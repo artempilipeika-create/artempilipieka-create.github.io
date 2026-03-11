@@ -442,10 +442,37 @@
             align-items: center;
         }
         
-        .file-remove {
+        .file-item.too-large {
+            background: rgba(255,100,100,0.3);
+            border: 1px solid #ff6b6b;
+        }
+        
+        .file-size-warning {
             color: #ff6b6b;
-            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .upload-method {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .upload-method label {
+            display: block;
+            margin-bottom: 10px;
+            color: white;
             font-weight: bold;
+        }
+        
+        .upload-method select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            font-size: 14px;
         }
 
         @media (max-width: 768px) {
@@ -650,21 +677,55 @@
                         <textarea id="message" placeholder="Что нужно рассчитать? Укажите материалы и размеры" rows="4"></textarea>
                     </div>
                     
-                    <!-- Блок загрузки файлов -->
-                    <div class="form-group" style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017;">
+                    <!-- Выбор способа загрузки -->
+                    <div class="upload-method">
+                        <label>📤 Способ отправки файлов:</label>
+                        <select id="uploadMethod" onchange="changeUploadMethod()">
+                            <option value="direct">Прямая загрузка (до 50 МБ)</option>
+                            <option value="link">Указать ссылку на облако (Google Drive, Яндекс.Диск и т.д.)</option>
+                            <option value="messenger">Отправить в WhatsApp/Telegram</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Блок прямой загрузки -->
+                    <div id="directUploadBlock" class="form-group" style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017;">
                         <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
-                            📎 Прикрепить файлы (Excel, фото, PDF):
+                            📎 Прикрепить файлы:
                         </label>
-                        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
+                        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf,.dwg,.zip,.rar" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
                         <p style="color: #ddd; font-size: 12px; margin-top: 8px; text-align: left;">
-                            * Можно прикрепить несколько файлов. Максимум 10 файлов по 20 МБ каждый
+                            * Можно прикрепить несколько файлов. Максимум 50 МБ на файл.<br>
+                            * Поддерживаются: Excel, PDF, JPG, PNG, DWG, ZIP, RAR
                         </p>
                         <div id="fileList" class="file-list"></div>
+                        <div id="fileWarning" class="file-size-warning" style="display: none;"></div>
+                    </div>
+                    
+                    <!-- Блок ссылки на облако -->
+                    <div id="linkUploadBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px;">
+                        <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
+                            🔗 Ссылка на файлы в облаке:
+                        </label>
+                        <input type="url" id="cloudLink" placeholder="https://drive.google.com/... или https://disk.yandex.ru/..." style="width: 100%; padding: 10px; border-radius: 5px;">
+                        <p style="color: #ddd; font-size: 12px; margin-top: 8px; text-align: left;">
+                            * Загрузите файлы на Google Drive, Яндекс.Диск или Dropbox и вставьте ссылку
+                        </p>
+                    </div>
+                    
+                    <!-- Блок мессенджеров -->
+                    <div id="messengerBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
+                        <p style="color: white; margin-bottom: 15px;">
+                            📱 Отправьте файлы напрямую в мессенджер после отправки заявки:
+                        </p>
+                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <a href="https://wa.me/375292519695" target="_blank" class="btn" style="background-color: #25D366; font-size: 14px; padding: 10px 20px;">WhatsApp</a>
+                            <a href="https://t.me/375292519695" target="_blank" class="btn" style="background-color: #0088cc; font-size: 14px; padding: 10px 20px;">Telegram</a>
+                        </div>
                     </div>
 
                     <!-- Индикатор загрузки -->
                     <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;">
-                        ⏫ Загружаем файлы в облако...
+                        ⏫ Загружаем файлы...
                     </div>
 
                     <button type="submit" class="btn" id="submitBtn">Отправить заявку</button>
@@ -739,28 +800,50 @@
     </footer>
 
     <script>
-        // ⬇️ URL из Google Apps Script
+        // URL из Google Apps Script
         const UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzOG6tE7Y5qmtm8lKcgsUH6OhAhOx7cPuDBOVr1J9924KWvBrY2fV77AU56joNhNg5L/exec';
         
-        // Проверка что URL заменен
-        if (UPLOAD_URL.includes('ВАШ_URL_ЗДЕСЬ')) {
-            console.error('❌ ОШИБКА: Не забудьте заменить UPLOAD_URL в коде!');
+        // Лимиты
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 МБ
+        
+        // Переключение способа загрузки
+        function changeUploadMethod() {
+            const method = document.getElementById('uploadMethod').value;
+            
+            document.getElementById('directUploadBlock').style.display = method === 'direct' ? 'block' : 'none';
+            document.getElementById('linkUploadBlock').style.display = method === 'link' ? 'block' : 'none';
+            document.getElementById('messengerBlock').style.display = method === 'messenger' ? 'block' : 'none';
         }
-
-        // Отображение выбранных файлов
+        
+        // Отображение выбранных файлов с проверкой размера
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileList = document.getElementById('fileList');
+            const warning = document.getElementById('fileWarning');
             fileList.innerHTML = '';
+            warning.style.display = 'none';
+            warning.innerHTML = '';
+            
+            let hasLargeFiles = false;
             
             if (this.files.length > 0) {
                 for (let i = 0; i < this.files.length; i++) {
                     const file = this.files[i];
+                    const isTooLarge = file.size > MAX_FILE_SIZE;
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    
+                    if (isTooLarge) hasLargeFiles = true;
+                    
                     const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
+                    fileItem.className = 'file-item' + (isTooLarge ? ' too-large' : '');
                     fileItem.innerHTML = `
-                        <span>📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} МБ)</span>
+                        <span>${isTooLarge ? '⚠️ ' : ''}${file.name} (${sizeMB} МБ)</span>
                     `;
                     fileList.appendChild(fileItem);
+                }
+                
+                if (hasLargeFiles) {
+                    warning.style.display = 'block';
+                    warning.innerHTML = '⚠️ Некоторые файлы превышают 50 МБ. Используйте "Ссылку на облако" или отправьте через WhatsApp/Telegram.';
                 }
             }
         });
@@ -769,17 +852,11 @@
         async function sendOrderWithFiles(event) {
             event.preventDefault();
             
-            // Проверка URL
-            if (UPLOAD_URL.includes('ВАШ_URL_ЗДЕСЬ')) {
-                alert('❌ Ошибка конфигурации! Необходимо настроить UPLOAD_URL в коде сайта.');
-                return;
-            }
-            
+            const method = document.getElementById('uploadMethod').value;
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
-            const fileInput = document.getElementById('fileInput');
             
             const submitBtn = document.getElementById('submitBtn');
             const statusDiv = document.getElementById('uploadStatus');
@@ -788,22 +865,56 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Отправка...';
             statusDiv.style.display = 'block';
-            statusDiv.innerHTML = '⏫ Загружаем файлы в облако...';
             
             try {
-                // Создаем FormData
+                let filesData = [];
+                let cloudLink = '';
+                
+                // Обрабатываем в зависимости от способа
+                if (method === 'direct') {
+                    const fileInput = document.getElementById('fileInput');
+                    
+                    // Проверяем размер файлов
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        if (fileInput.files[i].size > MAX_FILE_SIZE) {
+                            throw new Error(`Файл ${fileInput.files[i].name} превышает 50 МБ`);
+                        }
+                    }
+                    
+                    statusDiv.innerHTML = '⏫ Загружаем файлы...';
+                    
+                    // Загружаем файлы по очереди
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        const file = fileInput.files[i];
+                        statusDiv.innerHTML = `⏫ Загружаем файл ${i+1} из ${fileInput.files.length}: ${file.name}`;
+                        
+                        const fileData = await uploadFileToDrive(file, name, phone);
+                        filesData.push({
+                            name: file.name,
+                            url: fileData.url,
+                            size: (file.size / 1024 / 1024).toFixed(2)
+                        });
+                    }
+                    
+                } else if (method === 'link') {
+                    cloudLink = document.getElementById('cloudLink').value;
+                    if (!cloudLink) {
+                        throw new Error('Укажите ссылку на файлы');
+                    }
+                }
+                
+                // Отправляем данные в Google Apps Script
+                statusDiv.innerHTML = '⏫ Отправляем заявку...';
+                
                 const formData = new FormData();
                 formData.append('name', name);
                 formData.append('phone', phone);
                 formData.append('email', email || '');
                 formData.append('message', message || '');
+                formData.append('method', method);
+                formData.append('cloudLink', cloudLink);
+                formData.append('filesData', JSON.stringify(filesData));
                 
-                // Добавляем файлы
-                for (let i = 0; i < fileInput.files.length; i++) {
-                    formData.append('file' + i, fileInput.files[i]);
-                }
-                
-                // Отправляем на Google Apps Script
                 const response = await fetch(UPLOAD_URL, {
                     method: 'POST',
                     body: formData
@@ -812,20 +923,40 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    formStatus.innerHTML = `
+                    let successHTML = `
                         <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">
                             ✅ Заявка принята!
                         </p>
                         <p style="color: #1a3b2e; font-size: 16px; margin-top: 10px;">
                             <b>Номер заказа: ${result.orderId}</b>
                         </p>
+                    `;
+                    
+                    if (method === 'messenger') {
+                        successHTML += `
+                            <p style="color: #d4a017; font-size: 14px; margin-top: 10px;">
+                                📱 Не забудьте отправить файлы в WhatsApp или Telegram!<br>
+                                Нажмите на кнопки выше.
+                            </p>
+                        `;
+                    } else if (method === 'link') {
+                        successHTML += `
+                            <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                                ✅ Мы получили ссылку на ваши файлы.
+                            </p>
+                        `;
+                    }
+                    
+                    successHTML += `
                         <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                            Файлы сохранены, уведомление отправлено в Telegram.<br>
                             Мы свяжемся с вами в ближайшее время.
                         </p>
                     `;
+                    
+                    formStatus.innerHTML = successHTML;
                     document.getElementById('orderForm').reset();
                     document.getElementById('fileList').innerHTML = '';
+                    changeUploadMethod();
                 } else {
                     throw new Error(result.error || 'Неизвестная ошибка');
                 }
@@ -834,10 +965,10 @@
                 console.error('Ошибка:', error);
                 formStatus.innerHTML = `
                     <p style="color: #ff6b6b; font-weight: bold;">
-                        ❌ Ошибка отправки
+                        ❌ ${error.message || 'Ошибка отправки'}
                     </p>
                     <p style="color: #666; font-size: 14px; margin-top: 5px;">
-                        Пожалуйста, позвоните нам:<br>
+                        Позвоните нам:<br>
                         <a href="tel:+375292519695" style="color: #d4a017; font-size: 18px; font-weight: bold;">
                             +375 29 251-96-95
                         </a>
@@ -852,6 +983,46 @@
                     formStatus.innerHTML = '';
                 }, 15000);
             }
+        }
+        
+        // Загрузка файла на Google Drive через Apps Script
+        async function uploadFileToDrive(file, userName, userPhone) {
+            const reader = new FileReader();
+            
+            return new Promise((resolve, reject) => {
+                reader.onload = async function(e) {
+                    try {
+                        const base64Data = e.target.result.split(',')[1];
+                        
+                        const response = await fetch(UPLOAD_URL + '?action=uploadFile', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                filename: file.name,
+                                mimeType: file.type || 'application/octet-stream',
+                                data: base64Data,
+                                userName: userName,
+                                userPhone: userPhone
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            resolve({ url: result.url });
+                        } else {
+                            reject(new Error(result.error));
+                        }
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                
+                reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+                reader.readAsDataURL(file);
+            });
         }
     </script>
 </body>
