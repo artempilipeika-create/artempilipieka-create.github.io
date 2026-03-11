@@ -174,7 +174,7 @@
 
         .materials-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-top: 30px;
         }
@@ -289,7 +289,7 @@
             background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
         }
 
-        /* Форма заявки */
+        /* Форма заявки с файлами */
         .order {
             padding: 80px 0;
             background: linear-gradient(135deg, #1a3b2e 0%, #2a5a45 100%);
@@ -496,7 +496,7 @@
     <section class="hero">
         <div class="container">
             <h2>Профессиональные материалы для мебели</h2>
-            <p>ЛДСП BYSPAN, EGGER, Филвуд МДФ, фасады SENOSAN, ULTRADECOR, ULTRAMATT. Распил и кромкование.</p>
+            <p>ЛДСП BYSPAN, EGGER, ЛДСП ULTRADECOR, Филвуд МДФ, фасады SENOSAN, ULTRAMATT. Распил и кромкование.</p>
             <a href="#prices" class="btn">Смотреть прайс-листы</a>
         </div>
     </section>
@@ -537,9 +537,9 @@
             <div class="materials-grid">
                 <div class="material-item">ЛДСП BYSPAN</div>
                 <div class="material-item">ЛДСП EGGER</div>
+                <div class="material-item">ЛДСП ULTRADECOR</div>
                 <div class="material-item">Филвуд МДФ</div>
                 <div class="material-item">Фасады SENOSAN</div>
-                <div class="material-item">Фасады ULTRADECOR</div>
                 <div class="material-item">Фасады ULTRAMATT</div>
                 <div class="material-item">Кромка ПВХ</div>
                 <div class="material-item">Распил в размер</div>
@@ -601,11 +601,11 @@
                     </div>
                 </div>
                 
-                <!-- Прайс 5: ULTRADECOR -->
+                <!-- Прайс 5: ULTRADECOR ЛДСП -->
                 <div class="price-card">
                     <div class="price-icon">🎨</div>
-                    <h3>Фасады ULTRADECOR</h3>
-                    <div class="price-desc">Декоративные фасады для мебели</div>
+                    <h3>ЛДСП ULTRADECOR</h3>
+                    <div class="price-desc">Декоративные плиты для мебели</div>
                     <div class="price-badge">Прайс-лист</div>
                     <div class="price-actions">
                         <a href="МФ_прайс Ultradecor.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
@@ -613,7 +613,7 @@
                     </div>
                 </div>
                 
-                <!-- Прайс 6: ULTRAMATT (спецпредложение) -->
+                <!-- Прайс 6: ULTRAMATT фасады -->
                 <div class="price-card price-special">
                     <div class="price-icon">🔥</div>
                     <h3>Фасады ULTRAMATT</h3>
@@ -632,26 +632,44 @@
         </div>
     </section>
 
-    <!-- Форма заявки -->
+    <!-- Форма заявки с файлами -->
     <section id="order" class="order">
         <div class="container">
             <h2 class="section-title" style="color: white;">Заказать расчет</h2>
             <div class="order-form">
-                <form>
+                <form id="orderForm" onsubmit="sendOrderWithFiles(event)" enctype="multipart/form-data">
                     <div class="form-group">
-                        <input type="text" placeholder="Ваше имя" required>
+                        <input type="text" id="name" placeholder="Ваше имя" required>
                     </div>
                     <div class="form-group">
-                        <input type="tel" placeholder="Телефон" required>
+                        <input type="tel" id="phone" placeholder="Телефон" required>
                     </div>
                     <div class="form-group">
-                        <input type="email" placeholder="Email">
+                        <input type="email" id="email" placeholder="Email">
                     </div>
                     <div class="form-group">
-                        <textarea placeholder="Что нужно рассчитать? Укажите материалы и размеры"></textarea>
+                        <textarea id="message" placeholder="Что нужно рассчитать? Укажите материалы и размеры" rows="4"></textarea>
                     </div>
-                    <button type="submit" class="btn">Отправить заявку</button>
+                    
+                    <!-- Блок загрузки файлов -->
+                    <div class="form-group" style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017;">
+                        <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
+                            📎 Прикрепить файлы (Excel, фото, PDF):
+                        </label>
+                        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
+                        <p style="color: #ddd; font-size: 12px; margin-top: 8px; text-align: left;">
+                            * Можно прикрепить несколько файлов. Поддерживаются: Excel, JPG, PNG, PDF
+                        </p>
+                    </div>
+
+                    <!-- Индикатор загрузки файлов -->
+                    <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;">
+                        ⏫ Загружаем файлы...
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">Отправить заявку</button>
                 </form>
+                <div id="formStatus" style="margin-top: 20px; text-align: center;"></div>
             </div>
         </div>
     </section>
@@ -670,9 +688,9 @@
                     <div class="contact-icon">📞</div>
                     <h3>Телефоны</h3>
                     <p><strong>Директор:</strong> Олег Петрович Мартинович<br>
-                    <a href="tel:+375295315315">+375 29 531-53-15</a><br>
-                    <strong>Отдел продаж:</strong><br>
-                    <a href="tel:+375295315315">+375 29 531-53-15</a></p>
+                    <a href="tel:+375295315315" style="color: #d4a017; text-decoration: none; font-weight: bold;">+375 29 531-53-15</a><br>
+                    <strong>Отдел продаж:</strong> Екатерина<br>
+                    <a href="tel:+375297559616" style="color: #d4a017; text-decoration: none; font-weight: bold;">+375 29 755-96-16</a></p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">🏢</div>
@@ -682,8 +700,8 @@
                 <div class="contact-item">
                     <div class="contact-icon">✉️</div>
                     <h3>Email</h3>
-                    <p><a href="mailto:info@martinforest.by">info@martinforest.by</a><br>
-                    <a href="mailto:zakaz@martinforest.by">zakaz@martinforest.by</a></p>
+                    <p><a href="mailto:info@martinforest.by" style="color: #333; text-decoration: none;">info@martinforest.by</a><br>
+                    <a href="mailto:zakaz@martinforest.by" style="color: #333; text-decoration: none;">zakaz@martinforest.by</a></p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">🕒</div>
@@ -717,5 +735,119 @@
             <p style="margin-top: 10px; opacity: 0.7;">УНП 490942442</p>
         </div>
     </footer>
+
+    <script>
+        // Функция для загрузки файлов на временное хранилище
+        async function uploadFiles(files) {
+            if (!files || files.length === 0) return [];
+            
+            const uploadedUrls = [];
+            const statusDiv = document.getElementById('uploadStatus');
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = `⏫ Загружаем файл ${i+1} из ${files.length}: ${file.name}`;
+                
+                try {
+                    // Используем бесплатный сервис для временного хранения файлов
+                    const response = await fetch('https://tmpfiles.org/api/v1/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        // Получаем прямую ссылку на файл
+                        const fileUrl = data.data.url.replace('tmpfiles.org', 'tmpfiles.org/dl');
+                        uploadedUrls.push(`📎 ${file.name}: ${fileUrl}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки файла:', error);
+                    uploadedUrls.push(`❌ Не удалось загрузить ${file.name} (файл слишком большой или поврежден)`);
+                }
+            }
+            
+            statusDiv.style.display = 'none';
+            return uploadedUrls;
+        }
+
+        // Основная функция отправки заявки
+        async function sendOrderWithFiles(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const statusDiv = document.getElementById('formStatus');
+            
+            // Твои данные
+            const TELEGRAM_TOKEN = '8271414943:AAGKhJ-pguPjJMC5Nl9cR6bYhJBuMU3BbFs';
+            const CHAT_ID = '1475564376';
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Отправка...';
+            
+            // Сначала загружаем файлы, если они есть
+            let fileLinks = [];
+            if (files.length > 0) {
+                fileLinks = await uploadFiles(files);
+            }
+            
+            // Формируем текст сообщения
+            let text = `🔥 <b>Новая заявка с сайта Мартин Форест!</b>\n\n`;
+            text += `👤 <b>Имя:</b> ${name}\n`;
+            text += `📞 <b>Телефон:</b> ${phone}\n`;
+            text += `✉️ <b>Email:</b> ${email || 'не указан'}\n`;
+            text += `📝 <b>Сообщение:</b> ${message || 'не указано'}\n`;
+            
+            if (fileLinks.length > 0) {
+                text += `\n<b>📎 Прикрепленные файлы:</b>\n${fileLinks.join('\n')}`;
+            } else if (files.length > 0) {
+                text += `\n⚠️ Файлы не загрузились (возможно, слишком большие)`;
+            }
+            
+            // Отправляем в Telegram
+            fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: text,
+                    parse_mode: 'HTML'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    statusDiv.innerHTML = '<p style="color: #4CAF50; font-weight: bold;">✅ Заявка отправлена! Мы свяжемся с вами.</p>';
+                    document.getElementById('orderForm').reset();
+                } else {
+                    statusDiv.innerHTML = '<p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка. Попробуйте позже или позвоните нам.</p>';
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = '<p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка. Попробуйте позже или позвоните нам.</p>';
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Отправить заявку';
+                
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                }, 5000);
+            });
+        }
+    </script>
 </body>
 </html>
