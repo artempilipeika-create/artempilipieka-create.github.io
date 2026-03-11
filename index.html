@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мартин Форест - Распил ЛДСП в размер</title>
+    <title>Мартин Форест - ЛДСП, фасады, распил</title>
     <style>
         /* Общие стили */
         * {
@@ -26,7 +26,7 @@
 
         /* Шапка */
         .header {
-            background-color: #1a3b2e; /* Темно-зеленый, цвет леса */
+            background-color: #1a3b2e;
             color: white;
             padding: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
@@ -49,7 +49,7 @@
         }
 
         .logo span {
-            color: #d4a017; /* Золотистый акцент */
+            color: #d4a017;
             font-size: 14px;
             display: block;
         }
@@ -166,85 +166,127 @@
             color: #1a3b2e;
         }
 
-        /* Услуги и цены */
-        .pricing {
-            padding: 80px 0;
+        /* Материалы, с которыми работаем */
+        .materials {
+            padding: 60px 0;
+            background-color: white;
         }
 
-        .price-grid {
+        .materials-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .material-item {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #1a3b2e;
+            border-left: 4px solid #d4a017;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Прайс-листы */
+        .prices {
+            padding: 60px 0;
+            background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+        }
+
+        .prices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
 
         .price-card {
             background: white;
             border-radius: 15px;
-            padding: 30px;
+            padding: 25px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             border: 1px solid #eee;
             transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
         }
 
         .price-card:hover {
+            transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             border-color: #d4a017;
         }
 
+        .price-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
         .price-card h3 {
-            font-size: 24px;
             color: #1a3b2e;
+            font-size: 20px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .price-desc {
+            color: #666;
+            font-size: 14px;
             margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #d4a017;
+            flex-grow: 1;
         }
 
-        .price-list {
-            list-style: none;
-        }
-
-        .price-list li {
-            padding: 10px 0;
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px dashed #ddd;
-        }
-
-        .price-list .price {
-            font-weight: bold;
+        .price-badge {
+            background-color: #f5f5f5;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
             color: #d4a017;
+            font-weight: bold;
         }
 
-        /* Галерея */
-        .gallery {
-            padding: 80px 0;
-            background-color: #f9f9f9;
+        .price-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: auto;
         }
 
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+        .price-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s;
         }
 
-        .gallery-item {
-            height: 250px;
-            background-color: #ddd;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        .price-btn.view {
+            background-color: #1a3b2e;
+            color: white;
         }
 
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
+        .price-btn.view:hover {
+            background-color: #2a5a45;
         }
 
-        .gallery-item:hover img {
-            transform: scale(1.05);
+        .price-btn.download {
+            background-color: #d4a017;
+            color: #1a3b2e;
+        }
+
+        .price-btn.download:hover {
+            background-color: #f0b823;
+        }
+
+        .price-special {
+            border: 2px solid #d4a017;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
         }
 
         /* Форма заявки */
@@ -291,12 +333,14 @@
         /* Контакты */
         .contacts {
             padding: 80px 0;
+            background-color: #f9f9f9;
         }
 
         .contacts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
         }
 
         .contact-item {
@@ -315,15 +359,72 @@
         }
 
         .contact-item p {
+            font-size: 16px;
+        }
+
+        .contact-item a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-item a:hover {
+            color: #d4a017;
+        }
+
+        .request-block {
+            text-align: center;
+            margin: 40px 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+            border-radius: 15px;
+            border: 2px solid #d4a017;
+        }
+
+        .request-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+
+        .request-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
             font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .request-btn.phone {
+            background-color: #1a3b2e;
+            color: white;
+        }
+
+        .request-btn.wa {
+            background-color: #25D366;
+            color: white;
+        }
+
+        .request-btn.tg {
+            background-color: #0088cc;
+            color: white;
+        }
+
+        .request-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         .map {
-            margin-top: 40px;
             height: 400px;
             background-color: #eee;
             border-radius: 15px;
             overflow: hidden;
+            margin-top: 40px;
         }
 
         .map iframe {
@@ -360,6 +461,16 @@
             .hero h2 {
                 font-size: 32px;
             }
+            
+            .request-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .request-btn {
+                width: 100%;
+                max-width: 300px;
+            }
         }
     </style>
 </head>
@@ -369,24 +480,24 @@
         <div class="container header-content">
             <div class="logo">
                 <h1>МАРТИН ФОРЕСТ</h1>
-                <span>Распил ЛДСП в размер</span>
+                <span>ЛДСП, фасады, распил</span>
             </div>
             <nav class="nav">
-                <a href="#services">Услуги</a>
-                <a href="#gallery">Работы</a>
-                <a href="#price">Цены</a>
+                <a href="#materials">Материалы</a>
+                <a href="#prices">Прайсы</a>
+                <a href="#order">Заявка</a>
                 <a href="#contacts">Контакты</a>
             </nav>
-            <div class="phone">+7 (999) 123-45-67</div>
+            <div class="phone">+375 29 531-53-15</div>
         </div>
     </header>
 
     <!-- Главный экран -->
     <section class="hero">
         <div class="container">
-            <h2>Профессиональный раскрой ЛДСП</h2>
-            <p>Точный распил в размер. Доставка по городу. Работаем с Egger, Kronospan, Swisspan и другими</p>
-            <a href="#order" class="btn">Рассчитать стоимость</a>
+            <h2>Профессиональные материалы для мебели</h2>
+            <p>ЛДСП BYSPAN, EGGER, Филвуд МДФ, фасады SENOSAN, ULTRADECOR, ULTRAMATT. Распил и кромкование.</p>
+            <a href="#prices" class="btn">Смотреть прайс-листы</a>
         </div>
     </section>
 
@@ -397,92 +508,131 @@
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">⚡</div>
-                    <h3>Точность до 1 мм</h3>
-                    <p>Современное оборудование с ЧПУ обеспечивает идеальный рез без сколов</p>
+                    <h3>Точный распил</h3>
+                    <p>Современное оборудование с ЧПУ, точность до 1 мм</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📦</div>
-                    <h3>Собственный склад</h3>
-                    <p>Более 50 цветов ЛДСП в наличии. Не ждем поставок</p>
+                    <h3>Весь спектр материалов</h3>
+                    <p>ЛДСП, МДФ, фасады, кромка — всё в наличии</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🚚</div>
-                    <h3>Быстрая доставка</h3>
-                    <p>Доставим заказ по городу в течение 24 часов</p>
+                    <h3>Доставка по Мозырю</h3>
+                    <p>Быстрая доставка заказов</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">💰</div>
-                    <h3>Низкие цены</h3>
-                    <p>Работаем напрямую с производителями без посредников</p>
+                    <h3>Прозрачные цены</h3>
+                    <p>Все цены в открытых прайс-листах</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Услуги и цены -->
-    <section id="services" class="pricing">
+    <!-- Материалы, с которыми работаем -->
+    <section id="materials" class="materials">
         <div class="container">
-            <h2 class="section-title">Наши услуги и цены</h2>
-            <div class="price-grid">
-                <div class="price-card">
-                    <h3>Раскрой ЛДСП</h3>
-                    <ul class="price-list">
-                        <li><span>Прямолинейный рез</span> <span class="price">150 ₽/п.м.</span></li>
-                        <li><span>Фигурный рез</span> <span class="price">250 ₽/п.м.</span></li>
-                        <li><span>Присадка отверстий</span> <span class="price">50 ₽/шт.</span></li>
-                        <li><span>Кромкование ПВХ</span> <span class="price">100 ₽/п.м.</span></li>
-                    </ul>
-                </div>
-                <div class="price-card">
-                    <h3>Материалы</h3>
-                    <ul class="price-list">
-                        <li><span>ЛДСП Egger (16 мм)</span> <span class="price">от 2500 ₽/лист</span></li>
-                        <li><span>ЛДСП Kronospan</span> <span class="price">от 1800 ₽/лист</span></li>
-                        <li><span>ЛДСП Swisspan</span> <span class="price">от 2000 ₽/лист</span></li>
-                        <li><span>Кромка ПВХ</span> <span class="price">от 30 ₽/м</span></li>
-                    </ul>
-                </div>
-                <div class="price-card">
-                    <h3>Готовые решения</h3>
-                    <ul class="price-list">
-                        <li><span>Столешницы</span> <span class="price">от 3500 ₽</span></li>
-                        <li><span>Двери-купе</span> <span class="price">от 5000 ₽</span></li>
-                        <li><span>Шкафы-купе</span> <span class="price">индивидуально</span></li>
-                        <li><span>Кухонные гарнитуры</span> <span class="price">индивидуально</span></li>
-                    </ul>
-                </div>
+            <h2 class="section-title">Материалы в наличии</h2>
+            <div class="materials-grid">
+                <div class="material-item">ЛДСП BYSPAN</div>
+                <div class="material-item">ЛДСП EGGER</div>
+                <div class="material-item">Филвуд МДФ</div>
+                <div class="material-item">Фасады SENOSAN</div>
+                <div class="material-item">Фасады ULTRADECOR</div>
+                <div class="material-item">Фасады ULTRAMATT</div>
+                <div class="material-item">Кромка ПВХ</div>
+                <div class="material-item">Распил в размер</div>
             </div>
         </div>
     </section>
 
-    <!-- Галерея работ -->
-    <section id="gallery" class="gallery">
+    <!-- Прайс-листы -->
+    <section id="prices" class="prices">
         <div class="container">
-            <h2 class="section-title">Примеры наших работ</h2>
-            <div class="gallery-grid">
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=400" alt="Кухня из ЛДСП">
+            <h2 class="section-title">Наши прайс-листы</h2>
+            
+            <div class="prices-grid">
+                <!-- Прайс 1: Кромка -->
+                <div class="price-card">
+                    <div class="price-icon">📏</div>
+                    <h3>Кромка ПВХ</h3>
+                    <div class="price-desc">Кромка для ЛДСП и МДФ, все толщины</div>
+                    <div class="price-badge">Актуальные цены</div>
+                    <div class="price-actions">
+                        <a href="МФ_кромка_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
+                        <a href="МФ_кромка_отпускные цены.pdf" download class="price-btn download">📥 Скачать</a>
+                    </div>
                 </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400" alt="Шкаф купе">
+                
+                <!-- Прайс 2: BYSPAN -->
+                <div class="price-card">
+                    <div class="price-icon">🌲</div>
+                    <h3>ЛДСП BYSPAN</h3>
+                    <div class="price-desc">Белорусские плиты, высокое качество</div>
+                    <div class="price-badge">Отпускные цены</div>
+                    <div class="price-actions">
+                        <a href="МФ_прайс Byspan_отпусные цены.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
+                        <a href="МФ_прайс Byspan_отпусные цены.pdf" download class="price-btn download">📥 Скачать</a>
+                    </div>
                 </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1616486029423-aaa478753e1f?w=400" alt="Стол из ЛДСП">
+                
+                <!-- Прайс 3: EGGER -->
+                <div class="price-card">
+                    <div class="price-icon">🏭</div>
+                    <h3>ЛДСП EGGER</h3>
+                    <div class="price-desc">Австрийские плиты премиум-класса</div>
+                    <div class="price-badge">Отпускные цены</div>
+                    <div class="price-actions">
+                        <a href="МФ_прайс Egger_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
+                        <a href="МФ_прайс Egger_отпускные цены.pdf" download class="price-btn download">📥 Скачать</a>
+                    </div>
                 </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?w=400" alt="Стеллаж">
+                
+                <!-- Прайс 4: SENOSAN -->
+                <div class="price-card">
+                    <div class="price-icon">✨</div>
+                    <h3>Фасады SENOSAN</h3>
+                    <div class="price-desc">Высококачественные фасады</div>
+                    <div class="price-badge">Прайс-лист</div>
+                    <div class="price-actions">
+                        <a href="МФ_прайс Senosan.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
+                        <a href="МФ_прайс Senosan.pdf" download class="price-btn download">📥 Скачать</a>
+                    </div>
                 </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" alt="Гардеробная">
+                
+                <!-- Прайс 5: ULTRADECOR -->
+                <div class="price-card">
+                    <div class="price-icon">🎨</div>
+                    <h3>Фасады ULTRADECOR</h3>
+                    <div class="price-desc">Декоративные фасады для мебели</div>
+                    <div class="price-badge">Прайс-лист</div>
+                    <div class="price-actions">
+                        <a href="МФ_прайс Ultradecor.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
+                        <a href="МФ_прайс Ultradecor.pdf" download class="price-btn download">📥 Скачать</a>
+                    </div>
                 </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=400" alt="Офисная мебель">
+                
+                <!-- Прайс 6: ULTRAMATT (спецпредложение) -->
+                <div class="price-card price-special">
+                    <div class="price-icon">🔥</div>
+                    <h3>Фасады ULTRAMATT</h3>
+                    <div class="price-desc">Матовые фасады премиум-класса</div>
+                    <div class="price-badge">⚡ Спецпредложение</div>
+                    <div class="price-actions">
+                        <a href="МФ_прайс Ultramatt.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
+                        <a href="МФ_прайс Ultramatt.pdf" download class="price-btn download">📥 Скачать</a>
+                    </div>
                 </div>
             </div>
+            
+            <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
+                * Нажмите «Смотреть» для просмотра в браузере или «Скачать» для сохранения PDF
+            </p>
         </div>
     </section>
 
-    <!-- Форма заказа -->
+    <!-- Форма заявки -->
     <section id="order" class="order">
         <div class="container">
             <h2 class="section-title" style="color: white;">Заказать расчет</h2>
@@ -498,7 +648,7 @@
                         <input type="email" placeholder="Email">
                     </div>
                     <div class="form-group">
-                        <textarea placeholder="Размеры деталей или описание задачи"></textarea>
+                        <textarea placeholder="Что нужно рассчитать? Укажите материалы и размеры"></textarea>
                     </div>
                     <button type="submit" class="btn">Отправить заявку</button>
                 </form>
@@ -514,17 +664,26 @@
                 <div class="contact-item">
                     <div class="contact-icon">📍</div>
                     <h3>Адрес</h3>
-                    <p>г. Москва, ул. Лесная, д. 15<br>Производственный цех №4</p>
+                    <p>247760, Республика Беларусь<br>Гомельская область, Мозырский район<br>г. Мозырь, ул. Притыцкого, 46</p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">📞</div>
-                    <h3>Телефон</h3>
-                    <p>+7 (999) 123-45-67<br>+7 (495) 765-43-21</p>
+                    <h3>Телефоны</h3>
+                    <p><strong>Директор:</strong> Олег Петрович Мартинович<br>
+                    <a href="tel:+375295315315">+375 29 531-53-15</a><br>
+                    <strong>Отдел продаж:</strong><br>
+                    <a href="tel:+375295315315">+375 29 531-53-15</a></p>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">🏢</div>
+                    <h3>УНП</h3>
+                    <p>490942442</p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">✉️</div>
                     <h3>Email</h3>
-                    <p>info@martinforest.ru<br>zakaz@martinforest.ru</p>
+                    <p><a href="mailto:info@martinforest.by">info@martinforest.by</a><br>
+                    <a href="mailto:zakaz@martinforest.by">zakaz@martinforest.by</a></p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">🕒</div>
@@ -532,9 +691,21 @@
                     <p>Пн-Пт: 9:00 - 20:00<br>Сб-Вс: 10:00 - 18:00</p>
                 </div>
             </div>
+            
+            <!-- Блок для заявок -->
+            <div class="request-block">
+                <h3 style="color: #1a3b2e; font-size: 28px; margin-bottom: 20px;">📲 Подать заявку</h3>
+                <p style="font-size: 18px; margin-bottom: 25px;">Звоните или пишите в удобный мессенджер:</p>
+                <div class="request-buttons">
+                    <a href="tel:+375292519695" class="request-btn phone">📞 +375 29 251-96-95</a>
+                    <a href="https://wa.me/375292519695" target="_blank" class="request-btn wa">💬 WhatsApp</a>
+                    <a href="https://t.me/375292519695" target="_blank" class="request-btn tg">📱 Telegram</a>
+                </div>
+                <p style="color: #666; font-size: 14px;">Нажми на кнопку — сразу откроется диалог в приложении</p>
+            </div>
+
             <div class="map">
-                <!-- Здесь будет карта -->
-                <iframe src="https://yandex.ru/map-widget/v1/?um=constructor%3A1234567890abcdef" allowfullscreen></iframe>
+                <iframe src="https://yandex.by/map-widget/v1/?ll=29.249396%2C52.040955&mode=search&oid=1030853375&ol=biz&sctx=ZAAAAAgBEAAaKAoSCbmrD93%2BOkVAEfJ3rwVqOEpAEhIJWpRCI7kF6T8RHPxYUh%2F6wD8iBgABAgMEBSgKOABA%54LaaEF5BYnCbzEa9NPbaNAjmMtK93BS6w2K15bJLZq8%2BhkQwwIimAJqoP5%2BnrKkgq2hlqeDqI2lk6qlpbKkgqCFvIGwhZqHxYCGgAq3Ar0B&sll=29.249396%2C52.040955&sspn=0.015340%2C0.006575&text=%D0%93%D0%BE%D0%BC%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%B0%D1%8F%20%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C%2C%20%D0%9C%D0%BE%D0%B7%D1%8B%D1%80%D1%8C%2C%20%D1%83%D0%BB%D0%B8%D1%86%D0%B0%20%D0%A1.%D0%9E.%20%D0%9F%D1%80%D0%B8%D1%82%D1%8B%D1%86%D0%BA%D0%BE%D0%B3%D0%BE%2C%2046&z=16" width="100%" height="400" frameborder="0" allowfullscreen></iframe>
             </div>
         </div>
     </section>
@@ -542,8 +713,8 @@
     <!-- Футер -->
     <footer class="footer">
         <div class="container">
-            <p>© 2024 Мартин Форест. Распил ЛДСП. Все права защищены.</p>
-            <p style="margin-top: 10px; opacity: 0.7;">Сайт создан для демонстрации</p>
+            <p>© 2026 Мартин Форест. ЛДСП, фасады, распил. Все права защищены.</p>
+            <p style="margin-top: 10px; opacity: 0.7;">УНП 490942442</p>
         </div>
     </footer>
 </body>
