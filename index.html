@@ -664,7 +664,7 @@
 
                     <!-- Индикатор загрузки -->
                     <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;">
-                        ⏫ Отправляем файлы...
+                        ⏫ Загружаем файлы в облако...
                     </div>
 
                     <button type="submit" class="btn" id="submitBtn">Отправить заявку</button>
@@ -739,6 +739,14 @@
     </footer>
 
     <script>
+        // ⬇️ URL из Google Apps Script
+        const UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzOG6tE7Y5qmtm8lKcgsUH6OhAhOx7cPuDBOVr1J9924KWvBrY2fV77AU56joNhNg5L/exec';
+        
+        // Проверка что URL заменен
+        if (UPLOAD_URL.includes('ВАШ_URL_ЗДЕСЬ')) {
+            console.error('❌ ОШИБКА: Не забудьте заменить UPLOAD_URL в коде!');
+        }
+
         // Отображение выбранных файлов
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileList = document.getElementById('fileList');
@@ -757,115 +765,84 @@
             }
         });
 
-        // Основная функция отправки заявки с файлами
+        // Отправка формы
         async function sendOrderWithFiles(event) {
             event.preventDefault();
+            
+            // Проверка URL
+            if (UPLOAD_URL.includes('ВАШ_URL_ЗДЕСЬ')) {
+                alert('❌ Ошибка конфигурации! Необходимо настроить UPLOAD_URL в коде сайта.');
+                return;
+            }
             
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
             const fileInput = document.getElementById('fileInput');
-            const files = fileInput.files;
             
             const submitBtn = document.getElementById('submitBtn');
             const statusDiv = document.getElementById('uploadStatus');
             const formStatus = document.getElementById('formStatus');
             
-            // Твои данные
-            const TELEGRAM_TOKEN = '8271414943:AAGKhJ-pguPjJMC5Nl9cR6bYhJBuMU3BbFs';
-            const CHAT_ID = '1475564376';
-            
             submitBtn.disabled = true;
             submitBtn.textContent = 'Отправка...';
             statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '⏫ Загружаем файлы в облако...';
             
             try {
-                // Сначала отправляем текстовое сообщение
-                let text = `🔥 <b>Новая заявка с сайта Мартин Форест!</b>\n\n`;
-                text += `👤 <b>Имя:</b> ${name}\n`;
-                text += `📞 <b>Телефон:</b> ${phone}\n`;
-                text += `✉️ <b>Email:</b> ${email || 'не указан'}\n`;
-                text += `📝 <b>Сообщение:</b> ${message || 'не указано'}\n`;
+                // Создаем FormData
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('phone', phone);
+                formData.append('email', email || '');
+                formData.append('message', message || '');
                 
-                if (files.length > 0) {
-                    text += `\n<b>📎 Прикреплено файлов:</b> ${files.length}\n`;
-                    text += `<i>Файлы отправляются отдельными сообщениями...</i>`;
+                // Добавляем файлы
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    formData.append('file' + i, fileInput.files[i]);
                 }
                 
-                // Отправляем текст
-                const textResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                // Отправляем на Google Apps Script
+                const response = await fetch(UPLOAD_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: text,
-                        parse_mode: 'HTML'
-                    })
+                    body: formData
                 });
                 
-                const textData = await textResponse.json();
+                const result = await response.json();
                 
-                if (!textData.ok) {
-                    throw new Error('Ошибка отправки текста');
+                if (result.success) {
+                    formStatus.innerHTML = `
+                        <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">
+                            ✅ Заявка принята!
+                        </p>
+                        <p style="color: #1a3b2e; font-size: 16px; margin-top: 10px;">
+                            <b>Номер заказа: ${result.orderId}</b>
+                        </p>
+                        <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                            Файлы сохранены, уведомление отправлено в Telegram.<br>
+                            Мы свяжемся с вами в ближайшее время.
+                        </p>
+                    `;
+                    document.getElementById('orderForm').reset();
+                    document.getElementById('fileList').innerHTML = '';
+                } else {
+                    throw new Error(result.error || 'Неизвестная ошибка');
                 }
-                
-                // Отправляем файлы по очереди
-                if (files.length > 0) {
-                    for (let i = 0; i < files.length; i++) {
-                        const file = files[i];
-                        statusDiv.innerHTML = `⏫ Отправляем файл ${i+1} из ${files.length}: ${file.name}`;
-                        
-                        const formData = new FormData();
-                        formData.append('chat_id', CHAT_ID);
-                        formData.append('document', file);
-                        formData.append('caption', `📎 ${file.name}`);
-                        
-                        // Определяем тип файла и используем соответствующий метод
-                        let method = 'sendDocument';
-                        if (file.type.startsWith('image/')) {
-                            method = 'sendPhoto';
-                            formData.delete('document');
-                            formData.append('photo', file);
-                        }
-                        
-                        const fileResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/${method}`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const fileData = await fileResponse.json();
-                        
-                        if (!fileData.ok) {
-                            console.error('Ошибка отправки файла:', fileData);
-                            // Отправляем уведомление об ошибке файлом
-                            await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    chat_id: CHAT_ID,
-                                    text: `❌ Не удалось отправить файл: ${file.name}\nРазмер: ${(file.size/1024/1024).toFixed(2)} МБ`,
-                                    parse_mode: 'HTML'
-                                })
-                            });
-                        }
-                        
-                        // Небольшая задержка между файлами
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                }
-                
-                formStatus.innerHTML = '<p style="color: #4CAF50; font-weight: bold;">✅ Заявка и файлы отправлены! Мы свяжемся с вами.</p>';
-                document.getElementById('orderForm').reset();
-                document.getElementById('fileList').innerHTML = '';
                 
             } catch (error) {
                 console.error('Ошибка:', error);
-                formStatus.innerHTML = '<p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка отправки. Попробуйте позже или позвоните нам.</p>';
+                formStatus.innerHTML = `
+                    <p style="color: #ff6b6b; font-weight: bold;">
+                        ❌ Ошибка отправки
+                    </p>
+                    <p style="color: #666; font-size: 14px; margin-top: 5px;">
+                        Пожалуйста, позвоните нам:<br>
+                        <a href="tel:+375292519695" style="color: #d4a017; font-size: 18px; font-weight: bold;">
+                            +375 29 251-96-95
+                        </a>
+                    </p>
+                `;
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Отправить заявку';
@@ -873,7 +850,7 @@
                 
                 setTimeout(() => {
                     formStatus.innerHTML = '';
-                }, 5000);
+                }, 15000);
             }
         }
     </script>
