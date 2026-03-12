@@ -5,509 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мартин Форест - ЛДСП, фасады, распил</title>
     <style>
-        /* Все стили остаются такими же */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .header {
-            background-color: #1a3b2e;
-            color: white;
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .logo h1 {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .logo span {
-            color: #d4a017;
-            font-size: 14px;
-            display: block;
-        }
-
-        .nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 30px;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav a:hover {
-            color: #d4a017;
-        }
-
-        .phone {
-            font-size: 20px;
-            font-weight: bold;
-            color: #d4a017;
-        }
-
-        .hero {
-            background: linear-gradient(135deg, #2a5a45 0%, #1a3b2e 100%);
-            color: white;
-            padding: 80px 0;
-            text-align: center;
-        }
-
-        .hero h2 {
-            font-size: 48px;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-
-        .hero p {
-            font-size: 20px;
-            max-width: 700px;
-            margin: 0 auto 30px;
-            opacity: 0.9;
-        }
-
-        .btn {
-            display: inline-block;
-            background-color: #d4a017;
-            color: #1a3b2e;
-            padding: 15px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 18px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background-color: #f0b823;
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .features {
-            padding: 80px 0;
-            background-color: #f9f9f9;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 36px;
-            margin-bottom: 60px;
-            color: #1a3b2e;
-            position: relative;
-        }
-
-        .section-title:after {
-            content: "";
-            display: block;
-            width: 80px;
-            height: 4px;
-            background-color: #d4a017;
-            margin: 15px auto 0;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-
-        .feature-card h3 {
-            font-size: 22px;
-            margin-bottom: 15px;
-            color: #1a3b2e;
-        }
-
-        .materials {
-            padding: 60px 0;
-            background-color: white;
-        }
-
-        .materials-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .material-item {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: bold;
-            color: #1a3b2e;
-            border-left: 4px solid #d4a017;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .prices {
-            padding: 60px 0;
-            background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
-        }
-
-        .prices-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .price-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            border: 1px solid #eee;
-            transition: all 0.3s;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .price-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            border-color: #d4a017;
-        }
-
-        .price-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .price-card h3 {
-            color: #1a3b2e;
-            font-size: 20px;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .price-desc {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-            flex-grow: 1;
-        }
-
-        .price-badge {
-            background-color: #f5f5f5;
-            padding: 8px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #d4a017;
-            font-weight: bold;
-        }
-
-        .price-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: auto;
-        }
-
-        .price-btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .price-btn.view {
-            background-color: #1a3b2e;
-            color: white;
-        }
-
-        .price-btn.view:hover {
-            background-color: #2a5a45;
-        }
-
-        .price-special {
-            border: 2px solid #d4a017;
-            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
-        }
-
-        .order {
-            padding: 80px 0;
-            background: linear-gradient(135deg, #1a3b2e 0%, #2a5a45 100%);
-            color: white;
-        }
-
-        .order-form {
-            max-width: 600px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.1);
-            padding: 40px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.9);
-            font-size: 16px;
-        }
-
-        .form-group textarea {
-            height: 120px;
-            resize: vertical;
-        }
-
-        .order-form .btn {
-            width: 100%;
-            font-size: 20px;
-            padding: 15px;
-        }
-
-        .contacts {
-            padding: 80px 0;
-            background-color: #f9f9f9;
-        }
-
-        .contacts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-
-        .contact-item {
-            text-align: center;
-        }
-
-        .contact-icon {
-            font-size: 36px;
-            color: #d4a017;
-            margin-bottom: 15px;
-        }
-
-        .contact-item h3 {
-            color: #1a3b2e;
-            margin-bottom: 10px;
-        }
-
-        .contact-item p {
-            font-size: 16px;
-        }
-
-        .contact-item a {
-            color: #333;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .contact-item a:hover {
-            color: #d4a017;
-        }
-
-        .request-block {
-            text-align: center;
-            margin: 40px 0;
-            padding: 40px;
-            background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
-            border-radius: 15px;
-            border: 2px solid #d4a017;
-        }
-
-        .request-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin: 25px 0;
-        }
-
-        .request-btn {
-            display: inline-block;
-            padding: 15px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 18px;
-            transition: all 0.3s;
-        }
-
-        .request-btn.phone {
-            background-color: #1a3b2e;
-            color: white;
-        }
-
-        .request-btn.wa {
-            background-color: #25D366;
-            color: white;
-        }
-
-        .request-btn.tg {
-            background-color: #0088cc;
-            color: white;
-        }
-
-        .request-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .map {
-            height: 400px;
-            background-color: #eee;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-top: 40px;
-        }
-
-        .map iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
-
-        .footer {
-            background-color: #1a1a1a;
-            color: white;
-            text-align: center;
-            padding: 30px 0;
-            font-size: 14px;
-        }
-
-        /* Стили для файлов */
-        .file-list {
-            margin-top: 10px;
-            text-align: left;
-        }
-        
-        .file-item {
-            background: rgba(255,255,255,0.2);
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 5px;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .file-item.too-large {
-            background: rgba(255,100,100,0.3);
-            border: 1px solid #ff6b6b;
-        }
-        
-        .file-size-warning {
-            color: #ff6b6b;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-        
-        .upload-method {
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-        }
-        
-        .upload-method label {
-            display: block;
-            margin-bottom: 10px;
-            color: white;
-            font-weight: bold;
-        }
-        
-        .upload-method select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
-            font-size: 14px;
-        }
-
+        /* Все стили без изменений */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .header { background-color: #1a3b2e; color: white; padding: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .logo h1 { font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+        .logo span { color: #d4a017; font-size: 14px; display: block; }
+        .nav a { color: white; text-decoration: none; margin-left: 30px; font-weight: 500; transition: color 0.3s; }
+        .nav a:hover { color: #d4a017; }
+        .phone { font-size: 20px; font-weight: bold; color: #d4a017; }
+        .hero { background: linear-gradient(135deg, #2a5a45 0%, #1a3b2e 100%); color: white; padding: 80px 0; text-align: center; }
+        .hero h2 { font-size: 48px; margin-bottom: 20px; font-weight: 700; }
+        .hero p { font-size: 20px; max-width: 700px; margin: 0 auto 30px; opacity: 0.9; }
+        .btn { display: inline-block; background-color: #d4a017; color: #1a3b2e; padding: 15px 40px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 18px; transition: all 0.3s; border: none; cursor: pointer; }
+        .btn:hover { background-color: #f0b823; transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .features { padding: 80px 0; background-color: #f9f9f9; }
+        .section-title { text-align: center; font-size: 36px; margin-bottom: 60px; color: #1a3b2e; position: relative; }
+        .section-title:after { content: ""; display: block; width: 80px; height: 4px; background-color: #d4a017; margin: 15px auto 0; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+        .feature-card { background: white; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .feature-card:hover { transform: translateY(-5px); }
+        .feature-icon { font-size: 48px; margin-bottom: 20px; }
+        .feature-card h3 { font-size: 22px; margin-bottom: 15px; color: #1a3b2e; }
+        .materials { padding: 60px 0; background-color: white; }
+        .materials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+        .material-item { background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center; font-weight: bold; color: #1a3b2e; border-left: 4px solid #d4a017; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .prices { padding: 60px 0; background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%); }
+        .prices-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; margin-bottom: 40px; }
+        .price-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #eee; transition: all 0.3s; text-align: center; display: flex; flex-direction: column; }
+        .price-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-color: #d4a017; }
+        .price-icon { font-size: 48px; margin-bottom: 15px; }
+        .price-card h3 { color: #1a3b2e; font-size: 20px; margin-bottom: 10px; font-weight: 700; }
+        .price-desc { color: #666; font-size: 14px; margin-bottom: 20px; flex-grow: 1; }
+        .price-badge { background-color: #f5f5f5; padding: 8px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #d4a017; font-weight: bold; }
+        .price-actions { display: flex; gap: 10px; justify-content: center; margin-top: auto; }
+        .price-btn { padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 14px; transition: all 0.3s; }
+        .price-btn.view { background-color: #1a3b2e; color: white; }
+        .price-btn.view:hover { background-color: #2a5a45; }
+        .price-special { border: 2px solid #d4a017; background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%); }
+        .order { padding: 80px 0; background: linear-gradient(135deg, #1a3b2e 0%, #2a5a45 100%); color: white; }
+        .order-form { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); }
+        .form-group { margin-bottom: 20px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 15px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); font-size: 16px; }
+        .form-group textarea { height: 120px; resize: vertical; }
+        .order-form .btn { width: 100%; font-size: 20px; padding: 15px; }
+        .contacts { padding: 80px 0; background-color: #f9f9f9; }
+        .contacts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-bottom: 40px; }
+        .contact-item { text-align: center; }
+        .contact-icon { font-size: 36px; color: #d4a017; margin-bottom: 15px; }
+        .contact-item h3 { color: #1a3b2e; margin-bottom: 10px; }
+        .contact-item p { font-size: 16px; }
+        .contact-item a { color: #333; text-decoration: none; transition: color 0.3s; }
+        .contact-item a:hover { color: #d4a017; }
+        .request-block { text-align: center; margin: 40px 0; padding: 40px; background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 15px; border: 2px solid #d4a017; }
+        .request-buttons { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 25px 0; }
+        .request-btn { display: inline-block; padding: 15px 30px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 18px; transition: all 0.3s; }
+        .request-btn.phone { background-color: #1a3b2e; color: white; }
+        .request-btn.wa { background-color: #25D366; color: white; }
+        .request-btn.tg { background-color: #0088cc; color: white; }
+        .request-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .map { height: 400px; background-color: #eee; border-radius: 15px; overflow: hidden; margin-top: 40px; }
+        .map iframe { width: 100%; height: 100%; border: 0; }
+        .footer { background-color: #1a1a1a; color: white; text-align: center; padding: 30px 0; font-size: 14px; }
+        .file-list { margin-top: 10px; text-align: left; }
+        .file-item { background: rgba(255,255,255,0.2); padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 14px; }
+        .upload-method { margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+        .upload-method label { display: block; margin-bottom: 10px; color: white; font-weight: bold; }
+        .upload-method select { width: 100%; padding: 10px; border-radius: 5px; border: none; font-size: 14px; }
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .nav a {
-                margin: 10px 15px;
-                display: inline-block;
-            }
-            
-            .phone {
-                margin-top: 15px;
-            }
-            
-            .hero h2 {
-                font-size: 32px;
-            }
-            
-            .request-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .request-btn {
-                width: 100%;
-                max-width: 300px;
-            }
+            .header-content { flex-direction: column; text-align: center; }
+            .nav a { margin: 10px 15px; display: inline-block; }
+            .phone { margin-top: 15px; }
+            .hero h2 { font-size: 32px; }
+            .request-buttons { flex-direction: column; align-items: center; }
+            .request-btn { width: 100%; max-width: 300px; }
         }
     </style>
 </head>
 <body>
-    <!-- Шапка сайта -->
     <header class="header">
         <div class="container header-content">
             <div class="logo">
@@ -524,7 +101,6 @@
         </div>
     </header>
 
-    <!-- Главный экран -->
     <section class="hero">
         <div class="container">
             <h2>Профессиональные материалы для мебели</h2>
@@ -533,7 +109,6 @@
         </div>
     </section>
 
-    <!-- Преимущества -->
     <section class="features">
         <div class="container">
             <h2 class="section-title">Почему выбирают нас</h2>
@@ -562,7 +137,6 @@
         </div>
     </section>
 
-    <!-- Материалы, с которыми работаем -->
     <section id="materials" class="materials">
         <div class="container">
             <h2 class="section-title">Материалы в наличии</h2>
@@ -579,13 +153,10 @@
         </div>
     </section>
 
-    <!-- Прайс-листы -->
     <section id="prices" class="prices">
         <div class="container">
             <h2 class="section-title">Наши прайс-листы</h2>
-            
             <div class="prices-grid">
-                <!-- Прайс 1: Кромка -->
                 <div class="price-card">
                     <div class="price-icon">📏</div>
                     <h3>Кромка ПВХ</h3>
@@ -595,8 +166,6 @@
                         <a href="МФ_кромка_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
-                
-                <!-- Прайс 2: BYSPAN -->
                 <div class="price-card">
                     <div class="price-icon">🌲</div>
                     <h3>ЛДСП BYSPAN</h3>
@@ -606,8 +175,6 @@
                         <a href="МФ_прайс Byspan_отпусные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
-                
-                <!-- Прайс 3: EGGER -->
                 <div class="price-card">
                     <div class="price-icon">🏭</div>
                     <h3>ЛДСП EGGER</h3>
@@ -617,8 +184,6 @@
                         <a href="МФ_прайс Egger_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
-                
-                <!-- Прайс 4: SENOSAN -->
                 <div class="price-card">
                     <div class="price-icon">✨</div>
                     <h3>Фасады SENOSAN</h3>
@@ -628,8 +193,6 @@
                         <a href="МФ_прайс Senosan.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
-                
-                <!-- Прайс 5: ULTRADECOR ЛДСП -->
                 <div class="price-card">
                     <div class="price-icon">🎨</div>
                     <h3>ЛДСП ULTRADECOR</h3>
@@ -639,8 +202,6 @@
                         <a href="МФ_прайс Ultradecor.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
-                
-                <!-- Прайс 6: ULTRAMATT фасады -->
                 <div class="price-card price-special">
                     <div class="price-icon">🔥</div>
                     <h3>Фасады ULTRAMATT</h3>
@@ -651,14 +212,12 @@
                     </div>
                 </div>
             </div>
-            
             <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
                 * PDF откроется в новой вкладке. Чтобы скачать — нажмите Ctrl+S или кнопку загрузки в просмотрщике PDF
             </p>
         </div>
     </section>
 
-    <!-- Форма заявки с файлами -->
     <section id="order" class="order">
         <div class="container">
             <h2 class="section-title" style="color: white;">Заказать расчет</h2>
@@ -677,56 +236,40 @@
                         <textarea id="message" placeholder="Что нужно рассчитать? Укажите материалы и размеры" rows="4"></textarea>
                     </div>
                     
-                    <!-- Выбор способа загрузки -->
                     <div class="upload-method">
                         <label>📤 Способ отправки файлов:</label>
                         <select id="uploadMethod" onchange="changeUploadMethod()">
-                            <option value="direct">Прямая загрузка (до 10 МБ)</option>
-                            <option value="link">Указать ссылку на облако (Google Drive, Яндекс.Диск)</option>
-                            <option value="messenger">Отправить в WhatsApp/Telegram</option>
+                            <option value="direct">Прямая загрузка в Telegram (до 50 МБ)</option>
+                            <option value="link">Ссылка на облако (Google Drive, Яндекс.Диск)</option>
+                            <option value="messenger">Отправлю в WhatsApp/Telegram самостоятельно</option>
                         </select>
                     </div>
                     
-                    <!-- Блок прямой загрузки -->
                     <div id="directUploadBlock" class="form-group" style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017;">
                         <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
                             📎 Прикрепить файлы:
                         </label>
                         <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf,.dwg,.zip,.rar" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
-                        <p style="color: #ddd; font-size: 12px; margin-top: 8px; text-align: left;">
-                            * Можно прикрепить несколько файлов. Максимум 10 МБ на файл.<br>
-                            * Поддерживаются: Excel, PDF, JPG, PNG, DWG, ZIP, RAR
+                        <p style="color: #ddd; font-size: 12px; margin-top: 8px;">
+                            * Максимум 50 МБ на файл. Поддерживаются: Excel, PDF, JPG, PNG, DWG, ZIP, RAR
                         </p>
                         <div id="fileList" class="file-list"></div>
-                        <div id="fileWarning" class="file-size-warning" style="display: none;"></div>
                     </div>
                     
-                    <!-- Блок ссылки на облако -->
                     <div id="linkUploadBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px;">
                         <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
-                            🔗 Ссылка на файлы в облаке:
+                            🔗 Ссылка на файлы:
                         </label>
-                        <input type="url" id="cloudLink" placeholder="https://drive.google.com/... или https://disk.yandex.ru/..." style="width: 100%; padding: 10px; border-radius: 5px;">
-                        <p style="color: #ddd; font-size: 12px; margin-top: 8px; text-align: left;">
-                            * Загрузите файлы на Google Drive, Яндекс.Диск или Dropbox и вставьте ссылку
-                        </p>
+                        <input type="url" id="cloudLink" placeholder="https://drive.google.com/..." style="width: 100%; padding: 10px; border-radius: 5px;">
                     </div>
                     
-                    <!-- Блок мессенджеров -->
                     <div id="messengerBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
-                        <p style="color: white; margin-bottom: 15px;">
-                            📱 Отправьте файлы напрямую в мессенджер после отправки заявки:
-                        </p>
-                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                            <a href="https://wa.me/375292519695" target="_blank" class="btn" style="background-color: #25D366; font-size: 14px; padding: 10px 20px;">WhatsApp</a>
-                            <a href="https://t.me/375292519695" target="_blank" class="btn" style="background-color: #0088cc; font-size: 14px; padding: 10px 20px;">Telegram</a>
-                        </div>
+                        <p style="color: white; margin-bottom: 15px;">📱 Отправьте файлы после отправки заявки:</p>
+                        <a href="https://wa.me/375292519695" target="_blank" class="btn" style="background-color: #25D366; font-size: 14px; padding: 10px 20px; margin: 5px;">WhatsApp</a>
+                        <a href="https://t.me/375292519695" target="_blank" class="btn" style="background-color: #0088cc; font-size: 14px; padding: 10px 20px; margin: 5px;">Telegram</a>
                     </div>
 
-                    <!-- Индикатор загрузки -->
-                    <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;">
-                        ⏫ Загружаем файлы...
-                    </div>
+                    <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;"></div>
 
                     <button type="submit" class="btn" id="submitBtn">Отправить заявку</button>
                 </form>
@@ -735,7 +278,6 @@
         </div>
     </section>
 
-    <!-- Контакты -->
     <section id="contacts" class="contacts">
         <div class="container">
             <h2 class="section-title">Контакты</h2>
@@ -748,12 +290,9 @@
                 <div class="contact-item">
                     <div class="contact-icon">📞</div>
                     <h3>Телефоны</h3>
-                    <p><strong>Директор:</strong> Олег Петрович Мартинович<br>
-                    <a href="tel:+375295315315" style="color: #d4a017; text-decoration: none; font-weight: bold;">+375 29 531-53-15</a><br>
-                    <strong>Отдел продаж:</strong> Екатерина<br>
-                    <a href="tel:+375297559616" style="color: #d4a017; text-decoration: none; font-weight: bold;">+375 29 755-96-16</a><br>
-                    <strong>Заявки:</strong><br>
-                    <a href="tel:+375292519695" style="color: #d4a017; text-decoration: none;">+375 29 251-96-95</a></p>
+                    <p><strong>Директор:</strong> Олег Петрович Мартинович<br><a href="tel:+375295315315" style="color: #d4a017; font-weight: bold;">+375 29 531-53-15</a><br>
+                    <strong>Отдел продаж:</strong> Екатерина<br><a href="tel:+375297559616" style="color: #d4a017; font-weight: bold;">+375 29 755-96-16</a><br>
+                    <strong>Заявки:</strong><br><a href="tel:+375292519695" style="color: #d4a017;">+375 29 251-96-95</a></p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">🏢</div>
@@ -763,8 +302,7 @@
                 <div class="contact-item">
                     <div class="contact-icon">✉️</div>
                     <h3>Email</h3>
-                    <p><a href="mailto:info@martinforest.by" style="color: #333; text-decoration: none;">info@martinforest.by</a><br>
-                    <a href="mailto:zakaz@martinforest.by" style="color: #333; text-decoration: none;">zakaz@martinforest.by</a></p>
+                    <p><a href="mailto:info@martinforest.by">info@martinforest.by</a><br><a href="mailto:zakaz@martinforest.by">zakaz@martinforest.by</a></p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">🕒</div>
@@ -773,16 +311,13 @@
                 </div>
             </div>
             
-            <!-- Блок для заявок -->
             <div class="request-block">
                 <h3 style="color: #1a3b2e; font-size: 28px; margin-bottom: 20px;">📲 Подать заявку</h3>
-                <p style="font-size: 18px; margin-bottom: 25px;">Звоните или пишите в удобный мессенджер:</p>
                 <div class="request-buttons">
                     <a href="tel:+375292519695" class="request-btn phone">📞 +375 29 251-96-95</a>
                     <a href="https://wa.me/375292519695" target="_blank" class="request-btn wa">💬 WhatsApp</a>
                     <a href="https://t.me/375292519695" target="_blank" class="request-btn tg">📱 Telegram</a>
                 </div>
-                <p style="color: #666; font-size: 14px;">Нажми на кнопку — сразу откроется диалог в приложении</p>
             </div>
 
             <div class="map">
@@ -791,7 +326,6 @@
         </div>
     </section>
 
-    <!-- Футер -->
     <footer class="footer">
         <div class="container">
             <p>© 2026 Мартин Форест. ЛДСП, фасады, распил. Все права защищены.</p>
@@ -800,55 +334,32 @@
     </footer>
 
     <script>
-        // URL из Google Apps Script
-        const UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzOG6tE7Y5qmtm8lKcgsUH6OhAhOx7cPuDBOVr1J9924KWvBrY2fV77AU56joNhNg5L/exec';
-        
-        // Лимиты
-        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 МБ
-        
-        // Переключение способа загрузки
+        const TELEGRAM_TOKEN = '8271414943:AAGKhJ-pguPjJMC5Nl9cR6bYhJBuMU3BbFs';
+        const CHAT_ID = '1475564376';
+        const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
         function changeUploadMethod() {
             const method = document.getElementById('uploadMethod').value;
-            
             document.getElementById('directUploadBlock').style.display = method === 'direct' ? 'block' : 'none';
             document.getElementById('linkUploadBlock').style.display = method === 'link' ? 'block' : 'none';
             document.getElementById('messengerBlock').style.display = method === 'messenger' ? 'block' : 'none';
         }
         
-        // Отображение выбранных файлов с проверкой размера
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileList = document.getElementById('fileList');
-            const warning = document.getElementById('fileWarning');
             fileList.innerHTML = '';
-            warning.style.display = 'none';
-            warning.innerHTML = '';
-            
-            let hasLargeFiles = false;
-            
             if (this.files.length > 0) {
                 for (let i = 0; i < this.files.length; i++) {
                     const file = this.files[i];
-                    const isTooLarge = file.size > MAX_FILE_SIZE;
                     const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-                    
-                    if (isTooLarge) hasLargeFiles = true;
-                    
                     const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item' + (isTooLarge ? ' too-large' : '');
-                    fileItem.innerHTML = `
-                        <span>${isTooLarge ? '⚠️ ' : ''}${file.name} (${sizeMB} МБ)</span>
-                    `;
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `<span>📄 ${file.name} (${sizeMB} МБ)</span>`;
                     fileList.appendChild(fileItem);
-                }
-                
-                if (hasLargeFiles) {
-                    warning.style.display = 'block';
-                    warning.innerHTML = '⚠️ Некоторые файлы превышают 10 МБ. Используйте "Ссылку на облако" или отправьте через WhatsApp/Telegram.';
                 }
             }
         });
 
-        // Отправка формы
         async function sendOrderWithFiles(event) {
             event.preventDefault();
             
@@ -857,6 +368,7 @@
             const phone = document.getElementById('phone').value;
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
+            const fileInput = document.getElementById('fileInput');
             
             const submitBtn = document.getElementById('submitBtn');
             const statusDiv = document.getElementById('uploadStatus');
@@ -867,118 +379,77 @@
             statusDiv.style.display = 'block';
             
             try {
-                // Создаем FormData
-                const formData = new FormData();
-                formData.append('name', name);
-                formData.append('phone', phone);
-                formData.append('email', email || '');
-                formData.append('message', message || '');
-                formData.append('method', method);
+                const orderId = 'MF-' + new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 14);
                 
-                // Обрабатываем в зависимости от способа
-                if (method === 'direct') {
-                    const fileInput = document.getElementById('fileInput');
-                    
-                    // Проверяем размер файлов
-                    for (let i = 0; i < fileInput.files.length; i++) {
-                        if (fileInput.files[i].size > MAX_FILE_SIZE) {
-                            throw new Error(`Файл ${fileInput.files[i].name} превышает 10 МБ`);
-                        }
-                    }
-                    
-                    // Добавляем файлы в FormData
-                    for (let i = 0; i < fileInput.files.length; i++) {
-                        formData.append('file' + i, fileInput.files[i]);
-                    }
-                    
-                    statusDiv.innerHTML = `⏫ Загружаем ${fileInput.files.length} файл(ов)...`;
-                    
-                } else if (method === 'link') {
-                    const cloudLink = document.getElementById('cloudLink').value;
-                    if (!cloudLink) {
-                        throw new Error('Укажите ссылку на файлы');
-                    }
-                    formData.append('cloudLink', cloudLink);
+                // Отправляем текст
+                statusDiv.innerHTML = '⏫ Отправляем заявку...';
+                
+                let text = `🔥 <b>НОВАЯ ЗАЯВКА #${orderId}</b>\n\n`;
+                text += `👤 <b>Имя:</b> ${name || 'не указано'}\n`;
+                text += `📞 <b>Телефон:</b> <code>${phone || 'не указано'}</code>\n`;
+                text += `✉️ <b>Email:</b> ${email || 'не указан'}\n\n`;
+                text += `📝 <b>Сообщение:</b>\n${message || 'не указано'}\n\n`;
+                
+                if (method === 'link') {
+                    text += `🔗 <b>Ссылка:</b> ${document.getElementById('cloudLink').value}\n\n`;
+                } else if (method === 'messenger') {
+                    text += `📱 <b>Клиент отправит файлы самостоятельно</b>\n\n`;
                 }
                 
-                // Отправляем на Google Apps Script
-                const response = await fetch(UPLOAD_URL, {
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
                     method: 'POST',
-                    body: formData
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({chat_id: CHAT_ID, text: text, parse_mode: 'HTML'})
                 });
                 
-                if (!response.ok) {
-                    throw new Error('Ошибка сервера: ' + response.status);
-                }
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    let successHTML = `
-                        <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">
-                            ✅ Заявка принята!
-                        </p>
-                        <p style="color: #1a3b2e; font-size: 16px; margin-top: 10px;">
-                            <b>Номер заказа: ${result.orderId}</b>
-                        </p>
-                    `;
-                    
-                    if (method === 'messenger') {
-                        successHTML += `
-                            <p style="color: #d4a017; font-size: 14px; margin-top: 10px;">
-                                📱 Не забудьте отправить файлы в WhatsApp или Telegram!<br>
-                                Нажмите на кнопки выше.
-                            </p>
-                        `;
-                    } else if (method === 'link') {
-                        successHTML += `
-                            <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                                ✅ Мы получили ссылку на ваши файлы.
-                            </p>
-                        `;
-                    } else if (result.filesCount > 0) {
-                        successHTML += `
-                            <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                                ✅ Загружено файлов: ${result.filesCount}
-                            </p>
-                        `;
+                // Отправляем файлы напрямую в Telegram
+                if (method === 'direct' && fileInput.files.length > 0) {
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        const file = fileInput.files[i];
+                        if (file.size > MAX_FILE_SIZE) throw new Error(`Файл ${file.name} слишком большой`);
+                        
+                        statusDiv.innerHTML = `⏫ Отправляем файл ${i+1}/${fileInput.files.length}: ${file.name}`;
+                        
+                        const formData = new FormData();
+                        formData.append('chat_id', CHAT_ID);
+                        formData.append('caption', `📎 ${orderId} - ${file.name}`);
+                        formData.append('document', file);
+                        
+                        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendDocument`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            const err = await response.json();
+                            throw new Error(err.description || 'Ошибка отправки файла');
+                        }
                     }
-                    
-                    successHTML += `
-                        <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                            Мы свяжемся с вами в ближайшее время.
-                        </p>
-                    `;
-                    
-                    formStatus.innerHTML = successHTML;
-                    document.getElementById('orderForm').reset();
-                    document.getElementById('fileList').innerHTML = '';
-                    changeUploadMethod();
-                } else {
-                    throw new Error(result.error || 'Неизвестная ошибка');
                 }
+                
+                formStatus.innerHTML = `
+                    <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">✅ Заявка #${orderId} отправлена!</p>
+                    <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                        ${method === 'direct' && fileInput.files.length > 0 ? 'Все файлы загружены.' : 
+                          method === 'link' ? 'Мы получили ссылку.' : 
+                          'Не забудьте отправить файлы в мессенджер!'}
+                    </p>
+                `;
+                
+                document.getElementById('orderForm').reset();
+                document.getElementById('fileList').innerHTML = '';
                 
             } catch (error) {
-                console.error('Ошибка:', error);
                 formStatus.innerHTML = `
-                    <p style="color: #ff6b6b; font-weight: bold;">
-                        ❌ ${error.message || 'Ошибка отправки'}
-                    </p>
+                    <p style="color: #ff6b6b; font-weight: bold;">❌ ${error.message}</p>
                     <p style="color: #666; font-size: 14px; margin-top: 5px;">
-                        Позвоните нам:<br>
-                        <a href="tel:+375292519695" style="color: #d4a017; font-size: 18px; font-weight: bold;">
-                            +375 29 251-96-95
-                        </a>
+                        Позвоните: <a href="tel:+375292519695" style="color: #d4a017;">+375 29 251-96-95</a>
                     </p>
                 `;
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Отправить заявку';
                 statusDiv.style.display = 'none';
-                
-                setTimeout(() => {
-                    formStatus.innerHTML = '';
-                }, 15000);
             }
         }
     </script>
