@@ -353,10 +353,11 @@
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
         
         // ============================================
-        // ПОЛУЧЕНИЕ НОМЕРА ЗАКАЗА ИЗ ЧАТА (сквозная нумерация)
+        // СКВОЗНАЯ НУМЕРАЦИЯ ЗАКАЗОВ
         // ============================================
         
         // Получаем текущий максимальный номер из сообщений бота
+        // Формат номера: #01, #02, #03... #99, #100 и т.д.
         async function getCurrentOrderNumberFromChat() {
             try {
                 // Получаем последние 100 сообщений из чата
@@ -368,10 +369,11 @@
                 if (data.ok && data.result && data.result.length > 0) {
                     // Проходим все сообщения и ищем номера заказов
                     for (const update of data.result) {
+                        // Проверяем текст сообщений
                         if (update.message && update.message.text) {
                             const text = update.message.text;
-                            // Ищем номер в формате #01.12.03 или #1.12.03 или #001.12.03
-                            const match = text.match(/#(\d+)\.\d{2}\.\d{2}/);
+                            // Ищем номер в формате #01 или #1 или #001 (только число после #)
+                            const match = text.match(/#(\d+)(?!\.\d)/);
                             if (match) {
                                 const orderNum = parseInt(match[1]);
                                 if (orderNum > maxNumber) {
@@ -379,9 +381,10 @@
                                 }
                             }
                         }
-                        // Проверяем подписи к документам тоже
+                        // Проверяем подписи к документам
                         if (update.message && update.message.caption) {
-                            const match = update.message.caption.match(/#(\d+)\.\d{2}\.\d{2}/);
+                            const caption = update.message.caption;
+                            const match = caption.match(/#(\d+)(?!\.\d)/);
                             if (match) {
                                 const orderNum = parseInt(match[1]);
                                 if (orderNum > maxNumber) {
@@ -392,6 +395,7 @@
                     }
                 }
                 
+                console.log('Найден максимальный номер в чате:', maxNumber);
                 return maxNumber;
             } catch (error) {
                 console.error('Ошибка получения номера из чата:', error);
@@ -399,19 +403,16 @@
             }
         }
         
-        // Генерируем следующий номер заказа
+        // Генерируем следующий номер заказа (сквозная нумерация!)
         async function getNextOrderNumber() {
             const currentMax = await getCurrentOrderNumberFromChat();
             const nextNumber = currentMax + 1;
             
-            const today = new Date();
-            const day = String(today.getDate()).padStart(2, '0');
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            
-            // Форматируем: 01, 02... 99, 100 (без ограничения)
+            // Форматируем: 01, 02, 03... 99, 100, 101
             const formattedNumber = String(nextNumber).padStart(2, '0');
             
-            return `${formattedNumber}.${day}.${month}`;
+            console.log('Следующий номер заказа:', formattedNumber);
+            return formattedNumber;
         }
 
         // ============================================
