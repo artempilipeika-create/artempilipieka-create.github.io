@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мартин Форест - ЛДСП, фасады, распил</title>
     <style>
-        /* Все стили без изменений */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
@@ -73,6 +72,7 @@
         .phone-note { color: #d4a017; font-size: 13px; margin-top: 5px; }
         .error-message { color: #ffb3b3; font-size: 14px; margin-top: 5px; display: none; }
         .form-status { margin-top: 20px; text-align: center; }
+        .order-note { background: rgba(212, 160, 23, 0.2); padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-size: 14px; border: 1px solid #d4a017; }
         @media (max-width: 768px) {
             .header-content { flex-direction: column; text-align: center; }
             .nav a { margin: 10px 15px; display: inline-block; }
@@ -217,8 +217,11 @@
 
     <section id="order" class="order">
         <div class="container">
-            <h2 class="section-title" style="color: white;">Заказать расчет</h2>
+            <h2 class="section-title" style="color: white;">Заказать или сделать заказ</h2>
             <div class="order-form">
+                <div class="order-note">
+                    Ваш заказ получит номер: <strong id="previewOrderNumber">...</strong>
+                </div>
                 <form id="orderForm">
                     <!-- Контактные данные -->
                     <h3 style="color: #d4a017; margin-bottom: 15px;">1. Контактные данные</h3>
@@ -267,6 +270,13 @@
                         <div id="typeError" class="error-message">Выберите тип заявки</div>
                     </div>
 
+                    <!-- Новая графа: Номер заказа клиента -->
+                    <div class="form-group">
+                        <label for="clientOrderNumber">Номер заказа (ваш/фирмы)</label>
+                        <input type="text" id="clientOrderNumber" placeholder="Например: З-123 или 2026-03">
+                        <div style="color: #ddd; font-size: 12px; margin-top: 5px;">Если у вас есть свой номер заказа, укажите его</div>
+                    </div>
+
                     <div class="form-group">
                         <label for="message">Примечание к заказу</label>
                         <textarea id="message" placeholder="Размеры, цвет, количество и т.д."></textarea>
@@ -284,7 +294,7 @@
                     </div>
 
                     <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;"></div>
-                    <button type="submit" class="btn" id="submitBtn">Отправить заявку</button>
+                    <button type="submit" class="btn" id="submitBtn">Отправить заказ</button>
                 </form>
                 <div id="formStatus" class="form-status"></div>
             </div>
@@ -342,32 +352,69 @@
         const CHAT_ID = '1475564376';
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-        // Функция для получения номера заказа (сквозная нумерация для текущего дня)
-        function getOrderNumber() {
-            const today = new Date();
-            const dateStr = today.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }).replace(/\./g, '');
-            const day = dateStr.slice(0, 2);
-            const month = dateStr.slice(2, 4);
-            
-            // Ключ для хранения счетчика в localStorage
-            const storageKey = `orderCounter_${day}${month}`;
-            
-            // Получаем текущий счетчик для этого дня
-            let currentCount = localStorage.getItem(storageKey);
-            if (!currentCount) {
-                // Если сегодня еще не было заявок, начинаем с 1
-                currentCount = 1;
-            } else {
-                currentCount = parseInt(currentCount) + 1;
+        // Функция для получения следующего номера заказа через Telegram Bot API
+        async function getNextOrderNumber() {
+            try {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                
+                // Ключ для хранения счетчика в Telegram (используем description бота как хранилище)
+                const counterKey = `order_counter_${day}${month}`;
+                
+                // Получаем текущее значение счетчика
+                const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?offset=-1`);
+                const data = await response.json();
+                
+                // Ищем последнее сообщение с нашим счетчиком
+                let currentCount = 0;
+                if (data.result && data.result.length > 0) {
+                    // Перебираем последние сообщения в поисках нашего счетчика
+                    for (let i = data.result.length - 1; i >= 0; i--) {
+                        const msg = data.result[i];
+                        if (msg.message && msg.message.text && msg.message.text.startsWith(`COUNTER_${counterKey}=`)) {
+                            currentCount = parseInt(msg.message.text.split('=')[1]);
+                            break;
+                        }
+                    }
+                }
+                
+                // Увеличиваем счетчик
+                const newCount = currentCount + 1;
+                
+                // Отправляем новое значение счетчика в Telegram (скрытое сообщение)
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: `COUNTER_${counterKey}=${newCount}`,
+                        disable_notification: true
+                    })
+                });
+                
+                // Формируем номер заказа
+                const orderNum = String(newCount).padStart(2, '0') + '.' + day + '.' + month;
+                return orderNum;
+                
+            } catch (error) {
+                console.error('Ошибка при получении номера заказа:', error);
+                // В случае ошибки генерируем временный номер на основе времени
+                const now = new Date();
+                const fallbackNum = '99.' + 
+                    String(now.getDate()).padStart(2, '0') + '.' + 
+                    String(now.getMonth() + 1).padStart(2, '0');
+                return fallbackNum;
             }
-            
-            // Сохраняем обновленный счетчик
-            localStorage.setItem(storageKey, currentCount);
-            
-            // Формируем номер: две цифры счетчика + . + день + . + месяц
-            const orderNum = String(currentCount).padStart(2, '0') + '.' + day + '.' + month;
-            return orderNum;
         }
+
+        // Показываем предварительный номер заказа при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async function() {
+            const previewEl = document.getElementById('previewOrderNumber');
+            previewEl.textContent = 'получаем номер...';
+            const orderNum = await getNextOrderNumber();
+            previewEl.textContent = orderNum;
+        });
 
         function validatePhone(phone) {
             const phoneRegex = /^\+375\s?(29|33|25|44)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}$/;
@@ -446,6 +493,7 @@
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const email = document.getElementById('email').value;
+            const clientOrderNumber = document.getElementById('clientOrderNumber').value;
             const message = document.getElementById('message').value;
             const material = document.querySelector('input[name="material"]:checked').value;
             const edge = document.querySelector('input[name="edge"]:checked').value;
@@ -461,19 +509,25 @@
             statusDiv.style.display = 'block';
             
             try {
-                const orderId = getOrderNumber();
+                statusDiv.innerHTML = '⏫ Получаем номер заказа...';
+                const orderId = await getNextOrderNumber();
                 
                 // Отправляем текст
-                statusDiv.innerHTML = '⏫ Отправляем заявку...';
+                statusDiv.innerHTML = '⏫ Отправляем заказ...';
                 
-                let text = `🔥 <b>НОВАЯ ЗАЯВКА #${orderId}</b>\n\n`;
+                let text = `🔥 <b>НОВЫЙ ЗАКАЗ #${orderId}</b>\n\n`;
                 text += `👤 <b>Имя:</b> ${name || 'не указано'}\n`;
                 text += `📞 <b>Телефон:</b> <code>${phone}</code>\n`;
                 text += `✉️ <b>Email:</b> ${email || 'не указан'}\n\n`;
                 text += `📦 <b>Материал:</b> ${material}\n`;
                 text += `🪚 <b>Кромка:</b> ${edge}\n`;
-                text += `📋 <b>Тип заявки:</b> ${requestType}\n\n`;
-                text += `📝 <b>Примечание:</b>\n${message || 'не указано'}\n\n`;
+                text += `📋 <b>Тип заказа:</b> ${requestType}\n`;
+                
+                if (clientOrderNumber) {
+                    text += `🏷️ <b>Номер заказа (клиента):</b> ${clientOrderNumber}\n`;
+                }
+                
+                text += `\n📝 <b>Примечание:</b>\n${message || 'не указано'}\n\n`;
                 
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
                     method: 'POST',
@@ -493,7 +547,7 @@
                         
                         const formData = new FormData();
                         formData.append('chat_id', CHAT_ID);
-                        formData.append('caption', `📎 Заявка #${orderId} - ${file.name}`);
+                        formData.append('caption', `📎 Заказ #${orderId} - ${file.name}`);
                         formData.append('document', file);
                         
                         const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendDocument`, {
@@ -509,9 +563,9 @@
                 }
                 
                 formStatus.innerHTML = `
-                    <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">✅ Заявка #${orderId} отправлена!</p>
+                    <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">✅ Заказ #${orderId} отправлен!</p>
                     <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                        ${fileInput.files.length > 0 ? 'Все файлы успешно загружены.' : 'Заявка отправлена без файлов.'}
+                        ${fileInput.files.length > 0 ? 'Все файлы успешно загружены.' : 'Заказ отправлен без файлов.'}
                     </p>
                 `;
                 
@@ -522,6 +576,11 @@
                 // Сброс ошибок
                 document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
                 
+                // Обновляем предпросмотр номера
+                const previewEl = document.getElementById('previewOrderNumber');
+                const nextOrderNum = await getNextOrderNumber();
+                previewEl.textContent = nextOrderNum;
+                
             } catch (error) {
                 formStatus.innerHTML = `
                     <p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка: ${error.message}</p>
@@ -531,7 +590,7 @@
                 `;
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Отправить заявку';
+                submitBtn.textContent = 'Отправить заказ';
                 statusDiv.style.display = 'none';
             }
         });
