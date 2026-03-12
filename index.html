@@ -270,15 +270,6 @@
             background-color: #2a5a45;
         }
 
-        .price-btn.download {
-            background-color: #d4a017;
-            color: #1a3b2e;
-        }
-
-        .price-btn.download:hover {
-            background-color: #f0b823;
-        }
-
         .price-special {
             border: 2px solid #d4a017;
             background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
@@ -434,6 +425,56 @@
             font-size: 14px;
         }
 
+        /* Стили для файлов */
+        .file-list {
+            margin-top: 10px;
+            text-align: left;
+        }
+        
+        .file-item {
+            background: rgba(255,255,255,0.2);
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .file-item.too-large {
+            background: rgba(255,100,100,0.3);
+            border: 1px solid #ff6b6b;
+        }
+        
+        .file-size-warning {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .upload-method {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .upload-method label {
+            display: block;
+            margin-bottom: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .upload-method select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            font-size: 14px;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -551,8 +592,7 @@
                     <div class="price-desc">Кромка для ЛДСП и МДФ, все толщины</div>
                     <div class="price-badge">Актуальные цены</div>
                     <div class="price-actions">
-                        <a href="МФ_кромка_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
-                        <a href="МФ_кромка_отпускные цены.pdf" download class="price-btn download">📥 Скачать</a>
+                        <a href="МФ_кромка_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 
@@ -563,8 +603,7 @@
                     <div class="price-desc">Белорусские плиты, высокое качество</div>
                     <div class="price-badge">Отпускные цены</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Byspan_отпусные цены.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
-                        <a href="МФ_прайс Byspan_отпусные цены.pdf" download class="price-btn download">📥 Скачать</a>
+                        <a href="МФ_прайс Byspan_отпусные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 
@@ -575,8 +614,7 @@
                     <div class="price-desc">Австрийские плиты премиум-класса</div>
                     <div class="price-badge">Отпускные цены</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Egger_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
-                        <a href="МФ_прайс Egger_отпускные цены.pdf" download class="price-btn download">📥 Скачать</a>
+                        <a href="МФ_прайс Egger_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 
@@ -587,8 +625,7 @@
                     <div class="price-desc">Высококачественные фасады</div>
                     <div class="price-badge">Прайс-лист</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Senosan.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
-                        <a href="МФ_прайс Senosan.pdf" download class="price-btn download">📥 Скачать</a>
+                        <a href="МФ_прайс Senosan.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 
@@ -599,8 +636,7 @@
                     <div class="price-desc">Декоративные плиты для мебели</div>
                     <div class="price-badge">Прайс-лист</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Ultradecor.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
-                        <a href="МФ_прайс Ultradecor.pdf" download class="price-btn download">📥 Скачать</a>
+                        <a href="МФ_прайс Ultradecor.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 
@@ -611,14 +647,13 @@
                     <div class="price-desc">Матовые фасады премиум-класса</div>
                     <div class="price-badge">⚡ Спецпредложение</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Ultramatt.pdf" target="_blank" class="price-btn view">👁️ Смотреть</a>
-                        <a href="МФ_прайс Ultramatt.pdf" download class="price-btn download">📥 Скачать</a>
+                        <a href="МФ_прайс Ultramatt.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
                     </div>
                 </div>
             </div>
             
             <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
-                * Нажмите «Смотреть» для просмотра в браузере или «Скачать» для сохранения PDF
+                * PDF откроется в новой вкладке. Чтобы скачать — нажмите Ctrl+S или кнопку загрузки в просмотрщике PDF
             </p>
         </div>
     </section>
@@ -628,7 +663,7 @@
         <div class="container">
             <h2 class="section-title" style="color: white;">Заказать расчет</h2>
             <div class="order-form">
-                <form id="orderForm" onsubmit="sendOrderWithFiles(event)" enctype="multipart/form-data">
+                <form id="orderForm" onsubmit="sendOrderWithFiles(event)">
                     <div class="form-group">
                         <input type="text" id="name" placeholder="Ваше имя" required>
                     </div>
@@ -642,18 +677,53 @@
                         <textarea id="message" placeholder="Что нужно рассчитать? Укажите материалы и размеры" rows="4"></textarea>
                     </div>
                     
-                    <!-- Блок загрузки файлов -->
-                    <div class="form-group" style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017;">
+                    <!-- Выбор способа загрузки -->
+                    <div class="upload-method">
+                        <label>📤 Способ отправки файлов:</label>
+                        <select id="uploadMethod" onchange="changeUploadMethod()">
+                            <option value="direct">Прямая загрузка (до 10 МБ)</option>
+                            <option value="link">Указать ссылку на облако (Google Drive, Яндекс.Диск)</option>
+                            <option value="messenger">Отправить в WhatsApp/Telegram</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Блок прямой загрузки -->
+                    <div id="directUploadBlock" class="form-group" style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017;">
                         <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
-                            📎 Прикрепить файлы (Excel, фото, PDF):
+                            📎 Прикрепить файлы:
                         </label>
-                        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
+                        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf,.dwg,.zip,.rar" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
                         <p style="color: #ddd; font-size: 12px; margin-top: 8px; text-align: left;">
-                            * Можно прикрепить несколько файлов. Поддерживаются: Excel, JPG, PNG, PDF (до 20 МБ)
+                            * Можно прикрепить несколько файлов. Максимум 10 МБ на файл.<br>
+                            * Поддерживаются: Excel, PDF, JPG, PNG, DWG, ZIP, RAR
+                        </p>
+                        <div id="fileList" class="file-list"></div>
+                        <div id="fileWarning" class="file-size-warning" style="display: none;"></div>
+                    </div>
+                    
+                    <!-- Блок ссылки на облако -->
+                    <div id="linkUploadBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px;">
+                        <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
+                            🔗 Ссылка на файлы в облаке:
+                        </label>
+                        <input type="url" id="cloudLink" placeholder="https://drive.google.com/... или https://disk.yandex.ru/..." style="width: 100%; padding: 10px; border-radius: 5px;">
+                        <p style="color: #ddd; font-size: 12px; margin-top: 8px; text-align: left;">
+                            * Загрузите файлы на Google Drive, Яндекс.Диск или Dropbox и вставьте ссылку
                         </p>
                     </div>
+                    
+                    <!-- Блок мессенджеров -->
+                    <div id="messengerBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
+                        <p style="color: white; margin-bottom: 15px;">
+                            📱 Отправьте файлы напрямую в мессенджер после отправки заявки:
+                        </p>
+                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <a href="https://wa.me/375292519695" target="_blank" class="btn" style="background-color: #25D366; font-size: 14px; padding: 10px 20px;">WhatsApp</a>
+                            <a href="https://t.me/375292519695" target="_blank" class="btn" style="background-color: #0088cc; font-size: 14px; padding: 10px 20px;">Telegram</a>
+                        </div>
+                    </div>
 
-                    <!-- Индикатор загрузки файлов -->
+                    <!-- Индикатор загрузки -->
                     <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;">
                         ⏫ Загружаем файлы...
                     </div>
@@ -730,130 +800,186 @@
     </footer>
 
     <script>
-        // Функция для загрузки файлов на временное хранилище
-        async function uploadFiles(files) {
-            if (!files || files.length === 0) return [];
+        // URL из Google Apps Script
+        const UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzOG6tE7Y5qmtm8lKcgsUH6OhAhOx7cPuDBOVr1J9924KWvBrY2fV77AU56joNhNg5L/exec';
+        
+        // Лимиты
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 МБ
+        
+        // Переключение способа загрузки
+        function changeUploadMethod() {
+            const method = document.getElementById('uploadMethod').value;
             
-            const uploadedUrls = [];
-            const statusDiv = document.getElementById('uploadStatus');
-            const MAX_SIZE = 20 * 1024 * 1024; // 20 МБ
+            document.getElementById('directUploadBlock').style.display = method === 'direct' ? 'block' : 'none';
+            document.getElementById('linkUploadBlock').style.display = method === 'link' ? 'block' : 'none';
+            document.getElementById('messengerBlock').style.display = method === 'messenger' ? 'block' : 'none';
+        }
+        
+        // Отображение выбранных файлов с проверкой размера
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const fileList = document.getElementById('fileList');
+            const warning = document.getElementById('fileWarning');
+            fileList.innerHTML = '';
+            warning.style.display = 'none';
+            warning.innerHTML = '';
             
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                
-                // Проверка размера файла
-                if (file.size > MAX_SIZE) {
-                    uploadedUrls.push(`❌ ${file.name} (слишком большой, максимум 20 МБ)`);
-                    continue;
+            let hasLargeFiles = false;
+            
+            if (this.files.length > 0) {
+                for (let i = 0; i < this.files.length; i++) {
+                    const file = this.files[i];
+                    const isTooLarge = file.size > MAX_FILE_SIZE;
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    
+                    if (isTooLarge) hasLargeFiles = true;
+                    
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item' + (isTooLarge ? ' too-large' : '');
+                    fileItem.innerHTML = `
+                        <span>${isTooLarge ? '⚠️ ' : ''}${file.name} (${sizeMB} МБ)</span>
+                    `;
+                    fileList.appendChild(fileItem);
                 }
                 
-                statusDiv.style.display = 'block';
-                statusDiv.innerHTML = `⏫ Загружаем файл ${i+1} из ${files.length}: ${file.name}`;
-                
-                try {
-                    // Используем FormSubmit для отправки файлов (более надежно)
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    
-                    // Пробуем первый сервис
-                    try {
-                        const response = await fetch('https://file.io/?expires=7d', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const data = await response.json();
-                        if (data.success) {
-                            uploadedUrls.push(`📎 ${file.name}: ${data.link}`);
-                            continue;
-                        }
-                    } catch (e) {
-                        console.log('Первый сервис не сработал, пробуем второй');
-                    }
-                    
-                    // Запасной вариант
-                    uploadedUrls.push(`📎 ${file.name} (файл не загрузился, отправьте отдельно)`);
-                    
-                } catch (error) {
-                    console.error('Ошибка загрузки файла:', error);
-                    uploadedUrls.push(`❌ Ошибка загрузки ${file.name}`);
+                if (hasLargeFiles) {
+                    warning.style.display = 'block';
+                    warning.innerHTML = '⚠️ Некоторые файлы превышают 10 МБ. Используйте "Ссылку на облако" или отправьте через WhatsApp/Telegram.';
                 }
             }
-            
-            statusDiv.style.display = 'none';
-            return uploadedUrls;
-        }
+        });
 
-        // Основная функция отправки заявки
+        // Отправка формы
         async function sendOrderWithFiles(event) {
             event.preventDefault();
             
+            const method = document.getElementById('uploadMethod').value;
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
-            const fileInput = document.getElementById('fileInput');
-            const files = fileInput.files;
             
             const submitBtn = document.getElementById('submitBtn');
-            const statusDiv = document.getElementById('formStatus');
-            
-            // Твои данные
-            const TELEGRAM_TOKEN = '8271414943:AAGKhJ-pguPjJMC5Nl9cR6bYhJBuMU3BbFs';
-            const CHAT_ID = '1475564376';
+            const statusDiv = document.getElementById('uploadStatus');
+            const formStatus = document.getElementById('formStatus');
             
             submitBtn.disabled = true;
             submitBtn.textContent = 'Отправка...';
+            statusDiv.style.display = 'block';
             
-            // Сначала загружаем файлы, если они есть
-            let fileLinks = [];
-            if (files.length > 0) {
-                fileLinks = await uploadFiles(files);
-            }
-            
-            // Формируем текст сообщения
-            let text = `🔥 <b>Новая заявка с сайта Мартин Форест!</b>\n\n`;
-            text += `👤 <b>Имя:</b> ${name}\n`;
-            text += `📞 <b>Телефон:</b> ${phone}\n`;
-            text += `✉️ <b>Email:</b> ${email || 'не указан'}\n`;
-            text += `📝 <b>Сообщение:</b> ${message || 'не указано'}\n`;
-            
-            if (fileLinks.length > 0) {
-                text += `\n<b>📎 Файлы:</b>\n${fileLinks.join('\n')}`;
-            }
-            
-            // Отправляем в Telegram
-            fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    text: text,
-                    parse_mode: 'HTML'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    statusDiv.innerHTML = '<p style="color: #4CAF50; font-weight: bold;">✅ Заявка отправлена! Мы свяжемся с вами.</p>';
-                    document.getElementById('orderForm').reset();
-                } else {
-                    statusDiv.innerHTML = '<p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка. Попробуйте позже или позвоните нам.</p>';
+            try {
+                // Создаем FormData
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('phone', phone);
+                formData.append('email', email || '');
+                formData.append('message', message || '');
+                formData.append('method', method);
+                
+                // Обрабатываем в зависимости от способа
+                if (method === 'direct') {
+                    const fileInput = document.getElementById('fileInput');
+                    
+                    // Проверяем размер файлов
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        if (fileInput.files[i].size > MAX_FILE_SIZE) {
+                            throw new Error(`Файл ${fileInput.files[i].name} превышает 10 МБ`);
+                        }
+                    }
+                    
+                    // Добавляем файлы в FormData
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        formData.append('file' + i, fileInput.files[i]);
+                    }
+                    
+                    statusDiv.innerHTML = `⏫ Загружаем ${fileInput.files.length} файл(ов)...`;
+                    
+                } else if (method === 'link') {
+                    const cloudLink = document.getElementById('cloudLink').value;
+                    if (!cloudLink) {
+                        throw new Error('Укажите ссылку на файлы');
+                    }
+                    formData.append('cloudLink', cloudLink);
                 }
-            })
-            .catch(error => {
-                statusDiv.innerHTML = '<p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка. Попробуйте позже или позвоните нам.</p>';
-            })
-            .finally(() => {
+                
+                // Отправляем на Google Apps Script
+                const response = await fetch(UPLOAD_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера: ' + response.status);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    let successHTML = `
+                        <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">
+                            ✅ Заявка принята!
+                        </p>
+                        <p style="color: #1a3b2e; font-size: 16px; margin-top: 10px;">
+                            <b>Номер заказа: ${result.orderId}</b>
+                        </p>
+                    `;
+                    
+                    if (method === 'messenger') {
+                        successHTML += `
+                            <p style="color: #d4a017; font-size: 14px; margin-top: 10px;">
+                                📱 Не забудьте отправить файлы в WhatsApp или Telegram!<br>
+                                Нажмите на кнопки выше.
+                            </p>
+                        `;
+                    } else if (method === 'link') {
+                        successHTML += `
+                            <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                                ✅ Мы получили ссылку на ваши файлы.
+                            </p>
+                        `;
+                    } else if (result.filesCount > 0) {
+                        successHTML += `
+                            <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                                ✅ Загружено файлов: ${result.filesCount}
+                            </p>
+                        `;
+                    }
+                    
+                    successHTML += `
+                        <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                            Мы свяжемся с вами в ближайшее время.
+                        </p>
+                    `;
+                    
+                    formStatus.innerHTML = successHTML;
+                    document.getElementById('orderForm').reset();
+                    document.getElementById('fileList').innerHTML = '';
+                    changeUploadMethod();
+                } else {
+                    throw new Error(result.error || 'Неизвестная ошибка');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                formStatus.innerHTML = `
+                    <p style="color: #ff6b6b; font-weight: bold;">
+                        ❌ ${error.message || 'Ошибка отправки'}
+                    </p>
+                    <p style="color: #666; font-size: 14px; margin-top: 5px;">
+                        Позвоните нам:<br>
+                        <a href="tel:+375292519695" style="color: #d4a017; font-size: 18px; font-weight: bold;">
+                            +375 29 251-96-95
+                        </a>
+                    </p>
+                `;
+            } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Отправить заявку';
+                statusDiv.style.display = 'none';
                 
                 setTimeout(() => {
-                    statusDiv.innerHTML = '';
-                }, 5000);
-            });
+                    formStatus.innerHTML = '';
+                }, 15000);
+            }
         }
     </script>
 </body>
