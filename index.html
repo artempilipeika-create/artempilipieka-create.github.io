@@ -134,7 +134,7 @@
         </div>
     </section>
 
-    <section id="materials" class="materials">
+    <section class="materials" id="materials">
         <div class="container">
             <h2 class="section-title">Материалы в наличии</h2>
             <div class="materials-grid">
@@ -150,7 +150,7 @@
         </div>
     </section>
 
-    <section id="prices" class="prices">
+    <section class="prices" id="prices">
         <div class="container">
             <h2 class="section-title">Наши прайс-листы</h2>
             <div class="prices-grid">
@@ -160,7 +160,7 @@
                     <div class="price-desc">Кромка для ЛДСП и МДФ, все толщины</div>
                     <div class="price-badge">Актуальные цены</div>
                     <div class="price-actions">
-                        <a href="МФ_кромка_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
+                        <a href="#" class="price-btn view" target="_blank">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 <div class="price-card">
@@ -169,7 +169,7 @@
                     <div class="price-desc">Белорусские плиты, высокое качество</div>
                     <div class="price-badge">Отпускные цены</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Byspan_отпусные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
+                        <a href="#" class="price-btn view" target="_blank">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 <div class="price-card">
@@ -178,7 +178,7 @@
                     <div class="price-desc">Австрийские плиты премиум-класса</div>
                     <div class="price-badge">Отпускные цены</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Egger_отпускные цены.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
+                        <a href="#" class="price-btn view" target="_blank">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 <div class="price-card">
@@ -187,7 +187,7 @@
                     <div class="price-desc">Высококачественные фасады</div>
                     <div class="price-badge">Прайс-лист</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Senosan.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
+                        <a href="#" class="price-btn view" target="_blank">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 <div class="price-card">
@@ -196,7 +196,7 @@
                     <div class="price-desc">Декоративные плиты для мебели</div>
                     <div class="price-badge">Прайс-лист</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Ultradecor.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
+                        <a href="#" class="price-btn view" target="_blank">👁️ Открыть PDF</a>
                     </div>
                 </div>
                 <div class="price-card price-special">
@@ -205,76 +205,73 @@
                     <div class="price-desc">Матовые фасады премиум-класса</div>
                     <div class="price-badge">⚡ Спецпредложение</div>
                     <div class="price-actions">
-                        <a href="МФ_прайс Ultramatt.pdf" target="_blank" class="price-btn view">👁️ Открыть PDF</a>
+                        <a href="#" class="price-btn view" target="_blank">👁️ Открыть PDF</a>
                     </div>
                 </div>
             </div>
-            <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
+            <p style="text-align: center; color: #666; font-size: 14px;">
                 * PDF откроется в новой вкладке. Чтобы скачать — нажмите Ctrl+S или кнопку загрузки в просмотрщике PDF
             </p>
         </div>
     </section>
 
-    <section id="order" class="order">
+    <section class="order" id="order">
         <div class="container">
             <h2 class="section-title" style="color: white;">Заказать или сделать заказ</h2>
             <div class="order-form">
-                <div class="order-note">
-                    Ваш заказ получит номер: <strong id="previewOrderNumber">...</strong>
-                </div>
                 <form id="orderForm">
-                    <!-- Контактные данные -->
-                    <h3 style="color: #d4a017; margin-bottom: 15px;">1. Контактные данные</h3>
+                    
+                    <h3 style="color: #d4a017; margin-bottom: 20px;">1. Контактные данные</h3>
                     <div class="form-group">
-                        <label for="name">Имя <span style="color: #ff9999;">*</span></label>
+                        <label for="name">Имя <span style="color: #d4a017;">*</span></label>
                         <input type="text" id="name" placeholder="Ваше имя" required>
                     </div>
                     <div class="form-group">
-                        <label for="phone">Телефон <span style="color: #ff9999;">*</span></label>
+                        <label for="phone">Телефон <span style="color: #d4a017;">*</span></label>
                         <input type="tel" id="phone" placeholder="+375 29 123-45-67" required>
                         <div class="phone-note">Формат: +375 (29|33|25|44) XXX-XX-XX</div>
-                        <div id="phoneError" class="error-message">Неверный формат телефона. Используйте код 29, 33, 25 или 44.</div>
+                        <div class="error-message" id="phoneError">Неверный формат телефона. Используйте код 29, 33, 25 или 44.</div>
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
                         <input type="email" id="email" placeholder="example@mail.com">
                     </div>
 
-                    <!-- Детали заказа -->
-                    <h3 style="color: #d4a017; margin: 25px 0 15px;">2. Детали заказа</h3>
+                    
+                    <h3 style="color: #d4a017; margin: 30px 0 20px 0;">2. Детали заказа</h3>
                     
                     <div class="form-group">
-                        <label>Материал <span style="color: #ff9999;">*</span></label>
+                        <label>Материал <span style="color: #d4a017;">*</span></label>
                         <div class="radio-group">
                             <label><input type="radio" name="material" value="Свой материал" required> Свой материал</label>
                             <label><input type="radio" name="material" value="Материал фирмы"> Материал фирмы</label>
                         </div>
-                        <div id="materialError" class="error-message">Выберите вариант материала</div>
+                        <div class="error-message" id="materialError">Выберите вариант материала</div>
                     </div>
 
                     <div class="form-group">
-                        <label>Кромка <span style="color: #ff9999;">*</span></label>
+                        <label>Кромка <span style="color: #d4a017;">*</span></label>
                         <div class="radio-group">
                             <label><input type="radio" name="edge" value="Своя кромка" required> Своя кромка</label>
                             <label><input type="radio" name="edge" value="Кромка фирмы"> Кромка фирмы</label>
                         </div>
-                        <div id="edgeError" class="error-message">Выберите вариант кромки</div>
+                        <div class="error-message" id="edgeError">Выберите вариант кромки</div>
                     </div>
 
                     <div class="form-group">
-                        <label>Тип заказа <span style="color: #ff9999;">*</span></label>
+                        <label>Тип заказа <span style="color: #d4a017;">*</span></label>
                         <div class="radio-group">
                             <label><input type="radio" name="requestType" value="В работу" required> В работу</label>
                             <label><input type="radio" name="requestType" value="На просчет"> На просчет</label>
                         </div>
-                        <div id="typeError" class="error-message">Выберите тип заказа</div>
+                        <div class="error-message" id="typeError">Выберите тип заказа</div>
                     </div>
 
-                    <!-- Номер заказа клиента -->
+                    
                     <div class="form-group">
                         <label for="clientOrderNumber">Номер заказа (ваш/фирмы)</label>
                         <input type="text" id="clientOrderNumber" placeholder="Например: 716.Валеримебель">
-                        <div style="color: #ddd; font-size: 12px; margin-top: 5px;">Если у вас есть свой номер, укажите его</div>
+                        <div class="phone-note">Если у вас есть свой номер, укажите его</div>
                     </div>
 
                     <div class="form-group">
@@ -282,26 +279,26 @@
                         <textarea id="message" placeholder="Размеры, цвет, количество и т.д."></textarea>
                     </div>
 
-                    <!-- Файлы -->
-                    <h3 style="color: #d4a017; margin: 25px 0 15px;">3. Файлы (необязательно)</h3>
-                    <div class="upload-area">
+                    
+                    <h3 style="color: #d4a017; margin: 30px 0 20px 0;">3. Файлы (необязательно)</h3>
+                    <div class="form-group">
                         <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">📎 Прикрепить файлы:</label>
                         <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf,.dwg,.zip,.rar" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
-                        <p style="color: #ddd; font-size: 12px; margin-top: 8px;">
+                        <p style="color: #ccc; font-size: 12px; margin-top: 5px;">
                             * Максимум 50 МБ на файл. Поддерживаются: Excel, PDF, JPG, PNG, DWG, ZIP, RAR
                         </p>
-                        <div id="fileList" class="file-list"></div>
+                        <div class="file-list" id="fileList"></div>
                     </div>
 
-                    <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;"></div>
+                    <div id="uploadStatus" style="display: none; color: #d4a017; margin: 10px 0;"></div>
                     <button type="submit" class="btn" id="submitBtn">Отправить заказ</button>
                 </form>
-                <div id="formStatus" class="form-status"></div>
+                <div class="form-status" id="formStatus"></div>
             </div>
         </div>
     </section>
 
-    <section id="contacts" class="contacts">
+    <section class="contacts" id="contacts">
         <div class="container">
             <h2 class="section-title">Контакты</h2>
             <div class="contacts-grid">
@@ -313,9 +310,9 @@
                 <div class="contact-item">
                     <div class="contact-icon">📞</div>
                     <h3>Телефоны</h3>
-                    <p><strong>Директор:</strong> Мартинович Олег Петрович<br><a href="tel:+375295315315" style="color: #d4a017; font-weight: bold;">+375 29 531-53-15</a><br>
-                    <strong>Отдел продаж:</strong> Екатерина<br><a href="tel:+375297559616" style="color: #d4a017; font-weight: bold;">+375 29 755-96-16</a><br>
-                    <strong>Заявки:</strong><br><a href="tel:+375292519695" style="color: #d4a017;">+375 29 251-96-95</a></p>
+                    <p><strong>Директор:</strong> Мартинович Олег Петрович<br><a href="tel:+375295315315">+375 29 531-53-15</a><br>
+                    <strong>Отдел продаж:</strong> Екатерина<br><a href="tel:+375297559616">+375 29 755-96-16</a><br>
+                    <strong>Заявки:</strong><br><a href="tel:+375292519695">+375 29 251-96-95</a></p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">🏢</div>
@@ -343,68 +340,84 @@
     <footer class="footer">
         <div class="container">
             <p>© 2026 Мартин Форест. ЛДСП, фасады, распил. Все права защищены.</p>
-            <p style="margin-top: 10px; opacity: 0.7;">УНП 490942442</p>
+            <p>УНП 490942442</p>
         </div>
     </footer>
 
     <script>
+        // ============================================
+        // НАСТРОЙКИ
+        // ============================================
         const TELEGRAM_TOKEN = '8271414943:AAGKhJ-pguPjJMC5Nl9cR6bYhJBuMU3BbFs';
         const CHAT_ID = '1475564376';
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
-
-        // Получаем текущий номер заказа из Telegram
-        async function getCurrentOrderNumber() {
+        
+        // ============================================
+        // ПОЛУЧЕНИЕ НОМЕРА ЗАКАЗА ИЗ ЧАТА (сквозная нумерация)
+        // ============================================
+        
+        // Получаем текущий максимальный номер из сообщений бота
+        async function getCurrentOrderNumberFromChat() {
             try {
-                const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates`);
+                // Получаем последние 100 сообщений из чата
+                const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?limit=100`);
                 const data = await response.json();
                 
-                let lastNumber = 0;
+                let maxNumber = 0;
                 
-                if (data.ok && data.result) {
-                    // Ищем последнее сообщение с номером заказа
-                    for (let i = data.result.length - 1; i >= 0; i--) {
-                        const msg = data.result[i];
-                        if (msg.message && msg.message.text) {
-                            const text = msg.message.text;
-                            // Ищем номер заказа в формате #01.12.03
-                            const match = text.match(/#(\d+)\.(\d+)\.(\d+)/);
+                if (data.ok && data.result && data.result.length > 0) {
+                    // Проходим все сообщения и ищем номера заказов
+                    for (const update of data.result) {
+                        if (update.message && update.message.text) {
+                            const text = update.message.text;
+                            // Ищем номер в формате #01.12.03 или #1.12.03 или #001.12.03
+                            const match = text.match(/#(\d+)\.\d{2}\.\d{2}/);
                             if (match) {
                                 const orderNum = parseInt(match[1]);
-                                if (orderNum > lastNumber) {
-                                    lastNumber = orderNum;
+                                if (orderNum > maxNumber) {
+                                    maxNumber = orderNum;
+                                }
+                            }
+                        }
+                        // Проверяем подписи к документам тоже
+                        if (update.message && update.message.caption) {
+                            const match = update.message.caption.match(/#(\d+)\.\d{2}\.\d{2}/);
+                            if (match) {
+                                const orderNum = parseInt(match[1]);
+                                if (orderNum > maxNumber) {
+                                    maxNumber = orderNum;
                                 }
                             }
                         }
                     }
                 }
                 
-                return lastNumber;
+                return maxNumber;
             } catch (error) {
-                console.error('Ошибка получения номера:', error);
+                console.error('Ошибка получения номера из чата:', error);
                 return 0;
             }
         }
-
-        // Получаем следующий номер заказа
+        
+        // Генерируем следующий номер заказа
         async function getNextOrderNumber() {
-            const currentMax = await getCurrentOrderNumber();
+            const currentMax = await getCurrentOrderNumberFromChat();
             const nextNumber = currentMax + 1;
             
             const today = new Date();
             const day = String(today.getDate()).padStart(2, '0');
             const month = String(today.getMonth() + 1).padStart(2, '0');
             
-            return String(nextNumber).padStart(2, '0') + '.' + day + '.' + month;
+            // Форматируем: 01, 02... 99, 100 (без ограничения)
+            const formattedNumber = String(nextNumber).padStart(2, '0');
+            
+            return `${formattedNumber}.${day}.${month}`;
         }
 
-        // Показываем предварительный номер при загрузке
-        document.addEventListener('DOMContentLoaded', async function() {
-            const previewEl = document.getElementById('previewOrderNumber');
-            previewEl.textContent = 'загрузка...';
-            const orderNum = await getNextOrderNumber();
-            previewEl.textContent = orderNum;
-        });
-
+        // ============================================
+        // ВАЛИДАЦИЯ
+        // ============================================
+        
         function validatePhone(phone) {
             const phoneRegex = /^\+375\s?(29|33|25|44)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}$/;
             return phoneRegex.test(phone.trim());
@@ -452,6 +465,10 @@
             return isValid;
         }
 
+        // ============================================
+        // ФАЙЛЫ
+        // ============================================
+        
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
@@ -467,6 +484,10 @@
             }
         });
 
+        // ============================================
+        // ОТПРАВКА ФОРМЫ
+        // ============================================
+        
         document.getElementById('orderForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
@@ -493,6 +514,7 @@
             statusDiv.style.display = 'block';
             
             try {
+                // Получаем номер заказа из чата (сквозная нумерация!)
                 statusDiv.innerHTML = '⏫ Получаем номер заказа...';
                 const orderId = await getNextOrderNumber();
                 
@@ -514,7 +536,7 @@
                 text += `\n📝 <b>Примечание:</b>\n${message || 'не указано'}\n`;
                 
                 // Отправляем текст
-                await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                const messageResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -523,6 +545,10 @@
                         parse_mode: 'HTML'
                     })
                 });
+                
+                if (!messageResponse.ok) {
+                    throw new Error('Ошибка отправки сообщения');
+                }
                 
                 // Отправляем файлы
                 if (fileInput.files.length > 0) {
@@ -551,11 +577,13 @@
                     }
                 }
                 
+                // УСПЕХ - клиент не видит номер заказа!
                 formStatus.innerHTML = `
-                    <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">✅ Заказ #${orderId} отправлен!</p>
-                    <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                        ${fileInput.files.length > 0 ? 'Все файлы загружены.' : 'Заказ отправлен без файлов.'}
-                    </p>
+                    <div style="background: rgba(212, 160, 23, 0.3); border: 2px solid #d4a017; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                        <p style="font-size: 24px; margin-bottom: 10px;">✅ Заказ успешно отправлен!</p>
+                        <p style="font-size: 16px;">Мы свяжемся с вами в ближайшее время.</p>
+                        ${fileInput.files.length > 0 ? '<p style="font-size: 14px; margin-top: 10px; color: #ccc;">Все файлы загружены.</p>' : ''}
+                    </div>
                 `;
                 
                 // Сбрасываем форму
@@ -563,17 +591,15 @@
                 document.getElementById('fileList').innerHTML = '';
                 document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
                 
-                // Обновляем предпросмотр номера
-                const previewEl = document.getElementById('previewOrderNumber');
-                const nextOrderNum = await getNextOrderNumber();
-                previewEl.textContent = nextOrderNum;
-                
             } catch (error) {
                 formStatus.innerHTML = `
-                    <p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка: ${error.message}</p>
-                    <p style="color: #666; font-size: 14px; margin-top: 5px;">
-                        Позвоните: <a href="tel:+375292519695" style="color: #d4a017;">+375 29 251-96-95</a>
-                    </p>
+                    <div style="background: rgba(255, 0, 0, 0.2); border: 2px solid #ff6666; padding: 20px; border-radius: 10px; margin-top: 20px; color: #ffb3b3;">
+                        <p style="font-size: 18px; margin-bottom: 10px;">❌ Ошибка отправки</p>
+                        <p style="font-size: 14px;">${error.message}</p>
+                        <p style="font-size: 14px; margin-top: 10px;">
+                            Позвоните напрямую: <a href="tel:+375292519695" style="color: #d4a017;">+375 29 251-96-95</a>
+                        </p>
+                    </div>
                 `;
             } finally {
                 submitBtn.disabled = false;
