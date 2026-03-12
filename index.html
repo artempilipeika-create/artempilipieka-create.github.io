@@ -21,6 +21,7 @@
         .hero p { font-size: 20px; max-width: 700px; margin: 0 auto 30px; opacity: 0.9; }
         .btn { display: inline-block; background-color: #d4a017; color: #1a3b2e; padding: 15px 40px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 18px; transition: all 0.3s; border: none; cursor: pointer; }
         .btn:hover { background-color: #f0b823; transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
         .features { padding: 80px 0; background-color: #f9f9f9; }
         .section-title { text-align: center; font-size: 36px; margin-bottom: 60px; color: #1a3b2e; position: relative; }
         .section-title:after { content: ""; display: block; width: 80px; height: 4px; background-color: #d4a017; margin: 15px auto 0; }
@@ -46,11 +47,15 @@
         .price-btn.view:hover { background-color: #2a5a45; }
         .price-special { border: 2px solid #d4a017; background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%); }
         .order { padding: 80px 0; background: linear-gradient(135deg, #1a3b2e 0%, #2a5a45 100%); color: white; }
-        .order-form { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); }
-        .form-group { margin-bottom: 20px; }
-        .form-group input, .form-group textarea { width: 100%; padding: 15px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); font-size: 16px; }
-        .form-group textarea { height: 120px; resize: vertical; }
-        .order-form .btn { width: 100%; font-size: 20px; padding: 15px; }
+        .order-form { max-width: 700px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #fff; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 15px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); font-size: 16px; }
+        .form-group textarea { height: 100px; resize: vertical; }
+        .order-form .btn { width: 100%; font-size: 20px; padding: 15px; margin-top: 10px; }
+        .radio-group, .checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-top: 5px; }
+        .radio-group label, .checkbox-group label { display: flex; align-items: center; gap: 8px; font-weight: normal; margin-bottom: 0; cursor: pointer; }
+        .radio-group input, .checkbox-group input { width: auto; margin: 0; }
         .contacts { padding: 80px 0; background-color: #f9f9f9; }
         .contacts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-bottom: 40px; }
         .contact-item { text-align: center; }
@@ -59,28 +64,20 @@
         .contact-item p { font-size: 16px; }
         .contact-item a { color: #333; text-decoration: none; transition: color 0.3s; }
         .contact-item a:hover { color: #d4a017; }
-        .request-block { text-align: center; margin: 40px 0; padding: 40px; background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 15px; border: 2px solid #d4a017; }
-        .request-buttons { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 25px 0; }
-        .request-btn { display: inline-block; padding: 15px 30px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 18px; transition: all 0.3s; }
-        .request-btn.phone { background-color: #1a3b2e; color: white; }
-        .request-btn.wa { background-color: #25D366; color: white; }
-        .request-btn.tg { background-color: #0088cc; color: white; }
-        .request-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .map { height: 400px; background-color: #eee; border-radius: 15px; overflow: hidden; margin-top: 40px; }
         .map iframe { width: 100%; height: 100%; border: 0; }
         .footer { background-color: #1a1a1a; color: white; text-align: center; padding: 30px 0; font-size: 14px; }
         .file-list { margin-top: 10px; text-align: left; }
         .file-item { background: rgba(255,255,255,0.2); padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 14px; }
-        .upload-method { margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; }
-        .upload-method label { display: block; margin-bottom: 10px; color: white; font-weight: bold; }
-        .upload-method select { width: 100%; padding: 10px; border-radius: 5px; border: none; font-size: 14px; }
+        .upload-area { background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017; }
+        .phone-note { color: #d4a017; font-size: 13px; margin-top: 5px; }
+        .error-message { color: #ffb3b3; font-size: 14px; margin-top: 5px; display: none; }
+        .form-status { margin-top: 20px; text-align: center; }
         @media (max-width: 768px) {
             .header-content { flex-direction: column; text-align: center; }
             .nav a { margin: 10px 15px; display: inline-block; }
             .phone { margin-top: 15px; }
             .hero h2 { font-size: 32px; }
-            .request-buttons { flex-direction: column; align-items: center; }
-            .request-btn { width: 100%; max-width: 300px; }
         }
     </style>
 </head>
@@ -222,58 +219,74 @@
         <div class="container">
             <h2 class="section-title" style="color: white;">Заказать расчет</h2>
             <div class="order-form">
-                <form id="orderForm" onsubmit="sendOrderWithFiles(event)">
+                <form id="orderForm">
+                    <!-- Контактные данные -->
+                    <h3 style="color: #d4a017; margin-bottom: 15px;">1. Контактные данные</h3>
                     <div class="form-group">
+                        <label for="name">Имя <span style="color: #ff9999;">*</span></label>
                         <input type="text" id="name" placeholder="Ваше имя" required>
                     </div>
                     <div class="form-group">
-                        <input type="tel" id="phone" placeholder="Телефон" required>
+                        <label for="phone">Телефон <span style="color: #ff9999;">*</span></label>
+                        <input type="tel" id="phone" placeholder="+375 29 123-45-67" required>
+                        <div class="phone-note">Формат: +375 (29|33|25|44) XXX-XX-XX</div>
+                        <div id="phoneError" class="error-message">Неверный формат телефона. Используйте код 29, 33, 25 или 44.</div>
                     </div>
                     <div class="form-group">
-                        <input type="email" id="email" placeholder="Email">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="example@mail.com">
                     </div>
+
+                    <!-- Детали заказа -->
+                    <h3 style="color: #d4a017; margin: 25px 0 15px;">2. Детали заказа</h3>
+                    
                     <div class="form-group">
-                        <textarea id="message" placeholder="Что нужно рассчитать? Укажите материалы и размеры" rows="4"></textarea>
+                        <label>Материал <span style="color: #ff9999;">*</span></label>
+                        <div class="radio-group" id="materialGroup">
+                            <label><input type="radio" name="material" value="Свой материал"> Свой материал</label>
+                            <label><input type="radio" name="material" value="Материал фирмы"> Материал фирмы</label>
+                        </div>
+                        <div id="materialError" class="error-message">Выберите вариант материала</div>
                     </div>
-                    
-                    <div class="upload-method">
-                        <label>📤 Способ отправки файлов:</label>
-                        <select id="uploadMethod" onchange="changeUploadMethod()">
-                            <option value="direct">Прямая загрузка в Telegram (до 50 МБ)</option>
-                            <option value="link">Ссылка на облако (Google Drive, Яндекс.Диск)</option>
-                            <option value="messenger">Отправлю в WhatsApp/Telegram самостоятельно</option>
-                        </select>
+
+                    <div class="form-group">
+                        <label>Кромка <span style="color: #ff9999;">*</span></label>
+                        <div class="radio-group" id="edgeGroup">
+                            <label><input type="radio" name="edge" value="Своя кромка"> Своя кромка</label>
+                            <label><input type="radio" name="edge" value="Кромка фирмы"> Кромка фирмы</label>
+                        </div>
+                        <div id="edgeError" class="error-message">Выберите вариант кромки</div>
                     </div>
-                    
-                    <div id="directUploadBlock" class="form-group" style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; border: 2px dashed #d4a017;">
-                        <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
-                            📎 Прикрепить файлы:
-                        </label>
+
+                    <div class="form-group">
+                        <label>Тип заявки <span style="color: #ff9999;">*</span></label>
+                        <div class="radio-group" id="typeGroup">
+                            <label><input type="radio" name="requestType" value="В работу"> В работу</label>
+                            <label><input type="radio" name="requestType" value="На просчет"> На просчет</label>
+                        </div>
+                        <div id="typeError" class="error-message">Выберите тип заявки</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Примечание к заказу</label>
+                        <textarea id="message" placeholder="Размеры, цвет, количество и т.д."></textarea>
+                    </div>
+
+                    <!-- Файлы -->
+                    <h3 style="color: #d4a017; margin: 25px 0 15px;">3. Файлы (необязательно)</h3>
+                    <div class="upload-area">
+                        <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">📎 Прикрепить файлы:</label>
                         <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.jpg,.jpeg,.png,.pdf,.dwg,.zip,.rar" style="width: 100%; padding: 10px; background: white; border-radius: 5px;">
                         <p style="color: #ddd; font-size: 12px; margin-top: 8px;">
                             * Максимум 50 МБ на файл. Поддерживаются: Excel, PDF, JPG, PNG, DWG, ZIP, RAR
                         </p>
                         <div id="fileList" class="file-list"></div>
                     </div>
-                    
-                    <div id="linkUploadBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px;">
-                        <label style="display: block; color: white; margin-bottom: 10px; font-weight: bold;">
-                            🔗 Ссылка на файлы:
-                        </label>
-                        <input type="url" id="cloudLink" placeholder="https://drive.google.com/..." style="width: 100%; padding: 10px; border-radius: 5px;">
-                    </div>
-                    
-                    <div id="messengerBlock" class="form-group" style="display: none; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
-                        <p style="color: white; margin-bottom: 15px;">📱 Отправьте файлы после отправки заявки:</p>
-                        <a href="https://wa.me/375292519695" target="_blank" class="btn" style="background-color: #25D366; font-size: 14px; padding: 10px 20px; margin: 5px;">WhatsApp</a>
-                        <a href="https://t.me/375292519695" target="_blank" class="btn" style="background-color: #0088cc; font-size: 14px; padding: 10px 20px; margin: 5px;">Telegram</a>
-                    </div>
 
                     <div id="uploadStatus" style="margin: 10px 0; font-size: 14px; color: #d4a017; display: none;"></div>
-
                     <button type="submit" class="btn" id="submitBtn">Отправить заявку</button>
                 </form>
-                <div id="formStatus" style="margin-top: 20px; text-align: center;"></div>
+                <div id="formStatus" class="form-status"></div>
             </div>
         </div>
     </section>
@@ -290,7 +303,7 @@
                 <div class="contact-item">
                     <div class="contact-icon">📞</div>
                     <h3>Телефоны</h3>
-                    <p><strong>Директор:</strong> Олег Петрович Мартинович<br><a href="tel:+375295315315" style="color: #d4a017; font-weight: bold;">+375 29 531-53-15</a><br>
+                    <p><strong>Директор:</strong> Мартинович Олег Петрович<br><a href="tel:+375295315315" style="color: #d4a017; font-weight: bold;">+375 29 531-53-15</a><br>
                     <strong>Отдел продаж:</strong> Екатерина<br><a href="tel:+375297559616" style="color: #d4a017; font-weight: bold;">+375 29 755-96-16</a><br>
                     <strong>Заявки:</strong><br><a href="tel:+375292519695" style="color: #d4a017;">+375 29 251-96-95</a></p>
                 </div>
@@ -307,16 +320,7 @@
                 <div class="contact-item">
                     <div class="contact-icon">🕒</div>
                     <h3>Режим работы</h3>
-                    <p>Пн-Пт: 9:00 - 20:00<br>Сб-Вс: 10:00 - 18:00</p>
-                </div>
-            </div>
-            
-            <div class="request-block">
-                <h3 style="color: #1a3b2e; font-size: 28px; margin-bottom: 20px;">📲 Подать заявку</h3>
-                <div class="request-buttons">
-                    <a href="tel:+375292519695" class="request-btn phone">📞 +375 29 251-96-95</a>
-                    <a href="https://wa.me/375292519695" target="_blank" class="request-btn wa">💬 WhatsApp</a>
-                    <a href="https://t.me/375292519695" target="_blank" class="request-btn tg">📱 Telegram</a>
+                    <p>Пн-Пт: 9:00 - 20:00<br>Сб-Вс: выходной</p>
                 </div>
             </div>
 
@@ -338,13 +342,84 @@
         const CHAT_ID = '1475564376';
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-        function changeUploadMethod() {
-            const method = document.getElementById('uploadMethod').value;
-            document.getElementById('directUploadBlock').style.display = method === 'direct' ? 'block' : 'none';
-            document.getElementById('linkUploadBlock').style.display = method === 'link' ? 'block' : 'none';
-            document.getElementById('messengerBlock').style.display = method === 'messenger' ? 'block' : 'none';
+        // Функция для получения номера заказа (сквозная нумерация для текущего дня)
+        function getOrderNumber() {
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }).replace(/\./g, '');
+            const day = dateStr.slice(0, 2);
+            const month = dateStr.slice(2, 4);
+            
+            // Ключ для хранения счетчика в localStorage
+            const storageKey = `orderCounter_${day}${month}`;
+            
+            // Получаем текущий счетчик для этого дня
+            let currentCount = localStorage.getItem(storageKey);
+            if (!currentCount) {
+                // Если сегодня еще не было заявок, начинаем с 1
+                currentCount = 1;
+            } else {
+                currentCount = parseInt(currentCount) + 1;
+            }
+            
+            // Сохраняем обновленный счетчик
+            localStorage.setItem(storageKey, currentCount);
+            
+            // Формируем номер: две цифры счетчика + . + день + . + месяц
+            const orderNum = String(currentCount).padStart(2, '0') + '.' + day + '.' + month;
+            return orderNum;
         }
-        
+
+        function validatePhone(phone) {
+            const phoneRegex = /^\+375\s?(29|33|25|44)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}$/;
+            return phoneRegex.test(phone.trim());
+        }
+
+        function validateForm() {
+            let isValid = true;
+
+            // Проверка телефона
+            const phone = document.getElementById('phone').value;
+            const phoneError = document.getElementById('phoneError');
+            if (!validatePhone(phone)) {
+                phoneError.style.display = 'block';
+                isValid = false;
+            } else {
+                phoneError.style.display = 'none';
+            }
+
+            // Проверка материала
+            const materialSelected = document.querySelector('input[name="material"]:checked');
+            const materialError = document.getElementById('materialError');
+            if (!materialSelected) {
+                materialError.style.display = 'block';
+                isValid = false;
+            } else {
+                materialError.style.display = 'none';
+            }
+
+            // Проверка кромки
+            const edgeSelected = document.querySelector('input[name="edge"]:checked');
+            const edgeError = document.getElementById('edgeError');
+            if (!edgeSelected) {
+                edgeError.style.display = 'block';
+                isValid = false;
+            } else {
+                edgeError.style.display = 'none';
+            }
+
+            // Проверка типа заявки
+            const typeSelected = document.querySelector('input[name="requestType"]:checked');
+            const typeError = document.getElementById('typeError');
+            if (!typeSelected) {
+                typeError.style.display = 'block';
+                isValid = false;
+            } else {
+                typeError.style.display = 'none';
+            }
+
+            return isValid;
+        }
+
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
@@ -360,14 +435,21 @@
             }
         });
 
-        async function sendOrderWithFiles(event) {
+        document.getElementById('orderForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
-            const method = document.getElementById('uploadMethod').value;
+            // Валидация формы
+            if (!validateForm()) {
+                return;
+            }
+            
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
+            const material = document.querySelector('input[name="material"]:checked').value;
+            const edge = document.querySelector('input[name="edge"]:checked').value;
+            const requestType = document.querySelector('input[name="requestType"]:checked').value;
             const fileInput = document.getElementById('fileInput');
             
             const submitBtn = document.getElementById('submitBtn');
@@ -379,22 +461,19 @@
             statusDiv.style.display = 'block';
             
             try {
-                const orderId = 'MF-' + new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 14);
+                const orderId = getOrderNumber();
                 
                 // Отправляем текст
                 statusDiv.innerHTML = '⏫ Отправляем заявку...';
                 
                 let text = `🔥 <b>НОВАЯ ЗАЯВКА #${orderId}</b>\n\n`;
                 text += `👤 <b>Имя:</b> ${name || 'не указано'}\n`;
-                text += `📞 <b>Телефон:</b> <code>${phone || 'не указано'}</code>\n`;
+                text += `📞 <b>Телефон:</b> <code>${phone}</code>\n`;
                 text += `✉️ <b>Email:</b> ${email || 'не указан'}\n\n`;
-                text += `📝 <b>Сообщение:</b>\n${message || 'не указано'}\n\n`;
-                
-                if (method === 'link') {
-                    text += `🔗 <b>Ссылка:</b> ${document.getElementById('cloudLink').value}\n\n`;
-                } else if (method === 'messenger') {
-                    text += `📱 <b>Клиент отправит файлы самостоятельно</b>\n\n`;
-                }
+                text += `📦 <b>Материал:</b> ${material}\n`;
+                text += `🪚 <b>Кромка:</b> ${edge}\n`;
+                text += `📋 <b>Тип заявки:</b> ${requestType}\n\n`;
+                text += `📝 <b>Примечание:</b>\n${message || 'не указано'}\n\n`;
                 
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
                     method: 'POST',
@@ -402,17 +481,19 @@
                     body: JSON.stringify({chat_id: CHAT_ID, text: text, parse_mode: 'HTML'})
                 });
                 
-                // Отправляем файлы напрямую в Telegram
-                if (method === 'direct' && fileInput.files.length > 0) {
+                // Отправляем файлы
+                if (fileInput.files.length > 0) {
                     for (let i = 0; i < fileInput.files.length; i++) {
                         const file = fileInput.files[i];
-                        if (file.size > MAX_FILE_SIZE) throw new Error(`Файл ${file.name} слишком большой`);
+                        if (file.size > MAX_FILE_SIZE) {
+                            throw new Error(`Файл ${file.name} слишком большой (макс. 50 МБ)`);
+                        }
                         
                         statusDiv.innerHTML = `⏫ Отправляем файл ${i+1}/${fileInput.files.length}: ${file.name}`;
                         
                         const formData = new FormData();
                         formData.append('chat_id', CHAT_ID);
-                        formData.append('caption', `📎 ${orderId} - ${file.name}`);
+                        formData.append('caption', `📎 Заявка #${orderId} - ${file.name}`);
                         formData.append('document', file);
                         
                         const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendDocument`, {
@@ -430,18 +511,20 @@
                 formStatus.innerHTML = `
                     <p style="color: #4CAF50; font-weight: bold; font-size: 18px;">✅ Заявка #${orderId} отправлена!</p>
                     <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                        ${method === 'direct' && fileInput.files.length > 0 ? 'Все файлы загружены.' : 
-                          method === 'link' ? 'Мы получили ссылку.' : 
-                          'Не забудьте отправить файлы в мессенджер!'}
+                        ${fileInput.files.length > 0 ? 'Все файлы успешно загружены.' : 'Заявка отправлена без файлов.'}
                     </p>
                 `;
                 
+                // Сброс формы
                 document.getElementById('orderForm').reset();
                 document.getElementById('fileList').innerHTML = '';
                 
+                // Сброс ошибок
+                document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+                
             } catch (error) {
                 formStatus.innerHTML = `
-                    <p style="color: #ff6b6b; font-weight: bold;">❌ ${error.message}</p>
+                    <p style="color: #ff6b6b; font-weight: bold;">❌ Ошибка: ${error.message}</p>
                     <p style="color: #666; font-size: 14px; margin-top: 5px;">
                         Позвоните: <a href="tel:+375292519695" style="color: #d4a017;">+375 29 251-96-95</a>
                     </p>
@@ -451,7 +534,7 @@
                 submitBtn.textContent = 'Отправить заявку';
                 statusDiv.style.display = 'none';
             }
-        }
+        });
     </script>
 </body>
 </html>
