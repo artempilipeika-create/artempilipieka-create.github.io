@@ -345,80 +345,19 @@
     </footer>
 
     <script>
-        // ============================================
-        // НАСТРОЙКИ
-        // ============================================
         const TELEGRAM_TOKEN = '8271414943:AAGKhJ-pguPjJMC5Nl9cR6bYhJBuMU3BbFs';
         const CHAT_ID = '1475564376';
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
-        
-        // ============================================
-        // СКВОЗНАЯ НУМЕРАЦИЯ ЗАКАЗОВ
-        // ============================================
-        
-        // Получаем текущий максимальный номер из сообщений бота
-        // Формат номера: #01, #02, #03... #99, #100 и т.д.
-        async function getCurrentOrderNumberFromChat() {
-            try {
-                // Получаем последние 100 сообщений из чата
-                const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?limit=100`);
-                const data = await response.json();
-                
-                let maxNumber = 0;
-                
-                if (data.ok && data.result && data.result.length > 0) {
-                    // Проходим все сообщения и ищем номера заказов
-                    for (const update of data.result) {
-                        // Проверяем текст сообщений
-                        if (update.message && update.message.text) {
-                            const text = update.message.text;
-                            // Ищем номер в формате #01 или #1 или #001 (только число после #)
-                            const match = text.match(/#(\d+)(?!\.\d)/);
-                            if (match) {
-                                const orderNum = parseInt(match[1]);
-                                if (orderNum > maxNumber) {
-                                    maxNumber = orderNum;
-                                }
-                            }
-                        }
-                        // Проверяем подписи к документам
-                        if (update.message && update.message.caption) {
-                            const caption = update.message.caption;
-                            const match = caption.match(/#(\d+)(?!\.\d)/);
-                            if (match) {
-                                const orderNum = parseInt(match[1]);
-                                if (orderNum > maxNumber) {
-                                    maxNumber = orderNum;
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                console.log('Найден максимальный номер в чате:', maxNumber);
-                return maxNumber;
-            } catch (error) {
-                console.error('Ошибка получения номера из чата:', error);
-                return 0;
-            }
-        }
-        
-        // Генерируем следующий номер заказа (сквозная нумерация!)
-        async function getNextOrderNumber() {
-            const currentMax = await getCurrentOrderNumberFromChat();
-            const nextNumber = currentMax + 1;
-            
-            // Форматируем: 01, 02, 03... 99, 100, 101
-            const formattedNumber = String(nextNumber).padStart(2, '0');
-            
-            console.log('Следующий номер заказа:', formattedNumber);
-            return formattedNumber;
+
+        // Получаем текущую дату в формате ДД.ММ.ГГГГ
+        function getCurrentDate() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            return `${day}.${month}.${year}`;
         }
 
-        // ============================================
-        // ВАЛИДАЦИЯ
-        // ============================================
-        
         function validatePhone(phone) {
             const phoneRegex = /^\+375\s?(29|33|25|44)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}$/;
             return phoneRegex.test(phone.trim());
@@ -466,10 +405,6 @@
             return isValid;
         }
 
-        // ============================================
-        // ФАЙЛЫ
-        // ============================================
-        
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
@@ -485,10 +420,6 @@
             }
         });
 
-        // ============================================
-        // ОТПРАВКА ФОРМЫ
-        // ============================================
-        
         document.getElementById('orderForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
@@ -515,14 +446,12 @@
             statusDiv.style.display = 'block';
             
             try {
-                // Получаем номер заказа из чата (сквозная нумерация!)
-                statusDiv.innerHTML = '⏫ Получаем номер заказа...';
-                const orderId = await getNextOrderNumber();
+                const orderDate = getCurrentDate();
                 
                 statusDiv.innerHTML = '⏫ Отправляем заказ...';
                 
-                // Формируем текст заказа
-                let text = `⚫️ <b>НОВЫЙ ЗАКАЗ #${orderId}</b>\n\n`;
+                // Формируем текст заказа с датой вместо номера
+                let text = `⚫️ <b>НОВЫЙ ЗАКАЗ ${orderDate}</b>\n\n`;
                 text += `👤 <b>Имя:</b> ${name}\n`;
                 text += `📞 <b>Телефон:</b> <code>${phone}</code>\n`;
                 text += `✉️ <b>Email:</b> ${email || 'не указан'}\n\n`;
@@ -563,7 +492,7 @@
                         
                         const formData = new FormData();
                         formData.append('chat_id', CHAT_ID);
-                        formData.append('caption', `Заказ #${orderId} - ${file.name}`);
+                        formData.append('caption', `Заказ ${orderDate} - ${file.name}`);
                         formData.append('document', file);
                         
                         const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendDocument`, {
@@ -578,7 +507,7 @@
                     }
                 }
                 
-                // УСПЕХ - клиент не видит номер заказа!
+                // УСПЕХ
                 formStatus.innerHTML = `
                     <div style="background: rgba(212, 160, 23, 0.3); border: 2px solid #d4a017; padding: 20px; border-radius: 10px; margin-top: 20px;">
                         <p style="font-size: 24px; margin-bottom: 10px;">✅ Заказ успешно отправлен!</p>
