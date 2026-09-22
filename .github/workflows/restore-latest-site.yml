@@ -1,0 +1,53 @@
+name: Restore Martin Forest latest site
+
+on:
+  push:
+    branches:
+      - restore-martin-forest-20260921-latest
+    paths:
+      - .github/workflows/restore-latest-site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout restore branch
+        uses: actions/checkout@v4
+        with:
+          ref: restore-martin-forest-20260921-latest
+          fetch-depth: 0
+
+      - name: Rebuild verified site archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .recovery/static.b64.part0* | base64 --decode > /tmp/martin-forest-site.tar.xz
+          echo "f0ac36e0fd82f6aa9132f034466cbdee3aee5fdb1013c9739e0211f09f5f4866  /tmp/martin-forest-site.tar.xz" | sha256sum -c -
+          mkdir -p /tmp/martin-forest-site
+          tar -xJf /tmp/martin-forest-site.tar.xz -C /tmp/martin-forest-site
+          cp -a /tmp/martin-forest-site/. .
+          test -f index.html
+          test -f order.html
+          test -f order.js
+          test -f data.js
+          test -f styles.css
+          grep -q "От идеи до детали" index.html
+          grep -q "xlsx" order.js
+
+      - name: Commit restored source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Restore latest Martin Forest site from 2026-09-21 baseline"
+          git push origin HEAD:restore-martin-forest-20260921-latest
