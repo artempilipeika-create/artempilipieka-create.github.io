@@ -38,7 +38,7 @@ jobs:
           grep -q "От идеи" index.html
           grep -q "до детали" index.html
           grep -q "xlsx" order.js
-          grep -q "OBLX" order.js
+          grep -q "makeOblx" order.js
 
       - name: Commit restored source
         shell: bash
