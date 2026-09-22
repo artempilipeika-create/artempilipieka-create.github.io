@@ -2,17 +2,19 @@
 
 ## Prerequisites and exact boundary
 
-Resolve Railway's resource limit without modifying production. Create a new empty staging project (or an
-empty staging environment in the preview project); do not clone existing variables/services. Record exact
-project/environment/service/volume IDs in an evidence file before deployment. Never use Bridge project
-`7f59bf67-56db-4f6c-b213-c9c7b9342932` or preview environment
-`ee625678-c15e-452d-9761-cda99274839f` for this build.
+Resolve Railway's resource limit without modifying production. Reuse the newly created **empty staging service**
+`9aacf7bf-edd5-4f08-9423-3fbabea59268` in Preview project `6d754ad4-ba7b-45f8-8c5e-356387e7de06`,
+default-named environment `ee625678-c15e-452d-9761-cda99274839f`. Its private volume
+`29b79637-3f45-4ddd-ad2c-028d6b96af8e` is staged at `/mf-private`. A new empty staging environment/project
+is also acceptable if available, but never clone existing variables/services. Record exact IDs before
+deployment. Never use Bridge project `7f59bf67-56db-4f6c-b213-c9c7b9342932` or either existing preview service.
 
 1. Create a dedicated Postgres 17 service with a persistent volume at `/var/lib/postgresql/data`.
    Use a freshly generated password, database `mf_staging`, dedicated user `mf_staging_app`. The initial
    migration owner is staging-only. No production role/password/data import. Keep DB private networking only.
-2. Create app service from branch `martin-forest-v2-staging`, Dockerfile at repository root; use
-   `ops/staging/railway.toml`. Attach its own volume at `/mf-private`. Keep one replica with this volume adapter.
+2. Connect the new empty staging app service to branch `martin-forest-v2-staging`, Dockerfile at repository
+   root; use `ops/staging/railway.toml`. Verify its staged private volume at `/mf-private`; do not create a
+   duplicate volume. Keep one replica with this volume adapter.
 3. Set variables from `ops/staging/environment.example` with exact NEW infrastructure identities. Generate
    secrets inside the platform; never echo passwords or copy `DATABASE_URL`, `AGENT_API_KEY` or Telegram
    configuration. Record names/reference targets, not values. No Agent service is created.
@@ -63,7 +65,7 @@ Daily scheduling, off-volume retention, RPO/RTO and Railway disaster recovery ar
 Create another empty Postgres database named `mf_staging_restore_<suffix>` with a dedicated credential and
 separate empty private storage. Keep namespace the same as the source backup so identity checks and foreign
 keys remain valid. No application or transport runs on the restore target. Point the operator's MF variables
-to this **copy**, never the source. Restore accepts only trusted backups produced by the operator.
+   to this **copy**, never the source. Restore accepts only trusted backups produced by the operator.
 
 ```bash
 python -m backend.v2.backup restore /private-backups/unique-timestamp

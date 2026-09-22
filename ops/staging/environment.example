@@ -9,6 +9,7 @@ MF_AGENT_TRANSPORT=disabled
 MF_OUTBOX_DISPATCH=disabled
 MF_EXPECTED_RAILWAY_PROJECT_ID=NEW_STAGING_PROJECT_ID
 MF_EXPECTED_RAILWAY_ENVIRONMENT_ID=NEW_STAGING_ENVIRONMENT_ID
+MF_EXPECTED_RAILWAY_SERVICE_ID=NEW_STAGING_SERVICE_ID
 # Railway supplies RAILWAY_VOLUME_MOUNT_PATH=/mf-private after volume attachment.
 # No AGENT_API_KEY at all in Stage 1; no consumer endpoint exists to accept it.
 # Generate dedicated Agent credentials only when a fake consumer actually needs them.

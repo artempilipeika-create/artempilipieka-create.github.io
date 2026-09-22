@@ -7,7 +7,11 @@ import re
 from psycopg.conninfo import conninfo_to_dict
 
 PRODUCTION_PROJECT = '7f59bf67-56db-4f6c-b213-c9c7b9342932'
-PREVIEW_ENVIRONMENT = 'ee625678-c15e-452d-9761-cda99274839f'
+PROTECTED_SERVICES = {
+    '5ad059a8-b9bb-4607-aaae-658f242c64f1',  # production Bridge
+    '42c638e9-4dc2-4e9a-9ec9-e670ae661bb6',  # SPEC visual preview
+    'abc0e90d-fa8e-4c00-a0a6-312593a479ed',  # original preview
+}
 
 
 @dataclass(frozen=True, repr=False)
@@ -36,8 +40,9 @@ class Settings:
             expected = os.environ.get('MF_EXPECTED_RAILWAY_PROJECT_ID')
             if project == PRODUCTION_PROJECT or not expected or project != expected:
                 raise ValueError('Staging project identity mismatch')
-            if os.environ.get('RAILWAY_ENVIRONMENT_ID') == PREVIEW_ENVIRONMENT:
-                raise ValueError('Existing preview environment is forbidden')
+            service = os.environ.get('RAILWAY_SERVICE_ID')
+            if not service or service in PROTECTED_SERVICES or service != os.environ.get('MF_EXPECTED_RAILWAY_SERVICE_ID'):
+                raise ValueError('Staging service identity mismatch')
             if os.environ.get('RAILWAY_ENVIRONMENT_ID') != os.environ.get('MF_EXPECTED_RAILWAY_ENVIRONMENT_ID'):
                 raise ValueError('Staging environment identity mismatch')
         dsn = os.environ.get('MF_DATABASE_URL', '')

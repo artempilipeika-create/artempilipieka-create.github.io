@@ -1,0 +1,32 @@
+{
+  "projectId": "6d754ad4-ba7b-45f8-8c5e-356387e7de06",
+  "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+  "service": {
+    "service": {
+      "id": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+      "name": "martin-forest-v2-staging"
+    },
+    "project": {
+      "id": "6d754ad4-ba7b-45f8-8c5e-356387e7de06",
+      "name": "Martin Forest Site Preview"
+    },
+    "source": null,
+    "environment": {
+      "scope": "specific",
+      "id": "ee625678-c15e-452d-9761-cda99274839f"
+    },
+    "staged": null
+  },
+  "volume": {
+    "id": "29b79637-3f45-4ddd-ad2c-028d6b96af8e",
+    "mountPath": "/mf-private",
+    "status": "STAGED_NOT_DEPLOYED"
+  },
+  "database": {
+    "status": "NOT_CREATED",
+    "error": "Free plan resource provision limit exceeded"
+  },
+  "deployment": null,
+  "secrets_created": false,
+  "agent_credentials_created": false
+}

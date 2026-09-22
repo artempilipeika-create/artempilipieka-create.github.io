@@ -52,9 +52,19 @@ def test_config_fail_closed(environment,monkeypatch,key,value):
 
 def test_railway_requires_mounted_volume(environment,monkeypatch):
     for key,value in {'RAILWAY_PROJECT_ID':'test-project','MF_EXPECTED_RAILWAY_PROJECT_ID':'test-project',
-                      'RAILWAY_ENVIRONMENT_ID':'test-env','MF_EXPECTED_RAILWAY_ENVIRONMENT_ID':'test-env'}.items():
+                      'RAILWAY_ENVIRONMENT_ID':'test-env','MF_EXPECTED_RAILWAY_ENVIRONMENT_ID':'test-env',
+                      'RAILWAY_SERVICE_ID':'new-staging-service','MF_EXPECTED_RAILWAY_SERVICE_ID':'new-staging-service'}.items():
         monkeypatch.setenv(key,value)
     with pytest.raises(ValueError,match='persistent volume'):
+        Settings.from_env()
+
+
+def test_existing_preview_service_is_rejected(environment,monkeypatch):
+    for key,value in {'RAILWAY_PROJECT_ID':'preview-project','MF_EXPECTED_RAILWAY_PROJECT_ID':'preview-project',
+                      'RAILWAY_SERVICE_ID':'42c638e9-4dc2-4e9a-9ec9-e670ae661bb6',
+                      'MF_EXPECTED_RAILWAY_SERVICE_ID':'42c638e9-4dc2-4e9a-9ec9-e670ae661bb6'}.items():
+        monkeypatch.setenv(key,value)
+    with pytest.raises(ValueError,match='service identity'):
         Settings.from_env()
 
 

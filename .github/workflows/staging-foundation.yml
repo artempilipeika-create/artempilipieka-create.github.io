@@ -34,6 +34,13 @@ jobs:
           pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1
       - name: Test migrations, transactions, private files, RBAC and restore
         run: python -m pytest tests/stage01 -v --junitxml=qa-output/stage01/results.xml
+      - name: Record synthetic restore evidence in job log
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          data=json.loads(pathlib.Path('qa-output/stage01/restore-evidence.json').read_text())
+          print('MF_STAGE01_RESTORE_EVIDENCE='+json.dumps(data,separators=(',',':')))
+          PY
       - name: Preserve non-secret test evidence
         if: always()
         uses: actions/upload-artifact@v4

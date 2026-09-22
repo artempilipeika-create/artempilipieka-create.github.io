@@ -20,10 +20,15 @@ must never be pushed by the staging workflow. CI has contents-read permission an
 
 Railway refused creation of `Martin Forest V2 Staging` with:
 `Free plan resource provision limit exceeded. Please upgrade to provision more resources!`
-No staging project ID, database, volume, credentials or deployment was provisioned by this attempt.
+No staging project ID, database, credentials or deployment was provisioned by that attempt.
 The existing preview project has only its existing environment named `production`; creating a new empty
 environment is not supported by the connected plugin. The cloud browser is not signed in.
-No resources were deleted/reused to bypass quota and no billing/plan changes were made.
+The user-authorized fallback (separate service inside the preview project) succeeded partially:
+`martin-forest-v2-staging`, ID `9aacf7bf-edd5-4f08-9423-3fbabea59268`, is empty, with no source/variables/deployment.
+Private volume `29b79637-3f45-4ddd-ad2c-028d6b96af8e` at `/mf-private` is STAGED, not applied.
+Creation of its separate Postgres service also failed with the resource-limit error. No staged changes
+were accepted and no existing services were redeployed. No resources were deleted/reused to bypass quota
+and no billing/plan changes were made.
 
 The checked-in code and CI verification do **not** mean cloud Stage 1 acceptance is complete.
 Cloud persistence and cloud restore remain NOT YET VERIFIED until the infrastructure blocker is resolved.
@@ -36,9 +41,11 @@ Every response, including errors, carries `X-Robots-Tag: noindex, nofollow, noar
 Noindex is a crawler directive, not authorization. Private data is inaccessible because no serving route
 or static mount is installed. Until Stage 2, synthetic writes happen only through the operator CLI.
 
-Settings reject SQLite, absent environment/namespace, production project ID, existing preview environment,
+Settings reject SQLite, absent environment/namespace, production project ID, existing preview service IDs,
 legacy `DATABASE_URL`/`AGENT_API_KEY`/Telegram variables, unpinned DB host, non-staging DB/user names,
 enabled Agent/outbox dispatch and (on Railway) storage outside a mounted volume.
+Project/environment/service identities must all match explicit staging pins. Sharing the preview project's
+default-named environment does not allow this build to run on either existing preview service.
 Only `MF_DATABASE_URL` points to the dedicated staging Postgres. There is no production secret reader.
 Stage 1 has **no Agent credential or Agent listener**; a fresh credential for a fake consumer is unnecessary
 until such a consumer is added. This is not a claim that live staging credentials have been compared.
