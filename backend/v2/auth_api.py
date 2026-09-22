@@ -24,12 +24,15 @@ class Credentials(StrictModel):
             raise ValueError('Invalid email')
         return value
 
+class LoginCredentials(Credentials):
+    # Existing v9 hashes may have passwords shorter than the new registration policy.
+    password: str = Field(min_length=1,max_length=128)
+
 class Confirmation(StrictModel):
     token: str = Field(min_length=40,max_length=128)
 
 
 def user_dto(user):
-    client = user['roles'] == {'client'}
     return {'user_id':str(user['user_id']), 'email':user['email'],'roles':sorted(user['roles']),
             'account_status':user['account_status'],'email_verified':bool(user['email_verified_at']),
             # Exact capabilities filled from current grants by /me; no secrets or session hash.
@@ -59,7 +62,7 @@ def router(settings, policy):
             error(409,'REGISTRATION_UNAVAILABLE')
 
     @api.post('/login')
-    def login(body: Credentials, request: Request, response: Response):
+    def login(body: LoginCredentials, request: Request, response: Response):
         throttle_auth(settings,policy,request)
         with transaction(settings) as conn:
             user = conn.execute('SELECT * FROM mf_users WHERE lower(email)=%s FOR UPDATE',(body.email,)).fetchone()
@@ -115,7 +118,7 @@ def router(settings, policy):
         return {'email_verified':True}
 
     @api.post('/email/change')
-    def change_email(body: Credentials, request: Request, response: Response):
+    def change_email(body: LoginCredentials, request: Request, response: Response):
         throttle_auth(settings,policy,request)
         try:
             with transaction(settings) as conn:

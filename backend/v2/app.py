@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from .security import WebPolicy
 from . import auth_api, domain_api
 import secrets
+import os
 from .config import Settings
 from .db import connect, check_identity
 from .storage import VolumeStore
@@ -24,7 +25,8 @@ def readiness(settings):
 
 def create_app(settings=None, policy=None):
     settings = settings or Settings.from_env()
-    policy = policy or WebPolicy.from_env()
+    enabled = os.environ.get('MF_SECURITY_API','enabled') == 'enabled'
+    policy = (policy or WebPolicy.from_env()) if enabled else None
 
     @asynccontextmanager
     async def lifespan(app):
@@ -37,6 +39,9 @@ def create_app(settings=None, policy=None):
 
     @app.middleware('http')
     async def staging_headers(request, call_next):
+        if not enabled and request.url.path not in {'/health','/robots.txt'}:
+            return JSONResponse({'detail':{'code':'STAGING_API_DISABLED'}},status_code=404,
+                                headers={'X-Robots-Tag':'noindex, nofollow','Cache-Control':'no-store'})
         if request.method in {'POST','PUT','PATCH','DELETE'} and request.url.path.startswith('/api/v2/'):
             if request.headers.get('origin') != policy.origin:
                 return JSONResponse({'detail':{'code':'ORIGIN_DENIED'}},status_code=403,
@@ -62,6 +67,9 @@ def create_app(settings=None, policy=None):
         except Exception:
             raise HTTPException(503, 'Staging database is not ready') from None
         return {'ok': True, 'environment': 'staging', 'stage': '2', 'agent_transport': 'disabled'}
+
+    if not enabled:
+        return app
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, exc):

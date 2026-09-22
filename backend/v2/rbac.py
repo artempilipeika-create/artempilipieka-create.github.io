@@ -20,7 +20,13 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
         return False
     if user['account_status'] == 'blocked' and (roles != {'client'} or permission not in CLIENT_READ):
         return False
-    if roles & {'production','accounting','viewer'} and permission in CLIENT_WRITE:
+    ceilings = {
+        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read'},
+        'production': {'orders.read','orders.oblx.read','files.source.read'},
+        'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read'},
+        'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read'},
+    }
+    if any(role in ceilings and permission not in ceilings[role] for role in roles):
         return False
     order = None
     if order_id:
@@ -52,6 +58,12 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
             # Stage 2 production artifact review requires an explicit job grant, never execute rights.
             if 'production' not in roles:
                 return True
-        if scope == 'job' and job and g['scope_id'] == str(job_id) and roles == {'production'}:
-            return True
+        if scope == 'job' and roles == {'production'}:
+            if job and g['scope_id'] == str(job_id):
+                return True
+            if not job_id and order and permission == 'orders.read':
+                scoped = conn.execute("SELECT 1 FROM mf_production_jobs WHERE job_id::text=%s AND order_id=%s AND status='blocked'",
+                                      (g['scope_id'],order_id)).fetchone()
+                if scoped:
+                    return True
     return False

@@ -70,6 +70,8 @@ def verify(api,settings,policy,uid):
 
 
 def login(api,email):
+    # Simulate an independent browser; keep retained old cookies valid for revocation tests.
+    api.cookies.clear()
     r=api.post('/api/v2/auth/login',json={'email':email,'password':PASSWORD})
     assert r.status_code==200,r.text
 
@@ -365,3 +367,21 @@ def test_email_queue_failure_atomicity_and_no_dispatch(api,settings,policy):
     with connect(settings) as conn:
         assert conn.execute('SELECT count(*) n FROM mf_email_verifications WHERE user_id=%s',(u['user_id'],)).fetchone()['n']==1
     verify(api,settings,policy,u['user_id'])
+
+
+def test_operator_cloud_smoke_logic_on_native_postgres(settings,policy):
+    from backend.v2.smoke import run
+    result=run(settings,policy,restore_copy=False)
+    assert all(result['checks'].values()) and len(result['checks'])==7
+
+
+def test_v9_password_hash_compatible_and_rehashed(api,settings):
+    u=register(api)
+    salt=b'x'*16
+    encoded='pbkdf2_sha256$260000$'+salt.hex()+'$'+hashlib.pbkdf2_hmac('sha256',b'oldpw',salt,260000).hex()
+    with transaction(settings) as conn:
+        conn.execute('UPDATE mf_users SET password_hash=%s WHERE user_id=%s',(encoded,u['user_id']))
+    assert api.post('/api/v2/auth/login',json={'email':u['email'],'password':'oldpw'}).status_code==200
+    with connect(settings) as conn:
+        assert conn.execute('SELECT password_hash FROM mf_users WHERE user_id=%s',(u['user_id'],)).fetchone()['password_hash'].startswith('pbkdf2_sha256$600000$')
+    assert not api.get('/api/v2/auth/me').json()['email_verified']
