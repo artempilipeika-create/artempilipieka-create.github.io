@@ -14,4 +14,4 @@ COPY backend/v2 /app/backend/v2
 # No v9, legacy Bridge, frontend exporters, public files, or default users.
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
-CMD ["sh","-c","python -m backend.v2.startup && exec python -m uvicorn backend.v2.app:create_app --factory --host 0.0.0.0 --port ${PORT:-8000} --no-access-log"]
+CMD ["python","-m","backend.v2.serve"]

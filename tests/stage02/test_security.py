@@ -397,3 +397,16 @@ def test_order_list_paginates_authorized_rows_without_foreign_cursor(api,setting
     result=api.get('/api/v2/orders').json()
     assert [o['order_id'] for o in result['items']]==[oid]
     assert result['next'] is None
+
+
+def test_single_process_entrypoint_reaches_http_server(settings,policy,monkeypatch):
+    from backend.v2 import serve
+    calls=[]
+    monkeypatch.setattr(serve.Settings,'from_env',lambda:settings)
+    monkeypatch.setattr(serve.WebPolicy,'from_env',lambda:policy)
+    monkeypatch.setattr(serve,'prepare',lambda value:calls.append('prepared'))
+    monkeypatch.setattr(serve.uvicorn,'run',lambda app,**kw:calls.append(kw))
+    monkeypatch.setenv('PORT','8000')
+    serve.main()
+    assert calls[0]=='prepared'
+    assert calls[1]=={'host':'0.0.0.0','port':8000,'access_log':False,'proxy_headers':False}
