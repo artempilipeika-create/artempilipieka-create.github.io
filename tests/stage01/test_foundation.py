@@ -41,13 +41,20 @@ def test_config_valid(environment):
     ('TELEGRAM_BOT_TOKEN','forbidden'),('MF_JOB_NAMESPACE','production'),
     ('MF_AGENT_TRANSPORT','enabled'),('MF_OUTBOX_DISPATCH','enabled'),
     ('MF_PRIVATE_STORAGE_ROOT','/app/public/files'),('MF_DATABASE_HOST','other-host'),
-    ('MF_DATABASE_NAME','railway'),('MF_DATABASE_URL','postgresql://postgres@localhost/mf_staging_test'),
+    ('MF_DATABASE_NAME','other_database'),
     ('RAILWAY_PROJECT_ID','7f59bf67-56db-4f6c-b213-c9c7b9342932'),
 ])
 def test_config_fail_closed(environment,monkeypatch,key,value):
     monkeypatch.setenv(key,value)
     with pytest.raises(ValueError):
         Settings.from_env()
+
+
+def test_railway_default_postgres_names_are_allowed_when_isolated(environment,monkeypatch):
+    monkeypatch.setenv('MF_DATABASE_URL','postgresql://postgres@localhost/railway')
+    monkeypatch.setenv('MF_DATABASE_NAME','railway')
+    settings = Settings.from_env()
+    assert settings.database_name == 'railway'
 
 
 def test_railway_requires_mounted_volume(environment,monkeypatch):

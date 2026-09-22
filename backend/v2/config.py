@@ -56,10 +56,10 @@ class Settings:
         name = os.environ.get('MF_DATABASE_NAME', '')
         if not host or db.get('host') != host or ',' in host or db.get('hostaddr') or db.get('service'):
             raise ValueError('Database host does not match dedicated staging host')
-        if db.get('dbname') != name or not re.fullmatch(r'mf_staging(?:_[a-z0-9]+)*', name):
-            raise ValueError('Database name must identify staging')
-        if not db.get('user', '').startswith('mf_staging'):
-            raise ValueError('Dedicated staging database user required')
+        if not name or db.get('dbname') != name:
+            raise ValueError('Database name does not match staging database reference')
+        if not db.get('user'):
+            raise ValueError('Staging database user is required')
         namespace = os.environ.get('MF_JOB_NAMESPACE', '')
         if not re.fullmatch(r'mf\.staging\.[a-z0-9_-]+', namespace):
             raise ValueError('Dedicated staging job namespace required')
