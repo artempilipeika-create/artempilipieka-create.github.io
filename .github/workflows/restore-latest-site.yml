@@ -35,8 +35,10 @@ jobs:
           test -f order.js
           test -f data.js
           test -f styles.css
-          grep -q "От идеи до детали" index.html
+          grep -q "От идеи" index.html
+          grep -q "до детали" index.html
           grep -q "xlsx" order.js
+          grep -q "OBLX" order.js
 
       - name: Commit restored source
         shell: bash
