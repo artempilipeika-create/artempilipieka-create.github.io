@@ -1,0 +1,36 @@
+{
+  "tested_commit": "f238c95347a231540f8e7d0e7a6e23eaea1d6755",
+  "probe_deployment": "1f659e98-3ca8-42b0-8dc4-20b04c6e52eb",
+  "pre_migration_backup": {
+    "stage02_pre_migration_backup": true,
+    "database_sha256": "fd8056b92469de7cbe67285351bd67d1e28800e907aaf666d98ef2f598fe5114",
+    "file_count": 1,
+    "destination": "/mf-private/backups/pre-stage02"
+  },
+  "stage2_security_and_restore": {
+    "run_id": "9c1da2f15ea6422bab240b8c8a99b164",
+    "checks": {
+      "registration_client_only": true,
+      "unverified_draft_submit_gate": true,
+      "fake_email_confirm_once": true,
+      "client_oblx_legacy_head_range_deny": true,
+      "manager_reassignment_immediate": true,
+      "blocked_staff_old_cookie": true,
+      "logout_revoked": true
+    },
+    "order_id": "78b05015-e11c-40f4-84a6-40b83310748e",
+    "file_id": "9f877603-1129-442d-84da-c7e4e22a741f",
+    "synthetic_users_disabled": 4,
+    "agent_transport": "disabled",
+    "outbox_dispatch": "disabled",
+    "restore": {
+      "restored": true,
+      "file_count": 3,
+      "database": "mf_staging_restore_stage02_9c1da2f15ea6",
+      "source_dump_sha256": "fb2964c32e38b0c90a349dfe8afce49f66d02ac787c51cd47d14eb1a5568e7e4",
+      "destination": "/mf-private/backups/stage02-9c1da2f15ea6422bab240b8c8a99b164",
+      "restored_private_file_verified": true
+    }
+  },
+  "scope": "ASGI API inside Railway app with live isolated Postgres 18 and persistent private volume. Not production; not external HTTPS browser testing."
+}

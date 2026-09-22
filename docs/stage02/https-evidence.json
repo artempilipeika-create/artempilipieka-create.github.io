@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-09-22T23:02:19Z",
+  "origin": "https://martin-forest-v2-staging-production.up.railway.app",
+  "deployment": "8da85a05-c69d-4a79-b569-a57e34212b3d",
+  "transport": "external HTTPS, curl via workspace network",
+  "checks": [
+    {"path": "/health", "status": 200, "body": {"ok": true, "environment": "staging", "stage": "2", "agent_transport": "disabled"}},
+    {"path": "/api/v2/auth/me", "status": 401, "code": "AUTH_REQUIRED"},
+    {"path": "/api/orders", "status": 404},
+    {"path": "/verify-email", "status": 200, "csp_nonce": true, "no_external_resources": true}
+  ],
+  "headers_on_all_responses": {
+    "x-robots-tag": "noindex, nofollow, noarchive",
+    "cache-control": "no-store",
+    "referrer-policy": "no-referrer",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY"
+  }
+}

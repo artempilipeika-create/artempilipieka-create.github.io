@@ -1,0 +1,82 @@
+{
+  "runtime_commit": "3ff1752469f189f0e13191dcfe01a5e8033abff8",
+  "final_deployment": "8da85a05-c69d-4a79-b569-a57e34212b3d",
+  "status": "SUCCESS",
+  "healthcheck": "PASS",
+  "port": 8000,
+  "startCommand": "python -m backend.v2.serve",
+  "probe_modes": {
+    "stage01": "off",
+    "stage02": "off"
+  },
+  "agent_transport": "disabled",
+  "outbox_dispatch": "disabled",
+  "logs": [
+    {
+      "timestamp": "2026-09-22T23:01:11.548731047Z",
+      "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/12828e75-8d7f-4316-ac09-9cf2d4bcf165/vol_slzpfjam9f5zzyrb"
+    },
+    {
+      "timestamp": "2026-09-22T23:01:12.583719214Z",
+      "message": "Starting Container"
+    },
+    {
+      "timestamp": "2026-09-22T23:01:12.803087690Z",
+      "message": "Stage 2 validating staging database and migrations"
+    },
+    {
+      "timestamp": "2026-09-22T23:01:12.803098280Z",
+      "message": "Stage 2 starting HTTP server; transport and dispatch disabled"
+    },
+    {
+      "timestamp": "2026-09-22T23:01:12.803103490Z",
+      "message": "INFO:     Started server process [1]"
+    },
+    {
+      "timestamp": "2026-09-22T23:01:12.803108500Z",
+      "message": "INFO:     Waiting for application startup."
+    },
+    {
+      "timestamp": "2026-09-22T23:01:12.803113050Z",
+      "message": "INFO:     Application startup complete."
+    },
+    {
+      "timestamp": "2026-09-22T23:01:12.803120559Z",
+      "message": "INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)"
+    }
+  ],
+  "protected_preview_deployments": [
+    {
+      "id": "c28c394e-ff50-4cc7-ba04-0ad9f5eb804c",
+      "status": "SUCCESS",
+      "createdAt": "2026-09-22T18:50:17.778Z",
+      "updatedAt": "2026-09-22T18:51:51.956Z",
+      "serviceId": "42c638e9-4dc2-4e9a-9ec9-e670ae661bb6",
+      "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+      "url": null,
+      "snapshotId": "3e4c26ce-4bf9-4ee5-89e2-35edd2dcc727",
+      "meta": {
+        "reason": "deploy",
+        "commitMessage": "Keep sign-in accessible on tablet navigation and document preview checks",
+        "commitHash": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+        "branch": "spec-v2-homepage-preview-20260922"
+      }
+    },
+    {
+      "id": "5ac650b4-0d52-48c9-9222-29e0a8fd4f3a",
+      "status": "SUCCESS",
+      "createdAt": "2026-09-22T16:36:17.684Z",
+      "updatedAt": "2026-09-22T16:36:49.912Z",
+      "serviceId": "abc0e90d-fa8e-4c00-a0a6-312593a479ed",
+      "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+      "url": null,
+      "snapshotId": "e46b50df-9af0-4374-b29c-b675577688b3",
+      "meta": {
+        "reason": "deploy",
+        "commitMessage": "Enable v9 authentication backend for Martin Forest preview",
+        "commitHash": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+        "branch": "restore-martin-forest-20260921-latest"
+      }
+    }
+  ]
+}

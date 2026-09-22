@@ -1,0 +1,42 @@
+{
+  "protected_refs": {
+    "baseline": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+    "preview": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+    "bridge": "2031c09c2f9d8690cb75856b0a4cadb1533a411b",
+    "main": "470776dfd3efd1db9638668d2e19ea174b7901cc"
+  },
+  "production_bridge": {
+    "id": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-22T13:46:25.106Z",
+    "updatedAt": "2026-09-22T13:47:50.736Z",
+    "serviceId": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+    "environmentId": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+    "url": null,
+    "snapshotId": "a35d08d0-85a8-4ddb-8ac2-55d1802d321d",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Add secure server-side Telegram form bridge",
+      "commitHash": "2031c09c2f9d8690cb75856b0a4cadb1533a411b",
+      "branch": "martin-forest-api-v1"
+    }
+  },
+  "production_postgres": {
+    "id": "168b0c29-6693-433f-9a85-552f9de65b37",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-22T12:59:39.351Z",
+    "updatedAt": "2026-09-22T12:59:44.203Z",
+    "serviceId": "2f5c99bd-37ec-46b5-aa22-116f5f898f54",
+    "environmentId": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+    "url": null,
+    "snapshotId": "d7f6c54e-e804-40e3-b408-906777399a0c",
+    "meta": {
+      "reason": "deploy",
+      "image": "ghcr.io/railwayapp-templates/postgres-ssl:18"
+    }
+  },
+  "production_mutations": false,
+  "agent_transport": "disabled",
+  "outbox_dispatch": "disabled",
+  "production_secrets_read": false
+}
