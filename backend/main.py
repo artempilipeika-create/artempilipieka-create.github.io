@@ -118,7 +118,7 @@ class AgentEvent(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
-app = FastAPI(title="Martin Forest Bridge API", version="1.0.0")
+app = FastAPI(title="Martin Forest Bridge API", version="1.0.1")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -165,7 +165,7 @@ def serialize_order(row: Order) -> dict[str, Any]:
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    return {"ok": True, "service": "martin-forest-bridge-api", "time": utcnow().isoformat()}
+    return {"ok": True, "service": "martin-forest-bridge-api", "version": "1.0.1", "time": utcnow().isoformat()}
 
 
 @app.post("/api/orders")
@@ -188,6 +188,12 @@ def create_order(req: OrderCreate, db: Session = Depends(db_session)) -> dict[st
         updated_at=utcnow(),
     )
     db.add(row)
+
+    # Force the parent order INSERT before inserting the FK-dependent event.
+    # Without this explicit flush, SQLAlchemy can try to flush Event first
+    # because there is no ORM relationship declared between the two models.
+    db.flush()
+
     db.add(Event(order_id=order_id, event_type="created", payload={"source": "website"}))
     db.commit()
     db.refresh(row)
