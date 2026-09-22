@@ -1,0 +1,397 @@
+from __future__ import annotations
+
+import html
+import os
+import secrets
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
+import httpx
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, create_engine, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def normalize_db_url(url: str) -> str:
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://"):]
+    if url.startswith("postgresql://") and "+psycopg" not in url:
+        return "postgresql+psycopg://" + url[len("postgresql://"):]
+    return url
+
+
+DATABASE_URL = normalize_db_url(os.getenv("DATABASE_URL", "sqlite:///./martin_forest_api.db"))
+AGENT_API_KEY = os.getenv("AGENT_API_KEY", "")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+MAX_FILE_SIZE = 50 * 1024 * 1024
+
+CORS_ORIGINS = [
+    x.strip()
+    for x in os.getenv(
+        "CORS_ORIGINS",
+        "https://martin-forest.surge.sh,https://artempilipieka-create.github.io,https://artempilipeika-create.github.io",
+    ).split(",")
+    if x.strip()
+]
+
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args=connect_args)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Order(Base):
+    __tablename__ = "orders"
+    order_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    order_name: Mapped[str] = mapped_column(String(240), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="queued", index=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    lease_token: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class Event(Base):
+    __tablename__ = "events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.order_id"), index=True)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class Customer(BaseModel):
+    name: str = ""
+    phone: str = ""
+    email: str = ""
+
+
+class ProjectInfo(BaseModel):
+    type: str = ""
+    notes: str = ""
+
+
+class Material(BaseModel):
+    article: str = ""
+    name: str = ""
+    qty: float | None = None
+    unit: str = ""
+
+
+class BazisInfo(BaseModel):
+    expected_order_name: str = ""
+    source_model: str = ""
+
+
+class OrderCreate(BaseModel):
+    order_id: str | None = Field(default=None, max_length=80)
+    order_name: str = Field(min_length=1, max_length=240)
+    customer: Customer = Field(default_factory=Customer)
+    project: ProjectInfo = Field(default_factory=ProjectInfo)
+    materials: list[Material] = Field(default_factory=list)
+    bazis: BazisInfo = Field(default_factory=BazisInfo)
+    external: dict[str, Any] = Field(default_factory=dict)
+
+
+class PullRequest(BaseModel):
+    limit: int = Field(default=20, ge=1, le=100)
+    lease_minutes: int = Field(default=10, ge=1, le=60)
+
+
+class AckRequest(BaseModel):
+    order_ids: list[str]
+
+
+class AgentEvent(BaseModel):
+    order_id: str
+    event_type: str
+    status: str | None = None
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+app = FastAPI(title="Martin Forest Bridge API", version="1.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+def startup() -> None:
+    Base.metadata.create_all(engine)
+
+
+def db_session():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def require_agent_key(x_agent_key: str | None = Header(default=None)) -> None:
+    if not AGENT_API_KEY:
+        raise HTTPException(status_code=503, detail="AGENT_API_KEY is not configured")
+    if not x_agent_key or not secrets.compare_digest(x_agent_key, AGENT_API_KEY):
+        raise HTTPException(status_code=401, detail="Invalid agent key")
+
+
+def make_order_id() -> str:
+    return f"WEB-{utcnow():%Y%m%d}-{secrets.token_hex(4).upper()}"
+
+
+def serialize_order(row: Order) -> dict[str, Any]:
+    return {
+        "order_id": row.order_id,
+        "order_name": row.order_name,
+        "status": row.status,
+        "created_at": row.created_at.isoformat(),
+        "updated_at": row.updated_at.isoformat(),
+        **row.payload,
+    }
+
+
+def telegram_enabled() -> bool:
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+
+
+def telegram_message_for_order(order_id: str, order_name: str, payload: dict[str, Any]) -> str:
+    customer = payload.get("customer") or {}
+    project = payload.get("project") or {}
+    ext = payload.get("external") or {}
+    lines = [
+        f"⚫️ <b>НОВЫЙ ЗАКАЗ</b>",
+        f"🆔 <b>ID:</b> <code>{html.escape(order_id)}</code>",
+        f"🏷️ <b>Заказ:</b> {html.escape(order_name)}",
+        "",
+        f"👤 <b>Имя:</b> {html.escape(str(customer.get('name') or 'не указано'))}",
+        f"📞 <b>Телефон:</b> <code>{html.escape(str(customer.get('phone') or 'не указан'))}</code>",
+        f"✉️ <b>Email:</b> {html.escape(str(customer.get('email') or 'не указан'))}",
+        "",
+        f"📦 <b>Материал:</b> {html.escape(str(ext.get('material_option') or 'не указано'))}",
+        f"🪚 <b>Кромка:</b> {html.escape(str(ext.get('edge_option') or 'не указано'))}",
+        f"📋 <b>Тип заказа:</b> {html.escape(str(ext.get('request_type') or project.get('type') or 'не указано'))}",
+        "",
+        f"📝 <b>Примечание:</b>\n{html.escape(str(project.get('notes') or 'не указано'))}",
+    ]
+    return "\n".join(lines)
+
+
+def send_telegram_message(text: str) -> None:
+    if not telegram_enabled():
+        return
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    with httpx.Client(timeout=20.0) as client:
+        r = client.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML"})
+        r.raise_for_status()
+
+
+def send_telegram_file(order_id: str, order_name: str, filename: str, content_type: str, data: bytes) -> None:
+    if not telegram_enabled():
+        raise RuntimeError("Telegram is not configured")
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
+    caption = f"Заказ {order_id} — {order_name}\nФайл: {filename}"[:1000]
+    with httpx.Client(timeout=90.0) as client:
+        r = client.post(
+            url,
+            data={"chat_id": TELEGRAM_CHAT_ID, "caption": caption},
+            files={"document": (filename, data, content_type or "application/octet-stream")},
+        )
+        r.raise_for_status()
+
+
+@app.get("/health")
+def health() -> dict[str, Any]:
+    return {
+        "ok": True,
+        "service": "martin-forest-bridge-api",
+        "version": "1.1.0",
+        "telegram_configured": telegram_enabled(),
+        "time": utcnow().isoformat(),
+    }
+
+
+@app.post("/api/orders")
+def create_order(req: OrderCreate, db: Session = Depends(db_session)) -> dict[str, Any]:
+    order_id = (req.order_id or make_order_id()).strip()
+    existing = db.get(Order, order_id)
+    payload = req.model_dump(exclude={"order_id", "order_name"})
+
+    if existing:
+        if existing.order_name == req.order_name and existing.payload == payload:
+            return {"created": False, "order": serialize_order(existing)}
+        raise HTTPException(status_code=409, detail="order_id already exists with different content")
+
+    row = Order(
+        order_id=order_id,
+        order_name=req.order_name.strip(),
+        status="queued",
+        payload=payload,
+        created_at=utcnow(),
+        updated_at=utcnow(),
+    )
+    db.add(row)
+    db.flush()
+    db.add(Event(order_id=order_id, event_type="created", payload={"source": "website"}))
+    db.commit()
+    db.refresh(row)
+
+    telegram_ok = False
+    telegram_error = ""
+    if telegram_enabled():
+        try:
+            send_telegram_message(telegram_message_for_order(order_id, row.order_name, payload))
+            telegram_ok = True
+            db.add(Event(order_id=order_id, event_type="telegram_notified", payload={}))
+        except Exception as e:
+            telegram_error = f"{type(e).__name__}: {e}"[:1000]
+            db.add(Event(order_id=order_id, event_type="telegram_error", payload={"error": telegram_error}))
+        db.commit()
+
+    return {
+        "created": True,
+        "order": serialize_order(row),
+        "telegram_notified": telegram_ok,
+        "telegram_error": telegram_error,
+    }
+
+
+@app.post("/api/orders/{order_id}/files")
+async def upload_order_file(
+    order_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(db_session),
+) -> dict[str, Any]:
+    row = db.get(Order, order_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if not telegram_enabled():
+        raise HTTPException(status_code=503, detail="File forwarding is not configured")
+
+    data = await file.read(MAX_FILE_SIZE + 1)
+    if len(data) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File exceeds 50 MB limit")
+
+    filename = (file.filename or "file").strip()[:255]
+    try:
+        send_telegram_file(order_id, row.order_name, filename, file.content_type or "", data)
+    except Exception as e:
+        db.add(Event(
+            order_id=order_id,
+            event_type="file_forward_error",
+            payload={"filename": filename, "error": f"{type(e).__name__}: {e}"[:1000]},
+        ))
+        db.commit()
+        raise HTTPException(status_code=502, detail="Could not forward file") from e
+
+    db.add(Event(
+        order_id=order_id,
+        event_type="file_forwarded",
+        payload={"filename": filename, "size": len(data), "content_type": file.content_type or ""},
+    ))
+    db.commit()
+    return {"ok": True, "order_id": order_id, "filename": filename, "size": len(data)}
+
+
+@app.get("/api/orders/{order_id}")
+def get_order(order_id: str, db: Session = Depends(db_session)) -> dict[str, Any]:
+    row = db.get(Order, order_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Order not found")
+    events = db.scalars(select(Event).where(Event.order_id == order_id).order_by(Event.id.asc())).all()
+    return {
+        "order": serialize_order(row),
+        "events": [
+            {
+                "id": e.id,
+                "event_type": e.event_type,
+                "payload": e.payload,
+                "created_at": e.created_at.isoformat(),
+            }
+            for e in events
+        ],
+    }
+
+
+@app.post("/api/agent/pull", dependencies=[Depends(require_agent_key)])
+def agent_pull(req: PullRequest, db: Session = Depends(db_session)) -> dict[str, Any]:
+    now = utcnow()
+    expired = db.scalars(
+        select(Order).where(
+            Order.status == "leased",
+            Order.lease_expires_at.is_not(None),
+            Order.lease_expires_at < now,
+        )
+    ).all()
+    for row in expired:
+        row.status = "queued"
+        row.lease_token = None
+        row.lease_expires_at = None
+        row.updated_at = now
+
+    query = select(Order).where(Order.status == "queued").order_by(Order.created_at.asc()).limit(req.limit)
+    if engine.dialect.name == "postgresql":
+        query = query.with_for_update(skip_locked=True)
+
+    rows = db.scalars(query).all()
+    lease_token = secrets.token_urlsafe(24)
+    expires = now + timedelta(minutes=req.lease_minutes)
+
+    for row in rows:
+        row.status = "leased"
+        row.lease_token = lease_token
+        row.lease_expires_at = expires
+        row.updated_at = now
+
+    db.commit()
+    return {
+        "lease_token": lease_token,
+        "lease_expires_at": expires.isoformat(),
+        "orders": [serialize_order(x) for x in rows],
+    }
+
+
+@app.post("/api/agent/ack", dependencies=[Depends(require_agent_key)])
+def agent_ack(req: AckRequest, db: Session = Depends(db_session)) -> dict[str, Any]:
+    acked: list[str] = []
+    for order_id in req.order_ids:
+        row = db.get(Order, order_id)
+        if not row:
+            continue
+        row.status = "delivered_to_bridge"
+        row.lease_token = None
+        row.lease_expires_at = None
+        row.updated_at = utcnow()
+        db.add(Event(order_id=order_id, event_type="delivered_to_bridge", payload={}))
+        acked.append(order_id)
+    db.commit()
+    return {"acked": acked}
+
+
+@app.post("/api/agent/events", dependencies=[Depends(require_agent_key)])
+def agent_event(req: AgentEvent, db: Session = Depends(db_session)) -> dict[str, Any]:
+    row = db.get(Order, req.order_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if req.status:
+        row.status = req.status
+        row.updated_at = utcnow()
+
+    db.add(Event(order_id=req.order_id, event_type=req.event_type, payload=req.payload))
+    db.commit()
+    return {"ok": True, "order_id": req.order_id, "status": row.status}
