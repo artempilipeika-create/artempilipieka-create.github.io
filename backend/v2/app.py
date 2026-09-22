@@ -1,7 +1,11 @@
-"""Infrastructure-only staging surface. No legacy router, frontend or file mount."""
+"""Isolated Stage 2 API. Legacy frontend/router and public storage are never mounted."""
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
+from fastapi.exceptions import RequestValidationError
+from .security import WebPolicy
+from . import auth_api, domain_api
+import secrets
 from .config import Settings
 from .db import connect, check_identity
 from .storage import VolumeStore
@@ -18,8 +22,9 @@ def readiness(settings):
             raise ValueError('Migration version mismatch')
 
 
-def create_app(settings=None):
+def create_app(settings=None, policy=None):
     settings = settings or Settings.from_env()
+    policy = policy or WebPolicy.from_env()
 
     @asynccontextmanager
     async def lifespan(app):
@@ -32,10 +37,18 @@ def create_app(settings=None):
 
     @app.middleware('http')
     async def staging_headers(request, call_next):
+        if request.method in {'POST','PUT','PATCH','DELETE'} and request.url.path.startswith('/api/v2/'):
+            if request.headers.get('origin') != policy.origin:
+                return JSONResponse({'detail':{'code':'ORIGIN_DENIED'}},status_code=403,
+                                    headers={'X-Robots-Tag':'noindex, nofollow','Cache-Control':'no-store'})
+            if request.method != 'DELETE' and request.headers.get('content-type','').split(';')[0] != 'application/json':
+                return JSONResponse({'detail':{'code':'JSON_REQUIRED'}},status_code=415)
         response = await call_next(request)
         response.headers['X-Robots-Tag'] = 'noindex, nofollow, noarchive'
         response.headers['Cache-Control'] = 'no-store'
         response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['Referrer-Policy'] = 'no-referrer'
+        response.headers['X-Frame-Options'] = 'DENY'
         return response
 
     @app.get('/robots.txt', response_class=PlainTextResponse)
@@ -48,6 +61,29 @@ def create_app(settings=None):
             readiness(settings)
         except Exception:
             raise HTTPException(503, 'Staging database is not ready') from None
-        return {'ok': True, 'environment': 'staging', 'stage': '0-1', 'agent_transport': 'disabled'}
+        return {'ok': True, 'environment': 'staging', 'stage': '2', 'agent_transport': 'disabled'}
 
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request, exc):
+        # FastAPI's default error echoes submitted fields, including passwords/tokens.
+        return JSONResponse({'detail':{'code':'VALIDATION_ERROR'}},status_code=422)
+
+    @app.get('/verify-email',response_class=HTMLResponse)
+    def verification_page():
+        nonce = secrets.token_urlsafe(24)
+        html = """<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="robots" content="noindex">
+        <meta name="referrer" content="no-referrer"><title>Подтверждение email</title>
+        <h1>Подтверждение email</h1><button id="confirm" type="button">Подтвердить адрес</button><p id="state"></p>
+        <script nonce="NONCE">const token=new URLSearchParams(location.hash.slice(1)).get('token');
+        history.replaceState(null,'','/verify-email');
+        document.getElementById('confirm').onclick=async()=>{
+          const response=await fetch('/api/v2/auth/email-verification/confirm',{method:'POST',credentials:'same-origin',
+            headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+          document.getElementById('state').textContent=response.ok?'Адрес подтверждён.':'Ссылка недействительна или истекла. Запросите новую.';
+        };</script></html>""".replace('NONCE',nonce)
+        return HTMLResponse(html,headers={'Content-Security-Policy':
+            f"default-src 'none'; script-src 'nonce-{nonce}'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"})
+
+    app.include_router(auth_api.router(settings,policy))
+    app.include_router(domain_api.router(settings,policy))
     return app

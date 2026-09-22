@@ -1,0 +1,17 @@
+{
+  "date": "2026-09-22",
+  "staging_base": "49e291bfa4eca0da3fba8fb4694deba08df72cd7",
+  "baseline": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+  "preview": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+  "bridge": "2031c09c2f9d8690cb75856b0a4cadb1533a411b",
+  "production_bridge_deployment": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
+  "staging_project": "6d754ad4-ba7b-45f8-8c5e-356387e7de06",
+  "staging_environment": "ee625678-c15e-452d-9761-cda99274839f",
+  "staging_service": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+  "staging_database_service": "e773c03c-1f76-4f78-adb7-2132528c3a19",
+  "staging_private_volume": "29b79637-3f45-4ddd-ad2c-028d6b96af8e",
+  "staging_previous_deployment": "7a8cc659-4f8d-4f81-8a4a-8a942970aa4a",
+  "staging_previous_runtime_commit": "71567afa146a6a9126bbf0cca4ce236de646098c",
+  "source_commit_pinned": true,
+  "source_documents": ["MARTIN_FOREST_SPEC_v2_FINAL.md", "MARTIN_FOREST_AUDIT_EVIDENCE_2026-09-22.md", "Stage 2 attachment"]
+}

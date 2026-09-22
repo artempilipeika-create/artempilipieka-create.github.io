@@ -2,7 +2,7 @@ name: Staging foundation only
 on:
   push:
     branches: [martin-forest-v2-staging]
-    paths: ['backend/v2/**', 'tests/stage01/**', 'Dockerfile', '.github/workflows/staging-foundation.yml']
+    paths: ['backend/v2/**', 'tests/**', 'Dockerfile', '.github/workflows/staging-foundation.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
           apt-get install -y --no-install-recommends postgresql-client
           pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1
       - name: Test migrations, transactions, private files, RBAC and restore
-        run: python -m pytest tests/stage01 -v --junitxml=qa-output/stage01/results.xml
+        run: python -m pytest tests/stage01 tests/stage02 -v --junitxml=qa-output/stage01/results.xml
       - name: Record synthetic restore evidence in job log
         run: |
           python - <<'PY'

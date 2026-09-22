@@ -101,12 +101,14 @@ def test_volume_rejects_symlink(tmp_path):
 def test_http_has_no_files_or_legacy_routes(environment,monkeypatch):
     from backend.v2 import app as module
     monkeypatch.setattr(module,'readiness',lambda settings: None)
-    with TestClient(module.create_app(Settings.from_env())) as client:
+    from backend.v2.security import WebPolicy
+    from cryptography.fernet import Fernet
+    with TestClient(module.create_app(Settings.from_env(), WebPolicy('https://testserver', Fernet.generate_key()))) as client:
         assert client.get('/health').json()['agent_transport'] == 'disabled'
         assert 'Disallow: /' in client.get('/robots.txt').text
         for path in ['/','/public/probe.txt','/static/probe.txt','/objects/aa/test','/storage/test',
                      '/api/orders','/api/agent/pull','/api/agent/ack','/api/agent/events',
-                     '/api/v2/files/123','/api/v2/orders/123/oblx','/docs','/openapi.json']:
+                     '/docs','/openapi.json']:
             for method in ['GET','HEAD','POST']:
                 response = client.request(method,path,headers={'Range':'bytes=0-5'})
                 assert response.status_code == 404
@@ -135,11 +137,14 @@ def probe(db_settings):
 def test_postgres_migrations_idempotent_and_drift_rejected(db_settings,tmp_path):
     migrate(db_settings)
     with connect(db_settings) as conn:
-        assert conn.execute('SELECT count(*) AS n FROM mf_schema_migrations').fetchone()['n'] == 1
+        assert conn.execute('SELECT count(*) AS n FROM mf_schema_migrations').fetchone()['n'] == len(list(MIGRATIONS.glob('*.sql')))
         tables = {r['tablename'] for r in conn.execute("SELECT tablename FROM pg_tables WHERE schemaname='public'")}
         assert {'mf_users','mf_sessions','mf_email_verifications','mf_orders','mf_order_revisions',
                 'mf_manager_assignments','mf_files','mf_audit','mf_outbox','mf_job_events','mf_production_jobs'} <= tables
         assert 'orders' not in tables and 'events' not in tables
+    import shutil
+    for migration in MIGRATIONS.glob('*.sql'):
+        shutil.copy2(migration,tmp_path/migration.name)
     path = tmp_path/'0001_foundation.sql'
     path.write_bytes((MIGRATIONS/path.name).read_bytes()+b'\n-- changed')
     with pytest.raises(ValueError,match='checksum'):
@@ -241,7 +246,7 @@ def test_http_with_native_postgres(db_settings,probe):
     from backend.v2.app import create_app
     with TestClient(create_app(db_settings)) as client:
         assert client.get('/health').status_code == 200
-        assert client.get('/api/v2/files/'+probe['file_id']).status_code == 404
+        assert client.get('/api/v2/files/'+probe['file_id']).status_code == 401
 
 
 def test_backup_restore_separate_database(db_settings,tmp_path):
