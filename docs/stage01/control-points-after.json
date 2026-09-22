@@ -1,0 +1,204 @@
+{
+  "protected_refs": {
+    "zapusk-bazis-raskroy-baseline": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+    "spec-v2-homepage-preview-20260922": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+    "martin-forest-api-v1": "2031c09c2f9d8690cb75856b0a4cadb1533a411b"
+  },
+  "production_status": {
+    "project": {
+      "id": "7f59bf67-56db-4f6c-b213-c9c7b9342932",
+      "name": "Martin Forest Bridge API",
+      "workspaceName": "artempilipeika-create's Projects"
+    },
+    "environment": {
+      "id": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+      "name": "production",
+      "unmergedChangesCount": null,
+      "stagedChanges": null
+    },
+    "services": [
+      {
+        "id": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+        "name": "bridge-api",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [],
+        "latestDeployment": {
+          "id": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-22T13:46:25.106Z",
+          "url": null
+        }
+      },
+      {
+        "id": "2f5c99bd-37ec-46b5-aa22-116f5f898f54",
+        "name": "Postgres",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [
+          {
+            "id": "8cdc9cc1-8968-4443-8af1-63a29041bc04",
+            "name": "postgres-volume",
+            "mountPath": "/var/lib/postgresql/data",
+            "sizeMB": 500,
+            "region": "sfo"
+          }
+        ],
+        "latestDeployment": {
+          "id": "168b0c29-6693-433f-9a85-552f9de65b37",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-22T12:59:39.351Z",
+          "url": null
+        }
+      }
+    ],
+    "buckets": [],
+    "pendingWork": [
+      {
+        "id": "patch:fb061e37-22cf-4996-bfad-5f7cc31b45a1",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-09-22T13:18:31.639Z",
+        "workflowId": "commitChanges/818e6927-02ef-4cfe-a970-e7e01b0b6872/fb061e37-22cf-4996-bfad-5f7cc31b45a1"
+      }
+    ]
+  },
+  "preview_config": {
+    "service": {
+      "id": "42c638e9-4dc2-4e9a-9ec9-e670ae661bb6",
+      "name": "martin-forest-spec-v2-preview"
+    },
+    "environment": {
+      "id": "ee625678-c15e-452d-9761-cda99274839f",
+      "name": "production"
+    },
+    "config": {
+      "source": {
+        "repo": "artempilipeika-create/artempilipieka-create.github.io",
+        "branch": "spec-v2-homepage-preview-20260922"
+      },
+      "networking": {
+        "serviceDomains": {
+          "martin-forest-spec-v2-preview-production.up.railway.app": {
+            "port": 80
+          }
+        }
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "buildEnvironment": "V3",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "useLegacyStacker": false,
+        "ipv6EgressEnabled": false,
+        "runtime": "V2",
+        "multiRegionConfig": {
+          "sfo": {
+            "numReplicas": 1
+          }
+        }
+      }
+    },
+    "variableNames": [],
+    "staged": null
+  },
+  "old_preview_config": {
+    "service": {
+      "id": "abc0e90d-fa8e-4c00-a0a6-312593a479ed",
+      "name": "martin-forest-preview"
+    },
+    "environment": {
+      "id": "ee625678-c15e-452d-9761-cda99274839f",
+      "name": "production"
+    },
+    "config": {
+      "source": {
+        "repo": "artempilipeika-create/artempilipieka-create.github.io",
+        "branch": "restore-martin-forest-20260921-latest"
+      },
+      "networking": {
+        "serviceDomains": {
+          "martin-forest-preview-production.up.railway.app": {
+            "port": 80
+          }
+        }
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "buildEnvironment": "V3",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "useLegacyStacker": false,
+        "ipv6EgressEnabled": false,
+        "runtime": "V2",
+        "multiRegionConfig": {
+          "sfo": {
+            "numReplicas": 1
+          }
+        }
+      }
+    },
+    "variableNames": [
+      "ADMIN_EMAIL",
+      "ADMIN_PASSWORD"
+    ],
+    "staged": null
+  },
+  "production_config": {
+    "service": {
+      "id": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+      "name": "bridge-api"
+    },
+    "environment": {
+      "id": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+      "name": "production"
+    },
+    "config": {
+      "source": {
+        "repo": "artempilipeika-create/artempilipieka-create.github.io",
+        "branch": "martin-forest-api-v1"
+      },
+      "networking": {
+        "serviceDomains": {
+          "bridge-api-production-577d.up.railway.app": {
+            "port": 8000
+          }
+        }
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "buildEnvironment": "V3",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "healthcheckPath": "/health",
+        "healthcheckTimeout": 120,
+        "restartPolicyMaxRetries": 5,
+        "useLegacyStacker": false,
+        "ipv6EgressEnabled": false,
+        "runtime": "V2",
+        "multiRegionConfig": {
+          "sfo": {
+            "numReplicas": 1
+          }
+        }
+      }
+    },
+    "variableNames": [
+      "AGENT_API_KEY",
+      "CORS_ORIGINS",
+      "DATABASE_URL",
+      "PORT",
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_CHAT_ID"
+    ],
+    "staged": null
+  },
+  "all_three_service_configs_equal_initial": true,
+  "read_only_production_queries": true,
+  "production_secrets_read": false,
+  "production_mutations": false
+}

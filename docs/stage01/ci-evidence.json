@@ -1,0 +1,44 @@
+{
+  "commit": "590eb9e2584552c12ecf394996927838eac2971e",
+  "run_id": 35788628578,
+  "job_id": 106951469433,
+  "url": "https://github.com/artempilipeika-create/artempilipieka-create.github.io/actions/runs/35788628578",
+  "tests": {
+    "passed": 28,
+    "failed": 0,
+    "skipped": 0
+  },
+  "native_postgres": true,
+  "scope": "isolated CI/local only; NOT Railway",
+  "backup_restore": "PASS",
+  "tables": {
+    "mf_audit": 18,
+    "mf_email_verifications": 0,
+    "mf_environment": 1,
+    "mf_files": 10,
+    "mf_job_events": 9,
+    "mf_manager_assignments": 0,
+    "mf_order_revisions": 9,
+    "mf_orders": 9,
+    "mf_outbox": 18,
+    "mf_permission_grants": 4,
+    "mf_permissions": 13,
+    "mf_production_jobs": 9,
+    "mf_roles": 7,
+    "mf_schema_migrations": 1,
+    "mf_sessions": 0,
+    "mf_user_roles": 13,
+    "mf_users": 13
+  },
+  "file_count": 10,
+  "probe": {
+    "order_id": "3daeac02-011e-4f71-9081-18137c51c642",
+    "revision_id": "46ea2b6c-38ca-47ef-952c-1e596bb299ee",
+    "job_id": "a378807e-db90-4039-8952-02c10b6aed22",
+    "file_id": "f3610ec5-b1d3-4ca6-a5af-0feba11246e3",
+    "audit_event_id": "0fbf29f4-c02e-4ca4-be0a-c30adba65e4f",
+    "sha256": "1904569db06a27b7e605958feaf997605a912de0e2c91ababb5fcb6bdc7d25e2",
+    "size_bytes": 50
+  },
+  "database_dump_sha256": "795eb3a04862ed3fde3603c3d9e0c245541ff12cec420f6d7b048a7f1c66dbf0"
+}
