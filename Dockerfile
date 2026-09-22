@@ -5,4 +5,4 @@ RUN pip install --no-cache-dir -r /app/server/requirements.txt
 COPY . /app
 ENV PYTHONUNBUFFERED=1
 EXPOSE 80
-CMD ["python","-m","uvicorn","server.app:app","--host","0.0.0.0","--port","80"]
+CMD ["python","-m","uvicorn","server.preview:app","--host","0.0.0.0","--port","80"]
