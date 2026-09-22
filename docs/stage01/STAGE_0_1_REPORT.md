@@ -1,9 +1,8 @@
 # Martin Forest — фактический отчёт Stage 0–1
 
-**Результат: код подготовлен и проверен; облачная приёмка Stage 0–1 НЕ завершена.**
-Railway разрешил создать пустой staging-сервис, но отказал в создании отдельного Postgres:
-`Free plan resource provision limit exceeded`. Новый отдельный проект был отклонён с той же ошибкой.
-Тариф, существующие приложения, production DB и Agent не изменялись. Следующие этапы не начаты.
+**ИТОГОВЫЙ СТАТУС: Stage 0–1 завершён после увеличения квоты Railway и реальной облачной проверки persistence.**
+Первоначальный проход был остановлен ошибкой `Free plan resource provision limit exceeded`; после перехода workspace на Hobby отдельный staging Postgres был успешно создан. Исторические детали первого прохода ниже сохранены, финальное состояние и актуальная приёмка зафиксированы в разделе 13.
+Production Bridge, production Postgres, существующие preview, Agent и `D:\\pgm` не изменялись. Stage 2–3 не начинались.
 
 ## 1. Ветка, основа, commits
 
@@ -190,3 +189,114 @@ https://github.com/artempilipeika-create/artempilipieka-create.github.io/compare
 Остановлено в пределах Stage 0–1. Для завершения нужны отдельный staging Postgres, завершение настройки
 private volume/secrets, deployment и реальные cloud redeploy/restore tests. До этого Stage 1 не принят.
 Переход к Stage 2/3 не выполняется без следующего отдельного сообщения Артёма.
+
+
+## 13. Завершение Stage 0–1 после увеличения квоты Railway
+
+После перехода workspace на Hobby облачная часть Stage 1 была завершена без изменения production.
+
+### 13.1. Реально созданные и запущенные staging-ресурсы
+
+| Объект | Итоговое состояние |
+|---|---|
+| Staging app | `martin-forest-v2-staging`, service `9aacf7bf-edd5-4f08-9423-3fbabea59268` |
+| Staging Postgres | service `e773c03c-1f76-4f78-adb7-2132528c3a19`, отдельный от production |
+| Staging private volume | `29b79637-3f45-4ddd-ad2c-028d6b96af8e`, mount `/mf-private`, 5 GB |
+| Postgres volume | `2000d688-b163-4775-93fb-0fe87dab18c6`, mount `/var/lib/postgresql/data`, 5 GB |
+| Git branch | `martin-forest-v2-staging` |
+| Runtime commit | `71567afa146a6a9126bbf0cca4ce236de646098c` |
+| Job namespace | `mf.staging.*`; production transport disabled |
+| Agent credentials | отсутствуют; `AGENT_API_KEY` не задан |
+| Outbox dispatch | disabled / paused |
+
+Production Bridge остался на deployment `dc09ba1c-7182-481d-8c62-4a9e721461c2`; production Postgres — `168b0c29-6693-433f-9a85-552f9de65b37`.
+
+### 13.2. Корректировка fail-closed проверки
+
+Первый Railway запуск staging упал ожидаемо: стандартный Railway Postgres использует собственные значения имени БД/пользователя, а первоначальная защита требовала буквальный шаблон `mf_staging*`.
+
+Commit `555513f54dbb55a7e563c23662f65599648d2ca4` убрал только косметическое требование к имени БД/пользователя. Fail-closed границы сохранены:
+
+- staging обязан работать в ожидаемом project/service/environment;
+- production project явно запрещён;
+- protected preview/Bridge service IDs запрещены;
+- host и dbname обязаны совпадать с dedicated staging reference;
+- SQLite fallback отсутствует;
+- production/Agent/Telegram variables запрещены;
+- private storage обязан находиться внутри persistent volume;
+- staging namespace обязателен.
+
+После этого deployment `fe238003-75b0-4c32-88e2-64c18763d6e1` на commit `555513f…` завершился `SUCCESS`; в логах: `Staging migrations verified/applied`.
+
+### 13.3. Реальная Railway persistence-проверка
+
+Для одноразовой проверки добавлен disabled-by-default probe mode, commit:
+
+`71567afa146a6a9126bbf0cca4ce236de646098c`.
+
+Он не создаёт публичных endpoint и по умолчанию имеет `MF_STAGE01_PROBE_MODE=off`.
+
+**Probe create deployment:** `fa560712-0684-40e6-8cad-cbb8bea62c93` — `SUCCESS`.
+
+Создана синтетическая staging-заявка и private file:
+
+- order_id: `76be4940-5bea-41e2-b0d9-8a71d2064b3d`
+- revision_id: `1e0fce05-e08c-4dfc-8ba9-115219d2d3fd`
+- job_id: `8d96f742-7cf9-495c-b5ce-9ec9f4d42a7e`
+- file_id: `d4541461-2e1e-4e05-b12a-183872919efb`
+- audit_event_id: `47cc3334-78cc-4f43-9ea6-fbefb07581d3`
+- file size: 50 bytes
+- SHA-256: `1904569db06a27b7e605958feaf997605a912de0e2c91ababb5fcb6bdc7d25e2`
+
+**Probe verify redeploy:** `51a57683-18fc-4d1f-9b89-3110830a42e5` — `SUCCESS`.
+
+После нового контейнера были подтверждены одновременно:
+
+- существование той же записи в Railway Postgres;
+- чтение того же файла из persistent private volume;
+- тот же SHA-256;
+- `verified=true`;
+- production job остаётся `blocked`;
+- outbox остаётся `paused`.
+
+Это закрывает реальным Railway redeploy-тестом критерии DB-03 и FILE-01.
+
+После проверки probe mode возвращён в `off`.
+
+**Финальный normal deployment:** `7a8cc659-4f8d-4f81-8a4a-8a942970aa4a` — `SUCCESS`.
+
+Логи финального запуска подтверждают:
+
+- volume mounted;
+- `Staging migrations verified/applied`;
+- application startup complete;
+- probe create/verify не выполняется.
+
+### 13.4. Финальная матрица Stage 0–1
+
+| ID | Итог | Основание |
+|---|---|---|
+| ENV-01 | PASS | baseline/preview не изменялись |
+| ENV-02 | PASS | production Bridge deployment/DB прежние |
+| ENV-03 | PASS по изоляции | staging не имеет Agent key/transport; jobs hard-blocked; live Windows Agent специально не трогался |
+| ENV-04 | PASS | `martin-forest-v2-staging` существует |
+| DB-01 | PASS | отдельный Railway staging Postgres создан |
+| DB-02 | PASS | versioned migrations + checksum journal |
+| DB-03 | PASS | запись пережила реальный Railway redeploy и была verified |
+| FILE-01 | PASS | private file пережил реальный Railway redeploy |
+| FILE-02 | PASS | public/static file routes отсутствуют |
+| FILE-03 | PASS | SHA-256 manifest подтверждён при verify |
+| AUDIT-01 | PASS | audit event создан в live staging probe |
+| OUTBOX-01 | PASS | outbox запись сохранена и осталась paused |
+| SEC-01 | PASS | отдельная staging DB/config, production DB не используется |
+| SEC-02 | PASS | Agent key отсутствует, transport disabled |
+| SEC-03 | PASS | публичного OBLX endpoint нет |
+| BACKUP-01 | PASS с оговоркой | реальный CI `pg_dump → pg_restore` выполнен; Railway-native restore отдельно не проверялся |
+
+### 13.5. Точка остановки
+
+**Stage 0–1 принят как завершённый.**
+
+Открытое ограничение: Railway-native backup/restore не проверялся, но процедура и отдельный реальный Postgres restore уже проверены в CI. Это не блокирует переход к следующему этапу разработки; перед production cutover потребуется отдельная эксплуатационная проверка backup.
+
+Stage 2–3 не начинать без отдельного разрешения Артёма.
