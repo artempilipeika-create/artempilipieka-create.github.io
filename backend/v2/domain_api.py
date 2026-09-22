@@ -96,11 +96,18 @@ def router(settings, policy):
     def orders(request: Request):
         with transaction(settings) as conn:
             user = identity(conn,request)
-            # Bounded keyset pagination; each row still passes current permission/scope checks.
+            # Iterate a server cursor until a page of AUTHORIZED rows is filled. A foreign row must
+            # neither become a public cursor nor make a user's later orders unreachable.
             cursor = request.query_params.get('after','')
-            candidates = conn.execute('SELECT * FROM mf_orders WHERE order_id>%s ORDER BY order_id LIMIT 100',(cursor,)).fetchall()
-            return {'items':[projection(conn,user,o) for o in candidates if allowed(conn,user['user_id'],'orders.read',order_id=o['order_id'])],
-                    'next':next((o['order_id'] for o in reversed(candidates) if allowed(conn,user['user_id'],'orders.read',order_id=o['order_id'])),None) if len(candidates)==100 else None}
+            visible = []
+            with conn.cursor(name='visible_orders') as rows:
+                rows.execute('SELECT * FROM mf_orders WHERE order_id>%s ORDER BY order_id',(cursor,))
+                for item in rows:
+                    if allowed(conn,user['user_id'],'orders.read',order_id=item['order_id']):
+                        visible.append(projection(conn,user,item))
+                    if len(visible)==101:
+                        break
+            return {'items':visible[:100], 'next':visible[99]['order_id'] if len(visible)>100 else None}
 
     @api.get('/orders/{order_id}')
     def order(order_id: str, request: Request):

@@ -385,3 +385,15 @@ def test_v9_password_hash_compatible_and_rehashed(api,settings):
     with connect(settings) as conn:
         assert conn.execute('SELECT password_hash FROM mf_users WHERE user_id=%s',(u['user_id'],)).fetchone()['password_hash'].startswith('pbkdf2_sha256$600000$')
     assert not api.get('/api/v2/auth/me').json()['email_verified']
+
+
+def test_order_list_paginates_authorized_rows_without_foreign_cursor(api,settings):
+    other=register(api)
+    with transaction(settings) as conn:
+        for i in range(101):
+            conn.execute("INSERT INTO mf_orders(order_id,business_name,owner_user_id,preparation_mode) VALUES (%s,'foreign',%s,'self_prepared')",
+                         ('000-pagination-'+uuid4().hex,other['user_id']))
+    own=register(api);oid=draft(api)
+    result=api.get('/api/v2/orders').json()
+    assert [o['order_id'] for o in result['items']]==[oid]
+    assert result['next'] is None

@@ -47,3 +47,4 @@ def prepare(settings):
 
 if __name__=='__main__':
     prepare(Settings.from_env())
+    print('Stage 2 startup complete; transport and dispatch disabled',flush=True)
