@@ -345,11 +345,9 @@
     </footer>
 
     <script>
-        const TELEGRAM_TOKEN = '8271414943:AAGKhJ-pguPjJMC5Nl9cR6bYhJBuMU3BbFs';
-        const CHAT_ID = '1475564376';
+        const API_BASE = 'https://bridge-api-production-577d.up.railway.app';
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-        // Получаем текущую дату в формате ДД.ММ.ГГГГ
         function getCurrentDate() {
             const today = new Date();
             const day = String(today.getDate()).padStart(2, '0');
@@ -405,125 +403,125 @@
             return isValid;
         }
 
-        document.getElementById('fileInput').addEventListener('change', function(e) {
+        async function apiError(response, fallback) {
+            let detail = '';
+            try {
+                const data = await response.json();
+                detail = data.detail || data.message || '';
+            } catch (_) {}
+            throw new Error(detail || fallback);
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function() {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
-            if (this.files.length > 0) {
-                for (let i = 0; i < this.files.length; i++) {
-                    const file = this.files[i];
-                    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
-                    fileItem.innerHTML = `📄 ${file.name} (${sizeMB} МБ)`;
-                    fileList.appendChild(fileItem);
-                }
+            for (const file of this.files) {
+                const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.textContent = `📄 ${file.name} (${sizeMB} МБ)`;
+                fileList.appendChild(fileItem);
             }
         });
 
         document.getElementById('orderForm').addEventListener('submit', async function(event) {
             event.preventDefault();
-            
-            if (!validateForm()) {
-                return;
-            }
-            
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const email = document.getElementById('email').value;
-            const clientOrderNumber = document.getElementById('clientOrderNumber').value;
-            const message = document.getElementById('message').value;
+            if (!validateForm()) return;
+
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const clientOrderNumber = document.getElementById('clientOrderNumber').value.trim();
+            const message = document.getElementById('message').value.trim();
             const material = document.querySelector('input[name="material"]:checked').value;
             const edge = document.querySelector('input[name="edge"]:checked').value;
             const requestType = document.querySelector('input[name="requestType"]:checked').value;
             const fileInput = document.getElementById('fileInput');
-            
+
             const submitBtn = document.getElementById('submitBtn');
             const statusDiv = document.getElementById('uploadStatus');
             const formStatus = document.getElementById('formStatus');
-            
+
+            for (const file of fileInput.files) {
+                if (file.size > MAX_FILE_SIZE) {
+                    formStatus.innerHTML = `
+                        <div style="background: rgba(255,0,0,.2); border: 2px solid #ff6666; padding: 20px; border-radius: 10px; margin-top: 20px; color: #ffb3b3;">
+                            Файл ${file.name} больше 50 МБ.
+                        </div>`;
+                    return;
+                }
+            }
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Отправка...';
             statusDiv.style.display = 'block';
-            
+            formStatus.innerHTML = '';
+
             try {
-                const orderDate = getCurrentDate();
-                
-                statusDiv.innerHTML = '⏫ Отправляем заказ...';
-                
-                // Формируем текст заказа с датой вместо номера
-                let text = `⚫️ <b>НОВЫЙ ЗАКАЗ ${orderDate}</b>\n\n`;
-                text += `👤 <b>Имя:</b> ${name}\n`;
-                text += `📞 <b>Телефон:</b> <code>${phone}</code>\n`;
-                text += `✉️ <b>Email:</b> ${email || 'не указан'}\n\n`;
-                text += `📦 <b>Материал:</b> ${material}\n`;
-                text += `🪚 <b>Кромка:</b> ${edge}\n`;
-                text += `📋 <b>Тип заказа:</b> ${requestType}\n`;
-                
-                if (clientOrderNumber) {
-                    text += `🏷️ <b>Номер заказа (клиента):</b> ${clientOrderNumber}\n`;
-                }
-                
-                text += `\n📝 <b>Примечание:</b>\n${message || 'не указано'}\n`;
-                
-                // Отправляем текст
-                const messageResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                statusDiv.textContent = '⏫ Создаём заказ...';
+
+                const orderName = clientOrderNumber || `${getCurrentDate()} ${name}`;
+                const response = await fetch(`${API_BASE}/api/orders`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: text,
-                        parse_mode: 'HTML'
+                        order_name: orderName,
+                        customer: {name, phone, email},
+                        project: {
+                            type: requestType,
+                            notes: message
+                        },
+                        materials: [],
+                        bazis: {
+                            expected_order_name: clientOrderNumber || '',
+                            source_model: ''
+                        },
+                        external: {
+                            material_option: material,
+                            edge_option: edge,
+                            request_type: requestType,
+                            client_order_number: clientOrderNumber
+                        }
                     })
                 });
-                
-                if (!messageResponse.ok) {
-                    throw new Error('Ошибка отправки сообщения');
-                }
-                
-                // Отправляем файлы
+
+                if (!response.ok) await apiError(response, 'Не удалось создать заказ');
+                const created = await response.json();
+                const orderId = created.order.order_id;
+
                 if (fileInput.files.length > 0) {
-                    for (let i = 0; i < fileInput.files.length; i++) {
-                        const file = fileInput.files[i];
-                        if (file.size > MAX_FILE_SIZE) {
-                            throw new Error(`Файл ${file.name} слишком большой (макс. 50 МБ)`);
-                        }
-                        
-                        statusDiv.innerHTML = `⏫ Отправляем файл ${i+1}/${fileInput.files.length}: ${file.name}`;
-                        
+                    let i = 0;
+                    for (const file of fileInput.files) {
+                        i++;
+                        statusDiv.textContent = `⏫ Отправляем файл ${i}/${fileInput.files.length}: ${file.name}`;
                         const formData = new FormData();
-                        formData.append('chat_id', CHAT_ID);
-                        formData.append('caption', `Заказ ${orderDate} - ${file.name}`);
-                        formData.append('document', file);
-                        
-                        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendDocument`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        if (!response.ok) {
-                            const err = await response.json();
-                            throw new Error(err.description || 'Ошибка отправки файла');
+                        formData.append('file', file);
+                        const fileResponse = await fetch(
+                            `${API_BASE}/api/orders/${encodeURIComponent(orderId)}/files`,
+                            {method: 'POST', body: formData}
+                        );
+                        if (!fileResponse.ok) {
+                            await apiError(fileResponse, `Не удалось отправить файл ${file.name}`);
                         }
                     }
                 }
-                
-                // УСПЕХ
+
                 formStatus.innerHTML = `
-                    <div style="background: rgba(212, 160, 23, 0.3); border: 2px solid #d4a017; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <div style="background: rgba(212,160,23,.3); border: 2px solid #d4a017; padding: 20px; border-radius: 10px; margin-top: 20px;">
                         <p style="font-size: 24px; margin-bottom: 10px;">✅ Заказ успешно отправлен!</p>
-                        <p style="font-size: 16px;">Мы свяжемся с вами в ближайшее время.</p>
-                        ${fileInput.files.length > 0 ? '<p style="font-size: 14px; margin-top: 10px; color: #ccc;">Все файлы загружены.</p>' : ''}
+                        <p style="font-size: 16px;">Номер заказа: <strong>${orderId}</strong></p>
+                        <p style="font-size: 16px; margin-top: 6px;">Мы свяжемся с вами в ближайшее время.</p>
+                        ${fileInput.files.length > 0 ? '<p style="font-size: 14px; margin-top: 10px; color: #ccc;">Все файлы переданы.</p>' : ''}
                     </div>
                 `;
-                
-                // Сбрасываем форму
+
                 document.getElementById('orderForm').reset();
                 document.getElementById('fileList').innerHTML = '';
                 document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-                
+
             } catch (error) {
                 formStatus.innerHTML = `
-                    <div style="background: rgba(255, 0, 0, 0.2); border: 2px solid #ff6666; padding: 20px; border-radius: 10px; margin-top: 20px; color: #ffb3b3;">
+                    <div style="background: rgba(255,0,0,.2); border: 2px solid #ff6666; padding: 20px; border-radius: 10px; margin-top: 20px; color: #ffb3b3;">
                         <p style="font-size: 18px; margin-bottom: 10px;">❌ Ошибка отправки</p>
                         <p style="font-size: 14px;">${error.message}</p>
                         <p style="font-size: 14px; margin-top: 10px;">
