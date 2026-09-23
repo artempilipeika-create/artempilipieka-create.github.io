@@ -24,6 +24,14 @@ def prepare(settings):
         manifest=backup(settings,destination)
         print(json.dumps({'stage02_pre_migration_backup':True,'database_sha256':manifest['database_sha256'],
                           'file_count':len(manifest['files']),'destination':str(destination)}),flush=True)
+    if versions=={'0001_foundation.sql','0002_auth_security.sql'}:
+        destination=settings.storage_root.parent/'backups'/'pre-stage03'
+        manifest=backup(settings,destination)
+        state={'runtime_before':'3ff1752469f189f0e13191dcfe01a5e8033abff8','catalogue_before':None,
+               'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files']),
+               'destination':str(destination),'migration_versions':sorted(versions)}
+        (destination/'stage03-before.json').write_text(json.dumps(state,indent=2))
+        print('MF_STAGE03_PRE_MIGRATION='+json.dumps(state),flush=True)
     migrate(settings)
     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'
@@ -43,6 +51,8 @@ def prepare(settings):
         print('MF_STAGE02_EVIDENCE='+json.dumps(evidence),flush=True)
     elif os.environ.get('MF_STAGE02_PROBE_MODE','off')!='off':
         raise ValueError('Invalid Stage 2 probe mode')
+    from .stage03_operator import run_if_requested
+    run_if_requested(settings)
 
 
 if __name__=='__main__':

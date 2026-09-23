@@ -1,7 +1,8 @@
 """Exact grants AND current role ceiling/scope/state. Never a role-only bypass."""
-CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read'}
-CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve'}
-ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read'}
+CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read'}
+CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage'}
+ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read',
+              'catalogue.import','catalogue.publish','catalogue.mapping.manage'}
 
 
 def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=None):
@@ -21,7 +22,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
     if user['account_status'] == 'blocked' and (roles != {'client'} or permission not in CLIENT_READ):
         return False
     ceilings = {
-        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read'},
+        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage'},
         'production': {'orders.read','orders.oblx.read','files.source.read'},
         'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read'},
         'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read'},
@@ -47,13 +48,16 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
     for g in grants:
         scope = g['scope_type']
         if 'client' in roles:
-            if scope == 'own' and (order or permission == 'orders.draft.write'):
+            if scope == 'own' and (order or permission in {'orders.draft.write','catalogue.read','templates.own.manage'}):
                 return True
             continue
         if scope == 'all' and roles == {'admin'}:
             return True
         if scope == 'assigned' and roles == {'manager'} and order and order['assigned_manager_id'] == user_id:
             return True
+        if scope == 'assigned' and roles == {'manager'} and permission == 'catalogue.read' and not order:
+            if conn.execute('SELECT 1 FROM mf_orders WHERE assigned_manager_id=%s LIMIT 1',(user_id,)).fetchone():
+                return True
         if scope == 'order' and order and g['scope_id'] == order_id:
             # Stage 2 production artifact review requires an explicit job grant, never execute rights.
             if 'production' not in roles:
