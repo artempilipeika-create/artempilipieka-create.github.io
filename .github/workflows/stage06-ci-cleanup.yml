@@ -1,0 +1,32 @@
+name: Stage 6 diagnostic log cleanup
+on:
+  push:
+    branches: [martin-forest-v2-staging]
+    paths: ['.github/workflows/stage06-ci-cleanup.yml']
+permissions:
+  actions: write
+  contents: read
+jobs:
+  cancel-only-known-diagnostics:
+    if: github.ref == 'refs/heads/martin-forest-v2-staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Stop only superseded staging diagnostics with oversized pytest IDs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request
+          repo=os.environ['GH_REPO'];assert repo=='artempilipeika-create/artempilipieka-create.github.io'
+          base='https://api.github.com/repos/'+repo+'/actions/runs/'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'}
+          for run,sha in [(35863604224,'d21af2a3f626ffa1c1934d179242dff0275b0ea5'),(35864381534,'9a3db469cce7ec90ee3d426425bf51e73d09303a'),(35864866351,'04ee7c794fd71dd68aa5823a098748e80a810270')]:
+              data=json.load(urllib.request.urlopen(urllib.request.Request(base+str(run),headers=headers)))
+              assert data['head_branch']=='martin-forest-v2-staging' and data['head_sha']==sha
+              if data['status']!='completed':
+                  with urllib.request.urlopen(urllib.request.Request(base+str(run)+'/force-cancel',data=b'',headers=headers,method='POST')) as r:
+                      print('Stopped superseded staging diagnostic',run,r.status)
+              else: print('Already completed',run)
+          PY

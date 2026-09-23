@@ -73,7 +73,7 @@ def test_native_rotation_grain_fixtures_remain_unverified(grain,rotation):
     with pytest.raises(RuntimeError,match='CALIBRATION'): native_boundary({'native_calibration':'NOT VERIFIED'},None)
 
 
-@pytest.mark.parametrize('xml',[b'<!DOCTYPE Root [<!ENTITY x SYSTEM "file:///etc/passwd">]><Root/>',b'<!ENTITY x "x"><Root/>',b'x'*(4*1024*1024+1),'<!DOCTYPE Root [<!ENTITY x \"boom\">]><Root>&x;</Root>'.encode('utf-16')])
+@pytest.mark.parametrize('xml',[b'<!DOCTYPE Root [<!ENTITY x SYSTEM "file:///etc/passwd">]><Root/>',b'<!ENTITY x "x"><Root/>',b'x'*(4*1024*1024+1),'<!DOCTYPE Root [<!ENTITY x \"boom\">]><Root>&x;</Root>'.encode('utf-16')],ids=['doctype','entity','oversized','utf16-doctype'])
 def test_xml_xxe_and_size_rejected(xml):
     with pytest.raises(ValueError): inspect(xml)
 

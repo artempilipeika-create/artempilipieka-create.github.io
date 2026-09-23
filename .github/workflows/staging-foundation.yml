@@ -37,21 +37,8 @@ jobs:
           apt-get update -qq
           apt-get install -y --no-install-recommends postgresql-client
           pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1
-      - name: Previous stage regression tests
-        if: matrix.stage != 'stage06'
+      - name: Migrations, regression, protocol and restore tests
         run: timeout -s KILL 120s python -m pytest tests/${{ matrix.stage }} -vv -s --timeout=30 --timeout-method=thread --junitxml=qa-output/stage01/results.xml
-      - name: Stage 6 lease and fencing
-        if: matrix.stage == 'stage06'
-        run: python -m pytest tests/stage06/test_api.py -k 'job01 or job02 or job06' -vv -s --timeout=20 --timeout-method=thread
-      - name: Stage 6 results and isolation
-        if: matrix.stage == 'stage06'
-        run: python -m pytest tests/stage06/test_api.py -k 'not job01 and not job02 and not job06' -vv -s --timeout=20 --timeout-method=thread
-      - name: Stage 6 synthetic native contract
-        if: matrix.stage == 'stage06'
-        run: python -m pytest tests/stage06/test_native_contract.py -vv -s --timeout=20 --timeout-method=thread
-      - name: Stage 6 exporter
-        if: matrix.stage == 'stage06'
-        run: python -m pytest tests/stage06/test_exporter.py -vv -s --timeout=20 --timeout-method=thread
       - name: Record synthetic restore evidence in job log
         run: |
           python - <<'PY'
