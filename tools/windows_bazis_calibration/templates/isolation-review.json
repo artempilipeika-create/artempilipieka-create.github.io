@@ -1,0 +1,12 @@
+{
+  "test_root": null,
+  "reviewer_id": null,
+  "reviewed_at": null,
+  "dedicated_test_root": false,
+  "no_production_data": false,
+  "no_production_agent": false,
+  "no_machine_connection": false,
+  "no_sync_or_watcher_access": false,
+  "reviewed_process_service_task_inventory": false,
+  "notes": null
+}

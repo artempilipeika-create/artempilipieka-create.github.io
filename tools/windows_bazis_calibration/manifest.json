@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "kit_version": "mf-native-kit-1",
+  "source_head": "a0122fc60c97589c7919b626c884c4ef480b26af",
+  "native_status": "NOT VERIFIED",
+  "fixtures": [
+    {
+      "id": "four-edges",
+      "input": "fixtures/four-edges.oblx",
+      "size": 1614,
+      "sha256": "a9bb792d6fd5a24255d38e350a76fd6289e3eca5ea04f750b4f06719fb603d43",
+      "sidecar": "fixtures/four-edges.json",
+      "sidecar_sha256": "71a202084293f6badafbdf2c92c5d923f2deba7046e671f66a27bac2b32599ac"
+    },
+    {
+      "id": "texture-on-rotation-forbidden",
+      "input": "fixtures/texture-on-rotation-forbidden.oblx",
+      "size": 1614,
+      "sha256": "9cfa57b9d9af0e82dcdbd0c1d8812ce99099b16f3c27227947424bfcf1cea4b0",
+      "sidecar": "fixtures/texture-on-rotation-forbidden.json",
+      "sidecar_sha256": "3bdfcdb18c8a7cdf7355b1f82519bfddf163a470d0ef1a6d87375318f3d37133"
+    },
+    {
+      "id": "texture-on-rotation-allowed",
+      "input": "fixtures/texture-on-rotation-allowed.oblx",
+      "size": 1614,
+      "sha256": "07ab2ea3c2ab6046dd917ec580601f01fc290ac860e8124d31118a79acb9fc00",
+      "sidecar": "fixtures/texture-on-rotation-allowed.json",
+      "sidecar_sha256": "a90e3822154cab0da36f3a70c6eef38d03c8a5ee3473fc6c1de6f9da0740b937"
+    },
+    {
+      "id": "texture-off-rotation-allowed",
+      "input": "fixtures/texture-off-rotation-allowed.oblx",
+      "size": 1614,
+      "sha256": "b156367e3cbed97dbc6a3fdcb01d23d39495a57f78f7f87af7b92d0221bff43e",
+      "sidecar": "fixtures/texture-off-rotation-allowed.json",
+      "sidecar_sha256": "f756749e936760f566f38d39c54b1567071fde06ca11d479d68acf70be962f82"
+    },
+    {
+      "id": "width-grain-asymmetric",
+      "input": "fixtures/width-grain-asymmetric.oblx",
+      "size": 1614,
+      "sha256": "9cfa57b9d9af0e82dcdbd0c1d8812ce99099b16f3c27227947424bfcf1cea4b0",
+      "sidecar": "fixtures/width-grain-asymmetric.json",
+      "sidecar_sha256": "0f87fbd7ce1552c96800c4bc43d71ea974e53db5d4dc920962a1fbffb0bc34dd"
+    },
+    {
+      "id": "glued-18-plus-18",
+      "input": "fixtures/glued-18-plus-18.oblx",
+      "size": 1394,
+      "sha256": "7442a4c922bbad12c8f3a224e6efb5e52b6e8d093516657a229fc05bb6c6dee4",
+      "sidecar": "fixtures/glued-18-plus-18.json",
+      "sidecar_sha256": "4ccedb66f562a34de4c032eb67b5b9fbd565f1f59f9b4a7f7e44e50a3b74309a"
+    },
+    {
+      "id": "reference-69",
+      "input": "reference/69/04-22.09.26№69 ИП.Козинцев(1).oblx",
+      "size": 153631,
+      "sha256": "89f9b3ef2e646014600e743e809079411875e2c419c41dc613fc1517f3f5e02c",
+      "sidecar": "reference/69/expected.json",
+      "sidecar_sha256": "27c510ede4d802da3d08a2d6e3b0dcf68c5c176a9b84d98d5ac3e0daf7b809d6"
+    }
+  ]
+}

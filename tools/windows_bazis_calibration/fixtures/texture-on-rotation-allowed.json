@@ -1,0 +1,219 @@
+{
+  "synthetic": true,
+  "native_calibration": "NOT VERIFIED",
+  "manufacturing": {
+    "schema_version": 2,
+    "exporter_version": "mf-server-oblx-v1",
+    "export_profile": {
+      "version": "mf-oblx-preview-v1",
+      "exporter_version": "mf-server-oblx-v1",
+      "mode": "internal_preview",
+      "native_calibration": "NOT VERIFIED",
+      "orient": {
+        "none": "N",
+        "length": "Y",
+        "width": "Y"
+      },
+      "without_but": "unchanged_dimensions",
+      "edge_allowance": "thickness",
+      "edge_overhung": "50",
+      "edge_clip": "Y",
+      "edge_butt_type": "1",
+      "rotation": "manifest_only",
+      "axes": "NOT VERIFIED",
+      "result_format": "mf-native-result-v1"
+    },
+    "production_profile_version": "profile-fixture-v1",
+    "production_settings": {
+      "kerf_mm": "4.4",
+      "trim_left_mm": "10",
+      "trim_right_mm": "10",
+      "trim_top_mm": "10",
+      "trim_bottom_mm": "10",
+      "glue_layers": 2,
+      "glue_allowance_each_side_mm": "10",
+      "glued_finished_thickness_mm": "36",
+      "complex_edge_threshold_mm": "60",
+      "geometry_decimal_places": 3
+    },
+    "catalogue_release_id": "fixture-release",
+    "parts": [
+      {
+        "finished_detail_id": "d1",
+        "finished_length": "600",
+        "finished_width": "400",
+        "finished_qty": 3,
+        "material_key": "material-18",
+        "material": {
+          "variant_id": "material-18",
+          "article": "621 PO",
+          "name": "Synthetic 18",
+          "family": "board",
+          "length": "2800",
+          "width": "2070",
+          "thickness": "18",
+          "catalogue_release": "fixture-release",
+          "identity_sha256": "7fd8cf7dcff684f9e0684e1e6d3b0fc0a15fe2890bcb65148bf799b718a8ef1d"
+        },
+        "supply_source": "company",
+        "provided_sheets": null,
+        "grain": "length",
+        "rotation_allowed": true,
+        "finished_edges": {
+          "L1": {
+            "edge": {
+              "edge_id": "edge-L1",
+              "article": "SKU-L1",
+              "name": "Edge L1 & Ąžuolas",
+              "width": "22",
+              "thickness": "0.4",
+              "catalogue_release": "fixture-release",
+              "identity_sha256": "1c5f3ed22c95a8e21e150a234ed1538113fede694a6137cf79d8f416802b2a60"
+            },
+            "supply_source": "company",
+            "mode": "explicit_revision",
+            "manual_lock": true,
+            "assignment_sha256": "ffe2166ee5d58ec28939d5b91e02181d4741b3aa326b2e163120976839a0e79a"
+          },
+          "L2": {
+            "edge": {
+              "edge_id": "edge-L2",
+              "article": "SKU-L2",
+              "name": "Edge L2 & Ąžuolas",
+              "width": "22",
+              "thickness": "0.4",
+              "catalogue_release": "fixture-release",
+              "identity_sha256": "635d30a253374ba1b00e75e572aeae76b2aae5af93255e42a69ed234852548ef"
+            },
+            "supply_source": "company",
+            "mode": "explicit_revision",
+            "manual_lock": true,
+            "assignment_sha256": "7d64bb97c37f7f088ab444a1e4a0bc341967f475b5e7266fd7ebddec12b9ebf4"
+          },
+          "W1": {
+            "edge": {
+              "edge_id": "edge-W1",
+              "article": "SKU-W1",
+              "name": "Edge W1 & Ąžuolas",
+              "width": "22",
+              "thickness": "0.4",
+              "catalogue_release": "fixture-release",
+              "identity_sha256": "dedf148a02103f776f94c85a8e2c1d704977e11613b197b2de6cfa8e0955fe6e"
+            },
+            "supply_source": "company",
+            "mode": "explicit_revision",
+            "manual_lock": true,
+            "assignment_sha256": "037d684a08fc5811bdb5ea579410129af9063fda44c45d07f0aa5496a9c8ead4"
+          },
+          "W2": {
+            "edge": {
+              "edge_id": "edge-W2",
+              "article": "SKU-W2",
+              "name": "Edge W2 & Ąžuolas",
+              "width": "22",
+              "thickness": "0.4",
+              "catalogue_release": "fixture-release",
+              "identity_sha256": "d98bd503e168b2c20e9e83ef035da9a86effeb4f634688fb701f59172247a78e"
+            },
+            "supply_source": "company",
+            "mode": "explicit_revision",
+            "manual_lock": true,
+            "assignment_sha256": "38ffea36666e3e07da333a474b99501001d296e49c70d4e173ccd40ec141e6a8"
+          }
+        },
+        "route": "solid",
+        "recipe": null,
+        "blank": {
+          "detail_id": "d1",
+          "length": "600",
+          "width": "400",
+          "qty": 3,
+          "edges": {
+            "L1": {
+              "edge": {
+                "edge_id": "edge-L1",
+                "article": "SKU-L1",
+                "name": "Edge L1 & Ąžuolas",
+                "width": "22",
+                "thickness": "0.4",
+                "catalogue_release": "fixture-release",
+                "identity_sha256": "1c5f3ed22c95a8e21e150a234ed1538113fede694a6137cf79d8f416802b2a60"
+              },
+              "supply_source": "company",
+              "mode": "explicit_revision",
+              "manual_lock": true,
+              "assignment_sha256": "ffe2166ee5d58ec28939d5b91e02181d4741b3aa326b2e163120976839a0e79a"
+            },
+            "L2": {
+              "edge": {
+                "edge_id": "edge-L2",
+                "article": "SKU-L2",
+                "name": "Edge L2 & Ąžuolas",
+                "width": "22",
+                "thickness": "0.4",
+                "catalogue_release": "fixture-release",
+                "identity_sha256": "635d30a253374ba1b00e75e572aeae76b2aae5af93255e42a69ed234852548ef"
+              },
+              "supply_source": "company",
+              "mode": "explicit_revision",
+              "manual_lock": true,
+              "assignment_sha256": "7d64bb97c37f7f088ab444a1e4a0bc341967f475b5e7266fd7ebddec12b9ebf4"
+            },
+            "W1": {
+              "edge": {
+                "edge_id": "edge-W1",
+                "article": "SKU-W1",
+                "name": "Edge W1 & Ąžuolas",
+                "width": "22",
+                "thickness": "0.4",
+                "catalogue_release": "fixture-release",
+                "identity_sha256": "dedf148a02103f776f94c85a8e2c1d704977e11613b197b2de6cfa8e0955fe6e"
+              },
+              "supply_source": "company",
+              "mode": "explicit_revision",
+              "manual_lock": true,
+              "assignment_sha256": "037d684a08fc5811bdb5ea579410129af9063fda44c45d07f0aa5496a9c8ead4"
+            },
+            "W2": {
+              "edge": {
+                "edge_id": "edge-W2",
+                "article": "SKU-W2",
+                "name": "Edge W2 & Ąžuolas",
+                "width": "22",
+                "thickness": "0.4",
+                "catalogue_release": "fixture-release",
+                "identity_sha256": "d98bd503e168b2c20e9e83ef035da9a86effeb4f634688fb701f59172247a78e"
+              },
+              "supply_source": "company",
+              "mode": "explicit_revision",
+              "manual_lock": true,
+              "assignment_sha256": "38ffea36666e3e07da333a474b99501001d296e49c70d4e173ccd40ec141e6a8"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "parser_expected": {
+    "programm": "mf-server-oblx-v1",
+    "sets": "1",
+    "materials": 1,
+    "positions": 1,
+    "parts": 3,
+    "details": [
+      {
+        "length": "600",
+        "width": "400",
+        "qty": 3,
+        "orient": "Y",
+        "edges": {
+          "L1": "SKU-L1",
+          "L2": "SKU-L2",
+          "W1": "SKU-W1",
+          "W2": "SKU-W2"
+        }
+      }
+    ],
+    "native_calibration": "NOT VERIFIED"
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "fixture_id": null,
+  "run_id": null,
+  "job_id": null,
+  "revision_id": null,
+  "order_id": null,
+  "calculation_id": null,
+  "identity_scope": "offline-calibration-only; not server job IDs",
+  "operator_id": null,
+  "attestor_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "bazis_file_version": null,
+  "mapping_version": null,
+  "profile_id": "mf-oblx-preview-v1",
+  "calibration_id": null,
+  "native_execution": "manual",
+  "fatal_errors": [],
+  "warnings": [],
+  "observed": {
+    "material": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "thickness": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "qty": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "finished_L": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "finished_W": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "blank_L": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "blank_W": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "grain": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "rotation_allowed": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "Orient": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "Rotation": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "X": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "Y": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "L_W_correspondence": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "WithoutBut": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "Allowance": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "Overhung": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "L1": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "L2": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "W1": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "W2": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "child_final_link": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "stages_layers": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "finished_qty": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "material_consumption": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    },
+    "L_plus_W_stage": {
+      "value": null,
+      "ui_label": null,
+      "evidence": [],
+      "status": "NOT VERIFIED"
+    }
+  },
+  "expected_comparison": {
+    "blank_length": null,
+    "blank_width": null,
+    "blank_qty": null,
+    "finished_length": null,
+    "finished_width": null,
+    "finished_qty": null,
+    "material_identity": null,
+    "grain": null,
+    "rotation_allowed": null,
+    "edges": {
+      "L1": null,
+      "L2": null,
+      "W1": null,
+      "W2": null
+    }
+  },
+  "reference_comparison": {
+    "materials": null,
+    "positions": null,
+    "parts": null,
+    "exact_codes_edges_review": null
+  }
+}

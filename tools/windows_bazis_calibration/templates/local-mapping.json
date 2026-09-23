@@ -1,0 +1,92 @@
+{
+  "mapping_version": null,
+  "purpose": "isolated synthetic calibration only; not production catalogue mapping",
+  "materials": [
+    {
+      "cloud_identity": "material-18",
+      "identity_sha256": "7fd8cf7dcff684f9e0684e1e6d3b0fc0a15fe2890bcb65148bf799b718a8ef1d",
+      "manufacturer": "NOT PROVIDED IN SYNTHETIC SOURCE",
+      "article_code": "621 PO",
+      "thickness": "18",
+      "format": [
+        "2800",
+        "2070"
+      ],
+      "local_bazis_identity": null,
+      "local_name_code": null,
+      "mapping_source": null,
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": [],
+      "status": "needs_material_mapping"
+    },
+    {
+      "cloud_identity": "edge-L1",
+      "identity_sha256": "1c5f3ed22c95a8e21e150a234ed1538113fede694a6137cf79d8f416802b2a60",
+      "manufacturer": "NOT PROVIDED IN SYNTHETIC SOURCE",
+      "article_code": "SKU-L1",
+      "thickness": "0.4",
+      "format": {
+        "width": "22"
+      },
+      "local_bazis_identity": null,
+      "local_name_code": null,
+      "mapping_source": null,
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": [],
+      "status": "needs_material_mapping"
+    },
+    {
+      "cloud_identity": "edge-L2",
+      "identity_sha256": "635d30a253374ba1b00e75e572aeae76b2aae5af93255e42a69ed234852548ef",
+      "manufacturer": "NOT PROVIDED IN SYNTHETIC SOURCE",
+      "article_code": "SKU-L2",
+      "thickness": "0.4",
+      "format": {
+        "width": "22"
+      },
+      "local_bazis_identity": null,
+      "local_name_code": null,
+      "mapping_source": null,
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": [],
+      "status": "needs_material_mapping"
+    },
+    {
+      "cloud_identity": "edge-W1",
+      "identity_sha256": "dedf148a02103f776f94c85a8e2c1d704977e11613b197b2de6cfa8e0955fe6e",
+      "manufacturer": "NOT PROVIDED IN SYNTHETIC SOURCE",
+      "article_code": "SKU-W1",
+      "thickness": "0.4",
+      "format": {
+        "width": "22"
+      },
+      "local_bazis_identity": null,
+      "local_name_code": null,
+      "mapping_source": null,
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": [],
+      "status": "needs_material_mapping"
+    },
+    {
+      "cloud_identity": "edge-W2",
+      "identity_sha256": "d98bd503e168b2c20e9e83ef035da9a86effeb4f634688fb701f59172247a78e",
+      "manufacturer": "NOT PROVIDED IN SYNTHETIC SOURCE",
+      "article_code": "SKU-W2",
+      "thickness": "0.4",
+      "format": {
+        "width": "22"
+      },
+      "local_bazis_identity": null,
+      "local_name_code": null,
+      "mapping_source": null,
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": [],
+      "status": "needs_material_mapping"
+    }
+  ]
+}

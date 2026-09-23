@@ -1,0 +1,18 @@
+{
+  "status": "NOT VERIFIED",
+  "separate_user_authorization": null,
+  "normal_native_run_evidence": null,
+  "no_machine_connection": false,
+  "job_id": null,
+  "revision_id": null,
+  "run_id": null,
+  "lease_digest": null,
+  "fencing": null,
+  "started_evidence": null,
+  "interruption_evidence": null,
+  "uncertain_evidence": null,
+  "no_blind_retry_evidence": null,
+  "stale_lease_rejection_evidence": null,
+  "operator_reconciliation_decision": null,
+  "evidence": []
+}
