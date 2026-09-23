@@ -125,9 +125,45 @@ def run(settings):
                           'calculation_id':calculation['calculation_id'],'document_id':doc['file_id'],'source_file_id':str(fid),
                           'catalogue_release':release,'financial_context':ctx,'pdf_sha256':sha256(pdf.content),
                           'raw_qty':0,'corrected_qty':3,'final_gate':'BAZIS_RUN_REQUIRED','jobs':0})
+        # A separate mixed manufacturing input retains the original error row.
+        # Unknown service/edge prices remain incomplete; no complete/final claim.
+        search={}
+        for term in ('ЛХДФ','HDF','U708','U5034','621 PO','621 PE'):
+            response=client.get('/api/v2/catalogue/materials',params={'q':term,'release':release})
+            assert response.status_code==200
+            search[term]=response.json()
+        hdf=next(m for m in search['ЛХДФ']['items'] if not m.get('article'))
+        edge_response=client.get('/api/v2/catalogue/edges',params={'release':release,'limit':250})
+        assert edge_response.status_code==200
+        edges=edge_response.json()['items'][:4]
+        assert len({e['edge_id'] for e in edges})==4
+        mixed=post(client,'/orders',{'business_name':'SYNTHETIC Stage 8 mixed materials','preparation_mode':'self_prepared'},status=201)
+        post(admin,'/orders/'+mixed['order_id']+'/financial-context',{**ctx,'reason':'Synthetic mixed manufacturing input'},1,status=201)
+        preview,row,applied=import_zero(client,mixed,material['article'])
+        extra=[{'detail_id':'ordinary-18','length':'700','width':'300','qty':2,'variant_id':material['variant_id'],
+                'grain':'length','rotation':False,'route':'solid','edges':{side:{'edge_id':e['edge_id'],'supply_source':'customer'} for side,e in zip(('L1','L2','W1','W2'),edges)}},
+               {'detail_id':'articleless-hdf-customer','length':'500','width':'250','qty':1,'variant_id':hdf['variant_id'],
+                'grain':'none','rotation':True,'route':'solid','edges':{},'supply_source':'customer','provided_sheets':1,
+                'customer_reason':'Synthetic explicitly customer-owned HDF; no company material charge'}]
+        revision=corrected_revision(client,mixed,release,material,row,applied['optimistic_lock_version'],extra=extra)
+        calculation=post(client,'/orders/'+mixed['order_id']+'/calculations',{'revision_id':revision['revision_id']},status=201)
+        doc=post(client,'/calculations/'+calculation['calculation_id']+'/documents/preliminary',{},status=201)
+        pdf=expect('client','GET','/documents/'+doc['file_id'],200);assert pdf.content.startswith(b'%PDF-')
+        sent=post(client,'/orders/'+mixed['order_id']+'/submit',{'revision_id':revision['revision_id'],
+                  'preliminary_calculation_id':calculation['calculation_id'],'handoff_problematic':True,
+                  'comment':'Synthetic explicit manager handoff of unresolved service classification'},
+                  revision['optimistic_lock_version'],**{'Idempotency-Key':uuid4().hex})
+        assert sent['production_ready'] is False
+        post(admin,'/orders/'+mixed['order_id']+'/review',{'reason':'Synthetic mixed-input review; no production release'},sent['optimistic_lock_version'])
+        flows.append({'mode':'mixed-self','order_id':mixed['order_id'],'revision_id':revision['revision_id'],
+                      'calculation_id':calculation['calculation_id'],'document_id':doc['file_id'],'pdf_sha256':sha256(pdf.content),
+                      'calculation_state':calculation['completeness'],'total':calculation['total'],
+                      'four_edge_ids':[e['edge_id'] for e in edges],'articleless_hdf_id':hdf['variant_id'],
+                      'raw_qty':0,'corrected_qty':3,'jobs':0,'explicit_problematic_handoff':True})
         with connect(settings) as db:
             for fid,expected in old_files.items(): assert sha256(read_verified(db,VolumeStore(settings.storage_root),fid))==expected
         result={'flows':flows,'responses':responses,'old_private_files_unchanged':len(old_files),
+                'catalogue_search':{q:{'total':v['total'],'items':[{k:m.get(k) for k in ('variant_id','article','thickness','length','width')} for m in v['items']]} for q,v in search.items()},
                 'gates_before':gate_before,'gates_after':gates(settings),'external_email_delivery':'NOT VERIFIED',
                 'native':'NOT VERIFIED','transport':'actual staging HTTPS','live_produce_created':0}
     finally:
