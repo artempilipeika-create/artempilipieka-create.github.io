@@ -33,7 +33,23 @@ def run(settings):
         print('MF_STAGE08_LIVE='+path.read_text(),flush=True);return
     if not (root/'pre-stage08-evidence.json').exists(): raise ValueError('Pre-stage checkpoint required')
     attempt=root/'stage08-live-attempt.json'
-    if attempt.exists(): raise ValueError('Incomplete attempt requires operator inspection; no blind rerun')
+    if attempt.exists():
+        # Narrow recovery for the observed initial Railway edge 502 only.
+        # Any order/data progress requires separate operator inspection, not replay.
+        with connect(settings) as db:
+            ids=[r['actor_user_id'] for r in db.execute("SELECT actor_user_id FROM mf_audit WHERE action='stage08.synthetic.actor.created'")]
+            if not ids: raise ValueError('Attempt state needs inspection')
+            orders=db.execute('SELECT count(*) n FROM mf_orders WHERE owner_user_id=ANY(%s)',(ids,)).fetchone()['n']
+            active=db.execute("SELECT count(*) n FROM mf_users WHERE user_id=ANY(%s) AND account_status<>'disabled'",(ids,)).fetchone()['n']
+            sessions=db.execute('SELECT count(*) n FROM mf_sessions WHERE user_id=ANY(%s) AND revoked_at IS NULL',(ids,)).fetchone()['n']
+            grants=db.execute('SELECT count(*) n FROM mf_permission_grants WHERE user_id=ANY(%s) AND revoked_at IS NULL',(ids,)).fetchone()['n']
+            if orders or active or sessions or grants: raise ValueError('Nonempty attempt; no blind rerun')
+        recovery={'prior_attempt':json.loads(attempt.read_text()),'created_orders':orders,'active_actors':active,'active_sessions':sessions,'active_grants':grants,
+                  'reason':'Initial HTTPS edge 502 before first order; explicitly verified empty and retired'}
+        recovered=root/('stage08-empty-attempt-'+uuid4().hex+'.json')
+        recovered.write_text(json.dumps(recovery));recovered.chmod(0o600)
+        print('MF_STAGE08_EMPTY_ATTEMPT='+json.dumps(recovery),flush=True)
+        attempt.unlink()
     attempt.write_text(json.dumps({'deployment':settings.instance_id}));attempt.chmod(0o600)
     actors={};clients={};responses=[];flows=[]
     gate_before=gates(settings)
@@ -188,12 +204,16 @@ def main():
     gates(settings)
     def worker():
         try:
-            # Server startup is signalled via local HTTP first, then exercise public HTTPS.
-            for _ in range(40):
+            # Wait for Railway public routing, not just local uvicorn readiness.
+            healthy=0
+            for _ in range(60):
                 try:
-                    if httpx.get('http://127.0.0.1:'+os.environ.get('PORT','8000')+'/health',timeout=2).status_code==200: break
-                except httpx.HTTPError: pass
-                time.sleep(1)
+                    response=httpx.get(ORIGIN+'/health',timeout=5)
+                    healthy=healthy+1 if response.status_code==200 and response.json().get('ok') else 0
+                    if healthy>=3: break
+                except (httpx.HTTPError,ValueError): healthy=0
+                time.sleep(2)
+            if healthy<3: raise ValueError('Public HTTPS did not become ready; no test data created')
             run(settings)
             result=checkpoint(settings,'post-stage08')
             print('MF_STAGE08_CHECKPOINT='+json.dumps(result,separators=(',',':'),default=str),flush=True)
