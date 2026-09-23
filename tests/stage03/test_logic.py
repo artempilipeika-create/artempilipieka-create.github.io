@@ -150,3 +150,21 @@ def test_macro_and_external_worksheet_rejected():
     data=BytesIO(master())
     with ZipFile(data,'a') as z: z.writestr('xl/vbaProject.bin',b'no execution')
     with pytest.raises(ValueError): read_workbook(data.getvalue())
+
+def test_literal_621_po_does_not_resolve_to_only_621_pe():
+    catalogue=item();catalogue['article']='621 PE';catalogue['structure']='PE'
+    result=resolve(raw(),[catalogue],'release')
+    assert result['status']=='unresolved' and result['selected'] is None
+    assert result['raw']['raw_article']=='621 PO'
+
+@pytest.mark.parametrize('side',['L1','L2','W1','W2'])
+def test_each_manual_side_is_protected(side):
+    material=item()
+    snapshot={'resolution':{'status':'manual_override','selected':material},
+              'edges':{s:{'mode':'auto_suggestion','mark':'present'} for s in ['L1','L2','W1','W2']}}
+    snapshot['edges'][side]={'mode':'manual_override','edge_id':'manual','confirmed_by':'person','reason':'explicit'}
+    edges=[{'edge_id':'manual','width':'22'},{'edge_id':'default','width':'23'}]
+    mapping={'variant_id':'variant','edge_id':'default','mapping_id':'map','version':1}
+    result=apply_auto(snapshot,edges,[mapping])
+    assert result['edges'][side]['edge_id']=='manual' and result['edges'][side]['confirmed_by']=='person'
+    assert result['resolution']['selected']==material

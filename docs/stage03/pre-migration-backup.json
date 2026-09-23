@@ -1,0 +1,13 @@
+{
+  "deployment_id": "4b0bc740-1fdf-4dcc-af7d-0b7b7bb76e0e",
+  "timestamp": "2026-09-23T09:13:55.585921776Z",
+  "runtime_before": "3ff1752469f189f0e13191dcfe01a5e8033abff8",
+  "catalogue_before": null,
+  "database_sha256": "c374390347864d7ff1b214e47af8ed8e31a1ee2c075f877641eac80f09535681",
+  "file_count": 3,
+  "destination": "/mf-private/backups/pre-stage03",
+  "migration_versions": [
+    "0001_foundation.sql",
+    "0002_auth_security.sql"
+  ]
+}

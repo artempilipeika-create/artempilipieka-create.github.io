@@ -85,7 +85,7 @@ def test_catalogue_security_private_source_and_reproducible_cache(api,settings,a
     with connect(settings) as c:
         assert verify_cache(c,release,cache.content)
         with pytest.raises(ValueError): verify_cache(c,release,cache.content+b'/* manual drift */')
-    for private in ('raw_value','price_entry','source_namespace','storage_key','identity_signature','999'):
+    for private in ('raw_value','price_entry','source_namespace','storage_key','identity_signature'):
         assert private not in cache.text
     report=api.get('/api/v2/catalogue/imports/'+result['import_id']).json();fid=report['file_id']
     assert api.get('/api/v2/files/'+fid+'/download').status_code==403

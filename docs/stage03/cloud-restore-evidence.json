@@ -1,0 +1,16 @@
+{
+  "deployment_id": "afd29129-c6de-475a-8fb1-8daf683bc727",
+  "timestamp": "2026-09-23T09:23:33.815212831Z",
+  "restored": true,
+  "file_count": 7,
+  "database": "mf_staging_restore_stage03_9e4c8658833c",
+  "source_dump_sha256": "e0aec56c5f56840360f1e47141437a13d262e8124bc5abb083affb9869a8ca81",
+  "backup_path": "/mf-private/backups/stage03-9e4c8658833c",
+  "master_sha256": "54c6f737f0bafecc3dc5df4ed14b573b7e2f5ab0c83e626e5e79fc296c641f4a",
+  "master_bytes_verified": true,
+  "catalogue_raw_rows": 44278,
+  "active_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+  "operator_retired": true,
+  "transport": "disabled",
+  "dispatch": "disabled"
+}

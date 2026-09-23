@@ -1,0 +1,2214 @@
+diff --git a/.github/workflows/staging-foundation.yml b/.github/workflows/staging-foundation.yml
+index efefe10..bd53ce8 100644
+--- a/.github/workflows/staging-foundation.yml
++++ b/.github/workflows/staging-foundation.yml
+@@ -33,7 +33,7 @@ jobs:
+           apt-get install -y --no-install-recommends postgresql-client
+           pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1
+       - name: Test migrations, transactions, private files, RBAC and restore
+-        run: python -m pytest tests/stage01 tests/stage02 -v --junitxml=qa-output/stage01/results.xml
++        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 -v --junitxml=qa-output/stage01/results.xml
+       - name: Record synthetic restore evidence in job log
+         run: |
+           python - <<'PY'
+diff --git a/backend/v2/app.py b/backend/v2/app.py
+index 0d81524..34da4c3 100644
+--- a/backend/v2/app.py
++++ b/backend/v2/app.py
+@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
+ from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
+ from fastapi.exceptions import RequestValidationError
+ from .security import WebPolicy
+-from . import auth_api, domain_api
++from . import auth_api, domain_api, catalogue_api
+ import secrets
+ import os
+ from .config import Settings
+@@ -66,7 +66,7 @@ def create_app(settings=None, policy=None):
+             readiness(settings)
+         except Exception:
+             raise HTTPException(503, 'Staging database is not ready') from None
+-        return {'ok': True, 'environment': 'staging', 'stage': '2', 'agent_transport': 'disabled'}
++        return {'ok': True, 'environment': 'staging', 'stage': '3', 'agent_transport': 'disabled'}
+ 
+     if not enabled:
+         return app
+@@ -94,4 +94,5 @@ def create_app(settings=None, policy=None):
+ 
+     app.include_router(auth_api.router(settings,policy))
+     app.include_router(domain_api.router(settings,policy))
++    app.include_router(catalogue_api.router(settings,policy))
+     return app
+diff --git a/backend/v2/auto.py b/backend/v2/auto.py
+new file mode 100644
+index 0000000..f5c72b7
+--- /dev/null
++++ b/backend/v2/auto.py
+@@ -0,0 +1,37 @@
++"""Edge-only AUTO. Manual SKU and explicit manual NONE are equally protected."""
++from copy import deepcopy
++from .catalogue_model import decimal
++
++
++def compatible(material,edge):
++    if not material or not edge: return False
++    thickness,width=decimal(material.get('thickness')),decimal(edge.get('width'))
++    return thickness is not None and width is not None and width>=thickness
++
++
++def apply_auto(snapshot,edge_items,mappings):
++    result=deepcopy(snapshot); material=result.get('resolution',{}).get('selected')
++    edges={e['edge_id']:e for e in edge_items}
++    approved=[m for m in mappings if material and str(m['variant_id'])==material['variant_id'] and str(m['edge_id']) in edges]
++    mapping=max(approved,key=lambda m:m['version']) if approved else None
++    for side,state in result.get('edges',{}).items():
++        state['warnings']=[]
++        if state.get('mode')=='manual_override':
++            eid=state.get('edge_id')
++            if eid and not compatible(material,edges.get(eid)):
++                state['warnings'].append('manual_edge_incompatible_or_absent_in_release')
++        elif state.get('mark')=='none':
++            state.update(edge_id=None,confirmed=False,mode='auto_suggestion',candidates=[])
++        elif state.get('conflict') or state.get('raw_sku') is not None:
++            # An imported exact SKU is not permission to replace it with a default.
++            state.update(edge_id=None,confirmed=False,mode='auto_suggestion',candidates=[e['edge_id'] for e in edge_items if e.get('article')==state.get('raw_sku')])
++        elif mapping and compatible(material,edges[str(mapping['edge_id'])]):
++            state.update(mode='confirmed_database_mapping',edge_id=str(mapping['edge_id']),confirmed=True,
++                         mapping_id=str(mapping['mapping_id']),mapping_version=mapping['version'],
++                         snapshot=deepcopy(edges[str(mapping['edge_id'])]))
++        else:
++            code=material.get('article') if material else None
++            suggestions=[e['edge_id'] for e in edge_items if code and code in (e.get('designation') or '')]
++            state.update(mode='auto_suggestion',edge_id=None,confirmed=False,candidates=suggestions)
++            for key in ('mapping_id','mapping_version','snapshot'): state.pop(key,None)
++    return result
+diff --git a/backend/v2/catalogue.py b/backend/v2/catalogue.py
+new file mode 100644
+index 0000000..471ce15
+--- /dev/null
++++ b/backend/v2/catalogue.py
+@@ -0,0 +1,167 @@
++"""Immutable catalogue releases. Caller owns the data/audit/outbox transaction."""
++from collections import Counter
++from uuid import uuid4
++from psycopg.types.json import Jsonb
++from .catalogue_model import normalize_master, fingerprint, safe_item, packed, canonical
++from .events import record_event
++from .security import error
++
++CATALOGUE_LOCK=76010301
++
++
++def active(conn):
++    row=conn.execute('SELECT release_id FROM mf_catalogue_active WHERE singleton').fetchone()
++    return row['release_id'] if row else None
++
++
++def items(conn,release_id,kind=None):
++    sql='SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s'
++    args=[release_id]
++    if kind: sql+=' AND kind=%s'; args.append(kind)
++    return [r['snapshot'] for r in conn.execute(sql+' ORDER BY item_id',args)]
++
++
++def get_item(conn,release_id,item_id,kind=None):
++    row=conn.execute('SELECT kind,snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s',(release_id,item_id)).fetchone()
++    if not row or (kind and row['kind']!=kind): error(422,'VARIANT_NOT_IN_RELEASE')
++    return safe_item(row['snapshot'],release_id)
++
++
++def build_diff(previous,records):
++    old={i.get('variant_id',i.get('edge_id')):i for i in previous}
++    new={r['normalized'].get('variant_id',r['normalized'].get('edge_id')):r for r in records if r['disposition']=='published'}
++    common=set(old)&set(new)
++    counts=Counter(r['disposition'] for r in records)
++    return {'source_rows':len(records),'accounted_rows':sum(counts.values()),
++        'dispositions':{s:counts[s] for s in ('published','review','excluded','error','duplicate')},
++        'added':sorted(set(new)-set(old)),'inactive':sorted(set(old)-set(new)),
++        'changed':[k for k in common if old[k].get('name')!=new[k]['normalized'].get('name')],
++        'price_changes':[], 'format_changes':[],
++        'ambiguous':sum('identity' in r['reason'] for r in records),
++        'identity_collisions':sum(r['reason']=='duplicate_external_sync_id' for r in records)}
++
++
++def ingest(conn,settings,actor,file_id,workbook,namespace,profile):
++    conn.execute('SELECT pg_advisory_xact_lock(%s)',(CATALOGUE_LOCK,))
++    current=active(conn)
++    existing=conn.execute('''SELECT import_id,report FROM mf_catalogue_imports
++        WHERE sha256=%s AND source_namespace=%s AND profile=%s
++        AND coalesce(report->>'base_release','')=%s ORDER BY created_at LIMIT 1''',
++        (workbook['sha256'],namespace,Jsonb(profile),str(current or ''))).fetchone()
++    if existing: return {**existing,'reused':True}
++    batch=uuid4(); records,classes=normalize_master(workbook,namespace)
++    prev=active(conn); previous=[i for i in items(conn,prev) if i['source_namespace']==namespace] if prev else []
++    known={r['source_key']:r for r in conn.execute('''SELECT source_key,identity_signature FROM mf_catalogue_source_mappings
++        WHERE source_namespace=%s AND key_kind='external' ''',(namespace,))}
++    old_signatures={i.get('identity_signature'):i for i in previous}
++    for r in records:
++        ext=canonical(r['raw']['L'])
++        if r['disposition']=='published' and ext in known and known[ext]['identity_signature']!=r['signature']:
++            r.update(disposition='review',reason='external_identity_changed_requires_mapping')
++        old=old_signatures.get(r['signature'])
++        if r['disposition']=='published' and old and old['name']!=r['normalized']['name']:
++            r.update(disposition='review',reason='rename_requires_explicit_audit')
++    eligible={r['signature'] for r in records if r['disposition']=='published'}
++    for r in records:
++        if r['disposition']=='duplicate' and r['signature'] not in eligible:
++            r.update(disposition='review',reason='duplicate_of_review_record')
++            r.pop('duplicate_of',None)
++    report=build_diff(previous,records); report['classes']=classes
++    report['reasons']=dict(Counter(r['reason'] for r in records)); report['base_release']=str(prev) if prev else None
++    report['price_policy']='NC-05 unknown currency/VAT/purpose; provenance only'
++    if prev:
++        old_price={str(r['item_id']):r['raw_value'] for r in conn.execute('SELECT item_id,raw_value FROM mf_material_price_entries WHERE release_id=%s',(prev,))}
++        report['price_changes']=[r['normalized'].get('variant_id',r['normalized'].get('edge_id')) for r in records
++            if r['disposition']=='published' and r['normalized'].get('variant_id',r['normalized'].get('edge_id')) in old_price
++            and old_price[r['normalized'].get('variant_id',r['normalized'].get('edge_id'))]!=r['raw']['D']]
++        # Article matches with different physical dimensions are visible; never silently replace.
++        old_article={i['article']:i for i in previous if i['article']}
++        report['format_changes']=[{'sheet':r['sheet'],'row':r['row'],'previous_variant':old_article[r['normalized']['article']].get('variant_id')}
++            for r in records if r['normalized'].get('article') in old_article
++            and any(r['normalized'].get(k)!=old_article[r['normalized']['article']].get(k) for k in ('length','width','thickness'))]
++    meta={'sha256':workbook['sha256'],'sheets':[{'name':s['name'],'rows':len(s['rows'])-1,
++           'headers':s['rows'][0]['cells']} for s in workbook['sheets']]}
++    conn.execute('''INSERT INTO mf_catalogue_imports VALUES (%s,%s,%s,%s,%s,%s,%s,%s,now())''',
++                 (batch,file_id,namespace,Jsonb(profile),workbook['sha256'],Jsonb(meta),Jsonb(report),actor))
++    # Persist stable identity map for every eligible unique variant, independent of row order and prices.
++    for r in records:
++        if r['disposition']!='published': continue  # All records are inserted into the raw ledger below.
++        item=r['normalized']; sig=r['signature']; vid=item.get('variant_id'); eid=item.get('edge_id')
++        if vid:
++            conn.execute('INSERT INTO mf_materials(material_id,source_namespace,identity_key) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING',
++                         (item['material_id'],namespace,sig))
++            conn.execute('INSERT INTO mf_material_variants VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING',
++                         (vid,item['material_id'],sig,Jsonb(item)))
++        else: conn.execute('INSERT INTO mf_edge_variants VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING',(eid,namespace,sig,Jsonb(item)))
++        keys=[('identity',sig)]+([('external',canonical(r['raw']['L']))] if canonical(r['raw']['L']) else [])
++        for kind,key in keys:
++            conn.execute('INSERT INTO mf_catalogue_source_mappings VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING',
++                         (namespace,kind,key,sig,vid,eid,batch))
++    # Raw IDs are batch-local (repeated bytes with a different profile remain separate evidence).
++    row_ids={r['raw_row_id']:uuid4() for r in records}
++    with conn.cursor() as cur:
++        cur.executemany('''INSERT INTO mf_catalogue_raw_rows VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
++            [(row_ids[r['raw_row_id']],batch,r['sheet'],r['row'],Jsonb(r['cells']),r['disposition'],r['reason'],Jsonb(r['normalized']),
++              r['normalized'].get('variant_id') if r['disposition'] in {'published','duplicate'} else None,
++              r['normalized'].get('edge_id') if r['disposition'] in {'published','duplicate'} else None,
++              row_ids.get(r.get('duplicate_of'))) for r in records])
++    record_event(conn,settings,actor=actor,action='catalogue.imported',object_type='catalogue_import',object_id=batch,reason='Immutable raw source and dry-run ledger')
++    return {'import_id':batch,'report':report,'reused':False}
++
++
++def publish(conn,settings,actor,batch,reason,accept_review,expected_active):
++    conn.execute('SELECT pg_advisory_xact_lock(%s)',(CATALOGUE_LOCK,))
++    row=conn.execute('SELECT * FROM mf_catalogue_imports WHERE import_id=%s',(batch,)).fetchone()
++    if not row: error(404,'IMPORT_NOT_FOUND')
++    existing=conn.execute('SELECT release_id FROM mf_catalogue_releases WHERE import_id=%s',(batch,)).fetchone()
++    if existing: return existing
++    previous=active(conn)
++    if str(previous or '')!=str(expected_active or '') or str(previous or '')!=(row['report']['base_release'] or ''):
++        error(409,'CATALOGUE_BASE_CHANGED_REIMPORT_REQUIRED')
++    if row['report']['dispositions']['error']: error(409,'CATALOGUE_ERRORS_BLOCK_PUBLICATION')
++    if row['report']['dispositions']['review'] and not accept_review: error(409,'EXPLICIT_REVIEW_EXCLUSION_REQUIRED')
++    release=uuid4()
++    conn.execute('INSERT INTO mf_catalogue_releases VALUES (%s,%s,%s,%s,%s,now())',
++                 (release,batch,previous,Jsonb(row['report']),actor))
++    # A source namespace is an explicit complete supplier scope, never a partial unmarked feed.
++    if previous:
++        conn.execute('''INSERT INTO mf_catalogue_items SELECT %s,item_id,kind,source_namespace,snapshot,raw_row_id
++            FROM mf_catalogue_items WHERE release_id=%s AND source_namespace<>%s''',(release,previous,row['source_namespace']))
++        conn.execute('''INSERT INTO mf_material_price_entries SELECT gen_random_uuid(),%s,p.item_id,p.raw_value,p.raw_unit,p.raw_row_id,
++            NULL,NULL,NULL,NULL FROM mf_material_price_entries p JOIN mf_catalogue_items i
++            ON i.release_id=p.release_id AND i.item_id=p.item_id WHERE p.release_id=%s AND i.source_namespace<>%s''',
++            (release,previous,row['source_namespace']))
++    rows=conn.execute("SELECT * FROM mf_catalogue_raw_rows WHERE import_id=%s AND disposition='published'",(batch,)).fetchall()
++    with conn.cursor() as cur:
++        cur.executemany('INSERT INTO mf_catalogue_items VALUES (%s,%s,%s,%s,%s,%s)',
++            [(release,r['variant_id'] or r['edge_id'],r['normalized']['kind'],row['source_namespace'],Jsonb(r['normalized']),r['raw_row_id']) for r in rows])
++        cur.executemany('INSERT INTO mf_material_price_entries VALUES (%s,%s,%s,%s,%s,%s,NULL,NULL,NULL,NULL)',
++            [(uuid4(),release,r['variant_id'] or r['edge_id'],Jsonb(r['cells'].get('D',{}).get('value')),
++              r['cells'].get('C',{}).get('value'),r['raw_row_id']) for r in rows])
++    conn.execute('INSERT INTO mf_catalogue_release_seals(release_id) VALUES(%s)',(release,))
++    activate(conn,settings,actor,release,reason)
++    return {'release_id':release,'published_items':len(rows)}
++
++
++def activate(conn,settings,actor,release,reason):
++    conn.execute('SELECT pg_advisory_xact_lock(%s)',(CATALOGUE_LOCK,))
++    if not conn.execute('SELECT 1 FROM mf_catalogue_releases WHERE release_id=%s',(release,)).fetchone(): error(404,'RELEASE_NOT_FOUND')
++    conn.execute('''INSERT INTO mf_catalogue_active VALUES(true,%s,now()) ON CONFLICT(singleton)
++        DO UPDATE SET release_id=EXCLUDED.release_id,updated_at=now()''',(release,))
++    record_event(conn,settings,actor=actor,action='catalogue.activated',object_type='catalogue_release',object_id=release,reason=reason)
++
++
++def projection(conn,release):
++    return {'catalogue_release':str(release),'materials':[safe_item(i,release) for i in items(conn,release,'material')],
++            'edges':[safe_item(i,release) for i in items(conn,release,'edge')]}
++
++
++def cache_bytes(conn,release):
++    # Compatibility cache has an independently verifiable hash and no purchasing/raw/internal fields.
++    return ('/* GENERATED. DO NOT EDIT. */\nwindow.MF_DATA = '+packed(projection(conn,release))+';\n').encode()
++
++
++def verify_cache(conn,release,data):
++    if data!=cache_bytes(conn,release):
++        raise ValueError('Generated catalogue cache drift')
++    return True
+diff --git a/backend/v2/catalogue_api.py b/backend/v2/catalogue_api.py
+new file mode 100644
+index 0000000..855402e
+--- /dev/null
++++ b/backend/v2/catalogue_api.py
+@@ -0,0 +1,434 @@
++"""Stage 3 API. Uses the same fresh sessions, explicit grants and scoped draft locks."""
++import base64
++import binascii
++from datetime import datetime, timezone
++import hashlib
++from typing import Literal
++from uuid import UUID,uuid4
++from fastapi import APIRouter,Request,Response,Query
++from pydantic import Field,field_validator
++from psycopg.types.json import Jsonb
++from .auth_api import StrictModel
++from .db import transaction
++from .domain_api import require,admin
++from .security import identity,error
++from .events import record_event
++from .files import save_private_file,read_verified
++from .storage import VolumeStore
++from .xlsx import read_workbook
++from . import catalogue,import_service
++from .catalogue_model import matches,safe_item,fingerprint
++from .excel_import import parse,validate_template
++from .auto import apply_auto,compatible
++
++
++class Upload(StrictModel):
++    filename:str=Field(min_length=1,max_length=255)
++    content_base64:str=Field(min_length=1,max_length=28*1024*1024)
++
++class MasterUpload(Upload):
++    source_namespace:str=Field(pattern=r'^[a-z0-9][a-z0-9._-]{2,79}$')
++    profile:Literal['complete_namespace_v1']='complete_namespace_v1'
++
++class Reason(StrictModel):
++    reason:str=Field(min_length=1,max_length=500)
++
++    @field_validator('reason')
++    @classmethod
++    def nonblank(cls,v):
++        if not v.strip(): raise ValueError('Reason required')
++        return v
++
++class CatalogueUpdate(Reason):
++    release_id:UUID
++
++class Publish(Reason):
++    accept_review_exclusion:bool=False
++    expected_active_release:UUID|None=None
++
++class Template(StrictModel):
++    name:str=Field(min_length=1,max_length=100)
++    owner_user_id:UUID|None=None
++    order_id:str|None=None
++    definition:dict
++    status:Literal['draft','active','retired']='active'
++
++class ClientUpload(Upload):
++    order_id:str=Field(min_length=1,max_length=80)
++    template_revision_id:UUID
++    catalogue_release:UUID|None=None
++    selected_sheets:list[str]=Field(default_factory=list,max_length=50)
++
++class Confirm(StrictModel):
++    mode:Literal['add','replace','new_revision']
++    exclusions:dict[str,str]=Field(default_factory=dict)
++
++class SelectMaterial(Reason):
++    variant_id:UUID|None=None
++    custom_customer:dict|None=None
++
++class SelectEdge(Reason):
++    side:Literal['L1','L2','W1','W2']
++    action:Literal['manual','reset_auto']
++    edge_id:UUID|None=None
++
++class Alias(Reason):
++    source_value:str=Field(min_length=1,max_length=500)
++    source_namespace:str=Field(min_length=1,max_length=80)
++    manufacturer:str|None=None
++    variant_id:UUID
++    source:str=Field(min_length=1,max_length=500)
++
++class Mapping(Reason):
++    variant_id:UUID
++    edge_id:UUID
++    source:str=Field(min_length=1,max_length=500)
++
++
++def decode(body):
++    try:
++        data=base64.b64decode(body.content_base64,validate=True)
++        workbook=read_workbook(data)
++    except (ValueError,binascii.Error): error(422,'INVALID_OR_UNSAFE_XLSX')
++    return data,workbook
++
++
++def release_or_active(conn,requested=None):
++    release=requested or catalogue.active(conn)
++    if not release or not conn.execute('SELECT 1 FROM mf_catalogue_releases WHERE release_id=%s',(release,)).fetchone():
++        error(409,'CATALOGUE_NOT_PUBLISHED')
++    return release
++
++
++def template_access(conn,user,owner,order_id):
++    if user['roles']=={'client'} and user['user_id']==owner:
++        require(conn,user,'templates.own.manage');return
++    if user['roles']=={'admin'}:
++        require(conn,user,'templates.manage');return
++    if user['roles']=={'manager'} and order_id:
++        order=conn.execute('SELECT owner_user_id FROM mf_orders WHERE order_id=%s',(order_id,)).fetchone()
++        if order and order['owner_user_id']==owner:
++            require(conn,user,'templates.manage',order_id=order_id);return
++    error(403,'PERMISSION_DENIED')
++
++
++def check_template(conn,user,revision,order):
++    t=conn.execute('''SELECT r.*,t.owner_user_id FROM mf_import_template_revisions r
++        JOIN mf_import_templates t USING(template_id) WHERE template_revision_id=%s''',(revision,)).fetchone()
++    if not t: error(404,'TEMPLATE_NOT_FOUND')
++    if t['owner_user_id']!=order['owner_user_id']: error(403,'TEMPLATE_SCOPE_DENIED')
++    # Old pinned revisions can be replayed even after a later revision retires its template.
++    return t
++
++
++def scoped_import(conn,user,batch,write=False):
++    source=conn.execute('SELECT * FROM mf_import_batches WHERE import_id=%s',(batch,)).fetchone()
++    if not source: error(404,'IMPORT_NOT_FOUND')
++    require(conn,user,'orders.draft.write' if write else 'orders.read',order_id=source['order_id'])
++    if user['roles'] not in ({'client'},{'manager'},{'admin'}): error(403,'PERMISSION_DENIED')
++    return source
++
++
++def router(settings,policy):
++    api=APIRouter(prefix='/api/v2')
++
++    @api.get('/catalogue/materials')
++    def materials(request:Request,q:str='',release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'catalogue.read')
++            version=release_or_active(conn,release)
++            found=[safe_item(i,version) for i in catalogue.items(conn,version,'material') if matches(i,q)]
++            return {'kind':'candidates','catalogue_release':version,'items':found[offset:offset+limit],
++                    'total':len(found),'next_offset':offset+limit if len(found)>offset+limit else None}
++
++    @api.get('/catalogue/edges')
++    def edges(request:Request,q:str='',release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'catalogue.read')
++            version=release_or_active(conn,release)
++            found=[safe_item(i,version) for i in catalogue.items(conn,version,'edge') if matches(i,q)]
++            return {'kind':'candidates','items':found[offset:offset+limit],'total':len(found),'catalogue_release':version}
++
++    @api.get('/catalogue/materials/{variant_id}')
++    def material(variant_id:UUID,request:Request,release:UUID|None=None):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'catalogue.read')
++            return catalogue.get_item(conn,release_or_active(conn,release),variant_id,'material')
++
++    @api.get('/catalogue/releases')
++    def releases(request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'catalogue.read')
++            return {'active_release':catalogue.active(conn),'items':conn.execute('SELECT release_id,parent_release_id,created_at FROM mf_catalogue_releases ORDER BY created_at DESC LIMIT 100').fetchall()}
++
++    @api.get('/catalogue/releases/{release_id}/data.js')
++    def cache(release_id:UUID,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'catalogue.read');release_or_active(conn,release_id)
++            data=catalogue.cache_bytes(conn,release_id)
++            return Response(data,media_type='application/javascript',headers={'ETag':'"'+hashlib.sha256(data).hexdigest()+'"',
++                'X-Catalogue-Release':str(release_id),'X-Content-SHA256':hashlib.sha256(data).hexdigest()})
++
++    @api.post('/catalogue/imports',status_code=201)
++    def ingest(body:MasterUpload,request:Request):
++        with transaction(settings) as conn:
++            user=admin(conn,request,'catalogue.import')
++            data,workbook=decode(body)
++            # Raw master prices are INTERNAL; never client-downloadable via the general file gateway.
++            fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=data,name=body.filename,
++                                  kind='internal',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
++            try: return catalogue.ingest(conn,settings,user['user_id'],fid,workbook,body.source_namespace,{'mode':body.profile})
++            except ValueError: error(422,'INVALID_MASTER_PROFILE')
++
++    @api.get('/catalogue/imports/{import_id}')
++    def import_report(import_id:UUID,request:Request,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=500)):
++        with transaction(settings) as conn:
++            admin(conn,request,'catalogue.import')
++            row=conn.execute('SELECT * FROM mf_catalogue_imports WHERE import_id=%s',(import_id,)).fetchone()
++            if not row: error(404,'IMPORT_NOT_FOUND')
++            row['rows']=conn.execute('''SELECT raw_row_id,sheet,row_number,disposition,reason,variant_id,edge_id,duplicate_of
++                FROM mf_catalogue_raw_rows WHERE import_id=%s ORDER BY sheet,row_number LIMIT %s OFFSET %s''',(import_id,limit,offset)).fetchall()
++            return row
++
++    @api.post('/catalogue/imports/{import_id}/publish')
++    def publish(import_id:UUID,body:Publish,request:Request):
++        with transaction(settings) as conn:
++            user=admin(conn,request,'catalogue.publish')
++            return catalogue.publish(conn,settings,user['user_id'],import_id,body.reason,body.accept_review_exclusion,body.expected_active_release)
++
++    @api.post('/catalogue/releases/{release_id}/activate')
++    def activate(release_id:UUID,body:Reason,request:Request):
++        with transaction(settings) as conn:
++            user=admin(conn,request,'catalogue.publish');catalogue.activate(conn,settings,user['user_id'],release_id,body.reason)
++            return {'active_release':release_id}
++
++    @api.post('/catalogue/aliases',status_code=201)
++    def alias(body:Alias,request:Request):
++        with transaction(settings) as conn:
++            user=admin(conn,request,'catalogue.mapping.manage');conn.execute('SELECT pg_advisory_xact_lock(%s)',(catalogue.CATALOGUE_LOCK,))
++            catalogue.get_item(conn,release_or_active(conn),body.variant_id,'material')
++            version=conn.execute('SELECT coalesce(max(version),0)+1 AS n FROM mf_identity_aliases WHERE source_namespace=%s AND source_value=%s',
++                                 (body.source_namespace,body.source_value)).fetchone()['n'];aid=uuid4()
++            conn.execute('INSERT INTO mf_identity_aliases VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,now())',
++                (aid,body.source_value,body.source_namespace,body.manufacturer,body.variant_id,version,body.reason,body.source,user['user_id'],user['user_id']))
++            record_event(conn,settings,actor=user['user_id'],action='catalogue.alias.approved',object_type='alias',object_id=aid,reason=body.reason,version=version)
++            return {'alias_id':aid,'version':version}
++
++    @api.post('/catalogue/edge-mappings',status_code=201)
++    def mapping(body:Mapping,request:Request):
++        with transaction(settings) as conn:
++            user=admin(conn,request,'catalogue.mapping.manage');conn.execute('SELECT pg_advisory_xact_lock(%s)',(catalogue.CATALOGUE_LOCK,))
++            release=release_or_active(conn);material=catalogue.get_item(conn,release,body.variant_id,'material');edge=catalogue.get_item(conn,release,body.edge_id,'edge')
++            if not compatible(material,edge): error(422,'INCOMPATIBLE_EDGE_MAPPING')
++            version=conn.execute('SELECT coalesce(max(version),0)+1 AS n FROM mf_material_edge_mappings WHERE variant_id=%s',(body.variant_id,)).fetchone()['n'];mid=uuid4()
++            conn.execute('INSERT INTO mf_material_edge_mappings VALUES (%s,%s,%s,%s,%s,%s,%s,%s,now())',
++                (mid,body.variant_id,body.edge_id,version,body.reason,body.source,user['user_id'],user['user_id']))
++            record_event(conn,settings,actor=user['user_id'],action='catalogue.edge_mapping.approved',object_type='edge_mapping',object_id=mid,reason=body.reason,version=version)
++            return {'mapping_id':mid,'version':version}
++
++    def save_template(conn,user,body,template_id=None):
++        owner=body.owner_user_id or user['user_id']
++        if template_id:
++            t=conn.execute('SELECT * FROM mf_import_templates WHERE template_id=%s FOR UPDATE',(template_id,)).fetchone()
++            if not t: error(404,'TEMPLATE_NOT_FOUND')
++            owner=t['owner_user_id']
++        template_access(conn,user,owner,body.order_id)
++        try: header_hash=validate_template(body.definition)
++        except (ValueError,TypeError,KeyError): error(422,'INVALID_TEMPLATE_DEFINITION')
++        if not template_id:
++            template_id=uuid4();conn.execute('INSERT INTO mf_import_templates VALUES (%s,%s,\'owner\',%s,%s,now())',
++                                           (template_id,owner,body.name,user['user_id']))
++        version=conn.execute('SELECT coalesce(max(version),0)+1 AS n FROM mf_import_template_revisions WHERE template_id=%s',(template_id,)).fetchone()['n']
++        revision=uuid4()
++        # Name/owner are part of the immutable revision envelope, not recognition heuristics.
++        definition={**body.definition,'revision_name':body.name}
++        conn.execute('INSERT INTO mf_import_template_revisions VALUES (%s,%s,%s,%s,%s,%s,%s,now())',
++            (revision,template_id,version,Jsonb(definition),header_hash,body.status,user['user_id']))
++        record_event(conn,settings,actor=user['user_id'],action='template.revision.created',object_type='template',object_id=template_id,reason='Immutable template revision',version=version)
++        return {'template_id':template_id,'template_revision_id':revision,'version':version}
++
++    @api.post('/import-templates',status_code=201)
++    def create_template(body:Template,request:Request):
++        with transaction(settings) as conn: return save_template(conn,identity(conn,request),body)
++
++    @api.post('/import-templates/{template_id}/revisions',status_code=201)
++    def revise_template(template_id:UUID,body:Template,request:Request):
++        with transaction(settings) as conn: return save_template(conn,identity(conn,request),body,template_id)
++
++    @api.get('/import-templates/{template_id}/revisions')
++    def templates(template_id:UUID,request:Request,order_id:str|None=None):
++        with transaction(settings) as conn:
++            user=identity(conn,request);t=conn.execute('SELECT * FROM mf_import_templates WHERE template_id=%s',(template_id,)).fetchone()
++            if not t: error(404,'TEMPLATE_NOT_FOUND')
++            template_access(conn,user,t['owner_user_id'],order_id)
++            return {'template':t,'revisions':conn.execute('SELECT * FROM mf_import_template_revisions WHERE template_id=%s ORDER BY version',(template_id,)).fetchall()}
++
++    @api.post('/imports/preview',status_code=201)
++    def preview(body:ClientUpload,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'orders.draft.write',order_id=body.order_id)
++            order=conn.execute('SELECT * FROM mf_orders WHERE order_id=%s',(body.order_id,)).fetchone()
++            template=check_template(conn,user,body.template_revision_id,order);version=release_or_active(conn,body.catalogue_release)
++            data,workbook=decode(body);definition={k:v for k,v in template['definition'].items() if k!='revision_name'}
++            try: parsed=parse(workbook,definition,body.selected_sheets)
++            except (ValueError,KeyError,TypeError): error(422,'TEMPLATE_OR_SHEET_MISMATCH')
++            if parsed['selection_required']: return parsed
++            existing=conn.execute('''SELECT b.import_id FROM mf_import_batches b JOIN mf_files f USING(file_id)
++                WHERE b.order_id=%s AND b.template_revision_id=%s AND b.release_id=%s AND b.selected_sheets=%s
++                AND f.sha256=%s ORDER BY b.created_at LIMIT 1''',
++                (body.order_id,body.template_revision_id,version,Jsonb(parsed['selected_sheets']),workbook['sha256'])).fetchone()
++            if existing:
++                return {'import_id':existing['import_id'],'reused':True,'available_sheets':parsed['available_sheets'],
++                        'summary':parsed['summary'],'rows':import_service.rows(conn,existing['import_id'])}
++            fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=data,name=body.filename,
++                                  kind='source',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',order_id=body.order_id)
++            batch=import_service.preview(conn,settings,user['user_id'],body.order_id,fid,body.template_revision_id,version,parsed)
++            return {'import_id':batch,'available_sheets':parsed['available_sheets'],'summary':parsed['summary'],'rows':import_service.rows(conn,batch)}
++
++    @api.get('/imports/{import_id}')
++    def get_import(import_id:UUID,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);source=scoped_import(conn,user,import_id)
++            return {'import':source,'rows':import_service.rows(conn,import_id)}
++
++    @api.post('/imports/{import_id}/replay')
++    def replay(import_id:UUID,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);source=scoped_import(conn,user,import_id)
++            t=conn.execute('SELECT definition FROM mf_import_template_revisions WHERE template_revision_id=%s',(source['template_revision_id'],)).fetchone()['definition']
++            data=read_verified(conn,VolumeStore(settings.storage_root),source['file_id'])
++            parsed=parse(read_workbook(data),{k:v for k,v in t.items() if k!='revision_name'},source['selected_sheets'])
++            old=[r['original'] for r in import_service.rows(conn,import_id)]
++            return {'matches_original':parsed['rows']==old,'original_sha256':fingerprint(old),'replay_sha256':fingerprint(parsed['rows'])}
++
++    @api.post('/imports/{import_id}/rows/{row_id}/resolution')
++    def resolution(import_id:UUID,row_id:UUID,body:SelectMaterial,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);source=scoped_import(conn,user,import_id,True)
++            conn.execute('SELECT row_id FROM mf_import_rows WHERE row_id=%s AND import_id=%s FOR UPDATE',(row_id,import_id))
++            if conn.execute('SELECT 1 FROM mf_import_receipts WHERE import_id=%s',(import_id,)).fetchone(): error(409,'IMPORT_CONFIRMED_EDIT_DRAFT_EXPLICITLY')
++            r=next((r for r in import_service.rows(conn,import_id) if r['row_id']==row_id),None)
++            if not r or not r['resolution']: error(404,'PART_ROW_NOT_FOUND')
++            selected=select(conn,source['release_id'],body)
++            value=import_service.manual_resolution(r['resolution'],selected,user['user_id'],body.reason,body.custom_customer)
++            conn.execute('INSERT INTO mf_import_row_resolutions VALUES (%s,%s,%s,%s,%s,now())',
++                         (uuid4(),row_id,r['resolution_version']+1,Jsonb(value),user['user_id']))
++            record_event(conn,settings,actor=user['user_id'],action='import.identity.confirmed',object_type='import_row',object_id=row_id,reason=body.reason)
++            return value
++
++    def select(conn,release,body):
++        if (body.variant_id is None)==(body.custom_customer is None): error(422,'EXACTLY_ONE_MATERIAL_CHOICE_REQUIRED')
++        if body.custom_customer is not None:
++            c=body.custom_customer
++            if set(c)!={'name','thickness','length','width','ownership_confirmed'} or c.get('ownership_confirmed') is not True:
++                error(422,'EXPLICIT_CUSTOMER_OWNERSHIP_REQUIRED')
++            from .catalogue_model import dimension
++            if not c.get('name') or not all(dimension(c.get(k)) for k in ('thickness','length','width')): error(422,'CUSTOMER_MATERIAL_FEATURES_REQUIRED')
++            return None
++        return catalogue.get_item(conn,release,body.variant_id,'material')
++
++    @api.post('/imports/{import_id}/confirm')
++    def confirm(import_id:UUID,body:Confirm,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);scoped_import(conn,user,import_id,True)
++            return import_service.confirm(conn,settings,user['user_id'],import_id,body.mode,body.exclusions,request.headers.get('if-match'))
++
++    @api.get('/orders/{order_id}/draft/rows')
++    def draft_rows(order_id:str,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'orders.read',order_id=order_id)
++            if user['roles'] not in ({'client'},{'manager'},{'admin'}): error(403,'PERMISSION_DENIED')
++            current=catalogue.active(conn);rows=conn.execute('SELECT * FROM mf_order_draft_rows WHERE order_id=%s ORDER BY draft_row_id',(order_id,)).fetchall()
++            return {'rows':rows,'active_catalogue_release':current,'catalogue_update_available':any(r['release_id']!=current for r in rows if not r['excluded_reason']),
++                    'optimistic_lock_version':conn.execute('SELECT optimistic_lock_version FROM mf_orders WHERE order_id=%s',(order_id,)).fetchone()['optimistic_lock_version']}
++
++    def edit(conn,user,order,row_id,request):
++        require(conn,user,'orders.draft.write',order_id=order);import_service.lock_draft(conn,order,request.headers.get('if-match'))
++        row=conn.execute('SELECT * FROM mf_order_draft_rows WHERE draft_row_id=%s AND order_id=%s',(row_id,order)).fetchone()
++        if not row: error(404,'DRAFT_ROW_NOT_FOUND')
++        return row
++
++    def save(conn,user,order,row,value,reason):
++        conn.execute('UPDATE mf_order_draft_rows SET snapshot=%s,updated_at=now() WHERE draft_row_id=%s',(Jsonb(value),row['draft_row_id']))
++        return {'snapshot':value,'optimistic_lock_version':import_service.bump(conn,settings,user['user_id'],order,reason)}
++
++    @api.post('/orders/{order_id}/draft/rows/{row_id}/material')
++    def draft_material(order_id:str,row_id:UUID,body:SelectMaterial,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);row=edit(conn,user,order_id,row_id,request);value=row['snapshot']
++            value['resolution']=import_service.manual_resolution(value['resolution'],select(conn,row['release_id'],body),user['user_id'],body.reason,body.custom_customer)
++            value=auto(conn,row['release_id'],value)
++            return save(conn,user,order_id,row,value,body.reason)
++
++    def auto(conn,release,value):
++        return apply_auto(value,[safe_item(e,release) for e in catalogue.items(conn,release,'edge')],conn.execute('SELECT * FROM mf_material_edge_mappings').fetchall())
++
++    @api.post('/orders/{order_id}/draft/rows/{row_id}/edges')
++    def draft_edge(order_id:str,row_id:UUID,body:SelectEdge,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);row=edit(conn,user,order_id,row_id,request);value=row['snapshot'];state=value['edges'][body.side]
++            if body.action=='manual':
++                edge=catalogue.get_item(conn,row['release_id'],body.edge_id,'edge') if body.edge_id else None
++                state.update(mode='manual_override',edge_id=str(body.edge_id) if body.edge_id else None,snapshot=edge,
++                    confirmed=True,confirmed_by=str(user['user_id']),confirmed_at=datetime.now(timezone.utc).isoformat(),reason=body.reason)
++                for k in ('mapping_id','mapping_version'): state.pop(k,None)
++            else:
++                state.update(mode='auto_suggestion',edge_id=None,confirmed=False,conflict=False,mark='present',raw_sku=None)
++                for k in ('snapshot','confirmed_by','confirmed_at','reason','mapping_id','mapping_version'): state.pop(k,None)
++            value=auto(conn,row['release_id'],value)
++            return save(conn,user,order_id,row,value,body.reason)
++
++    @api.post('/orders/{order_id}/draft/rows/{row_id}/auto')
++    def draft_auto(order_id:str,row_id:UUID,body:Reason,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);row=edit(conn,user,order_id,row_id,request)
++            return save(conn,user,order_id,row,auto(conn,row['release_id'],row['snapshot']),body.reason)
++
++    @api.post('/orders/{order_id}/draft/rows/{row_id}/exclude')
++    def exclude(order_id:str,row_id:UUID,body:Reason,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);row=edit(conn,user,order_id,row_id,request)
++            conn.execute('UPDATE mf_order_draft_rows SET excluded_reason=%s,updated_at=now() WHERE draft_row_id=%s',(body.reason,row_id))
++            return {'optimistic_lock_version':import_service.bump(conn,settings,user['user_id'],order_id,body.reason)}
++
++    def update_diff(conn,order_id,release):
++        current={i.get('variant_id'):i for i in catalogue.items(conn,release,'material')}
++        result=[]
++        for r in conn.execute('SELECT * FROM mf_order_draft_rows WHERE order_id=%s AND excluded_reason IS NULL ORDER BY draft_row_id',(order_id,)):
++            selected=r['snapshot'].get('resolution',{}).get('selected');vid=selected.get('variant_id') if selected else None
++            candidate=current.get(vid)
++            result.append({'draft_row_id':str(r['draft_row_id']),'from_release':str(r['release_id']),'to_release':str(release),
++                           'variant_id':vid,'variant_available':candidate is not None,
++                           'action':'keep_exact_variant' if candidate else 'keep_pinned_snapshot_requires_review',
++                           'manual_edges_preserved':True})
++        return result
++
++    @api.get('/orders/{order_id}/draft/catalogue-update')
++    def draft_catalogue_diff(order_id:str,request:Request,release:UUID|None=None):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'orders.draft.write',order_id=order_id)
++            version=release_or_active(conn,release)
++            return {'release_id':version,'diff':update_diff(conn,order_id,version)}
++
++    @api.post('/orders/{order_id}/draft/catalogue-update')
++    def draft_catalogue_update(order_id:str,body:CatalogueUpdate,request:Request):
++        with transaction(settings) as conn:
++            user=identity(conn,request);require(conn,user,'orders.draft.write',order_id=order_id)
++            import_service.lock_draft(conn,order_id,request.headers.get('if-match'));release_or_active(conn,body.release_id)
++            diff=update_diff(conn,order_id,body.release_id)
++            for d in diff:
++                row=conn.execute('SELECT * FROM mf_order_draft_rows WHERE draft_row_id=%s',(d['draft_row_id'],)).fetchone();value=row['snapshot']
++                if d['variant_id'] and not d['variant_available']:
++                    value['catalogue_update_warning']='Exact variant unavailable; pinned snapshot retained'
++                    conn.execute('UPDATE mf_order_draft_rows SET snapshot=%s WHERE draft_row_id=%s',(Jsonb(value),row['draft_row_id']))
++                else:
++                    value['catalogue_release']=str(body.release_id)
++                    if d['variant_id']:
++                        value['resolution']['selected']=catalogue.get_item(conn,body.release_id,d['variant_id'],'material')
++                        value['resolution']['catalogue_release']=str(body.release_id)
++                    value=auto(conn,body.release_id,value)
++                    conn.execute('UPDATE mf_order_draft_rows SET release_id=%s,snapshot=%s,updated_at=now() WHERE draft_row_id=%s',
++                                 (body.release_id,Jsonb(value),row['draft_row_id']))
++            return {'diff':diff,'optimistic_lock_version':import_service.bump(conn,settings,user['user_id'],order_id,body.reason)}
++
++    return api
+diff --git a/backend/v2/catalogue_model.py b/backend/v2/catalogue_model.py
+new file mode 100644
+index 0000000..6dccc40
+--- /dev/null
++++ b/backend/v2/catalogue_model.py
+@@ -0,0 +1,131 @@
++"""Pure catalogue classification, stable signatures and safe search projection."""
++from collections import Counter, defaultdict
++from decimal import Decimal, InvalidOperation
++import hashlib
++import json
++import re
++import unicodedata
++from uuid import UUID, uuid5
++from .xlsx import raw_value
++
++ID_NAMESPACE=UUID('5183eac4-7b57-4e34-8077-92ce6f58b928')
++HEADERS=['Артикул материала','Наименование материала','Единица измерения','Стоимость','Длина','Ширина',
++         'Толщина','Обозначение','Свес','Класс','Тип материала','Идентификатор для синхронизации']
++
++
++def canonical(value):
++    return unicodedata.normalize('NFC',str(value)).strip() if value is not None else None
++
++
++def packed(value):
++    return json.dumps(value,ensure_ascii=False,sort_keys=True,separators=(',',':'))
++
++
++def fingerprint(value):
++    return hashlib.sha256(packed(value).encode()).hexdigest()
++
++
++def stable(namespace,kind,value):
++    return str(uuid5(ID_NAMESPACE,packed([namespace,kind,value])))
++
++
++def decimal(value):
++    try:
++        n=Decimal(str(value).strip().replace(',','.'))
++        return n if n.is_finite() else None
++    except (InvalidOperation,ValueError):
++        return None
++
++
++def dimension(value):
++    n=decimal(value)
++    return format(n.normalize(),'f') if n is not None and n>0 else None
++
++
++def normalize_master(workbook,namespace):
++    result=[]; classes=Counter(); external=defaultdict(list)
++    for sheet in workbook['sheets']:
++        rows=sheet['rows']
++        if not rows or [raw_value(rows[0]['cells'],chr(65+i)) for i in range(12)]!=HEADERS:
++            raise ValueError('Master headers must match approved A–L profile')
++        for source in rows[1:]:
++            cells=source['cells']; v={chr(65+i):raw_value(cells,chr(65+i)) for i in range(12)}
++            tags=set((v['J'] or '').split()); classes[' '.join(sorted(tags))]+=1
++            rec={'sheet':sheet['name'],'row':source['row'],'cells':cells,'raw':v,
++                 'disposition':'excluded','reason':'non_catalogue_class','normalized':{},'signature':None}
++            rec['raw_row_id']=stable(workbook['sha256']+namespace,'raw',[sheet['name'],source['row']])
++            if tags not in ({'M1'},{'M2'}):
++                if tags & {'M1','M2'}: rec.update(disposition='review',reason='mixed_class_requires_approval')
++            else:
++                kind='material' if tags=={'M1'} else 'edge'
++                dims={k:dimension(v[c]) for k,c in [('length','E'),('width','F'),('thickness','G')]}
++                unit=canonical(v['C']); is_board_unit=unit in {'кв.м','кв.м.','м2','м²','m2','m²'}
++                is_edge_unit=unit in {'пог.м','пог.м.','пог. м','м.п','м','m','п.м','п.м.'}
++                formula_error=any(c.get('formula') is not None and (c.get('cached') is None or c.get('type')=='e') for c in cells.values())
++                if formula_error:
++                    rec.update(disposition='error',reason='formula_without_usable_cache')
++                elif not v['B']:
++                    rec.update(disposition='error',reason='missing_name')
++                elif kind=='material' and not all(dims.values()):
++                    rec.update(disposition='excluded' if not dims['length'] and not dims['width'] else 'review',reason='M1_without_board_geometry')
++                elif kind=='material' and not is_board_unit:
++                    rec.update(disposition='review',reason='unapproved_board_unit')
++                elif kind=='edge' and (not is_edge_unit or not dims['width'] or not dims['thickness']):
++                    rec.update(disposition='review',reason='unapproved_edge_unit_or_geometry')
++                else:
++                    article=canonical(v['A']) or None
++                    family='edge' if kind=='edge' else ('HDF' if re.search(r'(?<![\w])(?:лхдф|хдф|lhdf|hdf)(?![\w])',v['B'],re.I) else 'board')
++                    item={'kind':kind,'article':article,'name':v['B'],'manufacturer':None,'decor':None,
++                          'structure':None,'family':family,**dims,'designation':v['H'],
++                          'source_namespace':namespace,'unit':unit}
++                    # Unknown manufacturer/structure stay unknown. No name-based guess becomes identity.
++                    identity={k:item[k] for k in ('kind','article','manufacturer','decor','structure','thickness','length','width')}
++                    if not article: identity['articleless_name']=canonical(v['B'])
++                    sig=fingerprint(identity)
++                    item['variant_id' if kind=='material' else 'edge_id']=stable(namespace,'variant' if kind=='material' else 'edge',sig)
++                    if kind=='material': item['material_id']=stable(namespace,'material',sig)
++                    item['identity_signature']=sig
++                    rec.update(disposition='published',reason='validated_catalogue_candidate',normalized=item,signature=sig)
++            result.append(rec)
++            if v['L'] is not None and canonical(v['L'])!='': external[canonical(v['L'])].append(rec)
++    # External IDs are never used before proving namespace uniqueness. Conflicts do not merge.
++    for rows in external.values():
++        if len(rows)>1:
++            for row in rows:
++                if row['disposition']=='published': row.update(disposition='review',reason='duplicate_external_sync_id')
++    identity_names=defaultdict(set)
++    for row in result:
++        if row['disposition']=='published': identity_names[row['signature']].add(row['normalized']['name'])
++    for row in result:
++        if row['disposition']=='published' and len(identity_names[row['signature']])>1:
++            row.update(disposition='review',reason='same_identity_different_name_requires_audit')
++    seen={}
++    for row in result:
++        if row['disposition']=='published':
++            sig=row['signature']
++            if sig in seen:
++                previous=seen[sig]
++                if row['normalized']['name']!=previous['normalized']['name']:
++                    row.update(disposition='review',reason='same_identity_different_name_requires_audit')
++                else: row.update(disposition='duplicate',reason='exact_identity_duplicate',duplicate_of=previous['raw_row_id'])
++            else: seen[sig]=row
++    return result,dict(classes)
++
++
++def safe_item(item,release_id):
++    keys=('variant_id','material_id','edge_id','kind','article','name','manufacturer','decor','structure','family',
++          'thickness','length','width','designation','unit')
++    return {**{k:item.get(k) for k in keys if k in item},'catalogue_release':str(release_id)}
++
++
++def search_key(text):
++    text=(canonical(text) or '').casefold().replace(',','.')
++    for alias in ('лхдф','lhdf','хдф'): text=text.replace(alias,'hdf')
++    # Search only. Never feed this transliteration into strict identity or persistent IDs.
++    return text.translate(str.maketrans({'х':'x','×':'x'}))
++
++
++def matches(item,query):
++    hay=' '.join(str(item.get(k) or '') for k in ('article','name','manufacturer','decor','family','thickness','length','width'))
++    hay+=' '+str(item.get('length'))+'x'+str(item.get('width'))
++    return all(token in search_key(hay) for token in search_key(query).split())
+diff --git a/backend/v2/excel_import.py b/backend/v2/excel_import.py
+new file mode 100644
+index 0000000..323e684
+--- /dev/null
++++ b/backend/v2/excel_import.py
+@@ -0,0 +1,130 @@
++"""Versioned column semantics. Every worksheet row has an explicit disposition."""
++from decimal import Decimal
++import re
++from .catalogue_model import decimal, fingerprint
++
++FIELDS={'position','name','article','material','manufacturer','structure','thickness','format_length','format_width',
++        'length','width','qty','texture','rotation','comments','X1','X2','Y1','Y2','L1','L2','W1','W2','row_type'}
++SIDES={'L1':'X1','L2':'X2','W1':'Y1','W2':'Y2'}
++DEFAULT_EDGE_DICTIONARY={'0':'none','нет':'none','no':'none','false':'none','-':'none','*':'present','1':'present','':'unknown'}
++
++
++def validate_template(t):
++    if set(t)!={'headers','sheet_policy','mapping','inheritance','edge_dictionary','units'}: raise ValueError('Template keys invalid')
++    mapping=t['mapping']
++    if not isinstance(mapping,dict) or set(mapping)-FIELDS or not {'length','width','qty'}<=set(mapping): raise ValueError('Invalid column mapping')
++    if any(not isinstance(c,str) or not re.fullmatch('[A-Z]{1,3}',c) for c in mapping.values()): raise ValueError('Invalid column')
++    policy=t['sheet_policy']
++    if set(policy)-{'mode','sheets','header_row'} or policy.get('mode') not in {'explicit','named'}: raise ValueError('Invalid sheet policy')
++    if not isinstance(policy.get('header_row'),int) or not 1<=policy['header_row']<=100: raise ValueError('Header row required')
++    if policy['mode']=='named' and (not policy.get('sheets') or not isinstance(policy['sheets'],list)): raise ValueError('Named sheets required')
++    inheritance=t['inheritance']
++    if set(inheritance)-{'enabled','header_marker','service_markers','blank_resets','continuation_marker','confirmed_continuation'}: raise ValueError('Invalid inheritance rules')
++    if inheritance.get('enabled') and ('row_type' not in mapping or not inheritance.get('header_marker')): raise ValueError('Explicit material header marker required')
++    if inheritance.get('continuation_marker') and not inheritance.get('confirmed_continuation'): raise ValueError('Continuation must be explicitly approved in template')
++    if not isinstance(t['edge_dictionary'],dict) or any(v not in {'none','present','unknown'} for v in t['edge_dictionary'].values()): raise ValueError('Invalid edge dictionary')
++    if set(t['units'])-{'length','width','thickness','format_length','format_width'} or any(v not in {'mm','cm','m'} for v in t['units'].values()): raise ValueError('Unapproved units')
++    if not isinstance(t['headers'],dict) or not t['headers']: raise ValueError('Header fingerprint required')
++    return fingerprint(t['headers'])
++
++
++def issue(sheet,row,field,raw,reason,action='Исправить значение или явно исключить строку с причиной'):
++    return {'sheet':sheet,'row':row,'field':field,'raw':raw,'reason':reason,'possible_action':action}
++
++
++def numeric(value,field,unit,errors,changes,sheet,row):
++    n=decimal(value)
++    if n is None:
++        errors.append(issue(sheet,row,field,value,'missing_or_non_numeric'))
++        return value  # Empty, text and errors never become 0 or 1.
++    factor={'mm':1,'cm':10,'m':1000}[unit]
++    converted=n*factor
++    if factor!=1 or ',' in str(value): changes.append({'field':field,'raw':value,'normalized':str(converted),'unit':unit,'target':'mm' if field!='qty' else 'pieces'})
++    if converted<=0: errors.append(issue(sheet,row,field,value,'must_be_positive'))
++    if field=='qty' and converted!=converted.to_integral_value(): errors.append(issue(sheet,row,field,value,'integer_quantity_required'))
++    if field!='qty' and converted.as_tuple().exponent < -3:
++        errors.append(issue(sheet,row,field,value,'precision_requires_review_no_rounding'))
++    return int(converted) if converted==converted.to_integral_value() else str(converted)
++
++
++def parse(workbook,t,selected):
++    validate_template(t)
++    available=[s['name'] for s in workbook['sheets']]
++    if not selected and t['sheet_policy']['mode']=='named': selected=t['sheet_policy']['sheets']
++    if not selected: return {'selection_required':True,'available_sheets':available,'rows':[]}
++    if len(set(selected))!=len(selected) or any(s not in available for s in selected): raise ValueError('Invalid worksheet selection')
++    output=[]; mapping=t['mapping']; inheritance=t['inheritance']; header_row=t['sheet_policy']['header_row']
++    for sheet in workbook['sheets']:
++        if sheet['name'] not in selected: continue  # Explicit unselected sheet; available list is retained.
++        if len(sheet['rows'])<header_row: raise ValueError('Header row absent')
++        actual={c:sheet['rows'][header_row-1]['cells'].get(c,{}).get('value') for c in t['headers']}
++        if actual!=t['headers']: raise ValueError('Header fingerprint mismatch')
++        inherited={}; block=None
++        for source in sheet['rows']:
++            n=source['row']; cells=source['cells']; raw={k:cells.get(c,{}).get('value') for k,c in mapping.items()}
++            result={'sheet':sheet['name'],'row':n,'cells':cells,'raw_fields':raw,'values':dict(raw),
++                    'errors':[],'conversions':[],'edges':{},'inheritance':None,'disposition':'service'}
++            errors=result['errors']; marker=raw.get('row_type')
++            if n<=header_row: result['reason']='header_or_preamble'
++            elif not any(c.get('value') not in (None,'') or c.get('formula') is not None for c in cells.values()):
++                result.update(disposition='blank',reason='empty_row')
++                if inheritance.get('blank_resets',True): inherited={};block=None
++            elif inheritance.get('enabled') and marker==inheritance['header_marker']:
++                # Recognize before dimensional validation. A new block always clears old article.
++                inherited={k:raw.get(k) for k in ('article','material','manufacturer','structure','thickness','format_length','format_width')}
++                block=n;result['reason']='material_header';result['inheritance']={'header_row':n,'reset':True}
++            elif inheritance.get('enabled') and inheritance.get('continuation_marker') and marker==inheritance['continuation_marker']:
++                inherited.update({k:raw[k] for k in inherited if raw.get(k) not in (None,'')})
++                result['reason']='explicit_confirmed_continuation'
++            elif marker in inheritance.get('service_markers',[]):
++                result['reason']='template_service_row';inherited={};block=None
++            else:
++                result['disposition']='valid'
++                for k,v in inherited.items():
++                    if raw.get(k) in (None,''): result['values'][k]=v
++                if block: result['inheritance']={'header_row':block,'fields':inherited}
++                for field,col in mapping.items():
++                    c=cells.get(col,{})
++                    if c.get('formula') is not None and (c.get('cached') is None or c.get('type')=='e'):
++                        errors.append(issue(sheet['name'],n,field,c,'formula_without_usable_cached_value'))
++                    elif c.get('type')=='e': errors.append(issue(sheet['name'],n,field,c,'excel_error'))
++                for field in ('length','width','qty'):
++                    result['values'][field]=numeric(raw.get(field),field,t['units'].get(field,'mm'),errors,result['conversions'],sheet['name'],n)
++                for field in ('thickness','format_length','format_width'):
++                    value=result['values'].get(field)
++                    if value not in (None,''): result['values'][field]=numeric(value,field,t['units'].get(field,'mm'),errors,result['conversions'],sheet['name'],n)
++                for side,alias in SIDES.items():
++                    a,b=raw.get(side),raw.get(alias)
++                    both=side in mapping and alias in mapping
++                    conflict=both and a not in (None,'') and b not in (None,'') and a!=b
++                    value=a if a not in (None,'') or alias not in mapping else b
++                    meaning=t['edge_dictionary'].get('' if value is None else str(value))
++                    result['edges'][side]={'raw':{k:raw.get(k) for k in (side,alias) if k in mapping},
++                         'raw_sku':value if meaning is None else None,'mark':meaning or 'sku_unresolved',
++                         'mode':'auto_suggestion','edge_id':None,'confirmed':False,'conflict':conflict}
++                    if conflict: errors.append(issue(sheet['name'],n,side,{side:a,alias:b},'side_alias_conflict'))
++                    if meaning is None or meaning=='unknown': errors.append(issue(sheet['name'],n,side,value,'edge_requires_resolution'))
++                if errors: result['disposition']='problematic'
++            # Service/header formula errors cannot silently seed an inherited identity.
++            if result.get('reason') in {'material_header','explicit_confirmed_continuation'}:
++                for field,col in mapping.items():
++                    c=cells.get(col,{})
++                    if c.get('formula') is not None and (c.get('cached') is None or c.get('type')=='e'):
++                        errors.append(issue(sheet['name'],n,field,c,'formula_without_usable_cached_value'))
++                        inherited[field]=None
++            output.append(result)
++    counts={k:sum(r['disposition']==k for r in output) for k in ('valid','problematic','blank','service')}
++    return {'selection_required':False,'available_sheets':available,'selected_sheets':selected,'rows':output,
++            'summary':{'source_rows':len(output),'dispositions':counts,'part_rows':counts['valid']+counts['problematic'],
++                       'mapping':mapping,'template_fingerprint':fingerprint(t),'materials':sorted({str(r['values'].get('material')) for r in output if r['disposition'] in {'valid','problematic'}})}}
++
++
++def identity_input(row,file_id):
++    v=row['values']
++    inherited=(row.get('inheritance') or {}).get('fields',{})
++    raw={k:(value if value not in (None,'') else inherited.get(k,value)) for k,value in row['raw_fields'].items()}
++    return {**{'raw_'+k:raw.get(source) for k,source in [('article','article'),('material_name','material'),('manufacturer','manufacturer'),
++            ('structure','structure'),('thickness','thickness'),('format_length','format_length'),('format_width','format_width')]},
++            'source_file':str(file_id),'sheet':row['sheet'],'row':row['row'],'cells':row['cells'],
++            'raw_fields':row['raw_fields'],'inheritance':row['inheritance'],
++            'normalized_physical':{k:v.get(k) for k in ('thickness','format_length','format_width')},'conversions':row['conversions']}
+diff --git a/backend/v2/identity.py b/backend/v2/identity.py
+new file mode 100644
+index 0000000..ef205c3
+--- /dev/null
++++ b/backend/v2/identity.py
+@@ -0,0 +1,53 @@
++"""Strict resolution is deliberately independent from broad catalogue search."""
++from .catalogue_model import canonical, dimension, matches, safe_item
++
++STATES={'exact_match','confirmed_mapping','unresolved','ambiguous','manual_override','custom_customer'}
++
++
++def conflicts(raw,item):
++    result=[]
++    for field,key in [('manufacturer','raw_manufacturer'),('structure','raw_structure')]:
++        supplied=canonical(raw.get(key))
++        if supplied and supplied!=canonical(item.get(field)): result.append(field)
++    for field,key in [('thickness','raw_thickness'),('length','raw_format_length'),('width','raw_format_width')]:
++        supplied=raw.get('normalized_physical',{}).get(key.removeprefix('raw_'),raw.get(key))
++        if supplied not in (None,'') and (not dimension(supplied) or dimension(supplied)!=dimension(item.get(field))): result.append(field)
++    return result
++
++
++def resolve(raw,catalogue,release,aliases=(),namespace='client'):
++    article=canonical(raw.get('raw_article')); name=canonical(raw.get('raw_material_name'))
++    exact=[i for i in catalogue if (article and article==canonical(i.get('article'))) or
++           (not article and name and not i.get('article') and name==canonical(i.get('name')))]
++    possible=[i for i in exact if not conflicts(raw,i)]
++    result={'status':'unresolved','method':'strict_features','raw':raw,'selected':None,
++            'candidates':[i['variant_id'] for i in exact], 'reason':'Материал требует согласования',
++            'confirmed_by':None,'confirmed_at':None,'mapping_version':None,'mapping_id':None,
++            'catalogue_release':str(release)}
++    # Exact requires all physical facts provided. A missing manufacturer is not a guessed one.
++    required=('raw_thickness','raw_format_length','raw_format_width')
++    complete=all(raw.get(k) not in (None,'') for k in required)
++    if len(possible)==1 and complete:
++        i=possible[0]
++        if i.get('manufacturer') and canonical(raw.get('raw_manufacturer'))==canonical(i['manufacturer']) and \
++           (not i.get('structure') or canonical(raw.get('raw_structure'))==canonical(i['structure'])):
++            result.update(status='exact_match',selected=safe_item(i,release),reason='Exact full article/name and supplied physical features')
++            return result
++    if len(possible)>1 or (exact and not possible):
++        result.update(status='ambiguous',reason='Physical identity conflict or multiple exact variants')
++    # A versioned approved alias may resolve a spelling, never override physical conflicts.
++    candidates=[]
++    for alias in aliases:
++        if alias['source_namespace']!=namespace or alias['source_value']!=(article or name): continue
++        if alias.get('manufacturer') and alias['manufacturer']!=canonical(raw.get('raw_manufacturer')): continue
++        i=next((x for x in catalogue if x['variant_id']==str(alias['variant_id'])),None)
++        if i and not conflicts(raw,i): candidates.append((alias,i))
++    if len(candidates)==1:
++        a,i=candidates[0]
++        result.update(status='confirmed_mapping',method='approved_alias',selected=safe_item(i,release),
++            reason=a['reason'],confirmed_by=str(a['approved_by']),confirmed_at=str(a['approved_at']),
++            mapping_id=str(a['alias_id']),mapping_version=a['version'])
++    elif len(candidates)>1: result.update(status='ambiguous',reason='Multiple approved aliases')
++    if not result['candidates']:
++        result['candidates']=[i['variant_id'] for i in catalogue if matches(i,article or name or '__no_identity__')][:25]
++    return result
+diff --git a/backend/v2/import_service.py b/backend/v2/import_service.py
+new file mode 100644
+index 0000000..f168722
+--- /dev/null
++++ b/backend/v2/import_service.py
+@@ -0,0 +1,111 @@
++"""Draft-only application of immutable import evidence; no submission or jobs."""
++from datetime import datetime, timezone
++from uuid import uuid4
++from psycopg.types.json import Jsonb
++from . import catalogue
++from .catalogue_model import fingerprint, safe_item
++from .excel_import import identity_input
++from .identity import resolve, conflicts
++from .auto import apply_auto
++from .events import record_event
++from .security import error
++
++
++def aliases(conn):
++    return conn.execute('''SELECT DISTINCT ON(source_namespace,source_value) * FROM mf_identity_aliases
++        ORDER BY source_namespace,source_value,version DESC''').fetchall()
++
++
++def preview(conn,settings,actor,order,file_id,template,release,parsed):
++    batch=uuid4(); cat=catalogue.items(conn,release,'material'); approved=aliases(conn)
++    conn.execute('INSERT INTO mf_import_batches VALUES (%s,%s,%s,%s,%s,%s,%s,%s,now())',
++        (batch,order,file_id,template,release,Jsonb(parsed['selected_sheets']),Jsonb(parsed['summary']),actor))
++    for original in parsed['rows']:
++        row=uuid4()
++        conn.execute('INSERT INTO mf_import_rows VALUES (%s,%s,%s,%s,%s)',(row,batch,original['sheet'],original['row'],Jsonb(original)))
++        if original['disposition'] in {'valid','problematic'}:
++            resolution=resolve(identity_input(original,file_id),cat,release,approved)
++            conn.execute('INSERT INTO mf_import_row_resolutions VALUES (%s,%s,1,%s,%s,now())',(uuid4(),row,Jsonb(resolution),actor))
++    record_event(conn,settings,actor=actor,action='excel.preview.created',object_type='import',object_id=batch,reason='All selected worksheet rows retained')
++    return batch
++
++
++def rows(conn,batch):
++    return conn.execute('''SELECT r.*,x.resolution,x.version AS resolution_version FROM mf_import_rows r
++        LEFT JOIN LATERAL(SELECT resolution,version FROM mf_import_row_resolutions WHERE row_id=r.row_id ORDER BY version DESC LIMIT 1)x ON true
++        WHERE import_id=%s ORDER BY sheet,row_number''',(batch,)).fetchall()
++
++
++def manual_resolution(original,selected,actor,reason,custom=None):
++    if not reason.strip(): error(422,'OVERRIDE_REASON_REQUIRED')
++    result=dict(original)
++    result.update(status='custom_customer' if custom is not None else 'manual_override',method='explicit_user_action',
++                  selected=selected,reason=reason,confirmed_by=str(actor),confirmed_at=datetime.now(timezone.utc).isoformat(),
++                  mapping_id=None,mapping_version=None)
++    result['warnings']=conflicts(result['raw'],selected) if selected else []
++    if custom is not None: result['customer_material']=custom
++    return result
++
++
++def lock_draft(conn,order,expected):
++    row=conn.execute('SELECT * FROM mf_orders WHERE order_id=%s FOR UPDATE',(order,)).fetchone()
++    if not row or row['workflow_status']!='draft': error(409,'DRAFT_REQUIRED')
++    if not expected or not str(expected).strip('"').isdigit(): error(428,'VERSION_REQUIRED')
++    if row['optimistic_lock_version']!=int(str(expected).strip('"')): error(412,'REVISION_CONFLICT')
++    return row
++
++
++def bump(conn,settings,actor,order,reason):
++    row=conn.execute('''UPDATE mf_orders SET optimistic_lock_version=optimistic_lock_version+1,updated_at=now()
++        WHERE order_id=%s RETURNING optimistic_lock_version''',(order,)).fetchone()
++    record_event(conn,settings,actor=actor,action='order.draft.import.changed',object_type='order',object_id=order,
++                 version=row['optimistic_lock_version'],reason=reason)
++    return row['optimistic_lock_version']
++
++
++def confirm(conn,settings,actor,batch,mode,exclusions,expected):
++    source=conn.execute('SELECT * FROM mf_import_batches WHERE import_id=%s',(batch,)).fetchone()
++    if not source: error(404,'IMPORT_NOT_FOUND')
++    request_hash=fingerprint({'mode':mode,'exclusions':exclusions})
++    # Serialize repeat/concurrent confirms through the order lock. An identical retry is idempotent.
++    order=conn.execute('SELECT * FROM mf_orders WHERE order_id=%s FOR UPDATE',(source['order_id'],)).fetchone()
++    receipt=conn.execute('SELECT * FROM mf_import_receipts WHERE import_id=%s',(batch,)).fetchone()
++    if receipt:
++        if receipt['request_hash']!=request_hash: error(409,'IMPORT_ALREADY_APPLIED_WITH_DIFFERENT_REQUEST')
++        return receipt['result']
++    lock_draft(conn,source['order_id'],expected)
++    originals=rows(conn,batch); row_ids={str(r['row_id']) for r in originals}
++    if set(exclusions)-row_ids or any(not isinstance(v,str) or not v.strip() for v in exclusions.values()): error(422,'EXCLUSION_REASON_REQUIRED')
++    if mode not in {'add','replace','new_revision'}: error(422,'EXPLICIT_IMPORT_MODE_REQUIRED')
++    revision=None
++    if mode=='new_revision':
++        revision=uuid4()
++        snapshots=[r['snapshot'] for r in conn.execute('SELECT snapshot FROM mf_order_draft_rows WHERE order_id=%s ORDER BY draft_row_id',(source['order_id'],))]
++        number=conn.execute('SELECT coalesce(max(revision_number),0)+1 AS n FROM mf_order_revisions WHERE order_id=%s',(source['order_id'],)).fetchone()['n']
++        content={'stage':3,'draft_rows':snapshots,'note':'Immutable draft checkpoint; no submit/calculation'}
++        conn.execute('''INSERT INTO mf_order_revisions(revision_id,order_id,revision_number,parent_revision_id,created_by,reason,lifecycle,
++            content_hash,content,immutable_at) VALUES(%s,%s,%s,%s,%s,%s,'draft',%s,%s,now())''',
++            (revision,source['order_id'],number,order['active_revision_id'],actor,'Explicit draft checkpoint before new import',fingerprint(content),Jsonb(content)))
++        conn.execute('UPDATE mf_orders SET active_revision_id=%s WHERE order_id=%s',(revision,source['order_id']))
++    if mode in {'replace','new_revision'}:
++        # Do not delete evidence or history. Retired rows remain in the draft ledger with a reason.
++        conn.execute("UPDATE mf_order_draft_rows SET excluded_reason='Replaced by explicit import '||%s,updated_at=now() WHERE order_id=%s AND excluded_reason IS NULL",(str(batch),source['order_id']))
++    edges=[safe_item(e,source['release_id']) for e in catalogue.items(conn,source['release_id'],'edge')]
++    mappings=conn.execute('SELECT * FROM mf_material_edge_mappings').fetchall()
++    count=0
++    for r in originals:
++        original=r['original']
++        if original['disposition'] not in {'valid','problematic'}: continue  # Remains in mf_import_rows and full preview report.
++        snapshot={**original,'source_row_id':str(r['row_id']),'resolution':r['resolution'],
++                  'template_revision_id':str(source['template_revision_id']),'catalogue_release':str(source['release_id'])}
++        snapshot=apply_auto(snapshot,edges,mappings)
++        exclusion=exclusions.get(str(r['row_id']))
++        conn.execute('INSERT INTO mf_order_draft_rows VALUES (%s,%s,%s,%s,%s,%s,%s,now())',
++            (uuid4(),source['order_id'],r['row_id'],source['template_revision_id'],source['release_id'],Jsonb(snapshot),exclusion))
++        if exclusion: record_event(conn,settings,actor=actor,action='import.row.excluded',object_type='import_row',object_id=r['row_id'],reason=exclusion)
++        count+=1
++    version=bump(conn,settings,actor,source['order_id'],'Excel '+mode+' applied to draft; invalid quantities preserved')
++    result={'order_id':source['order_id'],'rows':count,'optimistic_lock_version':version,'checkpoint_revision_id':str(revision) if revision else None}
++    conn.execute('INSERT INTO mf_import_receipts VALUES (%s,%s,%s,%s,%s,%s,now())',
++        (batch,source['order_id'],mode,request_hash,Jsonb(result),actor))
++    return result
+diff --git a/backend/v2/migrations/0003_catalogue_imports.sql b/backend/v2/migrations/0003_catalogue_imports.sql
+new file mode 100644
+index 0000000..03c5b49
+--- /dev/null
++++ b/backend/v2/migrations/0003_catalogue_imports.sql
+@@ -0,0 +1,159 @@
++-- Stage 3 only. No production transport, calculation or legacy schema changes.
++INSERT INTO mf_permissions VALUES ('catalogue.read'),('catalogue.import'),('catalogue.publish'),
++ ('catalogue.mapping.manage'),('templates.own.manage'),('templates.manage');
++-- Fixed client grants are explicit; roles remain ceilings rather than authorization.
++INSERT INTO mf_permission_grants(grant_id,user_id,permission,scope_type,granted_by)
++ SELECT gen_random_uuid(),u.user_id,p.permission,'own',u.user_id
++ FROM mf_users u JOIN mf_user_roles r USING(user_id)
++ CROSS JOIN (VALUES ('catalogue.read'),('templates.own.manage')) p(permission)
++ WHERE r.role='client';
++
++CREATE TABLE mf_catalogue_imports (
++ import_id uuid PRIMARY KEY, file_id uuid NOT NULL REFERENCES mf_files,
++ source_namespace text NOT NULL, profile jsonb NOT NULL, sha256 text NOT NULL,
++ workbook jsonb NOT NULL, report jsonb NOT NULL, created_by uuid NOT NULL REFERENCES mf_users,
++ created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_materials (
++ material_id uuid PRIMARY KEY, source_namespace text NOT NULL,
++ identity_key text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
++ UNIQUE(source_namespace,identity_key)
++);
++CREATE TABLE mf_material_variants (
++ variant_id uuid PRIMARY KEY, material_id uuid NOT NULL REFERENCES mf_materials,
++ identity_signature text NOT NULL, identity jsonb NOT NULL,
++ UNIQUE(material_id,identity_signature)
++);
++CREATE TABLE mf_edge_variants (
++ edge_id uuid PRIMARY KEY, source_namespace text NOT NULL,
++ identity_signature text NOT NULL, identity jsonb NOT NULL,
++ UNIQUE(source_namespace,identity_signature)
++);
++CREATE TABLE mf_catalogue_raw_rows (
++ raw_row_id uuid PRIMARY KEY, import_id uuid NOT NULL REFERENCES mf_catalogue_imports,
++ sheet text NOT NULL, row_number integer NOT NULL CHECK(row_number>0), cells jsonb NOT NULL,
++ disposition text NOT NULL CHECK(disposition IN ('published','review','excluded','error','duplicate')),
++ reason text NOT NULL, normalized jsonb NOT NULL,
++ variant_id uuid REFERENCES mf_material_variants, edge_id uuid REFERENCES mf_edge_variants,
++ duplicate_of uuid REFERENCES mf_catalogue_raw_rows,
++ UNIQUE(import_id,sheet,row_number)
++);
++CREATE TABLE mf_catalogue_source_mappings (
++ source_namespace text NOT NULL, key_kind text NOT NULL CHECK(key_kind IN ('identity','external')),
++ source_key text NOT NULL, identity_signature text NOT NULL,
++ variant_id uuid REFERENCES mf_material_variants, edge_id uuid REFERENCES mf_edge_variants,
++ first_import_id uuid NOT NULL REFERENCES mf_catalogue_imports,
++ PRIMARY KEY(source_namespace,key_kind,source_key,identity_signature),
++ CHECK((variant_id IS NOT NULL)::int+(edge_id IS NOT NULL)::int=1)
++);
++CREATE TABLE mf_catalogue_releases (
++ release_id uuid PRIMARY KEY, import_id uuid NOT NULL UNIQUE REFERENCES mf_catalogue_imports,
++ parent_release_id uuid REFERENCES mf_catalogue_releases, report jsonb NOT NULL,
++ created_by uuid NOT NULL REFERENCES mf_users, created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_catalogue_items (
++ release_id uuid NOT NULL REFERENCES mf_catalogue_releases,
++ item_id uuid NOT NULL, kind text NOT NULL CHECK(kind IN ('material','edge')),
++ source_namespace text NOT NULL, snapshot jsonb NOT NULL,
++ raw_row_id uuid NOT NULL REFERENCES mf_catalogue_raw_rows,
++ PRIMARY KEY(release_id,item_id)
++);
++CREATE TABLE mf_material_price_entries (
++ price_entry_id uuid PRIMARY KEY, release_id uuid NOT NULL REFERENCES mf_catalogue_releases,
++ item_id uuid NOT NULL, raw_value jsonb, raw_unit text, raw_row_id uuid NOT NULL REFERENCES mf_catalogue_raw_rows,
++ currency text, vat_mode text, purpose text, approved_profile_id uuid,
++ CHECK(currency IS NULL AND vat_mode IS NULL AND purpose IS NULL AND approved_profile_id IS NULL),
++ FOREIGN KEY(release_id,item_id) REFERENCES mf_catalogue_items
++);
++CREATE TABLE mf_catalogue_active (
++ singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),
++ release_id uuid NOT NULL REFERENCES mf_catalogue_releases, updated_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_catalogue_release_seals (
++ release_id uuid PRIMARY KEY REFERENCES mf_catalogue_releases,
++ sealed_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE FUNCTION mf_check_catalogue_seal() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++ IF EXISTS(SELECT 1 FROM mf_catalogue_release_seals WHERE release_id=NEW.release_id)
++ THEN RAISE EXCEPTION 'sealed catalogue release'; END IF;
++ RETURN NEW;
++END $$;
++CREATE TRIGGER mf_catalogue_items_sealed BEFORE INSERT ON mf_catalogue_items
++ FOR EACH ROW EXECUTE FUNCTION mf_check_catalogue_seal();
++CREATE TRIGGER mf_catalogue_prices_sealed BEFORE INSERT ON mf_material_price_entries
++ FOR EACH ROW EXECUTE FUNCTION mf_check_catalogue_seal();
++CREATE FUNCTION mf_require_catalogue_seal() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++ IF NOT EXISTS(SELECT 1 FROM mf_catalogue_release_seals WHERE release_id=NEW.release_id)
++ THEN RAISE EXCEPTION 'catalogue release is not sealed'; END IF;
++ RETURN NEW;
++END $$;
++CREATE TRIGGER mf_catalogue_active_sealed BEFORE INSERT OR UPDATE ON mf_catalogue_active
++ FOR EACH ROW EXECUTE FUNCTION mf_require_catalogue_seal();
++CREATE TABLE mf_identity_aliases (
++ alias_id uuid PRIMARY KEY, source_value text NOT NULL, source_namespace text NOT NULL,
++ manufacturer text, variant_id uuid NOT NULL REFERENCES mf_material_variants,
++ version integer NOT NULL CHECK(version>0), reason text NOT NULL, source text NOT NULL,
++ created_by uuid NOT NULL REFERENCES mf_users, approved_by uuid NOT NULL REFERENCES mf_users,
++ approved_at timestamptz NOT NULL DEFAULT now(),
++ UNIQUE(source_namespace,source_value,version)
++);
++CREATE TABLE mf_material_edge_mappings (
++ mapping_id uuid PRIMARY KEY, variant_id uuid NOT NULL REFERENCES mf_material_variants,
++ edge_id uuid NOT NULL REFERENCES mf_edge_variants, version integer NOT NULL CHECK(version>0),
++ reason text NOT NULL, source text NOT NULL, created_by uuid NOT NULL REFERENCES mf_users,
++ approved_by uuid NOT NULL REFERENCES mf_users, approved_at timestamptz NOT NULL DEFAULT now(),
++ UNIQUE(variant_id,version)
++);
++CREATE TABLE mf_import_templates (
++ template_id uuid PRIMARY KEY, owner_user_id uuid NOT NULL REFERENCES mf_users,
++ scope text NOT NULL CHECK(scope='owner'), name text NOT NULL,
++ created_by uuid NOT NULL REFERENCES mf_users, created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_import_template_revisions (
++ template_revision_id uuid PRIMARY KEY, template_id uuid NOT NULL REFERENCES mf_import_templates,
++ version integer NOT NULL CHECK(version>0), definition jsonb NOT NULL,
++ header_fingerprint text NOT NULL, status text NOT NULL CHECK(status IN ('draft','active','retired')),
++ created_by uuid NOT NULL REFERENCES mf_users, created_at timestamptz NOT NULL DEFAULT now(),
++ UNIQUE(template_id,version)
++);
++CREATE TABLE mf_import_batches (
++ import_id uuid PRIMARY KEY, order_id text NOT NULL REFERENCES mf_orders,
++ file_id uuid NOT NULL REFERENCES mf_files,
++ template_revision_id uuid NOT NULL REFERENCES mf_import_template_revisions,
++ release_id uuid NOT NULL REFERENCES mf_catalogue_releases,
++ selected_sheets jsonb NOT NULL, summary jsonb NOT NULL,
++ created_by uuid NOT NULL REFERENCES mf_users, created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_import_rows (
++ row_id uuid PRIMARY KEY, import_id uuid NOT NULL REFERENCES mf_import_batches,
++ sheet text NOT NULL, row_number integer NOT NULL, original jsonb NOT NULL,
++ UNIQUE(import_id,sheet,row_number)
++);
++CREATE TABLE mf_import_row_resolutions (
++ resolution_id uuid PRIMARY KEY, row_id uuid NOT NULL REFERENCES mf_import_rows,
++ version integer NOT NULL, resolution jsonb NOT NULL, created_by uuid NOT NULL REFERENCES mf_users,
++ created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(row_id,version)
++);
++CREATE TABLE mf_order_draft_rows (
++ draft_row_id uuid PRIMARY KEY, order_id text NOT NULL REFERENCES mf_orders,
++ source_row_id uuid NOT NULL REFERENCES mf_import_rows,
++ template_revision_id uuid NOT NULL REFERENCES mf_import_template_revisions,
++ release_id uuid NOT NULL REFERENCES mf_catalogue_releases, snapshot jsonb NOT NULL,
++ excluded_reason text, updated_at timestamptz NOT NULL DEFAULT now(),
++ UNIQUE(order_id,source_row_id)
++);
++CREATE TABLE mf_import_receipts (
++ import_id uuid PRIMARY KEY REFERENCES mf_import_batches, order_id text NOT NULL REFERENCES mf_orders,
++ mode text NOT NULL CHECK(mode IN ('add','replace','new_revision')), request_hash text NOT NULL,
++ result jsonb NOT NULL, created_by uuid NOT NULL REFERENCES mf_users, created_at timestamptz NOT NULL DEFAULT now()
++);
++-- Published history, raw inputs, definitions and confirmations are immutable at the DB boundary.
++DO $$ DECLARE t text; BEGIN
++ FOREACH t IN ARRAY ARRAY['mf_catalogue_imports','mf_materials','mf_material_variants','mf_edge_variants',
++  'mf_catalogue_raw_rows','mf_catalogue_source_mappings','mf_catalogue_releases','mf_catalogue_items',
++  'mf_material_price_entries','mf_identity_aliases','mf_material_edge_mappings','mf_import_templates',
++  'mf_import_template_revisions','mf_import_batches','mf_import_rows','mf_import_row_resolutions','mf_import_receipts','mf_catalogue_release_seals']
++ LOOP EXECUTE format('CREATE TRIGGER %I BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION mf_append_only()',t||'_immutable',t); END LOOP;
++END $$;
+diff --git a/backend/v2/operator.py b/backend/v2/operator.py
+index e3a772f..362ba23 100644
+--- a/backend/v2/operator.py
++++ b/backend/v2/operator.py
+@@ -12,7 +12,8 @@ from .mail import FakeCollector, queue_verification
+ 
+ ADMIN_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.approve','orders.revision.create',
+                      'orders.assign_manager','orders.oblx.read','files.source.read','files.preliminary_pdf.read',
+-                     'customers.pii.read','users.staff.create','users.roles.write','audit.read','orders.prices.read')
++                     'customers.pii.read','users.staff.create','users.roles.write','audit.read','orders.prices.read',
++                     'catalogue.read','catalogue.import','catalogue.publish','catalogue.mapping.manage','templates.manage')
+ 
+ 
+ def bootstrap(settings,policy,email,password):
+diff --git a/backend/v2/rbac.py b/backend/v2/rbac.py
+index 79c3fee..8220124 100644
+--- a/backend/v2/rbac.py
++++ b/backend/v2/rbac.py
+@@ -1,7 +1,8 @@
+ """Exact grants AND current role ceiling/scope/state. Never a role-only bypass."""
+-CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read'}
+-CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve'}
+-ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read'}
++CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read'}
++CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage'}
++ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read',
++              'catalogue.import','catalogue.publish','catalogue.mapping.manage'}
+ 
+ 
+ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=None):
+@@ -21,7 +22,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
+     if user['account_status'] == 'blocked' and (roles != {'client'} or permission not in CLIENT_READ):
+         return False
+     ceilings = {
+-        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read'},
++        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage'},
+         'production': {'orders.read','orders.oblx.read','files.source.read'},
+         'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read'},
+         'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read'},
+@@ -47,13 +48,16 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
+     for g in grants:
+         scope = g['scope_type']
+         if 'client' in roles:
+-            if scope == 'own' and (order or permission == 'orders.draft.write'):
++            if scope == 'own' and (order or permission in {'orders.draft.write','catalogue.read','templates.own.manage'}):
+                 return True
+             continue
+         if scope == 'all' and roles == {'admin'}:
+             return True
+         if scope == 'assigned' and roles == {'manager'} and order and order['assigned_manager_id'] == user_id:
+             return True
++        if scope == 'assigned' and roles == {'manager'} and permission == 'catalogue.read' and not order:
++            if conn.execute('SELECT 1 FROM mf_orders WHERE assigned_manager_id=%s LIMIT 1',(user_id,)).fetchone():
++                return True
+         if scope == 'order' and order and g['scope_id'] == order_id:
+             # Stage 2 production artifact review requires an explicit job grant, never execute rights.
+             if 'production' not in roles:
+diff --git a/backend/v2/security.py b/backend/v2/security.py
+index 9d831b6..4e1f11e 100644
+--- a/backend/v2/security.py
++++ b/backend/v2/security.py
+@@ -15,7 +15,7 @@ from .db import transaction
+ COOKIE = 'mf_v2_session'
+ CLIENT_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.revision.create',
+                       'orders.approve','files.source.read','files.preliminary_pdf.read','customers.pii.read',
+-                      'orders.prices.read')
++                      'orders.prices.read','catalogue.read','templates.own.manage')
+ STAFF_ROLES = {'manager','production','accounting','viewer','admin','service_agent'}
+ 
+ @dataclass(frozen=True, repr=False)
+diff --git a/backend/v2/stage03_operator.py b/backend/v2/stage03_operator.py
+new file mode 100644
+index 0000000..4253f98
+--- /dev/null
++++ b/backend/v2/stage03_operator.py
+@@ -0,0 +1,70 @@
++"""Explicit isolated staging operations. Disabled by default; no HTTP maintenance bypass."""
++from dataclasses import replace
++import json
++import os
++from uuid import uuid4
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict,make_conninfo
++from .db import connect,transaction
++from .security import WebPolicy
++from .operator import bootstrap
++from .mail import FakeCollector,confirm
++from .storage import VolumeStore
++from .files import read_verified
++from .backup import backup,restore
++from .events import record_event
++
++
++def run_if_requested(settings):
++    mode=os.environ.get('MF_STAGE03_OPERATOR_MODE','off')
++    if mode=='off': return
++    if mode=='bootstrap':
++        email=os.environ.get('MF_STAGE03_OPERATOR_EMAIL','')
++        password=os.environ.get('MF_STAGE03_OPERATOR_PASSWORD','')
++        if not email.endswith('@example.invalid') or len(password)<32: raise ValueError('Explicit synthetic operator credentials required')
++        policy=WebPolicy.from_env()
++        with connect(settings) as conn:
++            exists=conn.execute('SELECT user_id,account_status,email_verified_at FROM mf_users WHERE email=%s',(email,)).fetchone()
++        if exists:
++            if exists['account_status']!='active' or not exists['email_verified_at']: raise ValueError('Operator not reusable')
++            print('MF_STAGE03_OPERATOR_READY',flush=True);return
++        result=bootstrap(settings,policy,email,password)
++        fid=FakeCollector().collect(settings,policy,result['verification_delivery_id'])
++        with transaction(settings) as conn:
++            payload=json.loads(read_verified(conn,VolumeStore(settings.storage_root),fid))
++            confirm(conn,settings,payload['url'].split('#token=')[1])
++        print('MF_STAGE03_OPERATOR_READY',flush=True)
++    elif mode=='retire_restore':
++        evidence_path=settings.storage_root.parent/'stage03-restore-evidence.json'
++        if evidence_path.exists():
++            print('MF_STAGE03_RESTORE='+evidence_path.read_text(),flush=True);return
++        email=os.environ.get('MF_STAGE03_OPERATOR_EMAIL','')
++        if not email.endswith('@example.invalid'): raise ValueError('Explicit synthetic operator identity required')
++        with transaction(settings) as conn:
++            u=conn.execute('SELECT user_id FROM mf_users WHERE email=%s FOR UPDATE',(email,)).fetchone()
++            if not u: raise ValueError('Operator not found')
++            uid=u['user_id']
++            conn.execute("UPDATE mf_users SET account_status='disabled',password_hash='disabled-stage03-operator' WHERE user_id=%s",(uid,))
++            conn.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++            conn.execute('UPDATE mf_permission_grants SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++            conn.execute("DELETE FROM mf_user_roles WHERE user_id=%s AND role='admin'",(uid,))
++            record_event(conn,settings,actor=uid,action='stage03.operator.retired',object_type='user',object_id=uid,reason='Temporary staging catalogue operator retired')
++        run_id=uuid4().hex[:12];destination=settings.storage_root.parent/'backups'/('stage03-'+run_id)
++        manifest=backup(settings,destination);name='mf_staging_restore_stage03_'+run_id
++        with connect(settings,autocommit=True) as conn: conn.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++        info=conninfo_to_dict(settings.database_url)
++        target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,
++                       storage_root=settings.storage_root.parent/('restore-stage03-'+run_id)/'storage')
++        result=restore(target,destination)
++        with connect(target) as conn:
++            active=conn.execute('SELECT release_id FROM mf_catalogue_active').fetchone()
++            source=conn.execute('SELECT file_id,sha256 FROM mf_catalogue_imports ORDER BY created_at LIMIT 1').fetchone()
++            import hashlib
++            assert hashlib.sha256(read_verified(conn,VolumeStore(target.storage_root),source['file_id'])).hexdigest()==source['sha256']
++            rows=conn.execute('SELECT count(*) AS n FROM mf_catalogue_raw_rows').fetchone()['n']
++        evidence={**result,'source_dump_sha256':manifest['database_sha256'],'backup_path':str(destination),
++                  'master_sha256':source['sha256'],'master_bytes_verified':True,'catalogue_raw_rows':rows,
++                  'active_release':str(active['release_id']),'operator_retired':True,'transport':'disabled','dispatch':'disabled'}
++        evidence_path.write_text(json.dumps(evidence,indent=2))
++        print('MF_STAGE03_RESTORE='+json.dumps(evidence),flush=True)
++    else: raise ValueError('Unknown Stage 3 operator mode')
+diff --git a/backend/v2/startup.py b/backend/v2/startup.py
+index 3535dad..95dfd2b 100644
+--- a/backend/v2/startup.py
++++ b/backend/v2/startup.py
+@@ -24,6 +24,14 @@ def prepare(settings):
+         manifest=backup(settings,destination)
+         print(json.dumps({'stage02_pre_migration_backup':True,'database_sha256':manifest['database_sha256'],
+                           'file_count':len(manifest['files']),'destination':str(destination)}),flush=True)
++    if versions=={'0001_foundation.sql','0002_auth_security.sql'}:
++        destination=settings.storage_root.parent/'backups'/'pre-stage03'
++        manifest=backup(settings,destination)
++        state={'runtime_before':'3ff1752469f189f0e13191dcfe01a5e8033abff8','catalogue_before':None,
++               'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files']),
++               'destination':str(destination),'migration_versions':sorted(versions)}
++        (destination/'stage03-before.json').write_text(json.dumps(state,indent=2))
++        print('MF_STAGE03_PRE_MIGRATION='+json.dumps(state),flush=True)
+     migrate(settings)
+     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
+     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'
+@@ -43,6 +51,8 @@ def prepare(settings):
+         print('MF_STAGE02_EVIDENCE='+json.dumps(evidence),flush=True)
+     elif os.environ.get('MF_STAGE02_PROBE_MODE','off')!='off':
+         raise ValueError('Invalid Stage 2 probe mode')
++    from .stage03_operator import run_if_requested
++    run_if_requested(settings)
+ 
+ 
+ if __name__=='__main__':
+diff --git a/backend/v2/xlsx.py b/backend/v2/xlsx.py
+new file mode 100644
+index 0000000..ac61ccb
+--- /dev/null
++++ b/backend/v2/xlsx.py
+@@ -0,0 +1,77 @@
++"""Bounded, read-only OOXML reader. Never evaluates formulae, links or macros."""
++from io import BytesIO
++import hashlib
++import posixpath
++import re
++from zipfile import ZipFile, BadZipFile
++from xml.etree import ElementTree as ET
++
++NS = {'s':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
++REL = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id'
++
++
++def xml(data):
++    if b'<!DOCTYPE' in data.upper() or b'<!ENTITY' in data.upper():
++        raise ValueError('XML entities are forbidden')
++    return ET.fromstring(data)
++
++
++def read_workbook(data):
++    if not data or len(data)>20*1024*1024:
++        raise ValueError('XLSX size exceeds 20 MiB')
++    try:
++        with ZipFile(BytesIO(data)) as z:
++            entries=z.infolist()
++            if len(entries)>2000 or sum(i.file_size for i in entries)>100*1024*1024:
++                raise ValueError('XLSX expansion limit')
++            if len({i.filename for i in entries})!=len(entries):
++                raise ValueError('Duplicate ZIP paths')
++            if any('vbaProject' in i.filename or '..' in i.filename.split('/') for i in entries):
++                raise ValueError('Macros or unsafe ZIP paths are forbidden')
++            strings=[]
++            if 'xl/sharedStrings.xml' in z.namelist():
++                strings=[''.join(t.text or '' for t in si.findall('.//s:t',NS))
++                         for si in xml(z.read('xl/sharedStrings.xml')).findall('s:si',NS)]
++            rels={e.get('Id'):e for e in xml(z.read('xl/_rels/workbook.xml.rels'))}
++            sheets=[]; total=0; count=0
++            for sheet in xml(z.read('xl/workbook.xml')).findall('s:sheets/s:sheet',NS):
++                rel=rels[sheet.get(REL)]
++                if rel.get('TargetMode')=='External':
++                    raise ValueError('External worksheet forbidden')
++                path=posixpath.normpath(posixpath.join('xl',rel.get('Target',''))).lstrip('/')
++                if not path.startswith('xl/'):
++                    raise ValueError('Worksheet outside workbook')
++                doc=xml(z.read(path)); physical={}
++                for row in doc.findall('s:sheetData/s:row',NS):
++                    number=int(row.get('r','0'))
++                    if number<1 or number>50000 or number in physical:
++                        raise ValueError('Invalid or duplicate row coordinate')
++                    cells={}
++                    for c in row.findall('s:c',NS):
++                        coord=c.get('r',''); match=re.fullmatch(r'([A-Z]{1,3})([1-9][0-9]*)',coord)
++                        if not match or int(match[2])!=number or match[1] in cells:
++                            raise ValueError('Invalid or duplicate cell coordinate')
++                        typ=c.get('t','n'); v=c.find('s:v',NS); formula=c.find('s:f',NS)
++                        value=v.text if v is not None else None
++                        if typ=='s' and value is not None: value=strings[int(value)]
++                        if typ=='inlineStr': value=''.join(t.text or '' for t in c.findall('s:is//s:t',NS))
++                        cells[match[1]]={'cell':coord,'type':typ,'value':value,
++                            'formula':None if formula is None else (formula.text or ''),
++                            'formula_attributes':None if formula is None else dict(formula.attrib),
++                            'cached':None if formula is None else value}
++                        count+=1
++                        if count>750000: raise ValueError('Cell limit exceeded')
++                    physical[number]=cells
++                last=max(physical,default=0); total+=last
++                if total>50000: raise ValueError('Workbook row limit exceeded')
++                # Gaps are explicit blank rows; dimensions cannot manufacture millions of rows.
++                sheets.append({'name':sheet.get('name'),'rows':[{'row':n,'cells':physical.get(n,{})}
++                              for n in range(1,last+1)]})
++            if not sheets or len(sheets)>50: raise ValueError('Invalid worksheet count')
++            return {'sha256':hashlib.sha256(data).hexdigest(),'sheets':sheets}
++    except (BadZipFile,KeyError,IndexError,ET.ParseError) as exc:
++        raise ValueError('Invalid XLSX structure') from exc
++
++
++def raw_value(cells,column):
++    return cells.get(column,{}).get('value')
+diff --git a/tests/stage03/__init__.py b/tests/stage03/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/stage03/live_acceptance.py b/tests/stage03/live_acceptance.py
+new file mode 100644
+index 0000000..f79249d
+--- /dev/null
++++ b/tests/stage03/live_acceptance.py
+@@ -0,0 +1,117 @@
++"""Explicit live acceptance runner. Hard-pinned staging URL; no production or Agent calls.
++Usage: python -m tests.stage03.live_acceptance ingest|verify MASTER_PATH CREDENTIALS_PATH
++Credentials file contains a freshly provisioned synthetic operator and is never printed.
++"""
++import base64
++import hashlib
++import json
++from pathlib import Path
++import subprocess
++import sys
++import tempfile
++from urllib.parse import urlencode
++from .support import parts,part,template
++
++ORIGIN='https://martin-forest-v2-staging-production.up.railway.app'
++EVIDENCE=Path('docs/stage03/live-evidence.json')
++
++def run(mode,master_path,credential_path):
++    credentials=json.loads(Path(credential_path).read_text())
++    if not credentials['email'].endswith('@example.invalid'): raise ValueError('Synthetic operator required')
++    with tempfile.TemporaryDirectory(prefix='mf-stage03-http-') as directory:
++        root=Path(directory);jar=root/'cookies';jar.touch(mode=0o600)
++        def request(method,path,body=None,version=None,expected=200,raw=False):
++            args=['curl','-sS','--max-time','90','-X',method,'-H','Origin: '+ORIGIN,
++                  '-H','Content-Type: application/json','-b',str(jar),'-c',str(jar)]
++            if version is not None: args+=['-H','If-Match: '+str(version)]
++            if body is not None:
++                payload=root/'request.json';payload.write_text(json.dumps(body));payload.chmod(0o600)
++                args+=['--data-binary','@'+str(payload)]
++            result=subprocess.run(args+['-w','\n%{http_code}',ORIGIN+path],capture_output=True,check=True)
++            content,status=result.stdout.rsplit(b'\n',1)
++            if int(status)!=expected: raise RuntimeError(f'{method} {path}: HTTP {status.decode()} (expected {expected})')
++            return content if raw else json.loads(content)
++        def post(path,body,**kw): return request('POST','/api/v2'+path,body,**kw)
++        def get(path,**kw): return request('GET','/api/v2'+path,**kw)
++        assert request('GET','/health')['stage']=='3'
++        post('/auth/login',credentials)
++        master=Path(master_path).read_bytes();sha=hashlib.sha256(master).hexdigest()
++        assert sha=='54c6f737f0bafecc3dc5df4ed14b573b7e2f5ab0c83e626e5e79fc296c641f4a'
++        if mode=='verify':
++            evidence=json.loads(EVIDENCE.read_text())
++            rows=get('/orders/'+evidence['draft_order_id']+'/draft/rows')['rows']
++            assert rows[0]['snapshot']['values']['qty']==0
++            assert rows[0]['snapshot']['edges']['L1']['mode']=='manual_override'
++            assert rows[0]['snapshot']['edges']['L1']['edge_id'] is None
++            assert get('/catalogue/releases')['active_release']==evidence['active_release']
++            cache=get('/catalogue/releases/'+evidence['active_release']+'/data.js',raw=True)
++            assert hashlib.sha256(cache).hexdigest()==evidence['cache_sha256']
++            evidence['after_redeploy']={'draft_qty_zero':True,'manual_none':True,'active_release':True,'cache_identical':True}
++            EVIDENCE.write_text(json.dumps(evidence,ensure_ascii=False,indent=2)+'\n')
++            print(json.dumps({'redeploy_verified':True,'draft_qty':0,'catalogue_items':evidence['published_items']}))
++            return
++        if mode!='ingest': raise ValueError('Unknown mode')
++        if EVIDENCE.exists(): raise ValueError('Evidence exists; inspect instead of repeating live writes')
++        encoded=base64.b64encode(master).decode()
++        payload={'filename':Path(master_path).name,'content_base64':encoded,'source_namespace':'master.u2'}
++        first=post('/catalogue/imports',payload,expected=201);iid=first['import_id']
++        report=get('/catalogue/imports/'+iid);counts=report['report']['dispositions']
++        assert sum(counts.values())==22139 and counts['error']==0
++        assert report['sha256']==sha
++        r1=post('/catalogue/imports/'+iid+'/publish',{'reason':'Stage 3 master validated; mixed classes and unapproved units remain in review',
++                'accept_review_exclusion':True,'expected_active_release':None})['release_id']
++        expected=json.loads(Path('docs/stage03/master-evidence.json').read_text())
++        assert counts=={**{'published':0,'review':0,'excluded':0,'error':0,'duplicate':0},**expected['dispositions']}
++        searches={}
++        for q in ['ЛХДФ','ХДФ','HDF','U708/U5034']:
++            result=get('/catalogue/materials?'+urlencode({'q':q}))
++            assert result['kind']=='candidates' and result['total']==(1 if q=='U708/U5034' else 5)
++            searches[q]=result['items']
++        expected_ids={h['variant_id'] for h in expected['hdf']}
++        assert {h['variant_id'] for h in searches['HDF']}==expected_ids
++        for h in searches['HDF']:
++            assert get('/catalogue/materials/'+h['variant_id'])['variant_id']==h['variant_id']
++        negative=get('/catalogue/imports/'+iid+'?offset=10747&limit=5')['rows']
++        assert [r['row_number'] for r in negative]==list(range(10749,10754))
++        assert all(r['disposition']=='excluded' and r['variant_id'] is None for r in negative)
++        request('GET','/api/v2/files/'+report['file_id']+'/download',expected=403)
++        request('GET','/static/'+report['file_id'],expected=404)
++        cache=get('/catalogue/releases/'+r1+'/data.js',raw=True)
++        assert cache==get('/catalogue/releases/'+r1+'/data.js',raw=True)
++        for forbidden in (b'raw_value',b'storage_key',b'price_entry',b'source_namespace',b'identity_signature'): assert forbidden not in cache
++        order=post('/orders',{'business_name':'STAGE 3 SYNTHETIC ACCEPTANCE — NOT PRODUCTION'},expected=201)
++        tpl=post('/import-templates',{'name':'Stage3 synthetic validation','definition':template()},expected=201)
++        xlsx=parts([part(qty=0,article='621 PO',material='UNKNOWN 621 PO')])
++        preview=post('/imports/preview',{'filename':'stage03-synthetic.xlsx','content_base64':base64.b64encode(xlsx).decode(),
++                     'order_id':order['order_id'],'template_revision_id':tpl['template_revision_id'],'selected_sheets':['Parts']},expected=201)
++        assert preview['rows'][1]['original']['values']['qty']==0
++        applied=post('/imports/'+preview['import_id']+'/confirm',{'mode':'add'},version=1)
++        assert post('/imports/'+preview['import_id']+'/confirm',{'mode':'add'},version=1)==applied
++        row=get('/orders/'+order['order_id']+'/draft/rows')['rows'][0];path='/orders/'+order['order_id']+'/draft/rows/'+row['draft_row_id']
++        chosen=next(h for h in searches['HDF'] if h['article'] is None)
++        result=post(path+'/material',{'variant_id':chosen['variant_id'],'reason':'Explicit selection of articleless exact variant'},version=applied['optimistic_lock_version'])
++        result=post(path+'/edges',{'side':'L1','action':'manual','edge_id':None,'reason':'Explicit manual NONE'},version=result['optimistic_lock_version'])
++        result=post(path+'/auto',{'reason':'Verify manual NONE survives AUTO'},version=result['optimistic_lock_version'])
++        assert result['snapshot']['edges']['L1']['mode']=='manual_override' and result['snapshot']['edges']['L1']['edge_id'] is None
++        assert result['snapshot']['resolution']['selected']['variant_id']==chosen['variant_id']
++        assert result['snapshot']['values']['qty']==0
++        pinned=result['snapshot']
++        second=post('/catalogue/imports',payload,expected=201)
++        assert not second['report']['added'] and not second['report']['inactive'] and not second['report']['price_changes']
++        r2=post('/catalogue/imports/'+second['import_id']+'/publish',{'reason':'Staging identical master release to verify pointer rollback',
++            'accept_review_exclusion':True,'expected_active_release':r1})['release_id']
++        assert get('/orders/'+order['order_id']+'/draft/rows')['rows'][0]['snapshot']==pinned
++        post('/catalogue/releases/'+r1+'/activate',{'reason':'Acceptance rollback to first Stage 3 release'})
++        assert get('/orders/'+order['order_id']+'/draft/rows')['rows'][0]['snapshot']==pinned
++        evidence={'runtime_commit':'267ed0cf8ac4439f82543dec1a79bad67fd4de63','source_sha256':sha,'source_filename':Path(master_path).name,
++             'import_id':iid,'repeat_import_id':second['import_id'],'raw_source_file_id':report['file_id'],
++             'active_release':r1,'rollback_from_release':r2,'source_rows':22139,'dispositions':counts,
++             'published_items':counts['published'],'search':searches,'negative_hdf':negative,'cache_sha256':hashlib.sha256(cache).hexdigest(),
++             'private_source_http_status':403,'static_source_http_status':404,
++             'draft_order_id':order['order_id'],'draft_row_id':row['draft_row_id'],'qty_zero_confirm_reload':True,
++             'manual_none_auto_reload':True,'manual_material_auto_unchanged':True,'release_rollback_draft_unchanged':True,
++             'idempotent_confirm':True,'stage4_actions':False}
++        EVIDENCE.write_text(json.dumps(evidence,ensure_ascii=False,indent=2)+'\n')
++        print(json.dumps({'master_imported':True,'source_rows':22139,'dispositions':counts,'hdf_count':5,'draft_qty_zero':True,'rollback':True}))
++if __name__=='__main__': run(*sys.argv[1:])
++
+diff --git a/tests/stage03/support.py b/tests/stage03/support.py
+new file mode 100644
+index 0000000..776e07f
+--- /dev/null
++++ b/tests/stage03/support.py
+@@ -0,0 +1,64 @@
++"""Synthetic OOXML fixtures only; never a copy of the private master."""
++from io import BytesIO
++from zipfile import ZipFile,ZipInfo,ZIP_DEFLATED
++from xml.sax.saxutils import escape,quoteattr
++from backend.v2.catalogue_model import HEADERS
++from backend.v2.excel_import import DEFAULT_EDGE_DICTIONARY
++
++
++def xlsx(sheets):
++    out=BytesIO()
++    with ZipFile(out,'w',ZIP_DEFLATED) as z:
++        def write(name,data):
++            info=ZipInfo(name,date_time=(2000,1,1,0,0,0));info.compress_type=ZIP_DEFLATED
++            z.writestr(info,data)
++        names=[];rels=[]
++        for i,(name,rows) in enumerate(sheets.items(),1):
++            names.append(f'<sheet name={quoteattr(name)} sheetId="{i}" r:id="rId{i}"/>')
++            rels.append(f'<Relationship Id="rId{i}" Target="worksheets/sheet{i}.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>')
++            xml=[]
++            for n,values in enumerate(rows,1):
++                cells=[]
++                for index,value in enumerate(values):
++                    col=chr(65+index);coord=f'{col}{n}'
++                    if value is None: continue
++                    if isinstance(value,dict):
++                        cached='' if value.get('cached') is None else '<v>'+escape(str(value['cached']))+'</v>'
++                        cells.append(f'<c r="{coord}"><f>{escape(value["formula"])}</f>{cached}</c>')
++                    else: cells.append(f'<c r="{coord}" t="inlineStr"><is><t xml:space="preserve">{escape(str(value))}</t></is></c>')
++                xml.append(f'<row r="{n}">'+''.join(cells)+'</row>')
++            write(f'xl/worksheets/sheet{i}.xml','<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+''.join(xml)+'</sheetData></worksheet>')
++        write('xl/workbook.xml','<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+''.join(names)+'</sheets></workbook>')
++        write('xl/_rels/workbook.xml.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+''.join(rels)+'</Relationships>')
++    return out.getvalue()
++
++
++def master(rows=None):
++    rows=rows if rows is not None else [
++        ['621 PO','Board 621 PO','кв.м','999',2800,2070,18,'PO','','M1','false',''],
++        ['621 PE','Board 621 PE','кв.м','1',2440,1220,18,'PE','','M1','false',''],
++        [None,'ЛХДФ  Белый','кв.м',0,2800,2070,3,'3мм','','M1','false',''],
++        ['E-22','Edge 22','м',0,0,22,.4,'621 POX','','M2','false',''],
++        ['E-2','Edge 2','м',0,0,2,.4,'621 PO','','M2','false','']]
++    return xlsx({'Sheet1':[HEADERS,*rows]})
++
++
++PART_HEADERS=['kind','position','name','article','material','length','width','qty','texture','rotation','comments','X1','L1','X2','Y1','Y2','thickness','format_length','format_width']
++
++
++def template():
++    return {'headers':{chr(65+i):h for i,h in enumerate(PART_HEADERS)},
++        'sheet_policy':{'mode':'explicit','header_row':1},
++        'mapping':{h:chr(65+i) for i,h in enumerate(PART_HEADERS) if h!='kind'}|{'row_type':'A'},
++        'inheritance':{'enabled':True,'header_marker':'MATERIAL','blank_resets':True,'service_markers':['TOTAL']},
++        'edge_dictionary':dict(DEFAULT_EDGE_DICTIONARY),'units':{'length':'mm','width':'mm','thickness':'mm'}}
++
++
++def part(qty=1,length=500,width=200,article='621 PO',material='Board',**kw):
++    values={'position':1,'name':'Part','article':article,'material':material,'length':length,'width':width,'qty':qty,
++            'X1':'*','X2':'*','Y1':'*','Y2':'*',**kw}
++    return [values.get(k) for k in PART_HEADERS]
++
++
++def parts(rows=None,sheets=None):
++    return xlsx(sheets or {'Parts':[PART_HEADERS,*(rows if rows is not None else [part()])]})
+diff --git a/tests/stage03/test_api.py b/tests/stage03/test_api.py
+new file mode 100644
+index 0000000..e6adf4e
+--- /dev/null
++++ b/tests/stage03/test_api.py
+@@ -0,0 +1,268 @@
++"""Real Postgres and ASGI acceptance; synthetic workbooks and identities only."""
++import base64
++import hashlib
++import os
++from uuid import uuid4
++from dataclasses import replace
++import pytest
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict,make_conninfo
++from cryptography.fernet import Fernet
++from fastapi.testclient import TestClient
++from backend.v2.config import Settings
++from backend.v2.db import connect,transaction
++from backend.v2.migrate import migrate
++from backend.v2.app import create_app
++from backend.v2.security import WebPolicy,password_hash,grant
++from backend.v2.backup import backup,restore
++from backend.v2.files import read_verified
++from backend.v2.storage import VolumeStore
++from .support import master,parts,part,template
++
++PASSWORD='Synthetic-Stage03-Test-Only-!'
++
++@pytest.fixture(scope='module')
++def settings(tmp_path_factory):
++    dsn=os.environ.get('MF_TEST_DATABASE_URL')
++    if not dsn: pytest.skip('Requires isolated native Postgres')
++    info=conninfo_to_dict(dsn)
++    assert info['host'] in {'postgres','localhost','127.0.0.1'} and info['dbname'].startswith('mf_staging_')
++    root=tmp_path_factory.mktemp('private03');base=Settings(dsn,info['host'],info['dbname'],root/'source','mf.staging.ci','ci')
++    name='mf_staging_stage03_'+uuid4().hex[:10]
++    with connect(base,autocommit=True) as c: c.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    s=replace(base,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name)
++    migrate(s);return s
++
++@pytest.fixture
++def api(settings):
++    policy=WebPolicy('https://testserver',Fernet.generate_key(),network_auth_per_hour=100000,network_emails_per_hour=100000)
++    with TestClient(create_app(settings,policy),base_url=policy.origin,headers={'Origin':policy.origin,'Content-Type':'application/json'}) as client:
++        yield client
++
++@pytest.fixture
++def admin_user(api,settings):
++    uid=uuid4();email=uid.hex+'@example.invalid'
++    with transaction(settings) as c:
++        c.execute('INSERT INTO mf_users(user_id,email,password_hash,email_verified_at) VALUES(%s,%s,%s,now())',(uid,email,password_hash(PASSWORD)))
++        c.execute("INSERT INTO mf_user_roles VALUES(%s,'admin')",(uid,))
++        for p in c.execute('SELECT permission FROM mf_permissions').fetchall(): grant(c,user_id=uid,permission=p['permission'],scope='all',actor=uid)
++    login(api,email);return {'user_id':str(uid),'email':email}
++
++def login(api,email):
++    api.cookies.clear();r=api.post('/api/v2/auth/login',json={'email':email,'password':PASSWORD});assert r.status_code==200,r.text
++
++def payload(data,filename='synthetic.xlsx',**extra):
++    return {'filename':filename,'content_base64':base64.b64encode(data).decode(),**extra}
++
++def post(api,url,body,version=None,status=200):
++    r=api.post('/api/v2'+url,json=body,headers={'If-Match':str(version)} if version else {})
++    assert r.status_code==status,r.text
++    return r.json()
++
++def publish(api,data=None,namespace=None):
++    before=api.get('/api/v2/catalogue/releases').json()['active_release']
++    result=post(api,'/catalogue/imports',payload(data or master(),source_namespace=namespace or 'test.'+uuid4().hex),status=201)
++    release=post(api,'/catalogue/imports/'+result['import_id']+'/publish',
++                 {'reason':'Synthetic approved test','accept_review_exclusion':True,'expected_active_release':before})['release_id']
++    return result,release
++
++def setup_import(api,qty=0,**kw):
++    order=post(api,'/orders',{'business_name':'Synthetic Stage3','preparation_mode':'self_prepared'},status=201)
++    t=post(api,'/import-templates',{'name':'Synthetic','definition':template()},status=201)
++    p=post(api,'/imports/preview',payload(parts([part(qty=qty,**kw)]),order_id=order['order_id'],
++               template_revision_id=t['template_revision_id'],selected_sheets=['Parts']),status=201)
++    return order,t,p
++
++def test_catalogue_security_private_source_and_reproducible_cache(api,settings,admin_user):
++    result,release=publish(api)
++    r=api.get('/api/v2/catalogue/materials',params={'q':'ЛХДФ','release':release}).json()
++    assert r['kind']=='candidates' and len(r['items'])>=1 and r['items'][0]['article'] is None
++    cache=api.get('/api/v2/catalogue/releases/'+release+'/data.js')
++    assert cache.content==api.get('/api/v2/catalogue/releases/'+release+'/data.js').content
++    assert cache.headers['x-content-sha256']==hashlib.sha256(cache.content).hexdigest()
++    assert hashlib.sha256(cache.content+b'/* manual drift */').hexdigest()!=cache.headers['x-content-sha256']
++    from backend.v2.catalogue import verify_cache
++    with connect(settings) as c:
++        assert verify_cache(c,release,cache.content)
++        with pytest.raises(ValueError): verify_cache(c,release,cache.content+b'/* manual drift */')
++    for private in ('raw_value','price_entry','source_namespace','storage_key','identity_signature'):
++        assert private not in cache.text
++    report=api.get('/api/v2/catalogue/imports/'+result['import_id']).json();fid=report['file_id']
++    assert api.get('/api/v2/files/'+fid+'/download').status_code==403
++    post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
++    assert api.get('/api/v2/catalogue/materials').status_code==200
++    assert api.get('/api/v2/catalogue/imports/'+result['import_id']).status_code==403
++    assert api.post('/api/v2/catalogue/imports',json=payload(master(),source_namespace='client.illegal')).status_code==403
++    assert api.post('/api/v2/catalogue/imports/'+result['import_id']+'/publish',json={'reason':'deny'}).status_code==403
++    assert api.get('/api/v2/files/'+fid+'/download').status_code==403
++
++def test_qty_zero_roundtrip_repeat_idempotent_and_audit_atomic(api,settings,admin_user):
++    publish(api);order,t,p=setup_import(api)
++    assert p['rows'][1]['original']['values']['qty']==0
++    # Same file/template/sheets/release is the same import, even through a fresh preview request.
++    again=post(api,'/imports/preview',payload(parts([part(qty=0)]),order_id=order['order_id'],
++             template_revision_id=t['template_revision_id'],selected_sheets=['Parts']),status=201)
++    assert again['import_id']==p['import_id'] and again['reused']
++    applied=post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)
++    assert post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)==applied
++    rows=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows']
++    assert len(rows)==1 and rows[0]['snapshot']['values']['qty']==0
++    assert any(e['field']=='qty' for e in rows[0]['snapshot']['errors'])
++    assert api.post('/api/v2/imports/'+p['import_id']+'/confirm',json={'mode':'replace'},headers={'If-Match':'2'}).status_code==409
++    with connect(settings) as c:
++        audits=c.execute("SELECT event_id FROM mf_audit WHERE object_id=%s AND action='order.draft.import.changed'",(order['order_id'],)).fetchall()
++        assert len(audits)==1 and c.execute('SELECT 1 FROM mf_outbox WHERE event_id=%s',(audits[0]['event_id'],)).fetchone()
++        assert c.execute("SELECT count(*) n FROM mf_production_jobs").fetchone()['n']==0
++
++def test_template_replay_after_new_revision_and_cross_client_deny(api,admin_user):
++    publish(api);order,t,p=setup_import(api)
++    changed=template();changed['edge_dictionary']['0']='present'
++    revision=post(api,'/import-templates/'+t['template_id']+'/revisions',{'name':'New','definition':changed},status=201)
++    assert revision['version']==2 and post(api,'/imports/'+p['import_id']+'/replay',{})['matches_original']
++    post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
++    assert api.get('/api/v2/imports/'+p['import_id']).status_code==403
++    assert api.get('/api/v2/import-templates/'+t['template_id']+'/revisions').status_code==403
++    assert api.post('/api/v2/imports/'+p['import_id']+'/confirm',json={'mode':'add'}).status_code==403
++
++def test_manual_auto_none_incompatible_material_survives_reload(api,admin_user):
++    _,release=publish(api);order,t,p=setup_import(api,qty=1)
++    post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)
++    row=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]
++    material=next(i for i in api.get('/api/v2/catalogue/materials',params={'release':release,'q':'621 PO'}).json()['items'] if i['article']=='621 PO')
++    edges=api.get('/api/v2/catalogue/edges',params={'release':release,'q':'E-'}).json()['items']
++    small=next(e for e in edges if e['article']=='E-2');wide=next(e for e in edges if e['article']=='E-22')
++    path='/orders/'+order['order_id']+'/draft/rows/'+row['draft_row_id'];version=2
++    r=post(api,path+'/material',{'variant_id':material['variant_id'],'reason':'Explicit selection'},version);version=r['optimistic_lock_version']
++    selected=r['snapshot']['resolution']
++    for side,eid in [('L1',small['edge_id']),('L2',None)]:
++        r=post(api,path+'/edges',{'side':side,'action':'manual','edge_id':eid,'reason':'Manual choice'},version);version=r['optimistic_lock_version']
++    post(api,'/catalogue/edge-mappings',{'variant_id':material['variant_id'],'edge_id':wide['edge_id'],'reason':'Approved exact mapping','source':'Synthetic'},status=201)
++    r=post(api,path+'/auto',{'reason':'Explicit AUTO'},version)
++    assert r['snapshot']['resolution']==selected
++    assert r['snapshot']['edges']['L1']['edge_id']==small['edge_id'] and r['snapshot']['edges']['L1']['warnings']
++    assert r['snapshot']['edges']['L2']['edge_id'] is None and r['snapshot']['edges']['L2']['mode']=='manual_override'
++    assert r['snapshot']['edges']['W1']['mode']=='confirmed_database_mapping'
++    reloaded=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]['snapshot']
++    assert reloaded==r['snapshot']
++
++def test_release_rollback_does_not_rewrite_draft_or_immutable_checkpoint(api,settings,admin_user):
++    _,old_release=publish(api);order,t,p=setup_import(api,qty=1)
++    post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)
++    before=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]['snapshot']
++    source=post(api,'/imports/preview',payload(parts([part(qty=2)]),order_id=order['order_id'],template_revision_id=t['template_revision_id'],selected_sheets=['Parts']),status=201)
++    confirmed=post(api,'/imports/'+source['import_id']+'/confirm',{'mode':'new_revision'},2)
++    rid=confirmed['checkpoint_revision_id']
++    with connect(settings) as c: checkpoint=c.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(rid,)).fetchone()['content']
++    assert checkpoint['draft_rows']==[before]
++    publish(api)
++    assert api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['catalogue_update_available']
++    post(api,'/catalogue/releases/'+old_release+'/activate',{'reason':'Synthetic rollback'})
++    with connect(settings) as c: assert c.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(rid,)).fetchone()['content']==checkpoint
++    with pytest.raises(Exception):
++        with transaction(settings) as c: c.execute("UPDATE mf_order_revisions SET content='{}' WHERE revision_id=%s",(rid,))
++    assert api.post('/api/v2/orders/'+order['order_id']+'/submit',json={}).status_code==409
++
++def test_publication_atomic_rollback_and_append_only(api,settings,admin_user):
++    from backend.v2 import catalogue
++    publish(api)
++    before=api.get('/api/v2/catalogue/releases').json()['active_release']
++    new=post(api,'/catalogue/imports',payload(master(),source_namespace='rollback.'+uuid4().hex),status=201)
++    with pytest.raises(RuntimeError):
++        with transaction(settings) as c:
++            catalogue.publish(c,settings,admin_user['user_id'],new['import_id'],'Injected fail',True,before)
++            raise RuntimeError('fail')
++    with connect(settings) as c:
++        assert str(catalogue.active(c))==before
++        assert not c.execute('SELECT 1 FROM mf_catalogue_releases WHERE import_id=%s',(new['import_id'],)).fetchone()
++    with pytest.raises(Exception):
++        with transaction(settings) as c: c.execute("UPDATE mf_catalogue_raw_rows SET cells='{}' WHERE import_id=%s",(new['import_id'],))
++    with pytest.raises(Exception):
++        with transaction(settings) as c:
++            c.execute('''INSERT INTO mf_catalogue_items SELECT release_id,%s,kind,source_namespace,snapshot,raw_row_id
++                FROM mf_catalogue_items WHERE release_id=%s LIMIT 1''',(uuid4(),before))
++
++def test_real_backup_restore_after_stage3(api,settings,admin_user,tmp_path):
++    result,release=publish(api)
++    manifest=backup(settings,tmp_path/'backup');info=conninfo_to_dict(settings.database_url)
++    name='mf_staging_restore_stage03_'+uuid4().hex[:10]
++    with connect(settings,autocommit=True) as c: c.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,storage_root=tmp_path/'restore')
++    restore(target,tmp_path/'backup')
++    with connect(target) as c:
++        source=c.execute('SELECT file_id,sha256 FROM mf_catalogue_imports WHERE import_id=%s',(result['import_id'],)).fetchone()
++        assert hashlib.sha256(read_verified(c,VolumeStore(target.storage_root),source['file_id'])).hexdigest()==source['sha256']
++        assert str(c.execute('SELECT release_id FROM mf_catalogue_active').fetchone()['release_id'])==release
++    assert manifest['database_sha256']
++
++def test_client_manager_template_scope_and_immediate_reassignment(api,settings,admin_user):
++    publish(api)
++    customer_email=uuid4().hex+'@example.invalid'
++    customer=post(api,'/auth/register',{'email':customer_email,'password':PASSWORD},status=201)
++    order=post(api,'/orders',{'business_name':'Client draft'},status=201)
++    t=post(api,'/import-templates',{'name':'Own template','definition':template()},status=201)
++    login(api,admin_user['email'])
++    manager=post(api,'/admin/staff',{'email':uuid4().hex+'@example.invalid','password':PASSWORD,'role':'manager'},status=201)
++    with connect(settings) as c: email=c.execute('SELECT email FROM mf_users WHERE user_id=%s',(manager['user_id'],)).fetchone()['email']
++    post(api,'/admin/staff/'+manager['user_id']+'/grants',{'permission':'templates.manage','scope_type':'assigned'},status=201)
++    post(api,'/orders/'+order['order_id']+'/assign-manager',{'manager_id':manager['user_id'],'reason':'Test assignment'})
++    login(api,email)
++    revision_body={'name':'Assigned edit','owner_user_id':customer['user_id'],'order_id':order['order_id'],'definition':template()}
++    assert post(api,'/import-templates/'+t['template_id']+'/revisions',revision_body,status=201)['version']==2
++    login(api,admin_user['email'])
++    post(api,'/orders/'+order['order_id']+'/assign-manager',{'manager_id':None,'reason':'Unassign'})
++    login(api,email)
++    assert api.post('/api/v2/import-templates/'+t['template_id']+'/revisions',json=revision_body).status_code==403
++
++def test_client_explicit_selection_exclusion_and_unknown_not_zero_price_inference(api,admin_user):
++    publish(api)
++    post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
++    order,t,p=setup_import(api,qty=0,article='UNKNOWN')
++    row=p['rows'][1]
++    assert row['resolution']['status']=='unresolved' and row['resolution'].get('customer_material') is None
++    rid=row['row_id']
++    v=post(api,'/imports/'+p['import_id']+'/rows/'+rid+'/resolution',
++         {'custom_customer':{'name':'Own board','thickness':18,'length':2800,'width':2070,'ownership_confirmed':True},'reason':'Client explicitly owns this material'})
++    assert v['status']=='custom_customer'
++    post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add','exclusions':{rid:'Zero quantity excluded explicitly'}},1)
++    stored=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]
++    assert stored['snapshot']['values']['qty']==0 and stored['excluded_reason']=='Zero quantity excluded explicitly'
++    assert stored['snapshot']['resolution']['status']=='custom_customer'
++
++def test_explicit_catalogue_update_preserves_manual_none_and_selected_variant(api,admin_user):
++    _,old=publish(api);order,t,p=setup_import(api,qty=1)
++    post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)
++    row=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]
++    material=api.get('/api/v2/catalogue/materials',params={'q':'ЛХДФ','release':old}).json()['items'][0]
++    path='/orders/'+order['order_id']+'/draft/rows/'+row['draft_row_id']
++    r=post(api,path+'/material',{'variant_id':material['variant_id'],'reason':'Exact articleless choice'},2)
++    r=post(api,path+'/edges',{'side':'L1','action':'manual','edge_id':None,'reason':'Manual NONE'},r['optimistic_lock_version'])
++    manual=r['snapshot']['edges']['L1']
++    _,new=publish(api)
++    diff=api.get('/api/v2/orders/'+order['order_id']+'/draft/catalogue-update').json()['diff']
++    assert diff[0]['action']=='keep_exact_variant'
++    post(api,'/orders/'+order['order_id']+'/draft/catalogue-update',{'release_id':new,'reason':'Explicit inspected catalogue update'},r['optimistic_lock_version'])
++    after=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]
++    assert after['release_id']==new and after['snapshot']['edges']['L1']==manual
++    assert after['snapshot']['resolution']['selected']['variant_id']==material['variant_id']
++
++def test_namespace_update_and_row_order_persistent_ids(api,settings,admin_user):
++    from .support import xlsx
++    from backend.v2.catalogue_model import HEADERS
++    scope='supplier.'+uuid4().hex
++    a=['X','Board X','кв.м',0,2800,2070,18,'PO','','M1','false','']
++    b=[None,'ЛХДФ  Белый','кв.м',0,2800,2070,3,None,'','M1','false','']
++    one,r1=publish(api,master([a,b]),scope)
++    unrelated,_=publish(api,master(),'unrelated.'+uuid4().hex)
++    b[3]='77'
++    two,r2=publish(api,master([b,a]),scope)
++    with connect(settings) as c:
++        before={str(r['item_id']) for r in c.execute('SELECT item_id FROM mf_catalogue_items WHERE release_id=%s AND source_namespace=%s',(r1,scope))}
++        after={str(r['item_id']) for r in c.execute('SELECT item_id FROM mf_catalogue_items WHERE release_id=%s AND source_namespace=%s',(r2,scope))}
++        assert before==after
++    report=api.get('/api/v2/catalogue/imports/'+two['import_id']).json()['report']
++    assert not report['added'] and not report['inactive'] and len(report['price_changes'])==1
++    three,r3=publish(api,master([a]),scope)
++    report=api.get('/api/v2/catalogue/imports/'+three['import_id']).json()['report']
++    assert len(report['inactive'])==1
++    with connect(settings) as c:
++        assert c.execute('SELECT count(*) n FROM mf_catalogue_items WHERE release_id=%s',(r3,)).fetchone()['n']>1
+diff --git a/tests/stage03/test_logic.py b/tests/stage03/test_logic.py
+new file mode 100644
+index 0000000..a70df24
+--- /dev/null
++++ b/tests/stage03/test_logic.py
+@@ -0,0 +1,170 @@
++from copy import deepcopy
++from collections import Counter
++import pytest
++from backend.v2.xlsx import read_workbook
++from backend.v2.catalogue_model import normalize_master,matches,HEADERS
++from backend.v2.identity import resolve
++from backend.v2.excel_import import parse
++from backend.v2.auto import apply_auto
++from .support import master,xlsx,parts,part,template,PART_HEADERS
++
++
++def test_lhdf_search_articleless_and_negative_hdf():
++    rows=[ [None,name,'кв.м',0,2800,2070,t,None,None,'M1','false',None] for name,t in
++          [('ЛХДФ 3ММ Белый, 2800х2070 мм',3),('ЛХДФ 3ММ Черный, 3мм',3),('ЛХДФ  Белый',3),('HDF, šviesiai pilka. 4 mm',4),('HDF,  2.8 mm Pilka (U708)/U5034',2.8)]]
++    rows[4][0]='U708/U5034'
++    rows.append(['117663','Смеситель HDF-2861','шт',90,0,0,0,None,None,None,'false',None])
++    records,_=normalize_master(read_workbook(master(rows)),'test.master')
++    boards=[r['normalized'] for r in records if r['disposition']=='published']
++    assert len(boards)==5
++    for q in ('ЛХДФ','ХДФ','HDF'): assert sum(matches(b,q) for b in boards)==5
++    assert [b for b in boards if matches(b,'U708/U5034')]==[boards[4]]
++    assert all(b['article'] is None for b in boards[:4]) and len({b['variant_id'] for b in boards})==5
++    assert records[-1]['disposition']=='excluded'
++
++
++def test_stable_ids_row_reordering_prices_and_scope():
++    first=read_workbook(master()); changed=deepcopy(first)
++    changed['sheets'][0]['rows'][1:]=reversed(changed['sheets'][0]['rows'][1:])
++    for i,r in enumerate(changed['sheets'][0]['rows'][1:],2): r['row']=i;r['cells']['D']['value']='101'
++    a,_=normalize_master(first,'one');b,_=normalize_master(changed,'one');c,_=normalize_master(first,'two')
++    keys=lambda rs:{r['signature']:r['normalized'].get('variant_id',r['normalized'].get('edge_id')) for r in rs}
++    assert keys(a)==keys(b) and not set(keys(a).values())&set(keys(c).values())
++
++
++def test_all_rows_accounted_mixed_zero_and_external_collision():
++    base=['X','Board','кв.м',0,2800,2070,18,'PO','','M1','false','sync']
++    other=base.copy();other[0]='Y'
++    mixed=base.copy();mixed[9]='M0 M1';mixed[11]=''
++    zero=base.copy();zero[4:7]=[0,0,0];zero[11]=''
++    result,_=normalize_master(read_workbook(master([base,other,mixed,zero])),'scope')
++    assert len(result)==4 and Counter(r['disposition'] for r in result)=={'review':3,'excluded':1}
++    assert result[0]['normalized']['variant_id']!=result[1]['normalized']['variant_id']
++
++
++def test_exact_duplicate_links_and_similar_names_do_not_merge():
++    a=[None,'ЛХДФ  Белый','кв.м',0,2800,2070,3,None,None,'M1',False,None]
++    b=a.copy();b[1]='ЛХДФ 3мм Белый'
++    rows,_=normalize_master(read_workbook(master([a,b,a])),'scope')
++    assert [r['disposition'] for r in rows]==['published','published','duplicate']
++    assert rows[2]['duplicate_of']==rows[0]['raw_row_id']
++
++
++def item():
++    return {'variant_id':'variant','material_id':'material','article':'621 PO','name':'Board',
++            'manufacturer':'Maker','structure':'PO','thickness':'18','length':'2800','width':'2070'}
++
++
++def raw():
++    return {'raw_article':'621 PO','raw_material_name':'Board','raw_manufacturer':'Maker','raw_structure':'PO',
++            'raw_thickness':'18','raw_format_length':'2800','raw_format_width':'2070'}
++
++
++@pytest.mark.parametrize('article',['621 PE','621 POX','unknown','621  PO','621 РО'])
++def test_no_fuzzy_identity(article):
++    r=raw();r['raw_article']=article
++    result=resolve(r,[item()],'release')
++    assert result['status']=='unresolved' and result['selected'] is None and result['raw']['raw_article']==article
++
++
++@pytest.mark.parametrize('field,value',[('raw_manufacturer','Other'),('raw_structure','PE'),('raw_thickness','16'),('raw_format_width','1220'),('raw_format_length','2440')])
++def test_physical_conflict_no_cheaper_format(field,value):
++    r=raw();r[field]=value
++    result=resolve(r,[item()],'release')
++    assert result['status']=='ambiguous' and result['selected'] is None
++
++
++def test_exact_requires_known_features_and_alias_cannot_override_conflict():
++    assert resolve(raw(),[item()],'release')['status']=='exact_match'
++    r=raw();r.pop('raw_thickness')
++    assert resolve(r,[item()],'release')['status']=='unresolved'
++    r=raw();r['raw_article']='ALIAS';r['raw_thickness']='16'
++    a={'source_namespace':'client','source_value':'ALIAS','variant_id':'variant','manufacturer':None,'approved_by':'a','approved_at':'now','version':1,'reason':'approved','alias_id':'id'}
++    assert resolve(r,[item()],'release',[a])['status']=='unresolved'
++    r['raw_thickness']='18'
++    assert resolve(r,[item()],'release',[a])['status']=='confirmed_mapping'
++
++
++@pytest.mark.parametrize('qty',[0,-1,'1.5',None,'text'])
++def test_bad_quantity_retained(qty):
++    result=parse(read_workbook(parts([part(qty=qty)])),template(),['Parts'])['rows'][1]
++    assert result['disposition']=='problematic' and result['raw_fields']['qty']==(None if qty is None else str(qty))
++    assert result['values']['qty']!=1 and any(e['field']=='qty' for e in result['errors'])
++    if qty==0: assert result['values']['qty']==0
++
++
++@pytest.mark.parametrize('value',[None,0,-5,'bad',{'formula':'1+1','cached':None}])
++def test_bad_dimension_and_formula_not_dropped(value):
++    result=parse(read_workbook(parts([part(length=value)])),template(),['Parts'])
++    assert len(result['rows'])==2 and result['rows'][1]['disposition']=='problematic'
++    assert any(e['field']=='length' for e in result['rows'][1]['errors'])
++
++
++def test_formula_cache_precision_units_and_independent_texture():
++    t=template();t['units']['length']='cm'
++    r=parse(read_workbook(parts([part(length={'formula':'2+3','cached':'5'},width='1,23456',texture='grain')])),t,['Parts'])['rows'][1]
++    assert r['values']['length']==50 and r['values']['width']=='1.23456'
++    assert r['values']['texture']=='grain' and r['values']['rotation'] is None
++    assert r['cells']['F']['formula']=='2+3' and r['cells']['F']['cached']=='5'
++    assert len(r['conversions'])==2 and any(e['reason']=='precision_requires_review_no_rounding' for e in r['errors'])
++
++
++def test_explicit_sheets_header_inheritance_reset_and_side_conflict():
++    rows=[PART_HEADERS,part(kind='MATERIAL',article='OLD',material='old',length=None,width=None,qty=None),
++          part(article=None,material=None,X1='EDGE-SKU',L1='DIFFERENT'),
++          part(kind='MATERIAL',article=None,material='NEW',length=None,width=None,qty=None),part(article=None,material=None)]
++    w=read_workbook(parts(sheets={'A':rows,'B':[PART_HEADERS,part()]}))
++    assert parse(w,template(),[])['available_sheets']==['A','B']
++    parsed=parse(w,template(),['A','B'])
++    a=parsed['rows'];assert len(a)==7 and a[1]['reason']=='material_header'
++    assert a[2]['values']['article']=='OLD' and a[4]['values']['article'] is None and a[4]['values']['material']=='NEW'
++    assert a[2]['edges']['L1']['raw_sku']=='DIFFERENT' and a[2]['edges']['L1']['raw']['X1']=='EDGE-SKU'
++    assert any(e['reason']=='side_alias_conflict' for e in a[2]['errors'])
++
++
++def test_template_edge_dictionary_version_and_axis_mapping():
++    t=template();source=read_workbook(parts([part(X1='0',X2='1',Y1='no',Y2='SKU')]))
++    old=parse(source,t,['Parts'])['rows'][1];t['edge_dictionary']['0']='present'
++    new=parse(source,t,['Parts'])['rows'][1]
++    assert old['edges']['L1']['mark']=='none' and new['edges']['L1']['mark']=='present'
++    assert old['edges']['L2']['mark']=='present' and old['edges']['W1']['mark']=='none' and old['edges']['W2']['raw_sku']=='SKU'
++
++
++def test_auto_preserves_manual_none_and_material_incompatible_and_suggestion():
++    snapshot={'resolution':{'status':'manual_override','selected':item()},'edges':{
++      'L1':{'mode':'manual_override','edge_id':'small'},'L2':{'mode':'manual_override','edge_id':None},
++      'W1':{'mode':'auto_suggestion','mark':'present'},'W2':{'mode':'auto_suggestion','mark':'present'}}}
++    edges=[{'edge_id':'small','width':'2','designation':'621 POX'},{'edge_id':'wide','width':'22','designation':'621 POX'}]
++    value=apply_auto(snapshot,edges,[])
++    assert value['resolution']==snapshot['resolution'] and value['edges']['L1']['edge_id']=='small'
++    assert value['edges']['L1']['warnings'] and value['edges']['L2']['edge_id'] is None
++    assert value['edges']['W1']['mode']=='auto_suggestion' and not value['edges']['W1']['confirmed']
++    mapping={'variant_id':'variant','edge_id':'wide','mapping_id':'mapping','version':2}
++    mapped=apply_auto(value,edges,[mapping]);assert mapped['edges']['W1']['mapping_version']==2
++    assert mapped['edges']['L1']['edge_id']=='small' and mapped['edges']['L2']['mode']=='manual_override'
++
++
++def test_macro_and_external_worksheet_rejected():
++    from zipfile import ZipFile
++    from io import BytesIO
++    data=BytesIO(master())
++    with ZipFile(data,'a') as z: z.writestr('xl/vbaProject.bin',b'no execution')
++    with pytest.raises(ValueError): read_workbook(data.getvalue())
++
++def test_literal_621_po_does_not_resolve_to_only_621_pe():
++    catalogue=item();catalogue['article']='621 PE';catalogue['structure']='PE'
++    result=resolve(raw(),[catalogue],'release')
++    assert result['status']=='unresolved' and result['selected'] is None
++    assert result['raw']['raw_article']=='621 PO'
++
++@pytest.mark.parametrize('side',['L1','L2','W1','W2'])
++def test_each_manual_side_is_protected(side):
++    material=item()
++    snapshot={'resolution':{'status':'manual_override','selected':material},
++              'edges':{s:{'mode':'auto_suggestion','mark':'present'} for s in ['L1','L2','W1','W2']}}
++    snapshot['edges'][side]={'mode':'manual_override','edge_id':'manual','confirmed_by':'person','reason':'explicit'}
++    edges=[{'edge_id':'manual','width':'22'},{'edge_id':'default','width':'23'}]
++    mapping={'variant_id':'variant','edge_id':'default','mapping_id':'map','version':1}
++    result=apply_auto(snapshot,edges,[mapping])
++    assert result['edges'][side]['edge_id']=='manual' and result['edges'][side]['confirmed_by']=='person'
++    assert result['resolution']['selected']==material
