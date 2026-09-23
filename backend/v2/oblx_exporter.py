@@ -148,6 +148,10 @@ def export(manufacturing, display_number):
 def inspect(data):
     """Bounded structural inspection; explicitly NOT a native BAZIS validator."""
     if len(data)>4*1024*1024 or b'<!DOCTYPE' in data.upper() or b'<!ENTITY' in data.upper(): raise ValueError('UNSAFE_XML')
+    decoded=data.decode('utf-8-sig')
+    if '\x00' in decoded or '<!DOCTYPE' in decoded.upper() or '<!ENTITY' in decoded.upper(): raise ValueError('UNSAFE_XML')
+    declaration=re.match(r'''\s*<\?xml[^?]*encoding=[\"']([^\"']+)''',decoded,re.I)
+    if declaration and declaration.group(1).lower() not in ('utf-8','utf8'): raise ValueError('UNSUPPORTED_XML_ENCODING')
     root=ET.fromstring(data)
     if root.tag!='Root' or len(list(root.iter()))>50000: raise ValueError('XML_STRUCTURE_LIMIT')
     materials=root.findall('./Materials/Material');details=root.findall('./Materials/Material/Details/Detail')

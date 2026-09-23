@@ -49,6 +49,8 @@ def run_once(transport,root,capabilities,namespace):
         for f in manifest['files']:
             blob=transport.request('GET',prefix+'/artifacts/'+f['file_id'],lease=lease)
             if len(blob)!=f['size_bytes'] or digest(blob)!=f['sha256']: raise ValueError('Input file hash mismatch')
+            decoded=blob.decode('utf-8-sig')
+            if '\x00' in decoded: raise ValueError('Unsupported XML encoding')
             if b'<!DOCTYPE' in blob.upper() or b'<!ENTITY' in blob.upper(): raise ValueError('Unsafe XML')
             parsed=ET.fromstring(blob)
             if parsed.tag!='Root': raise ValueError('Unexpected XML structure')

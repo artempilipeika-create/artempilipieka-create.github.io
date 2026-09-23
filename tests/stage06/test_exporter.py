@@ -73,7 +73,7 @@ def test_native_rotation_grain_fixtures_remain_unverified(grain,rotation):
     with pytest.raises(RuntimeError,match='CALIBRATION'): native_boundary({'native_calibration':'NOT VERIFIED'},None)
 
 
-@pytest.mark.parametrize('xml',[b'<!DOCTYPE Root [<!ENTITY x SYSTEM "file:///etc/passwd">]><Root/>',b'<!ENTITY x "x"><Root/>',b'x'*(4*1024*1024+1)])
+@pytest.mark.parametrize('xml',[b'<!DOCTYPE Root [<!ENTITY x SYSTEM "file:///etc/passwd">]><Root/>',b'<!ENTITY x "x"><Root/>',b'x'*(4*1024*1024+1),'<!DOCTYPE Root [<!ENTITY x \"boom\">]><Root>&x;</Root>'.encode('utf-16')])
 def test_xml_xxe_and_size_rejected(xml):
     with pytest.raises(ValueError): inspect(xml)
 
@@ -93,3 +93,13 @@ def test_agent_isolated_paths_and_durable_ledger(tmp_path):
     assert ledger.claim(m,lease);ledger.mark('run1','physical_intent');assert not Ledger(root).claim(m,lease)
     with pytest.raises(ValueError): Ledger(root).claim(m,{**lease,'run_id':'run2','fencing':2})
     assert {p.name for p in root.iterdir()}>={'inbox','work','outbox','failed','archive','logs'}
+
+
+def test_custom_customer_lhdf_exact_three_mm_without_company_price():
+    r,c=inputs(customer=True);d=r['content']['details'][0]
+    d['material']={'name':'Synthetic customer LHDF','family':'customer','length':'2440','width':'1220','thickness':'3'}
+    d['customer_material_key']='synthetic-customer-sheet';d['edges']={}
+    r['content_hash']=hash_value(r['content']);c['input_snapshot']['revision_hash']=r['content_hash'];c['input_hash']=hash_value(c['input_snapshot'])
+    m=manufacturing_input(r,c,PREVIEW)
+    assert m['parts'][0]['material']['thickness']=='3' and m['parts'][0]['material_key']=='customer:synthetic-customer-sheet'
+    assert b'<Thickness>3</Thickness>' in export(m,'MF-000069') and 'price' not in json.dumps(m)
