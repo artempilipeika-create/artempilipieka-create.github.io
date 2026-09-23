@@ -203,6 +203,7 @@ BEGIN
  THEN RAISE EXCEPTION 'immutable job references'; END IF;
  IF TG_OP='DELETE' THEN RETURN OLD; END IF;
  IF NEW.fencing<OLD.fencing OR NEW.attempt<OLD.attempt THEN RAISE EXCEPTION 'monotonic job fence'; END IF;
+ IF OLD.admitted_at IS NOT NULL AND NEW.admitted_at IS DISTINCT FROM OLD.admitted_at THEN RAISE EXCEPTION 'immutable admission time'; END IF;
  IF OLD.physical_started AND NOT NEW.physical_started THEN RAISE EXCEPTION 'physical execution cannot be forgotten'; END IF;
  IF OLD.status='uncertain' AND NEW.status IN ('admitted','leased','running') THEN RAISE EXCEPTION 'uncertain jobs require reconciliation and a new authorized job'; END IF;
  IF OLD.status<>NEW.status AND OLD.schema_version=6 AND NOT (

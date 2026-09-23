@@ -114,7 +114,7 @@ def test_final06_new_revision_never_inherits_approval(api,settings,admin_user):
     rr=revision(api,o,c['catalogue_release_id'],[request_detail(item(api,c['catalogue_release_id']),qty=2)],current['optimistic_lock_version'],r['revision_id'])
     with connect(settings) as db:
         row=db.execute('SELECT * FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()
-        assert row['approved_revision_id'] is None and row['workflow_status']=='review'
+        assert row['approved_revision_id'] is None and row['approved_final_candidate_id'] is None and row['reviewed_final_candidate_id'] is None and row['workflow_status']=='review'
     assert job(api,o,r,c,'produce',f['candidate_id'],status=409)['detail']['code']=='STALE_REVISION'
     assert api.post('/api/v2/orders/'+o['order_id']+'/approve',json={'candidate_id':f['candidate_id'],'revision_id':rr['revision_id'],'reason':'No inherited approval'}).status_code==409
 
@@ -166,3 +166,17 @@ def test_stage06_real_restore_jobs_fences_artifacts_results_candidate_audit(api,
          'final_candidate_count':before['tables']['mf_final_calculation_candidates']['count'],'native_BAZIS':'NOT VERIFIED; signed synthetic contract fixtures only','state':before}
     root=Path(os.environ.get('MF_TEST_EVIDENCE_DIR',tmp_path));root.mkdir(exist_ok=True,parents=True)
     (root/'stage06-restore-evidence.json').write_text(json.dumps(out,indent=2))
+
+
+def test_final_current_selection_rejects_historical_candidate_same_revision(api,settings,admin_user):
+    o,r,c,_,j,a,lease=calculated(api,settings,admin_user);first=candidate(api,j)
+    post(api,'/production-final-calculations/review',{'candidate_id':first['candidate_id'],'revision_id':r['revision_id'],'reason':'First exact review'})
+    second_job=job(api,o,r,c);second_lease=a.pull()[0];assert a.event(second_lease)[0].status_code==200
+    assert a.result(second_lease,native_body(settings,second_lease))[0].status_code==200
+    second=candidate(api,second_job)
+    post(api,'/production-final-calculations/review',{'candidate_id':second['candidate_id'],'revision_id':r['revision_id'],'reason':'Replace selection with exact second run'})
+    old=api.post('/api/v2/orders/'+o['order_id']+'/approve',json={'candidate_id':first['candidate_id'],'revision_id':r['revision_id'],'reason':'Historical approval must not apply'})
+    assert old.status_code==409 and old.json()['detail']['code']=='EXACT_REVIEW_REQUIRED'
+    approve(api,o,r,second)
+    assert job(api,o,r,c,'produce',first['candidate_id'],status=409)['detail']['code']=='APPROVED_FINAL_REQUIRED'
+    assert job(api,o,r,c,'produce',second['candidate_id'])['purpose']=='produce'

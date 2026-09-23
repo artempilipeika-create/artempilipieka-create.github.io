@@ -11,6 +11,7 @@ COPY backend/v2/requirements.txt /app/backend/v2/requirements.txt
 RUN pip install --no-cache-dir -r /app/backend/v2/requirements.txt
 COPY backend/__init__.py /app/backend/__init__.py
 COPY backend/v2 /app/backend/v2
+COPY agent /app/agent
 # No v9, legacy Bridge, frontend exporters, public files, or default users.
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8000

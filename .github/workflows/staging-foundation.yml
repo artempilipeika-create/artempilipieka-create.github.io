@@ -9,7 +9,11 @@ permissions:
 jobs:
   postgres-foundation:
     if: github.ref == 'refs/heads/martin-forest-v2-staging'
-    timeout-minutes: 8
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: [stage01, stage02, stage03, stage04, stage05, stage06]
     runs-on: ubuntu-latest
     container: python:3.12-trixie
     services:
@@ -34,23 +38,17 @@ jobs:
           apt-get install -y --no-install-recommends postgresql-client
           pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1
       - name: Test migrations, transactions, private files, RBAC and restore
-        run: timeout -s KILL 300s python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 tests/stage05 tests/stage06 -vv -s --timeout=45 --timeout-method=thread -o faulthandler_timeout=30 --junitxml=qa-output/stage01/results.xml
+        run: timeout -s KILL 120s python -m pytest tests/${{ matrix.stage }} -vv -s --timeout=30 --timeout-method=thread -o faulthandler_timeout=20 --junitxml=qa-output/stage01/results.xml
       - name: Record synthetic restore evidence in job log
         run: |
           python - <<'PY'
           import json,pathlib
-          data=json.loads(pathlib.Path('qa-output/stage01/restore-evidence.json').read_text())
-          print('MF_STAGE01_RESTORE_EVIDENCE='+json.dumps(data,separators=(',',':')))
-          stage4=json.loads(pathlib.Path('qa-output/stage01/stage04-restore-evidence.json').read_text())
-          print('MF_STAGE04_RESTORE_EVIDENCE='+json.dumps(stage4,separators=(',',':')))
-          stage5=json.loads(pathlib.Path('qa-output/stage01/stage05-restore-evidence.json').read_text())
-          print('MF_STAGE05_RESTORE_EVIDENCE='+json.dumps(stage5,separators=(',',':')))
-          stage6=json.loads(pathlib.Path('qa-output/stage01/stage06-restore-evidence.json').read_text())
-          print('MF_STAGE06_RESTORE_EVIDENCE='+json.dumps(stage6,separators=(',',':')))
+          for path in pathlib.Path('qa-output/stage01').glob('*restore-evidence.json'):
+              print('MF_RESTORE_EVIDENCE='+path.name+':'+path.read_text())
           PY
       - name: Preserve non-secret test evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: staging-foundation-evidence
+          name: staging-foundation-evidence-${{ matrix.stage }}
           path: qa-output/stage01/

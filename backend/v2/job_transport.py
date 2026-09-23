@@ -152,6 +152,9 @@ def result(c,settings,agent,j,run,p,body):
        (body.result_id,j['job_id'],run['run_id'],payload_hash,Jsonb(manifest),fid,p['manifest_sha256'],bool(calibration),calibration))
     c.execute("UPDATE mf_production_jobs SET status='result_uploaded',result_state=%s WHERE job_id=%s",('verified' if calibration else 'unverified',j['job_id']))
     c.execute("UPDATE mf_job_runs SET status='result_uploaded',completed_at=now() WHERE run_id=%s",(run['run_id'],))
+    if body.status=='failed' and not calibration:
+        c.execute("UPDATE mf_production_jobs SET status='failed' WHERE job_id=%s",(j['job_id'],))
+        c.execute("UPDATE mf_job_runs SET status='failed' WHERE run_id=%s",(run['run_id'],))
     if calibration:
         c.execute("UPDATE mf_production_jobs SET status='succeeded' WHERE job_id=%s",(j['job_id'],))
         c.execute("UPDATE mf_job_runs SET status='succeeded' WHERE run_id=%s",(run['run_id'],))

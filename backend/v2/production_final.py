@@ -74,9 +74,9 @@ def review(c,settings,user,body):
     o=c.execute('SELECT * FROM mf_orders WHERE order_id=%s FOR NO KEY UPDATE',(f['order_id'],)).fetchone()
     if f['revision_id']!=body.revision_id or o['active_revision_id']!=body.revision_id: error(409,'STALE_REVISION')
     if o['workflow_status'] not in ('submitted','review','awaiting_approval'): error(409,'REVIEW_REQUIRED')
-    if o['reviewed_final_candidate_id'] not in (None,body.candidate_id): error(409,'FINAL_REVIEW_ALREADY_SELECTED')
     if not c.execute("SELECT 1 FROM mf_final_approvals WHERE candidate_id=%s AND phase='manager_review'",(body.candidate_id,)).fetchone():
         c.execute("INSERT INTO mf_final_approvals VALUES(%s,%s,'manager_review',%s,%s,now())",(uuid4(),body.candidate_id,user['user_id'],body.reason))
+    if o['reviewed_final_candidate_id']!=body.candidate_id:
         c.execute("UPDATE mf_orders SET reviewed_final_candidate_id=%s,approved_final_candidate_id=NULL,approved_revision_id=NULL,workflow_status='awaiting_approval',optimistic_lock_version=optimistic_lock_version+1,updated_at=now() WHERE order_id=%s",(body.candidate_id,f['order_id']))
         record_event(c,settings,actor=user['user_id'],action='calculation.final.manager_approved',object_type='calculation',object_id=body.candidate_id,reason=body.reason)
     return projection(c,f)
