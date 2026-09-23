@@ -1,0 +1,68 @@
+[
+  {
+    "fixture": "four-edges",
+    "input_path": "tests/stage06/fixtures/four-edges.oblx",
+    "input_sha256": "a9bb792d6fd5a24255d38e350a76fd6289e3eca5ea04f750b4f06719fb603d43",
+    "size_bytes": 1614,
+    "native_executed": false,
+    "output_sha256": null,
+    "job_id": null,
+    "revision_id": null,
+    "run_id": null
+  },
+  {
+    "fixture": "texture-on-rotation-forbidden",
+    "input_path": "tests/stage06/fixtures/texture-on-rotation-forbidden.oblx",
+    "input_sha256": "9cfa57b9d9af0e82dcdbd0c1d8812ce99099b16f3c27227947424bfcf1cea4b0",
+    "size_bytes": 1614,
+    "native_executed": false,
+    "output_sha256": null,
+    "job_id": null,
+    "revision_id": null,
+    "run_id": null
+  },
+  {
+    "fixture": "texture-on-rotation-allowed",
+    "input_path": "tests/stage06/fixtures/texture-on-rotation-allowed.oblx",
+    "input_sha256": "07ab2ea3c2ab6046dd917ec580601f01fc290ac860e8124d31118a79acb9fc00",
+    "size_bytes": 1614,
+    "native_executed": false,
+    "output_sha256": null,
+    "job_id": null,
+    "revision_id": null,
+    "run_id": null
+  },
+  {
+    "fixture": "texture-off-rotation-allowed",
+    "input_path": "tests/stage06/fixtures/texture-off-rotation-allowed.oblx",
+    "input_sha256": "b156367e3cbed97dbc6a3fdcb01d23d39495a57f78f7f87af7b92d0221bff43e",
+    "size_bytes": 1614,
+    "native_executed": false,
+    "output_sha256": null,
+    "job_id": null,
+    "revision_id": null,
+    "run_id": null
+  },
+  {
+    "fixture": "width-grain-asymmetric",
+    "input_path": "tests/stage06/fixtures/width-grain-asymmetric.oblx",
+    "input_sha256": "9cfa57b9d9af0e82dcdbd0c1d8812ce99099b16f3c27227947424bfcf1cea4b0",
+    "size_bytes": 1614,
+    "native_executed": false,
+    "output_sha256": null,
+    "job_id": null,
+    "revision_id": null,
+    "run_id": null
+  },
+  {
+    "fixture": "glued-18-plus-18",
+    "input_path": "tests/stage06/fixtures/glued-18-plus-18.oblx",
+    "input_sha256": "7442a4c922bbad12c8f3a224e6efb5e52b6e8d093516657a229fc05bb6c6dee4",
+    "size_bytes": 1394,
+    "native_executed": false,
+    "output_sha256": null,
+    "job_id": null,
+    "revision_id": null,
+    "run_id": null
+  }
+]
