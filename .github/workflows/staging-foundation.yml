@@ -31,9 +31,9 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y --no-install-recommends postgresql-client
-          pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1 pypdf==6.9.1
       - name: Test migrations, transactions, private files, RBAC and restore
-        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 -v --junitxml=qa-output/stage01/results.xml
+        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 tests/stage05 -v --junitxml=qa-output/stage01/results.xml
       - name: Record synthetic restore evidence in job log
         run: |
           python - <<'PY'
@@ -42,6 +42,8 @@ jobs:
           print('MF_STAGE01_RESTORE_EVIDENCE='+json.dumps(data,separators=(',',':')))
           stage4=json.loads(pathlib.Path('qa-output/stage01/stage04-restore-evidence.json').read_text())
           print('MF_STAGE04_RESTORE_EVIDENCE='+json.dumps(stage4,separators=(',',':')))
+          stage5=json.loads(pathlib.Path('qa-output/stage01/stage05-restore-evidence.json').read_text())
+          print('MF_STAGE05_RESTORE_EVIDENCE='+json.dumps(stage5,separators=(',',':')))
           PY
       - name: Preserve non-secret test evidence
         if: always()

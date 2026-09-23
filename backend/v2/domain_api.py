@@ -291,6 +291,11 @@ def router(settings, policy):
         require(conn,user,permission,order_id=row['order_id'],job_id=row['job_id'],file_kind=row['kind'])
         if user['roles']=={'client'} and row['kind']=='source' and (row['created_by']!=user['user_id'] or row['job_id']):
             error(403,'PERMISSION_DENIED')
+        if row['kind']=='preliminary_pdf':
+            from .document_service import download as document_download
+            # Registered Stage 5 artifacts use the same gateway through every alias.
+            if conn.execute('SELECT 1 FROM mf_documents WHERE file_id=%s',(file_id,)).fetchone():
+                return document_download(conn,settings,user,file_id,head)
         if row['kind']=='oblx':
             verified(user)
         data = read_verified(conn,VolumeStore(settings.storage_root),file_id)

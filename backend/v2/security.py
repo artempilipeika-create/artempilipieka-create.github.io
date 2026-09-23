@@ -15,7 +15,7 @@ from .db import transaction
 COOKIE = 'mf_v2_session'
 CLIENT_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.revision.create',
                       'orders.approve','files.source.read','files.preliminary_pdf.read','customers.pii.read',
-                      'orders.prices.read','catalogue.read','templates.own.manage','calculations.create','calculations.read')
+                      'orders.prices.read','catalogue.read','templates.own.manage','calculations.create','documents.generate','calculations.read')
 STAFF_ROLES = {'manager','production','accounting','viewer','admin','service_agent'}
 
 @dataclass(frozen=True, repr=False)

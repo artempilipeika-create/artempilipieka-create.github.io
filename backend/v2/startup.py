@@ -53,6 +53,20 @@ def prepare(settings):
             before={'database_sha256':manifest['database_sha256'],'counts':counts,'file_count':len(manifest['files'])}
             (destination/'stage04-before.json').write_text(json.dumps(before,indent=2))
         print('MF_STAGE04_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
+    if versions=={'0001_foundation.sql','0002_auth_security.sql','0003_catalogue_imports.sql','0004_order_calculation.sql'}:
+        from .storage import sha256
+        destination=settings.storage_root.parent/'backups'/'pre-stage05'
+        if not destination.exists():
+            manifest=backup(settings,destination)
+            (destination/'stage05-before.json').write_text(json.dumps({'database_sha256':manifest['database_sha256']}))
+        manifest=json.loads((destination/'manifest.json').read_text())
+        before=json.loads((destination/'stage05-before.json').read_text())
+        if (manifest['namespace']!=settings.namespace or manifest['database']!=settings.database_name
+            or sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']
+            or before['database_sha256']!=manifest['database_sha256']): raise ValueError('Pre-Stage-5 backup integrity mismatch')
+        for f in manifest['files']:
+            if f['present'] and sha256((destination/'blobs'/f['storage_key']).read_bytes())!=f['sha256']: raise ValueError('Pre-Stage-5 private bytes mismatch')
+        print('MF_STAGE05_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
     migrate(settings)
     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'

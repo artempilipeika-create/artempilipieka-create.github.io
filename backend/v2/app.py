@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
 from fastapi.exceptions import RequestValidationError
 from .security import WebPolicy
-from . import auth_api, domain_api, catalogue_api, calculation_api
+from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui
 import secrets
 import os
 from .config import Settings
@@ -66,7 +66,7 @@ def create_app(settings=None, policy=None):
             readiness(settings)
         except Exception:
             raise HTTPException(503, 'Staging database is not ready') from None
-        return {'ok': True, 'environment': 'staging', 'stage': '4', 'agent_transport': 'disabled'}
+        return {'ok': True, 'environment': 'staging', 'stage': '5', 'agent_transport': 'disabled'}
 
     if not enabled:
         return app
@@ -96,4 +96,6 @@ def create_app(settings=None, policy=None):
     app.include_router(domain_api.router(settings,policy))
     app.include_router(catalogue_api.router(settings,policy))
     app.include_router(calculation_api.router(settings,policy))
+    app.include_router(document_api.router(settings,policy))
+    app.include_router(cabinet_ui.router())
     return app

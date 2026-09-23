@@ -14,7 +14,7 @@ ADMIN_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.
                      'orders.assign_manager','orders.oblx.read','files.source.read','files.preliminary_pdf.read',
                      'customers.pii.read','users.staff.create','users.roles.write','audit.read','orders.prices.read',
                      'catalogue.read','catalogue.import','catalogue.publish','catalogue.mapping.manage','templates.manage',
-                     'calculations.create','calculations.read','calculations.fix','orders.review','financial.profiles.manage','discounts.override')
+                     'calculations.create','documents.generate','calculations.read','calculations.fix','orders.review','financial.profiles.manage','discounts.override')
 
 
 def bootstrap(settings,policy,email,password):

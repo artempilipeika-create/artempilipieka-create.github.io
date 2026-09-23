@@ -1,6 +1,6 @@
 """Exact grants AND current role ceiling/scope/state. Never a role-only bypass."""
 CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read','calculations.read'}
-CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage','calculations.create'}
+CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage','calculations.create','documents.generate'}
 ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read',
               'catalogue.import','catalogue.publish','catalogue.mapping.manage','financial.profiles.manage'}
 
