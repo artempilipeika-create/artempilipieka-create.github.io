@@ -40,7 +40,7 @@ def page(settings):
 
 def screenshot(page,name):
     page.screenshot(path=str(OUT/(name+'.png')),full_page=True)
-    if name in {'home-360','home-1440','editor-360','editor-1440'}:
+    if name in {'home-360','home-1440','editor-360','editor-1440','about-1440','services-1440','preparation-1440','3d-1440'}:
         data=page.screenshot(type='jpeg',quality=40,full_page=False)
         encoded=base64.b64encode(data).decode()
         print('MF_UI_SCREENSHOT_BEGIN '+name,flush=True)

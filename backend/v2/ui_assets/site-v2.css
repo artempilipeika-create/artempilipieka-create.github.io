@@ -157,3 +157,9 @@
 .mf-nav a[aria-current=page]{text-decoration:underline;text-underline-offset:8px}
 @media(max-width:900px){.mf-wrap{width:calc(100% - 40px)}.mf-nav{gap:14px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* Furniture visual pass: same layout and palette, presentation only. */
+.mf-hero-image{object-position:50% 55%}
+.mf-hero-shade{background:linear-gradient(90deg,#082a20bf,#082a2099 50%,#08231dad)}
+.mf-furniture-banner{background-image:linear-gradient(90deg,#153d2df5,#153d2dbd),url('/ui/panels.webp');background-size:cover;background-position:center 55%}
+@media(max-width:900px){.mf-hero-image{object-position:62% center}.mf-hero-shade{background:linear-gradient(90deg,#082a20cf,#082a209e)}.mf-furniture-banner{background-position:62% center}}
