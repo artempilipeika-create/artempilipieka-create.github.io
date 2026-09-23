@@ -1,0 +1,23 @@
+ .github/workflows/staging-foundation.yml         |   4 +-
+ backend/v2/app.py                                |   5 +-
+ backend/v2/calculation_api.py                    | 156 +++++++++++++++
+ backend/v2/calculation_engine.py                 | 126 +++++++++++++
+ backend/v2/calculation_math.py                   |  45 +++++
+ backend/v2/calculation_models.py                 | 174 +++++++++++++++++
+ backend/v2/calculation_service.py                |  67 +++++++
+ backend/v2/domain_api.py                         |   9 +-
+ backend/v2/financial_profiles.py                 |  80 ++++++++
+ backend/v2/migrations/0004_order_calculation.sql | 208 ++++++++++++++++++++
+ backend/v2/operator.py                           |   3 +-
+ backend/v2/order_revisions.py                    | 162 ++++++++++++++++
+ backend/v2/rbac.py                               |   8 +-
+ backend/v2/security.py                           |   2 +-
+ backend/v2/serve.py                              |   4 +-
+ backend/v2/sheet_estimator.py                    |  66 +++++++
+ backend/v2/stage04_operator.py                   |  81 ++++++++
+ backend/v2/startup.py                            |  21 +++
+ tests/stage04/__init__.py                        |   0
+ tests/stage04/live_acceptance.py                 |  96 ++++++++++
+ tests/stage04/test_api.py                        | 229 +++++++++++++++++++++++
+ tests/stage04/test_engine.py                     | 147 +++++++++++++++
+ 22 files changed, 1678 insertions(+), 15 deletions(-)

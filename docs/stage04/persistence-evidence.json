@@ -1,0 +1,15 @@
+{
+  "deployment_id": "61ef2ee9-9113-43c8-8049-7f43c5582737",
+  "persistent_after_redeploy": true,
+  "calculation_count": 2,
+  "revision_count": 5,
+  "private_files_verified": 9,
+  "active_catalogue_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+  "production_jobs": 1,
+  "table_count": 58,
+  "order_count": 6,
+  "temporary_operator_disabled": true,
+  "temporary_credentials_cleared": true,
+  "active_operator_grants": 0,
+  "outbox_local_only": true
+}

@@ -1,0 +1,206 @@
+{
+  "project": {
+    "projectId": "6d754ad4-ba7b-45f8-8c5e-356387e7de06",
+    "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+    "serviceId": "9aacf7bf-edd5-4f08-9423-3fbabea59268"
+  },
+  "runtime_commit": "af6e58466a880eff17ccb1feb7f02e7f8db548f9",
+  "runtime": {
+    "id": "f9bf9f6a-6637-400c-b0bd-0efe47a4cc18",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-23T10:29:52.858Z",
+    "updatedAt": "2026-09-23T10:30:12.256Z",
+    "serviceId": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+    "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+    "url": null,
+    "snapshotId": "1686548b-6bc5-490f-ab69-196e96f7a5bc",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Add live Stage 4 acceptance runner and verify rounding and stale revision gates",
+      "commitHash": "af6e58466a880eff17ccb1feb7f02e7f8db548f9",
+      "branch": "martin-forest-v2-staging"
+    }
+  },
+  "service_config": {
+    "source": {
+      "repo": "artempilipeika-create/artempilipieka-create.github.io",
+      "branch": "martin-forest-v2-staging",
+      "commitSha": "af6e58466a880eff17ccb1feb7f02e7f8db548f9"
+    },
+    "networking": {
+      "serviceDomains": {
+        "martin-forest-v2-staging-production.up.railway.app": {
+          "port": 8000
+        }
+      }
+    },
+    "build": {
+      "builder": "DOCKERFILE",
+      "buildEnvironment": "V3",
+      "dockerfilePath": "Dockerfile"
+    },
+    "deploy": {
+      "startCommand": "python -m backend.v2.serve",
+      "healthcheckPath": "/health",
+      "useLegacyStacker": false,
+      "ipv6EgressEnabled": false,
+      "runtime": "V2",
+      "multiRegionConfig": {
+        "sfo": {
+          "numReplicas": 1
+        }
+      }
+    },
+    "volumeMounts": {
+      "29b79637-3f45-4ddd-ad2c-028d6b96af8e": {
+        "mountPath": "/mf-private"
+      }
+    }
+  },
+  "variable_names": [
+    "MF_AGENT_TRANSPORT",
+    "MF_DATABASE_HOST",
+    "MF_DATABASE_NAME",
+    "MF_DATABASE_URL",
+    "MF_EMAIL_SEAL_KEY",
+    "MF_ENVIRONMENT",
+    "MF_EXPECTED_RAILWAY_ENVIRONMENT_ID",
+    "MF_EXPECTED_RAILWAY_PROJECT_ID",
+    "MF_EXPECTED_RAILWAY_SERVICE_ID",
+    "MF_JOB_NAMESPACE",
+    "MF_OUTBOX_DISPATCH",
+    "MF_PRIVATE_STORAGE_ROOT",
+    "MF_SECURITY_API",
+    "MF_STAGE01_PROBE_MODE",
+    "MF_STAGE02_PROBE_MODE",
+    "MF_STAGE03_OPERATOR_EMAIL",
+    "MF_STAGE03_OPERATOR_MODE",
+    "MF_STAGE03_OPERATOR_PASSWORD",
+    "MF_WEB_ORIGIN",
+    "PORT"
+  ],
+  "protected_branch_checks": [
+    {
+      "branch": "refs/heads/main",
+      "sha": "470776dfd3efd1db9638668d2e19ea174b7901cc"
+    },
+    {
+      "branch": "refs/heads/martin-forest-api-v1",
+      "sha": "2031c09c2f9d8690cb75856b0a4cadb1533a411b"
+    },
+    {
+      "branch": "refs/heads/martin-forest-v2-staging",
+      "sha": "af6e58466a880eff17ccb1feb7f02e7f8db548f9"
+    },
+    {
+      "branch": "refs/heads/spec-v2-homepage-preview-20260922",
+      "sha": "5c97a60145569b7d1df99f5fce5341587db2f75c"
+    },
+    {
+      "branch": "refs/heads/zapusk-bazis-raskroy-baseline",
+      "sha": "4fb9d5ceb146480be540a39b454119ea84daa98f"
+    }
+  ],
+  "production_bridge": {
+    "id": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-22T13:46:25.106Z",
+    "updatedAt": "2026-09-22T13:47:50.736Z",
+    "serviceId": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+    "environmentId": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+    "url": null,
+    "snapshotId": "a35d08d0-85a8-4ddb-8ac2-55d1802d321d",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Add secure server-side Telegram form bridge",
+      "commitHash": "2031c09c2f9d8690cb75856b0a4cadb1533a411b",
+      "branch": "martin-forest-api-v1"
+    }
+  },
+  "production_postgres": {
+    "id": "168b0c29-6693-433f-9a85-552f9de65b37",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-22T12:59:39.351Z",
+    "updatedAt": "2026-09-22T12:59:44.203Z",
+    "serviceId": "2f5c99bd-37ec-46b5-aa22-116f5f898f54",
+    "environmentId": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+    "url": null,
+    "snapshotId": "d7f6c54e-e804-40e3-b408-906777399a0c",
+    "meta": {
+      "reason": "deploy",
+      "image": "ghcr.io/railwayapp-templates/postgres-ssl:18"
+    }
+  },
+  "staging_postgres": {
+    "id": "65355a15-c461-43b3-85dd-b9d3eb1076ed",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-22T22:01:39.947Z",
+    "updatedAt": "2026-09-22T22:01:53.263Z",
+    "serviceId": "e773c03c-1f76-4f78-adb7-2132528c3a19",
+    "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+    "url": null,
+    "snapshotId": "0ecc1818-6703-4bb7-bf23-f641f4361f40",
+    "meta": {
+      "reason": "deploy",
+      "image": "ghcr.io/railwayapp-templates/postgres-ssl:18"
+    }
+  },
+  "baseline_preview": {
+    "id": "5ac650b4-0d52-48c9-9222-29e0a8fd4f3a",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-22T16:36:17.684Z",
+    "updatedAt": "2026-09-22T16:36:49.912Z",
+    "serviceId": "abc0e90d-fa8e-4c00-a0a6-312593a479ed",
+    "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+    "url": null,
+    "snapshotId": "e46b50df-9af0-4374-b29c-b675577688b3",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Enable v9 authentication backend for Martin Forest preview",
+      "commitHash": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+      "branch": "restore-martin-forest-20260921-latest"
+    }
+  },
+  "visual_preview": {
+    "id": "c28c394e-ff50-4cc7-ba04-0ad9f5eb804c",
+    "status": "SUCCESS",
+    "createdAt": "2026-09-22T18:50:17.778Z",
+    "updatedAt": "2026-09-22T18:51:51.956Z",
+    "serviceId": "42c638e9-4dc2-4e9a-9ec9-e670ae661bb6",
+    "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+    "url": null,
+    "snapshotId": "3e4c26ce-4bf9-4ee5-89e2-35edd2dcc727",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Keep sign-in accessible on tablet navigation and document preview checks",
+      "commitHash": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+      "branch": "spec-v2-homepage-preview-20260922"
+    }
+  },
+  "temporary_operator": {
+    "table_count": 58,
+    "order_count": 6,
+    "temporary_operator_disabled": true,
+    "temporary_credentials_cleared": true,
+    "active_operator_grants": 0,
+    "outbox_local_only": true
+  },
+  "test_counts": {
+    "stage01": 28,
+    "stage02": 20,
+    "stage03": 46,
+    "stage04": 27
+  },
+  "note": "Branch checkpoint collected before final evidence-only report commit; source pin and runtime explicitly aligned.",
+  "health": {
+    "body": {
+      "ok": true,
+      "environment": "staging",
+      "stage": "4",
+      "agent_transport": "disabled"
+    },
+    "http_status": 200,
+    "x_robots_tag": "noindex, nofollow, noarchive",
+    "cache_control": "no-store"
+  }
+}

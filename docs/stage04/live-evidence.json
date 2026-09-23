@@ -1,0 +1,537 @@
+{
+  "active_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+  "material_variant": {
+    "variant_id": "33a8c06b-5b98-5bbc-83be-b977abbe68e5",
+    "material_id": "09ee89be-9789-547d-99c9-a4392707fcfb",
+    "kind": "material",
+    "article": "621 PO",
+    "name": "ЛДСП BYSPAN 18мм Пепел 621 PO",
+    "manufacturer": null,
+    "decor": null,
+    "structure": null,
+    "family": "board",
+    "thickness": "18",
+    "length": "2800",
+    "width": "2070",
+    "designation": "18мм",
+    "unit": "кв.м",
+    "catalogue_release": "e6db8155-91a6-4f15-9b89-ce2194b43373"
+  },
+  "actual_master_incomplete": {
+    "calculation_id": "75d1597e-4cae-411d-8d7c-a817ada20af8",
+    "order_id": "8d452653-3788-480c-9184-3f8a80f90a19",
+    "revision_id": "10e4d8d7-aba3-43a1-9617-f024ef3ef181",
+    "parent_calculation_id": null,
+    "type": "preliminary",
+    "completeness": "incomplete",
+    "currency": "BYN",
+    "engine_version": "mf-preliminary-decimal-v1",
+    "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+    "input_hash": "59d98b966ec610dafb5781e6bb3bb91c37c6f2c0c2d9a4b4a6e38d6185ebbfab",
+    "catalogue_release_id": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+    "production_profile_id": "04000000-0000-4000-8000-000000000001",
+    "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+    "price_book_id": null,
+    "discount_profile_id": null,
+    "created_at": "2026-09-23T10:20:28.308080+00:00",
+    "synthetic": false,
+    "lines": [
+      {
+        "category": "services",
+        "operation": "packaging",
+        "quantity": "0.24",
+        "unit": "m2",
+        "unit_price": "1.50",
+        "gross": "0.36",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000007",
+        "detail_id": "finished-1",
+        "basis": "finished_area"
+      },
+      {
+        "category": "materials",
+        "operation": "clean_sheets",
+        "quantity": null,
+        "unit": null,
+        "unit_price": null,
+        "gross": null,
+        "state": "incomplete",
+        "reason": "NC-05_APPROVED_MATERIAL_PRICE_REQUIRED",
+        "estimated_sheet_count": 1,
+        "material_key": "33a8c06b-5b98-5bbc-83be-b977abbe68e5"
+      },
+      {
+        "category": "services",
+        "operation": "cutting",
+        "quantity": null,
+        "unit": null,
+        "unit_price": null,
+        "gross": null,
+        "state": "needs_confirmation",
+        "reason": "NC-09_CUT_SCOPE_REQUIRED",
+        "material_key": "33a8c06b-5b98-5bbc-83be-b977abbe68e5",
+        "estimated_cut_metres": "2.65",
+        "thickness": "18"
+      }
+    ],
+    "category_totals": {
+      "materials": {
+        "gross": "0.00",
+        "percent": null,
+        "discount": null,
+        "net": null,
+        "complete": false
+      },
+      "edge_material": {
+        "gross": "0.00",
+        "percent": null,
+        "discount": null,
+        "net": null,
+        "complete": false
+      },
+      "services": {
+        "gross": "0.36",
+        "percent": null,
+        "discount": null,
+        "net": null,
+        "complete": false
+      }
+    },
+    "calculated_part": null,
+    "known_gross": "0.36",
+    "total": null,
+    "unresolved_categories": [
+      "edge_material",
+      "materials",
+      "services"
+    ],
+    "reasons": [
+      {
+        "category": "materials",
+        "code": "NC-05_APPROVED_MATERIAL_PRICE_REQUIRED",
+        "state": "incomplete"
+      },
+      {
+        "category": "services",
+        "code": "NC-09_CUT_SCOPE_REQUIRED",
+        "state": "needs_confirmation"
+      },
+      {
+        "category": "materials",
+        "code": "APPROVED_DISCOUNT_PROFILE_REQUIRED",
+        "state": "incomplete"
+      },
+      {
+        "category": "edge_material",
+        "code": "APPROVED_DISCOUNT_PROFILE_REQUIRED",
+        "state": "incomplete"
+      },
+      {
+        "category": "services",
+        "code": "APPROVED_DISCOUNT_PROFILE_REQUIRED",
+        "state": "incomplete"
+      }
+    ],
+    "final_state": "BAZIS_RUN_REQUIRED",
+    "production_ready": false,
+    "sheet_estimates": [
+      {
+        "material_key": "33a8c06b-5b98-5bbc-83be-b977abbe68e5:company",
+        "estimator_version": "guillotine-vertical-first-decimal-v1",
+        "label": "Расчётное количество листов",
+        "optimality_proven": false,
+        "sheet": {
+          "length": "2800",
+          "width": "2070"
+        },
+        "usable_length": "2780",
+        "usable_width": "2050",
+        "kerf_mm": "4.4",
+        "estimated_sheet_count": 1,
+        "area_lower_bound": 1,
+        "sheets": [
+          {
+            "sheet": 1,
+            "placements": [
+              {
+                "detail_id": "finished-1",
+                "copy": 0,
+                "x": "0",
+                "y": "0",
+                "length": "600",
+                "width": "400",
+                "rotated": false
+              }
+            ]
+          }
+        ],
+        "cut_segments": [
+          {
+            "sheet": 1,
+            "axis": "Y",
+            "x": "600",
+            "y": "0",
+            "length_mm": "2050",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "400",
+            "length_mm": "600",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          }
+        ],
+        "cut_metres": "2.65",
+        "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+        "trim": {
+          "trim_left_mm": "10",
+          "trim_right_mm": "10",
+          "trim_top_mm": "10",
+          "trim_bottom_mm": "10"
+        },
+        "plan_hash": "c362c4f1612ac0399c5baa49407a3f1e044abe7659d71fa57642c89d38328204"
+      }
+    ],
+    "manufacturing_recipes": []
+  },
+  "synthetic_calculation": {
+    "calculation_id": "537e764a-03eb-4b7d-9ea9-305d249bff27",
+    "order_id": "d2c6de29-1bad-411c-8c2a-6119851d66e1",
+    "revision_id": "4ad6ef03-5ca4-4094-be0c-a42bc35039e5",
+    "parent_calculation_id": null,
+    "type": "preliminary",
+    "completeness": "complete",
+    "currency": "BYN",
+    "engine_version": "mf-preliminary-decimal-v1",
+    "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+    "input_hash": "c04f035e6e3ce03a8cdbdf215f4490cda86aac7839fac48cb92cd6bf31f0b469",
+    "catalogue_release_id": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+    "production_profile_id": "38a06857-1700-47bb-889e-8e2902e3fcc0",
+    "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+    "price_book_id": "abed1873-5a90-428e-93b9-5e7b0b86baa8",
+    "discount_profile_id": "eed6cbf9-a7b3-4008-8739-01a37e80d307",
+    "created_at": "2026-09-23T10:21:54.485212+00:00",
+    "synthetic": true,
+    "lines": [
+      {
+        "category": "services",
+        "operation": "glue",
+        "quantity": "0.72",
+        "unit": "m2",
+        "unit_price": "14.00",
+        "gross": "10.08",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000006",
+        "detail_id": "finished-1",
+        "basis": "finished_area"
+      },
+      {
+        "category": "services",
+        "operation": "glued_finish_cut",
+        "quantity": "3",
+        "unit": "m",
+        "unit_price": "1.70",
+        "gross": "5.10",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000002",
+        "detail_id": "finished-1",
+        "basis": "one_length_plus_one_width"
+      },
+      {
+        "category": "services",
+        "operation": "packaging",
+        "quantity": "0.72",
+        "unit": "m2",
+        "unit_price": "1.50",
+        "gross": "1.08",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000007",
+        "detail_id": "finished-1",
+        "basis": "finished_area"
+      },
+      {
+        "category": "materials",
+        "operation": "clean_sheets",
+        "quantity": 1,
+        "unit": "sheet",
+        "unit_price": "100",
+        "gross": "100.00",
+        "state": "complete",
+        "reason": null,
+        "price_entry_id": "63602689-e782-4be6-a71c-6d5629424a4a",
+        "material_key": "33a8c06b-5b98-5bbc-83be-b977abbe68e5",
+        "source_unit": "sheet",
+        "conversion_factor": "1",
+        "estimated": true
+      },
+      {
+        "category": "services",
+        "operation": "cutting_18",
+        "quantity": "7.82",
+        "unit": "m",
+        "unit_price": "0.75",
+        "gross": "5.87",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000001",
+        "material_key": "33a8c06b-5b98-5bbc-83be-b977abbe68e5",
+        "plan_hash": "2180c1dc143eec8486a946c42168af3865256ae244cc0730eac875e9fc903f1a",
+        "basis": "estimated_plan_excluding_trim",
+        "estimated": true
+      }
+    ],
+    "category_totals": {
+      "materials": {
+        "gross": "100.00",
+        "percent": "10",
+        "discount": "10.00",
+        "net": "90.00",
+        "complete": true
+      },
+      "edge_material": {
+        "gross": "0.00",
+        "percent": "20",
+        "discount": "0.00",
+        "net": "0.00",
+        "complete": true
+      },
+      "services": {
+        "gross": "22.13",
+        "percent": "5",
+        "discount": "1.11",
+        "net": "21.02",
+        "complete": true
+      }
+    },
+    "calculated_part": "111.02",
+    "known_gross": "122.13",
+    "total": "111.02",
+    "unresolved_categories": [],
+    "reasons": [],
+    "final_state": "BAZIS_RUN_REQUIRED",
+    "production_ready": false,
+    "sheet_estimates": [
+      {
+        "material_key": "33a8c06b-5b98-5bbc-83be-b977abbe68e5:company",
+        "estimator_version": "guillotine-vertical-first-decimal-v1",
+        "label": "Расчётное количество листов",
+        "optimality_proven": false,
+        "sheet": {
+          "length": "2800",
+          "width": "2070"
+        },
+        "usable_length": "2780",
+        "usable_width": "2050",
+        "kerf_mm": "4.4",
+        "estimated_sheet_count": 1,
+        "area_lower_bound": 1,
+        "sheets": [
+          {
+            "sheet": 1,
+            "placements": [
+              {
+                "detail_id": "finished-1:blank",
+                "copy": 0,
+                "x": "0",
+                "y": "0",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "finished-1:blank",
+                "copy": 1,
+                "x": "0",
+                "y": "424.4",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "finished-1:blank",
+                "copy": 2,
+                "x": "0",
+                "y": "848.8",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "finished-1:blank",
+                "copy": 3,
+                "x": "0",
+                "y": "1273.2",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "finished-1:blank",
+                "copy": 4,
+                "x": "624.4",
+                "y": "0",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "finished-1:blank",
+                "copy": 5,
+                "x": "624.4",
+                "y": "424.4",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              }
+            ]
+          }
+        ],
+        "cut_segments": [
+          {
+            "sheet": 1,
+            "axis": "Y",
+            "x": "620",
+            "y": "0",
+            "length_mm": "2050",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "420",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "844.4",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "1268.8",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "1693.2",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "Y",
+            "x": "1244.4",
+            "y": "0",
+            "length_mm": "2050",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "624.4",
+            "y": "420",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "624.4",
+            "y": "844.4",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          }
+        ],
+        "cut_metres": "7.82",
+        "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+        "trim": {
+          "trim_left_mm": "10",
+          "trim_right_mm": "10",
+          "trim_top_mm": "10",
+          "trim_bottom_mm": "10"
+        },
+        "plan_hash": "2180c1dc143eec8486a946c42168af3865256ae244cc0730eac875e9fc903f1a"
+      }
+    ],
+    "manufacturing_recipes": [
+      {
+        "version": "glued_18_18-v1",
+        "finished_detail_id": "finished-1",
+        "finished_length": "600",
+        "finished_width": "400",
+        "finished_qty": 3,
+        "finished_thickness": "36",
+        "child_blank_id": "finished-1:blank",
+        "blank_length": "620",
+        "blank_width": "420",
+        "child_qty": 6,
+        "operations": [
+          "blank_nesting",
+          "glue",
+          "glued_finish_cut",
+          "edge_processing",
+          "packaging"
+        ],
+        "glue_area_basis": "finished_area"
+      }
+    ]
+  },
+  "synthetic_financial_dto_sha256": "23a179ca6da48fca1cc4aec11c9124661967885771bf4adb375997a9a85fc863",
+  "old_financial_dto_unchanged": true,
+  "child_revision": {
+    "order_id": "d2c6de29-1bad-411c-8c2a-6119851d66e1",
+    "revision_id": "10b248b9-4e60-4134-b261-80dd0385cc7e",
+    "revision_number": 2,
+    "parent_revision_id": "4ad6ef03-5ca4-4094-be0c-a42bc35039e5",
+    "content_hash": "ed7942efcc6ec0485aacf153da2fd9ab1b5394b5868dc0fabf3ed0031b509bd4",
+    "optimistic_lock_version": 4
+  },
+  "manager_assisted": {
+    "order_id": "5d29f52a-e34b-461c-9915-3a8b7c9f7894",
+    "revision_id": "744dd372-b77c-4bfa-9846-4766510f060c",
+    "workflow_status": "submitted",
+    "calculation_id": null,
+    "calculation_state": "calculation_not_available",
+    "production_ready": false,
+    "optimistic_lock_version": 4
+  },
+  "manager_assisted_raw_qty": 0,
+  "manager_assisted_source_sha256": "40021b814b2bc9bed184245a365e0ac053776cb167a9ed766c12e2f6f740b27e",
+  "idempotent_submit": true,
+  "changed_idempotency_body_http": 409,
+  "financial_injection_http": 422,
+  "final_gate": {
+    "detail": {
+      "code": "BAZIS_RUN_REQUIRED"
+    }
+  },
+  "pdf_http": 404,
+  "global_defaults_unchanged": true,
+  "no_production_calls": true
+}

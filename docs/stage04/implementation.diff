@@ -1,0 +1,1902 @@
+diff --git a/.github/workflows/staging-foundation.yml b/.github/workflows/staging-foundation.yml
+index bd53ce8..2d61396 100644
+--- a/.github/workflows/staging-foundation.yml
++++ b/.github/workflows/staging-foundation.yml
+@@ -33,13 +33,15 @@ jobs:
+           apt-get install -y --no-install-recommends postgresql-client
+           pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1
+       - name: Test migrations, transactions, private files, RBAC and restore
+-        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 -v --junitxml=qa-output/stage01/results.xml
++        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 -v --junitxml=qa-output/stage01/results.xml
+       - name: Record synthetic restore evidence in job log
+         run: |
+           python - <<'PY'
+           import json,pathlib
+           data=json.loads(pathlib.Path('qa-output/stage01/restore-evidence.json').read_text())
+           print('MF_STAGE01_RESTORE_EVIDENCE='+json.dumps(data,separators=(',',':')))
++          stage4=json.loads(pathlib.Path('qa-output/stage01/stage04-restore-evidence.json').read_text())
++          print('MF_STAGE04_RESTORE_EVIDENCE='+json.dumps(stage4,separators=(',',':')))
+           PY
+       - name: Preserve non-secret test evidence
+         if: always()
+diff --git a/backend/v2/app.py b/backend/v2/app.py
+index 34da4c3..ba0a776 100644
+--- a/backend/v2/app.py
++++ b/backend/v2/app.py
+@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
+ from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
+ from fastapi.exceptions import RequestValidationError
+ from .security import WebPolicy
+-from . import auth_api, domain_api, catalogue_api
++from . import auth_api, domain_api, catalogue_api, calculation_api
+ import secrets
+ import os
+ from .config import Settings
+@@ -66,7 +66,7 @@ def create_app(settings=None, policy=None):
+             readiness(settings)
+         except Exception:
+             raise HTTPException(503, 'Staging database is not ready') from None
+-        return {'ok': True, 'environment': 'staging', 'stage': '3', 'agent_transport': 'disabled'}
++        return {'ok': True, 'environment': 'staging', 'stage': '4', 'agent_transport': 'disabled'}
+ 
+     if not enabled:
+         return app
+@@ -95,4 +95,5 @@ def create_app(settings=None, policy=None):
+     app.include_router(auth_api.router(settings,policy))
+     app.include_router(domain_api.router(settings,policy))
+     app.include_router(catalogue_api.router(settings,policy))
++    app.include_router(calculation_api.router(settings,policy))
+     return app
+diff --git a/backend/v2/calculation_api.py b/backend/v2/calculation_api.py
+new file mode 100644
+index 0000000..0635996
+--- /dev/null
++++ b/backend/v2/calculation_api.py
+@@ -0,0 +1,156 @@
++"""Stage 4 structured API. No PDF, production transport, final price or new UI."""
++from uuid import UUID,uuid4
++from fastapi import APIRouter,Request
++from psycopg.errors import UniqueViolation
++from .db import transaction
++from .security import identity,verified,error
++from .domain_api import require,admin
++from .calculation_models import (RevisionRequest,CalculationRequest,RecalculateRequest,ReasonRequest,ProductionProfile,
++    TariffBook,PriceBook,DiscountProfile,Defaults,DiscountAssignment,OrderContext)
++from . import order_revisions as revisions,calculation_service as calculations,financial_profiles as profiles
++from .calculation_math import plain
++from .events import record_event
++
++
++def router(settings,policy):
++    api=APIRouter(prefix='/api/v2')
++
++    @api.post('/orders/{order_id}/revisions',status_code=201)
++    def revision(order_id:str,body:RevisionRequest,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);require(c,user,'orders.revision.create',order_id=order_id)
++            order=revisions.locked(c,order_id,request.headers.get('if-match',''))
++            manager=order['workflow_status']!='draft'
++            if manager:
++                if not user['roles'] & {'admin','manager'}: error(403,'MANAGER_REVISION_REQUIRED')
++                verified(user)
++            if body.production_profile_id:
++                require(c,user,'financial.profiles.manage');verified(user)
++            return revisions.create(c,settings,user['user_id'],order,body,manager)
++
++    @api.get('/orders/{order_id}/revisions')
++    def history(order_id:str,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);require(c,user,'orders.read',order_id=order_id)
++            if not user['roles'] & {'client','manager','admin'}: error(403,'PERMISSION_DENIED')
++            return {'items':c.execute('''SELECT revision_id,revision_number,parent_revision_id,lifecycle,content_hash,catalogue_release_id,
++                production_profile_id,created_at,submitted_at FROM mf_order_revisions WHERE order_id=%s ORDER BY revision_number''',(order_id,)).fetchall()}
++
++    @api.get('/orders/{order_id}/revisions/{revision_id}')
++    def revision_read(order_id:str,revision_id:UUID,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);require(c,user,'orders.read',order_id=order_id)
++            if not user['roles'] & {'client','manager','admin'}: error(403,'PERMISSION_DENIED')
++            r=revisions.get(c,order_id,revision_id)
++            return plain({**{k:r[k] for k in ('revision_id','order_id','revision_number','parent_revision_id','content_hash','lifecycle','catalogue_release_id','production_profile_id','created_at','submitted_at')},
++                'details':r['content'].get('details',[]),'issues':r['content'].get('issues',[])})
++
++    @api.post('/orders/{order_id}/calculations',status_code=201)
++    def calculation(order_id:str,body:CalculationRequest,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);require(c,user,'calculations.create',order_id=order_id)
++            return calculations.create(c,settings,user['user_id'],order_id,body.revision_id)
++
++    @api.get('/calculations/{calculation_id}')
++    def calculation_read(calculation_id:UUID,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);r=calculations.get(c,calculation_id);require(c,user,'calculations.read',order_id=r['order_id'])
++            return calculations.dto(r['result'])
++
++    @api.get('/orders/{order_id}/calculations')
++    def calculation_history(order_id:str,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);require(c,user,'calculations.read',order_id=order_id)
++            return {'items':c.execute('''SELECT calculation_id,revision_id,parent_calculation_id,type,completeness,input_hash,engine_version,created_at
++                FROM mf_calculations WHERE order_id=%s ORDER BY created_at,calculation_id''',(order_id,)).fetchall()}
++
++    @api.post('/calculations/{calculation_id}/recalculate',status_code=201)
++    def recalculate(calculation_id:UUID,body:RecalculateRequest,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);r=calculations.get(c,calculation_id);require(c,user,'calculations.create',order_id=r['order_id'])
++            return calculations.create(c,settings,user['user_id'],r['order_id'],r['revision_id'],r['calculation_id'],body.reason)
++
++    @api.post('/calculations/{calculation_id}/fix')
++    def fix(calculation_id:UUID,body:ReasonRequest,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);r=calculations.get(c,calculation_id);require(c,user,'calculations.fix',order_id=r['order_id']);verified(user)
++            error(409,'BAZIS_RUN_REQUIRED')
++
++    @api.post('/orders/{order_id}/review')
++    def review(order_id:str,body:ReasonRequest,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);require(c,user,'orders.review',order_id=order_id);verified(user)
++            order=revisions.locked(c,order_id,request.headers.get('if-match',''))
++            if order['workflow_status']!='submitted': error(409,'SUBMITTED_REQUIRED')
++            row=c.execute("UPDATE mf_orders SET workflow_status='review',optimistic_lock_version=optimistic_lock_version+1,updated_at=now() WHERE order_id=%s RETURNING workflow_status,optimistic_lock_version",(order_id,)).fetchone()
++            record_event(c,settings,actor=user['user_id'],action='order.review.started',object_type='order',object_id=order_id,reason=body.reason)
++            return row
++
++    def publish(kind,body,request):
++        try:
++            with transaction(settings) as c:
++                user=admin(c,request,'financial.profiles.manage')
++                return profiles.publish(c,settings,user['user_id'],kind,body)
++        except UniqueViolation: error(409,'FINANCIAL_VERSION_CONFLICT')
++
++    @api.post('/financial/production-profiles',status_code=201)
++    def production_profile(body:ProductionProfile,request:Request): return publish('production',body,request)
++    @api.post('/financial/tariff-books',status_code=201)
++    def tariff_book(body:TariffBook,request:Request): return publish('tariff',body,request)
++    @api.post('/financial/price-books',status_code=201)
++    def price_book(body:PriceBook,request:Request): return publish('price',body,request)
++    @api.post('/financial/discount-profiles',status_code=201)
++    def discount_profile(body:DiscountProfile,request:Request): return publish('discount',body,request)
++
++    @api.get('/financial/defaults')
++    def defaults_read(request:Request):
++        with transaction(settings) as c:
++            admin(c,request,'financial.profiles.manage');return plain(profiles.current(c))
++    @api.post('/financial/defaults')
++    def defaults(body:Defaults,request:Request):
++        with transaction(settings) as c:
++            user=admin(c,request,'financial.profiles.manage');return profiles.activate(c,settings,user['user_id'],body)
++    @api.get('/financial/versions/{kind}/{version_id}')
++    def financial_version(kind:str,version_id:UUID,request:Request):
++        with transaction(settings) as c:
++            admin(c,request,'financial.profiles.manage')
++            if kind not in profiles.TABLES: error(404,'VERSION_KIND_NOT_FOUND')
++            r=profiles.get(c,kind,version_id)
++            if kind in {'price','tariff'}:
++                table='mf_sale_price_entries' if kind=='price' else 'mf_tariff_entries'
++                r['entries']=c.execute(f'SELECT * FROM {table} WHERE book_id=%s ORDER BY entry_id',(version_id,)).fetchall()
++            return plain(r)
++
++    @api.post('/orders/{order_id}/financial-context',status_code=201)
++    def financial_context(order_id:str,body:OrderContext,request:Request):
++        with transaction(settings) as c:
++            user=admin(c,request,'financial.profiles.manage');require(c,user,'orders.read',order_id=order_id)
++            revisions.locked(c,order_id,request.headers.get('if-match',''))
++            for kind,ident in [('production',body.production_profile_id),('tariff',body.tariff_book_id),('price',body.price_book_id),('discount',body.discount_profile_id)]:
++                if ident: profiles.get(c,kind,ident)
++            cid=uuid4()
++            c.execute('INSERT INTO mf_order_financial_contexts VALUES(%s,%s,%s,%s,%s,%s,%s,%s,now())',
++                (cid,order_id,body.production_profile_id,body.tariff_book_id,body.price_book_id,body.discount_profile_id,user['user_id'],body.reason))
++            record_event(c,settings,actor=user['user_id'],action='order.financial.context.created',object_type='order',object_id=order_id,reason=body.reason)
++            return {'context_id':str(cid),'applies_to':'new calculations; production profile requires a new revision'}
++
++    @api.post('/orders/{order_id}/discount-overrides',status_code=201)
++    def discount_override(order_id:str,body:DiscountAssignment,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);require(c,user,'discounts.override',order_id=order_id);verified(user)
++            revisions.locked(c,order_id,request.headers.get('if-match',''));profiles.get(c,'discount',body.profile_id)
++            oid=uuid4()
++            c.execute('INSERT INTO mf_order_discount_overrides VALUES(%s,%s,%s,%s,%s,now())',(oid,order_id,body.profile_id,user['user_id'],body.reason))
++            record_event(c,settings,actor=user['user_id'],action='order.discount.overridden',object_type='order',object_id=order_id,reason=body.reason)
++            return {'override_id':str(oid),'applies_to':'new calculations only'}
++
++    @api.post('/financial/customers/{customer_id}/discount',status_code=201)
++    def customer_discount(customer_id:UUID,body:DiscountAssignment,request:Request):
++        with transaction(settings) as c:
++            user=admin(c,request,'financial.profiles.manage');profiles.get(c,'discount',body.profile_id)
++            if not c.execute("SELECT 1 FROM mf_user_roles WHERE user_id=%s AND role='client'",(customer_id,)).fetchone(): error(422,'CLIENT_REQUIRED')
++            aid=uuid4()
++            c.execute('INSERT INTO mf_customer_discount_assignments VALUES(%s,%s,%s,%s,%s,now())',(aid,customer_id,body.profile_id,user['user_id'],body.reason))
++            record_event(c,settings,actor=user['user_id'],action='customer.discount.assigned',object_type='user',object_id=customer_id,reason=body.reason)
++            return {'assignment_id':str(aid),'applies_to':'new calculations only'}
++    return api
+diff --git a/backend/v2/calculation_engine.py b/backend/v2/calculation_engine.py
+new file mode 100644
+index 0000000..3a6b1a6
+--- /dev/null
++++ b/backend/v2/calculation_engine.py
+@@ -0,0 +1,126 @@
++"""Pure server preliminary calculation from resolved immutable inputs only."""
++from collections import defaultdict
++from decimal import Decimal, ROUND_CEILING
++from .calculation_math import dec,money,plain,category_totals,ROUNDING_VERSION,CATEGORIES
++from .sheet_estimator import estimate,PlacementError
++
++VERSION='mf-preliminary-decimal-v1'
++
++def calculate(inputs):
++    revision=inputs['revision'];profile=inputs['production_profile'];settings=profile['settings'];policies=profile['policies']
++    tariffs=inputs['tariffs'];prices=inputs['prices'];discount=inputs.get('discount')
++    lines=[];plans=[];recipes=[];price_snapshots=[];issues=list(revision.get('issues',[]));materials={};edges={};processing=defaultdict(Decimal)
++    def line(category,operation,quantity=None,unit=None,price=None,state='complete',reason=None,**snapshot):
++        if state=='complete' and (quantity is None or price is None): state='incomplete';reason=reason or 'APPROVED_PRICE_REQUIRED'
++        lines.append(plain({'category':category,'operation':operation,'quantity':quantity,'unit':unit,'unit_price':price,
++             'gross':money(dec(quantity)*dec(price)) if state=='complete' else None,'state':state,'reason':reason,**snapshot}))
++    def service(operation,q,unit,**snapshot):
++        rate=tariffs.get(operation)
++        if not rate: return line('services',operation,q,unit,state='incomplete',reason='APPROVED_TARIFF_REQUIRED',**snapshot)
++        line('services',operation,q,unit,rate['amount'],tariff_entry_id=rate['entry_id'],**snapshot)
++    def blocked(cat,op,code,state='needs_confirmation',**snapshot): line(cat,op,state=state,reason=code,**snapshot)
++    for detail in revision.get('details',[]):
++        ident=detail['detail_id'];material=detail.get('material');supply=detail['supply_source'];route=detail['route']
++        try:
++            l,w=dec(detail['length']),dec(detail['width']);q=detail['qty']
++            if type(q) is not int or not 1<=q<=5000 or min(l,w)<=0: raise ValueError()
++            if any(max(0,-d.as_tuple().exponent)>settings['geometry_decimal_places'] for d in (l,w)): raise ValueError()
++        except (ValueError,ArithmeticError): blocked('materials','geometry','INVALID_GEOMETRY_OR_QTY','invalid',detail_id=ident);continue
++        if detail.get('grain')=='unknown': blocked('materials','orientation','GRAIN_CONFIRMATION_REQUIRED',detail_id=ident);continue
++        if not material: blocked('materials','material','EXACT_RELEASED_MATERIAL_REQUIRED','incomplete',detail_id=ident);continue
++        thickness=dec(material['thickness']);sl=dec(material['length']);sw=dec(material['width'])
++        if min(thickness,sl,sw)<=0: blocked('materials','material','INVALID_MATERIAL_GEOMETRY','invalid',detail_id=ident);continue
++        if supply=='customer' and (not detail.get('provided_sheets') or not detail.get('customer_reason')):
++            blocked('materials','customer_material','CUSTOMER_SHEET_PARAMETERS_REQUIRED',detail_id=ident);continue
++        if route=='glued_18_18' and thickness!=dec(settings['glued_finished_thickness_mm'])/settings['glue_layers']:
++            blocked('materials','recipe','GLUE_REQUIRES_EXACT_18MM_LAYERS','invalid',detail_id=ident);continue
++        material_key=material.get('variant_id') or 'customer:'+detail['customer_material_key']
++        key=(material_key,supply)
++        if key not in materials: materials[key]={'material':material,'parts':[],'provided_sheets':detail.get('provided_sheets'),'supply':supply,'routes':set()}
++        group=materials[key]
++        if group['material']!=material:
++            issues.append({'category':'materials','code':'MATERIAL_GROUP_IDENTITY_CONFLICT','state':'invalid'})
++        if supply=='customer' and group['provided_sheets']!=detail.get('provided_sheets'):
++            issues.append({'category':'materials','code':'CUSTOMER_SHEET_COUNT_CONFLICT','state':'invalid'})
++        group['routes'].add(route)
++        bl,bw,bq=l,w,q;blank_id=ident
++        if route=='glued_18_18':
++            allowance=dec(settings['glue_allowance_each_side_mm']);bl=l+2*allowance;bw=w+2*allowance;bq=q*settings['glue_layers'];blank_id=ident+':blank'
++            recipes.append(plain({'version':'glued_18_18-v1','finished_detail_id':ident,'finished_length':l,'finished_width':w,'finished_qty':q,
++                'finished_thickness':settings['glued_finished_thickness_mm'],'child_blank_id':blank_id,'blank_length':bl,'blank_width':bw,'child_qty':bq,
++                'operations':['blank_nesting','glue','glued_finish_cut','edge_processing','packaging'],'glue_area_basis':policies.get('glue_area')}))
++            basis=policies.get('glue_area')
++            if basis in {'finished_area','one_blank_area'}: service('glue',(l*w if basis=='finished_area' else bl*bw)*q/1000000,'m2',detail_id=ident,basis=basis)
++            else: blocked('services','glue','NC-03_GLUE_AREA_REQUIRED',detail_id=ident,finished_area=plain(l*w*q/1000000),one_blank_area=plain(bl*bw*q/1000000))
++            service('glued_finish_cut',(l+w)*q/1000,'m',detail_id=ident,basis='one_length_plus_one_width')
++        group['parts'].append({'detail_id':blank_id,'length':plain(bl),'width':plain(bw),'qty':bq,'rotation':detail['rotation'],'grain':detail['grain']})
++        if detail['packaging']: service('packaging',l*w*q/1000000,'m2',detail_id=ident,basis='finished_area')
++        for side,assignment in detail['edges'].items():
++            if assignment.get('state')=='unresolved': blocked('edge_material','edge_material','EXACT_EDGE_REQUIRED','incomplete',detail_id=ident,side=side);continue
++            edge=assignment.get('edge')
++            if edge is None: continue
++            net=(l if side in {'L1','L2'} else w)*q/1000;eid=edge['edge_id'];ownership=assignment['supply_source'];price=prices.get(eid)
++            ek=(eid,edge['width'],edge['thickness'],ownership,price['entry_id'] if price else None)
++            if ek not in edges: edges[ek]={'edge':edge,'net':Decimal(0),'supply':ownership,'price':price}
++            edges[ek]['net']+=net
++            finished_thickness=dec(settings['glued_finished_thickness_mm']) if route=='glued_18_18' else thickness
++            if dec(edge['width'])<finished_thickness:
++                blocked('services','edge_processing','EDGE_WIDTH_INCOMPATIBLE','invalid',detail_id=ident,side=side);continue
++            complex_part=min(l,w)<dec(settings['complex_edge_threshold_mm'])
++            # Both historically proposed thick tests are ambiguous (NC-02); no invented priority.
++            possible_thick=dec(edge['width'])>=42 or dec(edge['thickness'])>=Decimal('1.5')
++            classification=policies.get('edge_classification') or {}
++            explicit=classification.get(eid)
++            if explicit:
++                thick=explicit['thick']
++                op=explicit.get('complex_overlap') if thick and complex_part else ('edge_thick' if thick else ('edge_complex' if complex_part else 'edge_normal'))
++                if op not in {'edge_thick','edge_complex','edge_normal'}: op=None
++            else: op=None if possible_thick else ('edge_complex' if complex_part else 'edge_normal')
++            if op is None: blocked('services','edge_processing','NC-02_CLASSIFICATION_REQUIRED',detail_id=ident,side=side,net_metres=plain(net));continue
++            processing[(op,eid)]+=net
++    for (material_key,supply),group in sorted(materials.items()):
++        material=group['material']
++        try: plan=estimate({'length':material['length'],'width':material['width']},group['parts'],settings)
++        except PlacementError as exc: blocked('materials','sheet_plan',str(exc),'invalid',material_key=material_key);continue
++        plans.append({'material_key':material_key+':'+supply,**plan});n=plan['estimated_sheet_count'];price=prices.get(material.get('variant_id'))
++        if supply=='customer':
++            if n>group['provided_sheets']: blocked('materials','customer_sheets','INSUFFICIENT_CUSTOMER_SHEETS','invalid',required=n,provided=group['provided_sheets'])
++            line('materials','clean_sheets',n,'sheet','0',supply_source='customer',material_key=material_key,provided_sheets=group['provided_sheets'],estimated=True,manufacturing_compatibility={'geometry':'estimated_valid','native_profile':'NOT_YET_VERIFIED'})
++        elif not price: blocked('materials','clean_sheets','NC-05_APPROVED_MATERIAL_PRICE_REQUIRED','incomplete',estimated_sheet_count=n,material_key=material_key)
++        else:
++            sheet_price=dec(price['amount'])
++            factor=dec(material['length'])*dec(material['width'])/1000000 if price['unit']=='m2' else Decimal(1)
++            line('materials','clean_sheets',n,'sheet',sheet_price*factor,price_entry_id=price['entry_id'],material_key=material_key,source_unit=price['unit'],conversion_factor=plain(factor),estimated=True)
++        price_snapshots.append({'kind':'material','item_key':material_key,'price':price,'supply_source':supply,'material':material})
++        scope=policies.get('cutting_18')
++        thickness=dec(material['thickness'])
++        if thickness==18 and scope and scope['basis']=='estimated_plan_excluding_trim' and material['family'] in scope['families'] and (group['routes']=={'solid'} or scope['include_glue_blanks']):
++            service('cutting_18',plan['cut_metres'],'m',material_key=material_key,plan_hash=plan['plan_hash'],basis=scope['basis'],estimated=True)
++        else: blocked('services','cutting','NC-09_CUT_SCOPE_REQUIRED',material_key=material_key,estimated_cut_metres=plan['cut_metres'],thickness=plain(thickness))
++    for key,group in sorted(edges.items(),key=lambda kv:tuple(str(x) for x in kv[0])):
++        eid=key[0];net=group['net'];ownership=group['supply'];price=group['price'];policy=policies.get('edge_consumption');billable=None
++        if policy:
++            if policy['basis']=='net': billable=net
++            elif policy['basis']=='factor_ceil':
++                step=dec(policy['step_m']);billable=(net*dec(policy['factor'])/step).to_integral_value(rounding=ROUND_CEILING)*step
++        snap={'edge_id':eid,'net_metres':plain(net),'procurement_metres':plain(billable),'billable_metres':plain(billable),'supply_source':ownership}
++        if ownership=='customer': line('edge_material','edge_material',net,'m','0',**snap)
++        elif not price: blocked('edge_material','edge_material','NC-05_APPROVED_EDGE_PRICE_REQUIRED','incomplete',**snap)
++        elif billable is None: blocked('edge_material','edge_material','NC-01_EDGE_CONSUMPTION_REQUIRED',**snap)
++        else: line('edge_material','edge_material',billable,'m',price['amount'],price_entry_id=price['entry_id'],**snap)
++        price_snapshots.append({'kind':'edge','item_key':eid,'price':price,'edge':group['edge'],'policy':policy,**snap})
++    for (op,eid),net in sorted(processing.items()): service(op,net,'m',edge_id=eid,basis='net_metres')
++    if not revision.get('details'): issues.append({'category':'materials','code':'NO_CALCULABLE_DETAILS','state':'incomplete'})
++    for issue in issues: blocked(issue.get('category','materials'),'input',issue['code'],issue.get('state','needs_confirmation'))
++    totals=category_totals(lines,discount)
++    reasons=[{'category':l['category'],'code':l['reason'],'state':l['state']} for l in lines if l['state']!='complete']
++    if discount is None: reasons.extend({'category':c,'code':'APPROVED_DISCOUNT_PROFILE_REQUIRED','state':'incomplete'} for c in CATEGORIES)
++    states={r['state'] for r in reasons}
++    status=next((s for s in ('invalid','incomplete','needs_confirmation') if s in states),'complete')
++    calculated=sum((dec(t['net']) for t in totals.values()),Decimal(0)) if discount is not None else None
++    return plain({'engine_version':VERSION,'rounding_policy':ROUNDING_VERSION,'type':'preliminary','completeness':status,
++        'currency':'BYN','lines':lines,'category_totals':totals,'calculated_part':calculated,
++        'known_gross':sum((dec(t['gross']) for t in totals.values()),Decimal(0)),
++        'total':calculated if status=='complete' else None,'unresolved_categories':sorted({r['category'] for r in reasons}),
++        'reasons':reasons,'sheet_estimates':plans,'manufacturing_recipes':recipes,'price_snapshots':price_snapshots,
++        'final_state':'BAZIS_RUN_REQUIRED','production_ready':False})
+diff --git a/backend/v2/calculation_math.py b/backend/v2/calculation_math.py
+new file mode 100644
+index 0000000..99cedf7
+--- /dev/null
++++ b/backend/v2/calculation_math.py
+@@ -0,0 +1,45 @@
++"""Exact decimal arithmetic and canonical snapshots. No browser financial authority."""
++import json
++import hashlib
++from datetime import date, datetime
++from decimal import Decimal, ROUND_HALF_UP
++from uuid import UUID
++
++ROUNDING_VERSION='BYN-line-half-up-0.01-category-discount-v1'
++CATEGORIES=('materials','edge_material','services')
++
++def dec(value):
++    if isinstance(value,(float,bool)) or value is None:
++        raise ValueError('Decimal string or integer required')
++    d=Decimal(value)
++    if not d.is_finite(): raise ValueError('Finite decimal required')
++    return d
++
++def money(value):
++    return dec(value).quantize(Decimal('.01'),rounding=ROUND_HALF_UP)
++
++def plain(value):
++    if isinstance(value,Decimal): return format(value,'f')
++    if isinstance(value,UUID): return str(value)
++    if isinstance(value,(date,datetime)): return value.isoformat()
++    if isinstance(value,dict): return {str(k):plain(v) for k,v in value.items()}
++    if isinstance(value,(list,tuple)): return [plain(v) for v in value]
++    if isinstance(value,float): raise ValueError('Float in financial snapshot')
++    return value
++
++def canonical(value):
++    return json.dumps(plain(value),ensure_ascii=False,sort_keys=True,separators=(',',':'))
++
++def hash_value(value):
++    return hashlib.sha256(canonical(value).encode()).hexdigest()
++
++def category_totals(lines,discounts):
++    out={}
++    for cat in CATEGORIES:
++        gross=sum((dec(l['gross']) for l in lines if l['category']==cat and l['gross'] is not None),Decimal(0))
++        percent=dec(discounts[cat]) if discounts is not None else None
++        discount=money(gross*percent/100) if percent is not None else None
++        out[cat]={'gross':money(gross),'percent':percent,'discount':discount,
++                  'net':money(gross-discount) if discount is not None else None,
++                  'complete':percent is not None and all(l['state']=='complete' for l in lines if l['category']==cat)}
++    return plain(out)
+diff --git a/backend/v2/calculation_models.py b/backend/v2/calculation_models.py
+new file mode 100644
+index 0000000..9d550fe
+--- /dev/null
++++ b/backend/v2/calculation_models.py
+@@ -0,0 +1,174 @@
++"""Strict trust boundary: input geometry is allowed; request prices/totals are not."""
++from decimal import Decimal
++from datetime import date,datetime
++from typing import Annotated,Literal
++from uuid import UUID
++from pydantic import Field,BeforeValidator,model_validator
++from .auth_api import StrictModel
++from .calculation_math import dec
++
++Exact=Annotated[Decimal,BeforeValidator(dec)]
++Positive=Annotated[Exact,Field(gt=0,le=100000)]
++Reason=Annotated[str,Field(min_length=3,max_length=1000,pattern=r'\S.*\S')]
++
++class CustomerMaterial(StrictModel):
++    key: str=Field(min_length=1,max_length=80)
++    name: str=Field(min_length=1,max_length=200)
++    thickness: Positive
++    length: Positive
++    width: Positive
++    reason: Reason
++
++class EdgeInput(StrictModel):
++    edge_id: UUID | None=None
++    supply_source: Literal['company','customer']='company'
++
++class Detail(StrictModel):
++    detail_id: str=Field(min_length=1,max_length=100)
++    draft_row_id: UUID | None=None
++    resolution_reason: Reason | None=None
++    length: Positive
++    width: Positive
++    qty: int=Field(strict=True,ge=1,le=5000)
++    variant_id: UUID | None=None
++    custom_customer: CustomerMaterial | None=None
++    supply_source: Literal['company','customer']='company'
++    provided_sheets: int | None=Field(default=None,strict=True,ge=1,le=10000)
++    customer_reason: Reason | None=None
++    rotation: bool=Field(default=False,strict=True)
++    grain: Literal['none','length','width','unknown']='unknown'
++    route: Literal['solid','glued_18_18']='solid'
++    packaging: bool=Field(default=False,strict=True)
++    edges: dict[Literal['L1','L2','W1','W2'],EdgeInput]=Field(default_factory=dict)
++    @model_validator(mode='after')
++    def customer_contract(self):
++        if self.custom_customer and (self.variant_id or self.supply_source!='customer'): raise ValueError('Explicit customer ownership required')
++        if self.supply_source=='customer' and (not self.provided_sheets or not self.customer_reason): raise ValueError('Customer parameters required')
++        if self.draft_row_id and not self.resolution_reason: raise ValueError('Raw row correction needs a reason')
++        return self
++
++class RevisionRequest(StrictModel):
++    parent_revision_id: UUID | None=None
++    catalogue_release_id: UUID | None=None
++    production_profile_id: UUID | None=None
++    reason: Reason
++    comment: str=Field(default='',max_length=4000)
++    details: list[Detail] | None=Field(default=None,max_length=1000)
++
++class SubmitRequest(StrictModel):
++    revision_id: UUID | None=None
++    preliminary_calculation_id: UUID | None=None
++    comment: str=Field(default='',max_length=4000)
++    handoff_problematic: bool=Field(default=False,strict=True)
++
++class CalculationRequest(StrictModel):
++    revision_id: UUID
++
++class RecalculateRequest(StrictModel):
++    reason: Reason
++
++class ReasonRequest(StrictModel):
++    reason: Reason
++
++class GeometrySettings(StrictModel):
++    kerf_mm: Positive
++    trim_left_mm: Annotated[Exact,Field(ge=0,le=1000)]
++    trim_right_mm: Annotated[Exact,Field(ge=0,le=1000)]
++    trim_top_mm: Annotated[Exact,Field(ge=0,le=1000)]
++    trim_bottom_mm: Annotated[Exact,Field(ge=0,le=1000)]
++    glue_layers: Literal[2]
++    glue_allowance_each_side_mm: Positive
++    glued_finished_thickness_mm: Positive
++    complex_edge_threshold_mm: Positive
++    geometry_decimal_places: int=Field(strict=True,ge=0,le=6)
++
++class EdgeConsumption(StrictModel):
++    basis: Literal['net','factor_ceil']
++    factor: Positive | None=None
++    step_m: Positive | None=None
++    @model_validator(mode='after')
++    def rule(self):
++        if self.basis=='factor_ceil' and (self.factor is None or self.step_m is None): raise ValueError('Factor and step required')
++        return self
++
++class CutScope(StrictModel):
++    basis: Literal['estimated_plan_excluding_trim']
++    families: list[str]=Field(min_length=1,max_length=30)
++    include_glue_blanks: bool=Field(strict=True)
++
++class EdgeClass(StrictModel):
++    thick: bool=Field(strict=True)
++    complex_overlap: Literal['edge_thick','edge_complex'] | None=None
++
++class Policies(StrictModel):
++    edge_consumption: EdgeConsumption | None=None
++    cutting_18: CutScope | None=None
++    glue_area: Literal['finished_area','one_blank_area'] | None=None
++    edge_classification: dict[UUID,EdgeClass] | None=None
++
++class VersionMetadata(StrictModel):
++    supersedes: UUID | None=None
++    source: str=Field(min_length=3,max_length=1000)
++    source_date: date
++    reason: Reason
++    synthetic: bool=False
++
++class ProductionProfile(VersionMetadata):
++    settings: GeometrySettings
++    policies: Policies
++
++class Tariff(StrictModel):
++    operation: Literal['cutting_18','glued_finish_cut','edge_normal','edge_complex','edge_thick','glue','packaging']
++    amount: Annotated[Exact,Field(ge=0,le=100000)]
++    currency: Literal['BYN']
++    tax_convention: str | None=Field(default=None,max_length=200)
++
++class TariffBook(VersionMetadata):
++    effective_from: datetime
++    effective_to: datetime | None=None
++    entries: list[Tariff]=Field(min_length=1,max_length=7)
++
++class SalePrice(StrictModel):
++    item_id: UUID
++    kind: Literal['material','edge']
++    amount: Annotated[Exact,Field(ge=0,le=10000000)]
++    unit: Literal['sheet','m2','m']
++    free_basis: Reason | None=None
++    raw_price_entry_id: UUID | None=None
++    @model_validator(mode='after')
++    def basis(self):
++        if self.amount==0 and not self.free_basis: raise ValueError('Approved free basis required')
++        if (self.kind=='edge' and self.unit!='m') or (self.kind=='material' and self.unit=='m'): raise ValueError('Wrong unit')
++        return self
++
++class PriceBook(VersionMetadata):
++    release_id: UUID
++    currency: Literal['BYN']
++    tax_convention: str=Field(min_length=1,max_length=200)
++    effective_from: datetime
++    effective_to: datetime | None=None
++    entries: list[SalePrice]=Field(min_length=1,max_length=5000)
++
++class DiscountProfile(VersionMetadata):
++    materials: Annotated[Exact,Field(ge=0,le=100)]
++    edge_material: Annotated[Exact,Field(ge=0,le=100)]
++    services: Annotated[Exact,Field(ge=0,le=100)]
++
++class Defaults(StrictModel):
++    production_profile_id: UUID
++    tariff_book_id: UUID
++    price_book_id: UUID | None
++    discount_profile_id: UUID | None
++    expected_version: int=Field(strict=True,ge=1)
++    reason: Reason
++
++class DiscountAssignment(StrictModel):
++    profile_id: UUID
++    reason: Reason
++
++class OrderContext(StrictModel):
++    production_profile_id: UUID
++    tariff_book_id: UUID
++    price_book_id: UUID | None
++    discount_profile_id: UUID | None
++    reason: Reason
+diff --git a/backend/v2/calculation_service.py b/backend/v2/calculation_service.py
+new file mode 100644
+index 0000000..5c57fba
+--- /dev/null
++++ b/backend/v2/calculation_service.py
+@@ -0,0 +1,67 @@
++"""Calculation and all subordinate snapshots are sealed in one domain transaction."""
++from uuid import uuid4
++from datetime import datetime,timezone
++from psycopg.types.json import Jsonb
++from . import financial_profiles as fp,order_revisions as revisions
++from .calculation_math import plain,hash_value,CATEGORIES
++from .calculation_engine import calculate,VERSION
++from .events import record_event
++from .security import error
++
++
++def create(conn,settings,actor,order_id,revision_id,parent=None,reason='Explicit preliminary calculation'):
++    order=revisions.locked(conn,order_id);revision=revisions.get(conn,order_id,revision_id)
++    if revision['schema_version']!=4: error(409,'STAGE4_REVISION_REQUIRED')
++    defaults=revisions.context(conn,order_id) or fp.current(conn)
++    profile=fp.get(conn,'production',revision['production_profile_id']);tariff=fp.get(conn,'tariff',defaults['tariff_book_id'])
++    at=datetime.now(timezone.utc)
++    price=fp.get(conn,'price',defaults['price_book_id']) if defaults['price_book_id'] else None
++    discount,discount_origin=fp.discount_for(conn,order,defaults['discount_profile_id'])
++    tariff_entries=conn.execute('SELECT * FROM mf_tariff_entries WHERE book_id=%s ORDER BY operation',(tariff['book_id'],)).fetchall()
++    prices=[]
++    if price and str(price['release_id'])==str(revision['catalogue_release_id']) and fp.effective(price,at):
++        prices=conn.execute('SELECT * FROM mf_sale_price_entries WHERE book_id=%s ORDER BY item_id',(price['book_id'],)).fetchall()
++    if parent and not conn.execute('SELECT 1 FROM mf_calculations WHERE calculation_id=%s AND revision_id=%s AND order_id=%s',(parent,revision_id,order_id)).fetchone(): error(409,'RECALCULATION_PARENT_MISMATCH')
++    inputs=plain({'revision_id':revision_id,'revision_hash':revision['content_hash'],'revision':revision['content'],
++       'production_profile':profile,'tariff_book':tariff,'price_book':price,'discount_profile':discount,'discount_origin':discount_origin,
++       'tariffs':{r['operation']:r for r in tariff_entries} if fp.effective(tariff,at) else {},
++       'prices':{str(r['item_id']):r for r in prices},'discount':{k:discount[k] for k in CATEGORIES} if discount else None,
++       'effective_at':at,'engine_version':VERSION})
++    result=calculate(inputs);ident=uuid4()
++    result.update(calculation_id=str(ident),order_id=order_id,revision_id=str(revision_id),parent_calculation_id=plain(parent),
++        catalogue_release_id=plain(revision['catalogue_release_id']),production_profile_id=plain(profile['profile_id']),
++        tariff_book_id=plain(tariff['book_id']),price_book_id=plain(price['book_id']) if price else None,
++        discount_profile_id=plain(discount['profile_id']) if discount else None,created_at=plain(at),input_hash=hash_value(inputs),
++        synthetic=any(r and r['synthetic'] for r in [profile,tariff,price,discount]))
++    conn.execute('''INSERT INTO mf_calculations(calculation_id,order_id,revision_id,parent_calculation_id,type,completeness,input_hash,engine_version,rounding_policy,
++       catalogue_release_id,production_profile_id,tariff_book_id,price_book_id,discount_profile_id,input_snapshot,result,created_by,created_at)
++       VALUES(%s,%s,%s,%s,'preliminary',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
++       (ident,order_id,revision_id,parent,result['completeness'],result['input_hash'],result['engine_version'],result['rounding_policy'],revision['catalogue_release_id'],
++        profile['profile_id'],tariff['book_id'],price['book_id'] if price else None,discount['profile_id'] if discount else None,Jsonb(inputs),Jsonb(result),actor,at))
++    for number,l in enumerate(result['lines'],1):
++        conn.execute('INSERT INTO mf_calculation_lines VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
++          (uuid4(),ident,number,l['category'],l['operation'],l['state'],l['quantity'],l['unit'],l['unit_price'],l['gross'],Jsonb(l)))
++    conn.execute('INSERT INTO mf_discount_snapshots VALUES(%s,%s)',(ident,Jsonb(plain({'profile':discount,'origin':discount_origin,'categories':result['category_totals']}))))
++    for p in result['price_snapshots']:
++        conn.execute('INSERT INTO mf_calculation_price_snapshots VALUES(%s,%s,%s,%s,%s)',(uuid4(),ident,p['kind'],p['item_key'],Jsonb(p)))
++    for p in result['sheet_estimates']:
++        conn.execute('INSERT INTO mf_sheet_estimates VALUES(%s,%s,%s,%s,%s,%s)',(uuid4(),ident,p['material_key'],p['estimator_version'],p['plan_hash'],Jsonb(p)))
++    for r in result['manufacturing_recipes']:
++        conn.execute('INSERT INTO mf_manufacturing_recipes VALUES(%s,%s,%s,%s)',(uuid4(),ident,r['finished_detail_id'],Jsonb(r)))
++    conn.execute('INSERT INTO mf_calculation_seals(calculation_id,result_hash) VALUES(%s,%s)',(ident,hash_value(result)))
++    record_event(conn,settings,actor=actor,action='calculation.created',object_type='calculation',object_id=ident,reason=reason)
++    return dto(result)
++
++
++def dto(result):
++    # Financial DTO is explicit. No raw Excel cells, private storage paths, internal mapping or profile comments.
++    keys=('calculation_id','order_id','revision_id','parent_calculation_id','type','completeness','currency','engine_version','rounding_policy',
++      'input_hash','catalogue_release_id','production_profile_id','tariff_book_id','price_book_id','discount_profile_id','created_at',
++      'synthetic','lines','category_totals','calculated_part','known_gross','total','unresolved_categories','reasons','final_state','production_ready',
++      'sheet_estimates','manufacturing_recipes')
++    return {k:result[k] for k in keys}
++
++def get(conn,ident):
++    row=conn.execute('SELECT * FROM mf_calculations WHERE calculation_id=%s',(ident,)).fetchone()
++    if not row: error(404,'CALCULATION_NOT_FOUND')
++    return row
+diff --git a/backend/v2/domain_api.py b/backend/v2/domain_api.py
+index b60ed96..1f99fa4 100644
+--- a/backend/v2/domain_api.py
++++ b/backend/v2/domain_api.py
+@@ -1,4 +1,4 @@
+-"""Stage 2 security surface. No pricing, parsing, submission pipeline or production execution."""
++"""Scoped domain security. Stage 4 submission delegates to immutable revision service."""
+ from uuid import UUID, uuid4
+ from typing import Literal
+ from pydantic import Field
+@@ -11,6 +11,8 @@ from .security import STAFF_ROLES, error, grant, identity, password_hash, verifi
+ from .rbac import allowed
+ from .storage import VolumeStore
+ from .files import read_verified
++from .calculation_models import SubmitRequest
++from . import order_revisions
+ 
+ class Draft(StrictModel):
+     business_name: str = Field(min_length=1,max_length=200)
+@@ -136,13 +138,12 @@ def router(settings, policy):
+             return projection(conn,user,order)
+ 
+     @api.post('/orders/{order_id}/submit')
+-    def submit(order_id: str, request: Request):
++    def submit(order_id: str, request: Request, body: SubmitRequest):
+         with transaction(settings) as conn:
+             user = identity(conn,request)
+             require(conn,user,'orders.submit',order_id=order_id)
+             verified(user)
+-            # Stage 3 must validate source, immutable revision and idempotency. No fake submission here.
+-            error(409,'PACKAGE_NOT_READY')
++            return order_revisions.submit(conn,settings,user['user_id'],order_id,body,request.headers.get('idempotency-key'),request.headers.get('if-match'))
+ 
+     @api.post('/orders/{order_id}/approve')
+     def approve(order_id: str, request: Request):
+diff --git a/backend/v2/financial_profiles.py b/backend/v2/financial_profiles.py
+new file mode 100644
+index 0000000..6b78cd4
+--- /dev/null
++++ b/backend/v2/financial_profiles.py
+@@ -0,0 +1,80 @@
++"""Audited append-only commercial versions. No raw master price promotion."""
++from uuid import uuid4
++from datetime import datetime,timezone
++from psycopg.types.json import Jsonb
++from .calculation_math import plain,CATEGORIES
++from .events import record_event
++from .security import error
++
++TABLES={'production':'mf_production_profiles','tariff':'mf_tariff_books','price':'mf_price_books','discount':'mf_discount_profiles'}
++IDS={'production':'profile_id','tariff':'book_id','price':'book_id','discount':'profile_id'}
++SCOPES={'cutting_18':{'thickness_mm':'18','basis':'profile_policy_required'},
++        'glued_finish_cut':{'route':'glued_18_18','basis':'one_length_plus_one_width'},
++        'edge_normal':{'basis':'net_metres'},'edge_complex':{'basis':'net_metres','rule':'profile_complex_threshold'},
++        'edge_thick':{'basis':'net_metres','rule':'profile_policy_required'},
++        'glue':{'route':'glued_18_18','basis':'profile_policy_required'},'packaging':{'basis':'finished_area'}}
++
++def get(conn,kind,ident):
++    row=conn.execute(f'SELECT * FROM {TABLES[kind]} WHERE {IDS[kind]}=%s',(ident,)).fetchone()
++    if not row: error(422,'FINANCIAL_VERSION_NOT_FOUND')
++    return row
++
++def version(conn,kind,parent):
++    return get(conn,kind,parent)['version']+1 if parent else 1
++
++def publish(conn,settings,actor,kind,body):
++    ident=uuid4();data=plain(body.model_dump());ver=version(conn,kind,body.supersedes)
++    if kind in {'tariff','price'}:
++        if body.effective_from.tzinfo is None or (body.effective_to and (body.effective_to.tzinfo is None or body.effective_to<=body.effective_from)):
++            error(422,'INVALID_EFFECTIVE_INTERVAL')
++    if kind=='production':
++        conn.execute('''INSERT INTO mf_production_profiles(profile_id,version,supersedes,settings,policies,synthetic,source,source_date,reason,approved_by)
++          VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(ident,ver,body.supersedes,Jsonb(data['settings']),Jsonb(data['policies']),body.synthetic,body.source,body.source_date,body.reason,actor))
++    elif kind=='discount':
++        conn.execute('''INSERT INTO mf_discount_profiles(profile_id,version,supersedes,materials,edge_material,services,source,reason,synthetic,approved_by,source_date)
++          VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(ident,ver,body.supersedes,body.materials,body.edge_material,body.services,body.source,body.reason,body.synthetic,actor,body.source_date))
++    elif kind=='tariff':
++        if len({e.operation for e in body.entries})!=len(body.entries): error(422,'DUPLICATE_OPERATION')
++        conn.execute('''INSERT INTO mf_tariff_books(book_id,version,supersedes,synthetic,source,source_date,reason,approved_by,effective_from,effective_to)
++          VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(ident,ver,body.supersedes,body.synthetic,body.source,body.source_date,body.reason,actor,body.effective_from,body.effective_to))
++        for e in body.entries:
++            conn.execute('INSERT INTO mf_tariff_entries VALUES(%s,%s,%s,%s,%s,%s,%s,%s)',
++                (uuid4(),ident,e.operation,Jsonb(SCOPES[e.operation]),e.amount,e.currency,'m2' if e.operation in {'glue','packaging'} else 'm',e.tax_convention))
++        conn.execute('INSERT INTO mf_financial_book_seals(seal_id,tariff_book_id) VALUES(%s,%s)',(uuid4(),ident))
++    else:
++        if not conn.execute('SELECT 1 FROM mf_catalogue_release_seals WHERE release_id=%s',(body.release_id,)).fetchone(): error(422,'SEALED_CATALOGUE_REQUIRED')
++        if len({e.item_id for e in body.entries})!=len(body.entries): error(422,'DUPLICATE_PRICE_ITEM')
++        conn.execute('''INSERT INTO mf_price_books(book_id,version,release_id,supersedes,synthetic,source,source_date,reason,currency,tax_convention,approved_by,effective_from,effective_to)
++          VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(ident,ver,body.release_id,body.supersedes,body.synthetic,body.source,body.source_date,body.reason,body.currency,body.tax_convention,actor,body.effective_from,body.effective_to))
++        for e in body.entries:
++            item=conn.execute('SELECT kind FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s',(body.release_id,e.item_id)).fetchone()
++            if not item or item['kind']!=e.kind: error(422,'EXACT_RELEASED_ITEM_REQUIRED')
++            if e.raw_price_entry_id and not conn.execute('''SELECT 1 FROM mf_material_price_entries WHERE price_entry_id=%s AND release_id=%s AND item_id=%s''',(e.raw_price_entry_id,body.release_id,e.item_id)).fetchone(): error(422,'PRICE_PROVENANCE_MISMATCH')
++            conn.execute('INSERT INTO mf_sale_price_entries VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)',(uuid4(),ident,body.release_id,e.item_id,e.kind,e.amount,e.unit,e.free_basis,e.raw_price_entry_id))
++        conn.execute('INSERT INTO mf_financial_book_seals(seal_id,price_book_id) VALUES(%s,%s)',(uuid4(),ident))
++    record_event(conn,settings,actor=actor,action='financial.version.created',object_type=kind,object_id=ident,reason=body.reason,version=ver)
++    return {'id':str(ident),'version':ver,'synthetic':body.synthetic}
++
++def current(conn):
++    return conn.execute('SELECT * FROM mf_calculation_defaults WHERE singleton').fetchone()
++
++def activate(conn,settings,actor,body):
++    for kind,ident in [('production',body.production_profile_id),('tariff',body.tariff_book_id),('price',body.price_book_id),('discount',body.discount_profile_id)]:
++        if ident and get(conn,kind,ident)['synthetic']: error(422,'SYNTHETIC_VERSION_CANNOT_BE_GLOBAL_DEFAULT')
++    row=conn.execute('''UPDATE mf_calculation_defaults SET production_profile_id=%s,tariff_book_id=%s,price_book_id=%s,discount_profile_id=%s,
++      version=version+1,updated_at=now() WHERE singleton AND version=%s RETURNING *''',
++      (body.production_profile_id,body.tariff_book_id,body.price_book_id,body.discount_profile_id,body.expected_version)).fetchone()
++    if not row: error(412,'PROFILE_VERSION_CONFLICT')
++    record_event(conn,settings,actor=actor,action='financial.defaults.changed',object_type='financial_defaults',object_id='staging',reason=body.reason,version=row['version'])
++    return plain(row)
++
++def discount_for(conn,order,default):
++    override=conn.execute('SELECT * FROM mf_order_discount_overrides WHERE order_id=%s ORDER BY created_at DESC,override_id DESC LIMIT 1',(order['order_id'],)).fetchone()
++    assigned=conn.execute('SELECT * FROM mf_customer_discount_assignments WHERE customer_id=%s ORDER BY created_at DESC,assignment_id DESC LIMIT 1',(order['owner_user_id'],)).fetchone()
++    selected=override or assigned
++    ident=selected['profile_id'] if selected else default
++    profile=get(conn,'discount',ident) if ident else None
++    return profile,plain(selected)
++
++def effective(row,at):
++    return row['effective_from']<=at and (row['effective_to'] is None or at<row['effective_to'])
+diff --git a/backend/v2/migrations/0004_order_calculation.sql b/backend/v2/migrations/0004_order_calculation.sql
+new file mode 100644
+index 0000000..a1fbe3d
+--- /dev/null
++++ b/backend/v2/migrations/0004_order_calculation.sql
+@@ -0,0 +1,208 @@
++-- Stage 4. Expand only. Raw Stage 3 prices remain untrusted and untouched.
++CREATE TABLE mf_production_profiles (
++ profile_id uuid PRIMARY KEY, version integer NOT NULL CHECK(version>0),
++ supersedes uuid REFERENCES mf_production_profiles,
++ settings jsonb NOT NULL, policies jsonb NOT NULL, synthetic boolean NOT NULL DEFAULT false,
++ source text NOT NULL, source_date date NOT NULL, reason text NOT NULL,
++ approved_by uuid REFERENCES mf_users, approved_at timestamptz NOT NULL DEFAULT now(),
++ UNIQUE(supersedes)
++);
++CREATE TABLE mf_tariff_books (
++ book_id uuid PRIMARY KEY, version integer NOT NULL CHECK(version>0),
++ supersedes uuid REFERENCES mf_tariff_books, synthetic boolean NOT NULL DEFAULT false,
++ source text NOT NULL, source_date date NOT NULL, reason text NOT NULL,
++ approved_by uuid REFERENCES mf_users, approved_at timestamptz NOT NULL DEFAULT now(),
++ effective_from timestamptz NOT NULL, effective_to timestamptz,
++ CHECK(effective_to IS NULL OR effective_to>effective_from), UNIQUE(supersedes)
++);
++CREATE TABLE mf_tariff_entries (
++ entry_id uuid PRIMARY KEY, book_id uuid NOT NULL REFERENCES mf_tariff_books,
++ operation text NOT NULL, scope jsonb NOT NULL, amount numeric NOT NULL CHECK(amount>=0),
++ currency text NOT NULL CHECK(currency='BYN'), unit text NOT NULL CHECK(unit IN ('m','m2')),
++ tax_convention text, UNIQUE(book_id,operation)
++);
++CREATE TABLE mf_price_books (
++ book_id uuid PRIMARY KEY, version integer NOT NULL CHECK(version>0),
++ release_id uuid NOT NULL REFERENCES mf_catalogue_releases,
++ supersedes uuid REFERENCES mf_price_books, synthetic boolean NOT NULL DEFAULT false,
++ source text NOT NULL, source_date date NOT NULL, reason text NOT NULL,
++ currency text NOT NULL CHECK(currency='BYN'), tax_convention text NOT NULL,
++ approved_by uuid NOT NULL REFERENCES mf_users, approved_at timestamptz NOT NULL DEFAULT now(),
++ effective_from timestamptz NOT NULL, effective_to timestamptz,
++ CHECK(effective_to IS NULL OR effective_to>effective_from), UNIQUE(supersedes),
++ UNIQUE(book_id,release_id)
++);
++CREATE TABLE mf_sale_price_entries (
++ entry_id uuid PRIMARY KEY, book_id uuid NOT NULL, release_id uuid NOT NULL,
++ item_id uuid NOT NULL, kind text NOT NULL CHECK(kind IN ('material','edge')),
++ amount numeric NOT NULL CHECK(amount>=0), unit text NOT NULL CHECK(unit IN ('sheet','m2','m')),
++ free_basis text, raw_price_entry_id uuid REFERENCES mf_material_price_entries,
++ FOREIGN KEY(book_id,release_id) REFERENCES mf_price_books(book_id,release_id),
++ FOREIGN KEY(release_id,item_id) REFERENCES mf_catalogue_items(release_id,item_id),
++ CHECK(amount>0 OR (free_basis IS NOT NULL AND length(trim(free_basis))>0)),
++ CHECK((kind='material' AND unit IN ('sheet','m2')) OR (kind='edge' AND unit='m')),
++ UNIQUE(book_id,item_id)
++);
++CREATE TABLE mf_financial_book_seals (
++ seal_id uuid PRIMARY KEY, tariff_book_id uuid UNIQUE REFERENCES mf_tariff_books,
++ price_book_id uuid UNIQUE REFERENCES mf_price_books,
++ CHECK((tariff_book_id IS NULL)<>(price_book_id IS NULL))
++);
++CREATE TABLE mf_discount_profiles (
++ profile_id uuid PRIMARY KEY, version integer NOT NULL CHECK(version>0),
++ supersedes uuid REFERENCES mf_discount_profiles,
++ materials numeric NOT NULL CHECK(materials BETWEEN 0 AND 100),
++ edge_material numeric NOT NULL CHECK(edge_material BETWEEN 0 AND 100),
++ services numeric NOT NULL CHECK(services BETWEEN 0 AND 100),
++ source text NOT NULL, reason text NOT NULL, synthetic boolean NOT NULL DEFAULT false,
++ approved_by uuid NOT NULL REFERENCES mf_users, approved_at timestamptz NOT NULL DEFAULT now(), UNIQUE(supersedes)
++);
++CREATE TABLE mf_customer_discount_assignments (
++ assignment_id uuid PRIMARY KEY, customer_id uuid NOT NULL REFERENCES mf_users,
++ profile_id uuid NOT NULL REFERENCES mf_discount_profiles,
++ created_by uuid NOT NULL REFERENCES mf_users, reason text NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_order_discount_overrides (
++ override_id uuid PRIMARY KEY, order_id text NOT NULL REFERENCES mf_orders,
++ profile_id uuid NOT NULL REFERENCES mf_discount_profiles,
++ created_by uuid NOT NULL REFERENCES mf_users, reason text NOT NULL CHECK(length(trim(reason))>0),
++ created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_calculation_defaults (
++ singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),
++ production_profile_id uuid NOT NULL REFERENCES mf_production_profiles,
++ tariff_book_id uuid NOT NULL REFERENCES mf_tariff_books,
++ price_book_id uuid REFERENCES mf_price_books,
++ discount_profile_id uuid REFERENCES mf_discount_profiles,
++ version bigint NOT NULL DEFAULT 1 CHECK(version>0), updated_at timestamptz NOT NULL DEFAULT now()
++);
++ALTER TABLE mf_order_revisions ADD COLUMN catalogue_release_id uuid REFERENCES mf_catalogue_releases;
++ALTER TABLE mf_order_revisions ADD COLUMN production_profile_id uuid REFERENCES mf_production_profiles;
++CREATE TABLE mf_calculations (
++ calculation_id uuid PRIMARY KEY, order_id text NOT NULL, revision_id uuid NOT NULL,
++ parent_calculation_id uuid REFERENCES mf_calculations,
++ type text NOT NULL CHECK(type='preliminary'),
++ completeness text NOT NULL CHECK(completeness IN ('complete','incomplete','needs_confirmation','invalid')),
++ input_hash text NOT NULL CHECK(input_hash ~ '^[a-f0-9]{64}$'), engine_version text NOT NULL, rounding_policy text NOT NULL,
++ catalogue_release_id uuid REFERENCES mf_catalogue_releases,
++ production_profile_id uuid NOT NULL REFERENCES mf_production_profiles,
++ tariff_book_id uuid NOT NULL REFERENCES mf_tariff_books, price_book_id uuid REFERENCES mf_price_books,
++ discount_profile_id uuid REFERENCES mf_discount_profiles,
++ input_snapshot jsonb NOT NULL, result jsonb NOT NULL,
++ created_by uuid NOT NULL REFERENCES mf_users, created_at timestamptz NOT NULL DEFAULT now(),
++ FOREIGN KEY(revision_id,order_id) REFERENCES mf_order_revisions(revision_id,order_id),
++ UNIQUE(calculation_id,revision_id,order_id)
++);
++CREATE TABLE mf_calculation_lines (
++ line_id uuid PRIMARY KEY, calculation_id uuid NOT NULL REFERENCES mf_calculations,
++ line_number integer NOT NULL CHECK(line_number>0), category text NOT NULL CHECK(category IN ('materials','edge_material','services')),
++ operation text NOT NULL, state text NOT NULL CHECK(state IN ('complete','incomplete','needs_confirmation','invalid')),
++ quantity numeric, unit text, unit_price numeric, gross numeric,
++ snapshot jsonb NOT NULL, UNIQUE(calculation_id,line_number),
++ CHECK((state='complete' AND gross IS NOT NULL) OR (state<>'complete' AND gross IS NULL))
++);
++CREATE TABLE mf_discount_snapshots (
++ calculation_id uuid PRIMARY KEY REFERENCES mf_calculations, snapshot jsonb NOT NULL
++);
++CREATE TABLE mf_calculation_price_snapshots (
++ snapshot_id uuid PRIMARY KEY, calculation_id uuid NOT NULL REFERENCES mf_calculations,
++ kind text NOT NULL CHECK(kind IN ('material','edge')), item_key text NOT NULL, snapshot jsonb NOT NULL
++);
++CREATE TABLE mf_sheet_estimates (
++ estimate_id uuid PRIMARY KEY, calculation_id uuid NOT NULL REFERENCES mf_calculations,
++ material_key text NOT NULL, estimator_version text NOT NULL, plan_hash text NOT NULL,
++ snapshot jsonb NOT NULL, UNIQUE(calculation_id,material_key)
++);
++CREATE TABLE mf_manufacturing_recipes (
++ recipe_id uuid PRIMARY KEY, calculation_id uuid NOT NULL REFERENCES mf_calculations,
++ finished_detail_id text NOT NULL, snapshot jsonb NOT NULL, UNIQUE(calculation_id,finished_detail_id)
++);
++CREATE TABLE mf_submission_receipts (
++ receipt_id uuid PRIMARY KEY, order_id text NOT NULL REFERENCES mf_orders,
++ actor_id uuid NOT NULL REFERENCES mf_users, idempotency_key text NOT NULL,
++ request_hash text NOT NULL, revision_id uuid NOT NULL, result jsonb NOT NULL,
++ created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(order_id,actor_id,idempotency_key),
++ FOREIGN KEY(revision_id,order_id) REFERENCES mf_order_revisions(revision_id,order_id)
++);
++-- Profile is the single home of confirmed geometry. Open policies deliberately stay null.
++INSERT INTO mf_production_profiles VALUES (
++ '04000000-0000-4000-8000-000000000001',1,NULL,
++ '{"kerf_mm":"4.4","trim_left_mm":"10","trim_right_mm":"10","trim_top_mm":"10","trim_bottom_mm":"10","glue_layers":2,"glue_allowance_each_side_mm":"10","glued_finished_thickness_mm":"36","complex_edge_threshold_mm":"60","geometry_decimal_places":3}',
++ '{"edge_consumption":null,"cutting_18":null,"glue_area":null,"edge_classification":null}',false,
++ 'SPEC v2 J.3 / user Stage 4 confirmed settings','2026-09-23','Confirmed parameters; NC-01/02/03/09 remain open',NULL,now());
++INSERT INTO mf_tariff_books VALUES ('04000000-0000-4000-8000-000000000002',1,NULL,false,
++ 'SPEC v2 J.11 / user Stage 4 confirmed rates','2026-09-23','Preserved rates, scope gates enforced',NULL,now(),'2026-09-23T00:00:00Z',NULL);
++INSERT INTO mf_tariff_entries VALUES
++ ('04000000-0000-4000-8100-000000000001','04000000-0000-4000-8000-000000000002','cutting_18','{"thickness_mm":"18","basis":"profile_policy_required"}',0.75,'BYN','m',NULL),
++ ('04000000-0000-4000-8100-000000000002','04000000-0000-4000-8000-000000000002','glued_finish_cut','{"route":"glued_18_18","basis":"one_length_plus_one_width"}',1.70,'BYN','m',NULL),
++ ('04000000-0000-4000-8100-000000000003','04000000-0000-4000-8000-000000000002','edge_normal','{"basis":"net_metres"}',2.10,'BYN','m',NULL),
++ ('04000000-0000-4000-8100-000000000004','04000000-0000-4000-8000-000000000002','edge_complex','{"basis":"net_metres","rule":"profile_complex_threshold"}',4.00,'BYN','m',NULL),
++ ('04000000-0000-4000-8100-000000000005','04000000-0000-4000-8000-000000000002','edge_thick','{"basis":"net_metres","rule":"profile_policy_required"}',3.50,'BYN','m',NULL),
++ ('04000000-0000-4000-8100-000000000006','04000000-0000-4000-8000-000000000002','glue','{"route":"glued_18_18","basis":"profile_policy_required"}',14.00,'BYN','m2',NULL),
++ ('04000000-0000-4000-8100-000000000007','04000000-0000-4000-8000-000000000002','packaging','{"basis":"finished_area"}',1.50,'BYN','m2',NULL);
++INSERT INTO mf_financial_book_seals VALUES ('04000000-0000-4000-8200-000000000001','04000000-0000-4000-8000-000000000002',NULL);
++INSERT INTO mf_calculation_defaults(singleton,production_profile_id,tariff_book_id) VALUES(true,'04000000-0000-4000-8000-000000000001','04000000-0000-4000-8000-000000000002');
++CREATE FUNCTION mf_financial_sealed() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++ IF (TG_TABLE_NAME='mf_tariff_entries' AND EXISTS(SELECT 1 FROM mf_financial_book_seals WHERE tariff_book_id=NEW.book_id))
++ OR (TG_TABLE_NAME='mf_sale_price_entries' AND EXISTS(SELECT 1 FROM mf_financial_book_seals WHERE price_book_id=NEW.book_id))
++ THEN RAISE EXCEPTION 'sealed financial book'; END IF;
++ RETURN NEW;
++END; $$;
++CREATE TRIGGER mf_tariff_sealed BEFORE INSERT ON mf_tariff_entries FOR EACH ROW EXECUTE FUNCTION mf_financial_sealed();
++CREATE TRIGGER mf_sale_price_sealed BEFORE INSERT ON mf_sale_price_entries FOR EACH ROW EXECUTE FUNCTION mf_financial_sealed();
++-- Immutable content even while a Stage 4 draft revision awaits submit. Only lifecycle metadata may advance once.
++CREATE FUNCTION mf_stage04_revision_content() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++ IF OLD.schema_version>=4 AND (to_jsonb(NEW)-ARRAY['lifecycle','submitted_at','immutable_at']) IS DISTINCT FROM
++ (to_jsonb(OLD)-ARRAY['lifecycle','submitted_at','immutable_at']) THEN RAISE EXCEPTION 'immutable revision content'; END IF;
++ RETURN NEW;
++END; $$;
++CREATE TRIGGER mf_stage04_revision_content BEFORE UPDATE ON mf_order_revisions FOR EACH ROW EXECUTE FUNCTION mf_stage04_revision_content();
++DO $$ DECLARE t text; BEGIN
++ FOREACH t IN ARRAY ARRAY['mf_production_profiles','mf_tariff_books','mf_tariff_entries','mf_price_books','mf_sale_price_entries',
++ 'mf_financial_book_seals','mf_discount_profiles','mf_customer_discount_assignments','mf_order_discount_overrides','mf_calculations',
++ 'mf_calculation_lines','mf_discount_snapshots','mf_calculation_price_snapshots','mf_sheet_estimates','mf_manufacturing_recipes','mf_submission_receipts'] LOOP
++ EXECUTE format('CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION mf_append_only()',t);
++ END LOOP;
++END $$;
++INSERT INTO mf_permissions VALUES ('calculations.create'),('calculations.read'),('calculations.fix'),('orders.review'),
++ ('financial.profiles.manage'),('discounts.override');
++-- Explicit existing client grants, scoped own. Staff still need an audited explicit grant.
++INSERT INTO mf_permission_grants(grant_id,user_id,permission,scope_type,granted_by)
++ SELECT md5(u.user_id::text||p.permission)::uuid,u.user_id,p.permission,'own',u.user_id
++ FROM mf_users u JOIN mf_user_roles r USING(user_id)
++ CROSS JOIN (VALUES('calculations.create'),('calculations.read')) p(permission) WHERE r.role='client';
++CREATE INDEX mf_calculation_order ON mf_calculations(order_id,created_at,calculation_id);
++CREATE TABLE mf_order_financial_contexts (
++ context_id uuid PRIMARY KEY, order_id text NOT NULL REFERENCES mf_orders,
++ production_profile_id uuid NOT NULL REFERENCES mf_production_profiles,
++ tariff_book_id uuid NOT NULL REFERENCES mf_tariff_books, price_book_id uuid REFERENCES mf_price_books,
++ discount_profile_id uuid REFERENCES mf_discount_profiles,
++ created_by uuid NOT NULL REFERENCES mf_users, reason text NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON mf_order_financial_contexts FOR EACH ROW EXECUTE FUNCTION mf_append_only();
++CREATE TABLE mf_calculation_seals (
++ calculation_id uuid PRIMARY KEY REFERENCES mf_calculations, result_hash text NOT NULL,
++ sealed_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON mf_calculation_seals FOR EACH ROW EXECUTE FUNCTION mf_append_only();
++CREATE FUNCTION mf_calculation_sealed() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++ IF EXISTS(SELECT 1 FROM mf_calculation_seals WHERE calculation_id=NEW.calculation_id) THEN RAISE EXCEPTION 'sealed calculation'; END IF;
++ RETURN NEW;
++END; $$;
++DO $$ DECLARE t text; BEGIN
++ FOREACH t IN ARRAY ARRAY['mf_calculation_lines','mf_discount_snapshots','mf_calculation_price_snapshots','mf_sheet_estimates','mf_manufacturing_recipes'] LOOP
++ EXECUTE format('CREATE TRIGGER sealed BEFORE INSERT ON %I FOR EACH ROW EXECUTE FUNCTION mf_calculation_sealed()',t);
++ END LOOP;
++END $$;
++ALTER TABLE mf_submission_receipts ADD COLUMN request_snapshot jsonb NOT NULL;
++ALTER TABLE mf_discount_profiles ADD COLUMN source_date date NOT NULL;
++
++CREATE FUNCTION mf_immutable_order_id() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++ IF NEW.order_id IS DISTINCT FROM OLD.order_id THEN RAISE EXCEPTION 'immutable order_id'; END IF;
++ RETURN NEW;
++END; $$;
++CREATE TRIGGER mf_immutable_order_id BEFORE UPDATE ON mf_orders FOR EACH ROW EXECUTE FUNCTION mf_immutable_order_id();
+diff --git a/backend/v2/operator.py b/backend/v2/operator.py
+index 362ba23..5470561 100644
+--- a/backend/v2/operator.py
++++ b/backend/v2/operator.py
+@@ -13,7 +13,8 @@ from .mail import FakeCollector, queue_verification
+ ADMIN_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.approve','orders.revision.create',
+                      'orders.assign_manager','orders.oblx.read','files.source.read','files.preliminary_pdf.read',
+                      'customers.pii.read','users.staff.create','users.roles.write','audit.read','orders.prices.read',
+-                     'catalogue.read','catalogue.import','catalogue.publish','catalogue.mapping.manage','templates.manage')
++                     'catalogue.read','catalogue.import','catalogue.publish','catalogue.mapping.manage','templates.manage',
++                     'calculations.create','calculations.read','calculations.fix','orders.review','financial.profiles.manage','discounts.override')
+ 
+ 
+ def bootstrap(settings,policy,email,password):
+diff --git a/backend/v2/order_revisions.py b/backend/v2/order_revisions.py
+new file mode 100644
+index 0000000..3496e34
+--- /dev/null
++++ b/backend/v2/order_revisions.py
+@@ -0,0 +1,162 @@
++"""Immutable content, explicit children, optimistic locks and atomic submit receipts."""
++from uuid import uuid4
++from datetime import datetime,timezone
++from psycopg.types.json import Jsonb
++from .calculation_math import plain,hash_value
++from . import catalogue,financial_profiles
++from .events import record_event
++from .security import error
++
++
++def locked(conn,order_id,expected=None):
++    order=conn.execute('SELECT * FROM mf_orders WHERE order_id=%s FOR UPDATE',(order_id,)).fetchone()
++    if not order: error(404,'ORDER_NOT_FOUND')
++    if expected is not None:
++        value=str(expected).strip('"')
++        if not value.isdigit(): error(428,'VERSION_REQUIRED')
++        if order['optimistic_lock_version']!=int(value): error(412,'REVISION_CONFLICT')
++    return order
++
++def evidence(conn,order):
++    rows=conn.execute('SELECT * FROM mf_order_draft_rows WHERE order_id=%s ORDER BY draft_row_id',(order['order_id'],)).fetchall()
++    imports=conn.execute('SELECT import_id,file_id,template_revision_id,release_id,selected_sheets,summary FROM mf_import_batches WHERE order_id=%s ORDER BY import_id',(order['order_id'],)).fetchall()
++    sources=conn.execute("SELECT file_id,sha256,size_bytes,status FROM mf_files WHERE order_id=%s AND kind='source' ORDER BY file_id",(order['order_id'],)).fetchall()
++    return plain({'business_name':order['business_name'],'preparation_mode':order['preparation_mode'],'draft_rows':rows,'imports':imports,'sources':sources})
++
++def context(conn,order_id):
++    return conn.execute('SELECT * FROM mf_order_financial_contexts WHERE order_id=%s ORDER BY created_at DESC,context_id DESC LIMIT 1',(order_id,)).fetchone()
++
++def released(conn,release,ident,kind):
++    if not ident: return None
++    row=conn.execute('SELECT snapshot,kind FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s',(release,ident)).fetchone()
++    if not row or row['kind']!=kind: error(422,'EXACT_RELEASED_ITEM_REQUIRED')
++    from .catalogue_model import safe_item
++    return safe_item(row['snapshot'],release)
++
++def normalize(conn,release,detail):
++    d=plain(detail.model_dump());custom=d.pop('custom_customer');variant=d.pop('variant_id')
++    d['material']=released(conn,release,variant,'material') if variant else None
++    if custom:
++        d['material']={'name':custom['name'],'length':custom['length'],'width':custom['width'],'thickness':custom['thickness'],'family':'customer','raw_description':custom['name'],'reason':custom['reason']}
++        d['customer_material_key']=custom['key']
++    d['edges']={s:{'edge':released(conn,release,e['edge_id'],'edge'),'supply_source':e['supply_source'],'state':'confirmed'} for s,e in d['edges'].items()}
++    return d
++
++def from_raw(conn,release,row):
++    s=row['snapshot'];v=s['values'];r=s.get('resolution') or {};material=None;customer=None
++    if r.get('status') in {'exact_match','confirmed_mapping','manual_override'} and r.get('selected'):
++        selected=r['selected'];material=released(conn,release,selected.get('variant_id'),'material')
++    elif r.get('status')=='custom_customer':
++        customer=r['customer_material'];material={**customer,'family':'customer'}
++    grain=v.get('texture');rotation=v.get('rotation')
++    # Stage 3 raw flags are not silently interpreted as native orientation.
++    grain=grain if grain in {'none','length','width'} else 'unknown'
++    rotation=rotation if type(rotation) is bool else False
++    edges={}
++    for side,e in s.get('edges',{}).items():
++        none=e.get('mode')=='manual_override' and e.get('edge_id') is None or e.get('mark')=='none'
++        confirmed=bool(e.get('confirmed')) and not e.get('conflict')
++        edges[side]={'edge':released(conn,release,e['edge_id'],'edge') if e.get('edge_id') and confirmed else None,
++                     'supply_source':'company','state':'confirmed' if none or confirmed else 'unresolved'}
++    return {'detail_id':row['draft_row_id'],'draft_row_id':row['draft_row_id'],'length':v.get('length'),'width':v.get('width'),'qty':v.get('qty'),
++        'material':material,'supply_source':'customer' if customer else 'company','provided_sheets':None,'customer_reason':r.get('reason'),
++        'customer_material_key':row['draft_row_id'] if customer else None,'rotation':rotation,'grain':grain,'route':'solid','packaging':False,'edges':edges}
++
++def create(conn,settings,actor,order,body,manager=False):
++    if manager and order['workflow_status'] not in {'submitted','review'}: error(409,'SUBMITTED_OR_REVIEW_REQUIRED')
++    if not manager and order['workflow_status']!='draft': error(409,'DRAFT_REQUIRED')
++    if body.parent_revision_id!=order['active_revision_id']: error(412,'PARENT_REVISION_CONFLICT')
++    ev=evidence(conn,order);active_rows=[r for r in ev['draft_rows'] if r['excluded_reason'] is None]
++    pinned={r['release_id'] for r in active_rows}
++    release=body.catalogue_release_id or (next(iter(pinned)) if len(pinned)==1 else catalogue.active(conn))
++    if release and not conn.execute('SELECT 1 FROM mf_catalogue_release_seals WHERE release_id=%s',(release,)).fetchone(): error(422,'SEALED_CATALOGUE_REQUIRED')
++    selected_context=context(conn,order['order_id']);defaults=financial_profiles.current(conn)
++    profile_id=body.production_profile_id or (selected_context['production_profile_id'] if selected_context else defaults['production_profile_id'])
++    financial_profiles.get(conn,'production',profile_id)
++    issues=[]
++    if body.details is not None:
++        ids=[d.detail_id for d in body.details];links=[str(d.draft_row_id) for d in body.details if d.draft_row_id]
++        if len(set(ids))!=len(ids) or len(set(links))!=len(links) or sum(d.qty for d in body.details)>10000: error(422,'DETAIL_IDENTITIES_OR_QUANTITY_LIMIT')
++        active_ids={r['draft_row_id'] for r in active_rows}
++        if set(links)-active_ids: error(422,'FOREIGN_DRAFT_ROW')
++        details=[normalize(conn,release,d) for d in body.details]
++        for r in active_rows:
++            if r['draft_row_id'] not in links:
++                details.append(from_raw(conn,release,r))
++                if r['snapshot'].get('errors'): issues.append({'category':'materials','code':'RAW_PROBLEMATIC_ROW_REQUIRES_CORRECTION','state':'invalid'})
++    elif manager and body.parent_revision_id:
++        parent=get(conn,order['order_id'],body.parent_revision_id)
++        if parent['schema_version']!=4: error(409,'EXPLICIT_STAGE4_DETAILS_REQUIRED')
++        if str(release)!=str(parent['catalogue_release_id']): error(409,'EXPLICIT_RELEASE_RESELECTION_REQUIRED')
++        details=parent['content']['details'];issues=parent['content']['issues']
++    else:
++        details=[from_raw(conn,release,r) for r in active_rows]
++        if any(r['snapshot'].get('errors') for r in active_rows): issues.append({'category':'materials','code':'RAW_PROBLEMATIC_ROW_REQUIRES_CORRECTION','state':'invalid'})
++    # Never guess a replacement release for mixed/raw unresolved identity.
++    if len(pinned)>1 and body.details is None: issues.append({'category':'materials','code':'MIXED_PINNED_RELEASES','state':'needs_confirmation'})
++    content=plain({'schema_version':4,'catalogue_release_id':release,'production_profile_id':profile_id,
++        'details':details,'issues':issues,'source_evidence':ev,'draft_evidence_hash':hash_value(ev),'comment':body.comment})
++    ident=uuid4();number=conn.execute('SELECT coalesce(max(revision_number),0)+1 AS n FROM mf_order_revisions WHERE order_id=%s',(order['order_id'],)).fetchone()['n']
++    conn.execute('''INSERT INTO mf_order_revisions(revision_id,order_id,revision_number,parent_revision_id,created_by,reason,lifecycle,content_hash,content,schema_version,
++      submitted_at,immutable_at,catalogue_release_id,production_profile_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,4,%s,%s,%s,%s)''',
++      (ident,order['order_id'],number,body.parent_revision_id,actor,body.reason,'review' if manager else 'draft',hash_value(content),Jsonb(content),
++       datetime.now(timezone.utc) if manager else None,datetime.now(timezone.utc) if manager else None,release,profile_id))
++    result=conn.execute('''UPDATE mf_orders SET active_revision_id=%s,approved_revision_id=NULL,workflow_status=%s,optimistic_lock_version=optimistic_lock_version+1,
++      updated_at=now() WHERE order_id=%s RETURNING optimistic_lock_version''',(ident,'review' if manager else 'draft',order['order_id'])).fetchone()
++    record_event(conn,settings,actor=actor,action='order.revision.created',object_type='order',object_id=order['order_id'],reason=body.reason,version=number)
++    return {'order_id':order['order_id'],'revision_id':str(ident),'revision_number':number,'parent_revision_id':plain(body.parent_revision_id),'content_hash':hash_value(content),**result}
++
++def get(conn,order_id,revision_id):
++    row=conn.execute('SELECT * FROM mf_order_revisions WHERE order_id=%s AND revision_id=%s',(order_id,revision_id)).fetchone()
++    if not row: error(404,'REVISION_NOT_FOUND')
++    return row
++
++def submit(conn,settings,actor,order_id,body,key,expected):
++    order=locked(conn,order_id);request_hash=hash_value(body.model_dump())
++    if key:
++        receipt=conn.execute('SELECT * FROM mf_submission_receipts WHERE order_id=%s AND actor_id=%s AND idempotency_key=%s',(order_id,actor,key)).fetchone()
++        if receipt:
++            if receipt['request_hash']!=request_hash: error(409,'IDEMPOTENCY_BODY_CONFLICT')
++            return receipt['result']
++    if not body.revision_id and not body.comment.strip(): error(409,'PACKAGE_NOT_READY')
++    if not key or not 8<=len(key)<=128: error(428,'IDEMPOTENCY_KEY_REQUIRED')
++    locked(conn,order_id,expected or '')
++    if order['workflow_status']!='draft': error(409,'DRAFT_REQUIRED')
++    if order['preparation_mode']=='manager_assisted':
++        ev=evidence(conn,order)
++        if len(body.comment.strip())<10 or not any(s['status']=='ready' for s in ev['sources']): error(409,'SOURCE_AND_MEANINGFUL_REQUEST_REQUIRED')
++        from .files import read_verified
++        from .storage import VolumeStore
++        for source in ev['sources']:
++            if source['status']=='ready': read_verified(conn,VolumeStore(settings.storage_root),source['file_id'])
++        if not body.revision_id:
++            from .calculation_models import RevisionRequest
++            body_revision=RevisionRequest(parent_revision_id=order['active_revision_id'],reason='Manager-assisted source submission',comment=body.comment)
++            made=create(conn,settings,actor,order,body_revision)
++            rid=made['revision_id']
++        else: rid=body.revision_id
++    else:
++        if not body.revision_id or not body.preliminary_calculation_id: error(409,'PRELIMINARY_CALCULATION_REQUIRED')
++        rid=body.revision_id
++    current=locked(conn,order_id)
++    if str(current['active_revision_id'])!=str(rid): error(412,'ACTIVE_REVISION_CONFLICT')
++    revision=get(conn,order_id,rid)
++    if revision['schema_version']!=4 or revision['lifecycle']!='draft': error(409,'STAGE4_DRAFT_REVISION_REQUIRED')
++    if revision['content']['draft_evidence_hash']!=hash_value(evidence(conn,current)): error(412,'DRAFT_CHANGED_SINCE_REVISION')
++    calculation=None
++    if body.preliminary_calculation_id:
++        calculation=conn.execute('SELECT * FROM mf_calculations WHERE calculation_id=%s AND revision_id=%s AND order_id=%s',
++          (body.preliminary_calculation_id,rid,order_id)).fetchone()
++        if not calculation: error(409,'CALCULATION_REVISION_MISMATCH')
++    if order['preparation_mode']=='self_prepared' and calculation['completeness'] in {'invalid','needs_confirmation'} and not body.handoff_problematic:
++        error(409,'EXPLICIT_PROBLEMATIC_HANDOFF_REQUIRED')
++    # Even an incomplete price calculation may also contain invalid input; inspect reasons, not just top-level state.
++    if order['preparation_mode']=='self_prepared' and any(r['state']=='invalid' or r['code'] in {'EXACT_RELEASED_MATERIAL_REQUIRED','EXACT_EDGE_REQUIRED','GRAIN_CONFIRMATION_REQUIRED'} for r in calculation['result']['reasons']) and not body.handoff_problematic:
++        error(409,'EXPLICIT_PROBLEMATIC_HANDOFF_REQUIRED')
++    conn.execute("UPDATE mf_order_revisions SET lifecycle='submitted',submitted_at=now(),immutable_at=now() WHERE revision_id=%s",(rid,))
++    updated=conn.execute("UPDATE mf_orders SET workflow_status='submitted',optimistic_lock_version=optimistic_lock_version+1,updated_at=now() WHERE order_id=%s RETURNING optimistic_lock_version",(order_id,)).fetchone()
++    result=plain({'order_id':order_id,'revision_id':rid,'workflow_status':'submitted','calculation_id':body.preliminary_calculation_id,
++        'calculation_state':calculation['completeness'] if calculation else 'calculation_not_available','production_ready':False,**updated})
++    conn.execute('INSERT INTO mf_submission_receipts VALUES(%s,%s,%s,%s,%s,%s,%s,now(),%s)',(uuid4(),order_id,actor,key,request_hash,rid,Jsonb(result),Jsonb(plain(body.model_dump()))))
++    record_event(conn,settings,actor=actor,action='order.submitted',object_type='order',object_id=order_id,reason='Immutable manager review handoff; no job created',version=revision['revision_number'])
++    return result
+diff --git a/backend/v2/rbac.py b/backend/v2/rbac.py
+index 8220124..5c67fe3 100644
+--- a/backend/v2/rbac.py
++++ b/backend/v2/rbac.py
+@@ -1,8 +1,8 @@
+ """Exact grants AND current role ceiling/scope/state. Never a role-only bypass."""
+-CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read'}
+-CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage'}
++CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read','calculations.read'}
++CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage','calculations.create'}
+ ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read',
+-              'catalogue.import','catalogue.publish','catalogue.mapping.manage'}
++              'catalogue.import','catalogue.publish','catalogue.mapping.manage','financial.profiles.manage'}
+ 
+ 
+ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=None):
+@@ -22,7 +22,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
+     if user['account_status'] == 'blocked' and (roles != {'client'} or permission not in CLIENT_READ):
+         return False
+     ceilings = {
+-        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage'},
++        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage','orders.review','calculations.fix','discounts.override'},
+         'production': {'orders.read','orders.oblx.read','files.source.read'},
+         'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read'},
+         'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read'},
+diff --git a/backend/v2/security.py b/backend/v2/security.py
+index 4e1f11e..2e9eb72 100644
+--- a/backend/v2/security.py
++++ b/backend/v2/security.py
+@@ -15,7 +15,7 @@ from .db import transaction
+ COOKIE = 'mf_v2_session'
+ CLIENT_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.revision.create',
+                       'orders.approve','files.source.read','files.preliminary_pdf.read','customers.pii.read',
+-                      'orders.prices.read','catalogue.read','templates.own.manage')
++                      'orders.prices.read','catalogue.read','templates.own.manage','calculations.create','calculations.read')
+ STAFF_ROLES = {'manager','production','accounting','viewer','admin','service_agent'}
+ 
+ @dataclass(frozen=True, repr=False)
+diff --git a/backend/v2/serve.py b/backend/v2/serve.py
+index 75d707f..dd06ebd 100644
+--- a/backend/v2/serve.py
++++ b/backend/v2/serve.py
+@@ -10,9 +10,9 @@ from .startup import prepare
+ def main():
+     settings=Settings.from_env()
+     policy=WebPolicy.from_env() if os.environ.get('MF_SECURITY_API','enabled')=='enabled' else None
+-    print('Stage 2 validating staging database and migrations',flush=True)
++    print('Stage 4 validating staging database and migrations',flush=True)
+     prepare(settings)
+-    print('Stage 2 starting HTTP server; transport and dispatch disabled',flush=True)
++    print('Stage 4 starting HTTP server; transport and dispatch disabled',flush=True)
+     uvicorn.run(create_app(settings,policy),host='0.0.0.0',port=int(os.environ.get('PORT','8000')),
+                 access_log=False,proxy_headers=False)
+ 
+diff --git a/backend/v2/sheet_estimator.py b/backend/v2/sheet_estimator.py
+new file mode 100644
+index 0000000..c532b7f
+--- /dev/null
++++ b/backend/v2/sheet_estimator.py
+@@ -0,0 +1,66 @@
++"""Deterministic guillotine estimate, not an optimal or actual BAZIS cut plan.
++
++Sort: decreasing area/long side/short side, then detail ID and copy index.
++Placement: earliest sheet, smallest fitting rectangle area, y/x, no-rotation tie.
++Split: vertical full rectangle, then horizontal across the placed strip.
++Only explicit grain=none permits rotation. Coordinates are usable-field coordinates.
++"""
++from decimal import Decimal
++from .calculation_math import dec,plain,hash_value
++
++VERSION='guillotine-vertical-first-decimal-v1'
++
++class PlacementError(ValueError): pass
++
++def estimate(sheet,parts,settings):
++    k=dec(settings['kerf_mm']);sl=dec(sheet['length']);sw=dec(sheet['width'])
++    ul=sl-dec(settings['trim_left_mm'])-dec(settings['trim_right_mm'])
++    uw=sw-dec(settings['trim_top_mm'])-dec(settings['trim_bottom_mm'])
++    if min(ul,uw)<=0: raise PlacementError('NONPOSITIVE_USABLE_FIELD')
++    expanded=[]
++    for p in parts:
++        l,w=dec(p['length']),dec(p['width']);q=p['qty']
++        if min(l,w)<=0 or type(q) is not int or not 1<=q<=5000: raise PlacementError('INVALID_DIMENSIONS_OR_QTY')
++        if p['grain'] not in {'none','length','width'}: raise PlacementError('GRAIN_CONFIRMATION_REQUIRED')
++        if p['grain']=='width':
++            # Explicit model: width grain aligns W to the sheet length axis; never infer from rotation.
++            if not p['rotation']: raise PlacementError('GRAIN_ROTATION_CONFLICT')
++            l,w=w,l
++        alternatives=[(l,w,p['grain']=='width')]
++        if p['rotation'] and p['grain']=='none' and l!=w: alternatives.append((w,l,True))
++        if not any(a<=ul and b<=uw for a,b,_ in alternatives): raise PlacementError('DETAIL_EXCEEDS_USABLE_FIELD')
++        for copy in range(q): expanded.append((p['detail_id'],copy,l,w,alternatives))
++    if not expanded: raise PlacementError('NO_PARTS')
++    if len(expanded)>10000: raise PlacementError('ESTIMATE_LIMIT_EXCEEDED')
++    expanded.sort(key=lambda p:(-p[2]*p[3],-max(p[2],p[3]),-min(p[2],p[3]),p[0],p[1]))
++    sheets=[];segments=[]
++    for ident,copy,l,w,orientations in expanded:
++        options=[]
++        for si,s in enumerate(sheets):
++            for ri,r in enumerate(s['free']):
++                x,y,a,b=r
++                for pl,pw,rotated in orientations:
++                    if pl<=a and pw<=b: options.append(((si,a*b,y,x,rotated,ri),ri,r,pl,pw,rotated))
++        if not options:
++            sheets.append({'free':[(Decimal(0),Decimal(0),ul,uw)],'placements':[]})
++            si=len(sheets)-1
++            pl,pw,rotated=next(o for o in orientations if o[0]<=ul and o[1]<=uw)
++            options=[((si,ul*uw,Decimal(0),Decimal(0),rotated,0),0,(Decimal(0),Decimal(0),ul,uw),pl,pw,rotated)]
++        key,ri,r,pl,pw,rotated=min(options,key=lambda o:o[0]);si=key[0];s=sheets[si]
++        x,y,a,b=r;s['free'].pop(ri)
++        s['placements'].append({'detail_id':ident,'copy':copy,'x':x,'y':y,'length':pl,'width':pw,'rotated':rotated})
++        if pl<a:
++            segments.append({'sheet':si+1,'axis':'Y','x':x+pl,'y':y,'length_mm':b,'kind':'nesting','kerf_mm':k})
++            if a-pl-k>0: s['free'].append((x+pl+k,y,a-pl-k,b))
++        if pw<b:
++            segments.append({'sheet':si+1,'axis':'X','x':x,'y':y+pw,'length_mm':pl,'kind':'nesting','kerf_mm':k})
++            if b-pw-k>0: s['free'].append((x,y+pw+k,pl,b-pw-k))
++    area=sum((p[2]*p[3] for p in expanded),Decimal(0))
++    plan=plain({'estimator_version':VERSION,'label':'Расчётное количество листов','optimality_proven':False,
++        'sheet':sheet,'usable_length':ul,'usable_width':uw,'kerf_mm':k,'estimated_sheet_count':len(sheets),
++        'area_lower_bound':int((area/(ul*uw)).to_integral_value(rounding='ROUND_CEILING')),
++        'sheets':[{'sheet':i+1,'placements':s['placements']} for i,s in enumerate(sheets)],
++        'cut_segments':segments,'cut_metres':sum((s['length_mm'] for s in segments),Decimal(0))/1000,
++        'trim_billing':'excluded_from_nesting_segments; NC-09 until approved policy',
++        'trim':{key:settings[key] for key in ('trim_left_mm','trim_right_mm','trim_top_mm','trim_bottom_mm')}})
++    plan['plan_hash']=hash_value(plan);return plan
+diff --git a/backend/v2/stage04_operator.py b/backend/v2/stage04_operator.py
+new file mode 100644
+index 0000000..cb08f55
+--- /dev/null
++++ b/backend/v2/stage04_operator.py
+@@ -0,0 +1,81 @@
++"""Explicit staging maintenance only, no HTTP route. Real restore into a new DB/root."""
++from dataclasses import replace
++from pathlib import Path
++from uuid import uuid4
++import json
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict,make_conninfo
++from .db import connect,transaction
++from .backup import backup,restore
++from .files import read_verified
++from .storage import VolumeStore,sha256
++from .calculation_math import canonical,hash_value
++from .events import record_event
++
++TABLES=('mf_order_revisions','mf_calculations','mf_calculation_lines','mf_discount_snapshots','mf_calculation_price_snapshots',
++ 'mf_sheet_estimates','mf_manufacturing_recipes','mf_tariff_books','mf_tariff_entries','mf_price_books','mf_sale_price_entries',
++ 'mf_discount_profiles','mf_production_profiles','mf_order_financial_contexts','mf_order_discount_overrides',
++ 'mf_customer_discount_assignments','mf_submission_receipts','mf_calculation_seals','mf_catalogue_releases','mf_catalogue_items','mf_files')
++
++def snapshot(conn):
++    result={}
++    for table in TABLES:
++        rows=sorted(r['r'] for r in conn.execute(sql.SQL('SELECT to_jsonb(t)::text r FROM {} t').format(sql.Identifier(table))))
++        result[table]={'count':len(rows),'sha256':hash_value(rows)}
++    return result
++
++def verify(settings):
++    with connect(settings) as conn:
++        tables=snapshot(conn)
++        for revision in conn.execute('SELECT content,content_hash FROM mf_order_revisions WHERE schema_version=4'):
++            if hash_value(revision['content'])!=revision['content_hash']: raise ValueError('Revision hash mismatch')
++        for c in conn.execute('SELECT c.*,s.result_hash FROM mf_calculations c JOIN mf_calculation_seals s USING(calculation_id)'):
++            if hash_value(c['input_snapshot'])!=c['input_hash'] or hash_value(c['result'])!=c['result_hash']: raise ValueError('Calculation hash mismatch')
++        verified_files=[]
++        for f in conn.execute("SELECT file_id,sha256 FROM mf_files WHERE status='ready' ORDER BY file_id"):
++            if sha256(read_verified(conn,VolumeStore(settings.storage_root),f['file_id']))!=f['sha256']: raise ValueError('Private bytes mismatch')
++            verified_files.append({'file_id':str(f['file_id']),'sha256':f['sha256']})
++        active=str(conn.execute('SELECT release_id FROM mf_catalogue_active').fetchone()['release_id'])
++        jobs=conn.execute("SELECT count(*) n FROM mf_production_jobs").fetchone()['n']
++        if conn.execute("SELECT 1 FROM mf_production_jobs WHERE status NOT IN ('blocked','cancelled') LIMIT 1").fetchone(): raise ValueError('Unexpected job state')
++    return {'tables':tables,'private_files':verified_files,'active_catalogue_release':active,'production_jobs':jobs}
++
++def retire_restore(settings,email):
++    evidence_path=settings.storage_root.parent/'stage04-restore-evidence.json'
++    if evidence_path.exists():
++        print('MF_STAGE04_RESTORE='+evidence_path.read_text(),flush=True);return
++    if not email.endswith('@example.invalid'): raise ValueError('Explicit synthetic operator required')
++    with transaction(settings) as conn:
++        user=conn.execute('SELECT user_id FROM mf_users WHERE email=%s FOR UPDATE',(email,)).fetchone()
++        if not user: raise ValueError('Synthetic operator missing')
++        uid=user['user_id']
++        conn.execute("UPDATE mf_users SET account_status='disabled',password_hash='disabled-stage04-operator' WHERE user_id=%s",(uid,))
++        conn.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++        conn.execute('UPDATE mf_permission_grants SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++        conn.execute("DELETE FROM mf_user_roles WHERE user_id=%s AND role='admin'",(uid,))
++        record_event(conn,settings,actor=uid,action='stage04.operator.retired',object_type='user',object_id=uid,reason='Temporary synthetic acceptance operator retired')
++    before=verify(settings)
++    if not before['tables']['mf_calculations']['count']: raise ValueError('Calculation evidence missing')
++    run=uuid4().hex[:12];destination=settings.storage_root.parent/'backups'/('stage04-'+run)
++    manifest=backup(settings,destination);name='mf_staging_restore_stage04_'+run
++    with connect(settings,autocommit=True) as conn: conn.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    info=conninfo_to_dict(settings.database_url)
++    target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,
++      storage_root=settings.storage_root.parent/('restore-stage04-'+run)/'storage')
++    restored=restore(target,destination);after=verify(target)
++    if before!=after: raise ValueError('Restored tables/bytes differ from isolated source snapshot')
++    evidence={'restore':restored,'dump_sha256':manifest['database_sha256'],'backup_path':str(destination),'storage_root':str(target.storage_root),
++       'operator_retired':True,'table_snapshots_match':True,'revision_input_result_hashes_verified':True,'state':after,
++       'transport':'disabled','dispatch':'disabled'}
++    evidence_path.write_text(json.dumps(evidence,indent=2))
++    print('MF_STAGE04_RESTORE='+json.dumps(evidence,separators=(',',':')),flush=True)
++
++def verify_persistence(settings):
++    recorded=json.loads((settings.storage_root.parent/'stage04-restore-evidence.json').read_text())
++    current=verify(settings)
++    if current!=recorded['state']: raise ValueError('Persistence verification differs')
++    result={'persistent_after_redeploy':True,'calculation_count':current['tables']['mf_calculations']['count'],
++        'revision_count':current['tables']['mf_order_revisions']['count'],'private_files_verified':len(current['private_files']),
++        'active_catalogue_release':current['active_catalogue_release'],'production_jobs':current['production_jobs']}
++    (settings.storage_root.parent/'stage04-persistence-evidence.json').write_text(json.dumps(result,indent=2))
++    print('MF_STAGE04_PERSISTENCE='+json.dumps(result),flush=True)
+diff --git a/backend/v2/startup.py b/backend/v2/startup.py
+index 95dfd2b..18cd8dd 100644
+--- a/backend/v2/startup.py
++++ b/backend/v2/startup.py
+@@ -32,6 +32,27 @@ def prepare(settings):
+                'destination':str(destination),'migration_versions':sorted(versions)}
+         (destination/'stage03-before.json').write_text(json.dumps(state,indent=2))
+         print('MF_STAGE03_PRE_MIGRATION='+json.dumps(state),flush=True)
++    if versions=={'0001_foundation.sql','0002_auth_security.sql','0003_catalogue_imports.sql'}:
++        from .storage import sha256
++        destination=settings.storage_root.parent/'backups'/'pre-stage04'
++        if destination.exists():
++            manifest=json.loads((destination/'manifest.json').read_text())
++            before=json.loads((destination/'stage04-before.json').read_text())
++            if (manifest['namespace']!=settings.namespace or manifest['database']!=settings.database_name
++                or sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']
++                or before['database_sha256']!=manifest['database_sha256']):
++                raise ValueError('Pre-Stage-4 backup integrity mismatch')
++            for f in manifest['files']:
++                if f['present'] and sha256((destination/'blobs'/f['storage_key']).read_bytes())!=f['sha256']:
++                    raise ValueError('Pre-Stage-4 private backup integrity mismatch')
++        else:
++            manifest=backup(settings,destination)
++            with connect(settings) as conn:
++                counts={t:conn.execute('SELECT count(*) n FROM '+t).fetchone()['n'] for t in
++                    ('mf_orders','mf_order_revisions','mf_catalogue_releases','mf_files')}
++            before={'database_sha256':manifest['database_sha256'],'counts':counts,'file_count':len(manifest['files'])}
++            (destination/'stage04-before.json').write_text(json.dumps(before,indent=2))
++        print('MF_STAGE04_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
+     migrate(settings)
+     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
+     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'
+diff --git a/tests/stage04/__init__.py b/tests/stage04/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/stage04/live_acceptance.py b/tests/stage04/live_acceptance.py
+new file mode 100644
+index 0000000..5a7bead
+--- /dev/null
++++ b/tests/stage04/live_acceptance.py
+@@ -0,0 +1,96 @@
++"""Explicit live Stage 4 HTTP checks on the one hard-pinned staging origin.
++No master republish, no production calls. Synthetic credentials are read from a private file.
++"""
++import base64,hashlib,json,subprocess,sys,tempfile
++from pathlib import Path
++from urllib.parse import urlencode
++from uuid import uuid4
++from tests.stage03.support import parts,part,template
++
++ORIGIN='https://martin-forest-v2-staging-production.up.railway.app'
++EVIDENCE=Path('docs/stage04/live-evidence.json')
++
++def run(credential_path):
++    if EVIDENCE.exists(): raise ValueError('Evidence exists; inspect instead of repeating live writes')
++    credentials=json.loads(Path(credential_path).read_text())
++    if not credentials['email'].endswith('@example.invalid'): raise ValueError('Synthetic operator required')
++    with tempfile.TemporaryDirectory(prefix='mf-stage04-http-') as directory:
++        root=Path(directory);jar=root/'cookies';jar.touch(mode=0o600)
++        def request(method,path,body=None,version=None,key=None,expected=200,raw=False):
++            args=['curl','-sS','--max-time','90','-X',method,'-H','Origin: '+ORIGIN,'-H','Content-Type: application/json','-b',str(jar),'-c',str(jar)]
++            if version is not None: args+=['-H','If-Match: '+str(version)]
++            if key: args+=['-H','Idempotency-Key: '+key]
++            if body is not None:
++                payload=root/'request.json';payload.write_text(json.dumps(body));payload.chmod(0o600);args+=['--data-binary','@'+str(payload)]
++            response=subprocess.run(args+['-w','\n%{http_code}',ORIGIN+path],capture_output=True,check=True)
++            content,status=response.stdout.rsplit(b'\n',1)
++            if int(status)!=expected:
++                code=''
++                try: code=json.loads(content).get('detail',{}).get('code','')
++                except Exception: pass
++                raise RuntimeError(f'{method} {path}: HTTP {status.decode()}, {code}, expected {expected}')
++            return content if raw else json.loads(content)
++        def post(path,body,**kw): return request('POST','/api/v2'+path,body,**kw)
++        def get(path,**kw): return request('GET','/api/v2'+path,**kw)
++        assert request('GET','/health')['stage']=='4';post('/auth/login',credentials)
++        active=get('/catalogue/releases')['active_release'];assert active=='e6db8155-91a6-4f15-9b89-ce2194b43373'
++        candidates=get('/catalogue/materials?'+urlencode({'q':'621 PO','release':active}))['items']
++        material=next(m for m in candidates if m['article']=='621 PO' and m['thickness']=='18' and m['length']=='2800' and m['width']=='2070')
++        def detail(**extra): return {'detail_id':'finished-1','length':'600','width':'400','qty':3,'variant_id':material['variant_id'],'rotation':False,'grain':'none','route':'glued_18_18','packaging':True,'edges':{},**extra}
++        raw_order=post('/orders',{'business_name':'STAGE4 SYNTHETIC master-price-incomplete fixture','preparation_mode':'self_prepared'},expected=201)
++        raw_revision=post('/orders/'+raw_order['order_id']+'/revisions',{'catalogue_release_id':active,'reason':'Actual master provenance remains unapproved','details':[detail(route='solid',qty=1)]},version=1,expected=201)
++        incomplete=post('/orders/'+raw_order['order_id']+'/calculations',{'revision_id':raw_revision['revision_id']},expected=201)
++        assert incomplete['completeness']=='incomplete' and incomplete['total'] is None
++        assert any(r['code']=='NC-05_APPROVED_MATERIAL_PRICE_REQUIRED' for r in incomplete['reasons'])
++        submit_body={'revision_id':raw_revision['revision_id'],'preliminary_calculation_id':incomplete['calculation_id']};key=uuid4().hex
++        submitted=post('/orders/'+raw_order['order_id']+'/submit',submit_body,version=2,key=key)
++        assert post('/orders/'+raw_order['order_id']+'/submit',submit_body,version=2,key=key)==submitted
++        post('/orders/'+raw_order['order_id']+'/submit',{**submit_body,'comment':'Different idempotent body'},version=2,key=key,expected=409)
++        defaults=get('/financial/defaults');base=get('/financial/versions/production/'+defaults['production_profile_id'])
++        meta={'source':'EXPLICIT SYNTHETIC STAGE4 ACCEPTANCE ONLY','source_date':'2026-09-23','reason':'Synthetic mechanism test, not a real sale policy','synthetic':True}
++        profile=post('/financial/production-profiles',{**meta,'settings':base['settings'],'policies':{'edge_consumption':{'basis':'net'},
++            'cutting_18':{'basis':'estimated_plan_excluding_trim','families':['board'],'include_glue_blanks':True},'glue_area':'finished_area','edge_classification':None}},expected=201)
++        discounts=post('/financial/discount-profiles',{**meta,'materials':'10','edge_material':'20','services':'5'},expected=201)
++        prices=post('/financial/price-books',{**meta,'release_id':active,'currency':'BYN','tax_convention':'Synthetic fixture; no real VAT assertion',
++            'effective_from':'2026-09-23T00:00:00Z','entries':[{'item_id':material['variant_id'],'kind':'material','amount':'100','unit':'sheet'}]},expected=201)
++        synthetic=post('/orders',{'business_name':'STAGE4 SYNTHETIC glue-and-discount fixture','preparation_mode':'self_prepared'},expected=201)
++        post('/orders/'+synthetic['order_id']+'/financial-context',{'production_profile_id':profile['id'],'tariff_book_id':defaults['tariff_book_id'],
++             'price_book_id':prices['id'],'discount_profile_id':discounts['id'],'reason':'Explicit synthetic order context only'},version=1,expected=201)
++        rev=post('/orders/'+synthetic['order_id']+'/revisions',{'catalogue_release_id':active,'reason':'Synthetic explicit 18+18 route','details':[detail()]},version=1,expected=201)
++        calculation=post('/orders/'+synthetic['order_id']+'/calculations',{'revision_id':rev['revision_id']},expected=201)
++        assert calculation['completeness']=='complete' and calculation['synthetic'] and calculation['total'] is not None
++        recipe=calculation['manufacturing_recipes'][0];assert (recipe['blank_length'],recipe['blank_width'],recipe['child_qty'])==('620','420',6)
++        operations={l['operation']:l for l in calculation['lines']}
++        assert operations['packaging']['quantity']=='0.72' and operations['glued_finish_cut']['quantity']=='3'
++        before=get('/calculations/'+calculation['calculation_id'],raw=True)
++        for field in ('preliminaryTotal','material_price','edge_price','discounts','tariff'):
++            post('/orders/'+synthetic['order_id']+'/calculations',{'revision_id':rev['revision_id'],field:'0'},expected=422)
++        assert get('/calculations/'+calculation['calculation_id'],raw=True)==before
++        gate=post('/calculations/'+calculation['calculation_id']+'/fix',{'reason':'Verify gate without any production run'},expected=409)
++        assert gate['detail']['code']=='BAZIS_RUN_REQUIRED'
++        get('/calculations/'+calculation['calculation_id']+'/pdf',expected=404)
++        submitted2=post('/orders/'+synthetic['order_id']+'/submit',{'revision_id':rev['revision_id'],'preliminary_calculation_id':calculation['calculation_id']},version=2,key=uuid4().hex)
++        child=post('/orders/'+synthetic['order_id']+'/revisions',{'parent_revision_id':rev['revision_id'],'catalogue_release_id':active,
++            'reason':'Manager changes finished dimensions in child revision','details':[detail(length='610')]},version=submitted2['optimistic_lock_version'],expected=201)
++        assert child['parent_revision_id']==rev['revision_id'] and get('/calculations/'+calculation['calculation_id'],raw=True)==before
++        # A genuinely saved problematic workbook follows manager-assisted submission, without calculation.
++        assisted=post('/orders',{'business_name':'STAGE4 SYNTHETIC problematic source handoff','preparation_mode':'manager_assisted'},expected=201)
++        tpl=post('/import-templates',{'name':'Stage4 synthetic problematic fixture','definition':template()},expected=201)
++        source=parts([part(qty=0,article='UNKNOWN-STAGE04')])
++        preview=post('/imports/preview',{'filename':'stage04-synthetic-problematic.xlsx','content_base64':base64.b64encode(source).decode(),
++           'order_id':assisted['order_id'],'template_revision_id':tpl['template_revision_id'],'selected_sheets':['Parts']},expected=201)
++        applied=post('/imports/'+preview['import_id']+'/confirm',{'mode':'add'},version=1)
++        handoff=post('/orders/'+assisted['order_id']+'/submit',{'comment':'Please review unresolved material and zero quantity in saved source'},version=applied['optimistic_lock_version'],key=uuid4().hex)
++        assert handoff['calculation_state']=='calculation_not_available'
++        assert get('/orders/'+assisted['order_id']+'/calculations')['items']==[]
++        assert get('/financial/defaults')==defaults and get('/catalogue/releases')['active_release']==active
++        evidence={'active_release':active,'material_variant':material,'actual_master_incomplete':incomplete,'synthetic_calculation':calculation,
++            'synthetic_financial_dto_sha256':hashlib.sha256(before).hexdigest(),'old_financial_dto_unchanged':True,'child_revision':child,
++            'manager_assisted':handoff,'manager_assisted_raw_qty':preview['rows'][1]['original']['values']['qty'],
++            'manager_assisted_source_sha256':hashlib.sha256(source).hexdigest(),'idempotent_submit':True,'changed_idempotency_body_http':409,
++            'financial_injection_http':422,'final_gate':gate,'pdf_http':404,'global_defaults_unchanged':True,'no_production_calls':True}
++        EVIDENCE.write_text(json.dumps(evidence,ensure_ascii=False,indent=2)+'\n')
++        print(json.dumps({'live_stage4_http_pass':True,'actual_master_total':None,'synthetic_total':calculation['total'],
++          'estimated_sheets':calculation['sheet_estimates'][0]['estimated_sheet_count'],'final_gate':'BAZIS_RUN_REQUIRED','manager_assisted_raw_qty':0}))
++
++if __name__=='__main__': run(sys.argv[1])
+diff --git a/tests/stage04/test_api.py b/tests/stage04/test_api.py
+new file mode 100644
+index 0000000..16d6684
+--- /dev/null
++++ b/tests/stage04/test_api.py
+@@ -0,0 +1,229 @@
++"""Native Postgres + HTTP order, finance, isolation and restore acceptance."""
++from copy import deepcopy
++from dataclasses import replace
++from uuid import uuid4
++from pathlib import Path
++import hashlib,json,os
++import pytest
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict,make_conninfo
++from backend.v2.db import connect,transaction
++from backend.v2.backup import backup,restore
++from backend.v2.calculation_math import canonical,hash_value
++from backend.v2.files import read_verified
++from backend.v2.storage import VolumeStore
++from tests.stage03.test_api import settings,api,admin_user,post,publish,setup_import,login,PASSWORD
++
++
++def order(api,mode='self_prepared'):
++    return post(api,'/orders',{'business_name':'SYNTHETIC Stage 4 acceptance','preparation_mode':mode},status=201)
++
++def item(api,release,q='621 PO'):
++    return next(i for i in api.get('/api/v2/catalogue/materials',params={'q':q,'release':release}).json()['items'] if i['article']==q)
++
++def request_detail(material,**extra):
++    return {'detail_id':'d1','length':'600','width':'400','qty':1,'variant_id':material['variant_id'],
++        'rotation':False,'grain':'none','route':'solid','packaging':True,'edges':{},**extra}
++
++def revision(api,o,release,details,version=1,parent=None):
++    return post(api,'/orders/'+o['order_id']+'/revisions',{'reason':'Explicit test revision','catalogue_release_id':release,
++        'parent_revision_id':parent,'details':details},version,status=201)
++
++def calc(api,o,r):
++    return post(api,'/orders/'+o['order_id']+'/calculations',{'revision_id':r['revision_id']},status=201)
++
++def configure(api,o,release,material,edge=None,discounts=None):
++    meta={'source':'EXPLICIT SYNTHETIC ACCEPTANCE ONLY','source_date':'2026-09-23','reason':'Approved synthetic fixture, no global activation','synthetic':True}
++    defaults=api.get('/api/v2/financial/defaults').json()
++    production=api.get('/api/v2/financial/versions/production/'+defaults['production_profile_id']).json()
++    policies={'edge_consumption':{'basis':'net'},'cutting_18':{'basis':'estimated_plan_excluding_trim','families':['board','customer'],'include_glue_blanks':True},
++              'glue_area':'finished_area','edge_classification':None}
++    profile=post(api,'/financial/production-profiles',{**meta,'settings':production['settings'],'policies':policies},status=201)
++    discount=post(api,'/financial/discount-profiles',{**meta,**(discounts or {'materials':'0','edge_material':'0','services':'0'})},status=201)
++    entries=[{'item_id':material['variant_id'],'kind':'material','amount':'100','unit':'sheet'}]
++    if edge: entries.append({'item_id':edge['edge_id'],'kind':'edge','amount':'4','unit':'m'})
++    price=post(api,'/financial/price-books',{**meta,'release_id':release,'currency':'BYN','tax_convention':'Synthetic fixture only, no real VAT policy',
++        'effective_from':'2026-09-23T00:00:00Z','entries':entries},status=201)
++    context={'production_profile_id':profile['id'],'tariff_book_id':defaults['tariff_book_id'],'price_book_id':price['id'],'discount_profile_id':discount['id'],'reason':'Explicit isolated synthetic order fixture'}
++    post(api,'/orders/'+o['order_id']+'/financial-context',context,1,status=201)
++    return context,meta
++
++def submit(api,o,r,c=None,key=None,version=None,**extra):
++    body={'revision_id':r['revision_id'],**extra}
++    if c: body['preliminary_calculation_id']=c['calculation_id']
++    return api.post('/api/v2/orders/'+o['order_id']+'/submit',json=body,
++        headers={'Idempotency-Key':key or uuid4().hex,'If-Match':str(version or r['optimistic_lock_version'])})
++
++def test_ord01_ord02_submit_repeat_changed_body_and_stale(api,settings,admin_user):
++    _,release=publish(api);o=order(api);m=item(api,release);configure(api,o,release,m)
++    r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r);assert c['completeness']=='complete'
++    key=uuid4().hex;a=submit(api,o,r,c,key=key);assert a.status_code==200,a.text
++    b=submit(api,o,r,c,key=key);assert b.json()==a.json()
++    assert submit(api,o,r,c,key=key,comment='Different body').status_code==409
++    with connect(settings) as db:
++        assert db.execute('SELECT count(*) n FROM mf_submission_receipts WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==1
++        assert db.execute('SELECT count(*) n FROM mf_production_jobs WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
++        receipt=db.execute('SELECT request_snapshot FROM mf_submission_receipts WHERE order_id=%s',(o['order_id'],)).fetchone()['request_snapshot']
++        assert receipt['preliminary_calculation_id']==c['calculation_id']
++    other=order(api);rr=revision(api,other,release,[request_detail(m)]);cc=calc(api,other,rr)
++    assert submit(api,other,rr,cc,version=1).status_code==412
++
++def test_ord03_ord04_manager_child_immutable_approval_reset(api,settings,admin_user):
++    _,release=publish(api);o=order(api);m=item(api,release);configure(api,o,release,m)
++    r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r);submitted=submit(api,o,r,c).json()
++    with connect(settings) as db: before=canonical(db.execute('SELECT * FROM mf_order_revisions WHERE revision_id=%s',(r['revision_id'],)).fetchone())
++    # Synthetic previous approval pointer only, never a production run/final price.
++    with transaction(settings) as db: db.execute('UPDATE mf_orders SET approved_revision_id=%s WHERE order_id=%s',(r['revision_id'],o['order_id']))
++    changed=revision(api,o,release,[request_detail(item(api,release,'621 PE'))],submitted['optimistic_lock_version'],r['revision_id'])
++    with connect(settings) as db:
++        after=canonical(db.execute('SELECT * FROM mf_order_revisions WHERE revision_id=%s',(r['revision_id'],)).fetchone())
++        assert before==after
++        current=db.execute('SELECT * FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()
++        assert current['approved_revision_id'] is None and current['workflow_status']=='review'
++        assert str(current['active_revision_id'])==changed['revision_id']
++    for statement in ["UPDATE mf_order_revisions SET content='{}' WHERE revision_id=%s",'DELETE FROM mf_order_revisions WHERE revision_id=%s']:
++        with pytest.raises(Exception):
++            with transaction(settings) as db: db.execute(statement,(r['revision_id'],))
++
++def test_cal10_ord05_old_financial_bytes_survive_all_version_changes(api,settings,admin_user):
++    _,release=publish(api);o=order(api);m=item(api,release);ctx,meta=configure(api,o,release,m)
++    r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r);url='/api/v2/calculations/'+c['calculation_id'];before=api.get(url).content
++    oldtariff=api.get('/api/v2/financial/versions/tariff/'+ctx['tariff_book_id']).json()
++    entries=[{'operation':e['operation'],'amount':'9.99','currency':'BYN'} for e in oldtariff['entries']]
++    t=post(api,'/financial/tariff-books',{**meta,'supersedes':ctx['tariff_book_id'],'effective_from':'2026-09-23T00:00:00Z','entries':entries},status=201)
++    p=post(api,'/financial/price-books',{**meta,'supersedes':ctx['price_book_id'],'release_id':release,'currency':'BYN','tax_convention':'Synthetic',
++      'effective_from':'2026-09-23T00:00:00Z','entries':[{'item_id':m['variant_id'],'kind':'material','amount':'999','unit':'sheet'}]},status=201)
++    d=post(api,'/financial/discount-profiles',{**meta,'supersedes':ctx['discount_profile_id'],'materials':'10','edge_material':'20','services':'5'},status=201)
++    prof=api.get('/api/v2/financial/versions/production/'+ctx['production_profile_id']).json();prof['settings']['kerf_mm']='5'
++    pp=post(api,'/financial/production-profiles',{**meta,'supersedes':ctx['production_profile_id'],'settings':prof['settings'],'policies':prof['policies']},status=201)
++    post(api,'/orders/'+o['order_id']+'/financial-context',{**ctx,'tariff_book_id':t['id'],'price_book_id':p['id'],'discount_profile_id':d['id'],'production_profile_id':pp['id']},r['optimistic_lock_version'],status=201)
++    publish(api)
++    newer=post(api,'/calculations/'+c['calculation_id']+'/recalculate',{'reason':'Explicit newer commercial versions'},status=201)
++    assert newer['calculation_id']!=c['calculation_id'] and newer['total']!=c['total']
++    assert newer['production_profile_id']==c['production_profile_id'] # revision pins geometry; new revision required to change it
++    assert api.get(url).content==before
++    with pytest.raises(Exception):
++        with transaction(settings) as db: db.execute("UPDATE mf_calculations SET result='{}' WHERE calculation_id=%s",(c['calculation_id'],))
++    with pytest.raises(Exception):
++        with transaction(settings) as db: db.execute('INSERT INTO mf_calculation_lines SELECT %s,calculation_id,999,category,operation,state,quantity,unit,unit_price,gross,snapshot FROM mf_calculation_lines WHERE calculation_id=%s LIMIT 1',(uuid4(),c['calculation_id']))
++    with pytest.raises(Exception):
++        with transaction(settings) as db: db.execute("INSERT INTO mf_tariff_entries SELECT %s,book_id,'illegal','{}',1,'BYN','m',NULL FROM mf_tariff_entries WHERE book_id=%s LIMIT 1",(uuid4(),ctx['tariff_book_id']))
++
++def test_ord06_manager_assisted_problematic_raw_persisted_no_autocalc(api,settings,admin_user):
++    publish(api);o,t,p=setup_import(api,qty=0,article='UNKNOWN')
++    # Explicitly choose the manager-assisted flow before submitting raw evidence.
++    q=api.patch('/api/v2/orders/'+o['order_id']+'/draft',json={'business_name':'Synthetic problematic manager request','preparation_mode':'manager_assisted'},headers={'If-Match':'1'})
++    assert q.status_code==200
++    applied=post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},2)
++    response=api.post('/api/v2/orders/'+o['order_id']+'/submit',json={'comment':'Please inspect unresolved source rows and prepare the order'},
++        headers={'Idempotency-Key':uuid4().hex,'If-Match':str(applied['optimistic_lock_version'])})
++    assert response.status_code==200,response.text
++    assert response.json()['calculation_state']=='calculation_not_available'
++    with connect(settings) as db:
++        revision=db.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(response.json()['revision_id'],)).fetchone()['content']
++        assert revision['source_evidence']['draft_rows'][0]['snapshot']['values']['qty']==0
++        assert revision['source_evidence']['draft_rows'][0]['snapshot']['errors']
++        assert db.execute('SELECT count(*) n FROM mf_calculations WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
++        assert db.execute('SELECT count(*) n FROM mf_production_jobs WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
++
++def test_ord07_unapproved_master_incomplete_submit_review_and_final_gate(api,settings,admin_user):
++    _,release=publish(api);o=order(api);m=item(api,release)
++    r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r)
++    assert c['completeness']=='incomplete' and c['total'] is None
++    a=submit(api,o,r,c);assert a.status_code==200,a.text
++    review=post(api,'/orders/'+o['order_id']+'/review',{'reason':'Review incomplete preliminary'},a.json()['optimistic_lock_version'])
++    assert review['workflow_status']=='review'
++    gate=api.post('/api/v2/calculations/'+c['calculation_id']+'/fix',json={'reason':'Attempt before verified run'})
++    assert gate.status_code==409 and gate.json()['detail']['code']=='BAZIS_RUN_REQUIRED'
++    assert api.post('/api/v2/orders/'+o['order_id']+'/approve',json={}).status_code==409
++    assert api.get('/api/v2/calculations/'+c['calculation_id']+'/pdf').status_code==404
++
++def test_client_financial_injection_foreign_scope_and_block_revoke(api,settings,admin_user):
++    _,release=publish(api);m=item(api,release)
++    email=uuid4().hex+'@example.invalid';user=post(api,'/auth/register',{'email':email,'password':PASSWORD},status=201)
++    o=order(api);r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r)
++    assert submit(api,o,r,c).status_code==403
++    for key in ('preliminaryTotal','material_price','edge_price','discounts','tariff'):
++        bad=api.post('/api/v2/orders/'+o['order_id']+'/calculations',json={'revision_id':r['revision_id'],key:'0'})
++        assert bad.status_code==422
++    assert api.post('/api/v2/orders/'+o['order_id']+'/discount-overrides',json={'profile_id':str(uuid4()),'reason':'Client override attempt'}).status_code==403
++    assert api.get('/api/v2/financial/defaults').status_code==403
++    post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
++    assert api.get('/api/v2/calculations/'+c['calculation_id']).status_code==403
++    assert api.post('/api/v2/calculations/'+c['calculation_id']+'/recalculate',json={'reason':'Foreign attempt'}).status_code==403
++    login(api,email)
++    with transaction(settings) as db: db.execute("UPDATE mf_users SET account_status='blocked' WHERE user_id=%s",(user['user_id'],))
++    assert api.get('/api/v2/calculations/'+c['calculation_id']).status_code==200
++    assert api.post('/api/v2/orders/'+o['order_id']+'/calculations',json={'revision_id':r['revision_id']}).status_code==403
++    with transaction(settings) as db: db.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s',(user['user_id'],))
++    assert api.get('/api/v2/calculations/'+c['calculation_id']).status_code==401
++
++def test_manager_assignment_scope_and_discount_override_reason(api,settings,admin_user):
++    _,release=publish(api);o=order(api);m=item(api,release);ctx,meta=configure(api,o,release,m)
++    r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r)
++    manager_email=uuid4().hex+'@example.invalid'
++    manager=post(api,'/admin/staff',{'email':manager_email,'password':PASSWORD,'role':'manager'},status=201)
++    with transaction(settings) as db: db.execute('UPDATE mf_users SET email_verified_at=now() WHERE user_id=%s',(manager['user_id'],))
++    for permission in ('calculations.read','calculations.create','discounts.override','orders.revision.create'):
++        post(api,'/admin/staff/'+manager['user_id']+'/grants',{'permission':permission,'scope_type':'assigned'},status=201)
++    post(api,'/orders/'+o['order_id']+'/assign-manager',{'manager_id':manager['user_id'],'reason':'Assign synthetic review'})
++    version=api.get('/api/v2/orders/'+o['order_id']).json()['optimistic_lock_version']
++    login(api,manager_email)
++    assert api.get('/api/v2/calculations/'+c['calculation_id']).status_code==200
++    assert api.post('/api/v2/orders/'+o['order_id']+'/discount-overrides',json={'profile_id':ctx['discount_profile_id'],'reason':' '},headers={'If-Match':str(version)}).status_code==422
++    post(api,'/orders/'+o['order_id']+'/discount-overrides',{'profile_id':ctx['discount_profile_id'],'reason':'Scoped approved profile override'},version,status=201)
++    login(api,admin_user['email']);post(api,'/orders/'+o['order_id']+'/assign-manager',{'manager_id':None,'reason':'Revoke current assignment'})
++    login(api,manager_email)
++    assert api.get('/api/v2/calculations/'+c['calculation_id']).status_code==403
++    assert api.post('/api/v2/orders/'+o['order_id']+'/discount-overrides',json={'profile_id':ctx['discount_profile_id'],'reason':'Former assignment'},headers={'If-Match':str(version)}).status_code==403
++
++def test_atomic_rollback_no_partial_calculation_or_outbox(api,settings,admin_user):
++    from backend.v2.calculation_service import create
++    _,release=publish(api);o=order(api);m=item(api,release);r=revision(api,o,release,[request_detail(m)])
++    with pytest.raises(RuntimeError):
++        with transaction(settings) as db:
++            made=create(db,settings,admin_user['user_id'],o['order_id'],r['revision_id'])
++            raise RuntimeError('Injected rollback')
++    with connect(settings) as db:
++        for table,key in [('mf_calculations','calculation_id'),('mf_calculation_lines','calculation_id'),('mf_discount_snapshots','calculation_id'),('mf_audit','object_id'),('mf_outbox','aggregate_id')]:
++            assert not db.execute(sql.SQL('SELECT 1 FROM {} WHERE {}=%s').format(sql.Identifier(table),sql.Identifier(key)),(made['calculation_id'],)).fetchone()
++
++def test_stage4_real_backup_restore_all_snapshots_and_private_bytes(api,settings,admin_user,tmp_path):
++    result,release=publish(api);o=order(api);m=item(api,release);configure(api,o,release,m)
++    r=revision(api,o,release,[request_detail(m,route='glued_18_18',qty=3)]);c=calc(api,o,r)
++    assert c['total'] is not None
++    manifest=backup(settings,tmp_path/'backup');info=conninfo_to_dict(settings.database_url);name='mf_staging_restore_stage04_'+uuid4().hex[:10]
++    with connect(settings,autocommit=True) as db: db.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,storage_root=tmp_path/'separate-restored-bytes')
++    restored=restore(target,tmp_path/'backup')
++    tables=['mf_order_revisions','mf_calculations','mf_calculation_lines','mf_tariff_books','mf_tariff_entries','mf_discount_snapshots','mf_price_books',
++      'mf_sale_price_entries','mf_production_profiles','mf_sheet_estimates','mf_manufacturing_recipes','mf_catalogue_releases','mf_files']
++    counts={}
++    with connect(settings) as src,connect(target) as dst:
++        for table in tables:
++            q=sql.SQL('SELECT to_jsonb(t)::text AS row FROM {} t').format(sql.Identifier(table))
++            left=sorted(r['row'] for r in src.execute(q));right=sorted(r['row'] for r in dst.execute(q));assert left==right
++            counts[table]=len(left)
++        restored_calc=dst.execute('SELECT result FROM mf_calculations WHERE calculation_id=%s',(c['calculation_id'],)).fetchone()['result']
++        assert restored_calc['manufacturing_recipes'][0]['child_qty']==6
++        assert str(dst.execute('SELECT release_id FROM mf_catalogue_active').fetchone()['release_id'])==release
++        for f in manifest['files']:
++            if f['status']=='ready': assert hashlib.sha256(read_verified(dst,VolumeStore(target.storage_root),f['file_id'])).hexdigest()==f['sha256']
++    evidence={'database_sha256':manifest['database_sha256'],'restored_database':name,'private_files':len(manifest['files']),'counts':counts,
++      'calculation_fixture':c,'restore':restored,'table_snapshots_match':True,'private_sha_match':True}
++    root=Path(os.environ.get('MF_TEST_EVIDENCE_DIR',str(tmp_path)));root.mkdir(parents=True,exist_ok=True)
++    (root/'stage04-restore-evidence.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2))
++    print('MF_STAGE04_CI_RESTORE='+json.dumps({k:v for k,v in evidence.items() if k!='calculation_fixture'}))
++
++def test_self_problematic_requires_explicit_handoff_and_changed_draft_rejected(api,settings,admin_user):
++    _,release=publish(api);o=order(api);m=item(api,release)
++    bad=revision(api,o,release,[request_detail(m,grain='unknown')]);c=calc(api,o,bad)
++    blocked=submit(api,o,bad,c)
++    assert blocked.status_code==409 and blocked.json()['detail']['code']=='EXPLICIT_PROBLEMATIC_HANDOFF_REQUIRED'
++    allowed=submit(api,o,bad,c,handoff_problematic=True)
++    assert allowed.status_code==200 and allowed.json()['production_ready'] is False
++    o=order(api);r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r)
++    change=api.patch('/api/v2/orders/'+o['order_id']+'/draft',json={'business_name':'Changed after preview','preparation_mode':'self_prepared'},headers={'If-Match':'2'})
++    assert change.status_code==200
++    rejected=submit(api,o,r,c,version=3)
++    assert rejected.status_code==412 and rejected.json()['detail']['code']=='DRAFT_CHANGED_SINCE_REVISION'
+diff --git a/tests/stage04/test_engine.py b/tests/stage04/test_engine.py
+new file mode 100644
+index 0000000..95f0c63
+--- /dev/null
++++ b/tests/stage04/test_engine.py
+@@ -0,0 +1,147 @@
++"""Literal SPEC boundary/financial fixtures, independent of cloud infrastructure."""
++from copy import deepcopy
++from decimal import Decimal
++import json
++import pytest
++from backend.v2.calculation_engine import calculate
++from backend.v2.calculation_math import category_totals,hash_value
++from backend.v2.calculation_models import CalculationRequest,Detail
++from backend.v2.sheet_estimator import estimate,PlacementError
++
++
++def fixture():
++    settings={'kerf_mm':'4.4','trim_left_mm':'10','trim_right_mm':'10','trim_top_mm':'10','trim_bottom_mm':'10',
++      'glue_layers':2,'glue_allowance_each_side_mm':'10','glued_finished_thickness_mm':'36','complex_edge_threshold_mm':'60','geometry_decimal_places':3}
++    mat={'variant_id':'material-18','name':'Synthetic 18','thickness':'18','length':'2800','width':'2070','family':'board'}
++    edge={'edge_id':'edge-22','width':'22','thickness':'0.4'}
++    detail={'detail_id':'d1','length':'600','width':'400','qty':1,'material':mat,'supply_source':'company','rotation':False,
++      'grain':'none','route':'solid','packaging':False,'edges':{},'provided_sheets':None,'customer_reason':None}
++    amounts={'cutting_18':'0.75','glued_finish_cut':'1.70','edge_normal':'2.10','edge_complex':'4.00','edge_thick':'3.50','glue':'14.00','packaging':'1.50'}
++    return {'revision':{'details':[detail],'issues':[]},'production_profile':{'settings':settings,'policies':{
++      'edge_consumption':{'basis':'net'},'cutting_18':{'basis':'estimated_plan_excluding_trim','families':['board','customer'],'include_glue_blanks':True},
++      'glue_area':None,'edge_classification':None}},'tariffs':{k:{'amount':v,'entry_id':k} for k,v in amounts.items()},
++      'prices':{'material-18':{'entry_id':'price-board','amount':'100','unit':'sheet'},'edge-22':{'entry_id':'price-edge','amount':'4','unit':'m'}},
++      'discount':{'materials':'0','edge_material':'0','services':'0'}},edge
++
++def detail(x): return x['revision']['details'][0]
++def op(result,name): return [l for l in result['lines'] if l['operation']==name]
++def net_fixture():
++    x,e=fixture();d=detail(x);d.update(length='1000',width='500',qty=3)
++    d['edges']={'L1':{'edge':e,'supply_source':'company'},'L2':{'edge':e,'supply_source':'company'}}
++    return x
++
++def test_cal01_minimum_full_sheet_and_exact_m2_conversion():
++    x,_=fixture();detail(x).update(length='10',width='10');r=calculate(x)
++    assert op(r,'clean_sheets')[0]['gross']=='100.00' and r['sheet_estimates'][0]['estimated_sheet_count']==1
++    x['prices']['material-18'].update(unit='m2',amount='5.0137');r=calculate(x)
++    assert op(r,'clean_sheets')[0]['unit_price']=='29.0594052'
++    assert op(r,'clean_sheets')[0]['gross']=='29.06'
++
++def test_cal02_oversized_detail_no_fake_sheet():
++    x,_=fixture();detail(x).update(length='2781',width='100');r=calculate(x)
++    assert r['completeness']=='invalid' and r['total'] is None and r['sheet_estimates']==[]
++    assert any(reason['code']=='DETAIL_EXCEEDS_USABLE_FIELD' for reason in r['reasons'])
++
++@pytest.mark.parametrize('length,sheets',[('1388',2),('1387.8',1)])
++def test_cal03_cal04_exact_decimal_kerf_boundary(length,sheets):
++    x,_=fixture();detail(x).update(length=length,width='1100',qty=2);r=calculate(x)
++    assert r['sheet_estimates'][0]['estimated_sheet_count']==sheets
++    if sheets==1:
++        placement=r['sheet_estimates'][0]['sheets'][0]['placements'][1]
++        assert Decimal(placement['x'])+Decimal(placement['length'])==Decimal('2780')
++
++def test_placement_nonoverlap_grain_reproducible_and_segments_not_perimeter():
++    x,_=fixture();detail(x).update(length='2700',width='1000',qty=3)
++    a=calculate(x);b=calculate(deepcopy(x));assert hash_value(a)==hash_value(b)
++    assert Decimal(a['sheet_estimates'][0]['cut_metres'])!=Decimal(2*(2700+1000)*3)/1000
++    for s in a['sheet_estimates'][0]['sheets']:
++        for i,p in enumerate(s['placements']):
++            assert not p['rotated']
++            for q in s['placements'][i+1:]:
++                assert (Decimal(p['x'])+Decimal(p['length'])+Decimal('4.4')<=Decimal(q['x']) or
++                        Decimal(q['x'])+Decimal(q['length'])+Decimal('4.4')<=Decimal(p['x']) or
++                        Decimal(p['y'])+Decimal(p['width'])+Decimal('4.4')<=Decimal(q['y']) or
++                        Decimal(q['y'])+Decimal(q['width'])+Decimal('4.4')<=Decimal(p['y']))
++    detail(x).update(length='2000',width='2700',rotation=True,grain='none');assert calculate(x)['completeness']=='complete'
++    detail(x)['grain']='length';assert calculate(x)['completeness']=='invalid'
++
++def test_cal05_customer_material_services_company_edge():
++    x=net_fixture();detail(x).update(supply_source='customer',provided_sheets=5,customer_reason='Explicit customer stock')
++    r=calculate(x);assert op(r,'clean_sheets')[0]['gross']=='0.00'
++    assert Decimal(op(r,'edge_material')[0]['gross'])>0 and Decimal(op(r,'edge_normal')[0]['gross'])>0
++    assert Decimal(op(r,'cutting_18')[0]['gross'])>0
++
++def test_cal06_raw_zero_never_free_and_cal07_partial_not_total():
++    x=net_fixture();x['prices'].pop('material-18');x['raw_master_price']='0'
++    r=calculate(x);assert r['total'] is None and op(r,'clean_sheets')[0]['gross'] is None
++    x=net_fixture();x['prices'].pop('edge-22');r=calculate(x)
++    assert r['completeness']=='incomplete' and r['total'] is None and Decimal(r['calculated_part'])>0
++
++def test_cal08_three_discounts_literal_179():
++    lines=[{'category':c,'gross':v,'state':'complete'} for c,v in [('materials','100.00'),('edge_material','40.00'),('services','60.00')]]
++    r=category_totals(lines,{'materials':'10','edge_material':'20','services':'5'})
++    assert [r[c]['net'] for c in ('materials','edge_material','services')]==['90.00','32.00','57.00']
++    assert sum(Decimal(v['net']) for v in r.values())==Decimal('179.00')
++
++def test_cal09_independent_edge_discount():
++    x=net_fixture();before=calculate(x);x['discount']['edge_material']='20';after=calculate(x)
++    assert before['category_totals']['services']==after['category_totals']['services']
++    assert before['category_totals']['materials']==after['category_totals']['materials']
++    assert before['category_totals']['edge_material']!=after['category_totals']['edge_material']
++
++def test_cal11_no_hidden_policy_cal12_explicit_synthetic_and_cal13_group_once():
++    x=net_fixture();x['production_profile']['policies']['edge_consumption']=None
++    r=calculate(x);assert op(r,'edge_material')[0]['net_metres']=='6'
++    assert op(r,'edge_material')[0]['procurement_metres'] is None and r['total'] is None
++    x['production_profile']['policies']['edge_consumption']={'basis':'factor_ceil','factor':'1.15','step_m':'5'}
++    r=calculate(x);assert op(r,'edge_material')[0]['procurement_metres']=='10'
++    assert op(r,'edge_normal')[0]['quantity']=='6' and len(op(r,'edge_material'))==1
++    original=detail(x);original['qty']=1
++    x['revision']['details']=[{**deepcopy(original),'detail_id':str(n)} for n in range(3)]
++    grouped=calculate(x);assert len(op(grouped,'edge_material'))==1 and op(grouped,'edge_material')[0]['quantity']=='10'
++
++def test_cal14_glue_recipe_cal15_finish_cut_and_packaging():
++    x,_=fixture();detail(x).update(qty=3,route='glued_18_18',packaging=True);r=calculate(x)
++    recipe=r['manufacturing_recipes'][0]
++    assert (recipe['blank_length'],recipe['blank_width'],recipe['child_qty'],recipe['finished_qty'])==('620','420',6,3)
++    assert op(r,'packaging')[0]['quantity']=='0.72' and op(r,'packaging')[0]['gross']=='1.08'
++    assert op(r,'glued_finish_cut')[0]['quantity']=='3' and op(r,'glued_finish_cut')[0]['gross']=='5.10'
++    assert len([l for l in r['lines'] if l['category']=='materials'])==1
++    assert op(r,'glue')[0]['state']=='needs_confirmation'
++    assert sum(len(s['placements']) for s in r['sheet_estimates'][0]['sheets'])==6
++    x['production_profile']['policies']['glue_area']='one_blank_area'
++    assert op(calculate(x),'glue')[0]['quantity']=='0.7812'
++
++def test_cal16_solid36_not_glued_not_cut18():
++    x,_=fixture();detail(x)['material']['thickness']='36';r=calculate(x)
++    assert not r['manufacturing_recipes'] and not op(r,'cutting_18') and not op(r,'glued_finish_cut')
++    assert any(r['code']=='NC-09_CUT_SCOPE_REQUIRED' for r in r['reasons'])
++
++def test_cal17_ambiguous_thick_complex_not_double_billed():
++    x,e=fixture();detail(x).update(length='40',width='500');e.update(width='43',thickness='2')
++    detail(x)['edges']={'W1':{'edge':e,'supply_source':'company'}};r=calculate(x)
++    assert not op(r,'edge_complex') and not op(r,'edge_thick')
++    assert op(r,'edge_processing')[0]['state']=='needs_confirmation'
++
++def test_cal18_financial_input_injection_and_float_rejected():
++    from pydantic import ValidationError
++    for key in ('preliminaryTotal','finalTotal','discounts','tariff','material_price','edge_price','sheet_count'):
++        with pytest.raises(ValidationError): CalculationRequest(revision_id='04000000-0000-4000-8000-000000000001',**{key:'0'})
++    with pytest.raises(ValidationError): Detail(detail_id='bad',length=1387.8,width='100',qty=1)
++    with pytest.raises(ValidationError): Detail(detail_id='bad',length='100',width='100',qty=True)
++
++def test_customer_edge_zero_only_material_and_packaging_absent():
++    x=net_fixture()
++    for e in detail(x)['edges'].values(): e['supply_source']='customer'
++    r=calculate(x);assert op(r,'edge_material')[0]['gross']=='0.00' and Decimal(op(r,'edge_normal')[0]['gross'])>0
++    assert not op(r,'packaging')
++
++def test_raw_qty_zero_preserved_invalid_not_corrected():
++    x,_=fixture();detail(x)['qty']=0;r=calculate(x)
++    assert r['completeness']=='invalid' and r['total'] is None and detail(x)['qty']==0
++
++def test_half_up_per_line_then_category_discount():
++    from backend.v2.calculation_math import money
++    lines=[{'category':'services','gross':str(money('1.005')),'state':'complete'} for _ in range(2)]
++    totals=category_totals(lines,{'materials':'0','edge_material':'0','services':'50'})
++    assert totals['services']=={'gross':'2.02','percent':'50','discount':'1.01','net':'1.01','complete':True}

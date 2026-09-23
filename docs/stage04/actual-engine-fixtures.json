@@ -1,0 +1,2494 @@
+{
+  "fixture_kind": "EXPLICIT_SYNTHETIC_APPROVED_TEST_INPUTS_ONLY",
+  "engine": "mf-preliminary-decimal-v1",
+  "rounding": "BYN-line-half-up-0.01-category-discount-v1",
+  "cases": {
+    "CAL-01": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "complete",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "2.06",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "1.55",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "14fc8d2b9fe75dda2958193592414da323085d45b82d863385cd06cc7bec0c99",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "1.55",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "1.55",
+          "complete": true
+        }
+      },
+      "calculated_part": "101.55",
+      "known_gross": "101.55",
+      "total": "101.55",
+      "unresolved_categories": [],
+      "reasons": [],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "10",
+                  "width": "10",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "10",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "10",
+              "length_mm": "10",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "2.06",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "14fc8d2b9fe75dda2958193592414da323085d45b82d863385cd06cc7bec0c99"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-02": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "invalid",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "sheet_plan",
+          "quantity": null,
+          "unit": null,
+          "unit_price": null,
+          "gross": null,
+          "state": "invalid",
+          "reason": "DETAIL_EXCEEDS_USABLE_FIELD",
+          "material_key": "material-18"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": false
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        }
+      },
+      "calculated_part": "0.00",
+      "known_gross": "0.00",
+      "total": null,
+      "unresolved_categories": [
+        "materials"
+      ],
+      "reasons": [
+        {
+          "category": "materials",
+          "code": "DETAIL_EXCEEDS_USABLE_FIELD",
+          "state": "invalid"
+        }
+      ],
+      "sheet_estimates": [],
+      "manufacturing_recipes": [],
+      "price_snapshots": [],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-03": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "complete",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 2,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "200.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "6.876",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "5.16",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "653792d5763c67044d490ce1432141f103866f889bc1dddb22d93f8a300b1c68",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "200.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "200.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "5.16",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "5.16",
+          "complete": true
+        }
+      },
+      "calculated_part": "205.16",
+      "known_gross": "205.16",
+      "total": "205.16",
+      "unresolved_categories": [],
+      "reasons": [],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 2,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1388",
+                  "width": "1100",
+                  "rotated": false
+                }
+              ]
+            },
+            {
+              "sheet": 2,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 1,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1388",
+                  "width": "1100",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1388",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1100",
+              "length_mm": "1388",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 2,
+              "axis": "Y",
+              "x": "1388",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 2,
+              "axis": "X",
+              "x": "0",
+              "y": "1100",
+              "length_mm": "1388",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "6.876",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "653792d5763c67044d490ce1432141f103866f889bc1dddb22d93f8a300b1c68"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-04": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "complete",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "4.8256",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "3.62",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "9858d7ffef955c27d0c325c5dd4c3bedc11e4e6e9cfbf331e4973eeef1fb5376",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "3.62",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "3.62",
+          "complete": true
+        }
+      },
+      "calculated_part": "103.62",
+      "known_gross": "103.62",
+      "total": "103.62",
+      "unresolved_categories": [],
+      "reasons": [],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1387.8",
+                  "width": "1100",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 1,
+                  "x": "1392.2",
+                  "y": "0",
+                  "length": "1387.8",
+                  "width": "1100",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1387.8",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1100",
+              "length_mm": "1387.8",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "1392.2",
+              "y": "1100",
+              "length_mm": "1387.8",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "4.8256",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "9858d7ffef955c27d0c325c5dd4c3bedc11e4e6e9cfbf331e4973eeef1fb5376"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-05": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "complete",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "0",
+          "gross": "0.00",
+          "state": "complete",
+          "reason": null,
+          "supply_source": "customer",
+          "material_key": "material-18",
+          "provided_sheets": 5,
+          "estimated": true,
+          "manufacturing_compatibility": {
+            "geometry": "estimated_valid",
+            "native_profile": "NOT_YET_VERIFIED"
+          }
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "5.05",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "3.79",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        },
+        {
+          "category": "edge_material",
+          "operation": "edge_material",
+          "quantity": "6",
+          "unit": "m",
+          "unit_price": "4",
+          "gross": "24.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-edge",
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "6",
+          "billable_metres": "6",
+          "supply_source": "company"
+        },
+        {
+          "category": "services",
+          "operation": "edge_normal",
+          "quantity": "6",
+          "unit": "m",
+          "unit_price": "2.10",
+          "gross": "12.60",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "edge_normal",
+          "edge_id": "edge-22",
+          "basis": "net_metres"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "24.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "24.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "16.39",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "16.39",
+          "complete": true
+        }
+      },
+      "calculated_part": "40.39",
+      "known_gross": "40.39",
+      "total": "40.39",
+      "unresolved_categories": [],
+      "reasons": [],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:customer",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 1,
+                  "x": "0",
+                  "y": "504.4",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 2,
+                  "x": "0",
+                  "y": "1008.8",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1000",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "500",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1004.4",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1508.8",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "5.05",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "customer",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        },
+        {
+          "kind": "edge",
+          "item_key": "edge-22",
+          "price": {
+            "entry_id": "price-edge",
+            "amount": "4",
+            "unit": "m"
+          },
+          "edge": {
+            "edge_id": "edge-22",
+            "width": "22",
+            "thickness": "0.4"
+          },
+          "policy": {
+            "basis": "net"
+          },
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "6",
+          "billable_metres": "6",
+          "supply_source": "company"
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-06": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "incomplete",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": null,
+          "unit": null,
+          "unit_price": null,
+          "gross": null,
+          "state": "incomplete",
+          "reason": "NC-05_APPROVED_MATERIAL_PRICE_REQUIRED",
+          "estimated_sheet_count": 1,
+          "material_key": "material-18"
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "5.05",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "3.79",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        },
+        {
+          "category": "edge_material",
+          "operation": "edge_material",
+          "quantity": "6",
+          "unit": "m",
+          "unit_price": "4",
+          "gross": "24.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-edge",
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "6",
+          "billable_metres": "6",
+          "supply_source": "company"
+        },
+        {
+          "category": "services",
+          "operation": "edge_normal",
+          "quantity": "6",
+          "unit": "m",
+          "unit_price": "2.10",
+          "gross": "12.60",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "edge_normal",
+          "edge_id": "edge-22",
+          "basis": "net_metres"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": false
+        },
+        "edge_material": {
+          "gross": "24.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "24.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "16.39",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "16.39",
+          "complete": true
+        }
+      },
+      "calculated_part": "40.39",
+      "known_gross": "40.39",
+      "total": null,
+      "unresolved_categories": [
+        "materials"
+      ],
+      "reasons": [
+        {
+          "category": "materials",
+          "code": "NC-05_APPROVED_MATERIAL_PRICE_REQUIRED",
+          "state": "incomplete"
+        }
+      ],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 1,
+                  "x": "0",
+                  "y": "504.4",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 2,
+                  "x": "0",
+                  "y": "1008.8",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1000",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "500",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1004.4",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1508.8",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "5.05",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": null,
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        },
+        {
+          "kind": "edge",
+          "item_key": "edge-22",
+          "price": {
+            "entry_id": "price-edge",
+            "amount": "4",
+            "unit": "m"
+          },
+          "edge": {
+            "edge_id": "edge-22",
+            "width": "22",
+            "thickness": "0.4"
+          },
+          "policy": {
+            "basis": "net"
+          },
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "6",
+          "billable_metres": "6",
+          "supply_source": "company"
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-07": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "incomplete",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "5.05",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "3.79",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        },
+        {
+          "category": "edge_material",
+          "operation": "edge_material",
+          "quantity": null,
+          "unit": null,
+          "unit_price": null,
+          "gross": null,
+          "state": "incomplete",
+          "reason": "NC-05_APPROVED_EDGE_PRICE_REQUIRED",
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "6",
+          "billable_metres": "6",
+          "supply_source": "company"
+        },
+        {
+          "category": "services",
+          "operation": "edge_normal",
+          "quantity": "6",
+          "unit": "m",
+          "unit_price": "2.10",
+          "gross": "12.60",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "edge_normal",
+          "edge_id": "edge-22",
+          "basis": "net_metres"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": false
+        },
+        "services": {
+          "gross": "16.39",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "16.39",
+          "complete": true
+        }
+      },
+      "calculated_part": "116.39",
+      "known_gross": "116.39",
+      "total": null,
+      "unresolved_categories": [
+        "edge_material"
+      ],
+      "reasons": [
+        {
+          "category": "edge_material",
+          "code": "NC-05_APPROVED_EDGE_PRICE_REQUIRED",
+          "state": "incomplete"
+        }
+      ],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 1,
+                  "x": "0",
+                  "y": "504.4",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 2,
+                  "x": "0",
+                  "y": "1008.8",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1000",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "500",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1004.4",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1508.8",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "5.05",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        },
+        {
+          "kind": "edge",
+          "item_key": "edge-22",
+          "price": null,
+          "edge": {
+            "edge_id": "edge-22",
+            "width": "22",
+            "thickness": "0.4"
+          },
+          "policy": {
+            "basis": "net"
+          },
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "6",
+          "billable_metres": "6",
+          "supply_source": "company"
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-08": {
+      "materials": {
+        "gross": "100.00",
+        "percent": "10",
+        "discount": "10.00",
+        "net": "90.00",
+        "complete": true
+      },
+      "edge_material": {
+        "gross": "40.00",
+        "percent": "20",
+        "discount": "8.00",
+        "net": "32.00",
+        "complete": true
+      },
+      "services": {
+        "gross": "60.00",
+        "percent": "5",
+        "discount": "3.00",
+        "net": "57.00",
+        "complete": true
+      }
+    },
+    "CAL-11": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "needs_confirmation",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "5.05",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "3.79",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        },
+        {
+          "category": "edge_material",
+          "operation": "edge_material",
+          "quantity": null,
+          "unit": null,
+          "unit_price": null,
+          "gross": null,
+          "state": "needs_confirmation",
+          "reason": "NC-01_EDGE_CONSUMPTION_REQUIRED",
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": null,
+          "billable_metres": null,
+          "supply_source": "company"
+        },
+        {
+          "category": "services",
+          "operation": "edge_normal",
+          "quantity": "6",
+          "unit": "m",
+          "unit_price": "2.10",
+          "gross": "12.60",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "edge_normal",
+          "edge_id": "edge-22",
+          "basis": "net_metres"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": false
+        },
+        "services": {
+          "gross": "16.39",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "16.39",
+          "complete": true
+        }
+      },
+      "calculated_part": "116.39",
+      "known_gross": "116.39",
+      "total": null,
+      "unresolved_categories": [
+        "edge_material"
+      ],
+      "reasons": [
+        {
+          "category": "edge_material",
+          "code": "NC-01_EDGE_CONSUMPTION_REQUIRED",
+          "state": "needs_confirmation"
+        }
+      ],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 1,
+                  "x": "0",
+                  "y": "504.4",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 2,
+                  "x": "0",
+                  "y": "1008.8",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1000",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "500",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1004.4",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1508.8",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "5.05",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        },
+        {
+          "kind": "edge",
+          "item_key": "edge-22",
+          "price": {
+            "entry_id": "price-edge",
+            "amount": "4",
+            "unit": "m"
+          },
+          "edge": {
+            "edge_id": "edge-22",
+            "width": "22",
+            "thickness": "0.4"
+          },
+          "policy": null,
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": null,
+          "billable_metres": null,
+          "supply_source": "company"
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-12-13": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "complete",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "5.05",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "3.79",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        },
+        {
+          "category": "edge_material",
+          "operation": "edge_material",
+          "quantity": "10",
+          "unit": "m",
+          "unit_price": "4",
+          "gross": "40.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-edge",
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "10",
+          "billable_metres": "10",
+          "supply_source": "company"
+        },
+        {
+          "category": "services",
+          "operation": "edge_normal",
+          "quantity": "6",
+          "unit": "m",
+          "unit_price": "2.10",
+          "gross": "12.60",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "edge_normal",
+          "edge_id": "edge-22",
+          "basis": "net_metres"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "40.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "40.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "16.39",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "16.39",
+          "complete": true
+        }
+      },
+      "calculated_part": "156.39",
+      "known_gross": "156.39",
+      "total": "156.39",
+      "unresolved_categories": [],
+      "reasons": [],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 1,
+                  "x": "0",
+                  "y": "504.4",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1",
+                  "copy": 2,
+                  "x": "0",
+                  "y": "1008.8",
+                  "length": "1000",
+                  "width": "500",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1000",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "500",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1004.4",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1508.8",
+              "length_mm": "1000",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "5.05",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "a2b457a22d6225996eb2158ded3e7a35bf5ec74d0d763f3a2a86fec06ce72198"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        },
+        {
+          "kind": "edge",
+          "item_key": "edge-22",
+          "price": {
+            "entry_id": "price-edge",
+            "amount": "4",
+            "unit": "m"
+          },
+          "edge": {
+            "edge_id": "edge-22",
+            "width": "22",
+            "thickness": "0.4"
+          },
+          "policy": {
+            "basis": "factor_ceil",
+            "factor": "1.15",
+            "step_m": "5"
+          },
+          "edge_id": "edge-22",
+          "net_metres": "6",
+          "procurement_metres": "10",
+          "billable_metres": "10",
+          "supply_source": "company"
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-14-15": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "needs_confirmation",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "services",
+          "operation": "glue",
+          "quantity": null,
+          "unit": null,
+          "unit_price": null,
+          "gross": null,
+          "state": "needs_confirmation",
+          "reason": "NC-03_GLUE_AREA_REQUIRED",
+          "detail_id": "d1",
+          "finished_area": "0.72",
+          "one_blank_area": "0.7812"
+        },
+        {
+          "category": "services",
+          "operation": "glued_finish_cut",
+          "quantity": "3",
+          "unit": "m",
+          "unit_price": "1.70",
+          "gross": "5.10",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "glued_finish_cut",
+          "detail_id": "d1",
+          "basis": "one_length_plus_one_width"
+        },
+        {
+          "category": "services",
+          "operation": "packaging",
+          "quantity": "0.72",
+          "unit": "m2",
+          "unit_price": "1.50",
+          "gross": "1.08",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "packaging",
+          "detail_id": "d1",
+          "basis": "finished_area"
+        },
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "7.82",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "5.87",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "a5c03f18b8b62fd8130099b1699725eb5f59e15d84bc0016ce9b1619e6f0ee37",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "12.05",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "12.05",
+          "complete": false
+        }
+      },
+      "calculated_part": "112.05",
+      "known_gross": "112.05",
+      "total": null,
+      "unresolved_categories": [
+        "services"
+      ],
+      "reasons": [
+        {
+          "category": "services",
+          "code": "NC-03_GLUE_AREA_REQUIRED",
+          "state": "needs_confirmation"
+        }
+      ],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1:blank",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "620",
+                  "width": "420",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1:blank",
+                  "copy": 1,
+                  "x": "0",
+                  "y": "424.4",
+                  "length": "620",
+                  "width": "420",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1:blank",
+                  "copy": 2,
+                  "x": "0",
+                  "y": "848.8",
+                  "length": "620",
+                  "width": "420",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1:blank",
+                  "copy": 3,
+                  "x": "0",
+                  "y": "1273.2",
+                  "length": "620",
+                  "width": "420",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1:blank",
+                  "copy": 4,
+                  "x": "624.4",
+                  "y": "0",
+                  "length": "620",
+                  "width": "420",
+                  "rotated": false
+                },
+                {
+                  "detail_id": "d1:blank",
+                  "copy": 5,
+                  "x": "624.4",
+                  "y": "424.4",
+                  "length": "620",
+                  "width": "420",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "620",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "420",
+              "length_mm": "620",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "844.4",
+              "length_mm": "620",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1268.8",
+              "length_mm": "620",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "1693.2",
+              "length_mm": "620",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "1244.4",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "624.4",
+              "y": "420",
+              "length_mm": "620",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "624.4",
+              "y": "844.4",
+              "length_mm": "620",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "7.82",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "a5c03f18b8b62fd8130099b1699725eb5f59e15d84bc0016ce9b1619e6f0ee37"
+        }
+      ],
+      "manufacturing_recipes": [
+        {
+          "version": "glued_18_18-v1",
+          "finished_detail_id": "d1",
+          "finished_length": "600",
+          "finished_width": "400",
+          "finished_qty": 3,
+          "finished_thickness": "36",
+          "child_blank_id": "d1:blank",
+          "blank_length": "620",
+          "blank_width": "420",
+          "child_qty": 6,
+          "operations": [
+            "blank_nesting",
+            "glue",
+            "glued_finish_cut",
+            "edge_processing",
+            "packaging"
+          ],
+          "glue_area_basis": null
+        }
+      ],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-16": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "needs_confirmation",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting",
+          "quantity": null,
+          "unit": null,
+          "unit_price": null,
+          "gross": null,
+          "state": "needs_confirmation",
+          "reason": "NC-09_CUT_SCOPE_REQUIRED",
+          "material_key": "material-18",
+          "estimated_cut_metres": "2.65",
+          "thickness": "36"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "0.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "0.00",
+          "complete": false
+        }
+      },
+      "calculated_part": "100.00",
+      "known_gross": "100.00",
+      "total": null,
+      "unresolved_categories": [
+        "services"
+      ],
+      "reasons": [
+        {
+          "category": "services",
+          "code": "NC-09_CUT_SCOPE_REQUIRED",
+          "state": "needs_confirmation"
+        }
+      ],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "600",
+                  "width": "400",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "600",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "400",
+              "length_mm": "600",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "2.65",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "bcc45e924302ba8dbd23999fb32a72e537bc125c104d07f8992fc4f541d13100"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "36",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    },
+    "CAL-17": {
+      "engine_version": "mf-preliminary-decimal-v1",
+      "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+      "type": "preliminary",
+      "completeness": "needs_confirmation",
+      "currency": "BYN",
+      "lines": [
+        {
+          "category": "services",
+          "operation": "edge_processing",
+          "quantity": null,
+          "unit": null,
+          "unit_price": null,
+          "gross": null,
+          "state": "needs_confirmation",
+          "reason": "NC-02_CLASSIFICATION_REQUIRED",
+          "detail_id": "d1",
+          "side": "W1",
+          "net_metres": "0.5"
+        },
+        {
+          "category": "materials",
+          "operation": "clean_sheets",
+          "quantity": 1,
+          "unit": "sheet",
+          "unit_price": "100",
+          "gross": "100.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-board",
+          "material_key": "material-18",
+          "source_unit": "sheet",
+          "conversion_factor": "1",
+          "estimated": true
+        },
+        {
+          "category": "services",
+          "operation": "cutting_18",
+          "quantity": "2.09",
+          "unit": "m",
+          "unit_price": "0.75",
+          "gross": "1.57",
+          "state": "complete",
+          "reason": null,
+          "tariff_entry_id": "cutting_18",
+          "material_key": "material-18",
+          "plan_hash": "b4bf2e6f13c50c63ee505f5b457f530be180ac140b82b23f659c7fd6e1917604",
+          "basis": "estimated_plan_excluding_trim",
+          "estimated": true
+        },
+        {
+          "category": "edge_material",
+          "operation": "edge_material",
+          "quantity": "0.5",
+          "unit": "m",
+          "unit_price": "4",
+          "gross": "2.00",
+          "state": "complete",
+          "reason": null,
+          "price_entry_id": "price-edge",
+          "edge_id": "edge-22",
+          "net_metres": "0.5",
+          "procurement_metres": "0.5",
+          "billable_metres": "0.5",
+          "supply_source": "company"
+        }
+      ],
+      "category_totals": {
+        "materials": {
+          "gross": "100.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "100.00",
+          "complete": true
+        },
+        "edge_material": {
+          "gross": "2.00",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "2.00",
+          "complete": true
+        },
+        "services": {
+          "gross": "1.57",
+          "percent": "0",
+          "discount": "0.00",
+          "net": "1.57",
+          "complete": false
+        }
+      },
+      "calculated_part": "103.57",
+      "known_gross": "103.57",
+      "total": null,
+      "unresolved_categories": [
+        "services"
+      ],
+      "reasons": [
+        {
+          "category": "services",
+          "code": "NC-02_CLASSIFICATION_REQUIRED",
+          "state": "needs_confirmation"
+        }
+      ],
+      "sheet_estimates": [
+        {
+          "material_key": "material-18:company",
+          "estimator_version": "guillotine-vertical-first-decimal-v1",
+          "label": "Расчётное количество листов",
+          "optimality_proven": false,
+          "sheet": {
+            "length": "2800",
+            "width": "2070"
+          },
+          "usable_length": "2780",
+          "usable_width": "2050",
+          "kerf_mm": "4.4",
+          "estimated_sheet_count": 1,
+          "area_lower_bound": 1,
+          "sheets": [
+            {
+              "sheet": 1,
+              "placements": [
+                {
+                  "detail_id": "d1",
+                  "copy": 0,
+                  "x": "0",
+                  "y": "0",
+                  "length": "40",
+                  "width": "500",
+                  "rotated": false
+                }
+              ]
+            }
+          ],
+          "cut_segments": [
+            {
+              "sheet": 1,
+              "axis": "Y",
+              "x": "40",
+              "y": "0",
+              "length_mm": "2050",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            },
+            {
+              "sheet": 1,
+              "axis": "X",
+              "x": "0",
+              "y": "500",
+              "length_mm": "40",
+              "kind": "nesting",
+              "kerf_mm": "4.4"
+            }
+          ],
+          "cut_metres": "2.09",
+          "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+          "trim": {
+            "trim_left_mm": "10",
+            "trim_right_mm": "10",
+            "trim_top_mm": "10",
+            "trim_bottom_mm": "10"
+          },
+          "plan_hash": "b4bf2e6f13c50c63ee505f5b457f530be180ac140b82b23f659c7fd6e1917604"
+        }
+      ],
+      "manufacturing_recipes": [],
+      "price_snapshots": [
+        {
+          "kind": "material",
+          "item_key": "material-18",
+          "price": {
+            "entry_id": "price-board",
+            "amount": "100",
+            "unit": "sheet"
+          },
+          "supply_source": "company",
+          "material": {
+            "variant_id": "material-18",
+            "name": "Synthetic 18",
+            "thickness": "18",
+            "length": "2800",
+            "width": "2070",
+            "family": "board"
+          }
+        },
+        {
+          "kind": "edge",
+          "item_key": "edge-22",
+          "price": {
+            "entry_id": "price-edge",
+            "amount": "4",
+            "unit": "m"
+          },
+          "edge": {
+            "edge_id": "edge-22",
+            "width": "43",
+            "thickness": "2"
+          },
+          "policy": {
+            "basis": "net"
+          },
+          "edge_id": "edge-22",
+          "net_metres": "0.5",
+          "procurement_metres": "0.5",
+          "billable_metres": "0.5",
+          "supply_source": "company"
+        }
+      ],
+      "final_state": "BAZIS_RUN_REQUIRED",
+      "production_ready": false
+    }
+  }
+}
