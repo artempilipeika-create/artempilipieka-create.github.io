@@ -19,3 +19,7 @@ backend/v2/cabinet_ui.py, cabinet_assets, new ui_assets and UI-only static route
 ## Verification
 
 360/768/1440 px and 200% zoom, keyboard/focus, labels, error/empty/disabled/loading states; real API role/isolation tests plus browser UI scenarios; complete prior 195 regressions; isolated staging only.
+
+## Compatibility finding during CI
+
+The unchanged Stage 1 regression explicitly requires `/` to return 404. New public UI is therefore opt-in via `MF_PRESENTATION_UI=enabled`; absent/disabled retains the foundation-only route set. Stage 7 tests explicitly enable that deployment feature, old tests are untouched. The flag has no domain/auth/storage effect. Rollback may disable the flag or pin the accepted Stage 6 runtime.

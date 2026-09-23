@@ -25,6 +25,7 @@ for route in routes:
     text=text.replace('Предварительный список деталей можно перенести в редактор заказа.','Подключение рабочего инструмента к защищённому кабинету требует отдельной проверки доступа.')
     target=OUT/route;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(text)
 css=(ROOT/'public/site-v2.css').read_text();css=re.sub(r"@import[^;]+;",'',css,count=1)
+css=css.replace('--mf-muted:#68736b','--mf-muted:#536459')
 css+='''\n/* Stage 7 accessibility refinements, same accepted visual language. */
 [hidden]{display:none!important}html{scroll-behavior:smooth}body{overflow-wrap:break-word}
 :focus-visible{outline:3px solid #ae6b16;outline-offset:4px}

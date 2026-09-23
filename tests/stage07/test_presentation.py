@@ -69,3 +69,17 @@ def test_form_label_and_landmarks():
         assert f'for="{name}"' in text and f'id="{name}"' in text
     assert 'href="#main"' in text and 'id="main"' in text
     assert 'aria-label="Навигация"' in text
+
+
+@pytest.fixture(autouse=True)
+def presentation_enabled(monkeypatch):
+    monkeypatch.setenv("MF_PRESENTATION_UI","enabled")
+
+def test_primary_text_contrast():
+    def lum(h):
+        v=[int(h[i:i+2],16)/255 for i in (0,2,4)]
+        v=[x/12.92 if x<=.04045 else ((x+.055)/1.055)**2.4 for x in v]
+        return sum(x*y for x,y in zip(v,[.2126,.7152,.0722]))
+    for fg,bg in [('20382c','f6f3eb'),('ffffff','153d2d'),('536459','f6f3eb'),('664812','fff8e8'),('80271d','fff0ed')]:
+        a,b=sorted([lum(fg),lum(bg)])
+        assert (b+.05)/(a+.05)>=4.5,(fg,bg)

@@ -116,5 +116,6 @@ def create_app(settings=None, policy=None):
     app.include_router(document_api.router(settings,policy))
     app.include_router(production_api.router(settings,policy))
     app.include_router(cabinet_ui.router())
-    app.include_router(presentation_ui.router())
+    if os.environ.get('MF_PRESENTATION_UI','disabled') == 'enabled':
+        app.include_router(presentation_ui.router())
     return app

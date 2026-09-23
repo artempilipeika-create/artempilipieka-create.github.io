@@ -96,3 +96,34 @@ def test_zoom_200_and_form_labels(page):
     # 1440 CSS pixels at 200% browser zoom has a 720 CSS-pixel layout viewport.
     no_overflow(page);assert page.locator('input').evaluate_all('(xs)=>xs.every(x=>x.labels.length>0)')
     screenshot(page,'login-zoom-equivalent-200')
+
+
+@pytest.fixture(autouse=True)
+def presentation_enabled(monkeypatch):
+    monkeypatch.setenv("MF_PRESENTATION_UI","enabled")
+
+def test_manager_import_keeps_zero_and_source(page,api,settings,admin_user):
+    from tests.stage03.support import xlsx
+    o,_,_,email=client_order(api,settings,admin_user,mode='manager_assisted')
+    login_ui(page,email);page.goto('https://testserver/editor?order='+o['order_id'])
+    page.get_by_role('button',name='Импорт Excel',exact=True).click()
+    data=xlsx({'Лист1':[['Длина','Ширина','Количество','Артикул','Материал','L1','L2','W1','W2','Текстура','Вращение'],[600,400,0,'621 PO','Board','0','0','0','0','none','false']]})
+    page.get_by_label('Файл XLSX',exact=True).set_input_files({'name':'synthetic-stage07.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
+    page.get_by_role('button',name='Проверить файл',exact=True).click()
+    expect(page.get_by_role('heading',name='Предпросмотр — строки не потеряны',exact=True)).to_be_visible()
+    page.get_by_role('button',name='Добавить позиции в черновик',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Подтвердить',exact=True).click()
+    expect(page.get_by_role('heading',name='Позиции из Excel',exact=True)).to_be_visible();expect(page.locator('main')).to_contain_text('qty: must_be_positive')
+    screenshot(page,'excel-zero-preserved')
+    with transaction(settings) as c:
+        assert c.execute('SELECT snapshot FROM mf_order_draft_rows WHERE order_id=%s',(o['order_id'],)).fetchone()['snapshot']['values']['qty']==0
+        assert c.execute("SELECT count(*) n FROM mf_files WHERE order_id=%s AND kind='source'",(o['order_id'],)).fetchone()['n']==1
+
+
+def test_assigned_manager_queue_no_admin(page,api,settings,admin_user):
+    from tests.stage05.test_api import staff
+    o=order(api)
+    _,email=staff(settings,'manager',o['order_id'],['orders.read'],assigned=True)
+    login_ui(page,email);expect(page.get_by_role('heading',name='Рабочий кабинет',exact=True)).to_be_visible()
+    expect(page.locator('#staff-content')).to_contain_text(o['business_name'])
+    assert page.get_by_role('button',name='Сотрудники',exact=True).count()==0
+    screenshot(page,'manager-1440')
