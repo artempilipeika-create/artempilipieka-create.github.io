@@ -1,8 +1,8 @@
 """Exact grants AND current role ceiling/scope/state. Never a role-only bypass."""
-CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read'}
-CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage'}
+CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read','calculations.read'}
+CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage','calculations.create'}
 ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read',
-              'catalogue.import','catalogue.publish','catalogue.mapping.manage'}
+              'catalogue.import','catalogue.publish','catalogue.mapping.manage','financial.profiles.manage'}
 
 
 def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=None):
@@ -22,7 +22,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
     if user['account_status'] == 'blocked' and (roles != {'client'} or permission not in CLIENT_READ):
         return False
     ceilings = {
-        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage'},
+        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage','orders.review','calculations.fix','discounts.override'},
         'production': {'orders.read','orders.oblx.read','files.source.read'},
         'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read'},
         'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read'},

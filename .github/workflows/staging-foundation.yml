@@ -33,7 +33,7 @@ jobs:
           apt-get install -y --no-install-recommends postgresql-client
           pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1
       - name: Test migrations, transactions, private files, RBAC and restore
-        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 -v --junitxml=qa-output/stage01/results.xml
+        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 -v --junitxml=qa-output/stage01/results.xml
       - name: Record synthetic restore evidence in job log
         run: |
           python - <<'PY'

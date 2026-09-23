@@ -11,6 +11,8 @@ from .security import STAFF_ROLES, error, grant, identity, password_hash, verifi
 from .rbac import allowed
 from .storage import VolumeStore
 from .files import read_verified
+from .calculation_models import SubmitRequest
+from . import order_revisions
 
 class Draft(StrictModel):
     business_name: str = Field(min_length=1,max_length=200)
@@ -136,13 +138,12 @@ def router(settings, policy):
             return projection(conn,user,order)
 
     @api.post('/orders/{order_id}/submit')
-    def submit(order_id: str, request: Request):
+    def submit(order_id: str, request: Request, body: SubmitRequest):
         with transaction(settings) as conn:
             user = identity(conn,request)
             require(conn,user,'orders.submit',order_id=order_id)
             verified(user)
-            # Stage 3 must validate source, immutable revision and idempotency. No fake submission here.
-            error(409,'PACKAGE_NOT_READY')
+            return order_revisions.submit(conn,settings,user['user_id'],order_id,body,request.headers.get('idempotency-key'),request.headers.get('if-match'))
 
     @api.post('/orders/{order_id}/approve')
     def approve(order_id: str, request: Request):

@@ -32,6 +32,27 @@ def prepare(settings):
                'destination':str(destination),'migration_versions':sorted(versions)}
         (destination/'stage03-before.json').write_text(json.dumps(state,indent=2))
         print('MF_STAGE03_PRE_MIGRATION='+json.dumps(state),flush=True)
+    if versions=={'0001_foundation.sql','0002_auth_security.sql','0003_catalogue_imports.sql'}:
+        from .storage import sha256
+        destination=settings.storage_root.parent/'backups'/'pre-stage04'
+        if destination.exists():
+            manifest=json.loads((destination/'manifest.json').read_text())
+            before=json.loads((destination/'stage04-before.json').read_text())
+            if (manifest['namespace']!=settings.namespace or manifest['database']!=settings.database_name
+                or sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']
+                or before['database_sha256']!=manifest['database_sha256']):
+                raise ValueError('Pre-Stage-4 backup integrity mismatch')
+            for f in manifest['files']:
+                if f['present'] and sha256((destination/'blobs'/f['storage_key']).read_bytes())!=f['sha256']:
+                    raise ValueError('Pre-Stage-4 private backup integrity mismatch')
+        else:
+            manifest=backup(settings,destination)
+            with connect(settings) as conn:
+                counts={t:conn.execute('SELECT count(*) n FROM '+t).fetchone()['n'] for t in
+                    ('mf_orders','mf_order_revisions','mf_catalogue_releases','mf_files')}
+            before={'database_sha256':manifest['database_sha256'],'counts':counts,'file_count':len(manifest['files'])}
+            (destination/'stage04-before.json').write_text(json.dumps(before,indent=2))
+        print('MF_STAGE04_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
     migrate(settings)
     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'

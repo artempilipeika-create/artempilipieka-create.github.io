@@ -1,0 +1,11 @@
+{
+  "head": "96f320cef3ef5823c9ac35955fd5905ca500958a",
+  "runtime": "267ed0cf8ac4439f82543dec1a79bad67fd4de63",
+  "backup_deployment": "21d932d7-a476-476c-b482-97c4808fad78",
+  "ordinary_start_deployment": "5abeef88-fd6c-428b-b6cd-35b40feb65d9",
+  "active_catalogue_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+  "counts": {"tables": 39, "mf_orders": 3, "mf_order_revisions": 1, "mf_catalogue_releases": 2, "mf_files": 7, "mf_production_jobs": 1},
+  "database_sha256": "77b6afbfd2371efe9a5d41b3eb40eae4fba24e940c259716d6ec7ab890ccbfd7",
+  "backup_path": "/mf-private/backups/pre-stage04",
+  "private_file_count": 7
+}
