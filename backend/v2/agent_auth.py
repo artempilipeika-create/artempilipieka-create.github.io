@@ -51,6 +51,9 @@ def revoke(settings,actor,agent_id):
 def authenticate(settings,request):
     # Called before all Agent routes. A committed replay record survives domain rejection.
     if request.headers.get('cookie') or request.headers.get('origin'): error(403,'AGENT_BROWSER_AUTH_DENIED')
+    from .security import rate_limit,network_bucket
+    with transaction(settings) as c:
+        rate_limit(c,'agent-network:'+network_bucket(request),maximum=1200,seconds=60)
     auth=request.headers.get('authorization','')
     if not re.fullmatch(r'Bearer MF_STAGING_AGENT_[a-f0-9]{32}\.[A-Za-z0-9_-]{64}',auth): error(401,'AGENT_CREDENTIAL_REQUIRED')
     token=auth[7:];aid=UUID(token[len('MF_STAGING_AGENT_'):].split('.')[0])

@@ -59,6 +59,8 @@ def verify(c,j,run,package,body,artifacts):
         seen.add(m['material_key']);expected_material=expected_materials[m['material_key']]
         if m.get('identity_sha256')!=expected_material['identity_sha256'] or not isinstance(m.get('native_mapping_id'),str) or not 1<=len(m['native_mapping_id'])<=100:
             error(409,'NATIVE_MAPPING_MISMATCH')
+        pinned=j['manifest']['manufacturing'].get('native_mappings',{}).get(expected_material['identity_sha256'])
+        if not pinned or any(m.get(k)!=pinned[k] for k in ('native_mapping_id','local_catalogue_version')): error(409,'NATIVE_MAPPING_MISMATCH')
         if type(m.get('sheet_count')) is not int or not 1<=m['sheet_count']<=10000 or m.get('cut_basis')!='excluding_trim': error(409,'NATIVE_FACTS_INVALID')
         try:
             cut=dec(m['cut_metres'])

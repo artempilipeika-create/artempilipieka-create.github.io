@@ -16,7 +16,7 @@ def verify(settings):
         tables={}
         for t in c.execute("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'mf_%' ORDER BY tablename").fetchall():
             name=t['tablename']
-            rows=sorted(r['row'] for r in c.execute(sql.SQL('SELECT to_jsonb(t)::text row FROM {} t').format(sql.Identifier(name))))
+            rows=sorted(r['r'] for r in c.execute(sql.SQL('SELECT to_jsonb(t)::text r FROM {} t').format(sql.Identifier(name))))
             tables[name]={'count':len(rows),'sha256':hash_value(rows)}
         for r in c.execute('SELECT content,content_hash FROM mf_order_revisions WHERE schema_version=4'):
             if hash_value(r['content'])!=r['content_hash']: raise ValueError('Revision seal mismatch')

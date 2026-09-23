@@ -19,6 +19,18 @@ CREATE TABLE mf_bazis_calibrations (
 CREATE TRIGGER mf_calibration_immutable BEFORE UPDATE OR DELETE ON mf_bazis_calibrations
  FOR EACH ROW EXECUTE FUNCTION mf_append_only();
 
+CREATE TABLE mf_bazis_material_mappings (
+ calibration_id uuid NOT NULL REFERENCES mf_bazis_calibrations,
+ identity_sha256 text NOT NULL CHECK(identity_sha256 ~ '^[a-f0-9]{64}$'),
+ native_mapping_id text NOT NULL CHECK(length(native_mapping_id) BETWEEN 1 AND 100),
+ local_catalogue_version text NOT NULL CHECK(length(local_catalogue_version) BETWEEN 1 AND 100),
+ approved_by uuid NOT NULL REFERENCES mf_users,
+ approved_at timestamptz NOT NULL DEFAULT now(),
+ PRIMARY KEY(calibration_id,identity_sha256)
+);
+CREATE TRIGGER mf_native_mapping_immutable BEFORE UPDATE OR DELETE ON mf_bazis_material_mappings
+ FOR EACH ROW EXECUTE FUNCTION mf_append_only();
+
 CREATE TABLE mf_bazis_export_profiles (
  version text PRIMARY KEY,
  snapshot jsonb NOT NULL,

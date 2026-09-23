@@ -53,6 +53,8 @@ def check_current(c,j,produce=False):
         if not final or {a['phase'] for a in approvals}!={'manager_review','customer_confirmation'}: error(409,'APPROVED_FINAL_REQUIRED')
         original=c.execute('SELECT input_hash,export_profile_version FROM mf_production_jobs WHERE job_id=%s',(final['job_id'],)).fetchone()
         if original['input_hash']!=j['input_hash'] or original['export_profile_version']!=j['export_profile_version']: error(409,'APPROVED_PACKAGE_MISMATCH')
+        if c.execute("SELECT 1 FROM mf_production_jobs WHERE order_id=%s AND revision_id=%s AND purpose='produce' AND schema_version=6 AND job_id<>%s AND status NOT IN ('failed','cancelled')",
+                     (j['order_id'],j['revision_id'],j['job_id'])).fetchone(): error(409,'PRODUCE_ALREADY_EXISTS')
     return o
 
 
@@ -105,6 +107,16 @@ def create(settings,user,order_id,body,key):
                 'price_tariff_snapshot':hash_value({k:calc['input_snapshot'][k] for k in ('prices','tariffs','discount')}),
                 'manufacturing':hash_value(manufacturing)}
             calibration=c.execute('SELECT * FROM mf_bazis_calibrations WHERE calibration_id=%s',(p['calibration_id'],)).fetchone() if p['calibration_id'] else None
+            if calibration:
+                mappings={}
+                for part in manufacturing['parts']:
+                    signature=part['material']['identity_sha256']
+                    mapping=c.execute('SELECT identity_sha256,native_mapping_id,local_catalogue_version FROM mf_bazis_material_mappings WHERE calibration_id=%s AND identity_sha256=%s',
+                        (calibration['calibration_id'],signature)).fetchone()
+                    if not mapping: error(409,'NATIVE_MATERIAL_MAPPING_REQUIRED')
+                    mappings[signature]=mapping
+                manufacturing['native_mappings']=mappings
+                inputs['manufacturing']=hash_value(manufacturing)
             required=['protocol:mf-v2','purpose:'+body.purpose,'export:'+oblx_exporter.VERSION,'profile:'+p['version'],
                 'result:mf-native-result-v1','executor:native' if calibration else 'executor:fake']
             if calibration: required.append('bazis:'+calibration['bazis_version'])

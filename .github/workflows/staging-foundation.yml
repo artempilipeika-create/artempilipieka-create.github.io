@@ -9,6 +9,7 @@ permissions:
 jobs:
   postgres-foundation:
     if: github.ref == 'refs/heads/martin-forest-v2-staging'
+    timeout-minutes: 12
     runs-on: ubuntu-latest
     container: python:3.12-trixie
     services:
@@ -31,9 +32,9 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y --no-install-recommends postgresql-client
-          pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1 pypdf==6.9.1
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1
       - name: Test migrations, transactions, private files, RBAC and restore
-        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 tests/stage05 tests/stage06 -v --junitxml=qa-output/stage01/results.xml
+        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 tests/stage05 tests/stage06 -v --timeout=45 --timeout-method=thread --junitxml=qa-output/stage01/results.xml
       - name: Record synthetic restore evidence in job log
         run: |
           python - <<'PY'
@@ -44,6 +45,8 @@ jobs:
           print('MF_STAGE04_RESTORE_EVIDENCE='+json.dumps(stage4,separators=(',',':')))
           stage5=json.loads(pathlib.Path('qa-output/stage01/stage05-restore-evidence.json').read_text())
           print('MF_STAGE05_RESTORE_EVIDENCE='+json.dumps(stage5,separators=(',',':')))
+          stage6=json.loads(pathlib.Path('qa-output/stage01/stage06-restore-evidence.json').read_text())
+          print('MF_STAGE06_RESTORE_EVIDENCE='+json.dumps(stage6,separators=(',',':')))
           PY
       - name: Preserve non-secret test evidence
         if: always()

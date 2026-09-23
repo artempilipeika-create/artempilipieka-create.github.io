@@ -158,3 +158,44 @@ def test_separate_agent_package_real_http_contract_fake_roundtrip(api,settings,a
     outcome=run_once(Adapter(),tmp_path/'independent-staging-agent',a.caps,settings.namespace)
     assert outcome['claimed'] and outcome['verified'] is False and outcome['job_id']==j['job_id']
     assert (tmp_path/'independent-staging-agent'/'ledger.sqlite3').exists()
+
+
+def test_two_agents_concurrent_pull_only_one_claim(api,settings,admin_user):
+    from concurrent.futures import ThreadPoolExecutor
+    o,r,c,_=ready(api);j=job(api,o,r,c);agents=[Agent(api,settings,admin_user),Agent(api,settings,admin_user)]
+    with ThreadPoolExecutor(max_workers=2) as pool: pulled=list(pool.map(lambda a:a.pull(),agents))
+    assert sum(len(x) for x in pulled)==1
+    with connect(settings) as db: assert db.execute('SELECT count(*) n FROM mf_job_runs WHERE job_id=%s',(j['job_id'],)).fetchone()['n']==1
+
+
+@pytest.mark.parametrize('role,permission,assigned,expected',[
+    ('manager','production.jobs.read',True,200),('manager','production.jobs.read',False,403),
+    ('admin',None,False,403),('accounting','production.jobs.read',False,200),
+    ('viewer','production.jobs.read',False,403),('production','production.jobs.read',False,403)])
+def test_staff_current_scope_and_role_ceiling(api,settings,admin_user,role,permission,assigned,expected):
+    o,r,c,_=ready(api);j=job(api,o,r,c)
+    uid,email=staff(settings,role,o['order_id'],[permission] if permission else [],assigned)
+    login(api,email);response=api.get('/api/v2/production-jobs/'+j['job_id']);assert response.status_code==expected,response.text
+    if expected==200:
+        assert all(s not in response.text for s in ('credential','lease_digest','lease_token','storage_key','manifest'))
+        with transaction(settings) as db: db.execute('UPDATE mf_permission_grants SET revoked_at=now() WHERE user_id=%s',(uid,))
+        assert api.get('/api/v2/production-jobs/'+j['job_id']).status_code==403
+
+
+def test_upload_body_limit_and_lease_renewal(api,settings,admin_user):
+    o,r,c,_=ready(api);job(api,o,r,c);a=Agent(api,settings,admin_user);lease=a.pull()[0]
+    renewed=a.request('POST','/jobs/'+lease['job_id']+'/renew',{},lease);assert renewed.status_code==200 and renewed.json()['fencing']==lease['fencing']
+    oversized=a.client.post('/api/v2/agent/jobs/'+lease['job_id']+'/results',content=b' '*(5*1024*1024+1),
+                            headers={**a.headers(lease),'Content-Type':'application/json'})
+    assert oversized.status_code==413
+
+
+def test_event_failure_rolls_back_status_audit_and_outbox(api,settings,admin_user,monkeypatch):
+    from backend.v2 import job_transport
+    o,r,c,_=ready(api);job(api,o,r,c);a=Agent(api,settings,admin_user);lease=a.pull()[0]
+    def fail(*a,**kw): raise RuntimeError('Synthetic transaction interruption')
+    monkeypatch.setattr(job_transport,'record_event',fail)
+    with pytest.raises(RuntimeError): a.event(lease)
+    with connect(settings) as db:
+        assert db.execute('SELECT status FROM mf_production_jobs WHERE job_id=%s',(lease['job_id'],)).fetchone()['status']=='leased'
+        assert not db.execute("SELECT 1 FROM mf_job_events WHERE job_id=%s AND event_type='started'",(lease['job_id'],)).fetchone()
