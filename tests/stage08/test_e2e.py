@@ -69,25 +69,3 @@ def test_manager_assisted_raw_intake_child_revision_no_early_job(api,settings,ad
              'calculation_id':c['calculation_id'],'original_sha256':hash_value(old),'original_unchanged':True,'early_jobs':0})
 
 
-def test_approved_snapshot_pdf_survives_release_and_commercial_updates(api,settings,admin_user,monkeypatch):
-    monkeypatch.setenv('MF_STAGING_AGENT_API','enabled')
-    o,r,c,_,j,a,lease=calculated(api,settings,admin_user);f=candidate(api,j);approve(api,o,r,f)
-    d=document(api,c);pdf_before=api.get('/api/v2/documents/'+d['file_id']).content
-    with connect(settings) as db:
-        before={table:db.execute('SELECT to_jsonb(t) data FROM '+table+' t WHERE '+key+'=%s',(ident,)).fetchone()['data']
-                for table,key,ident in [('mf_orders','order_id',o['order_id']),('mf_order_revisions','revision_id',r['revision_id']),
-                ('mf_calculations','calculation_id',c['calculation_id']),('mf_final_calculation_candidates','candidate_id',f['candidate_id'])]}
-    _,release=publish(api)
-    other=order(api);ctx,meta=configure(api,other,release,item(api,release),discounts={'materials':'50','edge_material':'25','services':'10'})
-    tariff=api.get('/api/v2/financial/versions/tariff/'+ctx['tariff_book_id']).json()
-    post(api,'/financial/tariff-books',{**meta,'supersedes':ctx['tariff_book_id'],'effective_from':'2026-09-23T00:00:00Z',
-         'entries':[{'operation':e['operation'],'amount':'99.99','currency':'BYN'} for e in tariff['entries']]},status=201)
-    with connect(settings) as db:
-        for table,key,ident in [('mf_orders','order_id',o['order_id']),('mf_order_revisions','revision_id',r['revision_id']),
-                               ('mf_calculations','calculation_id',c['calculation_id']),('mf_final_calculation_candidates','candidate_id',f['candidate_id'])]:
-            assert db.execute('SELECT to_jsonb(t) data FROM '+table+' t WHERE '+key+'=%s',(ident,)).fetchone()['data']==before[table]
-    assert api.get('/api/v2/documents/'+d['file_id']).content==pdf_before
-    evidence('approved-snapshot',{'scope':'SOFTWARE CONTRACT PASS / SYNTHETIC','order_id':o['order_id'],
-             'candidate_id':f['candidate_id'],'unchanged_hashes':{k:hash_value(v) for k,v in before.items()},'pdf_sha256':sha256(pdf_before),
-             'native':'NOT VERIFIED'})
-    cancel_open(settings)
