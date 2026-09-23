@@ -23,10 +23,10 @@ jobs:
           assert repo=='artempilipeika-create/artempilipieka-create.github.io'
           base='https://api.github.com/repos/'+repo+'/actions/runs/'
           headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'}
-          run=35860804725
+          run=35861706442
           data=json.load(urllib.request.urlopen(urllib.request.Request(base+str(run),headers=headers)))
           assert data['head_branch']=='martin-forest-v2-staging'
-          assert data['head_sha']=='618c24d7f408eaeb75d113518bcb5cf5313dae85'
+          assert data['head_sha']=='bffefaabb5491d3f2cf0860923c9bbf452af74ea'
           if data['status']!='completed':
               with urllib.request.urlopen(urllib.request.Request(base+str(run)+'/force-cancel',data=b'',headers=headers,method='POST')) as r:
                   print('Cancelled superseded staging test',run,r.status)

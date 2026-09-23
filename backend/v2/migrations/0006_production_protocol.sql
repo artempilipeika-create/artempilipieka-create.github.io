@@ -239,3 +239,11 @@ BEGIN
 END; $$;
 CREATE TRIGGER mf_job_file_immutable BEFORE UPDATE OR DELETE ON mf_files
  FOR EACH ROW EXECUTE FUNCTION mf_protect_job_file();
+
+-- Exact currently selected review and approval, never inferred from historical approvals.
+ALTER TABLE mf_orders ADD COLUMN reviewed_final_candidate_id uuid;
+ALTER TABLE mf_orders ADD COLUMN approved_final_candidate_id uuid;
+ALTER TABLE mf_orders ADD CONSTRAINT mf_order_reviewed_final FOREIGN KEY(reviewed_final_candidate_id,active_revision_id,order_id)
+ REFERENCES mf_final_calculation_candidates(candidate_id,revision_id,order_id);
+ALTER TABLE mf_orders ADD CONSTRAINT mf_order_approved_final FOREIGN KEY(approved_final_candidate_id,approved_revision_id,order_id)
+ REFERENCES mf_final_calculation_candidates(candidate_id,revision_id,order_id);

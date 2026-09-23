@@ -43,7 +43,7 @@ def check_current(c,j,produce=False):
     if not o or o['active_revision_id']!=j['revision_id']: error(409,'STALE_REVISION')
     if o['workflow_status'] in ('cancelled','issued','ready','in_production'): error(409,'WORKFLOW_STATE_DENIED')
     if produce:
-        if o['workflow_status']!='approved' or o['approved_revision_id']!=j['revision_id'] or not j['final_candidate_id']:
+        if o['workflow_status']!='approved' or o['approved_revision_id']!=j['revision_id'] or not j['final_candidate_id'] or o['approved_final_candidate_id']!=j['final_candidate_id']:
             error(409,'APPROVED_FINAL_REQUIRED')
         final=c.execute('''SELECT f.* FROM mf_final_calculation_candidates f
           JOIN mf_job_results r USING(result_id) WHERE candidate_id=%s AND f.order_id=%s AND f.revision_id=%s

@@ -103,7 +103,7 @@ def create(conn,settings,actor,order,body,manager=False):
       submitted_at,immutable_at,catalogue_release_id,production_profile_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,4,%s,%s,%s,%s)''',
       (ident,order['order_id'],number,body.parent_revision_id,actor,body.reason,'review' if manager else 'draft',hash_value(content),Jsonb(content),
        datetime.now(timezone.utc) if manager else None,datetime.now(timezone.utc) if manager else None,release,profile_id))
-    result=conn.execute('''UPDATE mf_orders SET active_revision_id=%s,approved_revision_id=NULL,workflow_status=%s,optimistic_lock_version=optimistic_lock_version+1,
+    result=conn.execute('''UPDATE mf_orders SET active_revision_id=%s,approved_revision_id=NULL,approved_final_candidate_id=NULL,reviewed_final_candidate_id=NULL,workflow_status=%s,optimistic_lock_version=optimistic_lock_version+1,
       updated_at=now() WHERE order_id=%s RETURNING optimistic_lock_version''',(ident,'review' if manager else 'draft',order['order_id'])).fetchone()
     record_event(conn,settings,actor=actor,action='order.revision.created',object_type='order',object_id=order['order_id'],reason=body.reason,version=number)
     return {'order_id':order['order_id'],'revision_id':str(ident),'revision_number':number,'parent_revision_id':plain(body.parent_revision_id),'content_hash':hash_value(content),**result}
