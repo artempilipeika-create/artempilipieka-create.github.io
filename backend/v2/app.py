@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
 from fastapi.exceptions import RequestValidationError
 from .security import WebPolicy
-from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui, production_api
+from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui, production_api, presentation_ui
 import secrets
 import os
 from .config import Settings
@@ -116,4 +116,5 @@ def create_app(settings=None, policy=None):
     app.include_router(document_api.router(settings,policy))
     app.include_router(production_api.router(settings,policy))
     app.include_router(cabinet_ui.router())
+    app.include_router(presentation_ui.router())
     return app

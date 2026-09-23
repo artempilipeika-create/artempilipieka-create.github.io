@@ -2,7 +2,7 @@ name: Staging foundation only
 on:
   push:
     branches: [martin-forest-v2-staging]
-    paths: ['backend/v2/**', 'agent/**', 'tests/**', 'Dockerfile', '.github/workflows/staging-foundation.yml']
+    paths: ['backend/v2/**', 'agent/**', 'scripts/build-stage07-ui.py', 'tests/**', 'Dockerfile', '.github/workflows/staging-foundation.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stage: [stage01, stage02, stage03, stage04, stage05, stage06]
+        stage: [stage01, stage02, stage03, stage04, stage05, stage06, stage07]
     runs-on: ubuntu-latest
     container: python:3.12-trixie
     services:
@@ -52,3 +52,35 @@ jobs:
         with:
           name: staging-foundation-evidence-${{ matrix.stage }}
           path: qa-output/stage01/
+  stage07-browser:
+    if: github.ref == 'refs/heads/martin-forest-v2-staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_TEST_EVIDENCE_DIR: qa-output/stage07
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Chromium desktop tablet mobile with actual ASGI Postgres
+        run: python -m pytest tests/stage07/browser_checks.py -vv --junitxml=qa-output/stage07/results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage07-browser-evidence
+          path: qa-output/stage07/
