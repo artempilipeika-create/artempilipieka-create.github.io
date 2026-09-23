@@ -3,7 +3,7 @@ Browser requests are transported to TestClient; responses, cookies and RBAC are 
 """
 from pathlib import Path
 from uuid import uuid4
-import os,json
+import os,json,base64
 import pytest
 from playwright.sync_api import sync_playwright,expect
 from fastapi.testclient import TestClient
@@ -38,7 +38,14 @@ def page(settings):
         assert not errors,errors
         context.close();browser.close()
 
-def screenshot(page,name):page.screenshot(path=str(OUT/(name+'.png')),full_page=True)
+def screenshot(page,name):
+    page.screenshot(path=str(OUT/(name+'.png')),full_page=True)
+    if name in {'home-360','home-1440','editor-360','editor-1440'}:
+        data=page.screenshot(type='jpeg',quality=40,full_page=False)
+        encoded=base64.b64encode(data).decode()
+        print('MF_UI_SCREENSHOT_BEGIN '+name,flush=True)
+        for n in range(0,len(encoded),3000): print('MF_UI_IMAGE '+encoded[n:n+3000],flush=True)
+        print('MF_UI_SCREENSHOT_END '+name,flush=True)
 def no_overflow(page):assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
 def login_ui(page,email):
     page.goto('https://testserver/login');page.get_by_label('Email',exact=True).fill(email)
