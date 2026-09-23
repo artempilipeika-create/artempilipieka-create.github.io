@@ -1,0 +1,33 @@
+ .github/workflows/staging-foundation.yml         |    2 +-
+ backend/v2/app.py                                |    5 +-
+ backend/v2/auto.py                               |   37 ++
+ backend/v2/catalogue.py                          |  167 +++++
+ backend/v2/catalogue_api.py                      |  434 ++++++++++++
+ backend/v2/catalogue_model.py                    |  131 ++++
+ backend/v2/excel_import.py                       |  130 ++++
+ backend/v2/identity.py                           |   53 ++
+ backend/v2/import_service.py                     |  111 ++++
+ backend/v2/migrations/0003_catalogue_imports.sql |  159 +++++
+ backend/v2/operator.py                           |    3 +-
+ backend/v2/rbac.py                               |   14 +-
+ backend/v2/security.py                           |    2 +-
+ backend/v2/stage03_operator.py                   |   70 ++
+ backend/v2/startup.py                            |   10 +
+ backend/v2/xlsx.py                               |   77 +++
+ docs/stage03/RUNBOOK.md                          |  109 ++++
+ docs/stage03/STAGE_3_REPORT.md                   |  304 +++++++++
+ docs/stage03/ci-evidence.json                    |  100 +++
+ docs/stage03/cloud-restore-evidence.json         |   16 +
+ docs/stage03/deployment-evidence.json            |  116 ++++
+ docs/stage03/final-ci-evidence.json              |  106 +++
+ docs/stage03/final-http-evidence.json            |   10 +
+ docs/stage03/live-evidence.json                  |  370 +++++++++++
+ docs/stage03/master-evidence.json                |  124 ++++
+ docs/stage03/pre-migration-backup.json           |   13 +
+ docs/stage03/stage3-code.diff                    | 2214 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ tests/stage03/__init__.py                        |    0
+ tests/stage03/live_acceptance.py                 |  117 ++++
+ tests/stage03/support.py                         |   64 ++
+ tests/stage03/test_api.py                        |  268 ++++++++
+ tests/stage03/test_logic.py                      |  170 +++++
+ 32 files changed, 5496 insertions(+), 10 deletions(-)

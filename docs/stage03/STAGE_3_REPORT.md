@@ -14,6 +14,8 @@
 - 267ed0cf8ac4439f82543dec1a79bad67fd4de63 — sealed releases, explicit draft catalogue update, replay, dedup и дополнительные scope tests.
 - Runtime закреплён на 267ed0cf8ac4439f82543dec1a79bad67fd4de63. Последующие commits отчёта/тестов отдельно от runtime.
 - Первый Stage 3 deployment: 4b0bc740-1fdf-4dcc-af7d-0b7b7bb76e0e, SUCCESS.
+- Финальный deployment: 8ce93522-0b8f-4947-ae7a-a0cffc5ec485, SUCCESS; operator mode=off, временные значения credentials очищены.
+- 967dcb3820be11c3242ddf71644362a8af817804 — live master/restore evidence и дополнительные буквальные acceptance fixtures.
 
 | Объект | ID |
 |---|---|
@@ -239,7 +241,10 @@ restore — NOT VERIFIED; они не выполнялись в этом эта�
 Runtime 267ed0c: GitHub Actions run 35841323686, job 107116816030 — **89 PASS**:
 все прежние 48 Stage 0–2 regression tests и 41 новый Stage 3 test.
 Native Postgres использован реально; SQLite/fake DB не заменяли integration tests.
-Дополнительные буквальные PO/PE и проверки каждой стороны отмечены в final-ci-evidence.json.
+Финальный прогон commit 967dcb3: Actions run 35842834801, job 107121768609 — **94 PASS**
+(48 прежних regression checks + 46 Stage 3). Дополнительно проверены буквальный PO→PE mismatch
+и каждая из четырёх ручных сторон. Backend tree не менялся относительно runtime 267ed0c.
+Полные имена tests — final-ci-evidence.json; skipped/failed в native run нет.
 
 | Criteria | Результат | Доказательство |
 |---|---|---|

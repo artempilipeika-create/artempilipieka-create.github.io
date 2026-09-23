@@ -1,0 +1,116 @@
+{
+  "runtime_commit": "267ed0cf8ac4439f82543dec1a79bad67fd4de63",
+  "project_id": "6d754ad4-ba7b-45f8-8c5e-356387e7de06",
+  "environment_id": "ee625678-c15e-452d-9761-cda99274839f",
+  "staging_service_id": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+  "staging_postgres_service_id": "e773c03c-1f76-4f78-adb7-2132528c3a19",
+  "deployments": [
+    {
+      "purpose": "pre-migration backup + Stage3 startup",
+      "id": "4b0bc740-1fdf-4dcc-af7d-0b7b7bb76e0e",
+      "status": "SUCCESS"
+    },
+    {
+      "purpose": "redeploy persistence",
+      "id": "737796c4-56d9-4c12-945b-3c86141e5f41",
+      "status": "SUCCESS"
+    },
+    {
+      "purpose": "operator retirement and separate DB restore",
+      "id": "afd29129-c6de-475a-8fb1-8daf683bc727",
+      "status": "SUCCESS"
+    },
+    {
+      "purpose": "final mode off; synthetic credential values cleared",
+      "id": "8ce93522-0b8f-4947-ae7a-a0cffc5ec485",
+      "status": "SUCCESS"
+    }
+  ],
+  "configuration": {
+    "source": {
+      "repo": "artempilipeika-create/artempilipieka-create.github.io",
+      "branch": "martin-forest-v2-staging",
+      "commitSha": "267ed0cf8ac4439f82543dec1a79bad67fd4de63"
+    },
+    "networking": {
+      "serviceDomains": {
+        "martin-forest-v2-staging-production.up.railway.app": {
+          "port": 8000
+        }
+      }
+    },
+    "build": {
+      "builder": "DOCKERFILE",
+      "buildEnvironment": "V3",
+      "dockerfilePath": "Dockerfile"
+    },
+    "deploy": {
+      "startCommand": "python -m backend.v2.serve",
+      "healthcheckPath": "/health",
+      "useLegacyStacker": false,
+      "ipv6EgressEnabled": false,
+      "runtime": "V2",
+      "multiRegionConfig": {
+        "sfo": {
+          "numReplicas": 1
+        }
+      }
+    },
+    "volumeMounts": {
+      "29b79637-3f45-4ddd-ad2c-028d6b96af8e": {
+        "mountPath": "/mf-private"
+      }
+    }
+  },
+  "variable_names": [
+    "MF_AGENT_TRANSPORT",
+    "MF_DATABASE_HOST",
+    "MF_DATABASE_NAME",
+    "MF_DATABASE_URL",
+    "MF_EMAIL_SEAL_KEY",
+    "MF_ENVIRONMENT",
+    "MF_EXPECTED_RAILWAY_ENVIRONMENT_ID",
+    "MF_EXPECTED_RAILWAY_PROJECT_ID",
+    "MF_EXPECTED_RAILWAY_SERVICE_ID",
+    "MF_JOB_NAMESPACE",
+    "MF_OUTBOX_DISPATCH",
+    "MF_PRIVATE_STORAGE_ROOT",
+    "MF_SECURITY_API",
+    "MF_STAGE01_PROBE_MODE",
+    "MF_STAGE02_PROBE_MODE",
+    "MF_STAGE03_OPERATOR_EMAIL",
+    "MF_STAGE03_OPERATOR_MODE",
+    "MF_STAGE03_OPERATOR_PASSWORD",
+    "MF_WEB_ORIGIN",
+    "PORT"
+  ],
+  "operator_mode": "off",
+  "operator_email_value": "",
+  "operator_password_value": "",
+  "protected_deployments": [
+    {
+      "id": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
+      "service_id": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+      "status": "SUCCESS",
+      "commit": "2031c09c2f9d8690cb75856b0a4cadb1533a411b"
+    },
+    {
+      "id": "168b0c29-6693-433f-9a85-552f9de65b37",
+      "service_id": "2f5c99bd-37ec-46b5-aa22-116f5f898f54",
+      "status": "SUCCESS",
+      "commit": null
+    },
+    {
+      "id": "c28c394e-ff50-4cc7-ba04-0ad9f5eb804c",
+      "service_id": "42c638e9-4dc2-4e9a-9ec9-e670ae661bb6",
+      "status": "SUCCESS",
+      "commit": "5c97a60145569b7d1df99f5fce5341587db2f75c"
+    }
+  ],
+  "protected_refs": {
+    "main": "470776dfd3efd1db9638668d2e19ea174b7901cc",
+    "baseline": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+    "preview": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+    "bridge": "2031c09c2f9d8690cb75856b0a4cadb1533a411b"
+  }
+}

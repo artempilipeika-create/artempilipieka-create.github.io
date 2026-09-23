@@ -1,0 +1,10 @@
+{
+  "health": {
+    "ok": true,
+    "environment": "staging",
+    "stage": "3",
+    "agent_transport": "disabled"
+  },
+  "noindex": true,
+  "retired_operator_login_status": 401
+}
