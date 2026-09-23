@@ -10,7 +10,7 @@ def conflicts(raw,item):
         supplied=canonical(raw.get(key))
         if supplied and supplied!=canonical(item.get(field)): result.append(field)
     for field,key in [('thickness','raw_thickness'),('length','raw_format_length'),('width','raw_format_width')]:
-        supplied=raw.get(key)
+        supplied=raw.get('normalized_physical',{}).get(key.removeprefix('raw_'),raw.get(key))
         if supplied not in (None,'') and (not dimension(supplied) or dimension(supplied)!=dimension(item.get(field))): result.append(field)
     return result
 

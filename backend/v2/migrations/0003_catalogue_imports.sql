@@ -69,6 +69,28 @@ CREATE TABLE mf_catalogue_active (
  singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),
  release_id uuid NOT NULL REFERENCES mf_catalogue_releases, updated_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE mf_catalogue_release_seals (
+ release_id uuid PRIMARY KEY REFERENCES mf_catalogue_releases,
+ sealed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE FUNCTION mf_check_catalogue_seal() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF EXISTS(SELECT 1 FROM mf_catalogue_release_seals WHERE release_id=NEW.release_id)
+ THEN RAISE EXCEPTION 'sealed catalogue release'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER mf_catalogue_items_sealed BEFORE INSERT ON mf_catalogue_items
+ FOR EACH ROW EXECUTE FUNCTION mf_check_catalogue_seal();
+CREATE TRIGGER mf_catalogue_prices_sealed BEFORE INSERT ON mf_material_price_entries
+ FOR EACH ROW EXECUTE FUNCTION mf_check_catalogue_seal();
+CREATE FUNCTION mf_require_catalogue_seal() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM mf_catalogue_release_seals WHERE release_id=NEW.release_id)
+ THEN RAISE EXCEPTION 'catalogue release is not sealed'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER mf_catalogue_active_sealed BEFORE INSERT OR UPDATE ON mf_catalogue_active
+ FOR EACH ROW EXECUTE FUNCTION mf_require_catalogue_seal();
 CREATE TABLE mf_identity_aliases (
  alias_id uuid PRIMARY KEY, source_value text NOT NULL, source_namespace text NOT NULL,
  manufacturer text, variant_id uuid NOT NULL REFERENCES mf_material_variants,
@@ -132,6 +154,6 @@ DO $$ DECLARE t text; BEGIN
  FOREACH t IN ARRAY ARRAY['mf_catalogue_imports','mf_materials','mf_material_variants','mf_edge_variants',
   'mf_catalogue_raw_rows','mf_catalogue_source_mappings','mf_catalogue_releases','mf_catalogue_items',
   'mf_material_price_entries','mf_identity_aliases','mf_material_edge_mappings','mf_import_templates',
-  'mf_import_template_revisions','mf_import_batches','mf_import_rows','mf_import_row_resolutions','mf_import_receipts']
+  'mf_import_template_revisions','mf_import_batches','mf_import_rows','mf_import_row_resolutions','mf_import_receipts','mf_catalogue_release_seals']
  LOOP EXECUTE format('CREATE TRIGGER %I BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION mf_append_only()',t||'_immutable',t); END LOOP;
 END $$;

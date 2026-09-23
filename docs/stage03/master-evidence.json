@@ -1,0 +1,124 @@
+{
+  "source_filename": "ДЛЯ ГПТ(5).xlsx",
+  "task_mentions_filename": "ДЛЯ ГПТ(4).xlsx",
+  "sha256": "54c6f737f0bafecc3dc5df4ed14b573b7e2f5ab0c83e626e5e79fc296c641f4a",
+  "size_bytes": 1019521,
+  "sheet": "Sheet1",
+  "source_rows": 22139,
+  "classes": {
+    "M1": 2290,
+    "M0 M1": 44,
+    "": 16425,
+    "M0": 75,
+    "KINDS1 SAPL4": 74,
+    "KINDS2 SAPL4": 14,
+    "M8": 1704,
+    "FRN1": 2,
+    "M2": 1292,
+    "M3": 215,
+    "M4": 3,
+    "FRN4": 1
+  },
+  "dispositions": {
+    "published": 3065,
+    "excluded": 18698,
+    "review": 372,
+    "duplicate": 4
+  },
+  "reasons": {
+    "validated_catalogue_candidate": 3065,
+    "M1_without_board_geometry": 186,
+    "mixed_class_requires_approval": 44,
+    "non_catalogue_class": 18513,
+    "unapproved_edge_unit_or_geometry": 327,
+    "exact_identity_duplicate": 4
+  },
+  "hdf": [
+    {
+      "row": 2141,
+      "variant_id": "fb7b270e-66ad-5411-affc-5717b1adf0d6",
+      "material_id": "a16b7ab4-1980-5fc7-9b13-a089fc8aff8c",
+      "article": null,
+      "name": "ЛХДФ 3ММ Белый, 2800х2070 мм",
+      "thickness": "3",
+      "length": "2800",
+      "width": "2070"
+    },
+    {
+      "row": 2144,
+      "variant_id": "4ff13ca6-23b5-5eb2-b1f8-82707ef82398",
+      "material_id": "2a9171ca-a9d7-5ef5-b4ba-75c72cb169d8",
+      "article": null,
+      "name": "ЛХДФ 3ММ Черный, 3мм",
+      "thickness": "3",
+      "length": "2800",
+      "width": "2070"
+    },
+    {
+      "row": 2145,
+      "variant_id": "19f3e6b2-9b84-5b5c-8e4f-6d2d67c2d293",
+      "material_id": "a35d225a-9d79-5bec-9b14-3b0c17ff5360",
+      "article": null,
+      "name": "ЛХДФ  Белый",
+      "thickness": "3",
+      "length": "2800",
+      "width": "2070"
+    },
+    {
+      "row": 2146,
+      "variant_id": "4b266664-8666-52c4-be1c-d1fcd225d215",
+      "material_id": "f75b02d1-908d-5aa8-87b2-13bf69e06801",
+      "article": null,
+      "name": "HDF, šviesiai pilka. 4 mm",
+      "thickness": "4",
+      "length": "2800",
+      "width": "2070"
+    },
+    {
+      "row": 2147,
+      "variant_id": "f4dfb610-6ed0-51ed-be21-595609e9117b",
+      "material_id": "dbd65b3f-f25f-5da1-a557-74da8fdd7d4d",
+      "article": "U708/U5034",
+      "name": "HDF,  2.8 mm Pilka (U708)/U5034",
+      "thickness": "2.8",
+      "length": "2800",
+      "width": "2070"
+    }
+  ],
+  "search_counts": {
+    "ЛХДФ": 5,
+    "ХДФ": 5,
+    "HDF": 5,
+    "U708/U5034": 1
+  },
+  "negative_hdf": [
+    {
+      "row": 10749,
+      "disposition": "excluded",
+      "reason": "non_catalogue_class"
+    },
+    {
+      "row": 10750,
+      "disposition": "excluded",
+      "reason": "non_catalogue_class"
+    },
+    {
+      "row": 10751,
+      "disposition": "excluded",
+      "reason": "non_catalogue_class"
+    },
+    {
+      "row": 10752,
+      "disposition": "excluded",
+      "reason": "non_catalogue_class"
+    },
+    {
+      "row": 10753,
+      "disposition": "excluded",
+      "reason": "non_catalogue_class"
+    }
+  ],
+  "actual_xlsx_reorder_stable_ids": true,
+  "source_unmodified": true,
+  "execution": "local read-only OOXML inspection; cloud evidence separate"
+}

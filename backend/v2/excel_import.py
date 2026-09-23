@@ -121,7 +121,10 @@ def parse(workbook,t,selected):
 
 def identity_input(row,file_id):
     v=row['values']
-    return {**{'raw_'+k:v.get(source) for k,source in [('article','article'),('material_name','material'),('manufacturer','manufacturer'),
+    inherited=(row.get('inheritance') or {}).get('fields',{})
+    raw={k:(value if value not in (None,'') else inherited.get(k,value)) for k,value in row['raw_fields'].items()}
+    return {**{'raw_'+k:raw.get(source) for k,source in [('article','article'),('material_name','material'),('manufacturer','manufacturer'),
             ('structure','structure'),('thickness','thickness'),('format_length','format_length'),('format_width','format_width')]},
             'source_file':str(file_id),'sheet':row['sheet'],'row':row['row'],'cells':row['cells'],
-            'raw_fields':row['raw_fields'],'inheritance':row['inheritance']}
+            'raw_fields':row['raw_fields'],'inheritance':row['inheritance'],
+            'normalized_physical':{k:v.get(k) for k in ('thickness','format_length','format_width')},'conversions':row['conversions']}

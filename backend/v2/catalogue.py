@@ -138,6 +138,7 @@ def publish(conn,settings,actor,batch,reason,accept_review,expected_active):
         cur.executemany('INSERT INTO mf_material_price_entries VALUES (%s,%s,%s,%s,%s,%s,NULL,NULL,NULL,NULL)',
             [(uuid4(),release,r['variant_id'] or r['edge_id'],Jsonb(r['cells'].get('D',{}).get('value')),
               r['cells'].get('C',{}).get('value'),r['raw_row_id']) for r in rows])
+    conn.execute('INSERT INTO mf_catalogue_release_seals(release_id) VALUES(%s)',(release,))
     activate(conn,settings,actor,release,reason)
     return {'release_id':release,'published_items':len(rows)}
 
@@ -158,3 +159,9 @@ def projection(conn,release):
 def cache_bytes(conn,release):
     # Compatibility cache has an independently verifiable hash and no purchasing/raw/internal fields.
     return ('/* GENERATED. DO NOT EDIT. */\nwindow.MF_DATA = '+packed(projection(conn,release))+';\n').encode()
+
+
+def verify_cache(conn,release,data):
+    if data!=cache_bytes(conn,release):
+        raise ValueError('Generated catalogue cache drift')
+    return True

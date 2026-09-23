@@ -81,6 +81,10 @@ def test_catalogue_security_private_source_and_reproducible_cache(api,settings,a
     assert cache.content==api.get('/api/v2/catalogue/releases/'+release+'/data.js').content
     assert cache.headers['x-content-sha256']==hashlib.sha256(cache.content).hexdigest()
     assert hashlib.sha256(cache.content+b'/* manual drift */').hexdigest()!=cache.headers['x-content-sha256']
+    from backend.v2.catalogue import verify_cache
+    with connect(settings) as c:
+        assert verify_cache(c,release,cache.content)
+        with pytest.raises(ValueError): verify_cache(c,release,cache.content+b'/* manual drift */')
     for private in ('raw_value','price_entry','source_namespace','storage_key','identity_signature','999'):
         assert private not in cache.text
     report=api.get('/api/v2/catalogue/imports/'+result['import_id']).json();fid=report['file_id']
@@ -95,6 +99,10 @@ def test_catalogue_security_private_source_and_reproducible_cache(api,settings,a
 def test_qty_zero_roundtrip_repeat_idempotent_and_audit_atomic(api,settings,admin_user):
     publish(api);order,t,p=setup_import(api)
     assert p['rows'][1]['original']['values']['qty']==0
+    # Same file/template/sheets/release is the same import, even through a fresh preview request.
+    again=post(api,'/imports/preview',payload(parts([part(qty=0)]),order_id=order['order_id'],
+             template_revision_id=t['template_revision_id'],selected_sheets=['Parts']),status=201)
+    assert again['import_id']==p['import_id'] and again['reused']
     applied=post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)
     assert post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)==applied
     rows=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows']
@@ -168,6 +176,10 @@ def test_publication_atomic_rollback_and_append_only(api,settings,admin_user):
         assert not c.execute('SELECT 1 FROM mf_catalogue_releases WHERE import_id=%s',(new['import_id'],)).fetchone()
     with pytest.raises(Exception):
         with transaction(settings) as c: c.execute("UPDATE mf_catalogue_raw_rows SET cells='{}' WHERE import_id=%s",(new['import_id'],))
+    with pytest.raises(Exception):
+        with transaction(settings) as c:
+            c.execute('''INSERT INTO mf_catalogue_items SELECT release_id,%s,kind,source_namespace,snapshot,raw_row_id
+                FROM mf_catalogue_items WHERE release_id=%s LIMIT 1''',(uuid4(),before))
 
 def test_real_backup_restore_after_stage3(api,settings,admin_user,tmp_path):
     result,release=publish(api)
@@ -182,3 +194,75 @@ def test_real_backup_restore_after_stage3(api,settings,admin_user,tmp_path):
         assert str(c.execute('SELECT release_id FROM mf_catalogue_active').fetchone()['release_id'])==release
     assert manifest['database_sha256']
 
+def test_client_manager_template_scope_and_immediate_reassignment(api,settings,admin_user):
+    publish(api)
+    customer_email=uuid4().hex+'@example.invalid'
+    customer=post(api,'/auth/register',{'email':customer_email,'password':PASSWORD},status=201)
+    order=post(api,'/orders',{'business_name':'Client draft'},status=201)
+    t=post(api,'/import-templates',{'name':'Own template','definition':template()},status=201)
+    login(api,admin_user['email'])
+    manager=post(api,'/admin/staff',{'email':uuid4().hex+'@example.invalid','password':PASSWORD,'role':'manager'},status=201)
+    with connect(settings) as c: email=c.execute('SELECT email FROM mf_users WHERE user_id=%s',(manager['user_id'],)).fetchone()['email']
+    post(api,'/admin/staff/'+manager['user_id']+'/grants',{'permission':'templates.manage','scope_type':'assigned'},status=201)
+    post(api,'/orders/'+order['order_id']+'/assign-manager',{'manager_id':manager['user_id'],'reason':'Test assignment'})
+    login(api,email)
+    revision_body={'name':'Assigned edit','owner_user_id':customer['user_id'],'order_id':order['order_id'],'definition':template()}
+    assert post(api,'/import-templates/'+t['template_id']+'/revisions',revision_body,status=201)['version']==2
+    login(api,admin_user['email'])
+    post(api,'/orders/'+order['order_id']+'/assign-manager',{'manager_id':None,'reason':'Unassign'})
+    login(api,email)
+    assert api.post('/api/v2/import-templates/'+t['template_id']+'/revisions',json=revision_body).status_code==403
+
+def test_client_explicit_selection_exclusion_and_unknown_not_zero_price_inference(api,admin_user):
+    publish(api)
+    post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
+    order,t,p=setup_import(api,qty=0,article='UNKNOWN')
+    row=p['rows'][1]
+    assert row['resolution']['status']=='unresolved' and row['resolution'].get('customer_material') is None
+    rid=row['row_id']
+    v=post(api,'/imports/'+p['import_id']+'/rows/'+rid+'/resolution',
+         {'custom_customer':{'name':'Own board','thickness':18,'length':2800,'width':2070,'ownership_confirmed':True},'reason':'Client explicitly owns this material'})
+    assert v['status']=='custom_customer'
+    post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add','exclusions':{rid:'Zero quantity excluded explicitly'}},1)
+    stored=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]
+    assert stored['snapshot']['values']['qty']==0 and stored['excluded_reason']=='Zero quantity excluded explicitly'
+    assert stored['snapshot']['resolution']['status']=='custom_customer'
+
+def test_explicit_catalogue_update_preserves_manual_none_and_selected_variant(api,admin_user):
+    _,old=publish(api);order,t,p=setup_import(api,qty=1)
+    post(api,'/imports/'+p['import_id']+'/confirm',{'mode':'add'},1)
+    row=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]
+    material=api.get('/api/v2/catalogue/materials',params={'q':'ЛХДФ','release':old}).json()['items'][0]
+    path='/orders/'+order['order_id']+'/draft/rows/'+row['draft_row_id']
+    r=post(api,path+'/material',{'variant_id':material['variant_id'],'reason':'Exact articleless choice'},2)
+    r=post(api,path+'/edges',{'side':'L1','action':'manual','edge_id':None,'reason':'Manual NONE'},r['optimistic_lock_version'])
+    manual=r['snapshot']['edges']['L1']
+    _,new=publish(api)
+    diff=api.get('/api/v2/orders/'+order['order_id']+'/draft/catalogue-update').json()['diff']
+    assert diff[0]['action']=='keep_exact_variant'
+    post(api,'/orders/'+order['order_id']+'/draft/catalogue-update',{'release_id':new,'reason':'Explicit inspected catalogue update'},r['optimistic_lock_version'])
+    after=api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows'][0]
+    assert after['release_id']==new and after['snapshot']['edges']['L1']==manual
+    assert after['snapshot']['resolution']['selected']['variant_id']==material['variant_id']
+
+def test_namespace_update_and_row_order_persistent_ids(api,settings,admin_user):
+    from .support import xlsx
+    from backend.v2.catalogue_model import HEADERS
+    scope='supplier.'+uuid4().hex
+    a=['X','Board X','кв.м',0,2800,2070,18,'PO','','M1','false','']
+    b=[None,'ЛХДФ  Белый','кв.м',0,2800,2070,3,None,'','M1','false','']
+    one,r1=publish(api,master([a,b]),scope)
+    unrelated,_=publish(api,master(),'unrelated.'+uuid4().hex)
+    b[3]='77'
+    two,r2=publish(api,master([b,a]),scope)
+    with connect(settings) as c:
+        before={str(r['item_id']) for r in c.execute('SELECT item_id FROM mf_catalogue_items WHERE release_id=%s AND source_namespace=%s',(r1,scope))}
+        after={str(r['item_id']) for r in c.execute('SELECT item_id FROM mf_catalogue_items WHERE release_id=%s AND source_namespace=%s',(r2,scope))}
+        assert before==after
+    report=api.get('/api/v2/catalogue/imports/'+two['import_id']).json()['report']
+    assert not report['added'] and not report['inactive'] and len(report['price_changes'])==1
+    three,r3=publish(api,master([a]),scope)
+    report=api.get('/api/v2/catalogue/imports/'+three['import_id']).json()['report']
+    assert len(report['inactive'])==1
+    with connect(settings) as c:
+        assert c.execute('SELECT count(*) n FROM mf_catalogue_items WHERE release_id=%s',(r3,)).fetchone()['n']>1

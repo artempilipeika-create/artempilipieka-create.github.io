@@ -93,6 +93,12 @@ def normalize_master(workbook,namespace):
         if len(rows)>1:
             for row in rows:
                 if row['disposition']=='published': row.update(disposition='review',reason='duplicate_external_sync_id')
+    identity_names=defaultdict(set)
+    for row in result:
+        if row['disposition']=='published': identity_names[row['signature']].add(row['normalized']['name'])
+    for row in result:
+        if row['disposition']=='published' and len(identity_names[row['signature']])>1:
+            row.update(disposition='review',reason='same_identity_different_name_requires_audit')
     seen={}
     for row in result:
         if row['disposition']=='published':

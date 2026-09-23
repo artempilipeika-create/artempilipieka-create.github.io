@@ -6,7 +6,7 @@ import hashlib
 from typing import Literal
 from uuid import UUID,uuid4
 from fastapi import APIRouter,Request,Response,Query
-from pydantic import Field
+from pydantic import Field,field_validator
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
 from .db import transaction
@@ -32,6 +32,15 @@ class MasterUpload(Upload):
 
 class Reason(StrictModel):
     reason:str=Field(min_length=1,max_length=500)
+
+    @field_validator('reason')
+    @classmethod
+    def nonblank(cls,v):
+        if not v.strip(): raise ValueError('Reason required')
+        return v
+
+class CatalogueUpdate(Reason):
+    release_id:UUID
 
 class Publish(Reason):
     accept_review_exclusion:bool=False
@@ -168,7 +177,8 @@ def router(settings,policy):
             # Raw master prices are INTERNAL; never client-downloadable via the general file gateway.
             fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=data,name=body.filename,
                                   kind='internal',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            return catalogue.ingest(conn,settings,user['user_id'],fid,workbook,body.source_namespace,{'mode':body.profile})
+            try: return catalogue.ingest(conn,settings,user['user_id'],fid,workbook,body.source_namespace,{'mode':body.profile})
+            except ValueError: error(422,'INVALID_MASTER_PROFILE')
 
     @api.get('/catalogue/imports/{import_id}')
     def import_report(import_id:UUID,request:Request,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=500)):
@@ -263,6 +273,13 @@ def router(settings,policy):
             try: parsed=parse(workbook,definition,body.selected_sheets)
             except (ValueError,KeyError,TypeError): error(422,'TEMPLATE_OR_SHEET_MISMATCH')
             if parsed['selection_required']: return parsed
+            existing=conn.execute('''SELECT b.import_id FROM mf_import_batches b JOIN mf_files f USING(file_id)
+                WHERE b.order_id=%s AND b.template_revision_id=%s AND b.release_id=%s AND b.selected_sheets=%s
+                AND f.sha256=%s ORDER BY b.created_at LIMIT 1''',
+                (body.order_id,body.template_revision_id,version,Jsonb(parsed['selected_sheets']),workbook['sha256'])).fetchone()
+            if existing:
+                return {'import_id':existing['import_id'],'reused':True,'available_sheets':parsed['available_sheets'],
+                        'summary':parsed['summary'],'rows':import_service.rows(conn,existing['import_id'])}
             fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=data,name=body.filename,
                                   kind='source',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',order_id=body.order_id)
             batch=import_service.preview(conn,settings,user['user_id'],body.order_id,fid,body.template_revision_id,version,parsed)
@@ -373,5 +390,45 @@ def router(settings,policy):
             user=identity(conn,request);row=edit(conn,user,order_id,row_id,request)
             conn.execute('UPDATE mf_order_draft_rows SET excluded_reason=%s,updated_at=now() WHERE draft_row_id=%s',(body.reason,row_id))
             return {'optimistic_lock_version':import_service.bump(conn,settings,user['user_id'],order_id,body.reason)}
+
+    def update_diff(conn,order_id,release):
+        current={i.get('variant_id'):i for i in catalogue.items(conn,release,'material')}
+        result=[]
+        for r in conn.execute('SELECT * FROM mf_order_draft_rows WHERE order_id=%s AND excluded_reason IS NULL ORDER BY draft_row_id',(order_id,)):
+            selected=r['snapshot'].get('resolution',{}).get('selected');vid=selected.get('variant_id') if selected else None
+            candidate=current.get(vid)
+            result.append({'draft_row_id':str(r['draft_row_id']),'from_release':str(r['release_id']),'to_release':str(release),
+                           'variant_id':vid,'variant_available':candidate is not None,
+                           'action':'keep_exact_variant' if candidate else 'keep_pinned_snapshot_requires_review',
+                           'manual_edges_preserved':True})
+        return result
+
+    @api.get('/orders/{order_id}/draft/catalogue-update')
+    def draft_catalogue_diff(order_id:str,request:Request,release:UUID|None=None):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write',order_id=order_id)
+            version=release_or_active(conn,release)
+            return {'release_id':version,'diff':update_diff(conn,order_id,version)}
+
+    @api.post('/orders/{order_id}/draft/catalogue-update')
+    def draft_catalogue_update(order_id:str,body:CatalogueUpdate,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write',order_id=order_id)
+            import_service.lock_draft(conn,order_id,request.headers.get('if-match'));release_or_active(conn,body.release_id)
+            diff=update_diff(conn,order_id,body.release_id)
+            for d in diff:
+                row=conn.execute('SELECT * FROM mf_order_draft_rows WHERE draft_row_id=%s',(d['draft_row_id'],)).fetchone();value=row['snapshot']
+                if d['variant_id'] and not d['variant_available']:
+                    value['catalogue_update_warning']='Exact variant unavailable; pinned snapshot retained'
+                    conn.execute('UPDATE mf_order_draft_rows SET snapshot=%s WHERE draft_row_id=%s',(Jsonb(value),row['draft_row_id']))
+                else:
+                    value['catalogue_release']=str(body.release_id)
+                    if d['variant_id']:
+                        value['resolution']['selected']=catalogue.get_item(conn,body.release_id,d['variant_id'],'material')
+                        value['resolution']['catalogue_release']=str(body.release_id)
+                    value=auto(conn,body.release_id,value)
+                    conn.execute('UPDATE mf_order_draft_rows SET release_id=%s,snapshot=%s,updated_at=now() WHERE draft_row_id=%s',
+                                 (body.release_id,Jsonb(value),row['draft_row_id']))
+            return {'diff':diff,'optimistic_lock_version':import_service.bump(conn,settings,user['user_id'],order_id,body.reason)}
 
     return api

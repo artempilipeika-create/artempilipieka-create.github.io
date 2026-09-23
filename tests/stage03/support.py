@@ -1,6 +1,6 @@
 """Synthetic OOXML fixtures only; never a copy of the private master."""
 from io import BytesIO
-from zipfile import ZipFile,ZIP_DEFLATED
+from zipfile import ZipFile,ZipInfo,ZIP_DEFLATED
 from xml.sax.saxutils import escape,quoteattr
 from backend.v2.catalogue_model import HEADERS
 from backend.v2.excel_import import DEFAULT_EDGE_DICTIONARY
@@ -9,6 +9,9 @@ from backend.v2.excel_import import DEFAULT_EDGE_DICTIONARY
 def xlsx(sheets):
     out=BytesIO()
     with ZipFile(out,'w',ZIP_DEFLATED) as z:
+        def write(name,data):
+            info=ZipInfo(name,date_time=(2000,1,1,0,0,0));info.compress_type=ZIP_DEFLATED
+            z.writestr(info,data)
         names=[];rels=[]
         for i,(name,rows) in enumerate(sheets.items(),1):
             names.append(f'<sheet name={quoteattr(name)} sheetId="{i}" r:id="rId{i}"/>')
@@ -24,9 +27,9 @@ def xlsx(sheets):
                         cells.append(f'<c r="{coord}"><f>{escape(value["formula"])}</f>{cached}</c>')
                     else: cells.append(f'<c r="{coord}" t="inlineStr"><is><t xml:space="preserve">{escape(str(value))}</t></is></c>')
                 xml.append(f'<row r="{n}">'+''.join(cells)+'</row>')
-            z.writestr(f'xl/worksheets/sheet{i}.xml','<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+''.join(xml)+'</sheetData></worksheet>')
-        z.writestr('xl/workbook.xml','<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+''.join(names)+'</sheets></workbook>')
-        z.writestr('xl/_rels/workbook.xml.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+''.join(rels)+'</Relationships>')
+            write(f'xl/worksheets/sheet{i}.xml','<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+''.join(xml)+'</sheetData></worksheet>')
+        write('xl/workbook.xml','<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+''.join(names)+'</sheets></workbook>')
+        write('xl/_rels/workbook.xml.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+''.join(rels)+'</Relationships>')
     return out.getvalue()
 
 
