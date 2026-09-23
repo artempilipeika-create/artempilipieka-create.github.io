@@ -45,6 +45,8 @@ def dto(row):
 def generate(settings,request,calculation_id):
     with transaction(settings) as conn:
         user=identity(conn,request);c=get(conn,calculation_id);authorize(conn,user,c['order_id'],generate=True)
+        from .cabinet_service import visible
+        if 'client' in user['roles'] and not visible(conn,c['order_id'],direct=True): error(404,'ORDER_NOT_FOUND')
         conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,5))',(str(calculation_id),))
         previous=conn.execute('SELECT * FROM mf_documents WHERE calculation_id=%s AND template_version=%s',(calculation_id,renderer.VERSION)).fetchone()
         if previous:

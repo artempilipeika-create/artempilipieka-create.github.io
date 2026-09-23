@@ -81,8 +81,8 @@ def timeline(conn,order_id):
     actions={'order.draft.created':'Черновик создан','order.draft.saved':'Черновик обновлён','order.submitted':'Заказ передан на обработку','order.review.started':'Менеджер начал проверку'}
     for r in conn.execute("SELECT action,created_at FROM mf_audit WHERE object_type='order' AND object_id=%s AND action=ANY(%s)",(order_id,list(actions))):
         rows.append({'date':r['created_at'],'label':actions[r['action']]})
-    for r in conn.execute('SELECT revision_number,created_at,parent_revision_id FROM mf_order_revisions WHERE order_id=%s',(order_id,)):
-        rows.append({'date':r['created_at'],'label':('Новая редакция для проверки' if r['parent_revision_id'] else 'Редакция сохранена')+' · '+str(r['revision_number'])})
+    for r in conn.execute('SELECT revision_number,created_at,parent_revision_id,lifecycle FROM mf_order_revisions WHERE order_id=%s',(order_id,)):
+        rows.append({'date':r['created_at'],'label':('Редакция менеджера' if r['lifecycle']=='review' else 'Редакция сохранена')+' · '+str(r['revision_number'])})
     for r in conn.execute('SELECT created_at FROM mf_calculations WHERE order_id=%s',(order_id,)): rows.append({'date':r['created_at'],'label':'Предварительный расчёт подготовлен'})
     for r in conn.execute('SELECT created_at,document_version FROM mf_documents WHERE order_id=%s',(order_id,)): rows.append({'date':r['created_at'],'label':'Документ сформирован · версия '+str(r['document_version'])})
     return plain(sorted(rows,key=lambda r:r['date']))

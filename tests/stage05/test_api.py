@@ -181,3 +181,39 @@ def test_stage5_actual_backup_restore_documents_authorization(api,settings,admin
     output={'restore':restored,'dump_sha256':manifest['database_sha256'],'document_bindings_and_pdf_sha':True,'authorization_metadata':True,'state':before}
     root=Path(os.environ.get('MF_TEST_EVIDENCE_DIR',tmp_path));root.mkdir(parents=True,exist_ok=True)
     (root/'stage05-restore-evidence.json').write_text(json.dumps(output,indent=2))
+
+
+def test_generation_serializes_and_failure_rolls_back_document_audit(api,settings,admin_user,monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from backend.v2 import document_service
+    o,r,c,_,_=prepared(api)
+    with ThreadPoolExecutor(max_workers=2) as pool: a,b=list(pool.map(lambda _:document(api,c),range(2)))
+    assert a==b
+    new=post(api,'/calculations/'+c['calculation_id']+'/recalculate',{'reason':'Atomic rollback fixture'},status=201)
+    original=document_service.record_event
+    def fail(*a,**k): raise RuntimeError('Synthetic transaction failure')
+    monkeypatch.setattr(document_service,'record_event',fail)
+    with pytest.raises(RuntimeError): document(api,new)
+    with connect(settings) as db:
+        assert not db.execute('SELECT 1 FROM mf_documents WHERE calculation_id=%s',(new['calculation_id'],)).fetchone()
+    monkeypatch.setattr(document_service,'record_event',original)
+    assert document(api,new)['calculation_id']==new['calculation_id']
+
+
+def test_nc08_visibility_configurable_no_deletion_and_direct_routes(api,settings,admin_user):
+    o,r,c,email=client_order(api,settings,admin_user);d=document(api,c)
+    with transaction(settings) as db:
+        db.execute("UPDATE mf_orders SET completed_at=now()-interval '60 days' WHERE order_id=%s",(o['order_id'],))
+        db.execute('UPDATE mf_history_policy SET completed_visibility_days=30,direct_history_access=false WHERE singleton')
+    try:
+        assert api.get('/api/v2/account/orders').json()['items']==[]
+        assert api.get('/api/v2/account/orders/'+o['order_id']).status_code==404
+        assert api.get('/api/v2/documents/'+d['file_id']).status_code==404
+        assert api.post('/api/v2/calculations/'+c['calculation_id']+'/documents/preliminary',json={}).status_code==404
+        with transaction(settings) as db: db.execute('UPDATE mf_history_policy SET direct_history_access=true WHERE singleton')
+        assert api.get('/api/v2/documents/'+d['file_id']).status_code==200
+        with connect(settings) as db:
+            assert db.execute('SELECT 1 FROM mf_documents WHERE file_id=%s',(d['file_id'],)).fetchone()
+            assert read_verified(db,VolumeStore(settings.storage_root),d['file_id']).startswith(b'%PDF-')
+    finally:
+        with transaction(settings) as db: db.execute('UPDATE mf_history_policy SET completed_visibility_days=NULL,direct_history_access=true WHERE singleton')

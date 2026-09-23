@@ -1,4 +1,6 @@
 -- Stage 5 only. Financial snapshots and existing migrations remain unchanged.
+-- Nullable legacy completion timestamp; Stage 5 does not set production completion.
+ALTER TABLE mf_orders ADD COLUMN completed_at timestamptz;
 CREATE SEQUENCE mf_order_display_sequence;
 ALTER TABLE mf_orders ALTER COLUMN display_number SET DEFAULT ('MF-' || lpad(nextval('mf_order_display_sequence')::text,6,'0'));
 UPDATE mf_orders SET display_number='MF-' || lpad(nextval('mf_order_display_sequence')::text,6,'0') WHERE display_number IS NULL;
