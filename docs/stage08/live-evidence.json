@@ -1,0 +1,641 @@
+{
+  "flows": [
+    {
+      "mode": "self_prepared",
+      "order_id": "9f67822e-326c-4824-9540-2c78e6018cd4",
+      "original_revision": null,
+      "revision_id": "1b22be09-1573-4c00-955c-464d3c10b4aa",
+      "calculation_id": "90d5eaa3-9812-4cb4-822b-37461d662539",
+      "document_id": "d878361f-8a17-4583-8676-57143d65b17e",
+      "source_file_id": "2162c1a8-4fc7-44fe-8ae8-dc0bcb4b3204",
+      "catalogue_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+      "financial_context": {
+        "production_profile_id": "38a06857-1700-47bb-889e-8e2902e3fcc0",
+        "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+        "price_book_id": "abed1873-5a90-428e-93b9-5e7b0b86baa8",
+        "discount_profile_id": "eed6cbf9-a7b3-4008-8739-01a37e80d307"
+      },
+      "pdf_sha256": "67d946dc616450b90f3f551755c0cf1281c991b0a302515bff78b8aa9cf95c03",
+      "raw_qty": 0,
+      "corrected_qty": 3,
+      "final_gate": "BAZIS_RUN_REQUIRED",
+      "jobs": 0
+    },
+    {
+      "mode": "manager_assisted",
+      "order_id": "2b2468ca-b867-4310-9f1d-5889475d22ad",
+      "original_revision": "605da4e8-7419-418e-a6a3-960a1e371273",
+      "revision_id": "e3d12db8-8c36-49ef-be62-d2c1d49b99ab",
+      "calculation_id": "0950d87b-9f48-448a-ac69-ab75946c8956",
+      "document_id": "132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "source_file_id": "ba97a29f-db0f-47b6-97c4-07e74cdeaad0",
+      "catalogue_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+      "financial_context": {
+        "production_profile_id": "38a06857-1700-47bb-889e-8e2902e3fcc0",
+        "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+        "price_book_id": "abed1873-5a90-428e-93b9-5e7b0b86baa8",
+        "discount_profile_id": "eed6cbf9-a7b3-4008-8739-01a37e80d307"
+      },
+      "pdf_sha256": "b11d107363ec558c58bd6774bbc40e88f74a6cf8458848ff3539b5d3f5b6395f",
+      "raw_qty": 0,
+      "corrected_qty": 3,
+      "final_gate": "BAZIS_RUN_REQUIRED",
+      "jobs": 0
+    },
+    {
+      "mode": "mixed-self",
+      "order_id": "7742a857-b57e-4175-af07-1792f170a269",
+      "revision_id": "c1a0b2a4-1218-4527-bb1d-35057da16eca",
+      "calculation_id": "b6b0a6eb-0fda-49d3-930a-ddd694559671",
+      "document_id": "87038f30-cc74-4d5a-a179-6adf4b540c5e",
+      "pdf_sha256": "72f5216ad963047970ec37bb84d9f0ea0b42f9147d731a7c87176cb9de6c03a9",
+      "calculation_state": "needs_confirmation",
+      "total": null,
+      "four_edge_ids": [
+        "0001e71e-77d4-59b4-924c-70466e826f0a",
+        "00021f9f-e6d2-54e2-9ea0-598fd4469297",
+        "005040e6-ef67-56d5-b062-89d187a47721",
+        "009b92e3-330b-583a-bbe4-1979d3636394"
+      ],
+      "articleless_hdf_id": "19f3e6b2-9b84-5b5c-8e4f-6d2d67c2d293",
+      "raw_qty": 0,
+      "corrected_qty": 3,
+      "jobs": 0,
+      "explicit_problematic_handoff": true
+    }
+  ],
+  "responses": [
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "admin",
+      "method": "POST",
+      "path": "/calculations/90d5eaa3-9812-4cb4-822b-37461d662539/fix",
+      "status": 409,
+      "expected": 409
+    },
+    {
+      "actor": "foreign",
+      "method": "GET",
+      "path": "/orders/9f67822e-326c-4824-9540-2c78e6018cd4",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "foreign",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/admin/staff",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "accounting",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "accounting",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "accounting",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "viewer",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "viewer",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "viewer",
+      "method": "GET",
+      "path": "/documents/d878361f-8a17-4583-8676-57143d65b17e",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/files/3377a87d-de7c-4d88-a6dd-4fae658be587",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/files/3377a87d-de7c-4d88-a6dd-4fae658be587",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/files/3377a87d-de7c-4d88-a6dd-4fae658be587/download",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/files/3377a87d-de7c-4d88-a6dd-4fae658be587/download",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/files/3377a87d-de7c-4d88-a6dd-4fae658be587/preview",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/files/3377a87d-de7c-4d88-a6dd-4fae658be587/preview",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/documents/3377a87d-de7c-4d88-a6dd-4fae658be587",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/documents/3377a87d-de7c-4d88-a6dd-4fae658be587",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/account/orders/9f67822e-326c-4824-9540-2c78e6018cd4",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/account/orders/9f67822e-326c-4824-9540-2c78e6018cd4/documents",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/account/orders/9f67822e-326c-4824-9540-2c78e6018cd4/timeline",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/orders/9f67822e-326c-4824-9540-2c78e6018cd4/history",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "manager",
+      "method": "GET",
+      "path": "/orders/2b2468ca-b867-4310-9f1d-5889475d22ad",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "admin",
+      "method": "POST",
+      "path": "/calculations/0950d87b-9f48-448a-ac69-ab75946c8956/fix",
+      "status": 409,
+      "expected": 409
+    },
+    {
+      "actor": "foreign",
+      "method": "GET",
+      "path": "/orders/2b2468ca-b867-4310-9f1d-5889475d22ad",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "foreign",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/admin/staff",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "accounting",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "accounting",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "accounting",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "viewer",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "viewer",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "viewer",
+      "method": "GET",
+      "path": "/documents/132d2870-f659-42f0-8576-b6f3cbca2b86",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/files/c873c145-ba42-4ce1-8368-d6249b541a16",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/files/c873c145-ba42-4ce1-8368-d6249b541a16",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/files/c873c145-ba42-4ce1-8368-d6249b541a16/download",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/files/c873c145-ba42-4ce1-8368-d6249b541a16/download",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/files/c873c145-ba42-4ce1-8368-d6249b541a16/preview",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/files/c873c145-ba42-4ce1-8368-d6249b541a16/preview",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/documents/c873c145-ba42-4ce1-8368-d6249b541a16",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "HEAD",
+      "path": "/documents/c873c145-ba42-4ce1-8368-d6249b541a16",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/account/orders/2b2468ca-b867-4310-9f1d-5889475d22ad",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/account/orders/2b2468ca-b867-4310-9f1d-5889475d22ad/documents",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/account/orders/2b2468ca-b867-4310-9f1d-5889475d22ad/timeline",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/orders/2b2468ca-b867-4310-9f1d-5889475d22ad/history",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "actor": "manager",
+      "method": "GET",
+      "path": "/orders/2b2468ca-b867-4310-9f1d-5889475d22ad",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "actor": "client",
+      "method": "GET",
+      "path": "/documents/87038f30-cc74-4d5a-a179-6adf4b540c5e",
+      "status": 200,
+      "expected": 200
+    }
+  ],
+  "old_private_files_unchanged": 26,
+  "catalogue_search": {
+    "ЛХДФ": {
+      "total": 5,
+      "items": [
+        {
+          "variant_id": "19f3e6b2-9b84-5b5c-8e4f-6d2d67c2d293",
+          "article": null,
+          "thickness": "3",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "4b266664-8666-52c4-be1c-d1fcd225d215",
+          "article": null,
+          "thickness": "4",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "4ff13ca6-23b5-5eb2-b1f8-82707ef82398",
+          "article": null,
+          "thickness": "3",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "f4dfb610-6ed0-51ed-be21-595609e9117b",
+          "article": "U708/U5034",
+          "thickness": "2.8",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "fb7b270e-66ad-5411-affc-5717b1adf0d6",
+          "article": null,
+          "thickness": "3",
+          "length": "2800",
+          "width": "2070"
+        }
+      ]
+    },
+    "HDF": {
+      "total": 5,
+      "items": [
+        {
+          "variant_id": "19f3e6b2-9b84-5b5c-8e4f-6d2d67c2d293",
+          "article": null,
+          "thickness": "3",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "4b266664-8666-52c4-be1c-d1fcd225d215",
+          "article": null,
+          "thickness": "4",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "4ff13ca6-23b5-5eb2-b1f8-82707ef82398",
+          "article": null,
+          "thickness": "3",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "f4dfb610-6ed0-51ed-be21-595609e9117b",
+          "article": "U708/U5034",
+          "thickness": "2.8",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "fb7b270e-66ad-5411-affc-5717b1adf0d6",
+          "article": null,
+          "thickness": "3",
+          "length": "2800",
+          "width": "2070"
+        }
+      ]
+    },
+    "U708": {
+      "total": 3,
+      "items": [
+        {
+          "variant_id": "37e8c91a-b521-53ed-bafe-24557298c8df",
+          "article": "U708 ST9",
+          "thickness": "18",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "4013f602-5264-56e5-aad9-5a3459bc7171",
+          "article": "U708 PG",
+          "thickness": "18",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "f4dfb610-6ed0-51ed-be21-595609e9117b",
+          "article": "U708/U5034",
+          "thickness": "2.8",
+          "length": "2800",
+          "width": "2070"
+        }
+      ]
+    },
+    "U5034": {
+      "total": 1,
+      "items": [
+        {
+          "variant_id": "f4dfb610-6ed0-51ed-be21-595609e9117b",
+          "article": "U708/U5034",
+          "thickness": "2.8",
+          "length": "2800",
+          "width": "2070"
+        }
+      ]
+    },
+    "621 PO": {
+      "total": 2,
+      "items": [
+        {
+          "variant_id": "33a8c06b-5b98-5bbc-83be-b977abbe68e5",
+          "article": "621 PO",
+          "thickness": "18",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "41eb7a86-d319-53ad-bec0-7150253e2a5f",
+          "article": "621 PO (16мм)",
+          "thickness": "16",
+          "length": "2800",
+          "width": "2070"
+        }
+      ]
+    },
+    "621 PE": {
+      "total": 3,
+      "items": [
+        {
+          "variant_id": "dd486ca2-7114-5558-a915-a7be503a56cd",
+          "article": "621  PE",
+          "thickness": "18",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "e5322a19-cf47-5050-9b1e-95ade87720eb",
+          "article": "621PE (10)",
+          "thickness": "10",
+          "length": "2800",
+          "width": "2070"
+        },
+        {
+          "variant_id": "fe2f5b1b-b341-5358-a0f6-ff85d9ec2366",
+          "article": "621 PE",
+          "thickness": "18",
+          "length": "2800",
+          "width": "2070"
+        }
+      ]
+    }
+  },
+  "gates_before": {
+    "calibrations": 0,
+    "final_candidates": 0,
+    "produce_jobs": 0,
+    "verified_results": 0,
+    "native": "NOT VERIFIED / CLOSED",
+    "catalogue_active": [
+      "e6db8155-91a6-4f15-9b89-ce2194b43373"
+    ],
+    "schema_versions": [
+      "0001_foundation.sql",
+      "0002_auth_security.sql",
+      "0003_catalogue_imports.sql",
+      "0004_order_calculation.sql",
+      "0005_client_documents.sql",
+      "0006_production_protocol.sql"
+    ],
+    "financial_defaults": [
+      {
+        "singleton": true,
+        "production_profile_id": "04000000-0000-4000-8000-000000000001",
+        "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+        "price_book_id": null,
+        "discount_profile_id": null,
+        "version": 1,
+        "updated_at": "2026-09-23T10:18:45.432250+00:00"
+      }
+    ]
+  },
+  "gates_after": {
+    "calibrations": 0,
+    "final_candidates": 0,
+    "produce_jobs": 0,
+    "verified_results": 0,
+    "native": "NOT VERIFIED / CLOSED",
+    "catalogue_active": [
+      "e6db8155-91a6-4f15-9b89-ce2194b43373"
+    ],
+    "schema_versions": [
+      "0001_foundation.sql",
+      "0002_auth_security.sql",
+      "0003_catalogue_imports.sql",
+      "0004_order_calculation.sql",
+      "0005_client_documents.sql",
+      "0006_production_protocol.sql"
+    ],
+    "financial_defaults": [
+      {
+        "singleton": true,
+        "production_profile_id": "04000000-0000-4000-8000-000000000001",
+        "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+        "price_book_id": null,
+        "discount_profile_id": null,
+        "version": 1,
+        "updated_at": "2026-09-23T10:18:45.432250+00:00"
+      }
+    ]
+  },
+  "external_email_delivery": "NOT VERIFIED",
+  "native": "NOT VERIFIED",
+  "transport": "actual staging HTTPS",
+  "live_produce_created": 0,
+  "temporary_credentials_retired": true
+}

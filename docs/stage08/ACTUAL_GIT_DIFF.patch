@@ -1,0 +1,737 @@
+diff --git a/.github/workflows/staging-foundation.yml b/.github/workflows/staging-foundation.yml
+index e116794..38d7bc0 100644
+--- a/.github/workflows/staging-foundation.yml
++++ b/.github/workflows/staging-foundation.yml
+@@ -13,7 +13,7 @@ jobs:
+     strategy:
+       fail-fast: false
+       matrix:
+-        stage: [stage01, stage02, stage03, stage04, stage05, stage06, stage07]
++        stage: [stage01, stage02, stage03, stage04, stage05, stage06, stage07, stage08]
+     runs-on: ubuntu-latest
+     container: python:3.12-trixie
+     services:
+diff --git a/backend/v2/stage08_acceptance.py b/backend/v2/stage08_acceptance.py
+new file mode 100644
+index 0000000..85b3f67
+--- /dev/null
++++ b/backend/v2/stage08_acceptance.py
+@@ -0,0 +1,227 @@
++"""One-shot synthetic staging HTTPS acceptance. Not imported by normal serve.
++
++Uses existing contracts; never enrolls native attestators or creates produce jobs.
++Ephemeral operator/browser credentials stay in memory and are retired in finally.
++"""
++import json
++import os
++import secrets
++import threading
++import time
++from uuid import uuid4
++import httpx
++import uvicorn
++
++from .app import create_app
++from .config import Settings
++from .db import connect, transaction
++from .security import COOKIE, CLIENT_PERMISSIONS, WebPolicy, digest, grant
++from .stage08_operator import gates, checkpoint
++from .stage08_scenarios import post, import_zero, corrected_revision, submit
++from .storage import VolumeStore, sha256
++from .files import save_private_file, read_verified
++from .calculation_math import hash_value, plain
++from .events import record_event
++
++ORIGIN='https://martin-forest-v2-staging-production.up.railway.app'
++
++
++def run(settings):
++    root=settings.storage_root.parent;path=root/'stage08-live-evidence.json'
++    if path.exists():
++        gates(settings)
++        print('MF_STAGE08_LIVE='+path.read_text(),flush=True);return
++    if not (root/'pre-stage08-evidence.json').exists(): raise ValueError('Pre-stage checkpoint required')
++    attempt=root/'stage08-live-attempt.json'
++    if attempt.exists():
++        # Narrow recovery for the observed initial Railway edge 502 only.
++        # Any order/data progress requires separate operator inspection, not replay.
++        with connect(settings) as db:
++            ids=[r['actor_user_id'] for r in db.execute("SELECT actor_user_id FROM mf_audit WHERE action='stage08.synthetic.actor.created'")]
++            if not ids: raise ValueError('Attempt state needs inspection')
++            orders=db.execute('SELECT count(*) n FROM mf_orders WHERE owner_user_id=ANY(%s)',(ids,)).fetchone()['n']
++            active=db.execute("SELECT count(*) n FROM mf_users WHERE user_id=ANY(%s) AND account_status<>'disabled'",(ids,)).fetchone()['n']
++            sessions=db.execute('SELECT count(*) n FROM mf_sessions WHERE user_id=ANY(%s) AND revoked_at IS NULL',(ids,)).fetchone()['n']
++            grants=db.execute('SELECT count(*) n FROM mf_permission_grants WHERE user_id=ANY(%s) AND revoked_at IS NULL',(ids,)).fetchone()['n']
++            if orders or active or sessions or grants: raise ValueError('Nonempty attempt; no blind rerun')
++        recovery={'prior_attempt':json.loads(attempt.read_text()),'created_orders':orders,'active_actors':active,'active_sessions':sessions,'active_grants':grants,
++                  'reason':'Initial HTTPS edge 502 before first order; explicitly verified empty and retired'}
++        recovered=root/('stage08-empty-attempt-'+uuid4().hex+'.json')
++        recovered.write_text(json.dumps(recovery));recovered.chmod(0o600)
++        print('MF_STAGE08_EMPTY_ATTEMPT='+json.dumps(recovery),flush=True)
++        attempt.unlink()
++    attempt.write_text(json.dumps({'deployment':settings.instance_id}));attempt.chmod(0o600)
++    actors={};clients={};responses=[];flows=[]
++    gate_before=gates(settings)
++    with connect(settings) as db:
++        source=db.execute("SELECT * FROM mf_calculations WHERE calculation_id='537e764a-03eb-4b7d-9ea9-305d249bff27'").fetchone()
++        if not source or not source['result']['synthetic']: raise ValueError('Accepted synthetic financial context required')
++        old_files={str(f['file_id']):f['sha256'] for f in db.execute('SELECT file_id,sha256 FROM mf_files')}
++    material=source['input_snapshot']['revision']['details'][0]['material'];release=str(source['catalogue_release_id'])
++    try:
++        with transaction(settings) as db:
++            for role in ('admin','client','foreign','manager','accounting','viewer'):
++                uid=uuid4();token=secrets.token_urlsafe(32);actors[role]=uid
++                actual='client' if role=='foreign' else role
++                db.execute("INSERT INTO mf_users(user_id,email,password_hash,email_verified_at) VALUES(%s,%s,'operator-no-password-login',now())",(uid,'stage08-'+uid.hex+'@example.invalid'))
++                db.execute('INSERT INTO mf_user_roles VALUES(%s,%s)',(uid,actual))
++                perms=[r['permission'] for r in db.execute('SELECT permission FROM mf_permissions')] if role=='admin' else CLIENT_PERMISSIONS if actual=='client' else []
++                for permission in perms: grant(db,user_id=uid,permission=permission,scope='all' if role=='admin' else 'own',actor=uid)
++                db.execute("INSERT INTO mf_sessions(session_id,user_id,token_hash,expires_at) VALUES(%s,%s,%s,now()+interval '30 minutes')",(uuid4(),uid,digest(token)))
++                clients[role]=httpx.Client(base_url=ORIGIN,headers={'Origin':ORIGIN},cookies={COOKIE:token},timeout=60)
++                record_event(db,settings,actor=uid,action='stage08.synthetic.actor.created',object_type='user',object_id=uid,reason='Temporary isolated acceptance identity')
++        admin=clients['admin'];client=clients['client']
++        def expect(who,method,path,status,**kw):
++            r=clients[who].request(method,'/api/v2'+path,**kw)
++            responses.append({'actor':who,'method':method,'path':path,'status':r.status_code,'expected':status})
++            assert r.status_code==status,(who,path,r.status_code,r.text[:200])
++            return r
++        for mode in ('self_prepared','manager_assisted'):
++            o=post(client,'/orders',{'business_name':'SYNTHETIC Stage 8 '+mode,'preparation_mode':mode},status=201)
++            oid=o['order_id']
++            ctx={k:str(source[k]) for k in ('production_profile_id','tariff_book_id','price_book_id','discount_profile_id')}
++            post(admin,'/orders/'+oid+'/financial-context',{**ctx,'reason':'Accepted synthetic version references; no global activation'},1,status=201)
++            preview,row,applied=import_zero(client,o,material['article'])
++            if mode=='manager_assisted':
++                sent=submit(client,o,version=applied['optimistic_lock_version'])
++                with connect(settings) as db: original=db.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(sent['revision_id'],)).fetchone()['content']
++                parent=sent['revision_id'];version=sent['optimistic_lock_version']
++            else: parent=None;version=applied['optimistic_lock_version']
++            if mode=='manager_assisted':
++                with transaction(settings) as db:
++                    for permission in ('orders.read','orders.revision.create','orders.review','calculations.create','calculations.read','orders.prices.read','files.preliminary_pdf.read'):
++                        grant(db,user_id=actors['manager'],permission=permission,scope='assigned',actor=actors['admin'])
++                post(admin,'/orders/'+oid+'/assign-manager',{'manager_id':str(actors['manager']),'reason':'Stage 8 synthetic manager correction'})
++                version=expect('manager','GET','/orders/'+oid,200).json()['optimistic_lock_version']
++            editor=clients['manager'] if mode=='manager_assisted' else client
++            revision=corrected_revision(editor,o,release,material,row,version,parent)
++            calculation=post(editor,'/orders/'+oid+'/calculations',{'revision_id':revision['revision_id']},status=201)
++            assert calculation['completeness']=='complete'
++            doc=post(client,'/calculations/'+calculation['calculation_id']+'/documents/preliminary',{},status=201)
++            pdf=expect('client','GET','/documents/'+doc['file_id'],200)
++            assert pdf.content.startswith(b'%PDF-')
++            if mode=='self_prepared':
++                sent=submit(client,o,revision,calculation,revision['optimistic_lock_version'])
++                post(admin,'/orders/'+oid+'/review',{'reason':'Stage 8 self prepared synthetic review'},sent['optimistic_lock_version'])
++            final=expect('admin','POST','/calculations/'+calculation['calculation_id']+'/fix',409,json={'reason':'Native result absent; must remain closed'})
++            assert final.json()['detail']['code']=='BAZIS_RUN_REQUIRED'
++            expect('foreign','GET','/orders/'+oid,403)
++            expect('foreign','GET','/documents/'+doc['file_id'],403)
++            expect('client','GET','/admin/staff',403)
++            for role in ('accounting','viewer'):
++                expect(role,'GET','/documents/'+doc['file_id'],403)
++                with transaction(settings) as db:
++                    ids=[grant(db,user_id=actors[role],permission=p,scope='order',scope_id=oid,actor=actors['admin'])
++                         for p in ('orders.read','files.preliminary_pdf.read','orders.prices.read')]
++                expect(role,'GET','/documents/'+doc['file_id'],200)
++                with transaction(settings) as db: db.execute('UPDATE mf_permission_grants SET revoked_at=now() WHERE grant_id=ANY(%s)',(ids,))
++                expect(role,'GET','/documents/'+doc['file_id'],403)
++            oblx=save_private_file(settings,VolumeStore(settings.storage_root),actor=actors['admin'],data=b'<fixture native="NOT VERIFIED"/>',
++                                  name='alternate-extension.pdf',kind='oblx',mime='application/xml',order_id=oid,revision_id=revision['revision_id'])
++            for route in ('/files/'+str(oblx),'/files/'+str(oblx)+'/download','/files/'+str(oblx)+'/preview','/documents/'+str(oblx)):
++                for method in ('GET','HEAD'): expect('client',method,route,403,headers={'Range':'bytes=0-9'})
++            for route in ('/account/orders/'+oid,'/account/orders/'+oid+'/documents','/account/orders/'+oid+'/timeline','/orders/'+oid+'/history'):
++                projection=expect('client','GET',route,200)
++                assert str(oblx) not in projection.text
++                assert all(x not in projection.text for x in ('lease_token','storage_key','native_signature','agent_id','internalComment'))
++            if mode=='manager_assisted':
++                with transaction(settings) as db: db.execute("UPDATE mf_users SET account_status='blocked' WHERE user_id=%s",(actors['manager'],))
++                expect('manager','GET','/orders/'+oid,403)
++            with connect(settings) as db:
++                rev=db.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(revision['revision_id'],)).fetchone()['content']
++                assert rev['source_evidence']['draft_rows'][0]['snapshot']['values']['qty']==0
++                assert rev['details'][0]['qty']==3 and rev['details'][0]['resolution_reason']
++                if parent: assert db.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(parent,)).fetchone()['content']==original
++                assert not db.execute('SELECT 1 FROM mf_production_jobs WHERE order_id=%s',(oid,)).fetchone()
++                fid=db.execute('SELECT file_id FROM mf_import_batches WHERE import_id=%s',(preview['import_id'],)).fetchone()['file_id']
++                assert read_verified(db,VolumeStore(settings.storage_root),fid).startswith(b'PK')
++                events=db.execute('SELECT event_id FROM mf_audit WHERE object_id=%s',(oid,)).fetchall()
++                assert events and all(db.execute('SELECT 1 FROM mf_outbox WHERE event_id=%s',(e['event_id'],)).fetchone() for e in events)
++            flows.append({'mode':mode,'order_id':oid,'original_revision':parent,'revision_id':revision['revision_id'],
++                          'calculation_id':calculation['calculation_id'],'document_id':doc['file_id'],'source_file_id':str(fid),
++                          'catalogue_release':release,'financial_context':ctx,'pdf_sha256':sha256(pdf.content),
++                          'raw_qty':0,'corrected_qty':3,'final_gate':'BAZIS_RUN_REQUIRED','jobs':0})
++        # A separate mixed manufacturing input retains the original error row.
++        # Unknown service/edge prices remain incomplete; no complete/final claim.
++        search={}
++        for term in ('ЛХДФ','HDF','U708','U5034','621 PO','621 PE'):
++            response=client.get('/api/v2/catalogue/materials',params={'q':term,'release':release})
++            assert response.status_code==200
++            search[term]=response.json()
++        hdf=next(m for m in search['ЛХДФ']['items'] if not m.get('article'))
++        edge_response=client.get('/api/v2/catalogue/edges',params={'release':release,'limit':250})
++        assert edge_response.status_code==200
++        edges=edge_response.json()['items'][:4]
++        assert len({e['edge_id'] for e in edges})==4
++        mixed=post(client,'/orders',{'business_name':'SYNTHETIC Stage 8 mixed materials','preparation_mode':'self_prepared'},status=201)
++        post(admin,'/orders/'+mixed['order_id']+'/financial-context',{**ctx,'reason':'Synthetic mixed manufacturing input'},1,status=201)
++        preview,row,applied=import_zero(client,mixed,material['article'])
++        extra=[{'detail_id':'ordinary-18','length':'700','width':'300','qty':2,'variant_id':material['variant_id'],
++                'grain':'length','rotation':False,'route':'solid','edges':{side:{'edge_id':e['edge_id'],'supply_source':'customer'} for side,e in zip(('L1','L2','W1','W2'),edges)}},
++               {'detail_id':'articleless-hdf-customer','length':'500','width':'250','qty':1,'variant_id':hdf['variant_id'],
++                'grain':'none','rotation':True,'route':'solid','edges':{},'supply_source':'customer','provided_sheets':1,
++                'customer_reason':'Synthetic explicitly customer-owned HDF; no company material charge'}]
++        revision=corrected_revision(client,mixed,release,material,row,applied['optimistic_lock_version'],extra=extra)
++        calculation=post(client,'/orders/'+mixed['order_id']+'/calculations',{'revision_id':revision['revision_id']},status=201)
++        doc=post(client,'/calculations/'+calculation['calculation_id']+'/documents/preliminary',{},status=201)
++        pdf=expect('client','GET','/documents/'+doc['file_id'],200);assert pdf.content.startswith(b'%PDF-')
++        sent=post(client,'/orders/'+mixed['order_id']+'/submit',{'revision_id':revision['revision_id'],
++                  'preliminary_calculation_id':calculation['calculation_id'],'handoff_problematic':True,
++                  'comment':'Synthetic explicit manager handoff of unresolved service classification'},
++                  revision['optimistic_lock_version'],**{'Idempotency-Key':uuid4().hex})
++        assert sent['production_ready'] is False
++        post(admin,'/orders/'+mixed['order_id']+'/review',{'reason':'Synthetic mixed-input review; no production release'},sent['optimistic_lock_version'])
++        flows.append({'mode':'mixed-self','order_id':mixed['order_id'],'revision_id':revision['revision_id'],
++                      'calculation_id':calculation['calculation_id'],'document_id':doc['file_id'],'pdf_sha256':sha256(pdf.content),
++                      'calculation_state':calculation['completeness'],'total':calculation['total'],
++                      'four_edge_ids':[e['edge_id'] for e in edges],'articleless_hdf_id':hdf['variant_id'],
++                      'raw_qty':0,'corrected_qty':3,'jobs':0,'explicit_problematic_handoff':True})
++        with connect(settings) as db:
++            for fid,expected in old_files.items(): assert sha256(read_verified(db,VolumeStore(settings.storage_root),fid))==expected
++        result={'flows':flows,'responses':responses,'old_private_files_unchanged':len(old_files),
++                'catalogue_search':{q:{'total':v['total'],'items':[{k:m.get(k) for k in ('variant_id','article','thickness','length','width')} for m in v['items']]} for q,v in search.items()},
++                'gates_before':gate_before,'gates_after':gates(settings),'external_email_delivery':'NOT VERIFIED',
++                'native':'NOT VERIFIED','transport':'actual staging HTTPS','live_produce_created':0}
++    finally:
++        with transaction(settings) as db:
++            for uid in actors.values():
++                db.execute("UPDATE mf_users SET account_status='disabled' WHERE user_id=%s",(uid,))
++                db.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++                db.execute('UPDATE mf_permission_grants SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++                db.execute("DELETE FROM mf_user_roles WHERE user_id=%s AND role='admin'",(uid,))
++                record_event(db,settings,actor=uid,action='stage08.synthetic.actor.retired',object_type='user',object_id=uid,reason='Acceptance identity retired')
++        for client in clients.values(): client.close()
++    result['temporary_credentials_retired']=True
++    path.write_text(json.dumps(plain(result),indent=2));path.chmod(0o600)
++    print('MF_STAGE08_LIVE='+json.dumps(plain(result),separators=(',',':')),flush=True)
++
++
++def main():
++    settings=Settings.from_env()
++    if os.environ.get('RAILWAY_PROJECT_ID')!='6d754ad4-ba7b-45f8-8c5e-356387e7de06': raise ValueError('Staging project required')
++    policy=WebPolicy.from_env()
++    if policy.origin!=ORIGIN: raise ValueError('Exact staging HTTPS origin required')
++    gates(settings)
++    def worker():
++        try:
++            # Wait for Railway public routing, not just local uvicorn readiness.
++            healthy=0
++            for _ in range(60):
++                try:
++                    response=httpx.get(ORIGIN+'/health',timeout=5)
++                    healthy=healthy+1 if response.status_code==200 and response.json().get('ok') else 0
++                    if healthy>=3: break
++                except (httpx.HTTPError,ValueError): healthy=0
++                time.sleep(2)
++            if healthy<3: raise ValueError('Public HTTPS did not become ready; no test data created')
++            run(settings)
++            result=checkpoint(settings,'post-stage08')
++            print('MF_STAGE08_CHECKPOINT='+json.dumps(result,separators=(',',':'),default=str),flush=True)
++        except Exception:
++            import traceback
++            print('MF_STAGE08_ACCEPTANCE_FAILED',flush=True);traceback.print_exc()
++    threading.Thread(target=worker,daemon=True).start()
++    uvicorn.run(create_app(settings,policy),host='0.0.0.0',port=int(os.environ.get('PORT','8000')),access_log=False,proxy_headers=False)
++
++
++if __name__=='__main__': main()
+diff --git a/backend/v2/stage08_operator.py b/backend/v2/stage08_operator.py
+new file mode 100644
+index 0000000..29fc5e1
+--- /dev/null
++++ b/backend/v2/stage08_operator.py
+@@ -0,0 +1,100 @@
++"""Explicit staging checkpoint. Never imported by normal serve or HTTP routes.
++
++No migrations, native enrollment, production jobs, or source data writes.
++Existing complete checkpoints are verified, never replaced.
++"""
++from dataclasses import replace
++from pathlib import Path
++from uuid import uuid4
++import argparse
++import json
++import os
++
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict, make_conninfo
++
++from .backup import backup, restore
++from .config import Settings
++from .db import check_identity, connect
++from .stage06_operator import verify
++from .storage import sha256
++
++
++def gates(settings):
++    with connect(settings) as db:
++        check_identity(db, settings)
++        result = {
++            'calibrations': db.execute('SELECT count(*) n FROM mf_bazis_calibrations').fetchone()['n'],
++            'final_candidates': db.execute('SELECT count(*) n FROM mf_final_calculation_candidates').fetchone()['n'],
++            'produce_jobs': db.execute("SELECT count(*) n FROM mf_production_jobs WHERE schema_version=6 AND purpose='produce'").fetchone()['n'],
++            'verified_results': db.execute('SELECT count(*) n FROM mf_job_results WHERE verified').fetchone()['n'],
++        }
++        if any(result.values()):
++            raise ValueError('Unexpected native/final/produce state; inspect before acceptance')
++        result['native'] = 'NOT VERIFIED / CLOSED'
++        result['catalogue_active'] = [str(r['release_id']) for r in db.execute('SELECT release_id FROM mf_catalogue_active')]
++        result['schema_versions'] = [r['version'] for r in db.execute('SELECT version FROM mf_schema_migrations ORDER BY version')]
++        result['financial_defaults'] = [dict(r) for r in db.execute('SELECT * FROM mf_calculation_defaults')]
++    return result
++
++
++def checkpoint(settings, label):
++    if label not in ('pre-stage08', 'post-stage08'):
++        raise ValueError('Unknown checkpoint')
++    root = settings.storage_root.parent
++    evidence_path = root / (label + '-evidence.json')
++    if evidence_path.exists():
++        recorded = json.loads(evidence_path.read_text())
++        manifest = json.loads((Path(recorded['backup_path']) / 'manifest.json').read_text())
++        if sha256((Path(recorded['backup_path']) / 'database.dump').read_bytes()) != recorded['dump_sha256']:
++            raise ValueError('Checkpoint dump changed')
++        if manifest['namespace'] != settings.namespace:
++            raise ValueError('Checkpoint namespace mismatch')
++        return recorded
++    state = verify(settings)
++    gate_state = gates(settings)
++    suffix = uuid4().hex[:12]
++    destination = root / 'backups' / (label + '-' + suffix)
++    manifest = backup(settings, destination)
++    name = 'mf_staging_restore_stage08_' + suffix
++    with connect(settings, autocommit=True) as db:
++        db.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    info = conninfo_to_dict(settings.database_url)
++    target = replace(settings, database_url=make_conninfo(**{**info, 'dbname': name}),
++                     database_name=name, storage_root=root / ('restore-stage08-' + suffix) / 'storage')
++    restored = restore(target, destination)
++    after = verify(target)
++    # A writer between the first snapshot and backup invalidates comparison; do not claim PASS.
++    if state != after or verify(settings) != after:
++        raise ValueError('Concurrent state change: backup remains valid but comparison requires review')
++    evidence = {'checkpoint': label, 'deployment': settings.instance_id,
++                'dump_sha256': manifest['database_sha256'], 'backup_path': str(destination),
++                'restored_database': name, 'restored_storage': str(target.storage_root),
++                'restore': restored, 'state': after, 'gates': gate_state,
++                'file_manifest': manifest['files'], 'all_tables_and_private_bytes_equal': True}
++    evidence_path.write_text(json.dumps(evidence, indent=2, default=str) + '\n')
++    evidence_path.chmod(0o600)
++    return evidence
++
++
++def persistence(settings, label):
++    evidence = json.loads((settings.storage_root.parent / (label + '-evidence.json')).read_text())
++    if verify(settings) != evidence['state']:
++        raise ValueError('State differs from checkpoint')
++    return {'checkpoint': label, 'deployment': settings.instance_id, 'persistent': True,
++            'private_files': len(evidence['state']['private_files']), 'gates': gates(settings)}
++
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument('action', choices=['pre-stage08', 'post-stage08', 'persistence'])
++    args = parser.parse_args()
++    settings = Settings.from_env()
++    if os.environ.get('RAILWAY_PROJECT_ID') != '6d754ad4-ba7b-45f8-8c5e-356387e7de06':
++        raise ValueError('Explicit staging project required')
++    result = persistence(settings, 'post-stage08') if args.action == 'persistence' else checkpoint(settings, args.action)
++    print('MF_STAGE08_CHECKPOINT=' + json.dumps(result, separators=(',', ':'), default=str), flush=True)
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/backend/v2/stage08_scenarios.py b/backend/v2/stage08_scenarios.py
+new file mode 100644
+index 0000000..405a639
+--- /dev/null
++++ b/backend/v2/stage08_scenarios.py
+@@ -0,0 +1,67 @@
++"""Synthetic acceptance scenarios over existing HTTP contracts, not product code."""
++import base64
++from io import BytesIO
++from uuid import uuid4
++from xml.sax.saxutils import escape
++from zipfile import ZipFile, ZIP_DEFLATED
++
++from .excel_import import DEFAULT_EDGE_DICTIONARY
++
++HEADERS = ['position','name','article','material','length','width','qty','texture','rotation','L1','L2','W1','W2']
++
++
++def workbook(article):
++    rows = [HEADERS, [1,'SYNTHETIC correction fixture',article,'Synthetic part',600,400,0,'none','false','0','0','0','0']]
++    out = BytesIO()
++    with ZipFile(out, 'w', ZIP_DEFLATED) as z:
++        z.writestr('xl/workbook.xml', '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Parts" sheetId="1" r:id="rId1"/></sheets></workbook>')
++        z.writestr('xl/_rels/workbook.xml.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/></Relationships>')
++        cells = ''.join('<row r="'+str(n)+'">'+''.join('<c r="'+chr(65+i)+str(n)+'" t="inlineStr"><is><t>'+escape(str(v))+'</t></is></c>' for i,v in enumerate(row))+'</row>' for n,row in enumerate(rows,1))
++        z.writestr('xl/worksheets/sheet1.xml','<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+cells+'</sheetData></worksheet>')
++    return out.getvalue()
++
++
++def post(api, path, body, version=None, status=200, **headers):
++    if version is not None: headers['If-Match'] = str(version)
++    response = api.post('/api/v2'+path, json=body, headers=headers)
++    if response.status_code != status:
++        # Response has no auth header/body echo; do not include input credentials.
++        raise AssertionError((path, response.status_code, response.text[:500]))
++    return response.json()
++
++
++def import_zero(api, order, article):
++    definition = {'headers':{chr(65+i):h for i,h in enumerate(HEADERS)},
++                  'sheet_policy':{'mode':'explicit','header_row':1},
++                  'mapping':{h:chr(65+i) for i,h in enumerate(HEADERS)},
++                  'inheritance':{'enabled':False,'header_marker':'MATERIAL','blank_resets':True,'service_markers':['TOTAL']},
++                  'edge_dictionary':dict(DEFAULT_EDGE_DICTIONARY),'units':{'length':'mm','width':'mm','thickness':'mm'}}
++    template = post(api,'/import-templates',{'name':'SYNTHETIC Stage 8','definition':definition},status=201)
++    data = workbook(article)
++    preview = post(api,'/imports/preview',{'filename':'synthetic-stage08.xlsx','content_base64':base64.b64encode(data).decode(),
++                   'order_id':order['order_id'],'template_revision_id':template['template_revision_id'],'selected_sheets':['Parts']},status=201)
++    applied = post(api,'/imports/'+preview['import_id']+'/confirm',{'mode':'add'},order['optimistic_lock_version'])
++    rows = api.get('/api/v2/orders/'+order['order_id']+'/draft/rows').json()['rows']
++    assert len(rows)==1 and rows[0]['snapshot']['values']['qty']==0 and rows[0]['snapshot']['errors']
++    return preview, rows[0], applied
++
++
++def corrected_detail(material, row):
++    return {'detail_id':'corrected','draft_row_id':row['draft_row_id'],
++            'resolution_reason':'SYNTHETIC operator confirms original qty=0 corrected to 3; source retained',
++            'length':'600','width':'400','qty':3,'variant_id':material['variant_id'],
++            'rotation':False,'grain':'none','route':'glued_18_18','packaging':True,'edges':{}}
++
++
++def corrected_revision(api, order, release, material, row, version, parent=None, extra=None):
++    return post(api,'/orders/'+order['order_id']+'/revisions',
++                {'reason':'SYNTHETIC traceable correction of source quantity',
++                 'catalogue_release_id':release,'parent_revision_id':parent,
++                 'details':[corrected_detail(material,row),*(extra or [])]},version,status=201)
++
++
++def submit(api, order, revision=None, calculation=None, version=None):
++    body = {'comment':'SYNTHETIC Stage 8 manager review of retained source and explicit corrections'}
++    if revision: body['revision_id']=revision['revision_id']
++    if calculation: body['preliminary_calculation_id']=calculation['calculation_id']
++    return post(api,'/orders/'+order['order_id']+'/submit',body,version,**{'Idempotency-Key':uuid4().hex})
+diff --git a/tests/stage08/__init__.py b/tests/stage08/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/stage08/rehearsal.py b/tests/stage08/rehearsal.py
+new file mode 100644
+index 0000000..0b0e1d7
+--- /dev/null
++++ b/tests/stage08/rehearsal.py
+@@ -0,0 +1,94 @@
++"""Fixture-only migration rehearsal, not a production migration utility.
++
++Historical money/payment/comments remain sealed legacy_snapshot data.
++No authorization, production approval, or new calculation is inferred.
++"""
++import base64
++from collections import Counter
++from pathlib import Path
++from uuid import UUID, uuid5
++from psycopg.types.json import Jsonb
++from backend.v2.db import connect, transaction
++from backend.v2.files import save_private_file
++from backend.v2.storage import VolumeStore,sha256
++from backend.v2.calculation_math import hash_value
++
++NAMESPACE=UUID('18080808-0000-4000-8000-000000000008')
++
++def key(row): return row['source'],str(row['id'])
++def stable(entity,row): return uuid5(NAMESPACE,entity+':'+row['source']+':'+str(row['id']))
++
++def fixture():
++    return {'synthetic':True,'users':[
++        {'source':'v9','id':1,'email':'duplicate@example.invalid','name':'Same name','phone':'same','role':'client','verified':True},
++        {'source':'bridge','id':'other','email':'DUPLICATE@example.invalid','name':'Same name','phone':'same','role':'client'},
++        {'source':'v9','id':2,'email':'staff@example.invalid','role':'admin','permissions':['*'],'verified':True,
++         'verification_evidence':{'source':'SYNTHETIC historical confirmation','address':'staff@example.invalid','confirmed_at':'2026-01-01T00:00:00Z'}}],
++      'orders':[
++        {'source':'bridge','id':'bridge-original-order-69','owner':['bridge','other'],'name':'Identical kitchen','total':'179.00','currency':'BYN',
++         'payments':[{'amount':'50.00','status':'received'}],'comments':['Historical internal comment'],
++         'materials':[{'raw':'621 PO','mapping':None}],'legacy_discounts':{'discount':10},'status':'CUT'},
++        {'source':'v9','id':69,'owner':['v9','1'],'name':'Identical kitchen','total':'179.00','currency':'BYN',
++         'payments':[],'comments':['No confirmed tariff snapshot'],'materials':[{'raw':'HDF','mapping':None}],
++         'legacy_discounts':{'materials':10,'edges':20,'services':5},'status':'paid'}],
++      'files':[
++        {'source':'v9','id':1,'order':['v9','69'],'name':'source.xlsx','kind':'source','content':base64.b64encode(b'fixture-only-source').decode()},
++        {'source':'bridge','id':'oblx','order':['bridge','bridge-original-order-69'],'name':'renamed.pdf','kind':'oblx','content':base64.b64encode(b'<fixture native="NOT VERIFIED"/>').decode()},
++        {'source':'v9','id':2,'order':['v9','69'],'name':'missing.pdf','kind':'preliminary_pdf','content':None}]}
++
++
++def migrate_fixture(settings,data):
++    if '_stage08_rehearsal_' not in settings.database_name or settings.namespace!='mf.staging.rehearsal8' or not data.get('synthetic'):
++        raise ValueError('Isolated synthetic rehearsal target required')
++    for entity in ('users','orders','files'):
++        keys=[key(row) for row in data[entity]]
++        if len(keys)!=len(set(keys)): raise ValueError('Duplicate legacy ID; no overwrite')
++    with connect(settings) as db:
++        if db.execute('SELECT 1 FROM mf_users UNION ALL SELECT 1 FROM mf_orders').fetchone():
++            raise ValueError('Empty rehearsal required')
++        db.execute((Path(__file__).with_name('rehearsal_v1.sql')).read_text())
++    collisions=Counter(u['email'].casefold() for u in data['users']);users={};orders={};revisions={}
++    def record(db,entity,row,target,disposition):
++        db.execute('INSERT INTO mf_legacy_rehearsal_records VALUES(%s,%s,%s,%s,%s,%s,%s)',
++                   (row['source'],entity,str(row['id']),str(target) if target else None,disposition,Jsonb(row),hash_value(row)))
++    with transaction(settings) as db:
++        for row in data['users']:
++            uid=stable('user',row);users[key(row)]=uid
++            collision=collisions[row['email'].casefold()]>1
++            proof=row.get('verification_evidence') or {}
++            verified=proof.get('confirmed_at') if proof.get('address','').casefold()==row['email'].casefold() and proof.get('source') and not collision else None
++            db.execute("INSERT INTO mf_users(user_id,email,password_hash,email_verified_at,account_status) VALUES(%s,%s,NULL,%s,'disabled')",
++                       (uid,None if collision else row['email'],verified))
++            # Legacy staff roles/permissions retained in the sealed record, not activated.
++            record(db,'user',row,uid,'email_collision_review' if collision else 'account_and_roles_review')
++        for row in data['orders']:
++            owner=users[tuple(row['owner'])];oid=str(row['id']) if row['source']=='bridge' else str(stable('order',row))
++            orders[key(row)]=oid;rid=stable('revision',row);revisions[key(row)]=rid
++            db.execute("INSERT INTO mf_orders(order_id,business_name,owner_user_id,preparation_mode,workflow_status,legacy_source,legacy_id) VALUES(%s,%s,%s,'manager_assisted','review',%s,%s)",
++                       (oid,row['name'],owner,row['source'],str(row['id'])))
++            snapshot={'kind':'legacy_snapshot','legacy_v9_id':row['id'] if row['source']=='v9' else None,'source':row,
++                      'pricing':'historical_only_not_recalculated','material_mapping':'needs_review'}
++            db.execute("INSERT INTO mf_order_revisions(revision_id,order_id,revision_number,created_by,reason,lifecycle,content_hash,content,immutable_at) VALUES(%s,%s,1,%s,'Fixture migration provenance','legacy_snapshot',%s,%s,now())",
++                       (rid,oid,owner,hash_value(snapshot),Jsonb(snapshot)))
++            db.execute('UPDATE mf_orders SET active_revision_id=%s WHERE order_id=%s',(rid,oid))
++            record(db,'order',row,oid,'legacy_snapshot_material_review')
++    store=VolumeStore(settings.storage_root)
++    for row in data['files']:
++        oid=orders[tuple(row['order'])];rid=revisions[tuple(row['order'])]
++        if row['content'] is None:
++            with transaction(settings) as db: record(db,'file',row,None,'missing_bytes_not_restored')
++            continue
++        raw=base64.b64decode(row['content'],validate=True)
++        with connect(settings) as db:
++            owner=db.execute('SELECT owner_user_id FROM mf_orders WHERE order_id=%s',(oid,)).fetchone()['owner_user_id']
++        # Historical PDFs without canonical calculation binding are internal archives.
++        kind=row['kind'] if row['kind'] in ('source','oblx') else 'internal'
++        fid=save_private_file(settings,store,actor=owner,data=raw,name=row['name'],kind=kind,mime='application/octet-stream',order_id=oid,revision_id=rid)
++        with transaction(settings) as db: record(db,'file',row,fid,'private_bytes_verified')
++    with connect(settings) as db:
++        records=db.execute('SELECT * FROM mf_legacy_rehearsal_records ORDER BY source,entity,legacy_id').fetchall()
++        for r in records: assert hash_value(r['payload'])==r['payload_sha256']
++        assert not db.execute('SELECT 1 FROM mf_permission_grants UNION ALL SELECT 1 FROM mf_production_jobs UNION ALL SELECT 1 FROM mf_calculations').fetchone()
++    return {'source_counts':{k:len(data[k]) for k in ('users','orders','files')},
++            'records':[{k:str(v) if k=='target_id' and v else v for k,v in r.items() if k!='payload'} for r in records],
++            'synthetic_only':True,'live_legacy_reconciliation':'NOT VERIFIED'}
+diff --git a/tests/stage08/rehearsal_v1.sql b/tests/stage08/rehearsal_v1.sql
+new file mode 100644
+index 0000000..7d2cc7d
+--- /dev/null
++++ b/tests/stage08/rehearsal_v1.sql
+@@ -0,0 +1,10 @@
++-- Rehearsal-only extension; NEVER a live backend/v2 migration.
++-- Applied after canonical migrations only in an empty isolated fixture DB.
++CREATE TABLE mf_legacy_rehearsal_records (
++ source text NOT NULL, entity text NOT NULL, legacy_id text NOT NULL,
++ target_id text, disposition text NOT NULL,
++ payload jsonb NOT NULL, payload_sha256 text NOT NULL,
++ PRIMARY KEY(source,entity,legacy_id)
++);
++CREATE TRIGGER mf_legacy_records_immutable BEFORE UPDATE OR DELETE ON mf_legacy_rehearsal_records
++ FOR EACH ROW EXECUTE FUNCTION mf_append_only();
+diff --git a/tests/stage08/test_e2e.py b/tests/stage08/test_e2e.py
+new file mode 100644
+index 0000000..c282cf3
+--- /dev/null
++++ b/tests/stage08/test_e2e.py
+@@ -0,0 +1,71 @@
++"""Stage 8 cross-layer software evidence. Synthetic signed result != native BAZIS."""
++import json
++import os
++from pathlib import Path
++from backend.v2.db import connect
++from backend.v2.calculation_math import hash_value
++from backend.v2.files import read_verified
++from backend.v2.storage import VolumeStore, sha256
++from backend.v2.stage08_scenarios import import_zero, corrected_revision, submit as source_submit
++from tests.stage03.test_api import settings, api, admin_user, post, publish
++from tests.stage04.test_api import order, item, configure, calc
++from tests.stage05.test_api import document
++from tests.stage06.support import job, Agent, fake_result, cancel_open
++from tests.stage06.test_native_contract import calculated, candidate, approve
++
++
++def evidence(name, data):
++    root=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/stage08'));root.mkdir(parents=True,exist_ok=True)
++    (root/(name+'.json')).write_text(json.dumps(data,indent=2,default=str))
++    print('MF_STAGE08_EVIDENCE='+json.dumps({'scenario':name,**data},default=str),flush=True)
++
++
++def test_self_excel_correction_pdf_submit_package_fake_final_closed(api,settings,admin_user,monkeypatch):
++    monkeypatch.setenv('MF_STAGING_AGENT_API','enabled')
++    _,release=publish(api);o=order(api);material=item(api,release);ctx,_=configure(api,o,release,material)
++    source,row,applied=import_zero(api,o,material['article'])
++    r=corrected_revision(api,o,release,material,row,applied['optimistic_lock_version'])
++    c=calc(api,o,r);assert c['completeness']=='complete'
++    d=document(api,c);pdf=api.get('/api/v2/documents/'+d['file_id']);assert pdf.content.startswith(b'%PDF-')
++    sent=source_submit(api,o,r,c,r['optimistic_lock_version']);assert sent['production_ready'] is False
++    post(api,'/orders/'+o['order_id']+'/review',{'reason':'SYNTHETIC exact source review'},sent['optimistic_lock_version'])
++    j=job(api,o,r,c);a=Agent(api,settings,admin_user);lease=a.pull()[0]
++    assert lease['order_id']==o['order_id'] and lease['revision_id']==r['revision_id']
++    assert a.event(lease)[0].status_code==200
++    result,_=a.result(lease);assert result.status_code==200 and not result.json()['verified']
++    final=api.post('/api/v2/production-jobs/'+j['job_id']+'/final-calculation',json={'reason':'Fake result must remain closed'})
++    assert final.status_code==409 and final.json()['detail']['code']=='BAZIS_RUN_REQUIRED'
++    with connect(settings) as db:
++        rev=db.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(r['revision_id'],)).fetchone()['content']
++        assert rev['source_evidence']['draft_rows'][0]['snapshot']['values']['qty']==0
++        assert rev['details'][0]['qty']==3 and rev['details'][0]['resolution_reason']
++        package=db.execute('SELECT manifest FROM mf_job_packages WHERE job_id=%s',(j['job_id'],)).fetchone()['manifest']
++        assert package['manufacturing']['parts'][0]['blank']['qty']==6
++        source_file=db.execute('SELECT file_id FROM mf_import_batches WHERE import_id=%s',(source['import_id'],)).fetchone()['file_id']
++        assert read_verified(db,VolumeStore(settings.storage_root),source_file).startswith(b'PK')
++        events=db.execute('SELECT event_id FROM mf_audit WHERE object_id=%s',(o['order_id'],)).fetchall()
++        assert events and all(db.execute('SELECT 1 FROM mf_outbox WHERE event_id=%s',(e['event_id'],)).fetchone() for e in events)
++    evidence('self-chain',{'order_id':o['order_id'],'revision_id':r['revision_id'],'calculation_id':c['calculation_id'],
++             'document':d['file_id'],'pdf_sha256':sha256(pdf.content),'job_id':j['job_id'],'run_id':lease['run_id'],
++             'source_qty':0,'corrected_qty':3,'child_qty':6,'final_gate':'BAZIS_RUN_REQUIRED','native':'NOT VERIFIED'})
++    cancel_open(settings)
++
++
++def test_manager_assisted_raw_intake_child_revision_no_early_job(api,settings,admin_user):
++    _,release=publish(api);o=order(api,'manager_assisted');m=item(api,release);configure(api,o,release,m)
++    source,row,applied=import_zero(api,o,'UNKNOWN')
++    sent=source_submit(api,o,version=applied['optimistic_lock_version'])
++    with connect(settings) as db:
++        old=db.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(sent['revision_id'],)).fetchone()['content']
++        assert old['source_evidence']['draft_rows'][0]['snapshot']['values']['qty']==0
++    child=corrected_revision(api,o,release,m,row,sent['optimistic_lock_version'],sent['revision_id'])
++    c=calc(api,o,child);assert c['completeness']=='complete'
++    with connect(settings) as db:
++        assert db.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(sent['revision_id'],)).fetchone()['content']==old
++        current=db.execute('SELECT * FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()
++        assert current['approved_revision_id'] is None and current['approved_final_candidate_id'] is None
++        assert not db.execute('SELECT 1 FROM mf_production_jobs WHERE order_id=%s',(o['order_id'],)).fetchone()
++    evidence('manager-chain',{'order_id':o['order_id'],'original_revision':sent['revision_id'],'child_revision':child['revision_id'],
++             'calculation_id':c['calculation_id'],'original_sha256':hash_value(old),'original_unchanged':True,'early_jobs':0})
++
++
+diff --git a/tests/stage08/test_rehearsal.py b/tests/stage08/test_rehearsal.py
+new file mode 100644
+index 0000000..a759183
+--- /dev/null
++++ b/tests/stage08/test_rehearsal.py
+@@ -0,0 +1,63 @@
++from copy import deepcopy
++from dataclasses import replace
++from uuid import uuid4
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict,make_conninfo
++import pytest
++from backend.v2.db import connect
++from backend.v2.migrate import migrate
++from backend.v2.backup import backup,restore
++from backend.v2.stage06_operator import verify
++from backend.v2.files import read_verified
++from backend.v2.storage import VolumeStore
++from tests.stage03.test_api import settings
++from .rehearsal import fixture,migrate_fixture
++from .test_e2e import evidence
++
++
++def target(settings,tmp_path):
++    name='mf_staging_stage08_rehearsal_'+uuid4().hex[:10]
++    info=conninfo_to_dict(settings.database_url)
++    with connect(settings,autocommit=True) as c: c.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    new=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,
++                namespace='mf.staging.rehearsal8',storage_root=tmp_path/'private')
++    migrate(new);return new
++
++
++def test_fixture_migration_reconciliation_and_actual_restore(settings,tmp_path):
++    source_before=verify(settings);s=target(settings,tmp_path);data=fixture();report=migrate_fixture(s,data)
++    with connect(s) as db:
++        assert db.execute('SELECT count(*) n FROM mf_users').fetchone()['n']==3
++        assert db.execute('SELECT count(*) n FROM mf_users WHERE email IS NULL AND email_verified_at IS NULL').fetchone()['n']==2
++        assert db.execute('SELECT count(*) n FROM mf_users WHERE email_verified_at IS NOT NULL').fetchone()['n']==1
++        assert not db.execute('SELECT 1 FROM mf_user_roles').fetchone()
++        orders=db.execute('SELECT * FROM mf_orders ORDER BY order_id').fetchall();assert len(orders)==2
++        assert any(o['order_id']=='bridge-original-order-69' for o in orders)
++        assert all(o['workflow_status']=='review' and o['approved_revision_id'] is None for o in orders)
++        for r in db.execute('SELECT content FROM mf_order_revisions'):
++            assert r['content']['source']['total']=='179.00' and r['content']['kind']=='legacy_snapshot'
++        files=db.execute('SELECT * FROM mf_files').fetchall();assert len(files)==2
++        for f in files:
++            assert read_verified(db,VolumeStore(s.storage_root),f['file_id'])
++            if f['kind']=='oblx': assert f['classification']=='internal' and f['original_name']=='renamed.pdf'
++        assert db.execute("SELECT count(*) n FROM mf_legacy_rehearsal_records WHERE disposition='missing_bytes_not_restored'").fetchone()['n']==1
++    before=verify(s);manifest=backup(s,tmp_path/'checkpoint')
++    name='mf_staging_restore_stage08_rehearsal_'+uuid4().hex[:10];info=conninfo_to_dict(s.database_url)
++    with connect(s,autocommit=True) as db: db.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    restored=replace(s,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,storage_root=tmp_path/'restored')
++    restore(restored,tmp_path/'checkpoint');assert verify(restored)==before and verify(settings)==source_before
++    evidence('migration-restore',{'scope':'SYNTHETIC FIXTURE REHEARSAL ONLY','report':report,'database':s.database_name,
++             'restored_database':name,'dump_sha256':manifest['database_sha256'],'state':before,'working_database_unchanged':True})
++    with pytest.raises(ValueError,match='Empty rehearsal'): migrate_fixture(s,data)
++
++
++def test_rehearsal_rejects_working_database_and_non_synthetic(settings,tmp_path):
++    with pytest.raises(ValueError,match='Isolated'): migrate_fixture(settings,fixture())
++    s=target(settings,tmp_path);bad=fixture();bad['synthetic']=False
++    with pytest.raises(ValueError,match='Isolated'): migrate_fixture(s,bad)
++
++
++def test_duplicate_legacy_ids_do_not_overwrite(settings,tmp_path):
++    s=target(settings,tmp_path);bad=fixture();bad['orders'].append(deepcopy(bad['orders'][0]))
++    with pytest.raises(ValueError,match='Duplicate legacy ID'): migrate_fixture(s,bad)
++    with connect(s) as db: assert not db.execute('SELECT 1 FROM mf_orders').fetchone()
+diff --git a/tests/stage08/test_snapshot.py b/tests/stage08/test_snapshot.py
+new file mode 100644
+index 0000000..0eb4570
+--- /dev/null
++++ b/tests/stage08/test_snapshot.py
+@@ -0,0 +1,41 @@
++"""Stage 8 cross-layer software evidence. Synthetic signed result != native BAZIS."""
++import json
++import os
++from pathlib import Path
++from backend.v2.db import connect
++from backend.v2.calculation_math import hash_value
++from backend.v2.files import read_verified
++from backend.v2.storage import VolumeStore, sha256
++from backend.v2.stage08_scenarios import import_zero, corrected_revision, submit as source_submit
++from tests.stage03.test_api import settings, api, admin_user, post, publish
++from tests.stage04.test_api import order, item, configure, calc
++from tests.stage05.test_api import document
++from tests.stage06.support import job, Agent, fake_result, cancel_open
++from tests.stage06.test_native_contract import calculated, candidate, approve
++
++
++from .test_e2e import evidence
++
++
++def test_approved_snapshot_pdf_survives_release_and_commercial_updates(api,settings,admin_user,monkeypatch):
++    monkeypatch.setenv('MF_STAGING_AGENT_API','enabled')
++    o,r,c,_,j,a,lease=calculated(api,settings,admin_user);f=candidate(api,j);approve(api,o,r,f)
++    d=document(api,c);pdf_before=api.get('/api/v2/documents/'+d['file_id']).content
++    with connect(settings) as db:
++        before={table:db.execute('SELECT to_jsonb(t) data FROM '+table+' t WHERE '+key+'=%s',(ident,)).fetchone()['data']
++                for table,key,ident in [('mf_orders','order_id',o['order_id']),('mf_order_revisions','revision_id',r['revision_id']),
++                ('mf_calculations','calculation_id',c['calculation_id']),('mf_final_calculation_candidates','candidate_id',f['candidate_id'])]}
++    _,release=publish(api)
++    other=order(api);ctx,meta=configure(api,other,release,item(api,release),discounts={'materials':'50','edge_material':'25','services':'10'})
++    tariff=api.get('/api/v2/financial/versions/tariff/'+ctx['tariff_book_id']).json()
++    post(api,'/financial/tariff-books',{**meta,'supersedes':ctx['tariff_book_id'],'effective_from':'2026-09-23T00:00:00Z',
++         'entries':[{'operation':e['operation'],'amount':'99.99','currency':'BYN'} for e in tariff['entries']]},status=201)
++    with connect(settings) as db:
++        for table,key,ident in [('mf_orders','order_id',o['order_id']),('mf_order_revisions','revision_id',r['revision_id']),
++                               ('mf_calculations','calculation_id',c['calculation_id']),('mf_final_calculation_candidates','candidate_id',f['candidate_id'])]:
++            assert db.execute('SELECT to_jsonb(t) data FROM '+table+' t WHERE '+key+'=%s',(ident,)).fetchone()['data']==before[table]
++    assert api.get('/api/v2/documents/'+d['file_id']).content==pdf_before
++    evidence('approved-snapshot',{'scope':'SOFTWARE CONTRACT PASS / SYNTHETIC','order_id':o['order_id'],
++             'candidate_id':f['candidate_id'],'unchanged_hashes':{k:hash_value(v) for k,v in before.items()},'pdf_sha256':sha256(pdf_before),
++             'native':'NOT VERIFIED'})
++    cancel_open(settings)

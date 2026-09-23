@@ -1,0 +1,392 @@
+{
+  "scenario": "migration-restore",
+  "scope": "SYNTHETIC FIXTURE REHEARSAL ONLY",
+  "report": {
+    "source_counts": {
+      "users": 3,
+      "orders": 2,
+      "files": 3
+    },
+    "records": [
+      {
+        "source": "bridge",
+        "entity": "file",
+        "legacy_id": "oblx",
+        "target_id": "da29fd58-358b-4521-b098-6a00eedbebce",
+        "disposition": "private_bytes_verified",
+        "payload_sha256": "ce25443426ce605dffeb3f0a2cc1ce7a30a9027ebfbd34cb705d07c15185dfbe"
+      },
+      {
+        "source": "bridge",
+        "entity": "order",
+        "legacy_id": "bridge-original-order-69",
+        "target_id": "bridge-original-order-69",
+        "disposition": "legacy_snapshot_material_review",
+        "payload_sha256": "d1cf5550e0745f37257a24dcd1134be132bc727af3903688eec202c7b99038d7"
+      },
+      {
+        "source": "bridge",
+        "entity": "user",
+        "legacy_id": "other",
+        "target_id": "0f533cce-2c7c-5ce3-aca2-964728ee57b5",
+        "disposition": "email_collision_review",
+        "payload_sha256": "5c4be7c101ada1648fe60ee5b8856a8a966a5d7fe90493fa6dd02bd55bdf84b4"
+      },
+      {
+        "source": "v9",
+        "entity": "file",
+        "legacy_id": "1",
+        "target_id": "fe6a1ef1-ad16-41ca-b5ba-d725c600b218",
+        "disposition": "private_bytes_verified",
+        "payload_sha256": "9d0a1c361871a6a2bdbb14cdd02fb54d90b75a500eabe2e0dbe89d6dfd771293"
+      },
+      {
+        "source": "v9",
+        "entity": "file",
+        "legacy_id": "2",
+        "target_id": null,
+        "disposition": "missing_bytes_not_restored",
+        "payload_sha256": "3a3caa1d37c7cfd5661efe20b45221d5fb480dff59d3441adde7dc55ba785509"
+      },
+      {
+        "source": "v9",
+        "entity": "order",
+        "legacy_id": "69",
+        "target_id": "deb110c7-5448-5acb-94f9-38604a101665",
+        "disposition": "legacy_snapshot_material_review",
+        "payload_sha256": "6aa27738fa8f8b53a98dc5862867493f19fe2100e2a8ca33a2899c43c65f0f8b"
+      },
+      {
+        "source": "v9",
+        "entity": "user",
+        "legacy_id": "1",
+        "target_id": "86d71a00-78af-50a8-ad61-f2eb3e431f70",
+        "disposition": "email_collision_review",
+        "payload_sha256": "b5d1e067458a433eeb3c4f76e8bfdcb37c6f91e7776dea3ddb1f76d50dc4db97"
+      },
+      {
+        "source": "v9",
+        "entity": "user",
+        "legacy_id": "2",
+        "target_id": "aa5f733f-fded-57ef-aaf7-e01bbf77935d",
+        "disposition": "account_and_roles_review",
+        "payload_sha256": "4663c7152399144ca70ffa913571c288282748484c7653a3dd1970852273808b"
+      }
+    ],
+    "synthetic_only": true,
+    "live_legacy_reconciliation": "NOT VERIFIED"
+  },
+  "database": "mf_staging_stage08_rehearsal_f5c5e4aff1",
+  "restored_database": "mf_staging_restore_stage08_rehearsal_db41a94493",
+  "dump_sha256": "7a457fc2e5d4e11ed84c0f07a3eea90c4a7b2b8ccc8c06b7a7577863e5d95ee7",
+  "state": {
+    "tables": {
+      "mf_agent_requests": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_audit": {
+        "count": 2,
+        "sha256": "e961f3c99c1afdcb6954938b5584d81cbb935bcaccda61925556ed18cf3c2cda"
+      },
+      "mf_bazis_calibrations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_bazis_export_profiles": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_bazis_material_mappings": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_calculation_defaults": {
+        "count": 1,
+        "sha256": "d7655396c2909638f755e32ee34b4469bedc48b7f86fd1159b8dd793aaa7b70c"
+      },
+      "mf_calculation_lines": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_calculation_price_snapshots": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_calculation_seals": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_calculations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_catalogue_active": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_catalogue_imports": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_catalogue_items": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_catalogue_raw_rows": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_catalogue_release_seals": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_catalogue_releases": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_catalogue_source_mappings": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_customer_discount_assignments": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_discount_profiles": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_discount_snapshots": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_document_templates": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_documents": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_edge_variants": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_email_deliveries": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_email_verifications": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_environment": {
+        "count": 1,
+        "sha256": "957c7e89a255e95077d6244b1237137f937455c06e5f15b2edf7a865d70b5757"
+      },
+      "mf_files": {
+        "count": 2,
+        "sha256": "32f6f8213a1291aed5f1c1b3e4278eb2bd1b649860c18d54445048da2bfd3ead"
+      },
+      "mf_final_approvals": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_final_calculation_candidates": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_financial_book_seals": {
+        "count": 1,
+        "sha256": "7ec4a62a6fb42f98ae3f7252f50f3ebb439c33ec2f0fb6e88155ca990d30839a"
+      },
+      "mf_history_policy": {
+        "count": 1,
+        "sha256": "1d8b21ce38ba906d0dfdc1fd6d83d74e00f84e484adedf468c2c14224af8c67e"
+      },
+      "mf_identity_aliases": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_import_batches": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_import_receipts": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_import_row_resolutions": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_import_rows": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_import_template_revisions": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_import_templates": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_job_events": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_job_packages": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_job_reconciliations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_job_results": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_job_runs": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_legacy_rehearsal_records": {
+        "count": 8,
+        "sha256": "db0d9dbe2153228050914de3d0d1db134ae8a8b8b18f4e44ce0f875e84d0d669"
+      },
+      "mf_manager_assignments": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_manufacturing_recipes": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_material_edge_mappings": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_material_price_entries": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_material_variants": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_materials": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_order_discount_overrides": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_order_draft_rows": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_order_financial_contexts": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_order_revisions": {
+        "count": 2,
+        "sha256": "cfc7d36b3596551fde59d958cd192722eb90be790d5f274bcfa3c2e49449be59"
+      },
+      "mf_orders": {
+        "count": 2,
+        "sha256": "ef22ff0f0dd97a11c371e35fc6cd6143b6d23b9e6cae137cf8c95d4cdfb9b9a1"
+      },
+      "mf_outbox": {
+        "count": 2,
+        "sha256": "b0ca1ded8f41c22672ae229fbac59624b5e17006d341611cc2812e9748a8187f"
+      },
+      "mf_permission_grants": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_permissions": {
+        "count": 37,
+        "sha256": "200999bc12bf9acc71991d58149cc8d16904bf883514c6d1f442a36cc8fc24b5"
+      },
+      "mf_price_books": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_production_jobs": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_production_profiles": {
+        "count": 1,
+        "sha256": "15db02f6681f4689809ab04487d646a37ebac418e8ceb5449690f597533b813c"
+      },
+      "mf_rate_events": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_roles": {
+        "count": 7,
+        "sha256": "da5a24c85a41cae75101ddc0be803638aa5ed8dc4ac97ae6f0501853b9873412"
+      },
+      "mf_sale_price_entries": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_schema_migrations": {
+        "count": 6,
+        "sha256": "5f4d469aabc7d3dfa0588fddf5ecb363c87aac0b6cfeb0e3895260a633dc9edd"
+      },
+      "mf_sessions": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_sheet_estimates": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_staging_agents": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_submission_receipts": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_tariff_books": {
+        "count": 1,
+        "sha256": "7c332d829dca1847396a39a9cef3b20c349a28380915a328f6ef4f24e4398988"
+      },
+      "mf_tariff_entries": {
+        "count": 7,
+        "sha256": "3cc490e4925931dd9871917c255d43ca82f4afa6ae9aaea0815f9669424f4035"
+      },
+      "mf_user_roles": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_users": {
+        "count": 3,
+        "sha256": "c5650e284ee77a1aab33129fb05941b9fa2e7a3e964cee93d588b3b5b74bb510"
+      }
+    },
+    "private_files": [
+      {
+        "file_id": "da29fd58-358b-4521-b098-6a00eedbebce",
+        "sha256": "2b8cb87c3f0a51c5ce64069452041c0b67b35902f25a9eb4f659287713495af5"
+      },
+      {
+        "file_id": "fe6a1ef1-ad16-41ca-b5ba-d725c600b218",
+        "sha256": "4b0520c5f5f566897d2c66d1dd1fc6d6a0b4ba9bc0f396d1236cc54b5dc340f3"
+      }
+    ],
+    "namespace": "mf.staging.rehearsal8"
+  },
+  "working_database_unchanged": true,
+  "evidence_run_id": 35896674899,
+  "evidence_runtime": "bc6b96101a9eaf88732e1342eaf18c2579e6a385"
+}

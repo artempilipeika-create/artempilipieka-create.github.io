@@ -1,0 +1,17 @@
+{
+  "scenario": "self-chain",
+  "order_id": "07de72d2-d52a-463f-b6c6-6d89e6b32e33",
+  "revision_id": "e4fec2fc-b265-464d-853f-68e80de92d1c",
+  "calculation_id": "4e888cd8-c2da-4203-856f-19f37377e14a",
+  "document": "6e79ec59-2777-4416-897b-8d5b71ad0b96",
+  "pdf_sha256": "118f5e91f92792a270f2fffbf6cded81c021b4d7001327e8cfd1bce9d51b0065",
+  "job_id": "841f1a7d-6782-4843-a8a1-24a9954d383b",
+  "run_id": "835d4c93-5462-4a6f-8d2f-7abf930dd08d",
+  "source_qty": 0,
+  "corrected_qty": 3,
+  "child_qty": 6,
+  "final_gate": "BAZIS_RUN_REQUIRED",
+  "native": "NOT VERIFIED",
+  "evidence_run_id": 35896674899,
+  "evidence_runtime": "bc6b96101a9eaf88732e1342eaf18c2579e6a385"
+}

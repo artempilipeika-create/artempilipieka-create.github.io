@@ -1,0 +1,12 @@
+{
+  "scenario": "manager-chain",
+  "order_id": "701d98b8-7404-4988-aa35-b1749ec53720",
+  "original_revision": "7c6b14e5-9e11-4370-8fca-0a505e03993a",
+  "child_revision": "4021746f-1bda-4879-a789-080cb4b8c867",
+  "calculation_id": "2c1b4935-e2e6-4833-9490-1cf92abd54c4",
+  "original_sha256": "257824d4e08e6a2605abe3913f40d94da6a69870b87024fd883fd71786185aa9",
+  "original_unchanged": true,
+  "early_jobs": 0,
+  "evidence_run_id": 35896674899,
+  "evidence_runtime": "bc6b96101a9eaf88732e1342eaf18c2579e6a385"
+}

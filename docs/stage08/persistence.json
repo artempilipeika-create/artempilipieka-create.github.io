@@ -1,0 +1,35 @@
+{
+  "checkpoint": "post-stage08",
+  "deployment": "2dcfcf1a-ad85-4af5-a7c2-93b23bdbea95",
+  "persistent": true,
+  "private_files": 34,
+  "gates": {
+    "calibrations": 0,
+    "final_candidates": 0,
+    "produce_jobs": 0,
+    "verified_results": 0,
+    "native": "NOT VERIFIED / CLOSED",
+    "catalogue_active": [
+      "e6db8155-91a6-4f15-9b89-ce2194b43373"
+    ],
+    "schema_versions": [
+      "0001_foundation.sql",
+      "0002_auth_security.sql",
+      "0003_catalogue_imports.sql",
+      "0004_order_calculation.sql",
+      "0005_client_documents.sql",
+      "0006_production_protocol.sql"
+    ],
+    "financial_defaults": [
+      {
+        "singleton": true,
+        "production_profile_id": "04000000-0000-4000-8000-000000000001",
+        "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+        "price_book_id": null,
+        "discount_profile_id": null,
+        "version": 1,
+        "updated_at": "2026-09-23 10:18:45.432250+00:00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,362 @@
+{
+  "mf_agent_requests": {
+    "before": 8,
+    "after": 8,
+    "sha_equal": true
+  },
+  "mf_audit": {
+    "before": 153,
+    "after": 220,
+    "sha_equal": false
+  },
+  "mf_bazis_calibrations": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_bazis_export_profiles": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_bazis_material_mappings": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_calculation_defaults": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_calculation_lines": {
+    "before": 23,
+    "after": 48,
+    "sha_equal": false
+  },
+  "mf_calculation_price_snapshots": {
+    "before": 5,
+    "after": 13,
+    "sha_equal": false
+  },
+  "mf_calculation_seals": {
+    "before": 5,
+    "after": 8,
+    "sha_equal": false
+  },
+  "mf_calculations": {
+    "before": 5,
+    "after": 8,
+    "sha_equal": false
+  },
+  "mf_catalogue_active": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_catalogue_imports": {
+    "before": 2,
+    "after": 2,
+    "sha_equal": true
+  },
+  "mf_catalogue_items": {
+    "before": 6130,
+    "after": 6130,
+    "sha_equal": true
+  },
+  "mf_catalogue_raw_rows": {
+    "before": 44278,
+    "after": 44278,
+    "sha_equal": true
+  },
+  "mf_catalogue_release_seals": {
+    "before": 2,
+    "after": 2,
+    "sha_equal": true
+  },
+  "mf_catalogue_releases": {
+    "before": 2,
+    "after": 2,
+    "sha_equal": true
+  },
+  "mf_catalogue_source_mappings": {
+    "before": 3065,
+    "after": 3065,
+    "sha_equal": true
+  },
+  "mf_customer_discount_assignments": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_discount_profiles": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_discount_snapshots": {
+    "before": 5,
+    "after": 8,
+    "sha_equal": false
+  },
+  "mf_document_templates": {
+    "before": 2,
+    "after": 2,
+    "sha_equal": true
+  },
+  "mf_documents": {
+    "before": 8,
+    "after": 11,
+    "sha_equal": false
+  },
+  "mf_edge_variants": {
+    "before": 961,
+    "after": 961,
+    "sha_equal": true
+  },
+  "mf_email_deliveries": {
+    "before": 7,
+    "after": 7,
+    "sha_equal": true
+  },
+  "mf_email_verifications": {
+    "before": 7,
+    "after": 7,
+    "sha_equal": true
+  },
+  "mf_environment": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_files": {
+    "before": 26,
+    "after": 34,
+    "sha_equal": false
+  },
+  "mf_final_approvals": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_final_calculation_candidates": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_financial_book_seals": {
+    "before": 2,
+    "after": 2,
+    "sha_equal": true
+  },
+  "mf_history_policy": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_identity_aliases": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_import_batches": {
+    "before": 2,
+    "after": 5,
+    "sha_equal": false
+  },
+  "mf_import_receipts": {
+    "before": 2,
+    "after": 5,
+    "sha_equal": false
+  },
+  "mf_import_row_resolutions": {
+    "before": 2,
+    "after": 5,
+    "sha_equal": false
+  },
+  "mf_import_rows": {
+    "before": 4,
+    "after": 10,
+    "sha_equal": false
+  },
+  "mf_import_template_revisions": {
+    "before": 2,
+    "after": 5,
+    "sha_equal": false
+  },
+  "mf_import_templates": {
+    "before": 2,
+    "after": 5,
+    "sha_equal": false
+  },
+  "mf_job_events": {
+    "before": 3,
+    "after": 3,
+    "sha_equal": true
+  },
+  "mf_job_packages": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_job_reconciliations": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_job_results": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_job_runs": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_manager_assignments": {
+    "before": 2,
+    "after": 3,
+    "sha_equal": false
+  },
+  "mf_manufacturing_recipes": {
+    "before": 4,
+    "after": 7,
+    "sha_equal": false
+  },
+  "mf_material_edge_mappings": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_material_price_entries": {
+    "before": 6130,
+    "after": 6130,
+    "sha_equal": true
+  },
+  "mf_material_variants": {
+    "before": 2104,
+    "after": 2104,
+    "sha_equal": true
+  },
+  "mf_materials": {
+    "before": 2104,
+    "after": 2104,
+    "sha_equal": true
+  },
+  "mf_order_discount_overrides": {
+    "before": 0,
+    "after": 0,
+    "sha_equal": true
+  },
+  "mf_order_draft_rows": {
+    "before": 2,
+    "after": 5,
+    "sha_equal": false
+  },
+  "mf_order_financial_contexts": {
+    "before": 3,
+    "after": 6,
+    "sha_equal": false
+  },
+  "mf_order_revisions": {
+    "before": 8,
+    "after": 12,
+    "sha_equal": false
+  },
+  "mf_orders": {
+    "before": 10,
+    "after": 13,
+    "sha_equal": false
+  },
+  "mf_outbox": {
+    "before": 153,
+    "after": 220,
+    "sha_equal": false
+  },
+  "mf_permission_grants": {
+    "before": 181,
+    "after": 330,
+    "sha_equal": false
+  },
+  "mf_permissions": {
+    "before": 37,
+    "after": 37,
+    "sha_equal": true
+  },
+  "mf_price_books": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_production_jobs": {
+    "before": 2,
+    "after": 2,
+    "sha_equal": true
+  },
+  "mf_production_profiles": {
+    "before": 2,
+    "after": 2,
+    "sha_equal": true
+  },
+  "mf_rate_events": {
+    "before": 36,
+    "after": 36,
+    "sha_equal": true
+  },
+  "mf_roles": {
+    "before": 7,
+    "after": 7,
+    "sha_equal": true
+  },
+  "mf_sale_price_entries": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_schema_migrations": {
+    "before": 6,
+    "after": 6,
+    "sha_equal": true
+  },
+  "mf_sessions": {
+    "before": 19,
+    "after": 31,
+    "sha_equal": false
+  },
+  "mf_sheet_estimates": {
+    "before": 5,
+    "after": 9,
+    "sha_equal": false
+  },
+  "mf_staging_agents": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_submission_receipts": {
+    "before": 5,
+    "after": 8,
+    "sha_equal": false
+  },
+  "mf_tariff_books": {
+    "before": 1,
+    "after": 1,
+    "sha_equal": true
+  },
+  "mf_tariff_entries": {
+    "before": 7,
+    "after": 7,
+    "sha_equal": true
+  },
+  "mf_user_roles": {
+    "before": 8,
+    "after": 18,
+    "sha_equal": false
+  },
+  "mf_users": {
+    "before": 14,
+    "after": 26,
+    "sha_equal": false
+  }
+}

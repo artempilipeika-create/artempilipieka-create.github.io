@@ -1,0 +1,29 @@
+{
+  "live_browser": {
+    "width": 1363,
+    "pages": [
+      "/",
+      "/about/",
+      "/services/",
+      "/order/",
+      "/3d/",
+      "/login"
+    ],
+    "overflow": false,
+    "noindex": true,
+    "auth_workflow": "NOT VERIFIED in live browser; actual staging HTTPS acceptance recorded separately"
+  },
+  "ci_browser": {
+    "run_id": 35895571199,
+    "job_id": 107298527445,
+    "widths": [
+      360,
+      768,
+      1440
+    ],
+    "screenshots": "home/editor mobile/desktop and public pages",
+    "transport": "Chromium -> real ASGI TestClient -> isolated native Postgres; not live Railway mobile screenshots"
+  },
+  "health_browser_navigation": "blocked by browser client; Railway readiness and HTTPS operator used as distinct evidence",
+  "design_changed": false
+}

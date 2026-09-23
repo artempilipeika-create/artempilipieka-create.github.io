@@ -1,0 +1,46 @@
+ .github/workflows/staging-foundation.yml      |   2 +-
+ backend/v2/stage08_acceptance.py              | 227 ++++++++
+ backend/v2/stage08_operator.py                | 100 ++++
+ backend/v2/stage08_scenarios.py               |  67 +++
+ docs/stage08/ACTUAL_GIT_DIFF.patch            | 737 +++++++++++++++++++++++++
+ docs/stage08/OPEN_NC.md                       |  24 +
+ docs/stage08/OPERATIONS.md                    |  37 ++
+ docs/stage08/Q_MATRIX.md                      | 103 ++++
+ docs/stage08/STAGE_8_REPORT.md                | 111 ++++
+ docs/stage08/changed-files.txt                |  45 ++
+ docs/stage08/ci-approved-snapshot.json        |  16 +
+ docs/stage08/ci-manager-chain.json            |  12 +
+ docs/stage08/ci-migration-restore.json        | 392 ++++++++++++++
+ docs/stage08/ci-self-chain.json               |  17 +
+ docs/stage08/ci.json                          |  72 +++
+ docs/stage08/diff-stat.txt                    |   0
+ docs/stage08/environment.json                 | 326 +++++++++++
+ docs/stage08/live-evidence.json               | 641 ++++++++++++++++++++++
+ docs/stage08/persistence.json                 |  35 ++
+ docs/stage08/post-stage08.json                | 748 ++++++++++++++++++++++++++
+ docs/stage08/pre-stage08.json                 | 652 ++++++++++++++++++++++
+ docs/stage08/q-matrix.json                    | 730 +++++++++++++++++++++++++
+ docs/stage08/recovered-empty-attempt.json     |  10 +
+ docs/stage08/screenshots/3d-1440.jpg          | Bin 0 -> 59215 bytes
+ docs/stage08/screenshots/about-1440.jpg       | Bin 0 -> 64152 bytes
+ docs/stage08/screenshots/editor-1440.jpg      | Bin 0 -> 61852 bytes
+ docs/stage08/screenshots/editor-360.jpg       | Bin 0 -> 27909 bytes
+ docs/stage08/screenshots/home-1440.jpg        | Bin 0 -> 57998 bytes
+ docs/stage08/screenshots/home-360.jpg         | Bin 0 -> 24071 bytes
+ docs/stage08/screenshots/live-3d.jpg          | Bin 0 -> 89675 bytes
+ docs/stage08/screenshots/live-about.jpg       | Bin 0 -> 79194 bytes
+ docs/stage08/screenshots/live-home.jpg        | Bin 0 -> 94579 bytes
+ docs/stage08/screenshots/live-order.jpg       | Bin 0 -> 76363 bytes
+ docs/stage08/screenshots/live-services.jpg    | Bin 0 -> 71850 bytes
+ docs/stage08/screenshots/preparation-1440.jpg | Bin 0 -> 53857 bytes
+ docs/stage08/screenshots/services-1440.jpg    | Bin 0 -> 52468 bytes
+ docs/stage08/source-evidence.json             |   7 +
+ docs/stage08/state-comparison.json            | 362 +++++++++++++
+ docs/stage08/ui.json                          |  29 +
+ tests/stage08/__init__.py                     |   0
+ tests/stage08/rehearsal.py                    |  94 ++++
+ tests/stage08/rehearsal_v1.sql                |  10 +
+ tests/stage08/test_e2e.py                     |  71 +++
+ tests/stage08/test_rehearsal.py               |  63 +++
+ tests/stage08/test_snapshot.py                |  41 ++
+ 45 files changed, 5780 insertions(+), 1 deletion(-)

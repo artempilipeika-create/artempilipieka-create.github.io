@@ -1,0 +1,730 @@
+[
+  {
+    "criterion": "CAT-01",
+    "status": "PASS",
+    "scenario": "Загрузить неизменённый U2; запросы ЛХДФ/ХДФ/HDF",
+    "expected": "Доступны пять соответствующих исходных плит; каждая прослеживается до строки",
+    "evidence": "../stage03/master-evidence.json; ../stage03/live-evidence.json; ../../tests/stage03/test_logic.py",
+    "scope": "Accepted real master provenance; fresh unchanged-table SHA and Stage 3 regressions. Master price approval is separate."
+  },
+  {
+    "criterion": "CAT-02",
+    "status": "PASS",
+    "scenario": "Выбрать 2141/2144/2145/2146 без артикула",
+    "expected": "Записи выбираются по стабильному ID; артикул не придумывается",
+    "evidence": "../stage03/master-evidence.json; ../stage03/live-evidence.json; ../../tests/stage03/test_logic.py",
+    "scope": "Accepted real master provenance; fresh unchanged-table SHA and Stage 3 regressions. Master price approval is separate."
+  },
+  {
+    "criterion": "CAT-03",
+    "status": "PASS",
+    "scenario": "U708/U5034: поиск по коду и HDF",
+    "expected": "Один и тот же точный variant 2,8 мм, без подмены на 3/4 мм",
+    "evidence": "../stage03/master-evidence.json; ../stage03/live-evidence.json; ../../tests/stage03/test_logic.py",
+    "scope": "Accepted real master provenance; fresh unchanged-table SHA and Stage 3 regressions. Master price approval is separate."
+  },
+  {
+    "criterion": "CAT-04",
+    "status": "PASS",
+    "scenario": "Смесители HDF строк 10749–10753",
+    "expected": "Не попадают в список плит",
+    "evidence": "../stage03/master-evidence.json; ../stage03/live-evidence.json; ../../tests/stage03/test_logic.py",
+    "scope": "Accepted real master provenance; fresh unchanged-table SHA and Stage 3 regressions. Master price approval is separate."
+  },
+  {
+    "criterion": "CAT-05",
+    "status": "PASS",
+    "scenario": "Импорт 22 139 строк",
+    "expected": "Сумма опубликованных/review/excluded/error/duplicate равна исходному количеству",
+    "evidence": "../stage03/master-evidence.json; ../stage03/live-evidence.json; ../../tests/stage03/test_logic.py",
+    "scope": "Accepted real master provenance; fresh unchanged-table SHA and Stage 3 regressions. Master price approval is separate."
+  },
+  {
+    "criterion": "CAT-06",
+    "status": "PASS",
+    "scenario": "180 M1 с нулевыми размерами и 44 M0 M1",
+    "expected": "Первые объяснённо классифицированы; вторые не исчезают без review/правила",
+    "evidence": "../stage03/master-evidence.json; ../stage03/live-evidence.json; ../../tests/stage03/test_logic.py",
+    "scope": "Accepted real master provenance; fresh unchanged-table SHA and Stage 3 regressions. Master price approval is separate."
+  },
+  {
+    "criterion": "CAT-07",
+    "status": "PASS",
+    "scenario": "Переставить строки того же XLSX",
+    "expected": "Постоянные material IDs не меняются, provenance обновляется",
+    "evidence": "../stage03/master-evidence.json; ../stage03/live-evidence.json; ../../tests/stage03/test_logic.py",
+    "scope": "Accepted real master provenance; fresh unchanged-table SHA and Stage 3 regressions. Master price approval is separate."
+  },
+  {
+    "criterion": "CAT-08",
+    "status": "PASS",
+    "scenario": "Одинаковый external L у разных объектов либо пустой L",
+    "expected": "Конфликт/устойчивый registry, не слияние по false или номеру строки",
+    "evidence": "../../tests/stage03/test_logic.py::test_all_rows_accounted_mixed_zero_and_external_collision",
+    "scope": "Synthetic collisions, no name/row-number merge."
+  },
+  {
+    "criterion": "CAT-09",
+    "status": "PASS",
+    "scenario": "Новый каталог + rollback",
+    "expected": "Новые поиски используют выбранный release; старые snapshots не меняются",
+    "evidence": "../../tests/stage03/test_api.py",
+    "scope": "Release rollback, frozen draft checkpoint, generated cache hash; fresh regression run."
+  },
+  {
+    "criterion": "CAT-10",
+    "status": "PASS",
+    "scenario": "Сборка клиентского cache",
+    "expected": "Generated hash/версия совпадают с published catalogue; нет ручного data.js или private fields",
+    "evidence": "../../tests/stage03/test_api.py",
+    "scope": "Release rollback, frozen draft checkpoint, generated cache hash; fresh regression run."
+  },
+  {
+    "criterion": "ID-01",
+    "status": "PASS",
+    "scenario": "В Excel 621 PO, в базе только 621 PE",
+    "expected": "unresolved; raw=621 PO; никакой подстановки",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Literal PO/PE/POX and physical identity conflicts; no fuzzy/cheaper substitution."
+  },
+  {
+    "criterion": "ID-02",
+    "status": "PASS",
+    "scenario": "В описании 621 POX, в базе 621 PO",
+    "expected": "Не exact_match",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Literal PO/PE/POX and physical identity conflicts; no fuzzy/cheaper substitution."
+  },
+  {
+    "criterion": "ID-03",
+    "status": "PASS",
+    "scenario": "Тот же код, другой производитель/структура/толщина/формат",
+    "expected": "Конфликт или явный выбор новой редакции; не молчаливое совпадение",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Literal PO/PE/POX and physical identity conflicts; no fuzzy/cheaper substitution."
+  },
+  {
+    "criterion": "ID-04",
+    "status": "PASS",
+    "scenario": "Фиксирован формат, другой дешевле",
+    "expected": "Оптимизатор сохраняет исходный формат до явного согласования",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Literal PO/PE/POX and physical identity conflicts; no fuzzy/cheaper substitution."
+  },
+  {
+    "criterion": "ID-05",
+    "status": "PASS",
+    "scenario": "Материал есть в облаке, нет точного BAZIS mapping",
+    "expected": "needs_material_mapping; Agent не выбирает похожий",
+    "evidence": "../../tests/stage06/test_native_contract.py::test_native_exit_zero_missing_outputs_signature_wrong_mapping_fatal_rejected",
+    "scope": "Software exact-mapping rejection only; local BAZIS mapping itself remains uncalibrated."
+  },
+  {
+    "criterion": "IMP-T01",
+    "status": "PASS",
+    "scenario": "qty=0 проходит importer → editor → save → reload → API",
+    "expected": "Везде остаётся 0/error; не 1; выпуск production запрещён",
+    "evidence": "ci-self-chain.json; live-evidence.json",
+    "scope": "Source qty=0 retained; explicit reason corrects revision to 3. This is not silent normalization."
+  },
+  {
+    "criterion": "IMP-T02",
+    "status": "PASS",
+    "scenario": "qty=-1, 1,5, пусто, текст",
+    "expected": "Каждая строка сохранена с причиной; суммы деталей не завышены",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T03",
+    "status": "PASS",
+    "scenario": "Неверная/пустая одна размерность",
+    "expected": "Строка видима, raw сохранён; не continue/drop",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T04",
+    "status": "PASS",
+    "scenario": "Материал отдельной строкой, затем детали; новый header без артикула",
+    "expected": "Корректная граница наследования, старый article не прилипает к новому материалу",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T05",
+    "status": "PASS",
+    "scenario": "X1/X2/Y1/Y2 и отдельно L1/L2/W1/W2",
+    "expected": "Одинаковый итог по принятому mapping",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T06",
+    "status": "PASS",
+    "scenario": "Одновременно обе системы сторон с разными значениями",
+    "expected": "Явный конфликт, не приоритет случайной колонки",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T07",
+    "status": "PASS",
+    "scenario": "Два выбранных листа Excel",
+    "expected": "Оба импортированы с отдельным provenance и контрольными количествами",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T08",
+    "status": "PASS",
+    "scenario": "В стороне записан конкретный SKU кромки",
+    "expected": "SKU остаётся raw и проходит разрешение, не превращается только в true",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T09",
+    "status": "PASS",
+    "scenario": "Формула без пригодного cached value",
+    "expected": "Видимая ошибка, не 0 и не скрытая строка",
+    "evidence": "../../tests/stage03/test_logic.py",
+    "scope": "Bad rows, dimensions/formulas, sheet provenance and independent edge SKU/side conflict."
+  },
+  {
+    "criterion": "IMP-T10",
+    "status": "PASS",
+    "scenario": "Изменить шаблон после прошлого импорта",
+    "expected": "Старый импорт воспроизводится по прежней версии; новый по новой",
+    "evidence": "../../tests/stage03/test_api.py::test_template_replay_after_new_revision_and_cross_client_deny",
+    "scope": ""
+  },
+  {
+    "criterion": "AUTO-01",
+    "status": "PASS",
+    "scenario": "Ручная кромка + повтор AUTO/смена default/reload",
+    "expected": "Ручное назначение и автор/lock сохранены",
+    "evidence": "../../tests/stage03/test_api.py::test_manual_auto_none_incompatible_material_survives_reload; ../../tests/stage03/test_logic.py::test_each_manual_side_is_protected",
+    "scope": ""
+  },
+  {
+    "criterion": "AUTO-02",
+    "status": "PASS",
+    "scenario": "Ручной материал + автоматический перерасчёт",
+    "expected": "Material variant не меняется",
+    "evidence": "../../tests/stage03/test_api.py::test_manual_auto_none_incompatible_material_survives_reload; ../../tests/stage03/test_logic.py::test_each_manual_side_is_protected",
+    "scope": ""
+  },
+  {
+    "criterion": "AUTO-03",
+    "status": "PASS",
+    "scenario": "Ручное «без кромки»",
+    "expected": "AUTO не добавляет кромку на эту сторону",
+    "evidence": "../../tests/stage03/test_api.py::test_manual_auto_none_incompatible_material_survives_reload; ../../tests/stage03/test_logic.py::test_each_manual_side_is_protected",
+    "scope": ""
+  },
+  {
+    "criterion": "AUTO-04",
+    "status": "PASS",
+    "scenario": "Manual edge стала несовместимой после явной смены материала",
+    "expected": "Предупреждение/ошибка, но не тихая замена",
+    "evidence": "../../tests/stage03/test_api.py::test_manual_auto_none_incompatible_material_survives_reload; ../../tests/stage03/test_logic.py::test_each_manual_side_is_protected",
+    "scope": ""
+  },
+  {
+    "criterion": "AUTO-05",
+    "status": "PASS",
+    "scenario": "Подстрока designation совпала с material code",
+    "expected": "Suggestion, не confirmed mapping",
+    "evidence": "../../tests/stage03/test_api.py::test_manual_auto_none_incompatible_material_survives_reload; ../../tests/stage03/test_logic.py::test_each_manual_side_is_protected",
+    "scope": ""
+  },
+  {
+    "criterion": "AUTO-06",
+    "status": "PASS",
+    "scenario": "Каталог/mapping изменён после submit",
+    "expected": "Отправленная редакция сохраняет старый concrete edge snapshot",
+    "evidence": "../../tests/stage03/test_api.py::test_release_rollback_does_not_rewrite_draft_or_immutable_checkpoint; ../../tests/stage04/test_api.py::test_ord03_ord04_manager_child_immutable_approval_reset",
+    "scope": "Concrete old revision snapshot is immutable; new catalogue does not rewrite it."
+  },
+  {
+    "criterion": "CAL-01",
+    "status": "PASS",
+    "scenario": "Одна маленькая деталь из материала компании",
+    "expected": "Начисляются целые расчётные чистые листы, не только площадь детали",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-02",
+    "status": "PASS",
+    "scenario": "2800×2070, trim=10; L=2781, W=100, rotation=false",
+    "expected": "Невмещающаяся деталь не получает фиктивный valid plan",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-03",
+    "status": "PASS",
+    "scenario": "Две детали 1388×1100, rotation=false; рабочее поле 2780×2050, kerf=4,4",
+    "expected": "Не размещаются на одном листе как две по длине: 1388+1388+4,4=2780,4",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-04",
+    "status": "PASS",
+    "scenario": "Те же условия, L=1387,8",
+    "expected": "Проверяется допустимость точного граничного размещения; Decimal/kerf не теряются",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-05",
+    "status": "PASS",
+    "scenario": "supply_source=customer, реальный формат/толщина",
+    "expected": "Material amount=0; услуги и используемая кромка считаются",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-06",
+    "status": "PASS",
+    "scenario": "В master D=0 у чёрной ЛХДФ без основания бесплатности",
+    "expected": "Не объявляется автоматически бесплатным материалом",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-07",
+    "status": "PASS",
+    "scenario": "Цена отсутствует у одной кромки",
+    "expected": "Calculation incomplete; PDF не выдаёт известную часть за общую цену",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-08",
+    "status": "PASS",
+    "scenario": "Материалы/кромка/услуги 100/40/60; скидки 10/20/5",
+    "expected": "90 + 32 + 57 = 179 BYN",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-09",
+    "status": "PASS",
+    "scenario": "Изменить только скидку кромки",
+    "expected": "Услуга кромкооблицовки не меняется",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-10",
+    "status": "PASS",
+    "scenario": "Позднее изменить тариф/цену/скидку клиента",
+    "expected": "Старый approved calculation/PDF остаётся неизменным",
+    "evidence": "ci-approved-snapshot.json; ../../tests/stage04/test_api.py::test_cal10_ord05_old_financial_bytes_survive_all_version_changes",
+    "scope": "SOFTWARE CONTRACT PASS / SYNTHETIC; final candidate, exact approval and PDF retained after independent version publication."
+  },
+  {
+    "criterion": "CAL-11",
+    "status": "PASS",
+    "scenario": "До решения NC-01 net=6 м",
+    "expected": "Не появляется скрытое автоматическое 10 м по правилу 1,15/5",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-12",
+    "status": "PASS",
+    "scenario": "После явной активации именно политики 1,15/5; net=6",
+    "expected": "Procurement=10 м; policy/version видны в объяснении; обработка остаётся по net",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-13",
+    "status": "PASS",
+    "scenario": "Один SKU назначен нескольким деталям/материалам",
+    "expected": "Округление выполняется в утверждённой группе, не на каждой стороне",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-14",
+    "status": "PASS",
+    "scenario": "Склейка L600 W400 q3",
+    "expected": "Заготовки 620×420, количество 6; finished count=3; упаковка 0,72 м²; стоимость материала не дублируется",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-15",
+    "status": "PASS",
+    "scenario": "Та же финальная обрезка по правилу одной L+W",
+    "expected": "Для соответствующей операции 3 м, не 6; первичный раскрой учтён отдельно",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-16",
+    "status": "PASS",
+    "scenario": "Цельная фабричная плита 36 мм, glue=false",
+    "expected": "Не превращается в 18+18 и не получает тариф cut18 автоматически",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-17",
+    "status": "PASS",
+    "scenario": "Две конфликтующие классификации услуги edge",
+    "expected": "Применяется утверждённая матрица либо needs_confirmation, не произвольная сумма двух ставок",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "CAL-18",
+    "status": "PASS",
+    "scenario": "Подменить preliminaryTotal/discount/price в запросе браузера",
+    "expected": "Авторитетная серверная сумма не меняется на переданную клиентом",
+    "evidence": "../../tests/stage04/test_engine.py; ../../tests/stage04/test_api.py",
+    "scope": "Versioned software calculation fixtures; no native-final or commercial-policy acceptance implied."
+  },
+  {
+    "criterion": "PDF-01",
+    "status": "PASS",
+    "scenario": "1/5/20 материалов, длинные имена, кириллица",
+    "expected": "Читаемые страницы, повтор заголовков, без clipping и растянутого растра",
+    "evidence": "../../tests/stage05/test_pdf.py; ../../tests/stage05/test_api.py; ../stage05/",
+    "scope": "Fresh document regressions; renderer/assets unchanged. Accepted Stage 5 visual artifacts remain applicable."
+  },
+  {
+    "criterion": "PDF-02",
+    "status": "PASS",
+    "scenario": "Snapshot на экране/в кабинете/PDF",
+    "expected": "Все amounts/discounts/units одинаковы для одного calculation_id",
+    "evidence": "../../tests/stage05/test_pdf.py; ../../tests/stage05/test_api.py; ../stage05/",
+    "scope": "Fresh document regressions; renderer/assets unchanged. Accepted Stage 5 visual artifacts remain applicable."
+  },
+  {
+    "criterion": "PDF-03",
+    "status": "PASS",
+    "scenario": "Материал заказчика, три скидки, неполная цена",
+    "expected": "Верные подписи/нулевая стоимость по основанию; нет ложного полного итога",
+    "evidence": "../../tests/stage05/test_pdf.py; ../../tests/stage05/test_api.py; ../stage05/",
+    "scope": "Fresh document regressions; renderer/assets unchanged. Accepted Stage 5 visual artifacts remain applicable."
+  },
+  {
+    "criterion": "PDF-04",
+    "status": "PASS",
+    "scenario": "Проверить текст/ссылки/вложения/metadata",
+    "expected": "Нет OBLX, BAZIS IDs, paths, tokens, логов, scraps и внутренних комментариев",
+    "evidence": "../../tests/stage05/test_pdf.py; ../../tests/stage05/test_api.py; ../stage05/",
+    "scope": "Fresh document regressions; renderer/assets unchanged. Accepted Stage 5 visual artifacts remain applicable."
+  },
+  {
+    "criterion": "SEC-01",
+    "status": "PASS",
+    "scenario": "Client скачивает собственный OBLX через v2 и legacy route",
+    "expected": "403, не файл/redirect на публичные байты",
+    "evidence": "live-evidence.json; ../../tests/stage02/test_security.py; ../../tests/stage06/test_api.py::test_client_oblx_new_routes_head_range_alternate_zip_history_denied",
+    "scope": "Live owned OBLX deny + regression legacy/ZIP/alternate routes. No public bytes."
+  },
+  {
+    "criterion": "SEC-02",
+    "status": "PASS",
+    "scenario": "Client HEAD/Range/ZIP/history/alternate kind",
+    "expected": "Нет обхода запрета OBLX",
+    "evidence": "live-evidence.json; ../../tests/stage02/test_security.py; ../../tests/stage06/test_api.py::test_client_oblx_new_routes_head_range_alternate_zip_history_denied",
+    "scope": "Live owned OBLX deny + regression legacy/ZIP/alternate routes. No public bytes."
+  },
+  {
+    "criterion": "SEC-03",
+    "status": "PASS",
+    "scenario": "Manager назначенного заказа; production допущенного job",
+    "expected": "OBLX доступен только с нужным permission и scope",
+    "evidence": "../../tests/stage06/test_api.py::test_job01_lease_package_exact_ids_private_and_fresh_permissions; ../../tests/stage02/test_security.py::test_OBLX04_05_06_07_staff_exact_scope_block_and_revocation",
+    "scope": "Software scoped download/lease authorization, not native execution."
+  },
+  {
+    "criterion": "SEC-04",
+    "status": "PASS",
+    "scenario": "Accounting/viewer без grant; затем со scoped grant",
+    "expected": "Без grant запрет; с grant только разрешённые объекты",
+    "evidence": "live-evidence.json; ../../tests/stage02/test_security.py; ../../tests/stage05/test_api.py",
+    "scope": "Real staging HTTP responses plus fresh revoked-grant/reassignment/blocked-staff regressions."
+  },
+  {
+    "criterion": "SEC-05",
+    "status": "PASS",
+    "scenario": "Неавторизованный/чужой пользователь получает заказ Bridge или загружает файл к нему",
+    "expected": "Нет доступа к payload/событиям/файлам; ownership проверен",
+    "evidence": "../../tests/stage02/test_security.py; live-evidence.json",
+    "scope": "Staging auth/ownership/injection boundary; production Bridge is not probed or modified."
+  },
+  {
+    "criterion": "SEC-06",
+    "status": "PASS",
+    "scenario": "Публичная регистрация с role=admin/permissions=*",
+    "expected": "Не создаёт сотрудника/привилегии",
+    "evidence": "../../tests/stage02/test_security.py; live-evidence.json",
+    "scope": "Staging auth/ownership/injection boundary; production Bridge is not probed or modified."
+  },
+  {
+    "criterion": "SEC-07",
+    "status": "PASS",
+    "scenario": "Переназначить manager, отозвать grant, заблокировать сотрудника",
+    "expected": "Старые права не продолжают работать на download/status API",
+    "evidence": "live-evidence.json; ../../tests/stage02/test_security.py; ../../tests/stage05/test_api.py",
+    "scope": "Real staging HTTP responses plus fresh revoked-grant/reassignment/blocked-staff regressions."
+  },
+  {
+    "criterion": "SEC-08",
+    "status": "PASS",
+    "scenario": "Клиентская order projection",
+    "expected": "Нет internalComment, технических mappings и посторонних PII",
+    "evidence": "live-evidence.json; ../../tests/stage02/test_security.py; ../../tests/stage05/test_api.py",
+    "scope": "Real staging HTTP responses plus fresh revoked-grant/reassignment/blocked-staff regressions."
+  },
+  {
+    "criterion": "EMAIL-01",
+    "status": "PASS",
+    "scenario": "Unverified пользователь вошёл, сохранил draft и пытается submit",
+    "expected": "Draft работает; submit=403 EMAIL_NOT_VERIFIED",
+    "evidence": "../../tests/stage02/test_security.py",
+    "scope": "Token/session/outbox contract, concurrent confirmation, expired/reused/changed-address cases with isolated sink; not external delivery."
+  },
+  {
+    "criterion": "EMAIL-02",
+    "status": "PASS",
+    "scenario": "Действительный token",
+    "expected": "Одноразовое подтверждение нужного адреса; черновик сохранён",
+    "evidence": "../../tests/stage02/test_security.py",
+    "scope": "Token/session/outbox contract, concurrent confirmation, expired/reused/changed-address cases with isolated sink; not external delivery."
+  },
+  {
+    "criterion": "EMAIL-03",
+    "status": "PASS",
+    "scenario": "Истёкший/повторный token, сменённый email",
+    "expected": "Безопасное понятное поведение; старый token не подтверждает новый адрес",
+    "evidence": "../../tests/stage02/test_security.py",
+    "scope": "Token/session/outbox contract, concurrent confirmation, expired/reused/changed-address cases with isolated sink; not external delivery."
+  },
+  {
+    "criterion": "EMAIL-04",
+    "status": "PASS",
+    "scenario": "Два параллельных confirm",
+    "expected": "Только один атомарный переход; нет двойного эффекта",
+    "evidence": "../../tests/stage02/test_security.py",
+    "scope": "Token/session/outbox contract, concurrent confirmation, expired/reused/changed-address cases with isolated sink; not external delivery."
+  },
+  {
+    "criterion": "EMAIL-05",
+    "status": "NOT VERIFIED",
+    "scenario": "Resend spam/ошибка доставки",
+    "expected": "Rate limit; outbox retry; нет потери пользователя или дублей заявок",
+    "evidence": "../../tests/stage02/test_security.py::test_EMAIL05_resend_revoke_cooldown_hour_day; ../../tests/stage02/test_security.py::test_email_queue_failure_atomicity_and_no_dispatch",
+    "scope": "Rate limits/atomic queue pass; external provider delivery/retry not verified. NC-07 remains open."
+  },
+  {
+    "criterion": "ORD-01",
+    "status": "PASS",
+    "scenario": "Повтор submit с тем же idempotency key и телом",
+    "expected": "Возвращается тот же заказ/редакция",
+    "evidence": "../../tests/stage04/test_api.py::test_ord01_ord02_submit_repeat_changed_body_and_stale",
+    "scope": ""
+  },
+  {
+    "criterion": "ORD-02",
+    "status": "PASS",
+    "scenario": "Тот же key с другим телом либо stale If-Match",
+    "expected": "409/412; нет перезаписи чужих новых правок",
+    "evidence": "../../tests/stage04/test_api.py::test_ord01_ord02_submit_repeat_changed_body_and_stale",
+    "scope": ""
+  },
+  {
+    "criterion": "ORD-03",
+    "status": "PASS",
+    "scenario": "Manager меняет материал после submit",
+    "expected": "Новая revision, старый snapshot и исходник сохранены",
+    "evidence": "ci-manager-chain.json; ../../tests/stage06/test_native_contract.py::test_final06_new_revision_never_inherits_approval",
+    "scope": "Raw source and old revision retained; software synthetic approval binds exact revision."
+  },
+  {
+    "criterion": "ORD-04",
+    "status": "PASS",
+    "scenario": "Approval старой revision после появления новой",
+    "expected": "Не утверждает новую автоматически; версия явно проверяется",
+    "evidence": "ci-manager-chain.json; ../../tests/stage06/test_native_contract.py::test_final06_new_revision_never_inherits_approval",
+    "scope": "Raw source and old revision retained; software synthetic approval binds exact revision."
+  },
+  {
+    "criterion": "ORD-05",
+    "status": "NOT VERIFIED",
+    "scenario": "Изменение payment status / обнаружение CUT",
+    "expected": "Не переводит заказ в изготовлен/выдан без отдельного факта",
+    "evidence": "../../tests/stage04/test_api.py; ../../tests/stage06/test_api.py",
+    "scope": "No automatic ready/issued transition, but an actual payment/CUT event workflow was not exercised."
+  },
+  {
+    "criterion": "JOB-01",
+    "status": "NOT VERIFIED",
+    "scenario": "Переименовать business_name",
+    "expected": "Order_id во всех системах остаётся тем же",
+    "evidence": "../../tests/stage06/test_api.py::test_job_refs_package_artifacts_immutable",
+    "scope": "Stable IDs sealed in package; cross-system business-name rename with real legacy tools/BAZIS not exercised."
+  },
+  {
+    "criterion": "JOB-02",
+    "status": "PASS",
+    "scenario": "Повторная доставка job, повторный event_id",
+    "expected": "Нет повторного запуска/повторного эффекта события",
+    "evidence": "../../tests/stage06/test_api.py",
+    "scope": "Idempotency, concurrent claims, fencing and expired/foreign lease rejection; fresh CI."
+  },
+  {
+    "criterion": "JOB-03",
+    "status": "PASS",
+    "scenario": "ACK с истёкшим/чужим lease или старым fencing",
+    "expected": "Отклонение без подтверждения новой попытки",
+    "evidence": "../../tests/stage06/test_api.py",
+    "scope": "Idempotency, concurrent claims, fencing and expired/foreign lease rejection; fresh CI."
+  },
+  {
+    "criterion": "JOB-04",
+    "status": "NOT VERIFIED",
+    "scenario": "Поздний результат предыдущей revision",
+    "expected": "Сохранён отдельно; не заменяет текущую цену/production package",
+    "evidence": "../../tests/stage06/test_native_contract.py::test_final06_new_revision_never_inherits_approval",
+    "scope": "Stale approval and lease rejected; complete late-result preservation scenario for a previous revision not independently exercised."
+  },
+  {
+    "criterion": "JOB-05",
+    "status": "PASS",
+    "scenario": "Не хватает файла, hash не совпал, неподдерживаемая capability",
+    "expected": "Не исполняется; ясное needs_review/error",
+    "evidence": "../../tests/stage06/test_exporter.py; ../../tests/stage06/test_api.py; ../../tests/stage06/test_native_contract.py",
+    "scope": "Missing artifacts, hash/capability/mapping/signature mismatch rejected by software contract."
+  },
+  {
+    "criterion": "JOB-06",
+    "status": "NOT VERIFIED",
+    "scenario": "Сбой после запуска БАЗИС до записи завершения",
+    "expected": "Reconciliation/операторская проверка, не слепой повтор",
+    "evidence": "../../tests/stage06/test_native_contract.py::test_job12_job13_physical_disconnect_uncertain_no_blind_retry",
+    "scope": "Software physical_started/lease-expiry contract passes; actual BAZIS process-crash/reconciliation not executed."
+  },
+  {
+    "criterion": "JOB-07",
+    "status": "PASS",
+    "scenario": "Calculate job завершён",
+    "expected": "Получен результат расчёта; это не in_production/ready/paid",
+    "evidence": "ci-self-chain.json; ../../tests/stage06/test_native_contract.py",
+    "scope": "Fake result never final; successful signed synthetic calculate alone does not approve/produce/pay."
+  },
+  {
+    "criterion": "JOB-08",
+    "status": "NOT VERIFIED",
+    "scenario": "Контрольный OBLX №69",
+    "expected": "4 материала / 120 позиций / 306 деталей сохраняются; exact codes и четыре стороны проверены",
+    "evidence": "../stage06/STAGE_6_REPORT.md",
+    "scope": "Reference metadata is recorded, but complete original №69 native round-trip and codes/parts comparison unavailable."
+  },
+  {
+    "criterion": "JOB-09",
+    "status": "NOT VERIFIED",
+    "scenario": "Native fixture с четырьмя разными кромками и всеми grain/rotation сочетаниями",
+    "expected": "Геометрия/ориентация в БАЗИС соответствует утверждённому профилю",
+    "evidence": "../../tests/stage06/fixtures/; ../../tests/stage06/test_exporter.py",
+    "scope": "Parser/fixture evidence only. No isolated Windows/BAZIS run."
+  },
+  {
+    "criterion": "JOB-10",
+    "status": "NOT VERIFIED",
+    "scenario": "Отдельный fixture 18+18",
+    "expected": "Сохраняется связь слоёв/готовых деталей и стадий 36 мм",
+    "evidence": "../../tests/stage06/fixtures/; ../../tests/stage06/test_exporter.py",
+    "scope": "Parser/fixture evidence only. No isolated Windows/BAZIS run."
+  },
+  {
+    "criterion": "MIG-01",
+    "status": "NOT VERIFIED",
+    "scenario": "Перенос legacy orders/users/files",
+    "expected": "Сверены counts/hashes/суммы; old IDs доступны через mapping; нет merge по одному имени",
+    "evidence": "ci-migration-restore.json; ../../tests/stage08/rehearsal_v1.sql",
+    "scope": "Synthetic fixture migration/restore passes. No authorized real legacy snapshot; real counts/money/files reconciliation not verified."
+  },
+  {
+    "criterion": "MIG-02",
+    "status": "PASS",
+    "scenario": "Redeploy/restart целевого сервиса",
+    "expected": "Заказы, пользователи и private files не исчезают",
+    "evidence": "persistence.json; post-stage08.json",
+    "scope": "Actual staging redeployment compared all canonical table hashes and private bytes."
+  },
+  {
+    "criterion": "MIG-03",
+    "status": "PASS",
+    "scenario": "Изолированное восстановление backup",
+    "expected": "Восстановлены БД + manifest + файлы согласованной точки",
+    "evidence": "pre-stage08.json; post-stage08.json",
+    "scope": "Real pg_dump/pg_restore into separate databases and private roots. No overwrite; same-project restore only."
+  },
+  {
+    "criterion": "MIG-04",
+    "status": "NOT VERIFIED",
+    "scenario": "Staging создаёт production-purpose test job",
+    "expected": "Рабочий production Agent не получает его",
+    "evidence": "environment.json; ../../tests/stage01/test_foundation.py; ../../tests/stage06/test_native_contract.py",
+    "scope": "Separate namespaces/credentials/config; produce tested only isolated CI. No production Agent telemetry and no live produce job."
+  },
+  {
+    "criterion": "UI-01",
+    "status": "FAIL",
+    "scenario": "Главная после доработки",
+    "expected": "Три разные фотографии, существующие токены/навигация и страницы сохранены",
+    "evidence": "screenshots/home-1440.jpg; ../stage07/visual-fix/REPORT.md",
+    "scope": "Accepted current design has one generated kitchen concept, not three distinct real photographs. No redesign authorized here."
+  },
+  {
+    "criterion": "UI-02",
+    "status": "PASS",
+    "scenario": "Client открывает scraps/старые URL",
+    "expected": "Нет доступа к внутренним данным и обхода прав",
+    "evidence": "../../tests/stage07/test_presentation.py; ../../tests/stage02/test_security.py",
+    "scope": "Scraps and legacy bypasses deny; internal data not public."
+  },
+  {
+    "criterion": "UI-03",
+    "status": "NOT VERIFIED",
+    "scenario": "3D-подписка истекла / клиент заблокирован",
+    "expected": "Нет разрешённой работы инструмента; проекты не удалены; история сохранена",
+    "evidence": "../stage07/visual-fix/REPORT.md",
+    "scope": "Working protected 3D/subscription/project-history integration is not implemented/verified. Public page explicitly says so."
+  },
+  {
+    "criterion": "E2E-01",
+    "status": "NOT VERIFIED",
+    "scenario": "Self Excel → errors исправлены → calc/PDF → submit → manager → БАЗИС calculate → final → approval → release",
+    "expected": "Один стабильный order_id, связанные версии, правильные permissions и цена",
+    "evidence": "ci-self-chain.json; live-evidence.json; ci-approved-snapshot.json",
+    "scope": "Live first half + isolated signed software downstream tests pass; full native BAZIS chain not executed."
+  },
+  {
+    "criterion": "E2E-02",
+    "status": "PASS",
+    "scenario": "Manager-assisted исходный Excel с ошибками",
+    "expected": "Файл/строки не потеряны; manager создаёт revision; нет раннего задания в производство",
+    "evidence": "live-evidence.json; ci-manager-chain.json",
+    "scope": "Real HTTP manager intake/correction; immutable parent/raw source, no early production jobs."
+  },
+  {
+    "criterion": "E2E-03",
+    "status": "PASS",
+    "scenario": "После approval обновить каталог/тариф, затем открыть старый заказ/PDF",
+    "expected": "Старый согласованный предмет и цена неизменны",
+    "evidence": "ci-approved-snapshot.json",
+    "scope": "SOFTWARE CONTRACT PASS / SYNTHETIC in isolated CI database. No real native approval claimed."
+  }
+]

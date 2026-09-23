@@ -1,0 +1,10 @@
+{
+  "prior_attempt": {
+    "deployment": "30bf0bae-e08d-469a-ab55-f15d44fe0cb7"
+  },
+  "created_orders": 0,
+  "active_actors": 0,
+  "active_sessions": 0,
+  "active_grants": 0,
+  "reason": "Initial HTTPS edge 502 before first order; explicitly verified empty and retired"
+}

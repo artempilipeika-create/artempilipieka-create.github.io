@@ -1,0 +1,72 @@
+{
+  "runtime": "bc6b96101a9eaf88732e1342eaf18c2579e6a385",
+  "run_id": 35896674899,
+  "jobs": [
+    {
+      "job_id": 107302213549,
+      "name": "stage07-browser",
+      "conclusion": "success",
+      "passed": 10,
+      "summary": "======================== 10 passed, 1 warning in 38.71s ========================"
+    },
+    {
+      "job_id": 107302213907,
+      "name": "postgres-foundation (stage03)",
+      "conclusion": "success",
+      "passed": 46,
+      "summary": "======================== 46 passed, 1 warning in 6.42s ========================="
+    },
+    {
+      "job_id": 107302213964,
+      "name": "postgres-foundation (stage01)",
+      "conclusion": "success",
+      "passed": 28,
+      "summary": "======================== 28 passed, 1 warning in 1.68s ========================="
+    },
+    {
+      "job_id": 107302213985,
+      "name": "postgres-foundation (stage05)",
+      "conclusion": "success",
+      "passed": 30,
+      "summary": "======================== 30 passed, 1 warning in 26.35s ========================"
+    },
+    {
+      "job_id": 107302214048,
+      "name": "postgres-foundation (stage07)",
+      "conclusion": "success",
+      "passed": 37,
+      "summary": "======================== 37 passed, 1 warning in 5.80s ========================="
+    },
+    {
+      "job_id": 107302214049,
+      "name": "postgres-foundation (stage06)",
+      "conclusion": "success",
+      "passed": 44,
+      "summary": "======================== 44 passed, 1 warning in 23.76s ========================"
+    },
+    {
+      "job_id": 107302214123,
+      "name": "postgres-foundation (stage04)",
+      "conclusion": "success",
+      "passed": 27,
+      "summary": "======================== 27 passed, 1 warning in 8.40s ========================="
+    },
+    {
+      "job_id": 107302214126,
+      "name": "postgres-foundation (stage08)",
+      "conclusion": "success",
+      "passed": 6,
+      "summary": "========================= 6 passed, 1 warning in 5.72s ========================="
+    },
+    {
+      "job_id": 107302214256,
+      "name": "postgres-foundation (stage02)",
+      "conclusion": "success",
+      "passed": 20,
+      "summary": "======================= 20 passed, 2 warnings in 14.77s ========================"
+    }
+  ],
+  "pass": 248,
+  "fail": 0,
+  "skip": 0
+}

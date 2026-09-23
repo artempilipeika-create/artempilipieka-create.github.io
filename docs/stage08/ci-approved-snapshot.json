@@ -1,0 +1,16 @@
+{
+  "scenario": "approved-snapshot",
+  "scope": "SOFTWARE CONTRACT PASS / SYNTHETIC",
+  "order_id": "025a5cc4-d880-4afc-95ad-5817b0da0efa",
+  "candidate_id": "286f2f9f-bb2b-4d07-90b2-ce1369bc2b63",
+  "unchanged_hashes": {
+    "mf_orders": "df38220a30a3a3e3ebc1dc63584238bc91ee6519e5ca9ccfce4ce9dc35a336d1",
+    "mf_order_revisions": "51f53ab3a2a922c5d6e8109df07282299d5ced97213567d7c41c20e23d0775aa",
+    "mf_calculations": "c97ecee51e087471189c1c7110edeb45086b3c6b65eabdb8153eee71b268d6e9",
+    "mf_final_calculation_candidates": "717d2514f2fc41713d3d4531700a4358aaa265338c45495d503d94ff8acd7c4d"
+  },
+  "pdf_sha256": "20281ae82309f36956541c8066efeb516c4cc04a56b7e37a012cb26a470dbb0e",
+  "native": "NOT VERIFIED",
+  "evidence_run_id": 35896674899,
+  "evidence_runtime": "bc6b96101a9eaf88732e1342eaf18c2579e6a385"
+}
