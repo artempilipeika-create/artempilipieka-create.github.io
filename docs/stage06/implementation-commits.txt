@@ -1,0 +1,8 @@
+7ca146dbb5f2522604f8a7761e5763ec91f659a5 Stage 6: bound pytest parameter IDs to prevent oversized CI log records
+04ee7c794fd71dd68aa5823a098748e80a810270 Stage 6: reject non-UTF8 XML and isolate lease diagnostic step
+9a3db469cce7ec90ee3d426425bf51e73d09303a Stage 6: calibration fixtures, isolated acceptance and stage-specific regression diagnostics
+d21af2a3f626ffa1c1934d179242dff0275b0ea5 Stage 6: bind current approval to exact final candidate and diagnose full suite
+9bade457894764553e77316abd5ec7f55bd7c499 Stage 6: isolate first lease test and capture bounded stack traces
+aa3266820844be432dec45065e88e5865691b437 Stage 6: cancel superseded staging-only diagnostic CI run
+bffefaabb5491d3f2cf0860923c9bbf452af74ea Stage 6: exact native mappings, approval and physical safety tests; bounded CI diagnostics
+618c24d7f408eaeb75d113518bcb5cf5313dae85 Stage 6: isolated production jobs, server OBLX preview and Agent v2 protocol

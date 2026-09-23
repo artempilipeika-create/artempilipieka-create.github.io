@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-09-23T13:21:14.658358+00:00",
+  "origin": "https://martin-forest-v2-staging-production.up.railway.app",
+  "requests": [
+    {
+      "path": "/health",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "cache_control": "no-store",
+      "body": "{\"ok\":true,\"environment\":\"staging\",\"stage\":\"6\",\"agent_transport\":\"disabled\",\"staging_agent_api\":\"enabled\",\"native_execution\":\"calibration_required\"}"
+    },
+    {
+      "path": "/robots.txt",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "cache_control": "no-store",
+      "body": "User-agent: *\nDisallow: /\n"
+    },
+    {
+      "path": "/public/20ab82e6-1019-4151-a388-b507b5cfa32e.oblx",
+      "status": 404,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/static/20ab82e6-1019-4151-a388-b507b5cfa32e.pdf",
+      "status": 404,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/api/orders",
+      "status": 404,
+      "noindex": "noindex, nofollow, noarchive"
+    }
+  ],
+  "normal_deployment_check": {
+    "deployment_id": "2769bd61-0279-4f83-a152-c3aff6036e1d",
+    "at": "2026-09-23T13:31:01.196915+00:00",
+    "status": 200,
+    "noindex": "noindex, nofollow, noarchive",
+    "health": {
+      "ok": true,
+      "environment": "staging",
+      "stage": "6",
+      "agent_transport": "disabled",
+      "staging_agent_api": "enabled",
+      "native_execution": "calibration_required"
+    }
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "deployment_id": "a824a004-84c8-4dc0-aeaf-64611e24bf33",
+  "runtime": "7ca146dbb5f2522604f8a7761e5763ec91f659a5",
+  "job_id": "d68af5ae-7fed-4e00-a712-b82b754fa382",
+  "order_id": "52de2c57-4607-4f29-9e75-5da3b5784017",
+  "revision_id": "373d2e0a-4e43-4120-bce4-9bb10ebe3832",
+  "calculation_id": "23c54974-86f5-481c-809b-2ce75fd58bfc",
+  "before_counts": {
+    "mf_orders": 8,
+    "mf_production_jobs": 1,
+    "mf_files": 22,
+    "mf_calculations": 4
+  },
+  "stage5_pdf_sha": {
+    "ec551b6c-fe70-43cf-b16c-88e4a926f7d2": "65d26c0be30f356b4670c69f8dce38d3f277f09e423eff0cb62f91fb57be17bc",
+    "ad90fd11-acee-487e-95d6-88cfc0ce71dd": "aefccf5b7d1b373d786efeba8c5f8ffd37faf92356f38c11fa61df3e5c502b81",
+    "70cf83c9-684c-4677-9a6e-5a89eb3988b0": "860494ad949e25f104f57d735b90984f952c9ba0216a08fab161c7defedd2a9a",
+    "acd60c03-1592-4b19-94b6-39013399a677": "fd4488e097d5ddcd4c2cf8d669679679348832c842826498dc88d73bc60e68d5",
+    "b6ceb0fb-ef10-439c-8cbf-51ceb4d11349": "066e1fbf507ebe2dbbf6e990064ad74c0a4d2f7c69221b5971fbe013b23d749c",
+    "0b96a9f9-164c-405e-9212-1695b2c37980": "e7aa8308f6db560891a6fc6519565682403f780a3cd11f75d35dc407de8d2f22",
+    "7338bdaa-3b03-4065-b514-010c8220a8e4": "c6c3e93ce05127c456d9a51ccdd684d88c8c3740dbcc09a5850f1aad0a38dffd",
+    "a6e09d4f-65ba-4f1b-83b6-1a2b134ed3b3": "01d8e61e13d3d3177cc207b4b4bbe38a15ee4de872aba59652d40801a39a87c4"
+  },
+  "client_denied": [
+    {
+      "method": "GET",
+      "route": "/production-jobs/d68af5ae-7fed-4e00-a712-b82b754fa382/artifacts/20ab82e6-1019-4151-a388-b507b5cfa32e",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/production-jobs/d68af5ae-7fed-4e00-a712-b82b754fa382/artifacts/20ab82e6-1019-4151-a388-b507b5cfa32e",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/files/20ab82e6-1019-4151-a388-b507b5cfa32e",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/files/20ab82e6-1019-4151-a388-b507b5cfa32e",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/files/20ab82e6-1019-4151-a388-b507b5cfa32e/download",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/files/20ab82e6-1019-4151-a388-b507b5cfa32e/download",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/files/20ab82e6-1019-4151-a388-b507b5cfa32e/preview",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/files/20ab82e6-1019-4151-a388-b507b5cfa32e/preview",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/documents/20ab82e6-1019-4151-a388-b507b5cfa32e",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/documents/20ab82e6-1019-4151-a388-b507b5cfa32e",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/production-jobs/d68af5ae-7fed-4e00-a712-b82b754fa382/artifacts/38e46cae-4117-42c0-b172-b10e5a6eb53e",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/production-jobs/d68af5ae-7fed-4e00-a712-b82b754fa382/artifacts/38e46cae-4117-42c0-b172-b10e5a6eb53e",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/files/38e46cae-4117-42c0-b172-b10e5a6eb53e",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/files/38e46cae-4117-42c0-b172-b10e5a6eb53e",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/files/38e46cae-4117-42c0-b172-b10e5a6eb53e/download",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/files/38e46cae-4117-42c0-b172-b10e5a6eb53e/download",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/files/38e46cae-4117-42c0-b172-b10e5a6eb53e/preview",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/files/38e46cae-4117-42c0-b172-b10e5a6eb53e/preview",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/documents/38e46cae-4117-42c0-b172-b10e5a6eb53e",
+      "status": 403
+    },
+    {
+      "method": "HEAD",
+      "route": "/documents/38e46cae-4117-42c0-b172-b10e5a6eb53e",
+      "status": 403
+    }
+  ],
+  "fixture": {
+    "finished": "600x400 qty=3",
+    "child_blanks": "620x420 qty=6",
+    "native": "NOT VERIFIED"
+  },
+  "agent_id": "99a0bfbe-bc17-432e-a286-0199e6e2282d",
+  "external_https_roundtrip": {
+    "claimed": true,
+    "job_id": "d68af5ae-7fed-4e00-a712-b82b754fa382",
+    "run_id": "de7d4fe4-bbf6-4d6f-93ae-a7966bf95d60",
+    "result_id": "51466353-fc33-40a6-8070-faa14b2fd218",
+    "accepted": true,
+    "verified": false,
+    "native": "NOT VERIFIED"
+  },
+  "result_repeat_idempotent": true,
+  "result_conflict_rejected": true,
+  "final_gate": "BAZIS_RUN_REQUIRED",
+  "credentials_retired": true,
+  "stage5_pdfs_unchanged": true,
+  "production_jobs_created": 0,
+  "native_calibration": "NOT VERIFIED",
+  "legacy_transport": "disabled",
+  "dispatch": "disabled"
+}
