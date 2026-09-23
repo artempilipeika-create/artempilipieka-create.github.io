@@ -67,6 +67,21 @@ def prepare(settings):
         for f in manifest['files']:
             if f['present'] and sha256((destination/'blobs'/f['storage_key']).read_bytes())!=f['sha256']: raise ValueError('Pre-Stage-5 private bytes mismatch')
         print('MF_STAGE05_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
+    if versions=={'0001_foundation.sql','0002_auth_security.sql','0003_catalogue_imports.sql','0004_order_calculation.sql','0005_client_documents.sql'}:
+        from .storage import sha256
+        destination=settings.storage_root.parent/'backups'/'pre-stage06'
+        manifest=json.loads((destination/'manifest.json').read_text())
+        before=json.loads((destination/'stage06-before.json').read_text())
+        if (manifest['namespace']!=settings.namespace or manifest['database']!=settings.database_name
+            or sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']
+            or before['database_sha256']!=manifest['database_sha256']
+            or not before['stage5_pdf_bindings_sha'] or not before['active_client_own_oblx_hard_deny']):
+            raise ValueError('Pre-Stage-6 backup/checkpoint integrity mismatch')
+        for f in manifest['files']:
+            if f['present'] and sha256((destination/'blobs'/f['storage_key']).read_bytes())!=f['sha256']: raise ValueError('Pre-Stage-6 private bytes mismatch')
+        from .stage05_operator import verify
+        if verify(settings)!=before['state']: raise ValueError('Staging changed since pre-Stage-6 backup')
+        print('MF_STAGE06_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
     migrate(settings)
     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'

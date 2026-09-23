@@ -2,7 +2,8 @@
 CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read','calculations.read'}
 CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage','calculations.create','documents.generate'}
 ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read',
-              'catalogue.import','catalogue.publish','catalogue.mapping.manage','financial.profiles.manage'}
+              'catalogue.import','catalogue.publish','catalogue.mapping.manage','financial.profiles.manage',
+              'production.agents.manage','production.jobs.reconcile'}
 
 
 def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=None):
@@ -13,7 +14,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
         return False
     roles = {r['role'] for r in conn.execute('SELECT role FROM mf_user_roles WHERE user_id=%s',(user_id,))}
     if not roles or 'service_agent' in roles:
-        # Remains deny while jobs are blocked and no authenticated lease mechanism exists.
+        # Agent v2 uses separate credentials and leased job scope, never browser permissions.
         return False
     if permission in ADMIN_ONLY and roles != {'admin'}:
         return False
@@ -22,9 +23,10 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
     if user['account_status'] == 'blocked' and (roles != {'client'} or permission not in CLIENT_READ):
         return False
     ceilings = {
-        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage','orders.review','calculations.fix','discounts.override'},
-        'production': {'orders.read','orders.oblx.read','files.source.read'},
-        'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read'},
+        'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage','orders.review','calculations.fix','discounts.override',
+            'production.calculate.enqueue','production.jobs.read','production.jobs.cancel','production.final.create','production.final.review'},
+        'production': {'orders.read','orders.oblx.read','files.source.read','production.jobs.read','production.release'},
+        'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read','production.jobs.read'},
         'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read'},
     }
     if any(role in ceilings and permission not in ceilings[role] for role in roles):
@@ -41,7 +43,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
     job = None
     if job_id:
         job = conn.execute('SELECT * FROM mf_production_jobs WHERE job_id=%s AND order_id=%s',(job_id,order_id)).fetchone()
-        if not job or job['status'] != 'blocked':
+        if not job or job['status'] not in {'blocked','admitted','leased','running','result_uploaded','succeeded','failed','uncertain','cancelled'}:
             return False
     grants = conn.execute('''SELECT scope_type,scope_id FROM mf_permission_grants WHERE user_id=%s
         AND permission=%s AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now())''',(user_id,permission))
@@ -60,7 +62,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
                 return True
         if scope == 'order' and order and g['scope_id'] == order_id:
             # Stage 2 production artifact review requires an explicit job grant, never execute rights.
-            if 'production' not in roles:
+            if 'production' not in roles or permission=='production.release':
                 return True
         if scope == 'job' and roles == {'production'}:
             if job and g['scope_id'] == str(job_id):

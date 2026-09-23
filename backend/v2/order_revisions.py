@@ -63,7 +63,9 @@ def from_raw(conn,release,row):
         'customer_material_key':row['draft_row_id'] if customer else None,'rotation':rotation,'grain':grain,'route':'solid','packaging':False,'edges':edges}
 
 def create(conn,settings,actor,order,body,manager=False):
-    if manager and order['workflow_status'] not in {'submitted','review'}: error(409,'SUBMITTED_OR_REVIEW_REQUIRED')
+    if manager and order['workflow_status'] not in {'submitted','review','awaiting_approval','approved'}: error(409,'SUBMITTED_OR_REVIEW_REQUIRED')
+    if manager and conn.execute("SELECT 1 FROM mf_production_jobs WHERE order_id=%s AND purpose='produce' AND status IN ('leased','running','result_uploaded','uncertain','succeeded')",(order['order_id'],)).fetchone():
+        error(409,'PRODUCTION_RECONCILIATION_REQUIRED')
     if not manager and order['workflow_status']!='draft': error(409,'DRAFT_REQUIRED')
     if body.parent_revision_id!=order['active_revision_id']: error(412,'PARENT_REVISION_CONFLICT')
     ev=evidence(conn,order);active_rows=[r for r in ev['draft_rows'] if r['excluded_reason'] is None]

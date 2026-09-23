@@ -13,6 +13,7 @@ from .storage import VolumeStore
 from .files import read_verified
 from .calculation_models import SubmitRequest
 from . import order_revisions
+from .production_models import OrderApproval
 
 class Draft(StrictModel):
     business_name: str = Field(min_length=1,max_length=200)
@@ -146,12 +147,13 @@ def router(settings, policy):
             return order_revisions.submit(conn,settings,user['user_id'],order_id,body,request.headers.get('idempotency-key'),request.headers.get('if-match'))
 
     @api.post('/orders/{order_id}/approve')
-    def approve(order_id: str, request: Request):
+    def approve(order_id: str, request: Request, body: OrderApproval):
         with transaction(settings) as conn:
             user = identity(conn,request)
             require(conn,user,'orders.approve',order_id=order_id)
             verified(user)
-            error(409,'CALCULATION_INCOMPLETE')
+            from .production_final import approve as approve_exact
+            return approve_exact(conn,settings,user,order_id,body)
 
     @api.get('/orders/{order_id}/history')
     def history(order_id: str, request: Request):

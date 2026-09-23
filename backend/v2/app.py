@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
 from fastapi.exceptions import RequestValidationError
 from .security import WebPolicy
-from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui
+from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui, production_api
 import secrets
 import os
 from .config import Settings
@@ -42,7 +42,23 @@ def create_app(settings=None, policy=None):
         if not enabled and request.url.path not in {'/health','/robots.txt'}:
             return JSONResponse({'detail':{'code':'STAGING_API_DISABLED'}},status_code=404,
                                 headers={'X-Robots-Tag':'noindex, nofollow','Cache-Control':'no-store'})
-        if request.method in {'POST','PUT','PATCH','DELETE'} and request.url.path.startswith('/api/v2/'):
+        agent_request=request.url.path.startswith('/api/v2/agent/')
+        if agent_request and os.environ.get('MF_STAGING_AGENT_API','disabled')!='enabled':
+            return JSONResponse({'detail':{'code':'STAGING_AGENT_API_DISABLED'}},status_code=503,
+                                headers={'X-Robots-Tag':'noindex, nofollow','Cache-Control':'no-store'})
+        if agent_request:
+            if request.headers.get('cookie') or request.headers.get('origin'):
+                return JSONResponse({'detail':{'code':'AGENT_BROWSER_AUTH_DENIED'}},status_code=403)
+            if request.method=='POST':
+                if request.headers.get('content-type','').split(';')[0]!='application/json':
+                    return JSONResponse({'detail':{'code':'JSON_REQUIRED'}},status_code=415)
+                size=0;chunks=[]
+                async for chunk in request.stream():
+                    size+=len(chunk)
+                    if size>5*1024*1024: return JSONResponse({'detail':{'code':'AGENT_BODY_LIMIT'}},status_code=413)
+                    chunks.append(chunk)
+                request._body=b''.join(chunks)
+        if not agent_request and request.method in {'POST','PUT','PATCH','DELETE'} and request.url.path.startswith('/api/v2/'):
             if request.headers.get('origin') != policy.origin:
                 return JSONResponse({'detail':{'code':'ORIGIN_DENIED'}},status_code=403,
                                     headers={'X-Robots-Tag':'noindex, nofollow','Cache-Control':'no-store'})
@@ -66,7 +82,8 @@ def create_app(settings=None, policy=None):
             readiness(settings)
         except Exception:
             raise HTTPException(503, 'Staging database is not ready') from None
-        return {'ok': True, 'environment': 'staging', 'stage': '5', 'agent_transport': 'disabled'}
+        return {'ok': True, 'environment': 'staging', 'stage': '6', 'agent_transport': 'disabled',
+                'staging_agent_api':os.environ.get('MF_STAGING_AGENT_API','disabled'),'native_execution':'calibration_required'}
 
     if not enabled:
         return app
@@ -97,5 +114,6 @@ def create_app(settings=None, policy=None):
     app.include_router(catalogue_api.router(settings,policy))
     app.include_router(calculation_api.router(settings,policy))
     app.include_router(document_api.router(settings,policy))
+    app.include_router(production_api.router(settings,policy))
     app.include_router(cabinet_ui.router())
     return app
