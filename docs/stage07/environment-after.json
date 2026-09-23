@@ -1,0 +1,377 @@
+{
+  "staging": {
+    "project": {
+      "id": "6d754ad4-ba7b-45f8-8c5e-356387e7de06",
+      "name": "Martin Forest Site Preview",
+      "workspaceName": "artempilipeika-create's Projects"
+    },
+    "environment": {
+      "id": "ee625678-c15e-452d-9761-cda99274839f",
+      "name": "production",
+      "unmergedChangesCount": null,
+      "stagedChanges": null
+    },
+    "services": [
+      {
+        "id": "abc0e90d-fa8e-4c00-a0a6-312593a479ed",
+        "name": "martin-forest-preview",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [],
+        "latestDeployment": {
+          "id": "5ac650b4-0d52-48c9-9222-29e0a8fd4f3a",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-22T16:36:17.684Z",
+          "url": null
+        }
+      },
+      {
+        "id": "42c638e9-4dc2-4e9a-9ec9-e670ae661bb6",
+        "name": "martin-forest-spec-v2-preview",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [],
+        "latestDeployment": {
+          "id": "c28c394e-ff50-4cc7-ba04-0ad9f5eb804c",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-22T18:50:17.778Z",
+          "url": null
+        }
+      },
+      {
+        "id": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+        "name": "martin-forest-v2-staging",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [
+          {
+            "id": "29b79637-3f45-4ddd-ad2c-028d6b96af8e",
+            "name": "mf-v2-staging-private",
+            "mountPath": "/mf-private",
+            "sizeMB": 5000,
+            "region": "sfo"
+          }
+        ],
+        "latestDeployment": {
+          "id": "b3f876ae-906f-4ca7-8e36-55f195b3ee35",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-23T16:21:07.110Z",
+          "url": null
+        }
+      },
+      {
+        "id": "e773c03c-1f76-4f78-adb7-2132528c3a19",
+        "name": "Postgres",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [
+          {
+            "id": "2000d688-b163-4775-93fb-0fe87dab18c6",
+            "name": "postgres-volume",
+            "mountPath": "/var/lib/postgresql/data",
+            "sizeMB": 5000,
+            "region": "sfo"
+          }
+        ],
+        "latestDeployment": {
+          "id": "65355a15-c461-43b3-85dd-b9d3eb1076ed",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-22T22:01:39.947Z",
+          "url": null
+        }
+      }
+    ],
+    "buckets": [],
+    "pendingWork": []
+  },
+  "staging_config": {
+    "service": {
+      "id": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+      "name": "martin-forest-v2-staging"
+    },
+    "environment": {
+      "id": "ee625678-c15e-452d-9761-cda99274839f",
+      "name": "production"
+    },
+    "config": {
+      "source": {
+        "repo": "artempilipeika-create/artempilipieka-create.github.io",
+        "branch": "martin-forest-v2-staging",
+        "commitSha": "8dd33526e356ce24bd9c3390b0052167a777d0b7"
+      },
+      "networking": {
+        "serviceDomains": {
+          "martin-forest-v2-staging-production.up.railway.app": {
+            "port": 8000
+          }
+        }
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "buildEnvironment": "V3",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "python -m backend.v2.serve",
+        "healthcheckPath": "/health",
+        "useLegacyStacker": false,
+        "ipv6EgressEnabled": false,
+        "runtime": "V2",
+        "multiRegionConfig": {
+          "sfo": {
+            "numReplicas": 1
+          }
+        }
+      },
+      "volumeMounts": {
+        "29b79637-3f45-4ddd-ad2c-028d6b96af8e": {
+          "mountPath": "/mf-private"
+        }
+      }
+    },
+    "variableNames": [
+      "MF_AGENT_TRANSPORT",
+      "MF_DATABASE_HOST",
+      "MF_DATABASE_NAME",
+      "MF_DATABASE_URL",
+      "MF_EMAIL_SEAL_KEY",
+      "MF_ENVIRONMENT",
+      "MF_EXPECTED_RAILWAY_ENVIRONMENT_ID",
+      "MF_EXPECTED_RAILWAY_PROJECT_ID",
+      "MF_EXPECTED_RAILWAY_SERVICE_ID",
+      "MF_JOB_NAMESPACE",
+      "MF_OUTBOX_DISPATCH",
+      "MF_PRESENTATION_UI",
+      "MF_PRIVATE_STORAGE_ROOT",
+      "MF_SECURITY_API",
+      "MF_STAGE01_PROBE_MODE",
+      "MF_STAGE02_PROBE_MODE",
+      "MF_STAGE03_OPERATOR_EMAIL",
+      "MF_STAGE03_OPERATOR_MODE",
+      "MF_STAGE03_OPERATOR_PASSWORD",
+      "MF_STAGING_AGENT_API",
+      "MF_WEB_ORIGIN",
+      "PORT"
+    ],
+    "staged": null
+  },
+  "production": {
+    "project": {
+      "id": "7f59bf67-56db-4f6c-b213-c9c7b9342932",
+      "name": "Martin Forest Bridge API",
+      "workspaceName": "artempilipeika-create's Projects"
+    },
+    "environment": {
+      "id": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+      "name": "production",
+      "unmergedChangesCount": null,
+      "stagedChanges": null
+    },
+    "services": [
+      {
+        "id": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+        "name": "bridge-api",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [],
+        "latestDeployment": {
+          "id": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-22T13:46:25.106Z",
+          "url": null
+        }
+      },
+      {
+        "id": "2f5c99bd-37ec-46b5-aa22-116f5f898f54",
+        "name": "Postgres",
+        "numReplicas": null,
+        "cronSchedule": null,
+        "volumes": [
+          {
+            "id": "8cdc9cc1-8968-4443-8af1-63a29041bc04",
+            "name": "postgres-volume",
+            "mountPath": "/var/lib/postgresql/data",
+            "sizeMB": 500,
+            "region": "sfo"
+          }
+        ],
+        "latestDeployment": {
+          "id": "168b0c29-6693-433f-9a85-552f9de65b37",
+          "status": "SUCCESS",
+          "createdAt": "2026-09-22T12:59:39.351Z",
+          "url": null
+        }
+      }
+    ],
+    "buckets": [],
+    "pendingWork": [
+      {
+        "id": "patch:fb061e37-22cf-4996-bfad-5f7cc31b45a1",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-09-22T13:18:31.639Z",
+        "workflowId": "commitChanges/818e6927-02ef-4cfe-a970-e7e01b0b6872/fb061e37-22cf-4996-bfad-5f7cc31b45a1"
+      }
+    ]
+  },
+  "production_config": {
+    "service": {
+      "id": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+      "name": "bridge-api"
+    },
+    "environment": {
+      "id": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+      "name": "production"
+    },
+    "config": {
+      "source": {
+        "repo": "artempilipeika-create/artempilipieka-create.github.io",
+        "branch": "martin-forest-api-v1"
+      },
+      "networking": {
+        "serviceDomains": {
+          "bridge-api-production-577d.up.railway.app": {
+            "port": 8000
+          }
+        }
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "buildEnvironment": "V3",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "healthcheckPath": "/health",
+        "healthcheckTimeout": 120,
+        "restartPolicyMaxRetries": 5,
+        "useLegacyStacker": false,
+        "ipv6EgressEnabled": false,
+        "runtime": "V2",
+        "multiRegionConfig": {
+          "sfo": {
+            "numReplicas": 1
+          }
+        }
+      }
+    },
+    "variableNames": [
+      "AGENT_API_KEY",
+      "CORS_ORIGINS",
+      "DATABASE_URL",
+      "PORT",
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_CHAT_ID"
+    ],
+    "staged": null
+  },
+  "production_config_equal": true,
+  "deploy_logs": {
+    "scope": "deployment",
+    "deploymentId": "b3f876ae-906f-4ca7-8e36-55f195b3ee35",
+    "serviceId": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+    "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+    "status": "SUCCESS",
+    "deploy": [
+      {
+        "timestamp": "2026-09-23T16:22:55.841890193Z",
+        "severity": "info",
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/f2d8d843-b42a-4b21-97a6-0b8cc1096b42/vol_slzpfjam9f5zzyrb",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-09-23T16:22:56.851483464Z",
+        "severity": "info",
+        "message": "Starting Container",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-09-23T16:22:57.288152843Z",
+        "severity": "info",
+        "message": "Stage 6 validating staging database and migrations",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-09-23T16:22:57.288156203Z",
+        "severity": "info",
+        "message": "Stage 6 starting HTTP server; legacy transport and outbox dispatch disabled",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-09-23T16:22:57.288160203Z",
+        "severity": "error",
+        "message": "INFO:     Started server process [1]",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-09-23T16:22:57.288163303Z",
+        "severity": "error",
+        "message": "INFO:     Waiting for application startup.",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-09-23T16:22:57.288166263Z",
+        "severity": "error",
+        "message": "INFO:     Application startup complete.",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-09-23T16:22:57.288169163Z",
+        "severity": "error",
+        "message": "INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      }
+    ]
+  },
+  "protected_refs": {
+    "main": "470776dfd3efd1db9638668d2e19ea174b7901cc",
+    "baseline": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+    "preview": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+    "bridge": "2031c09c2f9d8690cb75856b0a4cadb1533a411b"
+  },
+  "observed_staging_only_mutations": [
+    "source.commitSha",
+    "MF_PRESENTATION_UI=enabled"
+  ],
+  "secret_values_not_read": true
+}

@@ -1,0 +1,126 @@
+{
+  "checked_at": "2026-09-23T16:26:16.151834+00:00",
+  "runtime": "8dd33526e356ce24bd9c3390b0052167a777d0b7",
+  "deployment": "b3f876ae-906f-4ca7-8e36-55f195b3ee35",
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "f648920c53143418a259f7e5dd0f154ec3d73fbfd471582a5e6b26eec303768d"
+    },
+    {
+      "path": "/about/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86943df935af66389bed4f375dfc15e8046726941fdb72786272ca97473384d9"
+    },
+    {
+      "path": "/services/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "383da086e9fee4edd43f5cc62a2dda04a8e0e2f76c0d1d5871b28e13fdf729f9"
+    },
+    {
+      "path": "/services/raspil/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "7a8fd16fdf27f553fd1c11468e02817171663531ec285615719a85afbc9f2960"
+    },
+    {
+      "path": "/services/kromka/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "75e81ebbb464acfe30d78f9a8d996123b31aad1106e55e4a98b65f22f72d268a"
+    },
+    {
+      "path": "/how-it-works/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "c268915d9cbeabfcbe6070221f98b47c83522c3be4ab0ccfe1b04cd62250c387"
+    },
+    {
+      "path": "/contacts/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "2f031a9ada1c57ee1d30a661875285b86c8ca7ca45f6599ba06faac54f56437d"
+    },
+    {
+      "path": "/order/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "6431ccde9a6f2077e85a5bd052a86ffaf4a1fadb468b2ab6a4090e1f9b1faa92"
+    },
+    {
+      "path": "/3d/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "e5f0d20f8887c5e203513135848b78b2a538c1df627bcf31ee7f1dfe5d8766c5"
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86aed4798b3870abe8be561f7c10402e4011716774e8c9fccec70628b6b955c9"
+    },
+    {
+      "path": "/register",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86aed4798b3870abe8be561f7c10402e4011716774e8c9fccec70628b6b955c9"
+    },
+    {
+      "path": "/account",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86aed4798b3870abe8be561f7c10402e4011716774e8c9fccec70628b6b955c9"
+    },
+    {
+      "path": "/editor",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86aed4798b3870abe8be561f7c10402e4011716774e8c9fccec70628b6b955c9"
+    },
+    {
+      "path": "/staff",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86aed4798b3870abe8be561f7c10402e4011716774e8c9fccec70628b6b955c9"
+    },
+    {
+      "path": "/admin.html",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86aed4798b3870abe8be561f7c10402e4011716774e8c9fccec70628b6b955c9"
+    },
+    {
+      "path": "/constructor.html",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive",
+      "sha256": "86aed4798b3870abe8be561f7c10402e4011716774e8c9fccec70628b6b955c9"
+    }
+  ],
+  "health": {
+    "ok": true,
+    "environment": "staging",
+    "stage": "6",
+    "agent_transport": "disabled",
+    "staging_agent_api": "enabled",
+    "native_execution": "calibration_required"
+  },
+  "asset_identity": {
+    "/account/app.js": {
+      "matches_runtime": true,
+      "sha256": "3fdc7cc3d0d00082744dcaec4c6f71b6f54181fb59d8384c0cd3efc48739789e"
+    },
+    "/account/workspace.js": {
+      "matches_runtime": true,
+      "sha256": "e28e1b0c6d033cd69751e802e8e3c5c6c401af4266a1c96eeaae10a59e94b6a3"
+    },
+    "/ui/site-v2.css": {
+      "matches_runtime": true,
+      "sha256": "eb935a3f3c0075d4770e6e8af41fd40d0cbe2be00f5360ee5d5d6ffaf1737015"
+    }
+  },
+  "read_only": true
+}

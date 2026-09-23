@@ -1,0 +1,1361 @@
+diff --git a/.github/workflows/staging-foundation.yml b/.github/workflows/staging-foundation.yml
+index 6180806..e116794 100644
+--- a/.github/workflows/staging-foundation.yml
++++ b/.github/workflows/staging-foundation.yml
+@@ -2,7 +2,7 @@ name: Staging foundation only
+ on:
+   push:
+     branches: [martin-forest-v2-staging]
+-    paths: ['backend/v2/**', 'agent/**', 'tests/**', 'Dockerfile', '.github/workflows/staging-foundation.yml']
++    paths: ['backend/v2/**', 'agent/**', 'scripts/build-stage07-ui.py', 'tests/**', 'Dockerfile', '.github/workflows/staging-foundation.yml']
+   workflow_dispatch:
+ permissions:
+   contents: read
+@@ -13,7 +13,7 @@ jobs:
+     strategy:
+       fail-fast: false
+       matrix:
+-        stage: [stage01, stage02, stage03, stage04, stage05, stage06]
++        stage: [stage01, stage02, stage03, stage04, stage05, stage06, stage07]
+     runs-on: ubuntu-latest
+     container: python:3.12-trixie
+     services:
+@@ -52,3 +52,35 @@ jobs:
+         with:
+           name: staging-foundation-evidence-${{ matrix.stage }}
+           path: qa-output/stage01/
++  stage07-browser:
++    if: github.ref == 'refs/heads/martin-forest-v2-staging'
++    runs-on: ubuntu-latest
++    timeout-minutes: 10
++    services:
++      postgres:
++        image: postgres:17
++        env:
++          POSTGRES_USER: mf_staging_ci
++          POSTGRES_DB: mf_staging_ci
++          POSTGRES_HOST_AUTH_METHOD: trust
++        ports: ['5432:5432']
++        options: >-
++          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
++          --health-interval 5s --health-timeout 5s --health-retries 10
++    env:
++      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
++      MF_TEST_EVIDENCE_DIR: qa-output/stage07
++    steps:
++      - uses: actions/checkout@v4
++      - uses: actions/setup-python@v5
++        with:
++          python-version: '3.12'
++      - run: pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
++      - run: python -m playwright install --with-deps chromium
++      - name: Chromium desktop tablet mobile with actual ASGI Postgres
++        run: python -m pytest tests/stage07/browser_checks.py -vv -s --junitxml=qa-output/stage07/results.xml
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: stage07-browser-evidence
++          path: qa-output/stage07/
+diff --git a/backend/v2/app.py b/backend/v2/app.py
+index e2004e4..9a11cf0 100644
+--- a/backend/v2/app.py
++++ b/backend/v2/app.py
+@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
+ from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
+ from fastapi.exceptions import RequestValidationError
+ from .security import WebPolicy
+-from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui, production_api
++from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui, production_api, presentation_ui
+ import secrets
+ import os
+ from .config import Settings
+@@ -116,4 +116,6 @@ def create_app(settings=None, policy=None):
+     app.include_router(document_api.router(settings,policy))
+     app.include_router(production_api.router(settings,policy))
+     app.include_router(cabinet_ui.router())
++    if os.environ.get('MF_PRESENTATION_UI','disabled') == 'enabled':
++        app.include_router(presentation_ui.router())
+     return app
+diff --git a/backend/v2/cabinet_assets/app.css b/backend/v2/cabinet_assets/app.css
+index 68cf633..bf8f1fc 100644
+--- a/backend/v2/cabinet_assets/app.css
++++ b/backend/v2/cabinet_assets/app.css
+@@ -1 +1,6 @@
+-:root{color-scheme:light;--forest:#153d2d;--paper:#f6f3eb;--ink:#20382c;--muted:#68736b;--rule:#d9ddd2;font-family:Manrope,Arial,sans-serif;color:var(--ink);background:var(--paper)}*{box-sizing:border-box}body{margin:0}header{padding:24px max(6vw,20px);display:flex;align-items:center;gap:28px;border-bottom:1px solid var(--rule);background:white}header span{flex:1;color:var(--muted)}.brand{font-family:Georgia,serif;font-size:29px;font-style:italic;color:var(--forest);text-decoration:none}main{max-width:1080px;margin:38px auto;padding:0 24px;min-height:70vh}h1{font-size:32px;font-weight:500;color:var(--forest);margin:16px 0 24px}h2{font-size:21px;margin:30px 0 16px}h3{font-size:17px}p{line-height:1.55}button,.button{padding:12px 18px;background:var(--forest);color:white;border:1px solid var(--forest);border-radius:4px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}button:disabled{opacity:.5;cursor:default}.secondary{color:var(--forest);background:white}.actions,nav{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}input,select,textarea{display:block;padding:12px;border:1px solid #a7b3aa;border-radius:3px;width:100%;font:inherit;background:white;color:var(--ink);margin:7px 0 20px}label{display:block;margin-bottom:15px}form{max-width:560px}a{color:var(--forest)}.muted,.meta{color:var(--muted);font-size:14px}.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase}.order{padding:20px 0;border-bottom:1px solid var(--rule)}.order a{font-size:21px}.amount{font-size:30px;color:var(--forest);font-weight:600}.notice{border-left:3px solid #8d6c2f;padding:12px 20px;background:#fffdf8}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:white;margin:16px 0;table-layout:fixed}th,td{text-align:left;padding:12px;vertical-align:top;border-bottom:1px solid var(--rule);overflow-wrap:anywhere}th{color:var(--forest);font-size:13px}td{font-size:14px}.timeline li{padding:8px 0}#message:not(:empty){padding:14px;background:#fffdf8;border-left:3px solid var(--forest)}footer{padding:25px 6vw;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}[hidden]{display:none!important}@media(max-width:640px){header{gap:14px;flex-wrap:wrap}.brand{font-size:25px}header span{font-size:13px}main{padding:0 16px;margin-top:24px}h1{font-size:27px}th,td{padding:8px}table{min-width:580px}.actions button{width:100%}}
++:root{color-scheme:light;--forest:#153d2d;--paper:#f6f3eb;--ink:#20382c;--muted:#536459;--rule:#d9ddd2;font-family:Manrope,Arial,sans-serif;color:var(--ink);background:var(--paper)}*{box-sizing:border-box}body{margin:0}header{padding:24px max(6vw,20px);display:flex;align-items:center;gap:28px;border-bottom:1px solid var(--rule);background:white}header span{flex:1;color:var(--muted)}.brand{font-family:Georgia,serif;font-size:29px;font-style:italic;color:var(--forest);text-decoration:none}main{max-width:1080px;margin:38px auto;padding:0 24px;min-height:70vh}h1{font-size:32px;font-weight:500;color:var(--forest);margin:16px 0 24px}h2{font-size:21px;margin:30px 0 16px}h3{font-size:17px}p{line-height:1.55}button,.button{padding:12px 18px;background:var(--forest);color:white;border:1px solid var(--forest);border-radius:4px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}button:disabled{opacity:.5;cursor:default}.secondary{color:var(--forest);background:white}.actions,nav{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}input,select,textarea{display:block;padding:12px;border:1px solid #a7b3aa;border-radius:3px;width:100%;font:inherit;background:white;color:var(--ink);margin:7px 0 20px}label{display:block;margin-bottom:15px}form{max-width:560px}a{color:var(--forest)}.muted,.meta{color:var(--muted);font-size:14px}.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase}.order{padding:20px 0;border-bottom:1px solid var(--rule)}.order a{font-size:21px}.amount{font-size:30px;color:var(--forest);font-weight:600}.notice{border-left:3px solid #8d6c2f;padding:12px 20px;background:#fffdf8}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:white;margin:16px 0;table-layout:fixed}th,td{text-align:left;padding:12px;vertical-align:top;border-bottom:1px solid var(--rule);overflow-wrap:anywhere}th{color:var(--forest);font-size:13px}td{font-size:14px}.timeline li{padding:8px 0}#message:not(:empty){padding:14px;background:#fffdf8;border-left:3px solid var(--forest)}footer{padding:25px 6vw;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}[hidden]{display:none!important}@media(max-width:640px){header{gap:14px;flex-wrap:wrap}.brand{font-size:25px}header span{font-size:13px}main{padding:0 16px;margin-top:24px}h1{font-size:27px}th,td{padding:8px}table{min-width:580px}.actions button{width:100%}}
++/* Stage 7: compact workspace, same forest/paper design tokens as the accepted public site. */
++html{scroll-behavior:smooth}body{overflow-wrap:anywhere}header{background:var(--forest);color:white;padding:18px max(3vw,16px);gap:22px}header .brand{color:#fff;font-size:32px;white-space:nowrap}header .brand small{display:block;font:9px/2 Arial,sans-serif;letter-spacing:.16em}header nav{margin:0 0 0 auto;gap:20px}header nav a{color:white;text-decoration:none;font-size:14px}header .secondary{border-color:#c1cec4;background:transparent;color:white}main{max-width:1400px;min-height:70vh}#auth{display:grid;grid-template-columns:1fr 1fr;gap:10%;padding:55px 4% 80px;align-items:start}#auth h1{font-size:clamp(36px,4vw,58px);line-height:1.08}#auth form{background:white;padding:32px;border:1px solid var(--rule)}#auth form h2{margin-top:0}#auth input{margin:8px 0 22px}.auth-intro p{max-width:430px}.skip{position:fixed;top:6px;left:10px;z-index:100;background:#fff;padding:14px;transform:translateY(-150%)}.skip:focus{transform:none}:focus-visible{outline:3px solid #ae6b16;outline-offset:4px}a:hover{text-decoration:underline}button:hover:not(:disabled){filter:brightness(1.12)}button:disabled{opacity:1;color:#657368;background:#e1e5df;border-color:#c1c9bf;cursor:not-allowed}.workspace-nav{padding-bottom:22px;border-bottom:1px solid var(--rule)}.workspace-nav a{margin-left:auto}.order{background:#fff;border:1px solid var(--rule);padding:22px 24px;margin-bottom:12px;border-left:4px solid var(--forest)}.order a{font-size:19px;text-decoration:none}.notice{color:#664812;background:#fff8e8}.muted,.meta{color:#536459}button,input,select{min-height:44px}input[type=checkbox]{display:inline-block;width:20px;min-height:20px;margin:0 10px 0 0}input[type=file]{max-width:100%}label small{display:block;color:var(--muted)}textarea{min-height:96px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid label{margin:0}.panel{padding:24px;background:white;border:1px solid var(--rule);margin:20px 0}.panel form{max-width:none}.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:20px 0}.toolbar p{margin-right:auto}.badge{font-size:13px;padding:5px 10px;border:1px solid var(--rule);display:inline-block}.row-editor{max-width:none;border:1px solid var(--rule);padding:24px;background:#fff}.row-editor fieldset{border:1px solid var(--rule);margin:18px 0;padding:18px}.row-editor legend{padding:0 8px;font-weight:bold}.row-editor .grid{grid-template-columns:repeat(4,minmax(0,1fr))}.row-editor .wide{grid-column:1/-1}.table-wrap{border:1px solid var(--rule);margin:18px 0;max-width:100%}.table-wrap:focus{outline:3px solid #ae6b16}table{table-layout:auto;margin:0;min-width:600px}thead{background:#ecf0e9}th{white-space:nowrap}td{min-width:80px}caption{text-align:left;padding:14px;font-weight:600}#content h1:focus{outline:none}.compact td,.compact th{padding:8px}#message:empty{display:none}#message.error{background:#fff0ed;border-color:#a72f20;color:#80271d}#message{position:relative}.loading{color:var(--muted)}.error-text{color:#9b2d20}.empty{padding:40px 20px;text-align:center;border:1px dashed #a1afa2;background:#fff}.danger{color:#92291c;background:#fff;border-color:#b84536}details{margin:18px 0}summary{cursor:pointer;padding:12px;background:#edf0e8}dialog{max-width:560px;width:calc(100% - 32px);border:1px solid var(--rule);padding:28px;color:var(--ink);background:var(--paper)}dialog::backdrop{background:#0b281eaa}footer{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between}.result-list{max-height:310px;overflow:auto;margin:8px 0 20px}.result-list button{text-align:left;width:100%;margin:3px 0}.selected-material{padding:14px;background:#eaf1e8}.import-rows td{max-width:360px}.loading[hidden]{display:none}.staff-tabs{display:flex;flex-wrap:wrap;gap:10px}.staff-tabs button{margin-bottom:8px}
++@media(max-width:900px){header{flex-wrap:wrap}header nav{order:3;flex-basis:100%;margin:0}#auth{gap:28px;padding:20px 0}.row-editor .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
++@media(max-width:600px){#auth{grid-template-columns:1fr}.auth-intro h1 br{display:none}#auth form{padding:22px}.grid{grid-template-columns:1fr}header .brand{font-size:27px}header nav{gap:15px}header nav a{font-size:13px}header #logout{margin-left:auto}main{padding:0 14px}.panel,.row-editor{padding:16px}.row-editor .grid{grid-template-columns:1fr}.workspace-nav{gap:8px}.workspace-nav a{margin-left:0}.toolbar>*{max-width:100%}h1{overflow-wrap:anywhere}footer{padding:22px 16px}.order{padding:18px}dialog{padding:20px}}
++@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+diff --git a/backend/v2/cabinet_assets/app.js b/backend/v2/cabinet_assets/app.js
+index 888c80e..811c90f 100644
+--- a/backend/v2/cabinet_assets/app.js
++++ b/backend/v2/cabinet_assets/app.js
+@@ -2,28 +2,34 @@
+ const $=id=>document.getElementById(id), content=$('content');
+ let currentUser=null;
+ function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
+-function message(text){$('message').textContent=text;}
+-function button(text,fn,secondary=false){const e=node('button',text,secondary?'secondary':'');e.type='button';e.onclick=()=>run(fn);return e;}
++function message(text,error=false){$('message').textContent=text;$('message').classList.toggle('error',error);if(error)$('message').focus();}
++function button(text,fn,secondary=false){const e=node('button',text,secondary?'secondary':'');e.type='button';e.onclick=()=>run(async()=>{e.disabled=true;try{await fn();}finally{if(e.isConnected)e.disabled=false;}});return e;}
+ function value(v){return v===null||v===undefined?'Уточняется':String(v);}
+ function date(v){return new Date(v).toLocaleDateString('ru-RU');}
+-async function api(path,method='GET',body,headers={}){const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});if(!r.ok){const e=await r.json().catch(()=>({}));const code=e.detail?.code;const labels={LOGIN_FAILED:'Не удалось войти. Проверьте email и пароль.',EMAIL_NOT_VERIFIED:'Подтвердите email перед отправкой.',REVISION_CONFLICT:'Заказ изменился. Обновите страницу.',PROBLEMATIC_HANDOFF_REQUIRED:'Подтвердите передачу проблемных позиций менеджеру.',SOURCE_FILE_REQUIRED:'Добавьте исходный файл в подготовке заказа.',CLIENT_ACCOUNT_REQUIRED:'Этот кабинет предназначен для клиента.',VALIDATION_ERROR:'Проверьте заполненные поля.',DOCUMENT_RENDER_LIMIT:'Документ требует проверки специалистом.',DOCUMENT_INTEGRITY_FAILED:'Документ временно недоступен. Обратитесь к менеджеру.'};throw new Error(labels[code]||'Действие недоступно. Проверьте данные и доступ к заказу.');}return r.status===204?null:r.json();}
+-async function run(fn){try{message('');await fn();}catch(e){message(e.message);}}
+-async function start(){try{currentUser=await api('/auth/me');$('auth').hidden=true;$('account').hidden=false;$('logout').hidden=false;$('verification').hidden=currentUser.email_verified;await list();}catch(e){$('auth').hidden=false;$('account').hidden=true;$('logout').hidden=true;}}
+-async function login(register=false){const f=new FormData($('login'));await api('/auth/'+(register?'register':'login'),'POST',{email:f.get('email'),password:f.get('password')});$('login').reset();await start();}
+-$('login').onsubmit=e=>{e.preventDefault();run(()=>login());};$('register').onclick=()=>run(()=>login(true));
++async function api(path,method='GET',body,headers={}){const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});if(!r.ok){const e=await r.json().catch(()=>({}));const code=e.detail?.code;const labels={LOGIN_FAILED:'Не удалось войти. Проверьте email и пароль.',EMAIL_NOT_VERIFIED:'Подтвердите email перед отправкой.',REVISION_CONFLICT:'Заказ изменился. Обновите страницу.',PROBLEMATIC_HANDOFF_REQUIRED:'Подтвердите передачу проблемных позиций менеджеру.',SOURCE_FILE_REQUIRED:'Добавьте исходный файл в подготовке заказа.',CLIENT_ACCOUNT_REQUIRED:'Этот кабинет предназначен для клиента.',VALIDATION_ERROR:'Проверьте заполненные поля.',DOCUMENT_RENDER_LIMIT:'Документ требует проверки специалистом.',DOCUMENT_INTEGRITY_FAILED:'Документ временно недоступен. Обратитесь к менеджеру.'};const err=new Error(labels[code]||workspaceErrors[code]||'Действие недоступно. Проверьте данные и доступ к заказу.');err.status=r.status;err.code=code;throw err;}return r.status===204?null:r.json();}
++let busy=false;
++async function run(fn){if(busy)return;busy=true;content.setAttribute('aria-busy','true');try{message('Выполняется…');await fn();if($('message').textContent==='Выполняется…')message('');}catch(e){message(e.message,true);}finally{busy=false;content.setAttribute('aria-busy','false');}}
++async function start(){
++ try{currentUser=await api('/auth/me');}catch(e){$('auth').hidden=false;$('account').hidden=true;$('logout').hidden=true;if(e.status!==401)message(e.message,true);return;}
++ $('auth').hidden=true;$('account').hidden=false;$('logout').hidden=false;$('verification').hidden=currentUser.email_verified;
++ const staff=!currentUser.roles.includes('client');$('staff-link').hidden=!staff;$('profile').hidden=staff;$('orders').textContent=staff?'Рабочая очередь':'Мои заказы';$('prepare-link').hidden=!currentUser.capabilities.draft_create;
++ await workspaceStart();
++}
++async function login(register=registrationMode){if(!$('login').reportValidity())return;const f=new FormData($('login'));await api('/auth/'+(register?'register':'login'),'POST',{email:f.get('email'),password:f.get('password')});$('login').reset();await start();}
++$('login').onsubmit=e=>{e.preventDefault();run(()=>login());};$('register').onclick=()=>{registrationMode=!registrationMode;authMode();};
+ $('logout').onclick=()=>run(async()=>{await api('/auth/logout','POST',{});content.replaceChildren();currentUser=null;await start();});
+ $('verify').onclick=()=>run(async()=>{await api('/auth/email-verification/request','POST',{});message('Запрос принят. В тестовой среде письмо сохраняется в закрытый тестовый приёмник; внешняя отправка отключена.');});
+-$('orders').onclick=()=>run(list);
++$('orders').onclick=()=>run(()=>currentUser.roles.includes('client')?list():staffHome());
+ $('profile').onclick=()=>run(async()=>{const p=await api('/account/profile');content.replaceChildren(node('h1','Данные клиента'));const f=node('form');for(const [key,label]of[['display_name','Имя клиента'],['company_name','Компания']]){const l=node('label',label),i=node('input');i.name=key;i.maxLength=200;i.value=p[key];l.append(i);f.append(l);}const save=node('button','Сохранить');f.append(save);f.onsubmit=e=>{e.preventDefault();run(async()=>{await api('/account/profile','PATCH',Object.fromEntries(new FormData(f)));message('Данные сохранены. Ранее созданные документы не изменены.');});};content.append(f);});
+-async function list(after='',append=false){const data=await api('/account/orders?after='+encodeURIComponent(after));if(!append){content.replaceChildren(node('h1','Мои заказы'));if(!data.items.length)content.append(node('p','Здесь появятся ваши заказы и документы.'));if(currentUser.capabilities.draft_create)content.append(button('Новый черновик',newOrder,true));}for(const o of data.items){const el=node('article',undefined,'order'),a=node('a',o.number+' · '+o.name);a.href='#'+o.order_id;a.onclick=e=>{e.preventDefault();run(()=>detail(o.order_id));};el.append(a,node('p',[date(o.created_at),o.preparation_label,o.status_label,o.revision_number?'Редакция '+o.revision_number:''].filter(Boolean).join(' · '),'meta'),node('p',o.amount!==null?value(o.amount)+' BYN · предварительно':o.calculation_label));content.append(el);}if(data.next){const more=button('Показать ещё',async()=>{more.remove();await list(data.next,true);},true);content.append(more);}}
+-async function newOrder(){content.replaceChildren(node('h1','Новый черновик'));const f=node('form'),label=node('label','Название заказа'),input=node('input');input.name='business_name';input.required=true;input.maxLength=200;label.append(input);const select=node('select');select.name='preparation_mode';for(const [v,t]of[['manager_assisted','С помощью менеджера'],['self_prepared','Самостоятельная подготовка']]){const o=node('option',t);o.value=v;select.append(o);}f.append(label,select,node('button','Создать'));f.onsubmit=e=>{e.preventDefault();run(async()=>{const o=await api('/orders','POST',Object.fromEntries(new FormData(f)));await detail(o.order_id);});};content.append(f);}
+-function table(headers,rows){const t=node('table'),head=node('tr');headers.forEach(x=>head.append(node('th',x)));const thead=node('thead');thead.append(head);t.append(thead);const body=node('tbody');rows.forEach(row=>{const tr=node('tr');row.forEach(x=>tr.append(node('td',value(x))));body.append(tr);});t.append(body);const wrap=node('div',undefined,'table-wrap');wrap.append(t);return wrap;}
++async function list(after='',append=false){const data=await api('/account/orders?after='+encodeURIComponent(after));if(!append){content.replaceChildren(node('h1','Мои заказы'));if(!data.items.length)content.append(node('p','Пока нет заказов. Начните с исходного Excel или создайте деталировку самостоятельно.','empty'));if(currentUser.capabilities.draft_create)content.append(link('Подготовить заказ','/editor','button'));}for(const o of data.items){const el=node('article',undefined,'order'),a=node('a',o.number+' · '+o.name);a.href='#'+o.order_id;a.onclick=e=>{e.preventDefault();run(()=>detail(o.order_id));};el.append(a,node('p',[date(o.created_at),o.preparation_label,o.status_label,o.revision_number?'Редакция '+o.revision_number:''].filter(Boolean).join(' · '),'meta'),node('p',o.amount!==null?value(o.amount)+' BYN · предварительно':o.calculation_label));content.append(el);}if(data.next){const more=button('Показать ещё',async()=>{more.remove();await list(data.next,true);},true);content.append(more);}}
++async function newOrder(){content.replaceChildren(node('h1','Новый черновик'));const f=node('form'),label=node('label','Название заказа'),input=node('input');input.name='business_name';input.required=true;input.maxLength=200;label.append(input);const select=node('select');select.name='preparation_mode';for(const [v,t]of[['manager_assisted','С помощью менеджера'],['self_prepared','Самостоятельная подготовка']]){const o=node('option',t);o.value=v;select.append(o);}const modeLabel=node('label','Способ подготовки');modeLabel.append(select);f.append(label,modeLabel,node('button','Создать'));f.onsubmit=e=>{e.preventDefault();run(async()=>{const o=await api('/orders','POST',Object.fromEntries(new FormData(f)));location.assign('/editor?order='+encodeURIComponent(o.order_id));});};content.append(f);}
++function table(headers,rows){const t=node('table'),head=node('tr');headers.forEach(x=>head.append(node('th',x)));const thead=node('thead');thead.append(head);t.append(thead);const body=node('tbody');rows.forEach(row=>{const tr=node('tr');row.forEach(x=>tr.append(node('td',value(x))));body.append(tr);});t.append(body);head.querySelectorAll('th').forEach(th=>th.scope='col');const wrap=node('div',undefined,'table-wrap');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Таблица — горизонтальная прокрутка');wrap.append(t);return wrap;}
+ async function pdf(id){const doc=await api('/calculations/'+id+'/documents/preliminary','POST',{});const a=node('a');a.href='/api/v2/documents/'+doc.file_id;a.download='';document.body.append(a);a.click();a.remove();}
+ async function detail(id){const o=await api('/account/orders/'+id),timeline=await api('/account/orders/'+id+'/timeline');content.replaceChildren(node('p',o.number,'eyebrow'),node('h1',o.name),node('p',[o.preparation_label,o.status_label,'Редакция '+(o.revision_number||'ещё не создана')].join(' · '),'meta'),node('p',o.next_step));if(o.problem_message)content.append(node('p',o.problem_message,'notice'));
+- const actions=node('div',undefined,'actions');if(o.calculation_id){const b=button('Скачать предварительный расчёт',()=>pdf(o.calculation_id));b.disabled=!o.can_generate;actions.append(b);}const send=button('Отправить заказ на обработку',()=>submit(o),true);send.disabled=!o.can_submit;actions.append(send);content.append(actions);
++ const actions=node('div',undefined,'actions');if(o.workflow_status==='draft'||o.status==='draft')actions.append(link('Продолжить деталировку','/editor?order='+encodeURIComponent(id),'button secondary'));if(o.calculation_id){const b=button('Скачать предварительный расчёт',()=>pdf(o.calculation_id));b.disabled=!o.can_generate;actions.append(b);}const send=button('Отправить заказ на обработку',()=>submit(o),true);send.disabled=!o.can_submit;actions.append(send);content.append(actions);
+  const c=o.calculation;if(c){content.append(node('h2',c.title),node('p',c.status_label));if(c.synthetic)content.append(node('p','Тестовый пример с условными ценами.','notice'));if(c.materials.length){content.append(node('h3','Материалы'),table(['Материал / формат','Расчётное количество листов','Цена за лист, BYN','Сумма, BYN'],c.materials.map(m=>[[m.manufacturer,m.name,m.article,m.structure,m.thickness?m.thickness+' мм':'',m.length?m.length+' × '+m.width+' мм':''].filter(Boolean).join(' · '),m.quantity,m.unit_price,m.amount])));if(c.materials.some(m=>m.supply_source==='customer'))content.append(node('p',c.customer_material_notice,'notice'));}if(c.edges.length)content.append(node('h3','Материал кромки'),table(['Кромка','Чистовой метраж, м','Оплачиваемый метраж, м','Цена / м, BYN','Сумма, BYN'],c.edges.map(e=>[[e.name||e.designation,e.article,e.width+' × '+e.thickness+' мм'].filter(Boolean).join(' · '),e.net_metres,e.billable_metres,e.unit_price,e.amount])));if(c.services.length)content.append(node('h3','Производственные услуги'),table(['Операция','Объём','Тариф, BYN','Сумма, BYN'],c.services.map(s=>[s.name,value(s.quantity)+' '+({m:'м',m2:'м²'}[s.unit]||''),s.unit_price,s.amount])));content.append(node('h3','Три независимые скидки'),table(['Категория','До скидки','Скидка, %','Скидка, BYN','После, BYN'],c.discounts.map(d=>[d.name,d.gross,d.percent,d.discount,d.net])));if(c.unresolved.length){const ul=node('ul');c.unresolved.forEach(x=>ul.append(node('li',x)));content.append(node('h3','Требует уточнения стоимости'),ul);}content.append(node('h3',c.amount_label),node('p',c.amount===null?'Уточняется':value(c.amount)+' BYN','amount'),node('p',c.disclaimer,'muted'));}else{content.append(node('h2',o.calculation_label));if(o.materials.length)content.append(table(['Материалы'],o.materials.map(m=>[[m.name,m.article].filter(Boolean).join(' · ')])));}
+  content.append(node('h2','Документы'));if(!o.documents.length)content.append(node('p','Документы ещё не сформированы.','muted'));for(const d of o.documents){const p=node('p'),a=node('a',d.name+(d.document_version?' · версия '+d.document_version:'')+' · '+date(d.created_at));a.href=d.download_url;p.append(a);content.append(p);}if(o.calculations.length){content.append(node('h2','История расчётов'));for(const calc of o.calculations){const row=node('p','Редакция '+calc.revision_number+' · '+date(calc.created_at)+' · '+(calc.amount===null?'Требует уточнения стоимости':value(calc.amount)+' BYN')+' ');if(calc.can_generate)row.append(button('Скачать эту версию',()=>pdf(calc.calculation_id),true));content.append(row);}}
+  content.append(node('h2','История заказа'));const history=node('ol',undefined,'timeline');timeline.items.forEach(x=>history.append(node('li',date(x.date)+' · '+x.label)));content.append(history);
+ }
+ async function submit(o){content.replaceChildren(node('h1','Передать заказ на обработку'),node('p','Проверьте комментарий. Передача сохраняет текущую редакцию и направляет её менеджеру для проверки.'));const f=node('form'),label=node('label','Комментарий менеджеру'),text=node('textarea');text.name='comment';text.maxLength=2000;text.required=o.preparation_mode==='manager_assisted';if(text.required)text.minLength=10;label.append(text);f.append(label);let check=null;if(['invalid','needs_confirmation','incomplete'].includes(o.calculation_state)){const l=node('label','Передать позиции, требующие уточнения, на проверку менеджеру');check=node('input');check.type='checkbox';l.append(check);f.append(l);}f.append(node('button','Подтвердить отправку'));const key=crypto.randomUUID();f.onsubmit=e=>{e.preventDefault();run(async()=>{const body={comment:text.value,handoff_problematic:check?.checked||false};if(o.revision_id)body.revision_id=o.revision_id;if(o.calculation_id)body.preliminary_calculation_id=o.calculation_id;await api('/orders/'+o.order_id+'/submit','POST',body,{'If-Match':String(o.optimistic_lock_version),'Idempotency-Key':key});await detail(o.order_id);message('Заказ передан на обработку.');});};content.append(f,button('Назад к заказу',()=>detail(o.order_id),true));}
+-run(start);
++window.addEventListener('DOMContentLoaded',()=>{authMode();run(start);});
+diff --git a/backend/v2/cabinet_assets/index.html b/backend/v2/cabinet_assets/index.html
+index 1842182..5c01dd8 100644
+--- a/backend/v2/cabinet_assets/index.html
++++ b/backend/v2/cabinet_assets/index.html
+@@ -1 +1,7 @@
+-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Кабинет | Martin Forest</title><link rel="stylesheet" href="/account/app.css"><script defer src="/account/app.js"></script></head><body><header><a href="/account" class="brand">Martin Forest</a><span>Личный кабинет</span><button id="logout" hidden>Выйти</button></header><main><p id="message" role="status" aria-live="polite"></p><section id="auth"><p class="eyebrow">Ваши заказы и документы</p><h1>Добро пожаловать</h1><form id="login"><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Пароль<input name="password" type="password" autocomplete="current-password" required maxlength="128"></label><div class="actions"><button type="submit">Войти</button><button type="button" id="register" class="secondary">Зарегистрироваться</button></div><p class="muted">Для регистрации используйте пароль от 12 символов.</p></form></section><section id="account" hidden><div id="verification" hidden><p>Подтвердите email, чтобы передать заказ на обработку. Черновики и история доступны.</p><button id="verify" class="secondary">Запросить подтверждение email</button></div><nav><button id="orders" class="secondary">Мои заказы</button><button id="profile" class="secondary">Данные клиента</button></nav><div id="content"></div></section></main><footer>Martin Forest · Предварительная стоимость подтверждается после проверки заказа специалистом.</footer></body></html>
++<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#153d2d"><title>Кабинет | Martin Forest</title><link rel="icon" href="/ui/favicon.svg"><link rel="stylesheet" href="/account/app.css"><script defer src="/account/app.js"></script><script defer src="/account/workspace.js"></script></head><body>
++<a class="skip" href="#main">К содержимому</a>
++<header><a href="/" class="brand">Martin Forest<small>РАСПИЛ И КРОМКООБЛИЦОВКА</small></a><nav aria-label="Навигация"><a href="/order/">Подготовить заказ</a><a href="/account">Личный кабинет</a><a href="/staff" id="staff-link" hidden>Рабочий кабинет</a></nav><button id="logout" class="secondary" hidden>Выйти</button></header>
++<main id="main" tabindex="-1"><p id="message" role="status" aria-live="polite" tabindex="-1"></p>
++<section id="auth"><div class="auth-intro"><p class="eyebrow">Martin Forest / Ваш рабочий кабинет</p><h1 id="auth-title">Рады видеть<br>вас снова.</h1><p>Деталировка, история заказа и документы — в одном месте.</p><p class="muted">Стоимость на этапе подготовки остаётся предварительной до проверки и согласования.</p></div><form id="login"><h2 id="form-title">Войти в кабинет</h2><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254"><label for="password">Пароль</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="128"><div class="actions"><button type="submit" id="auth-submit">Войти</button><button type="button" id="register" class="secondary">Зарегистрироваться</button></div><p class="muted" id="password-hint">Для регистрации используйте пароль от 12 символов.</p><a href="/order/">Как подготовить заказ →</a></form></section>
++<section id="account" hidden><div id="verification" class="notice" hidden><p>Подтвердите email, чтобы передать заказ на обработку. Черновики и история доступны.</p><button id="verify" class="secondary">Запросить подтверждение email</button></div><nav class="workspace-nav" aria-label="Разделы кабинета"><button id="orders" class="secondary">Мои заказы</button><button id="profile" class="secondary">Данные клиента</button><a href="/editor" class="button" id="prepare-link">Новый заказ</a></nav><div id="content" aria-busy="false"></div></section>
++</main><footer><a href="/">Martin Forest</a><span>Предварительная стоимость подтверждается после проверки заказа специалистом.</span><a href="/contacts/">Связаться с нами</a></footer></body></html>
+diff --git a/backend/v2/cabinet_assets/workspace.js b/backend/v2/cabinet_assets/workspace.js
+new file mode 100644
+index 0000000..6e52ab1
+--- /dev/null
++++ b/backend/v2/cabinet_assets/workspace.js
+@@ -0,0 +1,117 @@
++'use strict';
++// Presentation adapters only. Prices, catalogue identity, validation and gates remain server-owned.
++const workspaceErrors={PERMISSION_DENIED:'Недостаточно прав для этого действия.',AUTH_REQUIRED:'Войдите в кабинет. Несохранённые поля остаются на странице.',BAZIS_RUN_REQUIRED:'Итоговый расчёт ещё не подтверждён производством.',BAZIS_CALIBRATION_REQUIRED:'Производственная проверка пока недоступна.',APPROVED_FINAL_REQUIRED:'Нужен согласованный итоговый расчёт.',DRAFT_REQUIRED:'Редактирование этого черновика уже закрыто.',PARENT_REVISION_CONFLICT:'Редакция изменилась. Откройте актуальную версию; ваши поля не сброшены.',EXACT_RELEASED_ITEM_REQUIRED:'Выберите точный материал из закреплённого каталога.',CATALOGUE_NOT_PUBLISHED:'Каталог пока не опубликован. Попробуйте позже.',TEMPLATE_OR_SHEET_MISMATCH:'Лист или заголовки не совпали с шаблоном. Проверьте настройки импорта.',INVALID_OR_UNSAFE_XLSX:'Не удалось прочитать XLSX. Проверьте формат файла.',STAFF_NOT_FOUND:'Сотрудник не найден.',SUBMITTED_REQUIRED:'В проверку можно взять только отправленный заказ.'};
++let registrationMode=location.pathname.startsWith('/register');
++function authMode(){$('auth-submit').textContent=registrationMode?'Создать аккаунт':'Войти';$('form-title').textContent=registrationMode?'Регистрация':'Войти в кабинет';$('register').textContent=registrationMode?'У меня есть аккаунт':'Зарегистрироваться';$('password').autocomplete=registrationMode?'new-password':'current-password';$('password').minLength=registrationMode?12:1;}
++function link(text,href,cls){const a=node('a',text,cls);a.href=href;return a;}
++function field(label,name,type='text',val='',required=false){const l=node('label',label),i=node(type==='textarea'?'textarea':'input');i.name=name;i.id='f-'+crypto.randomUUID();l.htmlFor=i.id;if(type!=='textarea')i.type=type;i.value=val??'';i.required=required;i.maxLength=type==='textarea'?4000:200;l.append(i);return [l,i];}
++function selectField(label,name,options,val){const l=node('label',label),s=node('select');s.name=name;s.setAttribute('aria-label',label);s.id='s-'+crypto.randomUUID();l.htmlFor=s.id;for(const [v,t]of options){const o=node('option',t);o.value=v;s.append(o);}if(val!==undefined)s.value=val;l.append(s);return[l,s];}
++function heading(text,note){content.replaceChildren(node('p','Martin Forest / Рабочее пространство','eyebrow'),node('h1',text));if(note)content.append(node('p',note,'muted'));document.title=text+' | Martin Forest';}
++function confirmAction(title,description){return new Promise(resolve=>{const d=node('dialog'),h=node('h2',title),p=node('p',description),actions=node('div',undefined,'actions');const yes=node('button','Подтвердить'),no=node('button','Отмена','secondary');actions.append(no,yes);d.append(h,p,actions);d.setAttribute('aria-label',title);let done=false;function close(v){if(done)return;done=true;d.close();d.remove();resolve(v);}yes.onclick=()=>close(true);no.onclick=()=>close(false);d.oncancel=e=>{e.preventDefault();close(false);};document.body.append(d);d.showModal();no.focus();});}
++async function workspaceStart(){
++ const path=location.pathname;
++ if(path==='/constructor.html'){heading('3D-конструктор','Отдельный рабочий инструмент');content.append(node('p','В этой версии кабинета подключение проектов и подписки 3D ещё не завершено. Доступ к рабочему инструменту временно закрыт.','notice'),link('Подготовить деталировку','/order/','button'));return;}
++ if(path==='/staff'||path==='/admin.html'){await staffHome();return;}
++ if(path==='/editor'||path==='/order.html'){await editorStart();return;}
++ if(!currentUser.roles.includes('client')){await staffHome();return;}
++ if(location.hash&&/^[0-9a-f-]{36}$/.test(location.hash.slice(1)))await detail(location.hash.slice(1));else await list();
++}
++const statusLabels={draft:'Черновик',submitted:'Передан на обработку',review:'На проверке',awaiting_approval:'Ожидает согласования',approved:'Согласован',production:'В производстве',completed:'Завершён',cancelled:'Отменён'};
++let editorOrder=null,manualRows=[],catalogueRelease=null,dirty=false,importId=null,activeRow=null,revisionComment="";
++window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
++async function editorStart(){
++ const id=new URLSearchParams(location.search).get('order');
++ if(!id){heading('Начните с заказа','Название поможет найти деталировку в кабинете.');const form=node('form',undefined,'panel');const [l,n]=field('Название заказа','business_name','text','',true);const [ml,m]=selectField('Способ подготовки','preparation_mode',[['manager_assisted','С помощью менеджера'],['self_prepared','Самостоятельно']],new URLSearchParams(location.search).get('mode')==='self'?'self_prepared':'manager_assisted');form.append(l,ml,node('button','Создать черновик'));form.onsubmit=e=>{e.preventDefault();run(async()=>{const o=await api('/orders','POST',{business_name:n.value,preparation_mode:m.value});history.replaceState(null,'','/editor?order='+encodeURIComponent(o.order_id));await openEditor(o.order_id);});};content.append(form);return;}
++ await openEditor(id);
++}
++async function openEditor(id){
++ editorOrder=await api('/orders/'+encodeURIComponent(id));
++ if(!currentUser.roles.some(r=>['client','manager','admin'].includes(r))){heading('Доступ ограничен');content.append(node('p','Для редактирования нужны соответствующие права на заказ.','notice'));return;}
++ manualRows=[];catalogueRelease=null;
++ if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.filter(d=>!d.draft_row_id||d.resolution_reason).map(d=>({detail_id:d.detail_id,...(d.draft_row_id?{draft_row_id:d.draft_row_id,resolution_reason:d.resolution_reason}:{}),length:d.length,width:d.width,qty:d.qty,variant_id:d.material?.variant_id||null,materialLabel:materialLabel(d.material),custom_customer:d.customer_material_key?{key:d.customer_material_key,name:d.material.name,thickness:d.material.thickness,length:d.material.length,width:d.material.width,reason:d.material.reason}:null,supply_source:d.supply_source,provided_sheets:d.provided_sheets,customer_reason:d.customer_reason,rotation:d.rotation,grain:d.grain,route:d.route,packaging:d.packaging,edges:Object.fromEntries(Object.entries(d.edges).map(([s,e])=>[s,{edge_id:e.edge?.edge_id||null,supply_source:e.supply_source}]))}));}
++ dirty=false;revisionComment='';await editorView();
++}
++function materialLabel(m){return m?[m.manufacturer,m.raw_description||m.name,m.article,m.structure,m.thickness?m.thickness+' мм':'',m.length&&m.width?m.length+' × '+m.width+' мм':''].filter(Boolean).join(' · '):'Материал не выбран';}
++async function editorView(){
++ heading(editorOrder.business_name||'Деталировка','Размеры — готовые, в миллиметрах. Все расчёты выполняет сервер.');
++ content.append(node('p',statusLabels[editorOrder.workflow_status]||'Статус уточняется','badge'));
++ const editingAllowed=editorOrder.workflow_status==='draft'||currentUser.roles.some(r=>['admin','manager'].includes(r));
++ const bar=node('div',undefined,'toolbar');bar.append(link(currentUser.roles.includes('client')?'Заказ и документы':'Рабочая очередь',currentUser.roles.includes('client')?'/account#'+editorOrder.order_id:'/staff','button secondary'));
++ const add=button('Добавить деталь',()=>editRow());add.disabled=!editingAllowed;bar.append(add,button('Импорт Excel',importForm,true));
++ const mode=button('Компактный / расширенный вид',()=>{content.classList.toggle('compact');},true);bar.append(mode);content.append(bar);
++ if(editorOrder.preparation_mode==='manager_assisted')content.append(node('p','Загрузите исходник через проверяемый шаблон и добавьте комментарий. Не требуется самостоятельно исправлять все проблемные позиции перед передачей менеджеру.','notice'));
++ renderManual();
++ const draft=await api('/orders/'+editorOrder.order_id+'/draft/rows');editorOrder.optimistic_lock_version=draft.optimistic_lock_version;
++ if(draft.rows.length){content.append(node('h2','Позиции из Excel'));renderImported(draft.rows);}
++ if(draft.catalogue_update_available)content.append(button('Посмотреть изменения каталога',catalogueDiff,true));
++ const actions=node('div',undefined,'actions');const save=button('Сохранить новую редакцию',saveRevision);save.disabled=!editingAllowed;actions.append(save);
++ const calc=button('Предварительный расчёт',async()=>{if(dirty)throw new Error('Сначала сохраните новую редакцию.');await api('/orders/'+editorOrder.order_id+'/calculations','POST',{revision_id:editorOrder.active_revision_id});message('Предварительный расчёт создан. Откройте заказ и документы. Итоговая стоимость ещё не согласована.');});calc.disabled=!editorOrder.active_revision_id;actions.append(calc);content.append(actions,node('p','Сохранение новой редакции не означает согласование или запуск производства.','muted'));
++ const [cl,ci]=field('Комментарий к редакции','revision_comment','textarea',revisionComment);content.append(cl);ci.oninput=()=>{dirty=true;revisionComment=ci.value;};
++ if(!currentUser.roles.includes('client'))content.append(node('p','Работа с итоговым согласованием доступна только при наличии проверенного производственного расчёта.','notice'));
++}
++function renderManual(){const section=node('section');section.id='manual-rows';section.append(node('h2','Ручная деталировка'));
++ if(!manualRows.length)section.append(node('p','Добавьте деталь или импортируйте исходный Excel.','empty'));
++ else{const t=table(['№','Материал','Д × Ш, мм','Кол-во, шт.','Текстура / вращение','Кромка L1 / L2 / W1 / W2','Действия'],manualRows.map((r,i)=>[i+1,r.materialLabel,r.length+' × '+r.width,r.qty,({length:'По длине',width:'По ширине',none:'Без текстуры',unknown:'Не определена'}[r.grain])+' / '+(r.rotation?'разрешено':'запрещено'),['L1','L2','W1','W2'].map(s=>r.edges[s]?.edge_id?'Назначена':'Нет').join(' / '),'']));t.querySelectorAll('tbody tr').forEach((tr,i)=>{tr.lastChild.append(button('Изменить',()=>editRow(i),true),button('Удалить',async()=>{if(await confirmAction('Удалить деталь?','Будет удалена только строка текущей несохранённой редакции. Предыдущие редакции сохранятся.')){manualRows.splice(i,1);dirty=true;await editorView();}},true));});section.append(t);}
++ const old=$('manual-rows');if(old)old.replaceWith(section);else content.append(section);
++}
++function picker(label,kind,release,onPick){const box=node('div'),[l,q]=field(label,'search','search'),results=node('div',undefined,'result-list'),search=button('Найти',async()=>{results.replaceChildren(node('p','Поиск…'));const d=await api('/catalogue/'+kind+'?q='+encodeURIComponent(q.value)+(release?'&release='+encodeURIComponent(release):'')+'&limit=50');results.replaceChildren();if(!d.items.length)results.append(node('p','Совпадений не найдено. Уточните артикул.'));for(const item of d.items)results.append(button(materialLabel(item),async()=>{await onPick(item,d.catalogue_release);results.replaceChildren(node('p','Выбрано: '+materialLabel(item),'selected-material'));},true));if(d.total>50)results.append(node('p','Показаны первые 50 вариантов. Уточните поиск по артикулу.'));},true);box.append(l,search,results);return box;}
++async function editRow(index,source){
++ activeRow=index;const old=manualRows[index];const r=source?structuredClone(source):old?structuredClone(old):{detail_id:crypto.randomUUID(),length:'',width:'',qty:1,variant_id:null,materialLabel:'Материал не выбран',supply_source:'company',rotation:false,grain:'unknown',route:'solid',packaging:false,edges:{}};
++ const panel=node('section',undefined,'panel');panel.id='row-panel';panel.append(node('h2',old?'Изменить деталь':'Новая деталь'));const form=node('form',undefined,'row-editor'),grid=node('div',undefined,'grid');
++ for(const [k,t]of [['length','Длина, мм'],['width','Ширина, мм'],['qty','Количество, шт.']]){const[l,i]=field(t,k,'number',r[k],true);i.min=k==='qty'?'0':'0.001';i.step=k==='qty'?'1':'0.001';grid.append(l);}
++ const [gl,g]=selectField('Направление текстуры','grain',[['unknown','Не определено'],['length','По длине'],['width','По ширине'],['none','Без текстуры']],r.grain);const[rl,rot]=selectField('Вращение детали','rotation',[['false','Запрещено'],['true','Разрешено']],String(r.rotation));const[pl,route]=selectField('Конструкция','route',[['solid','Цельная плита'],['glued_18_18','Склейка 18 + 18']],r.route);const[packl,pack]=selectField('Упаковка','packaging',[['false','Без упаковки'],['true','Упаковать']],String(r.packaging));grid.append(gl,rl,pl,packl);form.append(grid);
++ const selected=node('p',r.materialLabel,'selected-material');form.append(selected,picker('Поиск материала: артикул, структура','materials',catalogueRelease,async(m,release)=>{if(r.variant_id&&r.variant_id!==m.variant_id&&!await confirmAction('Заменить материал?',r.materialLabel+' → '+materialLabel(m)+'. Проверьте все ручные назначения кромки.'))return;r.variant_id=m.variant_id;r.custom_customer=null;r.materialLabel=materialLabel(m);catalogueRelease=catalogueRelease||release;selected.textContent=r.materialLabel;}));
++ const [sl,supply]=selectField('Чей материал','supply_source',[['company','Материал компании'],['customer','Материал клиента']],r.supply_source);form.append(sl);const customer=node('details');customer.append(node('summary','Параметры материала клиента'));const cg=node('div',undefined,'grid');for(const[k,t,type,v]of[['provided_sheets','Передано листов, шт.','number',r.provided_sheets],['customer_reason','Основание / комментарий','text',r.customer_reason],['custom_name','Собственный материал вне каталога','text',r.custom_customer?.name],['custom_thickness','Толщина, мм','number',r.custom_customer?.thickness],['custom_length','Длина листа, мм','number',r.custom_customer?.length],['custom_width','Ширина листа, мм','number',r.custom_customer?.width]]){const[l,i]=field(t,k,type,v);if(type==='number'){i.min='0.001';i.step='0.001';}cg.append(l);}customer.append(cg);form.append(customer);
++ const edges=node('fieldset');edges.append(node('legend','Кромка — четыре отдельные стороны'));
++ for(const side of ['L1','L2','W1','W2']){const d=node('details');d.append(node('summary',side+' · '+(r.edges[side]?.edge_id?'Ручное назначение':'Без кромки')));const status=node('p',r.edges[side]?.edge_id?'Сохранено точное назначение':'Без кромки');d.append(status,picker('Кромка '+side,'edges',catalogueRelease,(e,release)=>{catalogueRelease=catalogueRelease||release;r.edges[side]={edge_id:e.edge_id,supply_source:'company'};status.textContent=materialLabel(e)+' · ручное назначение';d.querySelector('summary').textContent=side+' · '+(e.article||e.name||'Назначена');}),button('Без кромки',()=>{r.edges[side]={edge_id:null,supply_source:'company'};status.textContent='Без кромки';d.querySelector('summary').textContent=side+' · Без кромки';},true));const [el,es]=selectField('Источник кромки '+side,'edge_supply_'+side,[['company','Кромка компании'],['customer','Кромка клиента']],r.edges[side]?.supply_source||'company');d.append(el);edges.append(d);}
++ form.append(edges,node('p','Ручные назначения не заменяются AUTO. Для импортированных строк AUTO доступен отдельно.','muted'));const actions=node('div',undefined,'actions');actions.append(node('button','Сохранить строку'),button('Отмена',()=>{panel.remove();},true));form.append(actions);
++ form.onsubmit=e=>{e.preventDefault();run(async()=>{const f=new FormData(form);const qty=Number(f.get('qty'));if(!Number.isInteger(qty)||qty<1)throw new Error('Количество должно быть целым и больше нуля. Значение не исправлено автоматически.');r.length=f.get('length');r.width=f.get('width');r.qty=qty;r.grain=g.value;r.rotation=rot.value==='true';r.route=route.value;r.packaging=pack.value==='true';r.supply_source=supply.value;
++ if(r.supply_source==='customer'){r.provided_sheets=Number(f.get('provided_sheets'));r.customer_reason=f.get('customer_reason');if(!Number.isInteger(r.provided_sheets)||r.provided_sheets<1||r.customer_reason.trim().length<3)throw new Error('Укажите количество листов клиента и основание.');if(f.get('custom_name')){r.variant_id=null;r.custom_customer={key:r.custom_customer?.key||crypto.randomUUID(),name:f.get('custom_name'),thickness:f.get('custom_thickness'),length:f.get('custom_length'),width:f.get('custom_width'),reason:r.customer_reason};if(['thickness','length','width'].some(k=>!(Number(r.custom_customer[k])>0)))throw new Error('Укажите толщину и формат собственного материала.');r.materialLabel=r.custom_customer.name+' · материал клиента';}}else{delete r.provided_sheets;delete r.customer_reason;r.custom_customer=null;}
++ if(!r.variant_id&&!r.custom_customer)throw new Error('Выберите точный материал. Поисковая строка не является назначением.');for(const s of ['L1','L2','W1','W2'])r.edges[s]={...(r.edges[s]||{edge_id:null}),supply_source:f.get('edge_supply_'+s)};if(index===undefined)manualRows.push(r);else manualRows[index]=r;dirty=true;panel.remove();renderManual();message('Строка изменена локально. Сохраните новую редакцию заказа.');});};panel.append(form);$('row-panel')?.remove();content.append(panel);panel.scrollIntoView({block:'start'});form.querySelector('input').focus();
++}
++async function saveRevision(){
++ if(!await confirmAction('Сохранить новую редакцию?','Будет создана отдельная редакция. Предыдущие документы и расчёты останутся неизменными.'))return;
++ const details=manualRows.map(({materialLabel,...r})=>r);
++ const r=await api('/orders/'+editorOrder.order_id+'/revisions','POST',{parent_revision_id:editorOrder.active_revision_id,catalogue_release_id:catalogueRelease,reason:'Сохранение деталировки пользователем',comment:revisionComment,details},{'If-Match':String(editorOrder.optimistic_lock_version)});
++ editorOrder.active_revision_id=r.revision_id;editorOrder.optimistic_lock_version=r.optimistic_lock_version;dirty=false;await editorView();message('Редакция '+r.revision_number+' сохранена. Можно запросить предварительный расчёт.');
++}
++async function importForm(){
++ const panel=node('section',undefined,'panel');panel.append(node('h2','Импорт Excel'),node('p','Исходный XLSX хранится приватно. Сначала проверьте лист и заголовки; импорт не отправляет заказ в производство.'));
++ const form=node('form'),[fl,file]=field('Файл XLSX','file','file','',true);file.accept='.xlsx';const[sl,sheet]=field('Имя листа','sheet','text','Лист1',true),[tl,templateId]=field('ID сохранённой версии шаблона (если есть)','template');
++ const mapping=node('details');mapping.open=true;mapping.append(node('summary','Сопоставление колонок нового шаблона'));
++ const mg=node('div',undefined,'grid'),fields=[['length','Длина'],['width','Ширина'],['qty','Количество'],['article','Артикул'],['material','Материал'],['L1','L1'],['L2','L2'],['W1','W1'],['W2','W2'],['texture','Текстура'],['rotation','Вращение']];
++ fields.forEach(([k,label],i)=>{const[l,c]=field(label+': буква колонки','col_'+k,'text',String.fromCharCode(65+i));c.maxLength=3;const[hl,h]=field(label+': точный заголовок','header_'+k,'text',label);mg.append(l,hl);});mapping.append(node('p','Укажите фактические заголовки первой строки. Пустая буква исключает необязательное поле. X1/X2/Y1/Y2 сопоставляйте с L1/L2/W1/W2 явно.','muted'),mg);
++ const [ul,units]=selectField('Единицы длины и ширины','units',[['mm','мм'],['cm','см'],['m','м']],'mm');form.append(fl,sl,tl,mapping,ul,node('button','Проверить файл'));panel.append(form);content.append(panel);file.focus();
++ form.onsubmit=e=>{e.preventDefault();run(async()=>{if(file.files[0].size>20*1024*1024)throw new Error('Файл превышает 20 МБ.');let tid=templateId.value.trim();if(!tid){const headers={},map={};const f=new FormData(form);for(const[k]of fields){const col=String(f.get('col_'+k)).trim().toUpperCase();if(col){if(!/^[A-Z]{1,3}$/.test(col))throw new Error('Колонки задаются буквами A, B, C…');map[k]=col;headers[col]=f.get('header_'+k);}}const t=await api('/import-templates','POST',{name:'Шаблон '+file.files[0].name.slice(0,65),order_id:editorOrder.order_id,definition:{headers,sheet_policy:{mode:'named',header_row:1,sheets:[sheet.value]},mapping:map,inheritance:{enabled:false,blank_resets:true},edge_dictionary:{'0':'none','нет':'none','no':'none','false':'none','-':'none','*':'present','1':'present','':'unknown'},units:{length:units.value,width:units.value}}});tid=t.template_revision_id;templateId.value=tid;}
++ const bytes=new Uint8Array(await file.files[0].arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));const r=await api('/imports/preview','POST',{filename:file.files[0].name,content_base64:btoa(binary),order_id:editorOrder.order_id,template_revision_id:tid,selected_sheets:[sheet.value],catalogue_release:catalogueRelease});importId=r.import_id;const result=node('div');result.append(node('h3','Предпросмотр — строки не потеряны'));const rows=r.rows||[];result.append(table(['Лист / строка','Тип','Длина','Ширина','Количество','Ошибки'],rows.map(row=>{const o=row.original||row;return [o.sheet+' / '+o.row,o.disposition,o.values?.length,o.values?.width,o.values?.qty,(o.errors||[]).map(x=>x.field+': '+x.reason).join('; ')];})),node('p','Нулевые количества и другие ошибки сохранены для явного исправления или передачи менеджеру.','notice'));result.append(button('Добавить позиции в черновик',async()=>{if(!await confirmAction('Добавить импорт?', 'Существующие позиции сохранятся. Ошибочные строки не будут автоматически исправлены.'))return;const o=await api('/orders/'+editorOrder.order_id);await api('/imports/'+importId+'/confirm','POST',{mode:'add'},{'If-Match':String(o.optimistic_lock_version)});await editorView();message('Импорт добавлен. Проверьте назначения материала и кромки.');}));panel.append(result);result.scrollIntoView();});};
++}
++function renderImported(rows){
++ const t=table(['Строка','Материал / статус','Д × Ш, мм','Количество','Ошибки / исключение','Действия'],rows.map(r=>{const s=r.snapshot,v=s.values||{},res=s.resolution||{};return[v.position??s.row,materialLabel(res.selected)+' / '+({exact_match:'Точное совпадение',manual_override:'Выбрано вручную',confirmed_mapping:'Подтверждено',ambiguous:'Нужно уточнение',not_found:'Не найдено',custom_customer:'Материал клиента'}[res.status]||'Требует проверки'),value(v.length)+' × '+value(v.width),v.qty,r.excluded_reason||((s.errors||[]).map(e=>e.field+': '+e.reason).join('; ')||'Нет ошибок исходных значений'),''];}));
++ t.querySelectorAll('tbody tr').forEach((tr,i)=>{const r=rows[i];if(r.excluded_reason)return;tr.lastChild.append(button('Материал / кромка',()=>importedEditor(r),true),button('Исключить',async()=>{const reason=await reasonDialog('Исключить строку','Строка сохранится в истории с указанной причиной.');if(!reason)return;const result=await api('/orders/'+editorOrder.order_id+'/draft/rows/'+r.draft_row_id+'/exclude','POST',{reason},{'If-Match':String(editorOrder.optimistic_lock_version)});editorOrder.optimistic_lock_version=result.optimistic_lock_version;manualRows=manualRows.filter(x=>x.draft_row_id!==r.draft_row_id);await editorView();},true));});content.append(t);
++}
++function reasonDialog(title,text){return new Promise(resolve=>{const d=node('dialog'),form=node('form'),[l,i]=field('Причина','reason','textarea','',true);i.minLength=3;i.maxLength=500;form.append(node('h2',title),node('p',text),l,node('button','Подтвердить'));const no=node('button','Отмена','secondary');no.type='button';form.append(no);const end=v=>{d.close();d.remove();resolve(v);};no.onclick=()=>end(null);form.onsubmit=e=>{e.preventDefault();end(i.value);};d.oncancel=e=>{e.preventDefault();end(null);};d.append(form);document.body.append(d);d.showModal();i.focus();});}
++async function importedEditor(r){const p=node('section',undefined,'panel');p.append(node('h2','Назначения импортированной строки'));
++ const base='/orders/'+editorOrder.order_id+'/draft/rows/'+r.draft_row_id;
++ p.append(button('Исправить размеры и количество',async()=>{
++ const reason=await reasonDialog('Исправить исходную строку','Оригинальная строка сохранится. Исправление войдёт в новую редакцию с указанной причиной.');if(!reason)return;
++ const s=r.snapshot,v=s.values||{},m=s.resolution?.selected;
++ const index=manualRows.findIndex(x=>x.draft_row_id===r.draft_row_id);
++ await editRow(index>=0?index:undefined,{detail_id:r.draft_row_id,draft_row_id:r.draft_row_id,resolution_reason:reason,length:v.length,width:v.width,qty:v.qty,variant_id:m?.variant_id||null,materialLabel:materialLabel(m),supply_source:'company',rotation:v.rotation===true,grain:['none','length','width'].includes(v.texture)?v.texture:'unknown',route:'solid',packaging:false,edges:Object.fromEntries(['L1','L2','W1','W2'].map(side=>[side,{edge_id:s.edges?.[side]?.confirmed?s.edges[side].edge_id:null,supply_source:'company'}]))});
++ },true));
++ async function mutate(url,body){if(manualRows.some(x=>x.draft_row_id===r.draft_row_id))throw new Error('Для этой строки уже подготовлено исправление редакции. Измените её через ручную деталировку, чтобы сохранить все назначения.');const result=await api(base+url,'POST',body,{'If-Match':String(editorOrder.optimistic_lock_version)});editorOrder.optimistic_lock_version=result.optimistic_lock_version;dirty=true;await editorView();message('Назначение сохранено в черновике. Создайте новую редакцию для расчёта.');}
++ p.append(picker('Точный материал','materials',r.release_id,async(m)=>{const reason=await reasonDialog('Изменить материал','Новый материал: '+materialLabel(m)+'. AUTO будет проверен сервером, ручная кромка сохраняется.');if(reason)await mutate('/material',{variant_id:m.variant_id,reason});}));
++ for(const side of ['L1','L2','W1','W2']){const d=node('details'),e=r.snapshot.edges?.[side];d.append(node('summary',side+' · '+({manual_override:'Ручное назначение',auto_suggestion:'Предложение AUTO',confirmed_mapping:'Подтверждено'}[e?.mode]||'Требует проверки')),node('p',e?.snapshot?materialLabel(e.snapshot):'Назначение отсутствует или требует подтверждения'),picker('Кромка '+side,'edges',r.release_id,async(edge)=>{const reason=await reasonDialog('Назначить кромку '+side,materialLabel(edge));if(reason)await mutate('/edges',{side,action:'manual',edge_id:edge.edge_id,reason});}),button('Без кромки '+side,async()=>{const reason=await reasonDialog('Убрать кромку '+side,'Будет сохранено явное ручное отсутствие кромки.');if(reason)await mutate('/edges',{side,action:'manual',edge_id:null,reason});},true),button('Сбросить '+side+' в AUTO',async()=>{const reason=await reasonDialog('Сбросить ручное назначение?',side+': ручное назначение будет снято только после вашего подтверждения.');if(reason)await mutate('/edges',{side,action:'reset_auto',reason});},true));p.append(d);}
++ content.append(p);p.scrollIntoView();}
++async function catalogueDiff(){const result=await api('/orders/'+editorOrder.order_id+'/draft/catalogue-update');const p=node('section',undefined,'panel');p.append(node('h2','Изменения каталога'),table(['Позиция','Точный вариант доступен','Ручная кромка'],result.diff.map((d,i)=>[i+1,d.variant_available?'Да':'Нет — сохранить закреплённый вариант',d.manual_edges_preserved?'Сохраняется':'Требует проверки'])),node('p','AUTO будет проверен заново. Ручные назначения сохраняются.','notice'),button('Применить к черновику',async()=>{const reason=await reasonDialog('Обновить каталог черновика?','Ранее созданные редакции, расчёты и документы не изменятся.');if(!reason)return;await api('/orders/'+editorOrder.order_id+'/draft/catalogue-update','POST',{release_id:result.release_id,reason},{'If-Match':String(editorOrder.optimistic_lock_version)});await editorView();}));content.append(p);}
++async function staffHome(){
++ if(currentUser.roles.includes('client')||currentUser.roles.includes('service_agent')){heading('Доступ ограничен');content.append(node('p','Рабочий кабинет доступен сотрудникам с соответствующими правами.','notice'),link('Мои заказы','/account','button'));return;}
++ heading('Рабочий кабинет','Показываются только заказы, доступные по вашим текущим правам.');const tabs=node('div',undefined,'staff-tabs');tabs.append(button('Очередь заказов',staffQueue,true));if(currentUser.roles.includes('admin'))tabs.append(button('Сотрудники',staffList,true),button('Журнал действий',auditList,true),button('Каталог',catalogueView,true),button('Тарифы и профили',financialView,true));content.append(tabs);const area=node('div');area.id='staff-content';content.append(area);await staffQueue();
++}
++async function staffQueue(after='',append=false){const area=$('staff-content'),d=await api('/orders?after='+encodeURIComponent(after));if(!append)area.replaceChildren(node('h2','Очередь заказов'));if(!d.items.length&&!append)area.append(node('p','Доступных заказов пока нет.','empty'));for(const o of d.items){const a=node('article',undefined,'order');a.append(node('h3',o.business_name||'Заказ'),node('p',statusLabels[o.workflow_status]||'Статус уточняется'));if(currentUser.roles.some(r=>['manager','admin'].includes(r)))a.append(link('Открыть деталировку','/editor?order='+encodeURIComponent(o.order_id),'button secondary'));if(o.workflow_status==='submitted'&&currentUser.roles.some(r=>['manager','admin'].includes(r)))a.append(button('Взять на проверку',async()=>{const reason=await reasonDialog('Начать проверку заказа?',o.business_name||'Заказ');if(!reason)return;await api('/orders/'+o.order_id+'/review','POST',{reason},{'If-Match':String(o.optimistic_lock_version)});await staffQueue();}));if(currentUser.roles.includes('admin'))a.append(button('Назначить менеджера',()=>assignmentForm(o),true));area.append(a);}if(d.next){const more=button('Показать ещё',async()=>{more.remove();await staffQueue(d.next,true);},true);area.append(more);}}
++async function assignmentForm(order){const staff=await api('/admin/staff'),area=$('staff-content'),form=node('form',undefined,'panel');const[l,s]=selectField('Менеджер','manager_id',[['','Без менеджера'],...staff.items.filter(u=>u.role==='manager'&&u.account_status==='active').map(u=>[u.user_id,u.email])],order.assigned_manager_id||'');const[rl,r]=field('Причина назначения','reason','text','',true);r.minLength=3;form.append(node('h2','Назначение менеджера'),l,rl,node('button','Сохранить назначение'));form.onsubmit=e=>{e.preventDefault();run(async()=>{await api('/orders/'+order.order_id+'/assign-manager','POST',{manager_id:s.value||null,reason:r.value});await staffQueue();message('Назначение сохранено.');});};area.append(form);}
++async function staffList(){const d=await api('/admin/staff'),area=$('staff-content');area.replaceChildren(node('h2','Сотрудники'),node('p','Роль ограничивает доступ; отдельные разрешения проверяются сервером.','muted'));const t=table(['Email','Роль','Состояние','Управление'],d.items.map(u=>[u.email,u.role,u.account_status==='active'?'Активен':'Заблокирован','']));t.querySelectorAll('tbody tr').forEach((tr,i)=>{const u=d.items[i];tr.lastChild.append(button(u.account_status==='active'?'Заблокировать':'Разблокировать',async()=>{const blocked=u.account_status==='active';if(!await confirmAction(blocked?'Заблокировать сотрудника?':'Разблокировать сотрудника?',u.email+(blocked?'. Активные сессии будут отозваны.':'. Выданные права будут проверяться заново.')))return;await api('/admin/staff/'+u.user_id+'/state','PUT',{status:blocked?'blocked':'active'});await staffList();},true),button('Роль и разрешения',()=>grantForm(u),true));});area.append(t,button('Добавить сотрудника',staffCreate,true));}
++async function staffCreate(){const f=node('form',undefined,'panel');const[el,email]=field('Email сотрудника','email','email','',true),[pl,password]=field('Временный пароль (от 12 символов)','password','password','',true);password.minLength=12;password.autocomplete='new-password';const[rl,role]=selectField('Роль','role',['manager','production','accounting','viewer','admin'].map(x=>[x,x]));f.append(node('h2','Новый сотрудник'),el,pl,rl,node('button','Создать сотрудника'));f.onsubmit=e=>{e.preventDefault();run(async()=>{await api('/admin/staff','POST',{email:email.value,password:password.value,role:role.value});password.value='';await staffList();message('Сотрудник создан. Разрешения выдаются отдельно.');});};$('staff-content').append(f);}
++async function grantForm(user){const f=node('form',undefined,'panel');const[pl,p]=field('Точное разрешение (без *)','permission','text','',true),[sl,s]=selectField('Область доступа','scope',[['assigned','Назначенные заказы'],['order','Конкретный заказ'],['job','Конкретное производственное задание']]),[il,id]=field('ID области (для конкретного объекта)','scope_id');const[rl,role]=selectField('Роль сотрудника','role',['manager','production','accounting','viewer','admin'].map(x=>[x,x]),user.role);f.append(node('h2','Доступ: '+user.email),rl,button('Изменить роль',async()=>{if(await confirmAction('Изменить роль сотрудника?',user.role+' → '+role.value)){await api('/admin/staff/'+user.user_id+'/role','PUT',{role:role.value});await staffList();}},true),pl,sl,il,node('button','Выдать точное разрешение'));f.onsubmit=e=>{e.preventDefault();run(async()=>{if(p.value.includes('*'))throw new Error('Wildcard-разрешения запрещены.');if(!await confirmAction('Выдать разрешение?',p.value+' / '+s.value))return;await api('/admin/staff/'+user.user_id+'/grants','POST',{permission:p.value,scope_type:s.value,scope_id:id.value||null});message('Разрешение сохранено.');});};$('staff-content').append(f);}
++async function auditList(){const d=await api('/admin/audit');$('staff-content').replaceChildren(node('h2','Журнал действий'),table(['Дата','Действие','Объект'],d.items.map(e=>[date(e.created_at),e.action,e.object_type])));}
++async function catalogueView(){const d=await api('/catalogue/releases'),area=$('staff-content');area.replaceChildren(node('h2','Каталог'),node('p','Материал выбирается по точной идентичности. Поиск не меняет назначения в заказах.'));area.append(picker('Найти материал','materials',d.active_release,(m)=>message(materialLabel(m))),table(['Релиз','Дата','Состояние'],d.items.map(r=>[r.release_id,date(r.created_at),r.release_id===d.active_release?'Активный':'Архивный'])));}
++async function financialView(){const d=await api('/financial/defaults');$('staff-content').replaceChildren(node('h2','Действующие версии расчёта'),node('p','Публикация новых цен и тарифов не входит в изменение дизайна. Старые расчёты используют закреплённые версии.','notice'),table(['Профиль','Версия'],[['Производственный профиль',d.production_profile_id],['Тарифы',d.tariff_book_id],['Цены',d.price_book_id],['Скидки',d.discount_profile_id]]));}
+diff --git a/backend/v2/cabinet_ui.py b/backend/v2/cabinet_ui.py
+index f137c5e..7a5515d 100644
+--- a/backend/v2/cabinet_ui.py
++++ b/backend/v2/cabinet_ui.py
+@@ -1,4 +1,4 @@
+-"""Only three fixed UI assets, never a mount of public/ or private storage."""
++"""Fixed UI assets and compatible presentation aliases, never a mount of public/ or private storage."""
+ from pathlib import Path
+ from fastapi import APIRouter,Response
+ 
+@@ -6,6 +6,16 @@ CSP="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'
+ 
+ def router():
+     api=APIRouter();root=Path(__file__).parent/'cabinet_assets'
++    @api.get('/account.html')
++    @api.get('/login')
++    @api.get('/login.html')
++    @api.get('/register')
++    @api.get('/register.html')
++    @api.get('/editor')
++    @api.get('/order.html')
++    @api.get('/staff')
++    @api.get('/admin.html')
++    @api.get('/constructor.html')
+     @api.get('/account')
+     @api.get('/account/')
+     def account(): return Response((root/'index.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
+@@ -13,4 +23,6 @@ def router():
+     def script(): return Response((root/'app.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
+     @api.get('/account/app.css')
+     def style(): return Response((root/'app.css').read_bytes(),media_type='text/css',headers={'Content-Security-Policy':CSP})
++    @api.get('/account/workspace.js')
++    def workspace(): return Response((root/'workspace.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
+     return api
+diff --git a/backend/v2/presentation_ui.py b/backend/v2/presentation_ui.py
+new file mode 100644
+index 0000000..236cbb8
+--- /dev/null
++++ b/backend/v2/presentation_ui.py
+@@ -0,0 +1,22 @@
++"""Stage 7 presentation only: fixed public pages/assets, never a static directory mount."""
++from pathlib import Path
++from fastapi import APIRouter,Response
++from .cabinet_ui import CSP
++
++ROOT=Path(__file__).parent/'ui_assets'
++PAGES={'/':'index.html','/index.html':'index.html','/about/':'about/index.html',
++       '/services/':'services/index.html','/services/raspil/':'services/raspil/index.html',
++       '/services/kromka/':'services/kromka/index.html','/how-it-works/':'how-it-works/index.html',
++       '/contacts/':'contacts/index.html','/order/':'order/index.html','/3d/':'3d/index.html'}
++ASSETS={'site-v2.css':'text/css','site-nav.js':'application/javascript','favicon.svg':'image/svg+xml','panels.webp':'image/webp'}
++
++def router():
++    api=APIRouter()
++    def endpoint(path,mime):
++        def read(): return Response((ROOT/path).read_bytes(),media_type=mime,headers={'Content-Security-Policy':CSP})
++        return read
++    for url,path in PAGES.items():
++        api.add_api_route(url,endpoint(path,'text/html'),methods=['GET','HEAD'])
++    for name,mime in ASSETS.items():
++        api.add_api_route('/ui/'+name,endpoint(name,mime),methods=['GET','HEAD'])
++    return api
+diff --git a/backend/v2/ui_assets/3d/index.html b/backend/v2/ui_assets/3d/index.html
+new file mode 100644
+index 0000000..cd5007f
+--- /dev/null
++++ b/backend/v2/ui_assets/3d/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Представьте комод в объёме — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Представьте комод в объёме</h1><p class="mf-prose">Размеры, компоновка и материалы — в существующем 3D-конструкторе Martin Forest.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>От идеи к деталировке</h2><p class="mf-prose">Выберите компоновку комода, измените ширину, высоту и глубину, подберите материалы корпуса и фасадов. Подключение рабочего инструмента к защищённому кабинету требует отдельной проверки доступа.</p><div class="mf-note">Конструктор — производственный прототип. Состав деталей и конструктив проверяются перед изготовлением. Для работы нужен вход и доступ к 3D.</div><a class="mf-text-link" href="/constructor.html">Открыть 3D-конструктор <span>↗</span></a></div><div class="mf-constructor-details"><p class="mf-kicker">От общего — к деталям</p><h3>Размеры.<br>Компоновка.<br>Материалы.</h3><p class="mf-prose">Рабочий инструмент сохранён в отдельном разделе. Подготовленную деталировку можно продолжить в редакторе заказа.</p></div></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/about/index.html b/backend/v2/ui_assets/about/index.html
+new file mode 100644
+index 0000000..2f3556c
+--- /dev/null
++++ b/backend/v2/ui_assets/about/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Каждая деталь на своём месте. — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/" aria-current="page">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/" aria-current="page">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Каждая деталь на своём месте.</h1><p class="mf-prose">Martin Forest — распил мебельных плит и кромкооблицовка по вашей деталировке.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>Работаем с вашим проектом</h2><p class="mf-prose">Кухня, шкаф, гардеробная или отдельная полка начинаются с материала и точного списка деталей. Мы помогаем подготовить этот список к производству.</p><h2>Согласуем до начала работ</h2><p class="mf-prose">Проверяем размеры, количество, направление текстуры и стороны кромки. Если в деталировке есть вопросы, уточняем их вместе с вами.</p><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></div><img src="/ui/panels.webp" alt="Фактура мебельных плит" width="1536" height="1024"></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/contacts/index.html b/backend/v2/ui_assets/contacts/index.html
+new file mode 100644
+index 0000000..ac294b3
+--- /dev/null
++++ b/backend/v2/ui_assets/contacts/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>На связи — Martin Forest — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/" aria-current="page">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/" aria-current="page">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>На связи — Martin Forest</h1><p class="mf-prose">Обсудим материал, подготовку деталировки и ваш заказ.</p></div></section><section class="mf-wrap mf-reading"><p class="mf-kicker">Контактный телефон</p><a class="mf-contact-number" href="tel:+375295315315">+375 29 531-53-15</a><h2>Начните с деталей</h2><p class="mf-prose">Если у вас уже есть Excel с деталировкой, передайте его менеджеру через подготовку заказа. Если только планируете работу — позвоните, чтобы уточнить необходимые данные.</p><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/favicon.svg b/backend/v2/ui_assets/favicon.svg
+new file mode 100644
+index 0000000..b0f0dee
+--- /dev/null
++++ b/backend/v2/ui_assets/favicon.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="2" fill="#153d2d"/><text x="16" y="23" text-anchor="middle" font-family="Georgia,serif" font-size="25" fill="#f6f3eb">M</text></svg>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/how-it-works/index.html b/backend/v2/ui_assets/how-it-works/index.html
+new file mode 100644
+index 0000000..b737581
+--- /dev/null
++++ b/backend/v2/ui_assets/how-it-works/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>От заявки к готовым деталям — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/" aria-current="page">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/" aria-current="page">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>От заявки к готовым деталям</h1><p class="mf-prose">Подготовка, проверка и согласование — до начала изготовления.</p></div></section><section class="mf-wrap mf-reading"><div class="mf-steps"><article class="mf-step"><span>01</span><h3>Подготовка</h3><p>Excel менеджеру или самостоятельная деталировка.</p></article><article class="mf-step"><span>02</span><h3>Проверка и расчёт</h3><p>Уточняем материалы, кромку и производственные данные.</p></article><article class="mf-step"><span>03</span><h3>Согласование</h3><p>Фиксируем состав заказа и итоговую стоимость.</p></article><article class="mf-step"><span>04</span><h3>Изготовление</h3><p>Выполняем согласованный заказ.</p></article><article class="mf-step"><span>05</span><h3>Выдача</h3><p>Сообщаем о готовности и согласуем получение.</p></article></div><div class="mf-note">Сумма на этапе подготовки — предварительная. Итоговую стоимость согласуем после раскроя и проверки производственных данных.</div><a class="mf-text-link" href="/order/">Перейти к подготовке заказа <span>↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/index.html b/backend/v2/ui_assets/index.html
+new file mode 100644
+index 0000000..93d88dc
+--- /dev/null
++++ b/backend/v2/ui_assets/index.html
+@@ -0,0 +1,27 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Распил и кромкооблицовка — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public mf-home"><div class="mf-hero"><img class="mf-hero-image" src="/ui/panels.webp" alt="Текстура и торцы мебельных плит" width="1536" height="1024" fetchpriority="high"><div class="mf-hero-shade"></div><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/" aria-current="page">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/" aria-current="page">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header>
++<div class="mf-wrap"><section class="mf-hero-copy"><p class="mf-eyebrow">Мартин Форест / Мебельные детали</p><h1>Распил и кромкооблицовка</h1><p class="mf-hero-subtitle">Для ваших проектов. По вашим размерам.</p><div class="mf-hero-buttons"><a class="mf-button mf-button-light" href="/order/">Подготовить заказ <span aria-hidden="true">↗</span></a><a class="mf-text-link" href="/how-it-works/">Как мы работаем <span aria-hidden="true">↗</span></a></div></section></div>
++<div class="mf-hero-bottom"><div class="mf-wrap"><span>Иллюстрация материала · визуальный ориентир</span><span>От вашей деталировки — к готовым деталям</span></div></div></div>
++<main id="content">
++<section class="mf-section mf-wrap mf-intro"><div><p class="mf-kicker">Всё начинается с деталей</p><h2>Каждая деталь<br>на своём месте.</h2><p class="mf-prose">Для кухни, шкафа, гардеробной или отдельной полки — подготовим детали по вашему проекту.</p><p class="mf-prose">Вы задаёте размеры и выбираете материал. Мы проверяем деталировку, согласовываем кромку и направление текстуры, рассчитываем заказ и выполняем работу.</p><a class="mf-text-link" href="/about/">О Martin Forest <span aria-hidden="true">↗</span></a></div><aside class="mf-detail-note"><p class="mf-kicker">От списка — к детали</p><h3>Точность начинается<br>с деталировки.</h3><dl><div><dt>Материал</dt><dd>Артикул, структура и толщина</dd></div><div><dt>Размеры</dt><dd>Длина, ширина и количество</dd></div><div><dt>Торцы</dt><dd>Четыре независимые стороны</dd></div></dl></aside></section>
++<section class="mf-section mf-services" id="services"><div class="mf-wrap"><div class="mf-section-heading"><div><p class="mf-kicker">Что мы делаем</p><h2>От плиты<br>до вашей детали.</h2></div><p>Две основные операции, от которых зависит аккуратность будущей мебели.</p></div><a class="mf-service-row" href="/services/raspil/"><span class="mf-service-number">01</span><h3>Распил по размерам</h3><p>Подготовим мебельные детали по вашему списку. Учтём материал, количество и направление текстуры.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a><a class="mf-service-row" href="/services/kromka/"><span class="mf-service-number">02</span><h3>Кромкооблицовка</h3><p>Облицуем торцы по согласованной схеме. Декор, толщина кромки и каждая сторона — под ваш проект.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a></div></section>
++<section class="mf-section mf-wrap" id="prepare"><div class="mf-order-heading"><p class="mf-kicker">Подготовка заказа</p><h2>Выберите удобный<br>способ начать.</h2><p class="mf-prose">Готовую деталировку можно передать менеджеру или самостоятельно подготовить на сайте.</p></div><div class="mf-paths"><article class="mf-path"><p class="mf-kicker">01 / С помощью менеджера</p><h3>Отдать менеджеру<br>на обработку</h3><p class="mf-prose">Загрузите исходный Excel и добавьте пожелания. Менеджер проверит файл, уточнит материалы и подготовит заказ к расчёту.</p><a class="mf-button" href="/editor?mode=manager">Отдать менеджеру на обработку <span aria-hidden="true">↗</span></a></article><article class="mf-path"><p class="mf-kicker">02 / Самостоятельно</p><h3>Подготовить<br>самостоятельно</h3><p class="mf-prose">Импортируйте Excel или внесите детали вручную. Выберите материалы, проверьте размеры и стороны кромки — затем отправьте заказ на проверку.</p><a class="mf-button" href="/editor?mode=self">Подготовить самостоятельно <span aria-hidden="true">↗</span></a></article></div></section>
++<section class="mf-materials"><div class="mf-material-swatch"><span>ЛДСП / МДФ / ЛХДФ</span><strong>Декор.<br>Структура.<br>Торец.</strong><p>Точное обозначение материала сохраняется на каждом этапе заказа.</p></div><div class="mf-materials-copy"><p class="mf-kicker">Материалы и кромка</p><h2>Основа вашего<br>проекта.</h2><p class="mf-prose">Декор, структура и торец работают вместе. Подберём кромку к выбранному материалу и проверим каждое назначение перед запуском заказа.</p><div class="mf-brands"><span>EGGER</span><span>BYSPAN</span><span>ULTRADECOR</span></div><p class="mf-materials-note">Работаем и с материалом клиента. Формат листа, толщину и условия обработки согласуем при подготовке заказа.</p><a class="mf-text-link" href="/order/">Подготовить деталировку <span aria-hidden="true">↗</span></a></div></section>
++<section class="mf-section mf-wrap"><div class="mf-section-heading"><div><p class="mf-kicker">Как мы работаем</p><h2>Понятный путь<br>от заявки до выдачи.</h2></div><p>Предварительный расчёт уточняем после раскроя и проверки. В работу идёт согласованный заказ.</p></div><div class="mf-steps"><article class="mf-step"><span>01</span><h3>Подготовка</h3><p>Excel менеджеру или самостоятельная деталировка.</p></article><article class="mf-step"><span>02</span><h3>Проверка и расчёт</h3><p>Уточняем материалы, кромку и производственные данные.</p></article><article class="mf-step"><span>03</span><h3>Согласование</h3><p>Фиксируем состав заказа и итоговую стоимость.</p></article><article class="mf-step"><span>04</span><h3>Изготовление</h3><p>Выполняем согласованный заказ.</p></article><article class="mf-step"><span>05</span><h3>Выдача</h3><p>Сообщаем о готовности и согласуем получение.</p></article></div></section>
++<section class="mf-section mf-constructor"><div class="mf-wrap mf-constructor-grid"><div><p class="mf-kicker">Ещё один способ начать</p><h2>Сначала —<br>представить в объёме.</h2><p class="mf-prose">В 3D-конструкторе комода можно изменить размеры, выбрать компоновку и материалы, сформировать предварительный список деталей в отдельном инструменте.</p><a class="mf-text-link" href="/3d/">О 3D-конструкторе <span aria-hidden="true">↗</span></a></div><div class="mf-constructor-details"><p class="mf-kicker">3D / Комод</p><h3>Ваша идея.<br>Ваши размеры.</h3><dl><div><dt>Габариты</dt><dd>Ширина, высота и глубина</dd></div><div><dt>Компоновка</dt><dd>Ящики, двери и внутреннее пространство</dd></div><div><dt>Материалы</dt><dd>Корпус и фасады</dd></div></dl><a class="mf-text-link" href="/constructor.html">Открыть конструктор <span aria-hidden="true">↗</span></a></div></div></section>
++<section class="mf-contact"><div class="mf-wrap mf-contact-grid"><div><p class="mf-kicker">На связи — Martin Forest</p><h2>Обсудим<br>ваш заказ?</h2></div><div class="mf-contact-data"><a class="mf-contact-number" href="tel:+375295315315">+375 29 531-53-15</a><p>Уточним материалы, подготовку деталировки и порядок работы.</p><a class="mf-button" href="/order/">Подготовить заказ <span aria-hidden="true">↗</span></a></div></div></section>
++</main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/order/index.html b/backend/v2/ui_assets/order/index.html
+new file mode 100644
+index 0000000..a703526
+--- /dev/null
++++ b/backend/v2/ui_assets/order/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Подготовить заказ — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Подготовить заказ</h1><p class="mf-prose">Передайте исходный файл менеджеру или подготовьте деталировку самостоятельно.</p></div></section><section class="mf-wrap mf-reading"><div class="mf-paths"><article class="mf-path"><p class="mf-kicker">01 / С помощью менеджера</p><h3>Отдать менеджеру<br>на обработку</h3><p class="mf-prose">Загрузите исходный Excel и добавьте пожелания. Менеджер проверит файл, уточнит материалы и подготовит заказ к расчёту.</p><a class="mf-button" href="/editor?mode=manager">Отдать менеджеру на обработку <span aria-hidden="true">↗</span></a></article><article class="mf-path"><p class="mf-kicker">02 / Самостоятельно</p><h3>Подготовить<br>самостоятельно</h3><p class="mf-prose">Импортируйте Excel или внесите детали вручную. Выберите материалы, проверьте размеры и стороны кромки — затем отправьте заказ на проверку.</p><a class="mf-button" href="/editor?mode=self">Подготовить самостоятельно <span aria-hidden="true">↗</span></a></article></div><h2>Что подготовить</h2><p class="mf-prose">Материал и артикул, длину, ширину, количество, направление текстуры и стороны кромки. Если есть особые требования — добавьте комментарий. Для сохранения и отправки заказа потребуется вход в личный кабинет.</p><div class="mf-note">В Excel обозначения X1 / X2 / Y1 / Y2 соответствуют L1 / L2 / W1 / W2. Перед отправкой проверьте сопоставление колонок и количество деталей.</div></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/panels.webp b/backend/v2/ui_assets/panels.webp
+new file mode 100644
+index 0000000..214e497
+Binary files /dev/null and b/backend/v2/ui_assets/panels.webp differ
+diff --git a/backend/v2/ui_assets/services/index.html b/backend/v2/ui_assets/services/index.html
+new file mode 100644
+index 0000000..328bc4d
+--- /dev/null
++++ b/backend/v2/ui_assets/services/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Распил и кромкооблицовка — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Распил и кромкооблицовка</h1><p class="mf-prose">Подготовим мебельные детали по согласованным размерам, материалам и схеме облицовки торцов.</p></div></section><section class="mf-wrap mf-reading"><a class="mf-service-row" href="/services/raspil/"><span class="mf-service-number">01</span><h3>Распил по размерам</h3><p>Подготовим мебельные детали по вашему списку. Учтём материал, количество и направление текстуры.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a><a class="mf-service-row" href="/services/kromka/"><span class="mf-service-number">02</span><h3>Кромкооблицовка</h3><p>Облицуем торцы по согласованной схеме. Декор, толщина кромки и каждая сторона — под ваш проект.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/services/kromka/index.html b/backend/v2/ui_assets/services/kromka/index.html
+new file mode 100644
+index 0000000..e0ef8b5
+--- /dev/null
++++ b/backend/v2/ui_assets/services/kromka/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Кромкооблицовка — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Кромкооблицовка</h1><p class="mf-prose">Декор, толщина и стороны кромки — под ваш проект.</p></div></section><section class="mf-wrap mf-reading"><h2>Каждая сторона имеет значение</h2><p class="mf-prose">Назначьте кромку на нужные торцы детали: L1, L2, W1 и W2. Для каждой стороны можно выбрать собственную кромку или использовать назначение по умолчанию.</p><h2>Материал и кромка вместе</h2><p class="mf-prose">Проверим соответствие декора, размер кромки и особенности обработки. Ручные назначения кромки проверяем отдельно от автоматического подбора.</p><h2>Кромка клиента</h2><p class="mf-prose">Можно указать кромку заказчика. Её характеристики и возможность применения согласуем перед запуском, услуги оклейки учитываются отдельно.</p><a class="mf-text-link" href="/order/">Указать кромку в заказе <span>↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/services/raspil/index.html b/backend/v2/ui_assets/services/raspil/index.html
+new file mode 100644
+index 0000000..983593e
+--- /dev/null
++++ b/backend/v2/ui_assets/services/raspil/index.html
+@@ -0,0 +1,16 @@
++<!doctype html>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Распил по вашим размерам — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
++<header class="mf-header"><div class="mf-wrap">
++  <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
++    <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
++    <a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a>
++    <details class="mf-menu"><summary><span>Меню</span><span class="mf-menu-lines" aria-hidden="true"></span></summary><nav class="mf-menu-panel" aria-label="Мобильная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a><a class="mf-telephone" href="tel:+375295315315">+375 29 531-53-15</a></nav></details>
++  </div>
++  <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
++  
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Распил по вашим размерам</h1><p class="mf-prose">Мебельные плиты превращаются в детали по вашей деталировке.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>Что нужно для заказа</h2><p class="mf-prose">Укажите материал и его артикул, готовые размеры, количество деталей и направление текстуры. В одном заказе можно использовать несколько материалов.</p><ul><li>Полный артикул материала со структурой.</li><li>Длина, ширина и количество каждой детали.</li><li>Текстура, разрешение на вращение и комментарии.</li><li>Стороны кромки, если требуется облицовка.</li></ul><h2>С вашим материалом</h2><p class="mf-prose">Укажите толщину и фактический формат листа. Стоимость услуг рассчитывается отдельно от материала.</p><div class="mf-note">Окончательная стоимость фиксируется после производственного раскроя и проверки менеджером.</div><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></div><img src="/ui/panels.webp" alt="Торцы и плоскости мебельных плит" width="1536" height="1024"></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++<div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
++<div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++</div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/site-nav.js b/backend/v2/ui_assets/site-nav.js
+new file mode 100644
+index 0000000..ef17f8d
+--- /dev/null
++++ b/backend/v2/ui_assets/site-nav.js
+@@ -0,0 +1,3 @@
++'use strict';
++fetch('/api/v2/auth/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(u=>{if(u)document.querySelectorAll('[data-account-link]').forEach(a=>{a.textContent='Личный кабинет';a.href='/account';});}).catch(()=>{});
++document.querySelectorAll('.mf-menu').forEach(menu=>{menu.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.open=false;menu.querySelector('summary').focus();}});});
+diff --git a/backend/v2/ui_assets/site-v2.css b/backend/v2/ui_assets/site-v2.css
+new file mode 100644
+index 0000000..ac9cb90
+--- /dev/null
++++ b/backend/v2/ui_assets/site-v2.css
+@@ -0,0 +1,159 @@
++
++:root{--mf-forest:#153d2d;--mf-dark:#0b281e;--mf-paper:#f6f3eb;--mf-ink:#20382c;--mf-muted:#536459;--mf-rule:#d9ddd2;--mf-accent:#277646;--mf-width:1240px}
++.mf-public{margin:0;background:var(--mf-paper);color:var(--mf-ink);font:400 16px/1.7 Manrope,Arial,sans-serif}
++.mf-public *,.mf-header *,.mf-footer *{box-sizing:border-box}
++.mf-public a,.mf-header a,.mf-footer a{color:inherit;text-decoration:none}
++.mf-public img{display:block;max-width:100%}
++.mf-wrap{width:min(var(--mf-width),calc(100% - 96px));margin-inline:auto}
++.mf-public h1,.mf-public h2,.mf-public h3,.mf-public p,.mf-public figure{margin:0}
++.mf-public h2{font-size:clamp(34px,3.5vw,52px);font-weight:600;line-height:1.16;letter-spacing:-.045em;text-wrap:balance}
++.mf-public h3{font-size:24px;font-weight:600;line-height:1.3;letter-spacing:-.025em}
++.mf-public p{max-width:660px}
++.mf-public a:focus-visible,.mf-header a:focus-visible,.mf-header summary:focus-visible,.mf-footer a:focus-visible{outline:3px solid #83ba88;outline-offset:5px}
++.mf-skip{position:fixed;top:8px;left:16px;z-index:100;background:white;color:var(--mf-dark)!important;padding:12px;transform:translateY(-160%)}
++.mf-skip:focus{transform:none}
++.mf-header{position:relative;z-index:20;background:var(--mf-forest);color:#fff;font:500 14px/1.5 Manrope,Arial,sans-serif}
++.mf-home .mf-header{background:transparent}
++.mf-topline{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:center;min-height:118px;border-bottom:1px solid #ffffff2e}
++.mf-caption{font-size:12px;line-height:1.65;letter-spacing:.15em;text-transform:uppercase;color:#dce4d8;max-width:235px}
++.mf-brand{font:italic 600 46px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:-.03em;white-space:nowrap;display:inline-block}
++.mf-brand small{display:block;text-align:center;font:600 10px/1.5 Manrope,Arial,sans-serif;letter-spacing:.3em;margin-top:11px}
++.mf-telephone{justify-self:end;font-size:16px;white-space:nowrap}
++.mf-navigation{display:flex;justify-content:space-between;align-items:center;gap:24px;min-height:88px}
++.mf-nav{display:flex;gap:28px;align-items:center}
++.mf-nav a{position:relative;padding:10px 0;white-space:nowrap}
++.mf-nav a[aria-current=page]:after{content:'';position:absolute;bottom:2px;left:0;right:0;height:1px;background:#b4c6a4}
++.mf-nav a:hover,.mf-account:hover{color:#cbdcc0}
++.mf-actions{display:flex;align-items:center;gap:28px}
++.mf-header .mf-cta,.mf-public .mf-button{display:inline-flex;align-items:center;justify-content:center;gap:28px;border:1px solid transparent;border-radius:2px;background:var(--mf-accent);color:#fff;padding:16px 24px;font:600 14px/1.35 Manrope,Arial,sans-serif;min-height:52px;cursor:pointer;transition:background .2s,transform .2s}
++.mf-header .mf-cta:hover,.mf-public .mf-button:hover{background:#1c6037}
++.mf-public .mf-button-light{background:var(--mf-paper);color:var(--mf-dark)}
++.mf-public .mf-button-light:hover{background:#e5eadc}
++.mf-account{font-size:14px;white-space:nowrap}
++.mf-logout{background:transparent;border:0;color:inherit;padding:0;font:inherit;cursor:pointer}
++.mf-menu{display:none}
++.mf-hero{position:relative;isolation:isolate;background:var(--mf-dark);color:white;min-height:790px}
++.mf-hero-image,.mf-hero-shade{position:absolute;inset:0;width:100%;height:100%;z-index:-2}
++.mf-hero-image{object-fit:cover;object-position:50% 52%}
++.mf-hero-shade{z-index:-1;background:linear-gradient(90deg,#082a20db,#082a20a3 50%,#08231dc4)}
++.mf-hero-copy{text-align:center;padding:100px 0 108px;max-width:1220px;margin:auto}
++.mf-eyebrow{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#cbd4c1;margin-bottom:27px!important;max-width:none!important}
++.mf-hero h1{font-size:clamp(44px,5.4vw,78px);font-weight:600;line-height:1.13;letter-spacing:-.055em;text-wrap:balance;margin:auto;max-width:1140px}
++.mf-hero-subtitle{font-size:20px;line-height:1.6;color:#e6ebe1;margin:26px auto 32px!important;max-width:none!important}
++.mf-hero-buttons{display:flex;align-items:center;justify-content:center;gap:35px}
++.mf-hero-buttons .mf-text-link{color:#fff;border-color:#ffffff6b}
++.mf-hero-bottom{position:absolute;bottom:0;left:0;right:0;border-top:1px solid #ffffff24;padding-block:20px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#d7e1d6}
++.mf-hero-bottom .mf-wrap{display:flex;justify-content:space-between;gap:20px}
++.mf-section{padding-block:112px}
++.mf-kicker{font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mf-accent);margin-bottom:23px!important}
++.mf-intro{display:grid;grid-template-columns:1fr 1.12fr;align-items:center;gap:90px}
++.mf-intro h2{margin-bottom:28px}
++.mf-prose{color:var(--mf-muted);font-size:16px;line-height:1.85}
++.mf-prose+p{margin-top:16px}
++.mf-text-link{display:inline-flex;gap:30px;align-items:center;border-bottom:1px solid #a4b3a4;padding:8px 0;font-size:14px;font-weight:700;margin-top:25px}
++.mf-text-link span{font-size:21px;font-weight:400}
++.mf-material-photo{position:relative}
++.mf-material-photo img{width:100%;height:470px;object-fit:cover;object-position:75% center}
++.mf-material-photo figcaption{display:flex;justify-content:space-between;gap:24px;margin-top:18px;color:var(--mf-muted);font-size:12px}
++.mf-material-photo figcaption strong{font-weight:500;color:var(--mf-ink)}
++.mf-services{background:#eaece3}
++.mf-section-heading{display:flex;justify-content:space-between;gap:40px;align-items:end;margin-bottom:52px}
++.mf-section-heading>p{max-width:360px;font-size:15px;color:var(--mf-muted)}
++.mf-service-row{display:grid;grid-template-columns:62px 1fr 1fr 44px;gap:28px;align-items:start;border-top:1px solid #bfcabd;padding:36px 0}
++.mf-service-row:last-child{border-bottom:1px solid #bfcabd}
++.mf-service-number{font-size:13px;color:#667b68;padding-top:8px}
++.mf-service-row h3{font-size:32px;letter-spacing:-.035em}
++.mf-service-row p{color:var(--mf-muted);font-size:16px;max-width:410px}
++.mf-service-row .mf-round-arrow{width:44px;height:44px;border:1px solid #a7b5a2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
++.mf-service-row:hover h3{color:var(--mf-accent)}
++.mf-order-heading{text-align:center;max-width:760px;margin:0 auto 55px}
++.mf-order-heading .mf-prose{margin:24px auto 0}
++.mf-paths{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--mf-rule);border-bottom:1px solid var(--mf-rule)}
++.mf-path{padding:48px 55px 48px 0;display:flex;flex-direction:column;align-items:flex-start}
++.mf-path+article{border-left:1px solid var(--mf-rule);padding-left:55px;padding-right:0}
++.mf-path .mf-kicker{color:var(--mf-muted);margin-bottom:18px!important}
++.mf-path h3{max-width:440px;font-size:30px;margin-bottom:20px}
++.mf-path p{margin-bottom:22px;max-width:440px}
++.mf-path .mf-button{margin-top:auto}
++.mf-materials{display:grid;grid-template-columns:1fr 1fr;background:var(--mf-forest);color:#fff}
++.mf-materials-image{width:100%;height:100%;min-height:580px;object-fit:cover;object-position:20% center}
++.mf-materials-copy{padding:80px max(48px,calc((100vw - 1240px)/2)) 80px 75px}
++.mf-materials-copy .mf-kicker{color:#b5c9aa}
++.mf-materials-copy h2{margin-bottom:28px}
++.mf-materials-copy .mf-prose{color:#d3dfd2}
++.mf-brands{display:flex;flex-wrap:wrap;gap:28px;font-size:15px;font-weight:600;letter-spacing:.06em;padding-block:28px;margin-top:6px;border-bottom:1px solid #ffffff30}
++.mf-materials-note{font-size:14px;color:#c5d6c5;margin-top:24px!important}
++.mf-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:30px;margin-top:55px;counter-reset:steps}
++.mf-step{border-top:1px solid #bac6b8;padding-top:24px}
++.mf-step>span{font-size:13px;color:var(--mf-accent)}
++.mf-step h3{font-size:19px;margin:25px 0 13px}
++.mf-step p{font-size:14px;line-height:1.7;color:var(--mf-muted)}
++.mf-constructor{background:#eaece3}
++.mf-constructor-grid{display:grid;grid-template-columns:1fr 1fr;gap:95px;align-items:center}
++.mf-constructor h2{margin-bottom:25px}
++.mf-constructor-preview{margin:0}
++.mf-constructor-preview img{width:100%;height:350px;object-fit:contain;background:#e5ebe3}
++.mf-constructor-preview figcaption{font-size:12px;color:var(--mf-muted);margin-top:15px}
++.mf-contact{padding-block:90px;background:#fffefa}
++.mf-contact-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:center}
++.mf-contact h2{max-width:550px}
++.mf-contact-data{text-align:right}
++.mf-contact-number{font-size:clamp(25px,3vw,40px);line-height:1.4;letter-spacing:-.03em;white-space:nowrap}
++.mf-contact-data p{font-size:14px;color:var(--mf-muted);margin:15px 0 20px auto}
++.mf-footer{background:var(--mf-dark);color:#fff;font:400 14px/1.8 Manrope,Arial,sans-serif}
++.mf-footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:55px;padding-block:70px}
++.mf-footer .mf-brand{font-size:40px}
++.mf-footer-tag{color:#a6b9a9;font-size:13px;margin-top:24px;max-width:240px}
++.mf-footer h3{font-size:13px;font-weight:600;margin:0 0 20px;color:#a9bba8}
++.mf-footer-links{display:flex;flex-direction:column;gap:9px;align-items:flex-start}
++.mf-footer a:hover{color:#b6cdb3}
++.mf-footer-bottom{display:flex;justify-content:space-between;gap:25px;border-top:1px solid #ffffff24;color:#9fb4a4;padding-block:24px;font-size:12px}
++.mf-subhero{padding:66px 0 74px;background:var(--mf-forest);color:#fff}
++.mf-subhero .mf-kicker{color:#b5c9aa}
++.mf-subhero h1{font-size:clamp(38px,4.4vw,62px);line-height:1.15;letter-spacing:-.04em;font-weight:600;max-width:950px}
++.mf-subhero .mf-prose{color:#d3dfd2;margin-top:25px;max-width:760px}
++.mf-reading{padding-block:80px}
++.mf-reading h2{font-size:34px;margin:40px 0 22px}
++.mf-reading h2:first-child{margin-top:0}
++.mf-reading .mf-prose{max-width:800px}
++.mf-reading ul{padding-left:20px;color:var(--mf-muted);max-width:800px}
++.mf-reading li{margin:12px 0}
++.mf-reading-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px}
++.mf-reading-grid img{width:100%;height:400px;object-fit:cover}
++.mf-note{margin-top:30px;padding:22px 25px;border-left:2px solid var(--mf-accent);background:#eaece3;color:var(--mf-muted);font-size:14px}
++.mf-work{background:var(--mf-paper)}
++.mf-work .mf-header a,.mf-work .mf-footer a{text-decoration:none}
++.mf-work .mf-header .mf-brand,.mf-work .mf-footer .mf-brand{color:#fff}
++.mf-work .page-top{background:var(--mf-forest);padding:42px 0 48px}
++.mf-work .page-top h1{font-family:Manrope,Arial,sans-serif;font-weight:600;font-size:42px;letter-spacing:-.035em}
++.mf-work .page-top .eyebrow{color:#b5c9aa}
++.mf-work .panel,.mf-work .auth-card{border-radius:3px;box-shadow:none}
++.mf-work .btn{border-radius:3px}
++.mf-work.auth-body{display:block;background:var(--mf-paper);padding:0}
++.mf-work .auth-shell{margin:60px auto;width:min(480px,calc(100% - 40px))}
++.mf-work .auth-brand{display:none}
++.mf-work .mf-header [hidden],.mf-header [hidden]{display:none!important}
++.mf-work .mf-footer{margin-top:55px}
++.mf-work .mf-footer p{line-height:1.8}
++.mf-work .mf-header nav{margin:0}
++.mf-staff-links{display:flex;gap:20px;font-size:13px}
++@media(min-width:1700px){.mf-hero{min-height:870px}.mf-hero-copy{padding-top:125px}}
++@media(max-width:1200px){.mf-wrap{width:calc(100% - 64px)}.mf-nav{gap:18px}.mf-actions{gap:18px}.mf-header .mf-cta{padding:14px 18px}.mf-navigation{gap:16px}.mf-intro{gap:55px}.mf-materials-copy{padding:65px 40px}.mf-steps{gap:22px}}
++@media(max-width:1020px){.mf-navigation{min-height:78px}.mf-nav{gap:17px;font-size:13px}.mf-header .mf-account{display:inline-flex}.mf-hero{min-height:740px}.mf-hero-copy{padding-top:90px}.mf-intro{gap:45px}.mf-material-photo img{height:430px}.mf-section{padding-block:85px}.mf-constructor-grid{gap:50px}.mf-steps{grid-template-columns:repeat(3,1fr);row-gap:35px}.mf-service-row{grid-template-columns:35px 1fr 1fr 40px;gap:18px}.mf-service-row h3{font-size:27px}.mf-path{padding-right:35px}.mf-path+article{padding-left:35px}.mf-path h3{font-size:27px}}
++@media(max-width:900px){.mf-wrap{width:calc(100% - 40px)}.mf-topline{grid-template-columns:1fr auto;min-height:88px;gap:14px;border-bottom:0}.mf-caption,.mf-topline>.mf-telephone{display:none}.mf-brand{font-size:34px}.mf-brand small{font-size:8px;letter-spacing:.25em;margin-top:8px}.mf-navigation{display:none}.mf-menu{display:block;grid-column:2;grid-row:1}.mf-menu summary{list-style:none;display:flex;gap:10px;align-items:center;font-size:13px;cursor:pointer;padding:12px 0 12px 12px}.mf-menu summary::-webkit-details-marker{display:none}.mf-menu-lines{width:23px;height:12px;border-block:1px solid currentColor;display:inline-block}.mf-menu[open] .mf-menu-panel{position:absolute;left:0;right:0;top:88px;padding:22px 20px 30px;background:var(--mf-dark);box-shadow:0 20px 25px #0002;border-top:1px solid #ffffff30}.mf-menu-panel{display:flex;flex-direction:column;gap:4px}.mf-menu-panel>a{font-size:17px;padding:11px 0}.mf-menu-panel .mf-cta{margin-top:12px;font-size:14px;padding:16px}.mf-menu-panel .mf-account{display:block}.mf-menu-panel .mf-telephone{align-self:flex-start;justify-self:auto;margin-top:10px;font-size:16px}.mf-hero{min-height:740px}.mf-hero-image{object-position:58% center}.mf-hero-shade{background:linear-gradient(90deg,#082a20e3,#092d21b5)}.mf-hero-copy{text-align:left;padding:92px 0 105px}.mf-eyebrow{font-size:10px;letter-spacing:.13em;margin-bottom:24px!important}.mf-hero h1{font-size:clamp(35px,7.5vw,56px);letter-spacing:-.045em;line-height:1.18;overflow-wrap:normal;text-wrap:initial}.mf-hero-subtitle{font-size:17px;margin:25px 0 30px!important;max-width:290px!important}.mf-hero-buttons{align-items:flex-start;flex-direction:column;gap:12px}.mf-hero-buttons .mf-text-link{margin-top:0}.mf-hero-bottom{font-size:10px;letter-spacing:.06em;padding-block:18px}.mf-hero-bottom .mf-wrap{display:block}.mf-hero-bottom .mf-wrap>span+span{display:none}.mf-public h2{font-size:35px}.mf-section{padding-block:65px}.mf-intro{grid-template-columns:1fr;gap:38px}.mf-kicker{font-size:11px;letter-spacing:.13em;margin-bottom:20px!important}.mf-intro h2{margin-bottom:23px}.mf-material-photo img{height:350px}.mf-material-photo figcaption{font-size:11px;gap:12px}.mf-section-heading{display:block;margin-bottom:35px}.mf-section-heading>p{margin-top:20px}.mf-service-row{grid-template-columns:25px 1fr 35px;gap:15px;padding-block:27px}.mf-service-row h3{font-size:25px}.mf-service-row p{grid-column:2/4;font-size:15px;margin-top:0}.mf-service-row .mf-round-arrow{grid-column:3;grid-row:1;width:34px;height:34px;font-size:20px}.mf-order-heading{text-align:left;margin-bottom:30px}.mf-paths{grid-template-columns:1fr}.mf-path,.mf-path+article{padding:35px 0;border-left:0}.mf-path+article{border-top:1px solid var(--mf-rule)}.mf-path h3{font-size:27px}.mf-materials{grid-template-columns:1fr}.mf-materials-image{min-height:0;height:340px}.mf-materials-copy{padding:50px 20px 55px}.mf-brands{gap:24px;font-size:14px}.mf-steps{grid-template-columns:1fr;margin-top:35px;gap:22px}.mf-step{display:grid;grid-template-columns:28px 1fr;gap:0 17px;padding-top:20px}.mf-step>span{grid-row:1/3;padding-top:2px}.mf-step h3{margin:0 0 10px}.mf-step p{grid-column:2}.mf-constructor-grid{grid-template-columns:1fr;gap:30px}.mf-constructor-preview img{height:300px}.mf-contact{padding-block:60px}.mf-contact-grid{grid-template-columns:1fr;gap:35px}.mf-contact-data{text-align:left}.mf-contact-data p{margin-left:0}.mf-footer-grid{grid-template-columns:1fr 1fr;gap:40px 25px;padding-block:50px}.mf-footer-grid>div:first-child{grid-column:1/-1}.mf-footer .mf-brand{font-size:36px}.mf-footer-tag{max-width:280px}.mf-footer-links{gap:11px}.mf-footer-bottom{align-items:flex-start;font-size:11px;gap:15px}.mf-footer-bottom>span{max-width:230px}.mf-subhero{padding:36px 0 48px}.mf-subhero h1{font-size:37px}.mf-reading{padding-block:50px}.mf-reading-grid{grid-template-columns:1fr;gap:35px}.mf-reading-grid img{height:300px}.mf-work .page-top h1{font-size:34px}.mf-staff-links{padding-block:10px;flex-wrap:wrap}}
++@media(max-width:370px){.mf-hero h1{font-size:31px}.mf-wrap{width:calc(100% - 32px)}.mf-public h2{font-size:31px}.mf-hero{min-height:700px}.mf-hero-copy{padding-top:72px}}
++@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
++
++.mf-constructor-details{padding:38px 0 38px 48px;border-left:1px solid #bfcabd}.mf-constructor-details h3{font-size:42px;line-height:1.15;margin-bottom:28px}.mf-constructor-details dl{margin:0}.mf-constructor-details dl>div{border-top:1px solid #bdc9b9;padding:15px 0}.mf-constructor-details dt{font-size:14px;font-weight:700}.mf-constructor-details dd{margin:4px 0 0;font-size:14px;color:var(--mf-muted)}.mf-preparation-note{padding:20px 24px;margin-bottom:20px;border-left:3px solid var(--mf-accent);background:#eaece3;color:var(--mf-ink)}.mf-preparation-note p{margin:5px 0 0}.mf-work .mf-selected-action{outline:3px solid #76a681;outline-offset:4px}
++@media(max-width:900px){.mf-constructor-details{padding:30px 0 0;border-left:0;border-top:1px solid #bfcabd}.mf-constructor-details h3{font-size:34px}.mf-public .mf-path .mf-button{gap:12px;padding-inline:16px}}
++
++/* Stage 7 accessibility refinements, same accepted visual language. */
++[hidden]{display:none!important}html{scroll-behavior:smooth}body{overflow-wrap:break-word}
++:focus-visible{outline:3px solid #ae6b16;outline-offset:4px}
++.mf-detail-note{background:#e9e8dd;padding:clamp(24px,4vw,64px);align-self:stretch}
++.mf-detail-note dl{margin-top:32px}.mf-detail-note dl div{padding:18px 0;border-top:1px solid #aeb7a8}.mf-detail-note dt{font-weight:700}.mf-detail-note dd{margin:4px 0 0}
++.mf-material-swatch{background:#d7c9ae;color:#23392e;padding:clamp(24px,6vw,90px);display:flex;flex-direction:column;justify-content:center;gap:32px}
++.mf-material-swatch strong{font:500 clamp(40px,5vw,72px)/1.1 Georgia,serif}
++.mf-nav a[aria-current=page]{text-decoration:underline;text-underline-offset:8px}
++@media(max-width:900px){.mf-wrap{width:calc(100% - 40px)}.mf-nav{gap:14px}}
++@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+diff --git a/docs/stage07/ASSETS.md b/docs/stage07/ASSETS.md
+new file mode 100644
+index 0000000..64123f6
+--- /dev/null
++++ b/docs/stage07/ASSETS.md
+@@ -0,0 +1,7 @@
++# Visual provenance
++
++`backend/v2/ui_assets/panels.webp` is byte-identical to `public/assets/panels.webp` in accepted photographic preview commit 5c97a60145569b7d1df99f5fce5341587db2f75c and Stage 6 tree. It is a supplied/reused visual reference, not evidence of Martin Forest's actual factory or commissioned work. Original author/license documentation is NOT VERIFIED. The hero caption identifies it as an illustration. Alt: «Текстура и торцы мебельных плит». Crop/focal position retains accepted `.mf-hero-image` CSS; replace the fixed image asset when approved company photography becomes available.
++
++The same image no longer appears three times on the homepage. The second and third occurrences are replaced with distinct typographic process/material compositions, not fake photographs. SPEC N.2's complete three-distinct-photograph set remains a content/design limitation; this is explicitly reported rather than calling it fully satisfied.
++
++No external fonts, image trackers or CDN scripts are required at runtime. Existing Manrope/Cormorant declarations fall back to local Arial/Georgia when fonts are unavailable. All UI resources obey self-only CSP.
+diff --git a/docs/stage07/UI_AUDIT.md b/docs/stage07/UI_AUDIT.md
+new file mode 100644
+index 0000000..2b2a00f
+--- /dev/null
++++ b/docs/stage07/UI_AUDIT.md
+@@ -0,0 +1,25 @@
++# Stage 7 — before implementation
++
++Accepted HEAD: 3951a746c778e668f7d0ec4372f9002a2f3ee692; clean working tree.
++Runtime: 7ca146dbb5f2522604f8a7761e5763ec91f659a5; deployment 2769bd61-0279-4f83-a152-c3aff6036e1d SUCCESS; normal python -m backend.v2.serve.
++
++## Findings and contract boundaries
++
++- Stage 6 serves only the v2 cabinet, not the preserved photographic public pages or v9 workspaces. The legacy scripts use different auth/order/calculation contracts and browser OBLX export. Mounting public/ wholesale would violate Stage 2/6 boundaries.
++- Preserve all legacy sources unchanged. Reuse the accepted public HTML/composition, image and design tokens; serve only explicitly enumerated UI assets in v2. Adapt presentation to existing v2 endpoints, without changing request/response schemas or permissions.
++- v2 supports manual immutable revisions, exact catalogue selection, import templates and review, separate edge sides, preliminary calculation, private documents, staff administration and scoped queue. These can have working UI now.
++- Missing contracts: v2 has no 3D subscription/project API, scraps inventory API, arbitrary source-file intake independent of the template/import flow, full granular capability projection or grant listing. Do not manufacture those APIs in Stage 7. Preserve legacy implementation; show an honest unavailable state where secure integration requires future work. No silent v9 fallback.
++- No generic raw JSON/audit payload rendering in client UI. Existing client projection remains authoritative. Staff role chooses navigation only; every operation remains authorized by existing server RBAC.
++- Public photo repeated three times in the accepted preview. Remove repetition; keep the existing hero reference asset, distinguish it from an actual company-production photograph. Additional verified company photos remain a content limitation.
++
++## Scope
++
++backend/v2/cabinet_ui.py, cabinet_assets, new ui_assets and UI-only static router, app router registration; build script; new Stage 7 UI tests and CI job; documentation/evidence. No migrations, catalogue/financial/production/auth contracts or legacy sources change.
++
++## Verification
++
++360/768/1440 px and 200% zoom, keyboard/focus, labels, error/empty/disabled/loading states; real API role/isolation tests plus browser UI scenarios; complete prior 195 regressions; isolated staging only.
++
++## Compatibility finding during CI
++
++The unchanged Stage 1 regression explicitly requires `/` to return 404. New public UI is therefore opt-in via `MF_PRESENTATION_UI=enabled`; absent/disabled retains the foundation-only route set. Stage 7 tests explicitly enable that deployment feature, old tests are untouched. The flag has no domain/auth/storage effect. Rollback may disable the flag or pin the accepted Stage 6 runtime.
+diff --git a/docs/stage07/environment-before.json b/docs/stage07/environment-before.json
+new file mode 100644
+index 0000000..416eeeb
+--- /dev/null
++++ b/docs/stage07/environment-before.json
+@@ -0,0 +1,276 @@
++{
++  "stage_before": {
++    "project": {
++      "id": "6d754ad4-ba7b-45f8-8c5e-356387e7de06",
++      "name": "Martin Forest Site Preview",
++      "workspaceName": "artempilipeika-create's Projects"
++    },
++    "environment": {
++      "id": "ee625678-c15e-452d-9761-cda99274839f",
++      "name": "production",
++      "unmergedChangesCount": null,
++      "stagedChanges": null
++    },
++    "services": [
++      {
++        "id": "abc0e90d-fa8e-4c00-a0a6-312593a479ed",
++        "name": "martin-forest-preview",
++        "numReplicas": null,
++        "cronSchedule": null,
++        "volumes": [],
++        "latestDeployment": {
++          "id": "5ac650b4-0d52-48c9-9222-29e0a8fd4f3a",
++          "status": "SUCCESS",
++          "createdAt": "2026-09-22T16:36:17.684Z",
++          "url": null
++        }
++      },
++      {
++        "id": "42c638e9-4dc2-4e9a-9ec9-e670ae661bb6",
++        "name": "martin-forest-spec-v2-preview",
++        "numReplicas": null,
++        "cronSchedule": null,
++        "volumes": [],
++        "latestDeployment": {
++          "id": "c28c394e-ff50-4cc7-ba04-0ad9f5eb804c",
++          "status": "SUCCESS",
++          "createdAt": "2026-09-22T18:50:17.778Z",
++          "url": null
++        }
++      },
++      {
++        "id": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
++        "name": "martin-forest-v2-staging",
++        "numReplicas": null,
++        "cronSchedule": null,
++        "volumes": [
++          {
++            "id": "29b79637-3f45-4ddd-ad2c-028d6b96af8e",
++            "name": "mf-v2-staging-private",
++            "mountPath": "/mf-private",
++            "sizeMB": 5000,
++            "region": "sfo"
++          }
++        ],
++        "latestDeployment": {
++          "id": "2769bd61-0279-4f83-a152-c3aff6036e1d",
++          "status": "SUCCESS",
++          "createdAt": "2026-09-23T13:27:56.109Z",
++          "url": null
++        }
++      },
++      {
++        "id": "e773c03c-1f76-4f78-adb7-2132528c3a19",
++        "name": "Postgres",
++        "numReplicas": null,
++        "cronSchedule": null,
++        "volumes": [
++          {
++            "id": "2000d688-b163-4775-93fb-0fe87dab18c6",
++            "name": "postgres-volume",
++            "mountPath": "/var/lib/postgresql/data",
++            "sizeMB": 5000,
++            "region": "sfo"
++          }
++        ],
++        "latestDeployment": {
++          "id": "65355a15-c461-43b3-85dd-b9d3eb1076ed",
++          "status": "SUCCESS",
++          "createdAt": "2026-09-22T22:01:39.947Z",
++          "url": null
++        }
++      }
++    ],
++    "buckets": [],
++    "pendingWork": [
++      {
++        "id": "patch:657037dc-a108-42e0-b8a9-46410b68d38b",
++        "kind": "EnvironmentPatch",
++        "status": "staged",
++        "changes": [],
++        "startedAt": "2026-09-23T13:24:27.721Z",
++        "workflowId": "commitChanges/ee625678-c15e-452d-9761-cda99274839f/657037dc-a108-42e0-b8a9-46410b68d38b"
++      }
++    ]
++  },
++  "stage_config_before": {
++    "service": {
++      "id": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
++      "name": "martin-forest-v2-staging"
++    },
++    "environment": {
++      "id": "ee625678-c15e-452d-9761-cda99274839f",
++      "name": "production"
++    },
++    "config": {
++      "source": {
++        "repo": "artempilipeika-create/artempilipieka-create.github.io",
++        "branch": "martin-forest-v2-staging",
++        "commitSha": "7ca146dbb5f2522604f8a7761e5763ec91f659a5"
++      },
++      "networking": {
++        "serviceDomains": {
++          "martin-forest-v2-staging-production.up.railway.app": {
++            "port": 8000
++          }
++        }
++      },
++      "build": {
++        "builder": "DOCKERFILE",
++        "buildEnvironment": "V3",
++        "dockerfilePath": "Dockerfile"
++      },
++      "deploy": {
++        "startCommand": "python -m backend.v2.serve",
++        "healthcheckPath": "/health",
++        "useLegacyStacker": false,
++        "ipv6EgressEnabled": false,
++        "runtime": "V2",
++        "multiRegionConfig": {
++          "sfo": {
++            "numReplicas": 1
++          }
++        }
++      },
++      "volumeMounts": {
++        "29b79637-3f45-4ddd-ad2c-028d6b96af8e": {
++          "mountPath": "/mf-private"
++        }
++      }
++    },
++    "variableNames": [
++      "MF_AGENT_TRANSPORT",
++      "MF_DATABASE_HOST",
++      "MF_DATABASE_NAME",
++      "MF_DATABASE_URL",
++      "MF_EMAIL_SEAL_KEY",
++      "MF_ENVIRONMENT",
++      "MF_EXPECTED_RAILWAY_ENVIRONMENT_ID",
++      "MF_EXPECTED_RAILWAY_PROJECT_ID",
++      "MF_EXPECTED_RAILWAY_SERVICE_ID",
++      "MF_JOB_NAMESPACE",
++      "MF_OUTBOX_DISPATCH",
++      "MF_PRIVATE_STORAGE_ROOT",
++      "MF_SECURITY_API",
++      "MF_STAGE01_PROBE_MODE",
++      "MF_STAGE02_PROBE_MODE",
++      "MF_STAGE03_OPERATOR_EMAIL",
++      "MF_STAGE03_OPERATOR_MODE",
++      "MF_STAGE03_OPERATOR_PASSWORD",
++      "MF_STAGING_AGENT_API",
++      "MF_WEB_ORIGIN",
++      "PORT"
++    ],
++    "staged": null
++  },
++  "prod_before": {
++    "project": {
++      "id": "7f59bf67-56db-4f6c-b213-c9c7b9342932",
++      "name": "Martin Forest Bridge API",
++      "workspaceName": "artempilipeika-create's Projects"
++    },
++    "environment": {
++      "id": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
++      "name": "production",
++      "unmergedChangesCount": null,
++      "stagedChanges": null
++    },
++    "services": [
++      {
++        "id": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
++        "name": "bridge-api",
++        "numReplicas": null,
++        "cronSchedule": null,
++        "volumes": [],
++        "latestDeployment": {
++          "id": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
++          "status": "SUCCESS",
++          "createdAt": "2026-09-22T13:46:25.106Z",
++          "url": null
++        }
++      },
++      {
++        "id": "2f5c99bd-37ec-46b5-aa22-116f5f898f54",
++        "name": "Postgres",
++        "numReplicas": null,
++        "cronSchedule": null,
++        "volumes": [
++          {
++            "id": "8cdc9cc1-8968-4443-8af1-63a29041bc04",
++            "name": "postgres-volume",
++            "mountPath": "/var/lib/postgresql/data",
++            "sizeMB": 500,
++            "region": "sfo"
++          }
++        ],
++        "latestDeployment": {
++          "id": "168b0c29-6693-433f-9a85-552f9de65b37",
++          "status": "SUCCESS",
++          "createdAt": "2026-09-22T12:59:39.351Z",
++          "url": null
++        }
++      }
++    ],
++    "buckets": [],
++    "pendingWork": [
++      {
++        "id": "patch:fb061e37-22cf-4996-bfad-5f7cc31b45a1",
++        "kind": "EnvironmentPatch",
++        "status": "staged",
++        "changes": [],
++        "startedAt": "2026-09-22T13:18:31.639Z",
++        "workflowId": "commitChanges/818e6927-02ef-4cfe-a970-e7e01b0b6872/fb061e37-22cf-4996-bfad-5f7cc31b45a1"
++      }
++    ]
++  },
++  "prod_config_before": {
++    "service": {
++      "id": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
++      "name": "bridge-api"
++    },
++    "environment": {
++      "id": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
++      "name": "production"
++    },
++    "config": {
++      "source": {
++        "repo": "artempilipeika-create/artempilipieka-create.github.io",
++        "branch": "martin-forest-api-v1"
++      },
++      "networking": {
++        "serviceDomains": {
++          "bridge-api-production-577d.up.railway.app": {
++            "port": 8000
++          }
++        }
++      },
++      "build": {
++        "builder": "DOCKERFILE",
++        "buildEnvironment": "V3",
++        "dockerfilePath": "Dockerfile"
++      },
++      "deploy": {
++        "healthcheckPath": "/health",
++        "healthcheckTimeout": 120,
++        "restartPolicyMaxRetries": 5,
++        "useLegacyStacker": false,
++        "ipv6EgressEnabled": false,
++        "runtime": "V2",
++        "multiRegionConfig": {
++          "sfo": {
++            "numReplicas": 1
++          }
++        }
++      }
++    },
++    "variableNames": [
++      "AGENT_API_KEY",
++      "CORS_ORIGINS",
++      "DATABASE_URL",
++      "PORT",
++      "TELEGRAM_BOT_TOKEN",
++      "TELEGRAM_CHAT_ID"
++    ],
++    "staged": null
++  }
++}
+diff --git a/scripts/build-stage07-ui.py b/scripts/build-stage07-ui.py
+new file mode 100644
+index 0000000..a05295c
+--- /dev/null
++++ b/scripts/build-stage07-ui.py
+@@ -0,0 +1,46 @@
++"""Reuse the accepted photographic preview, without publishing its legacy runtime."""
++from pathlib import Path
++import re,shutil
++ROOT=Path(__file__).resolve().parents[1]
++OUT=ROOT/'backend/v2/ui_assets';OUT.mkdir(exist_ok=True)
++routes=['index.html','about/index.html','services/index.html','services/raspil/index.html','services/kromka/index.html','how-it-works/index.html','contacts/index.html','order/index.html','3d/index.html']
++for route in routes:
++    text=(ROOT/'public'/route).read_text()
++    depth=route.count('/'); prefix='../'*depth
++    def absolute(m):
++        attr,path=m.group(1),m.group(2)
++        if path.startswith(('http','tel:','#')):return m.group(0)
++        while path.startswith('../'):path=path[3:]
++        links={'index.html':'','login.html':'login','account.html':'account','register.html':'register','constructor.html':'constructor.html','order.html?mode=manager':'editor?mode=manager','order.html?mode=self':'editor?mode=self'}
++        path=links.get(path,path)
++        if path in ('site-v2.css','site-nav.js','favicon.svg','assets/panels.webp'):path='ui/'+path.replace('assets/','')
++        return f'{attr}="/{path}"'
++    text=re.sub(r'(href|src)="([^"]+)"',absolute,text)
++    # Keep the original photograph once. Do not pretend references are our factory.
++    if route=='index.html':
++        text=re.sub(r'<figure class="mf-material-photo">.*?</figure>','<aside class="mf-detail-note"><p class="mf-kicker">От списка — к детали</p><h3>Точность начинается<br>с деталировки.</h3><dl><div><dt>Материал</dt><dd>Артикул, структура и толщина</dd></div><div><dt>Размеры</dt><dd>Длина, ширина и количество</dd></div><div><dt>Торцы</dt><dd>Четыре независимые стороны</dd></div></dl></aside>',text,flags=re.S)
++        text=re.sub(r'<img class="mf-materials-image"[^>]+>','<div class="mf-material-swatch"><span>ЛДСП / МДФ / ЛХДФ</span><strong>Декор.<br>Структура.<br>Торец.</strong><p>Точное обозначение материала сохраняется на каждом этапе заказа.</p></div>',text)
++        text=text.replace('Материал · Размеры · Внимание к детали','Иллюстрация материала · визуальный ориентир')
++    text=text.replace('затем перенести предварительный список деталей в заказ','сформировать предварительный список деталей в отдельном инструменте')
++    text=text.replace('Предварительный список деталей можно перенести в редактор заказа.','Подключение рабочего инструмента к защищённому кабинету требует отдельной проверки доступа.')
++    target=OUT/route;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(text)
++css=(ROOT/'public/site-v2.css').read_text();css=re.sub(r"^@import[^\n]+\n",'',css,count=1)
++css=css.replace('--mf-muted:#68736b','--mf-muted:#536459')
++css+='''\n/* Stage 7 accessibility refinements, same accepted visual language. */
++[hidden]{display:none!important}html{scroll-behavior:smooth}body{overflow-wrap:break-word}
++:focus-visible{outline:3px solid #ae6b16;outline-offset:4px}
++.mf-detail-note{background:#e9e8dd;padding:clamp(24px,4vw,64px);align-self:stretch}
++.mf-detail-note dl{margin-top:32px}.mf-detail-note dl div{padding:18px 0;border-top:1px solid #aeb7a8}.mf-detail-note dt{font-weight:700}.mf-detail-note dd{margin:4px 0 0}
++.mf-material-swatch{background:#d7c9ae;color:#23392e;padding:clamp(24px,6vw,90px);display:flex;flex-direction:column;justify-content:center;gap:32px}
++.mf-material-swatch strong{font:500 clamp(40px,5vw,72px)/1.1 Georgia,serif}
++.mf-nav a[aria-current=page]{text-decoration:underline;text-underline-offset:8px}
++@media(max-width:900px){.mf-wrap{width:calc(100% - 40px)}.mf-nav{gap:14px}}
++@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
++'''
++(OUT/'site-v2.css').write_text(css)
++shutil.copy(ROOT/'public/assets/panels.webp',OUT/'panels.webp');shutil.copy(ROOT/'public/favicon.svg',OUT/'favicon.svg')
++(OUT/'site-nav.js').write_text("""'use strict';
++fetch('/api/v2/auth/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(u=>{if(u)document.querySelectorAll('[data-account-link]').forEach(a=>{a.textContent='Личный кабинет';a.href='/account';});}).catch(()=>{});
++document.querySelectorAll('.mf-menu').forEach(menu=>{menu.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.open=false;menu.querySelector('summary').focus();}});});
++""")
++print('Stage 7: nine accepted public pages, explicit assets; no legacy scripts copied.')
+diff --git a/tests/stage07/__init__.py b/tests/stage07/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/stage07/browser_checks.py b/tests/stage07/browser_checks.py
+new file mode 100644
+index 0000000..c7609ec
+--- /dev/null
++++ b/tests/stage07/browser_checks.py
+@@ -0,0 +1,139 @@
++"""Chromium + real ASGI/Postgres, isolated synthetic data. No staging/prod writes.
++Browser requests are transported to TestClient; responses, cookies and RBAC are real.
++"""
++from pathlib import Path
++from uuid import uuid4
++import os,json,base64
++import pytest
++from playwright.sync_api import sync_playwright,expect
++from fastapi.testclient import TestClient
++from cryptography.fernet import Fernet
++from backend.v2.app import create_app
++from backend.v2.security import WebPolicy,COOKIE
++from backend.v2.db import transaction
++from tests.stage03.test_api import settings,api,admin_user,publish,post,login,PASSWORD
++from tests.stage04.test_api import configure,item,order
++from tests.stage05.test_api import client_order
++
++OUT=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/stage07'))
++
++@pytest.fixture
++def page(settings):
++    OUT.mkdir(parents=True,exist_ok=True)
++    policy=WebPolicy('https://testserver',Fernet.generate_key(),network_auth_per_hour=100000,network_emails_per_hour=100000)
++    with TestClient(create_app(settings,policy),base_url=policy.origin) as transport, sync_playwright() as p:
++        browser=p.chromium.launch(headless=True)
++        context=browser.new_context(viewport={'width':1440,'height':1000})
++        errors=[]
++        def request(route):
++            req=route.request
++            if not req.url.startswith(policy.origin+'/'):
++                route.abort();return
++            transport.cookies.clear()
++            response=transport.request(req.method,req.url,headers=req.headers,content=req.post_data_buffer)
++            route.fulfill(status=response.status_code,headers=dict(response.headers),body=response.content)
++        context.route('**/*',request)
++        page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
++        yield page
++        assert not errors,errors
++        context.close();browser.close()
++
++def screenshot(page,name):
++    page.screenshot(path=str(OUT/(name+'.png')),full_page=True)
++    if name in {'home-360','home-1440','editor-360','editor-1440'}:
++        data=page.screenshot(type='jpeg',quality=40,full_page=False)
++        encoded=base64.b64encode(data).decode()
++        print('MF_UI_SCREENSHOT_BEGIN '+name,flush=True)
++        for n in range(0,len(encoded),3000): print('MF_UI_IMAGE '+encoded[n:n+3000],flush=True)
++        print('MF_UI_SCREENSHOT_END '+name,flush=True)
++def no_overflow(page):assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
++def login_ui(page,email):
++    page.goto('https://testserver/login');page.get_by_label('Email',exact=True).fill(email)
++    page.get_by_label('Пароль',exact=True).fill(PASSWORD);page.get_by_role('button',name='Войти',exact=True).click()
++    expect(page.locator('#auth')).to_be_hidden()
++
++@pytest.mark.parametrize('width',[360,768,1440])
++def test_public_responsive_keyboard(page,width):
++    page.set_viewport_size({'width':width,'height':1000})
++    for path,name in [('/','home'),('/about/','about'),('/services/','services'),('/services/raspil/','raspil'),('/services/kromka/','kromka'),('/order/','preparation'),('/how-it-works/','process'),('/contacts/','contacts'),('/3d/','3d'),('/login','login'),('/register','register')]:
++        page.goto('https://testserver'+path);no_overflow(page)
++        expect(page.locator('h1')).to_be_visible()
++        if path=='/':
++            assert page.locator('body').evaluate('(x)=>getComputedStyle(x).backgroundColor')=='rgb(246, 243, 235)'
++            assert page.locator('.mf-wrap').first.evaluate('(x)=>x.getBoundingClientRect().width')<=1240
++        assert page.locator('img').evaluate_all('(xs)=>xs.every(x=>x.complete && x.naturalWidth>0)')
++        screenshot(page,f'{name}-{width}')
++    page.goto('https://testserver/');page.keyboard.press('Tab');expect(page.locator('.mf-skip')).to_be_focused();page.keyboard.press('Enter')
++    if width==360:
++        page.locator('.mf-menu summary').click();expect(page.locator('.mf-menu')).to_have_attribute('open','');page.keyboard.press('Escape');assert not page.locator('.mf-menu').get_attribute('open')
++
++@pytest.mark.parametrize('width',[360,768,1440])
++def test_client_editor_actual_api(page,api,settings,admin_user,width):
++    o,_,_,email=client_order(api,settings,admin_user,mode='manager_assisted')
++    login(api,admin_user['email']);release=api.get('/api/v2/catalogue/releases').json()['active_release'];m=item(api,release);configure(api,o,release,m)
++    page.set_viewport_size({'width':width,'height':1000});login_ui(page,email)
++    expect(page.get_by_role('heading',name='Мои заказы',exact=True)).to_be_visible();screenshot(page,f'cabinet-{width}')
++    page.goto('https://testserver/editor?order='+o['order_id']);page.get_by_role('button',name='Добавить деталь',exact=True).click()
++    page.get_by_label('Длина, мм',exact=True).fill('600');page.get_by_label('Ширина, мм',exact=True).fill('400');page.get_by_label('Количество, шт.',exact=True).fill('0')
++    page.get_by_role('button',name='Сохранить строку',exact=True).click();expect(page.locator('#message')).to_contain_text('больше нуля');expect(page.get_by_label('Количество, шт.',exact=True)).to_have_value('0')
++    page.get_by_label('Количество, шт.',exact=True).fill('3');page.get_by_label('Поиск материала: артикул, структура',exact=True).fill('621 PO')
++    page.locator('#row-panel').get_by_role('button',name='Найти',exact=True).first.click()
++    page.locator('#row-panel .result-list button').first.click();page.get_by_label('Направление текстуры',exact=True).select_option('none')
++    page.get_by_role('button',name='Сохранить строку',exact=True).click();expect(page.locator('#manual-rows')).to_contain_text('600 × 400')
++    no_overflow(page);screenshot(page,f'editor-{width}')
++    page.get_by_role('button',name='Сохранить новую редакцию',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Подтвердить',exact=True).click()
++    expect(page.locator('#message')).to_contain_text('сохранена')
++    page.get_by_role('button',name='Предварительный расчёт',exact=True).click();expect(page.locator('#message')).to_contain_text('Предварительный расчёт создан')
++    page.goto('https://testserver/account#'+o['order_id']);expect(page.get_by_role('heading',name='Документы',exact=True)).to_be_visible()
++    assert not page.locator('main').inner_text().find('lease_token')>=0
++    no_overflow(page);screenshot(page,f'order-{width}')
++    page.goto('https://testserver/admin.html');expect(page.get_by_role('heading',name='Доступ ограничен',exact=True)).to_be_visible()
++    assert page.locator('text=Сотрудники').count()==0
++
++
++def test_staff_admin_and_error_states(page,api,settings,admin_user):
++    login_ui(page,admin_user['email']);expect(page.get_by_role('heading',name='Рабочий кабинет',exact=True)).to_be_visible()
++    page.get_by_role('button',name='Сотрудники',exact=True).click();expect(page.get_by_role('heading',name='Сотрудники',exact=True)).to_be_visible();screenshot(page,'staff-admin-1440')
++    page.get_by_role('button',name='Журнал действий',exact=True).click();expect(page.get_by_role('heading',name='Журнал действий',exact=True)).to_be_visible()
++    page.get_by_role('button',name='Выйти',exact=True).click();expect(page.locator('#auth')).to_be_visible()
++    page.get_by_label('Email',exact=True).fill('missing@example.invalid');page.get_by_label('Пароль',exact=True).fill('wrong-password-123')
++    page.get_by_role('button',name='Войти',exact=True).click();expect(page.locator('#message')).to_contain_text('Не удалось войти');expect(page.locator('#account')).to_be_hidden();screenshot(page,'login-error-1440')
++
++
++def test_zoom_200_and_form_labels(page):
++    page.set_viewport_size({'width':720,'height':500})
++    page.goto('https://testserver/login')
++    # 1440 CSS pixels at 200% browser zoom has a 720 CSS-pixel layout viewport.
++    no_overflow(page);assert page.locator('input').evaluate_all('(xs)=>xs.every(x=>x.labels.length>0)')
++    screenshot(page,'login-zoom-equivalent-200')
++
++
++@pytest.fixture(autouse=True)
++def presentation_enabled(monkeypatch):
++    monkeypatch.setenv("MF_PRESENTATION_UI","enabled")
++
++def test_manager_import_keeps_zero_and_source(page,api,settings,admin_user):
++    from tests.stage03.support import xlsx
++    o,_,_,email=client_order(api,settings,admin_user,mode='manager_assisted')
++    login_ui(page,email);page.goto('https://testserver/editor?order='+o['order_id'])
++    page.get_by_role('button',name='Импорт Excel',exact=True).click()
++    data=xlsx({'Лист1':[['Длина','Ширина','Количество','Артикул','Материал','L1','L2','W1','W2','Текстура','Вращение'],[600,400,0,'621 PO','Board','0','0','0','0','none','false']]})
++    page.get_by_label('Файл XLSX',exact=True).set_input_files({'name':'synthetic-stage07.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
++    page.get_by_role('button',name='Проверить файл',exact=True).click()
++    expect(page.get_by_role('heading',name='Предпросмотр — строки не потеряны',exact=True)).to_be_visible()
++    page.get_by_role('button',name='Добавить позиции в черновик',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Подтвердить',exact=True).click()
++    expect(page.get_by_role('heading',name='Позиции из Excel',exact=True)).to_be_visible();expect(page.locator('main')).to_contain_text('qty: must_be_positive')
++    screenshot(page,'excel-zero-preserved')
++    with transaction(settings) as c:
++        assert c.execute('SELECT snapshot FROM mf_order_draft_rows WHERE order_id=%s',(o['order_id'],)).fetchone()['snapshot']['values']['qty']==0
++        assert c.execute("SELECT count(*) n FROM mf_files WHERE order_id=%s AND kind='source'",(o['order_id'],)).fetchone()['n']==1
++
++
++def test_assigned_manager_queue_no_admin(page,api,settings,admin_user):
++    from tests.stage05.test_api import staff
++    o=order(api)
++    _,email=staff(settings,'manager',o['order_id'],['orders.read'],assigned=True)
++    login_ui(page,email);expect(page.get_by_role('heading',name='Рабочий кабинет',exact=True)).to_be_visible()
++    expect(page.locator('#staff-content')).to_contain_text(o['business_name'])
++    assert page.get_by_role('button',name='Сотрудники',exact=True).count()==0
++    screenshot(page,'manager-1440')
+diff --git a/tests/stage07/test_presentation.py b/tests/stage07/test_presentation.py
+new file mode 100644
+index 0000000..3115dc2
+--- /dev/null
++++ b/tests/stage07/test_presentation.py
+@@ -0,0 +1,85 @@
++"""Stage 7 presentation routes must not widen any private/business surface."""
++from pathlib import Path
++from html.parser import HTMLParser
++import pytest
++from tests.stage03.test_api import settings,api,admin_user,post,publish,PASSWORD
++from tests.stage05.test_api import client_order
++from backend.v2.presentation_ui import PAGES,ASSETS,ROOT
++from backend.v2.db import connect
++
++@pytest.mark.parametrize('path',list(PAGES))
++def test_public_pages_are_explicit_noindex_csp(api,path):
++    r=api.get(path)
++    assert r.status_code==200
++    assert 'noindex' in r.headers['x-robots-tag'] and "default-src 'none'" in r.headers['content-security-policy']
++    assert 'Подготовить заказ' in r.text
++    assert '/api/orders' not in r.text and 'scraps' not in r.text
++    assert '<html lang="ru">' in r.text
++
++@pytest.mark.parametrize('path',['/account','/account.html','/login','/login.html','/register','/register.html','/editor','/order.html','/staff','/admin.html','/constructor.html'])
++def test_compatible_workspace_routes_contain_no_user_data(api,path):
++    r=api.get(path)
++    assert r.status_code==200 and 'aria-live="polite"' in r.text
++    assert 'storage_key' not in r.text and 'lease_token' not in r.text
++    assert 'backend.v2' not in r.text
++
++@pytest.mark.parametrize('path',['/public/order.js','/static/order.js','/ui/../production_service.py','/ui/production_service.py','/ui/storage/test.oblx','/ui/test.zip','/ui/config.js','/scraps.html','/scraps/','/order.js','/auth.js'])
++def test_no_wholesale_static_legacy_or_private_mount(api,path):
++    for method in ('GET','HEAD'):
++        assert api.request(method,path,headers={'Range':'bytes=0-20'}).status_code in (404,405)
++
++def test_client_cannot_use_staff_or_production_data_through_ui_aliases(api,settings,admin_user):
++    order,_,_,_=client_order(api,settings,admin_user,mode='manager_assisted')
++    assert api.get('/api/v2/admin/staff').status_code==403
++    assert api.get('/api/v2/admin/audit').status_code==403
++    assert api.get('/api/v2/orders/'+order['order_id']+'/oblx').status_code==403
++    assert api.get('/api/v2/account/orders/'+order['order_id']).status_code==200
++    with connect(settings) as c:
++        assert c.execute('SELECT count(*) n FROM mf_final_calculation_candidates').fetchone()['n']==0
++        assert c.execute("SELECT count(*) n FROM mf_production_jobs WHERE purpose='produce'").fetchone()['n']==0
++
++class Links(HTMLParser):
++    def __init__(self):super().__init__();self.links=[]
++    def handle_starttag(self,tag,attrs):
++        d=dict(attrs)
++        for k in ('src','href'):
++            if k in d:self.links.append(d[k])
++
++def test_public_links_resolve_to_explicit_routes():
++    known=set(PAGES)|{'/ui/'+s for s in ASSETS}|{'/login','/account','/editor','/constructor.html'}
++    for path in set(PAGES.values()):
++        p=Links();p.feed((ROOT/path).read_text())
++        for link in p.links:
++            if link.startswith(('tel:','#')):continue
++            assert link.split('?')[0] in known,(path,link)
++
++def test_no_client_native_exports_or_unsafe_html():
++    root=Path('backend/v2/cabinet_assets')
++    for name in ('app.js','workspace.js'):
++        code=(root/name).read_text()
++        for forbidden in ('innerHTML','localStorage','AGENT_API_KEY','/agent/jobs','/production-jobs','createObjectURL'):
++            assert forbidden not in code
++    assert "BAZIS_RUN_REQUIRED:" in (root/'workspace.js').read_text()
++    assert 'qty<1' in (root/'workspace.js').read_text()
++    assert 'Idempotency-Key' in (root/'app.js').read_text()
++
++def test_form_label_and_landmarks():
++    text=Path('backend/v2/cabinet_assets/index.html').read_text()
++    for name in ('email','password'):
++        assert f'for="{name}"' in text and f'id="{name}"' in text
++    assert 'href="#main"' in text and 'id="main"' in text
++    assert 'aria-label="Навигация"' in text
++
++
++@pytest.fixture(autouse=True)
++def presentation_enabled(monkeypatch):
++    monkeypatch.setenv("MF_PRESENTATION_UI","enabled")
++
++def test_primary_text_contrast():
++    def lum(h):
++        v=[int(h[i:i+2],16)/255 for i in (0,2,4)]
++        v=[x/12.92 if x<=.04045 else ((x+.055)/1.055)**2.4 for x in v]
++        return sum(x*y for x,y in zip(v,[.2126,.7152,.0722]))
++    for fg,bg in [('20382c','f6f3eb'),('ffffff','153d2d'),('536459','f6f3eb'),('664812','fff8e8'),('80271d','fff0ed')]:
++        a,b=sorted([lum(fg),lum(bg)])
++        assert (b+.05)/(a+.05)>=4.5,(fg,bg)

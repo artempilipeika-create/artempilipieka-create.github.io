@@ -1,0 +1,4 @@
+8dd33526e356ce24bd9c3390b0052167a777d0b7 fix(ui): preserve theme variables when removing remote font import
+ef4d7b8cc1a25a8065d72a657dda1280b8f806dc Stage 7: retain compact browser screenshot evidence alongside full artifacts
+3c54793cb5eed948036b864f5143a9c5b031ef4b Stage 7: opt-in public UI, accessible selectors and preserved imported corrections
+ac28a78a166e022f47f7be9e2d1d246c41fe117e Stage 7: integrate accepted photographic UI and v2 workspaces without domain changes
