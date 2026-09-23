@@ -25,6 +25,7 @@ for route in routes:
     text=text.replace('Предварительный список деталей можно перенести в редактор заказа.','Подключение рабочего инструмента к защищённому кабинету требует отдельной проверки доступа.')
     # Visual fix: furniture outcome, honest 3D availability; no workflow changes.
     text=text.replace('Текстура и торцы мебельных плит','Визуализация кухни с дубовыми шкафами и зелёными фасадами')
+    text=text.replace('Фактура мебельных плит','Интерьерная концепция кухни: дубовые шкафы и зелёные фасады')
     text=text.replace('Торцы и плоскости мебельных плит','Кухня по индивидуальным размерам — интерьерная визуализация')
     text=text.replace('Иллюстрация материала · визуальный ориентир','Концепция интерьера · 3D-визуализация')
     text=text.replace('Для ваших проектов. По вашим размерам.','Детали для кухни, шкафа и вашей идеи.')
@@ -39,7 +40,7 @@ for route in routes:
     text=text.replace('href="/constructor.html">Открыть 3D-конструктор','href="/order/">Подготовить деталировку')
     text=text.replace('href="/constructor.html">Открыть конструктор','href="/3d/">Узнать о 3D-направлении')
     text=text.replace('>3D-конструктор</a>','>3D-визуализация</a>')
-    if route in ('about/index.html','services/index.html','order/index.html'):
+    if route in ('services/index.html','order/index.html'):
         text=text.replace('class="mf-subhero"','class="mf-subhero mf-furniture-banner"',1)
     if route=='services/raspil/index.html':
         text=text.replace('<img src="/ui/panels.webp"','<img loading="lazy" src="/ui/panels.webp"')
