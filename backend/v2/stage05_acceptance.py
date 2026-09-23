@@ -94,3 +94,33 @@ def run(settings):
             assert db.execute('SELECT count(*) n FROM mf_production_jobs').fetchone()['n']==1
         evidence['canonical_submit_passed']=True;evidence['new_revision_document']=updated_doc;evidence['stage4_snapshots_unchanged']=True;evidence['new_production_jobs']=0
     path.write_text(json.dumps(evidence,indent=2));print('MF_STAGE05_LIVE='+json.dumps(evidence,separators=(',',':')),flush=True)
+
+
+def upgrade_template(settings):
+    path=settings.storage_root.parent/'stage05-template-v2-evidence.json'
+    if path.exists():
+        print('MF_STAGE05_TEMPLATE_V2='+path.read_text(),flush=True);return
+    policy=WebPolicy.from_env();email=os.environ.get('MF_STAGE03_OPERATOR_EMAIL','');password=os.environ.get('MF_STAGE03_OPERATOR_PASSWORD','')
+    if not email.endswith('@example.invalid') or len(password)<32: raise ValueError('Synthetic operator required')
+    with connect(settings) as db:
+        old=db.execute("SELECT d.*,f.sha256 FROM mf_documents d JOIN mf_files f USING(file_id) WHERE template_version='mf-preliminary-a4-v1' ORDER BY d.created_at").fetchall()
+    assert len(old)==4
+    evidence=[]
+    with TestClient(create_app(settings,policy),base_url=policy.origin,headers={'Origin':policy.origin,'Content-Type':'application/json'}) as api:
+        assert api.post('/api/v2/auth/login',json={'email':email,'password':password}).status_code==200
+        for before in old:
+            route='/api/v2/calculations/'+str(before['calculation_id'])+'/documents/preliminary'
+            response=api.post(route,json={});assert response.status_code==201,response.text
+            after=response.json();assert after['template_version']=='mf-preliminary-a4-v2' and after['document_version']==2
+            assert api.post(route,json={}).json()==after
+            previous=api.get('/api/v2/documents/'+str(before['file_id']));new=api.get('/api/v2/documents/'+after['file_id'])
+            assert previous.status_code==new.status_code==200 and sha256(previous.content)==before['sha256']
+            assert after['file_id']!=str(before['file_id'])
+            with connect(settings) as db:
+                v=db.execute('SELECT presentation_snapshot FROM mf_documents WHERE file_id=%s',(after['file_id'],)).fetchone()['presentation_snapshot']
+            for k in ('materials','edges','services','discounts','amount','currency','state'):
+                assert v[k]==before['presentation_snapshot'][k]
+            evidence.append({'calculation_id':str(before['calculation_id']),'old_file_id':str(before['file_id']),'old_sha256':before['sha256'],
+               **after,'sha256':sha256(new.content),'financial_projection_unchanged':True,'old_pdf_preserved':True})
+    result={'template_version':'mf-preliminary-a4-v2','documents':evidence,'same_version_idempotent':True}
+    path.write_text(json.dumps(result,indent=2));print('MF_STAGE05_TEMPLATE_V2='+json.dumps(result,separators=(',',':')),flush=True)

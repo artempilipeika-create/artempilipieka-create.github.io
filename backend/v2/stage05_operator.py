@@ -2,7 +2,7 @@
 from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
-import json
+import json,re
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict,make_conninfo
 from .db import connect,transaction
@@ -27,8 +27,9 @@ def verify(settings):
     return state
 
 
-def retire_restore(settings,email):
-    evidence_path=settings.storage_root.parent/'stage05-restore-evidence.json'
+def retire_restore(settings,email,checkpoint='stage05'):
+    if checkpoint not in {'stage05','stage05-template-v2'}: raise ValueError('Invalid staging checkpoint')
+    evidence_path=settings.storage_root.parent/(checkpoint+'-restore-evidence.json')
     if evidence_path.exists():
         print('MF_STAGE05_RESTORE='+evidence_path.read_text(),flush=True);return
     if not email.endswith('@example.invalid'): raise ValueError('Synthetic operator required')
@@ -42,11 +43,11 @@ def retire_restore(settings,email):
             record_event(c,settings,actor=uid,action='stage05.operator.retired',object_type='user',object_id=uid,reason='Synthetic acceptance credentials retired')
     before=verify(settings)
     if before['tables']['mf_documents']['count']<2: raise ValueError('Document acceptance missing')
-    run=uuid4().hex[:12];destination=settings.storage_root.parent/'backups'/('stage05-'+run)
-    manifest=backup(settings,destination);name='mf_staging_restore_stage05_'+run
+    run=uuid4().hex[:12];destination=settings.storage_root.parent/'backups'/(checkpoint+'-'+run)
+    manifest=backup(settings,destination);name='mf_staging_restore_'+checkpoint.replace('-','_')+'_'+run
     with connect(settings,autocommit=True) as c: c.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
     info=conninfo_to_dict(settings.database_url)
-    target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,storage_root=settings.storage_root.parent/('restore-stage05-'+run)/'storage')
+    target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,storage_root=settings.storage_root.parent/('restore-'+checkpoint+'-'+run)/'storage')
     restored=restore(target,destination);after=verify(target)
     if before!=after: raise ValueError('Stage5 restore differs')
     evidence={'restore':restored,'dump_sha256':manifest['database_sha256'],'backup_path':str(destination),'storage_root':str(target.storage_root),
@@ -54,8 +55,9 @@ def retire_restore(settings,email):
     evidence_path.write_text(json.dumps(evidence,indent=2));print('MF_STAGE05_RESTORE='+json.dumps(evidence,separators=(',',':')),flush=True)
 
 
-def verify_persistence(settings):
-    recorded=json.loads((settings.storage_root.parent/'stage05-restore-evidence.json').read_text());current=verify(settings)
+def verify_persistence(settings,checkpoint='stage05'):
+    if checkpoint not in {'stage05','stage05-template-v2'}: raise ValueError('Invalid staging checkpoint')
+    recorded=json.loads((settings.storage_root.parent/(checkpoint+'-restore-evidence.json')).read_text());current=verify(settings)
     if current!=recorded['state']: raise ValueError('Stage5 persistence differs')
     evidence={'persistent_after_redeploy':True,'documents':current['tables']['mf_documents']['count'],'calculations':current['tables']['mf_calculations']['count'],
       'revisions':current['tables']['mf_order_revisions']['count'],'private_files':len(current['private_files']),'authorization_metadata_match':True,'production_jobs':current['production_jobs']}

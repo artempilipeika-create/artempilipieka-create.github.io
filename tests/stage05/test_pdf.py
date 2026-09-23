@@ -76,3 +76,10 @@ if __name__=='__main__':
     for name,count,mode in [('one-material',1,'complete'),('five-materials',5,'complete'),('twenty-materials',20,'complete'),('customer-material',1,'customer'),('glued-36mm',1,'glue'),('incomplete',1,'incomplete')]:
         c,v=sample(count,mode);(out/(name+'.pdf')).write_bytes(render(v));evidence[name]={'snapshot':c,'projection':v}
     (out/'synthetic-fixtures.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2))
+
+
+def test_unknown_discount_labels_fit_and_never_fake_total():
+    c,v=sample(mode='incomplete');c['input_snapshot']['discount']=None;c['result']=calculate(c['input_snapshot'])
+    view=project(c,number='MF-000124',name='Неизвестные условия',customer='Клиент',revision_number=1,date='2026-09-23')
+    text=' '.join(p.extract_text() for p in PdfReader(BytesIO(render(view))).pages)
+    assert 'Уточняетс\nя' not in text and 'РАССЧИТАННАЯ ЧАСТЬ' in text and 'ПРЕДВАРИТЕЛЬНАЯ СТОИМОСТЬ' not in text

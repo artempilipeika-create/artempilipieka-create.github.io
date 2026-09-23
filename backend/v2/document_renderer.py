@@ -13,8 +13,8 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,KeepTogether
 from .document_projection import UNITS
 
-VERSION='mf-preliminary-a4-v1'
-RENDERER='reportlab-4.4.9-mf-v1'
+VERSION='mf-preliminary-a4-v2'
+RENDERER='reportlab-4.4.9-mf-v2'
 FONTS={'DejaVuSans.ttf':'ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280',
  'DejaVuSans-Bold.ttf':'5c1247acef7f2b8522a31742c76d6adcb5569bacc0be7ceaa4dc39dd252ce895'}
 ASSET_HASH=hashlib.sha256(Path(__file__).read_bytes()+Path(__file__).with_name('document_projection.py').read_bytes()+json.dumps(FONTS,sort_keys=True).encode()).hexdigest()
@@ -90,7 +90,7 @@ def render(data, template_version=VERSION):
         story.append(table(['Кромка','Метраж','Цена, BYN','Сумма, BYN'],rows,[.38,.28,.18,.16],'Материал кромки'))
     if data['services']:
         story.append(table(['Операция','Объём','Тариф, BYN','Сумма, BYN'],[[p(s['name']),p(n(s['quantity'])+' '+UNITS.get(s['unit'],'')),p(n(s['unit_price'])),p(n(s['amount']))] for s in data['services']],[.49,.17,.18,.16],'Производственные услуги'))
-    story.append(table(['Категория','До скидки','Скидка, %','Скидка, BYN','После, BYN'],[[p(d['name']),p(n(d['gross'])),p(n(d['percent'])),p(n(d['discount'])),p(n(d['net']))] for d in data['discounts']],[.36,.16,.14,.17,.17],'Три независимые скидки'))
+    story.append(table(['Категория','До скидки','Скидка, %','Скидка, BYN','После, BYN'],[[p(d['name']),p(n(d['gross'])),p(n(d['percent']),'small' if d['percent'] is None else 'body'),p(n(d['discount'])),p(n(d['net']))] for d in data['discounts']],[.36,.16,.14,.17,.17],'Три независимые скидки'))
     if data['state']!='complete':
         story.append(p('Требует уточнения стоимости','heading'))
         for text in data['unresolved']: story.append(p(text,'small'))
