@@ -1,4 +1,3 @@
-500;600;700;800&family=Cormorant+Garamond:ital,wght@1,600&display=swap');
 
 :root{--mf-forest:#153d2d;--mf-dark:#0b281e;--mf-paper:#f6f3eb;--mf-ink:#20382c;--mf-muted:#536459;--mf-rule:#d9ddd2;--mf-accent:#277646;--mf-width:1240px}
 .mf-public{margin:0;background:var(--mf-paper);color:var(--mf-ink);font:400 16px/1.7 Manrope,Arial,sans-serif}

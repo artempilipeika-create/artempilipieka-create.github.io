@@ -58,6 +58,9 @@ def test_public_responsive_keyboard(page,width):
     for path,name in [('/','home'),('/about/','about'),('/services/','services'),('/services/raspil/','raspil'),('/services/kromka/','kromka'),('/order/','preparation'),('/how-it-works/','process'),('/contacts/','contacts'),('/3d/','3d'),('/login','login'),('/register','register')]:
         page.goto('https://testserver'+path);no_overflow(page)
         expect(page.locator('h1')).to_be_visible()
+        if path=='/':
+            assert page.locator('body').evaluate('(x)=>getComputedStyle(x).backgroundColor')=='rgb(246, 243, 235)'
+            assert page.locator('.mf-wrap').first.evaluate('(x)=>x.getBoundingClientRect().width')<=1240
         assert page.locator('img').evaluate_all('(xs)=>xs.every(x=>x.complete && x.naturalWidth>0)')
         screenshot(page,f'{name}-{width}')
     page.goto('https://testserver/');page.keyboard.press('Tab');expect(page.locator('.mf-skip')).to_be_focused();page.keyboard.press('Enter')
