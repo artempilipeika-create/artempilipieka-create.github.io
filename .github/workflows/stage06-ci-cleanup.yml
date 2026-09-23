@@ -28,7 +28,7 @@ jobs:
           assert data['head_branch']=='martin-forest-v2-staging'
           assert data['head_sha']=='618c24d7f408eaeb75d113518bcb5cf5313dae85'
           if data['status']!='completed':
-              with urllib.request.urlopen(urllib.request.Request(base+str(run)+'/cancel',data=b'',headers=headers,method='POST')) as r:
+              with urllib.request.urlopen(urllib.request.Request(base+str(run)+'/force-cancel',data=b'',headers=headers,method='POST')) as r:
                   print('Cancelled superseded staging test',run,r.status)
           else: print('Already completed',run)
           PY

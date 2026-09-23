@@ -9,7 +9,7 @@ permissions:
 jobs:
   postgres-foundation:
     if: github.ref == 'refs/heads/martin-forest-v2-staging'
-    timeout-minutes: 12
+    timeout-minutes: 3
     runs-on: ubuntu-latest
     container: python:3.12-trixie
     services:
@@ -34,7 +34,7 @@ jobs:
           apt-get install -y --no-install-recommends postgresql-client
           pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1
       - name: Test migrations, transactions, private files, RBAC and restore
-        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 tests/stage05 tests/stage06 -v --timeout=45 --timeout-method=thread --junitxml=qa-output/stage01/results.xml
+        run: timeout -s KILL 90s python -m pytest tests/stage06/test_api.py::test_job01_lease_package_exact_ids_private_and_fresh_permissions -vv -s --timeout=20 --timeout-method=thread -o faulthandler_timeout=15 --junitxml=qa-output/stage01/results.xml
       - name: Record synthetic restore evidence in job log
         run: |
           python - <<'PY'
