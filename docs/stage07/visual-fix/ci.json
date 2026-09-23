@@ -1,0 +1,70 @@
+{
+  "runtime": "a8228b6e0cf7847c5d7a54b2499e39cbd05ee5fb",
+  "run": 35891640070,
+  "jobs": [
+    {
+      "name": "stage07-browser",
+      "id": 107285282867,
+      "conclusion": "success",
+      "summary": [
+        "======================== 10 passed, 1 warning in 31.87s ========================"
+      ]
+    },
+    {
+      "name": "postgres-foundation (stage04)",
+      "id": 107285283406,
+      "conclusion": "success",
+      "summary": [
+        "======================== 27 passed, 1 warning in 6.98s ========================="
+      ]
+    },
+    {
+      "name": "postgres-foundation (stage02)",
+      "id": 107285283472,
+      "conclusion": "success",
+      "summary": [
+        "======================= 20 passed, 2 warnings in 14.63s ========================"
+      ]
+    },
+    {
+      "name": "postgres-foundation (stage07)",
+      "id": 107285283489,
+      "conclusion": "success",
+      "summary": [
+        "======================== 37 passed, 1 warning in 4.14s ========================="
+      ]
+    },
+    {
+      "name": "postgres-foundation (stage06)",
+      "id": 107285283519,
+      "conclusion": "success",
+      "summary": [
+        "======================== 44 passed, 1 warning in 25.13s ========================"
+      ]
+    },
+    {
+      "name": "postgres-foundation (stage01)",
+      "id": 107285283527,
+      "conclusion": "success",
+      "summary": [
+        "======================== 28 passed, 1 warning in 1.67s ========================="
+      ]
+    },
+    {
+      "name": "postgres-foundation (stage03)",
+      "id": 107285283672,
+      "conclusion": "success",
+      "summary": [
+        "======================== 46 passed, 1 warning in 8.75s ========================="
+      ]
+    },
+    {
+      "name": "postgres-foundation (stage05)",
+      "id": 107285283678,
+      "conclusion": "success",
+      "summary": [
+        "======================== 30 passed, 1 warning in 27.81s ========================"
+      ]
+    }
+  ]
+}

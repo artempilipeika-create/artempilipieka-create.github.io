@@ -1,0 +1,104 @@
+{
+  "runtime": "a8228b6e0cf7847c5d7a54b2499e39cbd05ee5fb",
+  "deployment": "fb0362e9-d47a-4189-9024-15c9d9369066",
+  "read_only": true,
+  "checked_at": "2026-09-23T16:56:22.912885+00:00",
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/about/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/services/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/services/raspil/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/services/kromka/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/order/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/3d/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/how-it-works/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/contacts/",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/account",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/editor",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/staff",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/admin.html",
+      "status": 200,
+      "noindex": "noindex, nofollow, noarchive"
+    }
+  ],
+  "health": {
+    "ok": true,
+    "environment": "staging",
+    "stage": "6",
+    "agent_transport": "disabled",
+    "staging_agent_api": "enabled",
+    "native_execution": "calibration_required"
+  },
+  "assets": {
+    "/ui/panels.webp": {
+      "matches_runtime": true,
+      "sha256": "549581b970b61a75971848fa92c3ff98688cfc2ddad7b0a158123cbb8c737aaf"
+    },
+    "/ui/site-v2.css": {
+      "matches_runtime": true,
+      "sha256": "5ce15f6275960c3fba31ba800b320b2b3b05e61a10541525592debaf151f2304"
+    },
+    "/account/app.js": {
+      "matches_runtime": true,
+      "sha256": "3fdc7cc3d0d00082744dcaec4c6f71b6f54181fb59d8384c0cd3efc48739789e"
+    },
+    "/account/workspace.js": {
+      "matches_runtime": true,
+      "sha256": "e28e1b0c6d033cd69751e802e8e3c5c6c401af4266a1c96eeaae10a59e94b6a3"
+    }
+  }
+}

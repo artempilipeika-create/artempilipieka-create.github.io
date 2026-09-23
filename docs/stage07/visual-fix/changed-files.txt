@@ -1,0 +1,14 @@
+M	backend/v2/ui_assets/3d/index.html
+M	backend/v2/ui_assets/about/index.html
+M	backend/v2/ui_assets/contacts/index.html
+M	backend/v2/ui_assets/how-it-works/index.html
+M	backend/v2/ui_assets/index.html
+M	backend/v2/ui_assets/order/index.html
+M	backend/v2/ui_assets/panels.webp
+M	backend/v2/ui_assets/services/index.html
+M	backend/v2/ui_assets/services/kromka/index.html
+M	backend/v2/ui_assets/services/raspil/index.html
+M	backend/v2/ui_assets/site-v2.css
+M	docs/stage07/ASSETS.md
+M	scripts/build-stage07-ui.py
+M	tests/stage07/browser_checks.py

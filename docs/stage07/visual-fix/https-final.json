@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-09-23T17:00:30.222425+00:00",
+  "runtime": "a8228b6e0cf7847c5d7a54b2499e39cbd05ee5fb",
+  "deployment": "7f509b33-b747-4bb2-b91a-4f23f186450f",
+  "health": {
+    "ok": true,
+    "environment": "staging",
+    "stage": "6",
+    "agent_transport": "disabled",
+    "staging_agent_api": "enabled",
+    "native_execution": "calibration_required"
+  },
+  "sha256": {
+    "/ui/panels.webp": "549581b970b61a75971848fa92c3ff98688cfc2ddad7b0a158123cbb8c737aaf",
+    "/ui/site-v2.css": "5ce15f6275960c3fba31ba800b320b2b3b05e61a10541525592debaf151f2304"
+  },
+  "read_only": true,
+  "initial_health_during_deploy": 502,
+  "retry_after_railway_success": 200
+}

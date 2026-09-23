@@ -1,0 +1,262 @@
+diff --git a/backend/v2/ui_assets/3d/index.html b/backend/v2/ui_assets/3d/index.html
+index cd5007f..958cb3d 100644
+--- a/backend/v2/ui_assets/3d/index.html
++++ b/backend/v2/ui_assets/3d/index.html
+@@ -1,5 +1,5 @@
+ <!doctype html>
+-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Представьте комод в объёме — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
++<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>3D-визуализация проекта — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
+ <body id="top" class="mf-public "><a class="mf-skip" href="#content">К содержимому</a>
+ <header class="mf-header"><div class="mf-wrap">
+   <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
+@@ -9,8 +9,8 @@
+   </div>
+   <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
+   
+-</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Представьте комод в объёме</h1><p class="mf-prose">Размеры, компоновка и материалы — в существующем 3D-конструкторе Martin Forest.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>От идеи к деталировке</h2><p class="mf-prose">Выберите компоновку комода, измените ширину, высоту и глубину, подберите материалы корпуса и фасадов. Подключение рабочего инструмента к защищённому кабинету требует отдельной проверки доступа.</p><div class="mf-note">Конструктор — производственный прототип. Состав деталей и конструктив проверяются перед изготовлением. Для работы нужен вход и доступ к 3D.</div><a class="mf-text-link" href="/constructor.html">Открыть 3D-конструктор <span>↗</span></a></div><div class="mf-constructor-details"><p class="mf-kicker">От общего — к деталям</p><h3>Размеры.<br>Компоновка.<br>Материалы.</h3><p class="mf-prose">Рабочий инструмент сохранён в отдельном разделе. Подготовленную деталировку можно продолжить в редакторе заказа.</p></div></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>3D-визуализация проекта</h1><p class="mf-prose">Комод, шкаф или тумба: сначала оценить пропорции и материалы, затем подготовить деталировку.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>От идеи к деталировке</h2><p class="mf-prose">Визуализация помогает обсудить габариты, расположение ящиков и дверей, декоры корпуса и фасадов. Она не заменяет проверенную деталировку и согласование заказа.</p><div class="mf-note">Рабочий 3D-инструмент пока не подключён к личному кабинету. Здесь представлено направление, а не доступный онлайн-конструктор. Заказ можно подготовить через существующий редактор.</div><a class="mf-text-link" href="/order/">Подготовить деталировку <span>↗</span></a></div><div class="mf-constructor-details"><p class="mf-kicker">От общего — к деталям</p><h3>Размеры.<br>Компоновка.<br>Материалы.</h3><p class="mf-prose">Начните с размеров и пожеланий к мебели. Для текущего заказа используйте Excel или ручной ввод деталей; автоматического переноса из 3D сейчас нет.</p></div></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/about/index.html b/backend/v2/ui_assets/about/index.html
+index 2f3556c..d77bb27 100644
+--- a/backend/v2/ui_assets/about/index.html
++++ b/backend/v2/ui_assets/about/index.html
+@@ -9,8 +9,8 @@
+   </div>
+   <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/" aria-current="page">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
+   
+-</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Каждая деталь на своём месте.</h1><p class="mf-prose">Martin Forest — распил мебельных плит и кромкооблицовка по вашей деталировке.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>Работаем с вашим проектом</h2><p class="mf-prose">Кухня, шкаф, гардеробная или отдельная полка начинаются с материала и точного списка деталей. Мы помогаем подготовить этот список к производству.</p><h2>Согласуем до начала работ</h2><p class="mf-prose">Проверяем размеры, количество, направление текстуры и стороны кромки. Если в деталировке есть вопросы, уточняем их вместе с вами.</p><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></div><img src="/ui/panels.webp" alt="Фактура мебельных плит" width="1536" height="1024"></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Каждая деталь на своём месте.</h1><p class="mf-prose">Martin Forest — распил мебельных плит и кромкооблицовка по вашей деталировке.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>Работаем с вашим проектом</h2><p class="mf-prose">Кухня, шкаф, гардеробная или отдельная полка начинаются с материала и точного списка деталей. Мы помогаем подготовить этот список к производству.</p><h2>Согласуем до начала работ</h2><p class="mf-prose">Проверяем размеры, количество, направление текстуры и стороны кромки. Если в деталировке есть вопросы, уточняем их вместе с вами.</p><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></div><img src="/ui/panels.webp" alt="Интерьерная концепция кухни: дубовые шкафы и зелёные фасады" width="1536" height="1024"></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/contacts/index.html b/backend/v2/ui_assets/contacts/index.html
+index ac294b3..3ebcf14 100644
+--- a/backend/v2/ui_assets/contacts/index.html
++++ b/backend/v2/ui_assets/contacts/index.html
+@@ -12,5 +12,5 @@
+ </div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>На связи — Martin Forest</h1><p class="mf-prose">Обсудим материал, подготовку деталировки и ваш заказ.</p></div></section><section class="mf-wrap mf-reading"><p class="mf-kicker">Контактный телефон</p><a class="mf-contact-number" href="tel:+375295315315">+375 29 531-53-15</a><h2>Начните с деталей</h2><p class="mf-prose">Если у вас уже есть Excel с деталировкой, передайте его менеджеру через подготовку заказа. Если только планируете работу — позвоните, чтобы уточнить необходимые данные.</p><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/how-it-works/index.html b/backend/v2/ui_assets/how-it-works/index.html
+index b737581..2643e63 100644
+--- a/backend/v2/ui_assets/how-it-works/index.html
++++ b/backend/v2/ui_assets/how-it-works/index.html
+@@ -12,5 +12,5 @@
+ </div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>От заявки к готовым деталям</h1><p class="mf-prose">Подготовка, проверка и согласование — до начала изготовления.</p></div></section><section class="mf-wrap mf-reading"><div class="mf-steps"><article class="mf-step"><span>01</span><h3>Подготовка</h3><p>Excel менеджеру или самостоятельная деталировка.</p></article><article class="mf-step"><span>02</span><h3>Проверка и расчёт</h3><p>Уточняем материалы, кромку и производственные данные.</p></article><article class="mf-step"><span>03</span><h3>Согласование</h3><p>Фиксируем состав заказа и итоговую стоимость.</p></article><article class="mf-step"><span>04</span><h3>Изготовление</h3><p>Выполняем согласованный заказ.</p></article><article class="mf-step"><span>05</span><h3>Выдача</h3><p>Сообщаем о готовности и согласуем получение.</p></article></div><div class="mf-note">Сумма на этапе подготовки — предварительная. Итоговую стоимость согласуем после раскроя и проверки производственных данных.</div><a class="mf-text-link" href="/order/">Перейти к подготовке заказа <span>↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/index.html b/backend/v2/ui_assets/index.html
+index 93d88dc..ce1855a 100644
+--- a/backend/v2/ui_assets/index.html
++++ b/backend/v2/ui_assets/index.html
+@@ -1,6 +1,6 @@
+ <!doctype html>
+ <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d2d"><meta name="description" content="Распил мебельных плит и кромкооблицовка по вашей деталировке. Martin Forest."><meta name="robots" content="noindex,nofollow"><title>Распил и кромкооблицовка — Martin Forest</title><link rel="stylesheet" href="/ui/site-v2.css"><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"></head>
+-<body id="top" class="mf-public mf-home"><div class="mf-hero"><img class="mf-hero-image" src="/ui/panels.webp" alt="Текстура и торцы мебельных плит" width="1536" height="1024" fetchpriority="high"><div class="mf-hero-shade"></div><a class="mf-skip" href="#content">К содержимому</a>
++<body id="top" class="mf-public mf-home"><div class="mf-hero"><img class="mf-hero-image" src="/ui/panels.webp" alt="Визуализация кухни с дубовыми шкафами и зелёными фасадами" width="1536" height="1024" fetchpriority="high"><div class="mf-hero-shade"></div><a class="mf-skip" href="#content">К содержимому</a>
+ <header class="mf-header"><div class="mf-wrap">
+   <div class="mf-topline"><span class="mf-caption">Распил и<br>кромкооблицовка</span>
+     <a class="mf-brand" href="/" aria-label="Martin Forest — главная">Martin Forest<small>МАРТИН ФОРЕСТ</small></a>
+@@ -10,18 +10,18 @@
+   <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/" aria-current="page">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
+   
+ </div></header>
+-<div class="mf-wrap"><section class="mf-hero-copy"><p class="mf-eyebrow">Мартин Форест / Мебельные детали</p><h1>Распил и кромкооблицовка</h1><p class="mf-hero-subtitle">Для ваших проектов. По вашим размерам.</p><div class="mf-hero-buttons"><a class="mf-button mf-button-light" href="/order/">Подготовить заказ <span aria-hidden="true">↗</span></a><a class="mf-text-link" href="/how-it-works/">Как мы работаем <span aria-hidden="true">↗</span></a></div></section></div>
+-<div class="mf-hero-bottom"><div class="mf-wrap"><span>Иллюстрация материала · визуальный ориентир</span><span>От вашей деталировки — к готовым деталям</span></div></div></div>
++<div class="mf-wrap"><section class="mf-hero-copy"><p class="mf-eyebrow">Мартин Форест / Мебельные детали</p><h1>Распил и кромкооблицовка</h1><p class="mf-hero-subtitle">Детали для кухни, шкафа и вашей идеи.</p><div class="mf-hero-buttons"><a class="mf-button mf-button-light" href="/order/">Подготовить заказ <span aria-hidden="true">↗</span></a><a class="mf-text-link" href="/how-it-works/">Как мы работаем <span aria-hidden="true">↗</span></a></div></section></div>
++<div class="mf-hero-bottom"><div class="mf-wrap"><span>Концепция интерьера · 3D-визуализация</span><span>От вашей деталировки — к готовым деталям</span></div></div></div>
+ <main id="content">
+ <section class="mf-section mf-wrap mf-intro"><div><p class="mf-kicker">Всё начинается с деталей</p><h2>Каждая деталь<br>на своём месте.</h2><p class="mf-prose">Для кухни, шкафа, гардеробной или отдельной полки — подготовим детали по вашему проекту.</p><p class="mf-prose">Вы задаёте размеры и выбираете материал. Мы проверяем деталировку, согласовываем кромку и направление текстуры, рассчитываем заказ и выполняем работу.</p><a class="mf-text-link" href="/about/">О Martin Forest <span aria-hidden="true">↗</span></a></div><aside class="mf-detail-note"><p class="mf-kicker">От списка — к детали</p><h3>Точность начинается<br>с деталировки.</h3><dl><div><dt>Материал</dt><dd>Артикул, структура и толщина</dd></div><div><dt>Размеры</dt><dd>Длина, ширина и количество</dd></div><div><dt>Торцы</dt><dd>Четыре независимые стороны</dd></div></dl></aside></section>
+ <section class="mf-section mf-services" id="services"><div class="mf-wrap"><div class="mf-section-heading"><div><p class="mf-kicker">Что мы делаем</p><h2>От плиты<br>до вашей детали.</h2></div><p>Две основные операции, от которых зависит аккуратность будущей мебели.</p></div><a class="mf-service-row" href="/services/raspil/"><span class="mf-service-number">01</span><h3>Распил по размерам</h3><p>Подготовим мебельные детали по вашему списку. Учтём материал, количество и направление текстуры.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a><a class="mf-service-row" href="/services/kromka/"><span class="mf-service-number">02</span><h3>Кромкооблицовка</h3><p>Облицуем торцы по согласованной схеме. Декор, толщина кромки и каждая сторона — под ваш проект.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a></div></section>
+ <section class="mf-section mf-wrap" id="prepare"><div class="mf-order-heading"><p class="mf-kicker">Подготовка заказа</p><h2>Выберите удобный<br>способ начать.</h2><p class="mf-prose">Готовую деталировку можно передать менеджеру или самостоятельно подготовить на сайте.</p></div><div class="mf-paths"><article class="mf-path"><p class="mf-kicker">01 / С помощью менеджера</p><h3>Отдать менеджеру<br>на обработку</h3><p class="mf-prose">Загрузите исходный Excel и добавьте пожелания. Менеджер проверит файл, уточнит материалы и подготовит заказ к расчёту.</p><a class="mf-button" href="/editor?mode=manager">Отдать менеджеру на обработку <span aria-hidden="true">↗</span></a></article><article class="mf-path"><p class="mf-kicker">02 / Самостоятельно</p><h3>Подготовить<br>самостоятельно</h3><p class="mf-prose">Импортируйте Excel или внесите детали вручную. Выберите материалы, проверьте размеры и стороны кромки — затем отправьте заказ на проверку.</p><a class="mf-button" href="/editor?mode=self">Подготовить самостоятельно <span aria-hidden="true">↗</span></a></article></div></section>
+ <section class="mf-materials"><div class="mf-material-swatch"><span>ЛДСП / МДФ / ЛХДФ</span><strong>Декор.<br>Структура.<br>Торец.</strong><p>Точное обозначение материала сохраняется на каждом этапе заказа.</p></div><div class="mf-materials-copy"><p class="mf-kicker">Материалы и кромка</p><h2>Основа вашего<br>проекта.</h2><p class="mf-prose">Декор, структура и торец работают вместе. Подберём кромку к выбранному материалу и проверим каждое назначение перед запуском заказа.</p><div class="mf-brands"><span>EGGER</span><span>BYSPAN</span><span>ULTRADECOR</span></div><p class="mf-materials-note">Работаем и с материалом клиента. Формат листа, толщину и условия обработки согласуем при подготовке заказа.</p><a class="mf-text-link" href="/order/">Подготовить деталировку <span aria-hidden="true">↗</span></a></div></section>
+ <section class="mf-section mf-wrap"><div class="mf-section-heading"><div><p class="mf-kicker">Как мы работаем</p><h2>Понятный путь<br>от заявки до выдачи.</h2></div><p>Предварительный расчёт уточняем после раскроя и проверки. В работу идёт согласованный заказ.</p></div><div class="mf-steps"><article class="mf-step"><span>01</span><h3>Подготовка</h3><p>Excel менеджеру или самостоятельная деталировка.</p></article><article class="mf-step"><span>02</span><h3>Проверка и расчёт</h3><p>Уточняем материалы, кромку и производственные данные.</p></article><article class="mf-step"><span>03</span><h3>Согласование</h3><p>Фиксируем состав заказа и итоговую стоимость.</p></article><article class="mf-step"><span>04</span><h3>Изготовление</h3><p>Выполняем согласованный заказ.</p></article><article class="mf-step"><span>05</span><h3>Выдача</h3><p>Сообщаем о готовности и согласуем получение.</p></article></div></section>
+-<section class="mf-section mf-constructor"><div class="mf-wrap mf-constructor-grid"><div><p class="mf-kicker">Ещё один способ начать</p><h2>Сначала —<br>представить в объёме.</h2><p class="mf-prose">В 3D-конструкторе комода можно изменить размеры, выбрать компоновку и материалы, сформировать предварительный список деталей в отдельном инструменте.</p><a class="mf-text-link" href="/3d/">О 3D-конструкторе <span aria-hidden="true">↗</span></a></div><div class="mf-constructor-details"><p class="mf-kicker">3D / Комод</p><h3>Ваша идея.<br>Ваши размеры.</h3><dl><div><dt>Габариты</dt><dd>Ширина, высота и глубина</dd></div><div><dt>Компоновка</dt><dd>Ящики, двери и внутреннее пространство</dd></div><div><dt>Материалы</dt><dd>Корпус и фасады</dd></div></dl><a class="mf-text-link" href="/constructor.html">Открыть конструктор <span aria-hidden="true">↗</span></a></div></div></section>
++<section class="mf-section mf-constructor"><div class="mf-wrap mf-constructor-grid"><div><p class="mf-kicker">Ещё один способ начать</p><h2>Сначала —<br>представить в объёме.</h2><p class="mf-prose">3D помогает заранее оценить пропорции мебели, сочетание фасадов и компоновку. Это отдельное направление: рабочий инструмент пока не подключён к кабинету.</p><a class="mf-text-link" href="/3d/">Посмотреть возможности 3D <span aria-hidden="true">↗</span></a></div><div class="mf-constructor-details"><p class="mf-kicker">3D / Проработка идеи</p><h3>Ваша идея.<br>Ваши размеры.</h3><dl><div><dt>Габариты</dt><dd>Ширина, высота и глубина</dd></div><div><dt>Компоновка</dt><dd>Ящики, двери и внутреннее пространство</dd></div><div><dt>Материалы</dt><dd>Корпус и фасады</dd></div></dl><a class="mf-text-link" href="/3d/">Узнать о 3D-направлении <span aria-hidden="true">↗</span></a></div></div></section>
+ <section class="mf-contact"><div class="mf-wrap mf-contact-grid"><div><p class="mf-kicker">На связи — Martin Forest</p><h2>Обсудим<br>ваш заказ?</h2></div><div class="mf-contact-data"><a class="mf-contact-number" href="tel:+375295315315">+375 29 531-53-15</a><p>Уточним материалы, подготовку деталировки и порядок работы.</p><a class="mf-button" href="/order/">Подготовить заказ <span aria-hidden="true">↗</span></a></div></div></section>
+ </main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/order/index.html b/backend/v2/ui_assets/order/index.html
+index a703526..281b60c 100644
+--- a/backend/v2/ui_assets/order/index.html
++++ b/backend/v2/ui_assets/order/index.html
+@@ -9,8 +9,8 @@
+   </div>
+   <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
+   
+-</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Подготовить заказ</h1><p class="mf-prose">Передайте исходный файл менеджеру или подготовьте деталировку самостоятельно.</p></div></section><section class="mf-wrap mf-reading"><div class="mf-paths"><article class="mf-path"><p class="mf-kicker">01 / С помощью менеджера</p><h3>Отдать менеджеру<br>на обработку</h3><p class="mf-prose">Загрузите исходный Excel и добавьте пожелания. Менеджер проверит файл, уточнит материалы и подготовит заказ к расчёту.</p><a class="mf-button" href="/editor?mode=manager">Отдать менеджеру на обработку <span aria-hidden="true">↗</span></a></article><article class="mf-path"><p class="mf-kicker">02 / Самостоятельно</p><h3>Подготовить<br>самостоятельно</h3><p class="mf-prose">Импортируйте Excel или внесите детали вручную. Выберите материалы, проверьте размеры и стороны кромки — затем отправьте заказ на проверку.</p><a class="mf-button" href="/editor?mode=self">Подготовить самостоятельно <span aria-hidden="true">↗</span></a></article></div><h2>Что подготовить</h2><p class="mf-prose">Материал и артикул, длину, ширину, количество, направление текстуры и стороны кромки. Если есть особые требования — добавьте комментарий. Для сохранения и отправки заказа потребуется вход в личный кабинет.</p><div class="mf-note">В Excel обозначения X1 / X2 / Y1 / Y2 соответствуют L1 / L2 / W1 / W2. Перед отправкой проверьте сопоставление колонок и количество деталей.</div></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++</div></header><main id="content"><section class="mf-subhero mf-furniture-banner"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Подготовить заказ</h1><p class="mf-prose">Передайте исходный файл менеджеру или подготовьте деталировку самостоятельно.</p></div></section><section class="mf-wrap mf-reading"><div class="mf-paths"><article class="mf-path"><p class="mf-kicker">01 / С помощью менеджера</p><h3>Отдать менеджеру<br>на обработку</h3><p class="mf-prose">Загрузите исходный Excel и добавьте пожелания. Менеджер проверит файл, уточнит материалы и подготовит заказ к расчёту.</p><a class="mf-button" href="/editor?mode=manager">Отдать менеджеру на обработку <span aria-hidden="true">↗</span></a></article><article class="mf-path"><p class="mf-kicker">02 / Самостоятельно</p><h3>Подготовить<br>самостоятельно</h3><p class="mf-prose">Импортируйте Excel или внесите детали вручную. Выберите материалы, проверьте размеры и стороны кромки — затем отправьте заказ на проверку.</p><a class="mf-button" href="/editor?mode=self">Подготовить самостоятельно <span aria-hidden="true">↗</span></a></article></div><h2>Что подготовить</h2><p class="mf-prose">Материал и артикул, длину, ширину, количество, направление текстуры и стороны кромки. Если есть особые требования — добавьте комментарий. Для сохранения и отправки заказа потребуется вход в личный кабинет.</p><div class="mf-note">В Excel обозначения X1 / X2 / Y1 / Y2 соответствуют L1 / L2 / W1 / W2. Перед отправкой проверьте сопоставление колонок и количество деталей.</div></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/panels.webp b/backend/v2/ui_assets/panels.webp
+index 214e497..0ae6f4d 100644
+Binary files a/backend/v2/ui_assets/panels.webp and b/backend/v2/ui_assets/panels.webp differ
+diff --git a/backend/v2/ui_assets/services/index.html b/backend/v2/ui_assets/services/index.html
+index 328bc4d..ad7d4f7 100644
+--- a/backend/v2/ui_assets/services/index.html
++++ b/backend/v2/ui_assets/services/index.html
+@@ -9,8 +9,8 @@
+   </div>
+   <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
+   
+-</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Распил и кромкооблицовка</h1><p class="mf-prose">Подготовим мебельные детали по согласованным размерам, материалам и схеме облицовки торцов.</p></div></section><section class="mf-wrap mf-reading"><a class="mf-service-row" href="/services/raspil/"><span class="mf-service-number">01</span><h3>Распил по размерам</h3><p>Подготовим мебельные детали по вашему списку. Учтём материал, количество и направление текстуры.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a><a class="mf-service-row" href="/services/kromka/"><span class="mf-service-number">02</span><h3>Кромкооблицовка</h3><p>Облицуем торцы по согласованной схеме. Декор, толщина кромки и каждая сторона — под ваш проект.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++</div></header><main id="content"><section class="mf-subhero mf-furniture-banner"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Распил и кромкооблицовка</h1><p class="mf-prose">Подготовим мебельные детали по согласованным размерам, материалам и схеме облицовки торцов.</p></div></section><section class="mf-wrap mf-reading"><a class="mf-service-row" href="/services/raspil/"><span class="mf-service-number">01</span><h3>Распил по размерам</h3><p>Подготовим мебельные детали по вашему списку. Учтём материал, количество и направление текстуры.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a><a class="mf-service-row" href="/services/kromka/"><span class="mf-service-number">02</span><h3>Кромкооблицовка</h3><p>Облицуем торцы по согласованной схеме. Декор, толщина кромки и каждая сторона — под ваш проект.</p><span class="mf-round-arrow" aria-hidden="true">↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/services/kromka/index.html b/backend/v2/ui_assets/services/kromka/index.html
+index e0ef8b5..d3bc2ba 100644
+--- a/backend/v2/ui_assets/services/kromka/index.html
++++ b/backend/v2/ui_assets/services/kromka/index.html
+@@ -12,5 +12,5 @@
+ </div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Кромкооблицовка</h1><p class="mf-prose">Декор, толщина и стороны кромки — под ваш проект.</p></div></section><section class="mf-wrap mf-reading"><h2>Каждая сторона имеет значение</h2><p class="mf-prose">Назначьте кромку на нужные торцы детали: L1, L2, W1 и W2. Для каждой стороны можно выбрать собственную кромку или использовать назначение по умолчанию.</p><h2>Материал и кромка вместе</h2><p class="mf-prose">Проверим соответствие декора, размер кромки и особенности обработки. Ручные назначения кромки проверяем отдельно от автоматического подбора.</p><h2>Кромка клиента</h2><p class="mf-prose">Можно указать кромку заказчика. Её характеристики и возможность применения согласуем перед запуском, услуги оклейки учитываются отдельно.</p><a class="mf-text-link" href="/order/">Указать кромку в заказе <span>↗</span></a></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/services/raspil/index.html b/backend/v2/ui_assets/services/raspil/index.html
+index 983593e..fc04b54 100644
+--- a/backend/v2/ui_assets/services/raspil/index.html
++++ b/backend/v2/ui_assets/services/raspil/index.html
+@@ -9,8 +9,8 @@
+   </div>
+   <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="/">Главная</a><a href="/about/">О компании</a><a href="/services/" aria-current="page">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="/login">Войти</a><a class="mf-cta" href="/order/">Подготовить заказ</a></div></div>
+   
+-</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Распил по вашим размерам</h1><p class="mf-prose">Мебельные плиты превращаются в детали по вашей деталировке.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>Что нужно для заказа</h2><p class="mf-prose">Укажите материал и его артикул, готовые размеры, количество деталей и направление текстуры. В одном заказе можно использовать несколько материалов.</p><ul><li>Полный артикул материала со структурой.</li><li>Длина, ширина и количество каждой детали.</li><li>Текстура, разрешение на вращение и комментарии.</li><li>Стороны кромки, если требуется облицовка.</li></ul><h2>С вашим материалом</h2><p class="mf-prose">Укажите толщину и фактический формат листа. Стоимость услуг рассчитывается отдельно от материала.</p><div class="mf-note">Окончательная стоимость фиксируется после производственного раскроя и проверки менеджером.</div><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></div><img src="/ui/panels.webp" alt="Торцы и плоскости мебельных плит" width="1536" height="1024"></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
++</div></header><main id="content"><section class="mf-subhero"><div class="mf-wrap"><p class="mf-kicker">Martin Forest</p><h1>Распил по вашим размерам</h1><p class="mf-prose">Мебельные плиты превращаются в детали по вашей деталировке.</p></div></section><section class="mf-wrap mf-reading mf-reading-grid"><div><h2>Что нужно для заказа</h2><p class="mf-prose">Укажите материал и его артикул, готовые размеры, количество деталей и направление текстуры. В одном заказе можно использовать несколько материалов.</p><ul><li>Полный артикул материала со структурой.</li><li>Длина, ширина и количество каждой детали.</li><li>Текстура, разрешение на вращение и комментарии.</li><li>Стороны кромки, если требуется облицовка.</li></ul><h2>С вашим материалом</h2><p class="mf-prose">Укажите толщину и фактический формат листа. Стоимость услуг рассчитывается отдельно от материала.</p><div class="mf-note">Окончательная стоимость фиксируется после производственного раскроя и проверки менеджером.</div><a class="mf-text-link" href="/order/">Подготовить заказ <span>↗</span></a></div><img loading="lazy" src="/ui/panels.webp" alt="Кухня по индивидуальным размерам — интерьерная визуализация" width="1536" height="1024"></section></main><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
+ <div><a class="mf-brand" href="/">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
+ <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="/about/">О компании</a><a href="/services/">Услуги</a><a href="/how-it-works/">Как мы работаем</a><a href="/contacts/">Контакты</a></nav></div>
+-<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-конструктор</a><a href="/account">Личный кабинет</a></nav></div>
++<div><h3>Заказчикам</h3><nav class="mf-footer-links" aria-label="Заказчикам"><a href="/order/">Подготовить заказ</a><a href="/services/raspil/">Распил</a><a href="/services/kromka/">Кромкооблицовка</a><a href="/3d/">3D-визуализация</a><a href="/account">Личный кабинет</a></nav></div>
+ </div><div class="mf-wrap mf-footer-bottom"><span>© Martin Forest · Распил и кромкооблицовка</span><a href="#top">Наверх ↑</a></div></footer><script src="/ui/site-nav.js" defer></script></body></html>
+\ No newline at end of file
+diff --git a/backend/v2/ui_assets/site-v2.css b/backend/v2/ui_assets/site-v2.css
+index ac9cb90..fe7f604 100644
+--- a/backend/v2/ui_assets/site-v2.css
++++ b/backend/v2/ui_assets/site-v2.css
+@@ -157,3 +157,9 @@
+ .mf-nav a[aria-current=page]{text-decoration:underline;text-underline-offset:8px}
+ @media(max-width:900px){.mf-wrap{width:calc(100% - 40px)}.mf-nav{gap:14px}}
+ @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
++
++/* Furniture visual pass: same layout and palette, presentation only. */
++.mf-hero-image{object-position:50% 55%}
++.mf-hero-shade{background:linear-gradient(90deg,#082a20bf,#082a2099 50%,#08231dad)}
++.mf-furniture-banner{background-image:linear-gradient(90deg,#153d2df5,#153d2dbd),url('/ui/panels.webp');background-size:cover;background-position:center 55%}
++@media(max-width:900px){.mf-hero-image{object-position:62% center}.mf-hero-shade{background:linear-gradient(90deg,#082a20cf,#082a209e)}.mf-furniture-banner{background-position:62% center}}
+diff --git a/docs/stage07/ASSETS.md b/docs/stage07/ASSETS.md
+index 64123f6..ce6bc1c 100644
+--- a/docs/stage07/ASSETS.md
++++ b/docs/stage07/ASSETS.md
+@@ -1,3 +1,17 @@
++# Visual asset — Stage 7 furniture fix
++
++Current `backend/v2/ui_assets/panels.webp` is a generated interior concept: natural oak tall cabinetry, forest-green kitchen and island, light stone countertop. The legacy URL is retained solely to keep the existing backend asset allowlist unchanged. It no longer contains boards or technical edge close-ups.
++
++Created with the built-in imagegen tool on 2026-09-23; 1536×1024 PNG converted to WebP quality 88 for delivery (76,046 bytes). No customer photo, logo or personal information was used. The homepage caption identifies it as an interior concept / 3D visualization, not a completed Martin Forest project. The services image and decorative page banners reuse this same concept, not multiple claimed installations.
++
++Prompt: “Premium realistic architectural interior visualization for a furniture-parts website hero. Modern kitchen, natural oak tall cabinetry, matte forest-green base cabinetry and island, pale limestone countertop, neutral plaster, soft daylight. Precise aligned closed fronts, consistent narrow reveals, plausible joinery, no exposed particleboard or edge-banding close-up, no impossible overhangs/intersecting doors/floating cabinetry. Wide eye-level architectural photography, calm center for text overlay; no text/logo/watermark/people/collage. Concept visualization, not a claimed completed customer project.”
++
++Visual inspection found no obvious construction intersections or misleading exposed edging. This is not manufacturing validation or proof of an actual completed project. Native BAZIS remains NOT VERIFIED.
++
++The original accepted boards image remains unchanged under `public/assets/panels.webp` and in Git history; neither protected preview nor baseline is modified. Three independently photographed company projects are still unavailable. The prior asset audit below describes Stage 7 before this fix.
++
++---
++
+ # Visual provenance
+ 
+ `backend/v2/ui_assets/panels.webp` is byte-identical to `public/assets/panels.webp` in accepted photographic preview commit 5c97a60145569b7d1df99f5fce5341587db2f75c and Stage 6 tree. It is a supplied/reused visual reference, not evidence of Martin Forest's actual factory or commissioned work. Original author/license documentation is NOT VERIFIED. The hero caption identifies it as an illustration. Alt: «Текстура и торцы мебельных плит». Crop/focal position retains accepted `.mf-hero-image` CSS; replace the fixed image asset when approved company photography becomes available.
+diff --git a/scripts/build-stage07-ui.py b/scripts/build-stage07-ui.py
+index a05295c..4dff194 100644
+--- a/scripts/build-stage07-ui.py
++++ b/scripts/build-stage07-ui.py
+@@ -23,6 +23,27 @@ for route in routes:
+         text=text.replace('Материал · Размеры · Внимание к детали','Иллюстрация материала · визуальный ориентир')
+     text=text.replace('затем перенести предварительный список деталей в заказ','сформировать предварительный список деталей в отдельном инструменте')
+     text=text.replace('Предварительный список деталей можно перенести в редактор заказа.','Подключение рабочего инструмента к защищённому кабинету требует отдельной проверки доступа.')
++    # Visual fix: furniture outcome, honest 3D availability; no workflow changes.
++    text=text.replace('Текстура и торцы мебельных плит','Визуализация кухни с дубовыми шкафами и зелёными фасадами')
++    text=text.replace('Фактура мебельных плит','Интерьерная концепция кухни: дубовые шкафы и зелёные фасады')
++    text=text.replace('Торцы и плоскости мебельных плит','Кухня по индивидуальным размерам — интерьерная визуализация')
++    text=text.replace('Иллюстрация материала · визуальный ориентир','Концепция интерьера · 3D-визуализация')
++    text=text.replace('Для ваших проектов. По вашим размерам.','Детали для кухни, шкафа и вашей идеи.')
++    text=text.replace('В 3D-конструкторе комода можно изменить размеры, выбрать компоновку и материалы, сформировать предварительный список деталей в отдельном инструменте.','3D помогает заранее оценить пропорции мебели, сочетание фасадов и компоновку. Это отдельное направление: рабочий инструмент пока не подключён к кабинету.')
++    text=text.replace('О 3D-конструкторе','Посмотреть возможности 3D')
++    text=text.replace('3D / Комод','3D / Проработка идеи')
++    text=text.replace('Представьте комод в объёме','3D-визуализация проекта')
++    text=text.replace('Размеры, компоновка и материалы — в существующем 3D-конструкторе Martin Forest.','Комод, шкаф или тумба: сначала оценить пропорции и материалы, затем подготовить деталировку.')
++    text=text.replace('Выберите компоновку комода, измените ширину, высоту и глубину, подберите материалы корпуса и фасадов. Подключение рабочего инструмента к защищённому кабинету требует отдельной проверки доступа.','Визуализация помогает обсудить габариты, расположение ящиков и дверей, декоры корпуса и фасадов. Она не заменяет проверенную деталировку и согласование заказа.')
++    text=text.replace('Конструктор — производственный прототип. Состав деталей и конструктив проверяются перед изготовлением. Для работы нужен вход и доступ к 3D.','Рабочий 3D-инструмент пока не подключён к личному кабинету. Здесь представлено направление, а не доступный онлайн-конструктор. Заказ можно подготовить через существующий редактор.')
++    text=text.replace('Рабочий инструмент сохранён в отдельном разделе. Подготовленную деталировку можно продолжить в редакторе заказа.','Начните с размеров и пожеланий к мебели. Для текущего заказа используйте Excel или ручной ввод деталей; автоматического переноса из 3D сейчас нет.')
++    text=text.replace('href="/constructor.html">Открыть 3D-конструктор','href="/order/">Подготовить деталировку')
++    text=text.replace('href="/constructor.html">Открыть конструктор','href="/3d/">Узнать о 3D-направлении')
++    text=text.replace('>3D-конструктор</a>','>3D-визуализация</a>')
++    if route in ('services/index.html','order/index.html'):
++        text=text.replace('class="mf-subhero"','class="mf-subhero mf-furniture-banner"',1)
++    if route=='services/raspil/index.html':
++        text=text.replace('<img src="/ui/panels.webp"','<img loading="lazy" src="/ui/panels.webp"')
+     target=OUT/route;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(text)
+ css=(ROOT/'public/site-v2.css').read_text();css=re.sub(r"^@import[^\n]+\n",'',css,count=1)
+ css=css.replace('--mf-muted:#68736b','--mf-muted:#536459')
+@@ -37,8 +58,17 @@ css+='''\n/* Stage 7 accessibility refinements, same accepted visual language. *
+ @media(max-width:900px){.mf-wrap{width:calc(100% - 40px)}.mf-nav{gap:14px}}
+ @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+ '''
++css += """
++/* Furniture visual pass: same layout and palette, presentation only. */
++.mf-hero-image{object-position:50% 55%}
++.mf-hero-shade{background:linear-gradient(90deg,#082a20bf,#082a2099 50%,#08231dad)}
++.mf-furniture-banner{background-image:linear-gradient(90deg,#153d2df5,#153d2dbd),url('/ui/panels.webp');background-size:cover;background-position:center 55%}
++@media(max-width:900px){.mf-hero-image{object-position:62% center}.mf-hero-shade{background:linear-gradient(90deg,#082a20cf,#082a209e)}.mf-furniture-banner{background-position:62% center}}
++"""
+ (OUT/'site-v2.css').write_text(css)
+-shutil.copy(ROOT/'public/assets/panels.webp',OUT/'panels.webp');shutil.copy(ROOT/'public/favicon.svg',OUT/'favicon.svg')
++# panels.webp is the versioned furniture visualization; do not restore the old boards image.
++assert (OUT/'panels.webp').is_file()
++shutil.copy(ROOT/'public/favicon.svg',OUT/'favicon.svg')
+ (OUT/'site-nav.js').write_text("""'use strict';
+ fetch('/api/v2/auth/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(u=>{if(u)document.querySelectorAll('[data-account-link]').forEach(a=>{a.textContent='Личный кабинет';a.href='/account';});}).catch(()=>{});
+ document.querySelectorAll('.mf-menu').forEach(menu=>{menu.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.open=false;menu.querySelector('summary').focus();}});});
+diff --git a/tests/stage07/browser_checks.py b/tests/stage07/browser_checks.py
+index c7609ec..69897c7 100644
+--- a/tests/stage07/browser_checks.py
++++ b/tests/stage07/browser_checks.py
+@@ -40,7 +40,7 @@ def page(settings):
+ 
+ def screenshot(page,name):
+     page.screenshot(path=str(OUT/(name+'.png')),full_page=True)
+-    if name in {'home-360','home-1440','editor-360','editor-1440'}:
++    if name in {'home-360','home-1440','editor-360','editor-1440','about-1440','services-1440','preparation-1440','3d-1440'}:
+         data=page.screenshot(type='jpeg',quality=40,full_page=False)
+         encoded=base64.b64encode(data).decode()
+         print('MF_UI_SCREENSHOT_BEGIN '+name,flush=True)

@@ -1,0 +1,15 @@
+ backend/v2/ui_assets/3d/index.html              |   6 ++---
+ backend/v2/ui_assets/about/index.html           |   4 +--
+ backend/v2/ui_assets/contacts/index.html        |   2 +-
+ backend/v2/ui_assets/how-it-works/index.html    |   2 +-
+ backend/v2/ui_assets/index.html                 |  10 ++++----
+ backend/v2/ui_assets/order/index.html           |   4 +--
+ backend/v2/ui_assets/panels.webp                | Bin 268352 -> 76046 bytes
+ backend/v2/ui_assets/services/index.html        |   4 +--
+ backend/v2/ui_assets/services/kromka/index.html |   2 +-
+ backend/v2/ui_assets/services/raspil/index.html |   4 +--
+ backend/v2/ui_assets/site-v2.css                |   6 +++++
+ docs/stage07/ASSETS.md                          |  14 +++++++++++
+ scripts/build-stage07-ui.py                     |  32 +++++++++++++++++++++++-
+ tests/stage07/browser_checks.py                 |   2 +-
+ 14 files changed, 71 insertions(+), 21 deletions(-)
