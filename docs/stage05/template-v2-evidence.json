@@ -1,0 +1,58 @@
+{
+  "template_version": "mf-preliminary-a4-v2",
+  "documents": [
+    {
+      "calculation_id": "75d1597e-4cae-411d-8d7c-a817ada20af8",
+      "old_file_id": "ec551b6c-fe70-43cf-b16c-88e4a926f7d2",
+      "old_sha256": "65d26c0be30f356b4670c69f8dce38d3f277f09e423eff0cb62f91fb57be17bc",
+      "file_id": "b6ceb0fb-ef10-439c-8cbf-51ceb4d11349",
+      "revision_id": "10e4d8d7-aba3-43a1-9617-f024ef3ef181",
+      "template_version": "mf-preliminary-a4-v2",
+      "document_version": 2,
+      "created_at": "2026-09-23T11:34:27.410348+00:00",
+      "sha256": "066e1fbf507ebe2dbbf6e990064ad74c0a4d2f7c69221b5971fbe013b23d749c",
+      "financial_projection_unchanged": true,
+      "old_pdf_preserved": true
+    },
+    {
+      "calculation_id": "537e764a-03eb-4b7d-9ea9-305d249bff27",
+      "old_file_id": "ad90fd11-acee-487e-95d6-88cfc0ce71dd",
+      "old_sha256": "aefccf5b7d1b373d786efeba8c5f8ffd37faf92356f38c11fa61df3e5c502b81",
+      "file_id": "0b96a9f9-164c-405e-9212-1695b2c37980",
+      "revision_id": "4ad6ef03-5ca4-4094-be0c-a42bc35039e5",
+      "template_version": "mf-preliminary-a4-v2",
+      "document_version": 2,
+      "created_at": "2026-09-23T11:34:27.745998+00:00",
+      "sha256": "e7aa8308f6db560891a6fc6519565682403f780a3cd11f75d35dc407de8d2f22",
+      "financial_projection_unchanged": true,
+      "old_pdf_preserved": true
+    },
+    {
+      "calculation_id": "dc8c60bc-1eec-4fa2-86c8-a2bd8b1eabe9",
+      "old_file_id": "70cf83c9-684c-4677-9a6e-5a89eb3988b0",
+      "old_sha256": "860494ad949e25f104f57d735b90984f952c9ba0216a08fab161c7defedd2a9a",
+      "file_id": "7338bdaa-3b03-4065-b514-010c8220a8e4",
+      "revision_id": "077b673c-7450-4314-b309-113642be0ca1",
+      "template_version": "mf-preliminary-a4-v2",
+      "document_version": 2,
+      "created_at": "2026-09-23T11:34:28.129308+00:00",
+      "sha256": "c6c3e93ce05127c456d9a51ccdd684d88c8c3740dbcc09a5850f1aad0a38dffd",
+      "financial_projection_unchanged": true,
+      "old_pdf_preserved": true
+    },
+    {
+      "calculation_id": "78324939-6584-4882-aea0-bf82640a98d3",
+      "old_file_id": "acd60c03-1592-4b19-94b6-39013399a677",
+      "old_sha256": "fd4488e097d5ddcd4c2cf8d669679679348832c842826498dc88d73bc60e68d5",
+      "file_id": "a6e09d4f-65ba-4f1b-83b6-1a2b134ed3b3",
+      "revision_id": "cde00cb2-7af1-4f4c-b8e4-ea847425d419",
+      "template_version": "mf-preliminary-a4-v2",
+      "document_version": 2,
+      "created_at": "2026-09-23T11:34:28.466001+00:00",
+      "sha256": "01d8e61e13d3d3177cc207b4b4bbe38a15ee4de872aba59652d40801a39a87c4",
+      "financial_projection_unchanged": true,
+      "old_pdf_preserved": true
+    }
+  ],
+  "same_version_idempotent": true
+}

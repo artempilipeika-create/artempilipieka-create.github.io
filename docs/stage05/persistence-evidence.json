@@ -1,0 +1,28 @@
+{
+  "deployment_id": "63068068-133f-4d68-876e-2788922303fd",
+  "runtime": "1d7b3f5e96809644655a31a9501092137294ef2c",
+  "persistence": {
+    "persistent_after_redeploy": true,
+    "documents": 8,
+    "calculations": 4,
+    "revisions": 7,
+    "private_files": 22,
+    "authorization_metadata_match": true,
+    "production_jobs": 1
+  },
+  "safety": {
+    "tables": 61,
+    "counts": {
+      "mf_orders": 8,
+      "mf_order_revisions": 7,
+      "mf_calculations": 4,
+      "mf_documents": 8,
+      "mf_files": 22,
+      "mf_production_jobs": 1
+    },
+    "temporary_credentials_retired": true,
+    "transport_disabled": true,
+    "dispatch_disabled": true,
+    "production_credentials_absent": true
+  }
+}

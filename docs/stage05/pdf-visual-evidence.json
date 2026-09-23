@@ -1,0 +1,56 @@
+[
+  {
+    "file": "customer-material.pdf",
+    "template_version": "mf-preliminary-a4-v2",
+    "sha256": "a3e65936034221311dc6ec907e4233c104585602a319ef5de3db10822a3905ce",
+    "pages": 2,
+    "searchable_text": true,
+    "words_within_page_margins": true,
+    "visual_review": "PASS"
+  },
+  {
+    "file": "five-materials.pdf",
+    "template_version": "mf-preliminary-a4-v2",
+    "sha256": "3adfa14bade052afbb65ae0662c3c896896b669b8b2274f0bc88c245944b76ec",
+    "pages": 2,
+    "searchable_text": true,
+    "words_within_page_margins": true,
+    "visual_review": "PASS"
+  },
+  {
+    "file": "glued-36mm.pdf",
+    "template_version": "mf-preliminary-a4-v2",
+    "sha256": "b3c9d52e2967017e5a00e6c6b4c3ed6b179b7a92fdca3ccc7605d26e50245332",
+    "pages": 1,
+    "searchable_text": true,
+    "words_within_page_margins": true,
+    "visual_review": "PASS"
+  },
+  {
+    "file": "incomplete.pdf",
+    "template_version": "mf-preliminary-a4-v2",
+    "sha256": "ca03abe41e9a95cbb25baac984dc5f951803434571da9c97147d521ba2dd37a8",
+    "pages": 1,
+    "searchable_text": true,
+    "words_within_page_margins": true,
+    "visual_review": "PASS"
+  },
+  {
+    "file": "one-material.pdf",
+    "template_version": "mf-preliminary-a4-v2",
+    "sha256": "716f1cb86d7195a82fe39f4fba6c3719870b059d2eec54f66dcdb52085a07094",
+    "pages": 1,
+    "searchable_text": true,
+    "words_within_page_margins": true,
+    "visual_review": "PASS"
+  },
+  {
+    "file": "twenty-materials.pdf",
+    "template_version": "mf-preliminary-a4-v2",
+    "sha256": "87fd40b2d0a92c34a3c9157d0594b1f243d531509ad4d658a3de1d89e1a3a3cc",
+    "pages": 6,
+    "searchable_text": true,
+    "words_within_page_margins": true,
+    "visual_review": "PASS"
+  }
+]

@@ -1,0 +1,1372 @@
+diff --git a/.github/workflows/staging-foundation.yml b/.github/workflows/staging-foundation.yml
+index 2d61396..17a4782 100644
+--- a/.github/workflows/staging-foundation.yml
++++ b/.github/workflows/staging-foundation.yml
+@@ -31,9 +31,9 @@ jobs:
+         run: |
+           apt-get update -qq
+           apt-get install -y --no-install-recommends postgresql-client
+-          pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1
++          pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1 pypdf==6.9.1
+       - name: Test migrations, transactions, private files, RBAC and restore
+-        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 -v --junitxml=qa-output/stage01/results.xml
++        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 tests/stage05 -v --junitxml=qa-output/stage01/results.xml
+       - name: Record synthetic restore evidence in job log
+         run: |
+           python - <<'PY'
+@@ -42,6 +42,8 @@ jobs:
+           print('MF_STAGE01_RESTORE_EVIDENCE='+json.dumps(data,separators=(',',':')))
+           stage4=json.loads(pathlib.Path('qa-output/stage01/stage04-restore-evidence.json').read_text())
+           print('MF_STAGE04_RESTORE_EVIDENCE='+json.dumps(stage4,separators=(',',':')))
++          stage5=json.loads(pathlib.Path('qa-output/stage01/stage05-restore-evidence.json').read_text())
++          print('MF_STAGE05_RESTORE_EVIDENCE='+json.dumps(stage5,separators=(',',':')))
+           PY
+       - name: Preserve non-secret test evidence
+         if: always()
+diff --git a/backend/v2/app.py b/backend/v2/app.py
+index ba0a776..8cf4470 100644
+--- a/backend/v2/app.py
++++ b/backend/v2/app.py
+@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
+ from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
+ from fastapi.exceptions import RequestValidationError
+ from .security import WebPolicy
+-from . import auth_api, domain_api, catalogue_api, calculation_api
++from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui
+ import secrets
+ import os
+ from .config import Settings
+@@ -66,7 +66,7 @@ def create_app(settings=None, policy=None):
+             readiness(settings)
+         except Exception:
+             raise HTTPException(503, 'Staging database is not ready') from None
+-        return {'ok': True, 'environment': 'staging', 'stage': '4', 'agent_transport': 'disabled'}
++        return {'ok': True, 'environment': 'staging', 'stage': '5', 'agent_transport': 'disabled'}
+ 
+     if not enabled:
+         return app
+@@ -96,4 +96,6 @@ def create_app(settings=None, policy=None):
+     app.include_router(domain_api.router(settings,policy))
+     app.include_router(catalogue_api.router(settings,policy))
+     app.include_router(calculation_api.router(settings,policy))
++    app.include_router(document_api.router(settings,policy))
++    app.include_router(cabinet_ui.router())
+     return app
+diff --git a/backend/v2/cabinet_assets/app.css b/backend/v2/cabinet_assets/app.css
+new file mode 100644
+index 0000000..68cf633
+--- /dev/null
++++ b/backend/v2/cabinet_assets/app.css
+@@ -0,0 +1 @@
++:root{color-scheme:light;--forest:#153d2d;--paper:#f6f3eb;--ink:#20382c;--muted:#68736b;--rule:#d9ddd2;font-family:Manrope,Arial,sans-serif;color:var(--ink);background:var(--paper)}*{box-sizing:border-box}body{margin:0}header{padding:24px max(6vw,20px);display:flex;align-items:center;gap:28px;border-bottom:1px solid var(--rule);background:white}header span{flex:1;color:var(--muted)}.brand{font-family:Georgia,serif;font-size:29px;font-style:italic;color:var(--forest);text-decoration:none}main{max-width:1080px;margin:38px auto;padding:0 24px;min-height:70vh}h1{font-size:32px;font-weight:500;color:var(--forest);margin:16px 0 24px}h2{font-size:21px;margin:30px 0 16px}h3{font-size:17px}p{line-height:1.55}button,.button{padding:12px 18px;background:var(--forest);color:white;border:1px solid var(--forest);border-radius:4px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}button:disabled{opacity:.5;cursor:default}.secondary{color:var(--forest);background:white}.actions,nav{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}input,select,textarea{display:block;padding:12px;border:1px solid #a7b3aa;border-radius:3px;width:100%;font:inherit;background:white;color:var(--ink);margin:7px 0 20px}label{display:block;margin-bottom:15px}form{max-width:560px}a{color:var(--forest)}.muted,.meta{color:var(--muted);font-size:14px}.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase}.order{padding:20px 0;border-bottom:1px solid var(--rule)}.order a{font-size:21px}.amount{font-size:30px;color:var(--forest);font-weight:600}.notice{border-left:3px solid #8d6c2f;padding:12px 20px;background:#fffdf8}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:white;margin:16px 0;table-layout:fixed}th,td{text-align:left;padding:12px;vertical-align:top;border-bottom:1px solid var(--rule);overflow-wrap:anywhere}th{color:var(--forest);font-size:13px}td{font-size:14px}.timeline li{padding:8px 0}#message:not(:empty){padding:14px;background:#fffdf8;border-left:3px solid var(--forest)}footer{padding:25px 6vw;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}[hidden]{display:none!important}@media(max-width:640px){header{gap:14px;flex-wrap:wrap}.brand{font-size:25px}header span{font-size:13px}main{padding:0 16px;margin-top:24px}h1{font-size:27px}th,td{padding:8px}table{min-width:580px}.actions button{width:100%}}
+diff --git a/backend/v2/cabinet_assets/app.js b/backend/v2/cabinet_assets/app.js
+new file mode 100644
+index 0000000..888c80e
+--- /dev/null
++++ b/backend/v2/cabinet_assets/app.js
+@@ -0,0 +1,29 @@
++'use strict';
++const $=id=>document.getElementById(id), content=$('content');
++let currentUser=null;
++function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
++function message(text){$('message').textContent=text;}
++function button(text,fn,secondary=false){const e=node('button',text,secondary?'secondary':'');e.type='button';e.onclick=()=>run(fn);return e;}
++function value(v){return v===null||v===undefined?'Уточняется':String(v);}
++function date(v){return new Date(v).toLocaleDateString('ru-RU');}
++async function api(path,method='GET',body,headers={}){const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});if(!r.ok){const e=await r.json().catch(()=>({}));const code=e.detail?.code;const labels={LOGIN_FAILED:'Не удалось войти. Проверьте email и пароль.',EMAIL_NOT_VERIFIED:'Подтвердите email перед отправкой.',REVISION_CONFLICT:'Заказ изменился. Обновите страницу.',PROBLEMATIC_HANDOFF_REQUIRED:'Подтвердите передачу проблемных позиций менеджеру.',SOURCE_FILE_REQUIRED:'Добавьте исходный файл в подготовке заказа.',CLIENT_ACCOUNT_REQUIRED:'Этот кабинет предназначен для клиента.',VALIDATION_ERROR:'Проверьте заполненные поля.',DOCUMENT_RENDER_LIMIT:'Документ требует проверки специалистом.',DOCUMENT_INTEGRITY_FAILED:'Документ временно недоступен. Обратитесь к менеджеру.'};throw new Error(labels[code]||'Действие недоступно. Проверьте данные и доступ к заказу.');}return r.status===204?null:r.json();}
++async function run(fn){try{message('');await fn();}catch(e){message(e.message);}}
++async function start(){try{currentUser=await api('/auth/me');$('auth').hidden=true;$('account').hidden=false;$('logout').hidden=false;$('verification').hidden=currentUser.email_verified;await list();}catch(e){$('auth').hidden=false;$('account').hidden=true;$('logout').hidden=true;}}
++async function login(register=false){const f=new FormData($('login'));await api('/auth/'+(register?'register':'login'),'POST',{email:f.get('email'),password:f.get('password')});$('login').reset();await start();}
++$('login').onsubmit=e=>{e.preventDefault();run(()=>login());};$('register').onclick=()=>run(()=>login(true));
++$('logout').onclick=()=>run(async()=>{await api('/auth/logout','POST',{});content.replaceChildren();currentUser=null;await start();});
++$('verify').onclick=()=>run(async()=>{await api('/auth/email-verification/request','POST',{});message('Запрос принят. В тестовой среде письмо сохраняется в закрытый тестовый приёмник; внешняя отправка отключена.');});
++$('orders').onclick=()=>run(list);
++$('profile').onclick=()=>run(async()=>{const p=await api('/account/profile');content.replaceChildren(node('h1','Данные клиента'));const f=node('form');for(const [key,label]of[['display_name','Имя клиента'],['company_name','Компания']]){const l=node('label',label),i=node('input');i.name=key;i.maxLength=200;i.value=p[key];l.append(i);f.append(l);}const save=node('button','Сохранить');f.append(save);f.onsubmit=e=>{e.preventDefault();run(async()=>{await api('/account/profile','PATCH',Object.fromEntries(new FormData(f)));message('Данные сохранены. Ранее созданные документы не изменены.');});};content.append(f);});
++async function list(after='',append=false){const data=await api('/account/orders?after='+encodeURIComponent(after));if(!append){content.replaceChildren(node('h1','Мои заказы'));if(!data.items.length)content.append(node('p','Здесь появятся ваши заказы и документы.'));if(currentUser.capabilities.draft_create)content.append(button('Новый черновик',newOrder,true));}for(const o of data.items){const el=node('article',undefined,'order'),a=node('a',o.number+' · '+o.name);a.href='#'+o.order_id;a.onclick=e=>{e.preventDefault();run(()=>detail(o.order_id));};el.append(a,node('p',[date(o.created_at),o.preparation_label,o.status_label,o.revision_number?'Редакция '+o.revision_number:''].filter(Boolean).join(' · '),'meta'),node('p',o.amount!==null?value(o.amount)+' BYN · предварительно':o.calculation_label));content.append(el);}if(data.next){const more=button('Показать ещё',async()=>{more.remove();await list(data.next,true);},true);content.append(more);}}
++async function newOrder(){content.replaceChildren(node('h1','Новый черновик'));const f=node('form'),label=node('label','Название заказа'),input=node('input');input.name='business_name';input.required=true;input.maxLength=200;label.append(input);const select=node('select');select.name='preparation_mode';for(const [v,t]of[['manager_assisted','С помощью менеджера'],['self_prepared','Самостоятельная подготовка']]){const o=node('option',t);o.value=v;select.append(o);}f.append(label,select,node('button','Создать'));f.onsubmit=e=>{e.preventDefault();run(async()=>{const o=await api('/orders','POST',Object.fromEntries(new FormData(f)));await detail(o.order_id);});};content.append(f);}
++function table(headers,rows){const t=node('table'),head=node('tr');headers.forEach(x=>head.append(node('th',x)));const thead=node('thead');thead.append(head);t.append(thead);const body=node('tbody');rows.forEach(row=>{const tr=node('tr');row.forEach(x=>tr.append(node('td',value(x))));body.append(tr);});t.append(body);const wrap=node('div',undefined,'table-wrap');wrap.append(t);return wrap;}
++async function pdf(id){const doc=await api('/calculations/'+id+'/documents/preliminary','POST',{});const a=node('a');a.href='/api/v2/documents/'+doc.file_id;a.download='';document.body.append(a);a.click();a.remove();}
++async function detail(id){const o=await api('/account/orders/'+id),timeline=await api('/account/orders/'+id+'/timeline');content.replaceChildren(node('p',o.number,'eyebrow'),node('h1',o.name),node('p',[o.preparation_label,o.status_label,'Редакция '+(o.revision_number||'ещё не создана')].join(' · '),'meta'),node('p',o.next_step));if(o.problem_message)content.append(node('p',o.problem_message,'notice'));
++ const actions=node('div',undefined,'actions');if(o.calculation_id){const b=button('Скачать предварительный расчёт',()=>pdf(o.calculation_id));b.disabled=!o.can_generate;actions.append(b);}const send=button('Отправить заказ на обработку',()=>submit(o),true);send.disabled=!o.can_submit;actions.append(send);content.append(actions);
++ const c=o.calculation;if(c){content.append(node('h2',c.title),node('p',c.status_label));if(c.synthetic)content.append(node('p','Тестовый пример с условными ценами.','notice'));if(c.materials.length){content.append(node('h3','Материалы'),table(['Материал / формат','Расчётное количество листов','Цена за лист, BYN','Сумма, BYN'],c.materials.map(m=>[[m.manufacturer,m.name,m.article,m.structure,m.thickness?m.thickness+' мм':'',m.length?m.length+' × '+m.width+' мм':''].filter(Boolean).join(' · '),m.quantity,m.unit_price,m.amount])));if(c.materials.some(m=>m.supply_source==='customer'))content.append(node('p',c.customer_material_notice,'notice'));}if(c.edges.length)content.append(node('h3','Материал кромки'),table(['Кромка','Чистовой метраж, м','Оплачиваемый метраж, м','Цена / м, BYN','Сумма, BYN'],c.edges.map(e=>[[e.name||e.designation,e.article,e.width+' × '+e.thickness+' мм'].filter(Boolean).join(' · '),e.net_metres,e.billable_metres,e.unit_price,e.amount])));if(c.services.length)content.append(node('h3','Производственные услуги'),table(['Операция','Объём','Тариф, BYN','Сумма, BYN'],c.services.map(s=>[s.name,value(s.quantity)+' '+({m:'м',m2:'м²'}[s.unit]||''),s.unit_price,s.amount])));content.append(node('h3','Три независимые скидки'),table(['Категория','До скидки','Скидка, %','Скидка, BYN','После, BYN'],c.discounts.map(d=>[d.name,d.gross,d.percent,d.discount,d.net])));if(c.unresolved.length){const ul=node('ul');c.unresolved.forEach(x=>ul.append(node('li',x)));content.append(node('h3','Требует уточнения стоимости'),ul);}content.append(node('h3',c.amount_label),node('p',c.amount===null?'Уточняется':value(c.amount)+' BYN','amount'),node('p',c.disclaimer,'muted'));}else{content.append(node('h2',o.calculation_label));if(o.materials.length)content.append(table(['Материалы'],o.materials.map(m=>[[m.name,m.article].filter(Boolean).join(' · ')])));}
++ content.append(node('h2','Документы'));if(!o.documents.length)content.append(node('p','Документы ещё не сформированы.','muted'));for(const d of o.documents){const p=node('p'),a=node('a',d.name+(d.document_version?' · версия '+d.document_version:'')+' · '+date(d.created_at));a.href=d.download_url;p.append(a);content.append(p);}if(o.calculations.length){content.append(node('h2','История расчётов'));for(const calc of o.calculations){const row=node('p','Редакция '+calc.revision_number+' · '+date(calc.created_at)+' · '+(calc.amount===null?'Требует уточнения стоимости':value(calc.amount)+' BYN')+' ');if(calc.can_generate)row.append(button('Скачать эту версию',()=>pdf(calc.calculation_id),true));content.append(row);}}
++ content.append(node('h2','История заказа'));const history=node('ol',undefined,'timeline');timeline.items.forEach(x=>history.append(node('li',date(x.date)+' · '+x.label)));content.append(history);
++}
++async function submit(o){content.replaceChildren(node('h1','Передать заказ на обработку'),node('p','Проверьте комментарий. Передача сохраняет текущую редакцию и направляет её менеджеру для проверки.'));const f=node('form'),label=node('label','Комментарий менеджеру'),text=node('textarea');text.name='comment';text.maxLength=2000;text.required=o.preparation_mode==='manager_assisted';if(text.required)text.minLength=10;label.append(text);f.append(label);let check=null;if(['invalid','needs_confirmation','incomplete'].includes(o.calculation_state)){const l=node('label','Передать позиции, требующие уточнения, на проверку менеджеру');check=node('input');check.type='checkbox';l.append(check);f.append(l);}f.append(node('button','Подтвердить отправку'));const key=crypto.randomUUID();f.onsubmit=e=>{e.preventDefault();run(async()=>{const body={comment:text.value,handoff_problematic:check?.checked||false};if(o.revision_id)body.revision_id=o.revision_id;if(o.calculation_id)body.preliminary_calculation_id=o.calculation_id;await api('/orders/'+o.order_id+'/submit','POST',body,{'If-Match':String(o.optimistic_lock_version),'Idempotency-Key':key});await detail(o.order_id);message('Заказ передан на обработку.');});};content.append(f,button('Назад к заказу',()=>detail(o.order_id),true));}
++run(start);
+diff --git a/backend/v2/cabinet_assets/index.html b/backend/v2/cabinet_assets/index.html
+new file mode 100644
+index 0000000..1842182
+--- /dev/null
++++ b/backend/v2/cabinet_assets/index.html
+@@ -0,0 +1 @@
++<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Кабинет | Martin Forest</title><link rel="stylesheet" href="/account/app.css"><script defer src="/account/app.js"></script></head><body><header><a href="/account" class="brand">Martin Forest</a><span>Личный кабинет</span><button id="logout" hidden>Выйти</button></header><main><p id="message" role="status" aria-live="polite"></p><section id="auth"><p class="eyebrow">Ваши заказы и документы</p><h1>Добро пожаловать</h1><form id="login"><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>Пароль<input name="password" type="password" autocomplete="current-password" required maxlength="128"></label><div class="actions"><button type="submit">Войти</button><button type="button" id="register" class="secondary">Зарегистрироваться</button></div><p class="muted">Для регистрации используйте пароль от 12 символов.</p></form></section><section id="account" hidden><div id="verification" hidden><p>Подтвердите email, чтобы передать заказ на обработку. Черновики и история доступны.</p><button id="verify" class="secondary">Запросить подтверждение email</button></div><nav><button id="orders" class="secondary">Мои заказы</button><button id="profile" class="secondary">Данные клиента</button></nav><div id="content"></div></section></main><footer>Martin Forest · Предварительная стоимость подтверждается после проверки заказа специалистом.</footer></body></html>
+diff --git a/backend/v2/cabinet_service.py b/backend/v2/cabinet_service.py
+new file mode 100644
+index 0000000..b1272f4
+--- /dev/null
++++ b/backend/v2/cabinet_service.py
+@@ -0,0 +1,88 @@
++"""Client account is a projection of canonical orders/revisions/calculations, never a second model."""
++from datetime import datetime,timezone,timedelta
++from .security import error
++from .domain_api import require
++from .rbac import allowed
++from .calculation_math import plain
++from . import document_service as documents
++
++STATUS={'draft':'Черновик','submitted':'Передан на обработку','review':'На проверке у менеджера',
++ 'approved':'Согласован','completed':'Завершён','cancelled':'Отменён'}
++MODE={'manager_assisted':'С помощью менеджера','self_prepared':'Самостоятельная подготовка'}
++
++
++def client(user):
++    if user['roles']!={'client'}: error(403,'CLIENT_ACCOUNT_REQUIRED')
++
++
++def visible(conn,order_id,direct=False):
++    policy=conn.execute('SELECT * FROM mf_history_policy WHERE singleton').fetchone()
++    if direct and policy['direct_history_access']: return True
++    days=policy['completed_visibility_days']
++    if days is None: return True
++    # Legacy completion timestamp only. NC-08 does not invent a new completion event or delete anything.
++    row=conn.execute('SELECT to_jsonb(o) data FROM mf_orders o WHERE order_id=%s',(order_id,)).fetchone()
++    completed=row['data'].get('completed_at')
++    return not completed or datetime.fromisoformat(completed)>datetime.now(timezone.utc)-timedelta(days=days)
++
++
++def own(conn,user,order_id):
++    client(user);require(conn,user,'orders.read',order_id=order_id)
++    row=conn.execute('SELECT * FROM mf_orders WHERE order_id=%s AND owner_user_id=%s',(order_id,user['user_id'])).fetchone()
++    if not row or not visible(conn,order_id,direct=True): error(404,'ORDER_NOT_FOUND')
++    return row
++
++
++def file_list(conn,user,order_id):
++    items=[]
++    for f in conn.execute("SELECT * FROM mf_files WHERE order_id=%s AND classification='private' AND kind IN ('source','preliminary_pdf') AND status='ready' AND job_id IS NULL ORDER BY created_at",(order_id,)):
++        permission='files.source.read' if f['kind']=='source' else 'files.preliminary_pdf.read'
++        if not allowed(conn,user['user_id'],permission,order_id=order_id,file_kind=f['kind']): continue
++        if f['kind']=='source':
++            if f['created_by']!=user['user_id']: continue
++            items.append({'file_id':f['file_id'],'kind':'source','name':'Исходный файл заказа','created_at':f['created_at'],'download_url':'/api/v2/files/'+str(f['file_id'])+'/download'})
++        else:
++            d=conn.execute('SELECT * FROM mf_documents WHERE file_id=%s',(f['file_id'],)).fetchone()
++            if d: items.append({**documents.dto(d),'kind':'preliminary_pdf','name':'Предварительный расчёт','download_url':'/api/v2/documents/'+str(f['file_id'])})
++    return plain(items)
++
++
++def order_view(conn,user,o,detail=False):
++    rev=conn.execute('SELECT * FROM mf_order_revisions WHERE revision_id=%s',(o['active_revision_id'],)).fetchone() if o['active_revision_id'] else None
++    c=conn.execute('SELECT * FROM mf_calculations WHERE order_id=%s AND revision_id=%s ORDER BY created_at DESC,calculation_id DESC LIMIT 1',
++        (o['order_id'],o['active_revision_id'])).fetchone() if rev else None
++    can_price=allowed(conn,user['user_id'],'orders.prices.read',order_id=o['order_id']) and allowed(conn,user['user_id'],'calculations.read',order_id=o['order_id'])
++    if not can_price: c=None
++    state=c['completeness'] if c else 'not_available'
++    state_label=('Предварительный расчёт подготовлен' if state=='complete' else 'Требует уточнения стоимости') if c else ('Расчёт после обработки менеджером' if o['preparation_mode']=='manager_assisted' else 'Предварительный расчёт ещё не подготовлен')
++    out={'order_id':o['order_id'],'number':o['display_number'],'name':o['business_name'],'created_at':o['created_at'],
++      'preparation_mode':o['preparation_mode'],'preparation_label':MODE[o['preparation_mode']],
++      'status':o['workflow_status'],'status_label':STATUS.get(o['workflow_status'],'В обработке'),
++      'revision_number':rev['revision_number'] if rev else None,'revision_id':rev['revision_id'] if rev else None,
++      'optimistic_lock_version':o['optimistic_lock_version'],'calculation_state':state,'calculation_label':state_label,
++      'calculation_id':c['calculation_id'] if c else None,'amount':c['result']['total'] if c and state=='complete' else None,
++      'documents':file_list(conn,user,o['order_id']),
++      'next_step':'Заказ проверит менеджер. Ожидайте согласования.' if o['workflow_status']!='draft' else 'Проверьте расчёт и передайте заказ на обработку.',
++      'can_submit':o['workflow_status']=='draft' and bool(user['email_verified_at']) and allowed(conn,user['user_id'],'orders.submit',order_id=o['order_id']),
++      'can_generate':bool(c) and allowed(conn,user['user_id'],'documents.generate',order_id=o['order_id'])}
++    if detail:
++        out['calculation']=documents.presentation(conn,c) if c else None
++        out['revisions']=[{'number':r['revision_number'],'created_at':r['created_at'],'status_label':STATUS.get(r['lifecycle'],'Редакция сохранена')} for r in conn.execute('SELECT revision_number,created_at,lifecycle FROM mf_order_revisions WHERE order_id=%s ORDER BY revision_number',(o['order_id'],))]
++        out['calculations']=[{'calculation_id':r['calculation_id'],'revision_number':r['revision_number'],'created_at':r['created_at'],'state':r['completeness'],'amount':r['result']['total'],
++           'can_generate':allowed(conn,user['user_id'],'documents.generate',order_id=o['order_id'])} for r in conn.execute('SELECT c.*,v.revision_number FROM mf_calculations c JOIN mf_order_revisions v USING(revision_id) WHERE c.order_id=%s ORDER BY c.created_at',(o['order_id'],))] if can_price else []
++        from .document_projection import material
++        out['materials']=[material(d['material']) for d in (rev['content'].get('details',[]) if rev else []) if d.get('material')]
++        out['problem_message']='Параметры заказа требуют проверки специалистом' if rev and rev['content'].get('issues') else None
++    return plain(out)
++
++
++def timeline(conn,order_id):
++    rows=[]
++    actions={'order.draft.created':'Черновик создан','order.draft.saved':'Черновик обновлён','order.submitted':'Заказ передан на обработку','order.review.started':'Менеджер начал проверку'}
++    for r in conn.execute("SELECT action,created_at FROM mf_audit WHERE object_type='order' AND object_id=%s AND action=ANY(%s)",(order_id,list(actions))):
++        rows.append({'date':r['created_at'],'label':actions[r['action']]})
++    for r in conn.execute('SELECT revision_number,created_at,parent_revision_id,lifecycle FROM mf_order_revisions WHERE order_id=%s',(order_id,)):
++        rows.append({'date':r['created_at'],'label':('Редакция менеджера' if r['lifecycle']=='review' else 'Редакция сохранена')+' · '+str(r['revision_number'])})
++    for r in conn.execute('SELECT created_at FROM mf_calculations WHERE order_id=%s',(order_id,)): rows.append({'date':r['created_at'],'label':'Предварительный расчёт подготовлен'})
++    for r in conn.execute('SELECT created_at,document_version FROM mf_documents WHERE order_id=%s',(order_id,)): rows.append({'date':r['created_at'],'label':'Документ сформирован · версия '+str(r['document_version'])})
++    return plain(sorted(rows,key=lambda r:r['date']))
+diff --git a/backend/v2/cabinet_ui.py b/backend/v2/cabinet_ui.py
+new file mode 100644
+index 0000000..f137c5e
+--- /dev/null
++++ b/backend/v2/cabinet_ui.py
+@@ -0,0 +1,16 @@
++"""Only three fixed UI assets, never a mount of public/ or private storage."""
++from pathlib import Path
++from fastapi import APIRouter,Response
++
++CSP="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
++
++def router():
++    api=APIRouter();root=Path(__file__).parent/'cabinet_assets'
++    @api.get('/account')
++    @api.get('/account/')
++    def account(): return Response((root/'index.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
++    @api.get('/account/app.js')
++    def script(): return Response((root/'app.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
++    @api.get('/account/app.css')
++    def style(): return Response((root/'app.css').read_bytes(),media_type='text/css',headers={'Content-Security-Policy':CSP})
++    return api
+diff --git a/backend/v2/document_api.py b/backend/v2/document_api.py
+new file mode 100644
+index 0000000..bc3ac87
+--- /dev/null
++++ b/backend/v2/document_api.py
+@@ -0,0 +1,64 @@
++from uuid import UUID
++from fastapi import APIRouter,Request
++from pydantic import Field
++from .auth_api import StrictModel
++from .db import transaction
++from .security import identity,error
++from .events import record_event
++from .calculation_service import get
++from . import document_service as ds,cabinet_service as cs
++
++class Generate(StrictModel): pass
++class Profile(StrictModel):
++    display_name:str=Field(max_length=200)
++    company_name:str=Field(max_length=200)
++
++
++def router(settings,policy):
++    api=APIRouter(prefix='/api/v2')
++    @api.post('/calculations/{calculation_id}/documents/preliminary',status_code=201)
++    def generate(calculation_id:UUID,body:Generate,request:Request): return ds.generate(settings,request,calculation_id)
++    @api.get('/calculations/{calculation_id}/documents')
++    def documents(calculation_id:UUID,request:Request):
++        with transaction(settings) as c:
++            user=identity(c,request);calc=get(c,calculation_id);ds.authorize(c,user,calc['order_id'])
++            if 'client' in user['roles'] and not cs.visible(c,calc['order_id'],direct=True): error(404,'ORDER_NOT_FOUND')
++            return {'items':[ds.dto(r) for r in c.execute("SELECT d.* FROM mf_documents d JOIN mf_files f USING(file_id) WHERE calculation_id=%s AND f.status='ready' ORDER BY document_version",(calculation_id,))]}
++    @api.api_route('/documents/{file_id}',methods=['GET','HEAD'])
++    def download(file_id:UUID,request:Request):
++        with transaction(settings) as c: return ds.download(c,settings,identity(c,request),file_id,request.method=='HEAD')
++    @api.get('/account/profile')
++    def profile(request:Request):
++        with transaction(settings) as c:
++            u=identity(c,request);cs.client(u)
++            return {k:u.get(k) or '' for k in ('display_name','company_name')}
++    @api.patch('/account/profile')
++    def save_profile(body:Profile,request:Request):
++        with transaction(settings) as c:
++            u=identity(c,request);cs.client(u)
++            if u['account_status']!='active': error(403,'ACCOUNT_BLOCKED')
++            c.execute('UPDATE mf_users SET display_name=%s,company_name=%s,updated_at=now() WHERE user_id=%s',(body.display_name,body.company_name,u['user_id']))
++            record_event(c,settings,actor=u['user_id'],action='customer.profile.updated',object_type='user',object_id=u['user_id'],reason='Customer display profile changed')
++            return body.model_dump()
++    @api.get('/account/orders')
++    def orders(request:Request,after:str=''):
++        with transaction(settings) as c:
++            u=identity(c,request);cs.client(u);items=[]
++            for o in c.execute('SELECT * FROM mf_orders WHERE owner_user_id=%s AND order_id>%s ORDER BY order_id',(u['user_id'],after)):
++                if cs.visible(c,o['order_id']):
++                    cs.own(c,u,o['order_id']);items.append(cs.order_view(c,u,o))
++                if len(items)==101: break
++            return {'items':items[:100],'next':items[99]['order_id'] if len(items)>100 else None}
++    @api.get('/account/orders/{order_id}')
++    def detail(order_id:str,request:Request):
++        with transaction(settings) as c:
++            u=identity(c,request);return cs.order_view(c,u,cs.own(c,u,order_id),True)
++    @api.get('/account/orders/{order_id}/timeline')
++    def timeline(order_id:str,request:Request):
++        with transaction(settings) as c:
++            u=identity(c,request);cs.own(c,u,order_id);return {'items':cs.timeline(c,order_id)}
++    @api.get('/account/orders/{order_id}/documents')
++    def order_documents(order_id:str,request:Request):
++        with transaction(settings) as c:
++            u=identity(c,request);cs.own(c,u,order_id);return {'items':cs.file_list(c,u,order_id)}
++    return api
+diff --git a/backend/v2/document_assets/DejaVuSans-Bold.ttf b/backend/v2/document_assets/DejaVuSans-Bold.ttf
+new file mode 100644
+index 0000000..426812b
+Binary files /dev/null and b/backend/v2/document_assets/DejaVuSans-Bold.ttf differ
+diff --git a/backend/v2/document_assets/DejaVuSans.ttf b/backend/v2/document_assets/DejaVuSans.ttf
+new file mode 100644
+index 0000000..fb0bd94
+Binary files /dev/null and b/backend/v2/document_assets/DejaVuSans.ttf differ
+diff --git a/backend/v2/document_assets/FONT-LICENSE.txt b/backend/v2/document_assets/FONT-LICENSE.txt
+new file mode 100644
+index 0000000..b3d93a1
+--- /dev/null
++++ b/backend/v2/document_assets/FONT-LICENSE.txt
+@@ -0,0 +1,78 @@
++Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
++Upstream-Name: DejaVu fonts
++Upstream-Author: Stepan Roh <src@users.sourceforge.net> (original author),
++                  see /usr/share/doc/fonts-dejavu-core/AUTHORS for full list
++Source: https://dejavu-fonts.github.io/
++
++Files: *
++Copyright: Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. 
++ Bitstream Vera is a trademark of Bitstream, Inc.
++ DejaVu changes are in public domain.
++License: bitstream-vera
++ Permission is hereby granted, free of charge, to any person obtaining a copy
++ of the fonts accompanying this license ("Fonts") and associated
++ documentation files (the "Font Software"), to reproduce and distribute the
++ Font Software, including without limitation the rights to use, copy, merge,
++ publish, distribute, and/or sell copies of the Font Software, and to permit
++ persons to whom the Font Software is furnished to do so, subject to the
++ following conditions:
++ .
++ The above copyright and trademark notices and this permission notice shall
++ be included in all copies of one or more of the Font Software typefaces.
++ .
++ The Font Software may be modified, altered, or added to, and in particular
++ the designs of glyphs or characters in the Fonts may be modified and
++ additional glyphs or characters may be added to the Fonts, only if the fonts
++ are renamed to names not containing either the words "Bitstream" or the word
++ "Vera".
++ .
++ This License becomes null and void to the extent applicable to Fonts or Font
++ Software that has been modified and is distributed under the "Bitstream
++ Vera" names.
++ .
++ The Font Software may be sold as part of a larger software package but no
++ copy of one or more of the Font Software typefaces may be sold by itself.
++ .
++ THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
++ OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY,
++ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT,
++ TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL BITSTREAM OR THE GNOME
++ FOUNDATION BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING
++ ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
++ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE
++ FONT SOFTWARE.
++ .
++ Except as contained in this notice, the names of Gnome, the Gnome
++ Foundation, and Bitstream Inc., shall not be used in advertising or
++ otherwise to promote the sale, use or other dealings in this Font Software
++ without prior written authorization from the Gnome Foundation or Bitstream
++ Inc., respectively. For further information, contact: fonts at gnome dot
++ org.
++
++Files: debian/*
++Copyright: (C) 2005-2006 Peter Cernak <pce@users.sourceforge.net> 
++           (C) 2006-2011 Davide Viti <zinosat@tiscali.it>
++           (C) 2011-2013 Christian Perrier <bubulle@debian.org>
++           (C) 2013 Fabian Greffrath <fabian+debian@greffrath.com>
++License: GPL-2+
++ This program is free software; you can redistribute it
++ and/or modify it under the terms of the GNU General Public
++ License as published by the Free Software Foundation; either
++ version 2 of the License, or (at your option) any later
++ version.
++ .
++ This program is distributed in the hope that it will be
++ useful, but WITHOUT ANY WARRANTY; without even the implied
++ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
++ PURPOSE.  See the GNU General Public License for more
++ details.
++ .
++ You should have received a copy of the GNU General Public
++ License along with this package; if not, write to the Free
++ Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ Boston, MA  02110-1301 USA
++ .
++ On Debian systems, the full text of the GNU General Public
++ License version 2 can be found in the file
++ /usr/share/common-licenses/GPL-2'.
+diff --git a/backend/v2/document_projection.py b/backend/v2/document_projection.py
+new file mode 100644
+index 0000000..4066dbb
+--- /dev/null
++++ b/backend/v2/document_projection.py
+@@ -0,0 +1,66 @@
++"""Commercial allow-list. Copies snapshot numbers; never calculates money or quantities."""
++from .calculation_math import plain
++
++TITLE='ПРЕДВАРИТЕЛЬНЫЙ РАСЧЁТ'
++DISCLAIMER='Стоимость рассчитана до фактического производственного раскроя. Окончательная стоимость подтверждается после проверки заказа специалистом Martin Forest и фактического раскроя.'
++CUSTOMER='Материал заказчика. Стоимость материала не начисляется. Рассчитываются производственные услуги и используемая кромка.'
++CATEGORIES={'materials':'Материалы','edge_material':'Материал кромки','services':'Производственные услуги'}
++OPERATIONS={'cutting_18':'Расчётный метраж распила','cutting':'Расчётный метраж распила','glue':'Склейка',
++ 'glued_finish_cut':'Финальная обрезка 36 мм','packaging':'Упаковка','edge_normal':'Кромкооблицовка обычная',
++ 'edge_complex':'Кромкооблицовка сложная','edge_thick':'Кромкооблицовка толстая','edge_processing':'Кромкооблицовка'}
++UNITS={'sheet':'лист','m2':'м²','m':'м'}
++
++
++def material(m):
++    return {k:m.get(k) for k in ('name','manufacturer','article','structure','thickness','length','width')}
++
++
++def project(calculation, *, number, name, customer, revision_number, date):
++    r=calculation['result'];inputs=calculation['input_snapshot']
++    materials=[];edges=[];services=[];unresolved=[]
++    snapshots=r.get('price_snapshots',[])
++    for l in r['lines']:
++        if l['category']=='materials' and l['operation']=='clean_sheets':
++            supply=l.get('supply_source','company')
++            snap=next((s for s in snapshots if s['kind']=='material' and s['item_key']==l['material_key'] and s['supply_source']==supply),{})
++            row={**material(snap.get('material',{})), 'quantity':l.get('quantity',None),
++                 'unit':'sheet','unit_price':l['unit_price'],'amount':l['gross'],'supply_source':supply,
++                 'price_unit':(snap.get('price') or {}).get('unit'),'sale_price':(snap.get('price') or {}).get('amount')}
++            if row['quantity'] is None: row['quantity']=l.get('estimated_sheet_count')
++            materials.append(row)
++            if l['state']!='complete': unresolved.append('Стоимость материала: '+(row['name'] or row['article'] or 'Материал заказа'))
++        elif l['category']=='edge_material':
++            snap=next((s for s in snapshots if s['kind']=='edge' and s['item_key']==l.get('edge_id') and s['supply_source']==l.get('supply_source')), {})
++            edge=snap.get('edge',{})
++            row={k:edge.get(k) for k in ('name','designation','article','width','thickness')}
++            row.update(net_metres=l.get('net_metres'),unit_price=l['unit_price'],amount=l['gross'],supply_source=l.get('supply_source'))
++            policy=snap.get('policy')
++            if policy:
++                row.update(procurement_metres=l.get('procurement_metres'),billable_metres=l.get('billable_metres'),
++                    policy={k:policy[k] for k in ('basis','factor','step_m') if k in policy})
++            edges.append(row)
++            if l['state']!='complete': unresolved.append('Стоимость и объём кромки: '+(row['name'] or row['designation'] or row['article'] or 'Кромка заказа'))
++        elif l['category']=='services':
++            if l['quantity'] is not None and str(l['quantity']).strip('0.')=='': continue
++            title=OPERATIONS.get(l['operation'],'Производственная операция')
++            services.append({'name':title,'quantity':l['quantity'],'unit':l['unit'],'unit_price':l['unit_price'],'amount':l['gross']})
++            if l['state']!='complete': unresolved.append('Объём или тариф: '+title)
++        elif l['state']!='complete':
++            unresolved.append('Параметры деталей и материалов требуют проверки специалистом')
++    # Invalid details can have no financial material line. Preserve their known identity for review.
++    known={(m['name'],m['article'],m['supply_source']) for m in materials}
++    for d in inputs['revision'].get('details',[]):
++        m=d.get('material')
++        if m and (m.get('name'),m.get('article'),d['supply_source']) not in known:
++            row={**material(m),'quantity':None,'unit':'sheet','unit_price':None,'amount':None,'supply_source':d['supply_source'],'price_unit':None,'sale_price':None}
++            materials.append(row);known.add((row['name'],row['article'],row['supply_source']))
++    if any(t['percent'] is None for t in r['category_totals'].values()): unresolved.append('Условия скидок требуют подтверждения')
++    complete=r['completeness']=='complete'
++    return plain({'title':TITLE,'order_number':number,'order_name':name,'customer':customer or 'Клиент',
++      'revision_number':revision_number,'date':str(date)[:10],'state':r['completeness'],
++      'status_label':'Предварительный расчёт подготовлен' if complete else 'Требует уточнения стоимости',
++      'synthetic':r.get('synthetic',False),'materials':materials,'edges':edges,'services':services,
++      'discounts':[{'category':k,'name':label,**{f:r['category_totals'][k][f] for f in ('gross','percent','discount','net','complete')}} for k,label in CATEGORIES.items()],
++      'amount_label':'ПРЕДВАРИТЕЛЬНАЯ СТОИМОСТЬ' if complete else 'РАССЧИТАННАЯ ЧАСТЬ',
++      'amount':r['total'] if complete else r['calculated_part'],'currency':r['currency'],
++      'unresolved':list(dict.fromkeys(unresolved)),'disclaimer':DISCLAIMER,'customer_material_notice':CUSTOMER})
+diff --git a/backend/v2/document_renderer.py b/backend/v2/document_renderer.py
+new file mode 100644
+index 0000000..5c0c55f
+--- /dev/null
++++ b/backend/v2/document_renderer.py
+@@ -0,0 +1,124 @@
++"""Offline deterministic ReportLab renderer. No HTML, URLs, external fonts or finance formulas."""
++from io import BytesIO
++from pathlib import Path
++from html import escape
++import hashlib,json,sys,subprocess,resource
++from reportlab.lib import colors
++from reportlab.lib.pagesizes import A4
++from reportlab.lib.units import mm
++from reportlab.lib.styles import ParagraphStyle
++from reportlab.pdfbase import pdfmetrics
++from reportlab.pdfbase.ttfonts import TTFont
++from reportlab.pdfgen.canvas import Canvas
++from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,KeepTogether
++from .document_projection import UNITS
++
++VERSION='mf-preliminary-a4-v2'
++RENDERER='reportlab-4.4.9-mf-v2'
++FONTS={'DejaVuSans.ttf':'ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280',
++ 'DejaVuSans-Bold.ttf':'5c1247acef7f2b8522a31742c76d6adcb5569bacc0be7ceaa4dc39dd252ce895'}
++ASSET_HASH=hashlib.sha256(Path(__file__).read_bytes()+Path(__file__).with_name('document_projection.py').read_bytes()+json.dumps(FONTS,sort_keys=True).encode()).hexdigest()
++FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');PAPER=colors.HexColor('#f6f3eb')
++WIDTH=A4[0]-32*mm
++
++def n(value):
++    return 'Уточняется' if value is None else str(value)
++
++def validate(data):
++    if len(json.dumps(data,ensure_ascii=False).encode())>500_000: raise ValueError('Document size limit')
++    if sum(len(data[k]) for k in ('materials','edges','services'))>500: raise ValueError('Document row limit')
++    def walk(v):
++        if isinstance(v,str) and (len(v)>2000 or any(ord(c)<32 and c not in '\n\t' for c in v)): raise ValueError('Document text limit')
++        if isinstance(v,dict):
++            for x in v.values(): walk(x)
++        if isinstance(v,list):
++            for x in v: walk(x)
++    walk(data)
++
++
++def render(data, template_version=VERSION):
++    validate(data)
++    root=Path(__file__).parent/'document_assets'
++    for file,expected in FONTS.items():
++        path=root/file
++        if hashlib.sha256(path.read_bytes()).hexdigest()!=expected: raise ValueError('Font integrity')
++        pdfmetrics.registerFont(TTFont('MF-Bold' if 'Bold' in file else 'MF',str(path)))
++    pdfmetrics.registerFontFamily('MF',normal='MF',bold='MF-Bold',italic='MF',boldItalic='MF-Bold')
++    font=pdfmetrics.getFont('MF').face.charToGlyph
++    for c in json.dumps(data,ensure_ascii=False):
++        if ord(c)>=32 and ord(c) not in font: raise ValueError('Unsupported glyph')
++    styles={
++      'body':ParagraphStyle('body',fontName='MF',fontSize=10,leading=13,textColor=INK,spaceAfter=3,splitLongWords=True),
++      'small':ParagraphStyle('small',fontName='MF',fontSize=9,leading=12,textColor=MUTED,spaceAfter=3),
++      'heading':ParagraphStyle('heading',fontName='MF-Bold',fontSize=12,leading=16,textColor=FOREST,spaceBefore=10,spaceAfter=6,keepWithNext=False),
++      'title':ParagraphStyle('title',fontName='MF-Bold',fontSize=18,leading=23,textColor=FOREST,spaceAfter=10),
++      'amount':ParagraphStyle('amount',fontName='MF-Bold',fontSize=24,leading=29,textColor=FOREST,spaceAfter=7),
++      'tablehead':ParagraphStyle('tablehead',fontName='MF-Bold',fontSize=9,leading=12,textColor=FOREST),
++    }
++    def p(text,style='body'): return Paragraph(escape(str(text)).replace('\n','<br/>'),styles[style])
++    def table(headers,rows,widths,title):
++        t=Table([[p(title,'heading')]+['']*(len(headers)-1),[p(x,'tablehead') for x in headers]]+rows,colWidths=[WIDTH*w for w in widths],repeatRows=2,hAlign='LEFT',splitByRow=1)
++        t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('SPAN',(0,0),(-1,0)),('BACKGROUND',(0,1),(-1,1),PAPER),
++          ('LINEBELOW',(0,1),(-1,1),.6,RULE),('LINEBELOW',(0,1),(-1,-1),.3,RULE),
++          ('LEFTPADDING',(0,0),(-1,-1),6),('RIGHTPADDING',(0,0),(-1,-1),6),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6)]))
++        return t
++    story=[p('Martin Forest','heading'),p(data['title'],'title'),p('Заказ '+data['order_number']+' · '+data['order_name']),
++      p('Клиент / компания: '+data['customer']),p('Документ от '+data['date']+' · Редакция '+str(data['revision_number']),'small'),p(data['status_label'],'small')]
++    if data['synthetic']: story.append(p('Тестовый пример: условные цены, не коммерческое предложение.','small'))
++    if data['materials']:
++        rows=[]
++        for m in data['materials']:
++            identity='\n'.join(str(v) for v in (m['manufacturer'],m['name'],('Артикул: '+m['article']) if m['article'] else None,('Структура: '+m['structure']) if m['structure'] else None) if v)
++            dims=' · '.join([str(m['thickness'])+' мм' if m['thickness'] else '',str(m['length'])+' × '+str(m['width'])+' мм' if m['length'] and m['width'] else '']).strip(' ·')
++            note=data['customer_material_notice'] if m['supply_source']=='customer' else ''
++            info=[p(identity),p(dims,'small')]
++            if note: info.append(p(note,'small'))
++            price=n(m['unit_price'])+' / лист'
++            if m.get('price_unit')=='m2': price+='\nЦена за м²: '+n(m['sale_price'])
++            rows.append([info,p(n(m['quantity'])),p(price),p(n(m['amount']))])
++        story.append(table(['Материал / формат','Расчётное количество листов','Цена, BYN','Сумма, BYN'],rows,[.49,.17,.18,.16],'Материалы'))
++    if data['edges']:
++        rows=[]
++        for e in data['edges']:
++            info='\n'.join(str(v) for v in (e.get('name') or e.get('designation'),e.get('article'),str(e.get('width') or '?')+' × '+str(e.get('thickness') or '?')+' мм') if v)
++            metres='Чистовой: '+n(e['net_metres'])+' м'
++            if e.get('policy'):
++                metres+='\nЗакупочный: '+n(e['procurement_metres'])+' м\nОплачиваемый: '+n(e['billable_metres'])+' м'
++                policy=e['policy'];metres+='\nПо чистовому метражу' if policy['basis']=='net' else '\nЗапас × '+n(policy.get('factor'))+'; шаг '+n(policy.get('step_m'))+' м'
++            if e['supply_source']=='customer': info+='\nКромка заказчика'
++            rows.append([p(info),p(metres,'small'),p(n(e['unit_price'])+' / м'),p(n(e['amount']))])
++        story.append(table(['Кромка','Метраж','Цена, BYN','Сумма, BYN'],rows,[.38,.28,.18,.16],'Материал кромки'))
++    if data['services']:
++        story.append(table(['Операция','Объём','Тариф, BYN','Сумма, BYN'],[[p(s['name']),p(n(s['quantity'])+' '+UNITS.get(s['unit'],'')),p(n(s['unit_price'])),p(n(s['amount']))] for s in data['services']],[.49,.17,.18,.16],'Производственные услуги'))
++    story.append(table(['Категория','До скидки','Скидка, %','Скидка, BYN','После, BYN'],[[p(d['name']),p(n(d['gross'])),p(n(d['percent']),'small' if d['percent'] is None else 'body'),p(n(d['discount'])),p(n(d['net']))] for d in data['discounts']],[.36,.16,.14,.17,.17],'Три независимые скидки'))
++    if data['state']!='complete':
++        story.append(p('Требует уточнения стоимости','heading'))
++        for text in data['unresolved']: story.append(p(text,'small'))
++        story.append(p('Указанные суммы включают только рассчитанные позиции.','small'))
++    story.append(KeepTogether([Spacer(1,12),p(data['amount_label'],'heading'),p(n(data['amount'])+(' BYN' if data['amount'] is not None else ''),'amount'),p(data['disclaimer'],'small')]))
++    def footer(canvas,doc):
++        if doc.page>100: raise ValueError('Document page limit')
++        canvas.saveState();canvas.setFont('MF',9);canvas.setFillColor(MUTED)
++        canvas.drawString(16*mm,11*mm,'Martin Forest · Заказ '+data['order_number'])
++        canvas.drawRightString(A4[0]-16*mm,11*mm,'Страница '+str(doc.page))
++        if doc.page>1:
++            canvas.drawString(16*mm,A4[1]-12*mm,'ПРЕДВАРИТЕЛЬНЫЙ РАСЧЁТ · '+data['order_number'])
++        canvas.restoreState()
++    buf=BytesIO();doc=SimpleDocTemplate(buf,pagesize=A4,leftMargin=16*mm,rightMargin=16*mm,topMargin=17*mm,bottomMargin=20*mm,
++        title=data['title'],author='Martin Forest',subject='Предварительный расчёт · '+template_version)
++    doc.build(story,onFirstPage=footer,onLaterPages=footer,canvasmaker=lambda *a,**kw:Canvas(*a,**{**kw,'invariant':1,'pageCompression':1}))
++    return buf.getvalue()
++
++
++def bounded_render(data):
++    validate(data)
++    proc=subprocess.run([sys.executable,'-m','backend.v2.document_renderer'],input=json.dumps({'view':data,'template':VERSION},ensure_ascii=False).encode(),
++        stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30,check=False)
++    if proc.returncode or not proc.stdout.startswith(b'%PDF-') or len(proc.stdout)>10_000_000: raise ValueError('Document render failed')
++    return proc.stdout
++
++if __name__=='__main__':
++    resource.setrlimit(resource.RLIMIT_AS,(512*1024*1024,512*1024*1024))
++    resource.setrlimit(resource.RLIMIT_CPU,(20,20))
++    resource.setrlimit(resource.RLIMIT_NOFILE,(32,32))
++    data=json.loads(sys.stdin.buffer.read(500_001));sys.stdout.buffer.write(render(data['view'],data['template']))
+diff --git a/backend/v2/document_service.py b/backend/v2/document_service.py
+new file mode 100644
+index 0000000..b39de56
+--- /dev/null
++++ b/backend/v2/document_service.py
+@@ -0,0 +1,97 @@
++"""Immutable private documents. Serialized generation, fresh authorization, SHA-verified bytes."""
++from datetime import datetime,timezone
++from uuid import uuid4
++import re,subprocess
++from psycopg.types.json import Jsonb
++from fastapi import Response
++from urllib.parse import quote
++from . import document_renderer as renderer,document_projection as projection
++from .db import transaction
++from .domain_api import require
++from .security import error,identity
++from .rbac import allowed
++from .events import record_event
++from .storage import VolumeStore
++from .files import save_private_file,read_verified
++from .calculation_math import hash_value,plain
++from .calculation_service import get
++
++
++def authorize(conn,user,order_id,generate=False):
++    require(conn,user,'orders.read',order_id=order_id)
++    require(conn,user,'files.preliminary_pdf.read',order_id=order_id,file_kind='preliminary_pdf')
++    if 'manager' in user['roles']:
++        assigned=conn.execute('SELECT assigned_manager_id FROM mf_orders WHERE order_id=%s',(order_id,)).fetchone()
++        if assigned['assigned_manager_id']!=user['user_id']: error(403,'PERMISSION_DENIED')
++    if user['roles']=={'accounting'} or generate:
++        require(conn,user,'orders.prices.read',order_id=order_id)
++    if generate:
++        require(conn,user,'documents.generate',order_id=order_id)
++        require(conn,user,'calculations.read',order_id=order_id)
++
++
++def presentation(conn,c):
++    o=conn.execute('SELECT * FROM mf_orders WHERE order_id=%s',(c['order_id'],)).fetchone()
++    owner=conn.execute('SELECT display_name,company_name FROM mf_users WHERE user_id=%s',(o['owner_user_id'],)).fetchone()
++    rev=conn.execute('SELECT revision_number FROM mf_order_revisions WHERE revision_id=%s',(c['revision_id'],)).fetchone()
++    return projection.project(c,number=o['display_number'],name=o['business_name'],customer=' · '.join(v for v in owner.values() if v),
++      revision_number=rev['revision_number'],date=c['created_at'])
++
++
++def dto(row):
++    return plain({k:row[k] for k in ('file_id','calculation_id','revision_id','template_version','document_version','created_at')})
++
++
++def generate(settings,request,calculation_id):
++    with transaction(settings) as conn:
++        user=identity(conn,request);c=get(conn,calculation_id);authorize(conn,user,c['order_id'],generate=True)
++        from .cabinet_service import visible
++        if 'client' in user['roles'] and not visible(conn,c['order_id'],direct=True): error(404,'ORDER_NOT_FOUND')
++        conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,5))',(str(calculation_id),))
++        previous=conn.execute('SELECT * FROM mf_documents WHERE calculation_id=%s AND template_version=%s',(calculation_id,renderer.VERSION)).fetchone()
++        if previous:
++            read_verified(conn,VolumeStore(settings.storage_root),previous['file_id'])
++            return dto(previous)
++        template_hash=renderer.ASSET_HASH
++        conn.execute('INSERT INTO mf_document_templates(template_version,renderer_version,asset_sha256) VALUES(%s,%s,%s) ON CONFLICT DO NOTHING',
++                     (renderer.VERSION,renderer.RENDERER,template_hash))
++        template=conn.execute('SELECT * FROM mf_document_templates WHERE template_version=%s',(renderer.VERSION,)).fetchone()
++        if template['asset_sha256']!=template_hash or template['renderer_version']!=renderer.RENDERER: error(409,'DOCUMENT_TEMPLATE_VERSION_REQUIRED')
++        view=presentation(conn,c)
++        view['date']=datetime.now(timezone.utc).date().isoformat()
++        try: data=renderer.bounded_render(view)
++        except (ValueError,TimeoutError,subprocess.TimeoutExpired): error(422,'DOCUMENT_RENDER_LIMIT')
++        number=conn.execute('SELECT count(*) n FROM mf_documents WHERE calculation_id=%s',(calculation_id,)).fetchone()['n']+1
++        # File manifest + bytes survive even an interrupted final binding; unbound PDFs never appear in documents.
++        fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=data,
++            name='Martin_Forest_Preliminary_'+safe_number(view['order_number'])+'.pdf',kind='preliminary_pdf',mime='application/pdf',
++            order_id=c['order_id'],revision_id=c['revision_id'])
++        row=conn.execute('''INSERT INTO mf_documents(file_id,calculation_id,order_id,revision_id,template_version,document_version,
++            presentation_snapshot,presentation_sha256,created_by) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *''',
++          (fid,calculation_id,c['order_id'],c['revision_id'],renderer.VERSION,number,Jsonb(view),hash_value(view),user['user_id'])).fetchone()
++        record_event(conn,settings,actor=user['user_id'],action='document.generated',object_type='document',object_id=fid,version=number,reason='Immutable preliminary document from calculation snapshot')
++        if number>1: record_event(conn,settings,actor=user['user_id'],action='document.version.created',object_type='document',object_id=fid,version=number,reason='New template version; prior artifact retained')
++        return dto(row)
++
++
++def safe_number(number):
++    return number if re.fullmatch(r'MF-[0-9]{1,12}',number or '') else 'Order'
++
++
++def download(conn,settings,user,file_id,head=False):
++    f=conn.execute('SELECT * FROM mf_files WHERE file_id=%s',(file_id,)).fetchone()
++    if not f: error(404,'DOCUMENT_NOT_FOUND')
++    if f['kind']!='preliminary_pdf' or f['classification']!='private': error(403,'PERMISSION_DENIED')
++    authorize(conn,user,f['order_id'])
++    row=conn.execute('SELECT * FROM mf_documents WHERE file_id=%s',(file_id,)).fetchone()
++    if not row: error(404,'DOCUMENT_NOT_FOUND')
++    from .cabinet_service import visible
++    if 'client' in user['roles'] and not visible(conn,f['order_id'],direct=True): error(404,'ORDER_NOT_FOUND')
++    try: data=read_verified(conn,VolumeStore(settings.storage_root),file_id)
++    except (ValueError,OSError): error(409,'DOCUMENT_INTEGRITY_FAILED')
++    if user['roles']!={'client'}:
++        record_event(conn,settings,actor=user['user_id'],action='document.staff.downloaded',object_type='document',object_id=file_id,reason='Authorized sensitive document access')
++    filename='Martin_Forest_Предварительный_расчёт_'+safe_number(row['presentation_snapshot']['order_number'])+'.pdf'
++    return Response(b'' if head else data,media_type='application/pdf',headers={'Content-Length':str(len(data)),
++      'Content-Disposition':"attachment; filename=Martin_Forest_Preliminary.pdf; filename*=UTF-8''"+quote(filename),
++      'X-Content-SHA256':f['sha256'],'Accept-Ranges':'none'})
+diff --git a/backend/v2/domain_api.py b/backend/v2/domain_api.py
+index 1f99fa4..a170946 100644
+--- a/backend/v2/domain_api.py
++++ b/backend/v2/domain_api.py
+@@ -291,6 +291,10 @@ def router(settings, policy):
+         require(conn,user,permission,order_id=row['order_id'],job_id=row['job_id'],file_kind=row['kind'])
+         if user['roles']=={'client'} and row['kind']=='source' and (row['created_by']!=user['user_id'] or row['job_id']):
+             error(403,'PERMISSION_DENIED')
++        if row['kind']=='preliminary_pdf':
++            from .document_service import download as document_download
++            # No legacy alias can bypass document binding or the current role/scope policy.
++            return document_download(conn,settings,user,file_id,head)
+         if row['kind']=='oblx':
+             verified(user)
+         data = read_verified(conn,VolumeStore(settings.storage_root),file_id)
+diff --git a/backend/v2/migrations/0005_client_documents.sql b/backend/v2/migrations/0005_client_documents.sql
+new file mode 100644
+index 0000000..d7aadfa
+--- /dev/null
++++ b/backend/v2/migrations/0005_client_documents.sql
+@@ -0,0 +1,47 @@
++-- Stage 5 only. Financial snapshots and existing migrations remain unchanged.
++-- Nullable legacy completion timestamp; Stage 5 does not set production completion.
++ALTER TABLE mf_orders ADD COLUMN completed_at timestamptz;
++CREATE SEQUENCE mf_order_display_sequence;
++ALTER TABLE mf_orders ALTER COLUMN display_number SET DEFAULT ('MF-' || lpad(nextval('mf_order_display_sequence')::text,6,'0'));
++UPDATE mf_orders SET display_number='MF-' || lpad(nextval('mf_order_display_sequence')::text,6,'0') WHERE display_number IS NULL;
++ALTER TABLE mf_users ADD COLUMN display_name text CHECK(length(display_name)<=200);
++ALTER TABLE mf_users ADD COLUMN company_name text CHECK(length(company_name)<=200);
++CREATE TABLE mf_document_templates (
++ template_version text PRIMARY KEY, renderer_version text NOT NULL,
++ asset_sha256 text NOT NULL CHECK(asset_sha256 ~ '^[a-f0-9]{64}$'), created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE TABLE mf_documents (
++ file_id uuid PRIMARY KEY REFERENCES mf_files, calculation_id uuid NOT NULL REFERENCES mf_calculations,
++ order_id text NOT NULL REFERENCES mf_orders, revision_id uuid NOT NULL,
++ template_version text NOT NULL REFERENCES mf_document_templates,
++ document_version integer NOT NULL CHECK(document_version>0),
++ presentation_snapshot jsonb NOT NULL, presentation_sha256 text NOT NULL CHECK(presentation_sha256 ~ '^[a-f0-9]{64}$'),
++ created_by uuid NOT NULL REFERENCES mf_users, created_at timestamptz NOT NULL DEFAULT now(),
++ UNIQUE(calculation_id,template_version), UNIQUE(calculation_id,document_version),
++ FOREIGN KEY(revision_id,order_id) REFERENCES mf_order_revisions(revision_id,order_id)
++);
++CREATE FUNCTION mf_document_binding() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++ IF NOT EXISTS(SELECT 1 FROM mf_calculations c JOIN mf_calculation_seals s USING(calculation_id)
++   JOIN mf_files f ON f.file_id=NEW.file_id WHERE c.calculation_id=NEW.calculation_id
++   AND c.order_id=NEW.order_id AND c.revision_id=NEW.revision_id
++   AND f.order_id=NEW.order_id AND f.revision_id=NEW.revision_id AND f.job_id IS NULL
++   AND f.kind='preliminary_pdf' AND f.classification='private' AND f.mime_type='application/pdf' AND f.status='ready')
++ THEN RAISE EXCEPTION 'document binding mismatch'; END IF;
++ RETURN NEW;
++END $$;
++CREATE TRIGGER binding BEFORE INSERT ON mf_documents FOR EACH ROW EXECUTE FUNCTION mf_document_binding();
++CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON mf_documents FOR EACH ROW EXECUTE FUNCTION mf_append_only();
++CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON mf_document_templates FOR EACH ROW EXECUTE FUNCTION mf_append_only();
++CREATE INDEX mf_documents_order ON mf_documents(order_id,created_at);
++-- NC-08 visibility only; no deletion or retention worker. Null means all history visible.
++CREATE TABLE mf_history_policy (
++ singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),
++ completed_visibility_days integer CHECK(completed_visibility_days>0),
++ direct_history_access boolean NOT NULL DEFAULT true
++);
++INSERT INTO mf_history_policy(singleton) VALUES(true);
++INSERT INTO mf_permissions VALUES('documents.generate');
++INSERT INTO mf_permission_grants(grant_id,user_id,permission,scope_type,granted_by)
++ SELECT md5(u.user_id::text||'documents.generate')::uuid,u.user_id,'documents.generate','own',u.user_id
++ FROM mf_users u JOIN mf_user_roles r USING(user_id) WHERE r.role='client';
+diff --git a/backend/v2/operator.py b/backend/v2/operator.py
+index 5470561..3ab3ef7 100644
+--- a/backend/v2/operator.py
++++ b/backend/v2/operator.py
+@@ -14,7 +14,7 @@ ADMIN_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.
+                      'orders.assign_manager','orders.oblx.read','files.source.read','files.preliminary_pdf.read',
+                      'customers.pii.read','users.staff.create','users.roles.write','audit.read','orders.prices.read',
+                      'catalogue.read','catalogue.import','catalogue.publish','catalogue.mapping.manage','templates.manage',
+-                     'calculations.create','calculations.read','calculations.fix','orders.review','financial.profiles.manage','discounts.override')
++                     'calculations.create','documents.generate','calculations.read','calculations.fix','orders.review','financial.profiles.manage','discounts.override')
+ 
+ 
+ def bootstrap(settings,policy,email,password):
+diff --git a/backend/v2/rbac.py b/backend/v2/rbac.py
+index 5c67fe3..27aacdb 100644
+--- a/backend/v2/rbac.py
++++ b/backend/v2/rbac.py
+@@ -1,6 +1,6 @@
+ """Exact grants AND current role ceiling/scope/state. Never a role-only bypass."""
+ CLIENT_READ = {'orders.read','files.source.read','files.preliminary_pdf.read','orders.prices.read','customers.pii.read','catalogue.read','calculations.read'}
+-CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage','calculations.create'}
++CLIENT_WRITE = {'orders.draft.write','orders.submit','orders.revision.create','orders.approve','templates.own.manage','calculations.create','documents.generate'}
+ ADMIN_ONLY = {'users.staff.create','users.roles.write','roles.write','orders.assign_manager','audit.read',
+               'catalogue.import','catalogue.publish','catalogue.mapping.manage','financial.profiles.manage'}
+ 
+diff --git a/backend/v2/requirements.txt b/backend/v2/requirements.txt
+index 8cf4216..60e0ae0 100644
+--- a/backend/v2/requirements.txt
++++ b/backend/v2/requirements.txt
+@@ -4,3 +4,6 @@ psycopg[binary]==3.3.6
+ 
+ cryptography==46.0.5
+ httpx==0.28.1
++reportlab==4.4.9
++pillow==12.3.0
++charset-normalizer==3.5.1
+diff --git a/backend/v2/security.py b/backend/v2/security.py
+index 2e9eb72..5509800 100644
+--- a/backend/v2/security.py
++++ b/backend/v2/security.py
+@@ -15,7 +15,7 @@ from .db import transaction
+ COOKIE = 'mf_v2_session'
+ CLIENT_PERMISSIONS = ('orders.read','orders.draft.write','orders.submit','orders.revision.create',
+                       'orders.approve','files.source.read','files.preliminary_pdf.read','customers.pii.read',
+-                      'orders.prices.read','catalogue.read','templates.own.manage','calculations.create','calculations.read')
++                      'orders.prices.read','catalogue.read','templates.own.manage','calculations.create','documents.generate','calculations.read')
+ STAFF_ROLES = {'manager','production','accounting','viewer','admin','service_agent'}
+ 
+ @dataclass(frozen=True, repr=False)
+diff --git a/backend/v2/serve.py b/backend/v2/serve.py
+index dd06ebd..6eea0e6 100644
+--- a/backend/v2/serve.py
++++ b/backend/v2/serve.py
+@@ -10,9 +10,9 @@ from .startup import prepare
+ def main():
+     settings=Settings.from_env()
+     policy=WebPolicy.from_env() if os.environ.get('MF_SECURITY_API','enabled')=='enabled' else None
+-    print('Stage 4 validating staging database and migrations',flush=True)
++    print('Stage 5 validating staging database and migrations',flush=True)
+     prepare(settings)
+-    print('Stage 4 starting HTTP server; transport and dispatch disabled',flush=True)
++    print('Stage 5 starting HTTP server; transport and dispatch disabled',flush=True)
+     uvicorn.run(create_app(settings,policy),host='0.0.0.0',port=int(os.environ.get('PORT','8000')),
+                 access_log=False,proxy_headers=False)
+ 
+diff --git a/backend/v2/stage05_acceptance.py b/backend/v2/stage05_acceptance.py
+new file mode 100644
+index 0000000..9661906
+--- /dev/null
++++ b/backend/v2/stage05_acceptance.py
+@@ -0,0 +1,126 @@
++"""Explicit one-shot staging HTTP acceptance via ASGI, synthetic fixtures only."""
++from pathlib import Path
++from uuid import uuid4
++import json,os,secrets
++from fastapi.testclient import TestClient
++from .app import create_app
++from .security import WebPolicy
++from .db import connect,transaction
++from .mail import FakeCollector,confirm
++from .files import read_verified,save_private_file
++from .storage import VolumeStore,sha256
++from .calculation_math import hash_value
++
++
++def run(settings):
++    path=settings.storage_root.parent/'stage05-live-evidence.json'
++    if path.exists():
++        print('MF_STAGE05_LIVE='+path.read_text(),flush=True);return
++    policy=WebPolicy.from_env();email=os.environ.get('MF_STAGE03_OPERATOR_EMAIL','');password=os.environ.get('MF_STAGE03_OPERATOR_PASSWORD','')
++    if not email.endswith('@example.invalid') or len(password)<32: raise ValueError('Explicit synthetic operator required')
++    with connect(settings) as db:
++        active=str(db.execute('SELECT release_id FROM mf_catalogue_active').fetchone()['release_id'])
++        assert active=='e6db8155-91a6-4f15-9b89-ce2194b43373'
++        old={str(c['calculation_id']):hash_value(c['result']) for c in db.execute('SELECT * FROM mf_calculations')}
++        context=db.execute('SELECT * FROM mf_order_financial_contexts WHERE order_id=%s ORDER BY created_at DESC LIMIT 1',('d2c6de29-1bad-411c-8c2a-6119851d66e1',)).fetchone()
++        old_calcs=[str(c['calculation_id']) for c in db.execute('SELECT calculation_id FROM mf_calculations ORDER BY created_at')]
++    with TestClient(create_app(settings,policy),base_url=policy.origin,headers={'Origin':policy.origin,'Content-Type':'application/json'}) as api:
++        def post(url,body,status=200,**headers):
++            r=api.post('/api/v2'+url,json=body,headers=headers)
++            if r.status_code!=status: raise ValueError(url+' '+str(r.status_code)+' '+r.text[:150])
++            return r.json()
++        def login(e,p):
++            api.cookies.clear();post('/auth/login',{'email':e,'password':p})
++        login(email,password);old_documents=[]
++        for ident in old_calcs:
++            doc=post('/calculations/'+ident+'/documents/preliminary',{},201)
++            data=api.get('/api/v2/documents/'+doc['file_id']);assert data.status_code==200
++            old_documents.append({**doc,'sha256':sha256(data.content),'size':len(data.content)})
++        client_email='stage05-'+uuid4().hex+'@example.invalid';client_password=secrets.token_urlsafe(36)
++        user=post('/auth/register',{'email':client_email,'password':client_password},201)
++        with connect(settings) as db: delivery=db.execute('SELECT d.delivery_id FROM mf_email_deliveries d JOIN mf_email_verifications v USING(verification_id) WHERE v.user_id=%s ORDER BY d.created_at DESC LIMIT 1',(user['user_id'],)).fetchone()['delivery_id']
++        fid=FakeCollector().collect(settings,policy,delivery)
++        with transaction(settings) as db:
++            payload=json.loads(read_verified(db,VolumeStore(settings.storage_root),fid));confirm(db,settings,payload['url'].split('#token=')[1])
++        assert api.patch('/api/v2/account/profile',json={'display_name':'Тестовый клиент Александра Ąžuolas','company_name':'Синтетическая проверка Stage 5'}).status_code==200
++        o=post('/orders',{'business_name':'STAGE 5 SYNTHETIC · кабинет и private PDF','preparation_mode':'self_prepared'},201)
++        manager=post('/orders',{'business_name':'STAGE 5 SYNTHETIC · ожидание менеджера','preparation_mode':'manager_assisted'},201)
++        assert api.get('/api/v2/account/orders/'+manager['order_id']).json()['calculation_label']=='Расчёт после обработки менеджером'
++        login(email,password)
++        post('/orders/'+o['order_id']+'/financial-context',{**{k:str(context[k]) if context[k] else None for k in ('production_profile_id','tariff_book_id','price_book_id','discount_profile_id')},'reason':'Explicit existing synthetic Stage4 context for Stage5 fixture'},201,**{'If-Match':'1'})
++        login(client_email,client_password)
++        r=post('/orders/'+o['order_id']+'/revisions',{'reason':'Stage5 synthetic immutable revision','catalogue_release_id':active,
++          'details':[{'detail_id':'stage05-detail','length':'600','width':'400','qty':3,'variant_id':'33a8c06b-5b98-5bbc-83be-b977abbe68e5',
++          'rotation':False,'grain':'none','route':'glued_18_18','packaging':True,'edges':{}}]},201,**{'If-Match':'1'})
++        calc=post('/orders/'+o['order_id']+'/calculations',{'revision_id':r['revision_id']},201)
++        assert calc['total']=='111.02'
++        doc=post('/calculations/'+calc['calculation_id']+'/documents/preliminary',{},201)
++        assert post('/calculations/'+calc['calculation_id']+'/documents/preliminary',{},201)==doc
++        view=api.get('/api/v2/account/orders/'+o['order_id']).json();assert view['amount']==calc['total']==view['calculation']['amount']
++        source=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=b'Stage5 synthetic source file',name='stage05-source.txt',kind='source',mime='text/plain',order_id=o['order_id'])
++        internal=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=b'SYNTHETIC DENY FIXTURE ONLY - NOT XML',name='ordinary.pdf',kind='oblx',mime='application/pdf',order_id=o['order_id'],revision_id=r['revision_id'])
++        denied=[]
++        for suffix in ['/documents/'+str(internal),'/files/'+str(internal),'/files/'+str(internal)+'/download','/files/'+str(internal)+'/preview','/orders/'+o['order_id']+'/oblx']:
++            for method in ('GET','HEAD'):
++                assert api.request(method,'/api/v2'+suffix,headers={'Range':'bytes=0-9'}).status_code==403
++                denied.append(method+' '+suffix)
++        docs=api.get('/api/v2/account/orders/'+o['order_id']+'/documents').json()['items']
++        assert str(source) in str(docs) and doc['file_id'] in str(docs) and str(internal) not in str(docs)
++        assert api.get('/api/v2/account/orders/d2c6de29-1bad-411c-8c2a-6119851d66e1').status_code==403
++        pdf=api.get('/api/v2/documents/'+doc['file_id']);assert pdf.status_code==200 and pdf.headers['x-content-sha256']==sha256(pdf.content)
++        for suffix in ['', '/download','/preview']:
++            assert api.get('/api/v2/files/'+doc['file_id']+suffix).content==pdf.content
++        assert api.head('/api/v2/documents/'+doc['file_id']).status_code==200
++        assert api.get('/api/v2/documents/'+doc['file_id'],headers={'Range':'bytes=0-9'}).content==pdf.content
++        # Source added after the calculated revision: verify existing stale-draft gate, not bypass it.
++        stale=api.post('/api/v2/orders/'+o['order_id']+'/submit',json={'revision_id':r['revision_id'],'preliminary_calculation_id':calc['calculation_id']},headers={'If-Match':str(r['optimistic_lock_version']),'Idempotency-Key':uuid4().hex})
++        assert stale.status_code==412
++        updated=post('/orders/'+o['order_id']+'/revisions',{'reason':'Explicit revision includes new source file','parent_revision_id':r['revision_id'],'catalogue_release_id':active,
++          'details':[{'detail_id':'stage05-detail','length':'600','width':'400','qty':3,'variant_id':'33a8c06b-5b98-5bbc-83be-b977abbe68e5',
++          'rotation':False,'grain':'none','route':'glued_18_18','packaging':True,'edges':{}}]},201,**{'If-Match':str(r['optimistic_lock_version'])})
++        updated_calc=post('/orders/'+o['order_id']+'/calculations',{'revision_id':updated['revision_id']},201)
++        updated_doc=post('/calculations/'+updated_calc['calculation_id']+'/documents/preliminary',{},201)
++        submitted=post('/orders/'+o['order_id']+'/submit',{'revision_id':updated['revision_id'],'preliminary_calculation_id':updated_calc['calculation_id']},
++          **{'If-Match':str(updated['optimistic_lock_version']),'Idempotency-Key':uuid4().hex})
++        assert submitted['workflow_status']=='submitted'
++        assert api.get('/api/v2/documents/'+doc['file_id']).content==pdf.content
++        evidence={'old_documents':old_documents,'client_document':{**doc,'sha256':sha256(pdf.content),'size':len(pdf.content)},
++           'client_order':o['order_id'],'manager_assisted_order':manager['order_id'],'calculation_total':calc['total'],
++           'same_financial_projection':True,'document_idempotent':True,'client_own_oblx_http_denials':denied,'source_and_pdf_only_listing':True,
++           'cross_client_denied':True,'sha_verified':True,'head_range_and_aliases_verified':True,'stale_submit_gate_preserved':True,'active_release':active}
++        login(email,password)
++        with connect(settings) as db:
++            for ident,digest in old.items(): assert hash_value(db.execute('SELECT result FROM mf_calculations WHERE calculation_id=%s',(ident,)).fetchone()['result'])==digest
++            assert db.execute('SELECT count(*) n FROM mf_production_jobs').fetchone()['n']==1
++        evidence['canonical_submit_passed']=True;evidence['new_revision_document']=updated_doc;evidence['stage4_snapshots_unchanged']=True;evidence['new_production_jobs']=0
++    path.write_text(json.dumps(evidence,indent=2));print('MF_STAGE05_LIVE='+json.dumps(evidence,separators=(',',':')),flush=True)
++
++
++def upgrade_template(settings):
++    path=settings.storage_root.parent/'stage05-template-v2-evidence.json'
++    if path.exists():
++        print('MF_STAGE05_TEMPLATE_V2='+path.read_text(),flush=True);return
++    policy=WebPolicy.from_env();email=os.environ.get('MF_STAGE03_OPERATOR_EMAIL','');password=os.environ.get('MF_STAGE03_OPERATOR_PASSWORD','')
++    if not email.endswith('@example.invalid') or len(password)<32: raise ValueError('Synthetic operator required')
++    with connect(settings) as db:
++        old=db.execute("SELECT d.*,f.sha256 FROM mf_documents d JOIN mf_files f USING(file_id) WHERE template_version='mf-preliminary-a4-v1' ORDER BY d.created_at").fetchall()
++    assert len(old)==4
++    evidence=[]
++    with TestClient(create_app(settings,policy),base_url=policy.origin,headers={'Origin':policy.origin,'Content-Type':'application/json'}) as api:
++        assert api.post('/api/v2/auth/login',json={'email':email,'password':password}).status_code==200
++        for before in old:
++            route='/api/v2/calculations/'+str(before['calculation_id'])+'/documents/preliminary'
++            response=api.post(route,json={});assert response.status_code==201,response.text
++            after=response.json();assert after['template_version']=='mf-preliminary-a4-v2' and after['document_version']==2
++            assert api.post(route,json={}).json()==after
++            previous=api.get('/api/v2/documents/'+str(before['file_id']));new=api.get('/api/v2/documents/'+after['file_id'])
++            assert previous.status_code==new.status_code==200 and sha256(previous.content)==before['sha256']
++            assert after['file_id']!=str(before['file_id'])
++            with connect(settings) as db:
++                v=db.execute('SELECT presentation_snapshot FROM mf_documents WHERE file_id=%s',(after['file_id'],)).fetchone()['presentation_snapshot']
++            for k in ('materials','edges','services','discounts','amount','currency','state'):
++                assert v[k]==before['presentation_snapshot'][k]
++            evidence.append({'calculation_id':str(before['calculation_id']),'old_file_id':str(before['file_id']),'old_sha256':before['sha256'],
++               **after,'sha256':sha256(new.content),'financial_projection_unchanged':True,'old_pdf_preserved':True})
++    result={'template_version':'mf-preliminary-a4-v2','documents':evidence,'same_version_idempotent':True}
++    path.write_text(json.dumps(result,indent=2));print('MF_STAGE05_TEMPLATE_V2='+json.dumps(result,separators=(',',':')),flush=True)
+diff --git a/backend/v2/stage05_operator.py b/backend/v2/stage05_operator.py
+new file mode 100644
+index 0000000..94b9c8f
+--- /dev/null
++++ b/backend/v2/stage05_operator.py
+@@ -0,0 +1,64 @@
++"""Explicit staging-only maintenance. No public endpoint, dispatch or production access."""
++from dataclasses import replace
++from pathlib import Path
++from uuid import uuid4
++import json,re
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict,make_conninfo
++from .db import connect,transaction
++from .backup import backup,restore
++from .stage04_operator import verify as verify_stage4
++from .files import read_verified
++from .storage import VolumeStore,sha256
++from .calculation_math import hash_value
++from .events import record_event
++
++EXTRA=('mf_documents','mf_document_templates','mf_history_policy','mf_users','mf_sessions','mf_user_roles','mf_permission_grants','mf_manager_assignments')
++
++def verify(settings):
++    state=verify_stage4(settings)
++    with connect(settings) as c:
++        for table in EXTRA:
++            rows=sorted(r['r'] for r in c.execute(sql.SQL('SELECT to_jsonb(t)::text r FROM {} t').format(sql.Identifier(table))))
++            state['tables'][table]={'count':len(rows),'sha256':hash_value(rows)}
++        for d in c.execute('SELECT d.*,f.kind,f.classification,f.order_id file_order,f.revision_id file_revision,c.order_id calculation_order,c.revision_id calculation_revision FROM mf_documents d JOIN mf_files f USING(file_id) JOIN mf_calculations c USING(calculation_id)'):
++            if not (d['kind']=='preliminary_pdf' and d['classification']=='private' and d['order_id']==d['file_order']==d['calculation_order'] and d['revision_id']==d['file_revision']==d['calculation_revision'] and hash_value(d['presentation_snapshot'])==d['presentation_sha256']): raise ValueError('Document binding mismatch')
++            if not read_verified(c,VolumeStore(settings.storage_root),d['file_id']).startswith(b'%PDF-'): raise ValueError('PDF bytes invalid')
++    return state
++
++
++def retire_restore(settings,email,checkpoint='stage05'):
++    if checkpoint not in {'stage05','stage05-template-v2'}: raise ValueError('Invalid staging checkpoint')
++    evidence_path=settings.storage_root.parent/(checkpoint+'-restore-evidence.json')
++    if evidence_path.exists():
++        print('MF_STAGE05_RESTORE='+evidence_path.read_text(),flush=True);return
++    if not email.endswith('@example.invalid'): raise ValueError('Synthetic operator required')
++    with transaction(settings) as c:
++        users=c.execute("SELECT user_id FROM mf_users WHERE email=%s OR email LIKE 'stage05-%%@example.invalid' FOR UPDATE",(email,)).fetchall()
++        for u in users:
++            uid=u['user_id'];c.execute("UPDATE mf_users SET account_status='disabled',password_hash='disabled-stage05-operator' WHERE user_id=%s",(uid,))
++            c.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++            c.execute('UPDATE mf_permission_grants SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
++            c.execute("DELETE FROM mf_user_roles WHERE user_id=%s AND role='admin'",(uid,))
++            record_event(c,settings,actor=uid,action='stage05.operator.retired',object_type='user',object_id=uid,reason='Synthetic acceptance credentials retired')
++    before=verify(settings)
++    if before['tables']['mf_documents']['count']<2: raise ValueError('Document acceptance missing')
++    run=uuid4().hex[:12];destination=settings.storage_root.parent/'backups'/(checkpoint+'-'+run)
++    manifest=backup(settings,destination);name='mf_staging_restore_'+checkpoint.replace('-','_')+'_'+run
++    with connect(settings,autocommit=True) as c: c.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    info=conninfo_to_dict(settings.database_url)
++    target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,storage_root=settings.storage_root.parent/('restore-'+checkpoint+'-'+run)/'storage')
++    restored=restore(target,destination);after=verify(target)
++    if before!=after: raise ValueError('Stage5 restore differs')
++    evidence={'restore':restored,'dump_sha256':manifest['database_sha256'],'backup_path':str(destination),'storage_root':str(target.storage_root),
++       'operator_retired':True,'tables_and_pdf_bindings_and_sha_verified':True,'authorization_metadata_verified':True,'state':after,'transport':'disabled','dispatch':'disabled'}
++    evidence_path.write_text(json.dumps(evidence,indent=2));print('MF_STAGE05_RESTORE='+json.dumps(evidence,separators=(',',':')),flush=True)
++
++
++def verify_persistence(settings,checkpoint='stage05'):
++    if checkpoint not in {'stage05','stage05-template-v2'}: raise ValueError('Invalid staging checkpoint')
++    recorded=json.loads((settings.storage_root.parent/(checkpoint+'-restore-evidence.json')).read_text());current=verify(settings)
++    if current!=recorded['state']: raise ValueError('Stage5 persistence differs')
++    evidence={'persistent_after_redeploy':True,'documents':current['tables']['mf_documents']['count'],'calculations':current['tables']['mf_calculations']['count'],
++      'revisions':current['tables']['mf_order_revisions']['count'],'private_files':len(current['private_files']),'authorization_metadata_match':True,'production_jobs':current['production_jobs']}
++    print('MF_STAGE05_PERSISTENCE='+json.dumps(evidence),flush=True)
+diff --git a/backend/v2/startup.py b/backend/v2/startup.py
+index 18cd8dd..e144e3a 100644
+--- a/backend/v2/startup.py
++++ b/backend/v2/startup.py
+@@ -53,6 +53,20 @@ def prepare(settings):
+             before={'database_sha256':manifest['database_sha256'],'counts':counts,'file_count':len(manifest['files'])}
+             (destination/'stage04-before.json').write_text(json.dumps(before,indent=2))
+         print('MF_STAGE04_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
++    if versions=={'0001_foundation.sql','0002_auth_security.sql','0003_catalogue_imports.sql','0004_order_calculation.sql'}:
++        from .storage import sha256
++        destination=settings.storage_root.parent/'backups'/'pre-stage05'
++        if not destination.exists():
++            manifest=backup(settings,destination)
++            (destination/'stage05-before.json').write_text(json.dumps({'database_sha256':manifest['database_sha256']}))
++        manifest=json.loads((destination/'manifest.json').read_text())
++        before=json.loads((destination/'stage05-before.json').read_text())
++        if (manifest['namespace']!=settings.namespace or manifest['database']!=settings.database_name
++            or sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']
++            or before['database_sha256']!=manifest['database_sha256']): raise ValueError('Pre-Stage-5 backup integrity mismatch')
++        for f in manifest['files']:
++            if f['present'] and sha256((destination/'blobs'/f['storage_key']).read_bytes())!=f['sha256']: raise ValueError('Pre-Stage-5 private bytes mismatch')
++        print('MF_STAGE05_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
+     migrate(settings)
+     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
+     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'
+diff --git a/tests/stage05/__init__.py b/tests/stage05/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/stage05/test_api.py b/tests/stage05/test_api.py
+new file mode 100644
+index 0000000..e9c42d4
+--- /dev/null
++++ b/tests/stage05/test_api.py
+@@ -0,0 +1,226 @@
++from copy import deepcopy
++from dataclasses import replace
++from pathlib import Path
++from uuid import uuid4
++from io import BytesIO
++import json,os
++import pytest
++from pypdf import PdfReader
++from psycopg import sql
++from psycopg.conninfo import conninfo_to_dict,make_conninfo
++from backend.v2.db import connect,transaction
++from backend.v2.security import grant,password_hash
++from backend.v2.files import save_private_file,read_verified
++from backend.v2.storage import VolumeStore,sha256
++from backend.v2.backup import backup,restore
++from backend.v2.calculation_math import hash_value
++from backend.v2 import document_renderer as renderer
++from tests.stage03.test_api import settings,api,admin_user,publish,post,login,PASSWORD
++from tests.stage04.test_api import order,item,configure,revision,request_detail,calc,submit
++
++
++def prepared(api):
++    _,release=publish(api);o=order(api);m=item(api,release);ctx,meta=configure(api,o,release,m,discounts={'materials':'10','edge_material':'20','services':'5'})
++    r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r)
++    return o,r,c,ctx,meta
++
++
++def document(api,c): return post(api,'/calculations/'+c['calculation_id']+'/documents/preliminary',{},status=201)
++
++
++def staff(settings,role,order_id,permissions,assigned=False):
++    uid=uuid4();email=uid.hex+'@example.invalid'
++    with transaction(settings) as c:
++        c.execute('INSERT INTO mf_users(user_id,email,password_hash,email_verified_at) VALUES(%s,%s,%s,now())',(uid,email,password_hash(PASSWORD)))
++        c.execute('INSERT INTO mf_user_roles VALUES(%s,%s)',(uid,role))
++        for permission in permissions: grant(c,user_id=uid,permission=permission,scope='order',scope_id=order_id,actor=uid)
++        if assigned: c.execute('UPDATE mf_orders SET assigned_manager_id=%s WHERE order_id=%s',(uid,order_id))
++    return uid,email
++
++
++def client_order(api,settings,admin_user,complete=True,mode='self_prepared'):
++    _,release=publish(api);m=item(api,release);email=uuid4().hex+'@example.invalid'
++    u=post(api,'/auth/register',{'email':email,'password':PASSWORD},status=201)
++    o=order(api,mode)
++    with transaction(settings) as c: c.execute('UPDATE mf_users SET email_verified_at=now() WHERE user_id=%s',(u['user_id'],))
++    if mode=='manager_assisted': return o,None,None,email
++    if complete:
++        login(api,admin_user['email']);configure(api,o,release,m);login(api,email)
++    r=revision(api,o,release,[request_detail(m)]);cal=calc(api,o,r)
++    return o,r,cal,email
++
++
++def test_doc01_doc02_atomic_event_version_and_binding(api,settings,admin_user,monkeypatch):
++    o,r,c,_,_=prepared(api);d=document(api,c);again=document(api,c);assert d==again
++    old=api.get('/api/v2/documents/'+d['file_id']);assert old.status_code==200 and old.headers['content-type']=='application/pdf'
++    with connect(settings) as db:
++        audits=db.execute("SELECT event_id FROM mf_audit WHERE object_id=%s AND action='document.generated'",(d['file_id'],)).fetchall()
++        assert len(audits)==1 and db.execute('SELECT 1 FROM mf_outbox WHERE event_id=%s',(audits[0]['event_id'],)).fetchone()
++        manifest=db.execute('SELECT * FROM mf_files WHERE file_id=%s',(d['file_id'],)).fetchone()
++        assert manifest['sha256']==sha256(old.content) and manifest['size_bytes']==len(old.content)
++    monkeypatch.setattr(renderer,'VERSION','mf-preliminary-a4-test-v2');new=document(api,c)
++    assert new['file_id']!=d['file_id'] and new['document_version']==2
++    assert api.get('/api/v2/documents/'+d['file_id']).content==old.content
++    listing=api.get('/api/v2/calculations/'+c['calculation_id']+'/documents').json()['items'];assert len(listing)==2
++    for statement in ['DELETE FROM mf_documents WHERE file_id=%s',"UPDATE mf_documents SET presentation_snapshot='{}' WHERE file_id=%s"]:
++        with pytest.raises(Exception):
++            with transaction(settings) as db: db.execute(statement,(d['file_id'],))
++    with pytest.raises(Exception):
++        with transaction(settings) as db:
++            db.execute('INSERT INTO mf_documents SELECT file_id,calculation_id,order_id,%s,template_version,3,presentation_snapshot,presentation_sha256,created_by,created_at FROM mf_documents WHERE file_id=%s',(uuid4(),d['file_id']))
++
++
++def test_doc03_old_pdf_survives_real_catalogue_tariff_discount_changes(api,settings,admin_user):
++    o,r,c,ctx,meta=prepared(api);d=document(api,c);url='/api/v2/documents/'+d['file_id'];old=api.get(url).content
++    oldtariff=api.get('/api/v2/financial/versions/tariff/'+ctx['tariff_book_id']).json()
++    t=post(api,'/financial/tariff-books',{**meta,'supersedes':ctx['tariff_book_id'],'effective_from':'2026-09-23T00:00:00Z','entries':[{'operation':e['operation'],'amount':'9.99','currency':'BYN'} for e in oldtariff['entries']]},status=201)
++    discount=post(api,'/financial/discount-profiles',{**meta,'materials':'33','edge_material':'44','services':'55'},status=201)
++    _,newrelease=publish(api)
++    post(api,'/orders/'+o['order_id']+'/financial-context',{**ctx,'tariff_book_id':t['id'],'discount_profile_id':discount['id'],'reason':'Explicit later synthetic versions'},r['optimistic_lock_version'],status=201)
++    assert api.get(url).content==old and document(api,c)==d
++    assert api.get('/api/v2/calculations/'+c['calculation_id']).json()['total']==c['total']
++    new=post(api,'/calculations/'+c['calculation_id']+'/recalculate',{'reason':'Explicit later calculation'},status=201)
++    assert document(api,new)['file_id']!=d['file_id']
++
++
++def test_doc04_sha_mismatch_all_aliases_and_headers(api,settings,admin_user):
++    o,r,c,_,_=prepared(api);d=document(api,c);url='/api/v2/documents/'+d['file_id'];response=api.get(url)
++    for name in ['x-robots-tag','cache-control','x-content-type-options','content-disposition']: assert name in response.headers
++    assert 'no-store' in response.headers['cache-control'] and 'noindex' in response.headers['x-robots-tag']
++    assert d['file_id'] not in response.headers['content-disposition']
++    for suffix in ['', '/download','/preview']:
++        assert api.get('/api/v2/files/'+d['file_id']+suffix).content==response.content
++    assert api.head(url).content==b'' and api.head(url).headers['content-length']==str(len(response.content))
++    assert api.get(url,headers={'Range':'bytes=0-10'}).content==response.content
++    with connect(settings) as db: f=db.execute('SELECT storage_key FROM mf_files WHERE file_id=%s',(d['file_id'],)).fetchone()
++    path=VolumeStore(settings.storage_root).path(f['storage_key']);original=path.read_bytes();path.write_bytes(b'corrupted')
++    try:
++        assert api.get(url).status_code==409 and api.head(url).status_code==409
++    finally: path.write_bytes(original)
++    for path in ['/static/'+d['file_id']+'.pdf','/public/'+d['file_id']+'.pdf','/'+f['storage_key']]: assert api.get(path).status_code==404
++
++@pytest.mark.parametrize('role,perms,assigned,expected',[
++ ('manager',['orders.read','files.preliminary_pdf.read'],True,200),
++ ('manager',['orders.read','files.preliminary_pdf.read'],False,403),
++ ('accounting',['orders.read','files.preliminary_pdf.read','orders.prices.read'],False,200),
++ ('accounting',['orders.read','files.preliminary_pdf.read'],False,403),
++ ('viewer',['orders.read','files.preliminary_pdf.read'],False,200),
++ ('viewer',['orders.read'],False,403),
++ ('production',['orders.read','files.preliminary_pdf.read'],False,403),
++ ('admin',[],False,403),
++ ('admin',['orders.read','files.preliminary_pdf.read'],False,200),
++ ('service_agent',['orders.read','files.preliminary_pdf.read'],False,403)])
++def test_document_roles_current_explicit_permissions(api,settings,admin_user,role,perms,assigned,expected):
++    o,r,c,_,_=prepared(api);d=document(api,c);uid,email=staff(settings,role,o['order_id'],perms,assigned)
++    if role=='service_agent':
++        api.cookies.clear();assert api.post('/api/v2/auth/login',json={'email':email,'password':PASSWORD}).status_code==403;return
++    login(api,email);url='/api/v2/documents/'+d['file_id'];assert api.get(url).status_code==expected
++    assert api.get('/api/v2/account/orders/'+o['order_id']).status_code==403
++    if expected==200:
++        with transaction(settings) as db: db.execute('UPDATE mf_permission_grants SET revoked_at=now() WHERE user_id=%s',(uid,))
++        assert api.head(url).status_code==403
++
++
++def test_cab01_to08_client_canonical_projection_pdf_submit_history(api,settings,admin_user):
++    foreign=order(api);o,r,c,email=client_order(api,settings,admin_user);d=document(api,c)
++    detail=api.get('/api/v2/account/orders/'+o['order_id']).json();assert detail['amount']==c['total'] and detail['calculation']['amount']==c['total']
++    assert detail['calculation']['discounts'][0]['net']==c['category_totals']['materials']['net']
++    assert [v['order_id'] for v in api.get('/api/v2/account/orders').json()['items']]==[o['order_id']]
++    assert api.get('/api/v2/account/orders/'+foreign['order_id']).status_code==403
++    assert any(x['file_id']==d['file_id'] for x in detail['documents'])
++    timeline=api.get('/api/v2/account/orders/'+o['order_id']+'/timeline').json();assert any(x['label'].startswith('Документ сформирован') for x in timeline['items'])
++    for key in ('storage_key','job_id','BAZIS','Agent','plan_hash','internalComment','input_hash'): assert key not in json.dumps(detail)+json.dumps(timeline)
++    sent=submit(api,o,r,c);assert sent.status_code==200,sent.text
++    assert api.get('/api/v2/account/orders/'+o['order_id']).json()['status']=='submitted'
++    assert any(x['label']=='Заказ передан на обработку' for x in api.get('/api/v2/account/orders/'+o['order_id']+'/timeline').json()['items'])
++    post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
++    assert api.get('/api/v2/documents/'+d['file_id']).status_code==403
++    assert api.get('/api/v2/calculations/'+c['calculation_id']+'/documents').status_code==403
++
++
++def test_cab04_incomplete_not_zero_and_cab05_manager_without_calculation(api,settings,admin_user):
++    o,r,c,email=client_order(api,settings,admin_user,complete=False)
++    view=api.get('/api/v2/account/orders/'+o['order_id']).json();assert view['amount'] is None and 'Требует уточнения' in view['calculation_label']
++    assert view['calculation']['amount_label']=='РАССЧИТАННАЯ ЧАСТЬ';document(api,c)
++    manager=order(api,'manager_assisted');m=api.get('/api/v2/account/orders/'+manager['order_id']).json()
++    assert m['calculation_label']=='Расчёт после обработки менеджером' and m['amount'] is None
++
++
++def test_client_own_oblx_all_document_routes_list_history_head_range(api,settings,admin_user):
++    o,r,c,email=client_order(api,settings,admin_user);d=document(api,c)
++    with connect(settings) as db: uid=db.execute('SELECT owner_user_id FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()['owner_user_id']
++    oblx=save_private_file(settings,VolumeStore(settings.storage_root),actor=uid,data=b'SYNTHETIC INTERNAL TEST',name='safe-looking.pdf',kind='oblx',mime='application/pdf',order_id=o['order_id'],revision_id=r['revision_id'])
++    for path in ['/documents/'+str(oblx),'/files/'+str(oblx),'/files/'+str(oblx)+'/download','/files/'+str(oblx)+'/preview','/orders/'+o['order_id']+'/oblx']:
++        for method in ['GET','HEAD']:
++            assert api.request(method,'/api/v2'+path,headers={'Range':'bytes=0-5'}).status_code==403
++    for path in ['/account/orders/'+o['order_id'],'/account/orders/'+o['order_id']+'/documents','/account/orders/'+o['order_id']+'/timeline','/orders/'+o['order_id']+'/history','/calculations/'+c['calculation_id']+'/documents']:
++        res=api.get('/api/v2'+path);assert res.status_code==200 and str(oblx) not in res.text and 'OBLX' not in res.text
++
++
++def test_profile_change_old_doc_frozen_and_ui_security(api,settings,admin_user):
++    o,r,c,email=client_order(api,settings,admin_user)
++    assert api.patch('/api/v2/account/profile',json={'display_name':'Александра Ąžuolas','company_name':'Мастерская'}).status_code==200
++    d=document(api,c);before=api.get('/api/v2/documents/'+d['file_id']).content
++    assert 'Александра Ąžuolas' in ' '.join(p.extract_text() for p in PdfReader(BytesIO(before)).pages)
++    api.patch('/api/v2/account/profile',json={'display_name':'Другое имя','company_name':'Другая компания'})
++    assert api.get('/api/v2/documents/'+d['file_id']).content==before
++    ui=api.get('/account');assert ui.status_code==200 and "script-src 'self'" in ui.headers['content-security-policy']
++    js=api.get('/account/app.js').text
++    assert '/api/v2' in js and 'innerHTML' not in js and 'localStorage' not in js and 'Idempotency-Key' in js and "'/orders/'+o.order_id+'/submit'" in js
++    assert api.post('/api/v2/calculations/'+c['calculation_id']+'/documents/preliminary',json={'html':'<script>'}).status_code==422
++    assert api.post('/api/v2/calculations/'+c['calculation_id']+'/documents/preliminary',json={},headers={'Origin':'https://evil.invalid'}).status_code==403
++
++
++def test_stage5_actual_backup_restore_documents_authorization(api,settings,admin_user,tmp_path):
++    from backend.v2.stage05_operator import verify
++    o,r,c,_,_=prepared(api);d=document(api,c);before=verify(settings)
++    manifest=backup(settings,tmp_path/'backup');info=conninfo_to_dict(settings.database_url);name='mf_staging_restore_stage05_'+uuid4().hex[:10]
++    with connect(settings,autocommit=True) as db: db.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
++    target=replace(settings,database_url=make_conninfo(**{**info,'dbname':name}),database_name=name,storage_root=tmp_path/'restore'/'storage')
++    restored=restore(target,tmp_path/'backup');assert verify(target)==before
++    output={'restore':restored,'dump_sha256':manifest['database_sha256'],'document_bindings_and_pdf_sha':True,'authorization_metadata':True,'state':before}
++    root=Path(os.environ.get('MF_TEST_EVIDENCE_DIR',tmp_path));root.mkdir(parents=True,exist_ok=True)
++    (root/'stage05-restore-evidence.json').write_text(json.dumps(output,indent=2))
++
++
++def test_generation_serializes_and_failure_rolls_back_document_audit(api,settings,admin_user,monkeypatch):
++    from concurrent.futures import ThreadPoolExecutor
++    from backend.v2 import document_service
++    o,r,c,_,_=prepared(api)
++    with ThreadPoolExecutor(max_workers=2) as pool: a,b=list(pool.map(lambda _:document(api,c),range(2)))
++    assert a==b
++    new=post(api,'/calculations/'+c['calculation_id']+'/recalculate',{'reason':'Atomic rollback fixture'},status=201)
++    original=document_service.record_event
++    def fail(*a,**k): raise RuntimeError('Synthetic transaction failure')
++    monkeypatch.setattr(document_service,'record_event',fail)
++    with pytest.raises(RuntimeError): document(api,new)
++    with connect(settings) as db:
++        assert not db.execute('SELECT 1 FROM mf_documents WHERE calculation_id=%s',(new['calculation_id'],)).fetchone()
++    monkeypatch.setattr(document_service,'record_event',original)
++    assert document(api,new)['calculation_id']==new['calculation_id']
++
++
++def test_nc08_visibility_configurable_no_deletion_and_direct_routes(api,settings,admin_user):
++    o,r,c,email=client_order(api,settings,admin_user);d=document(api,c)
++    with transaction(settings) as db:
++        db.execute("UPDATE mf_orders SET completed_at=now()-interval '60 days' WHERE order_id=%s",(o['order_id'],))
++        db.execute('UPDATE mf_history_policy SET completed_visibility_days=30,direct_history_access=false WHERE singleton')
++    try:
++        assert api.get('/api/v2/account/orders').json()['items']==[]
++        assert api.get('/api/v2/account/orders/'+o['order_id']).status_code==404
++        assert api.get('/api/v2/documents/'+d['file_id']).status_code==404
++        assert api.post('/api/v2/calculations/'+c['calculation_id']+'/documents/preliminary',json={}).status_code==404
++        with transaction(settings) as db: db.execute('UPDATE mf_history_policy SET direct_history_access=true WHERE singleton')
++        assert api.get('/api/v2/documents/'+d['file_id']).status_code==200
++        with connect(settings) as db:
++            assert db.execute('SELECT 1 FROM mf_documents WHERE file_id=%s',(d['file_id'],)).fetchone()
++            assert read_verified(db,VolumeStore(settings.storage_root),d['file_id']).startswith(b'%PDF-')
++    finally:
++        with transaction(settings) as db: db.execute('UPDATE mf_history_policy SET completed_visibility_days=NULL,direct_history_access=true WHERE singleton')
++
++
++def test_unbound_pdf_not_downloadable_through_legacy_alias(api,settings,admin_user):
++    o,r,c,_,_=prepared(api)
++    fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=admin_user['user_id'],data=b'%PDF-unbound',name='unbound.pdf',kind='preliminary_pdf',mime='application/pdf',order_id=o['order_id'],revision_id=r['revision_id'])
++    for path in ['/documents/','/files/']:
++        assert api.get('/api/v2'+path+str(fid)).status_code==404
+diff --git a/tests/stage05/test_pdf.py b/tests/stage05/test_pdf.py
+new file mode 100644
+index 0000000..9f557de
+--- /dev/null
++++ b/tests/stage05/test_pdf.py
+@@ -0,0 +1,85 @@
++from copy import deepcopy
++from io import BytesIO
++from pathlib import Path
++import json
++import pytest
++from pypdf import PdfReader
++from backend.v2.calculation_engine import calculate
++from backend.v2.document_projection import project,CUSTOMER,DISCLAIMER
++from backend.v2.document_renderer import render,bounded_render,validate
++from tests.stage04.test_engine import fixture,detail,net_fixture
++
++
++def sample(count=1,mode='complete'):
++    x,e=fixture();base=deepcopy(detail(x));x['revision']['details']=[]
++    for i in range(count):
++        d=deepcopy(base);key='material-'+str(i);d['detail_id']='detail-'+str(i);d['material'].update(variant_id=key,
++          name=('Дуб натуральный с выраженной текстурой для мебельных фасадов и интерьерных панелей · ЛХДФ Ąžuolas Šviesus Ė Ę Į Ų Ū Ž ą č ę ė į š ų ū ž' if count>1 else 'Дуб натуральный'),
++          manufacturer='Martin Forest · Тестовый каталог',article='H3331-ST10-ЛХДФ-'+str(i+1),structure='ST10 / натур')
++        x['prices'][key]={'entry_id':'price-'+str(i),'amount':'100','unit':'sheet'};x['revision']['details'].append(d)
++    x['discount']={'materials':'10','edge_material':'20','services':'5'}
++    if mode=='customer':
++        detail(x).update(supply_source='customer',provided_sheets=5,customer_reason='Explicit customer stock')
++        detail(x)['edges']={'L1':{'edge':{**e,'name':'Кромка натуральный дуб','article':'TEST-22-04'},'supply_source':'company'}}
++    if mode=='glue':
++        detail(x).update(route='glued_18_18',qty=3,packaging=True);x['production_profile']['policies']['glue_area']='finished_area'
++    if mode=='incomplete': x['prices'].pop('material-0')
++    result=calculate(x);result['synthetic']=True
++    c={'result':result,'input_snapshot':x}
++    view=project(c,number='MF-000123',name='Гостиная и кухня',customer='Александра Константиновна · Ąžuolo baldų dirbtuvės, мебельная мастерская индивидуальных проектов',revision_number=2,date='2026-09-23')
++    return c,view
++
++@pytest.mark.parametrize('count',[1,5,20])
++def test_pdf01_pdf02_pdf08_pdf09_actual_text_multipage(count):
++    c,v=sample(count);data=render(v);reader=PdfReader(BytesIO(data));text='\n'.join(p.extract_text() for p in reader.pages)
++    assert 'ПРЕДВАРИТЕЛЬНЫЙ РАСЧЁТ' in text and 'Ąžuolo' in text and 'Александра' in text
++    assert str(c['result']['total'])+' BYN' in text
++    assert len(reader.pages)>1 if count>=5 else len(reader.pages)==1
++    for i,p in enumerate(reader.pages,1):
++        assert not p.images and 'Страница '+str(i) in p.extract_text() and 'MF-000123' in p.extract_text()
++    for i in range(count): assert 'H3331-ST10-ЛХДФ-'+str(i+1) in text
++    if count>1: assert 'Ąžuolas Šviesus' in text
++    assert render(deepcopy(v))==data
++
++@pytest.mark.parametrize('mode',['customer','glue','incomplete'])
++def test_pdf03_pdf04_pdf06_pdf07_snapshot_numbers(mode):
++    c,v=sample(mode=mode);data=bounded_render(v);text=' '.join(p.extract_text() for p in PdfReader(BytesIO(data)).pages)
++    for d in v['discounts']:
++        for k in ('gross','percent','discount','net'): assert str(d[k]) in text
++    if mode=='customer':
++        assert v['materials'][0]['amount']=='0.00' and 'Материал заказчика.' in text
++        assert float(v['edges'][0]['amount'])>0 and any(float(s['amount'])>0 for s in v['services'])
++    if mode=='glue': assert 'Склейка' in text and 'Финальная обрезка 36 мм' in text and v['amount']=='111.02'
++    if mode=='incomplete':
++        assert c['result']['total'] is None and 'РАССЧИТАННАЯ ЧАСТЬ' in text
++        assert 'ПРЕДВАРИТЕЛЬНАЯ СТОИМОСТЬ' not in text and 'Стоимость материала' in text
++    assert v['disclaimer']==DISCLAIMER
++
++def test_pdf05_pdf10_no_edge_no_internal_and_escape():
++    c,v=sample();c['result']['token']='TOPSECRET';c['input_snapshot']['internalComment']='INTERNAL';
++    v=project(c,number='MF-000123',name='<img src="https://example.invalid/x">',customer='Клиент',revision_number=1,date='2026-09-23')
++    data=render(v);reader=PdfReader(BytesIO(data));text=' '.join(p.extract_text() for p in reader.pages)
++    assert 'Чистовой' not in text and 'Метраж' not in text and v['edges']==[]
++    for token in ['OBLX','BAZIS','Agent','TOPSECRET','INTERNAL','material-0','price-0','plan_hash','storage_key']:
++        assert token not in text and token not in str(reader.metadata)
++    assert '<img src=' in text and not any(p.get('/Annots') for p in reader.pages)
++
++def test_resource_limits_and_no_silent_missing_glyph():
++    _,v=sample();v['order_name']='x'*2001
++    with pytest.raises(ValueError): render(v)
++    _,v=sample();v['order_name']='\U0001f9cc'
++    with pytest.raises(ValueError,match='Unsupported glyph'): render(v)
++
++if __name__=='__main__':
++    out=Path('docs/stage05/pdf');out.mkdir(parents=True,exist_ok=True)
++    evidence={}
++    for name,count,mode in [('one-material',1,'complete'),('five-materials',5,'complete'),('twenty-materials',20,'complete'),('customer-material',1,'customer'),('glued-36mm',1,'glue'),('incomplete',1,'incomplete')]:
++        c,v=sample(count,mode);(out/(name+'.pdf')).write_bytes(render(v));evidence[name]={'snapshot':c,'projection':v}
++    (out/'synthetic-fixtures.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2))
++
++
++def test_unknown_discount_labels_fit_and_never_fake_total():
++    c,v=sample(mode='incomplete');c['input_snapshot']['discount']=None;c['result']=calculate(c['input_snapshot'])
++    view=project(c,number='MF-000124',name='Неизвестные условия',customer='Клиент',revision_number=1,date='2026-09-23')
++    text=' '.join(p.extract_text() for p in PdfReader(BytesIO(render(view))).pages)
++    assert 'Уточняетс\nя' not in text and 'РАССЧИТАННАЯ ЧАСТЬ' in text and 'ПРЕДВАРИТЕЛЬНАЯ СТОИМОСТЬ' not in text

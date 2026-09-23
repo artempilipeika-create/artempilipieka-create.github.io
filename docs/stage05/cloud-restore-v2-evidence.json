@@ -1,0 +1,227 @@
+{
+  "restore": {
+    "restored": true,
+    "file_count": 22,
+    "database": "mf_staging_restore_stage05_template_v2_6c48dbbd2ff2"
+  },
+  "dump_sha256": "3f8dc32762e4f466c818b214c75362c8cfb6ba8faa36c56cbbec46ab1c55dd9a",
+  "backup_path": "/mf-private/backups/stage05-template-v2-6c48dbbd2ff2",
+  "storage_root": "/mf-private/restore-stage05-template-v2-6c48dbbd2ff2/storage",
+  "operator_retired": true,
+  "tables_and_pdf_bindings_and_sha_verified": true,
+  "authorization_metadata_verified": true,
+  "state": {
+    "tables": {
+      "mf_order_revisions": {
+        "count": 7,
+        "sha256": "ca2c74d41f9aec5e2ab66e5865f0fdd5da18e60b6295a7348a1d9022257bdeeb"
+      },
+      "mf_calculations": {
+        "count": 4,
+        "sha256": "82cd82edd5224689c98a3993c5e24c1d210cf67e802b913d87ce2e2d0ea7e3ad"
+      },
+      "mf_calculation_lines": {
+        "count": 18,
+        "sha256": "89516b57a6b7acbc78d4762058c8af765746528f5bc1a6217fe95f8cc4f176c7"
+      },
+      "mf_discount_snapshots": {
+        "count": 4,
+        "sha256": "47ea00d88569cc6e4c6ca41a5845d891b2b55da473b52b37f356e3c900f6f8d1"
+      },
+      "mf_calculation_price_snapshots": {
+        "count": 4,
+        "sha256": "4c77bec5e2c348f05be29421b32725f2807dbd6011276b6d40b8fcc827a202a7"
+      },
+      "mf_sheet_estimates": {
+        "count": 4,
+        "sha256": "f8d7550aa118ce1d60948523aec6738efddd0069f49824dd9866c584b3b0e862"
+      },
+      "mf_manufacturing_recipes": {
+        "count": 3,
+        "sha256": "0116951e2f1ce8ea083f62a8dfaad5b9780970a6986b2c81b4f51e1a579ac341"
+      },
+      "mf_tariff_books": {
+        "count": 1,
+        "sha256": "787ade95bf91c32d93536243f4cf77c458dc0965974abbec249c0fb4bbc66a75"
+      },
+      "mf_tariff_entries": {
+        "count": 7,
+        "sha256": "3cc490e4925931dd9871917c255d43ca82f4afa6ae9aaea0815f9669424f4035"
+      },
+      "mf_price_books": {
+        "count": 1,
+        "sha256": "6ff57e7c9aeb93c3e5095e1624800a72569ef1da4081be1c6e6147c1b3b3d176"
+      },
+      "mf_sale_price_entries": {
+        "count": 1,
+        "sha256": "d2a604bf357296c703a762e9b43a30cc57bdbf338bbaeb9d699e5dcd81b72f0f"
+      },
+      "mf_discount_profiles": {
+        "count": 1,
+        "sha256": "43aed3fd83e06a9fd64312ddd606592ff8a0b97e8a49fc9b2beccfe6b98b3186"
+      },
+      "mf_production_profiles": {
+        "count": 2,
+        "sha256": "8609407c9f6145fe1c5e19f03373a1ebcb5f758c0a349deeeea9af683611aa99"
+      },
+      "mf_order_financial_contexts": {
+        "count": 2,
+        "sha256": "c947c8e866962f015807adc388c0e049da97d982080a696a9a51205b4395c690"
+      },
+      "mf_order_discount_overrides": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_customer_discount_assignments": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "mf_submission_receipts": {
+        "count": 4,
+        "sha256": "d363910c4b3adc9318cb30d8859397267390a53beb8063b6cecf14f037ff73f0"
+      },
+      "mf_calculation_seals": {
+        "count": 4,
+        "sha256": "2860b46cd5e42f9f836458276d124e52a84d80d72c3f203032e5a85b03c4c38a"
+      },
+      "mf_catalogue_releases": {
+        "count": 2,
+        "sha256": "bd5cd392e253060be566e081ec1d62da15892c40d4938b3efcbf8105f0a4f401"
+      },
+      "mf_catalogue_items": {
+        "count": 6130,
+        "sha256": "5cba88e9eea7a468d4c4f12ab08e4955d31bfeaab314035a10829e7abebe7f7b"
+      },
+      "mf_files": {
+        "count": 22,
+        "sha256": "6af25bb2c506c0be0076790a939886d36df19836bb68e6f49053003d5351b19d"
+      },
+      "mf_documents": {
+        "count": 8,
+        "sha256": "59de8ddb36d54fd5a4cc4a973c0b99e0bfacb5ca66bebd36787ae89f17cbbbc3"
+      },
+      "mf_document_templates": {
+        "count": 2,
+        "sha256": "f319f1c567daf56025984b032552d54cedb2c8cbc0f13a4ee6acb66dc860a0bc"
+      },
+      "mf_history_policy": {
+        "count": 1,
+        "sha256": "1d8b21ce38ba906d0dfdc1fd6d83d74e00f84e484adedf468c2c14224af8c67e"
+      },
+      "mf_users": {
+        "count": 10,
+        "sha256": "c2a61c1ff636f009b3eccce2c16c07ba2edeb7ad1370e2cb6c63c631601f9bbf"
+      },
+      "mf_sessions": {
+        "count": 17,
+        "sha256": "572f4630ea533603307e88e8f006e59f9f8eb22645ff69883d186a5c9d18dff7"
+      },
+      "mf_user_roles": {
+        "count": 5,
+        "sha256": "8873b08c8ade09d2fddae5241b5c240e34e4e95609cb0c06f90a30610227fc55"
+      },
+      "mf_permission_grants": {
+        "count": 142,
+        "sha256": "e1918833ec834cbe1beffb67a5f26022028468ba7ea2ae9bf870ff1d539d8298"
+      },
+      "mf_manager_assignments": {
+        "count": 2,
+        "sha256": "9138c054f643688e2d9abf908400a34efd99ef574f3fb383b24708633c1013fd"
+      }
+    },
+    "private_files": [
+      {
+        "file_id": "0b96a9f9-164c-405e-9212-1695b2c37980",
+        "sha256": "e7aa8308f6db560891a6fc6519565682403f780a3cd11f75d35dc407de8d2f22"
+      },
+      {
+        "file_id": "0ed1f91a-250a-476f-9310-656a06a0895e",
+        "sha256": "39e268901b296e8848dc406d8a78ceff093bc9dc7eec409a3993a4605d0517f4"
+      },
+      {
+        "file_id": "14fd744a-c8cc-4d3f-b60c-4095b5f378d6",
+        "sha256": "4661575275b4656458a49fc66f96cf7311b0c95b6e154c9c123379b7436f6b87"
+      },
+      {
+        "file_id": "5542c728-8f05-4267-92c6-91581784148b",
+        "sha256": "ae26f071102755dd92304973ca9a6baeaf03420554a32a85d72aacd297cf1652"
+      },
+      {
+        "file_id": "5968608c-2671-41f0-8f56-783e24d7ed3d",
+        "sha256": "3f9ca018a3ed51d2c0ce44e48cc12971f022f3c420b10feb84f7abd5a89852d9"
+      },
+      {
+        "file_id": "684e1f40-3744-45c3-bc13-44014d5eb510",
+        "sha256": "dc411326911b307e20b0e4ded929a8a4ad685c497dda202cfb5991f960f76db2"
+      },
+      {
+        "file_id": "70cf83c9-684c-4677-9a6e-5a89eb3988b0",
+        "sha256": "860494ad949e25f104f57d735b90984f952c9ba0216a08fab161c7defedd2a9a"
+      },
+      {
+        "file_id": "731e5d1a-ed05-4ae4-81aa-1082dfc1691a",
+        "sha256": "54c6f737f0bafecc3dc5df4ed14b573b7e2f5ab0c83e626e5e79fc296c641f4a"
+      },
+      {
+        "file_id": "7338bdaa-3b03-4065-b514-010c8220a8e4",
+        "sha256": "c6c3e93ce05127c456d9a51ccdd684d88c8c3740dbcc09a5850f1aad0a38dffd"
+      },
+      {
+        "file_id": "8a238f74-c697-4a6f-bd91-5eabcab43ab4",
+        "sha256": "40021b814b2bc9bed184245a365e0ac053776cb167a9ed766c12e2f6f740b27e"
+      },
+      {
+        "file_id": "8ea0c8ea-d53c-4aff-b6e3-971cad0bbc31",
+        "sha256": "34fde4911d2da55ba97c26b7fb9e007868dadf2935e140e4af8b9f7e01c18740"
+      },
+      {
+        "file_id": "9c5b5785-c86d-4b55-817b-232373932e2d",
+        "sha256": "e4ff49123abf16c7f182ae4f8231fa0316fadc5514b9e5401333e8e0c6b6b880"
+      },
+      {
+        "file_id": "9f877603-1129-442d-84da-c7e4e22a741f",
+        "sha256": "9d385e1cac6380a50580d92ac0cb21337e1fdf296ecaa4f5d6b51b39c47d3f13"
+      },
+      {
+        "file_id": "a6b3d3cd-325e-4e75-baa1-48ca46818107",
+        "sha256": "54c6f737f0bafecc3dc5df4ed14b573b7e2f5ab0c83e626e5e79fc296c641f4a"
+      },
+      {
+        "file_id": "a6e09d4f-65ba-4f1b-83b6-1a2b134ed3b3",
+        "sha256": "01d8e61e13d3d3177cc207b4b4bbe38a15ee4de872aba59652d40801a39a87c4"
+      },
+      {
+        "file_id": "acd60c03-1592-4b19-94b6-39013399a677",
+        "sha256": "fd4488e097d5ddcd4c2cf8d669679679348832c842826498dc88d73bc60e68d5"
+      },
+      {
+        "file_id": "ad90fd11-acee-487e-95d6-88cfc0ce71dd",
+        "sha256": "aefccf5b7d1b373d786efeba8c5f8ffd37faf92356f38c11fa61df3e5c502b81"
+      },
+      {
+        "file_id": "b6ceb0fb-ef10-439c-8cbf-51ceb4d11349",
+        "sha256": "066e1fbf507ebe2dbbf6e990064ad74c0a4d2f7c69221b5971fbe013b23d749c"
+      },
+      {
+        "file_id": "b872f79d-bb40-4558-9508-4cd23e4b61d1",
+        "sha256": "0a9b965ca2496e6d20579aae78e148208af4f683b348765c48fd5ef21d23655e"
+      },
+      {
+        "file_id": "c8a4dea0-791d-4df3-b9e6-4bea3a078819",
+        "sha256": "cfbb30feaa705399f436188463ca0c1d6e04ecc2d263ab3165d1a4821918d43a"
+      },
+      {
+        "file_id": "d4541461-2e1e-4e05-b12a-183872919efb",
+        "sha256": "1904569db06a27b7e605958feaf997605a912de0e2c91ababb5fcb6bdc7d25e2"
+      },
+      {
+        "file_id": "ec551b6c-fe70-43cf-b16c-88e4a926f7d2",
+        "sha256": "65d26c0be30f356b4670c69f8dce38d3f277f09e423eff0cb62f91fb57be17bc"
+      }
+    ],
+    "active_catalogue_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+    "production_jobs": 1
+  },
+  "transport": "disabled",
+  "dispatch": "disabled"
+}

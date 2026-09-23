@@ -1,0 +1,225 @@
+{
+  "staging_config": {
+    "service": {
+      "id": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+      "name": "martin-forest-v2-staging"
+    },
+    "environment": {
+      "id": "ee625678-c15e-452d-9761-cda99274839f",
+      "name": "production"
+    },
+    "config": {
+      "source": {
+        "repo": "artempilipeika-create/artempilipieka-create.github.io",
+        "branch": "martin-forest-v2-staging",
+        "commitSha": "1d7b3f5e96809644655a31a9501092137294ef2c"
+      },
+      "networking": {
+        "serviceDomains": {
+          "martin-forest-v2-staging-production.up.railway.app": {
+            "port": 8000
+          }
+        }
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "buildEnvironment": "V3",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "python -m backend.v2.serve",
+        "healthcheckPath": "/health",
+        "useLegacyStacker": false,
+        "ipv6EgressEnabled": false,
+        "runtime": "V2",
+        "multiRegionConfig": {
+          "sfo": {
+            "numReplicas": 1
+          }
+        }
+      },
+      "volumeMounts": {
+        "29b79637-3f45-4ddd-ad2c-028d6b96af8e": {
+          "mountPath": "/mf-private"
+        }
+      }
+    },
+    "variableNames": [
+      "MF_AGENT_TRANSPORT",
+      "MF_DATABASE_HOST",
+      "MF_DATABASE_NAME",
+      "MF_DATABASE_URL",
+      "MF_EMAIL_SEAL_KEY",
+      "MF_ENVIRONMENT",
+      "MF_EXPECTED_RAILWAY_ENVIRONMENT_ID",
+      "MF_EXPECTED_RAILWAY_PROJECT_ID",
+      "MF_EXPECTED_RAILWAY_SERVICE_ID",
+      "MF_JOB_NAMESPACE",
+      "MF_OUTBOX_DISPATCH",
+      "MF_PRIVATE_STORAGE_ROOT",
+      "MF_SECURITY_API",
+      "MF_STAGE01_PROBE_MODE",
+      "MF_STAGE02_PROBE_MODE",
+      "MF_STAGE03_OPERATOR_EMAIL",
+      "MF_STAGE03_OPERATOR_MODE",
+      "MF_STAGE03_OPERATOR_PASSWORD",
+      "MF_WEB_ORIGIN",
+      "PORT"
+    ],
+    "staged": null
+  },
+  "staging_deployment": {
+    "deployments": [
+      {
+        "id": "39019cb5-69ea-429a-a4ce-48ef966f2874",
+        "status": "SUCCESS",
+        "createdAt": "2026-09-23T11:38:58.418Z",
+        "updatedAt": "2026-09-23T11:39:16.216Z",
+        "serviceId": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+        "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+        "url": null,
+        "snapshotId": "e02c0676-d6c3-4123-a3d9-2ce19f68d42f",
+        "meta": {
+          "reason": "deploy",
+          "commitMessage": "Version PDF template for readable unknown discounts while preserving prior artifacts",
+          "commitHash": "1d7b3f5e96809644655a31a9501092137294ef2c",
+          "branch": "martin-forest-v2-staging"
+        }
+      }
+    ]
+  },
+  "staging_postgres": {
+    "deployments": [
+      {
+        "id": "65355a15-c461-43b3-85dd-b9d3eb1076ed",
+        "status": "SUCCESS",
+        "createdAt": "2026-09-22T22:01:39.947Z",
+        "updatedAt": "2026-09-22T22:01:53.263Z",
+        "serviceId": "e773c03c-1f76-4f78-adb7-2132528c3a19",
+        "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+        "url": null,
+        "snapshotId": "0ecc1818-6703-4bb7-bf23-f641f4361f40",
+        "meta": {
+          "reason": "deploy",
+          "image": "ghcr.io/railwayapp-templates/postgres-ssl:18"
+        }
+      }
+    ]
+  },
+  "production_bridge": {
+    "deployments": [
+      {
+        "id": "dc09ba1c-7182-481d-8c62-4a9e721461c2",
+        "status": "SUCCESS",
+        "createdAt": "2026-09-22T13:46:25.106Z",
+        "updatedAt": "2026-09-22T13:47:50.736Z",
+        "serviceId": "5ad059a8-b9bb-4607-aaae-658f242c64f1",
+        "environmentId": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+        "url": null,
+        "snapshotId": "a35d08d0-85a8-4ddb-8ac2-55d1802d321d",
+        "meta": {
+          "reason": "deploy",
+          "commitMessage": "Add secure server-side Telegram form bridge",
+          "commitHash": "2031c09c2f9d8690cb75856b0a4cadb1533a411b",
+          "branch": "martin-forest-api-v1"
+        }
+      }
+    ]
+  },
+  "production_postgres": {
+    "deployments": [
+      {
+        "id": "168b0c29-6693-433f-9a85-552f9de65b37",
+        "status": "SUCCESS",
+        "createdAt": "2026-09-22T12:59:39.351Z",
+        "updatedAt": "2026-09-22T12:59:44.203Z",
+        "serviceId": "2f5c99bd-37ec-46b5-aa22-116f5f898f54",
+        "environmentId": "818e6927-02ef-4cfe-a970-e7e01b0b6872",
+        "url": null,
+        "snapshotId": "d7f6c54e-e804-40e3-b408-906777399a0c",
+        "meta": {
+          "reason": "deploy",
+          "image": "ghcr.io/railwayapp-templates/postgres-ssl:18"
+        }
+      }
+    ]
+  },
+  "old_preview": {
+    "deployments": [
+      {
+        "id": "5ac650b4-0d52-48c9-9222-29e0a8fd4f3a",
+        "status": "SUCCESS",
+        "createdAt": "2026-09-22T16:36:17.684Z",
+        "updatedAt": "2026-09-22T16:36:49.912Z",
+        "serviceId": "abc0e90d-fa8e-4c00-a0a6-312593a479ed",
+        "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+        "url": null,
+        "snapshotId": "e46b50df-9af0-4374-b29c-b675577688b3",
+        "meta": {
+          "reason": "deploy",
+          "commitMessage": "Enable v9 authentication backend for Martin Forest preview",
+          "commitHash": "4fb9d5ceb146480be540a39b454119ea84daa98f",
+          "branch": "restore-martin-forest-20260921-latest"
+        }
+      }
+    ]
+  },
+  "visual_preview": {
+    "deployments": [
+      {
+        "id": "c28c394e-ff50-4cc7-ba04-0ad9f5eb804c",
+        "status": "SUCCESS",
+        "createdAt": "2026-09-22T18:50:17.778Z",
+        "updatedAt": "2026-09-22T18:51:51.956Z",
+        "serviceId": "42c638e9-4dc2-4e9a-9ec9-e670ae661bb6",
+        "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+        "url": null,
+        "snapshotId": "3e4c26ce-4bf9-4ee5-89e2-35edd2dcc727",
+        "meta": {
+          "reason": "deploy",
+          "commitMessage": "Keep sign-in accessible on tablet navigation and document preview checks",
+          "commitHash": "5c97a60145569b7d1df99f5fce5341587db2f75c",
+          "branch": "spec-v2-homepage-preview-20260922"
+        }
+      }
+    ]
+  },
+  "refs": [
+    {
+      "ref": "refs/heads/backup-main-20260922-470776d",
+      "sha": "470776dfd3efd1db9638668d2e19ea174b7901cc"
+    },
+    {
+      "ref": "refs/heads/main",
+      "sha": "470776dfd3efd1db9638668d2e19ea174b7901cc"
+    },
+    {
+      "ref": "refs/heads/martin-forest-api-v1",
+      "sha": "2031c09c2f9d8690cb75856b0a4cadb1533a411b"
+    },
+    {
+      "ref": "refs/heads/martin-forest-baseline-20260921",
+      "sha": "88cbd6200c56d164bc82bb8e93fcd83be2b61cd7"
+    },
+    {
+      "ref": "refs/heads/martin-forest-v2-staging",
+      "sha": "1d7b3f5e96809644655a31a9501092137294ef2c"
+    },
+    {
+      "ref": "refs/heads/restore-martin-forest-20260921-latest",
+      "sha": "4fb9d5ceb146480be540a39b454119ea84daa98f"
+    },
+    {
+      "ref": "refs/heads/site-before-bridge-api-20260922",
+      "sha": "2789744abfa752e2c4506144ce24441939a34184"
+    },
+    {
+      "ref": "refs/heads/spec-v2-homepage-preview-20260922",
+      "sha": "5c97a60145569b7d1df99f5fce5341587db2f75c"
+    },
+    {
+      "ref": "refs/heads/zapusk-bazis-raskroy-baseline",
+      "sha": "4fb9d5ceb146480be540a39b454119ea84daa98f"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+ .github/workflows/staging-foundation.yml        |   6 +-
+ backend/v2/app.py                               |   6 +-
+ backend/v2/cabinet_assets/app.css               |   1 +
+ backend/v2/cabinet_assets/app.js                |  29 +++
+ backend/v2/cabinet_assets/index.html            |   1 +
+ backend/v2/cabinet_service.py                   |  88 +++++++++
+ backend/v2/cabinet_ui.py                        |  16 ++
+ backend/v2/document_api.py                      |  64 +++++++
+ backend/v2/document_assets/DejaVuSans-Bold.ttf  | Bin 0 -> 708920 bytes
+ backend/v2/document_assets/DejaVuSans.ttf       | Bin 0 -> 759720 bytes
+ backend/v2/document_assets/FONT-LICENSE.txt     |  78 ++++++++
+ backend/v2/document_projection.py               |  66 +++++++
+ backend/v2/document_renderer.py                 | 124 +++++++++++++
+ backend/v2/document_service.py                  |  97 ++++++++++
+ backend/v2/domain_api.py                        |   4 +
+ backend/v2/migrations/0005_client_documents.sql |  47 +++++
+ backend/v2/operator.py                          |   2 +-
+ backend/v2/rbac.py                              |   2 +-
+ backend/v2/requirements.txt                     |   3 +
+ backend/v2/security.py                          |   2 +-
+ backend/v2/serve.py                             |   4 +-
+ backend/v2/stage05_acceptance.py                | 126 +++++++++++++
+ backend/v2/stage05_operator.py                  |  64 +++++++
+ backend/v2/startup.py                           |  14 ++
+ tests/stage05/__init__.py                       |   0
+ tests/stage05/test_api.py                       | 226 ++++++++++++++++++++++++
+ tests/stage05/test_pdf.py                       |  85 +++++++++
+ 27 files changed, 1146 insertions(+), 9 deletions(-)

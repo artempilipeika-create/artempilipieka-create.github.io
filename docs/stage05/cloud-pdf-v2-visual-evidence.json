@@ -1,0 +1,23 @@
+[
+  {
+    "file": "client-glued.pdf",
+    "sha256": "c6c3e93ce05127c456d9a51ccdd684d88c8c3740dbcc09a5850f1aad0a38dffd",
+    "pages": 1,
+    "text_and_bounds_verified": true,
+    "visual_review": "PASS"
+  },
+  {
+    "file": "incomplete.pdf",
+    "sha256": "066e1fbf507ebe2dbbf6e990064ad74c0a4d2f7c69221b5971fbe013b23d749c",
+    "pages": 1,
+    "text_and_bounds_verified": true,
+    "visual_review": "PASS"
+  },
+  {
+    "file": "complete.pdf",
+    "sha256": "e7aa8308f6db560891a6fc6519565682403f780a3cd11f75d35dc407de8d2f22",
+    "pages": 1,
+    "text_and_bounds_verified": true,
+    "visual_review": "PASS"
+  }
+]
