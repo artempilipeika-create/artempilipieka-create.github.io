@@ -214,3 +214,16 @@ def test_stage4_real_backup_restore_all_snapshots_and_private_bytes(api,settings
     root=Path(os.environ.get('MF_TEST_EVIDENCE_DIR',str(tmp_path)));root.mkdir(parents=True,exist_ok=True)
     (root/'stage04-restore-evidence.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2))
     print('MF_STAGE04_CI_RESTORE='+json.dumps({k:v for k,v in evidence.items() if k!='calculation_fixture'}))
+
+def test_self_problematic_requires_explicit_handoff_and_changed_draft_rejected(api,settings,admin_user):
+    _,release=publish(api);o=order(api);m=item(api,release)
+    bad=revision(api,o,release,[request_detail(m,grain='unknown')]);c=calc(api,o,bad)
+    blocked=submit(api,o,bad,c)
+    assert blocked.status_code==409 and blocked.json()['detail']['code']=='EXPLICIT_PROBLEMATIC_HANDOFF_REQUIRED'
+    allowed=submit(api,o,bad,c,handoff_problematic=True)
+    assert allowed.status_code==200 and allowed.json()['production_ready'] is False
+    o=order(api);r=revision(api,o,release,[request_detail(m)]);c=calc(api,o,r)
+    change=api.patch('/api/v2/orders/'+o['order_id']+'/draft',json={'business_name':'Changed after preview','preparation_mode':'self_prepared'},headers={'If-Match':'2'})
+    assert change.status_code==200
+    rejected=submit(api,o,r,c,version=3)
+    assert rejected.status_code==412 and rejected.json()['detail']['code']=='DRAFT_CHANGED_SINCE_REVISION'

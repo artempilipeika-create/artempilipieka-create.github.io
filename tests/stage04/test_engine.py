@@ -139,3 +139,9 @@ def test_customer_edge_zero_only_material_and_packaging_absent():
 def test_raw_qty_zero_preserved_invalid_not_corrected():
     x,_=fixture();detail(x)['qty']=0;r=calculate(x)
     assert r['completeness']=='invalid' and r['total'] is None and detail(x)['qty']==0
+
+def test_half_up_per_line_then_category_discount():
+    from backend.v2.calculation_math import money
+    lines=[{'category':'services','gross':str(money('1.005')),'state':'complete'} for _ in range(2)]
+    totals=category_totals(lines,{'materials':'0','edge_material':'0','services':'50'})
+    assert totals['services']=={'gross':'2.02','percent':'50','discount':'1.01','net':'1.01','complete':True}

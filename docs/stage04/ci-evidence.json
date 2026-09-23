@@ -1,0 +1,335 @@
+{
+  "run_id": 35847664118,
+  "job_id": 107137626066,
+  "commit": "01022dee7fffb1e9d98e285c787339b4a712e9f7",
+  "tests": 119,
+  "result": "PASS",
+  "database_sha256": "7158e7667bb103c029774080164a85e4e17cba80468685b0ef7265ca5797d3d7",
+  "restored_database": "mf_staging_restore_stage04_ceb22c458f",
+  "private_files": 11,
+  "counts": {
+    "mf_order_revisions": 11,
+    "mf_calculations": 9,
+    "mf_calculation_lines": 29,
+    "mf_tariff_books": 2,
+    "mf_tariff_entries": 14,
+    "mf_discount_snapshots": 9,
+    "mf_price_books": 6,
+    "mf_sale_price_entries": 6,
+    "mf_production_profiles": 7,
+    "mf_sheet_estimates": 9,
+    "mf_manufacturing_recipes": 1,
+    "mf_catalogue_releases": 10,
+    "mf_files": 11
+  },
+  "calculation_fixture": {
+    "calculation_id": "6d0e2d31-8b87-4226-8529-08ec4d585b3e",
+    "order_id": "d723f35c-981f-43f0-9b0c-9cc55094f8e4",
+    "revision_id": "f63b95b3-c3f1-441d-b267-e90922a98187",
+    "parent_calculation_id": null,
+    "type": "preliminary",
+    "completeness": "complete",
+    "currency": "BYN",
+    "engine_version": "mf-preliminary-decimal-v1",
+    "rounding_policy": "BYN-line-half-up-0.01-category-discount-v1",
+    "input_hash": "1f25683c483d1b3b8943a4cb5fb9ebf60cad6ebad997348bdfe623fa855088f1",
+    "catalogue_release_id": "723f0658-9c75-46b6-ac84-ae271e7bf9aa",
+    "production_profile_id": "8dfef8bc-5b42-497f-88be-88a40ff7133f",
+    "tariff_book_id": "04000000-0000-4000-8000-000000000002",
+    "price_book_id": "905e0442-ef87-44c3-9494-4327f0cb0290",
+    "discount_profile_id": "d2597bca-0100-4a70-8750-d36583cd0020",
+    "created_at": "2026-09-23T10:16:01.681591+00:00",
+    "synthetic": true,
+    "lines": [
+      {
+        "category": "services",
+        "operation": "glue",
+        "quantity": "0.72",
+        "unit": "m2",
+        "unit_price": "14.00",
+        "gross": "10.08",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000006",
+        "detail_id": "d1",
+        "basis": "finished_area"
+      },
+      {
+        "category": "services",
+        "operation": "glued_finish_cut",
+        "quantity": "3",
+        "unit": "m",
+        "unit_price": "1.70",
+        "gross": "5.10",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000002",
+        "detail_id": "d1",
+        "basis": "one_length_plus_one_width"
+      },
+      {
+        "category": "services",
+        "operation": "packaging",
+        "quantity": "0.72",
+        "unit": "m2",
+        "unit_price": "1.50",
+        "gross": "1.08",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000007",
+        "detail_id": "d1",
+        "basis": "finished_area"
+      },
+      {
+        "category": "materials",
+        "operation": "clean_sheets",
+        "quantity": 1,
+        "unit": "sheet",
+        "unit_price": "100",
+        "gross": "100.00",
+        "state": "complete",
+        "reason": null,
+        "price_entry_id": "f273b4e5-0bad-414c-b048-529fbe538928",
+        "material_key": "12e4d1ae-975e-5097-8fce-5ed27152767c",
+        "source_unit": "sheet",
+        "conversion_factor": "1",
+        "estimated": true
+      },
+      {
+        "category": "services",
+        "operation": "cutting_18",
+        "quantity": "7.82",
+        "unit": "m",
+        "unit_price": "0.75",
+        "gross": "5.87",
+        "state": "complete",
+        "reason": null,
+        "tariff_entry_id": "04000000-0000-4000-8100-000000000001",
+        "material_key": "12e4d1ae-975e-5097-8fce-5ed27152767c",
+        "plan_hash": "a5c03f18b8b62fd8130099b1699725eb5f59e15d84bc0016ce9b1619e6f0ee37",
+        "basis": "estimated_plan_excluding_trim",
+        "estimated": true
+      }
+    ],
+    "category_totals": {
+      "materials": {
+        "gross": "100.00",
+        "percent": "0",
+        "discount": "0.00",
+        "net": "100.00",
+        "complete": true
+      },
+      "edge_material": {
+        "gross": "0.00",
+        "percent": "0",
+        "discount": "0.00",
+        "net": "0.00",
+        "complete": true
+      },
+      "services": {
+        "gross": "22.13",
+        "percent": "0",
+        "discount": "0.00",
+        "net": "22.13",
+        "complete": true
+      }
+    },
+    "calculated_part": "122.13",
+    "known_gross": "122.13",
+    "total": "122.13",
+    "unresolved_categories": [],
+    "reasons": [],
+    "final_state": "BAZIS_RUN_REQUIRED",
+    "production_ready": false,
+    "sheet_estimates": [
+      {
+        "material_key": "12e4d1ae-975e-5097-8fce-5ed27152767c:company",
+        "estimator_version": "guillotine-vertical-first-decimal-v1",
+        "label": "Расчётное количество листов",
+        "optimality_proven": false,
+        "sheet": {
+          "length": "2800",
+          "width": "2070"
+        },
+        "usable_length": "2780",
+        "usable_width": "2050",
+        "kerf_mm": "4.4",
+        "estimated_sheet_count": 1,
+        "area_lower_bound": 1,
+        "sheets": [
+          {
+            "sheet": 1,
+            "placements": [
+              {
+                "detail_id": "d1:blank",
+                "copy": 0,
+                "x": "0",
+                "y": "0",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "d1:blank",
+                "copy": 1,
+                "x": "0",
+                "y": "424.4",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "d1:blank",
+                "copy": 2,
+                "x": "0",
+                "y": "848.8",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "d1:blank",
+                "copy": 3,
+                "x": "0",
+                "y": "1273.2",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "d1:blank",
+                "copy": 4,
+                "x": "624.4",
+                "y": "0",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              },
+              {
+                "detail_id": "d1:blank",
+                "copy": 5,
+                "x": "624.4",
+                "y": "424.4",
+                "length": "620",
+                "width": "420",
+                "rotated": false
+              }
+            ]
+          }
+        ],
+        "cut_segments": [
+          {
+            "sheet": 1,
+            "axis": "Y",
+            "x": "620",
+            "y": "0",
+            "length_mm": "2050",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "420",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "844.4",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "1268.8",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "0",
+            "y": "1693.2",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "Y",
+            "x": "1244.4",
+            "y": "0",
+            "length_mm": "2050",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "624.4",
+            "y": "420",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          },
+          {
+            "sheet": 1,
+            "axis": "X",
+            "x": "624.4",
+            "y": "844.4",
+            "length_mm": "620",
+            "kind": "nesting",
+            "kerf_mm": "4.4"
+          }
+        ],
+        "cut_metres": "7.82",
+        "trim_billing": "excluded_from_nesting_segments; NC-09 until approved policy",
+        "trim": {
+          "trim_left_mm": "10",
+          "trim_right_mm": "10",
+          "trim_top_mm": "10",
+          "trim_bottom_mm": "10"
+        },
+        "plan_hash": "a5c03f18b8b62fd8130099b1699725eb5f59e15d84bc0016ce9b1619e6f0ee37"
+      }
+    ],
+    "manufacturing_recipes": [
+      {
+        "version": "glued_18_18-v1",
+        "finished_detail_id": "d1",
+        "finished_length": "600",
+        "finished_width": "400",
+        "finished_qty": 3,
+        "finished_thickness": "36",
+        "child_blank_id": "d1:blank",
+        "blank_length": "620",
+        "blank_width": "420",
+        "child_qty": 6,
+        "operations": [
+          "blank_nesting",
+          "glue",
+          "glued_finish_cut",
+          "edge_processing",
+          "packaging"
+        ],
+        "glue_area_basis": "finished_area"
+      }
+    ]
+  },
+  "restore": {
+    "restored": true,
+    "file_count": 11,
+    "database": "mf_staging_restore_stage04_ceb22c458f"
+  },
+  "table_snapshots_match": true,
+  "private_sha_match": true
+}
