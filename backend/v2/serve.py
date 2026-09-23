@@ -10,9 +10,9 @@ from .startup import prepare
 def main():
     settings=Settings.from_env()
     policy=WebPolicy.from_env() if os.environ.get('MF_SECURITY_API','enabled')=='enabled' else None
-    print('Stage 2 validating staging database and migrations',flush=True)
+    print('Stage 4 validating staging database and migrations',flush=True)
     prepare(settings)
-    print('Stage 2 starting HTTP server; transport and dispatch disabled',flush=True)
+    print('Stage 4 starting HTTP server; transport and dispatch disabled',flush=True)
     uvicorn.run(create_app(settings,policy),host='0.0.0.0',port=int(os.environ.get('PORT','8000')),
                 access_log=False,proxy_headers=False)
 

@@ -1,4 +1,4 @@
-"""Stage 2 security surface. No pricing, parsing, submission pipeline or production execution."""
+"""Scoped domain security. Stage 4 submission delegates to immutable revision service."""
 from uuid import UUID, uuid4
 from typing import Literal
 from pydantic import Field

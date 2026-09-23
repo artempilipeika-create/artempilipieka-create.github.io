@@ -40,6 +40,8 @@ jobs:
           import json,pathlib
           data=json.loads(pathlib.Path('qa-output/stage01/restore-evidence.json').read_text())
           print('MF_STAGE01_RESTORE_EVIDENCE='+json.dumps(data,separators=(',',':')))
+          stage4=json.loads(pathlib.Path('qa-output/stage01/stage04-restore-evidence.json').read_text())
+          print('MF_STAGE04_RESTORE_EVIDENCE='+json.dumps(stage4,separators=(',',':')))
           PY
       - name: Preserve non-secret test evidence
         if: always()

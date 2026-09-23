@@ -85,7 +85,7 @@ def calculate(inputs):
         plans.append({'material_key':material_key+':'+supply,**plan});n=plan['estimated_sheet_count'];price=prices.get(material.get('variant_id'))
         if supply=='customer':
             if n>group['provided_sheets']: blocked('materials','customer_sheets','INSUFFICIENT_CUSTOMER_SHEETS','invalid',required=n,provided=group['provided_sheets'])
-            line('materials','clean_sheets',n,'sheet','0',supply_source='customer',material_key=material_key,provided_sheets=group['provided_sheets'],estimated=True)
+            line('materials','clean_sheets',n,'sheet','0',supply_source='customer',material_key=material_key,provided_sheets=group['provided_sheets'],estimated=True,manufacturing_compatibility={'geometry':'estimated_valid','native_profile':'NOT_YET_VERIFIED'})
         elif not price: blocked('materials','clean_sheets','NC-05_APPROVED_MATERIAL_PRICE_REQUIRED','incomplete',estimated_sheet_count=n,material_key=material_key)
         else:
             sheet_price=dec(price['amount'])

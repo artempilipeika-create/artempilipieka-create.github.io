@@ -201,8 +201,8 @@ def test_stage4_real_backup_restore_all_snapshots_and_private_bytes(api,settings
     counts={}
     with connect(settings) as src,connect(target) as dst:
         for table in tables:
-            q=sql.SQL('SELECT to_jsonb(t) AS row FROM {} t').format(sql.Identifier(table))
-            left=sorted(canonical(r['row']) for r in src.execute(q));right=sorted(canonical(r['row']) for r in dst.execute(q));assert left==right
+            q=sql.SQL('SELECT to_jsonb(t)::text AS row FROM {} t').format(sql.Identifier(table))
+            left=sorted(r['row'] for r in src.execute(q));right=sorted(r['row'] for r in dst.execute(q));assert left==right
             counts[table]=len(left)
         restored_calc=dst.execute('SELECT result FROM mf_calculations WHERE calculation_id=%s',(c['calculation_id'],)).fetchone()['result']
         assert restored_calc['manufacturing_recipes'][0]['child_qty']==6
