@@ -217,3 +217,10 @@ def test_nc08_visibility_configurable_no_deletion_and_direct_routes(api,settings
             assert read_verified(db,VolumeStore(settings.storage_root),d['file_id']).startswith(b'%PDF-')
     finally:
         with transaction(settings) as db: db.execute('UPDATE mf_history_policy SET completed_visibility_days=NULL,direct_history_access=true WHERE singleton')
+
+
+def test_unbound_pdf_not_downloadable_through_legacy_alias(api,settings,admin_user):
+    o,r,c,_,_=prepared(api)
+    fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=admin_user['user_id'],data=b'%PDF-unbound',name='unbound.pdf',kind='preliminary_pdf',mime='application/pdf',order_id=o['order_id'],revision_id=r['revision_id'])
+    for path in ['/documents/','/files/']:
+        assert api.get('/api/v2'+path+str(fid)).status_code==404

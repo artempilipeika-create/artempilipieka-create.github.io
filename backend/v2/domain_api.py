@@ -293,9 +293,8 @@ def router(settings, policy):
             error(403,'PERMISSION_DENIED')
         if row['kind']=='preliminary_pdf':
             from .document_service import download as document_download
-            # Registered Stage 5 artifacts use the same gateway through every alias.
-            if conn.execute('SELECT 1 FROM mf_documents WHERE file_id=%s',(file_id,)).fetchone():
-                return document_download(conn,settings,user,file_id,head)
+            # No legacy alias can bypass document binding or the current role/scope policy.
+            return document_download(conn,settings,user,file_id,head)
         if row['kind']=='oblx':
             verified(user)
         data = read_verified(conn,VolumeStore(settings.storage_root),file_id)
