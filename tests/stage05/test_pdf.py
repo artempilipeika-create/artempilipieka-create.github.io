@@ -54,7 +54,7 @@ def test_pdf03_pdf04_pdf06_pdf07_snapshot_numbers(mode):
     if mode=='customer':
         assert v['materials'][0]['amount']=='0.00' and 'Материал заказчика.' in text
         assert float(v['edges'][0]['amount'])>0 and any(float(s['amount'])>0 for s in v['services'])
-    if mode=='glue': assert 'Склейка' in text and 'Финальная обрезка 36 мм' in text and '36 мм · 18+18' in text and len(PdfReader(BytesIO(data)).pages)==1
+    if mode=='glue': assert 'Склейка' in text and 'Финальная обрезка 36 мм' in text and '36 мм' in text and 'СКЛЕЙКА 18+18' in text and len(PdfReader(BytesIO(data)).pages)==1
     if mode=='incomplete':
         assert c['result']['total'] is None and 'РАССЧИТАННАЯ ЧАСТЬ' in text
         assert 'ПРЕДВАРИТЕЛЬНАЯ СТОИМОСТЬ' not in text and 'Стоимость материала' in text
