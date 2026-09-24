@@ -375,6 +375,28 @@ def test_group_edge_choice_bulk_updates_marked_sides_and_keeps_manual_exception(
     assert details[0]['edges']['W1']['edge']['edge_id']==edges['AUTO-22-1']
 
 
+def test_excel_glue_pair_becomes_one_36mm_detail_with_different_backing(page,api,settings,admin_user):
+    from tests.stage03.support import xlsx
+    o,email,_=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/editor?order='+o['order_id'])
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    data=xlsx({'Детали':[['Позиция','Наименование','Артикул','Длина','Ширина','Количество','L1','L2','W1','W2'],
+        [7,'Гот.дет тол 36 мм','QA621 PO',600,400,1,1,0,0,0],
+        [7,'Полка (Копия)','621 PE',600,400,1,0,0,0,0]]})
+    page.get_by_label('Файл Excel',exact=True).set_input_files({'name':'glue-36.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
+    expect(page.locator('#import-preview .import-material-group')).to_have_count(2)
+    page.get_by_role('button',name='Импортировать деталировку',exact=True).click()
+    expect(page.locator('#manual-rows tr[data-detail-id]')).to_have_count(1)
+    expect(page.get_by_label('Готовая толщина 1',exact=True)).to_have_value('glued_18_18')
+    expect(page.locator('#manual-rows .route-cell small')).to_contain_text('621 PE')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
+    current=api.get('/api/v2/orders/'+o['order_id']).json()
+    details=api.get('/api/v2/orders/'+o['order_id']+'/revisions/'+current['active_revision_id']).json()['details']
+    assert len(details)==1 and details[0]['route']=='glued_18_18'
+    assert details[0]['material']['article']=='QA621 PO'
+    assert details[0]['glue_backing']['material']['article']=='621 PE'
+
+
 def fill_own_material(page):
     dialog=page.get_by_role('dialog',name='Свой материал',exact=True)
     for label,value in [('Артикул / свой код','MY-BOARD'),('Название своего материала','Мой дуб'),('Производитель (необязательно)','Мастерская'),
