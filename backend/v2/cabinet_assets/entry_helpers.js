@@ -115,7 +115,7 @@ const MFEntry=(()=>{
    const current=row.edges?.[side];
    const marked=!!current&&(current.selection_mode==='auto'||current.unresolved||!!current.edge_id);
    if(!marked)continue;
-   const manualException=current.selection_mode==='manual'&&!!current.edge_id&&!!previousDefault&&current.edge_id!==previousDefault&&!current.unresolved;
+   const manualException=current.selection_mode==='manual'&&!current.unresolved;
    if(manualException){protectedSides++;continue;}
    row.edges[side]={...current,edge_id:edgeId||null,supply_source:current.supply_source||'company',selection_mode:'auto',unresolved:!edgeId};changed++;
   }
