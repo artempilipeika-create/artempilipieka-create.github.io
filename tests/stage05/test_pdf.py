@@ -61,7 +61,7 @@ def test_pdf03_pdf04_pdf06_pdf07_snapshot_numbers(mode):
     assert v['disclaimer']==DISCLAIMER
 
 def test_missing_pvc_price_is_labeled_not_zero():
-    x,e=net_fixture();x['prices'].pop('edge-22');r=calculate(x);r['synthetic']=True
+    x=net_fixture();x['prices'].pop('edge-22');r=calculate(x);r['synthetic']=True
     view=project({'result':r,'input_snapshot':x},number='MF-000125',name='Нет цены ПВХ',customer='Клиент',revision_number=1,date='2026-09-24')
     text=' '.join(p.extract_text() for p in PdfReader(BytesIO(render(view))).pages)
     assert len(PdfReader(BytesIO(render(view))).pages)==1 and 'Нет стоимости' in text
