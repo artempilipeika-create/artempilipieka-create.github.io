@@ -25,6 +25,8 @@ class EdgeInput(StrictModel):
 
 class Detail(StrictModel):
     detail_id: str=Field(min_length=1,max_length=100)
+    name: str=Field(default='',max_length=200)
+    comments: str=Field(default='',max_length=1000)
     draft_row_id: UUID | None=None
     resolution_reason: Reason | None=None
     length: Positive

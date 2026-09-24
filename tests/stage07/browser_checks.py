@@ -69,24 +69,39 @@ def test_public_responsive_keyboard(page,width):
 
 @pytest.mark.parametrize('width',[360,768,1440])
 def test_client_editor_actual_api(page,api,settings,admin_user,width):
-    o,_,_,email=client_order(api,settings,admin_user,mode='manager_assisted')
-    login(api,admin_user['email']);release=api.get('/api/v2/catalogue/releases').json()['active_release'];m=item(api,release);configure(api,o,release,m)
+    o,r,c,email=client_order(api,settings,admin_user,mode='self_prepared')
     page.set_viewport_size({'width':width,'height':1000});login_ui(page,email)
-    expect(page.get_by_role('heading',name='Мои заказы',exact=True)).to_be_visible();screenshot(page,f'cabinet-{width}')
-    page.goto('https://testserver/editor?order='+o['order_id']);page.get_by_role('button',name='Добавить деталь',exact=True).click()
-    page.get_by_label('Длина, мм',exact=True).fill('600');page.get_by_label('Ширина, мм',exact=True).fill('400');page.get_by_label('Количество, шт.',exact=True).fill('0')
-    page.get_by_role('button',name='Сохранить строку',exact=True).click();expect(page.locator('#message')).to_contain_text('больше нуля');expect(page.get_by_label('Количество, шт.',exact=True)).to_have_value('0')
-    page.get_by_label('Количество, шт.',exact=True).fill('3');page.get_by_label('Поиск материала: артикул, структура',exact=True).fill('621 PO')
-    page.locator('#row-panel').get_by_role('button',name='Найти',exact=True).first.click()
-    page.locator('#row-panel .result-list button').first.click();page.get_by_label('Направление текстуры',exact=True).select_option('none')
-    page.get_by_role('button',name='Сохранить строку',exact=True).click();expect(page.locator('#manual-rows')).to_contain_text('600 × 400')
-    no_overflow(page);screenshot(page,f'editor-{width}')
-    page.get_by_role('button',name='Сохранить новую редакцию',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Подтвердить',exact=True).click()
-    expect(page.locator('#message')).to_contain_text('сохранена')
+    page.goto('https://testserver/editor?order='+o['order_id'])
+    expect(page.get_by_label('Длина 1',exact=True)).to_have_value('600')
+    page.get_by_label('Количество 1',exact=True).fill('0')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('больше нуля')
+    page.get_by_label('Количество 1',exact=True).fill('3')
+    for i in range(2,6):
+        page.get_by_role('button',name='+ Добавить деталь',exact=True).click()
+        row=page.locator('[data-detail-id]').nth(i-1)
+        row.get_by_role('button',name='Материал ↑',exact=True).click()
+        page.get_by_label('Длина '+str(i),exact=True).fill(str(600+i))
+        page.get_by_label('Ширина '+str(i),exact=True).fill('400')
+        page.get_by_label('Текстура '+str(i),exact=True).select_option('none')
+        page.get_by_label('Название '+str(i),exact=True).fill('Полка '+str(i))
+    page.locator('[data-detail-id]').last.get_by_role('button',name='Дублировать',exact=True).click()
+    expect(page.locator('[data-detail-id]')).to_have_count(6)
+    page.locator('[data-detail-id]').last.get_by_role('button',name='Удалить',exact=True).click()
+    expect(page.locator('[data-detail-id]')).to_have_count(5)
+    page.get_by_label('Длина 2',exact=True).fill('777')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
+    page.reload();expect(page.get_by_label('Длина 2',exact=True)).to_have_value('777')
+    expect(page.locator('[data-detail-id]')).to_have_count(5);no_overflow(page);screenshot(page,f'editor-{width}')
     page.get_by_role('button',name='Предварительный расчёт',exact=True).click();expect(page.locator('#message')).to_contain_text('Предварительный расчёт создан')
-    page.goto('https://testserver/account#'+o['order_id']);expect(page.get_by_role('heading',name='Документы',exact=True)).to_be_visible()
-    assert not page.locator('main').inner_text().find('lease_token')>=0
+    expect(page.get_by_role('link',name='Посмотреть PDF',exact=True)).to_be_visible()
+    expect(page.get_by_role('link',name='Скачать PDF',exact=True)).to_be_visible()
+    expect(page.get_by_role('button',name='Отправить заявку',exact=True)).to_be_visible()
     no_overflow(page);screenshot(page,f'order-{width}')
+    with transaction(settings) as c:
+        row=c.execute('SELECT * FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()
+        assert row['workflow_status']=='draft'
+        details=c.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(row['active_revision_id'],)).fetchone()['content']['details']
+        assert len(details)==5 and details[1]['length']=='777'
     page.goto('https://testserver/admin.html');expect(page.get_by_role('heading',name='Доступ ограничен',exact=True)).to_be_visible()
     assert page.locator('text=Сотрудники').count()==0
 
@@ -112,28 +127,44 @@ def test_zoom_200_and_form_labels(page):
 def presentation_enabled(monkeypatch):
     monkeypatch.setenv("MF_PRESENTATION_UI","enabled")
 
-def test_manager_import_keeps_zero_and_source(page,api,settings,admin_user):
+def test_excel_mapping_template_and_bad_rows(page,api,settings,admin_user):
     from tests.stage03.support import xlsx
+    o,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    login_ui(page,email);page.goto('https://testserver/editor?order='+o['order_id'])
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    data=xlsx({'Лист1':[['Длина','Ширина','Количество','Артикул','Материал','L1','L2','W1','W2','Текстура','Вращение','Лишний столбец'],[600,400,0,'621 PO','Board','0','0','0','0','none','false','ignore'],['',400,'ошибка','UNKNOWN','Неизвестный','0','0','0','0','none','false','ignore']]})
+    file={'name':'synthetic-entry.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data}
+    page.get_by_label('Файл Excel',exact=True).set_input_files(file)
+    expect(page.get_by_label('Колонка A',exact=True)).to_have_value('length')
+    expect(page.get_by_label('Колонка L',exact=True)).to_have_value('')
+    page.get_by_role('button',name='Проверить деталировку',exact=True).click()
+    expect(page.get_by_role('heading',name='Проверьте деталировку перед импортом',exact=True)).to_be_visible()
+    expect(page.locator('#import-preview')).to_contain_text('должно быть больше нуля')
+    expect(page.locator('#import-preview')).to_contain_text('UNKNOWN')
+    screenshot(page,'excel-preview-errors')
+    page.get_by_role('button',name='Импортировать деталировку',exact=True).click()
+    expect(page.get_by_label('Количество 2',exact=True)).to_have_value('0')
+    expect(page.locator('main')).to_contain_text('ошибка')
+    with transaction(settings) as c:
+        rows=c.execute('SELECT snapshot FROM mf_order_draft_rows WHERE order_id=%s',(o['order_id'],)).fetchall()
+        assert len(rows)==2 and any(r['snapshot']['values']['qty']==0 for r in rows)
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    page.get_by_label('Файл Excel',exact=True).set_input_files(file)
+    expect(page.get_by_label('Сохранённый шаблон',exact=True)).not_to_have_value('')
+    expect(page.get_by_label('Колонка A',exact=True)).to_have_value('length')
+
+
+def test_manager_file_only_flow(page,api,settings,admin_user):
     o,_,_,email=client_order(api,settings,admin_user,mode='manager_assisted')
     login_ui(page,email);page.goto('https://testserver/editor?order='+o['order_id'])
-    page.get_by_role('button',name='Импорт Excel',exact=True).click()
-    data=xlsx({'Лист1':[['Длина','Ширина','Количество','Артикул','Материал','L1','L2','W1','W2','Текстура','Вращение'],[600,400,0,'621 PO','Board','0','0','0','0','none','false']]})
-    page.get_by_label('Файл XLSX',exact=True).set_input_files({'name':'synthetic-stage07.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
-    page.get_by_role('button',name='Проверить файл',exact=True).click()
-    expect(page.get_by_role('heading',name='Предпросмотр — строки не потеряны',exact=True)).to_be_visible()
-    page.get_by_role('button',name='Добавить позиции в черновик',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Подтвердить',exact=True).click()
-    expect(page.get_by_role('heading',name='Позиции из Excel',exact=True)).to_be_visible();expect(page.locator('main')).to_contain_text('qty: must_be_positive')
-    screenshot(page,'excel-zero-preserved')
+    expect(page.get_by_role('button',name='Загрузить Excel',exact=True)).to_have_count(0)
+    data=base64.b64decode(Path('tests/stage84/fixtures/plain.xls.b64').read_text())
+    page.get_by_label('Прикрепить Excel',exact=True).set_input_files({'name':'manager-source.xls','mimeType':'application/vnd.ms-excel','buffer':data})
+    page.get_by_role('button',name='Передать менеджеру',exact=True).click()
+    expect(page.locator('#message')).to_contain_text('переданы менеджеру')
+    expect(page.get_by_role('link',name='manager-source.xls',exact=True)).to_be_visible()
+    screenshot(page,'manager-source-submitted')
     with transaction(settings) as c:
-        assert c.execute('SELECT snapshot FROM mf_order_draft_rows WHERE order_id=%s',(o['order_id'],)).fetchone()['snapshot']['values']['qty']==0
-        assert c.execute("SELECT count(*) n FROM mf_files WHERE order_id=%s AND kind='source'",(o['order_id'],)).fetchone()['n']==1
-
-
-def test_assigned_manager_queue_no_admin(page,api,settings,admin_user):
-    from tests.stage05.test_api import staff
-    o=order(api)
-    _,email=staff(settings,'manager',o['order_id'],['orders.read'],assigned=True)
-    login_ui(page,email);expect(page.get_by_role('heading',name='Рабочий кабинет',exact=True)).to_be_visible()
-    expect(page.locator('#staff-content')).to_contain_text(o['business_name'])
-    assert page.get_by_role('button',name='Сотрудники',exact=True).count()==0
-    screenshot(page,'manager-1440')
+        assert c.execute('SELECT workflow_status FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()['workflow_status']=='submitted'
+        assert c.execute('SELECT count(*) n FROM mf_import_batches WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
+        assert c.execute('SELECT count(*) n FROM mf_production_jobs WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0

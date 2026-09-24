@@ -13,7 +13,7 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,KeepTogether
 from .document_projection import UNITS
 
-VERSION='mf-preliminary-a4-v2'
+VERSION='mf-preliminary-a4-v3-details'
 RENDERER='reportlab-4.4.9-mf-v2'
 FONTS={'DejaVuSans.ttf':'ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280',
  'DejaVuSans-Bold.ttf':'5c1247acef7f2b8522a31742c76d6adcb5569bacc0be7ceaa4dc39dd252ce895'}
@@ -65,6 +65,21 @@ def render(data, template_version=VERSION):
     story=[p('Martin Forest','heading'),p(data['title'],'title'),p('Заказ '+data['order_number']+' · '+data['order_name']),
       p('Клиент / компания: '+data['customer']),p('Документ от '+data['date']+' · Редакция '+str(data['revision_number']),'small'),p(data['status_label'],'small')]
     if data['synthetic']: story.append(p('Тестовый пример: условные цены, не коммерческое предложение.','small'))
+    if data.get('details'):
+        rows=[]
+        grains={'none':'Без текстуры','length':'По длине','width':'По ширине','unknown':'Уточняется'}
+        for d in data['details']:
+            m=d['material'];identity=' · '.join(str(m[k]) for k in ('manufacturer','name','article','structure','thickness') if m.get(k))
+            label=str(d['number'])+'. '+(d['name'] or 'Деталь')
+            edge_lines=[]
+            for side in ('L1','L2','W1','W2'):
+                e=d['edges'].get(side)
+                text=(' · '.join(str(e[k]) for k in ('name','article','width','thickness') if e.get(k)) if e else ('Уточняется' if side in d.get('unresolved_edges',[]) else 'Нет'))
+                edge_lines.append(side+': '+text)
+            info=[p(label),p(identity,'small'),p(grains.get(d['grain'],'Уточняется'),'small')]
+            if d['comments']: info.append(p(d['comments'],'small'))
+            rows.append([info,p(n(d['length'])+' × '+n(d['width'])),p(n(d['qty'])),p('\n'.join(edge_lines),'small')])
+        story.append(table(['Деталь / материал','Д × Ш, мм','Кол-во','Кромка по сторонам'],rows,[.40,.16,.10,.34],'Деталировка'))
     if data['materials']:
         rows=[]
         for m in data['materials']:

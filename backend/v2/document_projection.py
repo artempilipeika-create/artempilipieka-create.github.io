@@ -55,11 +55,22 @@ def project(calculation, *, number, name, customer, revision_number, date):
             row={**material(m),'quantity':None,'unit':'sheet','unit_price':None,'amount':None,'supply_source':d['supply_source'],'price_unit':None,'sale_price':None}
             materials.append(row);known.add((row['name'],row['article'],row['supply_source']))
     if any(t['percent'] is None for t in r['category_totals'].values()): unresolved.append('Условия скидок требуют подтверждения')
+    details=[]
+    for index,d in enumerate(inputs['revision'].get('details',[]),1):
+        sides={}
+        for side in ('L1','L2','W1','W2'):
+            assignment=d.get('edges',{}).get(side,{})
+            e=assignment.get('edge')
+            sides[side]=({k:e.get(k) for k in ('name','article','width','thickness')} if e else None)
+        details.append({'number':index,'name':d.get('name',''),'comments':d.get('comments',''),
+            'material':material(d.get('material') or {}),'length':d.get('length'),'width':d.get('width'),
+            'qty':d.get('qty'),'grain':d.get('grain'),'rotation':d.get('rotation'),'edges':sides,
+            'unresolved_edges':[s for s,e in d.get('edges',{}).items() if e.get('state')=='unresolved']})
     complete=r['completeness']=='complete'
     return plain({'title':TITLE,'order_number':number,'order_name':name,'customer':customer or 'Клиент',
       'revision_number':revision_number,'date':str(date)[:10],'state':r['completeness'],
       'status_label':'Предварительный расчёт подготовлен' if complete else 'Требует уточнения стоимости',
-      'synthetic':r.get('synthetic',False),'materials':materials,'edges':edges,'services':services,
+      'synthetic':r.get('synthetic',False),'materials':materials,'edges':edges,'services':services,'details':details,
       'discounts':[{'category':k,'name':label,**{f:r['category_totals'][k][f] for f in ('gross','percent','discount','net','complete')}} for k,label in CATEGORIES.items()],
       'amount_label':'ПРЕДВАРИТЕЛЬНАЯ СТОИМОСТЬ' if complete else 'РАССЧИТАННАЯ ЧАСТЬ',
       'amount':r['total'] if complete else r['calculated_part'],'currency':r['currency'],

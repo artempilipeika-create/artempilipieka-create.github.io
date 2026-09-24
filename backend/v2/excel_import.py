@@ -90,6 +90,15 @@ def parse(workbook,t,selected):
                     elif c.get('type')=='e': errors.append(issue(sheet['name'],n,field,c,'excel_error'))
                 for field in ('length','width','qty'):
                     result['values'][field]=numeric(raw.get(field),field,t['units'].get(field,'mm'),errors,result['conversions'],sheet['name'],n)
+                texture=str(raw.get('texture') or '').strip().casefold()
+                texture_value={'none':'none','нет':'none','без текстуры':'none','0':'none','false':'none','n':'none',
+                    'length':'length','по длине':'length','вдоль':'length','1':'length','true':'length','да':'length','y':'length',
+                    'width':'width','по ширине':'width','поперёк':'width'}.get(texture)
+                if texture_value:
+                    result['values']['texture']=texture_value
+                rotation=str(raw.get('rotation') if raw.get('rotation') is not None else '').strip().casefold()
+                if rotation in {'true','1','да','y','false','0','нет','n'}:
+                    result['values']['rotation']=rotation in {'true','1','да','y'}
                 for field in ('thickness','format_length','format_width'):
                     value=result['values'].get(field)
                     if value not in (None,''): result['values'][field]=numeric(value,field,t['units'].get(field,'mm'),errors,result['conversions'],sheet['name'],n)

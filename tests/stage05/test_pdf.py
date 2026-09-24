@@ -34,7 +34,9 @@ def test_pdf01_pdf02_pdf08_pdf09_actual_text_multipage(count):
     c,v=sample(count);data=render(v);reader=PdfReader(BytesIO(data));text='\n'.join(p.extract_text() for p in reader.pages)
     assert 'ПРЕДВАРИТЕЛЬНЫЙ РАСЧЁТ' in text and 'Ąžuolo' in text and 'Александра' in text
     assert str(c['result']['total'])+' BYN' in text
-    assert len(reader.pages)>1 if count>=5 else len(reader.pages)==1
+    assert len(reader.pages)>1 if count>=5 else 1<=len(reader.pages)<=2
+    assert 'Деталировка' in text and 'Кромка по сторонам' in text
+    assert len(v['details'])==count
     for i,p in enumerate(reader.pages,1):
         assert not p.images and 'Страница '+str(i) in p.extract_text() and 'MF-000123' in p.extract_text()
     for i in range(count): assert 'H3331-ST10-ЛХДФ-'+str(i+1) in text

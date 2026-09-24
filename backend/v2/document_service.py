@@ -78,7 +78,7 @@ def safe_number(number):
     return number if re.fullmatch(r'MF-[0-9]{1,12}',number or '') else 'Order'
 
 
-def download(conn,settings,user,file_id,head=False):
+def download(conn,settings,user,file_id,head=False,inline=False):
     f=conn.execute('SELECT * FROM mf_files WHERE file_id=%s',(file_id,)).fetchone()
     if not f: error(404,'DOCUMENT_NOT_FOUND')
     if f['kind']!='preliminary_pdf' or f['classification']!='private': error(403,'PERMISSION_DENIED')
@@ -93,5 +93,5 @@ def download(conn,settings,user,file_id,head=False):
         record_event(conn,settings,actor=user['user_id'],action='document.staff.downloaded',object_type='document',object_id=file_id,reason='Authorized sensitive document access')
     filename='Martin_Forest_Предварительный_расчёт_'+safe_number(row['presentation_snapshot']['order_number'])+'.pdf'
     return Response(b'' if head else data,media_type='application/pdf',headers={'Content-Length':str(len(data)),
-      'Content-Disposition':"attachment; filename=Martin_Forest_Preliminary.pdf; filename*=UTF-8''"+quote(filename),
+      'Content-Disposition':('inline' if inline else 'attachment')+"; filename=Martin_Forest_Preliminary.pdf; filename*=UTF-8''"+quote(filename),
       'X-Content-SHA256':f['sha256'],'Accept-Ranges':'none'})

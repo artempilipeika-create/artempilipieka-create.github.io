@@ -59,6 +59,7 @@ def from_raw(conn,release,row):
         edges[side]={'edge':released(conn,release,e['edge_id'],'edge') if e.get('edge_id') and confirmed else None,
                      'supply_source':'company','state':'confirmed' if none or confirmed else 'unresolved'}
     return {'detail_id':row['draft_row_id'],'draft_row_id':row['draft_row_id'],'length':v.get('length'),'width':v.get('width'),'qty':v.get('qty'),
+        'name':str(v.get('name') or ''),'comments':str(v.get('comments') or ''),
         'material':material,'supply_source':'customer' if customer else 'company','provided_sheets':None,'customer_reason':r.get('reason'),
         'customer_material_key':row['draft_row_id'] if customer else None,'rotation':rotation,'grain':grain,'route':'solid','packaging':False,'edges':edges}
 
@@ -120,13 +121,13 @@ def submit(conn,settings,actor,order_id,body,key,expected):
         if receipt:
             if receipt['request_hash']!=request_hash: error(409,'IDEMPOTENCY_BODY_CONFLICT')
             return receipt['result']
-    if not body.revision_id and not body.comment.strip(): error(409,'PACKAGE_NOT_READY')
+    if not body.revision_id and not body.comment.strip() and order['preparation_mode']!='manager_assisted': error(409,'PACKAGE_NOT_READY')
     if not key or not 8<=len(key)<=128: error(428,'IDEMPOTENCY_KEY_REQUIRED')
     locked(conn,order_id,expected or '')
     if order['workflow_status']!='draft': error(409,'DRAFT_REQUIRED')
     if order['preparation_mode']=='manager_assisted':
         ev=evidence(conn,order)
-        if len(body.comment.strip())<10 or not any(s['status']=='ready' for s in ev['sources']): error(409,'SOURCE_AND_MEANINGFUL_REQUEST_REQUIRED')
+        if not any(s['status']=='ready' for s in ev['sources']): error(409,'SOURCE_FILE_REQUIRED')
         from .files import read_verified
         from .storage import VolumeStore
         for source in ev['sources']:

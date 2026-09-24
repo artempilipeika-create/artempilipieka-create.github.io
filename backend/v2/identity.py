@@ -1,5 +1,28 @@
 """Strict resolution is deliberately independent from broad catalogue search."""
 from .catalogue_model import canonical, dimension, matches, safe_item
+import re
+import unicodedata
+
+
+def search_candidates(raw,items):
+    """Suggestions only: user confirms the displayed exact variant before import.
+
+    Formatting and Cyrillic lookalikes are search conveniences, never persistent IDs.
+    Full article boundaries keep 621 PO and 621 PE (and H1180/H11800) separate.
+    """
+    def key(v):
+        return ''.join(c for c in unicodedata.normalize('NFKC',str(v or '')).upper().translate(
+            str.maketrans('АВЕКМНОРСТХ','ABEKMHOPCTX')) if c.isalnum())
+    article=key(raw.get('raw_article'));name=key(raw.get('raw_material_name'))
+    available=[i for i in items if not conflicts(raw,i)]
+    exact=[i for i in available if (article and key(i.get('article'))==article) or
+        (not article and name and name in {key(i.get('article')),key(i.get('name'))})]
+    if exact:return exact
+    text=unicodedata.normalize('NFKC',str(raw.get('raw_material_name') or '')).upper()
+    tokens=re.findall(r'[A-ZА-ЯЁ0-9]+',text)
+    embedded=[i for i in available if i.get('article') and any(key(''.join(tokens[a:b]))==key(i['article'])
+        for a in range(len(tokens)) for b in range(a+1,min(a+5,len(tokens))+1))] if not article else []
+    return embedded or [i for i in available if matches(i,raw.get('raw_article') or raw.get('raw_material_name') or '__no_identity__')]
 
 STATES={'exact_match','confirmed_mapping','unresolved','ambiguous','manual_override','custom_customer'}
 
@@ -49,5 +72,5 @@ def resolve(raw,catalogue,release,aliases=(),namespace='client'):
             mapping_id=str(a['alias_id']),mapping_version=a['version'])
     elif len(candidates)>1: result.update(status='ambiguous',reason='Multiple approved aliases')
     if not result['candidates']:
-        result['candidates']=[i['variant_id'] for i in catalogue if matches(i,article or name or '__no_identity__')][:25]
+        result['candidates']=[i['variant_id'] for i in search_candidates(raw,catalogue)][:25]
     return result

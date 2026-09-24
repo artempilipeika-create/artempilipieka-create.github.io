@@ -24,9 +24,15 @@ def router(settings,policy):
             user=identity(c,request);calc=get(c,calculation_id);ds.authorize(c,user,calc['order_id'])
             if 'client' in user['roles'] and not cs.visible(c,calc['order_id'],direct=True): error(404,'ORDER_NOT_FOUND')
             return {'items':[ds.dto(r) for r in c.execute("SELECT d.* FROM mf_documents d JOIN mf_files f USING(file_id) WHERE calculation_id=%s AND f.status='ready' ORDER BY document_version",(calculation_id,))]}
+    @api.get('/calculations/{calculation_id}/preview')
+    def calculation_preview(calculation_id:UUID,request:Request):
+        with transaction(settings) as c:
+            user=identity(c,request);calc=get(c,calculation_id);ds.authorize(c,user,calc['order_id'],generate=True)
+            if 'client' in user['roles'] and not cs.visible(c,calc['order_id'],direct=True): error(404,'ORDER_NOT_FOUND')
+            return ds.presentation(c,calc)
     @api.api_route('/documents/{file_id}',methods=['GET','HEAD'])
-    def download(file_id:UUID,request:Request):
-        with transaction(settings) as c: return ds.download(c,settings,identity(c,request),file_id,request.method=='HEAD')
+    def download(file_id:UUID,request:Request,inline:bool=False):
+        with transaction(settings) as c: return ds.download(c,settings,identity(c,request),file_id,request.method=='HEAD',inline)
     @api.get('/account/profile')
     def profile(request:Request):
         with transaction(settings) as c:

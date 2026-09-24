@@ -15,7 +15,7 @@ from .security import identity,error
 from .events import record_event
 from .files import save_private_file,read_verified
 from .storage import VolumeStore
-from .xlsx import read_workbook
+from .client_workbook import read_workbook
 from . import catalogue,import_service
 from .catalogue_model import matches,safe_item,fingerprint
 from .excel_import import parse,validate_template
@@ -58,6 +58,9 @@ class ClientUpload(Upload):
     template_revision_id:UUID
     catalogue_release:UUID|None=None
     selected_sheets:list[str]=Field(default_factory=list,max_length=50)
+
+class InspectUpload(Upload):
+    order_id:str=Field(min_length=1,max_length=80)
 
 class Confirm(StrictModel):
     mode:Literal['add','replace','new_revision']
@@ -131,6 +134,56 @@ def scoped_import(conn,user,batch,write=False):
 
 def router(settings,policy):
     api=APIRouter(prefix='/api/v2')
+
+    @api.post('/imports/workbook')
+    def workbook_preview(body:InspectUpload,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write',order_id=body.order_id)
+            from .security import rate_limit
+            rate_limit(conn,'workbook-preview:'+str(user['user_id']),maximum=120,seconds=3600)
+        _,book=decode(body)
+        return {'sheets':[{'name':s['name'],'row_count':len(s['rows']),'rows':s['rows'][:100]} for s in book['sheets']]}
+
+    @api.get('/import-templates')
+    def saved_templates(request:Request,order_id:str):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.read',order_id=order_id)
+            order=conn.execute('SELECT owner_user_id FROM mf_orders WHERE order_id=%s',(order_id,)).fetchone()
+            template_access(conn,user,order['owner_user_id'],order_id)
+            return {'items':conn.execute('''SELECT t.template_id,t.name,r.template_revision_id,r.version,r.definition
+                FROM mf_import_templates t JOIN LATERAL (
+                    SELECT * FROM mf_import_template_revisions r WHERE r.template_id=t.template_id ORDER BY version DESC LIMIT 1
+                ) r ON true WHERE t.owner_user_id=%s AND r.status='active' ORDER BY t.created_at DESC''',(order['owner_user_id'],)).fetchall()}
+
+    @api.post('/orders/{order_id}/source',status_code=201)
+    def upload_source(order_id:str,body:Upload,request:Request):
+        from .attachment_content import inspect
+        from .security import rate_limit
+        def authorize(conn):
+            user=identity(conn,request);require(conn,user,'orders.draft.write',order_id=order_id)
+            order=conn.execute('SELECT workflow_status FROM mf_orders WHERE order_id=%s FOR UPDATE',(order_id,)).fetchone()
+            if order['workflow_status']!='draft': error(409,'DRAFT_REQUIRED')
+            return user
+        with transaction(settings) as conn:
+            user=authorize(conn);rate_limit(conn,'source-upload:'+str(user['user_id']),maximum=60,seconds=3600)
+        try:
+            data=base64.b64decode(body.content_base64,validate=True);fmt,mime=inspect(data,body.filename)
+            if fmt not in {'xls','xlsx'}: error(422,'SOURCE_EXCEL_REQUIRED')
+        except (ValueError,binascii.Error) as e: error(422,str(e) if str(e).isupper() else 'INVALID_ATTACHMENT')
+        def bind(conn,fid):
+            fresh=authorize(conn)
+            import_service.bump(conn,settings,fresh['user_id'],order_id,'Source Excel attached for manager preparation')
+        fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=data,
+            name=body.filename,kind='source',mime=mime,order_id=order_id,on_ready=bind)
+        return {'file_id':fid,'name':body.filename,'download_url':'/api/v2/files/'+str(fid)+'/download'}
+
+    @api.get('/orders/{order_id}/sources')
+    def source_files(order_id:str,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.read',order_id=order_id)
+            require(conn,user,'files.source.read',order_id=order_id,file_kind='source')
+            rows=conn.execute("SELECT file_id,original_name,created_by FROM mf_files WHERE order_id=%s AND kind='source' AND classification='private' AND status='ready' AND job_id IS NULL ORDER BY created_at",(order_id,)).fetchall()
+            return {'items':[{'file_id':r['file_id'],'name':r['original_name'],'download_url':'/api/v2/files/'+str(r['file_id'])+'/download'} for r in rows if 'client' not in user['roles'] or r['created_by']==user['user_id']]}
 
     @api.get('/catalogue/materials')
     def materials(request:Request,q:str='',release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
@@ -228,6 +281,10 @@ def router(settings,policy):
 
     def save_template(conn,user,body,template_id=None):
         owner=body.owner_user_id or user['user_id']
+        if body.order_id:
+            require(conn,user,'orders.draft.write',order_id=body.order_id)
+            order=conn.execute('SELECT owner_user_id FROM mf_orders WHERE order_id=%s',(body.order_id,)).fetchone()
+            if not body.owner_user_id: owner=order['owner_user_id']
         if template_id:
             t=conn.execute('SELECT * FROM mf_import_templates WHERE template_id=%s FOR UPDATE',(template_id,)).fetchone()
             if not t: error(404,'TEMPLATE_NOT_FOUND')
@@ -281,7 +338,7 @@ def router(settings,policy):
                 return {'import_id':existing['import_id'],'reused':True,'available_sheets':parsed['available_sheets'],
                         'summary':parsed['summary'],'rows':import_service.rows(conn,existing['import_id'])}
             fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=user['user_id'],data=data,name=body.filename,
-                                  kind='source',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',order_id=body.order_id)
+                                  kind='source',mime='application/vnd.ms-excel' if data.startswith(bytes.fromhex('d0cf11e0a1b11ae1')) else 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',order_id=body.order_id)
             batch=import_service.preview(conn,settings,user['user_id'],body.order_id,fid,body.template_revision_id,version,parsed)
             return {'import_id':batch,'available_sheets':parsed['available_sheets'],'summary':parsed['summary'],'rows':import_service.rows(conn,batch)}
 

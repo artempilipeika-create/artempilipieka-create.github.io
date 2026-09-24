@@ -21,38 +21,132 @@ let editorOrder=null,manualRows=[],catalogueRelease=null,dirty=false,importId=nu
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 async function editorStart(){
  const id=new URLSearchParams(location.search).get('order');
- if(!id){heading('Начните с заказа','Название поможет найти деталировку в кабинете.');const form=node('form',undefined,'panel');const [l,n]=field('Название заказа','business_name','text','',true);const [ml,m]=selectField('Способ подготовки','preparation_mode',[['manager_assisted','С помощью менеджера'],['self_prepared','Самостоятельно']],new URLSearchParams(location.search).get('mode')==='self'?'self_prepared':'manager_assisted');form.append(l,ml,node('button','Создать черновик'));form.onsubmit=e=>{e.preventDefault();run(async()=>{const o=await api('/orders','POST',{business_name:n.value,preparation_mode:m.value});history.replaceState(null,'','/editor?order='+encodeURIComponent(o.order_id));await openEditor(o.order_id);});};content.append(form);return;}
- await openEditor(id);
+ if(id){await openEditor(id);return;}
+ heading('Новая заявка');
+ const form=node('form',undefined,'panel'),[l,n]=field('Название заказа','business_name','text','',true);
+ const paths=node('div',undefined,'preparation-paths');
+ form.append(l,paths);
+ for(const [mode,title,note]of [['self_prepared','Заполнить деталировку','Ввести детали или загрузить Excel, посмотреть расчёт и скачать PDF.'],['manager_assisted','Передать менеджеру','Прикрепить Excel. Менеджер подготовит деталировку и расчёт.']]){
+  const box=node('div',undefined,'preparation-path');
+  box.append(node('h2',title),node('p',note),button(title,async()=>{
+   if(!form.reportValidity())return;
+   const o=await api('/orders','POST',{business_name:n.value,preparation_mode:mode});
+   history.replaceState(null,'','/editor?order='+encodeURIComponent(o.order_id));await openEditor(o.order_id);
+  }));paths.append(box);
+ }
+ form.onsubmit=e=>e.preventDefault();content.append(form);
+}
+let catalogueMaterials=[],catalogueEdges=[],managerEditing=false;
+const sideNames=['L1','L2','W1','W2'];
+const grainNames={unknown:'Уточнить текстуру',length:'По длине',width:'По ширине',none:'Без текстуры'};
+function blankDetail(){return {detail_id:crypto.randomUUID(),name:'',comments:'',length:'',width:'',qty:1,variant_id:null,materialLabel:'Материал не выбран',supply_source:'company',rotation:false,grain:'unknown',route:'solid',packaging:false,edges:{}};}
+function materialLabel(m){return m?[m.manufacturer,m.raw_description||m.name,m.article,m.structure,m.thickness?m.thickness+' мм':'',m.length&&m.width?m.length+' × '+m.width+' мм':''].filter(Boolean).join(' · '):'Материал не выбран';}
+function edgeLabel(e){return e?[e.article,e.name,e.width&&e.thickness?e.width+' × '+e.thickness+' мм':''].filter(Boolean).join(' · '):'Без кромки';}
+function fromRevision(d){return {...blankDetail(),detail_id:d.detail_id,name:d.name||'',comments:d.comments||'',...(d.draft_row_id?{draft_row_id:d.draft_row_id,resolution_reason:d.resolution_reason||'Подтверждение деталировки в таблице'}:{}),length:d.length,width:d.width,qty:d.qty,variant_id:d.material?.variant_id||null,materialLabel:materialLabel(d.material),custom_customer:d.customer_material_key?{key:d.customer_material_key,name:d.material.name,thickness:d.material.thickness,length:d.material.length,width:d.material.width,reason:d.material.reason}:null,supply_source:d.supply_source,provided_sheets:d.provided_sheets,customer_reason:d.customer_reason,rotation:d.rotation,grain:d.grain,route:d.route,packaging:d.packaging,edges:Object.fromEntries(sideNames.map(s=>[s,{edge_id:d.edges[s]?.edge?.edge_id||null,supply_source:d.edges[s]?.supply_source||'company',unresolved:d.edges[s]?.state==='unresolved'}]))};}
+function fromImported(r){
+ const s=r.snapshot,v=s.values||{},m=s.resolution?.selected;
+ return {...blankDetail(),detail_id:r.draft_row_id,draft_row_id:r.draft_row_id,resolution_reason:'Подтверждение импортированной строки в таблице',name:String(v.name||''),comments:String(v.comments||''),length:v.length??'',width:v.width??'',qty:v.qty??'',variant_id:m?.variant_id||null,materialLabel:materialLabel(m),grain:grainNames[v.texture]?v.texture:'unknown',rotation:v.rotation===true,
+  edges:Object.fromEntries(sideNames.map(side=>{const e=s.edges?.[side]||{};return [side,{edge_id:e.edge_id||null,supply_source:'company',unresolved:e.mark!=='none'&&!e.confirmed&&e.mode!=='manual_override'}];})),_source:'Excel: '+s.sheet+', строка '+s.row,_errors:s.errors||[]};
+}
+async function loadCatalogue(){
+ catalogueMaterials=[];catalogueEdges=[];
+ for(const [kind,target]of [['materials',catalogueMaterials],['edges',catalogueEdges]]){
+  let offset=0;while(true){const r=await api('/catalogue/'+kind+'?limit=250&offset='+offset+(catalogueRelease?'&release='+encodeURIComponent(catalogueRelease):''));catalogueRelease=catalogueRelease||r.catalogue_release;target.push(...r.items);offset+=r.items.length;if(offset>=r.total||!r.items.length)break;}
+ }
 }
 async function openEditor(id){
  editorOrder=await api('/orders/'+encodeURIComponent(id));
- if(!currentUser.roles.some(r=>['client','manager','admin'].includes(r))){heading('Доступ ограничен');content.append(node('p','Для редактирования нужны соответствующие права на заказ.','notice'));return;}
- manualRows=[];catalogueRelease=null;
- if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.filter(d=>!d.draft_row_id||d.resolution_reason).map(d=>({detail_id:d.detail_id,...(d.draft_row_id?{draft_row_id:d.draft_row_id,resolution_reason:d.resolution_reason}:{}),length:d.length,width:d.width,qty:d.qty,variant_id:d.material?.variant_id||null,materialLabel:materialLabel(d.material),custom_customer:d.customer_material_key?{key:d.customer_material_key,name:d.material.name,thickness:d.material.thickness,length:d.material.length,width:d.material.width,reason:d.material.reason}:null,supply_source:d.supply_source,provided_sheets:d.provided_sheets,customer_reason:d.customer_reason,rotation:d.rotation,grain:d.grain,route:d.route,packaging:d.packaging,edges:Object.fromEntries(Object.entries(d.edges).map(([s,e])=>[s,{edge_id:e.edge?.edge_id||null,supply_source:e.supply_source}]))}));}
- dirty=false;revisionComment='';await editorView();
+ if(!currentUser.roles.some(r=>['client','manager','admin'].includes(r))){heading('Доступ ограничен');return;}
+ manualRows=[];catalogueRelease=null;revisionComment='';dirty=false;managerEditing=false;
+ if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.map(fromRevision);}
+ const draft=await api('/orders/'+id+'/draft/rows');editorOrder.optimistic_lock_version=draft.optimistic_lock_version;
+ for(const r of draft.rows){if(!r.excluded_reason&&!manualRows.some(d=>d.draft_row_id===r.draft_row_id))manualRows.push(fromImported(r));}
+ if(editorOrder.preparation_mode==='self_prepared'||!currentUser.roles.includes('client')){
+  try{await loadCatalogue();}catch(e){if(e.code!=='CATALOGUE_NOT_PUBLISHED')throw e;catalogueMaterials=[];catalogueEdges=[];}
+  if(!manualRows.length)manualRows.push(blankDetail());
+ }
+ await editorView();
 }
-function materialLabel(m){return m?[m.manufacturer,m.raw_description||m.name,m.article,m.structure,m.thickness?m.thickness+' мм':'',m.length&&m.width?m.length+' × '+m.width+' мм':''].filter(Boolean).join(' · '):'Материал не выбран';}
+async function sourceList(parent){
+ const sources=await api('/orders/'+editorOrder.order_id+'/sources');
+ if(sources.items.length){const list=node('ul');for(const f of sources.items){const li=node('li');li.append(link(f.name,f.download_url));list.append(li);}parent.append(list);}
+ return sources.items;
+}
+async function managerPreparation(){
+ const form=node('form',undefined,'panel'),[fl,file]=field('Прикрепить Excel','source','file');file.accept='.xlsx,.xls';
+ const [cl,comment]=field('Комментарий менеджеру (необязательно)','comment','textarea');comment.maxLength=2000;
+ form.append(node('p','Прикрепите файл с деталировкой. Менеджер проверит материалы и подготовит предварительный расчёт.'),fl,cl);
+ const sources=await sourceList(form),send=node('button','Передать менеджеру');form.append(send);content.append(form);
+ let uploaded=sources.length>0;const key=crypto.randomUUID();
+ form.onsubmit=e=>{e.preventDefault();run(async()=>{
+  if(file.files[0]){await api('/orders/'+editorOrder.order_id+'/source','POST',await filePayload(file.files[0]));uploaded=true;file.value='';}
+  if(!uploaded)throw new Error('Прикрепите Excel с деталировкой.');
+  const fresh=await api('/orders/'+editorOrder.order_id);
+  await api('/orders/'+editorOrder.order_id+'/submit','POST',{comment:comment.value.trim()||'Прошу менеджера подготовить деталировку и предварительный расчёт по приложенному Excel.'},{'If-Match':String(fresh.optimistic_lock_version),'Idempotency-Key':key});
+  dirty=false;await openEditor(editorOrder.order_id);message('Заявка и исходный Excel переданы менеджеру.');
+ });};
+}
 async function editorView(){
- heading(editorOrder.business_name||'Деталировка','Размеры — готовые, в миллиметрах. Все расчёты выполняет сервер.');
- content.append(node('p',statusLabels[editorOrder.workflow_status]||'Статус уточняется','badge'));
- const editingAllowed=editorOrder.workflow_status==='draft'||currentUser.roles.some(r=>['admin','manager'].includes(r));
- const bar=node('div',undefined,'toolbar');bar.append(link(currentUser.roles.includes('client')?'Заказ и документы':'Рабочая очередь',currentUser.roles.includes('client')?'/account#'+editorOrder.order_id:'/staff','button secondary'));
- const add=button('Добавить деталь',()=>editRow());add.disabled=!editingAllowed;bar.append(add,button('Импорт Excel',importForm,true));
- const mode=button('Компактный / расширенный вид',()=>{content.classList.toggle('compact');},true);bar.append(mode);content.append(bar);
- if(editorOrder.preparation_mode==='manager_assisted')content.append(node('p','Загрузите исходник через проверяемый шаблон и добавьте комментарий. Не требуется самостоятельно исправлять все проблемные позиции перед передачей менеджеру.','notice'));
+ heading(editorOrder.business_name||'Деталировка');content.append(node('p',statusLabels[editorOrder.workflow_status]||'В обработке','badge'));
+ const bar=node('div',undefined,'toolbar');bar.append(link(currentUser.roles.includes('client')?'Мои заказы':'Рабочая очередь',currentUser.roles.includes('client')?'/account':'/staff','button secondary'));content.append(bar);
+ const client=currentUser.roles.includes('client');
+ if(editorOrder.preparation_mode==='manager_assisted'&&(client||(!editorOrder.active_revision_id&&!managerEditing))){
+  if(editorOrder.workflow_status==='draft'){await managerPreparation();if(!client)content.append(button('Заполнить деталировку',()=>{managerEditing=true;return editorView();},true));}else{content.append(node('p','Заявка у менеджера. После проверки он отправит вам предварительный расчёт.'));await sourceList(content);}
+  return;
+ }
+ const editingAllowed=editorOrder.workflow_status==='draft'||!client;
+ const importButton=button('Загрузить Excel',importForm,true);importButton.disabled=!editingAllowed;bar.append(importButton);
+ content.append(node('p','Готовые размеры в миллиметрах. L1 и L2 — стороны по длине, W1 и W2 — по ширине.','muted'));
+ if(!catalogueMaterials.length)content.append(node('p','Каталог материалов пока недоступен.','notice'));
  renderManual();
- const draft=await api('/orders/'+editorOrder.order_id+'/draft/rows');editorOrder.optimistic_lock_version=draft.optimistic_lock_version;
- if(draft.rows.length){content.append(node('h2','Позиции из Excel'));renderImported(draft.rows);}
- if(draft.catalogue_update_available)content.append(button('Посмотреть изменения каталога',catalogueDiff,true));
- const actions=node('div',undefined,'actions');const save=button('Сохранить новую редакцию',saveRevision);save.disabled=!editingAllowed;actions.append(save);
- const calc=button('Предварительный расчёт',async()=>{if(dirty)throw new Error('Сначала сохраните новую редакцию.');await api('/orders/'+editorOrder.order_id+'/calculations','POST',{revision_id:editorOrder.active_revision_id});message('Предварительный расчёт создан. Откройте заказ и документы. Итоговая стоимость ещё не согласована.');});calc.disabled=!editorOrder.active_revision_id;actions.append(calc);content.append(actions,node('p','Сохранение новой редакции не означает согласование или запуск производства.','muted'));
- const [cl,ci]=field('Комментарий к редакции','revision_comment','textarea',revisionComment);content.append(cl);ci.oninput=()=>{dirty=true;revisionComment=ci.value;};
- if(!currentUser.roles.includes('client'))content.append(node('p','Работа с итоговым согласованием доступна только при наличии проверенного производственного расчёта.','notice'));
- await orderFiles(editorOrder.order_id);
+ if(!editingAllowed)$('manual-rows').querySelectorAll('input,select,button').forEach(el=>el.disabled=true);
+ const actions=node('div',undefined,'actions');const add=button('+ Добавить деталь',()=>{const r=blankDetail();manualRows.push(r);dirty=true;renderManual();$('manual-rows').querySelector('tbody tr:last-child input')?.focus();});add.disabled=!editingAllowed;
+ const save=button('Сохранить',()=>saveRevision(),true);save.disabled=!editingAllowed;
+ const calc=button('Предварительный расчёт',async()=>{if(dirty||!editorOrder.active_revision_id)await saveRevision(false);const c=await api('/orders/'+editorOrder.order_id+'/calculations','POST',{revision_id:editorOrder.active_revision_id});await showCalculation(c.calculation_id);});calc.disabled=!editingAllowed;
+ actions.append(add,save,calc);content.append(actions);
+ const [cl,ci]=field('Комментарий к заказу','revision_comment','textarea',revisionComment);content.append(cl);ci.oninput=()=>{dirty=true;revisionComment=ci.value;};
+ if(!client){const sources=node('section',undefined,'panel');sources.append(node('h2','Исходные Excel'));await sourceList(sources);content.append(sources);await orderFiles(editorOrder.order_id);}
 }
-function renderManual(){const section=node('section');section.id='manual-rows';section.append(node('h2','Ручная деталировка'));
- if(!manualRows.length)section.append(node('p','Добавьте деталь или импортируйте исходный Excel.','empty'));
- else{const t=table(['№','Материал','Д × Ш, мм','Кол-во, шт.','Текстура / вращение','Кромка L1 / L2 / W1 / W2','Действия'],manualRows.map((r,i)=>[i+1,r.materialLabel,r.length+' × '+r.width,r.qty,({length:'По длине',width:'По ширине',none:'Без текстуры',unknown:'Не определена'}[r.grain])+' / '+(r.rotation?'разрешено':'запрещено'),['L1','L2','W1','W2'].map(s=>r.edges[s]?.edge_id?'Назначена':'Нет').join(' / '),'']));t.querySelectorAll('tbody tr').forEach((tr,i)=>{tr.lastChild.append(button('Изменить',()=>editRow(i),true),button('Удалить',async()=>{if(await confirmAction('Удалить деталь?','Будет удалена только строка текущей несохранённой редакции. Предыдущие редакции сохранятся.')){manualRows.splice(i,1);dirty=true;await editorView();}},true));});section.append(t);}
+function normalSearch(v){return String(v||'').normalize('NFKC').toLocaleLowerCase('ru').replace(/\s+/g,' ').trim();}
+function catalogSelect(r,index){
+ const box=node('div',undefined,'material-cell'),q=node('input'),select=node('select'),info=node('small',r.materialLabel);
+ q.type='search';q.placeholder='Артикул или название';q.setAttribute('aria-label','Поиск материала '+(index+1));select.setAttribute('aria-label','Материал '+(index+1));
+ function options(){
+  const terms=normalSearch(q.value).split(' ').filter(Boolean);const found=catalogueMaterials.filter(m=>terms.every(t=>normalSearch(materialLabel(m)).includes(t)));
+  const selected=catalogueMaterials.find(m=>m.variant_id===r.variant_id);if(selected){const i=found.indexOf(selected);if(i>=0)found.splice(i,1);found.unshift(selected);}
+  select.replaceChildren();const empty=node('option',r.custom_customer?r.materialLabel:'Выберите материал');empty.value='';select.append(empty);
+  for(const m of found.slice(0,50)){const o=node('option',materialLabel(m));o.value=m.variant_id;select.append(o);}select.value=r.variant_id||'';
+ }
+ q.oninput=options;select.onchange=()=>{const m=catalogueMaterials.find(x=>x.variant_id===select.value);r.variant_id=m?.variant_id||null;r.materialLabel=materialLabel(m);r.custom_customer=null;if(m?.grain&&grainNames[m.grain])r.grain=m.grain;else if(m?.texture===false)r.grain='none';info.textContent=r.materialLabel;dirty=true;};
+ options();box.append(q,select,info);return box;
+}
+function edgeChooser(e,label,onChange){
+ const box=node('div'),search=node('input');search.type='search';search.placeholder='Найти кромку';search.setAttribute('aria-label','Поиск кромки '+label);
+ const [el,select]=selectField(label,'edge',[],undefined);el.classList.add('sr-label');let chosen=e.unresolved?'?':e.edge_id||'';
+ function options(){const terms=normalSearch(search.value).split(' ').filter(Boolean),items=catalogueEdges.filter(x=>terms.every(t=>normalSearch(edgeLabel(x)).includes(t))).slice(0,50);const current=catalogueEdges.find(x=>x.edge_id===chosen);if(current&&!items.includes(current))items.unshift(current);select.replaceChildren();for(const [v,t]of [['?','Выберите кромку'],['','Без кромки'],...items.map(x=>[x.edge_id,edgeLabel(x)])]){const o=node('option',t);o.value=v;select.append(o);}select.value=chosen;select.title=select.selectedOptions[0]?.textContent||'';}
+ search.oninput=options;select.onchange=()=>{chosen=select.value;select.title=select.selectedOptions[0]?.textContent||'';onChange({edge_id:chosen&&chosen!=='?'?chosen:null,supply_source:e.supply_source||'company',unresolved:chosen==='?'});};options();box.append(search,el);return {box,select};
+}
+function renderManual(){
+ const section=node('section');section.id='manual-rows';section.append(node('h2','Деталировка'));
+ const wrap=table(['№','Название','Материал / формат листа','Длина, мм','Ширина, мм','Кол-во','Текстура','L1','L2','W1','W2','Примечание','Действия'],[]);wrap.classList.add('detail-grid');const body=wrap.querySelector('tbody');
+ manualRows.forEach((r,index)=>{
+  const tr=node('tr');tr.dataset.detailId=r.detail_id;
+  function cell(child){const td=node('td');td.append(child);tr.append(td);return td;}
+  cell(node('span',index+1));
+  function input(k,label,type='text'){const i=node('input');i.type=type;i.value=r[k]??'';i.setAttribute('aria-label',label+' '+(index+1));if(type==='number'){i.min=k==='qty'?'1':'0.001';i.step=k==='qty'?'1':'0.001';}else i.maxLength=k==='comments'?1000:200;i.oninput=()=>{r[k]=k==='qty'?(i.value===''?'':Number(i.value)):i.value;dirty=true;tr.classList.remove('invalid-row');};return i;}
+  cell(input('name','Название'));cell(catalogSelect(r,index));cell(input('length','Длина','number'));cell(input('width','Ширина','number'));cell(input('qty','Количество','number'));
+  const [gl,g]=selectField('Текстура '+(index+1),'grain',Object.entries(grainNames),r.grain);gl.classList.add('sr-label');g.onchange=()=>{r.grain=g.value;r.rotation=g.value==='none';dirty=true;};cell(gl);
+  for(const side of sideNames){
+   cell(edgeChooser(r.edges[side]||{},side+' деталь '+(index+1),e=>{r.edges[side]=e;dirty=true;}).box);
+  }
+  cell(input('comments','Примечание'));
+  const actions=node('div',undefined,'row-actions');
+  actions.append(button('Дублировать',()=>{const clone=structuredClone(r);clone.detail_id=crypto.randomUUID();delete clone.draft_row_id;delete clone.resolution_reason;delete clone._source;delete clone._errors;manualRows.splice(index+1,0,clone);dirty=true;renderManual();},true));
+  if(index)actions.append(button('Материал ↑',()=>{for(const k of ['variant_id','materialLabel','custom_customer','supply_source','provided_sheets','customer_reason'])r[k]=structuredClone(manualRows[index-1][k]);dirty=true;renderManual();},true),button('Кромка ↑',()=>{r.edges=structuredClone(manualRows[index-1].edges);dirty=true;renderManual();},true));
+  actions.append(button('Удалить',async()=>{if(r.draft_row_id){const fresh=await api('/orders/'+editorOrder.order_id);const res=await api('/orders/'+editorOrder.order_id+'/draft/rows/'+r.draft_row_id+'/exclude','POST',{reason:'Удалено пользователем из таблицы деталировки'},{'If-Match':String(fresh.optimistic_lock_version)});editorOrder.optimistic_lock_version=res.optimistic_lock_version;}manualRows.splice(index,1);if(!manualRows.length)manualRows.push(blankDetail());dirty=true;renderManual();},true));
+  const more=node('details');more.append(node('summary','Дополнительно'),button('Материал клиента, склейка, упаковка',()=>editRow(index),true));actions.append(more);cell(actions);body.append(tr);
+  if(r._source){const note=node('tr',undefined,'source-note'+(r._errors?.length?' error-note':'')),td=node('td',r._source+(r._errors?.length?' · '+r._errors.map(importIssue).join('; '):''));td.colSpan=13;note.append(td);body.append(note);}
+ });section.append(wrap);
  const old=$('manual-rows');if(old)old.replaceWith(section);else content.append(section);
 }
 function picker(label,kind,release,onPick){const box=node('div'),[l,q]=field(label,'search','search'),results=node('div',undefined,'result-list'),search=button('Найти',async()=>{results.replaceChildren(node('p','Поиск…'));const d=await api('/catalogue/'+kind+'?q='+encodeURIComponent(q.value)+(release?'&release='+encodeURIComponent(release):'')+'&limit=50');results.replaceChildren();if(!d.items.length)results.append(node('p','Совпадений не найдено. Уточните артикул.'));for(const item of d.items)results.append(button(materialLabel(item),async()=>{await onPick(item,d.catalogue_release);results.replaceChildren(node('p','Выбрано: '+materialLabel(item),'selected-material'));},true));if(d.total>50)results.append(node('p','Показаны первые 50 вариантов. Уточните поиск по артикулу.'));},true);box.append(l,search,results);return box;}
@@ -70,21 +164,139 @@ async function editRow(index,source){
  if(r.supply_source==='customer'){r.provided_sheets=Number(f.get('provided_sheets'));r.customer_reason=f.get('customer_reason');if(!Number.isInteger(r.provided_sheets)||r.provided_sheets<1||r.customer_reason.trim().length<3)throw new Error('Укажите количество листов клиента и основание.');if(f.get('custom_name')){r.variant_id=null;r.custom_customer={key:r.custom_customer?.key||crypto.randomUUID(),name:f.get('custom_name'),thickness:f.get('custom_thickness'),length:f.get('custom_length'),width:f.get('custom_width'),reason:r.customer_reason};if(['thickness','length','width'].some(k=>!(Number(r.custom_customer[k])>0)))throw new Error('Укажите толщину и формат собственного материала.');r.materialLabel=r.custom_customer.name+' · материал клиента';}}else{delete r.provided_sheets;delete r.customer_reason;r.custom_customer=null;}
  if(!r.variant_id&&!r.custom_customer)throw new Error('Выберите точный материал. Поисковая строка не является назначением.');for(const s of ['L1','L2','W1','W2'])r.edges[s]={...(r.edges[s]||{edge_id:null}),supply_source:f.get('edge_supply_'+s)};if(index===undefined)manualRows.push(r);else manualRows[index]=r;dirty=true;panel.remove();renderManual();message('Строка изменена локально. Сохраните новую редакцию заказа.');});};panel.append(form);$('row-panel')?.remove();content.append(panel);panel.scrollIntoView({block:'start'});form.querySelector('input').focus();
 }
-async function saveRevision(){
- if(!await confirmAction('Сохранить новую редакцию?','Будет создана отдельная редакция. Предыдущие документы и расчёты останутся неизменными.'))return;
- const details=manualRows.map(({materialLabel,...r})=>r);
+async function saveRevision(refresh=true){
+ const details=[];
+ for(const [i,r]of manualRows.entries()){
+  if(!r.draft_row_id&&!r.variant_id&&!r.custom_customer&&!r.length&&!r.width&&!r.name&&!r.comments)continue;
+  const fail=text=>{document.querySelector('[data-detail-id="'+r.detail_id+'"]')?.classList.add('invalid-row');throw new Error('Строка '+(i+1)+': '+text);};
+  if(!r.variant_id&&!r.custom_customer)fail('выберите материал.');
+  if(!(Number(r.length)>0))fail('укажите длину числом больше нуля.');
+  if(!(Number(r.width)>0))fail('укажите ширину числом больше нуля.');
+  if(!Number.isInteger(r.qty)||r.qty<1)fail('количество должно быть целым и больше нуля.');
+  if(sideNames.some(s=>r.edges[s]?.unresolved))fail('выберите кромку или «Без кромки» для каждой стороны.');
+  const {materialLabel,_source,_errors,...data}=r;
+  data.edges=Object.fromEntries(sideNames.map(s=>[s,{edge_id:r.edges[s]?.edge_id||null,supply_source:r.edges[s]?.supply_source||'company'}]));details.push(data);
+ }
+ if(!details.length)throw new Error('Добавьте хотя бы одну деталь.');
  const r=await api('/orders/'+editorOrder.order_id+'/revisions','POST',{parent_revision_id:editorOrder.active_revision_id,catalogue_release_id:catalogueRelease,reason:'Сохранение деталировки пользователем',comment:revisionComment,details},{'If-Match':String(editorOrder.optimistic_lock_version)});
- editorOrder.active_revision_id=r.revision_id;editorOrder.optimistic_lock_version=r.optimistic_lock_version;dirty=false;await editorView();message('Редакция '+r.revision_number+' сохранена. Можно запросить предварительный расчёт.');
+ editorOrder.active_revision_id=r.revision_id;editorOrder.optimistic_lock_version=r.optimistic_lock_version;dirty=false;for(const row of manualRows)delete row._errors;
+ if(refresh)await editorView();message('Деталировка сохранена.');
 }
+const importFields=[['','Игнорировать колонку'],['position','№'],['name','Название детали'],['material','Материал'],['article','Артикул материала'],['length','Длина'],['width','Ширина'],['qty','Количество'],['L1','L1'],['L2','L2'],['W1','W1'],['W2','W2'],['texture','Текстура'],['rotation','Вращение'],['comments','Примечание'],['manufacturer','Производитель'],['structure','Структура'],['thickness','Толщина'],['format_length','Длина листа'],['format_width','Ширина листа']];
+const importLabels=Object.fromEntries(importFields);
+function excelColumn(n){let out='';for(n++;n>0;n=Math.floor((n-1)/26))out=String.fromCharCode(65+(n-1)%26)+out;return out;}
+function guessField(value){const v=String(value||'').toLowerCase().replace(/[^a-zа-яё0-9]/g,'');
+ if(/длиналиста|formatlength/.test(v))return 'format_length';if(/шириналиста|formatwidth/.test(v))return 'format_width';
+ if(/длина|^length|размерx/.test(v))return 'length';if(/ширина|^width|размерy/.test(v))return 'width';if(/колич|колво|^qty$|^count$/.test(v))return 'qty';
+ if(/артикул/.test(v)||v==='article')return 'article';if(/материал|^material$|^декор$/.test(v))return 'material';if(/наименован|назван|^name$|^деталь$/.test(v))return 'name';
+ if(/текстур|^texture$|^orient$/.test(v))return 'texture';if(/вращ|поворот|^rotation$/.test(v))return 'rotation';if(/примеч|коммент|^comments?$/.test(v))return 'comments';
+ if(/толщ|^thickness$/.test(v))return 'thickness';if(/производ|^manufacturer$/.test(v))return 'manufacturer';if(/структур|^structure$/.test(v))return 'structure';
+ if(/(?:l1|x1)$/.test(v))return 'L1';if(/(?:l2|x2)$/.test(v))return 'L2';if(/(?:w1|y1)$/.test(v))return 'W1';if(/(?:w2|y2)$/.test(v))return 'W2';
+ return ({l1:'L1',x1:'L1',х1:'L1',l2:'L2',x2:'L2',х2:'L2',w1:'W1',y1:'W1',у1:'W1',w2:'W2',y2:'W2',у2:'W2',position:'position',позиция:'position'})[v]||'';
+}
+function importIssue(e){const reason={missing_or_non_numeric:'пустое значение или не число',must_be_positive:'должно быть больше нуля',integer_quantity_required:'нужно целое количество',precision_requires_review_no_rounding:'слишком много знаков после запятой',formula_without_usable_cached_value:'формула без сохранённого результата',excel_error:'ошибка Excel',edge_requires_resolution:'выберите кромку',side_alias_conflict:'противоречивые обозначения стороны'}[e.reason]||'проверьте значение';return (importLabels[e.field]||e.field)+' «'+(e.raw??'пусто')+'»: '+reason;}
+async function filePayload(file){if(file.size>20*1024*1024)throw new Error('Файл превышает 20 МБ.');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return {filename:file.name,content_base64:btoa(binary)};}
 async function importForm(){
- const panel=node('section',undefined,'panel');panel.append(node('h2','Импорт Excel'),node('p','Исходный XLSX хранится приватно. Сначала проверьте лист и заголовки; импорт не отправляет заказ в производство.'));
- const form=node('form'),[fl,file]=field('Файл XLSX','file','file','',true);file.accept='.xlsx';const[sl,sheet]=field('Имя листа','sheet','text','Лист1',true),[tl,templateId]=field('ID сохранённой версии шаблона (если есть)','template');
- const mapping=node('details');mapping.open=true;mapping.append(node('summary','Сопоставление колонок нового шаблона'));
- const mg=node('div',undefined,'grid'),fields=[['length','Длина'],['width','Ширина'],['qty','Количество'],['article','Артикул'],['material','Материал'],['L1','L1'],['L2','L2'],['W1','W1'],['W2','W2'],['texture','Текстура'],['rotation','Вращение']];
- fields.forEach(([k,label],i)=>{const[l,c]=field(label+': буква колонки','col_'+k,'text',String.fromCharCode(65+i));c.maxLength=3;const[hl,h]=field(label+': точный заголовок','header_'+k,'text',label);mg.append(l,hl);});mapping.append(node('p','Укажите фактические заголовки первой строки. Пустая буква исключает необязательное поле. X1/X2/Y1/Y2 сопоставляйте с L1/L2/W1/W2 явно.','muted'),mg);
- const [ul,units]=selectField('Единицы длины и ширины','units',[['mm','мм'],['cm','см'],['m','м']],'mm');form.append(fl,sl,tl,mapping,ul,node('button','Проверить файл'));panel.append(form);content.append(panel);file.focus();
- form.onsubmit=e=>{e.preventDefault();run(async()=>{if(file.files[0].size>20*1024*1024)throw new Error('Файл превышает 20 МБ.');let tid=templateId.value.trim();if(!tid){const headers={},map={};const f=new FormData(form);for(const[k]of fields){const col=String(f.get('col_'+k)).trim().toUpperCase();if(col){if(!/^[A-Z]{1,3}$/.test(col))throw new Error('Колонки задаются буквами A, B, C…');map[k]=col;headers[col]=f.get('header_'+k);}}const t=await api('/import-templates','POST',{name:'Шаблон '+file.files[0].name.slice(0,65),order_id:editorOrder.order_id,definition:{headers,sheet_policy:{mode:'named',header_row:1,sheets:[sheet.value]},mapping:map,inheritance:{enabled:false,blank_resets:true},edge_dictionary:{'0':'none','нет':'none','no':'none','false':'none','-':'none','*':'present','1':'present','':'unknown'},units:{length:units.value,width:units.value}}});tid=t.template_revision_id;templateId.value=tid;}
- const bytes=new Uint8Array(await file.files[0].arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));const r=await api('/imports/preview','POST',{filename:file.files[0].name,content_base64:btoa(binary),order_id:editorOrder.order_id,template_revision_id:tid,selected_sheets:[sheet.value],catalogue_release:catalogueRelease});importId=r.import_id;const result=node('div');result.append(node('h3','Предпросмотр — строки не потеряны'));const rows=r.rows||[];result.append(table(['Лист / строка','Тип','Длина','Ширина','Количество','Ошибки'],rows.map(row=>{const o=row.original||row;return [o.sheet+' / '+o.row,o.disposition,o.values?.length,o.values?.width,o.values?.qty,(o.errors||[]).map(x=>x.field+': '+x.reason).join('; ')];})),node('p','Нулевые количества и другие ошибки сохранены для явного исправления или передачи менеджеру.','notice'));result.append(button('Добавить позиции в черновик',async()=>{if(!await confirmAction('Добавить импорт?', 'Существующие позиции сохранятся. Ошибочные строки не будут автоматически исправлены.'))return;const o=await api('/orders/'+editorOrder.order_id);await api('/imports/'+importId+'/confirm','POST',{mode:'add'},{'If-Match':String(o.optimistic_lock_version)});await editorView();message('Импорт добавлен. Проверьте назначения материала и кромки.');}));panel.append(result);result.scrollIntoView();});};
+ $('import-panel')?.remove();const panel=node('section',undefined,'panel');panel.id='import-panel';panel.append(node('h2','Загрузить Excel'));
+ const [fl,file]=field('Файл Excel','file','file');file.accept='.xlsx,.xls';panel.append(fl);const area=node('div');panel.append(area);content.append(panel);file.focus();
+ let payload=null,book=null,templates=[],activeTemplate=null;
+ file.onchange=()=>run(async()=>{
+  if(!file.files[0])return;payload=await filePayload(file.files[0]);
+  book=await api('/imports/workbook','POST',{...payload,order_id:editorOrder.order_id});
+  templates=(await api('/import-templates?order_id='+editorOrder.order_id)).items;
+  area.replaceChildren();const [sl,sheet]=selectField('Лист Excel','sheet',book.sheets.map(s=>[s.name,s.name]),book.sheets[0].name);
+  const [hl,header]=field('Строка заголовков','header','number',1);header.min=1;header.max=100;
+  const [tl,template]=selectField('Сохранённый шаблон','template',[['','Определить колонки'],...templates.map(t=>[t.template_revision_id,t.name+' · версия '+t.version])]);
+  const grid=node('div'),preview=node('div');preview.id='import-preview';const settings=node('div',undefined,'grid');settings.append(sl,hl,tl);area.append(settings,grid);
+  const [nl,name]=field('Название шаблона','template_name','text',file.files[0].name.replace(/\.[^.]+$/,''));name.maxLength=100;
+  const [ul,units]=selectField('Единицы размеров','units',[['mm','мм'],['cm','см'],['m','м']],'mm');
+  const [el,emptyEdges]=selectField('Пустая ячейка кромки означает','empty_edge',[['none','Без кромки'],['unknown','Нужно уточнение']],'none');
+  const extra=node('details');extra.append(node('summary','Шаблон и единицы'),nl,ul,el);area.append(extra);
+  let controls=new Map(),headers={};
+  function currentSheet(){return book.sheets.find(s=>s.name===sheet.value);}
+  function headerValues(row){return Object.fromEntries(Object.entries(row?.cells||{}).map(([c,v])=>[c,v.value??null]));}
+  function buildMapping(useTemplate=false){
+   preview.replaceChildren();grid.replaceChildren();controls=new Map();
+   const rows=currentSheet().rows,h=rows.find(r=>r.row===Number(header.value));headers=headerValues(h);
+   const cols=[...new Set(rows.flatMap(r=>Object.keys(r.cells)))].sort((a,b)=>a.length-b.length||a.localeCompare(b));
+   if(cols.length>80)throw new Error('В листе больше 80 колонок. Выберите лист с деталировкой.');
+   const t=table(cols.map(c=>c+' · '+(headers[c]??'без заголовка')),rows.filter(r=>r.row>Number(header.value)).slice(0,6).map(r=>cols.map(c=>r.cells[c]?.value??'')));
+   const mappingRow=node('tr'),used=new Set();
+   for(const col of cols){const selected=useTemplate?Object.entries(activeTemplate.definition.mapping).find(([,c])=>c===col)?.[0]||'':guessField(headers[col]);
+    const [l,s]=selectField('Колонка '+col,'column_'+col,importFields,used.has(selected)?'':selected);if(s.value)used.add(s.value);s.onchange=()=>{preview.replaceChildren();};controls.set(col,s);const th=node('th');th.append(l);mappingRow.append(th);
+   }t.querySelector('thead').append(mappingRow);grid.append(node('p','Выберите назначение колонок. Ниже — первые строки вашего файла.','muted'),t);
+  }
+  function selectSheet(){
+   const rows=currentSheet().rows;
+   const best=[...rows].sort((a,b)=>Object.values(b.cells).filter(c=>['length','width','qty'].includes(guessField(c.value))).length-Object.values(a.cells).filter(c=>['length','width','qty'].includes(guessField(c.value))).length)[0];header.value=best?.row||1;
+   const match=templates.find(t=>{const d=t.definition;const row=rows.find(r=>r.row===d.sheet_policy.header_row);return d.sheet_policy.sheets?.includes(sheet.value)&&Object.entries(d.headers).every(([c,v])=>(row?.cells[c]?.value??null)===v);});
+   activeTemplate=match||null;template.value=match?.template_revision_id||'';
+   if(match){header.value=match.definition.sheet_policy.header_row;name.value=match.name;units.value=match.definition.units.length||'mm';emptyEdges.value=match.definition.edge_dictionary['']||'unknown';}
+   buildMapping(!!match);
+  }
+  sheet.onchange=selectSheet;header.onchange=()=>{activeTemplate=null;template.value='';buildMapping();};template.onchange=()=>{activeTemplate=templates.find(t=>t.template_revision_id===template.value)||null;if(activeTemplate){header.value=activeTemplate.definition.sheet_policy.header_row;name.value=activeTemplate.name;units.value=activeTemplate.definition.units.length||'mm';emptyEdges.value=activeTemplate.definition.edge_dictionary['']||'unknown';}buildMapping(!!activeTemplate);};
+  for(const x of [name,units,emptyEdges])x.addEventListener('change',()=>preview.replaceChildren());
+  area.append(button('Проверить деталировку',async()=>{
+   const mapping={},expected={};for(const [col,s]of controls){if(!s.value)continue;if(mapping[s.value])throw new Error('Поле «'+importLabels[s.value]+'» назначено дважды.');mapping[s.value]=col;expected[col]=headers[col]??null;}
+   for(const k of ['length','width','qty'])if(!mapping[k])throw new Error('Выберите колонку «'+importLabels[k]+'».');
+   if(!mapping.article&&!mapping.material)throw new Error('Выберите колонку «Материал» или «Артикул материала».');
+   const definition={headers:expected,sheet_policy:{mode:'named',header_row:Number(header.value),sheets:[sheet.value]},mapping,inheritance:activeTemplate?.definition.inheritance||{enabled:false,blank_resets:true},edge_dictionary:{'0':'none','нет':'none','no':'none','false':'none','-':'none','*':'present','1':'present','':emptyEdges.value},units:{length:units.value,width:units.value}};
+   const clean=d=>Object.fromEntries(Object.entries(d).filter(([k])=>k!=='revision_name'));
+   const stable=v=>JSON.stringify(v,(_,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.entries(x).sort(([a],[b])=>a.localeCompare(b))):x);
+   const same=activeTemplate&&stable(clean(activeTemplate.definition))===stable(definition);
+   // Reuse the existing owner-scoped, versioned template API. No local-only template store.
+   const saved=same?activeTemplate:await api(activeTemplate?'/import-templates/'+activeTemplate.template_id+'/revisions':'/import-templates','POST',{name:name.value.trim()||'Мой Excel',order_id:editorOrder.order_id,definition});
+   if(!same){activeTemplate={...saved,name:name.value,definition};templates.unshift(activeTemplate);const o=node('option',name.value+' · версия '+saved.version);o.value=saved.template_revision_id;template.prepend(o);template.value=o.value;}
+   const result=await api('/imports/preview','POST',{...payload,order_id:editorOrder.order_id,template_revision_id:saved.template_revision_id,selected_sheets:[sheet.value],catalogue_release:catalogueRelease});
+   importId=result.import_id;preview.replaceChildren(node('h3','Проверьте деталировку перед импортом'));const rows=result.rows.filter(r=>['valid','problematic'].includes(r.original.disposition));
+   const selections=new Map(),edgeSelections=new Map();
+   const t=table(['Строка Excel','Материал из Excel','Выбранный материал / формат','Название','Длина','Ширина','Количество','Текстура','L1','L2','W1','W2','Примечание','Проверка'],rows.map(r=>{const v=r.original.values;return [r.original.row,v.article||v.material||'','',''+(v.name||''),v.length,v.width,v.qty,grainNames[v.texture]||'Уточнить','','','','',v.comments||'',(r.original.errors||[]).filter(e=>!sideNames.includes(e.field)).map(importIssue).join('; ')||''];}));
+   t.querySelectorAll('tbody tr').forEach((tr,i)=>{
+    const r=rows[i],res=r.resolution||{},candidates=catalogueMaterials.filter(m=>(res.candidates||[]).includes(m.variant_id));
+    const chosen=res.selected?.variant_id||(candidates.length===1?candidates[0].variant_id:'');
+    const pick={...blankDetail(),variant_id:chosen,materialLabel:materialLabel(catalogueMaterials.find(m=>m.variant_id===chosen))},picker=catalogSelect(pick,r.original.row-1),s=picker.querySelector('select');s.setAttribute('aria-label','Материал в строке '+r.original.row);tr.children[2].append(picker);selections.set(r.row_id,s);
+    const state=node('p',chosen?'Проверьте выбранный вариант':'Материал «'+(r.original.values.article||r.original.values.material||'пусто')+'» не определён. Выберите из списка.','muted');tr.children[2].append(state);
+    const sides={};for(const [j,side]of sideNames.entries()){
+     const e=r.original.edges[side],exact=catalogueEdges.filter(x=>String(x.article||'').trim()===String(e.raw_sku??'').trim());
+     const picked=e.mark==='none'?'':exact.length===1?exact[0].edge_id:'?';
+     const chooser=edgeChooser({edge_id:picked&&picked!=='?'?picked:null,unresolved:picked==='?'},side+' в строке '+r.original.row,()=>{});tr.children[8+j].append(chooser.box);sides[side]=chooser.select;
+    }edgeSelections.set(r.row_id,sides);
+   });preview.append(t,node('p','Импорт подтверждает показанные материалы и кромки. Строки с ошибками останутся в таблице для исправления.','muted'));
+   const confirm=button('Импортировать деталировку',async()=>{
+    if(!rows.length)throw new Error('На выбранном листе нет деталей. Проверьте строку заголовков.');
+    for(const r of rows){const selected=selections.get(r.row_id).value;if(selected&&selected!==r.resolution?.selected?.variant_id)await api('/imports/'+result.import_id+'/rows/'+r.row_id+'/resolution','POST',{variant_id:selected,reason:'Пользователь подтвердил материал в предпросмотре Excel'});}
+    const fresh=await api('/orders/'+editorOrder.order_id);await api('/imports/'+result.import_id+'/confirm','POST',{mode:'add'},{'If-Match':String(fresh.optimistic_lock_version)});
+    const draft=await api('/orders/'+editorOrder.order_id+'/draft/rows');let version=draft.optimistic_lock_version;
+    const added=draft.rows.filter(d=>rows.some(r=>r.row_id===d.source_row_id)).sort((a,b)=>rows.findIndex(r=>r.row_id===a.source_row_id)-rows.findIndex(r=>r.row_id===b.source_row_id));
+    for(const d of added){const sides=edgeSelections.get(d.source_row_id);for(const side of sideNames){const chosen=sides[side].value;if(chosen==='?')continue;const e=d.snapshot.edges[side];if(chosen===''&&e.mark==='none')continue;const updated=await api('/orders/'+editorOrder.order_id+'/draft/rows/'+d.draft_row_id+'/edges','POST',{side,action:'manual',edge_id:chosen||null,reason:'Пользователь подтвердил кромку в предпросмотре Excel'},{'If-Match':String(version)});version=updated.optimistic_lock_version;d.snapshot=updated.snapshot;}}
+    editorOrder.optimistic_lock_version=version;
+    manualRows=manualRows.filter(r=>r.draft_row_id||r.variant_id||r.custom_customer||r.length||r.width||r.name||r.comments);
+    for(const d of added)if(!manualRows.some(r=>r.draft_row_id===d.draft_row_id))manualRows.push(fromImported(d));
+    dirty=true;await editorView();message('Деталировка импортирована. Проверьте строки и нажмите «Предварительный расчёт».');
+   });preview.append(confirm);
+  }),preview);selectSheet();
+ });
+}
+async function showCalculation(id){
+ const c=await api('/calculations/'+id+'/preview');heading('Предварительный расчёт',editorOrder.business_name);
+ content.append(node('p',c.status_label),node('p','Заявка ещё не отправлена менеджеру.','muted'));
+ const actions=node('div',undefined,'actions');content.append(actions);
+ actions.append(button('К деталировке',editorView,true));
+ const doc=await api('/calculations/'+id+'/documents/preliminary','POST',{});
+ const view=link('Посмотреть PDF','/api/v2/documents/'+doc.file_id+'?inline=true','button secondary');view.target='_blank';view.rel='noopener';
+ const download=link('Скачать PDF','/api/v2/documents/'+doc.file_id,'button');download.download='';actions.append(view,download);
+ if(c.synthetic)content.append(node('p','Тестовый расчёт с условными ценами.','notice'));
+ content.append(node('h2','Деталировка'),table(['№','Название / материал','Д × Ш, мм','Количество','Текстура','L1','L2','W1','W2','Примечание'],c.details.map(d=>[d.number,[d.name,materialLabel(d.material)].filter(Boolean).join(' · '),d.length+' × '+d.width,d.qty,grainNames[d.grain],...sideNames.map(s=>d.unresolved_edges.includes(s)?'Уточняется':edgeLabel(d.edges[s])),d.comments])));
+ content.append(node('h2','Материалы'),table(['Материал / формат','Листов','Цена, BYN','Сумма, BYN'],c.materials.map(m=>[materialLabel(m),m.quantity,m.unit_price,m.amount])));
+ if(c.edges.length)content.append(node('h2','Кромка'),table(['Кромка','Метраж, м','Цена, BYN','Сумма, BYN'],c.edges.map(e=>[edgeLabel(e),e.billable_metres??e.net_metres,e.unit_price,e.amount])));
+ content.append(node('h2','Услуги'),table(['Услуга','Объём','Тариф, BYN','Сумма, BYN'],c.services.map(s=>[s.name,s.quantity,s.unit_price,s.amount])),node('h2','Скидки'),table(['Категория','До скидки','Скидка, %','После скидки'],c.discounts.map(d=>[d.name,d.gross,d.percent,d.net])),node('h2',c.amount_label),node('p',c.amount===null?'Уточняется':c.amount+' BYN','amount'));
+ if(c.unresolved.length){const ul=node('ul');c.unresolved.forEach(t=>ul.append(node('li',t)));content.append(ul);}content.append(node('p',c.disclaimer,'muted'));
+ if(editorOrder.workflow_status==='draft'){
+  const [cl,comment]=field('Комментарий менеджеру (необязательно)','comment','textarea');content.append(cl);let check=null;
+  if(c.state!=='complete'){const l=node('label','Передать менеджеру для проверки позиций, требующих уточнения');check=node('input');check.type='checkbox';l.prepend(check);content.append(l);}
+  const key=crypto.randomUUID();content.append(button('Отправить заявку',async()=>{const fresh=await api('/orders/'+editorOrder.order_id);await api('/orders/'+editorOrder.order_id+'/submit','POST',{revision_id:editorOrder.active_revision_id,preliminary_calculation_id:id,comment:comment.value,handoff_problematic:check?.checked||false},{'If-Match':String(fresh.optimistic_lock_version),'Idempotency-Key':key});await openEditor(editorOrder.order_id);message('Заявка передана менеджеру.');}));
+ }
+ message('Предварительный расчёт создан. PDF доступен для просмотра и скачивания.');
 }
 function renderImported(rows){
  const t=table(['Строка','Материал / статус','Д × Ш, мм','Количество','Ошибки / исключение','Действия'],rows.map(r=>{const s=r.snapshot,v=s.values||{},res=s.resolution||{};return[v.position??s.row,materialLabel(res.selected)+' / '+({exact_match:'Точное совпадение',manual_override:'Выбрано вручную',confirmed_mapping:'Подтверждено',ambiguous:'Нужно уточнение',not_found:'Не найдено',custom_customer:'Материал клиента'}[res.status]||'Требует проверки'),value(v.length)+' × '+value(v.width),v.qty,r.excluded_reason||((s.errors||[]).map(e=>e.field+': '+e.reason).join('; ')||'Нет ошибок исходных значений'),''];}));
