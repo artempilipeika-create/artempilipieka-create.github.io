@@ -60,12 +60,18 @@ const MFEntry=(()=>{
   return materials.map((m,i)=>({m,i,score:score(m)})).filter(x=>x.score).sort((a,b)=>b.score-a.score||a.i-b.i).map(x=>x.m);
  }
  function materialSignature(m){return key([m.manufacturer,m.article,m.name,m.raw_description,m.structure,m.thickness,m.length,m.width].join('|'));}
- function exactMaterial(materials,articleText,descriptionText){
+ function exactMaterial(materials,articleText,descriptionText,facts={}){
   const unique=rows=>{if(!rows.length)return null;const sig=new Set(rows.map(materialSignature));return sig.size===1?rows[0]:null;};
-  const direct=key(articleText);if(direct)return unique(materials.filter(m=>key(m.article)===direct));
+  const filterFacts=rows=>rows.filter(m=>{
+   for(const [field,raw]of [['thickness',facts.thickness],['length',facts.format_length],['width',facts.format_width]]){const n=num(raw);if(n!==null&&num(m[field])!==n)return false;}
+   for(const [field,raw]of [['manufacturer',facts.manufacturer],['structure',facts.structure]])if(key(raw)&&key(m[field])!==key(raw))return false;
+   return true;
+  });
+  const byDescription=rows=>{const q=String(descriptionText||'').trim();if(!q)return null;const ranked=materialMatches(rows,q);return ranked.length===1?ranked[0]:null;};
+  const direct=key(articleText);if(direct){const rows=filterFacts(materials.filter(m=>key(m.article)===direct));return unique(rows)||byDescription(rows);}
   const hay=key(descriptionText);if(!hay)return null;let longest=0;const groups=new Map();
-  for(const m of materials){const a=key(m.article);if(a.length<4||!hay.includes(a))continue;if(a.length>longest){longest=a.length;groups.clear();}if(a.length===longest){if(!groups.has(a))groups.set(a,[]);groups.get(a).push(m);}}
-  return groups.size===1?unique([...groups.values()][0]):null;
+  for(const m of filterFacts(materials)){const a=key(m.article);if(a.length<4||!hay.includes(a))continue;if(a.length>longest){longest=a.length;groups.clear();}if(a.length===longest){if(!groups.has(a))groups.set(a,[]);groups.get(a).push(m);}}
+  if(groups.size!==1)return null;const rows=[...groups.values()][0];return unique(rows)||byDescription(rows);
  }
  const legacyPairs=typeof window!=='undefined'&&Array.isArray(window.MF_V9_EDGE_PAIRS)?window.MF_V9_EDGE_PAIRS:[];
  function legacyMaterialScore(material,p){
