@@ -340,7 +340,7 @@ def test_v9_pair_restores_auto_edge_for_621_pe_manual_and_excel(page,api,setting
     expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
 
     page.get_by_role('button',name='Загрузить Excel',exact=True).click()
-    data=xlsx({'Детали':[['Наименование','Артикул','Длина','Ширина','Количество','L1','L2','W1','W2'],['V9 Excel','621 PE',600,400,1,1,0,0,0]]})
+    data=xlsx({'Детали':[['Наименование','Артикул','Материал','Длина','Ширина','Количество','L1','L2','W1','W2'],['V9 Excel','621 PE','Другой декор',600,400,1,1,0,0,0]]})
     page.get_by_label('Файл Excel',exact=True).set_input_files({'name':'v9-621-pe.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
     preview=page.locator('#import-preview')
     expect(preview).to_contain_text('✓ Материал найден автоматически')
