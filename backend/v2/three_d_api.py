@@ -1,6 +1,7 @@
 """Authenticated user-owned 3D furniture projects. No production side effects."""
 from typing import Literal
 from uuid import UUID,uuid4
+import hashlib,secrets
 from pydantic import Field
 from fastapi import APIRouter,Request
 from psycopg.types.json import Jsonb
@@ -112,6 +113,42 @@ def router(settings):
                 VALUES(%s,%s,%s,%s,%s) RETURNING *''',(pid,user['user_id'],name,source['module_type'],Jsonb(source['scene']))).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.duplicated',object_type='3d_project',object_id=pid,reason='User duplicated 3D project')
             return projection(row)
+
+    @api.post('/3d-projects/{project_id}/shares',status_code=201)
+    def create_share(project_id:UUID,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');own(conn,user,project_id)
+            token=secrets.token_urlsafe(32);digest=hashlib.sha256(token.encode()).hexdigest();sid=uuid4()
+            conn.execute('INSERT INTO mf_3d_project_shares(share_id,project_id,token_hash,created_by) VALUES(%s,%s,%s,%s)',
+                         (sid,project_id,digest,user['user_id']))
+            record_event(conn,settings,actor=user['user_id'],action='3d.project.share.created',object_type='3d_project',object_id=project_id,reason='User created read-only 3D share')
+            return {'share_id':sid,'url':'/3d-view?token='+token}
+
+    @api.get('/3d-projects/{project_id}/shares')
+    def list_shares(project_id:UUID,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');own(conn,user,project_id)
+            return {'items':conn.execute('SELECT share_id,created_at,revoked_at FROM mf_3d_project_shares WHERE project_id=%s ORDER BY created_at DESC',(project_id,)).fetchall()}
+
+    @api.delete('/3d-projects/{project_id}/shares/{share_id}',status_code=204)
+    def revoke_share(project_id:UUID,share_id:UUID,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');own(conn,user,project_id)
+            row=conn.execute('SELECT share_id FROM mf_3d_project_shares WHERE share_id=%s AND project_id=%s AND revoked_at IS NULL FOR UPDATE',(share_id,project_id)).fetchone()
+            if not row: error(404,'PROJECT_3D_SHARE_NOT_FOUND')
+            conn.execute('UPDATE mf_3d_project_shares SET revoked_at=now() WHERE share_id=%s',(share_id,))
+            record_event(conn,settings,actor=user['user_id'],action='3d.project.share.revoked',object_type='3d_project',object_id=project_id,reason='User revoked read-only 3D share')
+
+    @api.get('/3d-shares/{token}')
+    def public_share(token:str):
+        if len(token)<32 or len(token)>100: error(404,'PROJECT_3D_SHARE_NOT_FOUND')
+        digest=hashlib.sha256(token.encode()).hexdigest()
+        with transaction(settings) as conn:
+            row=conn.execute('''SELECT p.name,p.scene,p.version,p.updated_at FROM mf_3d_project_shares s
+                JOIN mf_3d_projects p ON p.project_id=s.project_id
+                WHERE s.token_hash=%s AND s.revoked_at IS NULL AND p.archived_at IS NULL''',(digest,)).fetchone()
+            if not row: error(404,'PROJECT_3D_SHARE_NOT_FOUND')
+            return {'name':row['name'],'scene':row['scene'],'version':row['version'],'updated_at':row['updated_at'],'read_only':True}
 
     @api.delete('/3d-projects/{project_id}',status_code=204)
     def archive_project(project_id:UUID,request:Request):
