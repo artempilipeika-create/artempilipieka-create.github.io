@@ -320,12 +320,32 @@ def searchable_catalogue_order(api):
         ['621 PE','Другой декор','кв.м',10,2440,1220,18,'PE','','M1','false',''],
         ['AUTO-22-1','Кромка синтетическая','м',1,0,22,1,'Для QA621 РО / 777 PE','','M2','false',''],
         ['AUTO-22-04','Кромка тонкая','м',1,0,22,.4,'QA621 PO','','M2','false',''],
+        ['100858','Кромка v9 без артикула материала в описании','м',1,0,22,.8,'Нейтральная кромка','','M2','false',''],
         ['WRONG-POX','Не подходит','м',1,0,22,1,'QA621 POX','','M2','false','']]),namespace='test.visible.autopick')
     email=uuid4().hex+'@example.invalid'
     post(api,'/auth/register',{'email':email,'password':PASSWORD},status=201)
     o=order(api,'self_prepared')
     edges=api.get('/api/v2/catalogue/edges',params={'release':release}).json()['items']
     return o,email,{e['article']:e['edge_id'] for e in edges}
+
+
+def test_v9_pair_restores_auto_edge_for_621_pe_manual_and_excel(page,api,settings,admin_user):
+    from tests.stage03.support import xlsx
+    o,email,edges=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/editor?order='+o['order_id'])
+    search=page.get_by_label('Поиск материала 1',exact=True);search.fill('621 PE')
+    page.locator('.material-suggestions button').first.click()
+    expect(page.get_by_label('Кромка AUTO материала 1',exact=True)).to_have_value(edges['100858'])
+    page.get_by_label('Оклеить L1 деталь 1',exact=True).check()
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    data=xlsx({'Детали':[['Наименование','Артикул','Длина','Ширина','Количество','L1','L2','W1','W2'],['V9 Excel','621 PE',600,400,1,1,0,0,0]]})
+    page.get_by_label('Файл Excel',exact=True).set_input_files({'name':'v9-621-pe.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
+    preview=page.locator('#import-preview')
+    expect(preview).to_contain_text('✓ Материал найден автоматически')
+    expect(preview.get_by_label('Кромка AUTO материала 1',exact=True)).to_have_value(edges['100858'])
+    expect(page.get_by_label('L1 в строке 2',exact=True)).to_have_value('__auto__')
 
 
 def fill_own_material(page):
