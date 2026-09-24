@@ -429,6 +429,8 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     expect(page.locator('body')).to_have_attribute('data-ready','true')
     page.locator('#project-name').fill('Кухня и шкаф 3D')
     page.locator('#room-width').fill('5200');page.locator('#room-depth').fill('3600');page.locator('#room-height').fill('2800')
+    page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
+    page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
     page.locator('[data-module="base_cabinet"]').click()
     page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
     page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
