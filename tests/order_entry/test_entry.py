@@ -94,3 +94,18 @@ def test_manager_source_without_mapping_optional_comment_and_scope(api,settings,
     assert api.get(saved['download_url']).status_code==403
     assert api.get('/api/v2/orders/'+o['order_id']+'/sources').status_code==403
     assert api.post('/api/v2/orders/'+o['order_id']+'/source',json=payload(data,'other.xls')).status_code==403
+
+def test_3d_project_persistence_copy_and_owner_scope(api,settings,admin_user):
+    _,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    body={'name':'Комод гостиная','scene':{'module_type':'chest','width':1200,'height':900,'depth':450,'layout':'combo','drawers':3,'base':'plinth','handles':'handles','body_variant_id':None,'front_variant_id':None,'view_mode':'3d'}}
+    created=post(api,'/3d-projects',body,status=201)
+    assert created['name']=='Комод гостиная' and created['version']==1
+    listed=api.get('/api/v2/3d-projects').json()['items']
+    assert any(x['project_id']==created['project_id'] for x in listed)
+    updated=api.patch('/api/v2/3d-projects/'+created['project_id'],json={**body,'name':'Комод вариант 2','version':1})
+    assert updated.status_code==200 and updated.json()['version']==2
+    assert api.patch('/api/v2/3d-projects/'+created['project_id'],json={**body,'version':1}).status_code==409
+    copied=post(api,'/3d-projects/'+created['project_id']+'/duplicate',{},status=201)
+    assert copied['project_id']!=created['project_id'] and 'копия' in copied['name']
+    post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
+    assert api.get('/api/v2/3d-projects/'+created['project_id']).status_code==404
