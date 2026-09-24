@@ -91,7 +91,7 @@ def render(data, template_version=VERSION):
     if data['materials']:
         rows=[]
         for m in data['materials']:
-            first=' · '.join(v for v in (str(m.get('article') or ''),short(m.get('name'),64)) if v)
+            first=' · '.join(v for v in (str(m.get('article') or ''),str(m.get('name') or '')) if v)
             second=' · '.join(v for v in (short(m.get('manufacturer'),36),str(m.get('structure') or '')) if v)
             identity='\n'.join(v for v in (first,second) if v)
             dims=' · '.join([str(m['thickness'])+' мм' if m['thickness'] else '',str(m['length'])+' × '+str(m['width'])+' мм' if m['length'] and m['width'] else '']).strip(' ·')
