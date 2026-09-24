@@ -423,6 +423,35 @@ def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin
     screenshot(page,'3d-transfer-to-order')
 
 
+def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_user):
+    o,email,edges=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/constructor.html')
+    expect(page.locator('body')).to_have_attribute('data-ready','true')
+    page.locator('#project-name').fill('Кухня и шкаф 3D')
+    page.locator('#room-width').fill('5200');page.locator('#room-depth').fill('3600');page.locator('#room-height').fill('2800')
+    page.locator('[data-module="base_cabinet"]').click()
+    page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
+    page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
+    page.locator('#pos-x').fill('-700');page.locator('#pos-z').fill('-1200')
+    page.locator('[data-module="wall_cabinet"]').click()
+    page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
+    page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
+    page.locator('#pos-x').fill('0');page.locator('#pos-z').fill('-1200')
+    page.locator('[data-module="wardrobe"]').click()
+    page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
+    page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
+    page.locator('#pos-x').fill('900');page.locator('#rotation').select_option('90')
+    expect(page.locator('#scene-items .mf3d-project')).to_have_count(4)
+    page.get_by_role('button',name='2D',exact=True).click();expect(page.locator('#scene-help')).to_contain_text('план помещения')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#status')).to_contain_text('сохранён')
+    page.get_by_role('button',name='Перенести в заказ',exact=True).click()
+    page.wait_for_url('**/editor?order=*')
+    expect(page.locator('#manual-rows tr[data-detail-id]')).to_have_count(17)
+    expect(page.locator('main')).to_contain_text('Кухня · нижний')
+    expect(page.locator('main')).to_contain_text('Кухня · верхний')
+    expect(page.locator('main')).to_contain_text('Шкаф')
+
+
 def fill_own_material(page):
     dialog=page.get_by_role('dialog',name='Свой материал',exact=True)
     for label,value in [('Артикул / свой код','MY-BOARD'),('Название своего материала','Мой дуб'),('Производитель (необязательно)','Мастерская'),
