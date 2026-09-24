@@ -147,7 +147,7 @@ const MFEntry=(()=>{
     const backing=finished===a?b:a,binfo=glueBackingFromRow(backing);if(!binfo)continue;
     finished.route='glued_18_18';finished.glue_backing=binfo;finished._glueAuto=true;finished._glueSourceRows=[a._sourceRow,b._sourceRow].filter(Boolean);consumed.add(backing);paired=true;
    }
-   if(!paired)for(const r of group)if(glueHint({_sourceGlueText:r._sourceGlueText}))r.route='glued_18_18';
+   if(!paired)for(const r of group)if(glueHint({_sourceGlueText:r._sourceGlueText})){r.route='glued_18_18';if(r.glue_backing===undefined)r.glue_backing=null;}
   }
   return result.filter(r=>!consumed.has(r));
  }
