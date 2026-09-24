@@ -400,6 +400,7 @@ def test_excel_glue_pair_becomes_one_36mm_detail_with_different_backing(page,api
 def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin_user):
     o,email,_=searchable_catalogue_order(api);login_ui(page,email)
     page.goto('https://testserver/constructor.html')
+    expect(page.locator('body')).to_have_attribute('data-ready','true')
     expect(page.locator('#project-name')).to_be_visible()
     page.locator('#project-name').fill('Комод из 3D')
     page.locator('#width').fill('1200');page.locator('#height').fill('900');page.locator('#depth').fill('500')
