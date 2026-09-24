@@ -26,6 +26,22 @@ class EdgeInput(StrictModel):
     supply_source: Literal['company','customer']='company'
     selection_mode: Literal['manual','auto']='manual'
 
+class GlueBacking(StrictModel):
+    draft_row_id: UUID | None=None
+    resolution_reason: Reason | None=None
+    variant_id: UUID | None=None
+    custom_customer: CustomerMaterial | None=None
+    supply_source: Literal['company','customer']='company'
+    provided_sheets: int | None=Field(default=None,strict=True,ge=1,le=10000)
+    customer_reason: Reason | None=None
+    @model_validator(mode='after')
+    def backing_contract(self):
+        if self.custom_customer and (self.variant_id or self.supply_source!='customer'): raise ValueError('Explicit backing customer ownership required')
+        if self.supply_source=='customer' and (not self.provided_sheets or not self.customer_reason): raise ValueError('Backing customer parameters required')
+        if self.draft_row_id and not self.resolution_reason: raise ValueError('Raw backing row correction needs a reason')
+        if not self.variant_id and not self.custom_customer: raise ValueError('Backing material required')
+        return self
+
 class Detail(StrictModel):
     detail_id: str=Field(min_length=1,max_length=100)
     name: str=Field(default='',max_length=200)
@@ -43,6 +59,7 @@ class Detail(StrictModel):
     rotation: bool=Field(default=False,strict=True)
     grain: Literal['none','length','width','unknown']='unknown'
     route: Literal['solid','glued_18_18']='solid'
+    glue_backing: GlueBacking | None=None
     packaging: bool=Field(default=False,strict=True)
     edges: dict[Literal['L1','L2','W1','W2'],EdgeInput]=Field(default_factory=dict)
     @model_validator(mode='after')
@@ -50,6 +67,7 @@ class Detail(StrictModel):
         if self.custom_customer and (self.variant_id or self.supply_source!='customer'): raise ValueError('Explicit customer ownership required')
         if self.supply_source=='customer' and (not self.provided_sheets or not self.customer_reason): raise ValueError('Customer parameters required')
         if self.draft_row_id and not self.resolution_reason: raise ValueError('Raw row correction needs a reason')
+        if self.glue_backing and self.route!='glued_18_18': raise ValueError('Backing requires glued route')
         return self
 
 class RevisionRequest(StrictModel):
