@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#153d2d">
+<title>3D-конструктор | Martin Forest</title>
+<link rel="stylesheet" href="/account/app.css"><link rel="stylesheet" href="/account/3d.css"><link rel="icon" href="/ui/favicon.svg">
+<script defer src="/account/3d.js"></script></head>
+<body class="mf-3d-page">
+<header class="mf3d-top"><a class="mf3d-brand" href="/">Martin Forest<small>3D-КОНСТРУКТОР</small></a>
+<div class="mf3d-top-actions"><a href="/account">Личный кабинет</a><button id="save-project">Сохранить</button><button id="to-order">Перенести в заказ</button></div></header>
+<main class="mf3d-shell">
+<aside class="mf3d-left">
+ <section><div class="mf3d-section-head"><h2>Проекты</h2><button id="new-project" class="secondary">+ Новый</button></div><div id="projects" class="mf3d-projects"></div></section>
+ <section><h2>Каталог модулей</h2><button class="mf3d-module active" data-module="chest"><strong>Комод</strong><span>Ящики, двери, ниша</span></button>
+ <p class="muted">Каталог построен модульно: следующие типы мебели добавляются сюда без изменения редактора заказа.</p></section>
+</aside>
+<section class="mf3d-stage">
+ <div class="mf3d-stagebar"><input id="project-name" value="Новый 3D-проект" maxlength="200" aria-label="Название 3D-проекта">
+ <div class="mf3d-segment"><button id="mode-2d" class="secondary">2D</button><button id="mode-3d">3D</button></div>
+ <button id="reset-view" class="secondary">Вид спереди</button></div>
+ <div class="mf3d-canvas-wrap"><canvas id="scene" aria-label="3D-визуализация мебели"></canvas><div class="mf3d-overlay"><span id="dims-badge">1000×850×450</span><span id="layout-badge">ящики + двери</span></div>
+ <div class="mf3d-help" id="scene-help">Мышь — вращение · колесо — масштаб</div></div>
+ <details class="mf3d-cutlist"><summary>Предварительная деталировка</summary><div id="cutlist"></div><p class="muted">Перед производством деталировка проходит обычную проверку в редакторе заказа.</p></details>
+</section>
+<aside class="mf3d-right">
+ <h2>Параметры</h2>
+ <div class="mf3d-grid">
+  <label>Ширина, мм<input id="width" type="number" min="400" max="3000" step="10" value="1000"></label>
+  <label>Высота, мм<input id="height" type="number" min="400" max="2400" step="10" value="850"></label>
+  <label>Глубина, мм<input id="depth" type="number" min="250" max="900" step="10" value="450"></label>
+ </div>
+ <label>Компоновка<select id="layout"><option value="drawers">Только ящики</option><option value="doors">Только двери</option><option value="combo" selected>Ящики + двери</option><option value="niche">Ящики + открытая ниша</option></select></label>
+ <label>Количество ящиков<select id="drawers"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label>
+ <label>Основание<select id="base"><option value="plinth" selected>Цоколь</option><option value="legs">Ножки</option><option value="wall">Подвесной</option></select></label>
+ <label>Фасады<select id="handles"><option value="handles" selected>С ручками</option><option value="handleless">Без ручек</option></select></label>
+ <section class="mf3d-material"><h3>Корпус</h3><input id="body-search" type="search" placeholder="Артикул или название"><div id="body-results" class="mf3d-results"></div><p id="body-selected" class="muted">Материал не выбран</p></section>
+ <section class="mf3d-material"><h3>Фасады</h3><input id="front-search" type="search" placeholder="Артикул или название"><div id="front-results" class="mf3d-results"></div><p id="front-selected" class="muted">Материал не выбран</p></section>
+ <div class="mf3d-side-actions"><button id="duplicate-project" class="secondary">Создать копию</button><button id="delete-project" class="secondary">Удалить проект</button></div>
+ <p id="status" class="mf3d-status" role="status"></p>
+</aside>
+</main></body></html>
