@@ -153,7 +153,7 @@ function renderExcelPreview(preview,result,version,currentVersion){
   const ids=new Map(rows.map((r,i)=>[r.row_id,i])),added=draft.rows.filter(d=>ids.has(d.source_row_id)&&!d.excluded_reason).sort((a,b)=>ids.get(a.source_row_id)-ids.get(b.source_row_id));
   manualRows=manualRows.filter(r=>r.draft_row_id||r.variant_id||r.custom_customer||r.length||r.width||r.name||r.comments);
   for(const d of added)if(!manualRows.some(r=>r.draft_row_id===d.draft_row_id||r.glue_backing?.draft_row_id===d.draft_row_id))manualRows.push(fromImported(d));
-  manualRows=MFEntry.recognizeGlueRows(manualRows);
+  manualRows=MFEntry.recognizeGlueRows(manualRows,catalogueMaterials);
   dirty=true;await editorView();message('Импортировано '+added.length+' исходных позиций. Материалы и кромки сгруппированы; пары 18+18 показаны как готовые детали 36 мм.');
  }));
 }
