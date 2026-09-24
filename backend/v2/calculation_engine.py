@@ -64,7 +64,7 @@ def calculate(inputs):
             backing_key=add_material_part(back_material,back_supply,back_key,back_sheets,ident+':backing',bl,bw,q)
             basis='one_blank_area'
             recipes.append(plain({'version':'glued_18_18-v2','finished_detail_id':ident,'finished_length':l,'finished_width':w,'finished_qty':q,
-                'finished_thickness':settings['glued_finished_thickness_mm'],'blank_length':bl,'blank_width':bw,'front_qty':q,'backing_qty':q,'child_qty':q*settings['glue_layers'],
+                'finished_thickness':settings['glued_finished_thickness_mm'],'blank_length':bl,'blank_width':bw,'front_qty':q,'backing_qty':q,'child_qty':q*settings['glue_layers'],'child_blank_id':ident+':blank',
                 'front_material_key':front_key,'backing_material_key':backing_key,'same_material':front_key==backing_key and supply==back_supply,
                 'operations':['blank_nesting','glue','glued_finish_cut','edge_processing','packaging'],'glue_area_basis':basis}))
             service('glue',bl*bw*q/1000000,'m2',detail_id=ident,basis='one_blank_area')
