@@ -1,0 +1,25 @@
+ .github/workflows/staging-foundation.yml          |   4 +-
+ backend/v2/app.py                                 |  10 +-
+ backend/v2/attachment_api.py                      | 126 ++++++++++++++
+ backend/v2/attachment_content.py                  | 106 +++++++++++
+ backend/v2/cabinet_assets/app.css                 |   2 +
+ backend/v2/cabinet_assets/app.js                  |   3 +-
+ backend/v2/cabinet_assets/attachments.js          |  30 ++++
+ backend/v2/cabinet_assets/index.html              |   2 +-
+ backend/v2/cabinet_assets/workspace.js            |   3 +-
+ backend/v2/cabinet_ui.py                          |   2 +
+ backend/v2/domain_api.py                          |   5 +-
+ backend/v2/files.py                               |  11 +-
+ backend/v2/migrations/0007_manual_attachments.sql |  40 +++++
+ backend/v2/rbac.py                                |  10 +-
+ backend/v2/requirements.txt                       |   2 +
+ backend/v2/stage84_acceptance.py                  | 176 +++++++++++++++++++
+ backend/v2/stage84_operator.py                    |  46 +++++
+ backend/v2/stage84_scenarios.py                   |  10 ++
+ backend/v2/startup.py                             |   3 +
+ tests/stage84/__init__.py                         |   0
+ tests/stage84/browser_checks.py                   |  36 ++++
+ tests/stage84/fixtures/plain.xls.b64              |   1 +
+ tests/stage84/test_attachments.py                 | 203 ++++++++++++++++++++++
+ tests/stage84/test_live_runner.py                 |  30 ++++
+ 24 files changed, 847 insertions(+), 14 deletions(-)
