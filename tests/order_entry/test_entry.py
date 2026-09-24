@@ -109,3 +109,20 @@ def test_3d_project_persistence_copy_and_owner_scope(api,settings,admin_user):
     assert copied['project_id']!=created['project_id'] and 'копия' in copied['name']
     post(api,'/auth/register',{'email':uuid4().hex+'@example.invalid','password':PASSWORD},status=201)
     assert api.get('/api/v2/3d-projects/'+created['project_id']).status_code==404
+
+def test_3d_project_scene_v2_room_and_multiple_items(api,settings,admin_user):
+    _,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    item=lambda ident,kind,x: {'item_id':ident,'module_type':kind,'name':kind,'x':x,'z':-900,'rotation':0,
+        'width':600 if kind!='wardrobe' else 1200,'height':720 if kind!='wardrobe' else 2400,
+        'depth':560 if kind!='wardrobe' else 600,'layout':'doors','drawers':0,'base':'plinth','handles':'handles',
+        'body_variant_id':None,'front_variant_id':None}
+    scene={'module_type':'chest','width':1000,'height':850,'depth':450,'layout':'combo','drawers':3,'base':'plinth',
+        'handles':'handles','body_variant_id':None,'front_variant_id':None,'view_mode':'2d','schema_version':2,
+        'room':{'width':5200,'depth':3600,'height':2800},
+        'items':[item('base-1','base_cabinet',-700),item('wardrobe-1','wardrobe',700)],'selected_item_id':'wardrobe-1'}
+    created=post(api,'/3d-projects',{'name':'Комната с мебелью','scene':scene},status=201)
+    read=api.get('/api/v2/3d-projects/'+created['project_id']).json()
+    assert read['scene']['schema_version']==2
+    assert read['scene']['room']=={'width':5200,'depth':3600,'height':2800}
+    assert [x['module_type'] for x in read['scene']['items']]==['base_cabinet','wardrobe']
+    assert read['scene']['selected_item_id']=='wardrobe-1'
