@@ -59,6 +59,29 @@ const MFEntry=(()=>{
   const score=m=>{const article=key(m.article),text=key([m.article,m.name,m.raw_description,m.manufacturer,m.structure,m.thickness,m.length,m.width].join(' '));return !q?1:article===q?400:article.startsWith(q)?300:article.includes(q)?200:terms.every(t=>text.includes(t))?100:0;};
   return materials.map((m,i)=>({m,i,score:score(m)})).filter(x=>x.score).sort((a,b)=>b.score-a.score||a.i-b.i).map(x=>x.m);
  }
+ function materialSignature(m){return key([m.manufacturer,m.article,m.name,m.raw_description,m.structure,m.thickness,m.length,m.width].join('|'));}
+ function exactMaterial(materials,articleText,descriptionText){
+  const unique=rows=>{if(!rows.length)return null;const sig=new Set(rows.map(materialSignature));return sig.size===1?rows[0]:null;};
+  const direct=key(articleText);if(direct)return unique(materials.filter(m=>key(m.article)===direct));
+  const hay=key(descriptionText);if(!hay)return null;let longest=0;const groups=new Map();
+  for(const m of materials){const a=key(m.article);if(a.length<4||!hay.includes(a))continue;if(a.length>longest){longest=a.length;groups.clear();}if(a.length===longest){if(!groups.has(a))groups.set(a,[]);groups.get(a).push(m);}}
+  return groups.size===1?unique([...groups.values()][0]):null;
+ }
+ const legacyPairs=Array.isArray(window.MF_V9_EDGE_PAIRS)?window.MF_V9_EDGE_PAIRS:[];
+ function legacyMaterialScore(material,p){
+  if(!material||material.family==='customer')return 0;
+  const mm=key(material.manufacturer),pm=key(String(p.manufacturer||'').replace(/\\([^)]*\\)/g,''));
+  if(pm&&mm&&pm!==mm&&!pm.includes(mm)&&!mm.includes(pm))return 0;
+  const article=key(material.article),decor=key(p.decor),structure=key(p.structure),code=key((p.decor||'')+(p.structure||''));
+  const text=key([material.article,material.decor,material.structure,material.name,material.raw_description].join(' '));let score=0;
+  if(code&&article===code)score=500;else if(code&&text.includes(code))score=400;else if(decor&&text.includes(decor)&&(!structure||text.includes(structure)))score=250;else return 0;
+  if(pm&&mm&&(pm===mm||pm.includes(mm)||mm.includes(pm)))score+=80;if(p.confirmed)score+=40;return score;
+ }
+ function legacyEdgeCandidates(material,edges){
+  const ranked=legacyPairs.map((p,i)=>({p,i,score:legacyMaterialScore(material,p)})).filter(x=>x.score).sort((a,b)=>b.score-a.score||a.i-b.i),out=[],seen=new Set();
+  for(const {p}of ranked){const sku=key(p.edgeSku);if(!sku)continue;for(const e of edges){if(seen.has(e.edge_id)||key(e.article)!==sku||!compatible(material,e))continue;seen.add(e.edge_id);out.push(e);}}
+  return out;
+ }
  function containsArticle(text,article){
   // Spaces/punctuation and Cyrillic lookalikes may vary; the complete code may not.
   const normalized=String(text??'').normalize('NFKC').toUpperCase().replace(/[АВЕКМНОРСТХ]/g,c=>aliases[c]);
@@ -66,10 +89,12 @@ const MFEntry=(()=>{
  }
  function edgeCandidates(material,edges){
   if(!material?.article||material.family==='customer')return [];
+  const legacy=legacyEdgeCandidates(material,edges),seen=new Set(legacy.map(e=>e.edge_id));
   const article=key(String(material.article).replace(/\([^)]*\d+[^)]*(?:мм|mm)[^)]*\)/gi,''));
-  if(!article)return [];
-  return edges.filter(e=>compatible(material,e)&&(!material.manufacturer||!e.manufacturer||key(material.manufacturer)===key(e.manufacturer))&&(key(e.article)===article||containsArticle(e.designation,article)))
+  if(!article)return legacy;
+  const heuristic=edges.filter(e=>!seen.has(e.edge_id)&&compatible(material,e)&&(!material.manufacturer||!e.manufacturer||key(material.manufacturer)===key(e.manufacturer))&&(key(e.article)===article||containsArticle(e.designation,article)))
    .sort((a,b)=>num(a.width)-num(b.width)||Math.abs((num(a.thickness)||1)-1)-Math.abs((num(b.thickness)||1)-1)||String(a.edge_id).localeCompare(String(b.edge_id)));
+  return [...legacy,...heuristic];
  }
  // The visible default uses the narrowest fitting width, then thickness nearest 1 mm.
  // Other sizes remain selectable; AUTO never changes a manually assigned side.
@@ -87,5 +112,5 @@ const MFEntry=(()=>{
   for(const row of rows){const k=importGroupKey(row);if(!groups.has(k))groups.set(k,{key:k,rows:[]});groups.get(k).rows.push(row);}
   return [...groups.values()];
  }
- return {fields,key,num,guess,columns,headers,detect,boardText,compatible,materialMatches,edgeCandidates,edgeDefault,autoEdge,previewGroups};
+ return {fields,key,num,guess,columns,headers,detect,boardText,compatible,materialMatches,exactMaterial,legacyEdgeCandidates,edgeCandidates,edgeDefault,autoEdge,previewGroups};
 })();
