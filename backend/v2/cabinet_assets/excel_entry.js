@@ -104,7 +104,9 @@ function renderExcelPreview(preview,result,version,currentVersion){
  groups.forEach((group,groupIndex)=>{
   const first=group.rows[0],source=String(first.original.values.article||first.original.values.material||'Материал не указан');
   const candidates=catalogueMaterials.filter(m=>group.rows.every(r=>(r.resolution?.candidates||[]).includes(m.variant_id)));
-  const selected=first.resolution?.selected?.variant_id||(candidates.length===1?candidates[0].variant_id:null);
+  const exact=MFEntry.exactMaterial(catalogueMaterials,first.original.values.article,first.original.values.material);
+  const selected=first.resolution?.selected?.variant_id||(candidates.length===1?candidates[0].variant_id:exact?.variant_id||null);
+  let automaticSelection=!!selected&&!first.resolution?.selected?.variant_id;
   const state={...blankDetail(),variant_id:selected,materialLabel:materialLabel(catalogueMaterials.find(m=>m.variant_id===selected))};
   let defaultEdge=MFEntry.edgeDefault(catalogueMaterials.find(m=>m.variant_id===selected),catalogueEdges);
   const card=node('article',undefined,'material-group import-material-group'),settings=node('div',undefined,'material-settings'),status=node('p',undefined,'muted');
@@ -121,7 +123,7 @@ function renderExcelPreview(preview,result,version,currentVersion){
    choices.set(r.row_id,rowChoice);items.push({r,rowChoice});
   }
   const tableArea=node('div');card.append(tableArea);cards.append(card);
-  function updateStatus(){status.textContent=state.custom_customer?'Свой материал клиента: '+state.custom_customer.name+'. Будет назначен всем '+group.rows.length+' строкам этой группы.':state.variant_id?'Подобран точный вариант. Нажатие «Импортировать деталировку» подтвердит его для '+group.rows.length+' строк.':candidates.length>1?'Есть несколько вариантов толщины или формата. Выберите нужный один раз для всего материала.':'Материал не найден однозначно. Уточните поиск или создайте свой материал.';}
+  function updateStatus(){status.textContent=state.custom_customer?'Свой материал клиента: '+state.custom_customer.name+'. Будет назначен всем '+group.rows.length+' строкам этой группы.':state.variant_id?(automaticSelection?'✓ Материал найден автоматически. Проверьте вариант и AUTO-кромку перед импортом.':'Материал выбран. Нажатие «Импортировать деталировку» подтвердит его для '+group.rows.length+' строк.'):candidates.length>1?'Есть несколько вариантов толщины или формата. Выберите нужный один раз для всего материала.':'Материал не найден. Найдите его в каталоге или создайте свой материал.';}
   function refreshEdges(){
    const m=state.custom_customer?{...state.custom_customer,family:'customer'}:catalogueMaterials.find(x=>x.variant_id===state.variant_id);
    edgeArea.replaceChildren(groupEdgePicker(m,defaultEdge,groupIndex+1,id=>{defaultEdge=id;refreshEdges();}));
@@ -137,7 +139,7 @@ function renderExcelPreview(preview,result,version,currentVersion){
     }
    });tableArea.replaceChildren(t);
   }
-  picker.onMaterialChange=()=>{defaultEdge=MFEntry.edgeDefault(catalogueMaterials.find(m=>m.variant_id===state.variant_id),catalogueEdges);refreshEdges();};refreshEdges();
+  picker.onMaterialChange=()=>{automaticSelection=false;defaultEdge=MFEntry.edgeDefault(catalogueMaterials.find(m=>m.variant_id===state.variant_id),catalogueEdges);refreshEdges();};refreshEdges();
  });
  preview.append(node('p','Материал выбирается один раз на группу. AUTO применяется к отмеченным сторонам; ручная кромка сохраняется. Строки с ошибками останутся для исправления.','muted'));
  preview.append(button('Импортировать деталировку',async()=>{
