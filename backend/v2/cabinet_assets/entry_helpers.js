@@ -141,6 +141,8 @@ const MFEntry=(()=>{
    for(let i=0;i<group.length&&!paired;i++)for(let j=i+1;j<group.length&&!paired;j++){
     const a=group[i],b=group[j];if(!sameGeometry(a,b))continue;const af=glueFlags({_sourceGlueText:a._sourceGlueText}),bf=glueFlags({_sourceGlueText:b._sourceGlueText});
     const samePos=String(a._sourcePosition??'').trim()!==''&&String(a._sourcePosition??'').trim()===String(b._sourcePosition??'').trim();
+    const explicitSignal=af.copy||bf.copy||af.ready||bf.ready||af.glue||bf.glue||af.thick36||bf.thick36;
+    if(!explicitSignal)continue;
     const score=(samePos?2:0)+2+(af.copy||bf.copy?2:0)+(af.ready||bf.ready?2:0)+(af.glue||bf.glue||af.thick36||bf.thick36?3:0);
     if(score<4)continue;
     const finished=af.copy&&!bf.copy?b:bf.copy&&!af.copy?a:(af.ready||af.thick36||af.glue)&&!(bf.ready||bf.thick36||bf.glue)?a:(bf.ready||bf.thick36||bf.glue)&&!(af.ready||af.thick36||af.glue)?b:a;
