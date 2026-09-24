@@ -126,7 +126,7 @@ function renderExcelPreview(preview,result,version,currentVersion){
   function updateStatus(){status.textContent=state.custom_customer?'Свой материал клиента: '+state.custom_customer.name+'. Будет назначен всем '+group.rows.length+' строкам этой группы.':state.variant_id?(automaticSelection?'✓ Материал найден автоматически. Проверьте вариант и AUTO-кромку перед импортом.':'Материал выбран. Нажатие «Импортировать деталировку» подтвердит его для '+group.rows.length+' строк.'):candidates.length>1?'Есть несколько вариантов толщины или формата. Выберите нужный один раз для всего материала.':'Материал не найден. Найдите его в каталоге или создайте свой материал.';}
   function refreshEdges(){
    const m=state.custom_customer?{...state.custom_customer,family:'customer'}:catalogueMaterials.find(x=>x.variant_id===state.variant_id);
-   edgeArea.replaceChildren(groupEdgePicker(m,defaultEdge,groupIndex+1,id=>{defaultEdge=id;refreshEdges();}));
+   edgeArea.replaceChildren(groupEdgePicker(m,defaultEdge,groupIndex+1,id=>{const previousDefault=defaultEdge;const applied=MFEntry.applyGroupEdgeSelection(items.map(x=>x.rowChoice),previousDefault,id);defaultEdge=id;refreshEdges();message(id?'Кромка материала применена к '+applied.changed+' отмеченным сторонам Excel.'+(applied.protectedSides?' Ручных исключений сохранено: '+applied.protectedSides+'.':''):'AUTO-кромка снята с '+applied.changed+' отмеченных сторон Excel.');}));
    for(const {rowChoice}of items){rowChoice.variant_id=state.variant_id;rowChoice.custom_customer=state.custom_customer?{...state.custom_customer,provided_sheets:state.provided_sheets,ownership_confirmed:true}:null;for(const side of sideNames)if(rowChoice.edges[side].selection_mode==='auto')rowChoice.edges[side]={...rowChoice.edges[side],edge_id:defaultEdge,unresolved:!defaultEdge};}
    renderRows();updateStatus();
   }
@@ -141,7 +141,7 @@ function renderExcelPreview(preview,result,version,currentVersion){
   }
   picker.onMaterialChange=()=>{automaticSelection=false;defaultEdge=MFEntry.edgeDefault(catalogueMaterials.find(m=>m.variant_id===state.variant_id),catalogueEdges);refreshEdges();};refreshEdges();
  });
- preview.append(node('p','Материал выбирается один раз на группу. AUTO применяется к отмеченным сторонам; ручная кромка сохраняется. Строки с ошибками останутся для исправления.','muted'));
+ preview.append(node('p','Материал и AUTO-кромка выбираются один раз на группу. При смене AUTO-кромки она сразу применяется ко всем отмеченным кромлением сторонам этого материала; пустые стороны и ручные исключения сохраняются. Строки с ошибками останутся для исправления.','muted'));
  preview.append(button('Импортировать деталировку',async()=>{
   if(version!==currentVersion())throw new Error('Настройки изменились. Повторите проверку деталировки.');
   if(!rows.length)throw new Error('На листе нет деталей. Проверьте первую строку деталей.');
