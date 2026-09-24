@@ -94,7 +94,8 @@ def calculate(inputs):
                 if op not in {'edge_thick','edge_complex','edge_normal'}: op=None
             else:
                 auto_thick=dec(edge['width'])>=Decimal('42') and dec(edge['thickness'])>=Decimal('1.5')
-                op=None if auto_thick and complex_part else ('edge_thick' if auto_thick else ('edge_complex' if complex_part else 'edge_normal'))
+                if possible_thick: op=None if not auto_thick or complex_part else 'edge_thick'
+                else: op='edge_complex' if complex_part else 'edge_normal'
             if op is None: blocked('services','edge_processing','NC-02_CLASSIFICATION_REQUIRED',detail_id=ident,side=side,net_metres=plain(net));continue
             processing[(op,eid)]+=net
     for (material_key,supply),group in sorted(materials.items()):
