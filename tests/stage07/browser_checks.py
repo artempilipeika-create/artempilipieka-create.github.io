@@ -454,6 +454,21 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     expect(page.get_by_label('Название 13',exact=True)).to_have_value('Шкаф · Боковина')
 
 
+def test_3d_share_link_opens_read_only_viewer(page,api,settings,admin_user):
+    o,email,_=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/constructor.html');expect(page.locator('body')).to_have_attribute('data-ready','true')
+    page.locator('#project-name').fill('Проект для клиента')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#status')).to_contain_text('сохранён')
+    page.get_by_role('button',name='Ссылка для просмотра',exact=True).click()
+    expect(page.locator('#share-panel')).to_be_visible()
+    url=page.locator('#share-url').input_value();assert '/3d-view?token=' in url
+    page.goto(url)
+    expect(page.locator('#readonly-label')).to_contain_text('Только просмотр')
+    expect(page.locator('#view-name')).to_have_text('Проект для клиента')
+    expect(page.locator('#scene')).to_be_visible()
+    expect(page.get_by_role('button',name='Перенести в заказ',exact=True)).to_have_count(0)
+
+
 def fill_own_material(page):
     dialog=page.get_by_role('dialog',name='Свой материал',exact=True)
     for label,value in [('Артикул / свой код','MY-BOARD'),('Название своего материала','Мой дуб'),('Производитель (необязательно)','Мастерская'),
