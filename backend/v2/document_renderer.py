@@ -58,6 +58,9 @@ def render(data, template_version=VERSION):
       'tablehead':ParagraphStyle('tablehead',fontName='MF-Bold',fontSize=6.6,leading=7.8,textColor=FOREST),
     }
     def p(text,style='body'): return Paragraph(escape(str(text)).replace('\n','<br/>'),styles[style])
+    def short(value,limit=72):
+        value=str(value or '').strip()
+        return value if len(value)<=limit else value[:limit-1].rstrip()+'…'
     def table(headers,rows,widths,title):
         t=Table([[p(title,'heading')]+['']*(len(headers)-1),[p(x,'tablehead') for x in headers]]+rows,colWidths=[WIDTH*w for w in widths],repeatRows=2,hAlign='LEFT',splitByRow=1)
         t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('SPAN',(0,0),(-1,0)),('BACKGROUND',(0,1),(-1,1),PAPER),
@@ -70,7 +73,7 @@ def render(data, template_version=VERSION):
         rows=[]
         grains={'none':'Без текстуры','length':'По длине','width':'По ширине','unknown':'Уточняется'}
         for d in data['details']:
-            m=d['material'];identity=' · '.join(str(m[k]) for k in ('manufacturer','name','article','structure','thickness') if m.get(k))
+            m=d['material'];identity=' · '.join(v for v in (str(m.get('article') or ''),short(m.get('name'),52)) if v)
             label=str(d['number'])+'. '+(d['name'] or 'Деталь')
             edge_lines=[]
             for side in ('L1','L2','W1','W2'):
@@ -80,7 +83,7 @@ def render(data, template_version=VERSION):
             thickness='36 мм · 18+18' if d.get('route')=='glued_18_18' else n(d.get('finished_thickness'))+' мм'
             info=[p(label),p(identity,'small'),p(grains.get(d['grain'],'Уточняется'),'small')]
             if d.get('glue_backing'):
-                b=d['glue_backing'];back=' · '.join(str(b[k]) for k in ('manufacturer','name','article','structure') if b.get(k))
+                b=d['glue_backing'];back=' · '.join(v for v in (str(b.get('article') or ''),short(b.get('name'),48)) if v)
                 info.append(p('Подклейка: '+(back or 'материал уточняется'),'small'))
             if d['comments']: info.append(p(d['comments'],'small'))
             rows.append([info,p(n(d['length'])+' × '+n(d['width'])),p(n(d['qty'])),p(thickness,'small'),p('\n'.join(edge_lines),'small')])
@@ -88,7 +91,9 @@ def render(data, template_version=VERSION):
     if data['materials']:
         rows=[]
         for m in data['materials']:
-            identity='\n'.join(str(v) for v in (m['manufacturer'],m['name'],('Артикул: '+m['article']) if m['article'] else None,('Структура: '+m['structure']) if m['structure'] else None) if v)
+            first=' · '.join(v for v in (str(m.get('article') or ''),short(m.get('name'),64)) if v)
+            second=' · '.join(v for v in (short(m.get('manufacturer'),36),str(m.get('structure') or '')) if v)
+            identity='\n'.join(v for v in (first,second) if v)
             dims=' · '.join([str(m['thickness'])+' мм' if m['thickness'] else '',str(m['length'])+' × '+str(m['width'])+' мм' if m['length'] and m['width'] else '']).strip(' ·')
             note=data['customer_material_notice'] if m['supply_source']=='customer' else ''
             info=[p(identity),p(dims,'small')]
@@ -100,7 +105,7 @@ def render(data, template_version=VERSION):
     if data['edges']:
         rows=[]
         for e in data['edges']:
-            info='\n'.join(str(v) for v in (e.get('name') or e.get('designation'),e.get('article'),str(e.get('width') or '?')+' × '+str(e.get('thickness') or '?')+' мм') if v)
+            info='\n'.join(v for v in (' · '.join(x for x in (str(e.get('article') or ''),short(e.get('name') or e.get('designation'),54)) if x),str(e.get('width') or '?')+' × '+str(e.get('thickness') or '?')+' мм') if v)
             metres='Чистовой: '+n(e['net_metres'])+' м'
             if e.get('policy'):
                 metres+='\nЗакупочный: '+n(e['procurement_metres'])+' м\nОплачиваемый: '+n(e['billable_metres'])+' м'
