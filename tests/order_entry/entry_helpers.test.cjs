@@ -35,6 +35,17 @@ test('edge designation matches a complete article, ranks sizes, rejects conflict
  assert.equal(h.edgeDefault({...m,family:'customer'},edges),null);
  assert.equal(h.edgeDefault({article:'()',thickness:18},edges),null);
 });
+test('group edge selection updates every marked side and preserves manual exceptions',()=>{
+ const rows=[{edges:{L1:{edge_id:'old',selection_mode:'auto'},L2:{edge_id:'old',selection_mode:'manual'},W1:{edge_id:'special',selection_mode:'manual'},W2:{edge_id:null,selection_mode:'manual',unresolved:false}}},{edges:{L1:{edge_id:null,selection_mode:'auto',unresolved:true},L2:{edge_id:null,selection_mode:'manual',unresolved:false},W1:{edge_id:'old',selection_mode:'auto'}}}];
+ const r=h.applyGroupEdgeSelection(rows,'old','new');
+ assert.equal(r.changed,4);assert.equal(r.protectedSides,1);
+ assert.equal(rows[0].edges.L1.edge_id,'new');assert.equal(rows[0].edges.L1.selection_mode,'auto');
+ assert.equal(rows[0].edges.L2.edge_id,'new');assert.equal(rows[0].edges.L2.selection_mode,'auto');
+ assert.equal(rows[0].edges.W1.edge_id,'special');assert.equal(rows[0].edges.W1.selection_mode,'manual');
+ assert.equal(rows[0].edges.W2.edge_id,null);assert.equal(rows[0].edges.W2.selection_mode,'manual');
+ assert.equal(rows[1].edges.L1.edge_id,'new');assert.equal(rows[1].edges.L1.unresolved,false);
+ assert.equal(rows[1].edges.L2.edge_id,null);assert.equal(rows[1].edges.W1.edge_id,'new');
+});
 test('AUTO preserves manual SKU and explicit NONE',()=>{
  for(const previous of [{edge_id:'manual',selection_mode:'manual'},{edge_id:null,selection_mode:'manual'}])assert.equal(h.autoEdge(previous,'new'),previous);
  assert.equal(h.autoEdge({edge_id:'old',selection_mode:'auto'},'new').edge_id,'new');assert.equal(h.autoEdge(undefined,'new').selection_mode,'auto');
