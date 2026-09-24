@@ -10,18 +10,45 @@ from .security import identity,error
 from .domain_api import require
 from .events import record_event
 
+class Room(StrictModel):
+    width: int=Field(default=4200,ge=1500,le=12000)
+    depth: int=Field(default=3200,ge=1500,le=12000)
+    height: int=Field(default=2700,ge=2000,le=5000)
+
+class FurnitureItem(StrictModel):
+    item_id: str=Field(min_length=1,max_length=80)
+    module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
+    name: str=Field(min_length=1,max_length=120)
+    x: int=Field(default=0,ge=-12000,le=12000)
+    z: int=Field(default=0,ge=-12000,le=12000)
+    rotation: Literal[0,90,180,270]=0
+    width: int=Field(ge=300,le=3000)
+    height: int=Field(ge=300,le=3000)
+    depth: int=Field(ge=200,le=1200)
+    layout: Literal['drawers','doors','combo','niche']='doors'
+    drawers: int=Field(default=2,ge=0,le=8)
+    base: Literal['plinth','legs','wall']='plinth'
+    handles: Literal['handles','handleless']='handles'
+    body_variant_id: UUID|None=None
+    front_variant_id: UUID|None=None
+
 class Scene(StrictModel):
-    module_type: Literal['chest']='chest'
-    width: int=Field(ge=400,le=3000)
-    height: int=Field(ge=400,le=2400)
-    depth: int=Field(ge=250,le=900)
+    # Legacy single-module fields stay accepted so previously saved projects remain readable.
+    module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
+    width: int=Field(default=1000,ge=300,le=3000)
+    height: int=Field(default=850,ge=300,le=3000)
+    depth: int=Field(default=450,ge=200,le=1200)
     layout: Literal['drawers','doors','combo','niche']='combo'
-    drawers: int=Field(ge=2,le=8)
+    drawers: int=Field(default=3,ge=0,le=8)
     base: Literal['plinth','legs','wall']='plinth'
     handles: Literal['handles','handleless']='handles'
     body_variant_id: UUID|None=None
     front_variant_id: UUID|None=None
     view_mode: Literal['2d','3d']='3d'
+    schema_version: Literal[1,2]=2
+    room: Room=Field(default_factory=Room)
+    items: list[FurnitureItem]=Field(default_factory=list,max_length=100)
+    selected_item_id: str|None=Field(default=None,max_length=80)
 
 class Create(StrictModel):
     name: str=Field(min_length=1,max_length=200)
