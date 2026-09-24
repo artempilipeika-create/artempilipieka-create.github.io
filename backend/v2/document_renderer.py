@@ -117,7 +117,7 @@ def render(data, template_version=VERSION):
         story.append(p('Требует уточнения стоимости','heading'))
         for text in data['unresolved']: story.append(p(text,'small'))
         story.append(p('Указанные суммы включают только рассчитанные позиции.','small'))
-    story.append(KeepTogether([Spacer(1,4),p(data['amount_label'],'heading'),p(n(data['amount'])+(' BYN' if data['amount'] is not None else ''),'amount'),p(data['disclaimer'],'small')]))
+    story.extend([Spacer(1,4),p(data['amount_label'],'heading'),p(n(data['amount'])+(' BYN' if data['amount'] is not None else ''),'amount'),p(data['disclaimer'],'small')])
     def footer(canvas,doc):
         if doc.page>1: raise ValueError('One-page preliminary document overflow')
         canvas.saveState();canvas.setFillColor(FOREST);canvas.rect(0,PAGE[1]-4*mm,PAGE[0],4*mm,fill=1,stroke=0)
