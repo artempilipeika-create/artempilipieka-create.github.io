@@ -129,7 +129,7 @@ def router(settings):
                 ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
             if release:
                 for ident in ids:
-                    found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,ident)).fetchone()
+                    found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()
                     if found:
                         m=found['snapshot'];materials[ident]=' · '.join(str(x) for x in (m.get('manufacturer'),m.get('article'),m.get('name')) if x)
             data=render_spec(row['name'],scene,materials)
