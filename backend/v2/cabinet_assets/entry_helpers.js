@@ -127,12 +127,15 @@ const MFEntry=(()=>{
  }
  function glueHint(values={}){const f=glueFlags(values);return f.glue||f.thick36;}
  function sameGeometry(a,b){return num(a.length)===num(b.length)&&num(a.width)===num(b.width)&&num(a.qty)===num(b.qty);}
- function glueBackingFromRow(r){
-  if(!r||(!r.variant_id&&!r.custom_customer))return null;
-  return {draft_row_id:r.draft_row_id||null,resolution_reason:r.resolution_reason||null,variant_id:r.variant_id||null,custom_customer:r.custom_customer?{...r.custom_customer}:null,
-    supply_source:r.supply_source||'company',provided_sheets:r.provided_sheets??null,customer_reason:r.customer_reason??null,materialLabel:r.materialLabel||'Материал подклейки'};
+ function glueBackingFromRow(r,materials=[]){
+  if(!r)return null;
+  let variant=r.variant_id||null,label=r.materialLabel||'Материал подклейки';
+  if(!variant&&!r.custom_customer&&r._materialSource){const m=exactMaterial(materials,r._materialSource,'',{});if(m){variant=m.variant_id;label=[m.manufacturer,m.article,m.name].filter(Boolean).join(' · ');}}
+  if(!variant&&!r.custom_customer)return null;
+  return {draft_row_id:r.draft_row_id||null,resolution_reason:r.resolution_reason||null,variant_id:variant,custom_customer:r.custom_customer?{...r.custom_customer}:null,
+    supply_source:r.supply_source||'company',provided_sheets:r.provided_sheets??null,customer_reason:r.customer_reason??null,materialLabel:label};
  }
- function recognizeGlueRows(rows){
+ function recognizeGlueRows(rows,materials=[]){
   const result=[...rows],consumed=new Set(),groups=new Map();
   for(const r of result){if(!r?._sourcePosition&&!r?._sourceGlueText)continue;const pos=String(r._sourcePosition??'').trim();const k=pos?'p:'+pos:'g:'+String(r.length)+'|'+String(r.width)+'|'+String(r.qty);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r);}
   for(const group of groups.values()){
@@ -146,7 +149,7 @@ const MFEntry=(()=>{
     const score=(samePos?2:0)+2+(af.copy||bf.copy?2:0)+(af.ready||bf.ready?2:0)+(af.glue||bf.glue||af.thick36||bf.thick36?3:0);
     if(score<4)continue;
     const finished=af.copy&&!bf.copy?b:bf.copy&&!af.copy?a:(af.ready||af.thick36||af.glue)&&!(bf.ready||bf.thick36||bf.glue)?a:(bf.ready||bf.thick36||bf.glue)&&!(af.ready||af.thick36||af.glue)?b:a;
-    const backing=finished===a?b:a,binfo=glueBackingFromRow(backing);if(!binfo)continue;
+    const backing=finished===a?b:a,binfo=glueBackingFromRow(backing,materials);if(!binfo)continue;
     finished.route='glued_18_18';finished.glue_backing=binfo;finished._glueAuto=true;finished._glueSourceRows=[a._sourceRow,b._sourceRow].filter(Boolean);consumed.add(backing);paired=true;
    }
    if(!paired)for(const r of group)if(glueHint({_sourceGlueText:r._sourceGlueText})){r.route='glued_18_18';if(r.glue_backing===undefined)r.glue_backing=null;}
