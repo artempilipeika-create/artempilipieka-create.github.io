@@ -24,10 +24,10 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
         return False
     ceilings = {
         'manager': CLIENT_READ | CLIENT_WRITE | {'orders.oblx.read','templates.manage','orders.review','calculations.fix','discounts.override',
-            'production.calculate.enqueue','production.jobs.read','production.jobs.cancel','production.final.create','production.final.review'},
-        'production': {'orders.read','orders.oblx.read','files.source.read','production.jobs.read','production.release'},
-        'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read','production.jobs.read'},
-        'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read'},
+            'production.calculate.enqueue','production.jobs.read','production.jobs.cancel','production.final.create','production.final.review','files.attachments.read','files.attachments.upload','files.attachments.internal.read'},
+        'production': {'orders.read','orders.oblx.read','files.source.read','production.jobs.read','production.release','files.attachments.read','files.attachments.internal.read'},
+        'accounting': {'orders.read','orders.oblx.read','orders.prices.read','files.preliminary_pdf.read','customers.pii.read','production.jobs.read','files.attachments.read'},
+        'viewer': {'orders.read','orders.oblx.read','files.preliminary_pdf.read','files.attachments.read'},
     }
     if any(role in ceilings and permission not in ceilings[role] for role in roles):
         return False
@@ -62,7 +62,7 @@ def allowed(conn, user_id, permission, *, order_id=None, job_id=None, file_kind=
                 return True
         if scope == 'order' and order and g['scope_id'] == order_id:
             # Stage 2 production artifact review requires an explicit job grant, never execute rights.
-            if 'production' not in roles or permission=='production.release':
+            if 'production' not in roles or permission in {'production.release','files.attachments.read','files.attachments.internal.read'}:
                 return True
         if scope == 'job' and roles == {'production'}:
             if job and g['scope_id'] == str(job_id):

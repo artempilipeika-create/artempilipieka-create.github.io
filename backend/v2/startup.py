@@ -82,6 +82,9 @@ def prepare(settings):
         from .stage05_operator import verify
         if verify(settings)!=before['state']: raise ValueError('Staging changed since pre-Stage-6 backup')
         print('MF_STAGE06_PRE_MIGRATION='+json.dumps({'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])}),flush=True)
+    if '0006_production_protocol.sql' in versions and '0007_manual_attachments.sql' not in versions:
+        from .stage84_operator import pre_backup
+        pre_backup(settings)
     migrate(settings)
     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'

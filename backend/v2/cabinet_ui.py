@@ -25,4 +25,6 @@ def router():
     def style(): return Response((root/'app.css').read_bytes(),media_type='text/css',headers={'Content-Security-Policy':CSP})
     @api.get('/account/workspace.js')
     def workspace(): return Response((root/'workspace.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
+    @api.get('/account/attachments.js')
+    def attachments(): return Response((root/'attachments.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
     return api

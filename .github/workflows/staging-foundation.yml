@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stage: [stage01, stage02, stage03, stage04, stage05, stage06, stage07, stage08]
+        stage: [stage01, stage02, stage03, stage04, stage05, stage06, stage07, stage08, stage84]
     runs-on: ubuntu-latest
     container: python:3.12-trixie
     services:

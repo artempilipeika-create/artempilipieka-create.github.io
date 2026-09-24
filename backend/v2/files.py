@@ -6,15 +6,21 @@ from .storage import new_key, sha256
 
 
 def save_private_file(settings, store, *, actor, data, name, kind, mime,
-                      order_id=None, revision_id=None, job_id=None):
+                      order_id=None, revision_id=None, job_id=None, on_ready=None, classification_override=None):
     if len(data) > 50 * 1024 * 1024:
         raise ValueError('File exceeds 50 MiB')
-    if kind not in {'source', 'preliminary_pdf', 'oblx', 'internal', 'test'}:
+    if kind not in {'source', 'preliminary_pdf', 'oblx', 'internal', 'test', 'attachment'}:
         raise ValueError('Unknown file kind')
     if not name or len(name) > 255 or not mime or len(mime) > 255:
         raise ValueError('Invalid file metadata')
     # Only trusted internal code calls this in Stage 1. No public upload accepts a client kind.
     classification = 'internal' if kind in {'oblx', 'internal', 'test'} else 'private'
+    if kind=='attachment':
+        if classification_override not in {'private','internal'} or on_ready is None:
+            raise ValueError('Manual attachment requires bound metadata')
+        classification=classification_override
+    elif classification_override is not None:
+        raise ValueError('Classification override restricted to manual attachments')
     file_id, key = uuid4(), new_key()
     with connect(settings, autocommit=True) as conn:
         conn.execute('SELECT pg_advisory_lock_shared(%s)', (BACKUP_LOCK,))
@@ -32,6 +38,7 @@ def save_private_file(settings, store, *, actor, data, name, kind, mime,
                 if sha256(store.read(key)) != sha256(data):
                     raise ValueError('Storage integrity verification failed')
                 with conn.transaction():
+                    if on_ready is not None: on_ready(conn,file_id)
                     conn.execute("UPDATE mf_files SET status='ready' WHERE file_id=%s", (file_id,))
                     record_event(conn,settings,actor=actor,action='file.ready',object_type='file',
                                  object_id=file_id,reason='Private bytes verified')

@@ -284,6 +284,9 @@ def router(settings, policy):
         row = conn.execute('SELECT * FROM mf_files WHERE file_id=%s',(file_id,)).fetchone()
         if not row:
             error(404,'FILE_NOT_FOUND')
+        from .attachment_api import attachment,download as attachment_download
+        if row['kind']=='attachment' or attachment(conn,file_id):
+            return attachment_download(conn,settings,user,file_id,head)
         # Internal is a server-controlled classification, independent of name/MIME/URL query.
         if row['classification']=='internal' and 'client' in user['roles']:
             error(403,'PERMISSION_DENIED')

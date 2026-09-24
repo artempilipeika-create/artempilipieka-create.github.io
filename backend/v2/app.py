@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
 from fastapi.exceptions import RequestValidationError
 from .security import WebPolicy
-from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui, production_api, presentation_ui
+from . import auth_api, domain_api, catalogue_api, calculation_api, document_api, cabinet_ui, production_api, presentation_ui, attachment_api
 import secrets
 import os
 from .config import Settings
@@ -64,6 +64,13 @@ def create_app(settings=None, policy=None):
                                     headers={'X-Robots-Tag':'noindex, nofollow','Cache-Control':'no-store'})
             if request.method != 'DELETE' and request.headers.get('content-type','').split(';')[0] != 'application/json':
                 return JSONResponse({'detail':{'code':'JSON_REQUIRED'}},status_code=415)
+        if request.method=='POST' and request.url.path.startswith('/api/v2/orders/') and request.url.path.endswith('/attachments'):
+            size=0; chunks=[]
+            async for chunk in request.stream():
+                size+=len(chunk)
+                if size>14*1024*1024: return JSONResponse({'detail':{'code':'ATTACHMENT_SIZE_LIMIT'}},status_code=413,headers={'Cache-Control':'no-store'})
+                chunks.append(chunk)
+            request._body=b''.join(chunks)
         response = await call_next(request)
         response.headers['X-Robots-Tag'] = 'noindex, nofollow, noarchive'
         response.headers['Cache-Control'] = 'no-store'
@@ -114,6 +121,7 @@ def create_app(settings=None, policy=None):
     app.include_router(catalogue_api.router(settings,policy))
     app.include_router(calculation_api.router(settings,policy))
     app.include_router(document_api.router(settings,policy))
+    app.include_router(attachment_api.router(settings,policy))
     app.include_router(production_api.router(settings,policy))
     app.include_router(cabinet_ui.router())
     if os.environ.get('MF_PRESENTATION_UI','disabled') == 'enabled':
