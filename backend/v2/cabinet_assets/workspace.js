@@ -64,11 +64,11 @@ async function openEditor(id){
  if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.map(fromRevision);}
  const draft=await api('/orders/'+id+'/draft/rows');editorOrder.optimistic_lock_version=draft.optimistic_lock_version;
  for(const r of draft.rows){if(!r.excluded_reason&&!manualRows.some(d=>d.draft_row_id===r.draft_row_id||d.glue_backing?.draft_row_id===r.draft_row_id))manualRows.push(fromImported(r));}
- manualRows=MFEntry.recognizeGlueRows(manualRows,catalogueMaterials);
  if(editorOrder.preparation_mode==='self_prepared'||!currentUser.roles.includes('client')){
   try{await loadCatalogue();}catch(e){if(e.code!=='CATALOGUE_NOT_PUBLISHED')throw e;catalogueMaterials=[];catalogueEdges=[];}
+  manualRows=MFEntry.recognizeGlueRows(manualRows,catalogueMaterials);
   if(!manualRows.length)manualRows.push(blankDetail());
- }
+ }else manualRows=MFEntry.recognizeGlueRows(manualRows,catalogueMaterials);
  await editorView();
 }
 async function sourceList(parent){
