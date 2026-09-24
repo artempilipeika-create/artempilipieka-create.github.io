@@ -416,7 +416,7 @@ def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin
     expect(page.locator('#projects .mf3d-project')).to_have_count(2)
     expect(page.locator('#project-name')).to_have_value('Комод из 3D — копия')
     page.get_by_role('button',name='Перенести в заказ',exact=True).click()
-    expect(page).to_have_url(lambda url:'/editor?order=' in url)
+    page.wait_for_url('**/editor?order=*')
     expect(page.get_by_label('Длина 1',exact=True)).to_have_value('820')
     expect(page.locator('#manual-rows tr[data-detail-id]')).to_have_count(5)
     screenshot(page,'3d-transfer-to-order')
