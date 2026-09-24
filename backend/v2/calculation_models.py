@@ -22,6 +22,7 @@ class CustomerMaterial(StrictModel):
 class EdgeInput(StrictModel):
     edge_id: UUID | None=None
     supply_source: Literal['company','customer']='company'
+    selection_mode: Literal['manual','auto']='manual'
 
 class Detail(StrictModel):
     detail_id: str=Field(min_length=1,max_length=100)

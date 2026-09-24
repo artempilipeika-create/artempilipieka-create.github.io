@@ -27,4 +27,8 @@ def router():
     def workspace(): return Response((root/'workspace.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
     @api.get('/account/attachments.js')
     def attachments(): return Response((root/'attachments.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
+    @api.get('/account/entry_helpers.js')
+    def entry_helpers(): return Response((root/'entry_helpers.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
+    @api.get('/account/excel_entry.js')
+    def excel_entry(): return Response((root/'excel_entry.js').read_bytes(),media_type='application/javascript',headers={'Content-Security-Policy':CSP})
     return api

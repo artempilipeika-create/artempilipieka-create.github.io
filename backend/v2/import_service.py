@@ -63,10 +63,11 @@ def bump(conn,settings,actor,order,reason):
     return row['optimistic_lock_version']
 
 
-def confirm(conn,settings,actor,batch,mode,exclusions,expected):
+def confirm(conn,settings,actor,batch,mode,exclusions,expected,choices=None):
+    choices=choices or {}
     source=conn.execute('SELECT * FROM mf_import_batches WHERE import_id=%s',(batch,)).fetchone()
     if not source: error(404,'IMPORT_NOT_FOUND')
-    request_hash=fingerprint({'mode':mode,'exclusions':exclusions})
+    request_hash=fingerprint({'mode':mode,'exclusions':exclusions,**({'choices':choices} if choices else {})})
     # Serialize repeat/concurrent confirms through the order lock. An identical retry is idempotent.
     order=conn.execute('SELECT * FROM mf_orders WHERE order_id=%s FOR UPDATE',(source['order_id'],)).fetchone()
     receipt=conn.execute('SELECT * FROM mf_import_receipts WHERE import_id=%s',(batch,)).fetchone()
@@ -77,6 +78,24 @@ def confirm(conn,settings,actor,batch,mode,exclusions,expected):
     originals=rows(conn,batch); row_ids={str(r['row_id']) for r in originals}
     if set(exclusions)-row_ids or any(not isinstance(v,str) or not v.strip() for v in exclusions.values()): error(422,'EXCLUSION_REASON_REQUIRED')
     if mode not in {'add','replace','new_revision'}: error(422,'EXPLICIT_IMPORT_MODE_REQUIRED')
+    parts={str(r['row_id']):r for r in originals if r['original']['disposition'] in {'valid','problematic'}}
+    if set(choices)-set(parts): error(422,'FOREIGN_IMPORT_ROW')
+    # One scoped, locked transaction for the entire displayed preview. A bad choice
+    # rolls everything back; retrying the same payload returns the existing receipt.
+    selected={};edge_choices={}
+    for row_id,choice in choices.items():
+        if choice.get('variant_id'):
+            selected[row_id]=catalogue.get_item(conn,source['release_id'],choice['variant_id'],'material')
+        for side,e in choice.get('edges',{}).items():
+            edge_choices[(row_id,side)]=catalogue.get_item(conn,source['release_id'],e['edge_id'],'edge') if e['edge_id'] else None
+    reason='User confirmed displayed material and edge choices in Excel preview'
+    for row_id,material in selected.items():
+        r=parts[row_id]
+        value=manual_resolution(r['resolution'],material,actor,reason)
+        conn.execute('INSERT INTO mf_import_row_resolutions VALUES (%s,%s,%s,%s,%s,now())',
+                     (uuid4(),r['row_id'],r['resolution_version']+1,Jsonb(value),actor))
+        r['resolution']=value
+        record_event(conn,settings,actor=actor,action='import.identity.confirmed',object_type='import_row',object_id=r['row_id'],reason=reason)
     revision=None
     if mode=='new_revision':
         revision=uuid4()
@@ -99,6 +118,14 @@ def confirm(conn,settings,actor,batch,mode,exclusions,expected):
         snapshot={**original,'source_row_id':str(r['row_id']),'resolution':r['resolution'],
                   'template_revision_id':str(source['template_revision_id']),'catalogue_release':str(source['release_id'])}
         snapshot=apply_auto(snapshot,edges,mappings)
+        for side,choice in choices.get(str(r['row_id']),{}).get('edges',{}).items():
+            snapshot['edges'][side].update(mode='manual_override',edge_id=choice['edge_id'],
+                snapshot=edge_choices[(str(r['row_id']),side)],confirmed=True,conflict=False,
+                selection_mode=choice['selection_mode'],confirmed_by=str(actor),
+                confirmed_at=datetime.now(timezone.utc).isoformat(),reason=reason)
+            for key in ('mapping_id','mapping_version'): snapshot['edges'][side].pop(key,None)
+        if choices.get(str(r['row_id']),{}).get('edges'):
+            record_event(conn,settings,actor=actor,action='import.edges.confirmed',object_type='import_row',object_id=r['row_id'],reason=reason)
         exclusion=exclusions.get(str(r['row_id']))
         conn.execute('INSERT INTO mf_order_draft_rows VALUES (%s,%s,%s,%s,%s,%s,%s,now())',
             (uuid4(),source['order_id'],r['row_id'],source['template_revision_id'],source['release_id'],Jsonb(snapshot),exclusion))

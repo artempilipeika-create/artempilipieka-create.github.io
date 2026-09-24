@@ -151,8 +151,8 @@ def test_excel_mapping_template_and_bad_rows(page,api,settings,admin_user):
     data=xlsx({'Лист1':[['Длина','Ширина','Количество','Артикул','Материал','L1','L2','W1','W2','Текстура','Вращение','Лишний столбец'],[600,400,0,'621 PO','Board','0','0','0','0','none','false','ignore'],['',400,'ошибка','UNKNOWN','Неизвестный','0','0','0','0','none','false','ignore']]})
     file={'name':'synthetic-entry.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data}
     page.get_by_label('Файл Excel',exact=True).set_input_files(file)
-    expect(page.get_by_label('Колонка A',exact=True)).to_have_value('length')
-    expect(page.get_by_label('Колонка L',exact=True)).to_have_value('')
+    expect(page.get_by_label('Длина — колонка Excel',exact=True)).to_have_value('A')
+    assert page.locator('[name^=mapping_]').evaluate_all('(xs)=>xs.every(x=>x.value!=="L")')
     page.get_by_role('button',name='Проверить деталировку',exact=True).click()
     expect(page.get_by_role('heading',name='Проверьте деталировку перед импортом',exact=True)).to_be_visible()
     expect(page.locator('#import-preview')).to_contain_text('должно быть больше нуля')
@@ -167,7 +167,7 @@ def test_excel_mapping_template_and_bad_rows(page,api,settings,admin_user):
     page.get_by_role('button',name='Загрузить Excel',exact=True).click()
     page.get_by_label('Файл Excel',exact=True).set_input_files(file)
     expect(page.get_by_label('Сохранённый шаблон',exact=True)).not_to_have_value('')
-    expect(page.get_by_label('Колонка A',exact=True)).to_have_value('length')
+    expect(page.get_by_label('Длина — колонка Excel',exact=True)).to_have_value('A')
 
 
 def test_manager_file_only_flow(page,api,settings,admin_user):
@@ -235,3 +235,79 @@ def test_excel_valid_edges_calculation_pdf_and_template_reuse(page,api,settings,
     expect(page.get_by_role('heading',name='Проверьте деталировку перед импортом',exact=True)).to_be_visible()
     with transaction(settings) as c:
         assert c.execute('SELECT count(*) n FROM mf_import_template_revisions').fetchone()['n']==count
+
+
+def test_group_auto_preserves_manual_edge_and_none_after_material_change_reload(page,api,settings,admin_user):
+    _,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    login_ui(page,email);page.goto('https://testserver/editor')
+    page.get_by_label('Название заказа',exact=True).fill('SYNTHETIC grouped AUTO')
+    page.get_by_role('button',name='Заполнить деталировку',exact=True).click()
+    picker=page.get_by_label('Материал 1',exact=True)
+    first=picker.locator('option').filter(has_text='621 PO').first.get_attribute('value')
+    picker.select_option(first)
+    page.get_by_label('Длина 1',exact=True).fill('600');page.get_by_label('Ширина 1',exact=True).fill('400')
+    page.get_by_label('Текстура материала 1',exact=True).select_option('none')
+    page.get_by_role('button',name='+ Деталь в этот материал',exact=True).click()
+    page.get_by_label('Длина 2',exact=True).fill('500');page.get_by_label('Ширина 2',exact=True).fill('300')
+    expect(page.locator('#manual-rows .material-group')).to_have_count(1)
+    expect(page.locator('#manual-rows .material-cell select')).to_have_count(1)
+    default=page.get_by_label('Кромка AUTO материала 1',exact=True)
+    edge=default.locator('option').filter(has_text='E-22').first.get_attribute('value')
+    default.select_option(edge)
+    page.get_by_label('L1 деталь 2',exact=True).select_option('')
+    page.get_by_label('W1 деталь 1',exact=True).select_option(edge)
+    page.get_by_role('button',name='AUTO 4 стороны',exact=True).click()
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+    expect(page.get_by_label('L1 деталь 2',exact=True)).to_have_value('')
+    expect(page.get_by_label('W1 деталь 1',exact=True)).to_have_value(edge)
+    second=picker.locator('option').filter(has_text='621 PE').first.get_attribute('value')
+    picker.select_option(second)
+    expect(page.get_by_label('W1 деталь 1',exact=True)).to_have_value(edge)
+    expect(page.get_by_label('L1 деталь 2',exact=True)).to_have_value('')
+    default.select_option(edge)
+    page.get_by_role('button',name='Сохранить',exact=True).click()
+    expect(page.locator('#message')).to_contain_text('сохранена')
+    page.reload()
+    expect(page.get_by_label('Материал 1',exact=True)).to_have_value(second)
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+    expect(page.get_by_label('L1 деталь 2',exact=True)).to_have_value('')
+    expect(page.get_by_label('W1 деталь 1',exact=True)).to_have_value(edge)
+    no_overflow(page);screenshot(page,'grouped-auto-manual-protected')
+
+
+@pytest.mark.parametrize('width',[360,1440])
+def test_legacy_block_excel_group_preview_auto_and_saved_template(page,api,settings,admin_user,width):
+    from tests.stage03.support import xlsx
+    o,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    page.set_viewport_size({'width':width,'height':1000})
+    login_ui(page,email);page.goto('https://testserver/editor?order='+o['order_id'])
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    data=xlsx({'Детали':[['SYNTHETIC block layout'],['ДСП 621 PO 18мм',None,None,'Кол-во','в','н','л','п','Текстура','Наименование'],
+        [None,600,400,2,1,0,0,1,'нет','Полка блока'],[None,500,300,1,1,0,0,0,'нет','Боковина'],
+        [None,'ДСП 621 PE 18мм'],[None,450,250,3,1,0,0,0,'нет','Второй материал']]})
+    file={'name':'synthetic-blocks.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data}
+    page.get_by_label('Файл Excel',exact=True).set_input_files(file)
+    expect(page.get_by_label('Длина — колонка Excel',exact=True)).to_have_value('B')
+    expect(page.get_by_label('Ширина — колонка Excel',exact=True)).to_have_value('C')
+    expect(page.locator('#import-preview')).to_contain_text('Материалов: 2 · Позиций: 3')
+    expect(page.locator('#import-preview .import-material-group')).to_have_count(2)
+    for row,article in [(3,'621 PO'),(6,'621 PE')]:
+        material=page.get_by_label('Материал в строке '+str(row),exact=True)
+        material.select_option(material.locator('option').filter(has_text=article).first.get_attribute('value'))
+    for group in [1,2]:
+        edge=page.locator('#import-preview').get_by_label('Кромка AUTO материала '+str(group),exact=True)
+        edge.select_option(edge.locator('option').filter(has_text='E-22').first.get_attribute('value'))
+    expect(page.get_by_label('L1 в строке 3',exact=True)).to_have_value('__auto__')
+    expect(page.get_by_label('L2 в строке 3',exact=True)).to_have_value('')
+    no_overflow(page);screenshot(page,'excel-block-preview-'+str(width))
+    page.get_by_role('button',name='Импортировать деталировку',exact=True).click()
+    expect(page.get_by_label('Название 2',exact=True)).to_have_value('Полка блока')
+    expect(page.get_by_label('Название 4',exact=True)).to_have_value('Второй материал')
+    expect(page.get_by_label('L1 деталь 2',exact=True)).to_have_value('__auto__')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
+    page.reload();expect(page.get_by_label('Название 4',exact=True)).to_have_value('Второй материал')
+    expect(page.get_by_label('Количество 2',exact=True)).to_have_value('2')
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    page.get_by_label('Файл Excel',exact=True).set_input_files(file)
+    expect(page.get_by_label('Сохранённый шаблон',exact=True)).not_to_have_value('')
+    expect(page.locator('#import-preview')).to_contain_text('Материалов: 2 · Позиций: 3')

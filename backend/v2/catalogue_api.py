@@ -62,9 +62,18 @@ class ClientUpload(Upload):
 class InspectUpload(Upload):
     order_id:str=Field(min_length=1,max_length=80)
 
+class ImportEdgeChoice(StrictModel):
+    edge_id:UUID|None=None
+    selection_mode:Literal['manual','auto']='manual'
+
+class ImportRowChoice(StrictModel):
+    variant_id:UUID|None=None
+    edges:dict[Literal['L1','L2','W1','W2'],ImportEdgeChoice]=Field(default_factory=dict)
+
 class Confirm(StrictModel):
     mode:Literal['add','replace','new_revision']
     exclusions:dict[str,str]=Field(default_factory=dict)
+    choices:dict[UUID,ImportRowChoice]=Field(default_factory=dict,max_length=1000)
 
 class SelectMaterial(Reason):
     variant_id:UUID|None=None
@@ -150,7 +159,7 @@ def router(settings,policy):
             user=identity(conn,request);require(conn,user,'orders.read',order_id=order_id)
             order=conn.execute('SELECT owner_user_id FROM mf_orders WHERE order_id=%s',(order_id,)).fetchone()
             template_access(conn,user,order['owner_user_id'],order_id)
-            return {'items':conn.execute('''SELECT t.template_id,t.name,r.template_revision_id,r.version,r.definition
+            return {'items':conn.execute('''SELECT t.template_id,t.name,r.template_revision_id,r.version,r.definition,r.status
                 FROM mf_import_templates t JOIN LATERAL (
                     SELECT * FROM mf_import_template_revisions r WHERE r.template_id=t.template_id ORDER BY version DESC LIMIT 1
                 ) r ON true WHERE t.owner_user_id=%s AND r.status='active' ORDER BY t.created_at DESC''',(order['owner_user_id'],)).fetchall()}
@@ -388,7 +397,8 @@ def router(settings,policy):
     def confirm(import_id:UUID,body:Confirm,request:Request):
         with transaction(settings) as conn:
             user=identity(conn,request);scoped_import(conn,user,import_id,True)
-            return import_service.confirm(conn,settings,user['user_id'],import_id,body.mode,body.exclusions,request.headers.get('if-match'))
+            return import_service.confirm(conn,settings,user['user_id'],import_id,body.mode,body.exclusions,request.headers.get('if-match'),
+                                          body.model_dump(mode='json')['choices'])
 
     @api.get('/orders/{order_id}/draft/rows')
     def draft_rows(order_id:str,request:Request):

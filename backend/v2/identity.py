@@ -14,15 +14,26 @@ def search_candidates(raw,items):
         return ''.join(c for c in unicodedata.normalize('NFKC',str(v or '')).upper().translate(
             str.maketrans('АВЕКМНОРСТХ','ABEKMHOPCTX')) if c.isalnum())
     article=key(raw.get('raw_article'));name=key(raw.get('raw_material_name'))
-    available=[i for i in items if not conflicts(raw,i)]
+    description=str(raw.get('raw_material_name') or '')
+    thicknesses=set(re.findall(r'(?<![\d.,])(\d{1,2}(?:[.,]\d+)?)\s*(?:мм|mm)(?!\w)',description,re.I))
+    # Dimensions embedded in a client's description filter suggestions only.
+    # They never become a strict identity or override an explicitly supplied fact.
+    hinted=dict(raw)
+    if len(thicknesses)==1 and raw.get('raw_thickness') in (None,''):
+        hinted['raw_thickness']=next(iter(thicknesses))
+        hinted['normalized_physical']={**raw.get('normalized_physical',{}),'thickness':hinted['raw_thickness']}
+    available=[i for i in items if not conflicts(hinted,i)]
     exact=[i for i in available if (article and key(i.get('article'))==article) or
         (not article and name and name in {key(i.get('article')),key(i.get('name'))})]
-    if exact:return exact
+    if exact or article:return exact
     text=unicodedata.normalize('NFKC',str(raw.get('raw_material_name') or '')).upper()
     tokens=re.findall(r'[A-ZА-ЯЁ0-9]+',text)
     embedded=[i for i in available if i.get('article') and any(key(''.join(tokens[a:b]))==key(i['article'])
         for a in range(len(tokens)) for b in range(a+1,min(a+5,len(tokens))+1))] if not article else []
-    return embedded or [i for i in available if matches(i,raw.get('raw_article') or raw.get('raw_material_name') or '__no_identity__')]
+    # Numeric decor fragments must never turn a longer, different article into
+    # the only suggested identity. Text-only names may still use broad search.
+    return embedded or ([] if re.search(r'\d',text) else
+        [i for i in available if matches(i,raw.get('raw_material_name') or '__no_identity__')])
 
 STATES={'exact_match','confirmed_mapping','unresolved','ambiguous','manual_override','custom_customer'}
 
@@ -44,7 +55,7 @@ def resolve(raw,catalogue,release,aliases=(),namespace='client'):
            (not article and name and not i.get('article') and name==canonical(i.get('name')))]
     possible=[i for i in exact if not conflicts(raw,i)]
     result={'status':'unresolved','method':'strict_features','raw':raw,'selected':None,
-            'candidates':[i['variant_id'] for i in exact], 'reason':'Материал требует согласования',
+            'candidates':[i['variant_id'] for i in search_candidates(raw,possible)], 'reason':'Материал требует согласования',
             'confirmed_by':None,'confirmed_at':None,'mapping_version':None,'mapping_id':None,
             'catalogue_release':str(release)}
     # Exact requires all physical facts provided. A missing manufacturer is not a guessed one.
