@@ -2,11 +2,13 @@
 from dataclasses import replace
 import json
 import os
-from uuid import uuid4
+import re
+from uuid import UUID,uuid4
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict,make_conninfo
 from .db import connect,transaction
-from .security import WebPolicy
+from .security import WebPolicy,password_hash
+from .config import Settings
 from .operator import bootstrap
 from .mail import FakeCollector,confirm
 from .storage import VolumeStore
@@ -15,10 +17,68 @@ from .backup import backup,restore
 from .events import record_event
 
 
+class _RecoveryRefused(ValueError):
+    """Only fixed, non-secret diagnostic messages may cross the startup boundary."""
+
+
+def _recover_existing_admin(settings):
+    # Revalidate even for direct callers; production and mismatched DB identity fail closed.
+    try:
+        if Settings.from_env() != settings:
+            raise ValueError()
+        railway_identity=(
+            os.environ.get('RAILWAY_PROJECT_ID'),
+            os.environ.get('RAILWAY_SERVICE_ID'),
+            os.environ.get('RAILWAY_ENVIRONMENT_ID'),
+        )
+        if any(railway_identity) and railway_identity != (
+            '6d754ad4-ba7b-45f8-8c5e-356387e7de06',
+            '9aacf7bf-edd5-4f08-9423-3fbabea59268',
+            'ee625678-c15e-452d-9761-cda99274839f',
+        ):
+            raise ValueError()
+    except Exception:
+        raise _RecoveryRefused('Isolated staging recovery configuration required') from None
+    email=os.environ.get('MF_STAGE03_OPERATOR_EMAIL','').strip()
+    password=os.environ.get('MF_STAGE03_OPERATOR_PASSWORD','')
+    if (not re.fullmatch(r'[^\s@<>]+@example\.invalid',email,re.IGNORECASE)
+        or not 32 <= len(password) <= 128):
+        raise _RecoveryRefused('Explicit synthetic recovery credentials required')
+    try:
+        uid=UUID(os.environ.get('MF_STAGE03_OPERATOR_USER_ID',''))
+    except (ValueError,TypeError,AttributeError):
+        raise _RecoveryRefused('Explicit recovery user ID required') from None
+    try:
+        with transaction(settings) as conn:
+            conn.execute('SELECT pg_advisory_xact_lock(76010203)')
+            users=conn.execute('''SELECT user_id FROM mf_users
+                WHERE user_id=%s AND lower(email)=lower(%s) FOR UPDATE''',(uid,email)).fetchall()
+            if len(users) != 1:
+                raise _RecoveryRefused('Recovery identity missing or ambiguous; no changes made')
+            roles=conn.execute('SELECT role FROM mf_user_roles WHERE user_id=%s FOR UPDATE',(uid,)).fetchall()
+            if [r['role'] for r in roles] != ['admin']:
+                raise _RecoveryRefused('Recovery requires exactly the admin role; no changes made')
+            conn.execute('''UPDATE mf_users SET password_hash=%s,account_status='active',
+                email_verified_at=COALESCE(email_verified_at,now()),updated_at=now()
+                WHERE user_id=%s''',(password_hash(password),uid))
+            conn.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(uid,))
+            record_event(conn,settings,actor=uid,action='staff.admin.recovered',object_type='user',object_id=uid,
+                         reason='Explicit isolated staging administrator credential recovery')
+    except _RecoveryRefused:
+        raise
+    except Exception:
+        # Driver/trigger/hash errors must not print input credentials or SQL parameters.
+        raise _RecoveryRefused('Staging administrator recovery failed; transaction rolled back') from None
+    # Only announce success after the transaction has committed.
+    print('MF_STAGE03_ADMIN_RECOVERED',flush=True)
+
+
 def run_if_requested(settings):
     mode=os.environ.get('MF_STAGE03_OPERATOR_MODE','off')
     if mode=='off': return
-    if mode=='bootstrap':
+    if mode=='recover_existing_admin':
+        _recover_existing_admin(settings)
+    elif mode=='bootstrap':
         email=os.environ.get('MF_STAGE03_OPERATOR_EMAIL','')
         password=os.environ.get('MF_STAGE03_OPERATOR_PASSWORD','')
         if not email.endswith('@example.invalid') or len(password)<32: raise ValueError('Explicit synthetic operator credentials required')
