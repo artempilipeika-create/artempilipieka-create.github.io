@@ -4,22 +4,24 @@ from pathlib import Path
 from html import escape
 import hashlib,json,sys,subprocess,resource
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4,landscape
 from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
-from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,KeepTogether
+from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,KeepTogether,KeepInFrame
 from .document_projection import UNITS
 
-VERSION='mf-preliminary-a4-v3-details'
+VERSION='mf-preliminary-a4-onepage-v4-glue'
 RENDERER='reportlab-4.4.9-mf-v2'
 FONTS={'DejaVuSans.ttf':'ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280',
  'DejaVuSans-Bold.ttf':'5c1247acef7f2b8522a31742c76d6adcb5569bacc0be7ceaa4dc39dd252ce895'}
 ASSET_HASH=hashlib.sha256(Path(__file__).read_bytes()+Path(__file__).with_name('document_projection.py').read_bytes()+json.dumps(FONTS,sort_keys=True).encode()).hexdigest()
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');PAPER=colors.HexColor('#f6f3eb')
-WIDTH=A4[0]-32*mm
+PAGE=landscape(A4)
+WIDTH=PAGE[0]-16*mm
+HEIGHT=PAGE[1]-20*mm
 
 def n(value):
     return 'Уточняется' if value is None else str(value)
@@ -48,22 +50,21 @@ def render(data, template_version=VERSION):
     for c in json.dumps(data,ensure_ascii=False):
         if ord(c)>=32 and ord(c) not in font: raise ValueError('Unsupported glyph')
     styles={
-      'body':ParagraphStyle('body',fontName='MF',fontSize=10,leading=13,textColor=INK,spaceAfter=3,splitLongWords=True),
-      'small':ParagraphStyle('small',fontName='MF',fontSize=9,leading=12,textColor=MUTED,spaceAfter=3),
-      'heading':ParagraphStyle('heading',fontName='MF-Bold',fontSize=12,leading=16,textColor=FOREST,spaceBefore=10,spaceAfter=6,keepWithNext=False),
-      'title':ParagraphStyle('title',fontName='MF-Bold',fontSize=18,leading=23,textColor=FOREST,spaceAfter=10),
-      'amount':ParagraphStyle('amount',fontName='MF-Bold',fontSize=24,leading=29,textColor=FOREST,spaceAfter=7),
-      'tablehead':ParagraphStyle('tablehead',fontName='MF-Bold',fontSize=9,leading=12,textColor=FOREST),
+      'body':ParagraphStyle('body',fontName='MF',fontSize=7.4,leading=9,textColor=INK,spaceAfter=1.2,splitLongWords=True),
+      'small':ParagraphStyle('small',fontName='MF',fontSize=6.2,leading=7.4,textColor=MUTED,spaceAfter=1),
+      'heading':ParagraphStyle('heading',fontName='MF-Bold',fontSize=8.2,leading=10,textColor=FOREST,spaceBefore=3,spaceAfter=2,keepWithNext=False),
+      'title':ParagraphStyle('title',fontName='MF-Bold',fontSize=14,leading=16,textColor=FOREST,spaceAfter=3),
+      'amount':ParagraphStyle('amount',fontName='MF-Bold',fontSize=18,leading=20,textColor=FOREST,spaceAfter=2),
+      'tablehead':ParagraphStyle('tablehead',fontName='MF-Bold',fontSize=6.6,leading=7.8,textColor=FOREST),
     }
     def p(text,style='body'): return Paragraph(escape(str(text)).replace('\n','<br/>'),styles[style])
     def table(headers,rows,widths,title):
         t=Table([[p(title,'heading')]+['']*(len(headers)-1),[p(x,'tablehead') for x in headers]]+rows,colWidths=[WIDTH*w for w in widths],repeatRows=2,hAlign='LEFT',splitByRow=1)
         t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('SPAN',(0,0),(-1,0)),('BACKGROUND',(0,1),(-1,1),PAPER),
           ('LINEBELOW',(0,1),(-1,1),.6,RULE),('LINEBELOW',(0,1),(-1,-1),.3,RULE),
-          ('LEFTPADDING',(0,0),(-1,-1),6),('RIGHTPADDING',(0,0),(-1,-1),6),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6)]))
+          ('LEFTPADDING',(0,0),(-1,-1),2.5),('RIGHTPADDING',(0,0),(-1,-1),2.5),('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
         return t
-    story=[p('Martin Forest','heading'),p(data['title'],'title'),p('Заказ '+data['order_number']+' · '+data['order_name']),
-      p('Клиент / компания: '+data['customer']),p('Документ от '+data['date']+' · Редакция '+str(data['revision_number']),'small'),p(data['status_label'],'small')]
+    story=[Table([[p('Martin Forest','title'),p(data['title'],'heading')],[p('Заказ '+data['order_number']+' · '+data['order_name']),p('Клиент / компания: '+data['customer'])],[p('Документ от '+data['date']+' · Редакция '+str(data['revision_number']),'small'),p(data['status_label'],'small')]],colWidths=[WIDTH*.5,WIDTH*.5],style=TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('LINEBELOW',(0,0),(-1,0),1,FOREST),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),4),('TOPPADDING',(0,0),(-1,-1),1),('BOTTOMPADDING',(0,0),(-1,-1),1)]))]
     if data['synthetic']: story.append(p('Тестовый пример: условные цены, не коммерческое предложение.','small'))
     if data.get('details'):
         rows=[]
@@ -76,10 +77,14 @@ def render(data, template_version=VERSION):
                 e=d['edges'].get(side)
                 text=(' · '.join(str(e[k]) for k in ('name','article','width','thickness') if e.get(k)) if e else ('Уточняется' if side in d.get('unresolved_edges',[]) else 'Нет'))
                 edge_lines.append(side+': '+text)
+            thickness='36 мм · 18+18' if d.get('route')=='glued_18_18' else n(d.get('finished_thickness'))+' мм'
             info=[p(label),p(identity,'small'),p(grains.get(d['grain'],'Уточняется'),'small')]
+            if d.get('glue_backing'):
+                b=d['glue_backing'];back=' · '.join(str(b[k]) for k in ('manufacturer','name','article','structure') if b.get(k))
+                info.append(p('Подклейка: '+(back or 'материал уточняется'),'small'))
             if d['comments']: info.append(p(d['comments'],'small'))
-            rows.append([info,p(n(d['length'])+' × '+n(d['width'])),p(n(d['qty'])),p('\n'.join(edge_lines),'small')])
-        story.append(table(['Деталь / материал','Д × Ш, мм','Кол-во','Кромка по сторонам'],rows,[.40,.16,.10,.34],'Деталировка'))
+            rows.append([info,p(n(d['length'])+' × '+n(d['width'])),p(n(d['qty'])),p(thickness,'small'),p('\n'.join(edge_lines),'small')])
+        story.append(table(['Деталь / материал','Д × Ш, мм','Кол-во','Толщина','Кромка по сторонам'],rows,[.35,.13,.07,.12,.33],'Деталировка'))
     if data['materials']:
         rows=[]
         for m in data['materials']:
@@ -101,7 +106,9 @@ def render(data, template_version=VERSION):
                 metres+='\nЗакупочный: '+n(e['procurement_metres'])+' м\nОплачиваемый: '+n(e['billable_metres'])+' м'
                 policy=e['policy'];metres+='\nПо чистовому метражу' if policy['basis']=='net' else '\nЗапас × '+n(policy.get('factor'))+'; шаг '+n(policy.get('step_m'))+' м'
             if e['supply_source']=='customer': info+='\nКромка заказчика'
-            rows.append([p(info),p(metres,'small'),p(n(e['unit_price'])+' / м'),p(n(e['amount']))])
+            price_text='Нет стоимости' if e['unit_price'] is None else n(e['unit_price'])+' / м'
+            amount_text='Нет стоимости' if e['amount'] is None else n(e['amount'])
+            rows.append([p(info),p(metres,'small'),p(price_text),p(amount_text)])
         story.append(table(['Кромка','Метраж','Цена, BYN','Сумма, BYN'],rows,[.38,.28,.18,.16],'Материал кромки'))
     if data['services']:
         story.append(table(['Операция','Объём','Тариф, BYN','Сумма, BYN'],[[p(s['name']),p(n(s['quantity'])+' '+UNITS.get(s['unit'],'')),p(n(s['unit_price'])),p(n(s['amount']))] for s in data['services']],[.49,.17,.18,.16],'Производственные услуги'))
@@ -110,18 +117,18 @@ def render(data, template_version=VERSION):
         story.append(p('Требует уточнения стоимости','heading'))
         for text in data['unresolved']: story.append(p(text,'small'))
         story.append(p('Указанные суммы включают только рассчитанные позиции.','small'))
-    story.append(KeepTogether([Spacer(1,12),p(data['amount_label'],'heading'),p(n(data['amount'])+(' BYN' if data['amount'] is not None else ''),'amount'),p(data['disclaimer'],'small')]))
+    story.append(KeepTogether([Spacer(1,4),p(data['amount_label'],'heading'),p(n(data['amount'])+(' BYN' if data['amount'] is not None else ''),'amount'),p(data['disclaimer'],'small')]))
     def footer(canvas,doc):
-        if doc.page>100: raise ValueError('Document page limit')
-        canvas.saveState();canvas.setFont('MF',9);canvas.setFillColor(MUTED)
-        canvas.drawString(16*mm,11*mm,'Martin Forest · Заказ '+data['order_number'])
-        canvas.drawRightString(A4[0]-16*mm,11*mm,'Страница '+str(doc.page))
-        if doc.page>1:
-            canvas.drawString(16*mm,A4[1]-12*mm,'ПРЕДВАРИТЕЛЬНЫЙ РАСЧЁТ · '+data['order_number'])
+        if doc.page>1: raise ValueError('One-page preliminary document overflow')
+        canvas.saveState();canvas.setFillColor(FOREST);canvas.rect(0,PAGE[1]-4*mm,PAGE[0],4*mm,fill=1,stroke=0)
+        canvas.setFont('MF',6.5);canvas.setFillColor(MUTED)
+        canvas.drawString(8*mm,5*mm,'Martin Forest · Заказ '+data['order_number'])
+        canvas.drawRightString(PAGE[0]-8*mm,5*mm,'Предварительный расчёт · 1 лист')
         canvas.restoreState()
-    buf=BytesIO();doc=SimpleDocTemplate(buf,pagesize=A4,leftMargin=16*mm,rightMargin=16*mm,topMargin=17*mm,bottomMargin=20*mm,
+    fitted=KeepInFrame(WIDTH,HEIGHT,story,mode='shrink')
+    buf=BytesIO();doc=SimpleDocTemplate(buf,pagesize=PAGE,leftMargin=8*mm,rightMargin=8*mm,topMargin=8*mm,bottomMargin=8*mm,
         title=data['title'],author='Martin Forest',subject='Предварительный расчёт · '+template_version)
-    doc.build(story,onFirstPage=footer,onLaterPages=footer,canvasmaker=lambda *a,**kw:Canvas(*a,**{**kw,'invariant':1,'pageCompression':1}))
+    doc.build([fitted],onFirstPage=footer,onLaterPages=footer,canvasmaker=lambda *a,**kw:Canvas(*a,**{**kw,'invariant':1,'pageCompression':1}))
     return buf.getvalue()
 
 
