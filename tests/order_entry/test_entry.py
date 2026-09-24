@@ -141,3 +141,18 @@ def test_3d_read_only_share_can_be_revoked(api,settings,admin_user):
     assert len(shares)==1 and shares[0]['revoked_at'] is None
     assert api.delete('/api/v2/3d-projects/'+created['project_id']+'/shares/'+str(shares[0]['share_id'])).status_code==204
     assert api.get('/api/v2/3d-shares/'+token).status_code==404
+
+def test_3d_project_pdf_specification(api,settings,admin_user):
+    _,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    scene={'module_type':'chest','width':1000,'height':850,'depth':450,'layout':'combo','drawers':3,'base':'plinth','handles':'handles',
+        'body_variant_id':None,'front_variant_id':None,'view_mode':'3d','schema_version':2,
+        'room':{'width':5000,'depth':3500,'height':2800},
+        'items':[{'item_id':'cab-1','module_type':'base_cabinet','name':'Кухня · нижний','x':-500,'z':-1000,'rotation':0,'width':600,'height':720,'depth':560,'layout':'doors','drawers':0,'base':'plinth','handles':'handles','body_variant_id':None,'front_variant_id':None},
+                 {'item_id':'ward-1','module_type':'wardrobe','name':'Шкаф','x':700,'z':-900,'rotation':90,'width':1200,'height':2400,'depth':600,'layout':'doors','drawers':0,'base':'plinth','handles':'handles','body_variant_id':None,'front_variant_id':None}],
+        'selected_item_id':'cab-1'}
+    created=post(api,'/3d-projects',{'name':'3D спецификация','scene':scene},status=201)
+    pdf=api.get('/api/v2/3d-projects/'+created['project_id']+'/specification.pdf')
+    assert pdf.status_code==200 and pdf.headers['content-type'].startswith('application/pdf')
+    reader=PdfReader(BytesIO(pdf.content));text='\n'.join(p.extract_text() for p in reader.pages)
+    assert len(reader.pages)==1
+    assert all(v in text for v in ['3D спецификация','5000','3500','2800','Кухня','Шкаф'])
