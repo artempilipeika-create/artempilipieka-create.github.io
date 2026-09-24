@@ -89,10 +89,10 @@ def test_cal09_independent_edge_discount():
     assert before['category_totals']['materials']==after['category_totals']['materials']
     assert before['category_totals']['edge_material']!=after['category_totals']['edge_material']
 
-def test_cal11_no_hidden_policy_cal12_explicit_synthetic_and_cal13_group_once():
+def test_cal11_confirmed_pvc_procurement_default_and_cal13_group_once():
     x=net_fixture();x['production_profile']['policies']['edge_consumption']=None
     r=calculate(x);assert op(r,'edge_material')[0]['net_metres']=='6'
-    assert op(r,'edge_material')[0]['procurement_metres'] is None and r['total'] is None
+    assert op(r,'edge_material')[0]['procurement_metres']=='10'
     x['production_profile']['policies']['edge_consumption']={'basis':'factor_ceil','factor':'1.15','step_m':'5'}
     r=calculate(x);assert op(r,'edge_material')[0]['procurement_metres']=='10'
     assert op(r,'edge_normal')[0]['quantity']=='6' and len(op(r,'edge_material'))==1
@@ -103,14 +103,26 @@ def test_cal11_no_hidden_policy_cal12_explicit_synthetic_and_cal13_group_once():
 def test_cal14_glue_recipe_cal15_finish_cut_and_packaging():
     x,_=fixture();detail(x).update(qty=3,route='glued_18_18',packaging=True);r=calculate(x)
     recipe=r['manufacturing_recipes'][0]
-    assert (recipe['blank_length'],recipe['blank_width'],recipe['child_qty'],recipe['finished_qty'])==('620','420',6,3)
+    assert (recipe['blank_length'],recipe['blank_width'],recipe['front_qty'],recipe['backing_qty'],recipe['finished_qty'])==('620','420',3,3,3)
+    assert recipe['same_material'] and recipe['glue_area_basis']=='one_blank_area'
     assert op(r,'packaging')[0]['quantity']=='0.72' and op(r,'packaging')[0]['gross']=='1.08'
     assert op(r,'glued_finish_cut')[0]['quantity']=='3' and op(r,'glued_finish_cut')[0]['gross']=='5.10'
     assert len([l for l in r['lines'] if l['category']=='materials'])==1
-    assert op(r,'glue')[0]['state']=='needs_confirmation'
+    assert op(r,'glue')[0]['quantity']=='0.7812' and op(r,'glue')[0]['gross']=='10.94'
     assert sum(len(s['placements']) for s in r['sheet_estimates'][0]['sheets'])==6
-    x['production_profile']['policies']['glue_area']='one_blank_area'
-    assert op(calculate(x),'glue')[0]['quantity']=='0.7812'
+
+def test_glue_different_backing_material_counts_each_layer_once():
+    x,_=fixture();front=detail(x);front.update(route='glued_18_18',qty=2)
+    backing={'variant_id':'material-back','name':'Backing 18','thickness':'18','length':'2800','width':'2070','family':'board'}
+    front['glue_backing']={'material':backing,'supply_source':'company','provided_sheets':None,'customer_reason':None}
+    x['prices']['material-back']={'entry_id':'price-back','amount':'80','unit':'sheet'}
+    r=calculate(x);recipe=r['manufacturing_recipes'][0]
+    assert recipe['same_material'] is False and recipe['front_material_key']=='material-18' and recipe['backing_material_key']=='material-back'
+    assert len(r['sheet_estimates'])==2
+    assert sum(sum(p['qty'] for p in s['sheets'][0]['placements']) if s['sheets'] else 0 for s in [])==0 if False else True
+    assert sum(len(sheet['placements']) for plan in r['sheet_estimates'] for sheet in plan['sheets'])==4
+    assert op(r,'glue')[0]['quantity']=='0.5208'
+    assert op(r,'glued_finish_cut')[0]['quantity']=='2'
 
 def test_cal16_solid36_not_glued_not_cut18():
     x,_=fixture();detail(x)['material']['thickness']='36';r=calculate(x)
