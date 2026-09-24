@@ -209,13 +209,16 @@ function renderManual(){
   grain.onchange=()=>{for(const {r}of group.rows)r.grain=grain.value;dirty=true;renderManual();};
   if(first._materialSource)card.append(node('p','Из Excel: '+first._materialSource,'muted'));
   card.append(node('p','Материал и формат выбираются для всей группы. Выбор AUTO-кромки сразу применяется ко всем уже отмеченным кромлением сторонам этого материала; пустые стороны не меняются, ручные исключения сохраняются.','muted'));
-  const wrap=table(['№','Название','Длина, мм','Ширина, мм','Кол-во','Текстура','Вращать','L1','L2','W1','W2','Примечание','Действия'],[]);wrap.classList.add('detail-grid');wrap.querySelectorAll('th')[11].classList.add('detail-extra');const body=wrap.querySelector('tbody');
+  const wrap=table(['№','Название','Длина, мм','Ширина, мм','Кол-во','Готовая толщина','Текстура','Вращать','L1','L2','W1','W2','Примечание','Действия'],[]);wrap.classList.add('detail-grid');wrap.querySelectorAll('th')[12].classList.add('detail-extra');const body=wrap.querySelector('tbody');
   group.rows.forEach(({r,index})=>{
   const tr=node('tr');tr.dataset.detailId=r.detail_id;
   function cell(child){const td=node('td');td.append(child);tr.append(td);return td;}
   cell(node('span',index+1));
   function input(k,label,type='text'){const i=node('input');i.type=type;i.value=r[k]??'';i.setAttribute('aria-label',label+' '+(index+1));if(type==='number'){i.min=k==='qty'?'1':'0.001';i.step=k==='qty'?'1':'0.001';}else i.maxLength=k==='comments'?1000:200;i.oninput=()=>{r[k]=k==='qty'?(i.value===''?'':Number(i.value)):i.value;dirty=true;tr.classList.remove('invalid-row');};return i;}
   cell(input('name','Название'));cell(input('length','Длина','number'));cell(input('width','Ширина','number'));cell(input('qty','Количество','number'));
+  const routeBox=node('div',undefined,'route-cell'),[tl,thickness]=selectField('Готовая толщина '+(index+1),'route',[['solid','Обычная'],['glued_18_18','36 мм · склейка 18+18']],r.route);tl.classList.add('sr-label');routeBox.append(tl);
+  if(r.route==='glued_18_18')routeBox.append(node('small',r.glue_backing?'Подклейка: '+(r.glue_backing.materialLabel||'другой материал'):'Подклейка: тот же материал','muted'));
+  thickness.onchange=()=>{r.route=thickness.value;if(r.route==='solid')r.glue_backing=null;dirty=true;renderManual();};cell(routeBox);
   const [gl,g]=selectField('Текстура '+(index+1),'grain',Object.entries(grainNames),r.grain);gl.classList.add('sr-label');g.onchange=()=>{r.grain=g.value;dirty=true;};cell(gl);
   const rotation=node('input');rotation.type='checkbox';rotation.checked=r.rotation;rotation.setAttribute('aria-label','Вращать '+(index+1));rotation.onchange=()=>{r.rotation=rotation.checked;dirty=true;};cell(rotation);
   for(const side of sideNames){
@@ -223,11 +226,11 @@ function renderManual(){
   }
   cell(input('comments','Примечание')).classList.add('detail-extra');
   const actions=node('div',undefined,'row-actions');
-  actions.append(button('Дублировать',()=>{const clone=structuredClone(r);clone.detail_id=crypto.randomUUID();delete clone.draft_row_id;delete clone.resolution_reason;delete clone._source;delete clone._errors;manualRows.splice(index+1,0,clone);dirty=true;renderManual();},true));
+  actions.append(button('Дублировать',()=>{const clone=structuredClone(r);clone.detail_id=crypto.randomUUID();for(const k of ['draft_row_id','resolution_reason','_source','_sourceRow','_sourcePosition','_sourceGlueText','_glueAuto','_glueSourceRows','_errors'])delete clone[k];if(clone.glue_backing){delete clone.glue_backing.draft_row_id;delete clone.glue_backing.resolution_reason;}manualRows.splice(index+1,0,clone);dirty=true;renderManual();},true));
   if(index)actions.append(button('Материал ↑',()=>{for(const k of ['variant_id','materialLabel','custom_customer','supply_source','provided_sheets','customer_reason'])r[k]=structuredClone(manualRows[index-1][k]);dirty=true;renderManual();},true),button('Кромка ↑',()=>{r.edges=structuredClone(manualRows[index-1].edges);dirty=true;renderManual();},true));
-  actions.append(button('Удалить',async()=>{if(r.draft_row_id){const fresh=await api('/orders/'+editorOrder.order_id);const res=await api('/orders/'+editorOrder.order_id+'/draft/rows/'+r.draft_row_id+'/exclude','POST',{reason:'Удалено пользователем из таблицы деталировки'},{'If-Match':String(fresh.optimistic_lock_version)});editorOrder.optimistic_lock_version=res.optimistic_lock_version;}manualRows.splice(index,1);if(!manualRows.length)manualRows.push(blankDetail());dirty=true;renderManual();},true));
+  actions.append(button('Удалить',async()=>{for(const rawId of [r.draft_row_id,r.glue_backing?.draft_row_id].filter(Boolean)){const fresh=await api('/orders/'+editorOrder.order_id);const res=await api('/orders/'+editorOrder.order_id+'/draft/rows/'+rawId+'/exclude','POST',{reason:'Удалено пользователем из таблицы деталировки'},{'If-Match':String(fresh.optimistic_lock_version)});editorOrder.optimistic_lock_version=res.optimistic_lock_version;}manualRows.splice(index,1);if(!manualRows.length)manualRows.push(blankDetail());dirty=true;renderManual();},true));
   const more=node('details');more.append(node('summary','Дополнительно'),button('Материал клиента, склейка, упаковка',()=>editRow(index),true));actions.append(more);cell(actions);body.append(tr);
-  if(r._source){const note=node('tr',undefined,'source-note'+(r._errors?.length?' error-note':'')),td=node('td',r._source+(r._errors?.length?' · '+r._errors.map(importIssue).join('; '):''));td.colSpan=13;note.append(td);body.append(note);}
+  if(r._source){const note=node('tr',undefined,'source-note'+(r._errors?.length?' error-note':'')),td=node('td',r._source+(r._errors?.length?' · '+r._errors.map(importIssue).join('; '):''));td.colSpan=14;note.append(td);body.append(note);}
 
   });card.append(wrap);
   const actions=node('div',undefined,'actions');actions.append(button('+ Деталь в этот материал',()=>addGroupDetail(first)));
