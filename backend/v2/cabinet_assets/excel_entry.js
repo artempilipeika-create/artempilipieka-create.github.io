@@ -104,7 +104,7 @@ function renderExcelPreview(preview,result,version,currentVersion){
  groups.forEach((group,groupIndex)=>{
   const first=group.rows[0],source=String(first.original.values.article||first.original.values.material||'Материал не указан');
   const candidates=catalogueMaterials.filter(m=>group.rows.every(r=>(r.resolution?.candidates||[]).includes(m.variant_id)));
-  const exact=MFEntry.exactMaterial(catalogueMaterials,first.original.values.article,first.original.values.material);
+  const exact=MFEntry.exactMaterial(catalogueMaterials,first.original.values.article,first.original.values.material,first.original.values);
   const selected=first.resolution?.selected?.variant_id||(candidates.length===1?candidates[0].variant_id:exact?.variant_id||null);
   let automaticSelection=!!selected&&!first.resolution?.selected?.variant_id;
   const state={...blankDetail(),variant_id:selected,materialLabel:materialLabel(catalogueMaterials.find(m=>m.variant_id===selected))};
