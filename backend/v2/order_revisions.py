@@ -33,12 +33,24 @@ def released(conn,release,ident,kind):
     from .catalogue_model import safe_item
     return safe_item(row['snapshot'],release)
 
-def normalize(conn,release,detail):
-    d=plain(detail.model_dump());custom=d.pop('custom_customer');variant=d.pop('variant_id')
-    d['material']=released(conn,release,variant,'material') if variant else None
+def _material_choice(conn,release,variant,custom):
+    material=released(conn,release,variant,'material') if variant else None
+    key=None
     if custom:
-        d['material']={'name':custom['name'],'article':custom['article'],'manufacturer':custom['manufacturer'],'length':custom['length'],'width':custom['width'],'thickness':custom['thickness'],'family':'customer','raw_description':custom['name'],'reason':custom['reason']}
-        d['customer_material_key']=custom['key']
+        material={'name':custom['name'],'article':custom['article'],'manufacturer':custom['manufacturer'],'length':custom['length'],'width':custom['width'],'thickness':custom['thickness'],'family':'customer','raw_description':custom['name'],'reason':custom['reason']}
+        key=custom['key']
+    return material,key
+
+def normalize(conn,release,detail):
+    d=plain(detail.model_dump());custom=d.pop('custom_customer');variant=d.pop('variant_id');backing=d.pop('glue_backing')
+    d['material'],key=_material_choice(conn,release,variant,custom)
+    if key: d['customer_material_key']=key
+    if backing:
+        bcustom=backing.pop('custom_customer');bvariant=backing.pop('variant_id')
+        backing['material'],bkey=_material_choice(conn,release,bvariant,bcustom)
+        if bkey: backing['customer_material_key']=bkey
+        d['glue_backing']=backing
+    else: d['glue_backing']=None
     d['edges']={s:{'edge':released(conn,release,e['edge_id'],'edge'),'supply_source':e['supply_source'],'state':'confirmed',
                    'selection_mode':e['selection_mode']} for s,e in d['edges'].items()}
     return d
@@ -80,7 +92,10 @@ def create(conn,settings,actor,order,body,manager=False):
     financial_profiles.get(conn,'production',profile_id)
     issues=[]
     if body.details is not None:
-        ids=[d.detail_id for d in body.details];links=[str(d.draft_row_id) for d in body.details if d.draft_row_id]
+        ids=[d.detail_id for d in body.details];links=[]
+        for d in body.details:
+            if d.draft_row_id: links.append(str(d.draft_row_id))
+            if d.glue_backing and d.glue_backing.draft_row_id: links.append(str(d.glue_backing.draft_row_id))
         if len(set(ids))!=len(ids) or len(set(links))!=len(links) or sum(d.qty for d in body.details)>10000: error(422,'DETAIL_IDENTITIES_OR_QUANTITY_LIMIT')
         active_ids={r['draft_row_id'] for r in active_rows}
         if set(links)-active_ids: error(422,'FOREIGN_DRAFT_ROW')
