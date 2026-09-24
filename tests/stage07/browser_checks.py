@@ -397,6 +397,31 @@ def test_excel_glue_pair_becomes_one_36mm_detail_with_different_backing(page,api
     assert details[0]['glue_backing']['material']['article']=='621 PE'
 
 
+def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin_user):
+    o,email,_=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/constructor.html')
+    expect(page.locator('#project-name')).to_be_visible()
+    page.locator('#project-name').fill('Комод из 3D')
+    page.locator('#width').fill('1200');page.locator('#height').fill('900');page.locator('#depth').fill('500')
+    page.get_by_role('button',name='2D',exact=True).click();expect(page.locator('#scene-help')).to_contain_text('2D')
+    page.get_by_role('button',name='3D',exact=True).click()
+    page.locator('#body-search').fill('QA621 PO')
+    page.locator('#body-results button').first.click()
+    page.locator('#front-search').fill('621 PE')
+    page.locator('#front-results button').first.click()
+    page.get_by_role('button',name='Сохранить',exact=True).click()
+    expect(page.locator('#status')).to_contain_text('сохранён')
+    expect(page.locator('#projects .mf3d-project')).to_have_count(1)
+    page.get_by_role('button',name='Создать копию',exact=True).click()
+    expect(page.locator('#projects .mf3d-project')).to_have_count(2)
+    expect(page.locator('#project-name')).to_have_value('Комод из 3D — копия')
+    page.get_by_role('button',name='Перенести в заказ',exact=True).click()
+    expect(page).to_have_url(lambda url:'/editor?order=' in url)
+    expect(page.get_by_label('Длина 1',exact=True)).to_have_value('900')
+    expect(page.locator('#manual-rows tr[data-detail-id]')).to_have_count(5)
+    screenshot(page,'3d-transfer-to-order')
+
+
 def fill_own_material(page):
     dialog=page.get_by_role('dialog',name='Свой материал',exact=True)
     for label,value in [('Артикул / свой код','MY-BOARD'),('Название своего материала','Мой дуб'),('Производитель (необязательно)','Мастерская'),
