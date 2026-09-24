@@ -449,9 +449,9 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     page.get_by_role('button',name='Перенести в заказ',exact=True).click()
     page.wait_for_url('**/editor?order=*')
     expect(page.locator('#manual-rows tr[data-detail-id]')).to_have_count(17)
-    expect(page.get_by_label('Название 6',exact=True)).to_have_value(lambda v:'Кухня · нижний' in v)
-    expect(page.get_by_label('Название 10',exact=True)).to_have_value(lambda v:'Кухня · верхний' in v)
-    expect(page.get_by_label('Название 13',exact=True)).to_have_value(lambda v:'Шкаф' in v)
+    expect(page.get_by_label('Название 6',exact=True)).to_have_value('Кухня · нижний · Боковина')
+    expect(page.get_by_label('Название 10',exact=True)).to_have_value('Кухня · верхний · Боковина')
+    expect(page.get_by_label('Название 13',exact=True)).to_have_value('Шкаф · Боковина')
 
 
 def fill_own_material(page):
