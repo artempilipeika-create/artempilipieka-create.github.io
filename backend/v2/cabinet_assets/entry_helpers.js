@@ -67,7 +67,7 @@ const MFEntry=(()=>{
   for(const m of materials){const a=key(m.article);if(a.length<4||!hay.includes(a))continue;if(a.length>longest){longest=a.length;groups.clear();}if(a.length===longest){if(!groups.has(a))groups.set(a,[]);groups.get(a).push(m);}}
   return groups.size===1?unique([...groups.values()][0]):null;
  }
- const legacyPairs=Array.isArray(window.MF_V9_EDGE_PAIRS)?window.MF_V9_EDGE_PAIRS:[];
+ const legacyPairs=typeof window!=='undefined'&&Array.isArray(window.MF_V9_EDGE_PAIRS)?window.MF_V9_EDGE_PAIRS:[];
  function legacyMaterialScore(material,p){
   if(!material||material.family==='customer')return 0;
   const mm=key(material.manufacturer),pm=key(String(p.manufacturer||'').replace(/\\([^)]*\\)/g,''));
