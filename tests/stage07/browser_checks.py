@@ -184,6 +184,8 @@ def test_manager_file_only_flow(page,api,settings,admin_user):
         assert c.execute('SELECT workflow_status FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()['workflow_status']=='submitted'
         assert c.execute('SELECT count(*) n FROM mf_import_batches WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
         assert c.execute('SELECT count(*) n FROM mf_production_jobs WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
+    page.get_by_role('button',name='Выйти',exact=True).click()
+    expect(page.locator('#auth')).to_be_visible()
     login_ui(page,admin_user['email']);page.goto('https://testserver/editor?order='+o['order_id'])
     expect(page.get_by_label('Длина 1',exact=True)).to_have_value('')
     expect(page.get_by_role('link',name='manager-source.xls',exact=True)).to_be_visible()
