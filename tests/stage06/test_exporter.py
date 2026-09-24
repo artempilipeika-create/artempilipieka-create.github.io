@@ -65,6 +65,20 @@ def test_oblx_exp06_glued_600_400_3_becomes_620_420_6_only():
     assert c['result']==before and m['parts'][0]['finished_edges']['L1']['edge']['article']=='SKU-L1'
 
 
+def test_oblx_glue_different_backing_material_exports_two_material_blank_groups():
+    r,c=inputs(glued=True);d=r['content']['details'][0]
+    backing={**d['material'],'variant_id':'material-back','article':'621 PE','name':'Backing 621 PE'}
+    d['glue_backing']={'material':backing,'supply_source':'company','provided_sheets':None,'customer_reason':None}
+    c['input_snapshot']['prices']['material-back']={'entry_id':'price-back','amount':'80','unit':'sheet'}
+    c['input_snapshot']['revision_hash']=hash_value(r['content']);r['content_hash']=c['input_snapshot']['revision_hash']
+    c['result']=calculate(c['input_snapshot']);c['input_hash']=hash_value(c['input_snapshot'])
+    m=manufacturing_input(r,c,PREVIEW);p=inspect(export(m,'MF-000069'))
+    assert p['positions']==2 and p['parts']==6
+    assert {x['component'] for x in m['parts']}=={'front','backing'}
+    assert {x['material']['article'] for x in m['parts']}=={'621 PO','621 PE'}
+    assert all(x['blank']['length']=='620' and x['blank']['width']=='420' and x['blank']['qty']==3 for x in m['parts'])
+
+
 @pytest.mark.parametrize('grain,rotation',[('length',False),('length',True),('none',True),('width',False)])
 def test_native_rotation_grain_fixtures_remain_unverified(grain,rotation):
     r,c=inputs(grain,rotation);m=manufacturing_input(r,c,PREVIEW);p=inspect(export(m,'MF-000069'))
