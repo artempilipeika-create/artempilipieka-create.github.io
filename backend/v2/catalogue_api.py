@@ -282,8 +282,8 @@ def router(settings,policy):
     def save_template(conn,user,body,template_id=None):
         owner=body.owner_user_id or user['user_id']
         if body.order_id:
-            require(conn,user,'orders.draft.write',order_id=body.order_id)
             order=conn.execute('SELECT owner_user_id FROM mf_orders WHERE order_id=%s',(body.order_id,)).fetchone()
+            if not order: error(404,'ORDER_NOT_FOUND')
             if not body.owner_user_id: owner=order['owner_user_id']
         if template_id:
             t=conn.execute('SELECT * FROM mf_import_templates WHERE template_id=%s FOR UPDATE',(template_id,)).fetchone()

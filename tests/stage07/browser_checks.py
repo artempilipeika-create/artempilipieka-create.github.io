@@ -73,6 +73,15 @@ def test_client_editor_actual_api(page,api,settings,admin_user,width):
     page.set_viewport_size({'width':width,'height':1000});login_ui(page,email)
     page.goto('https://testserver/editor?order='+o['order_id'])
     expect(page.get_by_label('Длина 1',exact=True)).to_have_value('600')
+    page.get_by_label('Поиск материала 1',exact=True).fill('621 PE')
+    materials=page.get_by_label('Материал 1',exact=True)
+    second=materials.locator('option').filter(has_text='621 PE').get_attribute('value')
+    materials.select_option(second)
+    expect(page.locator('.material-cell small').first).to_contain_text('2440 × 1220')
+    page.get_by_label('Текстура 1',exact=True).select_option('width')
+    edge=page.get_by_label('L1 деталь 1',exact=True).locator('option').filter(has_text='E-22').get_attribute('value')
+    page.get_by_label('L1 деталь 1',exact=True).select_option(edge)
+    page.get_by_label('W2 деталь 1',exact=True).select_option(edge)
     page.get_by_label('Количество 1',exact=True).fill('0')
     page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('больше нуля')
     page.get_by_label('Количество 1',exact=True).fill('3')
@@ -80,6 +89,7 @@ def test_client_editor_actual_api(page,api,settings,admin_user,width):
         page.get_by_role('button',name='+ Добавить деталь',exact=True).click()
         row=page.locator('[data-detail-id]').nth(i-1)
         row.get_by_role('button',name='Материал ↑',exact=True).click()
+        row.get_by_role('button',name='Кромка ↑',exact=True).click()
         page.get_by_label('Длина '+str(i),exact=True).fill(str(600+i))
         page.get_by_label('Ширина '+str(i),exact=True).fill('400')
         page.get_by_label('Текстура '+str(i),exact=True).select_option('none')
@@ -91,6 +101,10 @@ def test_client_editor_actual_api(page,api,settings,admin_user,width):
     page.get_by_label('Длина 2',exact=True).fill('777')
     page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
     page.reload();expect(page.get_by_label('Длина 2',exact=True)).to_have_value('777')
+    expect(page.get_by_label('Материал 1',exact=True)).to_have_value(second)
+    expect(page.get_by_label('Текстура 1',exact=True)).to_have_value('width')
+    expect(page.get_by_label('L1 деталь 2',exact=True)).to_have_value(edge)
+    expect(page.get_by_label('W2 деталь 2',exact=True)).to_have_value(edge)
     expect(page.locator('[data-detail-id]')).to_have_count(5);no_overflow(page);screenshot(page,f'editor-{width}')
     page.get_by_role('button',name='Предварительный расчёт',exact=True).click();expect(page.locator('#message')).to_contain_text('Предварительный расчёт создан')
     expect(page.get_by_role('link',name='Посмотреть PDF',exact=True)).to_be_visible()
@@ -168,3 +182,43 @@ def test_manager_file_only_flow(page,api,settings,admin_user):
         assert c.execute('SELECT workflow_status FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()['workflow_status']=='submitted'
         assert c.execute('SELECT count(*) n FROM mf_import_batches WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
         assert c.execute('SELECT count(*) n FROM mf_production_jobs WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
+
+
+def test_excel_valid_edges_calculation_pdf_and_template_reuse(page,api,settings,admin_user):
+    from tests.stage03.support import xlsx
+    from io import BytesIO
+    from pypdf import PdfReader
+    o,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    login_ui(page,email);page.goto('https://testserver/editor?order='+o['order_id'])
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    data=xlsx({'Детали':[['Название','Материал','Длина','Ширина','Количество','L1','L2','W1','W2','Текстура','Примечание'],['Полка Excel','621 PO',650,350,2,'E-22','0','0','E-22','нет','Из файла']]})
+    file={'name':'valid-entry.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data}
+    page.get_by_label('Файл Excel',exact=True).set_input_files(file)
+    page.get_by_role('button',name='Проверить деталировку',exact=True).click()
+    expect(page.get_by_label('Материал в строке 2',exact=True)).not_to_have_value('')
+    expect(page.get_by_label('L1 в строке 2',exact=True)).not_to_have_value('?')
+    page.get_by_role('button',name='Импортировать деталировку',exact=True).click()
+    expect(page.get_by_label('Название 2',exact=True)).to_have_value('Полка Excel')
+    expect(page.get_by_label('Текстура 2',exact=True)).to_have_value('none')
+    page.get_by_role('button',name='Предварительный расчёт',exact=True).click()
+    expect(page.get_by_role('link',name='Скачать PDF',exact=True)).to_be_visible()
+    expect(page.locator('main')).to_contain_text('Полка Excel')
+    expect(page.locator('main')).to_contain_text('E-22')
+    pdf_url=page.get_by_role('link',name='Скачать PDF',exact=True).get_attribute('href')
+    response=api.get(pdf_url);assert response.status_code==200
+    text='\n'.join(p.extract_text() for p in PdfReader(BytesIO(response.content)).pages)
+    assert all(v in text for v in ['Полка Excel','650','350','E-22','Из файла'])
+    with transaction(settings) as c:
+        current=c.execute('SELECT * FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()
+        assert current['workflow_status']=='draft'
+        details=c.execute('SELECT content FROM mf_order_revisions WHERE revision_id=%s',(current['active_revision_id'],)).fetchone()['content']['details']
+        assert len(details)==2 and details[1]['edges']['L1']['edge']['article']=='E-22'
+        count=c.execute('SELECT count(*) n FROM mf_import_template_revisions').fetchone()['n']
+    page.get_by_role('button',name='К деталировке',exact=True).click()
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    page.get_by_label('Файл Excel',exact=True).set_input_files(file)
+    expect(page.get_by_label('Сохранённый шаблон',exact=True)).not_to_have_value('')
+    page.get_by_role('button',name='Проверить деталировку',exact=True).click()
+    expect(page.get_by_role('heading',name='Проверьте деталировку перед импортом',exact=True)).to_be_visible()
+    with transaction(settings) as c:
+        assert c.execute('SELECT count(*) n FROM mf_import_template_revisions').fetchone()['n']==count
