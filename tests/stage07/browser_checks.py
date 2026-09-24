@@ -75,11 +75,11 @@ def test_client_editor_actual_api(page,api,settings,admin_user,width):
     expect(page.get_by_label('Длина 1',exact=True)).to_have_value('600')
     page.get_by_label('Поиск материала 1',exact=True).fill('621 PE')
     materials=page.get_by_label('Материал 1',exact=True)
-    second=materials.locator('option').filter(has_text='621 PE').get_attribute('value')
+    second=materials.locator('option').filter(has_text='621 PE').first.get_attribute('value')
     materials.select_option(second)
     expect(page.locator('.material-cell small').first).to_contain_text('2440 × 1220')
     page.get_by_label('Текстура 1',exact=True).select_option('width')
-    edge=page.get_by_label('L1 деталь 1',exact=True).locator('option').filter(has_text='E-22').get_attribute('value')
+    edge=page.get_by_label('L1 деталь 1',exact=True).locator('option').filter(has_text='E-22').first.get_attribute('value')
     page.get_by_label('L1 деталь 1',exact=True).select_option(edge)
     page.get_by_label('W2 деталь 1',exact=True).select_option(edge)
     page.get_by_label('Количество 1',exact=True).fill('0')
@@ -99,12 +99,14 @@ def test_client_editor_actual_api(page,api,settings,admin_user,width):
     page.locator('[data-detail-id]').last.get_by_role('button',name='Удалить',exact=True).click()
     expect(page.locator('[data-detail-id]')).to_have_count(5)
     page.get_by_label('Длина 2',exact=True).fill('777')
+    page.get_by_label('L1 деталь 3',exact=True).select_option('')
     page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
     page.reload();expect(page.get_by_label('Длина 2',exact=True)).to_have_value('777')
     expect(page.get_by_label('Материал 1',exact=True)).to_have_value(second)
     expect(page.get_by_label('Текстура 1',exact=True)).to_have_value('width')
     expect(page.get_by_label('L1 деталь 2',exact=True)).to_have_value(edge)
     expect(page.get_by_label('W2 деталь 2',exact=True)).to_have_value(edge)
+    expect(page.get_by_label('L1 деталь 3',exact=True)).to_have_value('')
     expect(page.locator('[data-detail-id]')).to_have_count(5);no_overflow(page);screenshot(page,f'editor-{width}')
     page.get_by_role('button',name='Предварительный расчёт',exact=True).click();expect(page.locator('#message')).to_contain_text('Предварительный расчёт создан')
     expect(page.get_by_role('link',name='Посмотреть PDF',exact=True)).to_be_visible()
@@ -182,6 +184,9 @@ def test_manager_file_only_flow(page,api,settings,admin_user):
         assert c.execute('SELECT workflow_status FROM mf_orders WHERE order_id=%s',(o['order_id'],)).fetchone()['workflow_status']=='submitted'
         assert c.execute('SELECT count(*) n FROM mf_import_batches WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
         assert c.execute('SELECT count(*) n FROM mf_production_jobs WHERE order_id=%s',(o['order_id'],)).fetchone()['n']==0
+    login_ui(page,admin_user['email']);page.goto('https://testserver/editor?order='+o['order_id'])
+    expect(page.get_by_label('Длина 1',exact=True)).to_have_value('')
+    expect(page.get_by_role('link',name='manager-source.xls',exact=True)).to_be_visible()
 
 
 def test_excel_valid_edges_calculation_pdf_and_template_reuse(page,api,settings,admin_user):
@@ -195,8 +200,14 @@ def test_excel_valid_edges_calculation_pdf_and_template_reuse(page,api,settings,
     file={'name':'valid-entry.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data}
     page.get_by_label('Файл Excel',exact=True).set_input_files(file)
     page.get_by_role('button',name='Проверить деталировку',exact=True).click()
-    expect(page.get_by_label('Материал в строке 2',exact=True)).not_to_have_value('')
-    expect(page.get_by_label('L1 в строке 2',exact=True)).not_to_have_value('?')
+    material=page.get_by_label('Материал в строке 2',exact=True)
+    # Each earlier fixture publishes a separate namespace. Confirm an exact candidate
+    # when several otherwise equal synthetic catalogue cards are available.
+    variant=material.locator('option').filter(has_text='621 PO').first.get_attribute('value')
+    material.select_option(variant)
+    edge=page.get_by_label('L1 в строке 2',exact=True).locator('option').filter(has_text='E-22').first.get_attribute('value')
+    page.get_by_label('L1 в строке 2',exact=True).select_option(edge)
+    page.get_by_label('W2 в строке 2',exact=True).select_option(edge)
     page.get_by_role('button',name='Импортировать деталировку',exact=True).click()
     expect(page.get_by_label('Название 2',exact=True)).to_have_value('Полка Excel')
     expect(page.get_by_label('Текстура 2',exact=True)).to_have_value('none')
