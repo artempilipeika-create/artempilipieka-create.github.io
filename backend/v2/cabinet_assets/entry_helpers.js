@@ -121,6 +121,36 @@ const MFEntry=(()=>{
   }
   return {changed,protectedSides};
  }
+ function glueFlags(values={}){
+  const text=[values.name,values.comments,values.material,values.article,values.row_type,values._sourceGlueText].filter(Boolean).join(' ').normalize('NFKC').toLowerCase();
+  return {glue:/склейк/.test(text),thick36:/(?:тол(?:щина)?\s*[:=-]?\s*36|36\s*мм)/i.test(text),copy:/\(\s*копия\s*\)|\bкопия\b/i.test(text),ready:/гот\.?\s*дет|готов(?:ая|ой)?\s*дет/i.test(text)};
+ }
+ function glueHint(values={}){const f=glueFlags(values);return f.glue||f.thick36;}
+ function sameGeometry(a,b){return num(a.length)===num(b.length)&&num(a.width)===num(b.width)&&num(a.qty)===num(b.qty);}
+ function glueBackingFromRow(r){
+  if(!r||(!r.variant_id&&!r.custom_customer))return null;
+  return {draft_row_id:r.draft_row_id||null,resolution_reason:r.resolution_reason||null,variant_id:r.variant_id||null,custom_customer:r.custom_customer?structuredClone(r.custom_customer):null,
+    supply_source:r.supply_source||'company',provided_sheets:r.provided_sheets??null,customer_reason:r.customer_reason??null,materialLabel:r.materialLabel||'Материал подклейки'};
+ }
+ function recognizeGlueRows(rows){
+  const result=[...rows],consumed=new Set(),groups=new Map();
+  for(const r of result){if(!r?._sourcePosition&&!r?._sourceGlueText)continue;const pos=String(r._sourcePosition??'').trim();const k=pos?'p:'+pos:'g:'+String(r.length)+'|'+String(r.width)+'|'+String(r.qty);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r);}
+  for(const group of groups.values()){
+   group.sort((a,b)=>(a._sourceRow||0)-(b._sourceRow||0));
+   let paired=false;
+   for(let i=0;i<group.length&&!paired;i++)for(let j=i+1;j<group.length&&!paired;j++){
+    const a=group[i],b=group[j];if(!sameGeometry(a,b))continue;const af=glueFlags({_sourceGlueText:a._sourceGlueText}),bf=glueFlags({_sourceGlueText:b._sourceGlueText});
+    const samePos=String(a._sourcePosition??'').trim()!==''&&String(a._sourcePosition??'').trim()===String(b._sourcePosition??'').trim();
+    const score=(samePos?2:0)+2+(af.copy||bf.copy?2:0)+(af.ready||bf.ready?2:0)+(af.glue||bf.glue||af.thick36||bf.thick36?3:0);
+    if(score<4)continue;
+    const finished=af.copy&&!bf.copy?b:bf.copy&&!af.copy?a:(af.ready||af.thick36||af.glue)&&!(bf.ready||bf.thick36||bf.glue)?a:(bf.ready||bf.thick36||bf.glue)&&!(af.ready||af.thick36||af.glue)?b:a;
+    const backing=finished===a?b:a,binfo=glueBackingFromRow(backing);if(!binfo)continue;
+    finished.route='glued_18_18';finished.glue_backing=binfo;finished._glueAuto=true;finished._glueSourceRows=[a._sourceRow,b._sourceRow].filter(Boolean);consumed.add(backing);paired=true;
+   }
+   if(!paired)for(const r of group)if(glueHint({_sourceGlueText:r._sourceGlueText}))r.route='glued_18_18';
+  }
+  return result.filter(r=>!consumed.has(r));
+ }
  function importGroupKey(row){
   const v=row.original.values;
   return JSON.stringify(['article','material','manufacturer','structure','thickness','format_length','format_width'].map(k=>String(v[k]??'').trim()).concat(row.resolution?.selected?.variant_id||''));
@@ -130,5 +160,5 @@ const MFEntry=(()=>{
   for(const row of rows){const k=importGroupKey(row);if(!groups.has(k))groups.set(k,{key:k,rows:[]});groups.get(k).rows.push(row);}
   return [...groups.values()];
  }
- return {fields,key,num,guess,columns,headers,detect,boardText,compatible,materialMatches,exactMaterial,legacyEdgeCandidates,edgeCandidates,edgeDefault,autoEdge,applyGroupEdgeSelection,previewGroups};
+ return {fields,key,num,guess,columns,headers,detect,boardText,compatible,materialMatches,exactMaterial,legacyEdgeCandidates,edgeCandidates,edgeDefault,autoEdge,applyGroupEdgeSelection,glueFlags,glueHint,recognizeGlueRows,previewGroups};
 })();
