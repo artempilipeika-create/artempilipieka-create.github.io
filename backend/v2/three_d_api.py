@@ -6,7 +6,8 @@ from fastapi import APIRouter,Request
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
 from .db import transaction
-from .security import identity,require,error
+from .security import identity,error
+from .rbac import require
 from .events import record_event
 
 class Scene(StrictModel):
