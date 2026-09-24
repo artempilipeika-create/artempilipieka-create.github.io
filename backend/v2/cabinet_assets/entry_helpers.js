@@ -109,6 +109,18 @@ const MFEntry=(()=>{
   if(previous?.selection_mode==='manual'||previous?.edge_id&&previous.selection_mode!=='auto')return previous;
   return {edge_id:edgeId||null,supply_source:'company',selection_mode:'auto',unresolved:!edgeId};
  }
+ function applyGroupEdgeSelection(rows,previousDefault,edgeId){
+  let changed=0,protectedSides=0;
+  for(const row of rows)for(const side of ['L1','L2','W1','W2']){
+   const current=row.edges?.[side];
+   const marked=!!current&&(current.selection_mode==='auto'||current.unresolved||!!current.edge_id);
+   if(!marked)continue;
+   const manualException=current.selection_mode==='manual'&&!!current.edge_id&&!!previousDefault&&current.edge_id!==previousDefault&&!current.unresolved;
+   if(manualException){protectedSides++;continue;}
+   row.edges[side]={...current,edge_id:edgeId||null,supply_source:current.supply_source||'company',selection_mode:'auto',unresolved:!edgeId};changed++;
+  }
+  return {changed,protectedSides};
+ }
  function importGroupKey(row){
   const v=row.original.values;
   return JSON.stringify(['article','material','manufacturer','structure','thickness','format_length','format_width'].map(k=>String(v[k]??'').trim()).concat(row.resolution?.selected?.variant_id||''));
@@ -118,5 +130,5 @@ const MFEntry=(()=>{
   for(const row of rows){const k=importGroupKey(row);if(!groups.has(k))groups.set(k,{key:k,rows:[]});groups.get(k).rows.push(row);}
   return [...groups.values()];
  }
- return {fields,key,num,guess,columns,headers,detect,boardText,compatible,materialMatches,exactMaterial,legacyEdgeCandidates,edgeCandidates,edgeDefault,autoEdge,previewGroups};
+ return {fields,key,num,guess,columns,headers,detect,boardText,compatible,materialMatches,exactMaterial,legacyEdgeCandidates,edgeCandidates,edgeDefault,autoEdge,applyGroupEdgeSelection,previewGroups};
 })();
