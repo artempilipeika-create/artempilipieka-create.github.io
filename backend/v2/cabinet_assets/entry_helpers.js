@@ -130,7 +130,11 @@ const MFEntry=(()=>{
  function glueBackingFromRow(r,materials=[]){
   if(!r)return null;
   let variant=r.variant_id||null,label=r.materialLabel||'Материал подклейки';
-  if(!variant&&!r.custom_customer&&r._materialSource){const m=exactMaterial(materials,r._materialSource,'',{});if(m){variant=m.variant_id;label=[m.manufacturer,m.article,m.name].filter(Boolean).join(' · ');}}
+  if(!variant&&!r.custom_customer&&r._materialSource){
+   let m=exactMaterial(materials,r._materialSource,'',{});
+   if(!m){const source=key(r._materialSource),exact18=materials.filter(x=>key(x.article)===source&&num(x.thickness)===18);const sig=new Set(exact18.map(materialSignature));if(sig.size===1&&exact18.length)m=exact18[0];}
+   if(m){variant=m.variant_id;label=[m.manufacturer,m.article,m.name].filter(Boolean).join(' · ');}
+  }
   if(!variant&&!r.custom_customer)return null;
   return {draft_row_id:r.draft_row_id||null,resolution_reason:r.resolution_reason||null,variant_id:variant,custom_customer:r.custom_customer?{...r.custom_customer}:null,
     supply_source:r.supply_source||'company',provided_sheets:r.provided_sheets??null,customer_reason:r.customer_reason??null,materialLabel:label};
