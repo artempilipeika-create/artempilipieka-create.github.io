@@ -136,7 +136,11 @@ const MFEntry=(()=>{
     const source=key(r._materialSource),exact18=materials.filter(x=>key(x.article)===source&&num(x.thickness)===18);
     const byVariant=new Map(exact18.filter(x=>x.variant_id).map(x=>[x.variant_id,x]));
     if(byVariant.size===1)m=[...byVariant.values()][0];
-    else if(!byVariant.size){const sig=new Set(exact18.map(materialSignature));if(sig.size===1&&exact18.length)m=exact18[0];}
+    else if(exact18.length){
+     const physical=x=>JSON.stringify([key(x.article),key(x.manufacturer),key(x.structure),num(x.thickness),num(x.length),num(x.width)]);
+     const physicalIds=new Set(exact18.map(physical));
+     if(physicalIds.size===1)m=[...exact18].sort((a,b)=>String(a.variant_id||'').localeCompare(String(b.variant_id||'')))[0];
+    }
    }
    if(m){variant=m.variant_id;label=[m.manufacturer,m.article,m.name].filter(Boolean).join(' · ');}
   }
