@@ -316,11 +316,11 @@ def test_legacy_block_excel_group_preview_auto_and_saved_template(page,api,setti
 def searchable_catalogue_order(api):
     from tests.stage03.support import master
     _,release=publish(api,master([
-        ['621 PO','Дуб синтетический','кв.м',10,2800,2070,18,'PO','','M1','false',''],
+        ['QA621 PO','Дуб синтетический','кв.м',10,2800,2070,18,'PO','','M1','false',''],
         ['621 PE','Другой декор','кв.м',10,2440,1220,18,'PE','','M1','false',''],
-        ['AUTO-22-1','Кромка синтетическая','м',1,0,22,1,'Для 621 РО / 777 PE','','M2','false',''],
-        ['AUTO-22-04','Кромка тонкая','м',1,0,22,.4,'621 PO','','M2','false',''],
-        ['WRONG-POX','Не подходит','м',1,0,22,1,'621 POX','','M2','false','']]))
+        ['AUTO-22-1','Кромка синтетическая','м',1,0,22,1,'Для QA621 РО / 777 PE','','M2','false',''],
+        ['AUTO-22-04','Кромка тонкая','м',1,0,22,.4,'QA621 PO','','M2','false',''],
+        ['WRONG-POX','Не подходит','м',1,0,22,1,'QA621 POX','','M2','false','']]),namespace='test.visible.autopick')
     email=uuid4().hex+'@example.invalid'
     post(api,'/auth/register',{'email':email,'password':PASSWORD},status=201)
     o=order(api,'self_prepared')
@@ -391,7 +391,7 @@ def test_excel_auto_edge_and_create_own_material_before_import(page,api,settings
     page.goto('https://testserver/editor?order='+o['order_id'])
     page.get_by_role('button',name='Загрузить Excel',exact=True).click()
     data=xlsx({'Детали':[['Наименование','Артикул','Длина','Ширина','Количество','L1','L2','W1','W2'],
-                       ['Полка','621 PO',600,400,2,1,0,0,1],['Своя деталь','UNKNOWN',500,300,1,0,0,0,0]]})
+                       ['Полка','QA621 PO',600,400,2,1,0,0,1],['Своя деталь','UNKNOWN',500,300,1,0,0,0,0]]})
     page.get_by_label('Файл Excel',exact=True).set_input_files({'name':'synthetic-auto-own.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
     preview=page.locator('#import-preview')
     expect(preview.locator('.import-material-group')).to_have_count(2)
