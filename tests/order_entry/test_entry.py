@@ -126,3 +126,18 @@ def test_3d_project_scene_v2_room_and_multiple_items(api,settings,admin_user):
     assert read['scene']['room']=={'width':5200,'depth':3600,'height':2800}
     assert [x['module_type'] for x in read['scene']['items']]==['base_cabinet','wardrobe']
     assert read['scene']['selected_item_id']=='wardrobe-1'
+
+def test_3d_read_only_share_can_be_revoked(api,settings,admin_user):
+    _,_,_,email=client_order(api,settings,admin_user,mode='self_prepared')
+    body={'name':'Проект для просмотра','scene':{'module_type':'chest','width':1000,'height':850,'depth':450,'layout':'combo','drawers':3,'base':'plinth','handles':'handles','body_variant_id':None,'front_variant_id':None,'view_mode':'3d'}}
+    created=post(api,'/3d-projects',body,status=201)
+    share=post(api,'/3d-projects/'+created['project_id']+'/shares',{},status=201)
+    token=share['url'].split('token=',1)[1]
+    post(api,'/auth/logout',{},status=200)
+    public=api.get('/api/v2/3d-shares/'+token)
+    assert public.status_code==200 and public.json()['read_only'] is True and public.json()['name']=='Проект для просмотра'
+    login(api,email)
+    shares=api.get('/api/v2/3d-projects/'+created['project_id']+'/shares').json()['items']
+    assert len(shares)==1 and shares[0]['revoked_at'] is None
+    assert api.delete('/api/v2/3d-projects/'+created['project_id']+'/shares/'+str(shares[0]['share_id'])).status_code==204
+    assert api.get('/api/v2/3d-shares/'+token).status_code==404
