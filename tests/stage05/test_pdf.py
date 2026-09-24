@@ -2,6 +2,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 import json
+import os
 import pytest
 from pypdf import PdfReader
 from backend.v2.calculation_engine import calculate
@@ -41,6 +42,9 @@ def test_pdf01_pdf02_pdf08_pdf09_actual_text_onepage(count):
     for i in range(count): assert 'H3331-ST10-ЛХДФ-'+str(i+1) in text
     if count>1: assert 'Ąžuolas Šviesus' in text
     assert render(deepcopy(v))==data
+    if count==5:
+        out=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/stage01'));out.mkdir(parents=True,exist_ok=True)
+        (out/'preliminary-onepage-preview.pdf').write_bytes(data)
 
 @pytest.mark.parametrize('mode',['customer','glue','incomplete'])
 def test_pdf03_pdf04_pdf06_pdf07_snapshot_numbers(mode):
