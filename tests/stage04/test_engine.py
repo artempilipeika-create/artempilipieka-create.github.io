@@ -119,7 +119,6 @@ def test_glue_different_backing_material_counts_each_layer_once():
     r=calculate(x);recipe=r['manufacturing_recipes'][0]
     assert recipe['same_material'] is False and recipe['front_material_key']=='material-18' and recipe['backing_material_key']=='material-back'
     assert len(r['sheet_estimates'])==2
-    assert sum(sum(p['qty'] for p in s['sheets'][0]['placements']) if s['sheets'] else 0 for s in [])==0 if False else True
     assert sum(len(sheet['placements']) for plan in r['sheet_estimates'] for sheet in plan['sheets'])==4
     assert op(r,'glue')[0]['quantity']=='0.5208'
     assert op(r,'glued_finish_cut')[0]['quantity']=='2'
