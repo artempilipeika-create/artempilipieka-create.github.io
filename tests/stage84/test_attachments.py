@@ -196,3 +196,8 @@ def test_verified_office_and_image_formats(api,scene):
  for fmt,ext in [('JPEG','jpg'),('JPEG','jpeg'),('WEBP','webp')]:
   b=BytesIO();Image.new('RGB',(3,3),'green').save(b,format=fmt)
   assert upload(api,scene,b.getvalue(),'sketch.'+ext).status_code==201
+
+def test_plain_xls_with_sector_padding(api,scene):
+ data=base64.b64decode(Path('tests/stage84/fixtures/plain.xls.b64').read_text())
+ assert inspect(data,'plain.xls')==('xls','application/vnd.ms-excel')
+ assert upload(api,scene,data,'plain.xls','source').status_code==201

@@ -84,13 +84,16 @@ def inspect(data,name):
                 if any(re.search(r'VBA|Macros|_VBA_PROJECT|ObjectPool|Ole10Native', '/'.join(s),re.I) for s in streams): raise ValueError()
                 # BIFF FILEPASS, OBPROJ and macro sheet records are not allowed in manual XLS.
                 b=ole.openstream('Workbook' if ole.exists('Workbook') else 'Book').read()
-                at=0
+                at=0; ended=False
                 while at<len(b):
+                    # CFB Workbook streams may pad the final BIFF EOF to a sector boundary.
+                    # Accept only zero padding AFTER a complete EOF record, never a truncated record.
+                    if ended and not any(b[at:]): break
                     if at+4>len(b): raise ValueError()
                     tag=int.from_bytes(b[at:at+2],'little'); size=int.from_bytes(b[at+2:at+4],'little'); at+=4
                     if at+size>len(b) or tag in {0x2f,0xd3}: raise ValueError()
                     if tag==0x85 and size>=6 and b[at+5] in {1,6}: raise ValueError()
-                    at+=size
+                    ended=tag==0x0a and size==0;at+=size
         except Exception: raise ValueError('UNSAFE_XLS') from None
         return ext,'application/vnd.ms-excel'
     if ext in {'txt','csv'} and text is not None:
