@@ -87,22 +87,47 @@ def manufacturing_input(revision, calculation, export_profile):
                 'manual_lock':bool(original.get('mode') in ('manual','manual_override') or side in d['edges']),
                 'assignment_sha256':hash_value(a)}
         blank={'detail_id':did,'length':length,'width':width,'qty':q,'edges':assignments}
-        recipe=None
+        recipe=None;part_specs=[]
         if d['route']=='glued_18_18':
             recipe=deepcopy(recipes.get(did))
             if not recipe: raise ValueError('SEALED_GLUE_RECIPE_REQUIRED')
-            settings=profile['settings']
+            settings=profile['settings'];blank_edges={s:{'edge':None,'supply_source':'company','mode':'recipe_child_blank','manual_lock':True} for s in SIDES}
             expected=(dec(length)+2*dec(settings['glue_allowance_each_side_mm']),dec(width)+2*dec(settings['glue_allowance_each_side_mm']),q*settings['glue_layers'])
             if (dec(recipe['blank_length']),dec(recipe['blank_width']),recipe['child_qty'])!=expected or dec(m['thickness'])!=18:
                 raise ValueError('RECIPE_SEAL_MISMATCH')
-            blank={'detail_id':recipe['child_blank_id'],'length':number(recipe['blank_length']),'width':number(recipe['blank_width']),
-                'qty':recipe['child_qty'],'edges':{s:{'edge':None,'supply_source':'company','mode':'recipe_child_blank','manual_lock':True} for s in SIDES}}
-        elif d['route']!='solid': raise ValueError('UNSUPPORTED_MANUFACTURING_ROUTE')
-        total+=blank['qty']
-        parts.append({'finished_detail_id':did,'finished_length':length,'finished_width':width,'finished_qty':q,
-            'material_key':material_key,'material':m,'supply_source':d['supply_source'],
-            'provided_sheets':d.get('provided_sheets') if customer else None,'grain':d['grain'],'rotation_allowed':d['rotation'],
-            'finished_edges':assignments,'route':d['route'],'recipe':recipe,'blank':blank})
+            if recipe.get('front_material_key') and recipe['front_material_key']!=material_key: raise ValueError('RECIPE_SEAL_MISMATCH')
+            backing=d.get('glue_backing')
+            if backing:
+                bm=identity(backing['material'],'material');bcustomer=backing['supply_source']=='customer'
+                if bm.get('variant_id') and str(bm.get('catalogue_release'))!=str(revision['catalogue_release_id']): raise ValueError('CATALOGUE_CONFLICT')
+                if bcustomer and (not backing.get('provided_sheets') or not backing.get('customer_reason')): raise ValueError('CUSTOMER_INPUT_REQUIRED')
+                bkey=bm.get('variant_id') or 'customer:'+text(backing['customer_material_key'],80)
+                bsupply=backing['supply_source'];bsheets=backing.get('provided_sheets') if bcustomer else None
+            else:
+                bm=m;bkey=material_key;bsupply=d['supply_source'];bsheets=d.get('provided_sheets') if customer else None
+            if dec(bm['thickness'])!=18 or (recipe.get('backing_material_key') and recipe['backing_material_key']!=bkey):
+                raise ValueError('RECIPE_SEAL_MISMATCH')
+            same=(material_key==bkey and d['supply_source']==bsupply)
+            if bool(recipe.get('same_material'))!=same: raise ValueError('RECIPE_SEAL_MISMATCH')
+            if same:
+                blank={'detail_id':recipe.get('child_blank_id',did+':blank'),'length':number(recipe['blank_length']),'width':number(recipe['blank_width']),
+                    'qty':recipe['child_qty'],'edges':blank_edges}
+                part_specs=[(material_key,m,d['supply_source'],d.get('provided_sheets') if customer else None,blank,'combined')]
+            else:
+                front_blank={'detail_id':did+':front','length':number(recipe['blank_length']),'width':number(recipe['blank_width']),
+                    'qty':recipe.get('front_qty',q),'edges':deepcopy(blank_edges)}
+                back_blank={'detail_id':did+':backing','length':number(recipe['blank_length']),'width':number(recipe['blank_width']),
+                    'qty':recipe.get('backing_qty',q),'edges':deepcopy(blank_edges)}
+                part_specs=[(material_key,m,d['supply_source'],d.get('provided_sheets') if customer else None,front_blank,'front'),
+                    (bkey,bm,bsupply,bsheets,back_blank,'backing')]
+        elif d['route']=='solid':
+            part_specs=[(material_key,m,d['supply_source'],d.get('provided_sheets') if customer else None,blank,'solid')]
+        else: raise ValueError('UNSUPPORTED_MANUFACTURING_ROUTE')
+        for pkey,pmat,psupply,psheets,pblank,component in part_specs:
+            total+=pblank['qty']
+            parts.append({'finished_detail_id':did,'finished_length':length,'finished_width':width,'finished_qty':q,
+                'material_key':pkey,'material':pmat,'supply_source':psupply,'provided_sheets':psheets,'grain':d['grain'],
+                'rotation_allowed':d['rotation'],'finished_edges':assignments,'route':d['route'],'recipe':recipe,'component':component,'blank':pblank})
     if total>20000: raise ValueError('TOTAL_QUANTITY_LIMIT')
     return plain({'schema_version':2,'exporter_version':VERSION,'export_profile':export_profile,
         'production_profile_version':profile['profile_id'],'production_settings':profile['settings'],
