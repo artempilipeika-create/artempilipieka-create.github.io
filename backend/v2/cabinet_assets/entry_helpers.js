@@ -61,7 +61,7 @@ const MFEntry=(()=>{
  }
  function materialSignature(m){return key([m.manufacturer,m.article,m.name,m.raw_description,m.structure,m.thickness,m.length,m.width].join('|'));}
  function exactMaterial(materials,articleText,descriptionText,facts={}){
-  const unique=rows=>{if(!rows.length)return null;const sig=new Set(rows.map(materialSignature));return sig.size===1?rows[0]:null;};
+  const unique=rows=>{if(!rows.length)return null;const variants=new Map(rows.filter(x=>x.variant_id).map(x=>[x.variant_id,x]));if(variants.size===1)return [...variants.values()][0];const sig=new Set(rows.map(materialSignature));return sig.size===1?rows[0]:null;};
   const filterFacts=rows=>rows.filter(m=>{
    for(const [field,raw]of [['thickness',facts.thickness],['length',facts.format_length],['width',facts.format_width]]){const n=num(raw);if(n!==null&&num(m[field])!==n)return false;}
    for(const [field,raw]of [['manufacturer',facts.manufacturer],['structure',facts.structure]])if(key(raw)&&key(m[field])!==key(raw))return false;
