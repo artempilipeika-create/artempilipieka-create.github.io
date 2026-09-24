@@ -26,6 +26,11 @@ test('v9-style exact material detection separates similar article codes',()=>{
  assert.equal(h.exactMaterial(materials,'','ЛДСП H11800 ST37 Другой дуб').variant_id,'h11800');
  assert.equal(h.exactMaterial(materials,'621 PX',''),null);
 });
+test('exact material treats duplicate labels of one current variant as one choice',()=>{
+ const materials=[{variant_id:'same',article:'621 PE',name:'Название A',thickness:18},{variant_id:'same',article:'621 PE',name:'Название B',thickness:18},{variant_id:'po',article:'621 PO',name:'Другой',thickness:18}];
+ assert.equal(h.exactMaterial(materials,'621 PE','')?.variant_id,'same');
+ assert.equal(h.exactMaterial(materials,'621 PO','')?.variant_id,'po');
+});
 test('edge designation matches a complete article, ranks sizes, rejects conflicting structure and brand',()=>{
  const m={article:'621 PO',thickness:18,manufacturer:'Test'};
  const edge=(id,designation,width=22,thickness=1,manufacturer='Test')=>({edge_id:id,article:id,designation,width,thickness,manufacturer});
