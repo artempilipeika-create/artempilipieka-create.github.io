@@ -11,7 +11,22 @@ test('multirow Russian headers and side aliases remain independent',()=>{
 });
 test('edge hints require exact decor and sufficient width',()=>{
  const m={article:'621 PO',thickness:18};const edges=[{edge_id:'good',article:'621 РО',width:22},{edge_id:'wrong',article:'621 PE',width:22},{edge_id:'prefix',article:'1621 PO',width:22},{edge_id:'narrow',article:'621 PO',width:16}];
- assert.equal(h.edgeDefault(m,edges),'good');assert.equal(h.edgeDefault(m,[...edges,{edge_id:'ambiguous',article:'621 PO',width:23}]),null);
+ assert.equal(h.edgeDefault(m,edges),'good');assert.equal(h.edgeDefault(m,[...edges,{edge_id:'wider',article:'621 PO',width:23}]),'good');
+});
+test('visible autocomplete ranks full codes first and also searches names and geometry',()=>{
+ const materials=[{article:'1621 PO',name:'Дуб тёмный'},{article:'621 PE',name:'Белый',thickness:18,length:2440},{article:'621 PO',name:'Дуб светлый',thickness:18,length:2800}];
+ assert.equal(h.materialMatches(materials,'621 РО')[0].article,'621 PO');
+ assert.equal(h.materialMatches(materials,'дуб светлый 2800')[0].article,'621 PO');
+ assert.equal(h.materialMatches(materials,'unknown').length,0);
+});
+test('edge designation matches a complete article, ranks sizes, rejects conflicting structure and brand',()=>{
+ const m={article:'621 PO',thickness:18,manufacturer:'Test'};
+ const edge=(id,designation,width=22,thickness=1,manufacturer='Test')=>({edge_id:id,article:id,designation,width,thickness,manufacturer});
+ const edges=[edge('bad','621 POX'),edge('pe','621 PE'),edge('prefix','1621 PO'),edge('brand','621 PO',22,1,'Other'),edge('wide','621 PO',43),edge('thin','Для 621 РО, белый',22,.4),edge('best','Для 621 PO / 777 PE')];
+ assert.equal(h.edgeCandidates(m,edges).map(e=>e.edge_id).join(','),'best,thin,wide');
+ assert.equal(h.edgeDefault(m,edges),'best');
+ assert.equal(h.edgeDefault({...m,family:'customer'},edges),null);
+ assert.equal(h.edgeDefault({article:'()',thickness:18},edges),null);
 });
 test('AUTO preserves manual SKU and explicit NONE',()=>{
  for(const previous of [{edge_id:'manual',selection_mode:'manual'},{edge_id:null,selection_mode:'manual'}])assert.equal(h.autoEdge(previous,'new'),previous);

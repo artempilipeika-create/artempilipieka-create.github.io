@@ -14,6 +14,8 @@ Reason=Annotated[str,Field(min_length=3,max_length=1000,pattern=r'\S.*\S')]
 class CustomerMaterial(StrictModel):
     key: str=Field(min_length=1,max_length=80)
     name: str=Field(min_length=1,max_length=200)
+    article: str=Field(default='',max_length=200)
+    manufacturer: str=Field(default='',max_length=200)
     thickness: Positive
     length: Positive
     width: Positive

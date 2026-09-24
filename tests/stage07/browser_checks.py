@@ -311,3 +311,102 @@ def test_legacy_block_excel_group_preview_auto_and_saved_template(page,api,setti
     page.get_by_label('Файл Excel',exact=True).set_input_files(file)
     expect(page.get_by_label('Сохранённый шаблон',exact=True)).not_to_have_value('')
     expect(page.locator('#import-preview')).to_contain_text('Материалов: 2 · Позиций: 3')
+
+
+def searchable_catalogue_order(api):
+    from tests.stage03.support import master
+    _,release=publish(api,master([
+        ['621 PO','Дуб синтетический','кв.м',10,2800,2070,18,'PO','','M1','false',''],
+        ['621 PE','Другой декор','кв.м',10,2440,1220,18,'PE','','M1','false',''],
+        ['AUTO-22-1','Кромка синтетическая','м',1,0,22,1,'Для 621 РО / 777 PE','','M2','false',''],
+        ['AUTO-22-04','Кромка тонкая','м',1,0,22,.4,'621 PO','','M2','false',''],
+        ['WRONG-POX','Не подходит','м',1,0,22,1,'621 POX','','M2','false','']]))
+    email=uuid4().hex+'@example.invalid'
+    post(api,'/auth/register',{'email':email,'password':PASSWORD},status=201)
+    o=order(api,'self_prepared')
+    edges=api.get('/api/v2/catalogue/edges',params={'release':release}).json()['items']
+    return o,email,{e['article']:e['edge_id'] for e in edges}
+
+
+def fill_own_material(page):
+    dialog=page.get_by_role('dialog',name='Свой материал',exact=True)
+    for label,value in [('Артикул / свой код','MY-BOARD'),('Название своего материала','Мой дуб'),('Производитель (необязательно)','Мастерская'),
+                        ('Толщина своего материала, мм','18'),('Длина своего листа, мм','2800'),('Ширина своего листа, мм','2070'),('Листов клиента, шт.','3')]:
+        dialog.get_by_label(label,exact=True).fill(value)
+    dialog.get_by_label('Подтверждаю: это материал клиента',exact=True).check()
+    dialog.get_by_role('button',name='Использовать свой материал',exact=True).click()
+    expect(dialog).not_to_be_attached()
+
+
+@pytest.mark.parametrize('width',[360,1440])
+def test_visible_autocomplete_auto_edges_and_own_material_save_reload(page,api,settings,admin_user,width):
+    o,email,edges=searchable_catalogue_order(api)
+    page.set_viewport_size({'width':width,'height':1000});login_ui(page,email)
+    page.goto('https://testserver/editor?order='+o['order_id'])
+    search=page.get_by_label('Поиск материала 1',exact=True);search.fill('дуб синтетический')
+    expect(page.locator('.material-suggestions button')).to_have_count(1)
+    expect(page.locator('.material-suggestions')).to_contain_text('2800 × 2070')
+    no_overflow(page);screenshot(page,'material-live-search-'+str(width))
+    if width==1440: search.press('ArrowDown');page.keyboard.press('Enter')
+    else: page.locator('.material-suggestions button').click()
+    expect(page.get_by_label('Кромка AUTO материала 1',exact=True)).to_have_value(edges['AUTO-22-1'])
+    expect(page.locator('.edge-suggestions')).not_to_contain_text('WRONG-POX')
+    page.get_by_label('Длина 1',exact=True).fill('600');page.get_by_label('Ширина 1',exact=True).fill('400')
+    page.get_by_label('Оклеить L1 деталь 1',exact=True).check()
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+    page.get_by_label('W1 деталь 1',exact=True).select_option(edges['AUTO-22-1'])
+    page.get_by_label('L2 деталь 1',exact=True).select_option('')
+    page.locator('.edge-suggestions button').filter(has_text='AUTO-22-04').click()
+    expect(page.get_by_label('Кромка AUTO материала 1',exact=True)).to_have_value(edges['AUTO-22-04'])
+    expect(page.get_by_label('W1 деталь 1',exact=True)).to_have_value(edges['AUTO-22-1'])
+    expect(page.get_by_label('L2 деталь 1',exact=True)).to_have_value('')
+    page.get_by_role('button',name='+ Добавить материал',exact=True).click()
+    page.get_by_role('button',name='+ Свой материал',exact=True).last.click();fill_own_material(page)
+    page.get_by_label('Длина 2',exact=True).fill('500');page.get_by_label('Ширина 2',exact=True).fill('300')
+    page.get_by_label('Подбор кромки 2',exact=True).fill('AUTO-22-1')
+    page.locator('.material-group').last.locator('.edge-suggestions button').click()
+    page.get_by_label('Оклеить W2 деталь 2',exact=True).check()
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
+    page.reload()
+    expect(page.get_by_label('Кромка AUTO материала 1',exact=True)).to_have_value(edges['AUTO-22-04'])
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+    expect(page.get_by_label('W1 деталь 1',exact=True)).to_have_value(edges['AUTO-22-1'])
+    expect(page.get_by_label('L2 деталь 1',exact=True)).to_have_value('')
+    expect(page.locator('.material-group').last.locator('.material-cell small')).to_contain_text('MY-BOARD')
+    expect(page.get_by_label('W2 деталь 2',exact=True)).to_have_value('__auto__')
+    no_overflow(page);screenshot(page,'auto-edge-own-material-'+str(width))
+    page.get_by_role('button',name='Изменить свой материал',exact=True).click()
+    expect(page.get_by_label('Листов клиента, шт.',exact=True)).to_have_value('3')
+    expect(page.get_by_label('Производитель (необязательно)',exact=True)).to_have_value('Мастерская')
+    page.get_by_role('button',name='Отмена',exact=True).click()
+    current=api.get('/api/v2/orders/'+o['order_id']).json()
+    details=api.get('/api/v2/orders/'+o['order_id']+'/revisions/'+current['active_revision_id']).json()['details']
+    assert details[0]['edges']['L1']['edge']['edge_id']==edges['AUTO-22-04']
+    assert details[1]['material']['article']=='MY-BOARD' and details[1]['provided_sheets']==3
+
+
+def test_excel_auto_edge_and_create_own_material_before_import(page,api,settings,admin_user):
+    from tests.stage03.support import xlsx
+    o,email,edges=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/editor?order='+o['order_id'])
+    page.get_by_role('button',name='Загрузить Excel',exact=True).click()
+    data=xlsx({'Детали':[['Наименование','Артикул','Длина','Ширина','Количество','L1','L2','W1','W2'],
+                       ['Полка','621 PO',600,400,2,1,0,0,1],['Своя деталь','UNKNOWN',500,300,1,0,0,0,0]]})
+    page.get_by_label('Файл Excel',exact=True).set_input_files({'name':'synthetic-auto-own.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
+    preview=page.locator('#import-preview')
+    expect(preview.locator('.import-material-group')).to_have_count(2)
+    expect(preview.get_by_label('Кромка AUTO материала 1',exact=True)).to_have_value(edges['AUTO-22-1'])
+    expect(page.get_by_label('L1 в строке 2',exact=True)).to_have_value('__auto__')
+    preview.get_by_role('button',name='+ Свой материал',exact=True).last.click();fill_own_material(page)
+    expect(preview).to_contain_text('Свой материал клиента: Мой дуб')
+    screenshot(page,'excel-auto-own-material')
+    page.get_by_role('button',name='Импортировать деталировку',exact=True).click()
+    expect(page.get_by_label('Название 2',exact=True)).to_have_value('Своя деталь')
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
+    page.reload()
+    expect(page.locator('.material-group').last.locator('.material-cell small')).to_contain_text('Мой дуб')
+    page.get_by_role('button',name='Изменить свой материал',exact=True).click()
+    expect(page.get_by_label('Артикул / свой код',exact=True)).to_have_value('MY-BOARD')
+    expect(page.get_by_label('Листов клиента, шт.',exact=True)).to_have_value('3')
+    page.get_by_role('button',name='Отмена',exact=True).click()

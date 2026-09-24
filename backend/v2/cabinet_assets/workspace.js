@@ -42,10 +42,11 @@ const grainNames={unknown:'Уточнить текстуру',length:'По дл�
 function blankDetail(){return {detail_id:crypto.randomUUID(),name:'',comments:'',length:'',width:'',qty:1,variant_id:null,materialLabel:'Материал не выбран',supply_source:'company',rotation:false,grain:'unknown',route:'solid',packaging:false,edges:{}};}
 function materialLabel(m){return m?[m.manufacturer,m.raw_description||m.name,m.article,m.structure,m.thickness?m.thickness+' мм':'',m.length&&m.width?m.length+' × '+m.width+' мм':''].filter(Boolean).join(' · '):'Материал не выбран';}
 function edgeLabel(e){return e?[e.article,e.name,e.width&&e.thickness?e.width+' × '+e.thickness+' мм':''].filter(Boolean).join(' · '):'Без кромки';}
-function fromRevision(d){return {...blankDetail(),detail_id:d.detail_id,name:d.name||'',comments:d.comments||'',...(d.draft_row_id?{draft_row_id:d.draft_row_id,resolution_reason:d.resolution_reason||'Подтверждение деталировки в таблице'}:{}),length:d.length,width:d.width,qty:d.qty,variant_id:d.material?.variant_id||null,materialLabel:materialLabel(d.material),custom_customer:d.customer_material_key?{key:d.customer_material_key,name:d.material.name,thickness:d.material.thickness,length:d.material.length,width:d.material.width,reason:d.material.reason}:null,supply_source:d.supply_source,provided_sheets:d.provided_sheets,customer_reason:d.customer_reason,rotation:d.rotation,grain:d.grain,route:d.route,packaging:d.packaging,edges:Object.fromEntries(sideNames.map(s=>[s,{edge_id:d.edges[s]?.edge?.edge_id||null,supply_source:d.edges[s]?.supply_source||'company',unresolved:d.edges[s]?.state==='unresolved',selection_mode:d.edges[s]?.selection_mode||'manual'}]))};}
+function fromRevision(d){return {...blankDetail(),detail_id:d.detail_id,name:d.name||'',comments:d.comments||'',...(d.draft_row_id?{draft_row_id:d.draft_row_id,resolution_reason:d.resolution_reason||'Подтверждение деталировки в таблице'}:{}),length:d.length,width:d.width,qty:d.qty,variant_id:d.material?.variant_id||null,materialLabel:materialLabel(d.material),custom_customer:d.customer_material_key?{key:d.customer_material_key,article:d.material.article||'',manufacturer:d.material.manufacturer||'',name:d.material.name,thickness:d.material.thickness,length:d.material.length,width:d.material.width,reason:d.material.reason}:null,supply_source:d.supply_source,provided_sheets:d.provided_sheets,customer_reason:d.customer_reason,rotation:d.rotation,grain:d.grain,route:d.route,packaging:d.packaging,edges:Object.fromEntries(sideNames.map(s=>[s,{edge_id:d.edges[s]?.edge?.edge_id||null,supply_source:d.edges[s]?.supply_source||'company',unresolved:d.edges[s]?.state==='unresolved',selection_mode:d.edges[s]?.selection_mode||'manual'}]))};}
 function fromImported(r){
- const s=r.snapshot,v=s.values||{},m=s.resolution?.selected;
- return {...blankDetail(),detail_id:r.draft_row_id,draft_row_id:r.draft_row_id,resolution_reason:'Подтверждение импортированной строки в таблице',name:String(v.name||''),comments:String(v.comments||''),length:v.length??'',width:v.width??'',qty:v.qty??'',variant_id:m?.variant_id||null,materialLabel:materialLabel(m),grain:grainNames[v.texture]?v.texture:'unknown',rotation:v.rotation===true,
+ const s=r.snapshot,v=s.values||{},custom=s.resolution?.status==='custom_customer'?s.resolution.customer_material:null,m=custom||s.resolution?.selected;
+ const customer=custom?{variant_id:null,custom_customer:{key:custom.key||r.draft_row_id,name:custom.name,article:custom.article||'',manufacturer:custom.manufacturer||'',thickness:custom.thickness,length:custom.length,width:custom.width,reason:custom.reason||s.resolution.reason},supply_source:'customer',provided_sheets:custom.provided_sheets,customer_reason:custom.reason||s.resolution.reason}:{};
+ return {...blankDetail(),detail_id:r.draft_row_id,draft_row_id:r.draft_row_id,resolution_reason:'Подтверждение импортированной строки в таблице',name:String(v.name||''),comments:String(v.comments||''),length:v.length??'',width:v.width??'',qty:v.qty??'',variant_id:m?.variant_id||null,materialLabel:materialLabel(m),grain:grainNames[v.texture]?v.texture:'unknown',rotation:v.rotation===true,...customer,
   edges:Object.fromEntries(sideNames.map(side=>{const e=s.edges?.[side]||{};return [side,{edge_id:e.edge_id||null,supply_source:'company',unresolved:e.mark!=='none'&&!e.confirmed&&e.mode!=='manual_override',selection_mode:e.selection_mode||'manual'}];})),_source:'Excel: '+s.sheet+', строка '+s.row,_errors:(s.errors||[]).filter(e=>!sideNames.includes(e.field)||!s.edges?.[e.field]?.confirmed),_materialSource:String(v.article||v.material||'Материал не указан')};
 }
 async function loadCatalogue(){
@@ -108,17 +109,56 @@ async function editorView(){
  if(!client){const sources=node('section',undefined,'panel');sources.append(node('h2','Исходные Excel'));await sourceList(sources);content.append(sources);await orderFiles(editorOrder.order_id);}
 }
 function normalSearch(v){return String(v||'').normalize('NFKC').toLocaleLowerCase('ru').replace(/\s+/g,' ').trim();}
+function customerMaterialDialog(row){return new Promise(resolve=>{
+ const d=node('dialog',undefined,'customer-material-dialog'),form=node('form'),grid=node('div',undefined,'grid'),old=row.custom_customer||{},controls={};
+ d.setAttribute('aria-label','Свой материал');form.append(node('h2','Свой материал'),node('p','Материал клиента для этой заявки. Укажите формат листа и толщину; менеджер проверит его перед производством.'),grid);
+ for(const [key,label,type,value,required]of [['article','Артикул / свой код','text',old.article,false],['name','Название своего материала','text',old.name,true],['manufacturer','Производитель (необязательно)','text',old.manufacturer,false],['thickness','Толщина своего материала, мм','number',old.thickness,true],['length','Длина своего листа, мм','number',old.length,true],['width','Ширина своего листа, мм','number',old.width,true],['provided_sheets','Листов клиента, шт.','number',row.provided_sheets,true],['reason','Комментарий к своему материалу','text',old.reason||'Материал клиента для этой заявки',true]]){
+  const [l,i]=field(label,key,type,value,required);if(type==='number'){i.min=key==='provided_sheets'?'1':'0.001';i.max=key==='provided_sheets'?'10000':'100000';i.step=key==='provided_sheets'?'1':'0.001';}if(key==='reason'){i.minLength=3;i.maxLength=1000;}grid.append(l);controls[key]=i;
+ }
+ const owned=node('label','Подтверждаю: это материал клиента','check-label'),check=node('input');check.type='checkbox';check.required=true;check.checked=!!row.custom_customer;owned.prepend(check);form.append(owned);
+ const actions=node('div',undefined,'actions'),save=node('button','Использовать свой материал'),cancel=button('Отмена',()=>end(null),true);actions.append(save,cancel);form.append(actions);
+ function end(v){d.close();d.remove();resolve(v);}
+ form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;const c=Object.fromEntries(Object.entries(controls).map(([k,i])=>[k,i.value.trim()])),sheets=Number(c.provided_sheets);delete c.provided_sheets;c.key=old.key||crypto.randomUUID();end({variant_id:null,custom_customer:c,materialLabel:materialLabel(c)+' · материал клиента',supply_source:'customer',provided_sheets:sheets,customer_reason:c.reason});};
+ d.oncancel=e=>{e.preventDefault();end(null);};d.append(form);document.body.append(d);d.showModal();controls.name.focus();
+});}
 function catalogSelect(r,index){
- const box=node('div',undefined,'material-cell'),q=node('input'),select=node('select'),info=node('small',r.materialLabel);
- q.type='search';q.placeholder='Артикул или название';q.setAttribute('aria-label','Поиск материала '+(index+1));select.setAttribute('aria-label','Материал '+(index+1));
+ const box=node('div',undefined,'material-cell'),q=node('input'),select=node('select'),info=node('small',r.materialLabel),results=node('div',undefined,'material-suggestions');
+ const label=node('label','Поиск материала по артикулу или названию');q.id='material-search-'+crypto.randomUUID();label.htmlFor=q.id;
+ q.type='search';q.placeholder='Например: 621 PO, дуб, Egger';q.autocomplete='off';q.setAttribute('aria-label','Поиск материала '+(index+1));select.setAttribute('aria-label','Материал '+(index+1));
+ results.id='material-results-'+crypto.randomUUID();results.hidden=true;results.setAttribute('aria-label','Найденные материалы');q.setAttribute('aria-controls',results.id);q.setAttribute('aria-expanded','false');
+ function hide(){results.hidden=true;q.setAttribute('aria-expanded','false');}
+ function choose(m){select.value=m.variant_id;hide();select.onchange();}
+ function suggest(){
+  const found=MFEntry.materialMatches(catalogueMaterials,q.value);results.replaceChildren();results.hidden=false;q.setAttribute('aria-expanded','true');
+  for(const m of found.slice(0,8)){const b=button(materialLabel(m),()=>choose(m),true);b.classList.add('material-suggestion');results.append(b);}
+  if(!found.length)results.append(node('p','Материал не найден. Измените запрос или нажмите «+ Свой материал».','muted'));
+  if(found.length>8)results.append(node('small','Показано 8 из '+found.length+'. Уточните артикул, толщину или формат.'));
+ }
  function options(){
-  const terms=normalSearch(q.value).split(' ').filter(Boolean);const found=catalogueMaterials.filter(m=>terms.every(t=>normalSearch(materialLabel(m)).includes(t))||q.value.trim()&&MFEntry.key(m.article).includes(MFEntry.key(q.value)));
+  const found=MFEntry.materialMatches(catalogueMaterials,q.value);
   const selected=catalogueMaterials.find(m=>m.variant_id===r.variant_id);if(selected){const i=found.indexOf(selected);if(i>=0)found.splice(i,1);found.unshift(selected);}
   select.replaceChildren();const empty=node('option',r.custom_customer?r.materialLabel:'Выберите материал');empty.value='';select.append(empty);
   for(const m of found.slice(0,50)){const o=node('option',materialLabel(m));o.value=m.variant_id;select.append(o);}select.value=r.variant_id||'';
  }
- q.oninput=options;select.onchange=()=>{const m=catalogueMaterials.find(x=>x.variant_id===select.value);r.variant_id=m?.variant_id||null;r.materialLabel=materialLabel(m);r.custom_customer=null;if(m?.grain&&grainNames[m.grain])r.grain=m.grain;else if(m?.texture===false)r.grain='none';info.textContent=r.materialLabel;dirty=true;};
- options();box.append(q,select,info);return box;
+ q.oninput=()=>{options();suggest();};q.onfocus=()=>{if(q.value.trim())suggest();};
+ q.onkeydown=e=>{if(e.key==='Escape'){hide();return;}if(e.key==='ArrowDown'){e.preventDefault();if(results.hidden)suggest();results.querySelector('button')?.focus();}else if(e.key==='Enter'&&!results.hidden){e.preventDefault();results.querySelector('button')?.click();}};
+ results.onkeydown=e=>{const buttons=[...results.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);if(e.key==='Escape'){q.focus();hide();}else if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();buttons[(i+(e.key==='ArrowDown'?1:buttons.length-1))%buttons.length]?.focus();}};
+ box.onfocusout=e=>{if(!box.contains(e.relatedTarget))hide();};
+ select.onchange=()=>{const m=catalogueMaterials.find(x=>x.variant_id===select.value);if(r.custom_customer){r.supply_source='company';delete r.provided_sheets;delete r.customer_reason;}r.variant_id=m?.variant_id||null;r.materialLabel=materialLabel(m);r.custom_customer=null;if(m?.grain&&grainNames[m.grain])r.grain=m.grain;else if(m?.texture===false)r.grain='none';info.textContent=r.materialLabel;hide();dirty=true;box.onMaterialChange?.();};
+ const own=button(r.custom_customer?'Изменить свой материал':'+ Свой материал',async()=>{const value=await customerMaterialDialog(r);if(!value)return;Object.assign(r,value);info.textContent=r.materialLabel;options();hide();own.textContent='Изменить свой материал';dirty=true;box.onMaterialChange?.();},true);own.classList.add('custom-material-button');
+ options();box.append(label,q,results,select,info,own);return box;
+}
+function groupEdgePicker(material,selected,index,onChange){
+ const box=node('div',undefined,'group-edge-picker'),matches=MFEntry.edgeCandidates(material,catalogueEdges),items=catalogueEdges.filter(e=>MFEntry.compatible(material,e)),current=catalogueEdges.find(e=>e.edge_id===selected);
+ if(current&&!items.includes(current))items.unshift(current);
+ const [el,select]=selectField('Кромка AUTO материала '+index,'group_edge',[['','Выберите кромку'],...[...matches,...items.filter(e=>!matches.includes(e))].map(e=>[e.edge_id,edgeLabel(e)])],selected||'');
+ const info=node('p',selected?'AUTO: '+edgeLabel(current):matches.length?'Выберите кромку для AUTO.':'Автосовпадения по артикулу нет. Подберите кромку из базы.','edge-auto-status');
+ if(selected&&!MFEntry.compatible(material,current||{}))info.textContent+=' · Проверьте ширину кромки для нового материала.';
+ const list=node('div',undefined,'edge-suggestions'),[sl,search]=field('Подбор кромки '+index,'edge_search','search');search.placeholder='Артикул, декор или размер';
+ function show(){const query=MFEntry.key(search.value),found=query?items.filter(e=>MFEntry.key([edgeLabel(e),e.designation].join(' ')).includes(query)):matches;list.replaceChildren();for(const e of found.slice(0,8)){const b=button(edgeLabel(e),()=>{select.value=e.edge_id;select.onchange();},true);b.classList.add('edge-suggestion');b.setAttribute('aria-pressed',String(e.edge_id===selected));list.append(b);}if(query&&!found.length)list.append(node('p','Нет подходящей кромки. Проверьте артикул и толщину материала.','muted'));}
+ select.onchange=()=>onChange(select.value||null);search.oninput=show;show();box.append(node('strong','Подбор кромки'),info,list,sl,el);
+ if(matches.length>1)box.append(node('small','Автовыбор: ближайшая подходящая ширина, затем толщина кромки ближе к 1 мм. Размер можно изменить.'));
+ return box;
 }
 function edgeChooser(e,label,onChange,autoId=undefined){
  const box=node('div',undefined,'edge-cell'),search=node('input');search.type='search';search.placeholder='Найти кромку';search.setAttribute('aria-label','Поиск кромки '+label);
@@ -130,10 +170,13 @@ function edgeChooser(e,label,onChange,autoId=undefined){
   const auto=autoId===undefined?[]:[['__auto__',autoId?'AUTO · '+edgeLabel(catalogueEdges.find(x=>x.edge_id===autoId)):'AUTO · выберите кромку материала']];
   select.replaceChildren();for(const [v,t]of [['?','Выберите кромку'],['','Без кромки'],...auto,...items.map(x=>[x.edge_id,edgeLabel(x)])]){const o=node('option',t);o.value=v;select.append(o);}select.value=chosen;select.title=select.selectedOptions[0]?.textContent||'';
  }
+ const mark=node('label','Оклеить','edge-mark'),check=node('input');check.type='checkbox';check.setAttribute('aria-label','Оклеить '+label);check.checked=!!e.edge_id||e.selection_mode==='auto';mark.prepend(check);
+ check.onchange=()=>{chosen=check.checked?'__auto__':'';options();onChange(check.checked?{edge_id:autoId||null,supply_source:'company',selection_mode:'auto',unresolved:!autoId}:{edge_id:null,supply_source:'company',selection_mode:'manual',unresolved:false});};
  search.oninput=options;select.onchange=()=>{
   chosen=select.value;select.title=select.selectedOptions[0]?.textContent||'';
+  check.checked=chosen==='__auto__'||!!chosen&&chosen!=='?';
   onChange(chosen==='__auto__'?{edge_id:autoId||null,supply_source:'company',selection_mode:'auto',unresolved:!autoId}:{edge_id:chosen&&chosen!=='?'?chosen:null,supply_source:e.supply_source||'company',unresolved:chosen==='?',selection_mode:'manual'});
- };options();box.append(search,el);return {box,select};
+ };options();if(autoId!==undefined)box.append(mark);box.append(search,el);return {box,select};
 }
 let entryExpanded=false;
 const groupEdgeDefaults=new Map();
@@ -148,16 +191,14 @@ function renderManual(){
  const tools=node('div',undefined,'toolbar');tools.append(node('h2','Материалы и детали'),button(entryExpanded?'Компактный вид':'Расширенный вид',()=>{entryExpanded=!entryExpanded;renderManual();},true),button('+ Добавить материал',()=>{const r=blankDetail();r._group=crypto.randomUUID();manualRows.push(r);dirty=true;renderManual();},true));section.append(tools);
  const groups=groupedDetails();
  for(const [gi,group]of groups.entries()){
-  const first=group.rows[0].r,firstIndex=group.rows[0].index,m=catalogueMaterials.find(x=>x.variant_id===first.variant_id);
+  const first=group.rows[0].r,firstIndex=group.rows[0].index,m=first.custom_customer?{...first.custom_customer,family:'customer'}:catalogueMaterials.find(x=>x.variant_id===first.variant_id);
   let defaultEdge=groupEdgeDefaults.has(group.key)?groupEdgeDefaults.get(group.key):group.rows.flatMap(({r})=>Object.values(r.edges)).find(e=>e.selection_mode==='auto'&&e.edge_id)?.edge_id||MFEntry.edgeDefault(m,catalogueEdges);
   const card=node('article',undefined,'material-group'),title=node('h3','Материал '+(gi+1)),settings=node('div',undefined,'material-settings');
   card.append(title,settings);section.append(card);
   const choice={...first},material=catalogSelect(choice,firstIndex),select=material.querySelector('select');
-  const change=select.onchange;select.onchange=()=>{change();const newMaterial=catalogueMaterials.find(x=>x.variant_id===choice.variant_id),next=MFEntry.edgeDefault(newMaterial,catalogueEdges);for(const {r}of group.rows){copyGroupMaterial(r,choice);for(const side of sideNames)if(r.edges[side]?.selection_mode==='auto')r.edges[side]={...r.edges[side],edge_id:next,unresolved:!next};}groupEdgeDefaults.set(detailGroupKey(first),next);dirty=true;renderManual();};
+  material.onMaterialChange=()=>{const newMaterial=catalogueMaterials.find(x=>x.variant_id===choice.variant_id),next=MFEntry.edgeDefault(newMaterial,catalogueEdges);for(const {r}of group.rows){copyGroupMaterial(r,choice);for(const side of sideNames)if(r.edges[side]?.selection_mode==='auto')r.edges[side]={...r.edges[side],edge_id:next,unresolved:!next};}groupEdgeDefaults.set(detailGroupKey(first),next);dirty=true;renderManual();};
   settings.append(material);
-  const suggested=MFEntry.edgeCandidates(m,catalogueEdges),other=catalogueEdges.filter(e=>!suggested.includes(e)&&MFEntry.compatible(m,e));
-  const [el,edge]=selectField('Кромка AUTO материала '+(gi+1),'group_edge',[['','Выберите кромку'],...[...suggested,...other].map(e=>[e.edge_id,edgeLabel(e)])],defaultEdge||'');settings.append(el);
-  edge.onchange=()=>{groupEdgeDefaults.set(group.key,edge.value||null);for(const {r}of group.rows)for(const side of sideNames)if(r.edges[side]?.selection_mode==='auto')r.edges[side]={...r.edges[side],edge_id:edge.value||null,unresolved:!edge.value};dirty=true;renderManual();};
+  settings.append(groupEdgePicker(m,defaultEdge,gi+1,edgeId=>{groupEdgeDefaults.set(group.key,edgeId);for(const {r}of group.rows)for(const side of sideNames)if(r.edges[side]?.selection_mode==='auto')r.edges[side]={...r.edges[side],edge_id:edgeId,unresolved:!edgeId};dirty=true;renderManual();}));
   const [gl,grain]=selectField('Текстура материала '+(gi+1),'group_grain',Object.entries(grainNames),first.grain);settings.append(gl);
   grain.onchange=()=>{for(const {r}of group.rows)r.grain=grain.value;dirty=true;renderManual();};
   if(first._materialSource)card.append(node('p','Из Excel: '+first._materialSource,'muted'));
@@ -203,7 +244,7 @@ async function editRow(index,source){
  for(const side of ['L1','L2','W1','W2']){const d=node('details');d.append(node('summary',side+' · '+(r.edges[side]?.edge_id?'Ручное назначение':'Без кромки')));const status=node('p',r.edges[side]?.edge_id?'Сохранено точное назначение':'Без кромки');d.append(status,picker('Кромка '+side,'edges',catalogueRelease,(e,release)=>{catalogueRelease=catalogueRelease||release;r.edges[side]={edge_id:e.edge_id,supply_source:'company'};status.textContent=materialLabel(e)+' · ручное назначение';d.querySelector('summary').textContent=side+' · '+(e.article||e.name||'Назначена');}),button('Без кромки',()=>{r.edges[side]={edge_id:null,supply_source:'company'};status.textContent='Без кромки';d.querySelector('summary').textContent=side+' · Без кромки';},true));const [el,es]=selectField('Источник кромки '+side,'edge_supply_'+side,[['company','Кромка компании'],['customer','Кромка клиента']],r.edges[side]?.supply_source||'company');d.append(el);edges.append(d);}
  form.append(edges,node('p','Ручные назначения не заменяются AUTO. Для импортированных строк AUTO доступен отдельно.','muted'));const actions=node('div',undefined,'actions');actions.append(node('button','Сохранить строку'),button('Отмена',()=>{panel.remove();},true));form.append(actions);
  form.onsubmit=e=>{e.preventDefault();run(async()=>{const f=new FormData(form);const qty=Number(f.get('qty'));if(!Number.isInteger(qty)||qty<1)throw new Error('Количество должно быть целым и больше нуля. Значение не исправлено автоматически.');r.length=f.get('length');r.width=f.get('width');r.qty=qty;r.grain=g.value;r.rotation=rot.value==='true';r.route=route.value;r.packaging=pack.value==='true';r.supply_source=supply.value;
- if(r.supply_source==='customer'){r.provided_sheets=Number(f.get('provided_sheets'));r.customer_reason=f.get('customer_reason');if(!Number.isInteger(r.provided_sheets)||r.provided_sheets<1||r.customer_reason.trim().length<3)throw new Error('Укажите количество листов клиента и основание.');if(f.get('custom_name')){r.variant_id=null;r.custom_customer={key:r.custom_customer?.key||crypto.randomUUID(),name:f.get('custom_name'),thickness:f.get('custom_thickness'),length:f.get('custom_length'),width:f.get('custom_width'),reason:r.customer_reason};if(['thickness','length','width'].some(k=>!(Number(r.custom_customer[k])>0)))throw new Error('Укажите толщину и формат собственного материала.');r.materialLabel=r.custom_customer.name+' · материал клиента';}}else{delete r.provided_sheets;delete r.customer_reason;r.custom_customer=null;}
+ if(r.supply_source==='customer'){r.provided_sheets=Number(f.get('provided_sheets'));r.customer_reason=f.get('customer_reason');if(!Number.isInteger(r.provided_sheets)||r.provided_sheets<1||r.customer_reason.trim().length<3)throw new Error('Укажите количество листов клиента и основание.');if(f.get('custom_name')){r.variant_id=null;r.custom_customer={key:r.custom_customer?.key||crypto.randomUUID(),article:r.custom_customer?.article||'',manufacturer:r.custom_customer?.manufacturer||'',name:f.get('custom_name'),thickness:f.get('custom_thickness'),length:f.get('custom_length'),width:f.get('custom_width'),reason:r.customer_reason};if(['thickness','length','width'].some(k=>!(Number(r.custom_customer[k])>0)))throw new Error('Укажите толщину и формат собственного материала.');r.materialLabel=r.custom_customer.name+' · материал клиента';}}else{delete r.provided_sheets;delete r.customer_reason;r.custom_customer=null;}
  if(!r.variant_id&&!r.custom_customer)throw new Error('Выберите точный материал. Поисковая строка не является назначением.');for(const s of ['L1','L2','W1','W2'])r.edges[s]={...(r.edges[s]||{edge_id:null}),supply_source:f.get('edge_supply_'+s)};if(index===undefined)manualRows.push(r);else manualRows[index]=r;dirty=true;panel.remove();renderManual();message('Строка изменена локально. Сохраните новую редакцию заказа.');});};panel.append(form);$('row-panel')?.remove();content.append(panel);panel.scrollIntoView({block:'start'});form.querySelector('input').focus();
 }
 async function saveRevision(refresh=true){
@@ -256,7 +297,8 @@ async function importedEditor(r){const p=node('section',undefined,'panel');p.app
  const base='/orders/'+editorOrder.order_id+'/draft/rows/'+r.draft_row_id;
  p.append(button('Исправить размеры и количество',async()=>{
  const reason=await reasonDialog('Исправить исходную строку','Оригинальная строка сохранится. Исправление войдёт в новую редакцию с указанной причиной.');if(!reason)return;
- const s=r.snapshot,v=s.values||{},m=s.resolution?.selected;
+ const s=r.snapshot,v=s.values||{},custom=s.resolution?.status==='custom_customer'?s.resolution.customer_material:null,m=custom||s.resolution?.selected;
+ const customer=custom?{variant_id:null,custom_customer:{key:custom.key||r.draft_row_id,name:custom.name,article:custom.article||'',manufacturer:custom.manufacturer||'',thickness:custom.thickness,length:custom.length,width:custom.width,reason:custom.reason||s.resolution.reason},supply_source:'customer',provided_sheets:custom.provided_sheets,customer_reason:custom.reason||s.resolution.reason}:{};
  const index=manualRows.findIndex(x=>x.draft_row_id===r.draft_row_id);
  await editRow(index>=0?index:undefined,{detail_id:r.draft_row_id,draft_row_id:r.draft_row_id,resolution_reason:reason,length:v.length,width:v.width,qty:v.qty,variant_id:m?.variant_id||null,materialLabel:materialLabel(m),supply_source:'company',rotation:v.rotation===true,grain:['none','length','width'].includes(v.texture)?v.texture:'unknown',route:'solid',packaging:false,edges:Object.fromEntries(['L1','L2','W1','W2'].map(side=>[side,{edge_id:s.edges?.[side]?.confirmed?s.edges[side].edge_id:null,supply_source:'company'}]))});
  },true));

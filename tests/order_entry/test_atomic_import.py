@@ -62,3 +62,40 @@ def test_revision_preserves_auto_and_manual_selection_modes(api,settings,admin_u
     result=api.get('/api/v2/orders/'+o['order_id']+'/revisions/'+rev['revision_id']).json()
     assert result['details'][0]['edges']['L1']['selection_mode']=='auto'
     assert result['details'][0]['edges']['L2']['selection_mode']=='manual'
+
+
+def custom_material():
+    return {'key':'synthetic-own-board','name':'Synthetic own board','article':'OWN-44','manufacturer':'Test workshop',
+            'thickness':'18','length':'2800','width':'2070','reason':'Explicit customer supplied material',
+            'provided_sheets':4,'ownership_confirmed':True}
+
+
+def test_custom_excel_group_persists_identity_stock_and_revision_without_catalogue_writes(api,settings,admin_user):
+    o,p,row,m,e,body=prepared(api);custom=custom_material()
+    body['choices'][row['row_id']]={'custom_customer':custom,'edges':{'L1':{'edge_id':e['edge_id'],'selection_mode':'auto'}}}
+    with transaction(settings) as c: count=c.execute('SELECT count(*) n FROM mf_catalogue_items').fetchone()['n']
+    path='/imports/'+p['import_id']+'/confirm'
+    assert post(api,path,body,1)==post(api,path,body,1)
+    saved=api.get('/api/v2/orders/'+o['order_id']+'/draft/rows').json()['rows'][0]
+    assert saved['snapshot']['resolution']['status']=='custom_customer'
+    assert saved['snapshot']['resolution']['customer_material']==custom
+    fresh=api.get('/api/v2/orders/'+o['order_id']).json()
+    revision=post(api,'/orders/'+o['order_id']+'/revisions',{'parent_revision_id':None,'catalogue_release_id':m['catalogue_release'],
+                    'reason':'Synthetic custom material confirmation'},fresh['optimistic_lock_version'],status=201)
+    detail=api.get('/api/v2/orders/'+o['order_id']+'/revisions/'+revision['revision_id']).json()['details'][0]
+    assert detail['customer_material_key']==custom['key'] and detail['material']['article']=='OWN-44'
+    assert detail['provided_sheets']==4 and detail['supply_source']=='customer'
+    with transaction(settings) as c: assert c.execute('SELECT count(*) n FROM mf_catalogue_items').fetchone()['n']==count
+
+
+def test_custom_excel_rejects_missing_ownership_geometry_and_untrusted_prices_without_changes(api,settings,admin_user):
+    o,p,row,m,e,body=prepared(api)
+    invalids=[{'ownership_confirmed':False},{'ownership_confirmed':1},{'provided_sheets':0},{'thickness':'0'},{'width':'-1'},{'price':'1'}]
+    for change in invalids:
+        body['choices'][row['row_id']]={'custom_customer':{**custom_material(),**change}}
+        response=api.post('/api/v2/imports/'+p['import_id']+'/confirm',json=body,headers={'If-Match':'1'})
+        assert response.status_code==422,response.text
+    body['choices'][row['row_id']]={'variant_id':m['variant_id'],'custom_customer':custom_material()}
+    assert api.post('/api/v2/imports/'+p['import_id']+'/confirm',json=body,headers={'If-Match':'1'}).status_code==422
+    assert api.get('/api/v2/orders/'+o['order_id']+'/draft/rows').json()['rows']==[]
+    assert api.get('/api/v2/orders/'+o['order_id']).json()['optimistic_lock_version']==1

@@ -110,7 +110,7 @@ function renderExcelPreview(preview,result,version,currentVersion){
   const card=node('article',undefined,'material-group import-material-group'),settings=node('div',undefined,'material-settings'),status=node('p',undefined,'muted');
   card.append(node('h3','Материал '+(groupIndex+1)+': '+source),status,settings);
   const picker=catalogSelect(state,first.original.row-1),select=picker.querySelector('select');select.setAttribute('aria-label','Материал в строке '+first.original.row);settings.append(picker);
-  const [el,edgeSelect]=selectField('Кромка AUTO материала '+(groupIndex+1),'default_edge',[],undefined);settings.append(el);
+  const edgeArea=node('div');settings.append(edgeArea);
   const items=[];
   for(const r of group.rows){
    const rowChoice={variant_id:selected,edges:{}};
@@ -121,12 +121,11 @@ function renderExcelPreview(preview,result,version,currentVersion){
    choices.set(r.row_id,rowChoice);items.push({r,rowChoice});
   }
   const tableArea=node('div');card.append(tableArea);cards.append(card);
-  function updateStatus(){status.textContent=state.variant_id?'Подобран точный вариант. Нажатие «Импортировать деталировку» подтвердит его для '+group.rows.length+' строк.':candidates.length>1?'Есть несколько вариантов толщины или формата. Выберите нужный один раз для всего материала.':'Материал не найден однозначно. Уточните поиск или оставьте строки для проверки.';}
+  function updateStatus(){status.textContent=state.custom_customer?'Свой материал клиента: '+state.custom_customer.name+'. Будет назначен всем '+group.rows.length+' строкам этой группы.':state.variant_id?'Подобран точный вариант. Нажатие «Импортировать деталировку» подтвердит его для '+group.rows.length+' строк.':candidates.length>1?'Есть несколько вариантов толщины или формата. Выберите нужный один раз для всего материала.':'Материал не найден однозначно. Уточните поиск или создайте свой материал.';}
   function refreshEdges(){
-   const m=catalogueMaterials.find(x=>x.variant_id===state.variant_id),suggested=MFEntry.edgeCandidates(m,catalogueEdges);
-   const sorted=[...suggested,...catalogueEdges.filter(e=>!suggested.includes(e)&&MFEntry.compatible(m,e))];
-   edgeSelect.replaceChildren();for(const [id,label]of [['','Выберите кромку для отмеченных сторон'],...sorted.map(e=>[e.edge_id,edgeLabel(e)])]){const o=node('option',label);o.value=id;edgeSelect.append(o);}edgeSelect.value=defaultEdge||'';
-   for(const {rowChoice}of items){rowChoice.variant_id=state.variant_id;for(const side of sideNames)if(rowChoice.edges[side].selection_mode==='auto')rowChoice.edges[side]={...rowChoice.edges[side],edge_id:defaultEdge,unresolved:!defaultEdge};}
+   const m=state.custom_customer?{...state.custom_customer,family:'customer'}:catalogueMaterials.find(x=>x.variant_id===state.variant_id);
+   edgeArea.replaceChildren(groupEdgePicker(m,defaultEdge,groupIndex+1,id=>{defaultEdge=id;refreshEdges();}));
+   for(const {rowChoice}of items){rowChoice.variant_id=state.variant_id;rowChoice.custom_customer=state.custom_customer?{...state.custom_customer,provided_sheets:state.provided_sheets,ownership_confirmed:true}:null;for(const side of sideNames)if(rowChoice.edges[side].selection_mode==='auto')rowChoice.edges[side]={...rowChoice.edges[side],edge_id:defaultEdge,unresolved:!defaultEdge};}
    renderRows();updateStatus();
   }
   function renderRows(){
@@ -138,15 +137,14 @@ function renderExcelPreview(preview,result,version,currentVersion){
     }
    });tableArea.replaceChildren(t);
   }
-  const materialChanged=select.onchange;select.onchange=()=>{materialChanged();defaultEdge=MFEntry.edgeDefault(catalogueMaterials.find(m=>m.variant_id===state.variant_id),catalogueEdges);refreshEdges();};
-  edgeSelect.onchange=()=>{defaultEdge=edgeSelect.value||null;refreshEdges();};refreshEdges();
+  picker.onMaterialChange=()=>{defaultEdge=MFEntry.edgeDefault(catalogueMaterials.find(m=>m.variant_id===state.variant_id),catalogueEdges);refreshEdges();};refreshEdges();
  });
  preview.append(node('p','Материал выбирается один раз на группу. AUTO применяется к отмеченным сторонам; ручная кромка сохраняется. Строки с ошибками останутся для исправления.','muted'));
  preview.append(button('Импортировать деталировку',async()=>{
   if(version!==currentVersion())throw new Error('Настройки изменились. Повторите проверку деталировки.');
   if(!rows.length)throw new Error('На листе нет деталей. Проверьте первую строку деталей.');
   if(rows.length>1000)throw new Error('За один импорт можно добавить до 1000 позиций. Разделите файл на несколько заявок.');
-  const confirmed=Object.fromEntries([...choices].map(([id,c])=>[id,{variant_id:c.variant_id||null,edges:Object.fromEntries(Object.entries(c.edges).filter(([,e])=>!e.unresolved).map(([s,e])=>[s,{edge_id:e.edge_id||null,selection_mode:e.selection_mode}]))}]));
+  const confirmed=Object.fromEntries([...choices].map(([id,c])=>[id,{variant_id:c.variant_id||null,...(c.custom_customer?{custom_customer:c.custom_customer}:{}),edges:Object.fromEntries(Object.entries(c.edges).filter(([,e])=>!e.unresolved).map(([s,e])=>[s,{edge_id:e.edge_id||null,selection_mode:e.selection_mode}]))}]));
   const fresh=await api('/orders/'+editorOrder.order_id);
   await api('/imports/'+result.import_id+'/confirm','POST',{mode:'add',choices:confirmed},{'If-Match':String(fresh.optimistic_lock_version)});
   const draft=await api('/orders/'+editorOrder.order_id+'/draft/rows');editorOrder.optimistic_lock_version=draft.optimistic_lock_version;

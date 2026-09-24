@@ -6,7 +6,7 @@ import hashlib
 from typing import Literal
 from uuid import UUID,uuid4
 from fastapi import APIRouter,Request,Response,Query
-from pydantic import Field,field_validator
+from pydantic import Field,field_validator,model_validator
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
 from .db import transaction
@@ -20,6 +20,7 @@ from . import catalogue,import_service
 from .catalogue_model import matches,safe_item,fingerprint
 from .excel_import import parse,validate_template
 from .auto import apply_auto,compatible
+from .calculation_models import CustomerMaterial
 
 
 class Upload(StrictModel):
@@ -66,9 +67,22 @@ class ImportEdgeChoice(StrictModel):
     edge_id:UUID|None=None
     selection_mode:Literal['manual','auto']='manual'
 
+class ImportCustomerMaterial(CustomerMaterial):
+    provided_sheets:int=Field(strict=True,ge=1,le=10000)
+    ownership_confirmed:bool=Field(strict=True)
+    @model_validator(mode='after')
+    def ownership(self):
+        if not self.ownership_confirmed: raise ValueError('Explicit customer ownership required')
+        return self
+
 class ImportRowChoice(StrictModel):
     variant_id:UUID|None=None
+    custom_customer:ImportCustomerMaterial|None=None
     edges:dict[Literal['L1','L2','W1','W2'],ImportEdgeChoice]=Field(default_factory=dict)
+    @model_validator(mode='after')
+    def material_choice(self):
+        if self.variant_id and self.custom_customer: raise ValueError('Exactly one material choice required')
+        return self
 
 class Confirm(StrictModel):
     mode:Literal['add','replace','new_revision']

@@ -37,7 +37,7 @@ def normalize(conn,release,detail):
     d=plain(detail.model_dump());custom=d.pop('custom_customer');variant=d.pop('variant_id')
     d['material']=released(conn,release,variant,'material') if variant else None
     if custom:
-        d['material']={'name':custom['name'],'length':custom['length'],'width':custom['width'],'thickness':custom['thickness'],'family':'customer','raw_description':custom['name'],'reason':custom['reason']}
+        d['material']={'name':custom['name'],'article':custom['article'],'manufacturer':custom['manufacturer'],'length':custom['length'],'width':custom['width'],'thickness':custom['thickness'],'family':'customer','raw_description':custom['name'],'reason':custom['reason']}
         d['customer_material_key']=custom['key']
     d['edges']={s:{'edge':released(conn,release,e['edge_id'],'edge'),'supply_source':e['supply_source'],'state':'confirmed',
                    'selection_mode':e['selection_mode']} for s,e in d['edges'].items()}
@@ -62,8 +62,8 @@ def from_raw(conn,release,row):
                      'selection_mode':e.get('selection_mode','manual')}
     return {'detail_id':row['draft_row_id'],'draft_row_id':row['draft_row_id'],'length':v.get('length'),'width':v.get('width'),'qty':v.get('qty'),
         'name':str(v.get('name') or ''),'comments':str(v.get('comments') or ''),
-        'material':material,'supply_source':'customer' if customer else 'company','provided_sheets':None,'customer_reason':r.get('reason'),
-        'customer_material_key':row['draft_row_id'] if customer else None,'rotation':rotation,'grain':grain,'route':'solid','packaging':False,'edges':edges}
+        'material':material,'supply_source':'customer' if customer else 'company','provided_sheets':customer.get('provided_sheets') if customer else None,'customer_reason':customer.get('reason',r.get('reason')) if customer else r.get('reason'),
+        'customer_material_key':customer.get('key',row['draft_row_id']) if customer else None,'rotation':rotation,'grain':grain,'route':'solid','packaging':False,'edges':edges}
 
 def create(conn,settings,actor,order,body,manager=False):
     if manager and order['workflow_status'] not in {'submitted','review','awaiting_approval','approved'}: error(409,'SUBMITTED_OR_REVIEW_REQUIRED')

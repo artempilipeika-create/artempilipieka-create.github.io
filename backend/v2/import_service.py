@@ -64,7 +64,9 @@ def bump(conn,settings,actor,order,reason):
 
 
 def confirm(conn,settings,actor,batch,mode,exclusions,expected,choices=None):
-    choices=choices or {}
+    # Preserve hashes of pre-existing catalogue-only confirmations across this extension.
+    choices={row:{k:v for k,v in choice.items() if k!='custom_customer' or v is not None}
+             for row,choice in (choices or {}).items()}
     source=conn.execute('SELECT * FROM mf_import_batches WHERE import_id=%s',(batch,)).fetchone()
     if not source: error(404,'IMPORT_NOT_FOUND')
     request_hash=fingerprint({'mode':mode,'exclusions':exclusions,**({'choices':choices} if choices else {})})
@@ -82,16 +84,18 @@ def confirm(conn,settings,actor,batch,mode,exclusions,expected,choices=None):
     if set(choices)-set(parts): error(422,'FOREIGN_IMPORT_ROW')
     # One scoped, locked transaction for the entire displayed preview. A bad choice
     # rolls everything back; retrying the same payload returns the existing receipt.
-    selected={};edge_choices={}
+    selected={};customs={};edge_choices={}
     for row_id,choice in choices.items():
         if choice.get('variant_id'):
             selected[row_id]=catalogue.get_item(conn,source['release_id'],choice['variant_id'],'material')
+        if choice.get('custom_customer'):
+            customs[row_id]=choice['custom_customer'];selected[row_id]=None
         for side,e in choice.get('edges',{}).items():
             edge_choices[(row_id,side)]=catalogue.get_item(conn,source['release_id'],e['edge_id'],'edge') if e['edge_id'] else None
     reason='User confirmed displayed material and edge choices in Excel preview'
     for row_id,material in selected.items():
         r=parts[row_id]
-        value=manual_resolution(r['resolution'],material,actor,reason)
+        value=manual_resolution(r['resolution'],material,actor,reason,customs.get(row_id))
         conn.execute('INSERT INTO mf_import_row_resolutions VALUES (%s,%s,%s,%s,%s,now())',
                      (uuid4(),r['row_id'],r['resolution_version']+1,Jsonb(value),actor))
         r['resolution']=value

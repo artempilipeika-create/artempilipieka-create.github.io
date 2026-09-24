@@ -54,12 +54,26 @@ const MFEntry=(()=>{
   return best;
  }
  function compatible(material,edge){return !!material&&num(material.thickness)>0&&num(edge.width)>=num(material.thickness);}
- function edgeCandidates(material,edges){
-  if(!material?.article)return [];
-  const article=key(String(material.article).replace(/\([^)]*\d+[^)]*(?:мм|mm)[^)]*\)/gi,''));
-  return edges.filter(e=>compatible(material,e)&&(key(e.article)===article||key(e.designation)===article));
+ function materialMatches(materials,query){
+  const q=key(query),terms=String(query).trim().split(/\s+/).map(key).filter(Boolean);
+  const score=m=>{const article=key(m.article),text=key([m.article,m.name,m.raw_description,m.manufacturer,m.structure,m.thickness,m.length,m.width].join(' '));return !q?1:article===q?400:article.startsWith(q)?300:article.includes(q)?200:terms.every(t=>text.includes(t))?100:0;};
+  return materials.map((m,i)=>({m,i,score:score(m)})).filter(x=>x.score).sort((a,b)=>b.score-a.score||a.i-b.i).map(x=>x.m);
  }
- function edgeDefault(material,edges){const matches=edgeCandidates(material,edges);return matches.length===1?matches[0].edge_id:null;}
+ function containsArticle(text,article){
+  // Spaces/punctuation and Cyrillic lookalikes may vary; the complete code may not.
+  const normalized=String(text??'').normalize('NFKC').toUpperCase().replace(/[АВЕКМНОРСТХ]/g,c=>aliases[c]);
+  return new RegExp('(^|[^A-ZА-ЯЁ0-9])'+[...article].join('[\\s._-]*')+'($|[^A-ZА-ЯЁ0-9])').test(normalized);
+ }
+ function edgeCandidates(material,edges){
+  if(!material?.article||material.family==='customer')return [];
+  const article=key(String(material.article).replace(/\([^)]*\d+[^)]*(?:мм|mm)[^)]*\)/gi,''));
+  if(!article)return [];
+  return edges.filter(e=>compatible(material,e)&&(!material.manufacturer||!e.manufacturer||key(material.manufacturer)===key(e.manufacturer))&&(key(e.article)===article||containsArticle(e.designation,article)))
+   .sort((a,b)=>num(a.width)-num(b.width)||Math.abs((num(a.thickness)||1)-1)-Math.abs((num(b.thickness)||1)-1)||String(a.edge_id).localeCompare(String(b.edge_id)));
+ }
+ // The visible default uses the narrowest fitting width, then thickness nearest 1 mm.
+ // Other sizes remain selectable; AUTO never changes a manually assigned side.
+ function edgeDefault(material,edges){return edgeCandidates(material,edges)[0]?.edge_id||null;}
  function autoEdge(previous,edgeId){
   if(previous?.selection_mode==='manual'||previous?.edge_id&&previous.selection_mode!=='auto')return previous;
   return {edge_id:edgeId||null,supply_source:'company',selection_mode:'auto',unresolved:!edgeId};
@@ -73,5 +87,5 @@ const MFEntry=(()=>{
   for(const row of rows){const k=importGroupKey(row);if(!groups.has(k))groups.set(k,{key:k,rows:[]});groups.get(k).rows.push(row);}
   return [...groups.values()];
  }
- return {fields,key,num,guess,columns,headers,detect,boardText,compatible,edgeCandidates,edgeDefault,autoEdge,previewGroups};
+ return {fields,key,num,guess,columns,headers,detect,boardText,compatible,materialMatches,edgeCandidates,edgeDefault,autoEdge,previewGroups};
 })();
