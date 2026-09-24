@@ -62,9 +62,12 @@ def project(calculation, *, number, name, customer, revision_number, date):
             assignment=d.get('edges',{}).get(side,{})
             e=assignment.get('edge')
             sides[side]=({k:e.get(k) for k in ('name','article','width','thickness')} if e else None)
+        backing=d.get('glue_backing') or {}
         details.append({'number':index,'name':d.get('name',''),'comments':d.get('comments',''),
             'material':material(d.get('material') or {}),'length':d.get('length'),'width':d.get('width'),
-            'qty':d.get('qty'),'grain':d.get('grain'),'rotation':d.get('rotation'),'edges':sides,
+            'qty':d.get('qty'),'grain':d.get('grain'),'rotation':d.get('rotation'),'route':d.get('route','solid'),
+            'finished_thickness':36 if d.get('route')=='glued_18_18' else (d.get('material') or {}).get('thickness'),
+            'glue_backing':material(backing.get('material') or {}) if backing else None,'edges':sides,
             'unresolved_edges':[s for s,e in d.get('edges',{}).items() if e.get('state')=='unresolved']})
     complete=r['completeness']=='complete'
     return plain({'title':TITLE,'order_number':number,'order_name':name,'customer':customer or 'Клиент',
