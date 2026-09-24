@@ -22,7 +22,7 @@ def sample(count=1,mode='complete'):
         detail(x).update(supply_source='customer',provided_sheets=5,customer_reason='Explicit customer stock')
         detail(x)['edges']={'L1':{'edge':{**e,'name':'Кромка натуральный дуб','article':'TEST-22-04'},'supply_source':'company'}}
     if mode=='glue':
-        detail(x).update(route='glued_18_18',qty=3,packaging=True);x['production_profile']['policies']['glue_area']='finished_area'
+        detail(x).update(route='glued_18_18',qty=3,packaging=True)
     if mode=='incomplete': x['prices'].pop('material-0')
     result=calculate(x);result['synthetic']=True
     c={'result':result,'input_snapshot':x}
@@ -30,15 +30,14 @@ def sample(count=1,mode='complete'):
     return c,view
 
 @pytest.mark.parametrize('count',[1,5,20])
-def test_pdf01_pdf02_pdf08_pdf09_actual_text_multipage(count):
+def test_pdf01_pdf02_pdf08_pdf09_actual_text_onepage(count):
     c,v=sample(count);data=render(v);reader=PdfReader(BytesIO(data));text='\n'.join(p.extract_text() for p in reader.pages)
     assert 'ПРЕДВАРИТЕЛЬНЫЙ РАСЧЁТ' in text and 'Ąžuolo' in text and 'Александра' in text
     assert str(c['result']['total'])+' BYN' in text
-    assert len(reader.pages)>1 if count>=5 else 1<=len(reader.pages)<=2
+    assert len(reader.pages)==1
     assert 'Деталировка' in text and 'Кромка по сторонам' in text
     assert len(v['details'])==count
-    for i,p in enumerate(reader.pages,1):
-        assert not p.images and 'Страница '+str(i) in p.extract_text() and 'MF-000123' in p.extract_text()
+    assert not reader.pages[0].images and '1 лист' in reader.pages[0].extract_text() and 'MF-000123' in reader.pages[0].extract_text()
     for i in range(count): assert 'H3331-ST10-ЛХДФ-'+str(i+1) in text
     if count>1: assert 'Ąžuolas Šviesus' in text
     assert render(deepcopy(v))==data
@@ -51,11 +50,17 @@ def test_pdf03_pdf04_pdf06_pdf07_snapshot_numbers(mode):
     if mode=='customer':
         assert v['materials'][0]['amount']=='0.00' and 'Материал заказчика.' in text
         assert float(v['edges'][0]['amount'])>0 and any(float(s['amount'])>0 for s in v['services'])
-    if mode=='glue': assert 'Склейка' in text and 'Финальная обрезка 36 мм' in text and v['amount']=='111.02'
+    if mode=='glue': assert 'Склейка' in text and 'Финальная обрезка 36 мм' in text and '36 мм · 18+18' in text and len(PdfReader(BytesIO(data)).pages)==1
     if mode=='incomplete':
         assert c['result']['total'] is None and 'РАССЧИТАННАЯ ЧАСТЬ' in text
         assert 'ПРЕДВАРИТЕЛЬНАЯ СТОИМОСТЬ' not in text and 'Стоимость материала' in text
     assert v['disclaimer']==DISCLAIMER
+
+def test_missing_pvc_price_is_labeled_not_zero():
+    x,e=net_fixture();x['prices'].pop('edge-22');r=calculate(x);r['synthetic']=True
+    view=project({'result':r,'input_snapshot':x},number='MF-000125',name='Нет цены ПВХ',customer='Клиент',revision_number=1,date='2026-09-24')
+    text=' '.join(p.extract_text() for p in PdfReader(BytesIO(render(view))).pages)
+    assert len(PdfReader(BytesIO(render(view))).pages)==1 and 'Нет стоимости' in text
 
 def test_pdf05_pdf10_no_edge_no_internal_and_escape():
     c,v=sample();c['result']['token']='TOPSECRET';c['input_snapshot']['internalComment']='INTERNAL';
