@@ -132,7 +132,12 @@ const MFEntry=(()=>{
   let variant=r.variant_id||null,label=r.materialLabel||'Материал подклейки';
   if(!variant&&!r.custom_customer&&r._materialSource){
    let m=exactMaterial(materials,r._materialSource,'',{});
-   if(!m){const source=key(r._materialSource),exact18=materials.filter(x=>key(x.article)===source&&num(x.thickness)===18);const sig=new Set(exact18.map(materialSignature));if(sig.size===1&&exact18.length)m=exact18[0];}
+   if(!m){
+    const source=key(r._materialSource),exact18=materials.filter(x=>key(x.article)===source&&num(x.thickness)===18);
+    const byVariant=new Map(exact18.filter(x=>x.variant_id).map(x=>[x.variant_id,x]));
+    if(byVariant.size===1)m=[...byVariant.values()][0];
+    else if(!byVariant.size){const sig=new Set(exact18.map(materialSignature));if(sig.size===1&&exact18.length)m=exact18[0];}
+   }
    if(m){variant=m.variant_id;label=[m.manufacturer,m.article,m.name].filter(Boolean).join(' · ');}
   }
   if(!variant&&!r.custom_customer)return null;
