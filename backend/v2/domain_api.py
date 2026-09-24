@@ -322,7 +322,7 @@ def router(settings, policy):
             user = identity(conn,request)
             if 'client' in user['roles']:
                 error(403,'PERMISSION_DENIED')
-            row = conn.execute("SELECT file_id FROM mf_files WHERE order_id=%s AND kind='oblx' AND status='ready' ORDER BY created_at DESC LIMIT 1",(order_id,)).fetchone()
+            row = conn.execute("SELECT f.file_id FROM mf_files f WHERE f.order_id=%s AND f.kind='oblx' AND f.status='ready' AND NOT EXISTS (SELECT 1 FROM mf_order_attachments a WHERE a.file_id=f.file_id) ORDER BY f.created_at DESC LIMIT 1",(order_id,)).fetchone()
             if not row:
                 error(404,'FILE_NOT_FOUND')
             return download(conn,user,row['file_id'],request.method=='HEAD')

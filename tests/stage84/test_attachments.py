@@ -169,3 +169,30 @@ def test_unbound_attachment_inaccessible(api,scene,settings):
  fid=uuid4()
  with transaction(settings) as c:c.execute("INSERT INTO mf_files(file_id,order_id,kind,classification,original_name,storage_key,sha256,size_bytes,mime_type,created_by,status) VALUES(%s,%s,'attachment','private','orphan.pdf',%s,%s,1,'application/pdf',%s,'ready')",(fid,scene['oid'],new_key(),'0'*64,scene['manager']['user_id']))
  assert api.get(url(str(fid))).status_code==404
+
+def test_manual_oblx_not_legacy_native_result(api,scene):
+ f=upload(api,scene,OBLX,'manual.oblx').json()
+ assert api.get(f['download_url']).status_code==200
+ assert api.get('/api/v2/orders/'+scene['oid']+'/oblx').status_code==404
+
+@pytest.mark.parametrize('role',['viewer','accounting','production'])
+def test_staff_role_never_inherits_upload(api,scene,settings,role):
+ actor=user(settings,role)
+ with transaction(settings) as c:
+  for p in ('orders.read','files.attachments.read','files.attachments.upload','files.attachments.internal.read'):
+   grant(c,user_id=actor['user_id'],permission=p,scope='order',scope_id=scene['oid'],actor=scene['manager']['user_id'])
+ login(api,actor['email']);assert upload(api,scene).status_code==403
+
+def test_rejected_content_does_not_create_manifest(api,scene,settings):
+ assert upload(api,scene,b'MZ payload','fake.pdf').status_code==422
+ with connect(settings) as c:assert not c.execute('SELECT 1 FROM mf_files WHERE order_id=%s',(scene['oid'],)).fetchone()
+
+def test_verified_office_and_image_formats(api,scene):
+ doc=BytesIO()
+ with ZipFile(doc,'w') as z:
+  z.writestr('[Content_Types].xml','<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+  z.writestr('word/document.xml','<document/>')
+ assert upload(api,scene,doc.getvalue(),'note.docx').status_code==201
+ for fmt,ext in [('JPEG','jpg'),('JPEG','jpeg'),('WEBP','webp')]:
+  b=BytesIO();Image.new('RGB',(3,3),'green').save(b,format=fmt)
+  assert upload(api,scene,b.getvalue(),'sketch.'+ext).status_code==201

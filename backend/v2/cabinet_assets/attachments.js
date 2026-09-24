@@ -22,7 +22,8 @@ async function orderFiles(orderId,parent=content){
    }finally{send.disabled=false;send.textContent='Добавить файл';}});};block.append(form);
   }
   if(!data.items.length){block.append(node('p','Прикреплённых файлов пока нет.','empty'));return;}
-  const t=table(['Файл','Тип','Видимость','Комментарий сотрудника','Кто добавил','Дата','Размер','Статус','Скачать'],data.items.map(f=>[f.name,fileCategoryLabels[f.category],fileVisibilityLabels[f.visibility],f.comment||'—',f.uploaded_by,date(f.created_at),(f.size_bytes/1024).toFixed(1)+' КБ','Сохранён','']));
+  const staff=!currentUser.roles.includes('client');
+  const t=table(['Файл','Тип','Видимость',...(staff?['Комментарий сотрудника']:[]),'Кто добавил','Дата и время','Размер','Статус','Скачать'],data.items.map(f=>[f.name,fileCategoryLabels[f.category],fileVisibilityLabels[f.visibility],...(staff?[f.comment||'—']:[]),f.uploaded_by,new Date(f.created_at).toLocaleString('ru-RU'),(f.size_bytes/1024).toFixed(1)+' КБ','Сохранён','']));
   t.querySelectorAll('tbody tr').forEach((tr,i)=>{const f=data.items[i],a=link('Скачать',f.download_url);a.setAttribute('aria-label','Скачать '+f.name);tr.lastChild.append(a);if(f.revision_id)tr.firstChild.append(node('small',' · Привязан к редакции'));});block.append(t);
  }catch(e){state.textContent=e.message||'Не удалось загрузить файлы заказа.';state.className='notice';}
 }
