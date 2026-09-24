@@ -129,7 +129,7 @@ const MFEntry=(()=>{
  function sameGeometry(a,b){return num(a.length)===num(b.length)&&num(a.width)===num(b.width)&&num(a.qty)===num(b.qty);}
  function glueBackingFromRow(r){
   if(!r||(!r.variant_id&&!r.custom_customer))return null;
-  return {draft_row_id:r.draft_row_id||null,resolution_reason:r.resolution_reason||null,variant_id:r.variant_id||null,custom_customer:r.custom_customer?structuredClone(r.custom_customer):null,
+  return {draft_row_id:r.draft_row_id||null,resolution_reason:r.resolution_reason||null,variant_id:r.variant_id||null,custom_customer:r.custom_customer?{...r.custom_customer}:null,
     supply_source:r.supply_source||'company',provided_sheets:r.provided_sheets??null,customer_reason:r.customer_reason??null,materialLabel:r.materialLabel||'Материал подклейки'};
  }
  function recognizeGlueRows(rows){
