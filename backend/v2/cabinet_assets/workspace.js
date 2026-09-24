@@ -201,11 +201,11 @@ function renderManual(){
   const choice={...first},material=catalogSelect(choice,firstIndex),select=material.querySelector('select');
   material.onMaterialChange=()=>{const newMaterial=catalogueMaterials.find(x=>x.variant_id===choice.variant_id),next=MFEntry.edgeDefault(newMaterial,catalogueEdges);for(const {r}of group.rows){copyGroupMaterial(r,choice);for(const side of sideNames)if(r.edges[side]?.selection_mode==='auto')r.edges[side]={...r.edges[side],edge_id:next,unresolved:!next};}groupEdgeDefaults.set(detailGroupKey(first),next);dirty=true;renderManual();};
   settings.append(material);
-  settings.append(groupEdgePicker(m,defaultEdge,gi+1,edgeId=>{groupEdgeDefaults.set(group.key,edgeId);for(const {r}of group.rows)for(const side of sideNames)if(r.edges[side]?.selection_mode==='auto')r.edges[side]={...r.edges[side],edge_id:edgeId,unresolved:!edgeId};dirty=true;renderManual();}));
+  settings.append(groupEdgePicker(m,defaultEdge,gi+1,edgeId=>{const previousDefault=defaultEdge;groupEdgeDefaults.set(group.key,edgeId);const applied=MFEntry.applyGroupEdgeSelection(group.rows.map(x=>x.r),previousDefault,edgeId);dirty=true;renderManual();message(edgeId?'Кромка материала применена к '+applied.changed+' отмеченным сторонам.'+(applied.protectedSides?' Ручных исключений сохранено: '+applied.protectedSides+'.':''):'AUTO-кромка снята с '+applied.changed+' отмеченных сторон.'+(applied.protectedSides?' Ручные исключения сохранены.':''));}));
   const [gl,grain]=selectField('Текстура материала '+(gi+1),'group_grain',Object.entries(grainNames),first.grain);settings.append(gl);
   grain.onchange=()=>{for(const {r}of group.rows)r.grain=grain.value;dirty=true;renderManual();};
   if(first._materialSource)card.append(node('p','Из Excel: '+first._materialSource,'muted'));
-  card.append(node('p','Материал и формат выбираются для всей группы. AUTO следует выбранной кромке; ручные стороны сохраняются.','muted'));
+  card.append(node('p','Материал и формат выбираются для всей группы. Выбор AUTO-кромки сразу применяется ко всем уже отмеченным кромлением сторонам этого материала; пустые стороны не меняются, ручные исключения сохраняются.','muted'));
   const wrap=table(['№','Название','Длина, мм','Ширина, мм','Кол-во','Текстура','Вращать','L1','L2','W1','W2','Примечание','Действия'],[]);wrap.classList.add('detail-grid');wrap.querySelectorAll('th')[11].classList.add('detail-extra');const body=wrap.querySelector('tbody');
   group.rows.forEach(({r,index})=>{
   const tr=node('tr');tr.dataset.detailId=r.detail_id;
