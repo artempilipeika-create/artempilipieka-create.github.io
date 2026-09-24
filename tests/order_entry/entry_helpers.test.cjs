@@ -55,6 +55,12 @@ test('glue recognition merges copy/ready pair and keeps different backing materi
  const b={draft_row_id:'b',resolution_reason:'ok',variant_id:'back',materialLabel:'Back 18',supply_source:'company',length:600,width:400,qty:2,route:'solid',edges:{},_sourcePosition:'7',_sourceRow:11,_sourceGlueText:'Полка (Копия)'};
  const rows=h.recognizeGlueRows([a,b]);assert.equal(rows.length,1);assert.equal(rows[0].route,'glued_18_18');assert.equal(rows[0].variant_id,'front');assert.equal(rows[0].glue_backing.variant_id,'back');assert.equal(rows[0].glue_backing.draft_row_id,'b');
 });
+test('glue pairing recovers unresolved backing from current catalogue source article',()=>{
+ const a={draft_row_id:'a',variant_id:'front',materialLabel:'Front 18',supply_source:'company',length:600,width:400,qty:1,route:'solid',edges:{},_sourcePosition:'7',_sourceRow:10,_sourceGlueText:'Гот.дет тол 36 мм',_materialSource:'QA621 PO'};
+ const b={draft_row_id:'b',variant_id:null,materialLabel:'Материал не выбран',supply_source:'company',length:600,width:400,qty:1,route:'solid',edges:{},_sourcePosition:'7',_sourceRow:11,_sourceGlueText:'Полка (Копия)',_materialSource:'621 PE'};
+ const materials=[{variant_id:'back',article:'621 PE',name:'Другой декор',thickness:18,length:2440,width:1220}];
+ const rows=h.recognizeGlueRows([a,b],materials);assert.equal(rows.length,1);assert.equal(rows[0].route,'glued_18_18');assert.equal(rows[0].glue_backing.variant_id,'back');
+});
 test('same position and geometry without glue evidence stays as two normal details',()=>{
  const a={draft_row_id:'a',variant_id:'front',length:500,width:300,qty:1,route:'solid',edges:{},_sourcePosition:'8',_sourceRow:3,_sourceGlueText:'Полка'};
  const b={draft_row_id:'b',variant_id:'front',length:500,width:300,qty:1,route:'solid',edges:{},_sourcePosition:'8',_sourceRow:4,_sourceGlueText:'Полка'};
