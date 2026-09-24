@@ -50,6 +50,15 @@ test('AUTO preserves manual SKU and explicit NONE',()=>{
  for(const previous of [{edge_id:'manual',selection_mode:'manual'},{edge_id:null,selection_mode:'manual'}])assert.equal(h.autoEdge(previous,'new'),previous);
  assert.equal(h.autoEdge({edge_id:'old',selection_mode:'auto'},'new').edge_id,'new');assert.equal(h.autoEdge(undefined,'new').selection_mode,'auto');
 });
+test('glue recognition merges copy/ready pair and keeps different backing material',()=>{
+ const a={draft_row_id:'a',resolution_reason:'ok',variant_id:'front',materialLabel:'Front 18',supply_source:'company',length:600,width:400,qty:2,route:'solid',edges:{},_sourcePosition:'7',_sourceRow:10,_sourceGlueText:'Гот.дет тол 36мм'};
+ const b={draft_row_id:'b',resolution_reason:'ok',variant_id:'back',materialLabel:'Back 18',supply_source:'company',length:600,width:400,qty:2,route:'solid',edges:{},_sourcePosition:'7',_sourceRow:11,_sourceGlueText:'Полка (Копия)'};
+ const rows=h.recognizeGlueRows([a,b]);assert.equal(rows.length,1);assert.equal(rows[0].route,'glued_18_18');assert.equal(rows[0].variant_id,'front');assert.equal(rows[0].glue_backing.variant_id,'back');assert.equal(rows[0].glue_backing.draft_row_id,'b');
+});
+test('explicit 36mm hint enables same-material glue without consuming another row',()=>{
+ const a={draft_row_id:'a',variant_id:'front',length:500,width:300,qty:1,route:'solid',edges:{},_sourcePosition:'',_sourceRow:3,_sourceGlueText:'Склейка тол 36 мм'};
+ const rows=h.recognizeGlueRows([a]);assert.equal(rows.length,1);assert.equal(rows[0].route,'glued_18_18');assert.equal(rows[0].glue_backing,null);
+});
 test('preview grouping separates physical variants and keeps zero quantities',()=>{
  const mk=(thickness,qty)=>({original:{values:{material:'621 PO',thickness,qty}},resolution:{}});
  const groups=h.previewGroups([mk(18,0),mk(18,2),mk(16,1)]);assert.equal(groups.length,2);assert.equal(groups[0].rows.length,2);assert.equal(groups[0].rows[0].original.values.qty,0);
