@@ -348,6 +348,33 @@ def test_v9_pair_restores_auto_edge_for_621_pe_manual_and_excel(page,api,setting
     expect(page.get_by_label('L1 в строке 2',exact=True)).to_have_value('__auto__')
 
 
+def test_group_edge_choice_bulk_updates_marked_sides_and_keeps_manual_exception(page,api,settings,admin_user):
+    o,email,edges=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/editor?order='+o['order_id'])
+    search=page.get_by_label('Поиск материала 1',exact=True);search.fill('дуб синтетический')
+    page.locator('.material-suggestions button').click()
+    page.get_by_label('Длина 1',exact=True).fill('600');page.get_by_label('Ширина 1',exact=True).fill('400')
+    page.get_by_role('button',name='+ Деталь в этот материал',exact=True).click()
+    page.get_by_label('Длина 2',exact=True).fill('500');page.get_by_label('Ширина 2',exact=True).fill('300')
+    page.get_by_label('Оклеить L1 деталь 1',exact=True).check()
+    page.get_by_label('Оклеить W2 деталь 2',exact=True).check()
+    default=page.get_by_label('Кромка AUTO материала 1',exact=True)
+    default.select_option(edges['AUTO-22-04'])
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+    expect(page.get_by_label('W2 деталь 2',exact=True)).to_have_value('__auto__')
+    page.get_by_label('W1 деталь 1',exact=True).select_option(edges['AUTO-22-1'])
+    default.select_option(edges['100858'])
+    expect(page.get_by_label('W1 деталь 1',exact=True)).to_have_value(edges['AUTO-22-1'])
+    expect(page.get_by_label('L1 деталь 1',exact=True)).to_have_value('__auto__')
+    expect(page.get_by_label('W2 деталь 2',exact=True)).to_have_value('__auto__')
+    page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#message')).to_contain_text('сохранена')
+    current=api.get('/api/v2/orders/'+o['order_id']).json()
+    details=api.get('/api/v2/orders/'+o['order_id']+'/revisions/'+current['active_revision_id']).json()['details']
+    assert details[0]['edges']['L1']['edge']['edge_id']==edges['100858']
+    assert details[1]['edges']['W2']['edge']['edge_id']==edges['100858']
+    assert details[0]['edges']['W1']['edge']['edge_id']==edges['AUTO-22-1']
+
+
 def fill_own_material(page):
     dialog=page.get_by_role('dialog',name='Свой материал',exact=True)
     for label,value in [('Артикул / свой код','MY-BOARD'),('Название своего материала','Мой дуб'),('Производитель (необязательно)','Мастерская'),
