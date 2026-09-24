@@ -3,13 +3,15 @@ from typing import Literal
 from uuid import UUID,uuid4
 import hashlib,secrets
 from pydantic import Field
-from fastapi import APIRouter,Request
+from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
 from .db import transaction
 from .security import identity,error
 from .domain_api import require
 from .events import record_event
+from . import catalogue
+from .three_d_document import render as render_spec
 
 class Room(StrictModel):
     width: int=Field(default=4200,ge=1500,le=12000)
@@ -113,6 +115,26 @@ def router(settings):
                 VALUES(%s,%s,%s,%s,%s) RETURNING *''',(pid,user['user_id'],name,source['module_type'],Jsonb(source['scene']))).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.duplicated',object_type='3d_project',object_id=pid,reason='User duplicated 3D project')
             return projection(row)
+
+    @api.get('/3d-projects/{project_id}/specification.pdf')
+    def specification(project_id:UUID,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            scene=row['scene'];release=catalogue.active(conn);materials={}
+            ids=set()
+            if scene.get('items'):
+                for item in scene['items']:
+                    ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id')) if x)
+            else:
+                ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
+            if release:
+                for ident in ids:
+                    found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,ident)).fetchone()
+                    if found:
+                        m=found['snapshot'];materials[ident]=' · '.join(str(x) for x in (m.get('manufacturer'),m.get('article'),m.get('name')) if x)
+            data=render_spec(row['name'],scene,materials)
+            filename='Martin_Forest_3D_Project.pdf'
+            return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename='+filename})
 
     @api.post('/3d-projects/{project_id}/shares',status_code=201)
     def create_share(project_id:UUID,request:Request):
