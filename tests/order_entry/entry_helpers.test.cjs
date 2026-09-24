@@ -19,6 +19,13 @@ test('visible autocomplete ranks full codes first and also searches names and ge
  assert.equal(h.materialMatches(materials,'дуб светлый 2800')[0].article,'621 PO');
  assert.equal(h.materialMatches(materials,'unknown').length,0);
 });
+test('v9-style exact material detection separates similar article codes',()=>{
+ const materials=[{variant_id:'po',article:'621 PO',name:'Пепел PO',thickness:18},{variant_id:'pe',article:'621 PE',name:'Пепел PE',thickness:18},{variant_id:'h1180',article:'H1180 ST37',name:'Дуб',thickness:18},{variant_id:'h11800',article:'H11800 ST37',name:'Другой дуб',thickness:18}];
+ assert.equal(h.exactMaterial(materials,'621 PE','').variant_id,'pe');
+ assert.equal(h.exactMaterial(materials,'','ЛДСП EGGER H1180 ST37 Дуб 18 мм').variant_id,'h1180');
+ assert.equal(h.exactMaterial(materials,'','ЛДСП H11800 ST37 Другой дуб').variant_id,'h11800');
+ assert.equal(h.exactMaterial(materials,'621 PX',''),null);
+});
 test('edge designation matches a complete article, ranks sizes, rejects conflicting structure and brand',()=>{
  const m={article:'621 PO',thickness:18,manufacturer:'Test'};
  const edge=(id,designation,width=22,thickness=1,manufacturer='Test')=>({edge_id:id,article:id,designation,width,thickness,manufacturer});
