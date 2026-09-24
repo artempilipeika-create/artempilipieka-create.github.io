@@ -4,7 +4,7 @@ from decimal import Decimal, ROUND_CEILING
 from .calculation_math import dec,money,plain,category_totals,ROUNDING_VERSION,CATEGORIES
 from .sheet_estimator import estimate,PlacementError
 
-VERSION='mf-preliminary-decimal-v1'
+VERSION='mf-preliminary-decimal-v2-glue'
 
 def calculate(inputs):
     revision=inputs['revision'];profile=inputs['production_profile'];settings=profile['settings'];policies=profile['policies']
@@ -34,26 +34,43 @@ def calculate(inputs):
             blocked('materials','customer_material','CUSTOMER_SHEET_PARAMETERS_REQUIRED',detail_id=ident);continue
         if route=='glued_18_18' and thickness!=dec(settings['glued_finished_thickness_mm'])/settings['glue_layers']:
             blocked('materials','recipe','GLUE_REQUIRES_EXACT_18MM_LAYERS','invalid',detail_id=ident);continue
-        material_key=material.get('variant_id') or 'customer:'+detail['customer_material_key']
-        key=(material_key,supply)
-        if key not in materials: materials[key]={'material':material,'parts':[],'provided_sheets':detail.get('provided_sheets'),'supply':supply,'routes':set()}
-        group=materials[key]
-        if group['material']!=material:
-            issues.append({'category':'materials','code':'MATERIAL_GROUP_IDENTITY_CONFLICT','state':'invalid'})
-        if supply=='customer' and group['provided_sheets']!=detail.get('provided_sheets'):
-            issues.append({'category':'materials','code':'CUSTOMER_SHEET_COUNT_CONFLICT','state':'invalid'})
-        group['routes'].add(route)
-        bl,bw,bq=l,w,q;blank_id=ident
+        def add_material_part(mat,owner,customer_key,provided_sheets,part_id,pl,pw,pq):
+            material_key=mat.get('variant_id') or 'customer:'+str(customer_key)
+            key=(material_key,owner)
+            if key not in materials: materials[key]={'material':mat,'parts':[],'provided_sheets':provided_sheets,'supply':owner,'routes':set()}
+            group=materials[key]
+            if group['material']!=mat: issues.append({'category':'materials','code':'MATERIAL_GROUP_IDENTITY_CONFLICT','state':'invalid'})
+            if owner=='customer' and group['provided_sheets']!=provided_sheets:
+                issues.append({'category':'materials','code':'CUSTOMER_SHEET_COUNT_CONFLICT','state':'invalid'})
+            group['routes'].add(route)
+            group['parts'].append({'detail_id':part_id,'length':plain(pl),'width':plain(pw),'qty':pq,'rotation':detail['rotation'],'grain':detail['grain']})
+            return material_key
+
         if route=='glued_18_18':
-            allowance=dec(settings['glue_allowance_each_side_mm']);bl=l+2*allowance;bw=w+2*allowance;bq=q*settings['glue_layers'];blank_id=ident+':blank'
-            recipes.append(plain({'version':'glued_18_18-v1','finished_detail_id':ident,'finished_length':l,'finished_width':w,'finished_qty':q,
-                'finished_thickness':settings['glued_finished_thickness_mm'],'child_blank_id':blank_id,'blank_length':bl,'blank_width':bw,'child_qty':bq,
-                'operations':['blank_nesting','glue','glued_finish_cut','edge_processing','packaging'],'glue_area_basis':policies.get('glue_area')}))
-            basis=policies.get('glue_area')
-            if basis in {'finished_area','one_blank_area'}: service('glue',(l*w if basis=='finished_area' else bl*bw)*q/1000000,'m2',detail_id=ident,basis=basis)
-            else: blocked('services','glue','NC-03_GLUE_AREA_REQUIRED',detail_id=ident,finished_area=plain(l*w*q/1000000),one_blank_area=plain(bl*bw*q/1000000))
+            backing=detail.get('glue_backing');back_material=(backing or {}).get('material') or material
+            back_supply=(backing or {}).get('supply_source',supply)
+            back_key=(backing or {}).get('customer_material_key',detail.get('customer_material_key'))
+            back_sheets=(backing or {}).get('provided_sheets',detail.get('provided_sheets'))
+            back_reason=(backing or {}).get('customer_reason',detail.get('customer_reason'))
+            try: back_thickness=dec(back_material['thickness']);bsl=dec(back_material['length']);bsw=dec(back_material['width'])
+            except (KeyError,ValueError,ArithmeticError):
+                blocked('materials','recipe','GLUE_BACKING_MATERIAL_REQUIRED','invalid',detail_id=ident);continue
+            if min(back_thickness,bsl,bsw)<=0 or back_thickness!=dec(settings['glued_finished_thickness_mm'])/settings['glue_layers']:
+                blocked('materials','recipe','GLUE_BACKING_REQUIRES_EXACT_18MM_LAYER','invalid',detail_id=ident);continue
+            if back_supply=='customer' and (not back_sheets or not back_reason):
+                blocked('materials','customer_material','CUSTOMER_BACKING_PARAMETERS_REQUIRED',detail_id=ident);continue
+            allowance=dec(settings['glue_allowance_each_side_mm']);bl=l+2*allowance;bw=w+2*allowance
+            front_key=add_material_part(material,supply,detail.get('customer_material_key'),detail.get('provided_sheets'),ident+':front',bl,bw,q)
+            backing_key=add_material_part(back_material,back_supply,back_key,back_sheets,ident+':backing',bl,bw,q)
+            basis=policies.get('glue_area') or 'one_blank_area'
+            recipes.append(plain({'version':'glued_18_18-v2','finished_detail_id':ident,'finished_length':l,'finished_width':w,'finished_qty':q,
+                'finished_thickness':settings['glued_finished_thickness_mm'],'blank_length':bl,'blank_width':bw,'front_qty':q,'backing_qty':q,
+                'front_material_key':front_key,'backing_material_key':backing_key,'same_material':front_key==backing_key and supply==back_supply,
+                'operations':['blank_nesting','glue','glued_finish_cut','edge_processing','packaging'],'glue_area_basis':basis}))
+            service('glue',bl*bw*q/1000000,'m2',detail_id=ident,basis='one_blank_area')
             service('glued_finish_cut',(l+w)*q/1000,'m',detail_id=ident,basis='one_length_plus_one_width')
-        group['parts'].append({'detail_id':blank_id,'length':plain(bl),'width':plain(bw),'qty':bq,'rotation':detail['rotation'],'grain':detail['grain']})
+        else:
+            add_material_part(material,supply,detail.get('customer_material_key'),detail.get('provided_sheets'),ident,l,w,q)
         if detail['packaging']: service('packaging',l*w*q/1000000,'m2',detail_id=ident,basis='finished_area')
         for side,assignment in detail['edges'].items():
             if assignment.get('state')=='unresolved': blocked('edge_material','edge_material','EXACT_EDGE_REQUIRED','incomplete',detail_id=ident,side=side);continue
@@ -75,7 +92,9 @@ def calculate(inputs):
                 thick=explicit['thick']
                 op=explicit.get('complex_overlap') if thick and complex_part else ('edge_thick' if thick else ('edge_complex' if complex_part else 'edge_normal'))
                 if op not in {'edge_thick','edge_complex','edge_normal'}: op=None
-            else: op=None if possible_thick else ('edge_complex' if complex_part else 'edge_normal')
+            else:
+                auto_thick=dec(edge['width'])>=Decimal('42') and dec(edge['thickness'])>=Decimal('1.5')
+                op=None if auto_thick and complex_part else ('edge_thick' if auto_thick else ('edge_complex' if complex_part else 'edge_normal'))
             if op is None: blocked('services','edge_processing','NC-02_CLASSIFICATION_REQUIRED',detail_id=ident,side=side,net_metres=plain(net));continue
             processing[(op,eid)]+=net
     for (material_key,supply),group in sorted(materials.items()):
@@ -98,7 +117,7 @@ def calculate(inputs):
             service('cutting_18',plan['cut_metres'],'m',material_key=material_key,plan_hash=plan['plan_hash'],basis=scope['basis'],estimated=True)
         else: blocked('services','cutting','NC-09_CUT_SCOPE_REQUIRED',material_key=material_key,estimated_cut_metres=plan['cut_metres'],thickness=plain(thickness))
     for key,group in sorted(edges.items(),key=lambda kv:tuple(str(x) for x in kv[0])):
-        eid=key[0];net=group['net'];ownership=group['supply'];price=group['price'];policy=policies.get('edge_consumption');billable=None
+        eid=key[0];net=group['net'];ownership=group['supply'];price=group['price'];policy=policies.get('edge_consumption') or {'basis':'factor_ceil','factor':'1.15','step_m':'5'};billable=None
         if policy:
             if policy['basis']=='net': billable=net
             elif policy['basis']=='factor_ceil':
