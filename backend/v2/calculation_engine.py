@@ -62,7 +62,7 @@ def calculate(inputs):
             allowance=dec(settings['glue_allowance_each_side_mm']);bl=l+2*allowance;bw=w+2*allowance
             front_key=add_material_part(material,supply,detail.get('customer_material_key'),detail.get('provided_sheets'),ident+':front',bl,bw,q)
             backing_key=add_material_part(back_material,back_supply,back_key,back_sheets,ident+':backing',bl,bw,q)
-            basis=policies.get('glue_area') or 'one_blank_area'
+            basis='one_blank_area'
             recipes.append(plain({'version':'glued_18_18-v2','finished_detail_id':ident,'finished_length':l,'finished_width':w,'finished_qty':q,
                 'finished_thickness':settings['glued_finished_thickness_mm'],'blank_length':bl,'blank_width':bw,'front_qty':q,'backing_qty':q,
                 'front_material_key':front_key,'backing_material_key':backing_key,'same_material':front_key==backing_key and supply==back_supply,
