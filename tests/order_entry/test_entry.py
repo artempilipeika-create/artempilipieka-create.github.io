@@ -133,7 +133,7 @@ def test_3d_read_only_share_can_be_revoked(api,settings,admin_user):
     created=post(api,'/3d-projects',body,status=201)
     share=post(api,'/3d-projects/'+created['project_id']+'/shares',{},status=201)
     token=share['url'].split('token=',1)[1]
-    post(api,'/auth/logout',{},status=200)
+    assert api.post('/api/v2/auth/logout',json={}).status_code==204
     public=api.get('/api/v2/3d-shares/'+token)
     assert public.status_code==200 and public.json()['read_only'] is True and public.json()['name']=='Проект для просмотра'
     login(api,email)
