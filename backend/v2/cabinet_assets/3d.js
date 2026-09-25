@@ -871,40 +871,91 @@ function updateAll(){
   $('item-badge').textContent=state.items.length+' '+(state.items.length===1?'модуль':(state.items.length>=2&&state.items.length<=4?'модуля':'модулей'));
 }
 
+function objSafeName(value){
+  return String(value||'module').normalize('NFKD').replace(/[^A-Za-z0-9_.-]+/g,'_').replace(/^_+|_+$/g,'')||'module';
+}
+function localBoxVertices(box){
+  const{x,y,z,w,h,d}=box,x0=x-w/2,x1=x+w/2,y0=y-h/2,y1=y+h/2,z0=z-d/2,z1=z+d/2;
+  return[
+    [x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],
+    [x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]
+  ];
+}
+function transformObjPoint(it,p){
+  const a=it.rotation*Math.PI/180,c=Math.cos(a),sn=Math.sin(a);
+  return[
+    it.x+p[0]*c-p[2]*sn,
+    p[1],
+    it.z+p[0]*sn+p[2]*c
+  ];
+}
+function objBoxesForItem(it){
+  const out=[],t=18,baseH=it.base==='plinth'?80:0,H=it.height,D=it.depth,W=it.width;
+  const add=(name,w,h,d,x,y,z)=>out.push({name,w,h,d,x,y,z});
+  add('body_left',t,H-baseH,D,-W/2+t/2,baseH+(H-baseH)/2,0);
+  add('body_right',t,H-baseH,D,W/2-t/2,baseH+(H-baseH)/2,0);
+  add('body_top',Math.max(1,W-2*t),t,D,0,H-t/2,0);
+  add('body_bottom',Math.max(1,W-2*t),t,D,0,baseH+t/2,0);
+  if(it.base==='plinth')add('plinth',W,80,Math.max(1,D*.78),0,40,0);
+  if(it.layout==='niche'){
+    const inner=H-baseH-2*t,nh=inner*.35;
+    add('niche_shelf',Math.max(1,W-2*t),t,Math.max(1,D*.92),0,H-t-nh,0);
+  }
+  const frontT=18,frontZ=D/2+frontT/2+2;
+  facadeCells(it).forEach((fr,i)=>add(
+    fr.kind==='drawer'?'drawer_front_'+(i+1):'door_front_'+(i+1),
+    fr.w,fr.h,frontT,fr.cx,fr.cy,frontZ
+  ));
+  return out;
+}
+function appendObjBox(lines,it,box,stateObj){
+  const verts=localBoxVertices(box).map(p=>transformObjPoint(it,p));
+  const start=stateObj.vertex+1;
+  lines.push('g '+objSafeName(stateObj.moduleName+'_'+box.name));
+  for(const p of verts)lines.push('v '+p.map(v=>Number(v.toFixed(3))).join(' '));
+  const tri=[
+    [0,1,2],[0,2,3],
+    [4,6,5],[4,7,6],
+    [0,4,5],[0,5,1],
+    [1,5,6],[1,6,2],
+    [2,6,7],[2,7,3],
+    [3,7,4],[3,4,0]
+  ];
+  for(const f of tri)lines.push('f '+f.map(i=>start+i).join(' '));
+  stateObj.vertex+=8;
+}
 function exportBazisProject(){
-  const bazisItems=state.items.filter(x=>x.bazis_file);
-  const missing=state.items.filter(x=>!x.bazis_file);
-  if(!bazisItems.length){
-    alert('В проекте пока нет модулей из раздела «Мои БАЗИС». Добавьте хотя бы один БАЗИС-модуль.');
-    status('Экспорт БАЗИС: нет привязанных модулей.');
+  if(!state.items.length){
+    alert('В проекте нет модулей для экспорта.');
+    status('Экспорт OBJ: добавьте хотя бы один модуль.');
     return;
   }
-  if(missing.length&&!confirm('В проекте есть '+missing.length+' модулей без привязки к .fr3d.\n\nЭкспортировать только '+bazisItems.length+' модулей БАЗИС?'))return;
-  const payload={
-    format:'martin-forest-bazis-project-v1',
-    project_name:$('project-name').value.trim()||'3D-проект',
-    exported_at:new Date().toISOString(),
-    room:{...state.room},
-    skipped_non_bazis:missing.map(x=>({name:x.name,module_type:x.module_type})),
-    items:bazisItems.map(it=>{
-      const src=bazisById.get(it.bazis_id);
-      return{
-        bazis_id:it.bazis_id,source_file:it.bazis_file,source_sha256:it.bazis_sha256,
-        resize:Boolean(it.bazis_resize),source_default:src?{width:src.defaults.w,height:src.defaults.h,depth:src.defaults.d}:null,
-        width:it.width,height:it.height,depth:it.depth,x:it.x,z:it.z,rotation:it.rotation,name:it.name
-      };
-    })
-  };
-  const json=JSON.stringify(payload,null,2);
-  const href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  const lines=[
+    '# Martin Forest -> BAZIS OBJ',
+    '# units: millimeters',
+    '# axes: X width, Y height, Z depth',
+    '# project: '+($('project-name').value.trim()||'3D-project'),
+    's off'
+  ];
+  const st={vertex:0,moduleName:''};
+  state.items.forEach((it,index)=>{
+    st.moduleName='module_'+String(index+1).padStart(3,'0')+'_'+objSafeName(it.name);
+    lines.push('');
+    lines.push('# '+it.name+' | '+it.width+'x'+it.height+'x'+it.depth+' | X='+it.x+' Z='+it.z+' R='+it.rotation);
+    lines.push('o '+st.moduleName);
+    for(const box of objBoxesForItem(it))appendObjBox(lines,it,box,st);
+  });
+  const blob=new Blob([lines.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'});
+  const href=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=href;
-  a.download='Martin_Forest_BAZIS_Project.json';
+  a.download=objSafeName($('project-name').value.trim()||'Martin_Forest_Project')+'.obj';
   a.style.display='none';
   document.body.append(a);
   a.click();
   a.remove();
-  status('Экспорт БАЗИС: '+bazisItems.length+' модулей выгружено.');
+  setTimeout(()=>URL.revokeObjectURL(href),3000);
+  status('OBJ сформирован: '+state.items.length+' '+(state.items.length===1?'модуль':'модулей')+'. Импортируйте его в БАЗИС как *.obj.');
 }
 
 async function toOrder(){
