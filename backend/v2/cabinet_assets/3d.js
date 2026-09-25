@@ -871,144 +871,55 @@ function updateAll(){
   $('item-badge').textContent=state.items.length+' '+(state.items.length===1?'модуль':(state.items.length>=2&&state.items.length<=4?'модуля':'модулей'));
 }
 
-function exportSafeName(value,max=42){
-  const s=String(value||'module').normalize('NFKD').replace(/[^A-Za-z0-9_.-]+/g,'_').replace(/^_+|_+$/g,'')||'module';
+function exportSafeName(value,max=48){
+  const s=String(value||'project').normalize('NFKD').replace(/[^A-Za-z0-9_.-]+/g,'_').replace(/^_+|_+$/g,'')||'project';
   return s.slice(0,max);
 }
-function bU16(v){const a=new Uint8Array(2);new DataView(a.buffer).setUint16(0,v,true);return a}
-function bU32(v){const a=new Uint8Array(4);new DataView(a.buffer).setUint32(0,v,true);return a}
-function bF32(v){const a=new Uint8Array(4);new DataView(a.buffer).setFloat32(0,v,true);return a}
-function bStr(value){
-  const text=exportSafeName(value,63),a=new Uint8Array(text.length+1);
-  for(let i=0;i<text.length;i++)a[i]=text.charCodeAt(i)&255;
-  return a;
-}
-function bJoin(parts){
-  const size=parts.reduce((n,p)=>n+p.length,0),out=new Uint8Array(size);
-  let off=0;for(const p of parts){out.set(p,off);off+=p.length}return out;
-}
-function bChunk(id,...parts){
-  const body=bJoin(parts);
-  return bJoin([bU16(id),bU32(body.length+6),body]);
-}
-function rgbBytes(hex){
-  const h=String(hex||'#b89470').replace('#','');
-  return new Uint8Array([
-    parseInt(h.slice(0,2),16)||0,
-    parseInt(h.slice(2,4),16)||0,
-    parseInt(h.slice(4,6),16)||0
-  ]);
-}
-function material3ds(name,hex){
-  return bChunk(0xAFFF,
-    bChunk(0xA000,bStr(name)),
-    bChunk(0xA020,bChunk(0x0011,rgbBytes(hex)))
-  );
-}
-function meshBoxVertices(box){
-  const{x,y,z,w,h,d}=box,x0=x-w/2,x1=x+w/2,y0=y-h/2,y1=y+h/2,z0=z-d/2,z1=z+d/2;
-  return[
-    [x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],
-    [x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]
-  ];
-}
-function transform3dsPoint(it,p){
-  const a=it.rotation*Math.PI/180,c=Math.cos(a),sn=Math.sin(a);
-  const x=it.x+p[0]*c-p[2]*sn;
-  const z=it.z+p[0]*sn+p[2]*c;
-  return[x,p[1],z];
-}
-function meshBoxesForItem(it){
-  const out=[],t=18,baseH=it.base==='plinth'?80:0,H=it.height,D=it.depth,W=it.width;
-  const add=(name,role,w,h,d,x,y,z)=>out.push({name,role,w,h,d,x,y,z});
-  add('body_left','body',t,H-baseH,D,-W/2+t/2,baseH+(H-baseH)/2,0);
-  add('body_right','body',t,H-baseH,D,W/2-t/2,baseH+(H-baseH)/2,0);
-  add('body_top','body',Math.max(1,W-2*t),t,D,0,H-t/2,0);
-  add('body_bottom','body',Math.max(1,W-2*t),t,D,0,baseH+t/2,0);
-  if(it.base==='plinth')add('plinth','body',W,80,Math.max(1,D*.78),0,40,0);
-  if(it.layout==='niche'){
-    const inner=H-baseH-2*t,nh=inner*.35;
-    add('niche_shelf','body',Math.max(1,W-2*t),t,Math.max(1,D*.92),0,H-t-nh,0);
-  }
-  const frontT=18,frontZ=D/2+frontT/2+2;
-  facadeCells(it).forEach((fr,i)=>add(
-    fr.kind==='drawer'?'drawer_front_'+(i+1):'door_front_'+(i+1),
-    'front',fr.w,fr.h,frontT,fr.cx,fr.cy,frontZ
-  ));
-  return out;
-}
-function materialDescriptor(it,role){
-  const id=role==='front'?it.front_variant_id:it.body_variant_id;
-  const m=materials.get(String(id));
-  const prefix=role==='front'?'FACADE':'BODY';
-  const label=m?[m.manufacturer,m.article||m.name].filter(Boolean).join('_'):prefix;
-  return{
-    key:role+':'+String(id||'default'),
-    name:exportSafeName(prefix+'_'+label,48),
-    color:colorFor(m,role==='front')
-  };
-}
-function object3ds(name,it,box,matName){
-  const verts=meshBoxVertices(box).map(p=>transform3dsPoint(it,p));
-  const faces=[
-    [0,1,2],[0,2,3],[4,6,5],[4,7,6],
-    [0,4,5],[0,5,1],[1,5,6],[1,6,2],
-    [2,6,7],[2,7,3],[3,7,4],[3,4,0]
-  ];
-  const vertBody=[bU16(verts.length)];
-  for(const p of verts)for(const v of p)vertBody.push(bF32(Number(v.toFixed(3))));
-  const faceBody=[bU16(faces.length)];
-  for(const f of faces)faceBody.push(bU16(f[0]),bU16(f[1]),bU16(f[2]),bU16(0));
-  const matGroup=[bStr(matName),bU16(faces.length)];
-  for(let i=0;i<faces.length;i++)matGroup.push(bU16(i));
-  faceBody.push(bChunk(0x4130,...matGroup));
-  return bChunk(0x4000,bStr(name),
-    bChunk(0x4100,
-      bChunk(0x4110,...vertBody),
-      bChunk(0x4120,...faceBody)
-    )
-  );
-}
-function build3ds(){
-  const mats=new Map(),objects=[];
-  state.items.forEach((it,itemIndex)=>{
-    const body=materialDescriptor(it,'body'),front=materialDescriptor(it,'front');
-    mats.set(body.key,body);mats.set(front.key,front);
-    meshBoxesForItem(it).forEach((box,boxIndex)=>{
-      const mat=box.role==='front'?front:body;
-      const name=exportSafeName('M'+(itemIndex+1)+'_'+box.name+'_'+(boxIndex+1),48);
-      objects.push(object3ds(name,it,box,mat.name));
-    });
-  });
-  const editorParts=[];
-  for(const m of mats.values())editorParts.push(material3ds(m.name,m.color));
-  editorParts.push(...objects);
-  return bChunk(0x4D4D,
-    bChunk(0x0002,bU32(3)),
-    bChunk(0x0100,bF32(1)),
-    bChunk(0x3D3D,...editorParts)
-  );
-}
 function exportBazisProject(){
-  if(!state.items.length){
-    alert('В проекте нет модулей для экспорта.');
-    status('Экспорт 3DS: добавьте хотя бы один модуль.');
+  const bazisItems=state.items.filter(x=>x.bazis_file);
+  const missing=state.items.filter(x=>!x.bazis_file);
+  if(!bazisItems.length){
+    alert('В проекте нет модулей из раздела «Мои БАЗИС». Для родной модели .b3d нужны исходные .fr3d.');
+    status('Экспорт БАЗИС: нет родных модулей.');
     return;
   }
-  try{
-    const data=build3ds();
-    const blob=new Blob([data],{type:'application/octet-stream'});
-    const href=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=href;
-    a.download=exportSafeName($('project-name').value.trim()||'Martin_Forest_Project',48)+'.3ds';
-    a.style.display='none';document.body.append(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(href),3000);
-    status('3DS сформирован. Корпус и фасады записаны отдельными группами материалов.');
-  }catch(e){
-    console.error(e);
-    alert('Не удалось сформировать 3DS: '+(e?.message||e));
-    status('Ошибка экспорта 3DS.');
-  }
+  if(missing.length&&!confirm(
+    'В проекте есть '+missing.length+' модулей без исходного .fr3d.\n\n'+
+    'Они не смогут стать родными объектами БАЗИС и будут пропущены. Продолжить?'
+  ))return;
+  const payload={
+    format:'martin-forest-bazis-native-v2',
+    project_name:$('project-name').value.trim()||'3D-проект',
+    exported_at:new Date().toISOString(),
+    room:{...state.room},
+    facade_gap_mm:FACADE_GAP_MM,
+    skipped_non_bazis:missing.map(x=>({name:x.name,module_type:x.module_type})),
+    items:bazisItems.map((it,index)=>{
+      const src=bazisById.get(it.bazis_id);
+      return{
+        index:index+1,
+        bazis_id:it.bazis_id,
+        source_file:it.bazis_file,
+        source_sha256:it.bazis_sha256,
+        source_default:src?{width:src.defaults.w,height:src.defaults.h,depth:src.defaults.d}:null,
+        elastic_resize:Boolean(it.bazis_resize),
+        target:{width:it.width,height:it.height,depth:it.depth},
+        position:{x:it.x,y:0,z:it.z},
+        rotation:it.rotation,
+        name:it.name,
+        body_variant_id:it.body_variant_id||null,
+        front_variant_id:it.front_variant_id||null
+      };
+    })
+  };
+  const json=JSON.stringify(payload,null,2);
+  const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+  const href=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=href;
+  a.download=exportSafeName($('project-name').value.trim()||'Martin_Forest_Project')+'.mf-bazis.json';
+  a.style.display='none';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),3000);
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей.');
 }
 
 async function toOrder(){
