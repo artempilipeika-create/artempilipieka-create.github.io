@@ -1,0 +1,38 @@
+name: WebGL isolated preparation
+on:
+  push:
+    branches: [mf-webgl-planner-20260926]
+    paths: [.github/workflows/mf-webgl-prepare.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare pinned vendor without touching services or databases
+        run: |
+          mkdir -p /tmp/mf-vendor
+          cd /tmp/mf-vendor
+          npm init -y >/dev/null
+          npm install --ignore-scripts --save-exact three@0.180.0
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p backend/v2/cabinet_assets/planner/vendor
+          cp /tmp/mf-vendor/node_modules/three/build/three.module.min.js backend/v2/cabinet_assets/planner/vendor/three.module.js
+          cp /tmp/mf-vendor/node_modules/three/build/three.core.min.js backend/v2/cabinet_assets/planner/vendor/three.core.min.js
+          cp /tmp/mf-vendor/node_modules/three/examples/jsm/controls/OrbitControls.js backend/v2/cabinet_assets/planner/vendor/OrbitControls.js
+          sed -i "s/from 'three'/from '.\/three.module.js'/" backend/v2/cabinet_assets/planner/vendor/OrbitControls.js
+          cp /tmp/mf-vendor/node_modules/three/LICENSE backend/v2/cabinet_assets/planner/vendor/THREE-LICENSE.txt
+          cp /tmp/mf-vendor/package-lock.json backend/v2/cabinet_assets/planner/vendor/package-lock.json
+          tar --exclude='.git' --exclude='node_modules' -czf /tmp/mf-webgl-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mf-webgl-source
+          path: /tmp/mf-webgl-source.tar.gz
+          retention-days: 7
