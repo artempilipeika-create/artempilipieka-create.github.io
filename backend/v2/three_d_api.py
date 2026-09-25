@@ -18,6 +18,7 @@ class Room(StrictModel):
     depth: int=Field(default=3200,ge=1500,le=12000)
     height: int=Field(default=2700,ge=2000,le=5000)
 
+# Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
@@ -26,12 +27,12 @@ class FurnitureItem(StrictModel):
     bazis_file: str|None=Field(default=None,max_length=240)
     bazis_sha256: str|None=Field(default=None,min_length=64,max_length=64)
     bazis_resize: bool=False
-    name: str=Field(min_length=1,max_length=120)
+    name: str=Field(min_length=1,max_length=160)
     x: int=Field(default=0,ge=-12000,le=12000)
     z: int=Field(default=0,ge=-12000,le=12000)
     rotation: Literal[0,90,180,270]=0
-    width: int=Field(ge=300,le=3000)
-    height: int=Field(ge=300,le=3000)
+    width: int=Field(ge=150,le=3000)
+    height: int=Field(ge=250,le=3000)
     depth: int=Field(ge=200,le=1200)
     layout: Literal['drawers','doors','combo','niche']='doors'
     drawers: int=Field(default=2,ge=0,le=8)
@@ -43,8 +44,8 @@ class FurnitureItem(StrictModel):
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
-    width: int=Field(default=1000,ge=300,le=3000)
-    height: int=Field(default=850,ge=300,le=3000)
+    width: int=Field(default=1000,ge=150,le=3000)
+    height: int=Field(default=850,ge=250,le=3000)
     depth: int=Field(default=450,ge=200,le=1200)
     layout: Literal['drawers','doors','combo','niche']='combo'
     drawers: int=Field(default=3,ge=0,le=8)
@@ -85,13 +86,15 @@ def router(settings):
                               (user['user_id'],)).fetchall()
             return {'items':[projection(r) for r in rows]}
 
+    # mf_3d_projects.module_type is a legacy storage discriminator (chest only).
+    # Actual furniture types are preserved, unchanged, in the scene JSON.
     @api.post('/3d-projects',status_code=201)
     def create_project(body:Create,request:Request):
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'orders.draft.write');pid=uuid4()
             row=conn.execute('''INSERT INTO mf_3d_projects(project_id,owner_user_id,name,module_type,scene)
                 VALUES(%s,%s,%s,%s,%s) RETURNING *''',
-                (pid,user['user_id'],body.name,body.scene.module_type,Jsonb(body.scene.model_dump(mode='json')))).fetchone()
+                (pid,user['user_id'],body.name,'chest',Jsonb(body.scene.model_dump(mode='json')))).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.created',object_type='3d_project',object_id=pid,reason='User created 3D project')
             return projection(row)
 
@@ -107,7 +110,7 @@ def router(settings):
             if row['version']!=body.version: error(409,'PROJECT_3D_VERSION_CONFLICT')
             row=conn.execute('''UPDATE mf_3d_projects SET name=%s,module_type=%s,scene=%s,version=version+1,updated_at=now()
                 WHERE project_id=%s RETURNING *''',
-                (body.name,body.scene.module_type,Jsonb(body.scene.model_dump(mode='json')),project_id)).fetchone()
+                (body.name,'chest',Jsonb(body.scene.model_dump(mode='json')),project_id)).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.updated',object_type='3d_project',object_id=project_id,reason='User updated 3D project',version=row['version'])
             return projection(row)
 

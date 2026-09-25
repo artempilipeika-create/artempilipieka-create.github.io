@@ -402,6 +402,7 @@ def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin
     page.goto('https://testserver/constructor.html')
     expect(page.locator('body')).to_have_attribute('data-ready','true')
     expect(page.locator('#project-name')).to_be_visible()
+    page.locator('[data-module="chest"]').click()
     page.locator('#project-name').fill('Комод из 3D')
     page.locator('#width').fill('1200');page.locator('#height').fill('900');page.locator('#depth').fill('500')
     page.get_by_role('button',name='2D',exact=True).click();expect(page.locator('#scene-help')).to_contain_text('2D')
@@ -413,10 +414,10 @@ def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin
     page.get_by_role('button',name='Сохранить',exact=True).click()
     expect(page.locator('#status')).to_contain_text('сохранён')
     expect(page.locator('#projects .mf3d-project')).to_have_count(1)
-    page.get_by_role('button',name='Создать копию',exact=True).click()
+    page.locator('#tab-projects').click();page.locator('#duplicate-project').click()
     expect(page.locator('#projects .mf3d-project')).to_have_count(2)
     expect(page.locator('#project-name')).to_have_value('Комод из 3D — копия')
-    page.get_by_role('button',name='Перенести в заказ',exact=True).click()
+    page.locator('#to-order').click()
     page.wait_for_url('**/editor?order=*')
     expect(page.get_by_label('Длина 1',exact=True)).to_have_value('820')
     expect(page.locator('#manual-rows tr[data-detail-id]')).to_have_count(5)
@@ -427,15 +428,17 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     o,email,edges=searchable_catalogue_order(api);login_ui(page,email)
     page.goto('https://testserver/constructor.html')
     expect(page.locator('body')).to_have_attribute('data-ready','true')
+    page.locator('[data-module="chest"]').click()
+    page.locator('.studio-room > summary').click()
     page.locator('#project-name').fill('Кухня и шкаф 3D')
     page.locator('#room-width').fill('5200');page.locator('#room-depth').fill('3600');page.locator('#room-height').fill('2800')
     page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
     page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
-    page.locator('[data-module="base_cabinet"]').click()
+    page.locator('[data-template="base.one_door"]').click()
     page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
     page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
     page.locator('#pos-x').fill('-700');page.locator('#pos-z').fill('-1200')
-    page.locator('[data-module="wall_cabinet"]').click()
+    page.locator('[data-template="wall.one_door"]').click()
     page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
     page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
     page.locator('#pos-x').fill('0');page.locator('#pos-z').fill('-1200')
@@ -444,9 +447,9 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
     page.locator('#pos-x').fill('900');page.locator('#rotation').select_option('90')
     expect(page.locator('#scene-items .mf3d-project')).to_have_count(4)
-    page.get_by_role('button',name='2D',exact=True).click();expect(page.locator('#scene-help')).to_contain_text('план помещения')
+    page.get_by_role('button',name='2D',exact=True).click();expect(page.locator('#scene-help')).to_contain_text('2D');expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed','true')
     page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#status')).to_contain_text('сохранён')
-    page.get_by_role('button',name='Перенести в заказ',exact=True).click()
+    page.locator('#to-order').click()
     page.wait_for_url('**/editor?order=*')
     expect(page.locator('#manual-rows tr[data-detail-id]')).to_have_count(17)
     expect(page.get_by_label('Название 6',exact=True)).to_have_value('Кухня · нижний · Боковина')
@@ -482,7 +485,7 @@ def test_3d_share_link_opens_read_only_viewer(page,api,settings,admin_user):
     page.goto('https://testserver/constructor.html');expect(page.locator('body')).to_have_attribute('data-ready','true')
     page.locator('#project-name').fill('Проект для клиента')
     page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#status')).to_contain_text('сохранён')
-    page.get_by_role('button',name='Ссылка для просмотра',exact=True).click()
+    page.locator('#tab-projects').click();page.locator('#share-project').click()
     expect(page.locator('#share-panel')).to_be_visible()
     url=page.locator('#share-url').input_value();assert '/3d-view?token=' in url
     page.goto(url)
@@ -574,3 +577,41 @@ def test_excel_auto_edge_and_create_own_material_before_import(page,api,settings
     expect(page.get_by_label('Артикул / свой код',exact=True)).to_have_value('MY-BOARD')
     expect(page.get_by_label('Листов клиента, шт.',exact=True)).to_have_value('3')
     page.get_by_role('button',name='Отмена',exact=True).click()
+
+
+@pytest.mark.parametrize('selector,module_type,width,height',[
+    ('[data-template="wall.horizontal"]','wall_cabinet',800,250),
+    ('[data-template="tall.one_door"]','tall_cabinet',600,2200),
+    ('[data-bazis="bazis.460987c9a8e8"]','base_cabinet',150,720),
+])
+def test_studio_real_database_roundtrip_preserves_template_and_dimensions(page,api,settings,admin_user,selector,module_type,width,height):
+    o,email,_=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/constructor.html')
+    expect(page.locator('body')).to_have_attribute('data-ready','true')
+    page.locator(selector).click()
+    page.locator('#width').fill(str(width));page.locator('#height').fill(str(height))
+    page.locator('#studio-item-name').fill('Тестовый модуль ' + 'а'*140)
+    page.locator('#studio-item-name').press('Tab')
+    page.locator('#project-name').fill('Проверка совместимости '+module_type)
+    page.locator('#save-project').click();expect(page.locator('#status')).to_contain_text('сохранён')
+    saved=api.get('/api/v2/3d-projects').json()['items'][0]
+    scene=saved['scene'];it=scene['items'][0]
+    assert scene['module_type']==module_type and it['module_type']==module_type
+    assert it['width']==width and it['height']==height
+    assert len(it['name'])>120
+    original=dict(it)
+    page.locator('#tab-projects').click();page.locator('#duplicate-project').click()
+    expect(page.locator('#projects .mf3d-project')).to_have_count(2)
+    page.locator('#projects .mf3d-project').last.click()
+    expect(page.locator('#width')).to_have_value(str(width))
+    expect(page.locator('#height')).to_have_value(str(height))
+    page.locator('#height').fill(str(height+10))
+    page.locator('#save-project').click();expect(page.locator('#status')).to_contain_text('сохранён')
+    updated=api.get('/api/v2/3d-projects').json()['items']
+    assert any(p['scene']['items'][0]['height']==height+10 for p in updated)
+    assert all(p['scene']['items'][0]['module_type']==module_type for p in updated)
+    pdf=api.get('/api/v2/3d-projects/'+saved['project_id']+'/specification.pdf')
+    assert pdf.status_code==200 and pdf.content.startswith(b'%PDF-')
+    if original.get('bazis_id'):
+        assert all(p['scene']['items'][0]['bazis_file']==original['bazis_file'] for p in updated)
+        assert all(p['scene']['items'][0]['bazis_sha256']==original['bazis_sha256'] for p in updated)
