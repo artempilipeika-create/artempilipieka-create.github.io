@@ -3,7 +3,7 @@ const rounded=it=>({...it,x:Math.round(it.x),z:Math.round(it.z),elevation_mm:Mat
 const verticalPeers=(a,b,room)=>{
   const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
   const ay=elevation(a,room),by=elevation(b,room);
-  return Math.abs(ay-by)<180||(aw&&Math.abs(ay+a.height-by-b.height)<180);
+  return Math.abs(ay-by)<180||(aw&&Math.abs(ay+a.height-by+b.height)<180);
 };
 /** A drag retains anchors, not mutations of the saved model. Release radius > capture. */
 export function snapItem(raw,items,room,options={},previous={}){
@@ -41,8 +41,8 @@ export function snapItem(raw,items,room,options={},previous={}){
   }
   choices.sort((a,b)=>a.distance-b.distance);
   if(choices.length){
-    const {value,other}=choices[0];it[axis]=value;anchors[axis]=value;
-    guides.push({axis,value,text:'Стык боковин · 0 мм'});
+    const {value,other,ob}=choices[0];it[axis]=value;anchors[axis]=value;
+    guides.push({axis,value:value<other[axis]?ob[min]:ob[max],text:'Стык боковин · 0 мм'});
     const front=rotateXZ(0,1,it.rotation),direction=front[cross];
     const line=options.alignment==='back'?'back':'front';
     const aligned=other[cross]+direction*(other.depth-it.depth)/2*(line==='front'?1:-1);
