@@ -36,7 +36,12 @@ def seed(page,count=13):
 def point(page,item_index=0):
     return page.evaluate('''index=>{const p=MF_PLANNER,it=p.adapter.items[index];
       const y=it.module_type==='wall_cabinet'?p.adapter.room.height-it.height-500:0;
-      return p.scene.projectPoint({x:it.x,y:y+it.height/2,z:it.z+it.depth/2+20});
+      // In plan view hit the interior of the lid, not the sub-pixel front edge.
+      // The front surface is exactly 20 mm beyond the body; its edge is not
+      // a stable top-down ray target after rasterisation and pixel rounding.
+      return p.scene.projectPoint(p.scene.mode==='top'
+        ?{x:it.x,y:y+it.height,z:it.z}
+        :{x:it.x,y:y+it.height/2,z:it.z+it.depth/2+20});
     }''',item_index)
 
 def screenshot(page,name):
@@ -82,7 +87,7 @@ def test_real_drag_is_preview_then_one_undo_and_invalid_drop_keeps_position(page
     page.evaluate('''()=>{const p=MF_PLANNER,s=p.bridge.snapshot();s.scene.items=[0,1300].map((x,i)=>Object.assign(p.adapter.createDraft({template:'base.drawers_3'}),{x,z:0,name:'Шкаф '+i}));s.selectedId=s.scene.items[1].item_id;s.scene.selected_item_id=s.selectedId;p.bridge.restore(s);p.history.reset();}''')
     page.locator('#mode-2d').click()
     start=point(page,1)
-    target=page.evaluate("MF_PLANNER.scene.projectPoint({x:620,y:360,z:300})")
+    target=page.evaluate("MF_PLANNER.scene.projectPoint({x:620,y:720,z:0})")
     before=page.evaluate('JSON.stringify(MF_PLANNER.adapter.state.items)')
     page.mouse.move(start['x'],start['y']);page.mouse.down();page.mouse.move(target['x'],target['y'],steps=8)
     assert page.evaluate('JSON.stringify(MF_PLANNER.adapter.state.items)')==before
