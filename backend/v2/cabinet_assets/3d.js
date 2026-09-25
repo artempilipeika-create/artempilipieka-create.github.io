@@ -159,6 +159,42 @@ function scenePayload(){
   };
 }
 
+function modulePreviewDataUrl(opt){
+  const c=document.createElement('canvas');
+  c.width=180;c.height=140;
+  const x=c.getContext('2d');
+  x.fillStyle='#f5f7f3';x.fillRect(0,0,c.width,c.height);
+  x.strokeStyle='#4e6b58';x.fillStyle='#dfe8df';x.lineWidth=3;
+  const isTall=opt.category==='tall',isWall=opt.category==='wall';
+  const bx=isTall?55:42,by=isTall?15:(isWall?29:33),bw=isTall?70:96,bh=isTall?112:(isWall?72:88);
+  x.fillRect(bx,by,bw,bh);x.strokeRect(bx,by,bw,bh);
+  x.fillStyle='#cbd8cb';
+  x.beginPath();x.moveTo(bx+bw,by);x.lineTo(bx+bw+16,by+8);x.lineTo(bx+bw+16,by+bh-4);x.lineTo(bx+bw,by+bh);x.closePath();x.fill();x.stroke();
+  const t=opt.template?kitchenTemplates[opt.template]:null,spec=t?.front||null;
+  x.strokeStyle='#6f8674';x.lineWidth=2;
+  if(spec?.kind==='drawers'){
+    const n=Math.max(1,spec.count||2);
+    for(let i=1;i<n;i++){const yy=by+bh*i/n;x.beginPath();x.moveTo(bx,yy);x.lineTo(bx+bw,yy);x.stroke();}
+  }else if(spec?.kind==='doors'){
+    const n=Math.max(1,spec.count||1);
+    for(let i=1;i<n;i++){const xx=bx+bw*i/n;x.beginPath();x.moveTo(xx,by);x.lineTo(xx,by+bh);x.stroke();}
+  }else if(spec?.kind==='combo'){
+    const top=Math.max(.18,Math.min(.55,spec.drawerRatio||.3)),split=by+bh*(1-top);
+    x.beginPath();x.moveTo(bx,split);x.lineTo(bx+bw,split);x.stroke();
+    const rows=Math.max(1,spec.drawerRows||1);
+    for(let i=1;i<rows;i++){const yy=split+(by+bh-split)*i/rows;x.beginPath();x.moveTo(bx,yy);x.lineTo(bx+bw,yy);x.stroke();}
+    const doors=Math.max(1,spec.doors||1);
+    for(let i=1;i<doors;i++){const xx=bx+bw*i/doors;x.beginPath();x.moveTo(xx,by);x.lineTo(xx,split);x.stroke();}
+  }else{
+    x.beginPath();x.moveTo(bx+bw/2,by);x.lineTo(bx+bw/2,by+bh);x.stroke();
+    x.beginPath();x.moveTo(bx,by+bh*.55);x.lineTo(bx+bw,by+bh*.55);x.stroke();
+  }
+  if(!isWall){
+    x.strokeStyle='#7c887f';x.lineWidth=2;
+    x.beginPath();x.moveTo(bx+7,by+bh+7);x.lineTo(bx+bw-7,by+bh+7);x.stroke();
+  }
+  return c.toDataURL('image/png');
+}
 function addCatalogueButton(root,opt){
   const b=document.createElement('button');
   b.className='mf3d-module';
@@ -167,9 +203,10 @@ function addCatalogueButton(root,opt){
   b.dataset.search=(opt.label+' '+opt.description).toLowerCase();
   if(opt.module)b.dataset.module=opt.module;
   if(opt.template)b.dataset.template=opt.template;
-  const icon=document.createElement('span');
-  icon.className='mf3d-module-icon '+(opt.category||'other');
-  icon.setAttribute('aria-hidden','true');
+  const icon=document.createElement('img');
+  icon.className='mf3d-module-thumb';
+  icon.alt='';
+  icon.src=modulePreviewDataUrl(opt);
   const copy=document.createElement('span');
   copy.className='mf3d-module-copy';
   const strong=document.createElement('strong'),span=document.createElement('span');
@@ -543,8 +580,8 @@ function rotateXZ(x,z,r){
   return{x:x*c-z*s,z:x*s+z*c};
 }
 function addItemBox(it,w,h,d,x,y,z,color){
-  const p=rotateXZ(x,z,it.rotation),odd=it.rotation===90||it.rotation===270;
-  boxes.push({w:odd?d:w,h,d:odd?w:d,x:it.x+p.x,y,z:it.z+p.z,color});
+  const p=rotateXZ(x,z,it.rotation),odd=it.rotation===90||it.rotation===270,S=1/500;
+  boxes.push({w:odd?d:w,h,d:odd?w:d,x:it.x*S+p.x,y,z:it.z*S+p.z,color});
 }
 function legacyFrontSpec(it){
   if(it.layout==='drawers')return{kind:'drawers',count:Math.max(1,it.drawers||1)};
