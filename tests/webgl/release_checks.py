@@ -7,13 +7,15 @@ from tests.webgl.browser_checks import page,api,settings,admin_user,open_planner
 
 
 def restore_items(page,items):
-    page.evaluate('''specs=>{const p=MF_PLANNER,s=p.bridge.snapshot();s.scene.items=specs.map(spec=>Object.assign(p.adapter.createDraft({template:spec.template}),spec));s.selectedId=s.scene.items.at(-1).item_id;s.scene.selected_item_id=s.selectedId;p.bridge.restore(s);p.history.reset();}''',items)
+    page.evaluate('''specs=>{const p=MF_PLANNER,s=p.bridge.snapshot();s.scene.items=specs.map(spec=>{const {template,...values}=spec;return Object.assign(p.adapter.createDraft({template}),values);});s.selectedId=s.scene.items.at(-1).item_id;s.scene.selected_item_id=s.selectedId;p.bridge.restore(s);p.history.reset();}''',items)
 
 
 def test_public_constructor_is_same_webgl_and_has_no_shader_or_script_errors(page,api,settings,admin_user):
+    # Login's deliberate unauthenticated /me probe is HTTP 401, not a scene error.
+    # Start collecting before loading the accepted route, after real test login.
+    open_planner(page,api)
     errors=[]
     page.on('console',lambda m:errors.append(m.text) if m.type=='error' or 'VALIDATE_STATUS' in m.text or 'GL_INVALID' in m.text else None)
-    open_planner(page,api)
     page.goto('https://testserver/constructor')
     expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl',timeout=20000)
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
@@ -32,11 +34,13 @@ def test_raycaster_selects_visible_front_surface_not_the_hidden_module(page,api,
     restore_items(page,[{'template':'base.two_door','x':0,'z':-500,'name':'Сзади'}, {'template':'base.two_door','x':0,'z':500,'name':'Спереди'}])
     page.locator('#planner-front').click()
     page.evaluate('MF_PLANNER.adapter.select(MF_PLANNER.adapter.items[0].item_id)')
-    hit=point(page,1)
+    # A two-door cabinet's exact center is its real 3 mm gap, not a surface.
+    hit=page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.items[1];return p.scene.projectPoint({x:it.x+50,y:it.height/2,z:it.z+it.depth/2+20});}''')
     assert page.evaluate('(p)=>MF_PLANNER.scene.pick(p.x,p.y).id===MF_PLANNER.adapter.items[1].item_id',hit)
     page.mouse.click(hit['x'],hit['y'])
     assert page.evaluate('MF_PLANNER.adapter.selected.name')=='Спереди'
-    page.locator('#scene').focus();page.keyboard.press('Delete')
+    expect(page.locator('#scene')).to_be_focused()
+    page.keyboard.press('Delete')
     assert page.evaluate('MF_PLANNER.adapter.items.length')==1
     page.keyboard.press('Control+z');assert page.evaluate('MF_PLANNER.adapter.items.length')==2
     page.keyboard.press('Control+Shift+z');assert page.evaluate('MF_PLANNER.adapter.items.length')==1
