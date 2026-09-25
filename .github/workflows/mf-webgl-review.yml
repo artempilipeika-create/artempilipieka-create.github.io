@@ -2,7 +2,7 @@ name: WebGL planner acceptance
 on:
   push:
     branches: [mf-webgl-planner-20260926]
-    paths: ['backend/v2/**', 'tests/**', '.github/workflows/mf-webgl-review.yml']
+    paths: ['backend/v2/**', 'tests/**', '.github/workflows/mf-webgl-review.yml', '.github/workflows/mf-webgl-live.yml']
 permissions:
   contents: read
 concurrency:
@@ -59,6 +59,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Actual browser and ASGI regression on exact committed source
         run: |
+          python -m py_compile tests/webgl/live_smoke.py
           python -m pytest tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/release_checks.py tests/stage07/browser_checks.py tests/stage84/browser_checks.py -vv --timeout=75 --junitxml=qa-output/webgl/browser.xml
           git diff --exit-code
           git rev-parse HEAD > qa-output/webgl/verified-commit.txt
