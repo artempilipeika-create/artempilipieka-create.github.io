@@ -142,13 +142,14 @@ function normalizeItem(x){
   return it;
 }
 function normalizeScene(s={}){
-  const items=Array.isArray(s.items)&&s.items.length?s.items.map(normalizeItem):[legacyItem(s)];
+  const items=Array.isArray(s.items)?s.items.map(normalizeItem):[legacyItem(s)];
   const room=s.room||{width:4200,depth:3200,height:2700};
   return{
     schema_version:2,
     room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700},
     items,
-    selected_item_id:s.selected_item_id||items[0]?.item_id||null,
+    selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
+      ?s.selected_item_id:(items[0]?.item_id||null),
     view_mode:s.view_mode||'3d'
   };
 }
