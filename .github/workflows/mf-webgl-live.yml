@@ -1,0 +1,49 @@
+name: Published WebGL read-only acceptance
+on:
+  push:
+    branches: [martin-forest-v2-staging]
+    paths: ['backend/v2/cabinet_assets/**', 'backend/v2/cabinet_ui.py', '.github/workflows/mf-webgl-live.yml']
+permissions:
+  contents: read
+concurrency:
+  group: webgl-staging-readonly
+  cancel-in-progress: true
+jobs:
+  published-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser for public GET-only verification
+        run: |
+          pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Wait for accepted vendor bytes on the existing staging service
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import time,urllib.request
+          expected=Path('backend/v2/cabinet_assets/planner/vendor/manifest.json').read_bytes()
+          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/vendor/manifest.json'
+          for attempt in range(24):
+              try:
+                  request=urllib.request.Request(url,method='GET',headers={'Cache-Control':'no-cache'})
+                  with urllib.request.urlopen(request,timeout=15) as response:
+                      if response.status==200 and response.read()==expected:break
+              except Exception:pass
+              if attempt==23:raise RuntimeError('Accepted WebGL assets not published in the bounded verification window')
+              time.sleep(10)
+          PY
+      - name: Verify exact committed public assets and capture desktop/mobile scene
+        run: python scripts/verify-webgl-live.py "$GITHUB_SHA" "Confirmed separately through Railway deployment metadata"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: published-webgl-browser-evidence
+          path: qa-output/webgl-live/
+          retention-days: 7
