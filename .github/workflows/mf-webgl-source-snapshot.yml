@@ -1,0 +1,28 @@
+name: WebGL review source snapshot
+on:
+  push:
+    branches: [mf-webgl-planner-20260926]
+    paths: [.github/workflows/mf-webgl-source-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify clean exact checkout and bundle repository objects only
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          mkdir -p /tmp/webgl-source
+          git rev-parse HEAD > /tmp/webgl-source/commit.txt
+          git bundle create /tmp/webgl-source/source.bundle HEAD refs/remotes/origin/mf-webgl-planner-20260926
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webgl-review-source
+          retention-days: 7
+          path: /tmp/webgl-source/
