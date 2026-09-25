@@ -1,0 +1,141 @@
+name: Studio isolated integration fix
+on:
+  push:
+    branches: [mf-3d-studio-20260925]
+    paths: [.github/workflows/mf-studio-integration-fix.yml]
+permissions:
+  contents: write
+jobs:
+  guarded-review-only:
+    if: github.ref == 'refs/heads/mf-3d-studio-20260925'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_TEST_EVIDENCE_DIR: qa-output/studio-integration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply exact-source compatibility and test navigation fixes only
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          def read_checked(path,sha):
+              p=Path(path);b=p.read_bytes()
+              assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()==sha,path+' changed; review required'
+              return p,b.decode()
+          p,s=read_checked('backend/v2/three_d_api.py','55ab86d99892dc008385b5d8001a2438c42b0c87')
+          # The legacy SQL discriminator has always accepted only chest. Keep the
+          # actual root/item module types in scene JSON; never change the database.
+          assert s.count('body.scene.module_type,Jsonb(body.scene.model_dump')==2
+          s=s.replace('body.scene.module_type,Jsonb(body.scene.model_dump',"'chest',Jsonb(body.scene.model_dump")
+          s=s.replace('class FurnitureItem(StrictModel):', '# Bounds include the existing cargo-150 and horizontal-250 catalogue templates.\nclass FurnitureItem(StrictModel):')
+          s=s.replace('name: str=Field(min_length=1,max_length=120)','name: str=Field(min_length=1,max_length=160)')
+          s=s.replace('width: int=Field(ge=300,le=3000)','width: int=Field(ge=150,le=3000)')
+          s=s.replace('height: int=Field(ge=300,le=3000)','height: int=Field(ge=250,le=3000)')
+          s=s.replace('width: int=Field(default=1000,ge=300,le=3000)','width: int=Field(default=1000,ge=150,le=3000)')
+          s=s.replace('height: int=Field(default=850,ge=300,le=3000)','height: int=Field(default=850,ge=250,le=3000)')
+          s=s.replace('    @api.post(\'/3d-projects\',status_code=201)', "    # mf_3d_projects.module_type is a legacy storage discriminator (chest only).\n    # Actual furniture types are preserved, unchanged, in the scene JSON.\n    @api.post('/3d-projects',status_code=201)")
+          p.write_text(s)
+          p,s=read_checked('tests/stage07/browser_checks.py','f674405b331ab94163784cacf9023c839d281f8b')
+          a=s.index('def test_3d_workspace_save_copy_2d_and_transfer_to_order(')
+          b=s.index('\ndef fill_own_material(',a)
+          block=s[a:b]
+          # Empty projects are intentional: explicitly add the module the old
+          # tests expected, then use the new real controls. Retain all assertions.
+          block=block.replace("    page.locator('#project-name').fill('Комод из 3D')", "    page.locator('[data-module=\"chest\"]').click()\n    page.locator('#project-name').fill('Комод из 3D')")
+          block=block.replace("    page.locator('#project-name').fill('Кухня и шкаф 3D')", "    page.locator('[data-module=\"chest\"]').click()\n    page.locator('.studio-room > summary').click()\n    page.locator('#project-name').fill('Кухня и шкаф 3D')")
+          block=block.replace("page.get_by_role('button',name='Создать копию',exact=True).click()", "page.locator('#tab-projects').click();page.locator('#duplicate-project').click()")
+          block=block.replace("page.get_by_role('button',name='Перенести в заказ',exact=True).click()", "page.locator('#to-order').click()")
+          block=block.replace("page.locator('[data-module=\"base_cabinet\"]').click()", "page.locator('[data-template=\"base.one_door\"]').click()")
+          block=block.replace("page.locator('[data-module=\"wall_cabinet\"]').click()", "page.locator('[data-template=\"wall.one_door\"]').click()")
+          block=block.replace("page.get_by_role('button',name='Ссылка для просмотра',exact=True).click()", "page.locator('#tab-projects').click();page.locator('#share-project').click()")
+          s=s[:a]+block+s[b:]
+          s+='''\n\n@pytest.mark.parametrize('selector,module_type,width,height',[
+              ('[data-template="wall.horizontal"]','wall_cabinet',800,250),
+              ('[data-template="tall.one_door"]','tall_cabinet',600,2200),
+              ('[data-bazis="bazis.460987c9a8e8"]','base_cabinet',150,720),
+          ])
+          def test_studio_real_database_roundtrip_preserves_template_and_dimensions(page,api,settings,admin_user,selector,module_type,width,height):
+              o,email,_=searchable_catalogue_order(api);login_ui(page,email)
+              page.goto('https://testserver/constructor.html')
+              expect(page.locator('body')).to_have_attribute('data-ready','true')
+              page.locator(selector).click()
+              page.locator('#width').fill(str(width));page.locator('#height').fill(str(height))
+              page.locator('#studio-item-name').fill('Тестовый модуль ' + 'а'*140)
+              page.locator('#studio-item-name').press('Tab')
+              page.locator('#project-name').fill('Проверка совместимости '+module_type)
+              page.locator('#save-project').click();expect(page.locator('#status')).to_contain_text('сохранён')
+              saved=api.get('/api/v2/3d-projects').json()['items'][0]
+              scene=saved['scene'];it=scene['items'][0]
+              assert scene['module_type']==module_type and it['module_type']==module_type
+              assert it['width']==width and it['height']==height
+              assert len(it['name'])>120
+              original=dict(it)
+              page.locator('#tab-projects').click();page.locator('#duplicate-project').click()
+              expect(page.locator('#projects .mf3d-project')).to_have_count(2)
+              page.locator('#projects .mf3d-project').last.click()
+              expect(page.locator('#width')).to_have_value(str(width))
+              expect(page.locator('#height')).to_have_value(str(height))
+              page.locator('#height').fill(str(height+10))
+              page.locator('#save-project').click();expect(page.locator('#status')).to_contain_text('сохранён')
+              updated=api.get('/api/v2/3d-projects').json()['items']
+              assert any(p['scene']['items'][0]['height']==height+10 for p in updated)
+              assert all(p['scene']['items'][0]['module_type']==module_type for p in updated)
+              pdf=api.get('/api/v2/3d-projects/'+saved['project_id']+'/specification.pdf')
+              assert pdf.status_code==200 and pdf.content.startswith(b'%PDF-')
+              if original.get('bazis_id'):
+                  assert all(p['scene']['items'][0]['bazis_file']==original['bazis_file'] for p in updated)
+                  assert all(p['scene']['items'][0]['bazis_sha256']==original['bazis_sha256'] for p in updated)
+          '''
+          # De-indent only the appended block; no original tests are removed.
+          import textwrap
+          marker="\n\n@pytest.mark.parametrize('selector,module_type,width,height',["
+          start=s.index(marker)
+          extra=s[start:]
+          lines=extra.splitlines()
+          lines=[line[10:] if line.startswith('          ') else line for line in lines]
+          s=s[:start]+'\n'.join(lines)+'\n'
+          p.write_text(s)
+          PY
+          python -m py_compile backend/v2/three_d_api.py tests/stage07/browser_checks.py
+          test "$(git hash-object backend/v2/cabinet_assets/3d.js)" = dc1d0a45b6284ba6fa615c7bb2f5c2efdb4db773
+          git diff --stat
+      - run: pip install -r backend/v2/requirements.txt pytest==9.1.1 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Full real ASGI Postgres browser regression, plus unchanged synthetic UI suite
+        run: |
+          python -m pytest tests/stage07/browser_checks.py tests/stage84/browser_checks.py -vv --junitxml=qa-output/studio-integration/results.xml
+          python tests/3d_studio_browser.py
+      - name: Commit verified changes ONLY to exact review branch, non-force
+        run: |
+          test "${GITHUB_REF}" = refs/heads/mf-3d-studio-20260925
+          test "$(git status --porcelain --untracked-files=no | wc -l)" = 2
+          git add backend/v2/three_d_api.py tests/stage07/browser_checks.py
+          git -c user.name='Martin Forest Studio verification' -c user.email='studio-verification@users.noreply.github.com' commit -m 'fix(studio): preserve kitchen scenes in legacy project storage; verify real database round trips'
+          git push origin HEAD:refs/heads/mf-3d-studio-20260925
+          git rev-parse HEAD > qa-output/studio-integration/verified-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-real-database-verification
+          retention-days: 7
+          path: |
+            qa-output/studio-integration/
+            qa-output/studio/
+            backend/v2/three_d_api.py
+            tests/stage07/browser_checks.py
