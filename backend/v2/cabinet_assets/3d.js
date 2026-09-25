@@ -364,11 +364,11 @@ async function newProject(){
   selectedId=null;
   $('project-name').value='Новый 3D-проект';
   syncRoom();
-  addModule('chest',false);
   setMode('3d');
+  syncControls();
   updateAll();
   renderProjects();
-  status('Новый проект.');
+  status('Пустой проект. Добавьте модуль слева.');
 }
 async function duplicateProject(){
   if(!project)await saveProject();
@@ -479,12 +479,8 @@ function duplicateItem(){
 }
 function removeItem(){
   if(!selected())return;
-  if(state.items.length===1){
-    status('В проекте должен остаться хотя бы один модуль.');
-    return;
-  }
   state.items=state.items.filter(x=>x.item_id!==selectedId);
-  selectedId=state.items[0].item_id;
+  selectedId=state.items[0]?.item_id||null;
   state.selected_item_id=selectedId;
   syncControls();
   updateAll();
@@ -594,7 +590,9 @@ function setMode(mode){
   viewMode=mode;
   $('mode-2d').className=mode==='2d'?'':'secondary';
   $('mode-3d').className=mode==='3d'?'':'secondary';
-  $('scene-help').textContent=mode==='3d'?'Мышь — вращение · колесо — масштаб':'2D · план помещения сверху';
+  $('scene-help').textContent=mode==='3d'
+    ?'Модуль — перетащить · пустое место — вращать · колесо — масштаб'
+    :'2D · нажмите модуль и перетащите его мышью';
   updateAll();
 }
 function colorFor(m,front=false){
@@ -739,6 +737,72 @@ function sizeCanvas(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   return{w,h};
 }
+function room2dMetrics(){
+  const r=canvas.getBoundingClientRect(),pad=45;
+  const scale=Math.min((r.width-pad*2)/state.room.width,(r.height-pad*2)/state.room.depth);
+  return{scale,ox:r.width/2,oz:r.height/2};
+}
+function itemFootprint(it){
+  const odd=it.rotation===90||it.rotation===270;
+  return{w:odd?it.depth:it.width,d:odd?it.width:it.depth};
+}
+function clampItemToRoom(it){
+  const fp=itemFootprint(it),rx=state.room.width/2,rz=state.room.depth/2;
+  it.x=Math.round(Math.max(-rx+fp.w/2,Math.min(rx-fp.w/2,it.x)));
+  it.z=Math.round(Math.max(-rz+fp.d/2,Math.min(rz-fp.d/2,it.z)));
+}
+function hitItem2d(clientX,clientY){
+  const r=canvas.getBoundingClientRect(),x=clientX-r.left,y=clientY-r.top,m=room2dMetrics();
+  for(let i=state.items.length-1;i>=0;i--){
+    const it=state.items[i],fp=itemFootprint(it),cx=m.ox+it.x*m.scale,cy=m.oz+it.z*m.scale;
+    if(x>=cx-fp.w*m.scale/2&&x<=cx+fp.w*m.scale/2&&y>=cy-fp.d*m.scale/2&&y<=cy+fp.d*m.scale/2)return it;
+  }
+  return null;
+}
+function itemRect3d(it,w,h){
+  const S=1/500,odd=it.rotation===90||it.rotation===270;
+  const ww=(odd?it.depth:it.width)*S,dd=(odd?it.width:it.depth)*S,H=it.height*S;
+  const wallLift=it.module_type==='wall_cabinet'?Math.max(0,(state.room.height-it.height-500))*S:0;
+  const cx=it.x*S,cz=it.z*S,y0=wallLift,y1=wallLift+H;
+  const pts=[];
+  for(const x of[cx-ww/2,cx+ww/2])for(const y of[y0,y1])for(const z of[cz-dd/2,cz+dd/2])pts.push(proj3({x,y,z},w,h));
+  return{
+    left:Math.min(...pts.map(p=>p.x)),right:Math.max(...pts.map(p=>p.x)),
+    top:Math.min(...pts.map(p=>p.y)),bottom:Math.max(...pts.map(p=>p.y))
+  };
+}
+function hitItem3d(clientX,clientY){
+  const r=canvas.getBoundingClientRect(),x=clientX-r.left,y=clientY-r.top;
+  for(let i=state.items.length-1;i>=0;i--){
+    const it=state.items[i],b=itemRect3d(it,r.width,r.height);
+    if(x>=b.left-8&&x<=b.right+8&&y>=b.top-8&&y<=b.bottom+8)return it;
+  }
+  return null;
+}
+let pointerMode=null,dragItemId=null,dragStartX=0,dragStartY=0,dragStartItemX=0,dragStartItemZ=0;
+function selectItem(it){
+  if(!it)return;
+  selectedId=it.item_id;state.selected_item_id=selectedId;
+  syncControls();updateAll();
+}
+function dragSelected2d(clientX,clientY){
+  const it=state.items.find(x=>x.item_id===dragItemId);if(!it)return;
+  const m=room2dMetrics();
+  it.x=Math.round(dragStartItemX+(clientX-dragStartX)/m.scale);
+  it.z=Math.round(dragStartItemZ+(clientY-dragStartY)/m.scale);
+  clampItemToRoom(it);
+  $('pos-x').value=String(it.x);$('pos-z').value=String(it.z);updateAll();
+}
+function dragSelected3d(clientX,clientY){
+  const it=state.items.find(x=>x.item_id===dragItemId);if(!it)return;
+  const r=canvas.getBoundingClientRect(),mmPerPx=Math.max(state.room.width/r.width,state.room.depth/r.height)*1.05;
+  const dx=(clientX-dragStartX)*mmPerPx,dy=(clientY-dragStartY)*mmPerPx;
+  const c=Math.cos(rotY),sn=Math.sin(rotY);
+  it.x=Math.round(dragStartItemX+dx*c+dy*sn);
+  it.z=Math.round(dragStartItemZ-dx*sn+dy*c);
+  clampItemToRoom(it);
+  $('pos-x').value=String(it.x);$('pos-z').value=String(it.z);updateAll();
+}
 function draw2d(w,h){
   ctx.fillStyle='#f4f2eb';
   ctx.fillRect(0,0,w,h);
@@ -803,21 +867,25 @@ function updateAll(){
     renderFacadeSummary(it);
   }
   $('room-badge').textContent=state.room.width+'×'+state.room.depth+'×'+state.room.height;
-  $('item-badge').textContent=state.items.length+' '+(state.items.length===1?'предмет':'предметов');
+  $('item-badge').textContent=state.items.length+' '+(state.items.length===1?'модуль':(state.items.length>=2&&state.items.length<=4?'модуля':'модулей'));
 }
 
 function exportBazisProject(){
+  const bazisItems=state.items.filter(x=>x.bazis_file);
   const missing=state.items.filter(x=>!x.bazis_file);
-  if(missing.length){
-    status('Для экспорта БАЗИС используйте только модули из раздела «Мои БАЗИС». Без привязки: '+missing.length);
+  if(!bazisItems.length){
+    alert('В проекте пока нет модулей из раздела «Мои БАЗИС». Добавьте хотя бы один БАЗИС-модуль.');
+    status('Экспорт БАЗИС: нет привязанных модулей.');
     return;
   }
+  if(missing.length&&!confirm('В проекте есть '+missing.length+' модулей без привязки к .fr3d.\n\nЭкспортировать только '+bazisItems.length+' модулей БАЗИС?'))return;
   const payload={
     format:'martin-forest-bazis-project-v1',
     project_name:$('project-name').value.trim()||'3D-проект',
     exported_at:new Date().toISOString(),
     room:{...state.room},
-    items:state.items.map(it=>{
+    skipped_non_bazis:missing.map(x=>({name:x.name,module_type:x.module_type})),
+    items:bazisItems.map(it=>{
       const src=bazisById.get(it.bazis_id);
       return{
         bazis_id:it.bazis_id,source_file:it.bazis_file,source_sha256:it.bazis_sha256,
@@ -826,11 +894,16 @@ function exportBazisProject(){
       };
     })
   };
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='Martin_Forest_BAZIS_Project.json';document.body.append(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  status('Файл для импорта в БАЗИС подготовлен.');
+  const json=JSON.stringify(payload,null,2);
+  const href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  const a=document.createElement('a');
+  a.href=href;
+  a.download='Martin_Forest_BAZIS_Project.json';
+  a.style.display='none';
+  document.body.append(a);
+  a.click();
+  a.remove();
+  status('Экспорт БАЗИС: '+bazisItems.length+' модулей выгружено.');
 }
 
 async function toOrder(){
@@ -890,16 +963,38 @@ $('mode-2d').onclick=()=>setMode('2d');
 $('mode-3d').onclick=()=>setMode('3d');
 $('reset-view').onclick=()=>{rotY=-.55;rotX=.2;zoom=1};
 canvas.onpointerdown=e=>{
-  if(viewMode!=='3d')return;
-  drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);
+  const it=viewMode==='2d'?hitItem2d(e.clientX,e.clientY):hitItem3d(e.clientX,e.clientY);
+  drag=true;px=e.clientX;py=e.clientY;
+  if(it){
+    selectItem(it);
+    pointerMode='item';dragItemId=it.item_id;
+    dragStartX=e.clientX;dragStartY=e.clientY;dragStartItemX=it.x;dragStartItemZ=it.z;
+    canvas.style.cursor='grabbing';
+  }else if(viewMode==='3d'){
+    pointerMode='camera';dragItemId=null;canvas.style.cursor='grabbing';
+  }else{
+    pointerMode=null;dragItemId=null;
+  }
+  canvas.setPointerCapture(e.pointerId);
 };
 canvas.onpointermove=e=>{
   if(!drag)return;
-  rotY+=(e.clientX-px)*.008;
-  rotX=Math.max(-.55,Math.min(.65,rotX+(e.clientY-py)*.004));
-  px=e.clientX;py=e.clientY;
+  if(pointerMode==='item'){
+    if(viewMode==='2d')dragSelected2d(e.clientX,e.clientY);
+    else dragSelected3d(e.clientX,e.clientY);
+    return;
+  }
+  if(pointerMode==='camera'&&viewMode==='3d'){
+    rotY+=(e.clientX-px)*.008;
+    rotX=Math.max(-.55,Math.min(.65,rotX+(e.clientY-py)*.004));
+    px=e.clientX;py=e.clientY;
+  }
 };
-canvas.onpointerup=()=>drag=false;
+canvas.onpointerup=e=>{
+  drag=false;pointerMode=null;dragItemId=null;canvas.style.cursor='';
+  try{canvas.releasePointerCapture(e.pointerId)}catch{}
+};
+canvas.onpointercancel=()=>{drag=false;pointerMode=null;dragItemId=null;canvas.style.cursor=''};
 canvas.onwheel=e=>{
   if(viewMode!=='3d')return;
   e.preventDefault();
@@ -915,6 +1010,19 @@ $('share-project').onclick=()=>shareProject().catch(e=>status(e.message));
 $('copy-share').onclick=()=>copyShare();
 $('download-spec').onclick=()=>downloadSpec().catch(e=>status(e.message));
 $('export-bazis').onclick=exportBazisProject;
+window.addEventListener('keydown',e=>{
+  const tag=document.activeElement?.tagName;
+  if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;
+  const it=selected();if(!it)return;
+  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();removeItem();return;}
+  const step=e.shiftKey?100:10;
+  if(e.key==='ArrowLeft'){it.x-=step;e.preventDefault();}
+  else if(e.key==='ArrowRight'){it.x+=step;e.preventDefault();}
+  else if(e.key==='ArrowUp'){it.z-=step;e.preventDefault();}
+  else if(e.key==='ArrowDown'){it.z+=step;e.preventDefault();}
+  else return;
+  clampItemToRoom(it);$('pos-x').value=String(it.x);$('pos-z').value=String(it.z);updateAll();
+});
 
 window.MF3D_KITCHEN={facadeGapMm:FACADE_GAP_MM,templates:kitchenTemplates,bazisModules,facadeCells};
 start().catch(e=>status(e.message));
