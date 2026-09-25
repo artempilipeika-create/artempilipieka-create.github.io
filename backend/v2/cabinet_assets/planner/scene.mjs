@@ -10,8 +10,8 @@ export class PlannerScene{
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.0;
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#f2f3ed');
-    this.scene.add(new THREE.HemisphereLight('#ffffff','#b5b7a9',1.65));
-    this.sun=new THREE.DirectionalLight('#fffaf0',2.7);this.sun.position.set(3,7,5);this.sun.castShadow=true;
+    this.scene.add(new THREE.HemisphereLight('#ffffff','#c1c5b9',1.5));
+    this.sun=new THREE.DirectionalLight('#fffaf0',2.2);this.sun.position.set(3,7,5);this.sun.castShadow=true;
     this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.1,far:30});
     this.sun.shadow.bias=-.0002;this.sun.shadow.normalBias=.001;this.sun.shadow.radius=3;this.scene.add(this.sun);
     const fill=new THREE.DirectionalLight('#e9f0ff',.8);fill.position.set(-4,3,-1);this.scene.add(fill);
@@ -23,8 +23,8 @@ export class PlannerScene{
     this.controls.addEventListener('change',()=>this.invalidate());
     this.factory=new MeshFactory(adapter,()=>this.invalidate());this.root=new THREE.Group();this.scene.add(this.root);
     this.guides=new THREE.Group();this.scene.add(this.guides);
-    this.selectedBox=new THREE.Box3Helper(new THREE.Box3(),0x346d4a);this.selectedBox.material.depthTest=false;this.selectedBox.renderOrder=20;this.selectedBox.visible=false;this.scene.add(this.selectedBox);
-    this.hoverBox=new THREE.Box3Helper(new THREE.Box3(),0x9cb49b);this.hoverBox.material.depthTest=false;this.hoverBox.visible=false;this.scene.add(this.hoverBox);
+    this.selectedBox=new THREE.Box3Helper(new THREE.Box3(),0x346d4a);this.selectedBox.material.depthTest=true;this.selectedBox.renderOrder=20;this.selectedBox.visible=false;this.scene.add(this.selectedBox);
+    this.hoverBox=new THREE.Box3Helper(new THREE.Box3(),0x9cb49b);this.hoverBox.material.depthTest=true;this.hoverBox.visible=false;this.scene.add(this.hoverBox);
     this.raycaster=new THREE.Raycaster();this.ndc=new THREE.Vector2();
     this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(canvas.parentElement);
     this.lost=e=>{e.preventDefault();if(!this.dead)this.onLost();};canvas.addEventListener('webglcontextlost',this.lost);
@@ -77,10 +77,10 @@ export class PlannerScene{
   highlight(error=''){
     const it=this.adapter.selected,entry=it?this.entries.get(it.item_id):null;
     this.selectedBox.visible=Boolean(entry?.group.visible&&!this.preview&&!document.body.classList.contains('planner-client'));
-    if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group);this.selectedBox.material.color.set(error?'#bf6c43':'#346d4a');}
+    if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':'#346d4a');}
     this.placeLabel();
   }
-  hover(id){const entry=this.entries.get(id);this.hoverBox.visible=Boolean(entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview);if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group);this.invalidate();}
+  hover(id){const entry=this.entries.get(id);this.hoverBox.visible=Boolean(entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview);if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group).expandByScalar(.003);this.invalidate();}
   placeLabel(){
     const label=document.getElementById('planner-dimension');if(!label)return;
     const it=this.adapter.selected;
@@ -99,10 +99,18 @@ export class PlannerScene{
     const box=this.cameraBox(which),center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3());
     this.controls.target.copy(center);
     if(this.mode==='3d'){
-      const dir=new THREE.Vector3(.8,.54,1).normalize();
-      const vfov=this.perspective.fov*Math.PI/180,hfov=2*Math.atan(Math.tan(vfov/2)*this.perspective.aspect);
-      const radius=Math.max(.24,size.length()/2),distance=Math.max(radius/Math.sin(Math.min(vfov,hfov)/2)*1.02,1.2);
-      this.camera.position.copy(center).addScaledVector(dir,distance);
+      // Fit the actual projected corners, not a bounding sphere. A long
+      // kitchen now uses the canvas instead of leaving a room-sized margin.
+      const dir=new THREE.Vector3(.65,.42,1).normalize();
+      const right=new THREE.Vector3(0,1,0).cross(dir).normalize();
+      const up=dir.clone().cross(right).normalize();
+      const tanV=Math.tan(this.perspective.fov*Math.PI/360),tanH=tanV*this.perspective.aspect;
+      let distance=1.2;
+      for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
+        const delta=new THREE.Vector3(x,y,z).sub(center),towardsCamera=delta.dot(dir);
+        distance=Math.max(distance,towardsCamera+Math.abs(delta.dot(right))/(tanH*.84),towardsCamera+Math.abs(delta.dot(up))/(tanV*.78));
+      }
+      this.camera.up.set(0,1,0);this.camera.position.copy(center).addScaledVector(dir,distance);
     }else{
       const distance=20;
       const direction=this.mode==='top'?new THREE.Vector3(0,1,0):this.mode==='left'?new THREE.Vector3(-1,0,0):this.mode==='right'?new THREE.Vector3(1,0,0):new THREE.Vector3(0,0,1);
@@ -110,7 +118,7 @@ export class PlannerScene{
       const horizontal=this.mode==='left'||this.mode==='right'?size.z:size.x,vertical=this.mode==='top'?size.z:size.y;
       this.orthoSpan=Math.max(.35,vertical/2,horizontal/2/(this.width/this.height))*1.35;this.camera.zoom=1;this.resize();
     }
-    this.controls.update();this.invalidate();
+    this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
   }
   setView(mode){
     this.mode=mode;this.camera=mode==='3d'?this.perspective:this.ortho;this.controls.object=this.camera;this.controls.enableRotate=mode==='3d';
@@ -147,6 +155,6 @@ export class PlannerScene{
     this.invalidate();
   }
   clearPreview(){this.preview?.removeFromParent();this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
-  projectPoint(point){const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
+  projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
   dispose(){this.dead=true;cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();this.factory.dispose();this.renderer.dispose();}
 }
