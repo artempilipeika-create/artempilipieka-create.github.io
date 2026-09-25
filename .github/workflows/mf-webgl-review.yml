@@ -1,0 +1,104 @@
+name: WebGL planner acceptance
+on:
+  push:
+    branches: [mf-webgl-planner-20260926]
+    paths: [.github/workflows/mf-webgl-review.yml]
+permissions:
+  contents: write
+concurrency:
+  group: webgl-planner-review
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/mf-webgl-planner-20260926'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_TEST_EVIDENCE_DIR: qa-output/webgl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fixed local vendor and exact-source integration
+        run: |
+          mkdir -p /tmp/mf-vendor qa-output/webgl
+          cd /tmp/mf-vendor
+          npm init -y >/dev/null
+          npm install --ignore-scripts --save-exact three@0.180.0
+          cd "$GITHUB_WORKSPACE"
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          source=Path('/tmp/mf-vendor/node_modules/three');target=Path('backend/v2/cabinet_assets/planner/vendor');target.mkdir(parents=True,exist_ok=True)
+          assert json.loads((source/'package.json').read_text())['version']=='0.180.0'
+          files={'three.module.js':'build/three.module.min.js','three.core.min.js':'build/three.core.min.js','OrbitControls.js':'examples/jsm/controls/OrbitControls.js','THREE-LICENSE.txt':'LICENSE'}
+          for name,path in files.items():
+              text=(source/path).read_text()
+              if name=='OrbitControls.js':
+                  assert text.count("from 'three'")==1
+                  text=text.replace("from 'three'","from './three.module.js'")
+              (target/name).write_text(text)
+          lock=Path('/tmp/mf-vendor/package-lock.json').read_bytes();(target/'package-lock.json').write_bytes(lock)
+          package=json.loads(lock)['packages']['node_modules/three']
+          manifest={'name':'three','version':'0.180.0','npm_integrity':package['integrity'],'source':'https://www.npmjs.com/package/three/v/0.180.0','local_imports':True,'files':{name:hashlib.sha256((target/name).read_bytes()).hexdigest() for name in files}}
+          (target/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          PY
+          python scripts/integrate-webgl.py
+          python -m py_compile backend/v2/cabinet_ui.py tests/webgl/browser_checks.py
+          for f in backend/v2/cabinet_assets/planner/*.mjs backend/v2/cabinet_assets/planner/*.js backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/3d-studio.js; do node --check "$f"; done
+          git diff --stat
+      - name: Geometry, placement, history and existing entry helpers
+        run: |
+          set -o pipefail
+          node --test tests/webgl/core.test.mjs | tee qa-output/webgl/core.tap
+          node --test tests/order_entry/entry_helpers.test.cjs | tee qa-output/webgl/order-entry.tap
+      - name: Install existing pinned test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: WebGL and complete existing browser regression on disposable Postgres
+        run: python -m pytest tests/webgl/browser_checks.py tests/stage07/browser_checks.py tests/stage84/browser_checks.py -vv --timeout=75 --junitxml=qa-output/webgl/browser.xml
+      - name: Existing backend regression without any live credentials
+        run: python -m pytest tests/stage01 tests/stage02 tests/stage03 tests/stage04 tests/stage05 tests/stage06 tests/stage07 tests/stage08 tests/stage84 tests/order_entry -vv --timeout=45 --junitxml=qa-output/webgl/backend.xml
+      - name: Commit only accepted integration into existing review branch
+        run: |
+          test "$GITHUB_REF" = refs/heads/mf-webgl-planner-20260926
+          test "$(git ls-remote origin refs/heads/mf-webgl-planner-20260926 | cut -f1)" = "$GITHUB_SHA"
+          git add backend/v2/cabinet_assets/planner backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/3d-studio.js backend/v2/cabinet_assets/constructor.html backend/v2/cabinet_assets/constructor-next.html backend/v2/cabinet_ui.py tests/stage07/browser_checks.py
+          if ! git diff --cached --quiet; then
+            git -c user.name='Martin Forest WebGL verification' -c user.email='webgl-verification@users.noreply.github.com' commit -m 'feat(planner): integrate accepted same-origin WebGL scene and compatible v2 project lifecycle'
+            git push origin HEAD:refs/heads/mf-webgl-planner-20260926
+          fi
+          git rev-parse HEAD > qa-output/webgl/verified-commit.txt
+      - name: Preserve source and non-secret synthetic evidence
+        if: always()
+        run: |
+          mkdir -p qa-output/webgl
+          git rev-parse HEAD > qa-output/webgl/source-head.txt
+          tar --exclude='./.git' --exclude='./node_modules' --exclude='./qa-output' --exclude='__pycache__' --exclude='*.pyc' -czf /tmp/mf-webgl-reviewed-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mf-webgl-acceptance
+          retention-days: 7
+          path: |
+            /tmp/mf-webgl-reviewed-source.tar.gz
+            qa-output/webgl/
