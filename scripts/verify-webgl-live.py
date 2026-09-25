@@ -15,7 +15,7 @@ def get(path):
 result={'expected_commit':sys.argv[1],'deployment':sys.argv[2],'public_requests':'GET only','browser_data':'Synthetic project; all API calls intercepted. No staging login or database writes.','endpoints':[]}
 status,headers,body=get('/health');health=json.loads(body)
 assert status==200 and health.get('ok') and health.get('environment')=='staging'
-result['health']=health
+result['health']=health;result['health_http_status']=status
 files={'/constructor':'backend/v2/cabinet_assets/constructor-next.html','/constructor-next':'backend/v2/cabinet_assets/constructor-next.html','/account/3d.js':'backend/v2/cabinet_assets/3d.js','/account/3d-studio.js':'backend/v2/cabinet_assets/3d-studio.js'}
 for f in (ROOT/'backend/v2/cabinet_assets/planner').rglob('*'):
     if f.suffix in ('.js','.mjs','.css') or f.name=='manifest.json':files['/account/planner/'+f.relative_to(ROOT/'backend/v2/cabinet_assets/planner').as_posix()]=f.relative_to(ROOT).as_posix()
@@ -56,17 +56,17 @@ with sync_playwright() as p:
     page.wait_for_timeout(350)
     assert page.evaluate('MF_PLANNER.adapter.items.length')==13
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_desktop.png'),full_page=True)
+    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_desktop.png'),full_page=False)
     page.locator('#planner-front').click();page.wait_for_timeout(150)
-    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_front.png'),full_page=True)
+    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_front.png'),full_page=False)
     page.locator('#mode-3d').click();page.locator('#planner-client').click();page.wait_for_timeout(200)
-    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_client.png'),full_page=True)
+    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_client.png'),full_page=False)
     page.locator('#planner-client').click()
     page.set_viewport_size({'width':390,'height':844});page.locator('#reset-view').click();page.wait_for_timeout(250)
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_mobile.png'),full_page=True)
+    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_mobile.png'),full_page=False)
     page.locator('#planner-mobile-inspector').click();expect(page.locator('.mf3d-right')).to_be_visible()
-    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_mobile_parameters.png'),full_page=True)
+    page.screenshot(path=str(OUT/'Martin_Forest_WebGL_mobile_parameters.png'),full_page=False)
     result.update(browser_errors=errors,console_errors=console,blocked_requests=blocked,real_static_get_requests=len(seen),renderer=page.evaluate('document.body.dataset.plannerRenderer'),module_count=13)
     assert not errors and not console and not blocked,result
     browser.close()
