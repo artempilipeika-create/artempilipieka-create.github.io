@@ -1,0 +1,46 @@
+name: Furniture studio UI review
+on:
+  push:
+    branches: [mf-3d-studio-20260925]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: furniture-studio-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser-review:
+    if: github.ref == 'refs/heads/mf-3d-studio-20260925'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check unchanged constructor engine
+        run: |
+          test "$(git hash-object backend/v2/cabinet_assets/3d.js)" = dc1d0a45b6284ba6fa615c7bb2f5c2efdb4db773
+          python -m py_compile backend/v2/cabinet_ui.py
+          if test -f backend/v2/cabinet_assets/3d-studio.js; then node --check backend/v2/cabinet_assets/3d-studio.js; fi
+      - name: Browser regression with synthetic local API only
+        if: hashFiles('tests/3d_studio_browser.py') != ''
+        run: |
+          pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+          python tests/3d_studio_browser.py
+      - name: Preserve UI source and review screenshots (no secrets or databases)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: furniture-studio-review
+          retention-days: 7
+          path: |
+            backend/v2/cabinet_assets/constructor.html
+            backend/v2/cabinet_assets/3d.js
+            backend/v2/cabinet_assets/3d.css
+            backend/v2/cabinet_assets/3d-studio.js
+            backend/v2/cabinet_assets/3d-studio.css
+            backend/v2/cabinet_assets/app.css
+            backend/v2/cabinet_ui.py
+            qa-output/studio/
