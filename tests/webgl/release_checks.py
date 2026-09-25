@@ -125,7 +125,7 @@ def test_bounded_release_viewport_and_large_kitchen_framing(page,api,settings,ad
 def test_facade_and_native_metadata_survive_nonzero_placement(page,api,settings,admin_user):
     open_planner(page,api)
     page.locator('[data-template="base.two_door"]').click()
-    assert page.evaluate('MF_PLANNER.adapter.facades(MF_PLANNER.adapter.selected).every(f=>f.w===397)')
+    assert page.evaluate('MF3D_KITCHEN.facadeCells(MF_PLANNER.adapter.selected).every(f=>f.w===397)')
     page.locator('#remove-item').click()
     page.locator('[data-bazis="bazis.460987c9a8e8"]').click()
     for selector,value in [('#pos-z','100'),('#pos-x','350')]:
