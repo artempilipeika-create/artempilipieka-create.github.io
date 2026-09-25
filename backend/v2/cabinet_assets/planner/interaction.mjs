@@ -8,6 +8,9 @@ export class Interaction {
     this.canvas=scene.canvas;this.gesture=null;this.catalogueDraft=null;
     this.abort=new AbortController();this.suspended=false;this.touches=new Set();
     const listen=(el,name,fn,capture=false)=>el?.addEventListener(name,fn,{capture,signal:this.abort.signal});
+    // Captured pointerdown prevents default focus. Commit any inspector blur
+    // before reading the picked item, then keep scene keyboard actions active.
+    listen(this.canvas,'pointerdown',e=>{if(e.button===0)this.canvas.focus({preventScroll:true});},true);
     listen(this.canvas,'pointerdown',e=>this.down(e),true);
     listen(this.canvas,'pointermove',e=>this.move(e),true);
     listen(this.canvas,'pointerup',e=>this.up(e),true);
