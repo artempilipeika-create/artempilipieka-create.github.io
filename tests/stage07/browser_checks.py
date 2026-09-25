@@ -454,6 +454,29 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     expect(page.get_by_label('Название 13',exact=True)).to_have_value('Шкаф · Боковина')
 
 
+def test_3d_kitchen_templates_use_fixed_overlay_facade_gap(page,api,settings,admin_user):
+    o,email,_=searchable_catalogue_order(api);login_ui(page,email)
+    page.goto('https://testserver/constructor.html')
+    expect(page.locator('body')).to_have_attribute('data-ready','true')
+    expect(page.locator('[data-template="base.two_door"]')).to_have_count(1)
+    expect(page.locator('[data-template="wall.two_door"]')).to_have_count(1)
+    page.locator('[data-template="wall.two_door"]').click()
+    expect(page.locator('#template-info')).to_contain_text('1,5 мм')
+    expect(page.locator('#cutlist')).to_contain_text('397×717')
+    gap=page.evaluate('window.MF3D_KITCHEN.facadeGapMm')
+    cells=page.evaluate("""window.MF3D_KITCHEN.facadeCells({
+        template_id:'base.two_door',base:'wall',width:800,height:720,depth:560,
+        layout:'doors',drawers:0,module_type:'base_cabinet'
+    })""")
+    assert gap==1.5
+    assert len(cells)==2
+    assert all(cell['w']==397 and cell['h']==717 for cell in cells)
+    page.get_by_role('button',name='Сохранить',exact=True).click()
+    expect(page.locator('#status')).to_contain_text('сохранён')
+    saved=api.get('/api/v2/3d-projects').json()['items']
+    assert any(any(item.get('template_id')=='wall.two_door' for item in p['scene'].get('items',[])) for p in saved)
+
+
 def test_3d_share_link_opens_read_only_viewer(page,api,settings,admin_user):
     o,email,_=searchable_catalogue_order(api);login_ui(page,email)
     page.goto('https://testserver/constructor.html');expect(page.locator('body')).to_have_attribute('data-ready','true')
