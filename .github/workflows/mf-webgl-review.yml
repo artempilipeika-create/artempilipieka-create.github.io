@@ -60,6 +60,7 @@ jobs:
           (target/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
           PY
           python scripts/integrate-webgl.py
+          python scripts/refine-webgl.py
           python -m py_compile backend/v2/cabinet_ui.py tests/webgl/browser_checks.py
           for f in backend/v2/cabinet_assets/planner/*.mjs backend/v2/cabinet_assets/planner/*.js backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/3d-studio.js; do node --check "$f"; done
           git diff --stat
@@ -68,10 +69,18 @@ jobs:
           set -o pipefail
           node --test tests/webgl/core.test.mjs | tee qa-output/webgl/core.tap
           node --test tests/order_entry/entry_helpers.test.cjs | tee qa-output/webgl/order-entry.tap
-      - name: Install existing pinned test dependencies
+      - name: Install Postgres 17 client and existing pinned test dependencies
         run: |
+          (command -v pg_dump && pg_dump --version) || true
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          . /etc/os-release
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" | sudo tee /etc/apt/sources.list.d/mf-ci-pgdg.list
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends postgresql-client
+          sudo apt-get install -y --no-install-recommends postgresql-client-17
+          echo '/usr/lib/postgresql/17/bin' >> "$GITHUB_PATH"
+          /usr/lib/postgresql/17/bin/pg_dump --version | tee qa-output/webgl/postgres-client.txt
+          /usr/lib/postgresql/17/bin/psql "$MF_TEST_DATABASE_URL" -Atc 'SHOW server_version' | tee qa-output/webgl/postgres-server.txt
           pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
           python -m playwright install --with-deps chromium
       - name: WebGL and complete existing browser regression on disposable Postgres
@@ -82,11 +91,12 @@ jobs:
         run: |
           test "$GITHUB_REF" = refs/heads/mf-webgl-planner-20260926
           test "$(git ls-remote origin refs/heads/mf-webgl-planner-20260926 | cut -f1)" = "$GITHUB_SHA"
-          git add backend/v2/cabinet_assets/planner backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/3d-studio.js backend/v2/cabinet_assets/constructor.html backend/v2/cabinet_assets/constructor-next.html backend/v2/cabinet_ui.py tests/stage07/browser_checks.py
+          git add backend/v2/cabinet_assets/planner backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/3d-studio.js backend/v2/cabinet_assets/constructor.html backend/v2/cabinet_assets/constructor-next.html backend/v2/cabinet_ui.py tests/stage07/browser_checks.py tests/webgl
           if ! git diff --cached --quiet; then
             git -c user.name='Martin Forest WebGL verification' -c user.email='webgl-verification@users.noreply.github.com' commit -m 'feat(planner): integrate accepted same-origin WebGL scene and compatible v2 project lifecycle'
             git push origin HEAD:refs/heads/mf-webgl-planner-20260926
           fi
+          git diff --exit-code
           git rev-parse HEAD > qa-output/webgl/verified-commit.txt
       - name: Preserve source and non-secret synthetic evidence
         if: always()
