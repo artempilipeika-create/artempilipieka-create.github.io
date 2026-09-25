@@ -10,8 +10,18 @@
 <main class="mf3d-shell">
 <aside class="mf3d-left">
  <section><div class="mf3d-section-head"><h2>Проекты</h2><button id="new-project" class="secondary">+ Новый</button></div><div id="projects" class="mf3d-projects"></div></section>
- <section><h2>Модули</h2>
+ <section class="mf3d-catalog-section"><div class="mf3d-section-head"><div><h2>Модули</h2><p class="mf3d-section-sub">Выберите модуль — он сразу появится в проекте.</p></div></div>
   <div class="mf3d-rule"><strong>Накладные фасады</strong><span>Технологический зазор: 1,5 мм с каждой из 4 сторон.</span></div>
+  <div class="mf3d-catalog-tools">
+   <input id="module-search" type="search" placeholder="Найти модуль…" aria-label="Поиск модуля">
+   <div id="module-tabs" class="mf3d-tabs" role="tablist" aria-label="Категории модулей">
+    <button type="button" class="active" data-module-filter="kitchen">Кухня</button>
+    <button type="button" data-module-filter="base">Нижние</button>
+    <button type="button" data-module-filter="wall">Верхние</button>
+    <button type="button" data-module-filter="tall">Пеналы</button>
+    <button type="button" data-module-filter="other">Прочее</button>
+   </div>
+  </div>
   <div id="module-catalogue" class="mf3d-modules" aria-label="Каталог мебельных модулей"></div>
  </section>
  <section><h2>Предметы в проекте</h2><div id="scene-items" class="mf3d-projects"></div></section>
@@ -31,17 +41,25 @@
   <label>Глубина, мм<input id="room-depth" type="number" min="1500" max="12000" step="50" value="3200"></label>
   <label>Высота, мм<input id="room-height" type="number" min="2000" max="5000" step="50" value="2700"></label>
  </div></section>
- <section id="item-controls"><div class="mf3d-section-head"><h2 id="item-title">Модуль</h2><button id="remove-item" class="secondary">Удалить</button></div>
+ <section id="item-controls"><div class="mf3d-section-head"><div><div class="mf3d-kicker">Выбранный модуль</div><h2 id="item-title">Модуль</h2></div><div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary" title="Создать копию модуля">Копия</button><button id="remove-item" class="secondary">Удалить</button></div></div>
  <div id="template-info" class="mf3d-template-info"></div>
- <div class="mf3d-grid">
-  <label>Ширина, мм<input id="width" type="number" min="300" max="3000" step="10"></label>
-  <label>Высота, мм<input id="height" type="number" min="300" max="3000" step="10"></label>
-  <label>Глубина, мм<input id="depth" type="number" min="200" max="1200" step="10"></label>
+ <div class="mf3d-control-card">
+  <div class="mf3d-control-title"><strong>Размер</strong><span id="size-hint">мм</span></div>
+  <div class="mf3d-grid">
+   <label>Ширина<input id="width" type="number" min="300" max="3000" step="10"></label>
+   <label>Высота<input id="height" type="number" min="300" max="3000" step="10"></label>
+   <label>Глубина<input id="depth" type="number" min="200" max="1200" step="10"></label>
+  </div>
+  <div id="quick-widths" class="mf3d-quick-widths" aria-label="Быстрый выбор ширины"></div>
+  <div id="facade-summary" class="mf3d-facade-summary"></div>
  </div>
- <div class="mf3d-grid">
-  <label>X в комнате<input id="pos-x" type="number" min="-12000" max="12000" step="10"></label>
-  <label>От стены, мм<input id="pos-z" type="number" min="-12000" max="12000" step="10"></label>
-  <label>Поворот<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+ <div class="mf3d-control-card">
+  <div class="mf3d-control-title"><strong>Положение</strong><span>в помещении</span></div>
+  <div class="mf3d-grid">
+   <label>X, мм<input id="pos-x" type="number" min="-12000" max="12000" step="10"></label>
+   <label>От стены, мм<input id="pos-z" type="number" min="-12000" max="12000" step="10"></label>
+   <label>Поворот<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+  </div>
  </div>
  <label id="layout-control">Компоновка<select id="layout"><option value="drawers">Только ящики</option><option value="doors">Только двери</option><option value="combo">Ящики + двери</option><option value="niche">Ящики + открытая ниша</option></select></label>
  <label id="drawers-control">Количество ящиков<select id="drawers"><option value="0">Нет</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label>
