@@ -33,10 +33,20 @@ const kitchenTemplates={
     description:'Три равных фасада ящиков',defaults:{w:600,h:720,d:560,layout:'drawers',drawers:3,base:'plinth'},
     limits:{w:[300,1200],h:[600,1000],d:[450,700]},front:{kind:'drawers',count:3}
   },
+  'base.drawers_4':{
+    category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 4 ящика',itemName:'Кухня · нижний · 4 ящика',
+    description:'Четыре равных фасада ящиков',defaults:{w:600,h:720,d:560,layout:'drawers',drawers:4,base:'plinth'},
+    limits:{w:[300,1200],h:[600,1000],d:[450,700]},front:{kind:'drawers',count:4}
+  },
   'base.drawer_door':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · ящик + дверь',itemName:'Кухня · нижний · ящик + дверь',
     description:'Верхний ящик и нижний дверной фасад',defaults:{w:600,h:720,d:560,layout:'combo',drawers:1,base:'plinth'},
     limits:{w:[300,900],h:[600,1000],d:[450,700]},front:{kind:'combo',drawerRows:1,drawerRatio:.25,doors:1}
+  },
+  'base.drawers2_door':{
+    category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 2 ящика + дверь',itemName:'Кухня · нижний · 2 ящика + дверь',
+    description:'Два верхних ящика и нижняя дверь',defaults:{w:600,h:720,d:560,layout:'combo',drawers:2,base:'plinth'},
+    limits:{w:[350,1000],h:[600,1000],d:[450,700]},front:{kind:'combo',drawerRows:2,drawerRatio:.36,doors:1}
   },
   'base.sink_2door':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Мойка · 2 двери',itemName:'Кухня · мойка · 2 двери',
@@ -152,14 +162,52 @@ function scenePayload(){
 function addCatalogueButton(root,opt){
   const b=document.createElement('button');
   b.className='mf3d-module';
+  b.type='button';
+  b.dataset.category=opt.category||'other';
+  b.dataset.search=(opt.label+' '+opt.description).toLowerCase();
   if(opt.module)b.dataset.module=opt.module;
   if(opt.template)b.dataset.template=opt.template;
+  const icon=document.createElement('span');
+  icon.className='mf3d-module-icon '+(opt.category||'other');
+  icon.setAttribute('aria-hidden','true');
+  const copy=document.createElement('span');
+  copy.className='mf3d-module-copy';
   const strong=document.createElement('strong'),span=document.createElement('span');
   strong.textContent=opt.label;
   span.textContent=opt.description;
-  b.append(strong,span);
+  copy.append(strong,span);
+  b.append(icon,copy);
   b.onclick=()=>opt.template?addTemplate(opt.template):addModule(opt.module);
   root.append(b);
+}
+let activeModuleFilter='kitchen';
+function categoryKey(t){
+  if(t.module_type==='base_cabinet')return'base';
+  if(t.module_type==='wall_cabinet')return'wall';
+  if(t.module_type==='tall_cabinet')return'tall';
+  return'other';
+}
+function applyCatalogueFilter(){
+  const q=($('module-search')?.value||'').trim().toLowerCase();
+  for(const b of document.querySelectorAll('#module-catalogue .mf3d-module')){
+    const cat=b.dataset.category||'other';
+    const inTab=activeModuleFilter==='kitchen'?cat!=='other':cat===activeModuleFilter;
+    const inSearch=!q||(b.dataset.search||'').includes(q);
+    b.hidden=!(inTab&&inSearch);
+  }
+  for(const group of document.querySelectorAll('#module-catalogue .mf3d-module-group')){
+    group.hidden=!group.querySelector('.mf3d-module:not([hidden])');
+  }
+}
+function bindCatalogueControls(){
+  $('module-search').oninput=applyCatalogueFilter;
+  for(const b of document.querySelectorAll('#module-tabs [data-module-filter]')){
+    b.onclick=()=>{
+      activeModuleFilter=b.dataset.moduleFilter;
+      document.querySelectorAll('#module-tabs [data-module-filter]').forEach(x=>x.classList.toggle('active',x===b));
+      applyCatalogueFilter();
+    };
+  }
 }
 function renderModuleCatalogue(){
   const root=$('module-catalogue');
@@ -169,9 +217,9 @@ function renderModuleCatalogue(){
   const freeHead=document.createElement('h3');
   freeHead.textContent='Свободные модули';
   free.append(freeHead);
-  addCatalogueButton(free,{module:'chest',label:'Комод',description:'Свободная компоновка'});
-  addCatalogueButton(free,{module:'wardrobe',label:'Шкаф',description:'Платяной / полочный'});
-  addCatalogueButton(free,{module:'vanity',label:'Тумба',description:'Подвесная / напольная'});
+  addCatalogueButton(free,{module:'chest',category:'other',label:'Комод',description:'Свободная компоновка'});
+  addCatalogueButton(free,{module:'wardrobe',category:'other',label:'Шкаф',description:'Платяной / полочный'});
+  addCatalogueButton(free,{module:'vanity',category:'other',label:'Тумба',description:'Подвесная / напольная'});
   root.append(free);
 
   for(const category of['Нижние модули','Верхние модули','Пеналы']){
@@ -183,10 +231,11 @@ function renderModuleCatalogue(){
     for(const [id,t] of Object.entries(kitchenTemplates)){
       if(t.category!==category)continue;
       const module=defaultTemplateByModule[t.module_type]===id?t.module_type:null;
-      addCatalogueButton(group,{template:id,module,label:t.label,description:t.description});
+      addCatalogueButton(group,{template:id,module,category:categoryKey(t),label:t.label,description:t.description});
     }
     root.append(group);
   }
+  applyCatalogueFilter();
 }
 
 async function loadProjects(){
@@ -350,6 +399,17 @@ function addModule(type,announce=true){
   updateAll();
   if(announce)status(d.name+' добавлен в проект.');
 }
+function duplicateItem(){
+  const src=selected();
+  if(!src)return;
+  const copy={...src,item_id:uid(),name:src.name+' · копия',x:Math.min(12000,src.x+120),z:Math.min(12000,src.z+80)};
+  state.items.push(copy);
+  selectedId=copy.item_id;
+  state.selected_item_id=selectedId;
+  syncControls();
+  updateAll();
+  status('Копия модуля добавлена.');
+}
 function removeItem(){
   if(!selected())return;
   if(state.items.length===1){
@@ -358,6 +418,7 @@ function removeItem(){
   }
   state.items=state.items.filter(x=>x.item_id!==selectedId);
   selectedId=state.items[0].item_id;
+  state.selected_item_id=selectedId;
   syncControls();
   updateAll();
   status('Модуль удалён из проекта.');
@@ -376,6 +437,44 @@ function applyLimits(it,t){
     $(id).max=String(lim[1]);
   }
 }
+const STANDARD_WIDTHS=[300,350,400,450,500,600,700,800,900,1000,1200];
+function renderQuickWidths(it,t){
+  const root=$('quick-widths');
+  if(!root)return;
+  root.replaceChildren();
+  const lim=t?.limits?.w||[300,3000];
+  const values=STANDARD_WIDTHS.filter(v=>v>=lim[0]&&v<=lim[1]);
+  if(!values.includes(Number(it.width)))values.push(Number(it.width));
+  values.sort((a,b)=>a-b);
+  for(const v of values){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='secondary'+(Number(it.width)===v?' active':'');
+    b.textContent=String(v);
+    b.onclick=()=>{
+      it.width=v;
+      $('width').value=String(v);
+      updateAll();
+    };
+    root.append(b);
+  }
+}
+function renderFacadeSummary(it){
+  const root=$('facade-summary');
+  if(!root||!it)return;
+  const cells=facadeCells(it),groups=new Map();
+  for(const f of cells){
+    const title=f.kind==='drawer'?'ящик':'дверь',key=title+'|'+f.w+'|'+f.h;
+    if(!groups.has(key))groups.set(key,{title,w:f.w,h:f.h,qty:0});
+    groups.get(key).qty++;
+  }
+  if(!groups.size){
+    root.innerHTML='<strong>Фасады</strong><span>В этом шаблоне фасадов нет.</span>';
+    return;
+  }
+  const lines=[...groups.values()].map(g=>g.qty+' × '+g.title+' · '+mmText(g.w)+' × '+mmText(g.h)+' мм');
+  root.innerHTML='<strong>Фасады по правилу 1,5 мм</strong><span>'+lines.join('<br>')+'</span>';
+}
 async function syncControls(){
   const it=selected();
   $('item-controls').hidden=!it;
@@ -390,6 +489,8 @@ async function syncControls(){
     :'Свободная компоновка. Накладные фасады считаются с зазором 1,5 мм по каждой стороне.';
   applyLimits(it,t);
   for(const [id,key] of[['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z'],['rotation','rotation'],['layout','layout'],['drawers','drawers'],['base','base'],['handles','handles']])$(id).value=String(it[key]);
+  renderQuickWidths(it,t);
+  renderFacadeSummary(it);
   $('layout').disabled=Boolean(t);
   $('drawers').disabled=Boolean(t);
   $('layout-control').title=t?'Компоновка задаётся выбранным шаблоном модуля.':'';
@@ -627,6 +728,11 @@ function updateAll(){
   buildBoxes();
   renderCutlist();
   renderItems();
+  const it=selected();
+  if(it){
+    renderQuickWidths(it,templateFor(it));
+    renderFacadeSummary(it);
+  }
   $('room-badge').textContent=state.room.width+'×'+state.room.depth+'×'+state.room.height;
   $('item-badge').textContent=state.items.length+' '+(state.items.length===1?'предмет':'предметов');
 }
@@ -651,6 +757,7 @@ async function toOrder(){
 
 async function start(){
   try{user=await api('/auth/me')}catch{location.assign('/login');return}
+  bindCatalogueControls();
   renderModuleCatalogue();
   await loadProjects();
   await newProject();
@@ -681,6 +788,7 @@ for(const [id,key]of[['rotation','rotation'],['layout','layout'],['drawers','dra
 
 $('body-search').oninput=()=>searchMaterial($('body-search'),$('body-results'),'body');
 $('front-search').oninput=()=>searchMaterial($('front-search'),$('front-results'),'front');
+$('duplicate-item').onclick=duplicateItem;
 $('remove-item').onclick=removeItem;
 $('mode-2d').onclick=()=>setMode('2d');
 $('mode-3d').onclick=()=>setMode('3d');
