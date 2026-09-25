@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare pinned vendor without touching services or databases
+      - name: Prepare fixed Three 0.180.0 and branch snapshot, no deployment
         run: |
           mkdir -p /tmp/mf-vendor
           cd /tmp/mf-vendor
@@ -30,9 +30,12 @@ jobs:
           sed -i "s/from 'three'/from '.\/three.module.js'/" backend/v2/cabinet_assets/planner/vendor/OrbitControls.js
           cp /tmp/mf-vendor/node_modules/three/LICENSE backend/v2/cabinet_assets/planner/vendor/THREE-LICENSE.txt
           cp /tmp/mf-vendor/package-lock.json backend/v2/cabinet_assets/planner/vendor/package-lock.json
+          git rev-parse HEAD > /tmp/mf-source-commit.txt
           tar --exclude='.git' --exclude='node_modules' -czf /tmp/mf-webgl-source.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
           name: mf-webgl-source
-          path: /tmp/mf-webgl-source.tar.gz
+          path: |
+            /tmp/mf-webgl-source.tar.gz
+            /tmp/mf-source-commit.txt
           retention-days: 7
