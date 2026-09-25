@@ -6,7 +6,7 @@
 <script defer src="/account/3d.js"></script></head>
 <body class="mf-3d-page">
 <header class="mf3d-top"><a class="mf3d-brand" href="/">Martin Forest<small>3D-КОНСТРУКТОР</small></a>
-<div class="mf3d-top-actions"><a href="/account">Личный кабинет</a><button id="save-project">Сохранить</button><button id="download-spec" class="secondary">PDF проекта</button><button id="export-bazis" class="secondary">Экспорт БАЗИС</button><button id="to-order">Перенести в заказ</button></div></header>
+<div class="mf3d-top-actions"><a href="/account">Личный кабинет</a><button id="save-project">Сохранить</button><button id="download-spec" class="secondary">PDF проекта</button><button id="export-bazis" class="secondary">Экспорт OBJ</button><button id="to-order">Перенести в заказ</button></div></header>
 <main class="mf3d-shell">
 <aside class="mf3d-left">
  <section><div class="mf3d-section-head"><h2>Проекты</h2><button id="new-project" class="secondary">+ Новый</button></div><div id="projects" class="mf3d-projects"></div></section>
@@ -33,7 +33,7 @@
  <button id="reset-view" class="secondary">Вид комнаты</button></div>
  <div class="mf3d-canvas-wrap"><canvas id="scene" aria-label="3D-визуализация помещения и мебели"></canvas>
  <div class="mf3d-overlay"><span id="room-badge">4200×3200×2700</span><span id="item-badge">1 предмет</span></div>
- <div class="mf3d-help" id="scene-help">Мышь — вращение · колесо — масштаб</div></div>
+ <div class="mf3d-help" id="scene-help">Мышь — вращение · колесо — масштаб</div><div class="mf3d-export-note">OBJ можно импортировать в БАЗИС напрямую: Файл → Импорт → Файлы obj (*.obj)</div></div>
  <details class="mf3d-cutlist"><summary>Предварительная деталировка всего проекта</summary><div id="cutlist"></div><p class="muted">В заказ передаются все предметы проекта. После переноса кромка, склейка и расчёт проверяются в обычном редакторе Martin Forest.</p></details>
 </section>
 <aside class="mf3d-right">
