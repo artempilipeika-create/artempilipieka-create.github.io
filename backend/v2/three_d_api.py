@@ -21,6 +21,7 @@ class Room(StrictModel):
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
+    template_id: str|None=Field(default=None,max_length=80)
     name: str=Field(min_length=1,max_length=120)
     x: int=Field(default=0,ge=-12000,le=12000)
     z: int=Field(default=0,ge=-12000,le=12000)
