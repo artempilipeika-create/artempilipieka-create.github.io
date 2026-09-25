@@ -1,0 +1,60 @@
+name: Studio staging read-only verification
+on:
+  push:
+    branches: [mf-3d-studio-20260925]
+    paths: [.github/workflows/mf-3d-live-readonly.yml]
+permissions:
+  contents: read
+jobs:
+  public-get-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4950cfcec3a8c80e69e337c0600c89e4955c52c3
+          persist-credentials: false
+      - name: Public staging GETs, no credentials or writes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, time, urllib.request
+          from pathlib import Path
+          base='https://martin-forest-v2-staging-production.up.railway.app'
+          paths={'/constructor':'backend/v2/cabinet_assets/constructor.html','/account/3d.js':'backend/v2/cabinet_assets/3d.js','/account/3d-studio.js':'backend/v2/cabinet_assets/3d-studio.js','/account/3d-studio.css':'backend/v2/cabinet_assets/3d-studio.css'}
+          csp="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args,**kwargs): return None
+          opener=urllib.request.build_opener(NoRedirect)
+          output=Path('qa-output/studio-live');output.mkdir(parents=True,exist_ok=True)
+          result={}
+          for attempt in range(1,7):
+              result={'expected_commit':'4950cfcec3a8c80e69e337c0600c89e4955c52c3','deployment_id':'8eeb617e-aedc-48dd-8708-93c15fe1b648','base':base,'method':'GET only; no authentication','attempt':attempt,'endpoints':[]}
+              try:
+                  for path in ['/health',*paths]:
+                      req=urllib.request.Request(base+path,headers={'User-Agent':'MartinForest-Studio-Readonly-Verification','Cache-Control':'no-cache'},method='GET')
+                      with opener.open(req,timeout=15) as response:
+                          body=response.read(1000000)
+                          record={'path':path,'status':response.status,'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}
+                          assert response.status==200, str(record)
+                          if path in paths:
+                              record['matches_tested_source']=body==Path(paths[path]).read_bytes()
+                              record['csp_unchanged']=response.headers.get('Content-Security-Policy')==csp
+                              assert record['matches_tested_source'], 'Source mismatch: '+path
+                              assert record['csp_unchanged'], 'CSP mismatch: '+path
+                          result['endpoints'].append(record)
+                  result['success']=True
+                  break
+              except Exception as e:
+                  result['success']=False;result['error']=str(e)
+                  if attempt<6:time.sleep(10)
+          (output/'results.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
+          print(json.dumps(result,ensure_ascii=False,indent=2))
+          assert result.get('success'), result.get('error')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-staging-readonly
+          path: qa-output/studio-live/results.json
+          retention-days: 7
