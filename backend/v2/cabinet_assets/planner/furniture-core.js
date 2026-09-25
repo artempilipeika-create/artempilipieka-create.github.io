@@ -45,7 +45,7 @@
   function tier(it){return it.module_type==='wall_cabinet'?'wall':it.module_type==='base_cabinet'?'base':it.module_type==='tall_cabinet'?'tall':'other';}
   function rotateXZ(x,z,r){
     const a=r*Math.PI/180,c=Math.round(Math.cos(a)),s=Math.round(Math.sin(a));
-    return{x:x*c-z*s,z:x*s+z*c};
+    return{x:x*c-z*s||0,z:x*s+z*c||0};
   }
   function bounds(it,room,includeFront=true){
     const points=[];

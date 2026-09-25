@@ -1,6 +1,10 @@
 import {bounds,elevation,tier,rotateXZ,placementError} from './furniture-core.mjs';
 const rounded=it=>({...it,x:Math.round(it.x),z:Math.round(it.z),elevation_mm:Math.round(it.elevation_mm)});
-const verticalPeers=(a,b,room)=>Math.abs(elevation(a,room)-elevation(b,room))<180&&((tier(a)==='wall')===(tier(b)==='wall'));
+const verticalPeers=(a,b,room)=>{
+  const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
+  const ay=elevation(a,room),by=elevation(b,room);
+  return Math.abs(ay-by)<180||(aw&&Math.abs(ay+a.height-by-b.height)<180);
+};
 /** A drag retains anchors, not mutations of the saved model. Release radius > capture. */
 export function snapItem(raw,items,room,options={},previous={}){
   let it={...raw,elevation_mm:elevation(raw,room)};
@@ -48,7 +52,7 @@ export function snapItem(raw,items,room,options={},previous={}){
       guides.push({axis:cross,value:aligned+direction*it.depth/2*(line==='front'?1:-1),text:line==='front'?'Линия фасадов':'Линия задних стенок'});
     }
   }
-  if(tier(it)==='wall'){
+  if(tier(it)==='wall'&&options.allowElevation!==false){
     const ys=[...new Set([options.upperRow??1500,...peers.map(x=>elevation(x,room))])];
     ys.sort((a,b)=>Math.abs(a-it.elevation_mm)-Math.abs(b-it.elevation_mm));
     if(ys.length&&Math.abs(ys[0]-it.elevation_mm)<(previous.y===ys[0]?threshold*1.65:threshold)){

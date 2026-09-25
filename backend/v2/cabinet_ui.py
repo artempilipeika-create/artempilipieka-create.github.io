@@ -20,7 +20,25 @@ def router():
     def account(): return Response((root/'index.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     @api.get('/constructor.html')
     @api.get('/constructor')
-    def constructor(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
+    def constructor(): return Response((root/'constructor-next.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
+    # Mounted only by the isolated, identity-checked staging v2 application.
+    @api.get('/constructor-next')
+    def constructor_next(): return Response((root/'constructor-next.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
+    @api.get('/constructor-legacy')
+    def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
+    planner_files={
+        'entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs',
+        'state-adapter.mjs','history.mjs','scene.mjs','module-mesh.mjs','placement.mjs',
+        'interaction.mjs','planner.css','vendor/three.module.js','vendor/three.core.min.js',
+        'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
+    }
+    @api.get('/account/planner/{asset:path}')
+    def planner_asset(asset:str):
+        if asset not in planner_files:return Response(status_code=404)
+        file=root/'planner'/asset
+        if not file.is_file():return Response(status_code=404)
+        mime='text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
+        return Response(file.read_bytes(),media_type=mime,headers={'Content-Security-Policy':CSP,'X-Content-Type-Options':'nosniff'})
     @api.get('/3d-view')
     @api.get('/3d-view.html')
     def three_d_view(): return Response((root/'3d_view.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})

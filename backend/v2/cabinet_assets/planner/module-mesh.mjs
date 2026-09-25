@@ -3,6 +3,8 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ} from './furniture-
 export class MeshFactory{
   constructor(adapter,invalidate){
     this.adapter=adapter;this.invalidate=invalidate;this.geometry=new THREE.BoxGeometry(1,1,1);
+    this.facadeEdges=new THREE.EdgesGeometry(this.geometry);
+    this.edgeMaterial=new THREE.LineBasicMaterial({color:0x9ba393,transparent:true,opacity:.34});
     this.materials=new Map();this.textures=new Map();
   }
   material(role,id,ghost=false){
@@ -49,7 +51,8 @@ export class MeshFactory{
     }
     const cells=facadeCells(it,this.adapter.template(it));
     for(const f of cells){
-      this.box(group,'front',f.w,f.h,18,f.cx,f.cy,D/2+11,front,ghost);
+      const panel=this.box(group,'front',f.w,f.h,18,f.cx,f.cy,D/2+11,front,ghost);
+      if(panel&&!ghost){const outline=new THREE.LineSegments(this.facadeEdges,this.edgeMaterial);outline.scale.copy(panel.scale);outline.position.copy(panel.position);outline.raycast=()=>{};group.add(outline);}
       if(it.handles==='handles'&&f.w>140&&f.h>100){
         // Visual handles only. Not a manufacturing specification or a hardware SKU.
         const drawer=f.kind==='drawer';
@@ -88,5 +91,5 @@ export class MeshFactory{
     return root;
   }
   signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.body_variant_id,it.front_variant_id]);}
-  dispose(){this.geometry.dispose();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());this.materials.clear();this.textures.clear();}
+  dispose(){this.facadeEdges.dispose();this.edgeMaterial.dispose();this.geometry.dispose();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());this.materials.clear();this.textures.clear();}
 }

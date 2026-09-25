@@ -182,3 +182,27 @@ def test_mobile_panels_selection_and_screenshot(page,api,settings,admin_user):
     page.locator('#scene-items .mf3d-project').first.click()
     page.locator('#planner-mobile-items').click()
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
+
+
+def test_top_controls_survive_async_inspector_refresh(page,api,settings,admin_user):
+    open_planner(page,api);seed(page,13)
+    page.locator('#mode-2d').click()
+    page.evaluate('MF_PLANNER.bridge.refresh()')
+    expect(page.locator('#studio-zoom-in')).to_be_enabled()
+    expect(page.locator('#studio-zoom-out')).to_be_enabled()
+    expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed','true')
+    page.locator('#planner-front').click();page.evaluate('MF_PLANNER.bridge.refresh()')
+    expect(page.locator('#planner-front')).to_have_attribute('aria-pressed','true')
+    expect(page.locator('#mode-3d')).to_have_attribute('aria-pressed','false')
+
+
+def test_new_project_cancels_active_drag_without_resurrecting_old_scene(page,api,settings,admin_user):
+    open_planner(page,api);seed(page,13);page.locator('#mode-2d').click()
+    start=point(page,0);page.mouse.move(start['x'],start['y']);page.mouse.down()
+    page.mouse.move(start['x']+35,start['y']+20,steps=5)
+    assert page.evaluate('Boolean(MF_PLANNER.interaction.gesture)')
+    page.evaluate('MF_PLANNER.bridge.newProject()');page.mouse.up()
+    expect(page.locator('#studio-empty-scene')).to_be_visible()
+    assert page.evaluate('MF_PLANNER.adapter.items.length')==0
+    assert page.evaluate('MF_PLANNER.history.undoStack.length')==0
+    assert page.evaluate('MF_PLANNER.scene.controls.enabled') is True

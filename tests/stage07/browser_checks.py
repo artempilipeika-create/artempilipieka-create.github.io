@@ -22,7 +22,7 @@ def page(settings):
     OUT.mkdir(parents=True,exist_ok=True)
     policy=WebPolicy('https://testserver',Fernet.generate_key(),network_auth_per_hour=100000,network_emails_per_hour=100000)
     with TestClient(create_app(settings,policy),base_url=policy.origin) as transport, sync_playwright() as p:
-        browser=p.chromium.launch(headless=True)
+        browser=p.chromium.launch(headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
         context=browser.new_context(viewport={'width':1440,'height':1000})
         errors=[]
         def request(route):
@@ -405,7 +405,7 @@ def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin
     page.locator('[data-module="chest"]').click()
     page.locator('#project-name').fill('Комод из 3D')
     page.locator('#width').fill('1200');page.locator('#height').fill('900');page.locator('#depth').fill('500')
-    page.get_by_role('button',name='2D',exact=True).click();expect(page.locator('#scene-help')).to_contain_text('2D')
+    page.locator('#mode-2d').click();expect(page.locator('#scene-help')).to_contain_text('2D')
     page.get_by_role('button',name='3D',exact=True).click()
     page.locator('#body-search').fill('QA621 PO')
     page.locator('#body-results button').first.click()
@@ -447,7 +447,7 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
     page.locator('#pos-x').fill('900');page.locator('#rotation').select_option('90')
     expect(page.locator('#scene-items .mf3d-project')).to_have_count(4)
-    page.get_by_role('button',name='2D',exact=True).click();expect(page.locator('#scene-help')).to_contain_text('2D');expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed','true')
+    page.locator('#mode-2d').click();expect(page.locator('#scene-help')).to_contain_text('2D');expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed','true')
     page.get_by_role('button',name='Сохранить',exact=True).click();expect(page.locator('#status')).to_contain_text('сохранён')
     page.locator('#to-order').click()
     page.wait_for_url('**/editor?order=*')

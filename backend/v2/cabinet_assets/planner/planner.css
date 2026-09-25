@@ -57,3 +57,10 @@
  .mf-webgl .studio-scene-caption{font-size:8px;min-height:25px}
 }
 @media(max-width:370px){.mf-webgl #planner-tools{gap:3px;padding-inline:5px}.mf-webgl #planner-tools>button,.mf-webgl #planner-tools>select{font-size:9px;padding-inline:5px}.mf-webgl #planner-tools #planner-layer{max-width:100px}}
+
+/* Full-screen studio must not inherit account-page scroll space. */
+html:has(body.mf-webgl){height:100%;overflow:hidden}
+body.mf-webgl{height:100dvh;overflow:hidden}
+.mf-webgl .mf3d-cutlist{margin:0}
+.mf-webgl .mf3d-cutlist>summary{padding:0;background:transparent}
+.mf-webgl #planner-mobile-nav{margin:0;flex-wrap:nowrap}

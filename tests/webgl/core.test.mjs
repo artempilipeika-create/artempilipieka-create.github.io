@@ -76,3 +76,20 @@ test('WebGL route has no competing legacy canvas controller',()=>{
  assert.ok(src.includes("ctx=plannerRequested?null:canvas.getContext('2d')"));assert.ok(src.includes('function draw(){\n  if(plannerRequested)return;'));assert.ok(src.includes('if(!plannerRequested){\ncanvas.onpointerdown'));
  assert.ok(src.includes('return globalThis.MF_FURNITURE_CORE.facadeCells(it,templateFor(it))'));
 });
+
+
+test('Different-height upper cabinets align without changing legacy height',()=>{
+ const upper=item({module_type:'wall_cabinet',height:720,depth:320,base:'wall'});
+ const shorter=item({item_id:'b',module_type:'wall_cabinet',height:360,depth:320,base:'wall',x:615,z:0});
+ const result=snapItem(shorter,[upper],room,{threshold:45,allowElevation:false});
+ assert.equal(result.error,'');assert.equal(result.item.x,600);
+ assert.equal(elevation(result.item,room),room.height-shorter.height-500);
+});
+
+
+test('Decorative outlines do not intercept real-surface selection',()=>{
+ const mesh=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/module-mesh.mjs',import.meta.url),'utf8');
+ const scene=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/scene.mjs',import.meta.url),'utf8');
+ assert.ok(mesh.includes('outline.raycast=()=>{}'));
+ assert.ok(scene.includes('.find(h=>h.object.isMesh&&h.object.userData.itemId)'));
+});

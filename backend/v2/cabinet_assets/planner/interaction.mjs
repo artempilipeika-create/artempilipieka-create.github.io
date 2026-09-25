@@ -105,7 +105,18 @@ export class Interaction {
   });}
   modify(patch,label='Изменение модуля'){
     const source=this.adapter.selected;if(!source)return false;
-    return this.change(label,()=>{const it={...source,...patch},error=this.adapter.validate(it);if(error)throw new Error(error);this.adapter.replace(it);});
+    return this.change(label,()=>{
+      const it={...source,...patch};
+      if(Number.isFinite(patch.depth)&&patch.depth!==source.depth){
+        const r=this.adapter.room,delta=(patch.depth-source.depth)/2,clearance=this.options().wallOffset||0;
+        if(source.rotation===0&&Math.abs(source.z-source.depth/2+r.depth/2-clearance)<1)it.z+=delta;
+        if(source.rotation===180&&Math.abs(r.depth/2-source.z-source.depth/2-clearance)<1)it.z-=delta;
+        if(source.rotation===90&&Math.abs(r.width/2-source.x-source.depth/2-clearance)<1)it.x-=delta;
+        if(source.rotation===270&&Math.abs(source.x-source.depth/2+r.width/2-clearance)<1)it.x+=delta;
+        it.x=Math.round(it.x);it.z=Math.round(it.z);
+      }
+      const error=this.adapter.validate(it);if(error)throw new Error(error);this.adapter.replace(it);
+    });
   }
   remove(){const id=this.adapter.selected?.item_id;if(id)this.change('Удаление модуля',()=>this.adapter.remove(id));}
   duplicate(){

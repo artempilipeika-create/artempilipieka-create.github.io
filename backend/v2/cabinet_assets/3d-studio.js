@@ -129,6 +129,7 @@
   get('studio-clear-search').onclick=()=>{get('module-search').value='';activeModuleFilter='all';applyCatalogueFilter();};
   get('studio-item-search').oninput=()=>renderItems();
   function focusItem(it){
+    if(document.body.dataset.plannerRequested==='webgl'){if(it)document.dispatchEvent(new CustomEvent('mf:planner-focus',{detail:it.item_id}));return;}
     if(!it)return;
     selectItem(it);
     const lift=it.module_type==='wall_cabinet'?Math.max(0,state.room.height-it.height-500):0;
@@ -193,6 +194,7 @@
   get('studio-zoom-in').onclick=()=>{zoom=Math.max(.55,zoom-.12);};get('studio-zoom-out').onclick=()=>{zoom=Math.min(2,zoom+.12);};
   const reset=get('reset-view').onclick;
   function fitRoom(){
+    if(document.body.dataset.plannerRequested==='webgl')return;
     if(!state)return;
     reset();cameraTarget={x:0,y:state.room.height*.44/500,z:0};
     const r=canvas.getBoundingClientRect(),points=[];
@@ -281,7 +283,7 @@
   get('new-project').addEventListener('click',guardDiscard,true);
   get('projects').addEventListener('click',guardDiscard,true);
   status=function studioStatus(message){
-    const errors={version_conflict:'Проект изменился на сервере. Откройте актуальную версию перед сохранением.',unauthorized:'Сессия завершена. Войдите в личный кабинет заново.',forbidden:'Для этого действия недостаточно прав.'};
+    const errors={PROJECT_3D_VERSION_CONFLICT:'Проект изменился на сервере. Откройте актуальную версию перед сохранением.',version_conflict:'Проект изменился на сервере. Откройте актуальную версию перед сохранением.',unauthorized:'Сессия завершена. Войдите в личный кабинет заново.',forbidden:'Для этого действия недостаточно прав.'};
     return original.status(errors[message]||message);
   };
   const help=get('studio-help-dialog');get('studio-help').onclick=()=>{document.querySelector('.studio-menu').open=false;help.showModal();};get('studio-help-close').onclick=()=>help.close();

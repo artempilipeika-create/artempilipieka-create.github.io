@@ -1,4 +1,5 @@
 'use strict';
+const plannerRequested=document.body.dataset.plannerRequested==='webgl';
 
 const $=id=>document.getElementById(id);
 const FACADE_GAP_MM=1.5;
@@ -621,32 +622,9 @@ function legacyFrontSpec(it){
   return{kind:'doors',count:1};
 }
 function facadeCells(it){
-  const t=templateFor(it),spec=t?.front||legacyFrontSpec(it);
-  const baseH=it.base==='plinth'?80:0;
-  const x0=-it.width/2,y0=baseH,W=it.width,H=Math.max(1,it.height-baseH),g=FACADE_GAP_MM,cells=[];
-  const cell=(kind,x,y,w,h)=>{
-    const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
-    cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
-  };
-  if(spec.kind==='none')return cells;
-  if(spec.kind==='doors'){
-    const n=Math.max(1,spec.count||1),cw=W/n;
-    for(let i=0;i<n;i++)cell('door',x0+i*cw,y0,cw,H);
-  }else if(spec.kind==='drawers'){
-    const n=Math.max(1,spec.count||it.drawers||1),ch=H/n;
-    for(let i=0;i<n;i++)cell('drawer',x0,y0+i*ch,W,ch);
-  }else if(spec.kind==='combo'){
-    const topH=H*(spec.drawerRatio||.42),bottomH=H-topH;
-    const doors=Math.max(1,spec.doors||1),doorW=W/doors;
-    for(let i=0;i<doors;i++)cell('door',x0+i*doorW,y0,doorW,bottomH);
-    const rows=Math.max(1,spec.drawerRows||1),rh=topH/rows;
-    for(let i=0;i<rows;i++)cell('drawer',x0,y0+bottomH+i*rh,W,rh);
-  }else if(spec.kind==='niche'){
-    const nicheH=H*(spec.nicheRatio||.35),bottomH=H-nicheH,rows=Math.max(1,spec.drawerRows||2),rh=bottomH/rows;
-    for(let i=0;i<rows;i++)cell('drawer',x0,y0+i*rh,W,rh);
-  }
-  return cells;
+  return globalThis.MF_FURNITURE_CORE.facadeCells(it,templateFor(it));
 }
+
 function buildItem(it){
   const S=1/500,W=it.width*S,H=it.height*S,D=it.depth*S,t=18*S;
   const bc=colorFor(materials.get(String(it.body_variant_id))),fc=colorFor(materials.get(String(it.front_variant_id)),true);
@@ -728,7 +706,7 @@ function faces(b){
   const v=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]].map(x=>({x:x[0],y:x[1],z:x[2]}));
   return[[0,1,2,3,.72],[4,5,6,7,1.05],[0,4,7,3,.84],[1,5,6,2,.92],[3,2,6,7,1.15],[0,1,5,4,.65]].map(f=>({verts:f.slice(0,4).map(i=>v[i]),sh:f[4],c:b.color}));
 }
-const canvas=$('scene'),ctx=canvas.getContext('2d');
+const canvas=$('scene'),ctx=plannerRequested?null:canvas.getContext('2d');
 function sizeCanvas(){
   const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),w=Math.max(1,r.width),h=Math.max(1,r.height);
   if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){
@@ -850,6 +828,7 @@ function draw3d(w,h){
   }
 }
 function draw(){
+  if(plannerRequested)return;
   const{w,h}=sizeCanvas();
   if(state){
     if(viewMode==='2d')draw2d(w,h);
@@ -946,7 +925,8 @@ async function start(){
   renderModuleCatalogue();
   await loadProjects();
   await newProject();
-  document.body.dataset.ready='true';
+  document.body.dataset.appReady='true';
+  if(!plannerRequested)document.body.dataset.ready='true';
   status('3D готов.');
   draw();
 }
@@ -978,6 +958,7 @@ $('remove-item').onclick=removeItem;
 $('mode-2d').onclick=()=>setMode('2d');
 $('mode-3d').onclick=()=>setMode('3d');
 $('reset-view').onclick=()=>{rotY=-.55;rotX=.2;zoom=1};
+if(!plannerRequested){
 canvas.onpointerdown=e=>{
   const it=viewMode==='2d'?hitItem2d(e.clientX,e.clientY):hitItem3d(e.clientX,e.clientY);
   drag=true;px=e.clientX;py=e.clientY;
@@ -1017,6 +998,8 @@ canvas.onwheel=e=>{
   zoom=Math.max(.55,Math.min(2,zoom+Math.sign(e.deltaY)*.08));
 };
 
+}
+
 $('save-project').onclick=()=>saveProject().catch(e=>status(e.message));
 $('new-project').onclick=()=>newProject().catch(e=>status(e.message));
 $('duplicate-project').onclick=()=>duplicateProject().catch(e=>status(e.message));
@@ -1027,6 +1010,7 @@ $('copy-share').onclick=()=>copyShare();
 $('download-spec').onclick=()=>downloadSpec().catch(e=>status(e.message));
 $('export-bazis').onclick=exportBazisProject;
 window.addEventListener('keydown',e=>{
+  if(plannerRequested)return;
   const tag=document.activeElement?.tagName;
   if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;
   const it=selected();if(!it)return;

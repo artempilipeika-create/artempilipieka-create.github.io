@@ -9,8 +9,11 @@
 <link rel="stylesheet" href="/account/3d-studio.css?v=20260925-1">
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
+<link rel="stylesheet" href="/account/planner/planner.css">
+<script defer src="/account/planner/bridge.js"></script>
+<script type="module" src="/account/planner/entry.mjs"></script>
 </head>
-<body class="mf-3d-page mf3d-studio">
+<body class="mf-3d-page mf3d-studio" data-planner-requested="webgl">
 <header class="mf3d-top">
  <a class="mf3d-brand" href="/" aria-label="Martin Forest — главная"><span class="studio-monogram" aria-hidden="true">m<span>f</span></span><span>Martin Forest<small>СТУДИЯ МЕБЕЛИ</small></span></a>
  <div class="studio-project-title"><label class="studio-sr" for="project-name">Название проекта</label><input id="project-name" value="Новый 3D-проект" maxlength="200"><span id="studio-save-state">Загрузка проекта…</span></div>

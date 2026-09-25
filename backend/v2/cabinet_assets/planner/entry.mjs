@@ -8,7 +8,7 @@ const make=(tag,id,text)=>{const el=document.createElement(tag);if(id)el.id=id;i
 const button=(id,text,title)=>{const b=make('button',id,text);b.type='button';b.className='secondary';if(title){b.title=title;b.setAttribute('aria-label',title);}return b;};
 const select=(id,label,choices)=>{const s=make('select',id);s.setAttribute('aria-label',label);for(const [value,text]of choices){const o=make('option',null,text);o.value=value;s.append(o);}return s;};
 function waitReady(){return new Promise((resolve,reject)=>{
-  const ready=()=>window.MF_PLANNER_BRIDGE&&document.body?.dataset.ready==='true';
+  const ready=()=>window.MF_PLANNER_BRIDGE&&(document.body?.dataset.appReady==='true'||document.body?.dataset.ready==='true');
   if(ready()){resolve();return;}
   const observer=new MutationObserver(()=>{if(ready()){observer.disconnect();clearTimeout(timer);resolve();}});
   observer.observe(document.documentElement,{attributes:true,subtree:true});
@@ -24,12 +24,13 @@ class PlannerApplication {
     await this.startRenderer();
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
+      if(reason==='before-project'){this.interaction?.cancel();return;}
       if(reason==='project'){this.interaction?.cancel();this.history.reset();this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
       this.sync();
     });
     this.history.onChange=()=>{get('planner-undo').disabled=!this.history.undoStack.length;get('planner-redo').disabled=!this.history.redoStack.length;};
     this.history.onChange();this.sync();this.scene.fit(this.adapter.items.length?'kitchen':'room');
-    this.ready=true;document.body.dataset.plannerReady='true';
+    this.ready=true;document.body.dataset.ready='true';document.body.dataset.plannerReady='true';
     this.adapter.status(this.scene.isFallback?'Резервный 2D-план. Проект доступен без перезагрузки.':'Сцена готова. Добавьте модуль из каталога или выберите шкаф.');
     return this;
   }
@@ -68,7 +69,7 @@ class PlannerApplication {
     get('planner-alignment').onchange=e=>{this.options.alignment=e.target.value;};
     offset.onchange=()=>{this.options.wallOffset=Math.max(0,Math.min(300,Number(offset.value)||0));offset.value=String(this.options.wallOffset);};
     auto.onchange=()=>{this.options.autoRotate=auto.checked;};
-    client.onclick=()=>{this.interaction.cancel();const on=document.body.classList.toggle('planner-client');client.setAttribute('aria-pressed',String(on));client.textContent=on?'Редактировать':'Просмотр';requestAnimationFrame(()=>{this.scene.resize();this.scene.fit('kitchen');});};
+    client.onclick=()=>{this.interaction.cancel();const on=document.body.classList.toggle('planner-client');client.setAttribute('aria-pressed',String(on));client.textContent=on?'Редактировать':'Просмотр';this.scene.highlight();this.scene.hover(null);requestAnimationFrame(()=>{this.scene.resize();this.scene.fit('kitchen');});};
     get('planner-retry').onclick=()=>this.startRenderer().then(()=>this.sync());
     const openPanel=which=>{
       const isInspector=which==='inspector',cls=isInspector?'studio-inspector-open':'studio-library-open';
@@ -136,6 +137,7 @@ class PlannerApplication {
   }
   sync(){
     if(!this.scene)return;const count=this.adapter.items.length;
+    get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
     this.scene.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;

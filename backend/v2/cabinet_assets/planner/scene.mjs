@@ -7,18 +7,18 @@ export class PlannerScene{
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
-    this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.15;
+    this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.0;
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#f2f3ed');
-    this.scene.add(new THREE.HemisphereLight('#ffffff','#b5b7a9',2.25));
-    this.sun=new THREE.DirectionalLight('#fffaf0',3.1);this.sun.position.set(3,7,5);this.sun.castShadow=true;
+    this.scene.add(new THREE.HemisphereLight('#ffffff','#b5b7a9',1.65));
+    this.sun=new THREE.DirectionalLight('#fffaf0',2.7);this.sun.position.set(3,7,5);this.sun.castShadow=true;
     this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.1,far:30});
-    this.sun.shadow.bias=-.0002;this.sun.shadow.normalBias=.012;this.sun.shadow.radius=3;this.scene.add(this.sun);
+    this.sun.shadow.bias=-.0002;this.sun.shadow.normalBias=.001;this.sun.shadow.radius=3;this.scene.add(this.sun);
     const fill=new THREE.DirectionalLight('#e9f0ff',.8);fill.position.set(-4,3,-1);this.scene.add(fill);
     this.perspective=new THREE.PerspectiveCamera(38,1,.025,150);
     this.ortho=new THREE.OrthographicCamera(-3,3,3,-3,.025,150);this.camera=this.perspective;
     this.camera.position.set(4,3.4,5);this.controls=new OrbitControls(this.camera,canvas);
-    this.controls.enableDamping=true;this.controls.dampingFactor=.12;this.controls.minDistance=.5;this.controls.maxDistance=28;
+    this.controls.enableDamping=true;this.controls.dampingFactor=.12;this.controls.minDistance=.5;this.controls.maxDistance=80;
     this.controls.maxPolarAngle=Math.PI*.495;this.controls.screenSpacePanning=true;this.controls.target.set(0,1,0);
     this.controls.addEventListener('change',()=>this.invalidate());
     this.factory=new MeshFactory(adapter,()=>this.invalidate());this.root=new THREE.Group();this.scene.add(this.root);
@@ -76,7 +76,7 @@ export class PlannerScene{
   setLayer(value){this.layer=value;this.sync();}
   highlight(error=''){
     const it=this.adapter.selected,entry=it?this.entries.get(it.item_id):null;
-    this.selectedBox.visible=Boolean(entry?.group.visible&&!this.preview);
+    this.selectedBox.visible=Boolean(entry?.group.visible&&!this.preview&&!document.body.classList.contains('planner-client'));
     if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group);this.selectedBox.material.color.set(error?'#bf6c43':'#346d4a');}
     this.placeLabel();
   }
@@ -101,7 +101,7 @@ export class PlannerScene{
     if(this.mode==='3d'){
       const dir=new THREE.Vector3(.8,.54,1).normalize();
       const vfov=this.perspective.fov*Math.PI/180,hfov=2*Math.atan(Math.tan(vfov/2)*this.perspective.aspect);
-      const radius=Math.max(.24,size.length()/2),distance=Math.max(radius/Math.sin(Math.min(vfov,hfov)/2)*1.1,1.2);
+      const radius=Math.max(.24,size.length()/2),distance=Math.max(radius/Math.sin(Math.min(vfov,hfov)/2)*1.02,1.2);
       this.camera.position.copy(center).addScaledVector(dir,distance);
     }else{
       const distance=20;
@@ -123,7 +123,7 @@ export class PlannerScene{
     this.camera.updateMatrixWorld();this.scene.updateMatrixWorld(true);this.raycaster.setFromCamera(this.ndc,this.camera);
     return this.raycaster;
   }
-  pick(x,y){const ray=this.cast(x,y);const hit=ray.intersectObjects([...this.entries.values()].filter(e=>e.group.visible).map(e=>e.group),true)[0];return hit?{id:hit.object.userData.itemId,point:hit.point}:null;}
+  pick(x,y){const ray=this.cast(x,y);const hit=ray.intersectObjects([...this.entries.values()].filter(e=>e.group.visible).map(e=>e.group),true).find(h=>h.object.isMesh&&h.object.userData.itemId);return hit?{id:hit.object.userData.itemId,point:hit.point}:null;}
   planePoint(x,y,plane){const point=new THREE.Vector3();return this.cast(x,y).ray.intersectPlane(plane,point)?point:null;}
   makePlane(it,hit){
     if(this.mode==='front'||this.mode==='left'||this.mode==='right'){

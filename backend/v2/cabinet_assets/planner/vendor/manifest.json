@@ -1,0 +1,13 @@
+{
+  "name": "three",
+  "version": "0.180.0",
+  "npm_integrity": "sha512-o+qycAMZrh+TsE01GqWUxUIKR1AL0S8pq7zDkYOQw8GqfX8b8VoCKYUoHbhiX5j+7hr8XsuHDVU6+gkQJQKg9w==",
+  "source": "https://www.npmjs.com/package/three/v/0.180.0",
+  "local_imports": true,
+  "files": {
+    "three.module.js": "e2b5ee6bccd38fd6d8a2428546b83c5f2426d84b152ef82be8055556e3b40eb6",
+    "three.core.min.js": "61ba0df005b05991361d040d8ff670e1aadfd0ce7aeebd1fdb0725957a8957de",
+    "OrbitControls.js": "06864a0fcb647730bfbc690b6c25a121199d716a3e299a40158509cbd247c3bf",
+    "THREE-LICENSE.txt": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
+  }
+}

@@ -7,8 +7,8 @@
   const oldUpdate=updateAll;
   updateAll=function(){const result=oldUpdate();emit('state');return result;};
   const oldNew=newProject,oldOpen=openProject;
-  newProject=async function(...args){const result=await oldNew(...args);emit('project');return result;};
-  openProject=async function(...args){const result=await oldOpen(...args);emit('project');return result;};
+  newProject=async function(...args){emit('before-project');const result=await oldNew(...args);emit('project');return result;};
+  openProject=async function(...args){emit('before-project');const result=await oldOpen(...args);emit('project');return result;};
   const oldShare=shareProject,oldCopy=duplicateProject,oldPdf=downloadSpec;
   shareProject=async function(){await saveProject();return oldShare();};
   duplicateProject=async function(){await saveProject();return oldCopy();};
@@ -26,16 +26,16 @@
     subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener);},
     select:id=>{
       selectedId=state.items.some(it=>it.item_id===id)?id:null;state.selected_item_id=selectedId;
-      Promise.resolve(syncControls()).catch(error=>status(error.message));updateAll();
+      Promise.resolve(syncControls()).then(()=>emit('state')).catch(error=>status(error.message));updateAll();
     },
     snapshot:()=>copy({name:$('project-name').value,scene:state,selectedId}),
     restore:snapshot=>{
       state=copy(snapshot.scene);selectedId=snapshot.selectedId||state.selected_item_id||null;
       if(!state.items.some(it=>it.item_id===selectedId))selectedId=state.items[0]?.item_id||null;
       state.selected_item_id=selectedId;viewMode=state.view_mode||'3d';$('project-name').value=snapshot.name;
-      syncRoom();Promise.resolve(syncControls()).catch(error=>status(error.message));updateAll();renderProjects();
+      syncRoom();Promise.resolve(syncControls()).then(()=>emit('state')).catch(error=>status(error.message));updateAll();renderProjects();
     },
-    refresh:()=>{Promise.resolve(syncControls()).catch(error=>status(error.message));updateAll();},
+    refresh:()=>{Promise.resolve(syncControls()).then(()=>emit('state')).catch(error=>status(error.message));updateAll();},
     view:mode=>{viewMode=mode==='top'?'2d':'3d';state.view_mode=viewMode;updateAll();},
     payload:()=>scenePayload(),
     save:()=>saveProject(),
