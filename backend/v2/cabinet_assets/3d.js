@@ -86,6 +86,9 @@ const defaultTemplateByModule={
   tall_cabinet:'tall.one_door'
 };
 
+const bazisModules=[{"id":"bazis.460987c9a8e8","source_file":"НМД1-200. Карго.fr3d","source_sha256":"a2a0c04ed70c493824d145c040f285b7c84deda6a0995b2cabea69c7b3bdfbf4","label":"Карго 200","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":200,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[150,400],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.0211e4f77fc4","source_file":"НМД1-600. отк L.fr3d","source_sha256":"cd5f119cec7467047cdac6ea1bc4aaafa95c4fa092cc92a101509003dbbd16b5","label":"Нижний 1 дверь L","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.facfa0cd038b","source_file":"НМД1-600. отк L.Мойка.fr3d","source_sha256":"cbc8eda7e1437b09e8043e147663ecfa63848bc942ef319456dae8ec6f8e9131","label":"Нижний 1 дверь L · мойка","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.784bf9af84f8","source_file":"НМД1-600. отк P.fr3d","source_sha256":"1ac5f7edba13c42c67007525a3b66738eb7937b4c6a35fb901d50144ad696df1","label":"Нижний 1 дверь P","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.b226370aab54","source_file":"НМД1-600. отк P.Мойка.fr3d","source_sha256":"bf92ea3711072d167897fc63d9c7fcf50319ffcda370e4e95e6921f71298b9ab","label":"Нижний 1 дверь P · мойка","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.3079d0656398","source_file":"НМД2-600..fr3d","source_sha256":"d79434c8d5e93744fcb37461491c9ec7560c1c78ad16d99a76ce7433fb9dfc80","label":"Нижний 2 двери","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[500,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":2},"resize":true},{"id":"bazis.5731630ddd87","source_file":"НМД2-600.Мойка.fr3d","source_sha256":"29f75ec2208db5f29d0fdc3a01718419a73635b0ae64d84424460229895704f6","label":"Нижний 2 двери · мойка","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[500,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":2},"resize":true},{"id":"bazis.39f282e08f0c","source_file":"НМРШ2-600.З.С 3ММ Гвозди  Шариковые напр без довод .fr3d","source_sha256":"7b141b668de043829e27e2bb48c9199517a354897c93ba55f4bfd1b9ff27dcbc","label":"Нижний 2 ящика","group":"Ящики БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"drawers","drawers":2,"base":"plinth"},"limits":{"w":[300,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"drawers","count":2},"resize":true},{"id":"bazis.5f5697e39e27","source_file":"НМРШ3-600.З.С 3ММ Гвозди  Шариковые напр без довод .fr3d","source_sha256":"c9ae8a439ccd0c158b70e6cd9b0dcabe175adda43e59a2d8c8e09e7cd65e979d","label":"Нижний 3 ящика","group":"Ящики БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"drawers","drawers":3,"base":"plinth"},"limits":{"w":[300,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"drawers","count":3},"resize":true},{"id":"bazis.b4420a0b4bbc","source_file":"НМУ-1000. Д1 (Мойка) L.fr3d","source_sha256":"5bc821b8f246c9e93a777dab38a032d900731b92b14be0839b9c5a5116117764","label":"Угловой Д1 L · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.694511d86dab","source_file":"НМУ-1000. Д1 (Мойка) P.fr3d","source_sha256":"3a1f04600696fa767cb1de53ac3bab6994a687b0c7fa98ce7172acd6e988e04e","label":"Угловой Д1 P · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.2ae4fb340b9e","source_file":"НМУ-1000. Д1 (Полка) L.fr3d","source_sha256":"f12f03b2e78a50e605ca21bf4c84a7e134bd8cf3efb8def19dcad220c86ce50a","label":"Угловой Д1 L · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.e182ac006a55","source_file":"НМУ-1000. Д1 (Полка) P.fr3d","source_sha256":"210766c11c885da75f21a6647ea6c7731d14ab22c84a0c9e9f3264c211020312","label":"Угловой Д1 P · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.a3270de534ee","source_file":"НМУ-1000. Д2 (Мойка) L.fr3d","source_sha256":"dcc4cc52e3ae24ab001dd8c1f7c33756744bca923ef24900556521736a01a474","label":"Угловой Д2 L · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.3858e6709c36","source_file":"НМУ-1000. Д2 (Мойка) P.fr3d","source_sha256":"d845c9cadd5f6bbf027e5bcbbe5da430e04cb15368ececd2a0b9bc18faf1ab9d","label":"Угловой Д2 P · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.2cc272f6bcdc","source_file":"НМУ-1000. Д2 (Полка) L.fr3d","source_sha256":"5c6732152cb42d99cdacae21a8ad7105126c50fca68ebcbc64e1ed0b6edcfff5","label":"Угловой Д2 L · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.b738c256b0c1","source_file":"НМУ-1000. Д2 (Полка) P.fr3d","source_sha256":"8a0e6489def9e870f9592bcfd2d2316319584df6b645c800bb732cd8e56ecf02","label":"Угловой Д2 P · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.9e77f4333545","source_file":"НШД-600. 595мм .fr3d","source_sha256":"b1d83b58fc32f95f5a1924bad1c60f50267f38f13de122db4def7f0610d1df65","label":"Модуль 600 · ниша 595","group":"Техника БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[550,650],"h":[600,1000],"d":[450,700]},"front":{"kind":"none"},"resize":true},{"id":"bazis.a95a0f22b385","source_file":"Фасад.Обычный ПМ.fr3d","source_sha256":"edddcff08dfff9af3b77dfe8f14897cfb66fa2b946c709bb16ef01a0a3ec22ef","label":"Фасад · обычный ПМ","group":"Компоненты БАЗИС","module_type":"component","defaults":{"w":600,"h":720,"d":18,"layout":"doors","drawers":0,"base":"wall"},"limits":{"w":[100,3000],"h":[100,3000],"d":[16,30]},"front":{"kind":"none"},"resize":false,"component":true}];
+const bazisById=new Map(bazisModules.map(x=>[x.id,x]));
+
 let user=null,projects=[],project=null,state=null,selectedId=null,viewMode='3d';
 let rotY=-.55,rotX=.2,zoom=1,drag=false,px=0,py=0,boxes=[],materials=new Map();
 
@@ -112,7 +115,7 @@ async function material(id){
   }catch{return null}
 }
 function selected(){return state?.items.find(x=>x.item_id===selectedId)||null}
-function templateFor(it){return it?.template_id?kitchenTemplates[it.template_id]||null:null}
+function templateFor(it){if(it?.bazis_id)return bazisById.get(it.bazis_id)||null;return it?.template_id?kitchenTemplates[it.template_id]||null:null}
 function inferTemplate(it={}){
   if(it.module_type==='base_cabinet'){
     if(it.layout==='drawers')return Number(it.drawers)>=3?'base.drawers_3':'base.drawers_2';
@@ -203,6 +206,7 @@ function addCatalogueButton(root,opt){
   b.dataset.search=(opt.label+' '+opt.description).toLowerCase();
   if(opt.module)b.dataset.module=opt.module;
   if(opt.template)b.dataset.template=opt.template;
+  if(opt.bazis)b.dataset.bazis=opt.bazis;
   const icon=document.createElement('img');
   icon.className='mf3d-module-thumb';
   icon.alt='';
@@ -214,7 +218,7 @@ function addCatalogueButton(root,opt){
   span.textContent=opt.description;
   copy.append(strong,span);
   b.append(icon,copy);
-  b.onclick=()=>opt.template?addTemplate(opt.template):addModule(opt.module);
+  b.onclick=()=>opt.bazis?addBazisModule(opt.bazis):(opt.template?addTemplate(opt.template):addModule(opt.module));
   root.append(b);
 }
 let activeModuleFilter='all';
@@ -258,6 +262,17 @@ function renderModuleCatalogue(){
   addCatalogueButton(free,{module:'wardrobe',category:'other',label:'Шкаф',description:'Платяной / полочный'});
   addCatalogueButton(free,{module:'vanity',category:'other',label:'Тумба',description:'Подвесная / напольная'});
   root.append(free);
+
+  const bazisGroup=document.createElement('div');
+  bazisGroup.className='mf3d-module-group';
+  const bazisHead=document.createElement('h3');
+  bazisHead.textContent='Мои модули БАЗИС';
+  bazisGroup.append(bazisHead);
+  for(const m of bazisModules){
+    if(m.component)continue;
+    addCatalogueButton(bazisGroup,{bazis:m.id,category:'bazis',label:m.label,description:m.source_file});
+  }
+  root.append(bazisGroup);
 
   for(const category of['Нижние модули','Верхние модули','Пеналы']){
     const group=document.createElement('div');
@@ -420,6 +435,21 @@ function addTemplate(templateId,announce=true){
   updateAll();
   if(announce)status(t.label+' добавлен в проект.');
 }
+function addBazisModule(bazisId,announce=true){
+  const m=bazisById.get(bazisId);
+  if(!m||m.component)return;
+  const d=m.defaults,n=state.items.filter(x=>x.bazis_id===bazisId).length+1;
+  const it={
+    item_id:uid(),module_type:m.module_type,template_id:null,bazis_id:m.id,bazis_file:m.source_file,
+    bazis_sha256:m.source_sha256,bazis_resize:Boolean(m.resize),name:m.label+(n>1?' '+n:''),
+    x:Math.min(1200,state.items.length*250),z:-Math.max(0,state.room.depth/2-d.d/2-100),rotation:0,
+    width:d.w,height:d.h,depth:d.d,layout:d.layout,drawers:d.drawers,base:d.base,handles:'handles',
+    body_variant_id:null,front_variant_id:null
+  };
+  state.items.push(it);selectedId=it.item_id;state.selected_item_id=selectedId;
+  syncControls();updateAll();
+  if(announce)status(m.label+' добавлен из библиотеки БАЗИС.');
+}
 function addModule(type,announce=true){
   if(defaultTemplateByModule[type])return addTemplate(defaultTemplateByModule[type],announce);
   const d=moduleDefs[type]||moduleDefs.chest,n=itemNumberFor(type,null);
@@ -521,9 +551,10 @@ async function syncControls(){
   }
   const t=templateFor(it);
   $('item-title').textContent=it.name;
-  $('template-info').textContent=t
-    ?t.label+' · '+t.description+' · накладные фасады, зазор 1,5 мм по каждой стороне.'
-    :'Свободная компоновка. Накладные фасады считаются с зазором 1,5 мм по каждой стороне.';
+  $('template-info').textContent=it.bazis_id
+    ?'БАЗИС · '+it.bazis_file+' · привязан к исходному .fr3d.'
+    :(t?t.label+' · '+t.description+' · накладные фасады, зазор 1,5 мм по каждой стороне.'
+       :'Свободная компоновка. Накладные фасады считаются с зазором 1,5 мм по каждой стороне.');
   applyLimits(it,t);
   for(const [id,key] of[['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z'],['rotation','rotation'],['layout','layout'],['drawers','drawers'],['base','base'],['handles','handles']])$(id).value=String(it[key]);
   renderQuickWidths(it,t);
@@ -598,6 +629,7 @@ function facadeCells(it){
     const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
     cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
   };
+  if(spec.kind==='none')return cells;
   if(spec.kind==='doors'){
     const n=Math.max(1,spec.count||1),cw=W/n;
     for(let i=0;i<n;i++)cell('door',x0+i*cw,y0,cw,H);
@@ -774,6 +806,33 @@ function updateAll(){
   $('item-badge').textContent=state.items.length+' '+(state.items.length===1?'предмет':'предметов');
 }
 
+function exportBazisProject(){
+  const missing=state.items.filter(x=>!x.bazis_file);
+  if(missing.length){
+    status('Для экспорта БАЗИС используйте только модули из раздела «Мои БАЗИС». Без привязки: '+missing.length);
+    return;
+  }
+  const payload={
+    format:'martin-forest-bazis-project-v1',
+    project_name:$('project-name').value.trim()||'3D-проект',
+    exported_at:new Date().toISOString(),
+    room:{...state.room},
+    items:state.items.map(it=>{
+      const src=bazisById.get(it.bazis_id);
+      return{
+        bazis_id:it.bazis_id,source_file:it.bazis_file,source_sha256:it.bazis_sha256,
+        resize:Boolean(it.bazis_resize),source_default:src?{width:src.defaults.w,height:src.defaults.h,depth:src.defaults.d}:null,
+        width:it.width,height:it.height,depth:it.depth,x:it.x,z:it.z,rotation:it.rotation,name:it.name
+      };
+    })
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='Martin_Forest_BAZIS_Project.json';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  status('Файл для импорта в БАЗИС подготовлен.');
+}
+
 async function toOrder(){
   for(const it of state.items)if(!it.body_variant_id||!it.front_variant_id)throw new Error('Выберите материалы корпуса и фасадов для всех модулей.');
   await saveProject();
@@ -855,6 +914,7 @@ $('to-order').onclick=()=>toOrder().catch(e=>status(e.message));
 $('share-project').onclick=()=>shareProject().catch(e=>status(e.message));
 $('copy-share').onclick=()=>copyShare();
 $('download-spec').onclick=()=>downloadSpec().catch(e=>status(e.message));
+$('export-bazis').onclick=exportBazisProject;
 
-window.MF3D_KITCHEN={facadeGapMm:FACADE_GAP_MM,templates:kitchenTemplates,facadeCells};
+window.MF3D_KITCHEN={facadeGapMm:FACADE_GAP_MM,templates:kitchenTemplates,bazisModules,facadeCells};
 start().catch(e=>status(e.message));
