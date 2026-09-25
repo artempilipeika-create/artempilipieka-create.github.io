@@ -15,7 +15,10 @@ export class Interaction {
     listen(this.canvas,'pointerleave',()=>{if(!this.gesture)this.scene.hover(null);});
     listen(this.canvas,'lostpointercapture',()=>{if(this.gesture)this.cancel();});
     listen(document,'keydown',e=>this.key(e),true);
-    listen(window,'blur',()=>this.cancel());
+    const finishTouch=e=>{if(e.pointerType==='touch'){this.touches.delete(e.pointerId);if(!this.touches.size)this.touchBlocked=false;}};
+    listen(document,'pointerup',finishTouch,true);
+    listen(document,'pointercancel',finishTouch,true);
+    listen(window,'blur',()=>{this.cancel();this.touches.clear();this.touchBlocked=false;});
     this.catalogue=document.getElementById('module-catalogue');
     listen(this.catalogue,'click',e=>{
       const card=e.target.closest('.mf3d-module');if(!card||this.suspended)return;
@@ -133,7 +136,8 @@ export class Interaction {
   key(e){
     if(e.key==='Escape'&&(this.gesture||this.catalogueDraft)){this.consume(e);this.cancel();return;}
     if(!this.editable()||document.querySelector('dialog[open]')||e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
-    const k=e.key.toLowerCase();
+    let k=e.key.toLowerCase();
+    if(!['z','y'].includes(k)&&['KeyZ','KeyY'].includes(e.code))k=e.code.slice(3).toLowerCase();
     if((e.ctrlKey||e.metaKey)&&(k==='z'||k==='y')){this.consume(e);this.cancel();(k==='y'||e.shiftKey)?this.history.redo():this.history.undo();return;}
     if(e.target.closest?.('button,summary,a,[role="tab"]'))return;
     if(e.key==='Delete'||e.key==='Backspace'){this.consume(e);this.remove();return;}
