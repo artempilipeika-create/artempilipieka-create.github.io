@@ -40,10 +40,15 @@ jobs:
               time.sleep(10)
           PY
       - name: Verify exact committed public assets and capture desktop/mobile scene
-        run: python scripts/verify-webgl-live.py "$GITHUB_SHA" "Confirmed separately through Railway deployment metadata"
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python scripts/verify-webgl-live.py "$GITHUB_SHA" "Confirmed separately through Railway deployment metadata"
+          mv qa-output/webgl-live/results.json qa-output/webgl-live/surface-check.json
+          python tests/webgl/live_smoke.py --commit "$GITHUB_SHA"
+          git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: published-webgl-browser-evidence
+          name: published-webgl-browser-evidence-${{ github.run_attempt }}
           path: qa-output/webgl-live/
           retention-days: 7
