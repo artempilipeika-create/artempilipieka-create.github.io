@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 4950cfcec3a8c80e69e337c0600c89e4955c52c3
+          ref: 8937f3e32c55a3a0d3d7fadd47dd773389f7d58d
           persist-credentials: false
       - name: Public staging GETs, no credentials or writes
         shell: bash
@@ -29,7 +29,7 @@ jobs:
           output=Path('qa-output/studio-live');output.mkdir(parents=True,exist_ok=True)
           result={}
           for attempt in range(1,7):
-              result={'expected_commit':'4950cfcec3a8c80e69e337c0600c89e4955c52c3','deployment_id':'8eeb617e-aedc-48dd-8708-93c15fe1b648','base':base,'method':'GET only; no authentication','attempt':attempt,'endpoints':[]}
+              result={'expected_commit':'8937f3e32c55a3a0d3d7fadd47dd773389f7d58d','deployment_id':'a2f5eb10-5f16-4252-9fc7-329c2a865928','base':base,'method':'GET only; no authentication','attempt':attempt,'endpoints':[]}
               try:
                   for path in ['/health',*paths]:
                       req=urllib.request.Request(base+path,headers={'User-Agent':'MartinForest-Studio-Readonly-Verification','Cache-Control':'no-cache'},method='GET')
