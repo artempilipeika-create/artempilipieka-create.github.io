@@ -3,7 +3,7 @@ const rounded=it=>({...it,x:Math.round(it.x),z:Math.round(it.z),elevation_mm:Mat
 const verticalPeers=(a,b,room)=>{
   const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
   const ay=elevation(a,room),by=elevation(b,room);
-  return Math.abs(ay-by)<180||(aw&&Math.abs(ay+a.height-by+b.height)<180);
+  return Math.abs(ay-by)<180||(aw&&Math.abs((ay+a.height)-(by+b.height))<180);
 };
 /** A drag retains anchors, not mutations of the saved model. Release radius > capture. */
 export function snapItem(raw,items,room,options={},previous={}){
