@@ -8,7 +8,7 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from threading import Thread
 from urllib.parse import urlparse
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / 'backend/v2/cabinet_assets'
@@ -83,7 +83,7 @@ def main():
         page.on('console',lambda m:csp.append(m.text) if 'Content Security Policy' in m.text or 'Refused to' in m.text else None)
         page.on('dialog',lambda d:d.accept())
         try:
-            page.goto(base+'/constructor');page.wait_for_function("document.body.dataset.ready==='true'")
+            page.goto(base+'/constructor');expect(page.locator('body')).to_have_attribute('data-ready','true')
             check('Studio attaches to the actual engine',page.evaluate("document.body.dataset.studioVersion==='1.0'"))
             check('Empty scene guidance',page.locator('#studio-empty-scene').is_visible())
             check('All 10 catalogue filters',page.locator('#module-tabs button').count()==10)
@@ -131,12 +131,12 @@ def main():
             check('Focus returns selected module to 3D',page.evaluate("viewMode==='3d'"))
             page.locator('#reset-view').click()
             check('Dirty state is honest',page.locator('#studio-save-state').get_attribute('data-dirty')=='true')
-            page.locator('#save-project').click();page.wait_for_function("document.getElementById('studio-save-state').textContent==='Проект сохранён'")
+            page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
             check('Save retains schema v2 and materials',page.evaluate("project.scene.schema_version===2&&project.scene.items[0].front_variant_id==='test-front'"))
             page.locator('#project-name').fill('Проверка ошибки сохранения');DATABASE['fail_save']=True
-            page.locator('#save-project').click();page.wait_for_function("document.getElementById('status').textContent.includes('Проект изменился')")
+            page.locator('#save-project').click();expect(page.locator('#status')).to_contain_text('Проект изменился')
             check('Failed save stays dirty',page.locator('#studio-save-state').get_attribute('data-dirty')=='true')
-            page.locator('#save-project').click();page.wait_for_function("document.getElementById('studio-save-state').textContent==='Проект сохранён'")
+            page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
             page.locator('#tab-catalog').click();page.locator('[data-module-filter="bazis"]').click();page.locator('#module-catalogue [data-bazis]:visible').first.click()
             before=page.evaluate('JSON.stringify(state)')
             with page.expect_download() as d: page.locator('#export-bazis').click()
@@ -149,9 +149,9 @@ def main():
             page.evaluate("state.items.forEach(it=>{it.body_variant_id='test-body';it.front_variant_id='test-front'});updateAll()")
             page.locator('#to-order').click();page.wait_for_url('**/editor?order=synthetic-order')
             check('Transfer to order retains all module details',DATABASE['revision'] is not None and len(DATABASE['revision']['details'])>=6)
-            page.goto(base+'/constructor');page.wait_for_function("document.body.dataset.ready==='true'")
+            page.goto(base+'/constructor');expect(page.locator('body')).to_have_attribute('data-ready','true')
             page.locator('#tab-projects').click();page.locator('#projects .mf3d-project').last.click()
-            page.wait_for_function('state.items.length===2')
+            expect(page.locator('#item-badge')).to_have_text('2 модуля')
             check('Reopen saved v2 project',page.evaluate("state.items.some(it=>it.bazis_id)&&state.items.some(it=>it.name==='Шкаф у окна')"))
             # Large synthetic kitchen: never persisted to a real service.
             page.evaluate("""async()=>{await newProject();state.room.width=6200;state.room.depth=3600;syncRoom();for(let i=0;i<6;i++){addTemplate(i%2?'base.two_door':'base.drawers_3',false);Object.assign(selected(),{width:600,x:-2100+i*600,z:-1380,name:'Нижний '+(i+1)});addTemplate('wall.two_door',false);Object.assign(selected(),{width:600,x:-2100+i*600,z:-1500,name:'Верхний '+(i+1)});}addTemplate('tall.one_door',false);Object.assign(selected(),{x:1650,z:-1380,name:'Пенал'});selectedId=state.items[4].item_id;state.selected_item_id=selectedId;syncControls();updateAll();}""")
