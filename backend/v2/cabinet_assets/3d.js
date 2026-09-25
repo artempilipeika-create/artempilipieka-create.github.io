@@ -180,7 +180,7 @@ function addCatalogueButton(root,opt){
   b.onclick=()=>opt.template?addTemplate(opt.template):addModule(opt.module);
   root.append(b);
 }
-let activeModuleFilter='kitchen';
+let activeModuleFilter='all';
 function categoryKey(t){
   if(t.module_type==='base_cabinet')return'base';
   if(t.module_type==='wall_cabinet')return'wall';
@@ -191,7 +191,7 @@ function applyCatalogueFilter(){
   const q=($('module-search')?.value||'').trim().toLowerCase();
   for(const b of document.querySelectorAll('#module-catalogue .mf3d-module')){
     const cat=b.dataset.category||'other';
-    const inTab=activeModuleFilter==='kitchen'?cat!=='other':cat===activeModuleFilter;
+    const inTab=activeModuleFilter==='all'?true:(activeModuleFilter==='kitchen'?cat!=='other':cat===activeModuleFilter);
     const inSearch=!q||(b.dataset.search||'').includes(q);
     b.hidden=!(inTab&&inSearch);
   }
