@@ -42,3 +42,5 @@
 .mf3d-facade-summary span{margin-top:3px;font-size:11px;line-height:1.45;color:#536158}
 @media(max-width:1180px){.mf3d-shell{grid-template-columns:260px minmax(430px,1fr) 320px}}
 @media(max-width:900px){.mf3d-shell{display:flex}.mf3d-left,.mf3d-right{width:100%}.mf3d-tabs{position:sticky;top:0;background:#f7f5ef;padding:4px 0;z-index:2}}
+
+/* staging module UX deploy */
