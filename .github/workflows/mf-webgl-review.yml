@@ -7,7 +7,7 @@ permissions:
   contents: write
 concurrency:
   group: webgl-planner-review
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   acceptance:
     if: github.ref == 'refs/heads/mf-webgl-planner-20260926'
@@ -61,6 +61,7 @@ jobs:
           PY
           python scripts/integrate-webgl.py
           python scripts/refine-webgl.py
+          python scripts/finalize-webgl-surface.py
           python -m py_compile backend/v2/cabinet_ui.py tests/webgl/browser_checks.py
           for f in backend/v2/cabinet_assets/planner/*.mjs backend/v2/cabinet_assets/planner/*.js backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/3d-studio.js; do node --check "$f"; done
           git diff --stat
