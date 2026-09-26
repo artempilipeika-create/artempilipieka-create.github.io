@@ -6,7 +6,7 @@ from uuid import uuid4
 import os,json,base64
 import pytest
 from playwright.sync_api import sync_playwright,expect
-from tests.webgl.navigation import panel
+from tests.webgl.navigation import panel,add_legacy
 from fastapi.testclient import TestClient
 from cryptography.fernet import Fernet
 from backend.v2.app import create_app
@@ -404,7 +404,7 @@ def test_3d_workspace_save_copy_2d_and_transfer_to_order(page,api,settings,admin
     expect(page.locator('body')).to_have_attribute('data-ready','true')
     expect(page.locator('#project-name')).to_be_visible()
     panel(page,'left','catalog')
-    page.locator('[data-module="chest"]').click()
+    add_legacy(page,{'module':'chest'})
     page.locator('#project-name').fill('Комод из 3D')
     panel(page,'right')
     page.locator('#width').fill('1200')
@@ -443,7 +443,7 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     page.goto('https://testserver/constructor.html')
     expect(page.locator('body')).to_have_attribute('data-ready','true')
     panel(page,'left','catalog')
-    page.locator('[data-module="chest"]').click()
+    add_legacy(page,{'module':'chest'})
     panel(page,'right')
     page.locator('.studio-room > summary').click()
     page.locator('#project-name').fill('Кухня и шкаф 3D')
@@ -462,7 +462,7 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     panel(page,'right')
     page.locator('#front-results button').first.click()
     panel(page,'left','catalog')
-    page.locator('[data-template="base.one_door"]').click()
+    add_legacy(page,{'template':'base.one_door'})
     panel(page,'right')
     page.locator('#body-search').fill('QA621 PO')
     panel(page,'right')
@@ -476,7 +476,7 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     panel(page,'right')
     page.locator('#pos-z').fill('-1200')
     panel(page,'left','catalog')
-    page.locator('[data-template="wall.one_door"]').click()
+    add_legacy(page,{'template':'wall.one_door'})
     panel(page,'right')
     page.locator('#body-search').fill('QA621 PO')
     panel(page,'right')
@@ -490,7 +490,7 @@ def test_3d_room_multiple_modules_transfer_one_order(page,api,settings,admin_use
     panel(page,'right')
     page.locator('#pos-z').fill('-1200')
     panel(page,'left','catalog')
-    page.locator('[data-module="wardrobe"]').click()
+    add_legacy(page,{'module':'wardrobe'})
     panel(page,'right')
     page.locator('#body-search').fill('QA621 PO')
     panel(page,'right')
@@ -518,10 +518,10 @@ def test_3d_kitchen_templates_use_fixed_overlay_facade_gap(page,api,settings,adm
     o,email,_=searchable_catalogue_order(api);login_ui(page,email)
     page.goto('https://testserver/constructor.html')
     expect(page.locator('body')).to_have_attribute('data-ready','true')
-    expect(page.locator('[data-template="base.two_door"]')).to_have_count(1)
-    expect(page.locator('[data-template="wall.two_door"]')).to_have_count(1)
+    expect(page.locator('[data-template="base.two_door"]')).to_have_count(0)
+    expect(page.locator('[data-template="wall.two_door"]')).to_have_count(0)
     panel(page,'left','catalog')
-    page.locator('[data-template="wall.two_door"]').click()
+    add_legacy(page,{'template':'wall.two_door'})
     expect(page.locator('#template-info')).to_contain_text('1,5 мм')
     expect(page.locator('#cutlist')).to_contain_text('397×717')
     gap=page.evaluate('window.MF3D_KITCHEN.facadeGapMm')
@@ -650,7 +650,9 @@ def test_studio_real_database_roundtrip_preserves_template_and_dimensions(page,a
     page.goto('https://testserver/constructor.html')
     expect(page.locator('body')).to_have_attribute('data-ready','true')
     panel(page,'left','catalog')
-    page.locator(selector).click()
+    import re
+    match=re.fullmatch(r'\[data-(template|module|bazis)="([^"]+)"\]',selector)
+    add_legacy(page,{match[1]:match[2]})
     panel(page,'right')
     page.locator('#width').fill(str(width))
     panel(page,'right')

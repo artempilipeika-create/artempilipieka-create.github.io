@@ -88,37 +88,12 @@ const defaultTemplateByModule={
 };
 
 const bazisModules=[{"id":"bazis.460987c9a8e8","source_file":"НМД1-200. Карго.fr3d","source_sha256":"a2a0c04ed70c493824d145c040f285b7c84deda6a0995b2cabea69c7b3bdfbf4","label":"Карго 200","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":200,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[150,400],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.0211e4f77fc4","source_file":"НМД1-600. отк L.fr3d","source_sha256":"cd5f119cec7467047cdac6ea1bc4aaafa95c4fa092cc92a101509003dbbd16b5","label":"Нижний 1 дверь L","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.facfa0cd038b","source_file":"НМД1-600. отк L.Мойка.fr3d","source_sha256":"cbc8eda7e1437b09e8043e147663ecfa63848bc942ef319456dae8ec6f8e9131","label":"Нижний 1 дверь L · мойка","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.784bf9af84f8","source_file":"НМД1-600. отк P.fr3d","source_sha256":"1ac5f7edba13c42c67007525a3b66738eb7937b4c6a35fb901d50144ad696df1","label":"Нижний 1 дверь P","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.b226370aab54","source_file":"НМД1-600. отк P.Мойка.fr3d","source_sha256":"bf92ea3711072d167897fc63d9c7fcf50319ffcda370e4e95e6921f71298b9ab","label":"Нижний 1 дверь P · мойка","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[300,900],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":1},"resize":true},{"id":"bazis.3079d0656398","source_file":"НМД2-600..fr3d","source_sha256":"d79434c8d5e93744fcb37461491c9ec7560c1c78ad16d99a76ce7433fb9dfc80","label":"Нижний 2 двери","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[500,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":2},"resize":true},{"id":"bazis.5731630ddd87","source_file":"НМД2-600.Мойка.fr3d","source_sha256":"29f75ec2208db5f29d0fdc3a01718419a73635b0ae64d84424460229895704f6","label":"Нижний 2 двери · мойка","group":"Нижние БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[500,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"doors","count":2},"resize":true},{"id":"bazis.39f282e08f0c","source_file":"НМРШ2-600.З.С 3ММ Гвозди  Шариковые напр без довод .fr3d","source_sha256":"7b141b668de043829e27e2bb48c9199517a354897c93ba55f4bfd1b9ff27dcbc","label":"Нижний 2 ящика","group":"Ящики БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"drawers","drawers":2,"base":"plinth"},"limits":{"w":[300,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"drawers","count":2},"resize":true},{"id":"bazis.5f5697e39e27","source_file":"НМРШ3-600.З.С 3ММ Гвозди  Шариковые напр без довод .fr3d","source_sha256":"c9ae8a439ccd0c158b70e6cd9b0dcabe175adda43e59a2d8c8e09e7cd65e979d","label":"Нижний 3 ящика","group":"Ящики БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"drawers","drawers":3,"base":"plinth"},"limits":{"w":[300,1200],"h":[600,1000],"d":[450,700]},"front":{"kind":"drawers","count":3},"resize":true},{"id":"bazis.b4420a0b4bbc","source_file":"НМУ-1000. Д1 (Мойка) L.fr3d","source_sha256":"5bc821b8f246c9e93a777dab38a032d900731b92b14be0839b9c5a5116117764","label":"Угловой Д1 L · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.694511d86dab","source_file":"НМУ-1000. Д1 (Мойка) P.fr3d","source_sha256":"3a1f04600696fa767cb1de53ac3bab6994a687b0c7fa98ce7172acd6e988e04e","label":"Угловой Д1 P · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.2ae4fb340b9e","source_file":"НМУ-1000. Д1 (Полка) L.fr3d","source_sha256":"f12f03b2e78a50e605ca21bf4c84a7e134bd8cf3efb8def19dcad220c86ce50a","label":"Угловой Д1 L · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.e182ac006a55","source_file":"НМУ-1000. Д1 (Полка) P.fr3d","source_sha256":"210766c11c885da75f21a6647ea6c7731d14ab22c84a0c9e9f3264c211020312","label":"Угловой Д1 P · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":1},"resize":false},{"id":"bazis.a3270de534ee","source_file":"НМУ-1000. Д2 (Мойка) L.fr3d","source_sha256":"dcc4cc52e3ae24ab001dd8c1f7c33756744bca923ef24900556521736a01a474","label":"Угловой Д2 L · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.3858e6709c36","source_file":"НМУ-1000. Д2 (Мойка) P.fr3d","source_sha256":"d845c9cadd5f6bbf027e5bcbbe5da430e04cb15368ececd2a0b9bc18faf1ab9d","label":"Угловой Д2 P · мойка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.2cc272f6bcdc","source_file":"НМУ-1000. Д2 (Полка) L.fr3d","source_sha256":"5c6732152cb42d99cdacae21a8ad7105126c50fca68ebcbc64e1ed0b6edcfff5","label":"Угловой Д2 L · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.b738c256b0c1","source_file":"НМУ-1000. Д2 (Полка) P.fr3d","source_sha256":"8a0e6489def9e870f9592bcfd2d2316319584df6b645c800bb732cd8e56ecf02","label":"Угловой Д2 P · полка","group":"Угловые БАЗИС","module_type":"base_cabinet","defaults":{"w":1000,"h":720,"d":1000,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[800,1200],"h":[600,1000],"d":[800,1200]},"front":{"kind":"doors","count":2},"resize":false},{"id":"bazis.9e77f4333545","source_file":"НШД-600. 595мм .fr3d","source_sha256":"b1d83b58fc32f95f5a1924bad1c60f50267f38f13de122db4def7f0610d1df65","label":"Модуль 600 · ниша 595","group":"Техника БАЗИС","module_type":"base_cabinet","defaults":{"w":600,"h":720,"d":560,"layout":"doors","drawers":0,"base":"plinth"},"limits":{"w":[550,650],"h":[600,1000],"d":[450,700]},"front":{"kind":"none"},"resize":true},{"id":"bazis.a95a0f22b385","source_file":"Фасад.Обычный ПМ.fr3d","source_sha256":"edddcff08dfff9af3b77dfe8f14897cfb66fa2b946c709bb16ef01a0a3ec22ef","label":"Фасад · обычный ПМ","group":"Компоненты БАЗИС","module_type":"component","defaults":{"w":600,"h":720,"d":18,"layout":"doors","drawers":0,"base":"wall"},"limits":{"w":[100,3000],"h":[100,3000],"d":[16,30]},"front":{"kind":"none"},"resize":false,"component":true}];
-const pilotProductionById={
-  'bazis.0211e4f77fc4':{
-    key:'base.standard.d1.left.600',source_sha256:'7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',
-    native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
-    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
-    back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
-    shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
-    doors:[{side:'left',hinge_count:2,open_angle:105}],hardware:{hinge_article:'112602',hinge_count:2}
-  },
-  'bazis.784bf9af84f8':{
-    key:'base.standard.d1.right.600',source_sha256:'5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb',
-    native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
-    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
-    back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
-    shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
-    doors:[{side:'right',hinge_count:2,open_angle:105}],hardware:{hinge_article:'112602',hinge_count:2}
-  },
-  'bazis.3079d0656398':{
-    key:'base.standard.d2.600',source_sha256:'7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',
-    native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
-    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
-    back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
-    shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
-    doors:[{side:'left',hinge_count:2,open_angle:105},{side:'right',hinge_count:2,open_angle:105}],hardware:{hinge_article:'112602',hinge_count:4}
-  }
-};
+const pilotProductionById=globalThis.MF_FURNITURE_CORE.PILOT_PRODUCTION;
 // Existing saved projects still refer to the earlier donor bytes and dimensions.
 const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
   const p=pilotProductionById[m.id];if(!p)continue;
-  m.source_sha256=p.source_sha256;m.production=p;
+  m.source_sha256=p.source_sha256;m.production=p;m.label=p.label;
   m.defaults={...m.defaults,w:600,h:p.body_height+p.base_height,d:p.scene_depth};
   m.limits={...m.limits,h:[p.base_height+600,p.base_height+1000],d:[450,700]};
 }
@@ -296,40 +271,15 @@ function bindCatalogueControls(){
 function renderModuleCatalogue(){
   const root=$('module-catalogue');
   root.replaceChildren();
-  const free=document.createElement('div');
-  free.className='mf3d-module-group';
-  const freeHead=document.createElement('h3');
-  freeHead.textContent='Свободные модули';
-  free.append(freeHead);
-  addCatalogueButton(free,{module:'chest',category:'other',label:'Комод',description:'Свободная компоновка'});
-  addCatalogueButton(free,{module:'wardrobe',category:'other',label:'Шкаф',description:'Платяной / полочный'});
-  addCatalogueButton(free,{module:'vanity',category:'other',label:'Тумба',description:'Подвесная / напольная'});
-  root.append(free);
-
-  const bazisGroup=document.createElement('div');
-  bazisGroup.className='mf3d-module-group';
-  const bazisHead=document.createElement('h3');
-  bazisHead.textContent='Мои модули БАЗИС';
-  bazisGroup.append(bazisHead);
-  for(const m of bazisModules){
-    if(m.component)continue;
-    addCatalogueButton(bazisGroup,{bazis:m.id,category:'bazis',label:m.label,description:m.source_file});
+  const group=document.createElement('div');
+  group.className='mf3d-module-group';
+  const heading=document.createElement('h3');heading.textContent='Производственные модули';group.append(heading);
+  for(const id of Object.keys(pilotProductionById)){
+    const m=bazisById.get(id);
+    addCatalogueButton(group,{bazis:id,category:'base',label:m.label,
+      description:m.production.doors.length===2?'Две двери · полка · задник':m.production.doors[0].side==='left'?'Левое открывание · полка · задник':'Правое открывание · полка · задник'});
   }
-  root.append(bazisGroup);
-
-  for(const category of['Нижние модули','Верхние модули','Пеналы']){
-    const group=document.createElement('div');
-    group.className='mf3d-module-group';
-    const h=document.createElement('h3');
-    h.textContent=category;
-    group.append(h);
-    for(const [id,t] of Object.entries(kitchenTemplates)){
-      if(t.category!==category)continue;
-      const module=defaultTemplateByModule[t.module_type]===id?t.module_type:null;
-      addCatalogueButton(group,{template:id,module,category:categoryKey(t),label:t.label,description:t.description});
-    }
-    root.append(group);
-  }
+  root.append(group);
   applyCatalogueFilter();
 }
 
@@ -606,7 +556,7 @@ async function syncControls(){
     const input=$(key.replaceAll('_','-'));if(input)input.value=String(h[key]);
   }
   if($('base-height'))$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);
-  if($('body-height'))$('body-height').disabled=Boolean(it.bazis_id);
+  if($('body-height'))$('body-height').disabled=Boolean(it.bazis_id&&!t?.production);
   if($('worktop-control'))$('worktop-control').hidden=it.module_type!=='base_cabinet'||it.depth>750;
   if($('height-breakdown'))$('height-breakdown').textContent='Корпус '+h.body_height+' + основание '+h.base_height+' = модуль '+h.module_height+' мм'+(h.worktop_thickness?' · со столешницей '+h.overall_height_with_worktop+' мм':'');
   const production=t?.production||null,prodRoot=$('production-controls');
@@ -622,8 +572,8 @@ async function syncControls(){
       $('shelf-enabled').checked=Boolean(shelf?.enabled);
       $('shelf-position').disabled=!shelf?.enabled;
       $('shelf-position').value=String(shelf?.offset_mm??Math.round(h.body_height/2));
-      $('shelf-position').min=String(Math.ceil((shelf?.thickness||18)/2));
-      $('shelf-position').max=String(Math.floor(h.body_height-(shelf?.thickness||18)/2));
+      $('shelf-position').min=String(Math.ceil(production.carcass.panel_thickness+(shelf?.thickness||18)/2));
+      $('shelf-position').max=String(Math.floor(h.body_height-production.carcass.rail_height-(shelf?.thickness||18)/2));
       $('toggle-doors').hidden=!production.doors?.length;
       $('toggle-doors').textContent=it.doors_open?'Закрыть фасады':'Открыть фасады';
     }
@@ -699,6 +649,13 @@ function facadeCells(it){
 }
 
 function buildItem(it){
+  const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it));
+  if(parts){
+    for(const part of parts){const d=part.size,c=part.position;
+      addItemBox(it,d.x/500,d.y/500,d.z/500,c.x/500,c.y/500,c.z/500,colorFor(materials.get(String(part.material.variant_id)),part.role==='front'));
+    }
+    return;
+  }
   const S=1/500,W=it.width*S,H=it.height*S,D=it.depth*S,t=18*S;
   const bc=colorFor(materials.get(String(it.body_variant_id))),fc=colorFor(materials.get(String(it.front_variant_id)),true);
   const baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height*S;
@@ -727,16 +684,13 @@ function buildBoxes(){
 
 function cutlistItem(it){
   const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
-  const src=it.bazis_id?templateFor(it):null,p=src?.production||null,bodyH=globalThis.MF_FURNITURE_CORE.heights(it).body_height;
-  if(p?.carcass?.type==='bottom_side_two_rails'){
-    const railH=p.carcass.rail_height||80;
-    a.push([prefix+'Дно',it.width,it.depth,1,'body',it]);
-    a.push([prefix+'Боковина',Math.max(1,bodyH-t),it.depth,2,'body',it]);
-    a.push([prefix+'Царга задняя',railH,inner,1,'body',it]);
-    a.push([prefix+'Царга передняя',railH,inner,1,'body',it]);
-    for(const shelf of it.shelves||p.shelves||[])if(shelf.enabled!==false)
-      a.push([prefix+'Полка',Math.max(1,it.width-(shelf.width_clearance||0)),Math.max(1,it.depth-(shelf.depth_clearance||0)),1,'body',it]);
-    if(p.back)a.push([prefix+'Задняя стенка',Math.max(1,bodyH-2*(p.back.inset||0)),Math.max(1,it.width-2*(p.back.inset||0)),1,'fixed',it,p.back.material_name||'Задняя стенка']);
+  const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it));
+  if(parts){
+    for(const part of parts){
+      const role=part.role==='back'?'fixed':part.role==='front'?'front':'body';
+      a.push([prefix+part.name,part.length,part.width,1,role,part.role==='shelf'?{...it,body_variant_id:part.material.variant_id}:it,part.material.name]);
+    }
+    return a;
   }else{
     a.push([prefix+'Боковина',it.height-baseH,it.depth,2,'body',it]);
     a.push([prefix+'Крышка/дно',inner,it.depth,2,'body',it]);
@@ -978,6 +932,7 @@ function exportBazisProject(){
         front_variant_id:it.front_variant_id||null,
         construction:p?{
           key:p.key,
+          parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src),
           carcass:p.carcass||null,
           back:p.back,
           shelves:(it.shelves||p.shelves||[]).map(shelf=>({...shelf,material_variant_id:shelf.material_variant_id||null})),

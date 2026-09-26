@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
-import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights} from './furniture-core.mjs';
+import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts} from './furniture-core.mjs';
 
-// Appearance only: millimetre envelopes, facadeCells and project payloads are untouched.
+// Rendering consumes canonical manufactured parts; extra dressings remain visual only.
 export const VISUAL_FINISHES=Object.freeze({
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
   shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
@@ -116,36 +116,24 @@ export class MeshFactory{
     group.userData.heights=heights(it);
     const body=it.body_variant_id,front=it.front_variant_id,template=this.adapter.template(it),production=template?.production||null,cells=facadeCells(it,template);
     group.userData.visualApproximation=Boolean(it.bazis_id&&!production);
-    if(production?.carcass?.type==='bottom_side_two_rails'){
-      const panelT=Number(production.carcass.panel_thickness)||t,railH=Number(production.carcass.rail_height)||80,sideH=Math.max(1,bodyH-panelT);
-      this.box(group,'body',panelT,sideH,D,-W/2+panelT/2,base+panelT+sideH/2,0,body,ghost);
-      this.box(group,'body',panelT,sideH,D,W/2-panelT/2,base+panelT+sideH/2,0,body,ghost);
-      this.box(group,'body',W,panelT,D,0,base+panelT/2,0,body,ghost);
-      this.box(group,'body',W-2*panelT,railH,panelT,0,H-railH/2,-D/2+panelT/2,body,ghost);
-      this.box(group,'body',W-2*panelT,railH,panelT,0,H-railH/2,D/2-panelT/2,body,ghost);
+    const parts=productionParts(it,template);
+    if(parts){
+      for(const part of parts.filter(p=>p.role!=='front')){
+        const d=part.size,c=part.position,m=this.box(group,part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.material.variant_id,ghost);
+        m.userData.part=part;m.userData.productionPart=part.role;
+        if(part.back_type)m.userData.backType=part.back_type;
+        if(part.shelf_id)m.userData.shelfId=part.shelf_id;
+      }
     }else{
       this.box(group,'body',t,bodyH,D,-W/2+t/2,base+bodyH/2,0,body,ghost);
       this.box(group,'body',t,bodyH,D,W/2-t/2,base+bodyH/2,0,body,ghost);
       this.box(group,'body',W-2*t,t,D,0,H-t/2,0,body,ghost);
       this.box(group,'body',W-2*t,t,D,0,base+t/2,0,body,ghost);
-    }
-
-    if(production?.back){
-      const back=production.back,inset=Number(back.inset)||0,thickness=Number(back.thickness)||3;
-      const m=this.box(group,'back',Math.max(1,W-2*inset),Math.max(1,bodyH-2*inset),thickness,0,base+bodyH/2,-D/2-thickness/2,null,ghost,.2);
-      if(m){m.userData.productionPart='back';m.userData.backType=back.type;}
-    }else if(!it.bazis_id){
-      this.box(group,'back',W-2*t,bodyH-2*t,4,0,base+bodyH/2,-D/2+2,body,ghost);
-    }
-
-    const shelves=Array.isArray(it.shelves)&&it.shelves.length?it.shelves:(production?.shelves||[]);
-    for(const shelf of shelves){
-      if(shelf?.enabled===false)continue;
-      const thickness=Number(shelf.thickness)||18,sw=Math.max(1,W-(Number(shelf.width_clearance)||0));
-      const sd=Math.max(1,D-(Number(shelf.depth_clearance)||0)),offset=Number(shelf.offset_mm);
-      if(!Number.isFinite(offset))continue;
-      const m=this.box(group,'shelf',sw,thickness,sd,0,base+offset,(D-sd)/2,shelf.material_variant_id||body,ghost,.35);
-      if(m){m.userData.productionPart='shelf';m.userData.shelfId=shelf.id||null;}
+      if(!it.bazis_id)this.box(group,'back',W-2*t,bodyH-2*t,4,0,base+bodyH/2,-D/2+2,body,ghost);
+      for(const shelf of it.shelves||[]){
+        if(shelf.enabled===false)continue;
+        this.box(group,'shelf',W-shelf.width_clearance,shelf.thickness,D-shelf.depth_clearance,0,base+shelf.offset_mm,shelf.depth_clearance/2,shelf.material_variant_id||body,ghost);
+      }
     }
 
     if(it.base==='plinth'&&base>2){
@@ -164,19 +152,19 @@ export class MeshFactory{
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
     }
 
-    const doorSpecs=production?.doors||[];let doorIndex=0;
+    const fronts=parts?.filter(p=>p.role==='front');let doorIndex=0;
     for(const f of cells){
-      const drawer=f.kind==='drawer',spec=!drawer&&doorSpecs.length?(doorSpecs[doorIndex++]||doorSpecs.at(-1)):null;
-      let parent=group,px=f.cx,pz=D/2+11,handleZ=D/2+20;
-      if(spec){
-        const hingeX=f.cx+(spec.side==='right'?f.w/2:-f.w/2),pivot=new THREE.Group();
+      const drawer=f.kind==='drawer',part=fronts?.[doorIndex++],spec=part?{side:part.hinge_side,open_angle:part.open_angle}:null;
+      let parent=group,px=f.cx,pz=part?.position.z??D/2+11,handleZ=pz+9;
+      if(part){
+        const hingeX=part.pivot.x,pivot=new THREE.Group();
         pivot.userData={itemId:it.item_id,role:'door-pivot',visualOnly:true,hingeSide:spec.side};
-        pivot.position.set(hingeX*S,0,(D/2+11)*S);
-        if(it.doors_open)pivot.rotation.y=(spec.side==='left'?-1:1)*(Number(spec.open_angle)||105)*Math.PI/180;
-        group.add(pivot);parent=pivot;px=f.cx-hingeX;pz=0;handleZ=9;
+        pivot.position.set(hingeX*S,part.pivot.y*S,part.pivot.z*S);
+        if(it.doors_open)pivot.rotation.y=(spec.side==='left'?-1:1)*spec.open_angle*Math.PI/180;
+        group.add(pivot);parent=pivot;px=part.position.x-hingeX;pz=0;handleZ=part.thickness/2;
       }
-      const panel=this.box(parent,'front',f.w,f.h,18,px,f.cy,pz,front,ghost);panel.userData.facade={...f};
-      if(spec)panel.userData.hingeSide=spec.side;
+      const panel=this.box(parent,'front',f.w,f.h,part?.thickness??18,px,f.cy,pz,part?.material.variant_id??front,ghost);panel.userData.facade={...f};
+      if(part){panel.userData.part=part;panel.userData.hingeSide=spec.side;}
       if(it.handles==='handles'&&f.w>140&&f.h>100){
         const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
         const side=rowDoors.length>1?(f.cx<0?1:-1):spec?(spec.side==='right'?-1:1):/отк P/.test(it.bazis_file||'')?-1:1;

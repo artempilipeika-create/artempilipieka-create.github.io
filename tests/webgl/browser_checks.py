@@ -3,7 +3,7 @@ from pathlib import Path
 import json, os
 import pytest
 from playwright.sync_api import expect
-from tests.webgl.navigation import panel,close_panels
+from tests.webgl.navigation import panel,close_panels,add_legacy
 from tests.stage07.browser_checks import page,settings,api,admin_user,login_ui,searchable_catalogue_order
 
 OUT=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/webgl'))
@@ -66,7 +66,7 @@ def test_empty_webgl_route_and_static_boundary(page,api,settings,admin_user):
 def test_add_pick_surface_resize_rotation_and_history(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    page.locator('[data-template="base.drawers_3"]').click()
+    page.locator('[data-bazis="bazis.3079d0656398"]').click()
     expect(page.locator('#item-badge')).to_have_text('1 модуль')
     hit=point(page);page.mouse.click(hit['x'],hit['y'])
     assert page.evaluate('MF_PLANNER.adapter.selected.item_id===MF_PLANNER.adapter.items[0].item_id')
@@ -119,7 +119,7 @@ def test_real_drag_is_preview_then_one_undo_and_invalid_drop_keeps_position(page
 def test_native_catalogue_drag_and_cancel(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    card=page.locator('[data-template="base.drawers_3"]');card.scroll_into_view_if_needed()
+    card=page.locator('[data-bazis="bazis.3079d0656398"]');card.scroll_into_view_if_needed()
     data=page.evaluate_handle('new DataTransfer()')
     card.dispatch_event('dragstart',{'dataTransfer':data})
     box=page.locator('#scene').bounding_box();event={'dataTransfer':data,'clientX':box['x']+box['width']/2,'clientY':box['y']+box['height']*.60}
@@ -137,7 +137,7 @@ def test_native_catalogue_drag_and_cancel(page,api,settings,admin_user):
 def test_native_export_and_real_save_reopen_duplicate_share(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    page.locator('[data-bazis="bazis.460987c9a8e8"]').click()
+    add_legacy(page,{'bazis':'bazis.460987c9a8e8'})
     panel(page,'right')
     page.locator('#width').fill('150');page.locator('#width').press('Tab')
     panel(page,'right')

@@ -20,12 +20,14 @@
   function defaultItem(opt){
     const template=opt.bazis?bazisById.get(opt.bazis):opt.template?kitchenTemplates[opt.template]:null;
     const d=template?.defaults||moduleDefs[opt.module]||moduleDefs.chest;
-    return{item_id:'preview',template_id:opt.template||null,bazis_id:opt.bazis||null,
+    return{item_id:'preview',template_id:opt.template||null,bazis_id:opt.bazis||null,bazis_sha256:template?.source_sha256||null,
+      ...(template?.production?{body_height:template.production.body_height,base_height:template.production.base_height,shelves:structuredClone(template.production.shelves)}:{}),
       module_type:template?.module_type||opt.module||'chest',width:d.w,height:d.h,depth:d.d,
       layout:d.layout,drawers:d.drawers,base:d.base,handles:'handles'};
   }
   function descriptionFor(it,source){
     const t=templateFor(it),front=t?.front||legacyFrontSpec(it);
+    if(t?.production)return source;
     if(front.kind==='none')return 'Открытый модуль';
     if(front.kind==='drawers')return plural(front.count||it.drawers,['ящик','ящика','ящиков']);
     if(front.kind==='doors')return plural(front.count||1,['дверь','двери','дверей']);

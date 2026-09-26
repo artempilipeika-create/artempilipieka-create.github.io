@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MeshFactory,panelGeometry,VISUAL_FINISHES} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
-import {facadeCells,heights,dimensionPatch,bounds,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {facadeCells,heights,dimensionPatch,bounds,placementError,PILOT_PRODUCTION,productionParts} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 const room={width:6200,depth:3600,height:2700};
 const make=(front={kind:'doors',count:2})=>new MeshFactory({room,material:()=>null,template:()=>({front})},()=>{});
 const item={item_id:'fixed',module_type:'base_cabinet',width:800,height:720,depth:560,x:0,z:0,rotation:0,base:'plinth',handles:'handles',layout:'doors',drawers:0};
@@ -17,14 +17,13 @@ test('Touching lower units share one visual countertop and one continuous plinth
 test('Separated rows and different heights do not create an imaginary shared countertop',()=>{const f=make(),g=f.dress([item,{...item,item_id:'second',x:1800},{...item,item_id:'third',x:800,height:800}]);assert.equal(g.children.length,3);assert.equal(g.userData.mergedPlinthIds.length,0);f.dispose();});
 test('Unknown FR3D interiors do not receive invented shelves or a back',()=>{const f=make(),g=f.build({...item,bazis_id:'source',layout:'niche'});assert.equal(roles(g,'back').length,0);assert.equal(roles(g,'shelf').length,0);assert.equal(roles(g,'body').length,4);assert.equal(g.userData.visualApproximation,true);f.dispose();});
 
-const pilotBack={type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'};
-const pilotShelf={id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1};
-const pilotItem={...item,bazis_id:'pilot',width:600,height:820,body_height:720,base_height:100,worktop_thickness:38,depth:510,shelves:[pilotShelf]};
-const pilotFactory=(doors)=>new MeshFactory({room,material:()=>null,template:()=>({front:{kind:'doors',count:doors.length},production:{carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},back:pilotBack,shelves:[pilotShelf],doors}})},()=>{});
+const pilotModel=PILOT_PRODUCTION['bazis.0211e4f77fc4'];
+const pilotItem={...item,bazis_id:'pilot',width:600,height:820,body_height:720,base_height:100,worktop_thickness:38,depth:510,shelves:structuredClone(pilotModel.shelves)};
+const pilotFactory=(doors)=>new MeshFactory({room,material:()=>null,template:()=>({production:Object.values(PILOT_PRODUCTION).find(p=>p.doors.map(d=>d.side).join()===doors.map(d=>d.side).join())})},()=>{});
 
 test('D1 production pilot renders the actual 596x716x3 back and 564x509x18 shelf',()=>{
  const f=pilotFactory([{side:'left',hinge_count:2,open_angle:105}]),g=f.build(pilotItem);
- assert.deepEqual(roles(g,'body').map(m=>size(m.geometry)),[[18,702,510],[18,702,510],[600,18,510],[564,80,18],[564,80,18]]);
+ assert.deepEqual(roles(g,'body').map(m=>size(m.geometry)),[[600,18,510],[18,702,510],[18,702,510],[564,80,18],[564,80,18]]);
  assert.deepEqual(size(roles(g,'back')[0].geometry),[596,716,3]);
  assert.deepEqual(size(roles(g,'shelf')[0].geometry),[564,18,509]);
  assert.equal(Math.round(roles(g,'shelf')[0].position.y*1000),460);
@@ -116,4 +115,35 @@ for(const module_type of ['base_cabinet','wall_cabinet','tall_cabinet'])test('Ev
 test('Different worktop thicknesses and zero worktop do not create doubled shared slabs',()=>{
  const f=make(),dress=f.dress([separated,{...separated,item_id:'b',x:800,worktop_thickness:20},{...separated,item_id:'c',x:1600,worktop_thickness:0}]);
  assert.deepEqual(dress.children.flatMap(g=>roles(g,'counter')).map(m=>size(m.geometry)[1]),[38,20]);f.dispose();
+});
+
+for(const [id,production] of Object.entries(PILOT_PRODUCTION))test(production.label+' canonical parts survive resizing, rendering and persistence',()=>{
+ const template={production},initial={...pilotItem,bazis_id:id,bazis_sha256:production.source_sha256};
+ const old=productionParts(initial,template),resized=dimensionPatch(initial,{width:800,height:920,depth:610});
+ const parts=productionParts(resized,template),byKey=Object.fromEntries(parts.map(p=>[p.key,p]));
+ assert.deepEqual(byKey['bottom'].size,{x:800,y:18,z:610});
+ assert.deepEqual(byKey['side-L'].size,{x:18,y:802,z:610});
+ assert.deepEqual(byKey['side-P'].position,{x:391,y:519,z:0});
+ assert.deepEqual(byKey['back'].size,{x:796,y:816,z:3});
+ assert.deepEqual(byKey['back'].position,{x:0,y:510,z:-306.5});
+ assert.deepEqual(byKey['shelf-1'].size,{x:764,y:18,z:609});
+ assert.deepEqual(byKey['rail-front'].position,{x:0,y:880,z:296});
+ assert.deepEqual(byKey['door-1'].size,{x:800/production.doors.length-3,y:817,z:18});
+ assert.equal(new Set(parts.map(p=>p.part_id)).size,parts.length);
+ assert.deepEqual(parts.map(p=>p.part_id),old.map(p=>p.part_id));
+ assert.ok(parts.every(p=>p.module_id===resized.item_id&&p.length>0&&p.width>0&&p.thickness>0));
+ assert.deepEqual(productionParts(JSON.parse(JSON.stringify(resized)),template),parts);
+ assert.deepEqual(productionParts({...resized,doors_open:true},template),parts);
+ const copy=productionParts({...resized,item_id:'copy'},template);
+ assert.ok(copy.every(p=>p.module_id==='copy'&&!parts.some(q=>p.part_id===q.part_id)));
+ const factory=new MeshFactory({room,material:()=>null,template:()=>template},()=>{}),g=factory.build(resized),rendered=[];
+ g.updateMatrixWorld(true);g.traverse(m=>{const p=m.userData.part;if(!p)return;rendered.push(p);assert.deepEqual(size(m.geometry),[p.size.x,p.size.y,p.size.z]);
+ const pos=m.getWorldPosition(m.position.clone());assert.deepEqual(pos.toArray().map(v=>Math.round(v*10000)/10),[p.position.x,p.position.y,p.position.z]);});
+ assert.deepEqual(rendered,parts);factory.dispose();
+});
+test('D1 L and P share identical manufactured carcass, shelf and back at custom dimensions',()=>{
+ const [left,right]=Object.values(PILOT_PRODUCTION),it={...pilotItem,width:750,height:900,depth:600};
+ const a=productionParts(it,{production:left}),b=productionParts(it,{production:right});
+ assert.deepEqual(a.filter(p=>p.role!=='front'),b.filter(p=>p.role!=='front'));
+ assert.deepEqual(a.at(-1).size,b.at(-1).size);assert.equal(a.at(-1).pivot.x,-b.at(-1).pivot.x);
 });

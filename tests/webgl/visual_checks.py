@@ -1,12 +1,12 @@
 """Visual geometry and unchanged interaction on the real ASGI/test Postgres."""
 from playwright.sync_api import expect
-from tests.webgl.navigation import panel,close_panels
+from tests.webgl.navigation import panel,close_panels,add_legacy
 from tests.webgl.browser_checks import page,settings,api,admin_user,open_planner,seed
 
 def test_visual_panels_and_handles_have_real_meshes_and_fixed_facade_dimensions(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    page.locator('[data-template="base.two_door"]').click()
+    add_legacy(page,{'template':'base.two_door'})
     data=page.evaluate('''()=>{const p=MF_PLANNER,g=p.scene.entries.get(p.adapter.selected.item_id).group;return{fronts:g.children.filter(m=>m.userData.role==='front').map(m=>m.userData.facade),handles:g.children.filter(m=>m.userData.role==='handle').map(m=>m.position.x),boards:g.children.filter(m=>m.userData.role==='body').length};}''')
     assert len(data['fronts'])==2 and all(x['w']==397 for x in data['fronts'])
     assert data['boards']==4 and data['handles'][0]<0<data['handles'][1]

@@ -6,7 +6,7 @@ from tests.webgl.browser_checks import page,api,settings,admin_user,open_planner
 def test_undo_redo_with_russian_keyboard_layout(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    page.locator('[data-template="base.drawers_3"]').click()
+    page.locator('[data-bazis="bazis.3079d0656398"]').click()
     expect(page.locator('#item-badge')).to_have_text('1 модуль')
     page.keyboard.press('Control+z')
     assert page.evaluate('MF_PLANNER.adapter.items.length')==0
@@ -29,7 +29,7 @@ def test_touch_release_outside_canvas_clears_multitouch_guard(page,api,settings,
 def test_clicking_cabinet_after_catalogue_moves_focus_for_delete(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    card=page.locator('[data-template="base.drawers_3"]');card.click();card.focus()
+    card=page.locator('[data-bazis="bazis.3079d0656398"]');card.click();card.focus()
     hit=point(page)
     page.mouse.click(hit['x'],hit['y'])
     expect(page.locator('#scene')).to_be_focused()

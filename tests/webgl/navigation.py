@@ -15,3 +15,11 @@ def close_panels(page):
     for side in ['left','right']:
         button=page.locator('#workspace-close-'+side)
         if button.is_visible():button.click()
+
+
+def add_legacy(page,options):
+    """Load a retained legacy definition through the planner for compatibility tests.
+    It is deliberately absent from the active customer catalogue.
+    """
+    page.wait_for_function('Boolean(window.MF_PLANNER?.interaction)')
+    assert page.evaluate('(options)=>MF_PLANNER.interaction.add(options)',options)

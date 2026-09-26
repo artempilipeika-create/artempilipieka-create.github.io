@@ -47,10 +47,12 @@ export class StateAdapter{
     if(h.body_height<150||h.base_height<0||h.base_height>300||h.worktop_thickness<0||h.worktop_thickness>100||
       ['body_height','base_height','worktop_thickness'].some(k=>it[k]!=null&&!Number.isInteger(it[k]))||
       (it.body_height!=null&&it.body_height!==h.body_height))return 'Проверьте высоту корпуса, основания и столешницы';
+    const production=this.template(it)?.production;
     if(Array.isArray(it.shelves))for(const shelf of it.shelves){
       const thickness=Number(shelf?.thickness)||18,offset=Number(shelf?.offset_mm);
-      if(shelf?.enabled!==false&&(!Number.isInteger(offset)||offset<thickness/2||offset>h.body_height-thickness/2))
+      if(shelf?.enabled!==false&&(!Number.isInteger(offset)||offset<(production?.carcass?.panel_thickness||0)+thickness/2||offset>h.body_height-(production?.carcass?.rail_height||0)-thickness/2))
         return 'Полка выходит за внутреннюю высоту корпуса';
+      if(shelf?.enabled!==false&&(it.width-shelf.width_clearance<=0||it.depth-shelf.depth_clearance<=0))return 'Полка не помещается в корпус';
     }
     if(elevation(it,this.room)+h.overall_height_with_worktop>this.room.height)return 'Столешница выходит за высоту помещения';
     const t=this.template(it),limits=t?.limits||{w:[300,3000],h:[300,3000],d:[200,1200]};

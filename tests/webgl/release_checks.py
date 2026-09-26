@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import pytest
 from playwright.sync_api import expect
-from tests.webgl.navigation import panel,close_panels
+from tests.webgl.navigation import panel,close_panels,add_legacy
 from tests.webgl.browser_checks import page,api,settings,admin_user,open_planner,seed,point,screenshot
 
 
@@ -83,7 +83,7 @@ def test_vertical_and_hidden_collisions_are_checked_in_browser(page,api,settings
 def test_context_recovery_preserves_unsaved_history_and_original_project_ids(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    page.locator('[data-template="base.drawers_3"]').click()
+    page.locator('[data-bazis="bazis.3079d0656398"]').click()
     panel(page,'right')
     page.locator('#width').fill('650');page.locator('#width').press('Tab')
     before=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
@@ -112,7 +112,7 @@ def test_initial_webgl_unavailable_keeps_edit_save_and_undo_available(page,api,s
     expect(page.locator('body')).to_have_attribute('data-planner-renderer','fallback',timeout=20000)
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
     panel(page,'left','catalog')
-    page.locator('[data-template="base.drawers_3"]').click()
+    page.locator('[data-bazis="bazis.3079d0656398"]').click()
     panel(page,'right')
     page.locator('#width').fill('650');page.locator('#width').press('Tab')
     panel(page,'right')
@@ -140,12 +140,12 @@ def test_bounded_release_viewport_and_large_kitchen_framing(page,api,settings,ad
 def test_facade_and_native_metadata_survive_nonzero_placement(page,api,settings,admin_user):
     open_planner(page,api)
     panel(page,'left','catalog')
-    page.locator('[data-template="base.two_door"]').click()
+    add_legacy(page,{'template':'base.two_door'})
     assert page.evaluate('MF3D_KITCHEN.facadeCells(MF_PLANNER.adapter.selected).every(f=>f.w===397)')
     panel(page,'right')
     page.locator('#remove-item').click()
     panel(page,'left','catalog')
-    page.locator('[data-bazis="bazis.460987c9a8e8"]').click()
+    add_legacy(page,{'bazis':'bazis.460987c9a8e8'})
     panel(page,'right')
     for selector,value in [('#pos-z','100'),('#pos-x','350')]:
         page.locator(selector).fill(value);page.locator(selector).press('Tab')
