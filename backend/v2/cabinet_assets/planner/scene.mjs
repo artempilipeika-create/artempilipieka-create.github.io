@@ -8,12 +8,24 @@ export class PlannerScene{
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.0;
-    this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
+    this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#eef1ef');
-    this.scene.add(new THREE.HemisphereLight('#ffffff','#adb9af',1.05));
-    this.sun=new THREE.DirectionalLight('#fffaf3',1.85);this.sun.position.set(-3.8,6.2,4.6);this.sun.castShadow=true;
+    this.scene.add(new THREE.HemisphereLight('#ffffff','#c9d0c8',1.4));
+    // Small procedural studio environment: 128x64 source, no HDRI download or room decor.
+    const ew=128,eh=64,data=new Float32Array(ew*eh*4);
+    const keyDirection=new THREE.Vector3(-.45,.65,1).normalize(),fillDirection=new THREE.Vector3(.85,.35,.5).normalize(),n=new THREE.Vector3();
+    for(let y=0;y<eh;y++)for(let x=0;x<ew;x++){
+      const theta=(y+.5)/eh*Math.PI,phi=(x+.5)/ew*Math.PI*2;
+      n.set(Math.sin(theta)*Math.cos(phi),Math.cos(theta),Math.sin(theta)*Math.sin(phi));
+      const light=.18+.25*(n.y+1)/2+3*Math.pow(Math.max(0,n.dot(keyDirection)),10)+1.5*Math.pow(Math.max(0,n.dot(fillDirection)),8),i=(y*ew+x)*4;
+      data[i]=light;data[i+1]=light*.995;data[i+2]=light*.98;data[i+3]=1;
+    }
+    const source=new THREE.DataTexture(data,ew,eh,THREE.RGBAFormat,THREE.FloatType);source.mapping=THREE.EquirectangularReflectionMapping;source.needsUpdate=true;
+    const pmrem=new THREE.PMREMGenerator(this.renderer);this.studioEnvironment=pmrem.fromEquirectangular(source);source.dispose();pmrem.dispose();
+    this.scene.environment=this.studioEnvironment.texture;this.scene.environmentIntensity=.65;
+    this.sun=new THREE.DirectionalLight('#fffaf3',1.5);this.sun.position.set(-3,5,7);this.sun.castShadow=true;
     this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.1,far:30});
-    this.sun.shadow.bias=-.00004;this.sun.shadow.normalBias=.0007;this.sun.shadow.intensity=.68;this.scene.add(this.sun,this.sun.target);
+    this.sun.shadow.bias=-.00004;this.sun.shadow.normalBias=.0007;this.sun.shadow.intensity=.45;this.sun.shadow.radius=5;this.scene.add(this.sun,this.sun.target);
     const fill=new THREE.DirectionalLight('#edf3ff',.55);fill.position.set(4,3,1);this.scene.add(fill);
     this.perspective=new THREE.PerspectiveCamera(34,1,.025,150);
     this.ortho=new THREE.OrthographicCamera(-3,3,3,-3,.025,150);this.camera=this.perspective;
@@ -50,11 +62,11 @@ export class PlannerScene{
   }
   roomMesh(){
     this.disposeTree(this.roomRoot);this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room;
-    const make=(w,h,d,x,y,z,color)=>{const material=new THREE.MeshStandardMaterial({color,roughness:1});const m=new THREE.Mesh(this.factory.geometry,material);m.userData.ownMaterial=true;m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.receiveShadow=true;this.roomRoot.add(m);return m;};
-    make(r.width,20,r.depth,0,-12,0,'#dce1dc');this.walls=[];
+    const make=(w,h,d,x,y,z,color,wall=false)=>{const material=wall?new THREE.MeshBasicMaterial({color}):new THREE.MeshStandardMaterial({color,roughness:1});const m=new THREE.Mesh(this.factory.geometry,material);m.userData.ownMaterial=true;m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.receiveShadow=true;this.roomRoot.add(m);return m;};
+    make(r.width,20,r.depth,0,-12,0,'#e9ece6');this.walls=[];
     for(const sign of[-1,1]){
-      const z=make(r.width,r.height,20,0,r.height/2,sign*(r.depth/2+10),'#ecefea');z.userData.axis='z';z.userData.sign=sign;this.walls.push(z);
-      const x=make(20,r.height,r.depth,sign*(r.width/2+10),r.height/2,0,'#e7ece7');x.userData.axis='x';x.userData.sign=sign;this.walls.push(x);
+      const z=make(r.width,r.height,20,0,r.height/2,sign*(r.depth/2+10),'#f1f3ee',true);z.userData.axis='z';z.userData.sign=sign;this.walls.push(z);
+      const x=make(20,r.height,r.depth,sign*(r.width/2+10),r.height/2,0,'#edf1ec',true);x.userData.axis='x';x.userData.sign=sign;this.walls.push(x);
     }
     const points=[];for(let x=-r.width/2;x<=r.width/2;x+=500)points.push(x*S,.001,-r.depth*S/2,x*S,.001,r.depth*S/2);
     for(let z=-r.depth/2;z<=r.depth/2;z+=500)points.push(-r.width*S/2,.001,z*S,r.width*S/2,.001,z*S);
@@ -81,7 +93,7 @@ export class PlannerScene{
   }
   fitShadow(){
     const box=this.cameraBox('kitchen'),center=box.getCenter(new THREE.Vector3());
-    this.sun.target.position.copy(center);this.sun.position.copy(center).add(new THREE.Vector3(-3.8,6.2,4.6));
+    this.sun.target.position.copy(center);this.sun.position.copy(center).add(new THREE.Vector3(-3,5,7));
     const c=this.sun.shadow.camera;c.position.copy(this.sun.position);c.lookAt(center);c.updateMatrixWorld();
     const local=new THREE.Box3();
     for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z])local.expandByPoint(new THREE.Vector3(x,y,z).applyMatrix4(c.matrixWorldInverse));
@@ -171,5 +183,5 @@ export class PlannerScene{
   }
   clearPreview(){this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();this.factory.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();this.factory.dispose();this.studioEnvironment?.dispose();this.renderer.dispose();}
 }
