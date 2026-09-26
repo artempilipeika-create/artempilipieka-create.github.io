@@ -28,8 +28,8 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import time,urllib.request
-          expected=Path('backend/v2/cabinet_assets/planner/vendor/manifest.json').read_bytes()
-          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/vendor/manifest.json'
+          expected=Path('backend/v2/cabinet_assets/planner/module-mesh.mjs').read_bytes()
+          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/module-mesh.mjs'
           for attempt in range(24):
               try:
                   request=urllib.request.Request(url,method='GET',headers={'Cache-Control':'no-cache'})
@@ -45,6 +45,7 @@ jobs:
           python scripts/verify-webgl-live.py "$GITHUB_SHA" "Confirmed separately through Railway deployment metadata"
           mv qa-output/webgl-live/results.json qa-output/webgl-live/surface-check.json
           python tests/webgl/live_smoke.py --commit "$GITHUB_SHA"
+          python tests/webgl/visual_capture.py --live --out qa-output/webgl-live/visual
           git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()
