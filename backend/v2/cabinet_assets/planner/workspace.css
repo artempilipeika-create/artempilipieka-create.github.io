@@ -1,0 +1,142 @@
+/* Full-viewport editing of the accepted WebGL scene. No furniture styling here. */
+#planner-workspace{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;width:100%;height:100dvh;overflow:hidden;background:#f4f5f0;color:var(--s-ink)}
+#planner-workspace:fullscreen{width:100vw;height:100dvh;max-height:none}
+#planner-workspace .mf3d-top{height:56px;min-height:56px;padding:0 18px;gap:18px;z-index:60}
+#planner-workspace .mf3d-brand{font-size:17px;gap:9px}
+#planner-workspace .studio-monogram{width:32px;height:32px;font-size:22px;border-radius:9px 2px}
+#planner-workspace .mf3d-brand small{font-size:7px;margin-top:2px;letter-spacing:.15em}
+#planner-workspace .studio-project-title{max-width:440px;min-width:100px;padding-left:18px}
+#planner-workspace .studio-project-title input{font-size:13px}
+#planner-workspace .studio-project-title>span{font-size:9px}
+#planner-workspace .mf3d-top-actions{margin-left:auto}
+#planner-workspace .mf3d-top-actions button{height:33px;min-height:33px;font-size:11px}
+#planner-workspace .mf3d-shell{position:relative;display:block;flex:1 1 0;min-height:0;height:auto;isolation:isolate;overflow:hidden}
+#planner-workspace .mf3d-stage{position:absolute;inset:0;display:block;min-height:0;height:100%;width:100%;overflow:hidden}
+#planner-workspace .mf3d-canvas-wrap{position:absolute;inset:0;width:100%;height:100%;min-height:0;overflow:hidden}
+#planner-workspace #scene{position:absolute;inset:0;width:100%;height:100%;min-height:0}
+#planner-workspace .mf3d-stagebar{position:absolute;top:10px;left:12px;right:12px;z-index:30;height:44px;min-height:44px;display:flex;flex-wrap:nowrap;align-items:center;gap:8px;padding:5px 8px;border:1px solid #dce4d9;border-radius:10px;background:#fffffcf5;box-shadow:0 3px 16px #233b3210}
+#planner-workspace #planner-tools{display:contents!important}
+#planner-workspace .mf3d-stagebar button,#planner-workspace .mf3d-stagebar select{font-size:11px;min-height:32px;height:32px;margin:0;padding:5px 10px;width:auto;flex-shrink:0;line-height:1.3}
+#planner-workspace #studio-toggle-library,#planner-workspace #studio-toggle-inspector{display:block;min-width:85px;color:#30573e;background:#f3f6ef;border-color:#d8e2d3}
+#planner-workspace #studio-toggle-library[aria-expanded=true],#planner-workspace #studio-toggle-inspector[aria-expanded=true]{background:#e4edde;border-color:#92ac8b}
+#planner-workspace .mf3d-segment{margin:0!important;padding:3px;gap:0;flex-shrink:0}
+#planner-workspace .mf3d-segment button{height:27px;min-height:27px;padding:4px 11px;font-size:10px}
+#planner-workspace #planner-layer{max-width:125px;padding:5px 7px}
+#planner-workspace #planner-undo,#planner-workspace #planner-redo{font-size:19px;min-width:32px;padding:2px 6px}
+#planner-workspace #planner-placement-options{flex-shrink:0;display:block}
+#planner-workspace #planner-placement-options>summary{padding:7px 5px;font-size:10px}
+#planner-workspace #reset-view{margin-left:auto}
+#planner-workspace #planner-client{margin-left:0!important}
+#planner-workspace .planner-options-panel{z-index:50}
+#planner-workspace .mf3d-left,#planner-workspace .mf3d-right{display:none!important;position:absolute;top:64px;bottom:12px;z-index:40;min-height:0;max-height:none;border:1px solid #dbe3d6;border-radius:13px;background:#fffefb;box-shadow:0 10px 42px #263d2c20;overflow:hidden}
+#planner-workspace .mf3d-left{left:12px;right:auto;width:340px;padding:0;flex-direction:column}
+#planner-workspace .mf3d-right{right:12px;left:auto;width:360px;padding:0 18px 18px;overflow-y:auto;overscroll-behavior:contain}
+#planner-workspace[data-left-open=true] .mf3d-left{display:flex!important}
+#planner-workspace[data-right-open=true] .mf3d-right{display:block!important}
+#planner-workspace .workspace-drawer-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;min-height:50px;background:#fffefb;border-bottom:1px solid #e5eadf;flex-shrink:0}
+#planner-workspace .workspace-drawer-head strong{font-size:12px;font-weight:600}
+#planner-workspace .workspace-drawer-head button{font-size:22px;font-weight:400;min-height:30px;height:30px;width:30px;padding:0;line-height:1;border:0;background:transparent;color:#648061}
+#planner-workspace .mf3d-right .workspace-drawer-head{position:sticky;top:0;z-index:2;margin:0 -18px 15px;padding-inline:18px}
+#planner-workspace .studio-panel-title{padding:15px 18px 10px}
+#planner-workspace .studio-panel-title h1{font-size:18px;max-width:none;margin:0;line-height:1.3}
+#planner-workspace .studio-panel-title p,#planner-workspace .studio-panel-title .mf3d-kicker,#planner-workspace .studio-inspector-heading{display:none}
+#planner-workspace .studio-library-tabs{margin:0 18px}
+#planner-workspace .studio-pane{padding:14px 18px;overscroll-behavior:contain}
+#planner-workspace .studio-library-footer{padding:9px 14px;font-size:9px}
+#planner-workspace .mf3d-overlay,#planner-workspace .studio-scene-caption{display:none!important}
+#planner-workspace .studio-camera{position:absolute;top:72px;right:16px;z-index:20;background:#fffffcf0;border-color:#d4decf}
+#planner-workspace[data-right-open=true] .studio-camera{right:386px}
+#planner-workspace .studio-camera button{min-height:34px;height:34px;width:34px}
+#planner-workspace #planner-fullscreen{font-size:23px}
+#planner-workspace #workspace-help{font-size:15px;border-top:1px solid #e1e7dc;border-radius:0;margin-top:3px}
+#planner-workspace #planner-dimension{z-index:5}
+#planner-workspace #planner-feedback{bottom:60px;z-index:25}
+#planner-workspace .mf3d-help{position:absolute;left:50%;bottom:56px;max-width:calc(100% - 40px);font-size:10px;opacity:0;visibility:hidden;transition:opacity .2s;z-index:22;pointer-events:none}
+#planner-workspace[data-help-visible=true] .mf3d-help{opacity:1;visibility:visible}
+#planner-workspace .studio-statusbar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);max-width:min(720px,50%);height:auto;min-height:0;padding:8px 13px;border:1px solid #d8e2d0;border-radius:8px;background:#fffff5f5;box-shadow:0 3px 14px #314b2d12;z-index:55;opacity:0;visibility:hidden;pointer-events:none}
+#planner-workspace[data-toast-visible=true] .studio-statusbar{opacity:1;visibility:visible}
+#planner-workspace .studio-statusbar>span{display:none}
+#planner-workspace .mf3d-status{font-size:11px;white-space:normal;line-height:1.5;max-height:85px;overflow:hidden}
+#planner-workspace .mf3d-cutlist{position:absolute;left:14px;bottom:14px;z-index:32;margin:0;padding:0;border:1px solid #d9e2d1;border-radius:9px;background:#fffffcf2;width:auto;max-width:calc(100% - 28px);max-height:55%;overflow:auto;box-shadow:0 3px 15px #283b2410}
+#planner-workspace .mf3d-cutlist>summary{position:sticky;top:0;cursor:pointer;background:#fffffc;padding:10px 14px;font-size:11px;line-height:1.3;z-index:2;list-style-position:inside}
+#planner-workspace .mf3d-cutlist>summary>span{display:none}
+#planner-workspace .mf3d-cutlist[open]{width:min(940px,calc(100% - 28px));background:#fffefb}
+#planner-workspace .mf3d-cutlist[open]>summary{border-bottom:1px solid #e1e7dc;padding-right:45px}
+#planner-workspace .mf3d-cutlist #cutlist,#planner-workspace .mf3d-cutlist>p{margin:12px 16px}
+#planner-workspace #workspace-close-cutlist{position:absolute;right:7px;top:5px;z-index:3;height:27px;min-height:27px;padding:0 8px;font-size:20px;border:0;background:transparent}
+#planner-workspace .mf3d-cutlist:not([open]) #workspace-close-cutlist{display:none}
+#planner-workspace .studio-empty-scene{max-width:320px;padding:22px;top:48%;z-index:3}
+#planner-workspace #planner-fallback{top:72px;left:14px;right:70px;width:max-content;max-width:calc(100% - 85px);z-index:25}
+#planner-workspace #planner-mobile-nav{display:none}
+#planner-workspace.workspace-fullscreen .mf3d-top{height:48px;min-height:48px}
+/* Client presentation remains distinct from browser fullscreen editing. */
+.planner-client #planner-workspace .mf3d-top{height:52px;min-height:52px}
+.planner-client #planner-workspace #planner-tools>*,.planner-client #planner-workspace #studio-toggle-library,.planner-client #planner-workspace #studio-toggle-inspector,.planner-client #planner-workspace #workspace-help,.planner-client #planner-workspace #planner-fullscreen{display:none!important}
+.planner-client #planner-workspace .mf3d-stagebar{height:42px;min-height:42px}
+.planner-client #planner-workspace #planner-fit-room{display:block}
+.planner-client #planner-workspace .studio-camera{right:16px;top:70px}
+.planner-client #planner-workspace #planner-client{display:block!important}
+.planner-client #planner-workspace .studio-project-title>span{display:none}
+@media(min-width:1700px){#planner-workspace .mf3d-left{width:350px}#planner-workspace .mf3d-right{width:370px}#planner-workspace[data-right-open=true] .studio-camera{right:396px}}
+@media(min-width:761px) and (max-width:1100px){
+ #planner-workspace .mf3d-left,#planner-workspace .mf3d-right{width:330px}
+ #planner-workspace[data-right-open=true] .studio-camera{right:356px}
+ #planner-workspace .mf3d-stagebar{gap:4px;left:8px;right:8px;padding-inline:5px}
+ #planner-workspace .mf3d-stagebar button,#planner-workspace .mf3d-stagebar select{font-size:10px;padding-inline:6px}
+ #planner-workspace #studio-toggle-library,#planner-workspace #studio-toggle-inspector{min-width:65px}
+ #planner-workspace #planner-layer{max-width:107px}
+ #planner-workspace .mf3d-segment button{padding-inline:7px}
+ #planner-workspace #planner-placement-options>summary{font-size:9px}
+}
+@media(max-width:760px){
+ #planner-workspace .mf3d-top{height:80px;min-height:80px;padding:6px 10px;display:grid;grid-template-columns:1fr 1.2fr;gap:2px 10px}
+ #planner-workspace .mf3d-brand{font-size:14px}
+ #planner-workspace .studio-monogram{display:none}
+ #planner-workspace .studio-project-title{min-width:0;max-width:none;padding-left:10px}
+ #planner-workspace .studio-project-title input{font-size:11px}
+ #planner-workspace .studio-project-title>span{font-size:8px}
+ #planner-workspace .mf3d-top-actions{grid-column:1/-1;justify-content:space-between;width:100%;gap:4px;margin:0}
+ #planner-workspace .mf3d-top-actions button{height:29px;min-height:29px;font-size:10px;padding:4px 8px}
+ #planner-workspace .mf3d-stagebar{height:42px;min-height:42px;top:8px;left:8px;right:8px;padding:4px 6px;gap:5px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;justify-content:flex-start}
+ #planner-workspace .mf3d-stagebar::-webkit-scrollbar{display:none}
+ #planner-workspace #studio-toggle-library,#planner-workspace #studio-toggle-inspector{display:none}
+ #planner-workspace .mf3d-stagebar button,#planner-workspace .mf3d-stagebar select{font-size:10px;min-height:29px;height:29px;padding:4px 8px}
+ #planner-workspace .mf3d-segment{order:0}
+ #planner-workspace .mf3d-segment button{min-height:26px;height:26px;padding:4px 8px}
+ #planner-workspace #planner-client{order:1}
+ #planner-workspace #reset-view{order:2;margin-left:0}
+ #planner-workspace #planner-fit-room{order:3;display:block}
+ #planner-workspace #planner-tools>*{order:4}
+ #planner-workspace .planner-options-panel{position:fixed;top:136px;left:10px;right:auto}
+ #planner-workspace #planner-placement-options{display:block}
+ #planner-workspace .mf3d-left,#planner-workspace .mf3d-right{top:auto;bottom:68px;left:8px;right:8px;width:auto;height:65dvh;max-height:calc(100% - 72px);border-radius:18px 18px 12px 12px;z-index:45;box-shadow:0 -8px 40px #263d2c25}
+ #planner-workspace .workspace-drawer-head{position:relative;min-height:51px;padding-top:15px;touch-action:none}
+ #planner-workspace .workspace-drawer-head::before{content:'';position:absolute;top:5px;left:calc(50% - 19px);width:38px;height:4px;border-radius:4px;background:#cdd7c6}
+ #planner-workspace .mf3d-right .workspace-drawer-head{padding-top:15px}
+ #planner-workspace .studio-panel-title{display:none}
+ #planner-workspace .studio-library-tabs{margin:0 14px}
+ #planner-workspace .studio-pane{padding:12px 14px}
+ #planner-workspace .studio-camera,#planner-workspace[data-right-open=true] .studio-camera{right:12px;top:65px}
+ #planner-workspace .studio-camera button{height:34px;min-height:34px;width:34px}
+ #planner-workspace #planner-mobile-nav{position:absolute;bottom:10px;left:8px;right:8px;display:flex;gap:4px;height:48px;min-height:48px;padding:5px;border:1px solid #d7e0d0;border-radius:11px;background:#fffefbf5;box-shadow:0 3px 16px #263d2c15;z-index:50}
+ #planner-workspace #planner-mobile-nav button{flex:1;min-width:0;min-height:36px;height:36px;font-size:11px;border:0;background:transparent;padding:6px;color:#486342}
+ #planner-workspace #planner-mobile-nav button[aria-expanded=true]{background:#e7eedf;color:#2b5137}
+ #planner-workspace .mf3d-cutlist{bottom:70px;left:10px;max-width:calc(100% - 20px);max-height:60%;border-radius:9px}
+ #planner-workspace .mf3d-cutlist>summary{padding:8px 10px;font-size:10px}
+ #planner-workspace .mf3d-cutlist[open]{width:calc(100% - 20px)}
+ #planner-workspace .mf3d-help{bottom:112px;font-size:9px;max-width:calc(100% - 30px)}
+ #planner-workspace .studio-statusbar{bottom:110px;max-width:calc(100% - 24px);width:max-content;padding:7px 10px}
+ #planner-workspace .mf3d-status{font-size:10px}
+ #planner-workspace #planner-feedback{bottom:116px;max-width:calc(100% - 30px)}
+ #planner-workspace #planner-fallback{top:60px;right:62px;max-width:calc(100% - 75px);font-size:9px;flex-wrap:wrap}
+ #planner-workspace .studio-empty-scene{max-width:265px;top:45%;padding:18px}
+ #planner-workspace .studio-empty-scene h2{font-size:27px}
+ #planner-workspace.workspace-fullscreen .mf3d-top{height:80px;min-height:80px}
+ .planner-client #planner-workspace .mf3d-top{height:52px;min-height:52px;display:flex;gap:8px}
+ .planner-client #planner-workspace .mf3d-brand{font-size:12px}
+ .planner-client #planner-workspace .mf3d-brand small{display:none}
+ .planner-client #planner-workspace .studio-project-title{flex:1;padding-left:8px;min-width:60px}
+ .planner-client #planner-workspace .mf3d-top-actions{width:auto;flex:0}
+ .planner-client #planner-workspace .studio-camera{top:62px;right:12px}
+}
+@media(prefers-reduced-motion:reduce){#planner-workspace *{transition:none!important}}
