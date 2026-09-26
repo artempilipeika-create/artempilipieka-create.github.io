@@ -24,6 +24,7 @@ const pilotFactory=(doors)=>new MeshFactory({room,material:()=>null,template:()=
 
 test('D1 production pilot renders the actual 596x716x3 back and 564x509x18 shelf',()=>{
  const f=pilotFactory([{side:'left',hinge_count:2,open_angle:105}]),g=f.build(pilotItem);
+ assert.deepEqual(roles(g,'body').map(m=>size(m.geometry)),[[18,702,510],[18,702,510],[600,18,510],[564,80,18],[564,80,18]]);
  assert.deepEqual(size(roles(g,'back')[0].geometry),[596,716,3]);
  assert.deepEqual(size(roles(g,'shelf')[0].geometry),[564,18,509]);
  assert.equal(Math.round(roles(g,'shelf')[0].position.y*1000),460);
