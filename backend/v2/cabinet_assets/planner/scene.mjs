@@ -48,7 +48,7 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();
     const r=this.adapter.room;
     if(this.walls)this.walls.forEach(w=>{w.visible=this.mode!=='top'&&(w.userData.axis==='x'?this.camera.position.x*w.userData.sign<r.width*S/2-.02:this.camera.position.z*w.userData.sign<r.depth*S/2-.02);});
-    if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
+    if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
     if(this.grid)this.grid.visible=!document.body.classList.contains('planner-client');
     this.renderer.render(this.scene,this.camera);this.placeLabel();
   }
@@ -128,14 +128,15 @@ export class PlannerScene{
     if(this.mode==='3d'){
       // Fit the actual projected corners, not a bounding sphere. A long
       // kitchen now uses the canvas instead of leaving a room-sized margin.
-      const dir=new THREE.Vector3(.50,.29,1).normalize();
+      const dir=(which==='room'?new THREE.Vector3(.65,.42,1):new THREE.Vector3(.50,.29,1)).normalize();
+      const padH=which==='room'?.84:.90,padV=which==='room'?.78:.85;
       const right=new THREE.Vector3(0,1,0).cross(dir).normalize();
       const up=dir.clone().cross(right).normalize();
       const tanV=Math.tan(this.perspective.fov*Math.PI/360),tanH=tanV*this.perspective.aspect;
       let distance=1.2;
       for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
         const delta=new THREE.Vector3(x,y,z).sub(center),towardsCamera=delta.dot(dir);
-        distance=Math.max(distance,towardsCamera+Math.abs(delta.dot(right))/(tanH*.90),towardsCamera+Math.abs(delta.dot(up))/(tanV*.85));
+        distance=Math.max(distance,towardsCamera+Math.abs(delta.dot(right))/(tanH*padH),towardsCamera+Math.abs(delta.dot(up))/(tanV*padV));
       }
       this.camera.up.set(0,1,0);this.camera.position.copy(center).addScaledVector(dir,distance);
     }else{
@@ -171,7 +172,7 @@ export class PlannerScene{
     if(!this.preview||this.preview.userData.itemId!==it.item_id||this.previewSignature!==this.factory.signature(it)){
       this.factory.release(this.preview);this.preview=this.factory.build(it,true);this.previewSignature=this.factory.signature(it);this.scene.add(this.preview);
     }
-    this.factory.position(this.preview,it);const existing=this.entries.get(it.item_id);if(existing)existing.group.visible=false;
+    this.factory.position(this.preview,it);const existing=this.entries.get(it.item_id);if(existing&&existing.group.visible){existing.group.visible=false;this.renderer.shadowMap.needsUpdate=true;}
     this.selectedBox.visible=false;this.hoverBox.visible=false;
     this.preview.traverse(m=>{if(m.isMesh)m.material.color.set(error?'#d1976d':'#b9cfb4');});
     this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);
@@ -181,7 +182,7 @@ export class PlannerScene{
     }
     this.invalidate();
   }
-  clearPreview(){this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
+  clearPreview(){this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();this.factory.dispose();this.studioEnvironment?.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();this.factory.dispose();this.studioEnvironment?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

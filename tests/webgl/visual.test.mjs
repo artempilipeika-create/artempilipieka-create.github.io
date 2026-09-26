@@ -19,3 +19,20 @@ test('Render-only geometry never mutates the project or native BAZIS identifiers
 test('Material roughness separates roles without invented texture data',()=>{const f=make();assert.ok(VISUAL_FINISHES.front.roughness>=.65&&VISUAL_FINISHES.front.roughness<=.85);assert.ok(VISUAL_FINISHES.body.roughness>VISUAL_FINISHES.front.roughness);assert.equal(f.material('front').metalness,0);assert.equal(f.material('front').map,null);assert.notEqual(f.material('front').color.getHexString(),f.material('body').color.getHexString());f.dispose();});
 test('Visual legs have a separate foot geometry and preserve facade arithmetic',()=>{const f=make(),it={...item,base:'legs'},g=f.build(it);assert.equal(roles(g,'leg').length,4);assert.deepEqual(roles(g,'front').map(m=>m.userData.facade),facadeCells(it,{front:{kind:'doors',count:2}}));f.dispose();});
 test('Geometry cache stays bounded through 250 resize cycles',()=>{const f=make();for(let i=0;i<250;i++){const g=f.build({...item,width:800+i});f.release(g);}assert.ok(f.pool.size<=192);assert.ok([...f.pool.values()].every(v=>v.refs===0));f.dispose();assert.equal(f.pool.size,0);});
+
+for(const rotation of [0,90,180,270])test('Asymmetric countertop overhang stays inside room at rotation '+rotation,async()=>{
+ const {Box3}=await import('../../backend/v2/cabinet_assets/planner/vendor/three.module.js');
+ const f=make(),axis=rotation%180?'z':'x',wall=axis==='x'?room.width/2:room.depth/2;
+ const it={...item,rotation,[axis]:-wall+item.width/2};const g=f.dress([it]);g.updateMatrixWorld(true);
+ const counter=roles(g.children[0],'counter')[0],b=new Box3().setFromObject(counter);
+ assert.ok(Math.abs(b.min[axis]+wall/1000)<1e-6);assert.ok(Math.abs(b.max[axis]-(-wall+item.width+12)/1000)<1e-6);f.dispose();
+});
+test('Countertop free-end overhang stops at adjacent tall cabinet',async()=>{
+ const {Box3}=await import('../../backend/v2/cabinet_assets/planner/vendor/three.module.js');const f=make();
+ const g=f.dress([item,{...item,item_id:'tall',module_type:'tall_cabinet',x:800,height:2200}]);g.updateMatrixWorld(true);
+ const b=new Box3().setFromObject(roles(g.children[0],'counter')[0]);assert.ok(Math.abs(b.max.x-.4)<1e-6);assert.ok(Math.abs(b.min.x+.412)<1e-6);f.dispose();
+});
+test('Edge shading preserves the front colour and darkens only physical edges',()=>{
+ const f=make(),g=f.build(item),panel=roles(g,'front')[0],n=panel.geometry.attributes.normal,c=panel.geometry.attributes.color;
+ assert.ok(panel.material.vertexColors);for(let i=0;i<n.count;i++){if(n.getZ(i)>.999)assert.equal(c.getX(i),1);if(Math.abs(n.getZ(i))<.001)assert.ok(c.getX(i)<.6);}assert.deepEqual(size(panel.geometry),[397,637,18]);f.dispose();
+});

@@ -150,7 +150,9 @@ def test_native_export_and_real_save_reopen_duplicate_share(page,api,settings,ad
 def test_kitchen_size_visibility_save_and_framing(page,api,settings,admin_user,count):
     open_planner(page,api);seed(page,count)
     assert page.evaluate('MF_PLANNER.scene.entries.size')==count
-    assert page.evaluate('MF_PLANNER.scene.renderer.info.memory.geometries')<30
+    # Rounded boards have dimension-specific shared geometry; still bounded.
+    assert page.evaluate('MF_PLANNER.scene.renderer.info.memory.geometries')<100
+    assert page.evaluate('MF_PLANNER.scene.factory.pool.size')<=192
     page.locator('#planner-layer').select_option('wall')
     assert page.evaluate('MF_PLANNER.adapter.items.length')==count
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')

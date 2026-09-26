@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ} from './furniture-core.mjs';
+import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds} from './furniture-core.mjs';
 
 // Appearance only: millimetre envelopes, facadeCells and project payloads are untouched.
 export const VISUAL_FINISHES=Object.freeze({
@@ -45,7 +45,7 @@ export class MeshFactory{
     // A tiny analytic opacity mask, not an invented wood/stone texture or HDRI.
     const size=64,bytes=new Uint8Array(size*size*4);
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-      const edge=Math.min(x,y,size-1-x,size-1-y)/(size*.22),t=Math.max(0,Math.min(1,edge));
+      const edge=Math.min(x,y,size-1-x,size-1-y)/(size*.10),t=Math.max(0,Math.min(1,edge));
       const a=Math.round(255*t*t*(3-2*t)),i=(y*size+x)*4;bytes[i]=bytes[i+1]=bytes[i+2]=a;bytes[i+3]=255;
     }
     this.contactMap=new THREE.DataTexture(bytes,size,size,THREE.RGBAFormat);this.contactMap.minFilter=THREE.LinearFilter;this.contactMap.magFilter=THREE.LinearFilter;this.contactMap.needsUpdate=true;
@@ -59,7 +59,7 @@ export class MeshFactory{
     const safe=typeof url==='string'&&url.startsWith('/')&&!url.startsWith('//')&&!url.includes('..')?url:null;
     const key=[role,id||'',color||'',safe||'',ghost].join('|');
     if(!this.materials.has(key)){
-      const m=new THREE.MeshStandardMaterial({...finish,color:color||(safe?'#ffffff':finish.color),transparent:ghost,opacity:ghost?.36:1,depthWrite:!ghost});
+      const m=new THREE.MeshStandardMaterial({...finish,color:color||(safe?'#ffffff':finish.color),vertexColors:role==='front'||role==='counter',transparent:ghost,opacity:ghost?.36:1,depthWrite:!ghost});
       if(safe&&!ghost){
         if(!this.textures.has(safe)){const tx=new THREE.TextureLoader().load(safe,()=>this.invalidate(),undefined,()=>{m.map=null;m.needsUpdate=true;this.invalidate();});tx.colorSpace=THREE.SRGBColorSpace;tx.anisotropy=4;this.textures.set(safe,tx);}
         m.map=this.textures.get(safe);
@@ -77,8 +77,23 @@ export class MeshFactory{
   box(group,role,w,h,d,x,y,z,id,ghost=false,bevel){
     if(w<=0||h<=0||d<=0)return;
     const r=bevel??(role==='front'?.85:role==='counter'?1.2:role==='body'?.45:.25);
-    const key=['panel',w,h,d,r].join(':');
-    return this.mesh(group,role,this.acquire(key,()=>panelGeometry(w,h,d,r)),key,x,y,z,id,ghost);
+    const key=['panel',role,w,h,d,r].join(':');
+    const geometry=this.acquire(key,()=>{
+      const g=panelGeometry(w,h,d,r);
+      // Edge occlusion lives on the actual panel sides, not lines painted over fronts.
+      // It costs no extra draw calls and never enlarges the 1.5 mm production gaps.
+      if(role==='front'||role==='counter'){
+        const n=g.attributes.normal,colors=new Float32Array(n.count*3);
+        for(let i=0;i<n.count;i++){
+          const face=Math.max(0,role==='front'?n.getZ(i):n.getY(i));
+          const value=role==='front'?.42+.58*face:.76+.24*face;
+          colors[i*3]=colors[i*3+1]=colors[i*3+2]=value;
+        }
+        g.setAttribute('color',new THREE.BufferAttribute(colors,3));
+      }
+      return g;
+    });
+    return this.mesh(group,role,geometry,key,x,y,z,id,ghost);
   }
   handle(group,length,x,y,z,horizontal,ghost){
     const key='handle:'+length;
@@ -149,8 +164,18 @@ export class MeshFactory{
         const g=new THREE.Group();g.userData={visualOnly:true,tier:'base',members:run.members.map(x=>x.it.item_id)};
         // The countertop's back follows the carcass; 16 mm past the facade, 12 mm at free ends.
         const roomLimit=(f.axis==='x'?this.adapter.room.width:this.adapter.room.depth)/2;
-        const left=Math.min(12,Math.max(0,run.lo+roomLimit)),right=Math.min(12,Math.max(0,roomLimit-run.hi));
-        this.box(g,'counter',width+left+right,32,depth+36,(right-left)/2,f.top+16,18,null);
+        let left=Math.min(12,Math.max(0,run.lo+roomLimit)),right=Math.min(12,Math.max(0,roomLimit-run.hi));
+        const cross0=Math.min(f.line,f.line-f.normal*depth),cross1=Math.max(f.line,f.line-f.normal*depth);
+        for(const other of items){
+          if(g.userData.members.includes(other.item_id))continue;
+          const b=bounds(other,this.adapter.room,false),along0=f.axis==='x'?b.minX:b.minZ,along1=f.axis==='x'?b.maxX:b.maxZ;
+          const side0=f.cross==='x'?b.minX:b.minZ,side1=f.cross==='x'?b.maxX:b.maxZ;
+          if(b.maxY<=f.top||b.minY>=f.top+32||side1<=cross0||side0>=cross1)continue;
+          if(along1<=run.lo+1)left=Math.min(left,Math.max(0,run.lo-along1));
+          if(along0>=run.hi-1)right=Math.min(right,Math.max(0,along0-run.hi));
+        }
+        const alongSign=rotateXZ(1,0,f.it.rotation||0)[f.axis];
+        this.box(g,'counter',width+left+right,32,depth+36,alongSign*(right-left)/2,f.top+16,18,null);
         if(f.it.base==='plinth'&&run.members.length>1){
           this.box(g,'plinth',width,78,18,0,elevation(f.it,this.adapter.room)+40,depth/2-60,null);
           for(const sign of[-1,1])this.box(g,'plinth',18,78,depth-100,sign*(width/2-9),elevation(f.it,this.adapter.room)+40,-10,null);
@@ -166,13 +191,13 @@ export class MeshFactory{
     const plane=(kind,w,h)=>{const m=new THREE.Mesh(this.plane,this.contactMaterials[kind]);m.scale.set(w*S,h*S,1);m.userData.visualOnly=true;m.raycast=()=>{};root.add(m);return m;};
     for(const it of items){
       const level=elevation(it,room),layer=tier(it);
-      if(level===0){const m=plane('floor',it.width+90,it.depth+80);m.position.set(it.x*S,.0004,it.z*S);m.rotation.set(-Math.PI/2,0,(it.rotation||0)*Math.PI/180);m.userData.tier=layer;}
+      if(level===0){const m=plane('floor',it.width+90,it.depth+80);m.position.set(it.x*S,.0004,it.z*S);m.rotation.set(-Math.PI/2,0,(it.rotation||0)*Math.PI/180);m.userData.tier=layer;m.userData.contactItem=it.item_id;}
       const r=it.rotation||0,axis=r===90||r===270?'x':'z',sign=rotateXZ(0,-1,r)[axis],wall=(axis==='x'?room.width:room.depth)/2;
       const gap=wall-sign*it[axis]-it.depth/2;
       if(gap>=-1&&gap<=80){
         const m=plane('wall',it.width+110,it.height+110);m.position.set(it.x*S,(level+it.height/2)*S,it.z*S);
         m.position[axis]=sign*(wall*S-.002);m.rotation.y=axis==='z'?(sign<0?0:Math.PI):(sign<0?Math.PI/2:-Math.PI/2);
-        m.userData.tier=layer;m.userData.wall={axis,sign};
+        m.userData.tier=layer;m.userData.contactItem=it.item_id;m.userData.wall={axis,sign};
       }
     }
     return root;
