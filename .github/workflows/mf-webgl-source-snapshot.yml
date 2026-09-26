@@ -16,6 +16,7 @@ jobs:
           fetch-depth: 0
       - name: Verify clean exact checkout and bundle repository objects only
         run: |
+          # Furniture-only polish baseline; no secrets, runtime data or deployment changes.
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test -z "$(git status --porcelain)"
           mkdir -p /tmp/webgl-source
