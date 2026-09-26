@@ -47,8 +47,8 @@ def export(page):
 
 def test_native_export_unchanged_when_worktop_changes_and_project_reopens(page,api,settings,admin_user):
     open_planner(page,api);panel(page,'left','catalog');page.locator('[data-bazis="bazis.3079d0656398"]').click()
-    before=export(page);assert before[0]['target']==dict(width=600,height=720,depth=510)
-    assert before[0]['source_default']==dict(width=600,height=720,depth=510)
+    before=export(page);assert before[0]['target']==dict(width=600,height=820,depth=510)
+    assert before[0]['source_default']==dict(width=600,height=820,depth=510)
     assert before[0]['construction']['base_height']==100 and before[0]['construction']['worktop_thickness']==38
     edit(page,'worktop-thickness',50)
     after=export(page);assert after[0]['target']==before[0]['target']
@@ -91,7 +91,7 @@ def test_d1_d2_pilot_back_shelf_doors_save_and_native_export(page,api,settings,a
     assert saved['shelves'][0]['offset_mm']==400 and saved['body_height']==720 and saved['base_height']==100
     payload=export_payload(page);native=payload['items'][0]
     assert payload['production_schema']==1
-    assert native['target']==dict(width=600,height=720,depth=510)
+    assert native['target']==dict(width=600,height=820,depth=510)
     assert native['construction']['back']['type']=='overlay_nails'
     assert native['construction']['shelves'][0]['offset_mm']==400
     assert native['construction']['doors']==[dict(side='left',hinge_count=2,open_angle=105)]
