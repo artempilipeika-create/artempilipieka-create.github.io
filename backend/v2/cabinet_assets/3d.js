@@ -92,6 +92,7 @@ const pilotProductionById={
   'bazis.0211e4f77fc4':{
     key:'base.standard.d1.left.600',source_sha256:'7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',
     native_defaults:{width:600,height:720,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
     doors:[{side:'left',hinge_count:2,open_angle:105}],hardware:{hinge_article:'112602',hinge_count:2}
@@ -99,6 +100,7 @@ const pilotProductionById={
   'bazis.784bf9af84f8':{
     key:'base.standard.d1.right.600',source_sha256:'5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb',
     native_defaults:{width:600,height:720,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
     doors:[{side:'right',hinge_count:2,open_angle:105}],hardware:{hinge_article:'112602',hinge_count:2}
@@ -106,6 +108,7 @@ const pilotProductionById={
   'bazis.3079d0656398':{
     key:'base.standard.d2.600',source_sha256:'7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',
     native_defaults:{width:600,height:720,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
     doors:[{side:'left',hinge_count:2,open_angle:105},{side:'right',hinge_count:2,open_angle:105}],hardware:{hinge_article:'112602',hinge_count:4}
@@ -711,11 +714,23 @@ function buildBoxes(){
 
 function cutlistItem(it){
   const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
-  a.push([prefix+'Боковина',it.height-baseH,it.depth,2,'body',it]);
-  a.push([prefix+'Крышка/дно',inner,it.depth,2,'body',it]);
-  if(it.base==='plinth')a.push([prefix+'Цоколь',it.width,Math.round(it.depth*.78),1,'body',it]);
-  if(['tall_cabinet','wardrobe'].includes(it.module_type))a.push([prefix+'Полка',inner,it.depth,Math.max(2,Math.floor(it.height/500)),'body',it]);
-  if(it.layout==='niche')a.push([prefix+'Полка ниши',inner,it.depth,1,'body',it]);
+  const src=it.bazis_id?bazisById.get(it.bazis_id):null,p=src?.production||null,bodyH=globalThis.MF_FURNITURE_CORE.heights(it).body_height;
+  if(p?.carcass?.type==='bottom_side_two_rails'){
+    const railH=p.carcass.rail_height||80;
+    a.push([prefix+'Дно',it.width,it.depth,1,'body',it]);
+    a.push([prefix+'Боковина',Math.max(1,bodyH-t),it.depth,2,'body',it]);
+    a.push([prefix+'Царга задняя',railH,inner,1,'body',it]);
+    a.push([prefix+'Царга передняя',railH,inner,1,'body',it]);
+    for(const shelf of it.shelves||p.shelves||[])if(shelf.enabled!==false)
+      a.push([prefix+'Полка',Math.max(1,it.width-(shelf.width_clearance||0)),Math.max(1,it.depth-(shelf.depth_clearance||0)),1,'body',it]);
+    if(p.back)a.push([prefix+'Задняя стенка',Math.max(1,bodyH-2*(p.back.inset||0)),Math.max(1,it.width-2*(p.back.inset||0)),1,'fixed',it,p.back.material_name||'Задняя стенка']);
+  }else{
+    a.push([prefix+'Боковина',it.height-baseH,it.depth,2,'body',it]);
+    a.push([prefix+'Крышка/дно',inner,it.depth,2,'body',it]);
+    if(it.base==='plinth')a.push([prefix+'Цоколь',it.width,Math.round(it.depth*.78),1,'body',it]);
+    if(['tall_cabinet','wardrobe'].includes(it.module_type))a.push([prefix+'Полка',inner,it.depth,Math.max(2,Math.floor(it.height/500)),'body',it]);
+    if(it.layout==='niche')a.push([prefix+'Полка ниши',inner,it.depth,1,'body',it]);
+  }
 
   const grouped=new Map();
   for(const f of facadeCells(it)){
@@ -734,7 +749,8 @@ function renderCutlist(){
   for(const r of rows){
     const tr=document.createElement('tr');
     const mat=r[4]==='front'?materials.get(String(r[5].front_variant_id)):materials.get(String(r[5].body_variant_id));
-    for(const v of[r[0],mmText(r[1])+'×'+mmText(r[2]),r[3],label(mat)]){
+    const materialText=r[6]||label(mat);
+    for(const v of[r[0],mmText(r[1])+'×'+mmText(r[2]),r[3],materialText]){
       const td=document.createElement('td');
       td.textContent=v;
       tr.append(td);
@@ -949,9 +965,11 @@ function exportBazisProject(){
         front_variant_id:it.front_variant_id||null,
         construction:p?{
           key:p.key,
+          carcass:p.carcass||null,
           back:p.back,
           shelves:it.shelves||p.shelves||[],
           doors:p.doors||[],
+          hardware:p.hardware||null,
           base_height:Number.isFinite(it.base_height)?it.base_height:p.base_height,
           worktop_thickness:Number.isFinite(it.worktop_thickness)?it.worktop_thickness:p.worktop_thickness,
           handles:it.handles
