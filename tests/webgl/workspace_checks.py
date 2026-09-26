@@ -60,7 +60,7 @@ def test_workspace_fullscreen_editing_is_real_and_distinct_from_client(page,api,
 
 def test_workspace_fullscreen_rejection_does_not_lose_project(page,api,settings,admin_user):
     open_planner(page,api);seed(page,13);before=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
-    page.evaluate("document.getElementById('planner-workspace').requestFullscreen=()=>Promise.reject(new Error('Denied for test'))")
+    page.evaluate("()=>{document.getElementById('planner-workspace').requestFullscreen=()=>Promise.reject(new Error('Denied for test'));}")
     page.locator('#planner-fullscreen').click();expect(page.locator('#status')).to_contain_text('не разрешил')
     assert page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==before
 

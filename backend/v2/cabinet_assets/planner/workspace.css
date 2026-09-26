@@ -140,3 +140,12 @@
  .planner-client #planner-workspace .studio-camera{top:62px;right:12px}
 }
 @media(prefers-reduced-motion:reduce){#planner-workspace *{transition:none!important}}
+
+/* Account details margins must not expand the compact header grid. */
+#planner-workspace .studio-menu{margin:0;align-self:center}
+#planner-workspace .mf3d-top{flex-wrap:nowrap}
+@media(max-width:760px){
+ #planner-workspace .mf3d-top{grid-template-rows:34px 32px;align-content:start}
+ #planner-workspace .mf3d-top-actions{min-height:0;height:32px}
+ #planner-workspace .studio-menu>summary{padding:5px 9px}
+}
