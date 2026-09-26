@@ -4,6 +4,7 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights} fro
 // Appearance only: millimetre envelopes, facadeCells and project payloads are untouched.
 export const VISUAL_FINISHES=Object.freeze({
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
+  shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
   front:{color:'#e5e3d8',roughness:.74,metalness:0},
   back:{color:'#a6afa7',roughness:.94,metalness:0},
   plinth:{color:'#536158',roughness:.87,metalness:0},
@@ -110,23 +111,41 @@ export class MeshFactory{
     ]));const m=this.mesh(group,'handle',g,key,x,height/2,z,null,ghost);m.userData.visualOnly=true;m.userData.role='leg';
   }
   build(it,ghost=false){
-    const group=new THREE.Group();group.userData={itemId:it.item_id,ghost,visualApproximation:Boolean(it.bazis_id)};
-    const {width:W,height:H,depth:D}=it,t=18,base=heights(it).base_height;
+    const group=new THREE.Group();group.userData={itemId:it.item_id,ghost,visualApproximation:false};
+    const {width:W,height:H,depth:D}=it,t=18,base=heights(it).base_height,bodyH=H-base;
     group.userData.heights=heights(it);
-    const body=it.body_variant_id,front=it.front_variant_id,template=this.adapter.template(it),cells=facadeCells(it,template);
-    this.box(group,'body',t,H-base,D,-W/2+t/2,base+(H-base)/2,0,body,ghost);
-    this.box(group,'body',t,H-base,D,W/2-t/2,base+(H-base)/2,0,body,ghost);
+    const body=it.body_variant_id,front=it.front_variant_id,template=this.adapter.template(it),production=template?.production||null,cells=facadeCells(it,template);
+    group.userData.visualApproximation=Boolean(it.bazis_id&&!production);
+    this.box(group,'body',t,bodyH,D,-W/2+t/2,base+bodyH/2,0,body,ghost);
+    this.box(group,'body',t,bodyH,D,W/2-t/2,base+bodyH/2,0,body,ghost);
     this.box(group,'body',W-2*t,t,D,0,H-t/2,0,body,ghost);
     this.box(group,'body',W-2*t,t,D,0,base+t/2,0,body,ghost);
-    // No imaginary FR3D shelves or hardware internals. Only known generic shells.
-    if(!it.bazis_id)this.box(group,'back',W-2*t,H-base-2*t,4,0,base+(H-base)/2,-D/2+2,body,ghost);
+
+    if(production?.back){
+      const back=production.back,inset=Number(back.inset)||0,thickness=Number(back.thickness)||3;
+      const m=this.box(group,'back',Math.max(1,W-2*inset),Math.max(1,bodyH-2*inset),thickness,0,base+bodyH/2,-D/2-thickness/2,null,ghost,.2);
+      if(m){m.userData.productionPart='back';m.userData.backType=back.type;}
+    }else if(!it.bazis_id){
+      this.box(group,'back',W-2*t,bodyH-2*t,4,0,base+bodyH/2,-D/2+2,body,ghost);
+    }
+
+    const shelves=Array.isArray(it.shelves)&&it.shelves.length?it.shelves:(production?.shelves||[]);
+    for(const shelf of shelves){
+      if(shelf?.enabled===false)continue;
+      const thickness=Number(shelf.thickness)||18,sw=Math.max(1,W-(Number(shelf.width_clearance)||0));
+      const sd=Math.max(1,D-(Number(shelf.depth_clearance)||0)),offset=Number(shelf.offset_mm);
+      if(!Number.isFinite(offset))continue;
+      const m=this.box(group,'shelf',sw,thickness,sd,0,base+offset,(D-sd)/2,shelf.material_variant_id||body,ghost,.35);
+      if(m){m.userData.productionPart='shelf';m.userData.shelfId=shelf.id||null;}
+    }
+
     if(it.base==='plinth'&&base>2){
       this.box(group,'plinth',W,base-2,18,0,base/2,D/2-60,null,ghost);
       for(const sign of[-1,1])this.box(group,'plinth',18,base-2,D-100,sign*(W/2-9),base/2,-10,null,ghost);
     }
     if(base>0)for(const x of[-W/2+45,W/2-45])for(const z of[-D/2+45,D/2-95])this.foot(group,x,z,base,ghost);
     if(!it.bazis_id&&it.layout==='niche'){
-      const ratio=template?.front?.nicheRatio||.35,y=base+(H-base)*(1-ratio);
+      const ratio=template?.front?.nicheRatio||.35,y=base+bodyH*(1-ratio);
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     if(cells.length){
@@ -134,15 +153,27 @@ export class MeshFactory{
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
     }
+
+    const doorSpecs=production?.doors||[];let doorIndex=0;
     for(const f of cells){
-      const panel=this.box(group,'front',f.w,f.h,18,f.cx,f.cy,D/2+11,front,ghost);panel.userData.facade={...f};
+      const drawer=f.kind==='drawer',spec=!drawer&&doorSpecs.length?(doorSpecs[doorIndex++]||doorSpecs.at(-1)):null;
+      let parent=group,px=f.cx,pz=D/2+11,handleZ=D/2+20;
+      if(spec){
+        const hingeX=f.cx+(spec.side==='right'?f.w/2:-f.w/2),pivot=new THREE.Group();
+        pivot.userData={itemId:it.item_id,role:'door-pivot',visualOnly:true,hingeSide:spec.side};
+        pivot.position.set(hingeX*S,0,(D/2+11)*S);
+        if(it.doors_open)pivot.rotation.y=(spec.side==='left'?-1:1)*(Number(spec.open_angle)||105)*Math.PI/180;
+        group.add(pivot);parent=pivot;px=f.cx-hingeX;pz=0;handleZ=9;
+      }
+      const panel=this.box(parent,'front',f.w,f.h,18,px,f.cy,pz,front,ghost);panel.userData.facade={...f};
+      if(spec)panel.userData.hingeSide=spec.side;
       if(it.handles==='handles'&&f.w>140&&f.h>100){
-        const drawer=f.kind==='drawer',doors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
-        const side=doors.length>1?(f.cx<0?1:-1):/отк P/.test(it.bazis_file||'')?-1:1;
-        const x=drawer?f.cx:f.cx+side*(f.w/2-50);
+        const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
+        const side=rowDoors.length>1?(f.cx<0?1:-1):spec?(spec.side==='right'?-1:1):/отк P/.test(it.bazis_file||'')?-1:1;
+        const x=drawer?f.cx:f.cx+side*(f.w/2-50),localX=spec?x-(f.cx+(spec.side==='right'?f.w/2:-f.w/2)):x;
         const y=f.cy+f.h/2-(drawer?36:50);
-        // The handle axis is 50 x 50; the 80 mm bar stays inside the facade.
-        this.handle(group,drawer?Math.min(160,f.w*.34):80,x,y,D/2+20,drawer,ghost);
+        // The handle axis is 50 x 50; pilot swing doors keep the handle on the rotating facade.
+        this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
     }
     this.position(group,it);return group;
@@ -210,7 +241,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.body_variant_id,it.front_variant_id]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.body_variant_id,it.front_variant_id,it.doors_open,it.shelves]);}
   dispose(){this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 
