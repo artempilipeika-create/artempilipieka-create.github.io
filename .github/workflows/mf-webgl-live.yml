@@ -23,13 +23,13 @@ jobs:
         run: |
           pip install playwright==1.58.0
           python -m playwright install --with-deps chromium
-      - name: Wait for accepted vendor bytes on the existing staging service
+      - name: Wait for accepted workspace bytes on the existing staging service
         run: |
           python - <<'PY'
           from pathlib import Path
           import time,urllib.request
-          expected=Path('backend/v2/cabinet_assets/planner/module-mesh.mjs').read_bytes()
-          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/module-mesh.mjs'
+          expected=Path('backend/v2/cabinet_assets/planner/workspace.mjs').read_bytes()
+          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/workspace.mjs'
           for attempt in range(24):
               try:
                   request=urllib.request.Request(url,method='GET',headers={'Cache-Control':'no-cache'})
@@ -46,6 +46,7 @@ jobs:
           mv qa-output/webgl-live/results.json qa-output/webgl-live/surface-check.json
           python tests/webgl/live_smoke.py --commit "$GITHUB_SHA"
           python tests/webgl/visual_capture.py --live --out qa-output/webgl-live/visual
+          python tests/webgl/workspace_capture.py --live --out qa-output/webgl-live/workspace
           git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()
