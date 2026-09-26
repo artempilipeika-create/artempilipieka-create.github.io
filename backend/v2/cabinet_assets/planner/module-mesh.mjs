@@ -191,7 +191,8 @@ export class CataloguePreviews{
   constructor(owner){
     this.owner=owner;this.queue=new Set();this.closed=false;
     const root=document.getElementById('module-catalogue');if(!root)return;
-    this.target=new THREE.WebGLRenderTarget(240,176,{depthBuffer:true});this.target.texture.colorSpace=THREE.SRGBColorSpace;
+    this.target=new THREE.WebGLRenderTarget(240,176,{depthBuffer:true,samples:4});this.target.texture.colorSpace=THREE.SRGBColorSpace;
+    root.querySelectorAll('canvas.studio-preview').forEach(c=>delete c.dataset.meshObserved);
     this.observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting&&e.target.dataset.modelPreview!=='mesh-v2'){this.queue.add(e.target);this.schedule();}},{root:document.getElementById('pane-catalog'),rootMargin:'30px'});
     const scan=()=>root.querySelectorAll('canvas.studio-preview').forEach(c=>{if(c.dataset.meshObserved)return;c.dataset.meshObserved='true';this.observer.observe(c);});
     this.mutations=new MutationObserver(scan);this.mutations.observe(root,{subtree:true,childList:true});scan();
@@ -210,8 +211,8 @@ export class CataloguePreviews{
   paint(canvas,opt){
     const {adapter,factory,renderer}=this.owner,it=adapter.createDraft(opt),scene=new THREE.Scene();
     it.x=it.z=it.rotation=0;it.elevation_mm=0;
-    scene.background=new THREE.Color('#eef0eb');scene.add(new THREE.HemisphereLight('#ffffff','#b1bbb0',1.05));
-    const key=new THREE.DirectionalLight('#fffaf1',1.85);key.position.set(-3,5,4);scene.add(key);
+    scene.background=new THREE.Color('#eef0eb');scene.environment=this.owner.scene.environment;scene.environmentIntensity=.65;scene.add(new THREE.HemisphereLight('#ffffff','#c9d0c8',1.4));
+    const key=new THREE.DirectionalLight('#fffaf1',1.5);key.position.set(-3,5,7);scene.add(key);
     const fill=new THREE.DirectionalLight('#f0f5ff',.55);fill.position.set(4,2,1);scene.add(fill);
     const model=factory.build(it),dress=factory.dress([it]);scene.add(model,dress);
     const b=new THREE.Box3().setFromObject(model).expandByObject(dress),center=b.getCenter(new THREE.Vector3());
