@@ -18,6 +18,16 @@ class Room(StrictModel):
     depth: int=Field(default=3200,ge=1500,le=12000)
     height: int=Field(default=2700,ge=2000,le=5000)
 
+class ShelfState(StrictModel):
+    id: str=Field(min_length=1,max_length=80)
+    enabled: bool=True
+    offset_mm: int=Field(ge=0,le=3000)
+    thickness: int=Field(default=18,ge=3,le=60)
+    width_clearance: int=Field(default=36,ge=0,le=300)
+    depth_clearance: int=Field(default=1,ge=0,le=300)
+    source_component: str|None=Field(default=None,max_length=500)
+    material_variant_id: UUID|None=None
+
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
@@ -43,6 +53,8 @@ class FurnitureItem(StrictModel):
     handles: Literal['handles','handleless']='handles'
     body_variant_id: UUID|None=None
     front_variant_id: UUID|None=None
+    shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
+    doors_open: bool=False
 
     @model_validator(mode='after')
     def separated_heights(self):
@@ -54,6 +66,10 @@ class FurnitureItem(StrictModel):
             raise ValueError('Module height must equal base plus body; worktop is separate')
         if self.worktop_thickness and (self.module_type!='base_cabinet' or self.depth>750):
             raise ValueError('Worktop is supported only for compatible lower modules')
+        body=self.height-base
+        for shelf in self.shelves:
+            if shelf.enabled and (shelf.offset_mm-shelf.thickness/2<0 or shelf.offset_mm+shelf.thickness/2>body):
+                raise ValueError('Shelf position must stay inside the cabinet body')
         return self
 
 class Scene(StrictModel):
