@@ -63,7 +63,7 @@ function harness(){
 }
 test('Temporary preview height is not silently added to v2 payload',()=>{const {adapter}=harness();adapter.replace({...adapter.selected,elevation_mm:1480});assert.equal(Object.hasOwn(adapter.selected,'elevation_mm'),false);assert.equal(Object.hasOwn(adapter.createDraft({module:'base_cabinet'}),'elevation_mm'),false);});
 test('D1 pilot draft separates 720 body, 100 base and 38 worktop while keeping 510 depth',()=>{
- const {adapter}=harness(),draft=adapter.createDraft({bazis:'pilot-d1'});
+ const {adapter}=harness();adapter.items.splice(0);const draft=adapter.createDraft({bazis:'pilot-d1'});
  assert.equal(draft.height,820);assert.equal(draft.body_height,720);assert.equal(draft.base_height,100);
  assert.equal(draft.worktop_thickness,38);assert.equal(draft.depth,510);assert.equal(draft.shelves.length,1);
  assert.equal(draft.shelves[0].offset_mm,360);assert.equal(draft.doors_open,false);
