@@ -1,4 +1,6 @@
-"""Real UI navigation for collapsible panels. No state or visibility overrides."""
+"""Real UI navigation for collapsible panels. No state or visibility overrides.
+All regression actions open the actual drawer before editing its existing controls.
+"""
 def panel(page,side,tab=None):
     if not page.locator('#planner-workspace').count():return
     target=page.locator('.mf3d-left' if side=='left' else '.mf3d-right')
