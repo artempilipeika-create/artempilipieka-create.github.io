@@ -52,8 +52,12 @@ def main():
             page.locator('#tab-catalog').click();page.locator('[data-module-filter="base"]').click();page.wait_for_timeout(1500);page.locator('.mf3d-left').screenshot(path=str(out/'catalog.png'))
             for n in [30,50]:
                 page.evaluate(SEED,n);page.wait_for_timeout(500)
-                report['performance'][str(n)]=page.evaluate('''()=>{const s=MF_PLANNER.scene,gl=s.renderer.getContext(),times=[],c=s.camera.position.clone();for(let i=0;i<14;i++){const t=performance.now();s.camera.position.x+=.005;s.camera.lookAt(s.controls.target);s.renderer.render(s.scene,s.camera);gl.finish();if(i>3)times.push(performance.now()-t);}s.camera.position.copy(c);times.sort((a,b)=>a-b);return{samples:times,median_ms:times[Math.floor(times.length/2)],calls:s.renderer.info.render.calls,triangles:s.renderer.info.render.triangles,memory:s.renderer.info.memory,renderer:gl.getParameter(gl.RENDERER)};}''')
+                # Capture the normal application frame before the deliberately
+                # synchronous camera/GPU benchmark. Restore a complete camera
+                # transform and schedule a normal application frame afterwards.
+                page.evaluate('''()=>new Promise(resolve=>requestAnimationFrame(()=>{MF_PLANNER.scene.render();requestAnimationFrame(resolve);}))''')
                 page.screenshot(path=str(out/('modules-'+str(n)+'.png')))
+                report['performance'][str(n)]=page.evaluate('''()=>{const s=MF_PLANNER.scene,gl=s.renderer.getContext(),times=[],c=s.camera.position.clone(),q=s.camera.quaternion.clone();for(let i=0;i<14;i++){const t=performance.now();s.camera.position.x+=.005;s.camera.lookAt(s.controls.target);s.renderer.render(s.scene,s.camera);gl.finish();if(i>3)times.push(performance.now()-t);}s.camera.position.copy(c);s.camera.quaternion.copy(q);s.camera.updateMatrixWorld();s.invalidate();times.sort((a,b)=>a-b);return{samples:times,median_ms:times[Math.floor(times.length/2)],calls:s.renderer.info.render.calls,triangles:s.renderer.info.render.triangles,memory:s.renderer.info.memory,renderer:gl.getParameter(gl.RENDERER)};}''')
             assert not report['errors'],report['errors'];assert not report['unexpected_requests'],report['unexpected_requests']
             report['success']=True
         finally:
