@@ -103,6 +103,23 @@ def main():
             check('Published ghost',page.evaluate('Boolean(MF_PLANNER.scene.preview)'))
             page.keyboard.press('Escape');page.mouse.up()
             check('Published Escape preserves state',page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==before)
+            # Pilot acceptance uses the actual published catalogue, controls and export.
+            # Scene changes stay inside this synthetic browser; the live API remains GET-only.
+            for donor,sides,name in [('bazis.0211e4f77fc4',['left'],'D1-L'),('bazis.784bf9af84f8',['right'],'D1-P'),('bazis.3079d0656398',['left','right'],'D2')]:
+                page.evaluate('''()=>{const p=MF_PLANNER,s=p.bridge.snapshot();s.scene.items=[];s.scene.selected_item_id=null;s.selectedId=null;p.bridge.restore(s);p.history.reset();}''')
+                panel(page,'left','catalog');page.locator(f'[data-bazis="{donor}"]').click()
+                panel(page,'right');page.locator('#toggle-doors').click()
+                data=page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.selected,g=p.scene.entries.get(it.item_id).group,out={item:it,fronts:[],sides:[],angles:[],back:[],shelf:[],reveal:0};g.traverse(o=>{const r=o.userData?.role;if(r==='front')out.fronts.push(o.geometry.userData.envelopeMM);if(r==='door-pivot'){out.sides.push(o.userData.hingeSide);out.angles.push(Math.round(o.rotation.y*180/Math.PI));}if(r==='back'||r==='shelf')out[r].push(o.geometry.userData.envelopeMM);if(r==='reveal')out.reveal++;});return out;}''')
+                check(name+' real back, shelf and facades',data['back']==[[596,716,3]] and data['shelf']==[[564,18,509]] and data['fronts']==[[600/len(sides)-3,717,18]]*len(sides))
+                check(name+' opens correct sides and exposes interior',data['sides']==sides and data['angles']==[-105 if s=='left' else 105 for s in sides] and data['reveal']==0)
+                page.locator('#shelf-position').fill('400');page.locator('#shelf-position').press('Tab')
+                check(name+' shelf control',page.evaluate('MF_PLANNER.adapter.selected.shelves[0].offset_mm')==400)
+                close_panels(page)
+                with page.expect_download() as download:page.locator('#export-bazis').click()
+                payload=json.loads(Path(download.value.path()).read_text());native=payload['items'][0]
+                check(name+' existing native export contract',payload['format']=='martin-forest-bazis-native-v2' and native['target']=={'width':600,'height':820,'depth':510} and native['construction']['shelves'][0]['offset_mm']==400)
+                page.evaluate('MF_PLANNER.setView("3d");MF_PLANNER.scene.fit("selected");MF_PLANNER.scene.render()')
+                page.wait_for_timeout(200);screenshot='published-pilot-'+name+'.png';page.screenshot(path=str(OUT/screenshot));report['screenshots'].append(screenshot)
             page.evaluate('''()=>{const p=MF_PLANNER,items=[];for(let i=0;i<6;i++){const a=p.adapter.createDraft({template:i%2?'base.two_door':'base.drawers_3'});Object.assign(a,{width:600,x:-2100+i*600,z:-1500,name:'Нижний '+(i+1)});items.push(a);const u=p.adapter.createDraft({template:'wall.two_door'});Object.assign(u,{width:600,x:-2100+i*600,z:-1600,name:'Верхний '+(i+1)});items.push(u);}const t=p.adapter.createDraft({template:'tall.one_door'});Object.assign(t,{x:1650,z:-1500,name:'Пенал'});items.push(t);p.bridge.restore({name:'Кухня · 13 модулей',scene:{schema_version:2,room:{width:6200,depth:3600,height:2700},items,selected_item_id:items[0].item_id,view_mode:'3d'},selectedId:items[0].item_id});p.history.reset();}''')
             page.locator('#mode-3d').click()
             for width,height,name in [(1600,1000,'desktop'),(1024,768,'tablet'),(390,844,'mobile')]:

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MeshFactory,panelGeometry,VISUAL_FINISHES} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
-import {facadeCells,heights,dimensionPatch} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {facadeCells,heights,dimensionPatch,bounds,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 const room={width:6200,depth:3600,height:2700};
 const make=(front={kind:'doors',count:2})=>new MeshFactory({room,material:()=>null,template:()=>({front})},()=>{});
 const item={item_id:'fixed',module_type:'base_cabinet',width:800,height:720,depth:560,x:0,z:0,rotation:0,base:'plinth',handles:'handles',layout:'doors',drawers:0};
@@ -48,6 +48,20 @@ test('D2 production pilot has two 297x717 fronts on left/right pivots and one sh
  assert.deepEqual(pivots.map(p=>p.userData.hingeSide),['left','right']);
  assert.ok(pivots[0].rotation.y<0&&pivots[1].rotation.y>0);
  assert.equal(roles(g,'shelf').length,1);assert.deepEqual(size(roles(g,'back')[0].geometry),[596,716,3]);f.dispose();
+});
+test('Open D1 L/P and D2 expose the real interior without changing placement collisions',async()=>{
+ const {Raycaster,Vector3}=await import('../../backend/v2/cabinet_assets/planner/vendor/three.module.js');
+ for(const sides of [['left'],['right'],['left','right']]){
+  const f=pilotFactory(sides.map(side=>({side,open_angle:105}))),opened={...pilotItem,doors_open:true},g=f.build(opened);
+  assert.equal(roles(g,'reveal').length,0);g.updateMatrixWorld(true);
+  const hit=new Raycaster(new Vector3(0,.28,1),new Vector3(0,0,-1)).intersectObject(g,true)[0];
+  assert.equal(hit.object.userData.role,'back');
+  assert.deepEqual(bounds(opened,room),bounds(pilotItem,room));
+  const beside={...pilotItem,item_id:'beside',x:600};
+  assert.equal(placementError(opened,[beside],room),'');
+  assert.equal(placementError(pilotItem,[beside],room),'');
+  assert.match(placementError(opened,[{...beside,x:590}],room),/Пересечение/);f.dispose();
+ }
 });
 test('Render-only geometry never mutates the project or native BAZIS identifiers',()=>{const f=make(),it=Object.freeze({...item,bazis_id:'id',bazis_file:'source.fr3d',bazis_sha256:'a'.repeat(64),bazis_resize:true});const before=JSON.stringify(it);f.build(it);f.dress([it]);f.contacts([it]);assert.equal(JSON.stringify(it),before);f.dispose();});
 test('Material roughness separates roles without invented texture data',()=>{const f=make();assert.ok(VISUAL_FINISHES.front.roughness>=.65&&VISUAL_FINISHES.front.roughness<=.85);assert.ok(VISUAL_FINISHES.body.roughness>VISUAL_FINISHES.front.roughness);assert.equal(f.material('front').metalness,0);assert.equal(f.material('front').map,null);assert.notEqual(f.material('front').color.getHexString(),f.material('body').color.getHexString());f.dispose();});

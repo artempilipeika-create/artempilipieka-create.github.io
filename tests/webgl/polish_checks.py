@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import pytest
 from playwright.sync_api import expect
-from tests.webgl.browser_checks import page,settings,api,admin_user,open_planner
+from tests.webgl.browser_checks import page,settings,api,admin_user,open_planner,screenshot
 from tests.webgl.navigation import panel,close_panels
 
 def edit(page,key,value):
@@ -59,8 +59,13 @@ def test_native_export_unchanged_when_worktop_changes_and_project_reopens(page,a
     expect(page.locator('#height')).to_have_value('820');assert export(page)[0]['target']==before[0]['target']
     assert state(page)['heights']==dict(body_height=720,base_height=100,module_height=820,worktop_thickness=50,overall_height_with_worktop=870)
 
-def test_d1_d2_pilot_back_shelf_doors_save_and_native_export(page,api,settings,admin_user):
-    open_planner(page,api);panel(page,'left','catalog');page.locator('[data-bazis="bazis.0211e4f77fc4"]').click()
+@pytest.mark.parametrize('bazis_id,label,sides,source_sha',[
+    ('bazis.0211e4f77fc4','Нижний 1 дверь L',['left'],'7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64'),
+    ('bazis.784bf9af84f8','Нижний 1 дверь P',['right'],'5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb'),
+    ('bazis.3079d0656398','Нижний 2 двери',['left','right'],'7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29'),
+],ids=['D1-L','D1-P','D2'])
+def test_d1_d2_pilot_back_shelf_doors_save_and_native_export(page,api,settings,admin_user,bazis_id,label,sides,source_sha):
+    open_planner(page,api);panel(page,'left','catalog');page.locator(f'[data-bazis="{bazis_id}"]').click()
     item=page.evaluate('({...MF_PLANNER.adapter.selected})')
     assert item['height']==820 and item['body_height']==720 and item['base_height']==100 and item['depth']==510
     assert item['shelves'][0]['offset_mm']==360
@@ -70,40 +75,50 @@ def test_d1_d2_pilot_back_shelf_doors_save_and_native_export(page,api,settings,a
     assert meshes['back'][0]['env']==[596,716,3]
     assert meshes['shelf'][0]['env']==[564,18,509]
     assert round(meshes['shelf'][0]['y']*1000)==460
-    assert meshes['front'][0]['env']==[597,717,18]
+    assert [m['env'] for m in meshes['front']]==[[600/len(sides)-3,717,18]]*len(sides)
+    assert [m['hinge'] for m in meshes['door-pivot']]==sides
     rows=page.evaluate("()=>[...document.querySelectorAll('#cutlist tbody tr')].map(tr=>[...tr.cells].map(td=>td.textContent))")
     assert [r[:3] for r in rows[:6]]==[
-        ['Нижний 1 дверь L · Дно','600×510','1'],
-        ['Нижний 1 дверь L · Боковина','702×510','2'],
-        ['Нижний 1 дверь L · Царга задняя','80×564','1'],
-        ['Нижний 1 дверь L · Царга передняя','80×564','1'],
-        ['Нижний 1 дверь L · Полка','564×509','1'],
-        ['Нижний 1 дверь L · Задняя стенка','716×596','1'],
+        [label+' · Дно','600×510','1'],
+        [label+' · Боковина','702×510','2'],
+        [label+' · Царга задняя','80×564','1'],
+        [label+' · Царга передняя','80×564','1'],
+        [label+' · Полка','564×509','1'],
+        [label+' · Задняя стенка','716×596','1'],
     ]
     page.locator('#shelf-position').fill('400');page.locator('#shelf-position').press('Tab')
     assert page.evaluate('MF_PLANNER.adapter.selected.shelves[0].offset_mm')==400
     page.locator('#toggle-doors').click()
     assert page.evaluate('MF_PLANNER.adapter.selected.doors_open') is True
-    assert page.evaluate('''()=>{const g=MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group;return g.children.find(x=>x.userData.role==='door-pivot').rotation.y<0}''')
+    assert page.evaluate('''()=>{const g=MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group;return g.children.filter(x=>x.userData.role==='door-pivot').map(x=>Math.round(x.rotation.y*180/Math.PI));}''')==[-105 if side=='left' else 105 for side in sides]
+    assert page.evaluate("MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.children.some(x=>x.userData.role==='reveal')") is False
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
     pid=page.evaluate('MF_PLANNER.adapter.projectId')
     saved=api.get('/api/v2/3d-projects/'+pid).json()['scene']['items'][0]
     assert saved['shelves'][0]['offset_mm']==400 and saved['body_height']==720 and saved['base_height']==100
+    assert saved['doors_open'] is True and saved['bazis_id']==bazis_id
     payload=export_payload(page);native=payload['items'][0]
     assert payload['production_schema']==1
+    assert payload['format']=='martin-forest-bazis-native-v2'
     assert native['target']==dict(width=600,height=820,depth=510)
     assert native['construction']['back']['type']=='overlay_nails'
     assert native['construction']['shelves'][0]['offset_mm']==400
-    assert native['construction']['doors']==[dict(side='left',hinge_count=2,open_angle=105)]
-    assert native['source_sha256']=='7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64'
+    assert native['construction']['doors']==[dict(side=side,hinge_count=2,open_angle=105) for side in sides]
+    assert native['source_sha256']==source_sha
 
     page.goto('https://testserver/constructor');expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
     panel(page,'left','projects');page.locator('#projects .mf3d-project').first.click()
+    # Opening a project fetches its scene asynchronously; wait for this exact saved module.
+    page.wait_for_function('id=>MF_PLANNER.adapter.selected?.item_id===id',arg=item['item_id'])
     assert page.evaluate('MF_PLANNER.adapter.selected.shelves[0].offset_mm')==400
-    panel(page,'left','catalog');page.locator('[data-bazis="bazis.3079d0656398"]').click()
-    d2=page.evaluate('''()=>{const p=MF_PLANNER,g=p.scene.entries.get(p.adapter.selected.item_id).group,fronts=[],pivots=[];g.traverse(o=>{if(o.userData?.role==='front')fronts.push(o.geometry.userData.envelopeMM);if(o.userData?.role==='door-pivot')pivots.push(o.userData.hingeSide);});return {fronts,pivots,item:{...p.adapter.selected}};}''')
-    assert d2['fronts']==[[297,717,18],[297,717,18]]
-    assert d2['pivots']==['left','right'] and d2['item']['depth']==510 and d2['item']['height']==820
+    assert page.evaluate('MF_PLANNER.adapter.selected.doors_open') is True
+    assert export(page)[0]==native
+    panel(page,'right');page.locator('#shelf-enabled').uncheck()
+    assert page.evaluate("MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.children.filter(x=>x.userData.role==='shelf').length")==0
+    page.locator('#planner-undo').click()
+    assert page.evaluate("MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.children.filter(x=>x.userData.role==='shelf').length")==1
+    close_panels(page);page.evaluate('MF_PLANNER.scene.fit("selected");MF_PLANNER.scene.render()')
+    screenshot(page,'pilot-'+bazis_id+'-open')
 
 def test_legacy_project_retains_module_height_on_read_and_save(page,api,settings,admin_user):
     open_planner(page,api)

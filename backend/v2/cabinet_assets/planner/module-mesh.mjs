@@ -157,7 +157,8 @@ export class MeshFactory{
       const ratio=template?.front?.nicheRatio||.35,y=base+bodyH*(1-ratio);
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
-    if(cells.length){
+    // A solid gap-shading panel would hide the real back and shelf behind open doors.
+    if(cells.length&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
