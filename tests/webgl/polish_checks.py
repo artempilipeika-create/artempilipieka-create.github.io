@@ -131,3 +131,24 @@ def test_legacy_project_retains_module_height_on_read_and_save(page,api,settings
     close_panels(page);page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
     saved=api.get('/api/v2/3d-projects/'+response.json()['project_id']).json()['scene']['items'][0]
     assert saved['height']==720 and saved['worktop_thickness'] is None
+
+def test_existing_bazis_donors_keep_original_geometry_and_export_on_reopen(page,api,settings,admin_user):
+    open_planner(page,api)
+    for donor,filename,sha in [
+        ('bazis.0211e4f77fc4','НМД1-600. отк L.fr3d','cd5f119cec7467047cdac6ea1bc4aaafa95c4fa092cc92a101509003dbbd16b5'),
+        ('bazis.784bf9af84f8','НМД1-600. отк P.fr3d','1ac5f7edba13c42c67007525a3b66738eb7937b4c6a35fb901d50144ad696df1'),
+        ('bazis.3079d0656398','НМД2-600..fr3d','d79434c8d5e93744fcb37461491c9ec7560c1c78ad16d99a76ce7433fb9dfc80'),
+    ]:
+        legacy={'item_id':donor,'name':'Existing BAZIS donor','module_type':'base_cabinet','bazis_id':donor,'bazis_file':filename,'bazis_sha256':sha,'bazis_resize':True,'width':600,'height':720,'depth':560,'x':0,'z':0,'rotation':0,'base':'plinth','layout':'doors','drawers':0,'handles':'handles'}
+        response=api.post('/api/v2/3d-projects',json={'name':'Existing '+donor,'scene':{'schema_version':2,'items':[legacy]}})
+        assert response.status_code==201
+        page.evaluate('(id)=>MF_PLANNER.bridge.open(id)',response.json()['project_id'])
+        before=export(page)[0]
+        assert before['source_default']==dict(width=600,height=720,depth=560)
+        assert before['target']==before['source_default']
+        assert before['source_file']==filename and before['source_sha256']==sha
+        assert before['construction'] is None
+        assert page.evaluate('MF_PLANNER.adapter.template(MF_PLANNER.adapter.selected).production===undefined') is True
+        close_panels(page);page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
+        page.evaluate('(id)=>MF_PLANNER.bridge.open(id)',response.json()['project_id'])
+        assert export(page)[0]==before

@@ -114,6 +114,8 @@ const pilotProductionById={
     doors:[{side:'left',hinge_count:2,open_angle:105},{side:'right',hinge_count:2,open_angle:105}],hardware:{hinge_article:'112602',hinge_count:4}
   }
 };
+// Existing saved projects still refer to the earlier donor bytes and dimensions.
+const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
   const p=pilotProductionById[m.id];if(!p)continue;
   m.source_sha256=p.source_sha256;m.production=p;
@@ -148,7 +150,14 @@ async function material(id){
   }catch{return null}
 }
 function selected(){return state?.items.find(x=>x.item_id===selectedId)||null}
-function templateFor(it){if(it?.bazis_id)return bazisById.get(it.bazis_id)||null;return it?.template_id?kitchenTemplates[it.template_id]||null:null}
+function templateFor(it){
+  if(it?.bazis_id){
+    const source=bazisById.get(it.bazis_id);
+    if(source?.production&&it.bazis_sha256!==source.source_sha256)return legacyBazisById.get(it.bazis_id)||null;
+    return source||null;
+  }
+  return it?.template_id?kitchenTemplates[it.template_id]||null:null;
+}
 function inferTemplate(it={}){
   if(it.module_type==='base_cabinet'){
     if(it.layout==='drawers')return Number(it.drawers)>=3?'base.drawers_3':'base.drawers_2';
@@ -718,7 +727,7 @@ function buildBoxes(){
 
 function cutlistItem(it){
   const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
-  const src=it.bazis_id?bazisById.get(it.bazis_id):null,p=src?.production||null,bodyH=globalThis.MF_FURNITURE_CORE.heights(it).body_height;
+  const src=it.bazis_id?templateFor(it):null,p=src?.production||null,bodyH=globalThis.MF_FURNITURE_CORE.heights(it).body_height;
   if(p?.carcass?.type==='bottom_side_two_rails'){
     const railH=p.carcass.rail_height||80;
     a.push([prefix+'Дно',it.width,it.depth,1,'body',it]);
@@ -952,7 +961,7 @@ function exportBazisProject(){
     production_schema:1,
     skipped_non_bazis:missing.map(x=>({name:x.name,module_type:x.module_type})),
     items:bazisItems.map((it,index)=>{
-      const src=bazisById.get(it.bazis_id),p=src?.production||null;
+      const src=templateFor(it),p=src?.production||null;
       const nativeDefault=p?.native_defaults||{width:src?.defaults.w,height:src?.defaults.h,depth:src?.defaults.d};
       return{
         index:index+1,
