@@ -28,8 +28,8 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import time,urllib.request
-          expected=Path('backend/v2/cabinet_assets/planner/workspace.mjs').read_bytes()
-          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/workspace.mjs'
+          expected=Path('backend/v2/cabinet_assets/planner/module-mesh.mjs').read_bytes()
+          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/module-mesh.mjs'
           for attempt in range(24):
               try:
                   request=urllib.request.Request(url,method='GET',headers={'Cache-Control':'no-cache'})
@@ -47,6 +47,7 @@ jobs:
           python tests/webgl/live_smoke.py --commit "$GITHUB_SHA"
           python tests/webgl/visual_capture.py --live --out qa-output/webgl-live/visual
           python tests/webgl/workspace_capture.py --live --out qa-output/webgl-live/workspace
+          python tests/webgl/polish_capture.py --live --out qa-output/webgl-live/polish-v2
           git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()

@@ -3,6 +3,24 @@
 (function(root){
   const FACADE_GAP_MM=1.5, MM_TO_WORLD=0.001;
   const mmNumber=v=>Math.round(Number(v)*10)/10;
+  // `height` remains the saved module envelope and the native FR3D target.
+  // Old projects keep that envelope; a worktop has never been part of it.
+  function heights(it){
+    const base=it.base==='wall'?0:(Number.isFinite(it.base_height)?it.base_height:it.base==='plinth'?80:60);
+    const worktop=it.module_type==='base_cabinet'&&it.depth<=750
+      ?(Number.isFinite(it.worktop_thickness)?it.worktop_thickness:32):0;
+    return {body_height:it.height-base,base_height:base,module_height:it.height,
+      worktop_thickness:worktop,overall_height_with_worktop:it.height+worktop};
+  }
+  function dimensionPatch(source,patch){
+    const it={...source,...patch},old=heights(source);
+    if(['height','body_height','base_height','base'].some(k=>Object.hasOwn(patch,k))){
+      const base=it.base==='wall'?0:patch.base_height??(source.base==='wall'?100:old.base_height);
+      const body=patch.body_height??(Object.hasOwn(patch,'height')?patch.height-base:source.bazis_id?source.height-base:old.body_height);
+      Object.assign(it,{base_height:base,body_height:body,height:base+body});
+    }
+    return it;
+  }
   function legacyFrontSpec(it){
     if(it.layout==='drawers')return{kind:'drawers',count:Math.max(1,it.drawers||1)};
     if(it.layout==='doors')return{kind:'doors',count:it.width>=900?2:1};
@@ -13,7 +31,7 @@
   // Arithmetic transferred from the accepted 8937f3e constructor, not redesigned.
   function facadeCells(it,template){
     const spec=template?.front||legacyFrontSpec(it);
-    const baseH=it.base==='plinth'?80:0;
+    const baseH=heights(it).base_height;
     const x0=-it.width/2,y0=baseH,W=it.width,H=Math.max(1,it.height-baseH),g=FACADE_GAP_MM,cells=[];
     const cell=(kind,x,y,w,h)=>{
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
@@ -68,5 +86,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

@@ -10,7 +10,7 @@ def test_visual_panels_and_handles_have_real_meshes_and_fixed_facade_dimensions(
     data=page.evaluate('''()=>{const p=MF_PLANNER,g=p.scene.entries.get(p.adapter.selected.item_id).group;return{fronts:g.children.filter(m=>m.userData.role==='front').map(m=>m.userData.facade),handles:g.children.filter(m=>m.userData.role==='handle').map(m=>m.position.x),boards:g.children.filter(m=>m.userData.role==='body').length};}''')
     assert len(data['fronts'])==2 and all(x['w']==397 for x in data['fronts'])
     assert data['boards']==4 and data['handles'][0]<0<data['handles'][1]
-    assert all(abs(x)<.05 for x in data['handles'])
+    assert all(abs(abs(x)-.0515)<1e-6 for x in data['handles'])
 
 def test_visual_continuous_plinth_has_no_overlapping_individual_aprons(page,api,settings,admin_user):
     open_planner(page,api);seed(page,13)

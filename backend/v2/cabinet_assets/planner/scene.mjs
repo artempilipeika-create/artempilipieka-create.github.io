@@ -82,7 +82,7 @@ export class PlannerScene{
       if(!entry||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}
       this.factory.position(entry.group,it);entry.group.visible=this.layer==='all'||tier(it)===this.layer;
     }
-    const dressing=JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.body_variant_id]));
+    const dressing=JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.worktop_thickness,it.body_variant_id]));
     if(this.dressingKey!==dressing){this.dressingKey=dressing;this.factory.release(this.dressing);this.dressing=this.factory.dress(this.adapter.items);this.scene.add(this.dressing);this.contacts?.removeFromParent();this.contacts=this.factory.contacts(this.adapter.items);this.scene.add(this.contacts);this.fitShadow();}
     if(this.dressing){
       const merged=new Set(this.dressing.userData.mergedPlinthIds||[]);
@@ -120,6 +120,11 @@ export class PlannerScene{
     const b=new THREE.Box3();
     if(which==='room'||!this.adapter.items.length){const r=this.adapter.room;return b.set(new THREE.Vector3(-r.width*S/2,0,-r.depth*S/2),new THREE.Vector3(r.width*S/2,r.height*S,r.depth*S/2));}
     for(const it of this.adapter.items){if(which==='selected'&&it.item_id!==this.adapter.selected?.item_id)continue;const e=this.entries.get(it.item_id);if(e&&(e.group.visible||which==='selected'))b.expandByObject(e.group);}
+    for(const g of this.dressing?.children||[]){
+      if(which==='selected'?!g.userData.members.includes(this.adapter.selected?.item_id):!g.visible)continue;
+      // Fit the slab too, without changing the cabinet collision/export envelope.
+      if(which!=='selected'||g.userData.members.length===1)b.expandByObject(g);
+    }
     return b.isEmpty()?this.cameraBox('room'):b;
   }
   fit(which='kitchen'){

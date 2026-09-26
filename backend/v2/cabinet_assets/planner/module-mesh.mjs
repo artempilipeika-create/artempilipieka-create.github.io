@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds} from './furniture-core.mjs';
+import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights} from './furniture-core.mjs';
 
 // Appearance only: millimetre envelopes, facadeCells and project payloads are untouched.
 export const VISUAL_FINISHES=Object.freeze({
@@ -103,15 +103,16 @@ export class MeshFactory{
     ]));
     const m=this.mesh(group,'handle',g,key,x,y,z,null,ghost);if(horizontal)m.rotation.z=Math.PI/2;m.userData.visualOnly=true;
   }
-  foot(group,x,z,ghost){
-    const key='foot:60';const g=this.acquire(key,()=>combine([
-      new THREE.CylinderGeometry(.012,.013,.054,10).translate(0,.003,0),
-      new THREE.CylinderGeometry(.017,.017,.006,10).translate(0,-.027,0)
-    ]));const m=this.mesh(group,'handle',g,key,x,30,z,null,ghost);m.userData.visualOnly=true;m.userData.role='leg';
+  foot(group,x,z,height,ghost){
+    const pad=Math.min(6,height/3),key='foot:'+height;const g=this.acquire(key,()=>combine([
+      new THREE.CylinderGeometry(.012,.013,(height-pad)*S,10).translate(0,pad*S/2,0),
+      new THREE.CylinderGeometry(.017,.017,pad*S,10).translate(0,(-height+pad)*S/2,0)
+    ]));const m=this.mesh(group,'handle',g,key,x,height/2,z,null,ghost);m.userData.visualOnly=true;m.userData.role='leg';
   }
   build(it,ghost=false){
     const group=new THREE.Group();group.userData={itemId:it.item_id,ghost,visualApproximation:Boolean(it.bazis_id)};
-    const {width:W,height:H,depth:D}=it,t=18,base=it.base==='plinth'?80:it.base==='legs'?60:0;
+    const {width:W,height:H,depth:D}=it,t=18,base=heights(it).base_height;
+    group.userData.heights=heights(it);
     const body=it.body_variant_id,front=it.front_variant_id,template=this.adapter.template(it),cells=facadeCells(it,template);
     this.box(group,'body',t,H-base,D,-W/2+t/2,base+(H-base)/2,0,body,ghost);
     this.box(group,'body',t,H-base,D,W/2-t/2,base+(H-base)/2,0,body,ghost);
@@ -119,11 +120,11 @@ export class MeshFactory{
     this.box(group,'body',W-2*t,t,D,0,base+t/2,0,body,ghost);
     // No imaginary FR3D shelves or hardware internals. Only known generic shells.
     if(!it.bazis_id)this.box(group,'back',W-2*t,H-base-2*t,4,0,base+(H-base)/2,-D/2+2,body,ghost);
-    if(it.base==='plinth'){
-      this.box(group,'plinth',W,78,18,0,40,D/2-60,null,ghost);
-      for(const sign of[-1,1])this.box(group,'plinth',18,78,D-100,sign*(W/2-9),40,-10,null,ghost);
+    if(it.base==='plinth'&&base>2){
+      this.box(group,'plinth',W,base-2,18,0,base/2,D/2-60,null,ghost);
+      for(const sign of[-1,1])this.box(group,'plinth',18,base-2,D-100,sign*(W/2-9),base/2,-10,null,ghost);
     }
-    if(it.base==='legs')for(const x of[-W/2+45,W/2-45])for(const z of[-D/2+45,D/2-45])this.foot(group,x,z,ghost);
+    if(base>0)for(const x of[-W/2+45,W/2-45])for(const z of[-D/2+45,D/2-95])this.foot(group,x,z,base,ghost);
     if(!it.bazis_id&&it.layout==='niche'){
       const ratio=template?.front?.nicheRatio||.35,y=base+(H-base)*(1-ratio);
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
@@ -137,10 +138,11 @@ export class MeshFactory{
       const panel=this.box(group,'front',f.w,f.h,18,f.cx,f.cy,D/2+11,front,ghost);panel.userData.facade={...f};
       if(it.handles==='handles'&&f.w>140&&f.h>100){
         const drawer=f.kind==='drawer',doors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
-        const side=doors.length>1?(f.cx<0?1:-1):1;
-        const x=drawer?f.cx:f.cx+side*(f.w/2-30);
-        const y=drawer?f.cy+f.h/2-36:it.module_type==='wall_cabinet'?f.cy-f.h/2+120:f.cy;
-        this.handle(group,Math.min(160,drawer?f.w*.34:f.h*.30),x,y,D/2+20,drawer,ghost);
+        const side=doors.length>1?(f.cx<0?1:-1):/отк P/.test(it.bazis_file||'')?-1:1;
+        const x=drawer?f.cx:f.cx+side*(f.w/2-50);
+        const y=f.cy+f.h/2-(drawer?36:50);
+        // The handle axis is 50 x 50; the 80 mm bar stays inside the facade.
+        this.handle(group,drawer?Math.min(160,f.w*.34):80,x,y,D/2+20,drawer,ghost);
       }
     }
     this.position(group,it);return group;
@@ -152,8 +154,8 @@ export class MeshFactory{
     for(const it of items){
       if(tier(it)!=='base'||it.depth>750)continue;
       const r=it.rotation||0,axis=r===90||r===270?'z':'x',cross=axis==='x'?'z':'x',normal=rotateXZ(0,1,r)[cross];
-      const line=it[cross]+normal*it.depth/2,top=elevation(it,this.adapter.room)+it.height,key=[r,line,top,it.base].join('|');
-      if(!groups.has(key))groups.set(key,[]);groups.get(key).push({it,axis,cross,normal,line,top,lo:it[axis]-it.width/2,hi:it[axis]+it.width/2});
+      const dims=heights(it),line=it[cross]+normal*it.depth/2,top=elevation(it,this.adapter.room)+dims.module_height,key=[r,line,top,it.base,dims.base_height,dims.worktop_thickness].join('|');
+      if(!groups.has(key))groups.set(key,[]);groups.get(key).push({it,axis,cross,normal,line,top,dims,lo:it[axis]-it.width/2,hi:it[axis]+it.width/2});
     }
     for(const members of groups.values()){
       members.sort((a,b)=>a.lo-b.lo);const runs=[];
@@ -170,15 +172,16 @@ export class MeshFactory{
           if(g.userData.members.includes(other.item_id))continue;
           const b=bounds(other,this.adapter.room,false),along0=f.axis==='x'?b.minX:b.minZ,along1=f.axis==='x'?b.maxX:b.maxZ;
           const side0=f.cross==='x'?b.minX:b.minZ,side1=f.cross==='x'?b.maxX:b.maxZ;
-          if(b.maxY<=f.top||b.minY>=f.top+32||side1<=cross0||side0>=cross1)continue;
+          if(b.maxY<=f.top||b.minY>=f.top+f.dims.worktop_thickness||side1<=cross0||side0>=cross1)continue;
           if(along1<=run.lo+1)left=Math.min(left,Math.max(0,run.lo-along1));
           if(along0>=run.hi-1)right=Math.min(right,Math.max(0,along0-run.hi));
         }
         const alongSign=rotateXZ(1,0,f.it.rotation||0)[f.axis];
-        this.box(g,'counter',width+left+right,32,depth+36,alongSign*(right-left)/2,f.top+16,18,null);
-        if(f.it.base==='plinth'&&run.members.length>1){
-          this.box(g,'plinth',width,78,18,0,elevation(f.it,this.adapter.room)+40,depth/2-60,null);
-          for(const sign of[-1,1])this.box(g,'plinth',18,78,depth-100,sign*(width/2-9),elevation(f.it,this.adapter.room)+40,-10,null);
+        const thickness=f.dims.worktop_thickness,base=f.dims.base_height;
+        this.box(g,'counter',width+left+right,thickness,depth+36,alongSign*(right-left)/2,f.top+thickness/2,18,null);
+        if(f.it.base==='plinth'&&base>2&&run.members.length>1){
+          this.box(g,'plinth',width,base-2,18,0,elevation(f.it,this.adapter.room)+base/2,depth/2-60,null);
+          for(const sign of[-1,1])this.box(g,'plinth',18,base-2,depth-100,sign*(width/2-9),elevation(f.it,this.adapter.room)+base/2,-10,null);
           root.userData.mergedPlinthIds.push(...g.userData.members);
         }
         g.position.set(center.x*S,0,center.z*S);g.rotation.y=-(center.rotation||0)*Math.PI/180;root.add(g);
@@ -207,7 +210,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.body_variant_id,it.front_variant_id]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.body_variant_id,it.front_variant_id]);}
   dispose(){this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

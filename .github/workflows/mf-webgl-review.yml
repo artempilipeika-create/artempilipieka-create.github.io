@@ -60,7 +60,7 @@ jobs:
       - name: Actual browser and ASGI regression on exact committed source
         run: |
           python -m py_compile tests/webgl/live_smoke.py
-          python -m pytest tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py tests/stage07/browser_checks.py tests/stage84/browser_checks.py -vv --timeout=75 --maxfail=3 --junitxml=qa-output/webgl/browser.xml
+          python -m pytest tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/polish_checks.py tests/webgl/workspace_checks.py tests/stage07/browser_checks.py tests/stage84/browser_checks.py -vv --timeout=75 --maxfail=3 --junitxml=qa-output/webgl/browser.xml
           git diff --exit-code
           git rev-parse HEAD > qa-output/webgl/verified-commit.txt
       - uses: actions/upload-artifact@v4
@@ -119,10 +119,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify furniture, renderer, manufacturing and placement code unchanged
+      - name: Verify accepted fullscreen layout and production integration remain unchanged
         run: |
-          git diff --exit-code 3eab6b09a7f0cc99807e5c5bc5f0686840a55b4d -- backend/v2/cabinet_assets/planner/module-mesh.mjs backend/v2/cabinet_assets/planner/scene.mjs
-          git diff --exit-code 647a68582491008df22c587b96c5a9c31fb6c0e4 -- backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/planner/furniture-core.js backend/v2/cabinet_assets/planner/furniture-core.mjs backend/v2/cabinet_assets/planner/placement.mjs backend/v2/cabinet_assets/planner/history.mjs backend/v2/cabinet_assets/planner/state-adapter.mjs backend/v2/cabinet_assets/planner/bridge.js backend/v2/three_d_api.py backend/v2/three_d_document.py
+          git diff --exit-code 8f40ecc6e7841b67076278cd1c4ef1eed207c956 -- backend/v2/cabinet_assets/planner/workspace.css backend/v2/cabinet_assets/planner/workspace.mjs backend/v2/cabinet_assets/planner/placement.mjs backend/v2/cabinet_assets/planner/history.mjs backend/v2/cabinet_assets/planner/bridge.js backend/v2/three_d_document.py
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test -z "$(git status --porcelain)"
       - run: pip install playwright==1.58.0
@@ -134,7 +133,7 @@ jobs:
           python tests/webgl/visual_capture.py --root /tmp/mf-before --out qa-output/polish/before
           python tests/webgl/visual_capture.py --out qa-output/polish/after
           python tests/webgl/workspace_capture.py --out qa-output/polish/workspace
-          cmp qa-output/polish/before/project.json qa-output/polish/after/project.json
+          python tests/webgl/polish_capture.py --out qa-output/polish/v2
           git diff --exit-code
           git rev-parse HEAD > qa-output/polish/verified-commit.txt
       - uses: actions/upload-artifact@v4

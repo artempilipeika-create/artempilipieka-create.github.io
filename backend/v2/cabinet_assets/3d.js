@@ -6,7 +6,7 @@ const FACADE_GAP_MM=1.5;
 
 const moduleDefs={
   chest:{name:'Комод',w:1000,h:850,d:450,layout:'combo',drawers:3,base:'plinth'},
-  base_cabinet:{name:'Кухня · нижний',w:600,h:720,d:560,layout:'doors',drawers:0,base:'plinth'},
+  base_cabinet:{name:'Кухня · нижний',w:600,h:820,d:560,layout:'doors',drawers:0,base:'plinth'},
   wall_cabinet:{name:'Кухня · верхний',w:600,h:720,d:320,layout:'doors',drawers:0,base:'wall'},
   tall_cabinet:{name:'Пенал',w:600,h:2200,d:560,layout:'doors',drawers:0,base:'plinth'},
   wardrobe:{name:'Шкаф',w:1200,h:2400,d:600,layout:'doors',drawers:0,base:'plinth'},
@@ -16,42 +16,42 @@ const moduleDefs={
 const kitchenTemplates={
   'base.one_door':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 1 дверь',itemName:'Кухня · нижний',
-    description:'Один накладной фасад',defaults:{w:400,h:720,d:560,layout:'doors',drawers:0,base:'plinth'},
+    description:'Один накладной фасад',defaults:{w:400,h:820,d:560,layout:'doors',drawers:0,base:'plinth'},
     limits:{w:[250,650],h:[600,1000],d:[450,700]},front:{kind:'doors',count:1}
   },
   'base.two_door':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 2 двери',itemName:'Кухня · нижний · 2 двери',
-    description:'Два равных накладных фасада',defaults:{w:800,h:720,d:560,layout:'doors',drawers:0,base:'plinth'},
+    description:'Два равных накладных фасада',defaults:{w:800,h:820,d:560,layout:'doors',drawers:0,base:'plinth'},
     limits:{w:[600,1200],h:[600,1000],d:[450,700]},front:{kind:'doors',count:2}
   },
   'base.drawers_2':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 2 ящика',itemName:'Кухня · нижний · 2 ящика',
-    description:'Два равных фасада ящиков',defaults:{w:600,h:720,d:560,layout:'drawers',drawers:2,base:'plinth'},
+    description:'Два равных фасада ящиков',defaults:{w:600,h:820,d:560,layout:'drawers',drawers:2,base:'plinth'},
     limits:{w:[300,1200],h:[600,1000],d:[450,700]},front:{kind:'drawers',count:2}
   },
   'base.drawers_3':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 3 ящика',itemName:'Кухня · нижний · 3 ящика',
-    description:'Три равных фасада ящиков',defaults:{w:600,h:720,d:560,layout:'drawers',drawers:3,base:'plinth'},
+    description:'Три равных фасада ящиков',defaults:{w:600,h:820,d:560,layout:'drawers',drawers:3,base:'plinth'},
     limits:{w:[300,1200],h:[600,1000],d:[450,700]},front:{kind:'drawers',count:3}
   },
   'base.drawers_4':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 4 ящика',itemName:'Кухня · нижний · 4 ящика',
-    description:'Четыре равных фасада ящиков',defaults:{w:600,h:720,d:560,layout:'drawers',drawers:4,base:'plinth'},
+    description:'Четыре равных фасада ящиков',defaults:{w:600,h:820,d:560,layout:'drawers',drawers:4,base:'plinth'},
     limits:{w:[300,1200],h:[600,1000],d:[450,700]},front:{kind:'drawers',count:4}
   },
   'base.drawer_door':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · ящик + дверь',itemName:'Кухня · нижний · ящик + дверь',
-    description:'Верхний ящик и нижний дверной фасад',defaults:{w:600,h:720,d:560,layout:'combo',drawers:1,base:'plinth'},
+    description:'Верхний ящик и нижний дверной фасад',defaults:{w:600,h:820,d:560,layout:'combo',drawers:1,base:'plinth'},
     limits:{w:[300,900],h:[600,1000],d:[450,700]},front:{kind:'combo',drawerRows:1,drawerRatio:.25,doors:1}
   },
   'base.drawers2_door':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Нижний · 2 ящика + дверь',itemName:'Кухня · нижний · 2 ящика + дверь',
-    description:'Два верхних ящика и нижняя дверь',defaults:{w:600,h:720,d:560,layout:'combo',drawers:2,base:'plinth'},
+    description:'Два верхних ящика и нижняя дверь',defaults:{w:600,h:820,d:560,layout:'combo',drawers:2,base:'plinth'},
     limits:{w:[350,1000],h:[600,1000],d:[450,700]},front:{kind:'combo',drawerRows:2,drawerRatio:.36,doors:1}
   },
   'base.sink_2door':{
     category:'Нижние модули',module_type:'base_cabinet',label:'Мойка · 2 двери',itemName:'Кухня · мойка · 2 двери',
-    description:'Модуль под мойку, два фасада',defaults:{w:800,h:720,d:560,layout:'doors',drawers:0,base:'plinth'},
+    description:'Модуль под мойку, два фасада',defaults:{w:800,h:820,d:560,layout:'doors',drawers:0,base:'plinth'},
     limits:{w:[600,1200],h:[600,1000],d:[450,700]},front:{kind:'doors',count:2}
   },
   'wall.one_door':{
@@ -555,6 +555,14 @@ async function syncControls(){
        :'Свободная компоновка. Накладные фасады считаются с зазором 1,5 мм по каждой стороне.');
   applyLimits(it,t);
   for(const [id,key] of[['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z'],['rotation','rotation'],['layout','layout'],['drawers','drawers'],['base','base'],['handles','handles']])$(id).value=String(it[key]);
+  const h=globalThis.MF_FURNITURE_CORE.heights(it);
+  for(const key of ['body_height','base_height','worktop_thickness']){
+    const input=$(key.replaceAll('_','-'));if(input)input.value=String(h[key]);
+  }
+  if($('base-height'))$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);
+  if($('body-height'))$('body-height').disabled=Boolean(it.bazis_id);
+  if($('worktop-control'))$('worktop-control').hidden=it.module_type!=='base_cabinet'||it.depth>750;
+  if($('height-breakdown'))$('height-breakdown').textContent='Корпус '+h.body_height+' + основание '+h.base_height+' = модуль '+h.module_height+' мм'+(h.worktop_thickness?' · со столешницей '+h.overall_height_with_worktop+' мм':'');
   renderQuickWidths(it,t);
   renderFacadeSummary(it);
   $('layout').disabled=Boolean(t);
@@ -628,7 +636,7 @@ function facadeCells(it){
 function buildItem(it){
   const S=1/500,W=it.width*S,H=it.height*S,D=it.depth*S,t=18*S;
   const bc=colorFor(materials.get(String(it.body_variant_id))),fc=colorFor(materials.get(String(it.front_variant_id)),true);
-  const baseH=it.base==='plinth'?80*S:0;
+  const baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height*S;
   const wallLift=it.module_type==='wall_cabinet'?Math.max(0,(state.room.height-it.height-500))*S:0;
   const y0=wallLift;
   addItemBox(it,t,H-baseH,D,-W/2+t/2,y0+baseH+(H-baseH)/2,0,bc);
@@ -653,7 +661,7 @@ function buildBoxes(){
 }
 
 function cutlistItem(it){
-  const t=18,inner=Math.max(1,it.width-2*t),baseH=it.base==='plinth'?80:0,a=[],prefix=it.name+' · ';
+  const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
   a.push([prefix+'Боковина',it.height-baseH,it.depth,2,'body',it]);
   a.push([prefix+'Крышка/дно',inner,it.depth,2,'body',it]);
   if(it.base==='plinth')a.push([prefix+'Цоколь',it.width,Math.round(it.depth*.78),1,'body',it]);

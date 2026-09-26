@@ -85,7 +85,7 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
-    for(const [id,key]of [['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z']]){
+    for(const [id,key]of [['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z'],['body-height','body_height'],['base-height','base_height'],['worktop-thickness','worktop_thickness']]){
       const input=get(id);input.oninput=null;input.onchange=null;
       this.listen(input,'change',()=>{if(!this.interaction)return;const value=Number(input.value);this.interaction.modify({[key]:value},['x','z'].includes(key)?'Точное положение':'Изменение размера');this.bridge.refresh();});
     }

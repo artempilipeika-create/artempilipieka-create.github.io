@@ -1,4 +1,4 @@
-import {clone,elevation,tier,placementError} from './furniture-core.mjs';
+import {clone,elevation,tier,heights,placementError} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -26,6 +26,10 @@ export class StateAdapter{
       width:d.w,height:d.h,depth:d.d,layout:d.layout,drawers:d.drawers,base:d.base,handles:'handles',
       body_variant_id:null,front_variant_id:null};
     if(opt.bazis)Object.assign(it,{bazis_id:t.id,bazis_file:t.source_file,bazis_sha256:t.source_sha256,bazis_resize:Boolean(t.resize)});
+    if(!opt.bazis){
+      const base=it.base==='wall'?0:type==='base_cabinet'?100:it.base==='plinth'?80:60;
+      Object.assign(it,{body_height:it.height-base,base_height:base,worktop_thickness:type==='base_cabinet'&&it.depth<=750?38:0});
+    }
     return it;
   }
   persistent(it){const value=clone(it);if(!this.bridge.supportsElevation)delete value.elevation_mm;return value;}
@@ -34,6 +38,11 @@ export class StateAdapter{
   remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
   validate(it){
     if(!['x','z','width','height','depth'].every(k=>Number.isInteger(it[k])))return 'Размеры и координаты должны быть целыми миллиметрами';
+    const h=heights(it);
+    if(h.body_height<150||h.base_height<0||h.base_height>300||h.worktop_thickness<0||h.worktop_thickness>100||
+      ['body_height','base_height','worktop_thickness'].some(k=>it[k]!=null&&!Number.isInteger(it[k]))||
+      (it.body_height!=null&&it.body_height!==h.body_height))return 'Проверьте высоту корпуса, основания и столешницы';
+    if(elevation(it,this.room)+h.overall_height_with_worktop>this.room.height)return 'Столешница выходит за высоту помещения';
     const t=this.template(it),limits=t?.limits||{w:[300,3000],h:[300,3000],d:[200,1200]};
     for(const [k,axis]of[['width','w'],['height','h'],['depth','d']]){
       if(!Number.isFinite(it[k])||it[k]<limits[axis][0]||it[k]>limits[axis][1])return 'Допустимый размер: '+limits[axis].join('–')+' мм';

@@ -2,7 +2,7 @@
 from typing import Literal
 from uuid import UUID,uuid4
 import hashlib,secrets
-from pydantic import Field
+from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
@@ -33,6 +33,9 @@ class FurnitureItem(StrictModel):
     rotation: Literal[0,90,180,270]=0
     width: int=Field(ge=150,le=3000)
     height: int=Field(ge=250,le=3000)
+    body_height: int|None=Field(default=None,ge=150,le=3000)
+    base_height: int|None=Field(default=None,ge=0,le=300)
+    worktop_thickness: int|None=Field(default=None,ge=0,le=100)
     depth: int=Field(ge=200,le=1200)
     layout: Literal['drawers','doors','combo','niche']='doors'
     drawers: int=Field(default=2,ge=0,le=8)
@@ -40,6 +43,18 @@ class FurnitureItem(StrictModel):
     handles: Literal['handles','handleless']='handles'
     body_variant_id: UUID|None=None
     front_variant_id: UUID|None=None
+
+    @model_validator(mode='after')
+    def separated_heights(self):
+        # Additive JSON fields; no database migration or mass rewrite of projects.
+        base=0 if self.base=='wall' else self.base_height if self.base_height is not None else 80 if self.base=='plinth' else 60
+        if self.base=='wall' and self.base_height not in (None,0):
+            raise ValueError('Suspended modules have no floor base')
+        if self.height-base<150 or (self.body_height is not None and self.body_height+base!=self.height):
+            raise ValueError('Module height must equal base plus body; worktop is separate')
+        if self.worktop_thickness and (self.module_type!='base_cabinet' or self.depth>750):
+            raise ValueError('Worktop is supported only for compatible lower modules')
+        return self
 
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
