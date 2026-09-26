@@ -1,7 +1,7 @@
 name: WebGL planner acceptance
 on:
   push:
-    branches: [mf-webgl-planner-20260926]
+    branches: [mf-webgl-planner-20260926, mf-pilot-d1-d2-20260926]
     paths: ['backend/v2/**', 'tests/**', '.github/workflows/mf-webgl-review.yml', '.github/workflows/mf-webgl-live.yml']
 permissions:
   contents: read
