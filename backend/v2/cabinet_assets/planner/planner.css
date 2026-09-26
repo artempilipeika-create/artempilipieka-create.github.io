@@ -74,3 +74,25 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 .mf-webgl .studio-scene-caption,.mf-webgl .mf3d-cutlist{flex-shrink:0}
 /* Clipped labels retain accessibility without inheriting offscreen static positions. */
 .mf-webgl .studio-sr{top:0;left:0}
+
+/* Furniture-first presentation; the working shell and all controls are retained. */
+.mf-webgl #planner-dimension{background:#fffffcf2;border-color:#a5bbab;color:#285a40;padding:6px 11px;border-radius:7px;box-shadow:0 3px 12px #193d2b12}
+.mf-webgl #planner-feedback{background:#f5faf4f2;border-color:#aabfac;color:#315c3d;font-size:10px;padding:7px 12px}
+.mf-webgl .studio-preview{background:#eef0eb;aspect-ratio:240/176}
+.mf-webgl .mf3d-module-copy strong{color:#2d4037}
+.mf-webgl.planner-client .mf3d-top{height:64px}
+.mf-webgl.planner-client .mf3d-top-actions>:not(#to-order){display:none!important}
+.mf-webgl.planner-client .mf3d-overlay,.mf-webgl.planner-client .studio-scene-caption,.mf-webgl.planner-client .studio-statusbar,.mf-webgl.planner-client .mf3d-help{display:none!important}
+.mf-webgl.planner-client .mf3d-stagebar{height:44px;min-height:44px;background:#fafbf8}
+.mf-webgl.planner-client #planner-tools{position:absolute;right:150px;top:7px;z-index:14;min-height:30px;height:30px;border:0;padding:0;background:transparent}
+.mf-webgl.planner-client #planner-client{padding:6px 14px!important;background:#f7faf4;border-color:#c6d3c4;color:#2b543e}
+.mf-webgl.planner-client .studio-camera{top:16px;background:#fffffcdf;border-color:#d0dacf}
+@media(max-width:760px){
+ .mf-webgl.planner-client .mf3d-top{height:87px}
+ .mf-webgl.planner-client .mf3d-top-actions{justify-content:flex-end}
+ .mf-webgl.planner-client .mf3d-stagebar{height:43px;min-height:43px;padding-inline:8px}
+ .mf-webgl.planner-client #planner-tools{right:68px;top:6px}
+ .mf-webgl.planner-client #planner-client{padding:5px 8px!important;font-size:9px}
+ .mf-webgl.planner-client .mf3d-segment button{padding-inline:7px}
+ .mf-webgl #planner-dimension{font-size:9px;padding:5px 8px}
+}
