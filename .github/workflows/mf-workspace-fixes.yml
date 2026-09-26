@@ -1,0 +1,81 @@
+name: Apply bounded workspace corrections
+on:
+  push:
+    branches: [mf-webgl-planner-20260926]
+    paths: [.github/workflows/mf-workspace-fixes.yml]
+permissions:
+  contents: write
+jobs:
+  correct:
+    if: github.ref == 'refs/heads/mf-webgl-planner-20260926'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Correct exact known files, never workflows or data
+        run: |
+          test -z "$(git status --porcelain)"
+          python - <<'PY'
+          from pathlib import Path
+          import ast,hashlib
+          def checked(path,sha):
+              p=Path(path);b=p.read_bytes()
+              assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()==sha,path
+              return p,b.decode()
+          p,s=checked('backend/v2/cabinet_assets/planner/workspace.css','35206ad865c117ba07fd5ad40a00952405b0c32a')
+          s+='''\n/* Account details margins must not expand the compact header grid. */
+          #planner-workspace .studio-menu{margin:0;align-self:center}
+          #planner-workspace .mf3d-top{flex-wrap:nowrap}
+          @media(max-width:760px){
+           #planner-workspace .mf3d-top{grid-template-rows:34px 32px;align-content:start}
+           #planner-workspace .mf3d-top-actions{min-height:0;height:32px}
+           #planner-workspace .studio-menu>summary{padding:5px 9px}
+          }
+          '''
+          p.write_text(s)
+          p,s=checked('tests/webgl/workspace_checks.py','1a1c671c17279812eca711cbb69c3636afbaebb2')
+          old='page.evaluate("document.getElementById(\'planner-workspace\').requestFullscreen=()=>Promise.reject(new Error(\'Denied for test\'))")'
+          new='page.evaluate("()=>{document.getElementById(\'planner-workspace\').requestFullscreen=()=>Promise.reject(new Error(\'Denied for test\'));}")'
+          assert s.count(old)==1;s=s.replace(old,new);ast.parse(s);p.write_text(s)
+          p,s=checked('tests/stage07/browser_checks.py','daf6a2eb97c8835c49cc85db4dbffa63a6ef8fd8')
+          old_asserts=[ast.dump(n) for n in ast.walk(ast.parse(s)) if isinstance(n,ast.Assert)]
+          s=s.replace('from playwright.sync_api import sync_playwright,expect','from playwright.sync_api import sync_playwright,expect\nfrom tests.webgl.navigation import panel')
+          lines=s.splitlines();out=[];scope=False
+          for line in lines:
+              if line.startswith('def '):scope=line.startswith('def test_3d_') or line.startswith('def test_studio_real_database_')
+              if not scope:out.append(line);continue
+              parts=line.split(';page.locator(')
+              pieces=[parts[0]]+['    page.locator('+x for x in parts[1:]]
+              for piece in pieces:
+                  indent=piece[:len(piece)-len(piece.lstrip())]
+                  if 'page.locator(' in piece and any(v in piece for v in ['.click()', '.fill(', '.press(', '.select_option(']):
+                      if any(t in piece for t in ['[data-module=', '[data-template=', 'page.locator(selector)']):out.append(indent+"panel(page,'left','catalog')")
+                      elif any(t in piece for t in ['#tab-projects','#duplicate-project','#share-project','#projects .mf3d-project']):out.append(indent+"panel(page,'left','projects')")
+                      elif any(t in piece for t in ['#width', '#height', '#depth', '#body-', '#front-', '#pos-', '#rotation', '#studio-item-name', '.studio-room', '#room-']):out.append(indent+"panel(page,'right')")
+                  out.append(piece)
+          s='\n'.join(out)+'\n';tree=ast.parse(s)
+          assert [ast.dump(n) for n in ast.walk(tree) if isinstance(n,ast.Assert)]==old_asserts
+          p.write_text(s)
+          PY
+          python -m py_compile tests/webgl/workspace_checks.py tests/stage07/browser_checks.py
+          node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs
+      - name: Commit only bounded product and test corrections to existing work branch
+        run: |
+          test "$GITHUB_REF" = refs/heads/mf-webgl-planner-20260926
+          test "$(git ls-remote origin refs/heads/mf-webgl-planner-20260926 | cut -f1)" = "$GITHUB_SHA"
+          git add backend/v2/cabinet_assets/planner/workspace.css tests/webgl/workspace_checks.py tests/stage07/browser_checks.py
+          test "$(git diff --cached --name-only | wc -l)" = 3
+          test -z "$(git diff --cached --name-only -- .github)"
+          git -c user.name='Martin Forest workspace verification' -c user.email='workspace@users.noreply.github.com' commit -m 'fix(workspace): bound mobile header and navigate real drawers in existing regression tests'
+          git push origin HEAD:refs/heads/mf-webgl-planner-20260926
+          mkdir -p /tmp/workspace-fixes
+          git rev-parse HEAD > /tmp/workspace-fixes/commit.txt
+          git bundle create /tmp/workspace-fixes/source.bundle HEAD
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: workspace-corrected-source
+          path: /tmp/workspace-fixes/
+          retention-days: 7
