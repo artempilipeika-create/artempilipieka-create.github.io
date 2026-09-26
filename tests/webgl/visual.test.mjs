@@ -20,7 +20,7 @@ test('Unknown FR3D interiors do not receive invented shelves or a back',()=>{con
 const pilotBack={type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'};
 const pilotShelf={id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1};
 const pilotItem={...item,bazis_id:'pilot',width:600,height:820,body_height:720,base_height:100,worktop_thickness:38,depth:510,shelves:[pilotShelf]};
-const pilotFactory=(doors)=>new MeshFactory({room,material:()=>null,template:()=>({front:{kind:'doors',count:doors.length},production:{back:pilotBack,shelves:[pilotShelf],doors}})},()=>{});
+const pilotFactory=(doors)=>new MeshFactory({room,material:()=>null,template:()=>({front:{kind:'doors',count:doors.length},production:{carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},back:pilotBack,shelves:[pilotShelf],doors}})},()=>{});
 
 test('D1 production pilot renders the actual 596x716x3 back and 564x509x18 shelf',()=>{
  const f=pilotFactory([{side:'left',hinge_count:2,open_angle:105}]),g=f.build(pilotItem);
