@@ -53,10 +53,24 @@ function harness(){
  const bridge={supportsElevation:false,state:()=>state,selected:()=>state.items.find(x=>x.item_id===state.selected_item_id),projectId:()=>null,
   template:()=>null,material:()=>null,refresh:()=>{},status:()=>{},select:id=>{state.selected_item_id=id;},
   snapshot:()=>({name,scene:structuredClone(state),selectedId:state.selected_item_id}),restore:s=>{name=s.name;state=structuredClone(s.scene);},
-  catalogue:{templates:{},bazisModules:[],moduleDefs:{base_cabinet:{name:'Нижний',w:600,h:720,d:560,layout:'doors',drawers:0,base:'plinth'}}}};
+  catalogue:{templates:{},bazisModules:[{id:'pilot-d1',label:'Нижний 1 дверь L',module_type:'base_cabinet',
+    source_file:'НМД1-600. Отк L.fr3d',source_sha256:'7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',resize:true,
+    defaults:{w:600,h:820,d:510,layout:'doors',drawers:0,base:'plinth'},limits:{w:[300,900],h:[700,1100],d:[450,700]},front:{kind:'doors',count:1},
+    production:{body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+      shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1}]}}],
+    moduleDefs:{base_cabinet:{name:'Нижний',w:600,h:720,d:560,layout:'doors',drawers:0,base:'plinth'}}}};
  const adapter=new StateAdapter(bridge),history=new History(adapter);return{adapter,history};
 }
 test('Temporary preview height is not silently added to v2 payload',()=>{const {adapter}=harness();adapter.replace({...adapter.selected,elevation_mm:1480});assert.equal(Object.hasOwn(adapter.selected,'elevation_mm'),false);assert.equal(Object.hasOwn(adapter.createDraft({module:'base_cabinet'}),'elevation_mm'),false);});
+test('D1 pilot draft separates 720 body, 100 base and 38 worktop while keeping 510 depth',()=>{
+ const {adapter}=harness(),draft=adapter.createDraft({bazis:'pilot-d1'});
+ assert.equal(draft.height,820);assert.equal(draft.body_height,720);assert.equal(draft.base_height,100);
+ assert.equal(draft.worktop_thickness,38);assert.equal(draft.depth,510);assert.equal(draft.shelves.length,1);
+ assert.equal(draft.shelves[0].offset_mm,360);assert.equal(draft.doors_open,false);
+ assert.equal(adapter.validate(draft),'');
+ const bad={...draft,shelves:[{...draft.shelves[0],offset_mm:719}]};
+ assert.match(adapter.validate(bad),/Полка/);
+});
 test('Drag preview produces one undo; cancellation leaves original state',()=>{
  const {adapter,history}=harness();history.begin('drag');for(let n=0;n<100;n++){snapItem({...adapter.selected,x:n},[],room,{});}assert.equal(adapter.selected.x,0);
  adapter.replace({...adapter.selected,x:600});history.commit();assert.equal(history.undoStack.length,1);history.undo();assert.equal(adapter.selected.x,0);history.redo();assert.equal(adapter.selected.x,600);
