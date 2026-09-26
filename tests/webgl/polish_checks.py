@@ -71,6 +71,15 @@ def test_d1_d2_pilot_back_shelf_doors_save_and_native_export(page,api,settings,a
     assert meshes['shelf'][0]['env']==[564,18,509]
     assert round(meshes['shelf'][0]['y']*1000)==460
     assert meshes['front'][0]['env']==[597,717,18]
+    rows=page.evaluate("()=>[...document.querySelectorAll('#cutlist tbody tr')].map(tr=>[...tr.cells].map(td=>td.textContent))")
+    assert [r[:3] for r in rows[:6]]==[
+        ['Нижний 1 дверь L · Дно','600×510','1'],
+        ['Нижний 1 дверь L · Боковина','702×510','2'],
+        ['Нижний 1 дверь L · Царга задняя','80×564','1'],
+        ['Нижний 1 дверь L · Царга передняя','80×564','1'],
+        ['Нижний 1 дверь L · Полка','564×509','1'],
+        ['Нижний 1 дверь L · Задняя стенка','716×596','1'],
+    ]
     page.locator('#shelf-position').fill('400');page.locator('#shelf-position').press('Tab')
     assert page.evaluate('MF_PLANNER.adapter.selected.shelves[0].offset_mm')==400
     page.locator('#toggle-doors').click()
