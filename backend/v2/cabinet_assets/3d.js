@@ -91,7 +91,7 @@ const bazisModules=[{"id":"bazis.460987c9a8e8","source_file":"НМД1-200. Ка�
 const pilotProductionById={
   'bazis.0211e4f77fc4':{
     key:'base.standard.d1.left.600',source_sha256:'7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',
-    native_defaults:{width:600,height:720,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+    native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
     carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
@@ -99,7 +99,7 @@ const pilotProductionById={
   },
   'bazis.784bf9af84f8':{
     key:'base.standard.d1.right.600',source_sha256:'5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb',
-    native_defaults:{width:600,height:720,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+    native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
     carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
@@ -107,7 +107,7 @@ const pilotProductionById={
   },
   'bazis.3079d0656398':{
     key:'base.standard.d2.600',source_sha256:'7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',
-    native_defaults:{width:600,height:720,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+    native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
     carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}],
@@ -957,7 +957,7 @@ function exportBazisProject(){
         source_sha256:it.bazis_sha256,
         source_default:src?nativeDefault:null,
         elastic_resize:Boolean(it.bazis_resize),
-        target:{width:it.width,height:Number.isFinite(it.body_height)?it.body_height:it.height,depth:it.depth},
+        target:{width:it.width,height:it.height,depth:it.depth},
         position:{x:it.x,y:0,z:it.z},
         rotation:it.rotation,
         name:it.name,
