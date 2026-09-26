@@ -606,6 +606,10 @@ async function syncControls(){
     if(production){
       const shelf=(it.shelves||[])[0],back=production.back;
       $('production-back-summary').textContent=back?'Задняя стенка: '+(back.type==='overlay_nails'?'накладная, гвозди':'производственная')+' · '+back.thickness+' мм · '+(back.material_name||'материал из донора'):'Задняя стенка не задана';
+      if($('production-hardware-summary')){
+        const hw=production.hardware;
+        $('production-hardware-summary').textContent=hw?'Петли PRIME '+hw.hinge_article+' · '+hw.hinge_count+' шт.':'Фурнитура берётся из производственного донора';
+      }
       $('shelf-enabled').checked=Boolean(shelf?.enabled);
       $('shelf-position').disabled=!shelf?.enabled;
       $('shelf-position').value=String(shelf?.offset_mm??Math.round(h.body_height/2));
