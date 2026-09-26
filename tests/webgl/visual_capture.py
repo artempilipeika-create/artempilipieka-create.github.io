@@ -48,6 +48,7 @@ def main():
             page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(200);page.evaluate('MF_PLANNER.scene.fit("kitchen")');page.wait_for_timeout(200);page.screenshot(path=str(out/'mobile.png'))
             page.locator('#planner-client').click();page.wait_for_timeout(250);page.screenshot(path=str(out/'mobile-client.png'));page.locator('#planner-client').click()
             page.set_viewport_size({'width':1600,'height':1000});page.wait_for_timeout(150);page.evaluate('MF_PLANNER.scene.fit("selected")');page.wait_for_timeout(250);page.screenshot(path=str(out/'selected.png'))
+            if page.locator('#planner-workspace').count() and not page.locator('.mf3d-left').is_visible():page.locator('#studio-toggle-library').click()
             page.locator('#tab-catalog').click();page.locator('[data-module-filter="base"]').click();page.wait_for_timeout(1500);page.locator('.mf3d-left').screenshot(path=str(out/'catalog.png'))
             for n in [30,50]:
                 page.evaluate(SEED,n);page.wait_for_timeout(500)

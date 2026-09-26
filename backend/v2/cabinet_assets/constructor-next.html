@@ -10,10 +10,12 @@
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
+<link rel="stylesheet" href="/account/planner/workspace.css">
 <script defer src="/account/planner/bridge.js"></script>
 <script type="module" src="/account/planner/entry.mjs"></script>
 </head>
 <body class="mf-3d-page mf3d-studio" data-planner-requested="webgl">
+<div id="planner-workspace">
 <header class="mf3d-top">
  <a class="mf3d-brand" href="/" aria-label="Martin Forest — главная"><span class="studio-monogram" aria-hidden="true">m<span>f</span></span><span>Martin Forest<small>СТУДИЯ МЕБЕЛИ</small></span></a>
  <div class="studio-project-title"><label class="studio-sr" for="project-name">Название проекта</label><input id="project-name" value="Новый 3D-проект" maxlength="200"><span id="studio-save-state">Загрузка проекта…</span></div>
@@ -87,4 +89,5 @@
 </main>
 <footer class="studio-statusbar"><p id="status" class="mf3d-status" role="status" aria-live="polite">Загрузка конструктора…</p><span>Martin Forest · Конструктор мебели</span></footer>
 <dialog id="studio-help-dialog"><button id="studio-help-close" class="secondary" aria-label="Закрыть помощь">✕</button><span class="mf3d-kicker">ОТ ИДЕИ ДО ПРОЕКТА</span><h2>Всё начинается с одного модуля</h2><p><strong>1. Выберите.</strong> В каталоге есть нижние, верхние, пеналы и ваши шаблоны БАЗИС. Нажмите карточку, чтобы добавить модуль.</p><p><strong>2. Настройте.</strong> Выберите шкаф на сцене или в списке «В проекте». Справа доступны размеры, положение, фасады и материалы.</p><p><strong>3. Расставьте.</strong> Перетаскивайте модуль мышью. Стрелки клавиатуры сдвигают его на 10 мм, Shift + стрелки — на 100 мм. В 3D фон вращает комнату, колесо меняет масштаб.</p><p><strong>4. Сохраните.</strong> Сохранение выполняется кнопкой сверху. Затем можно подготовить родной экспорт БАЗИС или перенести деталировку в заказ.</p><p class="studio-hint">Геометрия на сцене — визуальное представление шаблона, не точная копия внутренней конструкции .fr3d. Технологический зазор накладного фасада: 1,5 мм по каждой стороне.</p></dialog>
+</div>
 </body></html>

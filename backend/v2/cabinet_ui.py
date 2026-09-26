@@ -29,7 +29,7 @@ def router():
     planner_files={
         'entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs',
         'state-adapter.mjs','history.mjs','scene.mjs','module-mesh.mjs','placement.mjs',
-        'interaction.mjs','planner.css','vendor/three.module.js','vendor/three.core.min.js',
+        'interaction.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
     @api.get('/account/planner/{asset:path}')

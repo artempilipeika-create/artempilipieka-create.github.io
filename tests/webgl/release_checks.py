@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import pytest
 from playwright.sync_api import expect
+from tests.webgl.navigation import panel,close_panels
 from tests.webgl.browser_checks import page,api,settings,admin_user,open_planner,seed,point,screenshot
 
 
@@ -72,6 +73,7 @@ def test_vertical_and_hidden_collisions_are_checked_in_browser(page,api,settings
     restore_items(page,[{'template':'tall.one_door','x':0,'z':0}, {'template':'wall.two_door','x':1300,'z':0}])
     page.locator('#planner-layer').select_option('wall')
     assert page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.items[0].item_id).group.visible') is False
+    panel(page,'right')
     page.locator('#pos-x').fill('0');page.locator('#pos-x').press('Tab')
     expect(page.locator('#status')).to_contain_text('Пересечение')
     assert page.evaluate('MF_PLANNER.adapter.items[1].x')==1300
@@ -80,19 +82,24 @@ def test_vertical_and_hidden_collisions_are_checked_in_browser(page,api,settings
 
 def test_context_recovery_preserves_unsaved_history_and_original_project_ids(page,api,settings,admin_user):
     open_planner(page,api)
+    panel(page,'left','catalog')
     page.locator('[data-template="base.drawers_3"]').click()
+    panel(page,'right')
     page.locator('#width').fill('650');page.locator('#width').press('Tab')
     before=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
     page.evaluate('MF_PLANNER.scene.renderer.forceContextLoss()')
     expect(page.locator('body')).to_have_attribute('data-planner-renderer','fallback')
     assert page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==before
+    panel(page,'right')
     page.locator('#planner-undo').click();expect(page.locator('#width')).to_have_value('600')
+    panel(page,'right')
     page.locator('#planner-redo').click();expect(page.locator('#width')).to_have_value('650')
     page.locator('#planner-retry').click()
     expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl',timeout=20000)
     assert page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==before
     assert page.locator('.mf3d-canvas-wrap canvas').count()==1
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
+    panel(page,'left')
     page.locator('#tab-projects').click();page.locator('#projects .mf3d-project').first.click()
     expect(page.locator('#width')).to_have_value('650')
 
@@ -104,9 +111,13 @@ def test_initial_webgl_unavailable_keeps_edit_save_and_undo_available(page,api,s
     page.goto('https://testserver/constructor')
     expect(page.locator('body')).to_have_attribute('data-planner-renderer','fallback',timeout=20000)
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
+    panel(page,'left','catalog')
     page.locator('[data-template="base.drawers_3"]').click()
+    panel(page,'right')
     page.locator('#width').fill('650');page.locator('#width').press('Tab')
+    panel(page,'right')
     page.locator('#planner-undo').click();expect(page.locator('#width')).to_have_value('600')
+    panel(page,'right')
     page.locator('#planner-redo').click();expect(page.locator('#width')).to_have_value('650')
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
     assert page.locator('.mf3d-canvas-wrap canvas').count()==1
@@ -128,12 +139,17 @@ def test_bounded_release_viewport_and_large_kitchen_framing(page,api,settings,ad
 
 def test_facade_and_native_metadata_survive_nonzero_placement(page,api,settings,admin_user):
     open_planner(page,api)
+    panel(page,'left','catalog')
     page.locator('[data-template="base.two_door"]').click()
     assert page.evaluate('MF3D_KITCHEN.facadeCells(MF_PLANNER.adapter.selected).every(f=>f.w===397)')
+    panel(page,'right')
     page.locator('#remove-item').click()
+    panel(page,'left','catalog')
     page.locator('[data-bazis="bazis.460987c9a8e8"]').click()
+    panel(page,'right')
     for selector,value in [('#pos-z','100'),('#pos-x','350')]:
         page.locator(selector).fill(value);page.locator(selector).press('Tab')
+    panel(page,'right')
     page.locator('#rotation').select_option('90')
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
     it=page.evaluate('({...MF_PLANNER.adapter.selected})')

@@ -1,3 +1,4 @@
+import {PlannerWorkspace} from './workspace.mjs';
 import {StateAdapter} from './state-adapter.mjs';
 import {History} from './history.mjs';
 import {Interaction} from './interaction.mjs';
@@ -20,7 +21,7 @@ class PlannerApplication {
   async init(){
     if(this.ready)return this;await waitReady();
     this.bridge=window.MF_PLANNER_BRIDGE;this.adapter=new StateAdapter(this.bridge);this.history=new History(this.adapter);
-    this.uiAbort=new AbortController();this.buildToolbar();this.bindInspector();
+    this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();
     await this.startRenderer();
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
@@ -146,7 +147,7 @@ class PlannerApplication {
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
     get('studio-empty-scene').hidden=Boolean(count);this.paintMode();
   }
-  dispose(){this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
+  dispose(){this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
 }
 export const planner=new PlannerApplication();
 window.MF_PLANNER=planner;

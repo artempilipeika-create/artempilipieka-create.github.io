@@ -3,6 +3,7 @@ from pathlib import Path
 import json, os
 import pytest
 from playwright.sync_api import expect
+from tests.webgl.navigation import panel,close_panels
 from tests.stage07.browser_checks import page,settings,api,admin_user,login_ui,searchable_catalogue_order
 
 OUT=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/webgl'))
@@ -34,6 +35,7 @@ def seed(page,count=13):
     }''',count)
 
 def point(page,item_index=0):
+    close_panels(page)
     return page.evaluate('''index=>{const p=MF_PLANNER,it=p.adapter.items[index];
       const y=it.module_type==='wall_cabinet'?p.adapter.room.height-it.height-500:0;
       // In plan view hit the interior of the lid, not the sub-pixel front edge.
@@ -63,22 +65,30 @@ def test_empty_webgl_route_and_static_boundary(page,api,settings,admin_user):
 
 def test_add_pick_surface_resize_rotation_and_history(page,api,settings,admin_user):
     open_planner(page,api)
+    panel(page,'left','catalog')
     page.locator('[data-template="base.drawers_3"]').click()
     expect(page.locator('#item-badge')).to_have_text('1 модуль')
     hit=point(page);page.mouse.click(hit['x'],hit['y'])
     assert page.evaluate('MF_PLANNER.adapter.selected.item_id===MF_PLANNER.adapter.items[0].item_id')
     camera=page.evaluate('MF_PLANNER.scene.camera.position.toArray()')
+    panel(page,'right')
     page.locator('#width').fill('650');page.locator('#width').press('Tab')
     assert page.evaluate('MF_PLANNER.adapter.selected.width')==650
     assert page.evaluate('MF_PLANNER.scene.camera.position.toArray()')==camera
+    panel(page,'right')
     page.locator('#planner-undo').click();expect(page.locator('#width')).to_have_value('600')
+    panel(page,'right')
     page.locator('#planner-redo').click();expect(page.locator('#width')).to_have_value('650')
     # Move away from walls, then rotate using the actual inspector control.
+    panel(page,'right')
     page.locator('#pos-z').fill('0');page.locator('#pos-z').press('Tab')
     for angle in (90,180,270,0):
+        panel(page,'right')
         page.locator('#studio-rotate').click()
         assert page.evaluate('MF_PLANNER.adapter.selected.rotation')==angle
+    panel(page,'right')
     page.locator('#duplicate-item').click();expect(page.locator('#item-badge')).to_have_text('2 модуля')
+    panel(page,'right')
     page.locator('#remove-item').click();expect(page.locator('#item-badge')).to_have_text('1 модуль')
     page.locator('#planner-undo').click();expect(page.locator('#item-badge')).to_have_text('2 модуля')
 
@@ -108,6 +118,7 @@ def test_real_drag_is_preview_then_one_undo_and_invalid_drop_keeps_position(page
 
 def test_native_catalogue_drag_and_cancel(page,api,settings,admin_user):
     open_planner(page,api)
+    panel(page,'left','catalog')
     card=page.locator('[data-template="base.drawers_3"]');card.scroll_into_view_if_needed()
     data=page.evaluate_handle('new DataTransfer()')
     card.dispatch_event('dragstart',{'dataTransfer':data})
@@ -125,14 +136,19 @@ def test_native_catalogue_drag_and_cancel(page,api,settings,admin_user):
 
 def test_native_export_and_real_save_reopen_duplicate_share(page,api,settings,admin_user):
     open_planner(page,api)
+    panel(page,'left','catalog')
     page.locator('[data-bazis="bazis.460987c9a8e8"]').click()
+    panel(page,'right')
     page.locator('#width').fill('150');page.locator('#width').press('Tab')
+    panel(page,'right')
     page.locator('#body-search').fill('QA621 PO');page.locator('#body-results button').first.click()
+    panel(page,'right')
     page.locator('#front-search').fill('621 PE');page.locator('#front-results button').first.click()
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
     pid=page.evaluate('MF_PLANNER.adapter.projectId');saved=api.get('/api/v2/3d-projects/'+pid).json()
     it=saved['scene']['items'][0];assert it['width']==150 and 'elevation_mm' not in it
     assert it['bazis_file']=='НМД1-200. Карго.fr3d'
+    panel(page,'left')
     page.locator('#tab-projects').click();page.locator('#projects .mf3d-project').first.click();expect(page.locator('#width')).to_have_value('150')
     with page.expect_download() as download:page.locator('#export-bazis').click()
     payload=json.loads(Path(download.value.path()).read_text());native=payload['items'][0]
@@ -140,7 +156,9 @@ def test_native_export_and_real_save_reopen_duplicate_share(page,api,settings,ad
     assert native['source_file']==it['bazis_file'] and native['source_sha256']==it['bazis_sha256']
     assert native['position']['x']==it['x'] and native['position']['z']==it['z'] and native['rotation']==it['rotation']
     assert native['target']=={'width':150,'height':720,'depth':560}
+    panel(page,'left')
     page.locator('#duplicate-project').click();expect(page.locator('#projects .mf3d-project')).to_have_count(2)
+    panel(page,'left')
     page.locator('#share-project').click();expect(page.locator('#share-panel')).to_be_visible()
     url=page.locator('#share-url').input_value();page.goto(url)
     expect(page.locator('#readonly-label')).to_contain_text('Только просмотр')
@@ -186,6 +204,7 @@ def test_mobile_panels_selection_and_screenshot(page,api,settings,admin_user):
     screenshot(page,'webgl-inspector-mobile')
     page.locator('#planner-mobile-inspector').click();expect(page.locator('.mf3d-right')).to_be_hidden()
     page.locator('#planner-mobile-items').click();expect(page.locator('#pane-items')).to_be_visible()
+    panel(page,'left')
     page.locator('#scene-items .mf3d-project').first.click()
     page.locator('#planner-mobile-items').click()
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')

@@ -5,7 +5,7 @@ project writes, orders, messages or database mutations are used. Backend
 save/reopen coverage belongs to the separate real-ASGI/disposable-Postgres suite.
 """
 from __future__ import annotations
-import argparse,hashlib,json
+import argparse,hashlib,json,sys
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request,build_opener,HTTPRedirectHandler
@@ -14,6 +14,8 @@ from playwright.sync_api import sync_playwright,expect
 
 BASE='https://martin-forest-v2-staging-production.up.railway.app'
 ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT))
+from tests.webgl.navigation import panel,close_panels
 OUT=ROOT/'qa-output/webgl-live'
 CSP="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
 
@@ -80,8 +82,10 @@ def main():
             expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl')
             check('Real published /constructor opens WebGL',page.url==BASE+'/constructor')
             check('One renderer and no old pointer loop',page.evaluate('JSON.stringify(MF_PLANNER.bridge.rendererState())')=='{"legacyLoopEnabled":false,"legacyPointerEnabled":false}')
+            panel(page,'left','catalog')
             page.locator('[data-template="base.drawers_3"]').click()
             check('Click-add on published UI',page.evaluate('MF_PLANNER.adapter.items.length')==1)
+            panel(page,'right')
             page.locator('#pos-z').fill('0');page.locator('#pos-z').press('Tab')
             page.locator('#width').fill('650');page.locator('#width').press('Tab')
             check('Published resize',page.evaluate('MF_PLANNER.adapter.selected.width')==650)
@@ -90,6 +94,7 @@ def main():
             page.locator('#studio-rotate').click();check('Published rotate',page.evaluate('MF_PLANNER.adapter.selected.rotation')==90)
             page.locator('#duplicate-item').click();check('Published copy',page.evaluate('MF_PLANNER.adapter.items.length')==2)
             page.locator('#scene').focus();page.keyboard.press('Delete');check('Published Delete',page.evaluate('MF_PLANNER.adapter.items.length')==1)
+            close_panels(page)
             page.locator('#mode-2d').click()
             hit=page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.selected;return p.scene.projectPoint({x:it.x,y:it.height,z:it.z});}''')
             check('Published Raycaster hit',page.evaluate('(h)=>MF_PLANNER.scene.pick(h.x,h.y).id===MF_PLANNER.adapter.selected.item_id',hit))

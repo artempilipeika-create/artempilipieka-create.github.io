@@ -1,9 +1,11 @@
 """Keyboard layout and touch-release contracts; disposable test app only."""
 from playwright.sync_api import expect
+from tests.webgl.navigation import panel,close_panels
 from tests.webgl.browser_checks import page,api,settings,admin_user,open_planner,point
 
 def test_undo_redo_with_russian_keyboard_layout(page,api,settings,admin_user):
     open_planner(page,api)
+    panel(page,'left','catalog')
     page.locator('[data-template="base.drawers_3"]').click()
     expect(page.locator('#item-badge')).to_have_text('1 модуль')
     page.keyboard.press('Control+z')
@@ -26,6 +28,7 @@ def test_touch_release_outside_canvas_clears_multitouch_guard(page,api,settings,
 
 def test_clicking_cabinet_after_catalogue_moves_focus_for_delete(page,api,settings,admin_user):
     open_planner(page,api)
+    panel(page,'left','catalog')
     card=page.locator('[data-template="base.drawers_3"]');card.click();card.focus()
     hit=point(page)
     page.mouse.click(hit['x'],hit['y'])
