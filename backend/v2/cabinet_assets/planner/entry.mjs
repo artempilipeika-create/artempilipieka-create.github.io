@@ -98,6 +98,21 @@ class PlannerApplication {
     document.querySelectorAll('[data-nudge]').forEach(b=>b.onclick=()=>{const n=Number(get('studio-nudge-step').value)||10;const moves={left:[-n,0],right:[n,0],back:[0,-n],front:[0,n]};this.interaction?.nudge(...moves[b.dataset.nudge]);});
     this.listen(get('quick-widths'),'click',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopImmediatePropagation();this.interaction?.modify({width:Number(b.textContent)},'Изменение ширины');this.bridge.refresh();},true);
     for(const id of ['body-results','front-results'])this.listen(get(id),'click',e=>{if(!e.target.closest('button'))return;this.history.begin('Материал');queueMicrotask(()=>this.history.commit());},true);
+    const shelfEnabled=get('shelf-enabled'),shelfPosition=get('shelf-position'),toggleDoors=get('toggle-doors');
+    this.listen(shelfEnabled,'change',()=>{
+      const it=this.adapter.selected;if(!it?.shelves?.length)return;
+      const shelves=structuredClone(it.shelves);shelves[0].enabled=shelfEnabled.checked;
+      this.interaction.modify({shelves},'Полка');this.bridge.refresh();
+    });
+    this.listen(shelfPosition,'change',()=>{
+      const it=this.adapter.selected;if(!it?.shelves?.length)return;
+      const shelves=structuredClone(it.shelves);shelves[0].offset_mm=Math.round(Number(shelfPosition.value));
+      this.interaction.modify({shelves},'Положение полки');this.bridge.refresh();
+    });
+    this.listen(toggleDoors,'click',()=>{
+      const it=this.adapter.selected;if(!it)return;
+      this.interaction.modify({doors_open:!it.doors_open},it.doors_open?'Закрытие фасадов':'Открывание фасадов');this.bridge.refresh();
+    });
     for(const [id,key,min,max]of [['room-width','width',1500,12000],['room-depth','depth',1500,12000],['room-height','height',2000,5000]]){
       const input=get(id);input.oninput=null;
       input.onchange=()=>{const value=Number(input.value),room={...this.adapter.room,[key]:value};this.interaction.change('Размеры помещения',()=>{
