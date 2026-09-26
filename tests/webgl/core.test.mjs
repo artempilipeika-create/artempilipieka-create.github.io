@@ -87,9 +87,14 @@ test('Different-height upper cabinets align without changing legacy height',()=>
 });
 
 
-test('Decorative outlines do not intercept real-surface selection',()=>{
- const mesh=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/module-mesh.mjs',import.meta.url),'utf8');
+test('Visual-only details do not intercept real-surface selection',async()=>{
+ const {MeshFactory}=await import('../../backend/v2/cabinet_assets/planner/module-mesh.mjs');
+ const {Raycaster,Vector3}=await import('../../backend/v2/cabinet_assets/planner/vendor/three.module.js');
+ const factory=new MeshFactory({room,material:()=>null,template:()=>two},()=>{});
+ const group=factory.build(item({width:800}));group.updateMatrixWorld(true);
+ const ray=new Raycaster(new Vector3(-.2,.4,2),new Vector3(0,0,-1));
+ const hits=ray.intersectObject(group,true);assert.ok(hits.length);assert.equal(hits[0].object.userData.role,'front');
+ for(const mesh of group.children.filter(o=>o.userData.role==='reveal'||o.isLineSegments))assert.equal(ray.intersectObject(mesh).length,0);
  const scene=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/scene.mjs',import.meta.url),'utf8');
- assert.ok(mesh.includes('outline.raycast=()=>{}'));
- assert.ok(scene.includes('.find(h=>h.object.isMesh&&h.object.userData.itemId)'));
+ assert.ok(scene.includes('.find(h=>h.object.isMesh&&h.object.userData.itemId)'));factory.dispose();
 });
