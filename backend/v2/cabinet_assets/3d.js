@@ -980,7 +980,7 @@ function exportBazisProject(){
           key:p.key,
           carcass:p.carcass||null,
           back:p.back,
-          shelves:it.shelves||p.shelves||[],
+          shelves:(it.shelves||p.shelves||[]).map(shelf=>({...shelf,material_variant_id:shelf.material_variant_id||null})),
           doors:p.doors||[],
           hardware:p.hardware||null,
           base_height:Number.isFinite(it.base_height)?it.base_height:p.base_height,
