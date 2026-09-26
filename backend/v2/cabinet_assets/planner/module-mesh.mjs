@@ -116,10 +116,19 @@ export class MeshFactory{
     group.userData.heights=heights(it);
     const body=it.body_variant_id,front=it.front_variant_id,template=this.adapter.template(it),production=template?.production||null,cells=facadeCells(it,template);
     group.userData.visualApproximation=Boolean(it.bazis_id&&!production);
-    this.box(group,'body',t,bodyH,D,-W/2+t/2,base+bodyH/2,0,body,ghost);
-    this.box(group,'body',t,bodyH,D,W/2-t/2,base+bodyH/2,0,body,ghost);
-    this.box(group,'body',W-2*t,t,D,0,H-t/2,0,body,ghost);
-    this.box(group,'body',W-2*t,t,D,0,base+t/2,0,body,ghost);
+    if(production?.carcass?.type==='bottom_side_two_rails'){
+      const panelT=Number(production.carcass.panel_thickness)||t,railH=Number(production.carcass.rail_height)||80,sideH=Math.max(1,bodyH-panelT);
+      this.box(group,'body',panelT,sideH,D,-W/2+panelT/2,base+panelT+sideH/2,0,body,ghost);
+      this.box(group,'body',panelT,sideH,D,W/2-panelT/2,base+panelT+sideH/2,0,body,ghost);
+      this.box(group,'body',W,panelT,D,0,base+panelT/2,0,body,ghost);
+      this.box(group,'body',W-2*panelT,railH,panelT,0,H-railH/2,-D/2+panelT/2,body,ghost);
+      this.box(group,'body',W-2*panelT,railH,panelT,0,H-railH/2,D/2-panelT/2,body,ghost);
+    }else{
+      this.box(group,'body',t,bodyH,D,-W/2+t/2,base+bodyH/2,0,body,ghost);
+      this.box(group,'body',t,bodyH,D,W/2-t/2,base+bodyH/2,0,body,ghost);
+      this.box(group,'body',W-2*t,t,D,0,H-t/2,0,body,ghost);
+      this.box(group,'body',W-2*t,t,D,0,base+t/2,0,body,ghost);
+    }
 
     if(production?.back){
       const back=production.back,inset=Number(back.inset)||0,thickness=Number(back.thickness)||3;
