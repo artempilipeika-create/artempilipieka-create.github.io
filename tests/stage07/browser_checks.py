@@ -39,6 +39,7 @@ def page(settings):
         assert not errors,errors
         # Release the software WebGL renderer before Chromium's graceful shutdown.
         # Material/geometry assertions above still run on the live renderer.
+        page.on('dialog',lambda dialog:dialog.accept())
         page.evaluate('window.MF_PLANNER?.dispose()')
         page.goto('about:blank')
         context.close();browser.close()
