@@ -63,7 +63,8 @@ export class PlannerScene{
   }
   roomMesh(){
     this.disposeTree(this.roomRoot);this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room;
-    const make=(w,h,d,x,y,z,color,wall=false)=>{const material=wall?new THREE.MeshBasicMaterial({color}):new THREE.MeshStandardMaterial({color,roughness:1});const m=new THREE.Mesh(this.factory.geometry,material);m.userData.ownMaterial=true;m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.receiveShadow=true;this.roomRoot.add(m);return m;};
+    // Flush overlay backs share the wall plane. Bias only the visual room surface, never cabinet geometry.
+    const make=(w,h,d,x,y,z,color,wall=false)=>{const material=wall?new THREE.MeshBasicMaterial({color,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:4}):new THREE.MeshStandardMaterial({color,roughness:1});const m=new THREE.Mesh(this.factory.geometry,material);m.userData.ownMaterial=true;m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.receiveShadow=true;this.roomRoot.add(m);return m;};
     make(r.width,20,r.depth,0,-12,0,'#e9ece6');this.walls=[];
     for(const sign of[-1,1]){
       const z=make(r.width,r.height,20,0,r.height/2,sign*(r.depth/2+10),'#f1f3ee',true);z.userData.axis='z';z.userData.sign=sign;this.walls.push(z);

@@ -20,8 +20,9 @@ def render_state(page):
 
 @pytest.mark.parametrize('donor',['bazis.0211e4f77fc4','bazis.784bf9af84f8','bazis.3079d0656398'],ids=['D1-L','D1-P','D2'])
 def test_materials_modes_history_save_load_native_export(page,api,settings,admin_user,donor):
-    open_planner(page,api);login(api,admin_user['email'])
+    open_planner(page,api);owner_email=api.get('/api/v2/auth/me').json()['email'];login(api,admin_user['email'])
     publish(api,master([[a,'ЛДСП EGGER 18мм '+n+' '+a,'кв.м',0,2800,2070,18,a.split()[1],'','M1','false',''] for a,n in zip(ARTICLES,NAMES)]),namespace='test.pilot.visuals')
+    login(api,owner_email)
     panel(page,'left','catalog');page.locator(f'[data-bazis="{donor}"]').click()
     original=render_state(page);choose(page,'body',ARTICLES[0])
     body=page.evaluate('MF_PLANNER.adapter.selected.body_variant_id')
@@ -60,7 +61,9 @@ def test_materials_modes_history_save_load_native_export(page,api,settings,admin
         assert page.evaluate('MF_FURNITURE_CORE.placementError(MF_PLANNER.adapter.selected,MF_PLANNER.adapter.items,MF_PLANNER.adapter.room)')==''
     page.locator('#module-display').select_option('inspection')
     close_panels(page);page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
-    pid=page.evaluate('MF_PLANNER.adapter.projectId');saved=api.get('/api/v2/3d-projects/'+pid).json()['scene']['items'][0]
+    pid=page.evaluate('MF_PLANNER.adapter.projectId');response=api.get('/api/v2/3d-projects/'+pid)
+    assert response.status_code==200,response.text
+    saved=response.json()['scene']['items'][0]
     assert saved['body_variant_id']==body and saved['front_variant_id']==front
     assert 'display_mode' not in saved and 'visual' not in saved
     native=export_payload(page)['items'][0]
