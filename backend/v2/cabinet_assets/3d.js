@@ -190,7 +190,7 @@ function scenePayload(){
   };
 }
 
-function modulePreviewDataUrl(opt){
+function modulePreviewCanvas(opt){
   const c=document.createElement('canvas');
   c.width=180;c.height=140;
   const x=c.getContext('2d');
@@ -224,7 +224,7 @@ function modulePreviewDataUrl(opt){
     x.strokeStyle='#7c887f';x.lineWidth=2;
     x.beginPath();x.moveTo(bx+7,by+bh+7);x.lineTo(bx+bw-7,by+bh+7);x.stroke();
   }
-  return c.toDataURL('image/png');
+  return c;
 }
 function addCatalogueButton(root,opt){
   const b=document.createElement('button');
@@ -235,10 +235,11 @@ function addCatalogueButton(root,opt){
   if(opt.module)b.dataset.module=opt.module;
   if(opt.template)b.dataset.template=opt.template;
   if(opt.bazis)b.dataset.bazis=opt.bazis;
-  const icon=document.createElement('img');
+  // Keep the initial preview on its canvas. A data: image is rejected by
+  // img-src 'self' before the WebGL catalogue replaces these bootstrap cards.
+  const icon=modulePreviewCanvas(opt);
   icon.className='mf3d-module-thumb';
-  icon.alt='';
-  icon.src=modulePreviewDataUrl(opt);
+  icon.setAttribute('aria-hidden','true');
   const copy=document.createElement('span');
   copy.className='mf3d-module-copy';
   const strong=document.createElement('strong'),span=document.createElement('span');

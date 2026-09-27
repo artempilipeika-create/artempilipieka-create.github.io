@@ -3,6 +3,7 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
 import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings} from './furniture-core.mjs';
 import {roomSettings,LIGHTS} from './room-state.mjs';
+import {clientFrame} from './client-camera.mjs';
 export class PlannerScene{
   constructor(canvas,adapter,onLost){
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
@@ -58,7 +59,9 @@ export class PlannerScene{
   }
   resize(){
     if(this.dead)return;const r=this.canvas.parentElement.getBoundingClientRect();this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);
-    this.renderer.setSize(this.width,this.height,false);this.perspective.aspect=this.width/this.height;this.perspective.updateProjectionMatrix();
+    this.renderer.setSize(this.width,this.height,false);this.perspective.aspect=this.width/this.height;
+    const v=this.perspective.view;if(v?.enabled)this.perspective.setViewOffset(this.width,this.height,v.offsetX*this.width/v.fullWidth,v.offsetY*this.height/v.fullHeight,this.width,this.height);
+    this.perspective.updateProjectionMatrix();
     const span=this.orthoSpan||3;this.ortho.left=-span*this.width/this.height;this.ortho.right=-this.ortho.left;this.ortho.top=span;this.ortho.bottom=-span;this.ortho.updateProjectionMatrix();this.invalidate();
   }
   disposeTree(group){
@@ -144,10 +147,10 @@ export class PlannerScene{
     this.scene.environmentIntensity=client?p.environment:.55;this.renderer.toneMappingExposure=client?p.exposure:1.03;
     // ACES kept after comparing the real U708 preview in the neutral showroom.
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.perspective.fov=client?32:34;this.perspective.updateProjectionMatrix();
+    this.perspective.fov=client?40:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
     // Cached shadow map plus analytic contact masks: no fullscreen AO pass.
-    this.sun.shadow.intensity=client?.35:.58;this.sun.shadow.radius=client?12:5;this.renderer.shadowMap.type=THREE.PCFShadowMap;
-    this.factory.contactMaterials.floor.opacity=client?.24:.14;this.factory.contactMaterials.wall.opacity=client?.16:.19;
+    this.sun.shadow.intensity=client?.32:.58;this.sun.shadow.radius=client?12:5;this.renderer.shadowMap.type=THREE.PCFShadowMap;
+    this.factory.contactMaterials.floor.opacity=client?.32:.14;this.factory.contactMaterials.wall.opacity=client?.20:.19;
     for(const m of Object.values(this.factory.contactMaterials))m.color.set(client?'#292b29':'#35443b');
     if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;this.floorTexture.needsUpdate=true;}
     this.fitShadow();this.highlight();this.renderer.shadowMap.needsUpdate=true;this.invalidate();
@@ -159,7 +162,7 @@ export class PlannerScene{
   fitShadow(){
     const box=this.cameraBox('kitchen'),center=box.getCenter(new THREE.Vector3());
     const rotation=-this.kitchenRotation()*Math.PI/180;
-    this.sun.target.position.copy(center);this.sun.position.copy(center).add(this.client?new THREE.Vector3(-3,4,5.5).applyAxisAngle(new THREE.Vector3(0,1,0),rotation):new THREE.Vector3(-3,5,7));
+    this.sun.target.position.copy(center);this.sun.position.copy(center).add(this.client?new THREE.Vector3(-4,3.8,5).applyAxisAngle(new THREE.Vector3(0,1,0),rotation):new THREE.Vector3(-3,5,7));
     this.fill.position.copy(this.client?center.clone().add(new THREE.Vector3(4,2.3,4).applyAxisAngle(new THREE.Vector3(0,1,0),rotation)):new THREE.Vector3(4,3,1));this.fill.target.position.copy(this.client?center:new THREE.Vector3());this.fill.target.updateMatrixWorld();
     const c=this.sun.shadow.camera;c.position.copy(this.sun.position);c.lookAt(center);c.updateMatrixWorld();
     const local=new THREE.Box3();
@@ -203,6 +206,8 @@ export class PlannerScene{
     return b.isEmpty()?this.cameraBox('room'):b;
   }
   fit(which='kitchen'){
+    if(this.client&&this.mode==='3d'&&which==='kitchen')return this.fitKitchenForClient();
+    this.perspective.clearViewOffset();
     if(this.client)this.stopOrbitInertia();
     const box=this.cameraBox(which),center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3());
     this.controls.target.copy(center);
@@ -229,6 +234,43 @@ export class PlannerScene{
       this.orthoSpan=Math.max(.35,vertical/2,horizontal/2/(this.width/this.height))*1.16;this.camera.zoom=1;this.resize();
     }
     this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
+  }
+  clientViewport(){
+    const r=this.canvas.getBoundingClientRect();let left=16,top=16,right=r.width-16,bottom=r.height-16;
+    const visible=el=>el&&el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden';
+    const bar=document.querySelector('.mf3d-stagebar');if(visible(bar))top=Math.max(top,bar.getBoundingClientRect().bottom-r.top+16);
+    for(const id of ['workspace-library','workspace-inspector','planner-room-settings','workspace-cutlist','planner-mobile-nav']){
+      const el=document.getElementById(id);if(!visible(el)||el.inert)continue;
+      if(el.tagName==='DETAILS'&&!el.open)continue;
+      const b=el.getBoundingClientRect(),x=b.left-r.left,y=b.top-r.top;
+      if(b.width>r.width*.7&&y>r.height*.4)bottom=Math.min(bottom,y-16);
+      else if(b.height>r.height*.2&&x<r.width*.45)left=Math.max(left,x+b.width+16);
+      else if(b.height>r.height*.2&&x>r.width*.5)right=Math.min(right,x-16);
+    }
+    return {left,top,width:Math.max(120,right-left),height:Math.max(120,bottom-top)};
+  }
+  fitKitchenForClient(view=this.clientView||'threeQuarter'){
+    // Furniture and derived kitchen pieces only. No walls, floor, guides or labels.
+    const box=new THREE.Box3();
+    for(const e of this.entries.values())if(e.group.visible)box.expandByObject(e.group);
+    for(const g of this.dressing?.children||[])if(g.visible)box.expandByObject(g);
+    if(box.isEmpty())return this.fit('room');
+    this.stopOrbitInertia();this.clientView=view;this.mode='3d';this.camera=this.perspective;
+    this.controls.object=this.camera;this.controls.enableRotate=true;this.controls.minPolarAngle=0;this.controls.maxPolarAngle=Math.PI*.495;
+    this.camera.fov=40;this.camera.zoom=1;this.camera.clearViewOffset();this.resize();
+    const center=box.getCenter(new THREE.Vector3()),axis=new THREE.Vector3(0,1,0);
+    const dir=(view==='front'?new THREE.Vector3(.035,.14,1):new THREE.Vector3(.42,.23,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
+    const right=axis.clone().cross(dir).normalize(),up=dir.clone().cross(right).normalize(),points=[];
+    for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z]){
+      const p=new THREE.Vector3(x,y,z).sub(center);points.push({x:p.dot(right),y:p.dot(up),z:p.dot(dir)});
+    }
+    const viewport=this.clientViewport(),frame=clientFrame(points,this.width,this.height,viewport,this.camera.fov);
+    this.controls.target.copy(center);this.camera.up.set(0,1,0);this.camera.position.copy(center).addScaledVector(dir,frame.distance);
+    // Shift the optical centre into the uncovered canvas; Raycaster uses this
+    // same projection matrix. Camera movement remains entirely user controlled.
+    this.camera.setViewOffset(this.width,this.height,frame.offsetX,frame.offsetY,this.width,this.height);
+    this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
+    this.clientFit={...frame,viewport,view,fov:this.camera.fov};return this.clientFit;
   }
   captureView(){return {mode:this.mode,position:this.camera.position.toArray(),target:this.controls.target.toArray(),up:this.camera.up.toArray(),zoom:this.camera.zoom,orthoSpan:this.orthoSpan};}
   stopOrbitInertia(){const damping=this.controls.enableDamping;this.controls.enableDamping=false;this.controls.update();this.controls.enableDamping=damping;}

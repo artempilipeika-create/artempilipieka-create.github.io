@@ -16,6 +16,20 @@ from tests.stage03.support import master
 DONORS=['bazis.0211e4f77fc4','bazis.3079d0656398','bazis.784bf9af84f8']
 ARTICLES=['W1000 ST9','H1180 ST37','U999 ST7','F186 ST9','U708 ST9']
 
+def test_catalogue_bootstrap_previews_obey_strict_csp(page,api,settings,admin_user):
+    page.add_init_script("window.__catalogueCsp=[];document.addEventListener('securitypolicyviolation',e=>window.__catalogueCsp.push({directive:e.violatedDirective,blocked:e.blockedURI}));")
+    open_planner(page,api)
+    # Exercise the bootstrap renderer after the normal WebGL handoff too:
+    # a fast handoff must not hide an invalid data: image from this check.
+    preview=page.evaluate('''()=>{const c=modulePreviewCanvas({category:'base',template:'base.two_door'});c.id='csp-preview-probe';document.body.append(c);return {tag:c.tagName,width:c.width,height:c.height,pixel:[...c.getContext('2d').getImageData(0,0,1,1).data]};}''')
+    assert preview=={'tag':'CANVAS','width':180,'height':140,'pixel':[245,247,243,255]}
+    page.wait_for_timeout(100)
+    assert page.evaluate('window.__catalogueCsp')==[]
+    page.locator('#csp-preview-probe').evaluate('el=>el.remove()')
+    panel(page,'left','catalog')
+    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(3)
+    assert page.locator('#module-catalogue img[src^="data:"]').count()==0
+
 def row(page,api,admin_user):
     open_planner(page,api);owner=api.get('/api/v2/auth/me').json()['email'];login(api,admin_user['email'])
     publish(api,master([[a,'ЛДСП EGGER 18мм '+a,'кв.м',0,2800,2070,18,a.split()[1],'','M1','false',''] for a in ARTICLES]),namespace='test.client.polish')
@@ -46,7 +60,7 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
         assert page.evaluate('MF_PLANNER.scene.renderer.shadowMap.autoUpdate') is False
         assert page.evaluate('MF_PLANNER.scene.scene.environment.isTexture')
         fit=page.evaluate('''()=>{const s=MF_PLANNER.scene,b=s.cameraBox('kitchen'),points=[];for(const x of[b.min.x,b.max.x])for(const y of[b.min.y,b.max.y])for(const z of[b.min.z,b.max.z])points.push(s.projectPoint({x:x*1000,y:y*1000,z:z*1000}));const r=s.canvas.getBoundingClientRect();return {points,r:{x:r.x,y:r.y,width:r.width,height:r.height},fov:s.perspective.fov};}''')
-        assert fit['fov']==32
+        assert fit['fov']==40
         assert all(fit['r']['x']+20<p['x']<fit['r']['x']+fit['r']['width']-20 and fit['r']['y']+40<p['y']<fit['r']['y']+fit['r']['height']-20 for p in fit['points'])
         if preset=='warm':
             floor=page.evaluate('''()=>{const s=MF_PLANNER.scene;return {planks:s.clientFloor.userData.plankSizeMm,scale:s.clientFloor.userData.scanSizeMm,anisotropy:s.floorTexture.anisotropy,max:s.renderer.capabilities.getMaxAnisotropy(),roughness:s.clientFloor.material.roughness};}''')
@@ -80,16 +94,15 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
     page.locator('#planner-client').click();page.wait_for_function('MF_PLANNER.scene.mode==="3d"')
     restored=page.evaluate('MF_PLANNER.scene.captureView()')
     assert max(abs(a-b) for a,b in zip(restored['position'],technical['position']))<.001
-    actual=export_payload(page)
-    assert actual['items']==native['items'] and actual['kitchen_production']==native['kitchen_production']
-    # An intentional reload after a download must answer Chromium's leave-page
-    # dialog. Persistence is checked against the real saved API document below.
+    # Reload the saved document before another download. Chromium can retain
+    # a blob-download navigation while a following Page.goto is pending.
+    # The complete native export is compared after reloading the API document.
     navigation={'saveState':page.locator('#studio-save-state').inner_text(),'dialogs':[]}
     def leave(dialog):
         navigation['dialogs'].append(dialog.type);dialog.accept()
     page.on('dialog',leave)
     try:
-        page.goto('https://testserver/constructor',wait_until='domcontentloaded')
+        page.reload(wait_until='domcontentloaded')
         expect(page.locator('body')).to_have_attribute('data-planner-ready','true',timeout=20000)
     finally:
         (OUT/'client-v2-reload-navigation.json').write_text(json.dumps(navigation,ensure_ascii=False,indent=2))
@@ -98,7 +111,8 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
     page.wait_for_function('id=>MF_PLANNER.adapter.projectId===id',arg=pid)
     page.wait_for_function('''()=>{const p=MF_PLANNER,ms=[];p.scene.root.traverse(m=>{if(m.isMesh&&m.material.userData.variantId)ms.push(m)});return ms.length>10&&ms.every(m=>m.material.map?.image?.complete)}''')
     assert page.evaluate('MF_PLANNER.adapter.state.displaySettings')==saved['displaySettings']
-    assert export_payload(page)['items']==native['items']
+    actual=export_payload(page)
+    assert actual['items']==native['items'] and actual['kitchen_production']==native['kitchen_production']
     (OUT/'client-v2-acceptance.json').write_text(json.dumps({'success':True,'modules':DONORS,'screenshots':5,'furniture_identity_preserved':True,'native_export_preserved':True,'real_save_load':True,'settings':saved['displaySettings']},indent=2))
 
 @pytest.mark.timeout(120)

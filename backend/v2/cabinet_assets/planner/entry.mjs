@@ -174,6 +174,7 @@ class PlannerApplication {
     }
     get('scene-help').textContent=this.scene.isFallback?'2D · резервный план · перетаскивайте модуль мышью':this.scene.mode==='top'?'2D · план сверху · тяните модуль для точной расстановки':this.scene.mode==='front'?'Спереди · перемещение по горизонтали · высота по правилу проекта':'Модуль — перемещение · фон — вращение · правая кнопка — сдвиг вида';
     get('studio-zoom-in').disabled=false;get('studio-zoom-out').disabled=false;
+    this.workspace?.paintCameraButtons();
   }
   sync(){
     if(!this.scene)return;const count=this.adapter.items.length;

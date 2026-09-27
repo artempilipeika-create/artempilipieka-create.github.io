@@ -95,7 +95,7 @@ class FurnitureItem(StrictModel):
 
 class DisplaySettings(StrictModel):
     environmentPreset: Literal['studio','warm','showroom']='showroom'
-    wallColor: str=Field(default='#e3dfd7',pattern=r'^#[0-9a-fA-F]{6}$')
+    wallColor: str=Field(default='#eeeae2',pattern=r'^#[0-9a-fA-F]{6}$')
     floorMaterial: Literal['light-stone','oak','concrete']='concrete'
     lightingPreset: Literal['daylight','warm','neutral']='neutral'
 

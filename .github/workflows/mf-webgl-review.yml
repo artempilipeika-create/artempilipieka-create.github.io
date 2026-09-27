@@ -1,7 +1,7 @@
 name: WebGL planner acceptance
 on:
   push:
-    branches: [mf-webgl-planner-20260926, mf-pilot-d1-d2-20260926, mf-three-module-pilot-20260927, mf-kitchen-foundation-20260927, mf-visuals-pricing-20260927, mf-client-scene-polish-v2-20260927]
+    branches: [mf-webgl-planner-20260926, mf-pilot-d1-d2-20260926, mf-three-module-pilot-20260927, mf-kitchen-foundation-20260927, mf-visuals-pricing-20260927, mf-client-scene-polish-v2-20260927, mf-client-camera-v3-20260928]
     paths: ['backend/v2/**', 'tests/**', '.github/workflows/mf-webgl-review.yml', '.github/workflows/mf-webgl-live.yml']
 permissions:
   contents: read
@@ -30,7 +30,7 @@ jobs:
           - suite: application
             tests: tests/stage07/browser_checks.py tests/stage84/browser_checks.py
           - suite: client
-            tests: tests/webgl/client_scene_checks.py
+            tests: tests/webgl/client_scene_checks.py tests/webgl/client_camera_checks.py::test_client_v3_presentation_occupancy_views_and_panels
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -74,7 +74,7 @@ jobs:
           assert "from './three.module.js'" in (root/'OrbitControls.js').read_text()
           PY
           set -o pipefail
-          node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/pricing.test.mjs tests/webgl/room.test.mjs | tee qa-output/webgl/core.tap
+          node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/pricing.test.mjs tests/webgl/room.test.mjs tests/webgl/client-camera.test.mjs | tee qa-output/webgl/core.tap
           node --test tests/order_entry/entry_helpers.test.cjs | tee qa-output/webgl/order-entry.tap
       - name: Install existing pinned browser dependencies
         run: |
@@ -83,34 +83,22 @@ jobs:
       - name: Same-runner accepted Client benchmark and immutable production boundary
         if: matrix.suite == 'client'
         run: |
-          git diff --exit-code 152a82eacd0b89f402a10ec5c580f14965ba66c6 -- backend/v2/cabinet_assets/planner/module-mesh.mjs backend/v2/cabinet_assets/planner/placement.mjs backend/v2/cabinet_assets/planner/interaction.mjs backend/v2/cabinet_assets/planner/pricing.mjs backend/v2/cabinet_assets/planner/bridge.js backend/v2/cabinet_assets/planner/workspace.css backend/v2/three_d_document.py
+          git diff --exit-code bc6a2c942b43c14dd892dfb22406f49db6bbfaf5 -- backend/v2/cabinet_assets/planner/furniture-core.js backend/v2/cabinet_assets/planner/module-mesh.mjs backend/v2/cabinet_assets/planner/placement.mjs backend/v2/cabinet_assets/planner/interaction.mjs backend/v2/cabinet_assets/planner/pricing.mjs backend/v2/cabinet_assets/planner/bridge.js backend/v2/cabinet_assets/planner/workspace.css backend/v2/three_d_document.py
           python - <<'PY'
           import subprocess
           from pathlib import Path
-          path='backend/v2/cabinet_assets/planner/furniture-core.js'
-          before=subprocess.check_output(['git','show','152a82eacd0b89f402a10ec5c580f14965ba66c6:'+path],text=True)
+          path='backend/v2/cabinet_assets/3d.js'
+          before=subprocess.check_output(['git','show','bc6a2c942b43c14dd892dfb22406f49db6bbfaf5:'+path],text=True)
           after=Path(path).read_text()
-          # The user's stock-length requirement permits kitchenRuns only.
-          # Every other production function, including all three donor geometries, is exact.
-          def outside_runs(source):
-              start=source.index('  function kitchenRuns(')
-              end=source.index('  function kitchenLegs(',start)
-              return source[:start]+source[end:]
-          assert outside_runs(before)==outside_runs(after)
+          def native_export(source):
+              return source[source.index('function exportSafeName('):source.index('async function toOrder(')]
+          assert native_export(before)==native_export(after)
           PY
           mkdir -p /tmp/mf-client-baseline
-          git archive 152a82eacd0b89f402a10ec5c580f14965ba66c6 | tar -x -C /tmp/mf-client-baseline
+          git archive bc6a2c942b43c14dd892dfb22406f49db6bbfaf5 | tar -x -C /tmp/mf-client-baseline
+          cp tests/webgl/client_camera_checks.py /tmp/mf-client-baseline/tests/webgl/client_camera_checks.py
           cd /tmp/mf-client-baseline
-          python - <<'PY'
-          # Only the screenshot helper changes. The accepted application and timed loop stay exact.
-          from pathlib import Path
-          p=Path('tests/webgl/client_pricing_checks.py')
-          source=p.read_text()
-          old="    screenshot(page,'client-twenty-modules')"
-          assert old in source
-          p.write_text(source.replace(old,"    from tests.webgl.kitchen_journey import capture_viewport\n    capture_viewport(page,OUT/'client-twenty-modules.png')"))
-          PY
-          MF_TEST_EVIDENCE_DIR="$GITHUB_WORKSPACE/qa-output/webgl/baseline" python -m pytest tests/webgl/client_pricing_checks.py::test_client_room_twenty_pilot_modules_render_budget -vv --timeout=120
+          MF_TEST_EVIDENCE_DIR="$GITHUB_WORKSPACE/qa-output/webgl/baseline" python -m pytest tests/webgl/client_pricing_checks.py::test_client_room_twenty_pilot_modules_render_budget tests/webgl/client_camera_checks.py::test_record_accepted_camera -vv --timeout=120
       - name: Actual browser and ASGI regression on exact committed source
         if: success() || (matrix.suite == 'client' && !cancelled())
         run: |

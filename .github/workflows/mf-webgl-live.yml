@@ -28,13 +28,16 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import time,urllib.request
-          expected=Path('backend/v2/cabinet_assets/planner/scene.mjs').read_bytes()
-          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/scene.mjs'
+          expected={path:Path('backend/v2/cabinet_assets/'+path).read_bytes() for path in ['planner/scene.mjs','3d.js']}
+          base='https://martin-forest-v2-staging-production.up.railway.app/account/'
           for attempt in range(36):
               try:
-                  request=urllib.request.Request(url,method='GET',headers={'Cache-Control':'no-cache'})
-                  with urllib.request.urlopen(request,timeout=15) as response:
-                      if response.status==200 and response.read()==expected:break
+                  matches=[]
+                  for path,body in expected.items():
+                      request=urllib.request.Request(base+path,method='GET',headers={'Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(request,timeout=15) as response:
+                          matches.append(response.status==200 and response.read()==body)
+                  if all(matches):break
               except Exception:pass
               if attempt==35:raise RuntimeError('Accepted WebGL assets not published in the bounded verification window')
               time.sleep(10)

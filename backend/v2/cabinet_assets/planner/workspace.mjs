@@ -47,6 +47,10 @@ export class PlannerWorkspace {
       full.title=active?'Выйти из полного экрана':'На весь экран';full.setAttribute('aria-label',full.title);this.resize();
     });
     get('planner-client').onclick=()=>this.client();
+    for(const [id,view]of [['mode-3d','threeQuarter'],['planner-front','front']]){
+      const technical=get(id).onclick;
+      get(id).onclick=()=>{if(!this.isClient()||!this.app.scene.fitKitchenForClient)return technical();this.app.scene.clientView=view;this.app.setView('3d');};
+    }
     get('planner-client').textContent='Технический';get('planner-client').setAttribute('aria-label','Переключить в клиентский режим');
     this.cutlist=document.querySelector('.mf3d-cutlist');this.cutlist.id='workspace-cutlist';
     const cutClose=button('workspace-close-cutlist','×','Закрыть деталировку');this.cutlist.append(cutClose);
@@ -111,12 +115,19 @@ export class PlannerWorkspace {
   }
   client(){
     this.app.interaction?.cancel();const on=document.body.classList.toggle('planner-client');
-    if(on)this.technicalView=this.app.scene.captureView?.();
+    if(on){this.technicalView=this.app.scene.captureView?.();this.app.scene.clientView='threeQuarter';}
     const b=this.get('planner-client');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Клиентский':'Технический';b.setAttribute('aria-label',on?'Переключить в технический режим':'Переключить в клиентский режим');
     this.get('project-name').readOnly=on;this.update();this.app.scene.highlight();this.app.scene.hover(null);
     this.app.scene.setPresentation?.(on);if(on&&this.app.scene.mode!=='3d')this.app.setView('3d');
     const fit=this.get('reset-view');fit.textContent=on?'Показать всю кухню':'Кухня';fit.title=on?'Показать всю кухню':'Показать кухню';fit.setAttribute('aria-label',fit.title);
-    requestAnimationFrame(()=>{this.app.scene.resize();if(on)this.app.scene.fit('kitchen');else if(this.technicalView&&this.app.scene.restoreView){this.app.scene.restoreView(this.technicalView);this.app.bridge.view(this.technicalView.mode);this.app.paintMode();}else this.app.scene.fit('kitchen');});
+    requestAnimationFrame(()=>{this.app.scene.resize();if(on)this.app.scene.fit('kitchen');else if(this.technicalView&&this.app.scene.restoreView){this.app.scene.restoreView(this.technicalView);this.app.bridge.view(this.technicalView.mode);}else this.app.scene.fit('kitchen');this.app.paintMode();});
+  }
+  paintCameraButtons(){
+    const client=this.isClient(),front=client&&this.app.scene.mode==='3d'&&this.app.scene.clientView==='front';
+    for(const [id,label,title]of [['mode-3d',client?'Клиентский 3D':'3D',client?'Клиентский 3D':'3D'],['planner-front',client?'Фасадный':'Спереди',client?'Фасадный ракурс кухни':'Фронтальный вид']]){
+      const b=this.get(id);b.textContent=label;b.setAttribute('aria-label',title);
+      if(client&&this.app.scene.mode==='3d'){const on=id==='planner-front'?front:!front;b.className=on?'':'secondary';b.setAttribute('aria-pressed',String(on));}
+    }
   }
   async fullscreen(){
     try {
