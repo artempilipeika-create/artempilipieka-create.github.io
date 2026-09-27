@@ -1,4 +1,4 @@
-import {clone,MM_TO_WORLD,elevation,placementError,dimensionPatch} from './furniture-core.mjs';
+import {clone,MM_TO_WORLD,elevation,placementError,dimensionPatch,kitchenSettings,rotateXZ} from './furniture-core.mjs';
 import {snapItem,findSpace} from './placement.mjs';
 
 /** One furniture gesture, one history entry; previews never mutate project data. */
@@ -113,7 +113,11 @@ export class Interaction {
     const source=this.adapter.selected;if(!source)return false;
     return this.change(label,()=>{
       const it=dimensionPatch(source,patch);
-      if(Number.isFinite(patch.depth)&&patch.depth!==source.depth){
+      const kitchen=kitchenSettings(source),nextKitchen=kitchenSettings(it);
+      if(kitchen&&(Number.isFinite(patch.depth)||Number.isFinite(patch.rearServiceGapMm))){
+        const delta=(it.depth-source.depth)/2+nextKitchen.rearServiceGapMm-kitchen.rearServiceGapMm,n=rotateXZ(0,1,source.rotation||0);
+        it.x=Math.round(source.x+n.x*delta);it.z=Math.round(source.z+n.z*delta);
+      }else if(Number.isFinite(patch.depth)&&patch.depth!==source.depth){
         const r=this.adapter.room,delta=(patch.depth-source.depth)/2,clearance=this.options().wallOffset||0;
         if(source.rotation===0&&Math.abs(source.z-source.depth/2+r.depth/2-clearance)<1)it.z+=delta;
         if(source.rotation===180&&Math.abs(r.depth/2-source.z-source.depth/2-clearance)<1)it.z-=delta;

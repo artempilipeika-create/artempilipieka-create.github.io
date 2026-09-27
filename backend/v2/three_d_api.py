@@ -46,6 +46,13 @@ class FurnitureItem(StrictModel):
     body_height: int|None=Field(default=None,ge=150,le=3000)
     base_height: int|None=Field(default=None,ge=0,le=300)
     worktop_thickness: int|None=Field(default=None,ge=0,le=100)
+    legHeightMm: Literal[80,100,150]|None=None
+    rearServiceGapMm: int|None=Field(default=None,ge=50,le=80)
+    plinthMaterialId: UUID|None=None
+    countertopDepthMm: int|None=Field(default=None,ge=300,le=1200)
+    countertopStockLengthMm: Literal[4100]|None=None
+    countertopThicknessMm: int|None=Field(default=None,ge=12,le=100)
+    countertopMaterialId: UUID|None=None
     depth: int=Field(ge=200,le=1200)
     layout: Literal['drawers','doors','combo','niche']='doors'
     drawers: int=Field(default=2,ge=0,le=8)
@@ -62,6 +69,16 @@ class FurnitureItem(StrictModel):
     def separated_heights(self):
         if any(not key or len(key)>80 or not all(c.isalnum() or c in '-_' for c in key) for key in self.part_materials):
             raise ValueError('Invalid production part material key')
+        if self.legHeightMm is not None:
+            if self.module_type!='base_cabinet' or self.base=='wall':
+                raise ValueError('Kitchen legs require a lower cabinet')
+            if self.base_height is not None and self.base_height!=self.legHeightMm:
+                raise ValueError('Leg height and legacy base height must agree')
+            self.base_height=self.legHeightMm
+        if self.countertopThicknessMm is not None:
+            if self.worktop_thickness is not None and self.worktop_thickness!=self.countertopThicknessMm:
+                raise ValueError('Countertop thickness aliases must agree')
+            self.worktop_thickness=self.countertopThicknessMm
         # Additive JSON fields; no database migration or mass rewrite of projects.
         base=0 if self.base=='wall' else self.base_height if self.base_height is not None else 80 if self.base=='plinth' else 60
         if self.base=='wall' and self.base_height not in (None,0):

@@ -1,4 +1,4 @@
-import {clone,elevation,tier,heights,placementError} from './furniture-core.mjs';
+import {clone,elevation,tier,heights,placementError,normalizeKitchen,kitchenSettings} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -35,7 +35,7 @@ export class StateAdapter{
       const base=it.base==='wall'?0:type==='base_cabinet'?100:it.base==='plinth'?80:60;
       Object.assign(it,{body_height:it.height-base,base_height:base,worktop_thickness:type==='base_cabinet'&&it.depth<=750?38:0});
     }
-    return it;
+    return normalizeKitchen(it);
   }
   persistent(it){const value=clone(it);if(!this.bridge.supportsElevation)delete value.elevation_mm;return value;}
   insert(it){if(this.items.length>=100)throw new Error('В одном проекте поддерживается до 100 модулей');this.items.push(this.persistent(it));this.bridge.select(it.item_id);}
@@ -47,6 +47,10 @@ export class StateAdapter{
     if(h.body_height<150||h.base_height<0||h.base_height>300||h.worktop_thickness<0||h.worktop_thickness>100||
       ['body_height','base_height','worktop_thickness'].some(k=>it[k]!=null&&!Number.isInteger(it[k]))||
       (it.body_height!=null&&it.body_height!==h.body_height))return 'Проверьте высоту корпуса, основания и столешницы';
+    const kitchen=kitchenSettings(it);
+    if(kitchen&&(![80,100,150].includes(kitchen.legHeightMm)||!Number.isInteger(kitchen.rearServiceGapMm)||kitchen.rearServiceGapMm<50||kitchen.rearServiceGapMm>80||
+      !Number.isInteger(kitchen.countertopDepthMm)||kitchen.countertopDepthMm<300||kitchen.countertopDepthMm>1200||kitchen.countertopStockLengthMm!==4100||
+      !Number.isInteger(kitchen.countertopThicknessMm)||kitchen.countertopThicknessMm<12||kitchen.countertopThicknessMm>100))return 'Проверьте ножки, задний зазор и размеры столешницы';
     const production=this.template(it)?.production;
     if(Array.isArray(it.shelves))for(const shelf of it.shelves){
       const thickness=Number(shelf?.thickness)||18,offset=Number(shelf?.offset_mm);

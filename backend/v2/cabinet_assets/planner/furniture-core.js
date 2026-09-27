@@ -6,7 +6,7 @@
   // Versioned FR3D donor data. D1 L/P share every construction parameter except hinges.
   const pilotBase={
     native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
-    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:80},
+    carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:18,rail_depth:80,rail_orientation:'horizontal'},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     facade:{thickness:18,gap_mm:FACADE_GAP_MM,clearance_mm:2},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}]
@@ -19,16 +19,48 @@
     'bazis.784bf9af84f8':pilot('Д1 P','base.standard.d1.right.600','5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb',['right']),
     'bazis.3079d0656398':pilot('Д2','base.standard.d2.600','7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',['left','right'])
   });
+  const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:60,plinthMaterialId:null,
+    countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
+  function isKitchenModule(it){const p=PILOT_PRODUCTION[it.bazis_id];return Boolean(p&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
+  function kitchenSettings(it){
+    if(!isKitchenModule(it))return null;
+    const k={...KITCHEN_DEFAULTS};for(const key of Object.keys(k))if(it[key]!=null)k[key]=it[key];
+    k.legHeightMm=it.legHeightMm??it.base_height??100;
+    k.countertopThicknessMm=it.countertopThicknessMm??it.worktop_thickness??38;
+    k.frontOverhangMm=k.countertopDepthMm-k.rearServiceGapMm-it.depth;
+    return k;
+  }
+  function normalizeKitchen(it,room){
+    const k=kitchenSettings(it);if(!k)return it;
+    const {frontOverhangMm,...saved}=k;
+    const result={...it,...saved,base_height:k.legHeightMm,body_height:it.body_height??it.height-k.legHeightMm,
+      worktop_thickness:k.countertopThicknessMm};
+    // Only old flush-to-wall pilot projects need the newly introduced service space.
+    // Free-standing saved positions and projects already carrying the gap are untouched.
+    if(room&&it.rearServiceGapMm==null){
+      const n=rotateXZ(0,1,it.rotation||0),axis=n.x?'x':'z',wall=(axis==='x'?room.width:room.depth)/2;
+      if(Math.abs(it[axis]*n[axis]-it.depth/2+wall)<1)result[axis]+=n[axis]*k.rearServiceGapMm;
+    }
+    return result;
+  }
   // `height` remains the saved module envelope and the native FR3D target.
   // Old projects keep that envelope; a worktop has never been part of it.
   function heights(it){
-    const base=it.base==='wall'?0:(Number.isFinite(it.base_height)?it.base_height:it.base==='plinth'?80:60);
+    const k=kitchenSettings(it),base=k?k.legHeightMm:it.base==='wall'?0:(Number.isFinite(it.base_height)?it.base_height:it.base==='plinth'?80:60);
     const worktop=it.module_type==='base_cabinet'&&it.depth<=750
-      ?(Number.isFinite(it.worktop_thickness)?it.worktop_thickness:32):0;
+      ?(k?k.countertopThicknessMm:Number.isFinite(it.worktop_thickness)?it.worktop_thickness:32):0;
     return {body_height:it.height-base,base_height:base,module_height:it.height,
       worktop_thickness:worktop,overall_height_with_worktop:it.height+worktop};
   }
   function dimensionPatch(source,patch){
+    if(isKitchenModule(source)){
+      const old=heights(source),it=normalizeKitchen({...source,...patch});
+      const leg=patch.legHeightMm??patch.base_height??old.base_height;
+      const body=patch.body_height??(Object.hasOwn(patch,'height')?patch.height-leg:old.body_height);
+      const thickness=patch.countertopThicknessMm??patch.worktop_thickness??old.worktop_thickness;
+      return {...it,legHeightMm:leg,base_height:leg,body_height:body,height:body+leg,
+        countertopThicknessMm:thickness,worktop_thickness:thickness};
+    }
     const it={...source,...patch},old=heights(source);
     if(['height','body_height','base_height','base'].some(k=>Object.hasOwn(patch,k))){
       const base=it.base==='wall'?0:patch.base_height??(source.base==='wall'?100:old.base_height);
@@ -80,7 +112,7 @@
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(p?.carcass?.type!=='bottom_side_two_rails')return null;
     const {width:W,height:H,depth:D}=it,{body_height:B,base_height:base}=heights(it);
-    const t=p.carcass.panel_thickness,rail=p.carcass.rail_height,inner=W-2*t,parts=[];
+    const t=p.carcass.panel_thickness,rail=p.carcass.rail_depth||80,inner=W-2*t,parts=[];
     const add=(key,name,role,size,position,axes,variant=null,material=null,extra={})=>{
       const [length_axis,width_axis,thickness_axis]=axes;
       parts.push({part_id:it.item_id+':'+key,key,module_id:it.item_id,name,role,type:'panel',
@@ -91,7 +123,7 @@
     for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,'Боковина '+side,'body',
       {x:t,y:B-t,z:D},{x:sign*(W-t)/2,y:base+t+(B-t)/2,z:0},['y','z','x'],it.body_variant_id);
     for(const [key,name,sign]of [['rear','задняя',-1],['front','передняя',1]])add('rail-'+key,'Царга '+name,'body',
-      {x:inner,y:rail,z:t},{x:0,y:H-rail/2,z:sign*(D-t)/2},['y','x','z'],it.body_variant_id);
+      {x:inner,y:t,z:rail},{x:0,y:H-t/2,z:sign*(D-rail)/2},['z','x','y'],it.body_variant_id);
     for(const shelf of it.shelves??p.shelves??[])if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
       {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
       {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,null,
@@ -121,6 +153,66 @@
     const a=r*Math.PI/180,c=Math.round(Math.cos(a)),s=Math.round(Math.sin(a));
     return{x:x*c-z*s||0,z:x*s+z*c||0};
   }
+  /** One derived production plan for continuous kitchen runs. All coordinates are mm.
+   * The frame origin is the middle of the rear countertop edge; local +Z faces the room.
+   * Different decors produce adjacent, non-overlapping finish sections of the same run.
+   */
+  function kitchenRuns(items,room,materialLookup=()=>null){
+    const groups=new Map(),runs=[];
+    for(const it of items){
+      const k=kitchenSettings(it);if(!k)continue;
+      const rotation=it.rotation||0,local=rotateXZ(it.x,it.z,-rotation),level=elevation(it,room);
+      const back=local.z-it.depth/2-k.rearServiceGapMm,top=level+it.height;
+      const key=[rotation,mmNumber(back),top,k.countertopDepthMm,k.countertopThicknessMm].join('|');
+      if(!groups.has(key))groups.set(key,[]);
+      groups.get(key).push({it,k,rotation,back,top,level,lo:local.x-it.width/2,hi:local.x+it.width/2});
+    }
+    for(const members of groups.values()){
+      members.sort((a,b)=>a.lo-b.lo);const contiguous=[];
+      for(const m of members){const last=contiguous.at(-1);if(last&&Math.abs(last.hi-m.lo)<=1){last.hi=m.hi;last.members.push(m);}else contiguous.push({lo:m.lo,hi:m.hi,members:[m]});}
+      for(const run of contiguous){
+        const f=run.members[0],center=(run.lo+run.hi)/2,origin=rotateXZ(center,f.back,f.rotation);
+        const plan={run_id:'kitchen:'+run.members.map(m=>m.it.item_id).join(':'),members:run.members.map(m=>m.it.item_id),rotation:f.rotation,
+          position:{x:origin.x,y:0,z:origin.z},countertopActualLengthMm:run.hi-run.lo,countertopDepthMm:f.k.countertopDepthMm,
+          countertopStockLengthMm:4100,countertopThicknessMm:f.k.countertopThicknessMm,parts:[]};
+        const add=(role,lo,hi,z,depth,y,height,id,ids,suffix='')=>{
+          const material=id?materialLookup(id):null;
+          plan.parts.push({part_id:plan.run_id+':'+role+':'+plan.parts.length+suffix,name:role==='counter'?'Столешница':'Цоколь',role,type:'panel',module_ids:ids,
+            material:{variant_id:id||null,name:material?.name||null,article:material?.article||null},
+            size:{x:hi-lo,y:height,z:depth},position:{x:(lo+hi)/2-center,y,z},
+            orientation:{length_axis:'x',width_axis:role==='counter'?'z':'y',thickness_axis:role==='counter'?'y':'z'},
+            length:hi-lo,width:role==='counter'?depth:height,thickness:role==='counter'?height:depth});
+        };
+        for(const role of ['counter','plinth']){
+          const sections=[];
+          for(const m of run.members){
+            const {k,it}=m,id=role==='counter'?k.countertopMaterialId:k.plinthMaterialId;
+            const z=role==='counter'?k.countertopDepthMm/2:k.rearServiceGapMm+it.depth-60;
+            const y=role==='counter'?m.top+k.countertopThicknessMm/2:m.level+k.legHeightMm/2;
+            const height=role==='counter'?k.countertopThicknessMm:k.legHeightMm,depth=role==='counter'?k.countertopDepthMm:18;
+            const last=sections.at(-1);
+            if(last&&last.id===id&&last.z===z&&last.y===y&&last.height===height){last.hi=m.hi;last.ids.push(it.item_id);}
+            else sections.push({lo:m.lo,hi:m.hi,z,y,height,depth,id,ids:[it.item_id]});
+          }
+          for(const s of sections)add(role,s.lo,s.hi,s.z,s.depth,s.y,s.height,s.id,s.ids);
+        }
+        // Returns at the two exposed ends; no doubled side panels between neighbours.
+        for(const [m,sign]of [[run.members[0],-1],[run.members.at(-1),1]]){
+          const d=m.it.depth-100,x=sign<0?run.lo:run.hi-18;
+          add('plinth',x,x+18,m.k.rearServiceGapMm+m.it.depth/2-10,d,m.level+m.k.legHeightMm/2,m.k.legHeightMm,m.k.plinthMaterialId,[m.it.item_id],':return');
+          const p=plan.parts.at(-1);p.length=d;p.width=m.k.legHeightMm;p.thickness=18;p.orientation={length_axis:'z',width_axis:'y',thickness_axis:'x'};
+        }
+        runs.push(plan);
+      }
+    }
+    return runs;
+  }
+  function kitchenLegs(it){
+    const k=kitchenSettings(it);if(!k)return null;
+    return [-it.width/2+45,it.width/2-45].flatMap((x,i)=>[-it.depth/2+45,it.depth/2-95].map((z,j)=>({
+      part_id:it.item_id+':leg-'+(i*2+j+1),module_id:it.item_id,name:'Опора регулируемая',role:'leg',type:'hardware',
+      height:k.legHeightMm,position:{x,y:k.legHeightMm/2,z},orientation:{axis:'y'}})));
+  }
   function bounds(it,room,includeFront=true){
     const points=[];
     const extension=includeFront?20:0;
@@ -138,9 +230,14 @@
     if(it.width<150||it.height<250||it.depth<200)return 'Размер меньше допустимого';
     const b=bounds(it,room);
     if(b.minX<-room.width/2-.5||b.maxX>room.width/2+.5||b.minZ<-room.depth/2-.5||b.maxZ>room.depth/2+.5)return 'Модуль выходит за границы помещения';
+    const k=kitchenSettings(it);
+    if(k)for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2-k.rearServiceGapMm,-it.depth/2-k.rearServiceGapMm+k.countertopDepthMm]){
+      const p=rotateXZ(x,z,it.rotation||0);
+      if(Math.abs(p.x+it.x)>room.width/2+.5||Math.abs(p.z+it.z)>room.depth/2+.5)return 'Столешница выходит за границы помещения';
+    }
     if(b.minY<0||b.maxY>room.height+.5)return 'Модуль выходит за высоту помещения';
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,KITCHEN_DEFAULTS,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

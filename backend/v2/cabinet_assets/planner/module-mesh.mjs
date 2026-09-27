@@ -1,8 +1,8 @@
 import * as THREE from './vendor/three.module.js';
 import {materialVisual,physicalPanelUV} from './material-visuals.mjs';
-import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts} from './furniture-core.mjs';
+import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts,kitchenRuns,kitchenLegs,isKitchenModule} from './furniture-core.mjs';
 
-// Rendering consumes canonical manufactured parts; extra dressings remain visual only.
+// Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
   shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
@@ -177,11 +177,13 @@ export class MeshFactory{
       }
     }
 
-    if(it.base==='plinth'&&base>2){
+    if(!isKitchenModule(it)&&it.base==='plinth'&&base>2){
       this.box(group,'plinth',W,base-2,18,0,base/2,D/2-60,null,ghost);
       for(const sign of[-1,1])this.box(group,'plinth',18,base-2,D-100,sign*(W/2-9),base/2,-10,null,ghost);
     }
-    if(base>0)for(const x of[-W/2+45,W/2-45])for(const z of[-D/2+45,D/2-95])this.foot(group,x,z,base,ghost);
+    const legs=kitchenLegs(it);
+    if(legs)for(const leg of legs){this.foot(group,leg.position.x,leg.position.z,leg.height,ghost);group.children.at(-1).userData.hardware=leg;}
+    else if(base>0)for(const x of[-W/2+45,W/2-45])for(const z of[-D/2+45,D/2-95])this.foot(group,x,z,base,ghost);
     if(!it.bazis_id&&it.layout==='niche'){
       const ratio=template?.front?.nicheRatio||.35,y=base+bodyH*(1-ratio);
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
@@ -218,11 +220,17 @@ export class MeshFactory{
     this.updateAppearance(group,it);this.position(group,it);return group;
   }
   position(group,it){group.position.set(it.x*S,elevation(it,this.adapter.room)*S,it.z*S);group.rotation.y=-(it.rotation||0)*Math.PI/180;}
-  /** Visual worktops and recessed plinth runs; never included in save/cutlist/export. */
+  /** Pilot runs derive from production data; the old visual dressing stays for legacy projects. */
   dress(items){
     const root=new THREE.Group();root.userData={visualOnly:true,mergedPlinthIds:[]};const groups=new Map();
+    for(const plan of kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id))){
+      const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
+      for(const part of plan.parts){const d=part.size,p=part.position,m=this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;}
+      g.position.set(plan.position.x*S,0,plan.position.z*S);g.rotation.y=-plan.rotation*Math.PI/180;root.add(g);
+      root.userData.mergedPlinthIds.push(...plan.members);
+    }
     for(const it of items){
-      if(tier(it)!=='base'||it.depth>750)continue;
+      if(isKitchenModule(it)||tier(it)!=='base'||it.depth>750)continue;
       const r=it.rotation||0,axis=r===90||r===270?'z':'x',cross=axis==='x'?'z':'x',normal=rotateXZ(0,1,r)[cross];
       const dims=heights(it),line=it[cross]+normal*it.depth/2,top=elevation(it,this.adapter.room)+dims.module_height,key=[r,line,top,it.base,dims.base_height,dims.worktop_thickness].join('|');
       if(!groups.has(key))groups.set(key,[]);groups.get(key).push({it,axis,cross,normal,line,top,dims,lo:it[axis]-it.width/2,hi:it[axis]+it.width/2});
@@ -280,7 +288,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

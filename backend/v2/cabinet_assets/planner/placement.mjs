@@ -1,4 +1,4 @@
-import {bounds,elevation,tier,rotateXZ,placementError} from './furniture-core.mjs';
+import {bounds,elevation,tier,rotateXZ,placementError,kitchenSettings} from './furniture-core.mjs';
 const rounded=it=>({...it,x:Math.round(it.x),z:Math.round(it.z),elevation_mm:Math.round(it.elevation_mm)});
 const verticalPeers=(a,b,room)=>{
   const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
@@ -13,7 +13,7 @@ export function snapItem(raw,items,room,options={},previous={}){
   if(options.enabled===false)return{item:rounded(it),anchors,error:placementError(it,items,room),guides};
   const walls=[{r:0,axis:'z',edge:-room.depth/2,sign:1},{r:90,axis:'x',edge:room.width/2,sign:-1},
     {r:180,axis:'z',edge:room.depth/2,sign:-1},{r:270,axis:'x',edge:-room.width/2,sign:1}];
-  const wallOffset=Number(options.wallOffset)||0;
+  const kitchen=kitchenSettings(it),wallOffset=(Number(options.wallOffset)||0)+(kitchen?.rearServiceGapMm||0);
   const candidates=[];
   for(const wall of walls){
     const position=wall.edge+wall.sign*(it.depth/2+wallOffset);
@@ -25,7 +25,7 @@ export function snapItem(raw,items,room,options={},previous={}){
   if(candidates.length){
     const {wall,position}=candidates[0];it.rotation=wall.r;it[wall.axis]=position;
     anchors.wall=wall.r;anchors[wall.axis]=position;
-    guides.push({axis:wall.axis,value:wall.edge,text:'К стене · отступ '+wallOffset+' мм'});
+    guides.push({axis:wall.axis,value:wall.edge,text:kitchen?'К стене · задний край столешницы · зазор '+wallOffset+' мм':'К стене · отступ '+wallOffset+' мм'});
   }
   const b=bounds(it,room,false),axis=it.rotation===90||it.rotation===270?'z':'x',cross=axis==='x'?'z':'x';
   const min=axis==='x'?'minX':'minZ',max=axis==='x'?'maxX':'maxZ';
@@ -45,11 +45,12 @@ export function snapItem(raw,items,room,options={},previous={}){
     guides.push({axis,value:value<other[axis]?ob[min]:ob[max],text:'Стык боковин · 0 мм'});
     const front=rotateXZ(0,1,it.rotation),direction=front[cross];
     const line=options.alignment==='back'?'back':'front';
-    const aligned=other[cross]+direction*(other.depth-it.depth)/2*(line==='front'?1:-1);
+    const otherKitchen=kitchenSettings(other);
+    const aligned=kitchen&&otherKitchen?other[cross]+direction*((it.depth-other.depth)/2+kitchen.rearServiceGapMm-otherKitchen.rearServiceGapMm):other[cross]+direction*(other.depth-it.depth)/2*(line==='front'?1:-1);
     // A wall anchor has priority over changing the wall clearance.
     if(anchors[cross]===undefined&&Math.abs(it[cross]-aligned)<threshold*2){
       it[cross]=aligned;anchors[cross]=aligned;
-      guides.push({axis:cross,value:aligned+direction*it.depth/2*(line==='front'?1:-1),text:line==='front'?'Линия фасадов':'Линия задних стенок'});
+      guides.push({axis:cross,value:aligned+direction*it.depth/2*(line==='front'?1:-1),text:kitchen&&otherKitchen?'Задний край столешницы':line==='front'?'Линия фасадов':'Линия задних стенок'});
     }
   }
   if(tier(it)==='wall'&&options.allowElevation!==false){
@@ -72,11 +73,11 @@ export function findSpace(draft,items,room,selected,options={}){
     for(const sign of[1,-1]){
       const p={...initial,rotation:r,x:peer.x,z:peer.z};
       p[axis]+=sign*(peer.width+p.width)/2;
-      const f=rotateXZ(0,1,r);p[cross]+=f[cross]*(peer.depth-p.depth)/2;
+      const f=rotateXZ(0,1,r),pk=kitchenSettings(p),ok=kitchenSettings(peer);p[cross]+=f[cross]*(pk&&ok?(p.depth-peer.depth)/2+pk.rearServiceGapMm-ok.rearServiceGapMm:(peer.depth-p.depth)/2);
       starts.push(p);
     }
   }
-  const clearance=options.wallOffset||0;
+  const clearance=(options.wallOffset||0)+(kitchenSettings(initial)?.rearServiceGapMm||0);
   starts.push({...initial,rotation:0,x:0,z:-room.depth/2+initial.depth/2+clearance});
   for(const p of starts)if(!placementError(p,items,room))return rounded(p);
   // A bounded grid search is used only for click placement, never in pointermove.

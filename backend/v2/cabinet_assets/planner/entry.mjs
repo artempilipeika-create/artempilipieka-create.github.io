@@ -3,7 +3,7 @@ import {StateAdapter} from './state-adapter.mjs';
 import {History} from './history.mjs';
 import {Interaction} from './interaction.mjs';
 import {FallbackPlan} from './fallback.mjs';
-import {placementError,elevation,tier} from './furniture-core.mjs';
+import {placementError,elevation,tier,kitchenSettings,dimensionPatch,rotateXZ} from './furniture-core.mjs';
 const get=id=>document.getElementById(id);
 const make=(tag,id,text)=>{const el=document.createElement(tag);if(id)el.id=id;if(text!==undefined)el.textContent=text;return el;};
 const button=(id,text,title)=>{const b=make('button',id,text);b.type='button';b.className='secondary';if(title){b.title=title;b.setAttribute('aria-label',title);}return b;};
@@ -26,7 +26,7 @@ class PlannerApplication {
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
       if(reason==='before-project'){this.interaction?.cancel();return;}
-      if(reason==='project'){this.interaction?.cancel();this.history.reset();this.scene?.setDisplayMode?.('normal');this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
+      if(reason==='project'){this.interaction?.cancel();this.history.reset();if(get('material-scope'))get('material-scope').value='module';if(this.scene)this.scene.selectionScope='module';this.scene?.setDisplayMode?.('normal');this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
       this.sync();
     });
     this.history.onChange=()=>{get('planner-undo').disabled=!this.history.undoStack.length;get('planner-redo').disabled=!this.history.redoStack.length;};
@@ -97,12 +97,27 @@ class PlannerApplication {
     get('duplicate-item').onclick=()=>this.interaction?.duplicate();get('remove-item').onclick=()=>this.interaction?.remove();get('studio-rotate').onclick=()=>this.interaction?.rotate();
     document.querySelectorAll('[data-nudge]').forEach(b=>b.onclick=()=>{const n=Number(get('studio-nudge-step').value)||10;const moves={left:[-n,0],right:[n,0],back:[0,-n],front:[0,n]};this.interaction?.nudge(...moves[b.dataset.nudge]);});
     this.listen(get('quick-widths'),'click',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopImmediatePropagation();this.interaction?.modify({width:Number(b.textContent)},'Изменение ширины');this.bridge.refresh();},true);
-    for(const id of ['body-results','front-results']){
+    for(const id of ['body-results','front-results','plinth-results','countertop-results']){
       // Trusted clicks can flush microtasks between capture and target handlers.
       // Snapshot before the selector mutates the item; commit on the same event's bubble.
       this.listen(get(id),'click',e=>{if(e.target.closest('button'))this.history.begin('Материал');},true);
       this.listen(get(id),'click',e=>{if(e.target.closest('button'))this.history.commit();});
     }
+    this.listen(get('material-scope'),'change',()=>{this.scene.selectionScope=get('material-scope').value;this.scene.sync();this.scene.invalidate();});
+    for(const [id,key]of [['leg-height','legHeightMm'],['rear-service-gap','rearServiceGapMm'],['countertop-depth','countertopDepthMm'],['countertop-thickness','countertopThicknessMm']])this.listen(get(id),'change',()=>{
+      const value=Number(get(id).value),targets=get('material-scope').value==='kitchen'?this.adapter.items.filter(it=>kitchenSettings(it)):[this.adapter.selected].filter(Boolean);
+      this.interaction.change('Параметры кухонного ряда',()=>{
+        const changed=targets.map(source=>{
+          const it=dimensionPatch(source,{[key]:value});
+          if(key==='rearServiceGapMm'){const n=rotateXZ(0,1,it.rotation||0),delta=value-kitchenSettings(source).rearServiceGapMm;it.x+=n.x*delta;it.z+=n.z*delta;}
+          return it;
+        });
+        const next=this.adapter.items.map(it=>changed.find(x=>x.item_id===it.item_id)||it);
+        for(const it of changed){const error=this.adapter.validate(it)||placementError(it,next,this.adapter.room);if(error)throw new Error(error);}
+        for(const it of changed){const index=this.adapter.items.findIndex(x=>x.item_id===it.item_id);this.adapter.items[index]=this.adapter.persistent(it);}
+        this.bridge.refresh();
+      });this.bridge.refresh();
+    });
     const shelfEnabled=get('shelf-enabled'),shelfPosition=get('shelf-position'),toggleDoors=get('toggle-doors');
     this.listen(get('module-display'),'change',()=>this.scene?.setDisplayMode?.(get('module-display').value));
     this.listen(shelfEnabled,'change',()=>{

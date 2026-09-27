@@ -153,14 +153,14 @@ function legacyItem(s){
   it.template_id=it.template_id||inferTemplate(it);
   return it;
 }
-function normalizeItem(x){
+function normalizeItem(x,room){
   const it={...x};
   if(!it.template_id)it.template_id=inferTemplate(it);
-  return it;
+  return globalThis.MF_FURNITURE_CORE.normalizeKitchen(it,room);
 }
 function normalizeScene(s={}){
-  const items=Array.isArray(s.items)?s.items.map(normalizeItem):[legacyItem(s)];
   const room=s.room||{width:4200,depth:3200,height:2700};
+  const items=Array.isArray(s.items)?s.items.map(x=>normalizeItem(x,room)):[legacyItem(s)];
   return{
     schema_version:2,
     room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700},
@@ -340,7 +340,7 @@ async function openProject(id){
   status('Проект открыт.');
 }
 async function hydrateMaterials(){
-  for(const it of state.items)for(const id of[it.body_variant_id,it.front_variant_id,it.back_variant_id,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id)await material(id);
+  for(const it of state.items)for(const id of[it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id)await material(id);
 }
 async function saveProject(){
   state.selected_item_id=selectedId;
@@ -555,9 +555,16 @@ async function syncControls(){
   for(const key of ['body_height','base_height','worktop_thickness']){
     const input=$(key.replaceAll('_','-'));if(input)input.value=String(h[key]);
   }
-  if($('base-height'))$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);
+  const kitchen=globalThis.MF_FURNITURE_CORE.kitchenSettings(it);
+  if($('kitchen-controls'))$('kitchen-controls').hidden=!kitchen;
+  if($('base-height')){$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);$('base-height').parentElement.hidden=Boolean(kitchen);}
+  if(kitchen){
+    for(const [id,key]of [['leg-height','legHeightMm'],['rear-service-gap','rearServiceGapMm'],['countertop-depth','countertopDepthMm'],['countertop-thickness','countertopThicknessMm']])if($(id))$(id).value=String(kitchen[key]);
+    const run=globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room).find(r=>r.members.includes(it.item_id));
+    if($('kitchen-summary'))$('kitchen-summary').textContent='Столешница ряда: '+(run?.countertopActualLengthMm||it.width)+' × '+kitchen.countertopDepthMm+' × '+kitchen.countertopThicknessMm+' мм · заготовка 4100 мм. Сзади '+kitchen.rearServiceGapMm+' мм · спереди '+kitchen.frontOverhangMm+' мм.'+(kitchen.frontOverhangMm<20?' Увеличьте глубину столешницы для переднего свеса.':'')+(run?.countertopActualLengthMm>4100?' Ряд длиннее заготовки: потребуется стык.':'');
+  }
   if($('body-height'))$('body-height').disabled=Boolean(it.bazis_id&&!t?.production);
-  if($('worktop-control'))$('worktop-control').hidden=it.module_type!=='base_cabinet'||it.depth>750;
+  if($('worktop-control'))$('worktop-control').hidden=Boolean(kitchen)||it.module_type!=='base_cabinet'||it.depth>750;
   if($('height-breakdown'))$('height-breakdown').textContent='Корпус '+h.body_height+' + основание '+h.base_height+' = модуль '+h.module_height+' мм'+(h.worktop_thickness?' · со столешницей '+h.overall_height_with_worktop+' мм':'');
   const production=t?.production||null,prodRoot=$('production-controls');
   if(prodRoot){
@@ -587,7 +594,10 @@ async function syncControls(){
   const bodyMaterial=await material(it.body_variant_id),frontMaterial=await material(it.front_variant_id);
   if(selected()?.item_id!==it.item_id)return;
   $('body-selected').textContent=label(bodyMaterial);$('front-selected').textContent=label(frontMaterial);
-  for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=!m?'':m.visual?.texture_url||m.visual?.preview_url?'Вид по изображению выбранного декора':m.visual?.render_color?'Цвет выбранного декора':'Изображение декора пока не добавлено — нейтральный вид.';}
+  const plinthMaterial=await material(it.plinthMaterialId),countertopMaterial=await material(it.countertopMaterialId);
+  if(selected()?.item_id!==it.item_id)return;
+  for(const [kind,m]of [['plinth',plinthMaterial],['countertop',countertopMaterial]])if($(kind+'-selected'))$(kind+'-selected').textContent=label(m);
+  for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial],['plinth',plinthMaterial],['countertop',countertopMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=!m?'':m.visual?.texture_url||m.visual?.preview_url?'Вид по изображению выбранного декора':m.visual?.render_color?'Цвет выбранного декора':'Изображение декора пока не добавлено — нейтральный вид.';}
   renderItems();
 }
 async function searchMaterial(input,results,kind){
@@ -602,9 +612,19 @@ async function searchMaterial(input,results,kind){
     b.onclick=()=>{
       const it=selected();
       if(!it)return;
-      if(templateFor(it)?.production&&Number(m.thickness)!==18){status('Для корпуса и фасадов этого модуля выберите материал толщиной 18 мм.');return;}
+      if(['body','front','plinth'].includes(kind)&&templateFor(it)?.production&&Number(m.thickness)!==18){status('Для корпуса, фасадов и цоколя выберите материал толщиной 18 мм.');return;}
       materials.set(String(m.variant_id),m);
-      it[kind+'_variant_id']=m.variant_id;
+      const targets=$('material-scope')?.value==='kitchen'?state.items.filter(x=>globalThis.MF_FURNITURE_CORE.isKitchenModule(x)):[it];
+      const field={body:'body_variant_id',front:'front_variant_id',plinth:'plinthMaterialId',countertop:'countertopMaterialId'}[kind];
+      for(const target of targets){
+        target[field]=m.variant_id;
+        if(kind==='body'||kind==='front'){
+          const parts=globalThis.MF_FURNITURE_CORE.productionParts(target,templateFor(target))||[];
+          for(const part of parts)if(kind==='front'?part.role==='front':['body','shelf'].includes(part.role))if(target.part_materials)delete target.part_materials[part.key];
+          if(kind==='body')for(const shelf of target.shelves||[])shelf.material_variant_id=null;
+        }
+      }
+      status('Материал: '+(targets.length>1?'вся кухня · '+targets.length+' модуля':it.name));
       $(kind+'-selected').textContent=label(m);
       results.replaceChildren();
       input.value='';
@@ -706,9 +726,14 @@ function cutlistItem(it){
   for(const g of grouped.values())a.push([prefix+g.name,g.w,g.h,g.qty,'front',it]);
   return a;
 }
-function allCutlist(){return state.items.flatMap(cutlistItem)}
+function allCutlist(includeKitchen=false){
+  const rows=state.items.flatMap(cutlistItem);
+  if(includeKitchen)for(const run of globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room,id=>materials.get(String(id))))for(const p of run.parts)
+    rows.push(['Кухонный ряд · '+p.name,p.length,p.width,1,'fixed',{body_variant_id:p.material.variant_id},p.material.name]);
+  return rows;
+}
 function renderCutlist(){
-  const rows=allCutlist(),t=document.createElement('table');
+  const rows=allCutlist(true),t=document.createElement('table');
   t.innerHTML='<thead><tr><th>Деталь</th><th>Размер</th><th>Кол.</th><th>Материал</th></tr></thead><tbody></tbody>';
   for(const r of rows){
     const tr=document.createElement('tr');
@@ -910,6 +935,9 @@ function exportBazisProject(){
     room:{...state.room},
     facade_gap_mm:FACADE_GAP_MM,
     production_schema:1,
+    // Additive preparation data. Existing native importer still owns source/target placement.
+    kitchen_production:{native_accessories_supported:false,
+      runs:globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room,id=>materials.get(String(id)))},
     skipped_non_bazis:missing.map(x=>({name:x.name,module_type:x.module_type})),
     items:bazisItems.map((it,index)=>{
       const src=templateFor(it),p=src?.production||null;
@@ -921,7 +949,9 @@ function exportBazisProject(){
         source_sha256:it.bazis_sha256,
         source_default:src?nativeDefault:null,
         elastic_resize:Boolean(it.bazis_resize),
-        target:{width:it.width,height:it.height,depth:it.depth},
+        // Legacy native elastic resize has no separate leg-height channel. Keep its donor base
+        // so changing legs cannot stretch the exported carcass; full kitchen parameters follow below.
+        target:{width:it.width,height:p?globalThis.MF_FURNITURE_CORE.heights(it).body_height+p.base_height:it.height,depth:it.depth},
         position:{x:it.x,y:0,z:it.z},
         rotation:it.rotation,
         name:it.name,
@@ -938,7 +968,10 @@ function exportBazisProject(){
           hardware:p.hardware||null,
           base_height:Number.isFinite(it.base_height)?it.base_height:p.base_height,
           worktop_thickness:Number.isFinite(it.worktop_thickness)?it.worktop_thickness:p.worktop_thickness,
-          handles:it.handles
+          handles:it.handles,
+          native_base_height_mm:p.base_height,
+          kitchen:globalThis.MF_FURNITURE_CORE.kitchenSettings(it),
+          legs:globalThis.MF_FURNITURE_CORE.kitchenLegs(it)
         }:null
       };
     })
@@ -1005,6 +1038,7 @@ for(const [id,key]of[['rotation','rotation'],['layout','layout'],['drawers','dra
 
 $('body-search').oninput=()=>searchMaterial($('body-search'),$('body-results'),'body');
 $('front-search').oninput=()=>searchMaterial($('front-search'),$('front-results'),'front');
+for(const kind of ['plinth','countertop'])if($(kind+'-search'))$(kind+'-search').oninput=()=>searchMaterial($(kind+'-search'),$(kind+'-results'),kind);
 $('duplicate-item').onclick=duplicateItem;
 $('remove-item').onclick=removeItem;
 $('mode-2d').onclick=()=>setMode('2d');

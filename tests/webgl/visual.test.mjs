@@ -23,7 +23,7 @@ const pilotFactory=(doors)=>new MeshFactory({room,material:()=>null,template:()=
 
 test('D1 production pilot renders the actual 596x716x3 back and 564x509x18 shelf',()=>{
  const f=pilotFactory([{side:'left',hinge_count:2,open_angle:105}]),g=f.build(pilotItem);
- assert.deepEqual(roles(g,'body').map(m=>size(m.geometry)),[[600,18,510],[18,702,510],[18,702,510],[564,80,18],[564,80,18]]);
+ assert.deepEqual(roles(g,'body').map(m=>size(m.geometry)),[[600,18,510],[18,702,510],[18,702,510],[564,18,80],[564,18,80]]);
  assert.deepEqual(size(roles(g,'back')[0].geometry),[596,716,3]);
  assert.deepEqual(size(roles(g,'shelf')[0].geometry),[564,18,509]);
  assert.equal(Math.round(roles(g,'shelf')[0].position.y*1000),460);
@@ -127,7 +127,7 @@ for(const [id,production] of Object.entries(PILOT_PRODUCTION))test(production.la
  assert.deepEqual(byKey['back'].size,{x:796,y:816,z:3});
  assert.deepEqual(byKey['back'].position,{x:0,y:510,z:-306.5});
  assert.deepEqual(byKey['shelf-1'].size,{x:764,y:18,z:609});
- assert.deepEqual(byKey['rail-front'].position,{x:0,y:880,z:296});
+ assert.deepEqual(byKey['rail-front'].position,{x:0,y:911,z:265});
  assert.deepEqual(byKey['door-1'].size,{x:800/production.doors.length-3,y:817,z:18});
  assert.equal(new Set(parts.map(p=>p.part_id)).size,parts.length);
  assert.deepEqual(parts.map(p=>p.part_id),old.map(p=>p.part_id));

@@ -60,7 +60,7 @@ def test_native_export_unchanged_when_worktop_changes_and_project_reopens(page,a
     before=export(page);assert before[0]['target']==dict(width=600,height=820,depth=510)
     assert before[0]['source_default']==dict(width=600,height=820,depth=510)
     assert before[0]['construction']['base_height']==100 and before[0]['construction']['worktop_thickness']==38
-    edit(page,'worktop-thickness',50)
+    edit(page,'countertop-thickness',50)
     after=export(page);assert after[0]['target']==before[0]['target']
     assert after[0]['construction']['worktop_thickness']==50
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
@@ -112,7 +112,7 @@ def test_d1_d2_pilot_back_shelf_doors_save_and_native_export(page,api,settings,a
     assert by_key['side-L']['size']==dict(x=18,y=802,z=610)
     assert by_key['back']['size']==dict(x=796,y=816,z=3)
     assert by_key['shelf-1']['size']==dict(x=764,y=18,z=609)
-    assert by_key['rail-front']['size']==dict(x=764,y=80,z=18)
+    assert by_key['rail-front']['size']==dict(x=764,y=18,z=80)
     assert by_key['door-1']['size']==dict(x=800/len(sides)-3,y=817,z=18)
     rendered=page.evaluate("()=>{const out=[];MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.traverse(m=>{if(m.userData.part)out.push(m.userData.part)});return out;}")
     assert rendered==expected
