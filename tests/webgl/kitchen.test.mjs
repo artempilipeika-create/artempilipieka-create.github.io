@@ -58,6 +58,11 @@ test('General overhang formula, stock length is never substituted for row length
  }
  const long=Array.from({length:8},(_,i)=>item(ids[i%3],{item_id:'long-'+i,x:i*600,z:0}));
  const run=kitchenRuns(long,room)[0];assert.equal(run.countertopActualLengthMm,4800);assert.equal(run.countertopStockLengthMm,4100);
+ const tops=run.parts.filter(p=>p.role==='counter');
+ assert.deepEqual(tops.map(p=>p.length),[4100,700]);
+ assert.equal(tops.reduce((sum,p)=>sum+p.length,0),run.countertopActualLengthMm);
+ assert.equal(tops[0].position.x+tops[0].size.x/2,tops[1].position.x-tops[1].size.x/2);
+ assert.ok(tops.every(p=>p.length<=run.countertopStockLengthMm));
 });
 test('Independent decors produce adjacent finish sections with no overlapping countertops',()=>{
  const items=row().map((it,i)=>({...it,body_variant_id:'body',front_variant_id:'front',countertopMaterialId:i===1?'stone-B':'stone-A',plinthMaterialId:'plinth'}));

@@ -83,7 +83,21 @@ jobs:
       - name: Same-runner accepted Client benchmark and immutable production boundary
         if: matrix.suite == 'client'
         run: |
-          git diff --exit-code 152a82eacd0b89f402a10ec5c580f14965ba66c6 -- backend/v2/cabinet_assets/planner/furniture-core.js backend/v2/cabinet_assets/planner/module-mesh.mjs backend/v2/cabinet_assets/planner/placement.mjs backend/v2/cabinet_assets/planner/interaction.mjs backend/v2/cabinet_assets/planner/pricing.mjs backend/v2/cabinet_assets/planner/bridge.js backend/v2/cabinet_assets/planner/workspace.css backend/v2/three_d_document.py
+          git diff --exit-code 152a82eacd0b89f402a10ec5c580f14965ba66c6 -- backend/v2/cabinet_assets/planner/module-mesh.mjs backend/v2/cabinet_assets/planner/placement.mjs backend/v2/cabinet_assets/planner/interaction.mjs backend/v2/cabinet_assets/planner/pricing.mjs backend/v2/cabinet_assets/planner/bridge.js backend/v2/cabinet_assets/planner/workspace.css backend/v2/three_d_document.py
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          path='backend/v2/cabinet_assets/planner/furniture-core.js'
+          before=subprocess.check_output(['git','show','152a82eacd0b89f402a10ec5c580f14965ba66c6:'+path],text=True)
+          after=Path(path).read_text()
+          # The user's stock-length requirement permits kitchenRuns only.
+          # Every other production function, including all three donor geometries, is exact.
+          def outside_runs(source):
+              start=source.index('  function kitchenRuns(')
+              end=source.index('  function kitchenLegs(',start)
+              return source[:start]+source[end:]
+          assert outside_runs(before)==outside_runs(after)
+          PY
           mkdir -p /tmp/mf-client-baseline
           git archive 152a82eacd0b89f402a10ec5c580f14965ba66c6 | tar -x -C /tmp/mf-client-baseline
           cd /tmp/mf-client-baseline

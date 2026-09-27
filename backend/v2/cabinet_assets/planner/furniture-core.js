@@ -194,7 +194,15 @@
             if(last&&last.id===id&&last.z===z&&last.y===y&&last.height===height){last.hi=m.hi;last.ids.push(it.item_id);}
             else sections.push({lo:m.lo,hi:m.hi,z,y,height,depth,id,ids:[it.item_id]});
           }
-          for(const s of sections)add(role,s.lo,s.hi,s.z,s.depth,s.y,s.height,s.id,s.ids);
+          for(const s of sections){
+            // Stock is a physical limit, not the displayed length of the kitchen.
+            // Simple butt joints; production seam optimisation remains a later step.
+            const limit=role==='counter'?plan.countertopStockLengthMm:s.hi-s.lo;
+            for(let lo=s.lo;lo<s.hi;lo+=limit){
+              const hi=Math.min(lo+limit,s.hi),ids=run.members.filter(m=>m.hi>lo&&m.lo<hi).map(m=>m.it.item_id);
+              add(role,lo,hi,s.z,s.depth,s.y,s.height,s.id,ids);
+            }
+          }
         }
         // Returns at the two exposed ends; no doubled side panels between neighbours.
         for(const [m,sign]of [[run.members[0],-1],[run.members.at(-1),1]]){

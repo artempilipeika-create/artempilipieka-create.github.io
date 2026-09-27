@@ -142,10 +142,11 @@ export class PlannerScene{
     this.hemi.color.set(client?p.sky:'#fffdf8');this.hemi.groundColor.set(client?p.ground:'#b9ab94');this.hemi.intensity=client?p.hemi:1;
     this.scene.background.set(roomSettings(this.adapter.state?.displaySettings).wallColor);
     this.scene.environmentIntensity=client?p.environment:.55;this.renderer.toneMappingExposure=client?p.exposure:1.03;
-    this.renderer.toneMapping=client?THREE.NeutralToneMapping:THREE.ACESFilmicToneMapping;
+    // ACES kept after comparing the real U708 preview in the neutral showroom.
+    this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.perspective.fov=client?32:34;this.perspective.updateProjectionMatrix();
     // Cached shadow map plus analytic contact masks: no fullscreen AO pass.
-    this.sun.shadow.intensity=client?.48:.58;this.sun.shadow.radius=client?3.5:5;this.renderer.shadowMap.type=THREE.PCFShadowMap;
+    this.sun.shadow.intensity=client?.35:.58;this.sun.shadow.radius=client?12:5;this.renderer.shadowMap.type=THREE.PCFShadowMap;
     this.factory.contactMaterials.floor.opacity=client?.24:.14;this.factory.contactMaterials.wall.opacity=client?.16:.19;
     for(const m of Object.values(this.factory.contactMaterials))m.color.set(client?'#292b29':'#35443b');
     if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;this.floorTexture.needsUpdate=true;}
@@ -202,13 +203,14 @@ export class PlannerScene{
     return b.isEmpty()?this.cameraBox('room'):b;
   }
   fit(which='kitchen'){
+    if(this.client)this.stopOrbitInertia();
     const box=this.cameraBox(which),center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3());
     this.controls.target.copy(center);
     if(this.mode==='3d'){
       // Fit the actual projected corners, not a bounding sphere. A long
       // kitchen now uses the canvas instead of leaving a room-sized margin.
       const presentation=this.client&&which!=='room';
-      const dir=(which==='room'?new THREE.Vector3(.65,.42,1):presentation?new THREE.Vector3(.24,.16,1).applyAxisAngle(new THREE.Vector3(0,1,0),-this.kitchenRotation()*Math.PI/180):new THREE.Vector3(.50,.29,1)).normalize();
+      const dir=(which==='room'?new THREE.Vector3(.65,.42,1):presentation?new THREE.Vector3(.24,.22,1).applyAxisAngle(new THREE.Vector3(0,1,0),-this.kitchenRotation()*Math.PI/180):new THREE.Vector3(.50,.29,1)).normalize();
       const padH=which==='room'?.84:presentation?.82:.90,padV=which==='room'?.78:presentation?.73:.85;
       const right=new THREE.Vector3(0,1,0).cross(dir).normalize();
       const up=dir.clone().cross(right).normalize();
@@ -229,8 +231,9 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
   }
   captureView(){return {mode:this.mode,position:this.camera.position.toArray(),target:this.controls.target.toArray(),up:this.camera.up.toArray(),zoom:this.camera.zoom,orthoSpan:this.orthoSpan};}
+  stopOrbitInertia(){const damping=this.controls.enableDamping;this.controls.enableDamping=false;this.controls.update();this.controls.enableDamping=damping;}
   restoreView(view){
-    if(!view)return;this.mode=view.mode;this.camera=this.mode==='3d'?this.perspective:this.ortho;this.controls.object=this.camera;this.controls.enableRotate=this.mode==='3d';
+    if(!view)return;this.stopOrbitInertia();this.mode=view.mode;this.camera=this.mode==='3d'?this.perspective:this.ortho;this.controls.object=this.camera;this.controls.enableRotate=this.mode==='3d';
     this.controls.minPolarAngle=0;this.controls.maxPolarAngle=this.mode==='3d'?Math.PI*.495:Math.PI;
     this.camera.position.fromArray(view.position);this.controls.target.fromArray(view.target);this.camera.up.fromArray(view.up);this.camera.zoom=view.zoom;this.orthoSpan=view.orthoSpan;this.resize();this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
   }

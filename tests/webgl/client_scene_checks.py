@@ -105,8 +105,8 @@ def test_neutral_material_color_and_countertop_keep_real_article(page,api,settin
         mean=[statistics.mean(s[i] for s in samples) for i in range(3)]
         result[mode]={'renderedRGB':mean,'meanAbsoluteRGBError':statistics.mean(abs(a-b) for a,b in zip(mean,probes['reference']))}
     (OUT/'client-v2-color-comparison.json').write_text(json.dumps(result,indent=2))
-    assert result['NeutralToneMapping']['meanAbsoluteRGBError']<=32,result
-    assert result['NeutralToneMapping']['meanAbsoluteRGBError']<=result['ACESFilmicToneMapping']['meanAbsoluteRGBError']+2,result
+    assert result['ACESFilmicToneMapping']['meanAbsoluteRGBError']<=32,result
+    assert result['ACESFilmicToneMapping']['meanAbsoluteRGBError']<=result['NeutralToneMapping']['meanAbsoluteRGBError']+2,result
 
 @pytest.mark.timeout(120)
 def test_twenty_pilot_modules_same_benchmark_and_orbit_frame_budget(page,api,settings,admin_user):
