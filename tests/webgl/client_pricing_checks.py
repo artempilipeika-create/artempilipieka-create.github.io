@@ -14,7 +14,8 @@ def test_client_room_twenty_pilot_modules_render_budget(page,api,settings,admin_
     OUT.mkdir(parents=True,exist_ok=True);(OUT/'client-performance.json').write_text(json.dumps({'modules':20,'viewport':page.viewport_size,'technical':technical,'client':client},indent=2))
     assert technical['geometries']==client['geometries']
     assert client['medianMs']<technical['medianMs']*2+75
-    screenshot(page,'client-twenty-modules')
+    from tests.webgl.kitchen_journey import capture_viewport
+    capture_viewport(page,OUT/'client-twenty-modules.png')
 
 def test_room_presets_pricing_history_save_load_and_native_isolation(page,api,settings,admin_user):
     open_planner(page,api);panel(page,'left','catalog')

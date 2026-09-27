@@ -28,15 +28,15 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import time,urllib.request
-          expected=Path('backend/v2/cabinet_assets/planner/module-mesh.mjs').read_bytes()
-          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/module-mesh.mjs'
-          for attempt in range(24):
+          expected=Path('backend/v2/cabinet_assets/planner/scene.mjs').read_bytes()
+          url='https://martin-forest-v2-staging-production.up.railway.app/account/planner/scene.mjs'
+          for attempt in range(36):
               try:
                   request=urllib.request.Request(url,method='GET',headers={'Cache-Control':'no-cache'})
                   with urllib.request.urlopen(request,timeout=15) as response:
                       if response.status==200 and response.read()==expected:break
               except Exception:pass
-              if attempt==23:raise RuntimeError('Accepted WebGL assets not published in the bounded verification window')
+              if attempt==35:raise RuntimeError('Accepted WebGL assets not published in the bounded verification window')
               time.sleep(10)
           PY
       - name: Verify exact committed public assets and capture desktop/mobile scene

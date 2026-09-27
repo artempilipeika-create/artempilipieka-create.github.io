@@ -87,7 +87,15 @@ jobs:
           mkdir -p /tmp/mf-client-baseline
           git archive 152a82eacd0b89f402a10ec5c580f14965ba66c6 | tar -x -C /tmp/mf-client-baseline
           cd /tmp/mf-client-baseline
-          MF_TEST_EVIDENCE_DIR="$GITHUB_WORKSPACE/qa-output/webgl/baseline" python -m pytest tests/webgl/client_pricing_checks.py::test_client_room_twenty_pilot_modules_render_budget -vv --timeout=120
+          MF_TEST_EVIDENCE_DIR="$GITHUB_WORKSPACE/qa-output/webgl/baseline" python - <<'PY'
+          # Keep the accepted benchmark unchanged; only avoid the full-page screenshot resize.
+          import os,pytest
+          from pathlib import Path
+          import tests.webgl.client_pricing_checks as benchmark
+          from tests.webgl.kitchen_journey import capture_viewport
+          benchmark.screenshot=lambda page,name:capture_viewport(page,Path(os.environ['MF_TEST_EVIDENCE_DIR'])/(name+'.png'))
+          raise SystemExit(pytest.main(['tests/webgl/client_pricing_checks.py::test_client_room_twenty_pilot_modules_render_budget','-vv','--timeout=120']))
+          PY
       - name: Actual browser and ASGI regression on exact committed source
         run: |
           python -m py_compile tests/webgl/live_smoke.py

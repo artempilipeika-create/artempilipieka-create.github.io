@@ -16,7 +16,7 @@ BASE='https://martin-forest-v2-staging-production.up.railway.app'
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tests.webgl.navigation import panel,close_panels
-from tests.webgl.kitchen_journey import journey,capture_viewport
+from tests.webgl.kitchen_journey import journey,capture_viewport,choose
 from backend.v2.material_visuals import manifest,visual_metadata
 from uuid import uuid5,NAMESPACE_URL
 OUT=ROOT/'qa-output/webgl-live'
@@ -98,7 +98,7 @@ def main():
             check('One renderer and no old pointer loop',page.evaluate('JSON.stringify(MF_PLANNER.bridge.rendererState())')=='{"legacyLoopEnabled":false,"legacyPointerEnabled":false}')
             panel(page,'left','catalog')
             check('Only three production modules in catalogue',page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==['Д1 L','Д1 P','Д2'])
-            page.locator('[data-bazis="bazis.3079d0656398"]').click()
+            page.locator('[data-bazis="bazis.0211e4f77fc4"]').click()
             check('Click-add on published UI',page.evaluate('MF_PLANNER.adapter.items.length')==1)
             panel(page,'right')
             page.locator('#pos-z').fill('0');page.locator('#pos-z').press('Tab')
@@ -117,6 +117,12 @@ def main():
                 page.locator('#room-preset').select_option(preset)
                 check('Published client preset '+preset,page.evaluate('MF_PLANNER.scene.client') and page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')==furniture)
                 screenshot='published-room-'+preset+'.png';page.screenshot(path=str(OUT/screenshot));report['screenshots'].append(screenshot)
+            page.locator('#room-wall-color').evaluate("e=>{e.value='#bbccdd';e.dispatchEvent(new Event('change',{bubbles:true}))}")
+            page.locator('#room-floor').select_option('oak');page.locator('#room-lighting').select_option('warm')
+            expected_room={'environmentPreset':'showroom','wallColor':'#bbccdd','floorMaterial':'oak','lightingPreset':'warm'}
+            check('Published custom wall color floor and lighting',page.evaluate('MF_PLANNER.adapter.state.displaySettings')==expected_room)
+            check('Published room changes preserve furniture',page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')==furniture)
+            screenshot='published-custom-room.png';page.screenshot(path=str(OUT/screenshot));report['screenshots'].append(screenshot)
             page.locator('#planner-client').click();page.locator('#planner-room-settings summary').click();panel(page,'right')
             page.locator('#width').fill('650');page.locator('#width').press('Tab')
             page.locator('#studio-rotate').click();check('Published rotate',page.evaluate('MF_PLANNER.adapter.selected.rotation')==90)
@@ -137,6 +143,13 @@ def main():
                 page.evaluate('''()=>{const p=MF_PLANNER,s=p.bridge.snapshot();s.scene.items=[];s.scene.selected_item_id=null;s.selectedId=null;p.bridge.restore(s);p.history.reset();}''')
                 panel(page,'left','catalog');page.locator(f'[data-bazis="{donor}"]').click()
                 panel(page,'right')
+                if name=='D2':
+                    page.locator('#width').fill('1100');page.locator('#width').press('Tab')
+                    expect(page.locator('#module-cost')).to_contain_text('Фактическая ширина: 1100 мм')
+                    expect(page.locator('#module-cost')).to_contain_text('Ценовая категория: CUSTOM · нестандарт')
+                    expect(page.locator('#module-cost')).to_have_attribute('data-price-status','CUSTOM')
+                    check('Published width above 1000 is CUSTOM without invented price',page.evaluate('MF_PLANNER.adapter.selected.width')==1100 and 'Цена: не настроена' in page.locator('#module-cost').inner_text())
+                    page.locator('#width').fill('600');page.locator('#width').press('Tab')
                 geometry=page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.uuid')
                 for kind,article in [('body','W1000 ST9'),('front','U999 ST7'),('front','U708 ST9'),('front','H1180 ST37'),('front','F186 ST9')]:
                     page.locator('#'+kind+'-search').fill(article);page.locator('#'+kind+'-results button').first.click()
@@ -166,6 +179,30 @@ def main():
             def capture_kitchen(name):
                 filename='published-'+name+'.png';capture_viewport(page,OUT/filename);report['screenshots'].append(filename)
             journey(page,check,capture_kitchen)
+            # Presentation acceptance uses the actual three-module kitchen above.
+            panel(page,'right');page.locator('#material-scope').select_option('kitchen')
+            choose(page,'plinth','U999 ST7');choose(page,'countertop','F186 ST9')
+            page.locator('#material-scope').select_option('module')
+            for index in range(3):
+                page.evaluate('i=>MF_PLANNER.adapter.select(MF_PLANNER.adapter.items[i].item_id)',index)
+                if page.evaluate('MF_PLANNER.adapter.selected.doors_open'):page.locator('#toggle-doors').click()
+            close_panels(page);page.locator('#mode-3d').click();page.locator('#reset-view').click()
+            capture_kitchen('client-v2-01-technical')
+            stable=page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')
+            page.locator('#planner-client').click()
+            expect(page.locator('#reset-view')).to_have_text('Показать всю кухню')
+            for preset,label in [('showroom','02-neutral-showroom'),('studio','03-light-studio'),('warm','04-warm-interior')]:
+                page.locator('#planner-room-settings summary').click();page.locator('#room-preset').select_option(preset)
+                page.locator('#planner-room-settings summary').click();page.locator('#reset-view').click()
+                check('Published Client v2 '+preset+' preserves kitchen',page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')==stable)
+                check('Published Client v2 moderate camera and subtle selection',page.evaluate('MF_PLANNER.scene.perspective.fov===32&&MF_PLANNER.scene.selectedBox.material.opacity<.4'))
+                capture_kitchen('client-v2-'+label)
+            page.locator('#planner-front').click();capture_kitchen('client-v2-05-front')
+            hit=page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.items[0];return p.scene.projectPoint({x:it.x,y:420,z:it.z+it.depth/2+20});}''')
+            page.mouse.click(hit['x'],hit['y'])
+            check('Published Client Raycaster selects first module',page.evaluate('MF_PLANNER.adapter.selected.bazis_id')=='bazis.0211e4f77fc4')
+            check('Client selection keeps furniture materials and dimensions',page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')==stable)
+            page.locator('#planner-client').click()
             page.evaluate('''()=>{const p=MF_PLANNER,items=[];for(let i=0;i<6;i++){const a=p.adapter.createDraft({template:i%2?'base.two_door':'base.drawers_3'});Object.assign(a,{width:600,x:-2100+i*600,z:-1500,name:'Нижний '+(i+1)});items.push(a);const u=p.adapter.createDraft({template:'wall.two_door'});Object.assign(u,{width:600,x:-2100+i*600,z:-1600,name:'Верхний '+(i+1)});items.push(u);}const t=p.adapter.createDraft({template:'tall.one_door'});Object.assign(t,{x:1650,z:-1500,name:'Пенал'});items.push(t);p.bridge.restore({name:'Кухня · 13 модулей',scene:{schema_version:2,room:{width:6200,depth:3600,height:2700},items,selected_item_id:items[0].item_id,view_mode:'3d'},selectedId:items[0].item_id});p.history.reset();}''')
             page.locator('#mode-3d').click()
             for width,height,name in [(1600,1000,'desktop'),(1024,768,'tablet'),(390,844,'mobile')]:

@@ -98,7 +98,8 @@ def test_neutral_material_color_and_countertop_keep_real_article(page,api,settin
     result={'reference':probes['reference'],'material':probes['material']}
     for mode in ['NeutralToneMapping','ACESFilmicToneMapping']:
         page.evaluate('''async mode=>{const T=await import('/account/planner/vendor/three.module.js'),s=MF_PLANNER.scene;s.renderer.toneMapping=T[mode];s.render();s.renderer.getContext().finish();}''',mode)
-        im=Image.open(io.BytesIO(page.screenshot())).convert('RGB');samples=[]
+        path=OUT/('client-v2-color-'+mode+'.png');capture_viewport(page,path)
+        im=Image.open(path).convert('RGB');samples=[]
         for pt in probes['points']:
             x,y=round(pt['x']),round(pt['y']);samples.append(ImageStat.Stat(im.crop((x-3,y-3,x+4,y+4))).mean)
         mean=[statistics.mean(s[i] for s in samples) for i in range(3)]
