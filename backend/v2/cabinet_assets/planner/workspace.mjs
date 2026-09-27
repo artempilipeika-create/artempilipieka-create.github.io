@@ -57,10 +57,11 @@ export class PlannerWorkspace {
     this.statusObserver=new MutationObserver(()=>this.toast());
     this.statusObserver.observe(get('status'),{childList:true,characterData:true,subtree:true});
     // A click may open the inspector. Drag and project loading never do.
-    on(this.root,'pointerdown',e=>{this.pickStart=e.target.id==='scene'&&e.button===0&&this.app.scene?.pick(e.clientX,e.clientY)?{x:e.clientX,y:e.clientY,id:e.pointerId}:null;},{capture:true});
+    on(this.root,'pointerdown',e=>{this.pickStart=e.target.id==='scene'&&e.button===0&&e.isPrimary!==false&&this.app.scene?.pick(e.clientX,e.clientY)?{x:e.clientX,y:e.clientY,id:e.pointerId}:null;},{capture:true});
     on(this.root,'pointerup',e=>{
       const start=this.pickStart;this.pickStart=null;
       if(!start||start.id!==e.pointerId||Math.hypot(e.clientX-start.x,e.clientY-start.y)>5)return;
+      if(this.isClient()){const hit=this.app.scene.pick(e.clientX,e.clientY);if(hit?.id)this.app.adapter.select(hit.id);return;}
       queueMicrotask(()=>{if(innerWidth>=1100&&!this.manualInspectorClosed&&!this.isClient()&&this.app.adapter.selected)this.panel('right',true);});
     },{capture:true});
     // Window capture runs before legacy document-level UI shortcuts. Furniture
@@ -110,10 +111,12 @@ export class PlannerWorkspace {
   }
   client(){
     this.app.interaction?.cancel();const on=document.body.classList.toggle('planner-client');
+    if(on)this.technicalView=this.app.scene.captureView?.();
     const b=this.get('planner-client');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Клиентский':'Технический';b.setAttribute('aria-label',on?'Переключить в технический режим':'Переключить в клиентский режим');
     this.get('project-name').readOnly=on;this.update();this.app.scene.highlight();this.app.scene.hover(null);
     this.app.scene.setPresentation?.(on);if(on&&this.app.scene.mode!=='3d')this.app.setView('3d');
-    requestAnimationFrame(()=>{this.app.scene.resize();this.app.scene.fit('kitchen');});
+    const fit=this.get('reset-view');fit.textContent=on?'Показать всю кухню':'Кухня';fit.title=on?'Показать всю кухню':'Показать кухню';fit.setAttribute('aria-label',fit.title);
+    requestAnimationFrame(()=>{this.app.scene.resize();if(on)this.app.scene.fit('kitchen');else if(this.technicalView&&this.app.scene.restoreView){this.app.scene.restoreView(this.technicalView);this.app.bridge.view(this.technicalView.mode);this.app.paintMode();}else this.app.scene.fit('kitchen');});
   }
   async fullscreen(){
     try {

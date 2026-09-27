@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {roomSettings,presetSettings,ROOM_PRESETS} from '../../backend/v2/cabinet_assets/planner/room-state.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 test('Old projects receive a stable display preset and all three presets round trip',()=>{
- assert.deepEqual(roomSettings(),presetSettings('studio'));
+ assert.deepEqual(roomSettings(),presetSettings('showroom'));
  for(const key of Object.keys(ROOM_PRESETS)){const settings=presetSettings(key);assert.equal(settings.environmentPreset,key);assert.deepEqual(roomSettings(JSON.parse(JSON.stringify(settings))),settings);}
 });
 test('Invalid presentation values are bounded independently without changing room geometry',()=>{

@@ -106,4 +106,14 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 .cost-card{font-size:14px;padding:14px 0;border-top:1px solid #dae2da}.cost-card p{margin:7px 0;line-height:1.45;font-size:14px}.cost-card h3{font-size:16px;margin:0 0 10px}.cost-card details{margin-top:12px}.cost-card summary{cursor:pointer;font-size:14px}.cost-card details strong{display:block;margin-top:14px}.cost-card details p{color:#536258}
 #room-visual-notice{position:absolute;left:18px;bottom:42px;max-width:calc(100% - 36px);z-index:12;padding:7px 11px;background:#fdfcf6e8;border:1px solid #d8d7ca;border-radius:6px;font-size:13px;color:#5a5c51;pointer-events:none}
 .planner-client #planner-workspace .mf3d-top-actions #save-project{display:inline-flex!important}
+/* Client controls stay out of the presentation centre, without changing the working shell. */
+.planner-client #planner-room-settings{font-size:12px}
+.planner-client #planner-room-settings[open]{width:220px}
+.planner-client #planner-room-settings>summary{padding:8px 12px}
+.planner-client .room-controls{padding:10px 12px;gap:8px}
+.planner-client .room-controls label{font-size:12px;gap:3px}
+.planner-client .room-controls select{font-size:12px;min-height:30px;height:30px;padding:4px 6px}
+.planner-client .room-controls input[type=color]{height:27px}
+.planner-client #reset-view{font-size:12px}
+@media(max-width:760px){.planner-client #reset-view{max-width:100px;font-size:10px;line-height:1.2;white-space:normal}}
 @media(max-width:760px){#planner-room-settings{left:10px;top:60px;max-width:calc(100% - 72px)}#room-visual-notice{left:10px;bottom:22px;font-size:12px}}

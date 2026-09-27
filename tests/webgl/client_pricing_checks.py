@@ -31,7 +31,7 @@ def test_room_presets_pricing_history_save_load_and_native_isolation(page,api,se
     page.locator('#planner-room-settings summary').click()
     page.locator('#room-preset').select_option('warm')
     expect(page.locator('#room-floor')).to_have_value('oak');expect(page.locator('#room-lighting')).to_have_value('warm')
-    page.locator('#planner-undo').click();expect(page.locator('#room-preset')).to_have_value('studio')
+    page.locator('#planner-undo').click();expect(page.locator('#room-preset')).to_have_value('showroom')
     page.locator('#planner-redo').click();expect(page.locator('#room-preset')).to_have_value('warm')
     page.locator('#planner-client').click()
     assert page.evaluate('MF_PLANNER.scene.client') is True

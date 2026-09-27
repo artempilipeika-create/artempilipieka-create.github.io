@@ -8,7 +8,7 @@ export class RoomPricingUI{
     const d=el('details',undefined,'planner-room-settings');d.append(el('summary','Комната'));
     const controls=el('div');controls.className='room-controls';
     controls.append(select('room-preset','Обстановка',Object.fromEntries(Object.entries(ROOM_PRESETS).map(([k,v])=>[k,v.label]))));
-    const wall=el('label','Цвет стен'),input=el('input',undefined,'room-wall-color');input.type='color';input.setAttribute('aria-label','Цвет стен');wall.append(input);controls.append(wall);
+    const wall=el('label','Стены'),input=el('input',undefined,'room-wall-color');input.type='color';input.setAttribute('aria-label','Цвет стен');wall.append(input);controls.append(wall);
     controls.append(select('room-floor','Пол',FLOOR_OPTIONS),select('room-lighting','Свет',LIGHT_OPTIONS));d.append(controls);document.querySelector('.mf3d-canvas-wrap').append(d);
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']]){
       document.getElementById(id).onchange=e=>{

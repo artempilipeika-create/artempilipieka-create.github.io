@@ -94,10 +94,10 @@ class FurnitureItem(StrictModel):
         return self
 
 class DisplaySettings(StrictModel):
-    environmentPreset: Literal['studio','warm','showroom']='studio'
-    wallColor: str=Field(default='#ecebe6',pattern=r'^#[0-9a-fA-F]{6}$')
-    floorMaterial: Literal['light-stone','oak','concrete']='light-stone'
-    lightingPreset: Literal['daylight','warm','neutral']='daylight'
+    environmentPreset: Literal['studio','warm','showroom']='showroom'
+    wallColor: str=Field(default='#e3dfd7',pattern=r'^#[0-9a-fA-F]{6}$')
+    floorMaterial: Literal['light-stone','oak','concrete']='concrete'
+    lightingPreset: Literal['daylight','warm','neutral']='neutral'
 
 class MaterialIdentity(StrictModel):
     materialId: UUID|None=None
