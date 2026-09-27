@@ -82,9 +82,21 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
     assert max(abs(a-b) for a,b in zip(restored['position'],technical['position']))<.001
     actual=export_payload(page)
     assert actual['items']==native['items'] and actual['kitchen_production']==native['kitchen_production']
-    page.goto('https://testserver/constructor');expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
+    # An intentional reload after a download must answer Chromium's leave-page
+    # dialog. Persistence is checked against the real saved API document below.
+    navigation={'saveState':page.locator('#studio-save-state').inner_text(),'dialogs':[]}
+    def leave(dialog):
+        navigation['dialogs'].append(dialog.type);dialog.accept()
+    page.on('dialog',leave)
+    try:
+        page.goto('https://testserver/constructor',wait_until='domcontentloaded')
+        expect(page.locator('body')).to_have_attribute('data-planner-ready','true',timeout=20000)
+    finally:
+        (OUT/'client-v2-reload-navigation.json').write_text(json.dumps(navigation,ensure_ascii=False,indent=2))
+    assert all(kind=='beforeunload' for kind in navigation['dialogs']),navigation
     panel(page,'left','projects');page.locator('#projects .mf3d-project').filter(has_text=saved.get('name','Новый 3D-проект')).first.click()
     page.wait_for_function('id=>MF_PLANNER.adapter.projectId===id',arg=pid)
+    page.wait_for_function('''()=>{const p=MF_PLANNER,ms=[];p.scene.root.traverse(m=>{if(m.isMesh&&m.material.userData.variantId)ms.push(m)});return ms.length>10&&ms.every(m=>m.material.map?.image?.complete)}''')
     assert page.evaluate('MF_PLANNER.adapter.state.displaySettings')==saved['displaySettings']
     assert export_payload(page)['items']==native['items']
     (OUT/'client-v2-acceptance.json').write_text(json.dumps({'success':True,'modules':DONORS,'screenshots':5,'furniture_identity_preserved':True,'native_export_preserved':True,'real_save_load':True,'settings':saved['displaySettings']},indent=2))
