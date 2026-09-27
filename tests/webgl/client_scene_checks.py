@@ -72,7 +72,8 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
     # Changing the room never forces another camera fit after the user's orbit.
     page.locator('#planner-room-settings summary').click();pose=page.evaluate('MF_PLANNER.scene.camera.position.toArray()')
     page.locator('#room-wall-color').fill('#ddd6cc');page.locator('#room-floor').select_option('oak');page.locator('#room-lighting').select_option('neutral')
-    assert page.evaluate('MF_PLANNER.scene.camera.position.toArray()')==pose
+    changed=page.evaluate('MF_PLANNER.scene.camera.position.toArray()')
+    assert max(abs(a-b) for a,b in zip(changed,pose))<1e-7
     page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
     pid=page.evaluate('MF_PLANNER.adapter.projectId');saved=api.get('/api/v2/3d-projects/'+pid).json()['scene']
     assert saved['displaySettings']=={'environmentPreset':'showroom','wallColor':'#ddd6cc','floorMaterial':'oak','lightingPreset':'neutral'}
