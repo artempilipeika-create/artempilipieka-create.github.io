@@ -25,7 +25,10 @@ def test_room_presets_pricing_history_save_load_and_native_isolation(page,api,se
     expect(page.locator('#module-cost')).to_have_attribute('data-price-status','PRICE_DATA_MISSING')
     native=export_payload(page)['items'];before=page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')
     geometry=page.evaluate('[...MF_PLANNER.scene.entries.values()].map(e=>e.group.uuid)')
-    close_panels(page);page.locator('#planner-room-settings summary').click()
+    close_panels(page)
+    room=page.locator('#planner-room-settings summary').bounding_box();toolbar=page.locator('.mf3d-stagebar').bounding_box()
+    assert room['y']>=toolbar['y']+toolbar['height'], 'Room controls must stay below the toolbar'
+    page.locator('#planner-room-settings summary').click()
     page.locator('#room-preset').select_option('warm')
     expect(page.locator('#room-floor')).to_have_value('oak');expect(page.locator('#room-lighting')).to_have_value('warm')
     page.locator('#planner-undo').click();expect(page.locator('#room-preset')).to_have_value('studio')
@@ -60,7 +63,9 @@ def test_preview_failure_clears_old_texture_and_identity_survives_save(page,api,
     open_planner(page,api);owner=api.get('/api/v2/auth/me').json()['email'];login(api,admin_user['email'])
     publish(api,master([[a,'ЛДСП EGGER 18мм '+a,'кв.м',0,2800,2070,18,a.split()[1],'','M1','false',''] for a in ['H1180 ST37','F186 ST9','AU999 ST7']]),namespace='test.coverage')
     login(api,owner);report=api.get('/api/v2/catalogue/visual-coverage');assert report.status_code==200
-    assert report.json()['counts']=={'EXACT_TEXTURE':1,'OFFICIAL_PREVIEW':1,'COLOR_ONLY':0,'MISSING_VISUAL':1}
+    # The active release retains the two original synthetic materials in another namespace.
+    assert report.json()['counts']=={'EXACT_TEXTURE':1,'OFFICIAL_PREVIEW':1,'COLOR_ONLY':0,'MISSING_VISUAL':3}
+    assert {r['article'] for r in report.json()['needs_source']}=={'QA621 PO','621 PE','AU999 ST7'}
     panel(page,'left','catalog');page.locator('[data-bazis="bazis.3079d0656398"]').click()
     choose(page,'front','H1180 ST37');old=render_state(page)['parts']['door-1']['url'];assert old
     panel(page,'right');page.locator('#front-search').fill('AU999 ST7');page.locator('#front-results button').filter(has_text='AU999 ST7').first.click()
