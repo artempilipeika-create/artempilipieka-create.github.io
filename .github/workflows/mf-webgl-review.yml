@@ -1,7 +1,7 @@
 name: WebGL planner acceptance
 on:
   push:
-    branches: [mf-webgl-planner-20260926, mf-pilot-d1-d2-20260926, mf-three-module-pilot-20260927, mf-kitchen-foundation-20260927]
+    branches: [mf-webgl-planner-20260926, mf-pilot-d1-d2-20260926, mf-three-module-pilot-20260927, mf-kitchen-foundation-20260927, mf-visuals-pricing-20260927]
     paths: ['backend/v2/**', 'tests/**', '.github/workflows/mf-webgl-review.yml', '.github/workflows/mf-webgl-live.yml']
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - suite: planner
-            tests: tests/webgl/polish_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py
+            tests: tests/webgl/polish_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/client_pricing_checks.py
           - suite: interaction
             tests: tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py
           - suite: application
@@ -71,7 +71,7 @@ jobs:
           assert "from './three.module.js'" in (root/'OrbitControls.js').read_text()
           PY
           set -o pipefail
-          node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/kitchen.test.mjs | tee qa-output/webgl/core.tap
+          node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/pricing.test.mjs tests/webgl/room.test.mjs | tee qa-output/webgl/core.tap
           node --test tests/order_entry/entry_helpers.test.cjs | tee qa-output/webgl/order-entry.tap
       - name: Install existing pinned browser dependencies
         run: |
@@ -225,7 +225,7 @@ jobs:
           python-version: '3.12'
       - name: Verify accepted fullscreen layout and native integration remain unchanged (kitchen snap is authorized)
         run: |
-          git diff --exit-code 8f40ecc6e7841b67076278cd1c4ef1eed207c956 -- backend/v2/cabinet_assets/planner/workspace.css backend/v2/cabinet_assets/planner/workspace.mjs backend/v2/cabinet_assets/planner/history.mjs backend/v2/cabinet_assets/planner/bridge.js backend/v2/three_d_document.py
+          git diff --exit-code 8f40ecc6e7841b67076278cd1c4ef1eed207c956 -- backend/v2/cabinet_assets/planner/workspace.css backend/v2/cabinet_assets/planner/bridge.js backend/v2/three_d_document.py
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test -z "$(git status --porcelain)"
       - run: pip install playwright==1.58.0

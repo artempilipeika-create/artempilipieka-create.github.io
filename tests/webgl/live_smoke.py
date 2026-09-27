@@ -50,7 +50,7 @@ def main():
         planner=ROOT/'backend/v2/cabinet_assets/planner'
         for p in planner.glob('*'):
             if p.suffix in ('.mjs','.js','.css'):files['/account/planner/'+p.name]='planner/'+p.name
-        for record in manifest()['decors'].values():files[record['texture_url']]='planner/materials/'+record['asset']
+        for record in manifest()['decors'].values():files[(record.get('texture_url') or record['preview_url'])]='planner/materials/'+record['asset']
         for name in ['three.module.js','three.core.min.js','OrbitControls.js','manifest.json']:
             files['/account/planner/vendor/'+name]='planner/vendor/'+name
         for path,relative in files.items():
@@ -106,6 +106,19 @@ def main():
             check('Published resize',page.evaluate('MF_PLANNER.adapter.selected.width')==650)
             page.locator('#planner-undo').click();check('Published undo',page.evaluate('MF_PLANNER.adapter.selected.width')==600)
             page.locator('#planner-redo').click();check('Published redo',page.evaluate('MF_PLANNER.adapter.selected.width')==650)
+            page.locator('#width').fill('320');page.locator('#width').press('Tab')
+            expect(page.locator('#module-cost')).to_contain_text('Фактическая ширина: 320 мм')
+            expect(page.locator('#module-cost')).to_contain_text('Ценовая категория: 350 мм')
+            expect(page.locator('#module-cost')).to_have_attribute('data-price-status','PRICE_DATA_MISSING')
+            check('Published pricing preserves actual width and reports missing rates',page.evaluate('MF_PLANNER.adapter.selected.width')==320)
+            furniture=page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')
+            close_panels(page);page.locator('#planner-room-settings summary').click();page.locator('#planner-client').click()
+            for preset in ['studio','warm','showroom']:
+                page.locator('#room-preset').select_option(preset)
+                check('Published client preset '+preset,page.evaluate('MF_PLANNER.scene.client') and page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')==furniture)
+                screenshot='published-room-'+preset+'.png';page.screenshot(path=str(OUT/screenshot));report['screenshots'].append(screenshot)
+            page.locator('#planner-client').click();page.locator('#planner-room-settings summary').click();panel(page,'right')
+            page.locator('#width').fill('650');page.locator('#width').press('Tab')
             page.locator('#studio-rotate').click();check('Published rotate',page.evaluate('MF_PLANNER.adapter.selected.rotation')==90)
             page.locator('#duplicate-item').click();check('Published copy',page.evaluate('MF_PLANNER.adapter.items.length')==2)
             page.locator('#scene').focus();page.keyboard.press('Delete');check('Published Delete',page.evaluate('MF_PLANNER.adapter.items.length')==1)
@@ -125,10 +138,10 @@ def main():
                 panel(page,'left','catalog');page.locator(f'[data-bazis="{donor}"]').click()
                 panel(page,'right')
                 geometry=page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.uuid')
-                for kind,article in [('body','W1000 ST9'),('front','U999 ST7'),('front','U708 ST9'),('front','H1180 ST37')]:
+                for kind,article in [('body','W1000 ST9'),('front','U999 ST7'),('front','U708 ST9'),('front','H1180 ST37'),('front','F186 ST9')]:
                     page.locator('#'+kind+'-search').fill(article);page.locator('#'+kind+'-results button').first.click()
                     page.wait_for_function('kind=>{const p=MF_PLANNER,id=p.adapter.selected[kind+"_variant_id"],ms=[];p.scene.entries.get(p.adapter.selected.item_id).group.traverse(m=>{if(m.isMesh&&m.material.userData.variantId===id)ms.push(m)});return ms.length&&ms.every(m=>m.material.map?.image?.complete)}',arg=kind)
-                    check(name+' published actual texture '+article,page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.uuid')==geometry)
+                    check(name+' published article visual '+article,page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.uuid')==geometry)
                 snapshot=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())');history=page.evaluate('MF_PLANNER.history.undoStack.length')
                 for mode in ['inspection','facadesHidden','normal']:
                     page.locator('#module-display').select_option(mode)

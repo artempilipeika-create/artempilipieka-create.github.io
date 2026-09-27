@@ -117,9 +117,12 @@ def safe_item(item,release_id):
           'thickness','length','width','designation','unit','texture','grain')
     result={**{k:item.get(k) for k in keys if k in item},'catalogue_release':str(release_id)}
     if item.get('kind')=='material':
-        from .material_visuals import visual_metadata
+        from .material_visuals import visual_metadata,visual_status,visual_manufacturer
         visual=visual_metadata(item)
         if visual:result['visual']=visual
+        result['visual_status']=visual_status(visual)
+        result['visual_identity']={'material_id':item.get('material_id'),'variant_id':item.get('variant_id'),
+                                   'article':item.get('article'),'manufacturer':visual_manufacturer(item)}
     return result
 
 

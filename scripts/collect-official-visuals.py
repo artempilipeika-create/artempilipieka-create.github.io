@@ -5,7 +5,7 @@ Existing verified attachments are left byte-for-byte unchanged.
 """
 import argparse, concurrent.futures, hashlib, html, io, json, re, urllib.request
 from pathlib import Path
-from PIL import Image, ImageStat
+from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]/'backend/v2/cabinet_assets/planner/materials'
 
@@ -35,10 +35,8 @@ def fetch_egger(article):
         target=ROOT/('egger-'+article.lower().replace(' ','-')+'.jpg')
         if original.startswith(b'\xff\xd8'):target.write_bytes(original)
         else:image.save(target,format='JPEG',quality=93)
-        avg=ImageStat.Stat(image.resize((1,1))).mean
         record={'asset':target.name,'preview_url':'/account/planner/materials/'+target.name,
-                'visual_status':'OFFICIAL_PREVIEW','manufacturer':'EGGER','article':article,
-                'render_color':'#'+''.join(f'{round(c):02x}' for c in avg),
+                'visual_status':'OFFICIAL_PREVIEW','manufacturer':'EGGER','article':article,'verified_title':title,
                 'texture_size_mm':size,'scale_note':scale_note,'rotation_deg':0,
                 'grain_direction':'length','roughness':.85,'source_url':resolved,
                 'image_source_url':source,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),

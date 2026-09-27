@@ -47,6 +47,7 @@ export class PlannerWorkspace {
       full.title=active?'Выйти из полного экрана':'На весь экран';full.setAttribute('aria-label',full.title);this.resize();
     });
     get('planner-client').onclick=()=>this.client();
+    get('planner-client').textContent='Технический';get('planner-client').setAttribute('aria-label','Переключить в клиентский режим');
     this.cutlist=document.querySelector('.mf3d-cutlist');this.cutlist.id='workspace-cutlist';
     const cutClose=button('workspace-close-cutlist','×','Закрыть деталировку');this.cutlist.append(cutClose);
     cutClose.onclick=()=>{this.cutlist.open=false;this.cutlist.querySelector('summary').focus({preventScroll:true});};
@@ -109,8 +110,9 @@ export class PlannerWorkspace {
   }
   client(){
     this.app.interaction?.cancel();const on=document.body.classList.toggle('planner-client');
-    const b=this.get('planner-client');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Редактировать':'Просмотр';b.setAttribute('aria-label',on?'Вернуться к редактированию':'Показать кухню клиенту');
+    const b=this.get('planner-client');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Клиентский':'Технический';b.setAttribute('aria-label',on?'Переключить в технический режим':'Переключить в клиентский режим');
     this.get('project-name').readOnly=on;this.update();this.app.scene.highlight();this.app.scene.hover(null);
+    this.app.scene.setPresentation?.(on);if(on&&this.app.scene.mode!=='3d')this.app.setView('3d');
     requestAnimationFrame(()=>{this.app.scene.resize();this.app.scene.fit('kitchen');});
   }
   async fullscreen(){

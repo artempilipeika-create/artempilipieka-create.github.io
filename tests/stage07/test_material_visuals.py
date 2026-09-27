@@ -3,9 +3,9 @@ import hashlib
 from uuid import uuid4
 import pytest
 from pydantic import ValidationError
-from backend.v2.material_visuals import ROOT,manifest,visual_metadata
+from backend.v2.material_visuals import ROOT,manifest,visual_metadata,coverage
 from backend.v2.catalogue_model import safe_item
-from backend.v2.three_d_api import FurnitureItem
+from backend.v2.three_d_api import FurnitureItem,Scene
 
 @pytest.mark.parametrize('article',['W1000 ST9','U999 ST7','U708 ST9','H1180 ST37'])
 def test_exact_existing_decor_has_verified_local_image(article):
@@ -35,3 +35,34 @@ def test_back_and_part_material_ids_roundtrip_without_display_state():
     assert FurnitureItem.model_validate(saved).model_dump(mode='json')==saved
     with pytest.raises(ValidationError):FurnitureItem.model_validate({**item,'display_mode':'inspection'})
     with pytest.raises(ValidationError):FurnitureItem.model_validate({**item,'part_materials':{'../bad':uid}})
+
+def test_all_official_previews_have_local_hash_and_full_article_provenance():
+    records=manifest()['decors']
+    for article,record in records.items():
+        if not record.get('preview_url'):continue
+        assert record['visual_status']=='OFFICIAL_PREVIEW'
+        assert record['source_url'].startswith('https://www.egger.com/')
+        assert article==record['article']
+        assert hashlib.sha256((ROOT/record['asset']).read_bytes()).hexdigest()==record['sha256']
+        assert visual_metadata({'manufacturer':'EGGER','article':article})['preview_url']==record['preview_url']
+
+def test_coverage_preserves_structures_ids_and_unconfirmed_manufacturers():
+    def material(article,name='ЛДСП EGGER',**extra):return dict(kind='material',article=article,name=name,material_id=str(uuid4()),variant_id=str(uuid4()),**extra)
+    materials=[material('W1000 ST9'),material('W1000 ST7'),material('W1000 ST9','Белый'),material('W1000 ST9','Белый',manufacturer='OTHER'),material(None,'EGGER'),material('A','Other',visual={'render_color':'#123456'})]
+    report=coverage(materials,'release')
+    assert report['total']==6 and report['identity_counts']['unique_material_ids']==6
+    assert report['counts']['EXACT_TEXTURE']==1 and report['counts']['COLOR_ONLY']==1
+    assert report['items'][2]['visual_status']==report['items'][3]['visual_status']==report['items'][4]['visual_status']=='MISSING_VISUAL'
+    assert report['items'][1]['visual_asset']!=report['items'][0]['visual_asset']
+    assert report['items'][0]['material_id']==materials[0]['material_id']
+    assert report['identity_counts']['manufacturer_unconfirmed']==2
+
+def test_scene_display_and_identity_roundtrip_are_separate_from_production_items():
+    uid=str(uuid4());mid=str(uuid4())
+    scene=Scene.model_validate({'displaySettings':{'environmentPreset':'warm','wallColor':'#aabbcc','floorMaterial':'oak','lightingPreset':'warm'},'materialIdentities':{uid:{'materialId':mid,'article':'W1000 ST9','manufacturer':'EGGER'}},'items':[{'item_id':'a','name':'Д1 L','width':320,'height':820,'depth':510,'front_variant_id':uid}]})
+    saved=scene.model_dump(mode='json');assert Scene.model_validate(saved).model_dump(mode='json')==saved
+    assert saved['items'][0]['width']==320 and 'pricingWidthMm' not in saved['items'][0]
+    assert saved['materialIdentities'][uid]['article']=='W1000 ST9'
+    assert 'displaySettings' not in saved['items'][0]
+    assert Scene().displaySettings.environmentPreset=='studio'
+    with pytest.raises(ValidationError):Scene.model_validate({'displaySettings':{'floorMaterial':'https://other.test/image'}})

@@ -1,4 +1,4 @@
-# Visuals, client room and pricing — interrupted work checkpoint
+# ARCHIVED checkpoint — see STATUS.md for the current continuation state
 
 Date: 2026-09-27. Status: IN PROGRESS; NOT ACCEPTED; NOT DEPLOYED.
 

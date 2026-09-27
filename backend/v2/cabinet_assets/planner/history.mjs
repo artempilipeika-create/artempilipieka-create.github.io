@@ -1,5 +1,5 @@
 import {clone} from './furniture-core.mjs';
-const key=s=>JSON.stringify([s.name,s.scene.room,s.scene.items,s.scene.upper_row_elevation_mm]);
+const key=s=>JSON.stringify([s.name,s.scene.room,s.scene.items,s.scene.upper_row_elevation_mm,s.scene.displaySettings]);
 export class History{
   constructor(adapter,limit=80){this.adapter=adapter;this.limit=limit;this.undoStack=[];this.redoStack=[];this.pending=null;this.onChange=()=>{};}
   reset(){this.undoStack=[];this.redoStack=[];this.pending=null;this.onChange();}

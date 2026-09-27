@@ -1,0 +1,10 @@
+{
+  "active_release": "e6db8155-91a6-4f15-9b89-ce2194b43373",
+  "live_variant_ids_verified": 2104,
+  "full_display_labels_verified": 2104,
+  "source_namespace": "master.u2",
+  "source_sha256": "54c6f737f0bafecc3dc5df4ed14b573b7e2f5ab0c83e626e5e79fc296c641f4a",
+  "live_options_sha256": "b53030971926d80de4db4ad31f9514dde331ad539674ed573119c7f8fd1f34c4",
+  "live_writes": 0,
+  "method": "Read rendered catalogue option values and labels using search; compare every ID and label with normalized immutable source release. materialId derived by unchanged deterministic master.u2 normalization."
+}

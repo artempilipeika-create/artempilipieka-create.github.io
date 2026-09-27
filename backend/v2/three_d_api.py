@@ -93,6 +93,17 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Shelf position must stay inside the cabinet body')
         return self
 
+class DisplaySettings(StrictModel):
+    environmentPreset: Literal['studio','warm','showroom']='studio'
+    wallColor: str=Field(default='#ecebe6',pattern=r'^#[0-9a-fA-F]{6}$')
+    floorMaterial: Literal['light-stone','oak','concrete']='light-stone'
+    lightingPreset: Literal['daylight','warm','neutral']='daylight'
+
+class MaterialIdentity(StrictModel):
+    materialId: UUID|None=None
+    article: str|None=Field(default=None,max_length=500)
+    manufacturer: str|None=Field(default=None,max_length=200)
+
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
@@ -108,6 +119,8 @@ class Scene(StrictModel):
     view_mode: Literal['2d','3d']='3d'
     schema_version: Literal[1,2]=2
     room: Room=Field(default_factory=Room)
+    displaySettings: DisplaySettings=Field(default_factory=DisplaySettings)
+    materialIdentities: dict[UUID,MaterialIdentity]=Field(default_factory=dict,max_length=500)
     items: list[FurnitureItem]=Field(default_factory=list,max_length=100)
     selected_item_id: str|None=Field(default=None,max_length=80)
 

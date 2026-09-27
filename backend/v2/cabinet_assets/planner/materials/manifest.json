@@ -65,6 +65,2153 @@
       "image_source_url": "https://cdn.egger.com/img/pim/8854365503518/8854523150366/original.jpg?width=768&srcext=png",
       "sha256": "0f9ac2027cf807d8678df948430fddcb7044c89e9f51817c773ce6d53a4c6755",
       "original_sha256": "560702ce35596693485940d3252a2be97b1fe19155df6d72da59db14c3c05c3a"
+    },
+    "F186 ST9": {
+      "asset": "egger-f186-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-f186-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F186 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F186_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854324805662/8854505521182/original.jpg?width=768&srcext=png",
+      "sha256": "f3a273cc57bb6cb3311c3e847a3f61b682841f80eed166697b98766ca17dfe15",
+      "original_sha256": "f3a273cc57bb6cb3311c3e847a3f61b682841f80eed166697b98766ca17dfe15"
+    },
+    "F187 ST9": {
+      "asset": "egger-f187-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-f187-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F187 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F187_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854325198878/8854505816094/original.jpg?width=768&srcext=png",
+      "sha256": "edd873f852fceaddd3daf977fffc7b3808ba45c0bada07c6cf5f5b10c0adeecd",
+      "original_sha256": "edd873f852fceaddd3daf977fffc7b3808ba45c0bada07c6cf5f5b10c0adeecd"
+    },
+    "F323 ST20": {
+      "asset": "egger-f323-st20.jpg",
+      "preview_url": "/account/planner/materials/egger-f323-st20.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F323 ST20",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F323_20",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854513877022/8854513909790/original.jpg?width=768&srcext=png",
+      "sha256": "c202d78823c62ba08251fb3771fd4c5e63dd56e002bd6e0179f71abe70f23da6",
+      "original_sha256": "c202d78823c62ba08251fb3771fd4c5e63dd56e002bd6e0179f71abe70f23da6"
+    },
+    "F433 ST10": {
+      "asset": "egger-f433-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-f433-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F433 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F433_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854336208926/8854514958366/original.jpg?width=768&srcext=png",
+      "sha256": "6cd7f99c84663575da7ef8e2d0ea50d75cf253188bdf05591cef39b812e1f9a2",
+      "original_sha256": "6cd7f99c84663575da7ef8e2d0ea50d75cf253188bdf05591cef39b812e1f9a2"
+    },
+    "F528 ST20": {
+      "asset": "egger-f528-st20.jpg",
+      "preview_url": "/account/planner/materials/egger-f528-st20.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F528 ST20",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F528_20",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854516432926/8854516465694/original.jpg?width=768&srcext=png",
+      "sha256": "60610df1715bbc3c03faa1ab81c66f96d775904716d1413d3b788609f63264c4",
+      "original_sha256": "60610df1715bbc3c03faa1ab81c66f96d775904716d1413d3b788609f63264c4"
+    },
+    "F637 ST10": {
+      "asset": "egger-f637-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-f637-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F637 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F637_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854345973790/8854517743646/original.jpg?width=768&srcext=png",
+      "sha256": "e54af6cf5aab6c58f345b28e1d45b5fbdaf746b5cb47be4b6e75a8a419cd16c5",
+      "original_sha256": "e54af6cf5aab6c58f345b28e1d45b5fbdaf746b5cb47be4b6e75a8a419cd16c5"
+    },
+    "F685 ST10": {
+      "asset": "egger-f685-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-f685-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F685 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F685_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854519119902/8854519152670/original.jpg?width=768&srcext=png",
+      "sha256": "116d4ddfd8679d9e22a2e9eee419f4862119e26c2fa14154d9125b1c579f6cc4",
+      "original_sha256": "116d4ddfd8679d9e22a2e9eee419f4862119e26c2fa14154d9125b1c579f6cc4"
+    },
+    "F765 ST20": {
+      "asset": "egger-f765-st20.jpg",
+      "preview_url": "/account/planner/materials/egger-f765-st20.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F765 ST20",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F765_20",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854519513118/8854519545886/original.jpg?width=768&srcext=png",
+      "sha256": "185e5a34eb6cc9bd17e2be29d538db18db1a4fa1bfce9752c22525b110b54a69",
+      "original_sha256": "185e5a34eb6cc9bd17e2be29d538db18db1a4fa1bfce9752c22525b110b54a69"
+    },
+    "F800 ST9": {
+      "asset": "egger-f800-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-f800-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "F800 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F800_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854519906334/8854519939102/original.jpg?width=768&srcext=png",
+      "sha256": "7f238d9c22d28f2d7dc0b253948f749e17836684115ef2787de33203b3abcf80",
+      "original_sha256": "7f238d9c22d28f2d7dc0b253948f749e17836684115ef2787de33203b3abcf80"
+    },
+    "H1113 ST10": {
+      "asset": "egger-h1113-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1113-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1113 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1113_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854361178142/8854521380894/original.jpg?width=768&srcext=png",
+      "sha256": "7900ae57f152352be63343ddb0778637193438030dfd3109ff76f190b120bb6f",
+      "original_sha256": "7900ae57f152352be63343ddb0778637193438030dfd3109ff76f190b120bb6f"
+    },
+    "H1142 ST36": {
+      "asset": "egger-h1142-st36.jpg",
+      "preview_url": "/account/planner/materials/egger-h1142-st36.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1142 ST36",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1142_36",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854521872414/8854521905182/original.jpg?width=768&srcext=png",
+      "sha256": "e1a22bcf8434b421b46647d2853e350df06da3bf5ee9eaa4e90933fde6651d77",
+      "original_sha256": "e1a22bcf8434b421b46647d2853e350df06da3bf5ee9eaa4e90933fde6651d77"
+    },
+    "H1145 ST10": {
+      "asset": "egger-h1145-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1145-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1145 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1145_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854363537438/8854522462238/original.jpg?width=768&srcext=png",
+      "sha256": "ebcfa9ef03b4cad70770b5875e4242118d60ca5208d168aa477c35b8bbec5c19",
+      "original_sha256": "ebcfa9ef03b4cad70770b5875e4242118d60ca5208d168aa477c35b8bbec5c19"
+    },
+    "H1176 ST37": {
+      "asset": "egger-h1176-st37.jpg",
+      "preview_url": "/account/planner/materials/egger-h1176-st37.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1176 ST37",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1176_37",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854365110302/8854522658846/original.jpg?width=768&srcext=png",
+      "sha256": "f166c975b0e9043be5cee084dfc57e69c28a6882a20433a7e344be238345a29a",
+      "original_sha256": "f166c975b0e9043be5cee084dfc57e69c28a6882a20433a7e344be238345a29a"
+    },
+    "H1181 ST37": {
+      "asset": "egger-h1181-st37.jpg",
+      "preview_url": "/account/planner/materials/egger-h1181-st37.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1181 ST37",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1181_37",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854365896734/8854523248670/original.jpg?width=768&srcext=png",
+      "sha256": "8640da5d0650fd2b36ea902a03c87fca04ee1a8eb3a430bf76954e5b59a1cf4a",
+      "original_sha256": "8640da5d0650fd2b36ea902a03c87fca04ee1a8eb3a430bf76954e5b59a1cf4a"
+    },
+    "H1199 ST12": {
+      "asset": "egger-h1199-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h1199-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1199 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1199_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854366289950/8854523346974/original.jpg?width=768&srcext=png",
+      "sha256": "1387a8d225ba29fabe85075e8436dfc18a0cc7812008e975ab3b28734fc305be",
+      "original_sha256": "1387a8d225ba29fabe85075e8436dfc18a0cc7812008e975ab3b28734fc305be"
+    },
+    "H1223 ST19": {
+      "asset": "egger-h1223-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h1223-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1223 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1223_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854524559390/8854524592158/original.jpg?width=768&srcext=png",
+      "sha256": "b35190f8f83ee4fcf98ff65f9b914e45425d99b9627ba1be83d8cfb8f94bc73e",
+      "original_sha256": "b35190f8f83ee4fcf98ff65f9b914e45425d99b9627ba1be83d8cfb8f94bc73e"
+    },
+    "H1225 ST12": {
+      "asset": "egger-h1225-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h1225-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1225 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1225_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854525149214/8854525181982/original.jpg?width=768&srcext=png",
+      "sha256": "fff17280c4ce59fc29568230de9c44993f217541b143140172644022df22ab40",
+      "original_sha256": "fff17280c4ce59fc29568230de9c44993f217541b143140172644022df22ab40"
+    },
+    "H1242 ST10": {
+      "asset": "egger-h1242-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1242-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1242 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1242_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854657663006/8854657695774/original.jpg?width=768&srcext=png",
+      "sha256": "a713fe1cc173abeeca0aa757a66a428fb8d1b44450cf7565f097a9aadbfc3ce2",
+      "original_sha256": "a713fe1cc173abeeca0aa757a66a428fb8d1b44450cf7565f097a9aadbfc3ce2"
+    },
+    "H1250 ST36": {
+      "asset": "egger-h1250-st36.jpg",
+      "preview_url": "/account/planner/materials/egger-h1250-st36.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1250 ST36",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1250_36",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854369042462/8854526132254/original.jpg?width=768&srcext=png",
+      "sha256": "bcb9478bbee101b2401a5536adcefe8c7ae10209fd347a0e6f9a516c6b88d45e",
+      "original_sha256": "bcb9478bbee101b2401a5536adcefe8c7ae10209fd347a0e6f9a516c6b88d45e"
+    },
+    "H1277 ST9": {
+      "asset": "egger-h1277-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-h1277-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1277 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1277_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854371794974/8854526328862/original.jpg?width=768&srcext=png",
+      "sha256": "5e1a7e63bbebc1bbc1b6d842330b90c96b86e659c0235ee449705d7721040fdf",
+      "original_sha256": "5e1a7e63bbebc1bbc1b6d842330b90c96b86e659c0235ee449705d7721040fdf"
+    },
+    "H1303 ST12": {
+      "asset": "egger-h1303-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h1303-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1303 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1303_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854526918686/8854526951454/original.jpg?width=768&srcext=png",
+      "sha256": "6bd8359936e1e75d54e409b09a36259d9eb4b395cb10fcddc1dca31044f3ef47",
+      "original_sha256": "6bd8359936e1e75d54e409b09a36259d9eb4b395cb10fcddc1dca31044f3ef47"
+    },
+    "H1312 ST10": {
+      "asset": "egger-h1312-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1312-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1312 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1312_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854374154270/8854527508510/original.jpg?width=768&srcext=png",
+      "sha256": "fc93643bdd1702ac1fd37c1a71d098b42587bbc5dc5a87bb992f7c9d1537515b",
+      "original_sha256": "fc93643bdd1702ac1fd37c1a71d098b42587bbc5dc5a87bb992f7c9d1537515b"
+    },
+    "H1313 ST10": {
+      "asset": "egger-h1313-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1313-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1313 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1313_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854374547486/8854527606814/original.jpg?width=768&srcext=png",
+      "sha256": "696383bd093ab5c95d534a43caf5b906a1d6b032b5723cc92c1dee969adc81b1",
+      "original_sha256": "696383bd093ab5c95d534a43caf5b906a1d6b032b5723cc92c1dee969adc81b1"
+    },
+    "H1330 ST10": {
+      "asset": "egger-h1330-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1330-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1330 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1330_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854375333918/8854527803422/original.jpg?width=768&srcext=png",
+      "sha256": "661995e3af21da722e59321ca3ad937530a980e7d76dfce81566c876e51f45d3",
+      "original_sha256": "661995e3af21da722e59321ca3ad937530a980e7d76dfce81566c876e51f45d3"
+    },
+    "H1344 ST32": {
+      "asset": "egger-h1344-st32.jpg",
+      "preview_url": "/account/planner/materials/egger-h1344-st32.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1344 ST32",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1344_32",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854376906782/8854527901726/original.jpg?width=768&srcext=png",
+      "sha256": "40b717a6ec93d4d6d4b0dafb3e7a8d8b501a051cda1026100a63a45e591ff601",
+      "original_sha256": "40b717a6ec93d4d6d4b0dafb3e7a8d8b501a051cda1026100a63a45e591ff601"
+    },
+    "H1346 ST32": {
+      "asset": "egger-h1346-st32.jpg",
+      "preview_url": "/account/planner/materials/egger-h1346-st32.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1346 ST32",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1346_32",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854377693214/8854528098334/original.jpg?width=768&srcext=png",
+      "sha256": "e0e1c90ada08c504061d4a49ebcaa77bcfcbb92944af6518a69fc45bd1ad6a6f",
+      "original_sha256": "e0e1c90ada08c504061d4a49ebcaa77bcfcbb92944af6518a69fc45bd1ad6a6f"
+    },
+    "H1362 ST12": {
+      "asset": "egger-h1362-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h1362-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1362 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1362_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854528786462/8854528819230/original.jpg?width=768&srcext=png",
+      "sha256": "c865c9d89b8144459b7759e2d30700ed8389f43ea933fc88a5ce7ea776bf124b",
+      "original_sha256": "c865c9d89b8144459b7759e2d30700ed8389f43ea933fc88a5ce7ea776bf124b"
+    },
+    "H1367 ST40": {
+      "asset": "egger-h1367-st40.jpg",
+      "preview_url": "/account/planner/materials/egger-h1367-st40.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1367 ST40",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1367_40",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854529179678/8854529212446/original.jpg?width=768&srcext=png",
+      "sha256": "e8c138b948d35f8b67b8cc390968b8ced6a6406e62dacb4d9bf9f5f19db6b01a",
+      "original_sha256": "e8c138b948d35f8b67b8cc390968b8ced6a6406e62dacb4d9bf9f5f19db6b01a"
+    },
+    "H1386 ST40": {
+      "asset": "egger-h1386-st40.jpg",
+      "preview_url": "/account/planner/materials/egger-h1386-st40.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1386 ST40",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1386_40",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854530818078/8854530850846/original.jpg?width=768&srcext=png",
+      "sha256": "c765ae8e3169a08bf9a1b94b31dd13cb2db735eb1409ca72c64a4b88ac07d153",
+      "original_sha256": "c765ae8e3169a08bf9a1b94b31dd13cb2db735eb1409ca72c64a4b88ac07d153"
+    },
+    "H1399 ST10": {
+      "asset": "egger-h1399-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1399-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1399 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1399_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854380052510/8854531014686/original.jpg?width=768&srcext=png",
+      "sha256": "624f8bde1b27b61eaf810cb133bffee937c79193c0feb6eb951494304a5b07f1",
+      "original_sha256": "624f8bde1b27b61eaf810cb133bffee937c79193c0feb6eb951494304a5b07f1"
+    },
+    "H1401 ST22": {
+      "asset": "egger-h1401-st22.jpg",
+      "preview_url": "/account/planner/materials/egger-h1401-st22.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1401 ST22",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1401_22",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854381232158/8854531112990/original.jpg?width=768&srcext=png",
+      "sha256": "62a220fc589e9ce23cd8ca04a48c43cf0c7316fd5f5249fad97967cc60f84e74",
+      "original_sha256": "62a220fc589e9ce23cd8ca04a48c43cf0c7316fd5f5249fad97967cc60f84e74"
+    },
+    "H1487 ST22": {
+      "asset": "egger-h1487-st22.jpg",
+      "preview_url": "/account/planner/materials/egger-h1487-st22.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1487 ST22",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1487_22",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854382805022/8854531211294/original.jpg?width=768&srcext=png",
+      "sha256": "177ff89cbfff3037a292447e83ddb27df4cf6a5dd8d40c101f4ff34b7c20bc4e",
+      "original_sha256": "177ff89cbfff3037a292447e83ddb27df4cf6a5dd8d40c101f4ff34b7c20bc4e"
+    },
+    "H1636 ST12": {
+      "asset": "egger-h1636-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h1636-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1636 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1636_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854384377886/8854531309598/original.jpg?width=768&srcext=png",
+      "sha256": "dbfa43d0a7d4b65a8af8da8c7a888eb10867da1da1a4de4f5bcb21d8d5847106",
+      "original_sha256": "dbfa43d0a7d4b65a8af8da8c7a888eb10867da1da1a4de4f5bcb21d8d5847106"
+    },
+    "H1710 ST10": {
+      "asset": "egger-h1710-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h1710-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1710 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1710_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854385950750/8854531702814/original.jpg?width=768&srcext=png",
+      "sha256": "f075bebc23a2e08c853dc10c6cbd031911c8938d2aa350faf47e7e1385e5235d",
+      "original_sha256": "f075bebc23a2e08c853dc10c6cbd031911c8938d2aa350faf47e7e1385e5235d"
+    },
+    "H1714 ST19": {
+      "asset": "egger-h1714-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h1714-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1714 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1714_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854386737182/8854531801118/original.jpg?width=768&srcext=png",
+      "sha256": "41c9ec1cd27aa897972d6309801daf333ec1def5c274a898a84015d0094ebcfb",
+      "original_sha256": "41c9ec1cd27aa897972d6309801daf333ec1def5c274a898a84015d0094ebcfb"
+    },
+    "H1715 ST12": {
+      "asset": "egger-h1715-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h1715-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1715 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1715_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854658056222/8854658088990/original.jpg?width=768&srcext=png",
+      "sha256": "9ff9d16287d8376a15e403785d69b830e1fb6737db12a0f52e46365a93ca177c",
+      "original_sha256": "9ff9d16287d8376a15e403785d69b830e1fb6737db12a0f52e46365a93ca177c"
+    },
+    "H1732 ST9": {
+      "asset": "egger-h1732-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-h1732-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1732 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1732_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854532096030/8854532128798/original.jpg?width=768&srcext=png",
+      "sha256": "045af91b8e1cdc5dc1a3a8afcd684a8d09515986db0f6aa14b2f3600750f3a11",
+      "original_sha256": "045af91b8e1cdc5dc1a3a8afcd684a8d09515986db0f6aa14b2f3600750f3a11"
+    },
+    "H1910 ST9": {
+      "asset": "egger-h1910-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-h1910-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H1910 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1910_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854533668894/8854533701662/original.jpg?width=768&srcext=png",
+      "sha256": "0400aa8b6901fd6a89969c2860f90c8fade4efec3c852a7e1e4b1b5a4e7352e3",
+      "original_sha256": "0400aa8b6901fd6a89969c2860f90c8fade4efec3c852a7e1e4b1b5a4e7352e3"
+    },
+    "H2033 ST10": {
+      "asset": "egger-h2033-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h2033-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H2033 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H2033_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854392242206/8854534455326/original.jpg?width=768&srcext=png",
+      "sha256": "0e2b0e76d70aa4ffafb52b2635dfd8ef756fe5cee26ab7a49a154367d397cbbe",
+      "original_sha256": "0e2b0e76d70aa4ffafb52b2635dfd8ef756fe5cee26ab7a49a154367d397cbbe"
+    },
+    "H3003 ST19": {
+      "asset": "egger-h3003-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3003-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3003 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3003_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854535143454/8854535176222/original.jpg?width=768&srcext=png",
+      "sha256": "50ad63155e14d6ce49443dbd4304eefcb2e7d3c82f8868c052b8924236c7dc9a",
+      "original_sha256": "50ad63155e14d6ce49443dbd4304eefcb2e7d3c82f8868c052b8924236c7dc9a"
+    },
+    "H3012 ST22": {
+      "asset": "egger-h3012-st22.jpg",
+      "preview_url": "/account/planner/materials/egger-h3012-st22.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3012 ST22",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3012_22",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854392635422/8854535340062/original.jpg?width=768&srcext=png",
+      "sha256": "3f4fba5aecaa387e45ca13b55cdbed47fb40ffc806ce0cfa2b49dab4455a3e67",
+      "original_sha256": "3f4fba5aecaa387e45ca13b55cdbed47fb40ffc806ce0cfa2b49dab4455a3e67"
+    },
+    "H3043 ST12": {
+      "asset": "egger-h3043-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3043-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3043 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3043_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854393815070/8854535536670/original.jpg?width=768&srcext=png",
+      "sha256": "4543d79b4bf53e13a974459413a3230d97d5ebf8c26df385576bfdcc1ad7a258",
+      "original_sha256": "4543d79b4bf53e13a974459413a3230d97d5ebf8c26df385576bfdcc1ad7a258"
+    },
+    "H305 ST12": {
+      "asset": "egger-h305-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h305-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H305 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H305_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854535831582/8854535864350/original.jpg?width=768&srcext=png",
+      "sha256": "7814fa07e7c93331d81630cad6f797232657c0a4515c09eece98e16b29af73e4",
+      "original_sha256": "7814fa07e7c93331d81630cad6f797232657c0a4515c09eece98e16b29af73e4"
+    },
+    "H309 ST12": {
+      "asset": "egger-h309-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h309-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H309 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H309_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854536683550/8854536716318/original.jpg?width=768&srcext=png",
+      "sha256": "27cd573e7837acc4e9cac3bae6a4ff60d692a1f8c045448b10f07aa17850f92d",
+      "original_sha256": "27cd573e7837acc4e9cac3bae6a4ff60d692a1f8c045448b10f07aa17850f92d"
+    },
+    "H3131 ST12": {
+      "asset": "egger-h3131-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3131-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3131 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3131_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854396567582/8854536880158/original.jpg?width=768&srcext=png",
+      "sha256": "65bd21a0c49bbdf345860b5ad12a6c197022e153ca6667607a40a01f8c3b8862",
+      "original_sha256": "65bd21a0c49bbdf345860b5ad12a6c197022e153ca6667607a40a01f8c3b8862"
+    },
+    "H3133 ST12": {
+      "asset": "egger-h3133-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3133-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3133 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3133_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854397452318/8854536978462/original.jpg?width=768&srcext=png",
+      "sha256": "1b14e3db370efeea2f3edb8f0ea6c6b0e6a3ccb2973c0d8a2563d0ac3c681dba",
+      "original_sha256": "1b14e3db370efeea2f3edb8f0ea6c6b0e6a3ccb2973c0d8a2563d0ac3c681dba"
+    },
+    "H3146 ST19": {
+      "asset": "egger-h3146-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3146-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3146 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3146_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854398238750/8854537175070/original.jpg?width=768&srcext=png",
+      "sha256": "e3a8517eacf8b131eca0bf8387d3f136fa014df9c17f7df9425aeea71b1c4e9b",
+      "original_sha256": "e3a8517eacf8b131eca0bf8387d3f136fa014df9c17f7df9425aeea71b1c4e9b"
+    },
+    "H3152 ST19": {
+      "asset": "egger-h3152-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3152-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3152 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3152_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854537568286/8854537601054/original.jpg?width=768&srcext=png",
+      "sha256": "66dc8f646ccfd6903a6e7bffb17e2b10da50f44c0ce523066f4280bbdf603063",
+      "original_sha256": "66dc8f646ccfd6903a6e7bffb17e2b10da50f44c0ce523066f4280bbdf603063"
+    },
+    "H3154 ST36": {
+      "asset": "egger-h3154-st36.jpg",
+      "preview_url": "/account/planner/materials/egger-h3154-st36.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3154 ST36",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3154_36",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854399418398/8854538158110/original.jpg?width=768&srcext=png",
+      "sha256": "282a1a4025d75a022f0d1052be0af374c6ccbe8abdc52c7e26249680c1f3aee8",
+      "original_sha256": "282a1a4025d75a022f0d1052be0af374c6ccbe8abdc52c7e26249680c1f3aee8"
+    },
+    "H3156 ST12": {
+      "asset": "egger-h3156-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3156-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3156 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3156_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854399811614/8854538256414/original.jpg?width=768&srcext=png",
+      "sha256": "d78f36f48a8796c251a0ae641761b304890db8f8da6d43fc582738e99cc9d61d",
+      "original_sha256": "d78f36f48a8796c251a0ae641761b304890db8f8da6d43fc582738e99cc9d61d"
+    },
+    "H3170 ST12": {
+      "asset": "egger-h3170-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3170-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3170 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3170_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854402170910/8854539239454/original.jpg?width=768&srcext=png",
+      "sha256": "e7c63dcbd3e76be3caa0abe86b765cdabbb947e4b13227eacf6acff9d3d0a11b",
+      "original_sha256": "e7c63dcbd3e76be3caa0abe86b765cdabbb947e4b13227eacf6acff9d3d0a11b"
+    },
+    "H3176 ST37": {
+      "asset": "egger-h3176-st37.jpg",
+      "preview_url": "/account/planner/materials/egger-h3176-st37.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3176 ST37",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3176_37",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854403743774/8854539632670/original.jpg?width=768&srcext=png",
+      "sha256": "e273ea73d6354e88773918ac3c028197306cab07a61e14596e47b7a8fd242d80",
+      "original_sha256": "e273ea73d6354e88773918ac3c028197306cab07a61e14596e47b7a8fd242d80"
+    },
+    "H3190 ST19": {
+      "asset": "egger-h3190-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3190-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3190 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3190_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854405316638/8854540025886/original.jpg?width=768&srcext=png",
+      "sha256": "a43cfb1878695ab7e5da4d99627d8c5a400aa49abd94eba225c4284877202906",
+      "original_sha256": "a43cfb1878695ab7e5da4d99627d8c5a400aa49abd94eba225c4284877202906"
+    },
+    "H3195 ST19": {
+      "asset": "egger-h3195-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3195-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3195 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3195_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854406889502/8854540124190/original.jpg?width=768&srcext=png",
+      "sha256": "c3ab0c2d4ddf94d3a1be92b7884c6f001c8c231940ea68131f4e1667b0921409",
+      "original_sha256": "c3ab0c2d4ddf94d3a1be92b7884c6f001c8c231940ea68131f4e1667b0921409"
+    },
+    "H3197 ST19": {
+      "asset": "egger-h3197-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3197-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3197 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3197_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854407675934/8854540222494/original.jpg?width=768&srcext=png",
+      "sha256": "97b45944211c5b108a96fd254b6fed33ea28e7b844d2c7094f7989583c151a0e",
+      "original_sha256": "97b45944211c5b108a96fd254b6fed33ea28e7b844d2c7094f7989583c151a0e"
+    },
+    "H3198 ST19": {
+      "asset": "egger-h3198-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3198-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3198 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3198_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854408069150/8854540320798/original.jpg?width=768&srcext=png",
+      "sha256": "0ea7953c603c1f4b8500264843ff669068e4984cd5d432fff03bff05327508ae",
+      "original_sha256": "0ea7953c603c1f4b8500264843ff669068e4984cd5d432fff03bff05327508ae"
+    },
+    "H3303 ST10": {
+      "asset": "egger-h3303-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h3303-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3303 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3303_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854408855582/8854540419102/original.jpg?width=768&srcext=png",
+      "sha256": "25bc7f6dd5786b4a6d523dbe886987512f2fad9a081ec49adec3e80569355626",
+      "original_sha256": "25bc7f6dd5786b4a6d523dbe886987512f2fad9a081ec49adec3e80569355626"
+    },
+    "H3309 ST28": {
+      "asset": "egger-h3309-st28.jpg",
+      "preview_url": "/account/planner/materials/egger-h3309-st28.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3309 ST28",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3309_28",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854409248798/8854540517406/original.jpg?width=768&srcext=png",
+      "sha256": "5f9c91ec136a14df326c0a70bb45ee08191f0ba932f931f1fdbe962ebc5c6c97",
+      "original_sha256": "5f9c91ec136a14df326c0a70bb45ee08191f0ba932f931f1fdbe962ebc5c6c97"
+    },
+    "H3317 ST28": {
+      "asset": "egger-h3317-st28.jpg",
+      "preview_url": "/account/planner/materials/egger-h3317-st28.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3317 ST28",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3317_28",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854541402142/8855167533086/original.jpg?width=768&srcext=png",
+      "sha256": "e3e7d018cee3a37e135c75e9144d1c8986df399cbf0fc381c61d492955debe2e",
+      "original_sha256": "e3e7d018cee3a37e135c75e9144d1c8986df399cbf0fc381c61d492955debe2e"
+    },
+    "H3325 ST28": {
+      "asset": "egger-h3325-st28.jpg",
+      "preview_url": "/account/planner/materials/egger-h3325-st28.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3325 ST28",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3325_28",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854409642014/8854541598750/original.jpg?width=768&srcext=png",
+      "sha256": "3a7d58c81a2f4422180ef8c3220a11b06920749bf2e6c463b75f13fa09319a20",
+      "original_sha256": "3a7d58c81a2f4422180ef8c3220a11b06920749bf2e6c463b75f13fa09319a20"
+    },
+    "H3359 ST32": {
+      "asset": "egger-h3359-st32.jpg",
+      "preview_url": "/account/planner/materials/egger-h3359-st32.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3359 ST32",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3359_32",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854542581790/8854542614558/original.jpg?width=768&srcext=png",
+      "sha256": "3fc40b4c20f2661d5bf6210374d243013893166329a77caf06b9a412827708f8",
+      "original_sha256": "3fc40b4c20f2661d5bf6210374d243013893166329a77caf06b9a412827708f8"
+    },
+    "H3395 ST12": {
+      "asset": "egger-h3395-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3395-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3395 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3395_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854413967390/8854542876702/original.jpg?width=768&srcext=png",
+      "sha256": "8167f7495beec0568c0714c940bb0370ca21817eaecb6525b887194dab436b0b",
+      "original_sha256": "8167f7495beec0568c0714c940bb0370ca21817eaecb6525b887194dab436b0b"
+    },
+    "H3398 ST12": {
+      "asset": "egger-h3398-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3398-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3398 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3398_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854414753822/8854543073310/original.jpg?width=768&srcext=png",
+      "sha256": "aeec0440e1ed5fa014949af5f545f0d6ebdd132956cb564a0774d2911ebfd284",
+      "original_sha256": "aeec0440e1ed5fa014949af5f545f0d6ebdd132956cb564a0774d2911ebfd284"
+    },
+    "H3430 ST22": {
+      "asset": "egger-h3430-st22.jpg",
+      "preview_url": "/account/planner/materials/egger-h3430-st22.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3430 ST22",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3430_22",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854417113118/8854543859742/original.jpg?width=768&srcext=png",
+      "sha256": "738ebf3b550e2f1aa6ca4c6f3ab6833b79e46c48174068f067ff28e47fd61004",
+      "original_sha256": "738ebf3b550e2f1aa6ca4c6f3ab6833b79e46c48174068f067ff28e47fd61004"
+    },
+    "H3433 ST22": {
+      "asset": "egger-h3433-st22.jpg",
+      "preview_url": "/account/planner/materials/egger-h3433-st22.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3433 ST22",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3433_22",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854417506334/8854543958046/original.jpg?width=768&srcext=png",
+      "sha256": "e40c828507ee41524e7df28b22ee4f2fb523c0fa30766564bef63b76f2aa9b11",
+      "original_sha256": "e40c828507ee41524e7df28b22ee4f2fb523c0fa30766564bef63b76f2aa9b11"
+    },
+    "H3450 ST22": {
+      "asset": "egger-h3450-st22.jpg",
+      "preview_url": "/account/planner/materials/egger-h3450-st22.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3450 ST22",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3450_22",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854417899550/8854544056350/original.jpg?width=768&srcext=png",
+      "sha256": "50755f4e6afebdcb2cd8c6e479c108e2a6fda153c06a37d78cf8b5ee48ece3b7",
+      "original_sha256": "50755f4e6afebdcb2cd8c6e479c108e2a6fda153c06a37d78cf8b5ee48ece3b7"
+    },
+    "H3700 ST10": {
+      "asset": "egger-h3700-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h3700-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3700 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3700_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854419472414/8854544941086/original.jpg?width=768&srcext=png",
+      "sha256": "12cd942bc57dbc0cad3fbdc7cdde2f0949e412912743dd6b70df50477ec7dfa1",
+      "original_sha256": "12cd942bc57dbc0cad3fbdc7cdde2f0949e412912743dd6b70df50477ec7dfa1"
+    },
+    "H3702 ST10": {
+      "asset": "egger-h3702-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h3702-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3702 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3702_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854419865630/8854545039390/original.jpg?width=768&srcext=png",
+      "sha256": "a8774c5cdf1b8e46b5ded858c1d0882145226ea0d4522010b0acba5df6d69265",
+      "original_sha256": "a8774c5cdf1b8e46b5ded858c1d0882145226ea0d4522010b0acba5df6d69265"
+    },
+    "H3710 ST12": {
+      "asset": "egger-h3710-st12.jpg",
+      "preview_url": "/account/planner/materials/egger-h3710-st12.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3710 ST12",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3710_12",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854420258846/8854545137694/original.jpg?width=768&srcext=png",
+      "sha256": "4937f475b4c882ce37bfbf9c9ad48be15eaf5ab63c8d72b20cbef1367f667c88",
+      "original_sha256": "4937f475b4c882ce37bfbf9c9ad48be15eaf5ab63c8d72b20cbef1367f667c88"
+    },
+    "H3730 ST10": {
+      "asset": "egger-h3730-st10.jpg",
+      "preview_url": "/account/planner/materials/egger-h3730-st10.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3730 ST10",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3730_10",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854421045278/8854545334302/original.jpg?width=768&srcext=png",
+      "sha256": "23728efe7351d22785c1964515eafc9eb40c4eb0a78a45edfc54ca7fa0e2b887",
+      "original_sha256": "23728efe7351d22785c1964515eafc9eb40c4eb0a78a45edfc54ca7fa0e2b887"
+    },
+    "H3734 ST9": {
+      "asset": "egger-h3734-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-h3734-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3734 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3734_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854421438494/8854545432606/original.jpg?width=768&srcext=png",
+      "sha256": "f074d24393c855af5861dee2d6ffd21a8ed3dd2ab61f7dad451ef27bb86fb9ff",
+      "original_sha256": "f074d24393c855af5861dee2d6ffd21a8ed3dd2ab61f7dad451ef27bb86fb9ff"
+    },
+    "H3787 ST19": {
+      "asset": "egger-h3787-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-h3787-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3787 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3787_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8860206432286/8860206465054/original.jpg?width=768&srcext=png",
+      "sha256": "5b2656e14f1adc6bd6f00e600b493962ee28f73b8245f273d543979228fc5912",
+      "original_sha256": "5b2656e14f1adc6bd6f00e600b493962ee28f73b8245f273d543979228fc5912"
+    },
+    "H3840 ST9": {
+      "asset": "egger-h3840-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-h3840-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3840 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3840_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854423011358/8854545825822/original.jpg?width=768&srcext=png",
+      "sha256": "b6c1f74027fea665ec8535dcd06b122a30ba8cbefc4aff30c145fc47a29053bc",
+      "original_sha256": "b6c1f74027fea665ec8535dcd06b122a30ba8cbefc4aff30c145fc47a29053bc"
+    },
+    "H3860 ST9": {
+      "asset": "egger-h3860-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-h3860-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "H3860 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H3860_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854423404574/8854545924126/original.jpg?width=768&srcext=png",
+      "sha256": "f9ae31b998aea2b67fbd622d7822ee0787d9e002a250101a97a54f4715db4939",
+      "original_sha256": "f9ae31b998aea2b67fbd622d7822ee0787d9e002a250101a97a54f4715db4939"
+    },
+    "U104 ST9": {
+      "asset": "egger-u104-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u104-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U104 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U104_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854424191006/8854424223774/original.jpg?width=768&srcext=png",
+      "sha256": "e8b990e18694958d903553a68590e92b7f412a299b6b4f8f3fce28d593f10a0c",
+      "original_sha256": "e8b990e18694958d903553a68590e92b7f412a299b6b4f8f3fce28d593f10a0c"
+    },
+    "U113 ST9": {
+      "asset": "egger-u113-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u113-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U113 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U113_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854425763870/8854546612254/original.jpg?width=768&srcext=png",
+      "sha256": "67fe8b2093bbbad3ea5c8c5ba7fc9ca2b047ccfc291d2b744451c4e982c9f5f5",
+      "original_sha256": "67fe8b2093bbbad3ea5c8c5ba7fc9ca2b047ccfc291d2b744451c4e982c9f5f5"
+    },
+    "U156 ST9": {
+      "asset": "egger-u156-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u156-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U156 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U156_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854427729950/8854547628062/original.jpg?width=768&srcext=png",
+      "sha256": "8cc4211320fa5310d03add1fd27ca6d64c3e189d430d683b52f0c10da6cf5f05",
+      "original_sha256": "8cc4211320fa5310d03add1fd27ca6d64c3e189d430d683b52f0c10da6cf5f05"
+    },
+    "U201 ST9": {
+      "asset": "egger-u201-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u201-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U201 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U201_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854429302814/8854429335582/original.jpg?width=768&srcext=png",
+      "sha256": "b53c3342591be978a608adaa5bfb00dd7f9a03108f404d34e5b802cde97ff0aa",
+      "original_sha256": "b53c3342591be978a608adaa5bfb00dd7f9a03108f404d34e5b802cde97ff0aa"
+    },
+    "U211 ST9": {
+      "asset": "egger-u211-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u211-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U211 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U211_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854548217886/8854548250654/original.jpg?width=768&srcext=png",
+      "sha256": "cabb59ec1a97b741559d9f238318b47d72a0d265849beabe9a1a9ec2c4369956",
+      "original_sha256": "cabb59ec1a97b741559d9f238318b47d72a0d265849beabe9a1a9ec2c4369956"
+    },
+    "U216 ST9": {
+      "asset": "egger-u216-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u216-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U216 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U216_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854429696030/8854548348958/original.jpg?width=768&srcext=png",
+      "sha256": "56d534e84f786045326a1610846328b251f9a604e01352fbd0f61f702dcdcdf3",
+      "original_sha256": "56d534e84f786045326a1610846328b251f9a604e01352fbd0f61f702dcdcdf3"
+    },
+    "U222 ST9": {
+      "asset": "egger-u222-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u222-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U222 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U222_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854430089246/8854548447262/original.jpg?width=768&srcext=png",
+      "sha256": "5fd577e55c5440c5af23a398230c8657e515c6d6779a9f3b357ac6cf75c3f93a",
+      "original_sha256": "5fd577e55c5440c5af23a398230c8657e515c6d6779a9f3b357ac6cf75c3f93a"
+    },
+    "U311 ST9": {
+      "asset": "egger-u311-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u311-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U311 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U311_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854430875678/8854548643870/original.jpg?width=768&srcext=png",
+      "sha256": "32bb472bb96e737742c3145cc025119a2669db1e3ba6a419e1be2491334f5473",
+      "original_sha256": "32bb472bb96e737742c3145cc025119a2669db1e3ba6a419e1be2491334f5473"
+    },
+    "U363 ST9": {
+      "asset": "egger-u363-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u363-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U363 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U363_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854435987486/8854549561374/original.jpg?width=768&srcext=png",
+      "sha256": "9ce3819a8f085782ec2f5f7df7edf6ed7aaecaed1d5159b8dc029d4e956d5656",
+      "original_sha256": "9ce3819a8f085782ec2f5f7df7edf6ed7aaecaed1d5159b8dc029d4e956d5656"
+    },
+    "U599 ST9": {
+      "asset": "egger-u599-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u599-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U599 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U599_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854443065374/8854552936478/original.jpg?width=768&srcext=png",
+      "sha256": "e438d154c7d6c8d3050ef36da8650eb8a0c3e18c0ea35bb99239de4330724204",
+      "original_sha256": "e438d154c7d6c8d3050ef36da8650eb8a0c3e18c0ea35bb99239de4330724204"
+    },
+    "U638 ST9": {
+      "asset": "egger-u638-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u638-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U638 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U638_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854554279966/8854554312734/original.jpg?width=768&srcext=png",
+      "sha256": "2733d0bf0e458f7076f649381c092d13e3016507d379af586389aa03dcd79e6a",
+      "original_sha256": "2733d0bf0e458f7076f649381c092d13e3016507d379af586389aa03dcd79e6a"
+    },
+    "U702 ST9": {
+      "asset": "egger-u702-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u702-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U702 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U702_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854449356830/8854449389598/original.jpg?width=768&srcext=png",
+      "sha256": "0d59652fed32792a983ea19e0a740a3bd19ba8f7b193831bde0f2a6e313a4fed",
+      "original_sha256": "0d59652fed32792a983ea19e0a740a3bd19ba8f7b193831bde0f2a6e313a4fed"
+    },
+    "U705 ST9": {
+      "asset": "egger-u705-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u705-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U705 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U705_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854451716126/8854556639262/original.jpg?width=768&srcext=png",
+      "sha256": "56fdbad95fc72cf8270137839047e148c522c90fa0fe44a3200f57af796d5bbb",
+      "original_sha256": "56fdbad95fc72cf8270137839047e148c522c90fa0fe44a3200f57af796d5bbb"
+    },
+    "U707 ST9": {
+      "asset": "egger-u707-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u707-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U707 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U707_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854452109342/8854556934174/original.jpg?width=768&srcext=png",
+      "sha256": "e73888c6b68f2b174d5f2256c2c78e5dafa95ef3264627adf4ffe45a53eff048",
+      "original_sha256": "e73888c6b68f2b174d5f2256c2c78e5dafa95ef3264627adf4ffe45a53eff048"
+    },
+    "U727 ST9": {
+      "asset": "egger-u727-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u727-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U727 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U727_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854455648286/8854455681054/original.jpg?width=768&srcext=png",
+      "sha256": "0670c296f5a7edef6e4fab37f0a187f7fd8b032a80de433ddcfbabee08d84306",
+      "original_sha256": "0670c296f5a7edef6e4fab37f0a187f7fd8b032a80de433ddcfbabee08d84306"
+    },
+    "U732 ST9": {
+      "asset": "egger-u732-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u732-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U732 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U732_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854457614366/8854457647134/original.jpg?width=768&srcext=png",
+      "sha256": "cfe76d5922dc834112a9192dc07a4dc663ed951e5fda24e5bd9763d6c954bcbf",
+      "original_sha256": "cfe76d5922dc834112a9192dc07a4dc663ed951e5fda24e5bd9763d6c954bcbf"
+    },
+    "U740 ST9": {
+      "asset": "egger-u740-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u740-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U740 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U740_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854459580446/8854558015518/original.jpg?width=768&srcext=png",
+      "sha256": "f09f61aa93d03304fe19c8a4bd49c860e76b3e1a31c310c2a832d2288a39c1e0",
+      "original_sha256": "f09f61aa93d03304fe19c8a4bd49c860e76b3e1a31c310c2a832d2288a39c1e0"
+    },
+    "U741 ST9": {
+      "asset": "egger-u741-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u741-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U741 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U741_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854459973662/8854558310430/original.jpg?width=768&srcext=png",
+      "sha256": "9f4280c2d5680a00097a2e65a3279d270273bb719970873a19999f67c26e3253",
+      "original_sha256": "9f4280c2d5680a00097a2e65a3279d270273bb719970873a19999f67c26e3253"
+    },
+    "U748 ST9": {
+      "asset": "egger-u748-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u748-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U748 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U748_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854460366878/8854558408734/original.jpg?width=768&srcext=png",
+      "sha256": "5cb9dc749ac7d0bb52dcd539bbef630b5c18e3687d86a25bca9502055bda969b",
+      "original_sha256": "5cb9dc749ac7d0bb52dcd539bbef630b5c18e3687d86a25bca9502055bda969b"
+    },
+    "U750 ST9": {
+      "asset": "egger-u750-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u750-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U750 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U750_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854460760094/8854558507038/original.jpg?width=768&srcext=png",
+      "sha256": "df56718e314baff4c09f91af31002c2c18fa0951c4eec6fee845da93295a654b",
+      "original_sha256": "df56718e314baff4c09f91af31002c2c18fa0951c4eec6fee845da93295a654b"
+    },
+    "U763 ST9": {
+      "asset": "egger-u763-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u763-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U763 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U763_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854461546526/8854559096862/original.jpg?width=768&srcext=png",
+      "sha256": "787f0727d73f4683cff387b961532e5fcabe2a46a67f6788413cef536fbd1765",
+      "original_sha256": "787f0727d73f4683cff387b961532e5fcabe2a46a67f6788413cef536fbd1765"
+    },
+    "U767 ST9": {
+      "asset": "egger-u767-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u767-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U767 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U767_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854462332958/8854559391774/original.jpg?width=768&srcext=png",
+      "sha256": "c0e5b571b400b4d8ab1c0519883775c8bd0eff2b530148b28024f4e25336f58f",
+      "original_sha256": "c0e5b571b400b4d8ab1c0519883775c8bd0eff2b530148b28024f4e25336f58f"
+    },
+    "U775 ST9": {
+      "asset": "egger-u775-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u775-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U775 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U775_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854462726174/8854559686686/original.jpg?width=768&srcext=png",
+      "sha256": "dd299f4cac821d7c23bccd1a5409007e1af0140124b975f74a95a61f657b115e",
+      "original_sha256": "dd299f4cac821d7c23bccd1a5409007e1af0140124b975f74a95a61f657b115e"
+    },
+    "U780 ST9": {
+      "asset": "egger-u780-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u780-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U780 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U780_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854463971358/8854559981598/original.jpg?width=768&srcext=png",
+      "sha256": "b5b72b6e21f03ee7f898ef7f098ba62380ecd51cf2e4d674fd936114de9be310",
+      "original_sha256": "b5b72b6e21f03ee7f898ef7f098ba62380ecd51cf2e4d674fd936114de9be310"
+    },
+    "U788 ST9": {
+      "asset": "egger-u788-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u788-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U788 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U788_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854464364574/8854560079902/original.jpg?width=768&srcext=png",
+      "sha256": "de45ca4659b1b5516b14bc27d4acf2ea15d8a984b3d8d46ebc35f31232844b4c",
+      "original_sha256": "de45ca4659b1b5516b14bc27d4acf2ea15d8a984b3d8d46ebc35f31232844b4c"
+    },
+    "U830 ST9": {
+      "asset": "egger-u830-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u830-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U830 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U830_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854465937438/8854560276510/original.jpg?width=768&srcext=png",
+      "sha256": "6ed3b9b04f89e6d0489d639e62a2ccee26bd9765c1dd21e45d449fc87b49f31d",
+      "original_sha256": "6ed3b9b04f89e6d0489d639e62a2ccee26bd9765c1dd21e45d449fc87b49f31d"
+    },
+    "U899 ST9": {
+      "asset": "egger-u899-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u899-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U899 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U899_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854466330654/8854560374814/original.jpg?width=768&srcext=png",
+      "sha256": "3bce7ab276497d99237106436ce654fa8eb92ec45b15c275f025c061d105f2c4",
+      "original_sha256": "3bce7ab276497d99237106436ce654fa8eb92ec45b15c275f025c061d105f2c4"
+    },
+    "U960 ST9": {
+      "asset": "egger-u960-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u960-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U960 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U960_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854467117086/8854560571422/original.jpg?width=768&srcext=png",
+      "sha256": "a8bf78978f875300be4ffcaf5869c6d711ea6d48be220a4b462183d0e7992aed",
+      "original_sha256": "a8bf78978f875300be4ffcaf5869c6d711ea6d48be220a4b462183d0e7992aed"
+    },
+    "U961 ST7": {
+      "asset": "egger-u961-st7.jpg",
+      "preview_url": "/account/planner/materials/egger-u961-st7.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U961 ST7",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U961_7",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854560931870/8854560964638/original.jpg?width=768&srcext=png",
+      "sha256": "350e3a430f4bd329a0f4c16fdf2d46d7985ecaec9ad25fc8d673d49aab7124e3",
+      "original_sha256": "350e3a430f4bd329a0f4c16fdf2d46d7985ecaec9ad25fc8d673d49aab7124e3"
+    },
+    "U963 ST9": {
+      "asset": "egger-u963-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u963-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U963 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U963_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854470262814/8854561259550/original.jpg?width=768&srcext=png",
+      "sha256": "3c193f7f572b7896c470d0a1ce9e0e9562f1fb8212f4cc24ffd8d72c48f49deb",
+      "original_sha256": "3c193f7f572b7896c470d0a1ce9e0e9562f1fb8212f4cc24ffd8d72c48f49deb"
+    },
+    "U968 ST9": {
+      "asset": "egger-u968-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-u968-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U968 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U968_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854471049246/8854561456158/original.jpg?width=768&srcext=png",
+      "sha256": "875bf056e40998d0790c46438c72a91a42a74dbf576398a16966b01e5e8fccb8",
+      "original_sha256": "875bf056e40998d0790c46438c72a91a42a74dbf576398a16966b01e5e8fccb8"
+    },
+    "U998 ST38": {
+      "asset": "egger-u998-st38.jpg",
+      "preview_url": "/account/planner/materials/egger-u998-st38.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U998 ST38",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U998_38",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854471835678/8854561849374/original.jpg?width=768&srcext=png",
+      "sha256": "bc9090ff21853a3adaa875ba47d58aaece7bdde263d69841645ea870fd5cf4f1",
+      "original_sha256": "bc9090ff21853a3adaa875ba47d58aaece7bdde263d69841645ea870fd5cf4f1"
+    },
+    "U999 ST19": {
+      "asset": "egger-u999-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-u999-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "U999 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U999_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854473015326/8854473048094/original.jpg?width=768&srcext=png",
+      "sha256": "bc9090ff21853a3adaa875ba47d58aaece7bdde263d69841645ea870fd5cf4f1",
+      "original_sha256": "bc9090ff21853a3adaa875ba47d58aaece7bdde263d69841645ea870fd5cf4f1"
+    },
+    "W1000 ST19": {
+      "asset": "egger-w1000-st19.jpg",
+      "preview_url": "/account/planner/materials/egger-w1000-st19.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "W1000 ST19",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/W1000_19",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854477340702/8854477373470/original.jpg?width=768&srcext=png",
+      "sha256": "41b14631d85fd89c69c59df3d9fe57999bf2b45e636638aec3158898aef349cd",
+      "original_sha256": "41b14631d85fd89c69c59df3d9fe57999bf2b45e636638aec3158898aef349cd"
+    },
+    "W1000 ST38": {
+      "asset": "egger-w1000-st38.jpg",
+      "preview_url": "/account/planner/materials/egger-w1000-st38.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "W1000 ST38",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/W1000_38",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854477733918/8854477766686/original.jpg?width=768&srcext=png",
+      "sha256": "41b14631d85fd89c69c59df3d9fe57999bf2b45e636638aec3158898aef349cd",
+      "original_sha256": "41b14631d85fd89c69c59df3d9fe57999bf2b45e636638aec3158898aef349cd"
+    },
+    "W1100 ST9": {
+      "asset": "egger-w1100-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-w1100-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "W1100 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/W1100_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854481928222/8854481960990/original.jpg?width=768&srcext=png",
+      "sha256": "ed65de1acc5926c05b3bd69f09fbfb344dff23deb009f41f459d88948cbe812e",
+      "original_sha256": "ed65de1acc5926c05b3bd69f09fbfb344dff23deb009f41f459d88948cbe812e"
+    },
+    "W1200 ST9": {
+      "asset": "egger-w1200-st9.jpg",
+      "preview_url": "/account/planner/materials/egger-w1200-st9.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "W1200 ST9",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/W1200_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854485073950/8854565027870/original.jpg?width=768&srcext=png",
+      "sha256": "7ff1668021da047d49ec05b06296c4753cb334714ff197cdccf93bdb5d3dafad",
+      "original_sha256": "7ff1668021da047d49ec05b06296c4753cb334714ff197cdccf93bdb5d3dafad"
+    },
+    "W960 ST7": {
+      "asset": "egger-w960-st7.jpg",
+      "preview_url": "/account/planner/materials/egger-w960-st7.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "W960 ST7",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/W960_7",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854565912606/8854565945374/original.jpg?width=768&srcext=png",
+      "sha256": "b7f9298d2eac90fef9367c56bbd88e8efb4e0b5b2721822d6acb1fe9d8f3db63",
+      "original_sha256": "b7f9298d2eac90fef9367c56bbd88e8efb4e0b5b2721822d6acb1fe9d8f3db63"
+    },
+    "W980 SM": {
+      "asset": "egger-w980-sm.jpg",
+      "preview_url": "/account/planner/materials/egger-w980-sm.jpg",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "manufacturer": "EGGER",
+      "article": "W980 SM",
+      "texture_size_mm": [
+        603,
+        1300
+      ],
+      "scale_note": "1300 mm display height; physical source extent not confirmed",
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/W980_SM",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854489399326/8854489432094/original.jpg?width=768&srcext=png",
+      "sha256": "5b5cbe35fff5df7392609a6ebfc804963aaf2888637eda6f5d5a99577caa71a1",
+      "original_sha256": "5b5cbe35fff5df7392609a6ebfc804963aaf2888637eda6f5d5a99577caa71a1"
     }
   }
 }

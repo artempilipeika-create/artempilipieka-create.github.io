@@ -164,6 +164,8 @@ function normalizeScene(s={}){
   return{
     schema_version:2,
     room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700},
+    displaySettings:s.displaySettings||{},
+    materialIdentities:s.materialIdentities||{},
     items,
     selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
       ?s.selected_item_id:(items[0]?.item_id||null),
@@ -172,10 +174,18 @@ function normalizeScene(s={}){
 }
 function scenePayload(){
   const first=state.items[0]||legacyItem({});
+  const materialIdentities={};
+  for(const it of state.items)for(const id of [it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id){
+    const m=materials.get(String(id));
+    if(m)materialIdentities[id]={materialId:m.material_id||null,article:m.article||null,manufacturer:m.manufacturer||m.visual_identity?.manufacturer||null};
+    else if(state.materialIdentities?.[id])materialIdentities[id]=state.materialIdentities[id];
+  }
   return{
     module_type:first.module_type,width:first.width,height:first.height,depth:first.depth,layout:first.layout,
     drawers:first.drawers,base:first.base,handles:first.handles,body_variant_id:first.body_variant_id,
     front_variant_id:first.front_variant_id,view_mode:viewMode,schema_version:2,room:{...state.room},
+    displaySettings:state.displaySettings||{},
+    materialIdentities,
     items:state.items.map(x=>({...x})),selected_item_id:selectedId
   };
 }
@@ -598,7 +608,7 @@ async function syncControls(){
   const plinthMaterial=await material(it.plinthMaterialId),countertopMaterial=await material(it.countertopMaterialId);
   if(selected()?.item_id!==it.item_id)return;
   for(const [kind,m]of [['plinth',plinthMaterial],['countertop',countertopMaterial]])if($(kind+'-selected'))$(kind+'-selected').textContent=label(m);
-  for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial],['plinth',plinthMaterial],['countertop',countertopMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=!m?'':m.visual?.texture_url||m.visual?.preview_url?'Вид по изображению выбранного декора':m.visual?.render_color?'Цвет выбранного декора':'Изображение декора пока не добавлено — нейтральный вид.';}
+  for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial],['plinth',plinthMaterial],['countertop',countertopMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=!m?'':m.visual?.texture_url?'Точная текстура · '+(m.article||''):m.visual?.preview_url?'Официальный preview, масштаб ориентировочный · '+(m.article||''):m.visual?.render_color?'Подтверждённый цвет; текстура отсутствует':'Нет точного изображения · '+(m.article||m.name||'')+' · нейтральный вид';}
   renderItems();
 }
 async function searchMaterial(input,results,kind){

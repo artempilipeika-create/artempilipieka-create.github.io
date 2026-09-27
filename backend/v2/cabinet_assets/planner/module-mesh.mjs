@@ -63,19 +63,20 @@ export class MeshFactory{
         metalness:role==='handle'?finish.metalness:0,vertexColors:role==='front'||role==='counter',
         transparent:ghost||inspection,opacity:ghost?.36:inspection?.16:1,depthWrite:!ghost&&!inspection,
         side:inspection?THREE.DoubleSide:THREE.FrontSide});
-      m.userData={visualSource:visual.source,variantId:id||null,fallbackColor:color};
+      m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color};
       if(visual.url&&!ghost&&!inspection){
         const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);
         if(!this.textures.has(txKey)){
           const tx=new THREE.TextureLoader().load(visual.url,()=>{if(!this.dead)this.invalidate();},undefined,()=>{
             tx.userData.failed=true;
-            for(const mat of this.materials.values())if(mat.map===tx){mat.map=null;mat.color.set(mat.userData.fallbackColor);mat.userData.visualSource=visual.color?'color':'fallback';mat.needsUpdate=true;}
+            for(const mat of this.materials.values())if(mat.map===tx){mat.map=null;mat.color.set(mat.userData.fallbackColor);mat.userData.visualSource=visual.color?'color':'fallback';mat.userData.visualStatus=visual.color?'COLOR_ONLY':'MISSING_VISUAL';mat.needsUpdate=true;}
             if(!this.dead)this.invalidate();
           });
           tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=tx.wrapT=THREE.RepeatWrapping;tx.repeat.set(1000/visual.size[0],1000/visual.size[1]);
           tx.rotation=rotation*Math.PI/180;tx.anisotropy=4;this.textures.set(txKey,tx);
         }
         const tx=this.textures.get(txKey);if(!tx.userData.failed){m.map=tx;m.color.set('#ffffff');}
+        else {m.userData.visualSource=visual.color?'color':'fallback';m.userData.visualStatus=visual.color?'COLOR_ONLY':'MISSING_VISUAL';}
       }
       this.materials.set(key,m);
     }

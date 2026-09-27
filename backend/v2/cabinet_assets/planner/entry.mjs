@@ -16,12 +16,14 @@ function waitReady(){return new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>{observer.disconnect();reject(new Error('Не удалось дождаться загрузки проекта. Проверьте вход в кабинет.'));},30000);
 });}
 
+import {RoomPricingUI} from './room-pricing-ui.mjs';
+
 class PlannerApplication {
   constructor(){this.version='1.0.0';this.ready=false;this.options={enabled:true,alignment:'front',wallOffset:0,autoRotate:true,allowElevation:false};}
   async init(){
     if(this.ready)return this;await waitReady();
     this.bridge=window.MF_PLANNER_BRIDGE;this.adapter=new StateAdapter(this.bridge);this.history=new History(this.adapter);
-    this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();
+    this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.roomPricing=new RoomPricingUI(this);
     await this.startRenderer();
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
@@ -151,6 +153,7 @@ class PlannerApplication {
     let canvas=get('scene');if(this.scene){const replacement=canvas.cloneNode(false);canvas.replaceWith(replacement);canvas=replacement;}
     try{const {PlannerScene}=await import('./scene.mjs');this.scene=new PlannerScene(canvas,this.adapter,()=>this.fallback());get('planner-fallback').hidden=true;document.body.dataset.plannerRenderer='webgl';}
     catch(error){console.warn('Planner switched to 2D:',error.message);this.installFallback(canvas);}
+    this.scene.onVisualChanged=()=>this.roomPricing?.syncVisualNotice();
     this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);
     this.scene.fit(this.adapter.items.length?'kitchen':'room');this.paintMode();
   }
@@ -175,7 +178,7 @@ class PlannerApplication {
   sync(){
     if(!this.scene)return;const count=this.adapter.items.length;
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.scene.sync();
+    this.scene.sync();this.roomPricing?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;

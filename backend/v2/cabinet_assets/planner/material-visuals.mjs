@@ -8,6 +8,7 @@ export function materialVisual(data){
   const color=hex(v.render_color)||hex(data?.renderColor)||hex(data?.preview_color)||hex(data?.color_hex)||hex(data?.color);
   const size=v.texture_size_mm;
   return {url:texture||preview,color,source:texture?'texture':preview?'preview':color?'color':'fallback',
+    status:texture?'EXACT_TEXTURE':preview?'OFFICIAL_PREVIEW':color?'COLOR_ONLY':'MISSING_VISUAL',
     size:Array.isArray(size)&&size.length===2&&size.every(x=>Number.isFinite(x)&&x>0)?size:[1000,1000],
     rotation:Number.isFinite(v.rotation_deg)?v.rotation_deg:0,
     grain:v.grain_direction||'length',roughness:Number.isFinite(v.roughness)?Math.max(.15,Math.min(1,v.roughness)):.85};

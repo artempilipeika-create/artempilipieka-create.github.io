@@ -225,6 +225,14 @@ def router(settings,policy):
             found=[safe_item(i,version) for i in catalogue.items(conn,version,'edge') if matches(i,q)]
             return {'kind':'candidates','items':found[offset:offset+limit],'total':len(found),'catalogue_release':version}
 
+    @api.get('/catalogue/visual-coverage')
+    def visual_coverage(request:Request,release:UUID|None=None):
+        from .material_visuals import coverage
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'catalogue.read')
+            version=release_or_active(conn,release)
+            return coverage(catalogue.items(conn,version,'material'),version)
+
     @api.get('/catalogue/materials/{variant_id}')
     def material(variant_id:UUID,request:Request,release:UUID|None=None):
         with transaction(settings) as conn:
