@@ -97,7 +97,12 @@ class PlannerApplication {
     get('duplicate-item').onclick=()=>this.interaction?.duplicate();get('remove-item').onclick=()=>this.interaction?.remove();get('studio-rotate').onclick=()=>this.interaction?.rotate();
     document.querySelectorAll('[data-nudge]').forEach(b=>b.onclick=()=>{const n=Number(get('studio-nudge-step').value)||10;const moves={left:[-n,0],right:[n,0],back:[0,-n],front:[0,n]};this.interaction?.nudge(...moves[b.dataset.nudge]);});
     this.listen(get('quick-widths'),'click',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopImmediatePropagation();this.interaction?.modify({width:Number(b.textContent)},'Изменение ширины');this.bridge.refresh();},true);
-    for(const id of ['body-results','front-results'])this.listen(get(id),'click',e=>{if(!e.target.closest('button'))return;this.history.begin('Материал');queueMicrotask(()=>this.history.commit());},true);
+    for(const id of ['body-results','front-results']){
+      // Trusted clicks can flush microtasks between capture and target handlers.
+      // Snapshot before the selector mutates the item; commit on the same event's bubble.
+      this.listen(get(id),'click',e=>{if(e.target.closest('button'))this.history.begin('Материал');},true);
+      this.listen(get(id),'click',e=>{if(e.target.closest('button'))this.history.commit();});
+    }
     const shelfEnabled=get('shelf-enabled'),shelfPosition=get('shelf-position'),toggleDoors=get('toggle-doors');
     this.listen(get('module-display'),'change',()=>this.scene?.setDisplayMode?.(get('module-display').value));
     this.listen(shelfEnabled,'change',()=>{
