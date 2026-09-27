@@ -179,7 +179,9 @@ export class PlannerScene{
     for(const [id,e]of this.entries){
       let box=this.kitchenBoxes.get(id);
       if(whole&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
-      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(whole&&show&&e.group.visible&&kitchenSettings(this.adapter.items.find(it=>it.item_id===id)));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
+      // Room presentation can refresh before sync removes the previous project's meshes.
+      const item=this.adapter.items.find(it=>it.item_id===id);
+      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(whole&&show&&e.group.visible&&item&&kitchenSettings(item));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
     }
     this.selectedBox.visible=Boolean(!whole&&entry?.group.visible&&show);
     if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':this.client?'#79796b':'#346d4a');}

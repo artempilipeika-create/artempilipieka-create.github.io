@@ -75,4 +75,11 @@ def test_client_v3_presentation_occupancy_views_and_panels(page,api,settings,adm
     for rotation in [90,180,270]:
         page.evaluate('''r=>{const p=MF_PLANNER,s=p.bridge.snapshot();for(let i=0;i<s.scene.items.length;i++){const v=MF_FURNITURE_CORE.rotateXZ(i*600,0,r);Object.assign(s.scene.items[i],{x:v.x,z:v.z,rotation:r});}p.bridge.restore(s);p.scene.fitKitchenForClient();}''',rotation)
         frame('rotation-'+str(rotation))
+    # A new room is applied before old meshes are pruned. Bulk outlines must
+    # tolerate that short transition, including undo/restore to an empty room.
+    assert page.evaluate('MF_PLANNER.scene.selectionScope')=='kitchen'
+    page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.createDraft({bazis:'bazis.3079d0656398'});p.bridge.restore({name:'Fresh room',scene:{schema_version:2,room:{width:4200,depth:3200,height:2700},items:[it],selected_item_id:it.item_id,view_mode:'3d'},selectedId:it.item_id});}''')
+    assert page.evaluate('''()=>{const p=MF_PLANNER;return p.scene.entries.size===1&&p.scene.entries.has(p.adapter.items[0].item_id)&&[...p.scene.kitchenBoxes.values()].filter(b=>b.visible).length===1;}''')
+    page.evaluate('''()=>{const p=MF_PLANNER,s=p.bridge.snapshot();s.scene.room.width=4600;s.scene.items=[];s.scene.selected_item_id=s.selectedId=null;p.bridge.restore(s);}''')
+    assert page.evaluate('MF_PLANNER.scene.entries.size===0&&MF_PLANNER.scene.kitchenBoxes.size===0')
     (OUT/'client-v3-camera.json').write_text(json.dumps({'success':True,'commit':os.environ.get('GITHUB_SHA'),'measurements':evidence},indent=2))
