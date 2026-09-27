@@ -19,6 +19,16 @@ jobs:
       - name: Build the existing staging Docker image without deployment or database access
         run: docker build -t martin-forest-pilot:${{ github.sha }} .
   webgl-browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: planner
+            tests: tests/webgl/polish_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py
+          - suite: interaction
+            tests: tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py
+          - suite: application
+            tests: tests/stage07/browser_checks.py tests/stage84/browser_checks.py
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -70,13 +80,13 @@ jobs:
       - name: Actual browser and ASGI regression on exact committed source
         run: |
           python -m py_compile tests/webgl/live_smoke.py
-          python -m pytest tests/webgl/polish_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py tests/stage07/browser_checks.py tests/stage84/browser_checks.py -vv --timeout=75 --maxfail=3 --junitxml=qa-output/webgl/browser.xml
+          python -m pytest ${{ matrix.tests }} -vv --timeout=75 --maxfail=3 --junitxml=qa-output/webgl/browser.xml
           git diff --exit-code
           git rev-parse HEAD > qa-output/webgl/verified-commit.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: webgl-browser-acceptance
+          name: webgl-browser-acceptance-${{ matrix.suite }}
           path: qa-output/webgl/
           retention-days: 7
   kitchen-browser:
@@ -120,6 +130,10 @@ jobs:
           path: qa-output/kitchen/
           retention-days: 7
   materials-browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        donor: [D1-L, D1-P, D2]
     runs-on: ubuntu-latest
     timeout-minutes: 12
     services:
@@ -150,13 +164,13 @@ jobs:
       - name: Actual browser and ASGI regression on exact committed source
         run: |
           python -m py_compile tests/webgl/live_smoke.py
-          python -m pytest tests/webgl/material_checks.py -vv -s --durations=5 --timeout=180 --junitxml=qa-output/materials/browser.xml
+          python -m pytest 'tests/webgl/material_checks.py::test_materials_modes_history_save_load_native_export[${{ matrix.donor }}]' -vv -s --durations=5 --timeout=180 --junitxml=qa-output/materials/browser.xml
           git diff --exit-code
           git rev-parse HEAD > qa-output/materials/verified-commit.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: materials-browser-acceptance
+          name: materials-browser-acceptance-${{ matrix.donor }}
           path: qa-output/materials/
           retention-days: 7
   backend-regression:

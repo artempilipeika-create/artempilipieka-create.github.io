@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PILOT_PRODUCTION,normalizeKitchen,kitchenSettings,kitchenRuns,kitchenLegs,productionParts,dimensionPatch,heights,rotateXZ,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {snapItem,findSpace} from '../../backend/v2/cabinet_assets/planner/placement.mjs';
+import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
 import {Box3} from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
 const room={width:6200,depth:3600,height:2700},ids=Object.keys(PILOT_PRODUCTION);
@@ -80,4 +81,10 @@ test('Old flush pilot projects gain service space once; saved/free-standing coor
   assert.match(placementError({...it,rearServiceGapMm:60},[],room),/Столешница/);
  }
  const free=item(ids[0],{x:0,z:0});delete free.rearServiceGapMm;assert.equal(normalizeKitchen(free,room).z,0);
+});
+
+test('A pilot cannot enter the legacy suspended-base state that cannot be saved with kitchen legs',()=>{
+ const it=item(),adapter=new StateAdapter({state:()=>({room,items:[it]}),template:x=>({production:PILOT_PRODUCTION[x.bazis_id]})});
+ assert.equal(adapter.validate(it),'');
+ assert.match(adapter.validate(dimensionPatch(it,{base:'wall'})),/ножки/);
 });

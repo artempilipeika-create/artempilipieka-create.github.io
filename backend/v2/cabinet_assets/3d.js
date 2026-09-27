@@ -556,6 +556,7 @@ async function syncControls(){
     const input=$(key.replaceAll('_','-'));if(input)input.value=String(h[key]);
   }
   const kitchen=globalThis.MF_FURNITURE_CORE.kitchenSettings(it);
+  $('base').disabled=Boolean(kitchen);
   if($('kitchen-controls'))$('kitchen-controls').hidden=!kitchen;
   if($('base-height')){$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);$('base-height').parentElement.hidden=Boolean(kitchen);}
   if(kitchen){
