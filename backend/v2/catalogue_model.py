@@ -115,7 +115,12 @@ def normalize_master(workbook,namespace):
 def safe_item(item,release_id):
     keys=('variant_id','material_id','edge_id','kind','article','name','manufacturer','decor','structure','family',
           'thickness','length','width','designation','unit','texture','grain')
-    return {**{k:item.get(k) for k in keys if k in item},'catalogue_release':str(release_id)}
+    result={**{k:item.get(k) for k in keys if k in item},'catalogue_release':str(release_id)}
+    if item.get('kind')=='material':
+        from .material_visuals import visual_metadata
+        visual=visual_metadata(item)
+        if visual:result['visual']=visual
+    return result
 
 
 def search_key(text):

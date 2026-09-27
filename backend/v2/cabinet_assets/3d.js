@@ -340,7 +340,7 @@ async function openProject(id){
   status('Проект открыт.');
 }
 async function hydrateMaterials(){
-  for(const it of state.items)for(const id of[it.body_variant_id,it.front_variant_id])if(id)await material(id);
+  for(const it of state.items)for(const id of[it.body_variant_id,it.front_variant_id,it.back_variant_id,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id)await material(id);
 }
 async function saveProject(){
   state.selected_item_id=selectedId;
@@ -584,8 +584,10 @@ async function syncControls(){
   $('drawers').disabled=Boolean(t);
   $('layout-control').title=t?'Компоновка задаётся выбранным шаблоном модуля.':'';
   $('drawers-control').title=t?'Количество фасадов задаётся выбранным шаблоном модуля.':'';
-  $('body-selected').textContent=label(await material(it.body_variant_id));
-  $('front-selected').textContent=label(await material(it.front_variant_id));
+  const bodyMaterial=await material(it.body_variant_id),frontMaterial=await material(it.front_variant_id);
+  if(selected()?.item_id!==it.item_id)return;
+  $('body-selected').textContent=label(bodyMaterial);$('front-selected').textContent=label(frontMaterial);
+  for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=!m?'':m.visual?.texture_url||m.visual?.preview_url?'Вид по изображению выбранного декора':m.visual?.render_color?'Цвет выбранного декора':'Изображение декора пока не добавлено — нейтральный вид.';}
   renderItems();
 }
 async function searchMaterial(input,results,kind){
@@ -600,6 +602,7 @@ async function searchMaterial(input,results,kind){
     b.onclick=()=>{
       const it=selected();
       if(!it)return;
+      if(templateFor(it)?.production&&Number(m.thickness)!==18){status('Для корпуса и фасадов этого модуля выберите материал толщиной 18 мм.');return;}
       materials.set(String(m.variant_id),m);
       it[kind+'_variant_id']=m.variant_id;
       $(kind+'-selected').textContent=label(m);
@@ -621,13 +624,7 @@ function setMode(mode){
   updateAll();
 }
 function colorFor(m,front=false){
-  const s=((m?.name||'')+' '+(m?.article||'')).toLowerCase();
-  if(s.includes('зел'))return'#718a77';
-  if(s.includes('бел'))return front?'#f0eee7':'#dad7ce';
-  if(s.includes('сер'))return'#848b87';
-  if(s.includes('чер')||s.includes('графит'))return'#424844';
-  if(s.includes('дуб')||s.includes('орех'))return'#a47d59';
-  return front?'#91ab82':'#b89470';
+  return m?.visual?.render_color||m?.renderColor||m?.preview_color||m?.color_hex||(front?'#e5e3d8':'#b9c1b9');
 }
 function rotateXZ(x,z,r){
   const a=r*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
@@ -649,7 +646,7 @@ function facadeCells(it){
 }
 
 function buildItem(it){
-  const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it));
+  const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it),id=>materials.get(String(id)));
   if(parts){
     for(const part of parts){const d=part.size,c=part.position;
       addItemBox(it,d.x/500,d.y/500,d.z/500,c.x/500,c.y/500,c.z/500,colorFor(materials.get(String(part.material.variant_id)),part.role==='front'));
@@ -684,7 +681,7 @@ function buildBoxes(){
 
 function cutlistItem(it){
   const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
-  const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it));
+  const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it),id=>materials.get(String(id)));
   if(parts){
     for(const part of parts){
       const role=part.role==='back'?'fixed':part.role==='front'?'front':'body';
@@ -932,7 +929,8 @@ function exportBazisProject(){
         front_variant_id:it.front_variant_id||null,
         construction:p?{
           key:p.key,
-          parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src),
+          parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
+          back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,
           back:p.back,
           shelves:(it.shelves||p.shelves||[]).map(shelf=>({...shelf,material_variant_id:shelf.material_variant_id||null})),

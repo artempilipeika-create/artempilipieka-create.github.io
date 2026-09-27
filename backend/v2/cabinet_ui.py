@@ -29,15 +29,18 @@ def router():
     planner_files={
         'entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs',
         'state-adapter.mjs','history.mjs','scene.mjs','module-mesh.mjs','placement.mjs',
-        'interaction.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
+        'interaction.mjs','material-visuals.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
+    from .material_visuals import manifest
+    material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}
+    planner_files.update(material_assets)
     @api.get('/account/planner/{asset:path}')
     def planner_asset(asset:str):
         if asset not in planner_files:return Response(status_code=404)
         file=root/'planner'/asset
         if not file.is_file():return Response(status_code=404)
-        mime='text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
+        mime='image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
         return Response(file.read_bytes(),media_type=mime,headers={'Content-Security-Policy':CSP,'X-Content-Type-Options':'nosniff'})
     @api.get('/3d-view')
     @api.get('/3d-view.html')

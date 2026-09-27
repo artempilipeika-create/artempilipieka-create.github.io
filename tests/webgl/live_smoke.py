@@ -7,7 +7,7 @@ save/reopen coverage belongs to the separate real-ASGI/disposable-Postgres suite
 from __future__ import annotations
 import argparse,hashlib,json,sys
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse,parse_qs
 from urllib.request import Request,build_opener,HTTPRedirectHandler
 from urllib.error import HTTPError
 from playwright.sync_api import sync_playwright,expect
@@ -16,6 +16,8 @@ BASE='https://martin-forest-v2-staging-production.up.railway.app'
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tests.webgl.navigation import panel,close_panels
+from backend.v2.material_visuals import manifest,visual_metadata
+from uuid import uuid5,NAMESPACE_URL
 OUT=ROOT/'qa-output/webgl-live'
 CSP="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
 
@@ -47,6 +49,7 @@ def main():
         planner=ROOT/'backend/v2/cabinet_assets/planner'
         for p in planner.glob('*'):
             if p.suffix in ('.mjs','.js','.css'):files['/account/planner/'+p.name]='planner/'+p.name
+        for record in manifest()['decors'].values():files[record['texture_url']]='planner/materials/'+record['asset']
         for name in ['three.module.js','three.core.min.js','OrbitControls.js','manifest.json']:
             files['/account/planner/vendor/'+name]='planner/vendor/'+name
         for path,relative in files.items():
@@ -58,6 +61,10 @@ def main():
             browser=p.chromium.launch(headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
             context=browser.new_context(viewport={'width':1600,'height':1000},accept_downloads=True)
             errors=[];unexpected=[];loaded=[]
+            materials=[]
+            for article in manifest()['decors']:
+                material=dict(kind='material',variant_id=str(uuid5(NAMESPACE_URL,'staging-readonly:'+article)),article=article,name='EGGER '+article,manufacturer='EGGER',thickness=18,length=2800,width=2070)
+                material['visual']=visual_metadata(material);materials.append(material)
             def request(route):
                 req=route.request
                 if not req.url.startswith(BASE+'/'):
@@ -69,6 +76,12 @@ def main():
                     route.fulfill(status=200,content_type='application/json',body='{"user_id":"synthetic-browser-only"}');return
                 if path=='/api/v2/3d-projects':
                     route.fulfill(status=200,content_type='application/json',body='{"items":[]}');return
+                if path=='/api/v2/catalogue/materials':
+                    q=parse_qs(urlparse(req.url).query).get('q',[''])[0]
+                    route.fulfill(status=200,content_type='application/json',body=json.dumps({'items':[m for m in materials if q in m['article']]}));return
+                if path.startswith('/api/v2/catalogue/materials/'):
+                    m=next((m for m in materials if m['variant_id']==path.rsplit('/',1)[-1]),None)
+                    if m:route.fulfill(status=200,content_type='application/json',body=json.dumps(m));return
                 if path.startswith('/api/'):
                     unexpected.append('unexpected API '+path);route.abort();return
                 route.continue_()
@@ -109,7 +122,22 @@ def main():
             for donor,sides,name in [('bazis.0211e4f77fc4',['left'],'D1-L'),('bazis.784bf9af84f8',['right'],'D1-P'),('bazis.3079d0656398',['left','right'],'D2')]:
                 page.evaluate('''()=>{const p=MF_PLANNER,s=p.bridge.snapshot();s.scene.items=[];s.scene.selected_item_id=null;s.selectedId=null;p.bridge.restore(s);p.history.reset();}''')
                 panel(page,'left','catalog');page.locator(f'[data-bazis="{donor}"]').click()
-                panel(page,'right');page.locator('#toggle-doors').click()
+                panel(page,'right')
+                geometry=page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.uuid')
+                for kind,article in [('body','W1000 ST9'),('front','U999 ST7'),('front','U708 ST9'),('front','H1180 ST37')]:
+                    page.locator('#'+kind+'-search').fill(article);page.locator('#'+kind+'-results button').first.click()
+                    page.wait_for_function('kind=>{const p=MF_PLANNER,id=p.adapter.selected[kind+"_variant_id"],ms=[];p.scene.entries.get(p.adapter.selected.item_id).group.traverse(m=>{if(m.isMesh&&m.material.userData.variantId===id)ms.push(m)});return ms.length&&ms.every(m=>m.material.map?.image?.complete)}',arg=kind)
+                    check(name+' published actual texture '+article,page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.uuid')==geometry)
+                snapshot=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())');history=page.evaluate('MF_PLANNER.history.undoStack.length')
+                for mode in ['inspection','facadesHidden','normal']:
+                    page.locator('#module-display').select_option(mode)
+                    check(name+' published view '+mode,page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==snapshot and page.evaluate('MF_PLANNER.history.undoStack.length')==history)
+                    close_panels(page);page.evaluate('MF_PLANNER.setView("3d");MF_PLANNER.scene.fit("selected");MF_PLANNER.scene.render()')
+                    # View angle is project UI state, so capture the invariant again after setting it once.
+                    snapshot=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
+                    screenshot='published-'+name+'-'+mode+'.png';page.screenshot(path=str(OUT/screenshot));report['screenshots'].append(screenshot)
+                    panel(page,'right')
+                page.locator('#toggle-doors').click()
                 data=page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.selected,g=p.scene.entries.get(it.item_id).group,out={item:it,fronts:[],sides:[],angles:[],back:[],shelf:[],reveal:0};g.traverse(o=>{const r=o.userData?.role;if(r==='front')out.fronts.push(o.geometry.userData.envelopeMM);if(r==='door-pivot'){out.sides.push(o.userData.hingeSide);out.angles.push(Math.round(o.rotation.y*180/Math.PI));}if(r==='back'||r==='shelf')out[r].push(o.geometry.userData.envelopeMM);if(r==='reveal')out.reveal++;});return out;}''')
                 check(name+' real back, shelf and facades',data['back']==[[596,716,3]] and data['shelf']==[[564,18,509]] and data['fronts']==[[600/len(sides)-3,717,18]]*len(sides))
                 check(name+' opens correct sides and exposes interior',data['sides']==sides and data['angles']==[-105 if s=='left' else 105 for s in sides] and data['reveal']==0)

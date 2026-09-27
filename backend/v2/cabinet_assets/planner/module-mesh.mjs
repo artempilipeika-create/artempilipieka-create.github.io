@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three.module.js';
+import {materialVisual,physicalPanelUV} from './material-visuals.mjs';
 import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts} from './furniture-core.mjs';
 
 // Rendering consumes canonical manufactured parts; extra dressings remain visual only.
@@ -53,21 +54,59 @@ export class MeshFactory{
     this.contactMaterials={};
     for(const [kind,opacity]of [['floor',.14],['wall',.19]])this.contactMaterials[kind]=new THREE.MeshBasicMaterial({color:'#35443b',alphaMap:this.contactMap,transparent:true,opacity,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
   }
-  material(role,id,ghost=false){
-    const data=id?this.adapter.material(id):null,finish=VISUAL_FINISHES[role]||VISUAL_FINISHES.body;
-    const color=[data?.preview_color,data?.color_hex,data?.color].find(v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v));
-    const url=data?.texture_preview||data?.preview_url;
-    const safe=typeof url==='string'&&url.startsWith('/')&&!url.startsWith('//')&&!url.includes('..')?url:null;
-    const key=[role,id||'',color||'',safe||'',ghost].join('|');
+  material(role,id,ghost=false,inspection=false){
+    const data=id?this.adapter.material(id):null,visual=materialVisual(data),finish=VISUAL_FINISHES[role]||VISUAL_FINISHES.body;
+    const key=JSON.stringify([role,id||'',visual,ghost,inspection]);
     if(!this.materials.has(key)){
-      const m=new THREE.MeshStandardMaterial({...finish,color:color||(safe?'#ffffff':finish.color),vertexColors:role==='front'||role==='counter',transparent:ghost,opacity:ghost?.36:1,depthWrite:!ghost});
-      if(safe&&!ghost){
-        if(!this.textures.has(safe)){const tx=new THREE.TextureLoader().load(safe,()=>this.invalidate(),undefined,()=>{m.map=null;m.needsUpdate=true;this.invalidate();});tx.colorSpace=THREE.SRGBColorSpace;tx.anisotropy=4;this.textures.set(safe,tx);}
-        m.map=this.textures.get(safe);
+      const color=visual.color||(id?'#aeb2b0':finish.color);
+      const m=new THREE.MeshStandardMaterial({...finish,color,roughness:id?visual.roughness:finish.roughness,
+        metalness:role==='handle'?finish.metalness:0,vertexColors:role==='front'||role==='counter',
+        transparent:ghost||inspection,opacity:ghost?.36:inspection?.16:1,depthWrite:!ghost&&!inspection,
+        side:inspection?THREE.DoubleSide:THREE.FrontSide});
+      m.userData={visualSource:visual.source,variantId:id||null,fallbackColor:color};
+      if(visual.url&&!ghost&&!inspection){
+        const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);
+        if(!this.textures.has(txKey)){
+          const tx=new THREE.TextureLoader().load(visual.url,()=>{if(!this.dead)this.invalidate();},undefined,()=>{
+            tx.userData.failed=true;
+            for(const mat of this.materials.values())if(mat.map===tx){mat.map=null;mat.color.set(mat.userData.fallbackColor);mat.userData.visualSource=visual.color?'color':'fallback';mat.needsUpdate=true;}
+            if(!this.dead)this.invalidate();
+          });
+          tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=tx.wrapT=THREE.RepeatWrapping;tx.repeat.set(1000/visual.size[0],1000/visual.size[1]);
+          tx.rotation=rotation*Math.PI/180;tx.anisotropy=4;this.textures.set(txKey,tx);
+        }
+        const tx=this.textures.get(txKey);if(!tx.userData.failed){m.map=tx;m.color.set('#ffffff');}
       }
       this.materials.set(key,m);
     }
     return this.materials.get(key);
+  }
+  updateAppearance(group,it,mode='normal'){
+    const parts=productionParts(it,this.adapter.template(it),id=>this.adapter.material(id)),byKey=new Map((parts||[]).map(p=>[p.key,p]));let changed=false;
+    group.traverse(m=>{
+      if(m.userData.role==='door-pivot'){const visible=mode!=='facadesHidden';if(m.visible!==visible){m.visible=visible;changed=true;}}
+      if(!m.isMesh)return;
+      const role=m.userData.role,part=byKey.get(m.userData.part?.key);
+      if(part)m.userData.part=part;
+      const visible=role==='reveal'?mode==='normal'&&!it.doors_open:(role==='front'||m.userData.frontAccessory)?mode!=='facadesHidden':true;
+      if(role==='front'||role==='reveal'||m.userData.frontAccessory){if(m.visible!==visible){m.visible=visible;changed=true;}}
+      const shell=part?part.role==='front'||part.key.startsWith('side-'):role==='front';
+      const inspection=mode==='inspection'&&shell;
+      const id=part?part.material.variant_id:role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
+      const material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
+      if(m.material!==material){m.material=material;changed=true;}
+      m.castShadow=!group.userData.ghost&&!inspection&&role!=='reveal';m.receiveShadow=!group.userData.ghost&&!inspection;m.renderOrder=inspection?5:0;
+    });
+    return changed;
+  }
+  pruneMaterials(roots){
+    const used=new Set();for(const root of roots)root?.traverse(m=>{if(m.material)used.add(m.material);});
+    if(this.materials.size>64)for(const [key,m]of this.materials){if(!used.has(m)){m.dispose();this.materials.delete(key);}if(this.materials.size<=64)break;}
+    const activeTextures=new Set([...used].map(m=>m.map).filter(Boolean));
+    if(this.textures.size>16)for(const [key,tx]of this.textures){
+      if(!activeTextures.has(tx)){for(const [mk,m]of this.materials)if(m.map===tx&&!used.has(m)){m.dispose();this.materials.delete(mk);}tx.dispose();this.textures.delete(key);}
+      if(this.textures.size<=16)break;
+    }
   }
   acquire(key,create){let value=this.pool.get(key);if(!value){value={geometry:create(),refs:0};this.pool.set(key,value);}value.refs++;return value.geometry;}
   ownsGeometry(g){return g===this.geometry||g===this.plane||[...this.pool.values()].some(v=>v.geometry===g);}
@@ -81,6 +120,8 @@ export class MeshFactory{
     const key=['panel',role,w,h,d,r].join(':');
     const geometry=this.acquire(key,()=>{
       const g=panelGeometry(w,h,d,r);
+      const grainAxis=role==='front'||role==='back'||w<h&&w<d?'y':'x';
+      physicalPanelUV(g,{x:w,y:h,z:d},grainAxis);
       // Edge occlusion lives on the actual panel sides, not lines painted over fronts.
       // It costs no extra draw calls and never enlarges the 1.5 mm production gaps.
       if(role==='front'||role==='counter'){
@@ -102,7 +143,7 @@ export class MeshFactory{
       panelGeometry(9,length,9,1.2).translate(0,0,21*S),
       ...[-1,1].map(sign=>panelGeometry(8,8,18,1).translate(0,sign*(length/2-10)*S,9*S))
     ]));
-    const m=this.mesh(group,'handle',g,key,x,y,z,null,ghost);if(horizontal)m.rotation.z=Math.PI/2;m.userData.visualOnly=true;
+    const m=this.mesh(group,'handle',g,key,x,y,z,null,ghost);if(horizontal)m.rotation.z=Math.PI/2;m.userData.visualOnly=true;m.userData.frontAccessory=true;
   }
   foot(group,x,z,height,ghost){
     const pad=Math.min(6,height/3),key='foot:'+height;const g=this.acquire(key,()=>combine([
@@ -116,7 +157,7 @@ export class MeshFactory{
     group.userData.heights=heights(it);
     const body=it.body_variant_id,front=it.front_variant_id,template=this.adapter.template(it),production=template?.production||null,cells=facadeCells(it,template);
     group.userData.visualApproximation=Boolean(it.bazis_id&&!production);
-    const parts=productionParts(it,template);
+    const parts=productionParts(it,template,id=>this.adapter.material(id));
     if(parts){
       for(const part of parts.filter(p=>p.role!=='front')){
         const d=part.size,c=part.position,m=this.box(group,part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.material.variant_id,ghost);
@@ -132,7 +173,7 @@ export class MeshFactory{
       if(!it.bazis_id)this.box(group,'back',W-2*t,bodyH-2*t,4,0,base+bodyH/2,-D/2+2,body,ghost);
       for(const shelf of it.shelves||[]){
         if(shelf.enabled===false)continue;
-        this.box(group,'shelf',W-shelf.width_clearance,shelf.thickness,D-shelf.depth_clearance,0,base+shelf.offset_mm,shelf.depth_clearance/2,shelf.material_variant_id||body,ghost);
+        const m=this.box(group,'shelf',W-shelf.width_clearance,shelf.thickness,D-shelf.depth_clearance,0,base+shelf.offset_mm,shelf.depth_clearance/2,shelf.material_variant_id||body,ghost);if(m)m.userData.shelfId=shelf.shelf_id;
       }
     }
 
@@ -174,7 +215,7 @@ export class MeshFactory{
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
     }
-    this.position(group,it);return group;
+    this.updateAppearance(group,it);this.position(group,it);return group;
   }
   position(group,it){group.position.set(it.x*S,elevation(it,this.adapter.room)*S,it.z*S);group.rotation.y=-(it.rotation||0)*Math.PI/180;}
   /** Visual worktops and recessed plinth runs; never included in save/cutlist/export. */
@@ -239,8 +280,8 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.body_variant_id,it.front_variant_id,it.doors_open,it.shelves]);}
-  dispose(){this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  dispose(){this.dead=true;this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 
 /** Lazy catalogue thumbnails from the SAME mesh factory and SAME WebGL context. */

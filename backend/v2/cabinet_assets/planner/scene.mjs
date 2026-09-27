@@ -5,6 +5,7 @@ import {MM_TO_WORLD as S,bounds,elevation,tier} from './furniture-core.mjs';
 export class PlannerScene{
   constructor(canvas,adapter,onLost){
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
+    this.displayMode='normal';this.displayItemId=null;
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.0;
@@ -74,6 +75,7 @@ export class PlannerScene{
     const grid=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color:0xa2afa7,transparent:true,opacity:.12}));grid.userData.ownMaterial=true;this.grid=grid;this.roomRoot.add(grid);this.renderer.shadowMap.needsUpdate=true;
   }
   sync(){
+    if(this.displayItemId!==this.adapter.selected?.item_id){this.displayMode='normal';this.displayItemId=this.adapter.selected?.item_id||null;}
     const roomKey=JSON.stringify(this.adapter.room);if(this.roomKey!==roomKey){this.roomKey=roomKey;this.roomMesh();}
     const ids=new Set(this.adapter.items.map(it=>it.item_id));
     for(const [id,entry]of this.entries)if(!ids.has(id)){this.factory.release(entry.group);this.entries.delete(id);this.renderer.shadowMap.needsUpdate=true;}
@@ -81,15 +83,21 @@ export class PlannerScene{
       const signature=this.factory.signature(it);let entry=this.entries.get(it.item_id);
       if(!entry||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}
       this.factory.position(entry.group,it);entry.group.visible=this.layer==='all'||tier(it)===this.layer;
+      if(this.factory.updateAppearance(entry.group,it,it.item_id===this.displayItemId?this.displayMode:'normal'))this.renderer.shadowMap.needsUpdate=true;
     }
-    const dressing=JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.worktop_thickness,it.body_variant_id]));
+    const dressing=JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.worktop_thickness]));
     if(this.dressingKey!==dressing){this.dressingKey=dressing;this.factory.release(this.dressing);this.dressing=this.factory.dress(this.adapter.items);this.scene.add(this.dressing);this.contacts?.removeFromParent();this.contacts=this.factory.contacts(this.adapter.items);this.scene.add(this.contacts);this.fitShadow();}
     if(this.dressing){
       const merged=new Set(this.dressing.userData.mergedPlinthIds||[]);
       for(const [id,entry]of this.entries)entry.group.traverse(m=>{if(m.userData.role==='plinth')m.visible=!merged.has(id);});
       for(const g of this.dressing.children)g.visible=this.layer==='all'||g.userData.tier===this.layer;
     }
+    this.factory.pruneMaterials([this.root,this.dressing,this.preview]);
     this.highlight();this.invalidate();
+  }
+  setDisplayMode(mode){
+    if(!['normal','inspection','facadesHidden'].includes(mode)||!this.adapter.selected)return;
+    this.displayItemId=this.adapter.selected.item_id;this.displayMode=mode;this.sync();
   }
   fitShadow(){
     const box=this.cameraBox('kitchen'),center=box.getCenter(new THREE.Vector3());
@@ -164,7 +172,7 @@ export class PlannerScene{
     this.camera.updateMatrixWorld();this.scene.updateMatrixWorld(true);this.raycaster.setFromCamera(this.ndc,this.camera);
     return this.raycaster;
   }
-  pick(x,y){const ray=this.cast(x,y);const hit=ray.intersectObjects([...this.entries.values()].filter(e=>e.group.visible).map(e=>e.group),true).find(h=>h.object.isMesh&&h.object.userData.itemId);return hit?{id:hit.object.userData.itemId,point:hit.point}:null;}
+  pick(x,y){const ray=this.cast(x,y);const visible=o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};const hit=ray.intersectObjects([...this.entries.values()].filter(e=>e.group.visible).map(e=>e.group),true).find(h=>h.object.isMesh&&h.object.userData.itemId&&visible(h.object));return hit?{id:hit.object.userData.itemId,point:hit.point}:null;}
   planePoint(x,y,plane){const point=new THREE.Vector3();return this.cast(x,y).ray.intersectPlane(plane,point)?point:null;}
   makePlane(it,hit){
     if(this.mode==='front'||this.mode==='left'||this.mode==='right'){

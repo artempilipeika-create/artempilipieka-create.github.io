@@ -26,7 +26,7 @@ class PlannerApplication {
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
       if(reason==='before-project'){this.interaction?.cancel();return;}
-      if(reason==='project'){this.interaction?.cancel();this.history.reset();this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
+      if(reason==='project'){this.interaction?.cancel();this.history.reset();this.scene?.setDisplayMode?.('normal');this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
       this.sync();
     });
     this.history.onChange=()=>{get('planner-undo').disabled=!this.history.undoStack.length;get('planner-redo').disabled=!this.history.redoStack.length;};
@@ -99,6 +99,7 @@ class PlannerApplication {
     this.listen(get('quick-widths'),'click',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopImmediatePropagation();this.interaction?.modify({width:Number(b.textContent)},'Изменение ширины');this.bridge.refresh();},true);
     for(const id of ['body-results','front-results'])this.listen(get(id),'click',e=>{if(!e.target.closest('button'))return;this.history.begin('Материал');queueMicrotask(()=>this.history.commit());},true);
     const shelfEnabled=get('shelf-enabled'),shelfPosition=get('shelf-position'),toggleDoors=get('toggle-doors');
+    this.listen(get('module-display'),'change',()=>this.scene?.setDisplayMode?.(get('module-display').value));
     this.listen(shelfEnabled,'change',()=>{
       const it=this.adapter.selected;if(!it?.shelves?.length)return;
       const shelves=structuredClone(it.shelves);shelves[0].enabled=shelfEnabled.checked;
@@ -158,6 +159,7 @@ class PlannerApplication {
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;
+    const display=get('module-display');if(display){display.value=this.scene.displayMode||'normal';display.disabled=Boolean(this.scene.isFallback||!selected);}
     const note=get('planner-elevation-note');note.textContent=selected?.module_type==='wall_cabinet'?'Низ модуля: '+elevation(selected,this.adapter.room)+' мм. Высота вычисляется по прежнему правилу; отдельная регулировка пока недоступна.':'';
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
     get('studio-empty-scene').hidden=Boolean(count);this.paintMode();

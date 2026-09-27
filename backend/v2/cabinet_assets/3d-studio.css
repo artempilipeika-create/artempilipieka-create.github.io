@@ -25,3 +25,5 @@
 .mf3d-studio button:hover:not(:disabled){filter:none}
 .mf3d-studio .studio-nudge select{min-height:31px}
 .mf3d-studio .studio-card-meta{display:flex;gap:4px}
+
+.mf3d-display-control{display:flex;align-items:center;gap:8px;margin-top:10px}.mf3d-display-control select{flex:1;min-width:0}

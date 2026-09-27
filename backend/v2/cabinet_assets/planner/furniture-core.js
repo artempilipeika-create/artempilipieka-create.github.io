@@ -77,7 +77,7 @@
    * Meshes, cutlist and native export all consume this same deterministic part list.
    * Orientation identifies the length/width/thickness axes of each board blank.
    */
-  function productionParts(it,template){
+  function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(p?.carcass?.type!=='bottom_side_two_rails')return null;
     const {width:W,height:H,depth:D}=it,{body_height:B,base_height:base}=heights(it);
     const t=p.carcass.panel_thickness,rail=p.carcass.rail_height,inner=W-2*t,parts=[];
@@ -104,6 +104,12 @@
         {facade:f,hinge_side:door.side,open_angle:door.open_angle,hinge_count:door.hinge_count,
           pivot:{x:f.cx+(door.side==='left'?-1:1)*f.w/2,y:0,z}});
     });
+    for(const part of parts){
+      const id=it.part_materials?.[part.key]??(part.role==='back'?it.back_variant_id:null)??part.material.variant_id;
+      const m=id?materialLookup(id):null;
+      part.material={variant_id:id||null,name:m?.name||(id?null:part.material.name),article:m?.article||null,
+        manufacturer:m?.manufacturer||null,material_id:m?.material_id||null};
+    }
     return parts;
   }
   function elevation(it,room){

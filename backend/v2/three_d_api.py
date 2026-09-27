@@ -53,11 +53,15 @@ class FurnitureItem(StrictModel):
     handles: Literal['handles','handleless']='handles'
     body_variant_id: UUID|None=None
     front_variant_id: UUID|None=None
+    back_variant_id: UUID|None=None
+    part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if any(not key or len(key)>80 or not all(c.isalnum() or c in '-_' for c in key) for key in self.part_materials):
+            raise ValueError('Invalid production part material key')
         # Additive JSON fields; no database migration or mass rewrite of projects.
         base=0 if self.base=='wall' else self.base_height if self.base_height is not None else 80 if self.base=='plinth' else 60
         if self.base=='wall' and self.base_height not in (None,0):

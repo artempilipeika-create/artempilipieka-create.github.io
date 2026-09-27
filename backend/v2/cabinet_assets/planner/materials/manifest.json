@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "note": "Official full-board images downloaded at the manufacturer-provided 768px rendition. Fixed 1300x2800 mm reference scan; no generated decor or name-based color guesses. Render color is mean sRGB of the downloaded image. Identity remains the catalogue variant ID.",
+  "decors": {
+    "W1000 ST9": {
+      "asset": "egger-w1000-st9.jpg",
+      "texture_url": "/account/planner/materials/egger-w1000-st9.jpg",
+      "render_color": "#fbfcf4",
+      "texture_size_mm": [
+        1300,
+        2800
+      ],
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/W1000_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854478520350/8854478553118/original.jpg?width=768&srcext=png",
+      "sha256": "41b14631d85fd89c69c59df3d9fe57999bf2b45e636638aec3158898aef349cd",
+      "original_sha256": "582809a880bb0fbc0a6b4b5c9204f702ee5daf10ddf0d551b2577c2329b83955"
+    },
+    "U999 ST7": {
+      "asset": "egger-u999-st7.jpg",
+      "texture_url": "/account/planner/materials/egger-u999-st7.jpg",
+      "render_color": "#040406",
+      "texture_size_mm": [
+        1300,
+        2800
+      ],
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U999_7",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854562930718/8854562963486/original.jpg?width=768&srcext=png",
+      "sha256": "bc9090ff21853a3adaa875ba47d58aaece7bdde263d69841645ea870fd5cf4f1",
+      "original_sha256": "9c82dc224faddfed29be0a0f48dcb1bd5f81e87e6cd005f08c3f0a55b88dc9b9"
+    },
+    "U708 ST9": {
+      "asset": "egger-u708-st9.jpg",
+      "texture_url": "/account/planner/materials/egger-u708-st9.jpg",
+      "render_color": "#d3cec8",
+      "texture_size_mm": [
+        1300,
+        2800
+      ],
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/U708_9",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854452502558/8854557032478/original.jpg?width=768&srcext=png",
+      "sha256": "03799b7221489859cedc0dd10d54e4223c58a3d5a904e9eb33774b072fc946ef",
+      "original_sha256": "5272a127c84101b4015a99b12e1fe4763a02cdf1a04e7f185715fcfcd382c8b6"
+    },
+    "H1180 ST37": {
+      "asset": "egger-h1180-st37.jpg",
+      "texture_url": "/account/planner/materials/egger-h1180-st37.jpg",
+      "render_color": "#b49570",
+      "texture_size_mm": [
+        1300,
+        2800
+      ],
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.85,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/H1180_37",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854365503518/8854523150366/original.jpg?width=768&srcext=png",
+      "sha256": "0f9ac2027cf807d8678df948430fddcb7044c89e9f51817c773ce6d53a4c6755",
+      "original_sha256": "560702ce35596693485940d3252a2be97b1fe19155df6d72da59db14c3c05c3a"
+    }
+  }
+}
