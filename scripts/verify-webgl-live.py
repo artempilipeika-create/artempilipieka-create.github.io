@@ -18,7 +18,7 @@ assert status==200 and health.get('ok') and health.get('environment')=='staging'
 result['health']=health;result['health_http_status']=status
 files={'/constructor':'backend/v2/cabinet_assets/constructor-next.html','/constructor-next':'backend/v2/cabinet_assets/constructor-next.html','/account/3d.js':'backend/v2/cabinet_assets/3d.js','/account/3d-studio.js':'backend/v2/cabinet_assets/3d-studio.js'}
 for f in (ROOT/'backend/v2/cabinet_assets/planner').rglob('*'):
-    if f.suffix in ('.js','.mjs','.css') or f.name=='manifest.json':files['/account/planner/'+f.relative_to(ROOT/'backend/v2/cabinet_assets/planner').as_posix()]=f.relative_to(ROOT).as_posix()
+    if f.suffix in ('.js','.mjs','.css','.jpg') or f.relative_to(ROOT/'backend/v2/cabinet_assets/planner').as_posix()=='vendor/manifest.json':files['/account/planner/'+f.relative_to(ROOT/'backend/v2/cabinet_assets/planner').as_posix()]=f.relative_to(ROOT).as_posix()
 for path,source in files.items():
     status,headers,body=get(path)
     assert status==200 and body==(ROOT/source).read_bytes(),path

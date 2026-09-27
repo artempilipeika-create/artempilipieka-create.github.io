@@ -2,7 +2,7 @@ name: Published WebGL read-only acceptance
 on:
   push:
     branches: [martin-forest-v2-staging]
-    paths: ['backend/v2/cabinet_assets/**', 'backend/v2/cabinet_ui.py', '.github/workflows/mf-webgl-live.yml']
+    paths: ['backend/v2/cabinet_assets/**', 'backend/v2/cabinet_ui.py', '.github/workflows/mf-webgl-live.yml', 'scripts/verify-webgl-live.py', 'tests/webgl/live_smoke.py']
 permissions:
   contents: read
 concurrency:
