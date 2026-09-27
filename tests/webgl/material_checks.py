@@ -70,7 +70,7 @@ def test_materials_modes_history_save_load_native_export(page,api,settings,admin
     page.goto('https://testserver/constructor');expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
     panel(page,'left','projects');page.locator('#projects .mf3d-project').first.click()
     page.wait_for_function('id=>MF_PLANNER.adapter.selected?.front_variant_id===id',arg=front)
-    page.wait_for_function('()=>{const p=MF_PLANNER,ms=[];p.scene.entries.get(p.adapter.selected.item_id).group.traverse(m=>{if(m.userData.role==="front")ms.push(m)});return ms.every(m=>m.material.map?.image?.complete)}')
+    page.wait_for_function('()=>{const p=MF_PLANNER,ms=[],g=p.scene.entries.get(p.adapter.selected?.item_id)?.group;if(!g)return false;g.traverse(m=>{if(m.userData.role==="front")ms.push(m)});return ms.length>0&&ms.every(m=>m.material.map?.image?.complete)}')
     assert render_state(page)['mode']=='normal' and render_state(page)['parts']['door-1']['article']==ARTICLES[3]
     assert export_payload(page)['items'][0]==native
     # Cache stability in the actual renderer, while repeatedly changing both materials and modes.
