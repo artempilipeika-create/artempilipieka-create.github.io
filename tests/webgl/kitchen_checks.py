@@ -1,11 +1,13 @@
 """Kitchen foundation through actual catalogue, browser, ASGI and disposable Postgres."""
+import os
+from pathlib import Path
 import pytest
 from playwright.sync_api import expect
 from tests.webgl.browser_checks import page,settings,api,admin_user,open_planner,screenshot
 from tests.webgl.navigation import panel,close_panels
 from tests.webgl.polish_checks import export_payload
 from tests.webgl.material_checks import ARTICLES,NAMES
-from tests.webgl.kitchen_journey import journey,row_data
+from tests.webgl.kitchen_journey import journey,row_data,capture_viewport
 from tests.stage03.test_api import publish,login
 from tests.stage03.support import master
 
@@ -17,8 +19,9 @@ def test_kitchen_row_materials_history_geometry_save_load_and_native_export(page
     checks=[]
     def check(label,result):
         assert result,label
-        checks.append(label)
-    before=journey(page,check,lambda name:screenshot(page,name))
+        checks.append(label);print("PASS:",label,flush=True)
+    out=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/kitchen'))
+    before=journey(page,check,lambda name:capture_viewport(page,out/(name+'.png')))
     native=export_payload(page)
     assert native['format']=='martin-forest-bazis-native-v2' and native['production_schema']==1
     assert len(native['items'])==3 and not native['skipped_non_bazis']
@@ -43,5 +46,5 @@ def test_kitchen_row_materials_history_geometry_save_load_and_native_export(page
     after=row_data(page)
     assert after['runs']==before['runs'] and after['parts']==before['parts'] and after['counters']==before['counters']
     assert export_payload(page)['items']==native['items']
-    close_panels(page);page.evaluate('MF_PLANNER.scene.fit("kitchen");MF_PLANNER.scene.render()');screenshot(page,'kitchen-reloaded')
+    close_panels(page);page.evaluate('MF_PLANNER.scene.fit("kitchen");MF_PLANNER.scene.render()');capture_viewport(page,out/'kitchen-reloaded.png')
     print('Kitchen UI checks:',len(checks),*checks,sep='\n')

@@ -16,7 +16,7 @@ BASE='https://martin-forest-v2-staging-production.up.railway.app'
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tests.webgl.navigation import panel,close_panels
-from tests.webgl.kitchen_journey import journey
+from tests.webgl.kitchen_journey import journey,capture_viewport
 from backend.v2.material_visuals import manifest,visual_metadata
 from uuid import uuid5,NAMESPACE_URL
 OUT=ROOT/'qa-output/webgl-live'
@@ -151,7 +151,7 @@ def main():
                 page.evaluate('MF_PLANNER.setView("3d");MF_PLANNER.scene.fit("selected");MF_PLANNER.scene.render()')
                 page.wait_for_timeout(200);screenshot='published-pilot-'+name+'.png';page.screenshot(path=str(OUT/screenshot));report['screenshots'].append(screenshot)
             def capture_kitchen(name):
-                filename='published-'+name+'.png';page.screenshot(path=str(OUT/filename));report['screenshots'].append(filename)
+                filename='published-'+name+'.png';capture_viewport(page,OUT/filename);report['screenshots'].append(filename)
             journey(page,check,capture_kitchen)
             page.evaluate('''()=>{const p=MF_PLANNER,items=[];for(let i=0;i<6;i++){const a=p.adapter.createDraft({template:i%2?'base.two_door':'base.drawers_3'});Object.assign(a,{width:600,x:-2100+i*600,z:-1500,name:'Нижний '+(i+1)});items.push(a);const u=p.adapter.createDraft({template:'wall.two_door'});Object.assign(u,{width:600,x:-2100+i*600,z:-1600,name:'Верхний '+(i+1)});items.push(u);}const t=p.adapter.createDraft({template:'tall.one_door'});Object.assign(t,{x:1650,z:-1500,name:'Пенал'});items.push(t);p.bridge.restore({name:'Кухня · 13 модулей',scene:{schema_version:2,room:{width:6200,depth:3600,height:2700},items,selected_item_id:items[0].item_id,view_mode:'3d'},selectedId:items[0].item_id});p.history.reset();}''')
             page.locator('#mode-3d').click()

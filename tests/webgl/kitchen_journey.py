@@ -1,9 +1,27 @@
 """Shared UI smoke for disposable ASGI CI and GET-only published staging verification."""
+import base64
+from pathlib import Path
 from playwright.sync_api import expect
 from tests.webgl.navigation import panel,close_panels
 
 DONORS=['bazis.0211e4f77fc4','bazis.3079d0656398','bazis.784bf9af84f8']
 FIELDS={'body':'body_variant_id','front':'front_variant_id','plinth':'plinthMaterialId','countertop':'countertopMaterialId'}
+
+def capture_viewport(page,path):
+    """Capture the fixed constructor viewport without Playwright's full-page resize pass.
+
+    Browser/ASGI routing remains active; CDP captures the actual composited surface.
+    The scene is still rendered by WebGL, including its selected production materials.
+    """
+    page.evaluate('MF_PLANNER.scene.render()')
+    session=page.context.new_cdp_session(page)
+    try:
+        data=session.send('Page.captureScreenshot',{'format':'png','fromSurface':True,'captureBeyondViewport':False})
+        target=Path(path);target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_bytes(base64.b64decode(data['data']))
+    finally:
+        session.detach()
+
 
 def row_data(page):
     return page.evaluate('''()=>{const p=MF_PLANNER;return {items:p.adapter.items,runs:MF_FURNITURE_CORE.kitchenRuns(p.adapter.items,p.adapter.room),undo:p.history.undoStack.length,
