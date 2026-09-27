@@ -35,13 +35,16 @@ def test_client_v3_presentation_occupancy_views_and_panels(page,api,settings,adm
     evidence={}
     def frame(name):
         page.evaluate('MF_PLANNER.scene.render()');m=page.evaluate(METRICS)
-        assert m['fov']==40 and .65<=m['widthFraction']<=.80,m
+        assert m['fov']==36 and .65<=m['widthFraction']<=.80,m
         assert m['heightFraction']<=.825 and m['centerError']<1,m
         v,b=m['viewport'],m['bounds']
         assert v['left']<=b['left']<b['right']<=v['left']+v['width'],m
         assert v['top']<=b['top']<b['bottom']<=v['top']+v['height'],m
         evidence[name]=m;capture_viewport(page,OUT/('client-v3-'+name+'.png'))
     frame('B-client-3d')
+    depth=page.evaluate('''()=>{const s=MF_PLANNER.scene,c=s.dressing.children.flatMap(g=>g.children).find(m=>m.userData.role==='counter'),b=c.geometry.boundingBox,front=b.max.clone(),back=b.max.clone();front.x=back.x=0;back.z=b.min.z;const project=v=>{c.localToWorld(v);return s.projectPoint({x:v.x*1000,y:v.y*1000,z:v.z*1000});};return project(front).y-project(back).y;}''')
+    assert depth>25,depth
+    evidence['B-client-3d']['countertopDepthPx']=depth
     page.locator('#planner-front').click();frame('C-client-front')
     expect(page.locator('#planner-front')).to_have_attribute('aria-pressed','true')
     page.locator('#mode-3d').click();frame('D-wood-facades')

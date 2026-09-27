@@ -147,7 +147,7 @@ export class PlannerScene{
     this.scene.environmentIntensity=client?p.environment:.55;this.renderer.toneMappingExposure=client?p.exposure:1.03;
     // ACES kept after comparing the real U708 preview in the neutral showroom.
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.perspective.fov=client?40:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
+    this.perspective.fov=client?36:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
     // Cached shadow map plus analytic contact masks: no fullscreen AO pass.
     this.sun.shadow.intensity=client?.32:.58;this.sun.shadow.radius=client?12:5;this.renderer.shadowMap.type=THREE.PCFShadowMap;
     this.factory.contactMaterials.floor.opacity=client?.32:.14;this.factory.contactMaterials.wall.opacity=client?.20:.19;
@@ -257,9 +257,9 @@ export class PlannerScene{
     if(box.isEmpty())return this.fit('room');
     this.stopOrbitInertia();this.clientView=view;this.mode='3d';this.camera=this.perspective;
     this.controls.object=this.camera;this.controls.enableRotate=true;this.controls.minPolarAngle=0;this.controls.maxPolarAngle=Math.PI*.495;
-    this.camera.fov=40;this.camera.zoom=1;this.camera.clearViewOffset();this.resize();
+    this.camera.fov=36;this.camera.zoom=1;this.camera.clearViewOffset();this.resize();
     const center=box.getCenter(new THREE.Vector3()),axis=new THREE.Vector3(0,1,0);
-    const dir=(view==='front'?new THREE.Vector3(.035,.14,1):new THREE.Vector3(.42,.23,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
+    const dir=(view==='front'?new THREE.Vector3(.035,.22,1):new THREE.Vector3(.30,.32,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
     const right=axis.clone().cross(dir).normalize(),up=dir.clone().cross(right).normalize(),points=[];
     for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z]){
       const p=new THREE.Vector3(x,y,z).sub(center);points.push({x:p.dot(right),y:p.dot(up),z:p.dot(dir)});

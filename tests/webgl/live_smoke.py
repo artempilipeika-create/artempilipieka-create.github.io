@@ -195,13 +195,13 @@ def main():
             report['client_camera']={}
             def camera_frame(name):
                 m=page.evaluate('''()=>{const s=MF_PLANNER.scene,b=s.cameraBox('kitchen'),points=[];for(const x of[b.min.x,b.max.x])for(const y of[b.min.y,b.max.y])for(const z of[b.min.z,b.max.z])points.push(s.projectPoint({x:x*1000,y:y*1000,z:z*1000}));const rect=s.canvas.getBoundingClientRect(),v=s.clientFit.viewport,left=Math.min(...points.map(p=>p.x))-rect.left,right=Math.max(...points.map(p=>p.x))-rect.left,top=Math.min(...points.map(p=>p.y))-rect.top,bottom=Math.max(...points.map(p=>p.y))-rect.top;return {fov:s.perspective.fov,viewport:v,bounds:{left,right,top,bottom},widthFraction:(right-left)/v.width,heightFraction:(bottom-top)/v.height,view:s.clientFit.view};}''')
-                check('Published Client v3 kitchen occupies 65–80% '+name,m['fov']==40 and .65<=m['widthFraction']<=.8 and m['heightFraction']<=.825)
+                check('Published Client v3 kitchen occupies 65–80% '+name,m['fov']==36 and .65<=m['widthFraction']<=.8 and m['heightFraction']<=.825)
                 report['client_camera'][name]=m;capture_kitchen('client-v3-'+name)
             for preset,label in [('showroom','02-neutral-showroom'),('studio','03-light-studio'),('warm','04-warm-interior')]:
                 page.locator('#planner-room-settings summary').click();page.locator('#room-preset').select_option(preset)
                 page.locator('#planner-room-settings summary').click();page.locator('#reset-view').click()
                 check('Published Client v2 '+preset+' preserves kitchen',page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')==stable)
-                check('Published Client v3 moderate camera and subtle selection',page.evaluate('MF_PLANNER.scene.perspective.fov===40&&MF_PLANNER.scene.selectedBox.material.opacity<.4'))
+                check('Published Client v3 moderate camera and subtle selection',page.evaluate('MF_PLANNER.scene.perspective.fov===36&&MF_PLANNER.scene.selectedBox.material.opacity<.4'))
                 capture_kitchen('client-v2-'+label)
                 if preset=='showroom':camera_frame('B-client-3d');camera_frame('D-wood-facades')
             page.locator('#planner-room-settings summary').click();page.locator('#room-preset').select_option('showroom');page.locator('#planner-room-settings summary').click()

@@ -1,6 +1,6 @@
 // Perspective fit in camera coordinates. Room dimensions never enter this solver.
 // x/y are right/up; z points towards the camera, relative to the kitchen centre.
-export function clientFrame(points,width,height,viewport,fov=40){
+export function clientFrame(points,width,height,viewport,fov=36){
   const focal=height/(2*Math.tan(fov*Math.PI/360));
   const measure=distance=>{
     const xs=points.map(p=>width/2+p.x*focal/(distance-p.z));

@@ -9,7 +9,7 @@ for(const [width,height,viewport]of [
  [1920,1028,{left:390,top:70,width:1110,height:942}],
  [390,792,{left:16,top:70,width:358,height:706}]
 ])test('Client fit fills usable viewport '+width+' / '+viewport.width,()=>{
- const frame=clientFrame(points,width,height,viewport,40);
+ const frame=clientFrame(points,width,height,viewport,36);
  assert.ok(frame.widthFraction>=.65&&frame.widthFraction<=.8);
  assert.ok(frame.heightFraction<=.821);
  assert.ok(frame.bounds.left>=viewport.left&&frame.bounds.right<=viewport.left+viewport.width);

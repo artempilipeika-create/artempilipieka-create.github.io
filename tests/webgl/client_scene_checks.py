@@ -60,7 +60,7 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
         assert page.evaluate('MF_PLANNER.scene.renderer.shadowMap.autoUpdate') is False
         assert page.evaluate('MF_PLANNER.scene.scene.environment.isTexture')
         fit=page.evaluate('''()=>{const s=MF_PLANNER.scene,b=s.cameraBox('kitchen'),points=[];for(const x of[b.min.x,b.max.x])for(const y of[b.min.y,b.max.y])for(const z of[b.min.z,b.max.z])points.push(s.projectPoint({x:x*1000,y:y*1000,z:z*1000}));const r=s.canvas.getBoundingClientRect();return {points,r:{x:r.x,y:r.y,width:r.width,height:r.height},fov:s.perspective.fov};}''')
-        assert fit['fov']==40
+        assert fit['fov']==36
         assert all(fit['r']['x']+20<p['x']<fit['r']['x']+fit['r']['width']-20 and fit['r']['y']+40<p['y']<fit['r']['y']+fit['r']['height']-20 for p in fit['points'])
         if preset=='warm':
             floor=page.evaluate('''()=>{const s=MF_PLANNER.scene;return {planks:s.clientFloor.userData.plankSizeMm,scale:s.clientFloor.userData.scanSizeMm,anisotropy:s.floorTexture.anisotropy,max:s.renderer.capabilities.getMaxAnisotropy(),roughness:s.clientFloor.material.roughness};}''')
@@ -94,25 +94,23 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
     page.locator('#planner-client').click();page.wait_for_function('MF_PLANNER.scene.mode==="3d"')
     restored=page.evaluate('MF_PLANNER.scene.captureView()')
     assert max(abs(a-b) for a,b in zip(restored['position'],technical['position']))<.001
-    # Reload the saved document before another download. Chromium can retain
-    # a blob-download navigation while a following Page.goto is pending.
-    # The complete native export is compared after reloading the API document.
-    navigation={'saveState':page.locator('#studio-save-state').inner_text(),'dialogs':[]}
-    def leave(dialog):
-        navigation['dialogs'].append(dialog.type);dialog.accept()
-    page.on('dialog',leave)
+    # A fresh document has no in-memory project or pending blob-download
+    # navigation. It must recover the real saved project through the API/UI.
+    # Context cookies and the real ASGI/Postgres transport are shared.
+    reopened=page.context.new_page();errors=[]
+    reopened.on('pageerror',lambda e:errors.append(str(e)))
     try:
-        page.reload(wait_until='domcontentloaded')
-        expect(page.locator('body')).to_have_attribute('data-planner-ready','true',timeout=20000)
+        reopened.goto('https://testserver/constructor',wait_until='domcontentloaded')
+        expect(reopened.locator('body')).to_have_attribute('data-planner-ready','true',timeout=20000)
+        panel(reopened,'left','projects');reopened.locator('#projects .mf3d-project').filter(has_text=saved.get('name','Новый 3D-проект')).first.click()
+        reopened.wait_for_function('id=>MF_PLANNER.adapter.projectId===id',arg=pid)
+        reopened.wait_for_function('''()=>{const p=MF_PLANNER,ms=[];p.scene.root.traverse(m=>{if(m.isMesh&&m.material.userData.variantId)ms.push(m)});return ms.length>10&&ms.every(m=>m.material.map?.image?.complete)}''')
+        assert reopened.evaluate('MF_PLANNER.adapter.state.displaySettings')==saved['displaySettings']
+        actual=export_payload(reopened)
+        assert actual['items']==native['items'] and actual['kitchen_production']==native['kitchen_production']
+        assert not errors,errors
     finally:
-        (OUT/'client-v2-reload-navigation.json').write_text(json.dumps(navigation,ensure_ascii=False,indent=2))
-    assert all(kind=='beforeunload' for kind in navigation['dialogs']),navigation
-    panel(page,'left','projects');page.locator('#projects .mf3d-project').filter(has_text=saved.get('name','Новый 3D-проект')).first.click()
-    page.wait_for_function('id=>MF_PLANNER.adapter.projectId===id',arg=pid)
-    page.wait_for_function('''()=>{const p=MF_PLANNER,ms=[];p.scene.root.traverse(m=>{if(m.isMesh&&m.material.userData.variantId)ms.push(m)});return ms.length>10&&ms.every(m=>m.material.map?.image?.complete)}''')
-    assert page.evaluate('MF_PLANNER.adapter.state.displaySettings')==saved['displaySettings']
-    actual=export_payload(page)
-    assert actual['items']==native['items'] and actual['kitchen_production']==native['kitchen_production']
+        reopened.evaluate('window.MF_PLANNER?.dispose()');reopened.close()
     (OUT/'client-v2-acceptance.json').write_text(json.dumps({'success':True,'modules':DONORS,'screenshots':5,'furniture_identity_preserved':True,'native_export_preserved':True,'real_save_load':True,'settings':saved['displaySettings']},indent=2))
 
 @pytest.mark.timeout(120)
