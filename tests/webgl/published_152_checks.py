@@ -120,7 +120,7 @@ def main():
             page.locator('#room-wall-color').evaluate("e=>{e.value='#bbccdd';e.dispatchEvent(new Event('change',{bubbles:true}))}")
             page.locator('#room-floor').select_option('oak');page.locator('#room-lighting').select_option('warm')
             expected_room={'environmentPreset':'showroom','wallColor':'#bbccdd','floorMaterial':'oak','lightingPreset':'warm'}
-            check('Published custom wall color floor and lighting',page.evaluate('MF_PLANNER.bridge.payload().scene.displaySettings')==expected_room)
+            check('Published custom wall color floor and lighting',page.evaluate('MF_PLANNER.adapter.state.displaySettings')==expected_room)
             check('Published room changes preserve furniture',page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')==furniture)
             screenshot='published-custom-room.png';page.screenshot(path=str(OUT/screenshot));report['screenshots'].append(screenshot)
             page.locator('#planner-client').click();page.locator('#planner-room-settings summary').click();panel(page,'right')
