@@ -1,0 +1,41 @@
+name: Published acceptance of approved 152a82e
+on:
+  push:
+    branches: [mf-published-smoke-152a82e]
+permissions:
+  contents: read
+jobs:
+  published-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      APP_COMMIT: 152a82eacd0b89f402a10ec5c580f14965ba66c6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ensure QA branch has not changed approved application files
+        run: git diff --exit-code "$APP_COMMIT" -- backend agent Dockerfile scripts
+      - name: Install pinned browser
+        run: |
+          pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Check published bytes and full browser journey without live API writes
+        run: |
+          python scripts/verify-webgl-live.py "$APP_COMMIT" "6b9fe037-2abf-47f1-a55f-05c515f9bc5b"
+          mv qa-output/webgl-live/results.json qa-output/webgl-live/surface-check.json
+          python tests/webgl/published_152_checks.py --commit "$APP_COMMIT"
+          python tests/webgl/visual_capture.py --live --out qa-output/webgl-live/visual
+          python tests/webgl/workspace_capture.py --live --out qa-output/webgl-live/workspace
+          python tests/webgl/polish_capture.py --live --out qa-output/webgl-live/polish-v2
+          git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: published-152a82e-evidence
+          path: qa-output/webgl-live/
+          retention-days: 14
