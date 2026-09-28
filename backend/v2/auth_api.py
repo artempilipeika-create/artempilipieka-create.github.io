@@ -172,11 +172,15 @@ def router(settings, policy):
                 conn.execute('UPDATE mf_email_verifications SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL AND consumed_at IS NULL',(user['user_id'],))
                 user = conn.execute('''UPDATE mf_users SET email=%s,email_version=email_version+1,email_verified_at=NULL,
                     verification_migration_state='unverified',updated_at=now() WHERE user_id=%s RETURNING *''',(body.email,user['user_id'])).fetchone()
-                # Email change cannot circumvent resend budget. Request a new message after cooldown.
                 conn.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(user['user_id'],))
-                new_session(conn,policy,user['user_id'],response)
-                record_event(conn,settings,actor=user['user_id'],action='email.changed',object_type='user',object_id=user['user_id'],reason='Password reauthentication; tokens and sessions revoked')
-                return {'email_verified':False,'verification_request_required':True}
+                delivery_id = queue_verification(conn,settings,policy,user,network_bucket(request))
+                record_event(conn,settings,actor=user['user_id'],action='email.changed',object_type='user',object_id=user['user_id'],reason='Password reauthentication; sessions revoked; verification required')
         except UniqueViolation:
             error(409,'EMAIL_UNAVAILABLE')
+        response.delete_cookie(COOKIE,path='/',secure=True,httponly=True,samesite='lax')
+        try:
+            deliver_verification(settings,policy,delivery_id)
+        except MailDeliveryError:
+            error(503,'EMAIL_DELIVERY_FAILED')
+        return {'email_verified':False,'verification_request_required':False}
     return api
