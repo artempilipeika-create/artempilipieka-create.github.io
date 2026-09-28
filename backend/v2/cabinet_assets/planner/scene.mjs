@@ -110,14 +110,43 @@ export class PlannerScene{
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(points,3));
     const grid=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color:0xa2afa7,transparent:true,opacity:.12}));grid.userData.ownMaterial=true;this.grid=grid;this.roomRoot.add(grid);this.renderer.shadowMap.needsUpdate=true;
   }
+  clearSelection(){
+    this.selectionScope='module';this.displayMode='normal';this.displayItemId=null;
+    this.selectedBox.visible=false;this.selectedBox.box.makeEmpty();
+    this.hoverBox.visible=false;this.hoverBox.box.makeEmpty();
+    for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();box.removeFromParent();}
+    this.kitchenBoxes.clear();this.placeLabel();
+  }
+  resetProject(){
+    this.clearSelection();
+    this.factory.release(this.preview);this.preview=null;this.previewSignature=null;
+    this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);
+    for(const entry of this.entries.values())this.factory.release(entry.group);
+    this.entries.clear();this.factory.release(this.dressing);this.dressing=null;this.dressingKey=null;
+    this.contacts?.removeFromParent();this.contacts=null;this.renderer.shadowMap.needsUpdate=true;
+  }
+  liveEntry(id,items=this.adapter.items){
+    const entry=this.entries.get(id);
+    return entry?.group.parent===this.root&&this.root.parent===this.scene&&items.some(it=>it.item_id===id)?entry:null;
+  }
   sync(){
-    if(this.selectionScope!=='kitchen'&&this.displayItemId!==this.adapter.selected?.item_id){this.displayMode='normal';this.displayItemId=this.adapter.selected?.item_id||null;}
-    const roomKey=JSON.stringify([this.adapter.room,roomSettings(this.adapter.state?.displaySettings)]);if(this.roomKey!==roomKey){this.roomKey=roomKey;this.roomMesh();this.setPresentation(document.body.classList.contains('planner-client'));}
+    // A restore replaces the scene document even when module IDs are reused.
+    // Release the old object graph before room/presentation can call highlight.
+    if(this.syncedState!==this.adapter.state){
+      // Undo/Redo may keep the kitchen scope, but never its old mesh references.
+      // Project navigation clears that scope in before-project.
+      const keepKitchen=this.selectionScope==='kitchen'&&this.adapter.items.some(it=>this.entries.has(it.item_id));
+      this.resetProject();if(keepKitchen)this.selectionScope='kitchen';this.syncedState=this.adapter.state;
+    }
     const ids=new Set(this.adapter.items.map(it=>it.item_id));
     for(const [id,entry]of this.entries)if(!ids.has(id)){this.factory.release(entry.group);this.entries.delete(id);this.renderer.shadowMap.needsUpdate=true;}
+    this.hover(null);
+    if(this.selectionScope==='kitchen'&&!this.adapter.items.some(it=>kitchenSettings(it)))this.clearSelection();
+    if(this.selectionScope!=='kitchen'&&this.displayItemId!==this.adapter.selected?.item_id){this.displayMode='normal';this.displayItemId=this.adapter.selected?.item_id||null;}
+    const roomKey=JSON.stringify([this.adapter.room,roomSettings(this.adapter.state?.displaySettings)]);if(this.roomKey!==roomKey){this.roomKey=roomKey;this.roomMesh();this.setPresentation(document.body.classList.contains('planner-client'));}
     for(const it of this.adapter.items){
       const signature=this.factory.signature(it);let entry=this.entries.get(it.item_id);
-      if(!entry||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}
+      if(!entry||entry.group.parent!==this.root||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}
       this.factory.position(entry.group,it);entry.group.visible=this.layer==='all'||tier(it)===this.layer;
       if(this.factory.updateAppearance(entry.group,it,this.selectionScope==='kitchen'&&kitchenSettings(it)||it.item_id===this.displayItemId?this.displayMode:'normal'))this.renderer.shadowMap.needsUpdate=true;
     }
@@ -172,20 +201,22 @@ export class PlannerScene{
   }
   setLayer(value){this.layer=value;this.renderer.shadowMap.needsUpdate=true;this.sync();}
   highlight(error=''){
-    const it=this.adapter.selected,entry=it?this.entries.get(it.item_id):null;
+    const items=this.adapter.items,it=this.adapter.selected,entry=it?this.liveEntry(it.item_id,items):null;
     const whole=this.selectionScope==='kitchen',show=!this.preview;
     this.selectedBox.material.opacity=this.client?.32:.78;
-    for(const [id,box]of this.kitchenBoxes)if(!this.entries.has(id)){box.geometry.dispose();box.material.dispose();box.removeFromParent();this.kitchenBoxes.delete(id);}
+    for(const [id,box]of this.kitchenBoxes)if(!this.liveEntry(id,items)){box.geometry.dispose();box.material.dispose();box.removeFromParent();this.kitchenBoxes.delete(id);}
     for(const [id,e]of this.entries){
+      const item=items.find(it=>it.item_id===id);if(!item||!this.liveEntry(id,items))continue;
       let box=this.kitchenBoxes.get(id);
       if(whole&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
-      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(whole&&show&&e.group.visible&&kitchenSettings(this.adapter.items.find(it=>it.item_id===id)));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
+      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(whole&&show&&e.group.visible&&kitchenSettings(item));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
     }
     this.selectedBox.visible=Boolean(!whole&&entry?.group.visible&&show);
     if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':this.client?'#79796b':'#346d4a');}
+    else this.selectedBox.box.makeEmpty();
     this.placeLabel();
   }
-  hover(id){const entry=this.entries.get(id);this.hoverBox.visible=Boolean(entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview&&!document.body.classList.contains('planner-client'));if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group).expandByScalar(.003);this.invalidate();}
+  hover(id){const entry=this.liveEntry(id);this.hoverBox.visible=Boolean(entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview&&!document.body.classList.contains('planner-client'));if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group).expandByScalar(.003);else this.hoverBox.box.makeEmpty();this.invalidate();}
   placeLabel(){
     const label=document.getElementById('planner-dimension');if(!label)return;
     const it=this.adapter.selected;
@@ -290,7 +321,7 @@ export class PlannerScene{
     this.camera.updateMatrixWorld();this.scene.updateMatrixWorld(true);this.raycaster.setFromCamera(this.ndc,this.camera);
     return this.raycaster;
   }
-  pick(x,y){const ray=this.cast(x,y);const visible=o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};const hit=ray.intersectObjects([...this.entries.values()].filter(e=>e.group.visible).map(e=>e.group),true).find(h=>h.object.isMesh&&h.object.userData.itemId&&visible(h.object));return hit?{id:hit.object.userData.itemId,point:hit.point}:null;}
+  pick(x,y){const ray=this.cast(x,y);const visible=o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};const hit=ray.intersectObjects(this.adapter.items.map(it=>this.liveEntry(it.item_id)).filter(e=>e?.group.visible).map(e=>e.group),true).find(h=>h.object.isMesh&&h.object.userData.itemId&&visible(h.object));return hit?{id:hit.object.userData.itemId,point:hit.point}:null;}
   planePoint(x,y,plane){const point=new THREE.Vector3();return this.cast(x,y).ray.intersectPlane(plane,point)?point:null;}
   makePlane(it,hit){
     if(this.mode==='front'||this.mode==='left'||this.mode==='right'){

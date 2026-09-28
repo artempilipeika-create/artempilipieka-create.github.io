@@ -1,7 +1,7 @@
 name: WebGL planner acceptance
 on:
   push:
-    branches: [mf-webgl-planner-20260926, mf-pilot-d1-d2-20260926, mf-three-module-pilot-20260927, mf-kitchen-foundation-20260927, mf-visuals-pricing-20260927, mf-client-scene-polish-v2-20260927, mf-client-camera-v3-20260928]
+    branches: [mf-webgl-planner-20260926, mf-pilot-d1-d2-20260926, mf-three-module-pilot-20260927, mf-kitchen-foundation-20260927, mf-visuals-pricing-20260927, mf-client-scene-polish-v2-20260927, mf-client-camera-v3-20260928, mf-selection-lifecycle-20260928]
     paths: ['backend/v2/**', 'tests/**', '.github/workflows/mf-webgl-review.yml', '.github/workflows/mf-webgl-live.yml']
 permissions:
   contents: read
@@ -26,7 +26,7 @@ jobs:
           - suite: planner
             tests: tests/webgl/polish_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/client_pricing_checks.py
           - suite: interaction
-            tests: tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py
+            tests: tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py tests/webgl/selection_checks.py
           - suite: application
             tests: tests/stage07/browser_checks.py tests/stage84/browser_checks.py
           - suite: client
@@ -76,6 +76,7 @@ jobs:
           set -o pipefail
           node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/pricing.test.mjs tests/webgl/room.test.mjs tests/webgl/client-camera.test.mjs | tee qa-output/webgl/core.tap
           node --test tests/order_entry/entry_helpers.test.cjs | tee qa-output/webgl/order-entry.tap
+          node --test tests/webgl/selection.test.mjs | tee qa-output/webgl/selection.tap
       - name: Install existing pinned browser dependencies
         run: |
           pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0

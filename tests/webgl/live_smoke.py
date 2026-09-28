@@ -1,6 +1,6 @@
 """Post-deploy staging frontend smoke.
 All HTML/CSS/JS are fetched from the real staging /constructor. Auth and project
-READ responses are synthetic for the interactive test; no live credentials,
+responses and browser-only project saves are synthetic; no live credentials,
 project writes, orders, messages or database mutations are used. Backend
 save/reopen coverage belongs to the separate real-ASGI/disposable-Postgres suite.
 """
@@ -17,6 +17,8 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tests.webgl.navigation import panel,close_panels
 from tests.webgl.kitchen_journey import journey,capture_viewport,choose
+from tests.webgl.selection_journey import selection_journey
+from tests.webgl.synthetic_projects import SyntheticProjects
 from backend.v2.material_visuals import manifest,visual_metadata
 from uuid import uuid5,NAMESPACE_URL
 OUT=ROOT/'qa-output/webgl-live'
@@ -29,7 +31,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--commit',required=True);args=parser.parse_args()
     OUT.mkdir(parents=True,exist_ok=True)
     report={'expected_commit':args.commit,'base':BASE,'route':'/constructor','live_writes':0,
-            'api_mode':'synthetic auth/project reads, actual deployed HTML/CSS/JS; no live backend save claim',
+            'api_mode':'synthetic auth and browser-only project persistence, actual deployed HTML/CSS/JS; no live backend save claim',
             'checks':[],'assets':[],'screenshots':[]}
     def check(label,condition):
         assert condition,label
@@ -61,7 +63,7 @@ def main():
         with sync_playwright() as p:
             browser=p.chromium.launch(headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
             context=browser.new_context(viewport={'width':1600,'height':1000},accept_downloads=True)
-            errors=[];unexpected=[];loaded=[]
+            errors=[];unexpected=[];loaded=[];synthetic_projects=SyntheticProjects()
             materials=[]
             for article in manifest()['decors']:
                 material=dict(kind='material',variant_id=str(uuid5(NAMESPACE_URL,'staging-readonly:'+article)),article=article,name='EGGER '+article,manufacturer='EGGER',thickness=18,length=2800,width=2070)
@@ -71,12 +73,11 @@ def main():
                 if not req.url.startswith(BASE+'/'):
                     unexpected.append('external request');route.abort();return
                 path=urlparse(req.url).path
+                if synthetic_projects.route(route,path):return
                 if req.method!='GET':
                     unexpected.append(req.method+' '+path);route.abort();return
                 if path=='/api/v2/auth/me':
                     route.fulfill(status=200,content_type='application/json',body='{"user_id":"synthetic-browser-only"}');return
-                if path=='/api/v2/3d-projects':
-                    route.fulfill(status=200,content_type='application/json',body='{"items":[]}');return
                 if path=='/api/v2/catalogue/materials':
                     q=parse_qs(urlparse(req.url).query).get('q',[''])[0]
                     route.fulfill(status=200,content_type='application/json',body=json.dumps({'items':[m for m in materials if q in m['article']]}));return
@@ -226,6 +227,8 @@ def main():
             page.locator('#planner-mobile-catalog').click();expect(page.locator('.mf3d-left')).to_be_visible()
             page.locator('#planner-mobile-inspector').click();expect(page.locator('.mf3d-right')).to_be_visible();expect(page.locator('.mf3d-left')).to_be_hidden()
             check('Published mobile panels',True)
+            selection_journey(page,check)
+            report['selection_lifecycle']={'success':True,'synthetic_project_writes':synthetic_projects.writes,'live_writes':0}
             before=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
             page.evaluate('MF_PLANNER.scene.renderer.forceContextLoss()')
             expect(page.locator('body')).to_have_attribute('data-planner-renderer','fallback')

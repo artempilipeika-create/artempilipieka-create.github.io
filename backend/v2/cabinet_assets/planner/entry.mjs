@@ -27,8 +27,13 @@ class PlannerApplication {
     await this.startRenderer();
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
-      if(reason==='before-project'){this.interaction?.cancel();return;}
-      if(reason==='project'){this.interaction?.cancel();this.history.reset();if(get('material-scope'))get('material-scope').value='module';if(this.scene)this.scene.selectionScope='module';this.scene?.setDisplayMode?.('normal');this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
+      if(reason==='before-project'){
+        this.interaction?.cancel();
+        if(get('material-scope'))get('material-scope').value='module';
+        if(this.scene)this.scene.selectionScope='module';this.scene?.clearSelection?.();
+        this.adapter.select(null);return;
+      }
+      if(reason==='project'){this.interaction?.cancel();this.history.reset();this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
       this.sync();
     });
     this.history.onChange=()=>{get('planner-undo').disabled=!this.history.undoStack.length;get('planner-redo').disabled=!this.history.redoStack.length;};
@@ -178,8 +183,10 @@ class PlannerApplication {
   }
   sync(){
     if(!this.scene)return;const count=this.adapter.items.length;
+    const selectedId=this.adapter.state?.selected_item_id;
+    if(selectedId&&!this.adapter.items.some(it=>it.item_id===selectedId)){this.adapter.select(null);return;}
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.scene.sync();this.roomPricing?.sync();
+    this.scene.sync();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;
