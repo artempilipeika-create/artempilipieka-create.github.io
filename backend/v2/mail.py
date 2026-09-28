@@ -27,6 +27,13 @@ def provider_name():
     return provider
 
 
+def validate_mail_config():
+    provider = provider_name()
+    if provider == 'smtp':
+        _smtp_config()
+    return provider
+
+
 def _smtp_config():
     host = os.environ.get('MF_SMTP_HOST', '').strip()
     username = os.environ.get('MF_SMTP_USERNAME', '').strip()
