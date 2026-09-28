@@ -9,11 +9,9 @@ import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from html import escape
 from pathlib import Path
 from typing import Optional
 
-import resend
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -61,17 +59,6 @@ class SessionToken(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-
-
-class EmailVerification(Base):
-    __tablename__ = "email_verifications"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -188,34 +175,6 @@ def token_digest(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def verification_url(token: str) -> str:
-    base = os.getenv("PUBLIC_BASE_URL", "https://martin-forest-v2-staging-production.up.railway.app").rstrip("/")
-    return f"{base}/verify-email.html#token={token}"
-
-
-def send_verification_email(email: str, token: str):
-    api_key = os.getenv("RESEND_API_KEY", "").strip()
-    if not api_key:
-        raise RuntimeError("RESEND_API_KEY is not configured")
-    resend.api_key = api_key
-    url = verification_url(token)
-    safe_url = escape(url, quote=True)
-    sender = os.getenv("RESEND_FROM", "Martin Forest <onboarding@resend.dev>").strip()
-    return resend.Emails.send({
-        "from": sender,
-        "to": email,
-        "subject": "Подтвердите email — Martin Forest",
-        "html": (
-            '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">'
-            '<h2 style="color:#173f2e">Подтверждение email</h2>'
-            '<p>Вы зарегистрировались на сайте Martin Forest.</p>'
-            f'<p><a href="{safe_url}" style="display:inline-block;padding:12px 18px;background:#173f2e;color:white;text-decoration:none;border-radius:8px">Подтвердить email</a></p>'
-            '<p style="color:#666;font-size:13px">Ссылка действует 24 часа. Если вы не регистрировались, просто проигнорируйте это письмо.</p>'
-            '</div>'
-        ),
-    })
-
-
 def issue_session(db: Session, user_id: int) -> str:
     token = secrets.token_urlsafe(36)
     db.add(SessionToken(user_id=user_id, token_hash=token_digest(token), expires_at=utcnow() + timedelta(days=30)))
@@ -301,14 +260,6 @@ class LoginIn(BaseModel):
     password: str
 
 
-class VerifyEmailIn(BaseModel):
-    token: str = Field(min_length=32, max_length=200)
-
-
-class ResendVerificationIn(BaseModel):
-    email: EmailStr
-
-
 class SourceFileIn(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     type: str = Field(default="application/octet-stream", max_length=160)
@@ -386,80 +337,17 @@ def health():
     return {"ok": True, "time": utcnow().isoformat()}
 
 
-@app.post("/api/auth/register", status_code=201)
-def register(data: RegisterIn, db: Session = Depends(db_session)):
+@app.post("/api/auth/register")
+def register(data: RegisterIn, response: Response, db: Session = Depends(db_session)):
     email = data.email.lower().strip()
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(409, "Такой email уже зарегистрирован")
-
     u = User(name=data.name.strip(), email=email, phone=data.phone.strip(), password_hash=hash_password(data.password), role="customer", permissions_json="[]")
-    db.add(u)
-    db.flush()
-
-    token = secrets.token_urlsafe(36)
-    verification = EmailVerification(
-        user_id=u.id,
-        token_hash=token_digest(token),
-        expires_at=utcnow() + timedelta(hours=24),
-    )
-    db.add(verification)
-    db.commit()
-    db.refresh(u)
-
-    try:
-        send_verification_email(u.email, token)
-    except Exception as exc:
-        audit(db, u.id, "auth.verification_send_failed", "user", u.id, {"error": type(exc).__name__})
-        raise HTTPException(502, "Аккаунт создан, но письмо подтверждения не отправилось. Используйте повторную отправку.") from None
-
-    verification.sent_at = utcnow()
-    db.commit()
-    audit(db, u.id, "auth.register", "user", u.id, {"emailVerification": "sent"})
-    return {"ok": True, "verificationRequired": True, "email": u.email}
-
-
-@app.post("/api/auth/resend-verification", status_code=202)
-def resend_verification(data: ResendVerificationIn, db: Session = Depends(db_session)):
-    email = data.email.lower().strip()
-    u = db.scalar(select(User).where(User.email == email))
-    if not u:
-        return {"ok": True}
-
-    verification = db.scalar(select(EmailVerification).where(EmailVerification.user_id == u.id))
-    if not verification or verification.verified_at is not None:
-        return {"ok": True}
-
-    sent_at = ensure_aware(verification.sent_at)
-    if sent_at and (utcnow() - sent_at).total_seconds() < 60:
-        raise HTTPException(429, "Повторная отправка доступна через минуту")
-
-    token = secrets.token_urlsafe(36)
-    verification.token_hash = token_digest(token)
-    verification.expires_at = utcnow() + timedelta(hours=24)
-    db.commit()
-
-    try:
-        send_verification_email(u.email, token)
-    except Exception as exc:
-        audit(db, u.id, "auth.verification_send_failed", "user", u.id, {"error": type(exc).__name__})
-        raise HTTPException(502, "Письмо подтверждения не отправилось. Попробуйте ещё раз позже.") from None
-
-    verification.sent_at = utcnow()
-    db.commit()
-    audit(db, u.id, "auth.verification_resent", "user", u.id)
-    return {"ok": True}
-
-
-@app.post("/api/auth/verify-email")
-def verify_email(data: VerifyEmailIn, db: Session = Depends(db_session)):
-    verification = db.scalar(select(EmailVerification).where(EmailVerification.token_hash == token_digest(data.token)))
-    if not verification or verification.verified_at is not None or ensure_aware(verification.expires_at) <= utcnow():
-        raise HTTPException(400, "Ссылка подтверждения недействительна или истекла")
-
-    verification.verified_at = utcnow()
-    db.commit()
-    audit(db, verification.user_id, "auth.email_verified", "user", verification.user_id)
-    return {"ok": True, "emailVerified": True}
+    db.add(u); db.commit(); db.refresh(u)
+    token = issue_session(db, u.id)
+    response.set_cookie("mf_session", token, httponly=True, samesite="lax", secure=False, max_age=30*24*3600)
+    audit(db, u.id, "auth.register", "user", u.id)
+    return {"ok": True, "user": public_user(u)}
 
 
 @app.post("/api/auth/login")
@@ -467,9 +355,6 @@ def login(data: LoginIn, response: Response, db: Session = Depends(db_session)):
     u = db.scalar(select(User).where(User.email == data.email.lower().strip()))
     if not u or not verify_password(data.password, u.password_hash):
         raise HTTPException(401, "Неверный email или пароль")
-    verification = db.scalar(select(EmailVerification).where(EmailVerification.user_id == u.id))
-    if verification and verification.verified_at is None:
-        raise HTTPException(403, "Сначала подтвердите email. Ссылка отправлена на вашу почту.")
     token = issue_session(db, u.id)
     response.set_cookie("mf_session", token, httponly=True, samesite="lax", secure=False, max_age=30*24*3600)
     audit(db, u.id, "auth.login", "user", u.id)
