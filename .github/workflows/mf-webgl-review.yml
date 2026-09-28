@@ -26,7 +26,7 @@ jobs:
           - suite: planner
             tests: tests/webgl/polish_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/client_pricing_checks.py
           - suite: interaction
-            tests: tests/webgl/selection_checks.py tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py
+            tests: tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py
           - suite: application
             tests: tests/stage07/browser_checks.py tests/stage84/browser_checks.py
           - suite: client
@@ -100,6 +100,9 @@ jobs:
           cp tests/webgl/client_camera_checks.py /tmp/mf-client-baseline/tests/webgl/client_camera_checks.py
           cd /tmp/mf-client-baseline
           MF_TEST_EVIDENCE_DIR="$GITHUB_WORKSPACE/qa-output/webgl/baseline" python -m pytest tests/webgl/client_pricing_checks.py::test_client_room_twenty_pilot_modules_render_budget tests/webgl/client_camera_checks.py::test_record_accepted_camera -vv --timeout=120
+      - name: Selection lifecycle regression with real project save and load
+        if: matrix.suite == 'interaction'
+        run: python -m pytest tests/webgl/selection_checks.py -vv -s --timeout=240 --junitxml=qa-output/webgl/selection.xml
       - name: Actual browser and ASGI regression on exact committed source
         if: success() || (matrix.suite == 'client' && !cancelled())
         run: |

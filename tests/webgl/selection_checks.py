@@ -6,6 +6,7 @@ from tests.webgl.selection_journey import selection_journey
 
 @pytest.mark.timeout(240)
 def test_bulk_selection_project_lifecycle(page,api,settings,admin_user):
+    page.on('dialog',lambda dialog:dialog.accept())
     row(page,api,admin_user)
     def check(label,condition):assert condition,label
     selection_journey(page,check)
