@@ -8,7 +8,37 @@
   <div class="mf-navigation"><nav class="mf-nav" aria-label="Основная навигация"><a href="index.html">Главная</a><a href="about/">О компании</a><a href="services/">Услуги</a><a href="how-it-works/">Как мы работаем</a><a href="contacts/">Контакты</a></nav><div class="mf-actions"><a class="mf-account" data-account-link href="login.html">Войти</a><a class="mf-cta" href="order/">Подготовить заказ</a></div></div>
   <div class="mf-staff-links"><a data-staff-link hidden href="scraps.html">Обрезки</a><a data-staff-link hidden id="adminNav" href="admin.html">Управление</a></div>
 </div></header><main class="auth-shell" id="content"><a class="brand auth-brand" href="index.html"><span>MARTIN</span><b>FOREST</b></a><section class="auth-card"><div class="eyebrow">MARTIN FOREST</div><h1>Регистрация</h1><p class="muted">После регистрации можно создавать деталировки, сохранять заказы и подключать 3D-подписку.</p><form id="form"><div class="field"><label>Имя / компания</label><input id="name" required></div><div class="field"><label>Телефон</label><input id="phone" placeholder="+375 ..."></div><div class="field"><label>Email</label><input id="email" type="email" required autocomplete="email"></div><div class="field"><label>Пароль</label><input id="password" type="password" minlength="8" required autocomplete="new-password"></div><label class="consent"><input id="consent" type="checkbox" required> <span>Согласен на обработку данных и условия использования сервиса.</span></label><button class="btn btn-primary auth-submit">Создать аккаунт</button><div id="error" class="form-error"></div></form><p class="auth-switch">Уже есть аккаунт? <a href="login.html">Войти</a></p></section></main><script src="auth.js"></script><script>
-(async()=>{if(await MFAuth.me()){location.href='account.html';return}form.onsubmit=async e=>{e.preventDefault();error.textContent='';try{await MFAuth.api('/api/auth/register',{method:'POST',body:{name:document.getElementById("name").value,email:email.value,phone:phone.value,password:password.value}});location.href='account.html'}catch(x){error.textContent=x.message}}})();
+(async()=>{
+  if(await MFAuth.me()){location.href='account.html';return}
+  const emailInput=document.getElementById('email');
+  function showPending(address,message='Мы отправили письмо со ссылкой подтверждения. Откройте его, подтвердите email и затем войдите в личный кабинет.'){
+    form.hidden=true;
+    document.querySelector('.auth-card h1').textContent='Проверьте почту';
+    document.querySelector('.auth-card .muted').textContent=message;
+    let box=document.getElementById('verificationActions');
+    if(!box){
+      box=document.createElement('div');box.id='verificationActions';box.className='notice';
+      const addressLine=document.createElement('p');addressLine.id='verificationAddress';box.appendChild(addressLine);
+      const resend=document.createElement('button');resend.type='button';resend.className='btn btn-ghost';resend.textContent='Отправить письмо ещё раз';
+      resend.onclick=async()=>{resend.disabled=true;try{await MFAuth.api('/api/auth/resend-verification',{method:'POST',body:{email:address}});addressLine.textContent='Письмо отправлено повторно на '+address+'.';}catch(x){addressLine.textContent=x.message}finally{setTimeout(()=>resend.disabled=false,1500)}};
+      box.appendChild(resend);
+      const login=document.createElement('p');login.className='auth-switch';login.innerHTML='<a href="login.html">Перейти ко входу</a>';box.appendChild(login);
+      document.querySelector('.auth-card').appendChild(box);
+    }
+    document.getElementById('verificationAddress').textContent='Письмо отправлено на '+address+'.';
+  }
+  form.onsubmit=async e=>{
+    e.preventDefault();error.textContent='';
+    const address=emailInput.value.trim();
+    try{
+      const result=await MFAuth.api('/api/auth/register',{method:'POST',body:{name:document.getElementById("name").value,email:address,phone:phone.value,password:password.value}});
+      showPending(result.email||address);
+    }catch(x){
+      if(String(x.message).includes('Аккаунт создан')) showPending(address,x.message);
+      else error.textContent=x.message;
+    }
+  };
+})();
 </script><footer class="mf-footer"><div class="mf-wrap mf-footer-grid">
 <div><a class="mf-brand" href="index.html">Martin Forest<small>МАРТИН ФОРЕСТ</small></a><p class="mf-footer-tag">Мебель начинается с деталей.<br>Мы помогаем их подготовить.</p></div>
 <div><h3>Компания</h3><nav class="mf-footer-links" aria-label="Компания"><a href="about/">О компании</a><a href="services/">Услуги</a><a href="how-it-works/">Как мы работаем</a><a href="contacts/">Контакты</a></nav></div>
