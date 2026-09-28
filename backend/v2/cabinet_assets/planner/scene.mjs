@@ -130,14 +130,9 @@ export class PlannerScene{
     return entry?.group.parent===this.root&&this.root.parent===this.scene&&items.some(it=>it.item_id===id)?entry:null;
   }
   sync(){
-    // A restore replaces the scene document even when module IDs are reused.
-    // Release the old object graph before room/presentation can call highlight.
-    if(this.syncedState!==this.adapter.state){
-      // Undo/Redo may keep the kitchen scope, but never its old mesh references.
-      // Project navigation clears that scope in before-project.
-      const keepKitchen=this.selectionScope==='kitchen'&&this.adapter.items.some(it=>this.entries.has(it.item_id));
-      this.resetProject();if(keepKitchen)this.selectionScope='kitchen';this.syncedState=this.adapter.state;
-    }
+    // Prune against the restored document before room/presentation can highlight.
+    // Same-project Undo/Redo retains valid geometry; project navigation explicitly
+    // resets the entire graph, including modules with IDs reused by another project.
     const ids=new Set(this.adapter.items.map(it=>it.item_id));
     for(const [id,entry]of this.entries)if(!ids.has(id)){this.factory.release(entry.group);this.entries.delete(id);this.renderer.shadowMap.needsUpdate=true;}
     this.hover(null);

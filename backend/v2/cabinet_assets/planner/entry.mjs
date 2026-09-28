@@ -33,7 +33,7 @@ class PlannerApplication {
         if(this.scene)this.scene.selectionScope='module';this.scene?.clearSelection?.();
         this.adapter.select(null);return;
       }
-      if(reason==='project'){this.interaction?.cancel();this.history.reset();this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
+      if(reason==='project'){this.interaction?.cancel();this.history.reset();this.scene?.resetProject?.();this.sync();this.setView(this.adapter.state.view_mode==='2d'?'top':'3d');return;}
       this.sync();
     });
     this.history.onChange=()=>{get('planner-undo').disabled=!this.history.undoStack.length;get('planner-redo').disabled=!this.history.redoStack.length;};
