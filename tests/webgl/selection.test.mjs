@@ -21,6 +21,7 @@ test('highlight ignores entries whose modules disappeared before scene sync',()=
   s.adapter.state={items:[],selected_item_id:null};
   assert.doesNotThrow(()=>s.highlight());
   assert.equal(s.kitchenBoxes.size,0);assert.equal(old.parent,null);assert.equal(s.selectedBox.visible,false);
+  assert.equal(s.selectionScope,'module');
 });
 test('detached meshes cannot be highlighted or hovered even if their IDs remain',()=>{
   const s=fixture();s.entries.get('old').group.removeFromParent();

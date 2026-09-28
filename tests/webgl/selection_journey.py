@@ -5,7 +5,10 @@ from tests.webgl.kitchen_journey import choose
 
 DONORS=['bazis.0211e4f77fc4','bazis.3079d0656398','bazis.784bf9af84f8']
 IDENTITY='''()=>{const p=MF_PLANNER;return {
-  items:p.adapter.items,
+  // Compare manufacturing state, accounting for existing schema defaults and
+  // the legacy template_id inferred by normalizeScene on load.
+  items:p.adapter.items.map(({template_id,...it})=>({back_variant_id:null,part_materials:{},...it,
+    shelves:(it.shelves||[]).map(s=>({material_variant_id:null,source_component:null,...s}))})),
   parts:p.adapter.items.map(it=>MF_FURNITURE_CORE.productionParts(it,p.adapter.template(it))),
   meshes:p.adapter.items.map(it=>{const a=[];p.scene.entries.get(it.item_id).group.traverse(m=>{
     if(m.isMesh)a.push({role:m.userData.role,envelope:m.geometry.userData.envelopeMM,
@@ -48,7 +51,7 @@ def selection_journey(page,check):
     try:
         if page.evaluate('document.body.classList.contains("planner-client")'):page.locator('#planner-client').click()
         page.set_viewport_size({'width':1440,'height':1000});close_panels(page)
-        page.locator('#new-project').click();page.wait_for_function('MF_PLANNER.adapter.items.length===0');clean(0)
+        page.locator('#new-project').click();page.wait_for_function('()=>MF_PLANNER.adapter.items.length===0');clean(0)
         panel(page,'left','catalog')
         for donor in DONORS:page.locator('[data-bazis="'+donor+'"]').click()
         verify('D1 L + D2 + D1 P',page.evaluate('MF_PLANNER.adapter.items.map(it=>it.bazis_id)')==DONORS)
@@ -59,7 +62,7 @@ def selection_journey(page,check):
         verify('bulk material applied',page.evaluate('new Set(MF_PLANNER.adapter.items.map(it=>it.front_variant_id)).size===1&&Boolean(MF_PLANNER.adapter.items[0].front_variant_id)'))
         a=save('Selection lifecycle A');before=page.evaluate(IDENTITY)
         old=page.evaluate('MF_PLANNER.adapter.items.map(it=>it.item_id)')
-        page.locator('#new-project').click();page.wait_for_function('MF_PLANNER.adapter.items.length===0');clean(0)
+        page.locator('#new-project').click();page.wait_for_function('()=>MF_PLANNER.adapter.items.length===0');clean(0)
         verify('old module IDs released',page.evaluate('ids=>ids.every(id=>!MF_PLANNER.scene.entries.has(id)&&!MF_PLANNER.scene.kitchenBoxes.has(id))',old))
         panel(page,'left','catalog');page.locator('[data-bazis="'+DONORS[1]+'"]').click()
         b=save('Selection lifecycle B')

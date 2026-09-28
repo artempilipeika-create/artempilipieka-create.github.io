@@ -202,6 +202,7 @@ export class PlannerScene{
   setLayer(value){this.layer=value;this.renderer.shadowMap.needsUpdate=true;this.sync();}
   highlight(error=''){
     const items=this.adapter.items,it=this.adapter.selected,entry=it?this.liveEntry(it.item_id,items):null;
+    if(this.selectionScope==='kitchen'&&!items.some(item=>kitchenSettings(item)))this.clearSelection();
     const whole=this.selectionScope==='kitchen',show=!this.preview;
     this.selectedBox.material.opacity=this.client?.32:.78;
     for(const [id,box]of this.kitchenBoxes)if(!this.liveEntry(id,items)){box.geometry.dispose();box.material.dispose();box.removeFromParent();this.kitchenBoxes.delete(id);}
