@@ -6,7 +6,7 @@ from .db import transaction
 from .events import record_event
 from .security import (COOKIE, CLIENT_PERMISSIONS, digest, error, grant, identity, network_bucket,
                        new_session, password_hash, password_valid, throttle_auth)
-from .mail import queue_verification, confirm
+from .mail import queue_verification, confirm, deliver_verification, provider_name, MailDeliveryError
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -31,6 +31,18 @@ class LoginCredentials(Credentials):
 class Confirmation(StrictModel):
     token: str = Field(min_length=40,max_length=128)
 
+class EmailRequest(StrictModel):
+    email: str = Field(min_length=3,max_length=254)
+
+    @field_validator('email')
+    @classmethod
+    def normalize_email(cls,value):
+        import re
+        value = value.strip().lower()
+        if not re.fullmatch(r'[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+',value) or any(ord(c)<32 for c in value):
+            raise ValueError('Invalid email')
+        return value
+
 
 def user_dto(user):
     return {'user_id':str(user['user_id']), 'email':user['email'],'roles':sorted(user['roles']),
@@ -43,7 +55,7 @@ def router(settings, policy):
     api = APIRouter(prefix='/api/v2/auth')
 
     @api.post('/register',status_code=201)
-    def register(body: Credentials, request: Request, response: Response):
+    def register(body: Credentials, request: Request):
         throttle_auth(settings,policy,request)
         user_id = uuid4()
         encoded = password_hash(body.password)
@@ -55,11 +67,17 @@ def router(settings, policy):
                 for permission in CLIENT_PERMISSIONS:
                     grant(conn,user_id=user_id,permission=permission,scope='own',actor=user_id)
                 record_event(conn,settings,actor=user_id,action='auth.registered',object_type='user',object_id=user_id,reason='Client registration')
-                queue_verification(conn,settings,policy,user,network_bucket(request))
-                new_session(conn,policy,user_id,response)
-                return user_dto({**user,'roles':{'client'}})
+                delivery_id = queue_verification(conn,settings,policy,user,network_bucket(request))
+                result = user_dto({**user,'roles':{'client'}})
         except UniqueViolation:
             error(409,'REGISTRATION_UNAVAILABLE')
+        try:
+            deliver_verification(settings,policy,delivery_id)
+        except MailDeliveryError:
+            error(503,'EMAIL_DELIVERY_FAILED')
+        result['registration_pending'] = True
+        result['provider'] = provider_name()
+        return result
 
     @api.post('/login')
     def login(body: LoginCredentials, request: Request, response: Response):
@@ -75,7 +93,93 @@ def router(settings, policy):
                 error(403,'ACCOUNT_BLOCKED')
             if not roles or 'service_agent' in roles:
                 error(403,'PERMISSION_DENIED')
-            if not encoded.startswith('pbkdf2_sha256$600000$'):
+            if roles == {'client'} and not user['email_verified_at']:
+                error(403,'EMAIL_NOT_VERIFIED')
+            if not encoded.startswith('pbkdf2_sha256$600000                conn.execute('UPDATE mf_users SET password_hash=%s WHERE user_id=%s',(password_hash(body.password),user['user_id']))
+            old = request.cookies.get(COOKIE)
+            if old:
+                conn.execute('UPDATE mf_sessions SET revoked_at=now() WHERE token_hash=%s',(digest(old),))
+            new_session(conn,policy,user['user_id'],response)
+            return user_dto({**user,'roles':roles})
+
+    @api.get('/me')
+    def me(request: Request):
+        from .rbac import allowed
+        with transaction(settings) as conn:
+            user = identity(conn,request)
+            result = user_dto(user)
+            result['capabilities'] = {'draft_create':allowed(conn,user['user_id'],'orders.draft.write'),
+                                      'email_verification_request':user['account_status']=='active' and not user['email_verified_at']}
+            return result
+
+    @api.post('/logout',status_code=204)
+    def logout(request: Request, response: Response):
+        with transaction(settings) as conn:
+            token = request.cookies.get(COOKIE,'')
+            conn.execute('UPDATE mf_sessions SET revoked_at=now() WHERE token_hash=%s',(digest(token),))
+        response.delete_cookie(COOKIE,path='/',secure=True,httponly=True,samesite='lax')
+
+    @api.post('/email-verification/request',status_code=202)
+    def request_verification(request: Request):
+        with transaction(settings) as conn:
+            user = identity(conn,request)
+            user = conn.execute('SELECT * FROM mf_users WHERE user_id=%s FOR UPDATE',(user['user_id'],)).fetchone()
+            if user['account_status'] != 'active':
+                error(403,'ACCOUNT_BLOCKED')
+            delivery_id = queue_verification(conn,settings,policy,user,network_bucket(request))
+        try:
+            deliver_verification(settings,policy,delivery_id)
+        except MailDeliveryError:
+            error(503,'EMAIL_DELIVERY_FAILED')
+        return {'status':'accepted','provider':provider_name()}
+
+    @api.post('/email-verification/resend',status_code=202)
+    def resend_verification(body: EmailRequest, request: Request):
+        throttle_auth(settings,policy,request)
+        delivery_id = None
+        with transaction(settings) as conn:
+            user = conn.execute('SELECT * FROM mf_users WHERE lower(email)=%s FOR UPDATE',(body.email,)).fetchone()
+            if user and user['account_status'] == 'active' and not user['email_verified_at']:
+                roles = {r['role'] for r in conn.execute('SELECT role FROM mf_user_roles WHERE user_id=%s',(user['user_id'],))}
+                if roles == {'client'}:
+                    delivery_id = queue_verification(conn,settings,policy,user,network_bucket(request))
+        if delivery_id:
+            try:
+                deliver_verification(settings,policy,delivery_id)
+            except MailDeliveryError:
+                error(503,'EMAIL_DELIVERY_FAILED')
+        return {'status':'accepted'}
+
+    @api.post('/email-verification/confirm')
+    def confirm_verification(body: Confirmation, request: Request):
+        throttle_auth(settings,policy,request)
+        with transaction(settings) as conn:
+            confirm(conn,settings,body.token)
+        return {'email_verified':True}
+
+    @api.post('/email/change')
+    def change_email(body: LoginCredentials, request: Request, response: Response):
+        throttle_auth(settings,policy,request)
+        try:
+            with transaction(settings) as conn:
+                user = identity(conn,request)
+                user = conn.execute('SELECT * FROM mf_users WHERE user_id=%s FOR UPDATE',(user['user_id'],)).fetchone()
+                if user['account_status']!='active' or not password_valid(body.password,user['password_hash']):
+                    error(403,'REAUTH_REQUIRED')
+                if user['email'] == body.email:
+                    error(409,'EMAIL_UNCHANGED')
+                conn.execute('UPDATE mf_email_verifications SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL AND consumed_at IS NULL',(user['user_id'],))
+                user = conn.execute('''UPDATE mf_users SET email=%s,email_version=email_version+1,email_verified_at=NULL,
+                    verification_migration_state='unverified',updated_at=now() WHERE user_id=%s RETURNING *''',(body.email,user['user_id'])).fetchone()
+                # Email change cannot circumvent resend budget. Request a new message after cooldown.
+                conn.execute('UPDATE mf_sessions SET revoked_at=now() WHERE user_id=%s AND revoked_at IS NULL',(user['user_id'],))
+                new_session(conn,policy,user['user_id'],response)
+                record_event(conn,settings,actor=user['user_id'],action='email.changed',object_type='user',object_id=user['user_id'],reason='Password reauthentication; tokens and sessions revoked')
+                return {'email_verified':False,'verification_request_required':True}
+        except UniqueViolation:
+            error(409,'EMAIL_UNAVAILABLE')
+    return api
+):
                 conn.execute('UPDATE mf_users SET password_hash=%s WHERE user_id=%s',(password_hash(body.password),user['user_id']))
             old = request.cookies.get(COOKIE)
             if old:
