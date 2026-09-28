@@ -1,6 +1,7 @@
 """Explicit operator probe on isolated staging. Random synthetic credentials are revoked in finally."""
 from dataclasses import replace
 import json
+import os
 import secrets
 from pathlib import Path
 from uuid import uuid4
@@ -31,6 +32,8 @@ def run(settings, policy=None, *, restore_copy=True):
         for permission in ADMIN_PERMISSIONS:
             grant(conn,user_id=admin_id,permission=permission,scope='all',actor=admin_id)
         record_event(conn,settings,actor=admin_id,action='probe.staff.created',object_type='user',object_id=admin_id,reason='Synthetic Stage 2 probe only')
+    provider_before=os.environ.get('MF_EMAIL_PROVIDER')
+    os.environ['MF_EMAIL_PROVIDER']='fake'
     try:
         with TestClient(create_app(settings,policy),base_url=policy.origin,
                         headers={'Origin':policy.origin,'Content-Type':'application/json'}) as api:
@@ -42,11 +45,10 @@ def run(settings, policy=None, *, restore_copy=True):
             assert r.status_code==201
             uid=r.json()['user_id'];users.append(uid)
             assert r.json()['roles']==['client']
-            checks['registration_client_only']=True
-            oid=api.post('/api/v2/orders',json={'business_name':'Stage 2 synthetic '+run_id}).json()['order_id']
-            r=api.post('/api/v2/orders/'+oid+'/submit',json={})
-            assert r.status_code==403 and r.json()['detail']['code']=='EMAIL_NOT_VERIFIED'
-            checks['unverified_draft_submit_gate']=True
+            assert api.get('/api/v2/auth/me').status_code==401
+            denied=api.post('/api/v2/auth/login',json={'email':email,'password':password})
+            assert denied.status_code==403 and denied.json()['detail']['code']=='EMAIL_NOT_VERIFIED'
+            checks['registration_requires_verification']=True
             with connect(settings) as conn:
                 delivery=conn.execute('''SELECT delivery_id FROM mf_email_deliveries JOIN mf_email_verifications USING(verification_id)
                     WHERE user_id=%s''',(uid,)).fetchone()['delivery_id']
@@ -55,8 +57,10 @@ def run(settings, policy=None, *, restore_copy=True):
                 token=json.loads(read_verified(conn,VolumeStore(settings.storage_root),sink))['url'].split('#token=')[1]
             assert api.post('/api/v2/auth/email-verification/confirm',json={'token':token}).status_code==200
             assert api.post('/api/v2/auth/email-verification/confirm',json={'token':token}).status_code==400
+            login(email)
             assert api.get('/api/v2/auth/me').json()['email_verified']
             checks['fake_email_confirm_once']=True
+            oid=api.post('/api/v2/orders',json={'business_name':'Stage 2 synthetic '+run_id}).json()['order_id']
             fid=save_private_file(settings,VolumeStore(settings.storage_root),actor=uid,data=b'SYNTHETIC INTERNAL STAGE 2',
                                   name='synthetic.txt',kind='oblx',mime='text/plain',order_id=oid)
             assert api.get('/api/v2/files/'+str(fid)).status_code==403
@@ -93,6 +97,10 @@ def run(settings, policy=None, *, restore_copy=True):
             assert api.get('/api/v2/auth/me').status_code==401
             checks['logout_revoked']=True
     finally:
+        if provider_before is None:
+            os.environ.pop('MF_EMAIL_PROVIDER',None)
+        else:
+            os.environ['MF_EMAIL_PROVIDER']=provider_before
         with transaction(settings) as conn:
             for uid in users:
                 conn.execute("UPDATE mf_users SET account_status='disabled' WHERE user_id=%s",(uid,))
