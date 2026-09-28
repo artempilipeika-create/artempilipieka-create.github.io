@@ -94,8 +94,14 @@ def prepare(settings):
         destination=settings.storage_root.parent/'backups'/'pre-email-verification'
         if destination.exists():
             manifest=json.loads((destination/'manifest.json').read_text())
-            if sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']:
+            if (manifest['namespace']!=settings.namespace or manifest['database']!=settings.database_name
+                or sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']):
                 raise ValueError('Pre-email-verification backup integrity mismatch')
+            for f in manifest['files']:
+                if f['present']:
+                    data=(destination/'blobs'/f['storage_key']).read_bytes()
+                    if len(data)!=f['size_bytes'] or sha256(data)!=f['sha256']:
+                        raise ValueError('Pre-email-verification private backup integrity mismatch')
         else:
             manifest=backup(settings,destination)
         print('MF_EMAIL_VERIFICATION_PRE_MIGRATION='+json.dumps({

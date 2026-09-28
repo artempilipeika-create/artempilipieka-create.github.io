@@ -8,6 +8,7 @@ import os
 import secrets
 import smtplib
 import ssl
+import httpx
 from uuid import uuid4
 from cryptography.fernet import Fernet
 from .db import transaction
@@ -21,9 +22,9 @@ class MailDeliveryError(RuntimeError):
 
 
 def provider_name():
-    provider = os.environ.get('MF_EMAIL_PROVIDER', 'fake').strip().lower()
-    if provider not in {'fake', 'smtp'}:
-        raise RuntimeError('MF_EMAIL_PROVIDER must be fake or smtp')
+    provider = os.environ.get('MF_EMAIL_PROVIDER', '').strip().lower()
+    if provider not in {'fake', 'smtp', 'resend'}:
+        raise RuntimeError('MF_EMAIL_PROVIDER must explicitly be fake, smtp or resend')
     return provider
 
 
@@ -31,6 +32,8 @@ def validate_mail_config():
     provider = provider_name()
     if provider == 'smtp':
         _smtp_config()
+    elif provider == 'resend':
+        _resend_config()
     return provider
 
 
@@ -87,8 +90,20 @@ def queue_verification(conn, settings, policy, user, network):
     return delivery_id
 
 
-def _send_smtp(payload):
-    cfg = _smtp_config()
+def _resend_config():
+    # Keep the dedicated sending key only in the authorized Railway secret variable.
+    cfg = {
+        'password': os.environ.get('MF_SMTP_PASSWORD', ''),
+        'sender': os.environ.get('MF_SMTP_FROM', '').strip(),
+        'sender_name': os.environ.get('MF_SMTP_FROM_NAME', 'Martin Forest').strip(),
+        'reply_to': os.environ.get('MF_SMTP_REPLY_TO', '').strip(),
+    }
+    if not cfg['password'].startswith('re_') or not cfg['sender']:
+        raise MailDeliveryError('RESEND_NOT_CONFIGURED')
+    return cfg
+
+
+def _verification_message(payload, cfg):
     url = payload['url']
     recipient = payload['to']
     msg = EmailMessage()
@@ -115,6 +130,31 @@ def _send_smtp(payload):
         'просто проигнорируйте это письмо.</p></body></html>',
         subtype='html'
     )
+    return msg
+
+
+def _send_resend(payload, delivery_id):
+    cfg = _resend_config()
+    msg = _verification_message(payload, cfg)
+    body = {
+        'from': str(msg['From']), 'to': [payload['to']], 'subject': str(msg['Subject']),
+        'text': msg.get_body(preferencelist=('plain',)).get_content(),
+        'html': msg.get_body(preferencelist=('html',)).get_content(),
+    }
+    if cfg['reply_to']:
+        body['reply_to'] = cfg['reply_to']
+    with httpx.Client(timeout=20, follow_redirects=False, trust_env=False) as client:
+        response = client.post('https://api.resend.com/emails', json=body, headers={
+            'Authorization': 'Bearer '+cfg['password'],
+            'Idempotency-Key': 'mf-verification-'+str(delivery_id),
+        })
+    if response.status_code not in {200, 201} or not response.json().get('id'):
+        raise MailDeliveryError('RESEND_DELIVERY_FAILED')
+
+
+def _send_smtp(payload):
+    cfg = _smtp_config()
+    msg = _verification_message(payload, cfg)
     context = ssl.create_default_context()
     if cfg['security'] == 'ssl':
         smtp = smtplib.SMTP_SSL(cfg['host'], cfg['port'], timeout=20, context=context)
@@ -150,20 +190,25 @@ def deliver_verification(settings, policy, delivery_id):
         payload = json.loads(plaintext)
         user_id = row['user_id']
     try:
-        _send_smtp(payload)
+        if row['provider'] == 'resend':
+            _send_resend(payload, delivery_id)
+        elif row['provider'] == 'smtp':
+            _send_smtp(payload)
+        else:
+            raise MailDeliveryError('UNKNOWN_DELIVERY_PROVIDER')
     except Exception:
         with transaction(settings) as conn:
             conn.execute("UPDATE mf_email_deliveries SET status='failed',failed_at=now() WHERE delivery_id=%s AND status='queued'",
                          (delivery_id,))
             record_event(conn,settings,actor=user_id,action='email.verification.failed',object_type='delivery',
-                         object_id=delivery_id,reason='SMTP delivery failed')
-        raise MailDeliveryError('SMTP_DELIVERY_FAILED') from None
+                         object_id=delivery_id,reason='Email provider delivery failed')
+        raise MailDeliveryError('EMAIL_DELIVERY_FAILED') from None
     with transaction(settings) as conn:
         updated = conn.execute("UPDATE mf_email_deliveries SET status='sent',sent_at=now() WHERE delivery_id=%s AND status='queued' RETURNING delivery_id",
                                (delivery_id,)).fetchone()
         if updated:
             record_event(conn,settings,actor=user_id,action='email.verification.sent',object_type='delivery',
-                         object_id=delivery_id,reason='SMTP delivery completed')
+                         object_id=delivery_id,reason='Email provider delivery completed')
     return True
 
 

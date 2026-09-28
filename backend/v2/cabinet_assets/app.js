@@ -35,6 +35,7 @@ async function login(register=registrationMode){
   if(e.code==='EMAIL_NOT_VERIFIED')showVerificationPending(email);
   if(register&&e.code==='EMAIL_DELIVERY_FAILED'){
    registrationMode=false;authMode();$('password').value='';$('email').value=email;showVerificationPending(email);
+   $('registration-pending-text').textContent='Аккаунт создан, но письмо не отправлено. Нажмите «Отправить повторно» после небольшой паузы.';
   }
   throw e;
  }

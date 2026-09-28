@@ -3,7 +3,7 @@ ALTER TABLE mf_email_deliveries DROP CONSTRAINT IF EXISTS mf_email_deliveries_pr
 ALTER TABLE mf_email_deliveries DROP CONSTRAINT IF EXISTS mf_email_deliveries_status_check;
 
 ALTER TABLE mf_email_deliveries
-    ADD CONSTRAINT mf_email_deliveries_provider_check CHECK (provider IN ('fake','smtp')),
+    ADD CONSTRAINT mf_email_deliveries_provider_check CHECK (provider IN ('fake','smtp','resend')),
     ADD CONSTRAINT mf_email_deliveries_status_check CHECK (status IN ('queued','collected','cancelled','sent','failed'));
 
 ALTER TABLE mf_email_deliveries ADD COLUMN sent_at timestamptz;
