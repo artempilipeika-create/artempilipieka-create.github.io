@@ -1,22 +1,52 @@
 'use strict';
 const $=id=>document.getElementById(id), content=$('content');
-let currentUser=null;
+let currentUser=null,pendingVerificationEmail='';
 function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 function message(text,error=false){$('message').textContent=text;$('message').classList.toggle('error',error);if(error)$('message').focus();}
 function button(text,fn,secondary=false){const e=node('button',text,secondary?'secondary':'');e.type='button';e.onclick=()=>run(async()=>{e.disabled=true;try{await fn();}finally{if(e.isConnected)e.disabled=false;}});return e;}
 function value(v){return v===null||v===undefined?'Уточняется':String(v);}
 function date(v){return new Date(v).toLocaleDateString('ru-RU');}
-async function api(path,method='GET',body,headers={}){const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});if(!r.ok){const e=await r.json().catch(()=>({}));const code=e.detail?.code;const labels={LOGIN_FAILED:'Не удалось войти. Проверьте email и пароль.',EMAIL_NOT_VERIFIED:'Подтвердите email перед отправкой.',REVISION_CONFLICT:'Заказ изменился. Обновите страницу.',PROBLEMATIC_HANDOFF_REQUIRED:'Подтвердите передачу проблемных позиций менеджеру.',SOURCE_FILE_REQUIRED:'Добавьте исходный файл в подготовке заказа.',CLIENT_ACCOUNT_REQUIRED:'Этот кабинет предназначен для клиента.',VALIDATION_ERROR:'Проверьте заполненные поля.',DOCUMENT_RENDER_LIMIT:'Документ требует проверки специалистом.',DOCUMENT_INTEGRITY_FAILED:'Документ временно недоступен. Обратитесь к менеджеру.'};const err=new Error(labels[code]||workspaceErrors[code]||'Действие недоступно. Проверьте данные и доступ к заказу.');if(code==='VALIDATION_ERROR'&&Array.isArray(e.detail?.fields))err.message='Проверьте заполненные поля: '+e.detail.fields.join(', ');err.status=r.status;err.code=code;throw err;}return r.status===204?null:r.json();}
+async function api(path,method='GET',body,headers={}){const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});if(!r.ok){const e=await r.json().catch(()=>({}));const code=e.detail?.code;const labels={LOGIN_FAILED:'Не удалось войти. Проверьте email и пароль.',EMAIL_NOT_VERIFIED:'Email ещё не подтверждён. Откройте письмо от Martin Forest или отправьте его повторно.',EMAIL_DELIVERY_FAILED:'Аккаунт создан, но письмо сейчас не отправилось. Повторите отправку ниже.',REGISTRATION_UNAVAILABLE:'Аккаунт с таким email уже существует.',RATE_LIMITED:'Слишком много попыток. Подождите немного и повторите.',REVISION_CONFLICT:'Заказ изменился. Обновите страницу.',PROBLEMATIC_HANDOFF_REQUIRED:'Подтвердите передачу проблемных позиций менеджеру.',SOURCE_FILE_REQUIRED:'Добавьте исходный файл в подготовке заказа.',CLIENT_ACCOUNT_REQUIRED:'Этот кабинет предназначен для клиента.',VALIDATION_ERROR:'Проверьте заполненные поля.',DOCUMENT_RENDER_LIMIT:'Документ требует проверки специалистом.',DOCUMENT_INTEGRITY_FAILED:'Документ временно недоступен. Обратитесь к менеджеру.'};const err=new Error(labels[code]||workspaceErrors[code]||'Действие недоступно. Проверьте данные и доступ к заказу.');if(code==='VALIDATION_ERROR'&&Array.isArray(e.detail?.fields))err.message='Проверьте заполненные поля: '+e.detail.fields.join(', ');err.status=r.status;err.code=code;throw err;}return r.status===204?null:r.json();}
 let busy=false;
 async function run(fn){if(busy)return;busy=true;content.inert=true;content.setAttribute('aria-busy','true');try{message('Выполняется…');await fn();if($('message').textContent==='Выполняется…')message('');}catch(e){message(e.message,true);}finally{busy=false;content.inert=false;content.setAttribute('aria-busy','false');}}
 async function start(){
  try{currentUser=await api('/auth/me');}catch(e){$('auth').hidden=false;$('account').hidden=true;$('logout').hidden=true;if(e.status!==401)message(e.message,true);return;}
- $('auth').hidden=true;$('account').hidden=false;$('logout').hidden=false;$('verification').hidden=currentUser.email_verified;
+ $('auth').hidden=true;$('account').hidden=false;$('logout').hidden=false;$('registration-pending').hidden=true;pendingVerificationEmail='';$('verification').hidden=currentUser.email_verified;
  const staff=!currentUser.roles.includes('client');$('staff-link').hidden=!staff;$('profile').hidden=staff;$('orders').textContent=staff?'Рабочая очередь':'Мои заказы';$('prepare-link').hidden=!currentUser.capabilities.draft_create;
  await workspaceStart();
 }
-async function login(register=registrationMode){if(!$('login').reportValidity())return;const f=new FormData($('login'));await api('/auth/'+(register?'register':'login'),'POST',{email:f.get('email'),password:f.get('password')});$('login').reset();await start();}
-$('login').onsubmit=e=>{e.preventDefault();run(()=>login());};$('register').onclick=()=>{registrationMode=!registrationMode;authMode();};
+function showVerificationPending(email){
+ pendingVerificationEmail=email;$('registration-pending').hidden=false;
+ $('registration-pending-text').textContent='Мы отправили письмо на '+email+'. Перейдите по ссылке из письма, затем войдите в кабинет.';
+}
+async function login(register=registrationMode){
+ if(!$('login').reportValidity())return;
+ const f=new FormData($('login')),email=String(f.get('email')||'').trim(),password=f.get('password');
+ try{
+  if(register){
+   await api('/auth/register','POST',{email,password});
+   $('login').reset();registrationMode=false;authMode();$('email').value=email;showVerificationPending(email);
+   message('Письмо с подтверждением отправлено. До подтверждения email вход в кабинет закрыт.');
+   return;
+  }
+  await api('/auth/login','POST',{email,password});
+  $('login').reset();$('registration-pending').hidden=true;pendingVerificationEmail='';await start();
+ }catch(e){
+  if(e.code==='EMAIL_NOT_VERIFIED')showVerificationPending(email);
+  if(register&&e.code==='EMAIL_DELIVERY_FAILED'){
+   registrationMode=false;authMode();$('password').value='';$('email').value=email;showVerificationPending(email);
+  }
+  throw e;
+ }
+}
+$('login').onsubmit=e=>{e.preventDefault();run(()=>login());};
+$('register').onclick=()=>{registrationMode=!registrationMode;$('registration-pending').hidden=true;pendingVerificationEmail='';authMode();};
+$('resend-verification').onclick=()=>run(async()=>{
+ const email=pendingVerificationEmail||String($('email').value||'').trim();
+ if(!email){message('Введите email, на который нужно повторно отправить письмо.',true);return;}
+ await api('/auth/email-verification/resend','POST',{email});showVerificationPending(email);
+ message('Новое письмо с подтверждением отправлено. Проверьте также папку «Спам».');
+});
 $('logout').onclick=()=>run(async()=>{await api('/auth/logout','POST',{});content.replaceChildren();currentUser=null;await start();});
 $('verify').onclick=()=>run(async()=>{await api('/auth/email-verification/request','POST',{});message('Запрос принят. В тестовой среде письмо сохраняется в закрытый тестовый приёмник; внешняя отправка отключена.');});
 $('orders').onclick=()=>run(()=>currentUser.roles.includes('client')?list():staffHome());
