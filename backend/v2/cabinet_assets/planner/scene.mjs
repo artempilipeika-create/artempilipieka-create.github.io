@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
-import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings} from './furniture-core.mjs';
+import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings,scopeMatches} from './furniture-core.mjs';
 import {roomSettings,LIGHTS} from './room-state.mjs';
 import {clientFrame} from './client-camera.mjs';
 export class PlannerScene{
@@ -143,7 +143,8 @@ export class PlannerScene{
       const signature=this.factory.signature(it);let entry=this.entries.get(it.item_id);
       if(!entry||entry.group.parent!==this.root||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}
       this.factory.position(entry.group,it);entry.group.visible=this.layer==='all'||tier(it)===this.layer;
-      if(this.factory.updateAppearance(entry.group,it,this.selectionScope==='kitchen'&&kitchenSettings(it)||it.item_id===this.displayItemId?this.displayMode:'normal'))this.renderer.shadowMap.needsUpdate=true;
+      const groupedDisplay=this.selectionScope!=='module'&&scopeMatches(it,this.selectionScope);
+      if(this.factory.updateAppearance(entry.group,it,groupedDisplay||it.item_id===this.displayItemId?this.displayMode:'normal'))this.renderer.shadowMap.needsUpdate=true;
     }
     const dressing=JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.worktop_thickness,kitchenSettings(it)]));
     if(this.dressingKey!==dressing){this.dressingKey=dressing;this.factory.release(this.dressing);this.dressing=this.factory.dress(this.adapter.items);this.scene.add(this.dressing);this.contacts?.removeFromParent();this.contacts=this.factory.contacts(this.adapter.items);this.scene.add(this.contacts);this.fitShadow();}
@@ -197,17 +198,17 @@ export class PlannerScene{
   setLayer(value){this.layer=value;this.renderer.shadowMap.needsUpdate=true;this.sync();}
   highlight(error=''){
     const items=this.adapter.items,it=this.adapter.selected,entry=it?this.liveEntry(it.item_id,items):null;
-    if(this.selectionScope==='kitchen'&&!items.some(item=>kitchenSettings(item)))this.clearSelection();
-    const whole=this.selectionScope==='kitchen',show=!this.preview;
+    let grouped=this.selectionScope!=='module';const show=!this.preview;
+    if(grouped&&!items.some(item=>scopeMatches(item,this.selectionScope))){this.selectionScope='module';grouped=false;}
     this.selectedBox.material.opacity=this.client?.32:.78;
     for(const [id,box]of this.kitchenBoxes)if(!this.liveEntry(id,items)){box.geometry.dispose();box.material.dispose();box.removeFromParent();this.kitchenBoxes.delete(id);}
     for(const [id,e]of this.entries){
       const item=items.find(it=>it.item_id===id);if(!item||!this.liveEntry(id,items))continue;
       let box=this.kitchenBoxes.get(id);
-      if(whole&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
-      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(whole&&show&&e.group.visible&&kitchenSettings(item));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
+      if(grouped&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
+      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(grouped&&show&&e.group.visible&&scopeMatches(item,this.selectionScope));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
     }
-    this.selectedBox.visible=Boolean(!whole&&entry?.group.visible&&show);
+    this.selectedBox.visible=Boolean(!grouped&&entry?.group.visible&&show);
     if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':this.client?'#79796b':'#346d4a');}
     else this.selectedBox.box.makeEmpty();
     this.placeLabel();

@@ -110,9 +110,15 @@ class PlannerApplication {
       this.listen(get(id),'click',e=>{if(e.target.closest('button'))this.history.begin('Материал');},true);
       this.listen(get(id),'click',e=>{if(e.target.closest('button'))this.history.commit();});
     }
-    this.listen(get('material-scope'),'change',()=>{this.scene.selectionScope=get('material-scope').value;this.scene.sync();this.scene.invalidate();});
+    this.listen(get('material-scope'),'change',()=>{
+      const scope=get('material-scope').value;this.scene.selectionScope=scope;this.scene.sync();this.scene.invalidate();
+      const count=scope==='module'?(this.adapter.selected?1:0):this.adapter.items.filter(it=>globalThis.MF_FURNITURE_CORE.scopeMatches(it,scope)).length;
+      const label={module:'модуль',kitchen:'вся кухня',lower:'низ',upper:'верх'}[scope]||scope;
+      this.adapter.status('Выделение: '+label+(scope==='module'?'':' · '+count+' модулей'));
+    });
     for(const [id,key]of [['leg-height','legHeightMm'],['rear-service-gap','rearServiceGapMm'],['countertop-depth','countertopDepthMm'],['countertop-thickness','countertopThicknessMm']])this.listen(get(id),'change',()=>{
-      const value=Number(get(id).value),targets=get('material-scope').value==='kitchen'?this.adapter.items.filter(it=>kitchenSettings(it)):[this.adapter.selected].filter(Boolean);
+      const value=Number(get(id).value),scope=get('material-scope').value,
+        targets=['kitchen','lower'].includes(scope)?this.adapter.items.filter(it=>kitchenSettings(it)):[this.adapter.selected].filter(Boolean);
       this.interaction.change('Параметры кухонного ряда',()=>{
         const changed=targets.map(source=>{
           const it=dimensionPatch(source,{[key]:value});

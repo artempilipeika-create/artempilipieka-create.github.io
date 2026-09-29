@@ -60,7 +60,8 @@ export class Interaction {
     const plane=this.scene.makePlane(it,hit.point),start=this.scene.planePoint(e.clientX,e.clientY,plane);
     if(!start)return;
     this.history.begin('Перемещение модуля');
-    this.gesture={pointerId:e.pointerId,item:clone(it),plane,start,x:e.clientX,y:e.clientY,moved:false,anchors:{},result:null};
+    this.gesture={pointerId:e.pointerId,item:clone(it),plane,start,x:e.clientX,y:e.clientY,moved:false,anchors:{},result:null,
+      lastValid:{item:clone(it),anchors:{},error:'',guides:[]}};
     this.scene.controls.enabled=false;this.scene.hover(null);
     this.canvas.setPointerCapture(e.pointerId);this.canvas.style.cursor='grabbing';
   }
@@ -75,9 +76,18 @@ export class Interaction {
     // First release keeps the existing v2 elevation rule. No unsavable Y field.
     const raw={...g.item,x:g.item.x+(point.x-g.start.x)/MM_TO_WORLD,z:g.item.z+(point.z-g.start.z)/MM_TO_WORLD};
     const opts={...this.options(),threshold:this.scene.pixelThreshold(raw),allowElevation:false};
-    g.result=snapItem(raw,this.adapter.items,this.adapter.room,opts,g.anchors);g.anchors=g.result.anchors;
-    g.result.error=g.result.error||this.adapter.validate(g.result.item);
-    this.scene.showPreview(g.result.item,g.result.error,g.result.guides);this.feedback(g.result);
+    const candidate=snapItem(raw,this.adapter.items,this.adapter.room,opts,g.anchors);g.anchors=candidate.anchors;
+    candidate.error=candidate.error||this.adapter.validate(candidate.item);
+    if(candidate.error?.startsWith('Пересечение:')){
+      const blocked=candidate.error.replace('Пересечение:','').trim();
+      g.result=g.lastValid;
+      this.scene.showPreview(g.lastValid.item,'',g.lastValid.guides||[]);
+      this.feedback({error:'Упор: '+blocked+' · пересечение запрещено',guides:[]});
+    }else{
+      g.result=candidate;
+      if(!candidate.error)g.lastValid={item:clone(candidate.item),anchors:{...candidate.anchors},error:'',guides:[...(candidate.guides||[])]};
+      this.scene.showPreview(candidate.item,candidate.error,candidate.guides);this.feedback(candidate);
+    }
   }
   up(e){
     if(e.pointerType==='touch'){this.touches.delete(e.pointerId);if(!this.touches.size)this.touchBlocked=false;}
