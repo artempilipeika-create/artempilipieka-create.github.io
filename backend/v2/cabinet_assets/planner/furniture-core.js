@@ -175,7 +175,8 @@
       if(door)Object.assign(extra,{hinge_side:door.side,open_angle:door.open_angle,hinge_count:door.hinge_count,
         pivot:{x:f.cx+(door.side==='left'?-1:1)*f.w/2,y:0,z}});
       add('front-'+(i+1),f.kind==='drawer'?'Фасад ящика':'Фасад двери','front',
-        {x:f.w,y:f.h,z:thickness},{x:f.cx,y:f.cy,z},['x','y','z'],it.front_variant_id,p.facade?.material_name||null,extra);
+        {x:f.w,y:f.h,z:thickness},{x:f.cx,y:f.cy,z},f.kind==='drawer'?['y','x','z']:['x','y','z'],
+        it.front_variant_id,p.facade?.material_name||null,extra);
     });
     for(const part of parts){
       const id=it.part_materials?.[part.key]??(part.role==='back'?it.back_variant_id:null)??part.material.variant_id;
