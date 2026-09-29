@@ -1,0 +1,65 @@
+name: Drawer modules isolated acceptance
+on:
+  push:
+    branches: [mf-drawer-modules-20260929]
+    paths:
+      - 'backend/v2/cabinet_assets/**'
+      - 'tests/webgl/**'
+      - '.github/workflows/mf-drawer-modules-review.yml'
+permissions:
+  contents: read
+concurrency:
+  group: drawer-modules-review
+  cancel-in-progress: true
+jobs:
+  pure-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and deterministic planner tests
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          for source in backend/v2/cabinet_assets/*.js backend/v2/cabinet_assets/planner/*.js backend/v2/cabinet_assets/planner/*.mjs; do node --check "$source"; done
+          node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/pricing.test.mjs tests/webgl/room.test.mjs tests/webgl/client-camera.test.mjs tests/webgl/selection.test.mjs
+          git diff --exit-code
+      - name: Build staging image without deployment
+        run: docker build -t martin-forest-drawer-modules:ci .
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_TEST_EVIDENCE_DIR: qa-output/drawer-modules
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned browser dependencies
+        run: |
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Planner browser regression
+        run: |
+          python -m pytest tests/webgl/kitchen_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/client_pricing_checks.py tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py -vv --timeout=90 --maxfail=3 --junitxml=qa-output/drawer-modules/browser.xml
+          git diff --exit-code
