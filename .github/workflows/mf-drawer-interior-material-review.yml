@@ -1,0 +1,28 @@
+name: Drawer interior material acceptance
+on:
+  push:
+    branches: [mf-drawer-interior-body-material-20260930]
+    paths:
+      - 'backend/v2/cabinet_assets/planner/furniture-core.js'
+      - 'tests/webgl/materials.test.mjs'
+      - '.github/workflows/mf-drawer-interior-material-review.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Drawer material regression
+        run: |
+          node --check backend/v2/cabinet_assets/planner/furniture-core.js
+          node --test tests/webgl/materials.test.mjs tests/webgl/pricing.test.mjs
+          git diff --exit-code
+      - name: Build staging image
+        run: docker build -t martin-forest-drawer-material:ci .
