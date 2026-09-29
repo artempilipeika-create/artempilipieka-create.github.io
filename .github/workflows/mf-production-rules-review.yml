@@ -1,0 +1,95 @@
+name: Production rules acceptance
+on:
+  push:
+    branches: [mf-production-rules-dryers-20260929]
+    paths:
+      - 'backend/v2/cabinet_assets/**'
+      - 'tests/webgl/**'
+      - 'tests/email_verification/**'
+      - '.github/workflows/mf-production-rules-review.yml'
+permissions:
+  contents: read
+concurrency:
+  group: production-rules-review
+  cancel-in-progress: true
+jobs:
+  pure-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and deterministic production tests
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          for source in backend/v2/cabinet_assets/*.js backend/v2/cabinet_assets/planner/*.js backend/v2/cabinet_assets/planner/*.mjs; do node --check "$source"; done
+          node --test tests/webgl/core.test.mjs tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/pricing.test.mjs tests/webgl/room.test.mjs tests/webgl/client-camera.test.mjs tests/webgl/selection.test.mjs tests/webgl/upper.test.mjs
+          git diff --exit-code
+      - name: Build staging image without deployment
+        run: docker build -t martin-forest-production-rules:ci .
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_TEST_EVIDENCE_DIR: qa-output/production-rules
+      MF_EMAIL_PROVIDER: fake
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned browser dependencies
+        run: |
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Native production rule browser acceptance
+        run: |
+          python -m pytest tests/webgl/drawer_modules_checks.py tests/webgl/upper_modules_checks.py tests/webgl/production_rules_checks.py -vv --timeout=180 --maxfail=2 --junitxml=qa-output/production-rules/browser.xml
+          git diff --exit-code
+  email-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_email_test
+          POSTGRES_DB: mf_staging_email_test_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_email_test -d mf_staging_email_test_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_email_test@localhost:5432/mf_staging_email_test_ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preserve current verified-registration flow
+        run: |
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1
+          python -m pytest tests/email_verification -vv --timeout=60
+          git diff --exit-code
