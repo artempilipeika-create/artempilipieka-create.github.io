@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {PILOT_PRODUCTION,normalizeKitchen,kitchenSettings,kitchenRuns,kitchenLegs,productionParts,dimensionPatch,heights,rotateXZ,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {PILOT_PRODUCTION,normalizeKitchen,kitchenSettings,kitchenRuns,kitchenLegs,productionParts,dimensionPatch,heights,facadeCells,rotateXZ,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {snapItem,findSpace} from '../../backend/v2/cabinet_assets/planner/placement.mjs';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
@@ -17,6 +17,23 @@ for(const id of ids)test(PILOT_PRODUCTION[id].label+': horizontal rails have the
   assert.equal(p.length,80);assert.equal(p.width,564);assert.equal(p.thickness,18);
   assert.deepEqual(p.position,{x:0,y:811,z:(i?1:-1)*215});
  }
+});
+for(const [id,heights,boxHeights,sha,file]of [
+ ['bazis.39f282e08f0c',[357,357],[300,300],'f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2','НМРШ2-600.З.С 3мм Гвозди Шариковые напр с довод.fr3d'],
+ ['bazis.5f5697e39e27',[357,178,178],[300,121,121],'f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0','НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.fr3d']
+])test(PILOT_PRODUCTION[id].label+': exact donor facades, drawer boxes and soft-close hardware',()=>{
+ const p=PILOT_PRODUCTION[id],it=item(id,{layout:'drawers',drawers:heights.length}),cells=facadeCells(it,{production:p}),bom=parts(it);
+ assert.equal(p.source_sha256,sha);assert.equal(p.source_file,file);assert.equal(p.hardware.drawer_system,'AKS');
+ assert.equal(p.hardware.slide_type,'ball_bearing_soft_close');assert.equal(p.hardware.drawer_count,heights.length);
+ assert.deepEqual(cells.map(c=>[c.w,c.h]),heights.map(h=>[597,h]));
+ assert.deepEqual(bom.filter(x=>x.role==='front').map(x=>[x.length,x.width]),heights.map(h=>[h,597]));
+ assert.deepEqual(bom.filter(x=>x.name==='ЗАДНЯЯ ШУФ').map(x=>[x.length,x.width]),boxHeights.map(h=>[h,501]));
+ assert.deepEqual(bom.filter(x=>x.name==='Фронтальная ШУФ').map(x=>[x.length,x.width]),boxHeights.map(h=>[h,501]));
+ assert.deepEqual(bom.filter(x=>x.name==='Боковая напр.P').map(x=>[x.length,x.width]),boxHeights.map(h=>[h,500]));
+ assert.deepEqual(bom.filter(x=>x.name==='Боковая напр.L').map(x=>[x.length,x.width]),boxHeights.map(h=>[h,500]));
+ assert.deepEqual(bom.filter(x=>x.name==='З.С').map(x=>[x.length,x.width]),boxHeights.map(()=>[533,496]));
+ assert.ok(bom.filter(x=>x.name==='ЗАДНЯЯ ШУФ'||x.name==='Фронтальная ШУФ'||x.name.startsWith('Боковая напр.')).every(x=>x.material.name==='ЛДСП- БЕЛЫЙ'));
+ assert.ok(bom.filter(x=>x.name==='З.С').every(x=>x.material.name==='ЛХДФ 3ММ Белый'));
 });
 for(const leg of [80,100,150])test('Leg '+leg+' shifts every cabinet panel without stretching any body/front/shelf/back/rail',()=>{
  for(const id of ids){const before=item(id),after=dimensionPatch(before,{legHeightMm:leg}),a=parts(before),b=parts(after);
