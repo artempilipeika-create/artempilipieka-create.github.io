@@ -93,7 +93,7 @@ const pilotProductionById=globalThis.MF_FURNITURE_CORE.PILOT_PRODUCTION;
 const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
   const p=pilotProductionById[m.id];if(!p)continue;
-  m.source_sha256=p.source_sha256;m.production=p;m.label=p.label;
+  m.source_sha256=p.source_sha256;m.source_file=p.source_file||m.source_file;m.production=p;m.label=p.label;
   m.defaults={...m.defaults,w:600,h:p.body_height+p.base_height,d:p.scene_depth};
   m.limits={...m.limits,h:[p.base_height+600,p.base_height+1000],d:[450,700]};
 }
@@ -287,8 +287,11 @@ function renderModuleCatalogue(){
   const heading=document.createElement('h3');heading.textContent='Производственные модули';group.append(heading);
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
-    addCatalogueButton(group,{bazis:id,category:'base',label:m.label,
-      description:m.production.doors.length===2?'Две двери · полка · задник':m.production.doors[0].side==='left'?'Левое открывание · полка · задник':'Правое открывание · полка · задник'});
+    const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0;
+    const description=drawerCount
+      ?drawerCount+' ящика · AKS · шариковые направляющие с доводчиком · задник 3 мм'
+      :p.doors.length===2?'Две двери · полка · задник':p.doors[0].side==='left'?'Левое открывание · полка · задник':'Правое открывание · полка · задник';
+    addCatalogueButton(group,{bazis:id,category:'base',label:m.label,description});
   }
   root.append(group);
   applyCatalogueFilter();
