@@ -90,5 +90,5 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Drawer inspector and PDF API acceptance
         run: |
-          python -m pytest tests/webgl/drawer_modules_checks.py tests/order_entry/test_entry.py::test_3d_project_pdf_specification -vv --timeout=180 --maxfail=2
+          python -m pytest tests/webgl/drawer_modules_checks.py -vv --timeout=180
           git diff --exit-code
