@@ -109,7 +109,7 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front):
-    bid=it.get('bazis_id');known=bid in DRAWERS|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2
+    bid=it.get('bazis_id');known=bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2
     if known and (not body or body=='Не выбран'):body='ЛДСП- БЕЛЫЙ'
     if known and (not front or front=='Не выбран'):front='Evagloss P004'
     rows=[('Корпус',body or 'Не выбран'),('Фасад',front or 'Не выбран')]
