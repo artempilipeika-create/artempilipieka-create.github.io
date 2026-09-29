@@ -14,7 +14,12 @@ for(const id of ids)test(PILOT_PRODUCTION[id].label+': quote uses canonical BOM 
  assert.deepEqual(b.pricingBOM.parts,productionParts({...it,width:350},t));
  const quotedArea=b.pricingBOM.parts.reduce((n,p)=>n+p.length*p.width/1e6,0);
  assert.ok(Math.abs(b.sheetMaterials.reduce((n,p)=>n+p.quantity,0)-quotedArea)<.00001);
- assert.equal(b.hardware.find(r=>r.key.startsWith('hinges:')).quantity,t.production.hardware.hinge_count);
+ if(Number.isInteger(t.production.hardware.hinge_count))assert.equal(b.hardware.find(r=>r.key.startsWith('hinges:')).quantity,t.production.hardware.hinge_count);
+ else{
+  const slides=b.hardware.find(r=>r.key.startsWith('drawer-slides:'));
+  assert.equal(slides.quantity,t.production.hardware.drawer_count);assert.equal(slides.unit,'set');
+  assert.equal(slides.manufacturer,'AKS');assert.equal(slides.lengthMm,500);
+ }
  assert.equal(b.hardware.find(r=>r.key.startsWith('legs:')).quantity,4);
  for(const section of ['sheetMaterials','edging','hardware','operations'])for(const r of b[section]){assert.equal(r.unitPriceMinor,null);assert.equal(r.amountMinor,null);assert.equal(r.status,r.quantity===null?'PRICING_RULE_MISSING':'PRICE_DATA_MISSING');}
  assert.equal(b.totals.costMinor,null);assert.equal(b.totals.saleMinor,null);assert.equal(b.totals.markupMinor,null);
@@ -30,10 +35,10 @@ test('Explicit rates price only the identified row; absent rows never become zer
 });
 test('Shared kitchen extras occur once and retain actual run length',()=>{
  const items=ids.map((id,i)=>item(600,id,(i-1)*600)),b=kitchenPriceBreakdown(items,room,template);
- assert.equal(b.modules.length,3);assert.ok(b.modules.every(m=>!m.extras.length));
- const top=b.extras.find(r=>r.role==='counter');assert.equal(top.partCount,1);assert.equal(top.quantity,1.08);assert.equal(b.extras.filter(r=>r.role==='plinth').reduce((n,r)=>n+r.partCount,0),3);
+ assert.equal(b.modules.length,ids.length);assert.ok(b.modules.every(m=>!m.extras.length));
+ const top=b.extras.find(r=>r.role==='counter');assert.equal(top.partCount,1);assert.equal(top.quantity,ids.length*.6*.6);assert.equal(b.extras.filter(r=>r.role==='plinth').reduce((n,r)=>n+r.partCount,0),3);
  assert.equal(b.totals.saleMinor,null);assert.equal(b.notice,'Расчёт цены требует прайс-листа');
 });
-test('Future matrix has exactly 45 unique donor-width identities and no invented prices',()=>{
- const m=pricingMatrixDescriptors();assert.equal(m.length,45);assert.equal(new Set(m.map(r=>r.moduleType+':'+r.pricingWidthMm)).size,45);assert.ok(m.every(r=>r.saleMinor===null&&r.status==='PRICE_DATA_MISSING'));
+test('Future matrix covers every production donor and width identity with no invented prices',()=>{
+ const m=pricingMatrixDescriptors(),expected=ids.length*15;assert.equal(m.length,expected);assert.equal(new Set(m.map(r=>r.moduleType+':'+r.pricingWidthMm)).size,expected);assert.ok(m.every(r=>r.saleMinor===null&&r.status==='PRICE_DATA_MISSING'));
 });
