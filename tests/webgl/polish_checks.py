@@ -6,14 +6,14 @@ from playwright.sync_api import expect
 from tests.webgl.browser_checks import page,settings,api,admin_user,open_planner,screenshot
 from tests.webgl.navigation import panel,close_panels,add_legacy
 
-def test_only_three_real_modules_are_available_in_catalogue(page,api,settings,admin_user):
+def test_all_production_modules_are_available_in_catalogue(page,api,settings,admin_user):
     open_planner(page,api);panel(page,'left','catalog')
-    assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==['Д1 L','Д1 P','Д2']
+    assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==['Д1 L','Д1 P','Д2','Нижний 2 ящика · с доводчиком','Нижний 3 ящика · с доводчиком','ВМД1 L','ВМД1 P','ВМД2']
     assert page.locator('#module-catalogue [data-template],#module-catalogue [data-module]').count()==0
     page.locator('#module-search').fill('Д1 P')
     expect(page.locator('#module-catalogue .mf3d-module:visible')).to_have_count(1)
     page.locator('#module-search').fill('')
-    expect(page.locator('#module-catalogue .mf3d-module:visible')).to_have_count(3)
+    expect(page.locator('#module-catalogue .mf3d-module:visible')).to_have_count(8)
 
 
 def edit(page,key,value):
