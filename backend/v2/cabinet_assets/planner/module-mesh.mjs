@@ -199,7 +199,7 @@ export class MeshFactory{
     const fronts=parts?.filter(p=>p.role==='front');let doorIndex=0;
     for(const f of cells){
       const drawer=f.kind==='drawer',part=fronts?.[doorIndex++],hasPivot=Boolean(part?.pivot)&&!drawer;
-      const spec=hasPivot?{side:part.hinge_side,open_angle:part.open_angle}:null;
+      const spec=hasPivot?{side:part.hinge_side,open_angle:Number.isFinite(part.open_angle)?part.open_angle:105}:null;
       let parent=group,px=f.cx,pz=part?.position.z??D/2+11,handleZ=pz+9;
       if(hasPivot){
         const hingeX=part.pivot.x,pivot=new THREE.Group();
