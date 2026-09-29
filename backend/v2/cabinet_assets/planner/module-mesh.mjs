@@ -214,8 +214,10 @@ export class MeshFactory{
         const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
         const side=rowDoors.length>1?(f.cx<0?1:-1):spec?(spec.side==='right'?-1:1):/отк P/.test(it.bazis_file||'')?-1:1;
         const x=drawer?f.cx:f.cx+side*(f.w/2-50),localX=spec?x-(f.cx+(spec.side==='right'?f.w/2:-f.w/2)):x;
-        const y=f.cy+f.h/2-(drawer?36:50);
-        // The handle axis is 50 x 50; pilot swing doors keep the handle on the rotating facade.
+        const wallDoor=!drawer&&(production?.tier==='wall'||it.module_type==='wall_cabinet');
+        const y=drawer?f.cy+f.h/2-36:wallDoor?f.cy-f.h/2+50:f.cy+f.h/2-50;
+        // Base/tall swing handles sit near the top edge; wall-cabinet handles sit near the bottom edge.
+        // The pilot swing doors keep the handle on the rotating facade.
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
     }
