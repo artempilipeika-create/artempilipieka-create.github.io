@@ -160,5 +160,5 @@ def test_facade_and_native_metadata_survive_nonzero_placement(page,api,settings,
     assert native['source_sha256']==it['bazis_sha256']
     assert native['elastic_resize']==it['bazis_resize']
     assert native['target']=={k:it[k] for k in ['width','height','depth']}
-    assert native['position']['x']==350 and native['position']['z']==100 and native['rotation']==90
+    assert native['position']['x']==350 and native['position']['y']==0 and native['position']['z']==100 and native['rotation']==90
     assert payload['format']=='martin-forest-bazis-native-v2' and payload['facade_gap_mm']==1.5
