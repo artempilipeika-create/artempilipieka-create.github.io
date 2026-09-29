@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
-import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings} from './furniture-core.mjs';
+import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings,scopeMatches} from './furniture-core.mjs';
 import {roomSettings,LIGHTS} from './room-state.mjs';
 import {clientFrame} from './client-camera.mjs';
 export class PlannerScene{
@@ -197,17 +197,17 @@ export class PlannerScene{
   setLayer(value){this.layer=value;this.renderer.shadowMap.needsUpdate=true;this.sync();}
   highlight(error=''){
     const items=this.adapter.items,it=this.adapter.selected,entry=it?this.liveEntry(it.item_id,items):null;
-    if(this.selectionScope==='kitchen'&&!items.some(item=>kitchenSettings(item)))this.clearSelection();
-    const whole=this.selectionScope==='kitchen',show=!this.preview;
+    const grouped=this.selectionScope!=='module',show=!this.preview;
+    if(grouped&&!items.some(item=>scopeMatches(item,this.selectionScope)))this.selectionScope='module';
     this.selectedBox.material.opacity=this.client?.32:.78;
     for(const [id,box]of this.kitchenBoxes)if(!this.liveEntry(id,items)){box.geometry.dispose();box.material.dispose();box.removeFromParent();this.kitchenBoxes.delete(id);}
     for(const [id,e]of this.entries){
       const item=items.find(it=>it.item_id===id);if(!item||!this.liveEntry(id,items))continue;
       let box=this.kitchenBoxes.get(id);
-      if(whole&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
-      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(whole&&show&&e.group.visible&&kitchenSettings(item));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
+      if(grouped&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
+      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(grouped&&show&&e.group.visible&&scopeMatches(item,this.selectionScope));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
     }
-    this.selectedBox.visible=Boolean(!whole&&entry?.group.visible&&show);
+    this.selectedBox.visible=Boolean(!grouped&&entry?.group.visible&&show);
     if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':this.client?'#79796b':'#346d4a');}
     else this.selectedBox.box.makeEmpty();
     this.placeLabel();
