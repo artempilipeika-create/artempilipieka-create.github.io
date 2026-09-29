@@ -17,9 +17,15 @@
     doors:sides.map(side=>({side,hinge_count:2,open_angle:105})),hardware:{
       hinge_name:'Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)',
       hinge_article:'112602',hinge_count:2*sides.length,items:[
+        {key:'support-base-h5',name:'Основание для кухонной опоры крепление Н5 под саморезы',article:'840 00 P2 H5 00',quantity:2,unit:'pcs'},
+        {key:'support-h100',name:'Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',article:'415 10 P2 0Z 02',quantity:2,unit:'pcs'},
+        {key:'plastic-leg-100',name:'1031 Ножка пластиковая без базы, высота 100 мм',article:'05.0360',quantity:2,unit:'pcs'},
+        {key:'plastic-leg-base',name:'1031 База для пластиковой ножки с упором под саморез',article:'05.0360',quantity:2,unit:'pcs'},
+        {key:'clip-plate',name:'Площадка клипсы усиленной (06.152)',article:'06.080',quantity:2,unit:'pcs'},
+        {key:'clip-heavy',name:'Клипса усиленная',article:'06.152',quantity:2,unit:'pcs'},
         {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:12,unit:'pcs'},
-        {key:'nails-1.4x25',name:'Гвозди 1,4*25 РМЗ',quantity:51,unit:'pcs'},
-        {key:'screw-5x30',name:'Саморез универсальный 5,0*30, желтый цинк AKS',quantity:4,unit:'pcs'}
+        {key:'nails-1.4x25',name:'Гвозди 1,4*25 РМЗ',article:'16181',quantity:51,unit:'pcs'},
+        {key:'screw-5x30',name:'Саморез универсальный 5,0*30 желтый цинк AKS',article:'12867',quantity:4,unit:'pcs'}
       ]}});
   const DRAWER_SLIDE_RULE=Object.freeze({
     mode:'native_fr3d_parameter_table',depth_drives_slide:true,
@@ -34,6 +40,19 @@
       600:[[600,0],[1000,1]]
     }
   });
+  const drawerHardwareItems=count=>[
+    {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:24,unit:'pcs'},
+    {key:'support-base-h5',name:'Основание для кухонной опоры крепление Н5 под саморезы',quantity:2,unit:'pcs'},
+    {key:'support-h100',name:'Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',quantity:2,unit:'pcs'},
+    {key:'plastic-leg-100',name:'1031 Ножка пластиковая без базы, высота 100 мм',quantity:2,unit:'pcs'},
+    {key:'plastic-leg-base',name:'1031 База для пластиковой ножки с упором под саморез',quantity:2,unit:'pcs'},
+    {key:'clip-plate',name:'Площадка клипсы усиленной (06.152)',quantity:2,unit:'pcs'},
+    {key:'clip-heavy',name:'Клипса усиленная',quantity:2,unit:'pcs'},
+    {key:'nails-1.4x25',name:'Гвозди 1,4*25 РМЗ',quantity:51,unit:'pcs'},
+    {key:'screw-5x30',name:'Саморез универсальный 5,0*30 желтый цинк AKS',quantity:count===2?10:13,unit:'pcs'},
+    {key:'screw-3.5x16-d5',name:'Шурупы 3.5х16 д5',quantity:count*3,unit:'pcs'},
+    {key:'screw-3.5x16-zn',name:'Шуруп 3.5х16 мм,Zn',quantity:count*18,unit:'pcs'}
+  ];
   const pilotDrawer=(label,key,sha,source_file,heights)=>({...kitchenBase,label,key,source_sha256:sha,source_file,
     carcass:{...kitchenBase.carcass,material_name:'ЛДСП- БЕЛЫЙ'},
     facade:{...kitchenBase.facade,material_name:'Evagloss P004'},
@@ -43,7 +62,7 @@
       front_back_width_clearance:99,side_depth_clearance:10,bottom_width_clearance:67,bottom_depth_clearance:14,
       material_name:'ЛДСП- БЕЛЫЙ',bottom_material_name:'ЛХДФ 3ММ Белый'},
     hardware:{drawer_system:'AKS',slide_type:'ball_bearing_soft_close',native_slide_length_mm:500,
-      slide_length_mm:500,slide_rule:DRAWER_SLIDE_RULE,drawer_count:heights.length}
+      slide_length_mm:500,slide_rule:DRAWER_SLIDE_RULE,drawer_count:heights.length,items:drawerHardwareItems(heights.length)}
   });
   const wallBase={
     tier:'wall',native_defaults:{width:600,height:720,depth:317},body_height:720,base_height:0,worktop_thickness:0,scene_depth:317,
@@ -96,12 +115,26 @@
     return offsets.map((offset_mm,i)=>({id:'shelf-'+(i+1),enabled:true,offset_mm,thickness:18,width_clearance:38,depth_clearance:0,
       source_component:null,material_variant_id:null}));
   }
+  function drawerSlideLengthMm(depth){
+    const d=Number(depth);
+    if(!Number.isFinite(d))return null;
+    if(d===510)return 500;
+    if(d>=1000)return 600;
+    if(d>=600)return 550;
+    if(d>=550)return 500;
+    if(d>=500)return 450;
+    if(d>=450)return 400;
+    if(d>=400)return 350;
+    if(d>=350)return 300;
+    if(d>=300)return 250;
+    return null;
+  }
   function productionHardware(it,p=PRODUCTION_MODELS[it?.bazis_id]){
     if(!p?.hardware)return null;
     const hw={...p.hardware,items:(p.hardware.items||[]).map(x=>({...x}))};
     if(hw.slide_rule){
       hw.slide_selection='native_auto_by_depth';
-      hw.slide_length_mm=Number(it?.depth)===Number(p.native_defaults?.depth)?hw.native_slide_length_mm:null;
+      hw.slide_length_mm=drawerSlideLengthMm(it?.depth);
     }
     if(p.dryer){
       const width=Number(it?.width)||p.native_defaults.width;
@@ -403,5 +436,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,productionShelves,productionHardware,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);
