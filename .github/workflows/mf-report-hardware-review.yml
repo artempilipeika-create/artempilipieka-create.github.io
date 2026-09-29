@@ -1,0 +1,94 @@
+name: Report and hardware acceptance
+on:
+  push:
+    branches: [mf-report-hardware-selection-20260929]
+    paths:
+      - 'backend/v2/three_d_document.py'
+      - 'backend/v2/cabinet_assets/**'
+      - 'tests/webgl/**'
+      - 'tests/order_entry/**'
+      - '.github/workflows/mf-report-hardware-review.yml'
+permissions:
+  contents: read
+concurrency:
+  group: report-hardware-review
+  cancel-in-progress: true
+jobs:
+  build-and-pdf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install report dependencies
+        run: |
+          pip install -r backend/v2/requirements.txt pypdf==6.9.1
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils
+      - name: Syntax and deterministic production tests
+        run: |
+          node --check backend/v2/cabinet_assets/3d.js
+          node --check backend/v2/cabinet_assets/planner/furniture-core.js
+          node --test tests/webgl/kitchen.test.mjs tests/webgl/pricing.test.mjs tests/webgl/upper.test.mjs
+      - name: Render sample picking report through PDF renderer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from backend.v2.three_d_document import render
+          scene={'room':{'width':3000,'depth':1500,'height':2500},'items':[
+            {'item_id':'d1','bazis_id':'bazis.0211e4f77fc4','module_type':'base_cabinet','name':'Д1 L','width':600,'height':820,'depth':510,'x':0,'z':0,'rotation':0,'body_variant_id':None,'front_variant_id':None},
+            {'item_id':'dr','bazis_id':'bazis.39f282e08f0c','module_type':'base_cabinet','name':'Нижний 2 ящика · с доводчиком','width':600,'height':820,'depth':450,'x':600,'z':0,'rotation':0,'body_variant_id':None,'front_variant_id':None},
+            {'item_id':'up','bazis_id':'bazis.1ac4fadd97b7','module_type':'wall_cabinet','name':'ВМД2 · Сушка','width':800,'height':920,'depth':317,'x':1200,'z':0,'rotation':0,'body_variant_id':None,'front_variant_id':None}
+          ]}
+          Path('/tmp/report.pdf').write_bytes(render('Контрольный отчёт',scene,{}))
+          PY
+          pdfinfo /tmp/report.pdf
+          pdftotext /tmp/report.pdf /tmp/report.txt
+          grep -F 'Комплектация по модулям' /tmp/report.txt
+          grep -F 'Сводная закупка фурнитуры' /tmp/report.txt
+          grep -F 'Цена BYN' /tmp/report.txt
+          grep -F 'Направляющие шариковые' /tmp/report.txt
+          mkdir -p /tmp/report-render
+          pdftoppm -png -r 110 /tmp/report.pdf /tmp/report-render/page >/dev/null 2>&1
+          test "$(find /tmp/report-render -name '*.png' | wc -l)" -ge 3
+      - name: Build staging image
+        run: docker build -t martin-forest-report-hardware:ci .
+  api-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_EMAIL_PROVIDER: fake
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser dependencies
+        run: |
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Drawer inspector and PDF API acceptance
+        run: |
+          python -m pytest tests/webgl/drawer_modules_checks.py -vv --timeout=180
+          git diff --exit-code

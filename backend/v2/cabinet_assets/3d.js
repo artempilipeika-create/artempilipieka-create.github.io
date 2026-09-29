@@ -595,17 +595,33 @@ async function syncControls(){
   if(prodRoot){
     prodRoot.hidden=!production;
     if(production){
-      const shelf=(it.shelves||[])[0],back=production.back;
+      const core=globalThis.MF_FURNITURE_CORE,shelves=core.productionShelves(it,production),shelf=shelves[0],back=production.back,hw=core.productionHardware(it,production);
       $('production-back-summary').textContent=back?'Задняя стенка: '+(back.type==='overlay_nails'?'накладная, гвозди':'производственная')+' · '+back.thickness+' мм · '+(back.material_name||'материал из донора'):'Задняя стенка не задана';
       if($('production-hardware-summary')){
-        const hw=production.hardware;
-        $('production-hardware-summary').textContent=hw?'Петли PRIME '+hw.hinge_article+' · '+hw.hinge_count+' шт.':'Фурнитура берётся из производственного донора';
+        const unit=u=>({pcs:'шт.',set:'компл.'}[u]||u||'шт.'),bits=[];
+        if(Number.isInteger(hw?.hinge_count))bits.push('Петли PRIME'+(hw.hinge_article?' '+hw.hinge_article:'')+' · '+hw.hinge_count+' шт.');
+        if(Number.isInteger(hw?.drawer_count))bits.push('Направляющие AKS с доводчиком · '+hw.drawer_count+' компл.'+(hw.slide_length_mm?' · '+hw.slide_length_mm+' мм':' · автоподбор по глубине'));
+        for(const row of hw?.items||[])bits.push(row.name+' · '+row.quantity+' '+unit(row.unit));
+        $('production-hardware-summary').textContent=bits.length?'Фурнитура: '+bits.join(' · '):'Фурнитура не задана для этого производственного донора';
       }
-      $('shelf-enabled').checked=Boolean(shelf?.enabled);
-      $('shelf-position').disabled=!shelf?.enabled;
-      $('shelf-position').value=String(shelf?.offset_mm??Math.round(h.body_height/2));
-      $('shelf-position').min=String(Math.ceil(production.carcass.panel_thickness+(shelf?.thickness||18)/2));
-      $('shelf-position').max=String(Math.floor(h.body_height-production.carcass.rail_height-(shelf?.thickness||18)/2));
+      const shelfControls=$('production-shelf-controls'),manualShelf=Boolean(shelf&&!production.shelf_rule);
+      if(shelfControls)shelfControls.hidden=!manualShelf;
+      if(manualShelf){
+        $('shelf-enabled').checked=Boolean(shelf.enabled);
+        $('shelf-position').disabled=!shelf.enabled;
+        $('shelf-position').value=String(shelf.offset_mm??Math.round(h.body_height/2));
+        $('shelf-position').min=String(Math.ceil(production.carcass.panel_thickness+(shelf.thickness||18)/2));
+        $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
+      }
+      if($('production-rule-note')){
+        $('production-rule-note').textContent=production.front_layout?.kind==='drawer'
+          ?'Полка в модуле не предусмотрена. Направляющие подбираются родным FR3D по глубине модуля.'
+          :production.dryer
+            ?'Сушка равна ширине модуля с шагом 100 мм. При высоте больше 850 мм автоматически добавляется верхняя полка.'
+            :production.shelf_rule
+              ?'Полки формируются автоматически по высоте: до 850 мм - одна, выше 850 мм - две.'
+              :'Полка является производственным параметром и передаётся в экспорт БАЗИС.';
+      }
       $('toggle-doors').hidden=!production.doors?.length;
       $('toggle-doors').textContent=it.doors_open?'Закрыть фасады':'Открыть фасады';
     }

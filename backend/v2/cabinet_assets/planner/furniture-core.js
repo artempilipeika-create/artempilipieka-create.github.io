@@ -14,7 +14,13 @@
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}]
   };
   const pilotDoor=(label,key,sha,sides)=>({...doorBase,label,key,source_sha256:sha,
-    doors:sides.map(side=>({side,hinge_count:2,open_angle:105})),hardware:{hinge_article:'112602',hinge_count:2*sides.length}});
+    doors:sides.map(side=>({side,hinge_count:2,open_angle:105})),hardware:{
+      hinge_name:'Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)',
+      hinge_article:'112602',hinge_count:2*sides.length,items:[
+        {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:12,unit:'pcs'},
+        {key:'nails-1.4x25',name:'Гвозди 1,4*25 РМЗ',quantity:51,unit:'pcs'},
+        {key:'screw-5x30',name:'Саморез универсальный 5,0*30, желтый цинк AKS',quantity:4,unit:'pcs'}
+      ]}});
   const DRAWER_SLIDE_RULE=Object.freeze({
     mode:'native_fr3d_parameter_table',depth_drives_slide:true,
     control_points:{

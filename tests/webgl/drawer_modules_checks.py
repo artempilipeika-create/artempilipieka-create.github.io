@@ -95,6 +95,10 @@ def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api
         assert actual['roles']['drawer']==4*len(expected['fronts'])
 
         panel(page,'right')
+        expect(page.locator('#production-shelf-controls')).to_be_hidden()
+        expect(page.locator('#production-hardware-summary')).to_contain_text('Направляющие AKS с доводчиком')
+        assert 'Петли' not in page.locator('#production-hardware-summary').inner_text()
+        expect(page.locator('#production-rule-note')).to_contain_text('Полка в модуле не предусмотрена')
         page.locator('#depth').fill('450');page.locator('#depth').press('Tab')
         resized=state(page)
         assert resized['item']['depth']==450
