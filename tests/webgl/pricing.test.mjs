@@ -36,7 +36,7 @@ test('Explicit rates price only the identified row; absent rows never become zer
 test('Shared kitchen extras occur once and retain actual run length',()=>{
  const items=ids.map((id,i)=>item(600,id,(i-1)*600)),b=kitchenPriceBreakdown(items,room,template);
  assert.equal(b.modules.length,ids.length);assert.ok(b.modules.every(m=>!m.extras.length));
- const top=b.extras.find(r=>r.role==='counter');assert.equal(top.partCount,1);assert.equal(top.quantity,ids.length*.6*.6);assert.equal(b.extras.filter(r=>r.role==='plinth').reduce((n,r)=>n+r.partCount,0),3);
+ const top=b.extras.find(r=>r.role==='counter');assert.equal(top.partCount,1);assert.ok(Math.abs(top.quantity-ids.length*.36)<1e-9);assert.equal(b.extras.filter(r=>r.role==='plinth').reduce((n,r)=>n+r.partCount,0),3);
  assert.equal(b.totals.saleMinor,null);assert.equal(b.notice,'Расчёт цены требует прайс-листа');
 });
 test('Future matrix covers every production donor and width identity with no invented prices',()=>{
