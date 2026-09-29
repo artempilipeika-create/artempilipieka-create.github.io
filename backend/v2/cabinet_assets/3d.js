@@ -705,7 +705,10 @@ async function searchMaterial(input,results,kind){
       if(!it)return;
       if(['body','front','plinth'].includes(kind)&&templateFor(it)?.production&&Number(m.thickness)!==18){status('Для корпуса, фасадов и цоколя выберите материал толщиной 18 мм.');return;}
       materials.set(String(m.variant_id),m);
-      const targets=$('material-scope')?.value==='kitchen'?state.items.filter(x=>globalThis.MF_FURNITURE_CORE.isKitchenModule(x)):[it];
+      const scope=$('material-scope')?.value||'module',core=globalThis.MF_FURNITURE_CORE;
+      let targets=scope==='module'?[it]:state.items.filter(x=>core.scopeMatches(x,scope));
+      if(kind==='plinth'||kind==='countertop')targets=targets.filter(x=>core.kitchenSettings(x));
+      if(!targets.length){status('В выбранной группе нет модулей для этого материала.');return;}
       const field={body:'body_variant_id',front:'front_variant_id',plinth:'plinthMaterialId',countertop:'countertopMaterialId'}[kind];
       for(const target of targets){
         target[field]=m.variant_id;
@@ -715,7 +718,8 @@ async function searchMaterial(input,results,kind){
           if(kind==='body')for(const shelf of target.shelves||[])shelf.material_variant_id=null;
         }
       }
-      status('Материал: '+(targets.length>1?'вся кухня · '+targets.length+' модуля':it.name));
+      const scopeLabel={kitchen:'вся кухня',lower:'низ',upper:'верх'}[scope];
+      status('Материал: '+(scopeLabel?scopeLabel+' · '+targets.length+' модулей':it.name));
       $(kind+'-selected').textContent=label(m);
       results.replaceChildren();
       input.value='';
