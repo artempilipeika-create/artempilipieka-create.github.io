@@ -113,7 +113,7 @@ def module_materials(it,body,front):
     if known and (not body or body=='Не выбран'):body='ЛДСП- БЕЛЫЙ'
     if known and (not front or front=='Не выбран'):front='Evagloss P004'
     rows=[('Корпус',body or 'Не выбран'),('Фасад',front or 'Не выбран')]
-    if bid in D1|D2|DRAWERS|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2:rows.append(('Задняя стенка','ЛХДФ 3ММ Белый'))
+    if bid in D1|D2|set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2:rows.append(('Задняя стенка','ЛХДФ 3ММ Белый'))
     if bid in DRAWERS:
         rows.extend([('Короба ящиков','ЛДСП- БЕЛЫЙ'),('Днища ящиков','ЛХДФ 3ММ Белый')])
     return rows
