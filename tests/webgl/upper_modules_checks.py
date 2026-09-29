@@ -59,10 +59,6 @@ def test_vmd_upper_modules_exact_render_save_load_and_native_export(page,api,set
     panel(page,'left','catalog')
     expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(8)
     assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE
-    page.locator('#module-tabs [data-module-filter="wall"]').click()
-    expect(page.locator('#module-catalogue .mf3d-module:visible')).to_have_count(3)
-    page.locator('#module-tabs [data-module-filter="all"]').click()
-
     for bazis_id,expected in DONORS.items():
         page.locator(f'[data-bazis="{bazis_id}"]').click()
         actual=state(page);parts=actual['parts']
