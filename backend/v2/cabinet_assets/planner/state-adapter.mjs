@@ -1,4 +1,4 @@
-import {clone,elevation,tier,heights,placementError,normalizeKitchen,kitchenSettings} from './furniture-core.mjs';
+import {clone,elevation,tier,heights,placementError,normalizeKitchen,kitchenSettings,productionShelves} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -29,8 +29,8 @@ export class StateAdapter{
     if(opt.bazis&&t.production){
       const p=t.production;
       Object.assign(it,{height:p.body_height+p.base_height,depth:p.scene_depth??it.depth,
-        body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,
-        shelves:clone(p.shelves||[]),doors_open:false});
+        body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
+      it.shelves=clone(productionShelves(it,p));
     }else if(!opt.bazis){
       const base=it.base==='wall'?0:type==='base_cabinet'?100:it.base==='plinth'?80:60;
       Object.assign(it,{body_height:it.height-base,base_height:base,worktop_thickness:type==='base_cabinet'&&it.depth<=750?38:0});
@@ -53,6 +53,8 @@ export class StateAdapter{
       !Number.isInteger(kitchen.countertopDepthMm)||kitchen.countertopDepthMm<300||kitchen.countertopDepthMm>1200||kitchen.countertopStockLengthMm!==4100||
       !Number.isInteger(kitchen.countertopThicknessMm)||kitchen.countertopThicknessMm<12||kitchen.countertopThicknessMm>100))return 'Проверьте ножки, задний зазор и размеры столешницы';
     const production=this.template(it)?.production;
+    if(production?.dryer?.width_step_mm&&it.width%production.dryer.width_step_mm!==0)
+      return 'Для сушки ширина модуля должна изменяться шагом '+production.dryer.width_step_mm+' мм';
     if(Array.isArray(it.shelves))for(const shelf of it.shelves){
       const thickness=Number(shelf?.thickness)||18,offset=Number(shelf?.offset_mm);
       if(shelf?.enabled!==false&&(!Number.isInteger(offset)||offset<(production?.carcass?.panel_thickness||0)+thickness/2||offset>h.body_height-(production?.carcass?.rail_height||0)-thickness/2))
