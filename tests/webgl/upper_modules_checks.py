@@ -41,7 +41,7 @@ def state(page):
       });
       return {item:{id:it.item_id,bazis_id:it.bazis_id,bazis_file:it.bazis_file,bazis_sha256:it.bazis_sha256,module_type:it.module_type,
         width:it.width,height:it.height,depth:it.depth,base:it.base,body_height:it.body_height,base_height:it.base_height,worktop_thickness:it.worktop_thickness},
-        label:t.label,hardware:t.production.hardware,cells,roles,pivots,elevation:MF_FURNITURE_CORE.elevation(it,p.adapter.room),
+        label:t.label,hardware:MF_FURNITURE_CORE.productionHardware(it,t.production),cells,roles,pivots,elevation:MF_FURNITURE_CORE.elevation(it,p.adapter.room),
         kitchen:MF_FURNITURE_CORE.kitchenSettings(it),legs:MF_FURNITURE_CORE.kitchenLegs(it),
         parts:parts.map(x=>({key:x.key,name:x.name,role:x.role,length:x.length,width:x.width,thickness:x.thickness,material:x.material?.name||null}))};}""")
 
