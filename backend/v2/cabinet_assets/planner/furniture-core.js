@@ -151,6 +151,22 @@
   const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:60,plinthMaterialId:null,
     countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
   function isKitchenModule(it){const p=PILOT_PRODUCTION[it.bazis_id];return Boolean(p&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
+  function kitchenGroup(it){
+    const p=PRODUCTION_MODELS[it?.bazis_id];
+    if(p?.tier==='base')return 'lower';
+    if(p?.tier==='wall')return 'upper';
+    if(it?.module_type==='base_cabinet')return 'lower';
+    if(it?.module_type==='wall_cabinet')return 'upper';
+    if(it?.module_type==='tall_cabinet')return 'tall';
+    return null;
+  }
+  function scopeMatches(it,scope='module'){
+    const group=kitchenGroup(it);
+    if(scope==='kitchen')return Boolean(group);
+    if(scope==='lower')return group==='lower';
+    if(scope==='upper')return group==='upper';
+    return false;
+  }
   function kitchenSettings(it){
     if(!isKitchenModule(it))return null;
     const k={...KITCHEN_DEFAULTS};for(const key of Object.keys(k))if(it[key]!=null)k[key]=it[key];
@@ -441,5 +457,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);
