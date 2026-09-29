@@ -5,7 +5,7 @@
   const mmNumber=v=>Math.round(Number(v)*10)/10;
   // Versioned FR3D donor data. Old donor hashes remain valid through 3d.js legacyBazisById.
   const kitchenBase={
-    native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
+    tier:'base',native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
     carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:18,rail_depth:80,rail_orientation:'horizontal'},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     facade:{thickness:18,gap_mm:FACADE_GAP_MM,clearance_mm:2}
@@ -25,6 +25,24 @@
       material_name:'ЛДСП- БЕЛЫЙ',bottom_material_name:'ЛХДФ 3ММ Белый'},
     hardware:{drawer_system:'AKS',slide_type:'ball_bearing_soft_close',slide_length_mm:500,drawer_count:heights.length}
   });
+  const wallBase={
+    tier:'wall',native_defaults:{width:600,height:720,depth:317},body_height:720,base_height:0,worktop_thickness:0,scene_depth:317,
+    carcass:{type:'wall_box',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
+    back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
+    facade:{thickness:18,gap_mm:FACADE_GAP_MM,clearance_mm:2,material_name:'Evagloss P004'},
+    shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:38,depth_clearance:0,
+      placement_source:'centered_visual_default'}]
+  };
+  const wallDoor=(label,key,sha,source_file,sides)=>({...wallBase,label,key,source_sha256:sha,source_file,
+    doors:sides.map(side=>({side,hinge_count:2,open_angle:null})),
+    hardware:{hinge_name:'Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)',
+      hinge_article:null,hinge_count:2*sides.length,items:[
+        {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:8,unit:'pcs'},
+        {key:'hanger-white',name:'Навес простой, белый',quantity:2,unit:'pcs'},
+        {key:'screw-3x30',name:'Шуруп 3*30 мм,Zn',quantity:4,unit:'pcs'},
+        {key:'nails-1.4x25',name:'Гвозди 1,4*25 РМЗ',quantity:52,unit:'pcs'},
+        {key:'shelf-support-marcopol',name:'Полкодержатель, Marcopol, оцинкованный',quantity:4,unit:'pcs'}
+      ]}});
   const freeze=value=>{Object.values(value).forEach(v=>{if(v&&typeof v==='object')freeze(v);});return Object.freeze(value);};
   const PILOT_PRODUCTION=freeze({
     'bazis.0211e4f77fc4':pilotDoor('Д1 L','base.standard.d1.left.600','7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',['left']),
@@ -33,6 +51,12 @@
     'bazis.39f282e08f0c':pilotDrawer('Нижний 2 ящика · с доводчиком','base.standard.drawers2.softclose.600','f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2','НМРШ2-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d',[357,357]),
     'bazis.5f5697e39e27':pilotDrawer('Нижний 3 ящика · с доводчиком','base.standard.drawers3.softclose.600','f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0','НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d',[357,178,178])
   });
+  const WALL_PRODUCTION=freeze({
+    'bazis.858266606bc5':wallDoor('ВМД1 L','wall.standard.d1.left.600','858266606bc5e6f36a96635c155beb8f86161ce869956a8f961f27406db7ebc2','ВМД1-600. отк L.fr3d',['left']),
+    'bazis.2175c60e84a6':wallDoor('ВМД1 P','wall.standard.d1.right.600','2175c60e84a6eb6eeefa62eaddc611f2180b6a3060a0ea3aa1b5305ffbcc6ed5','ВМД1-600. отк P.fr3d',['right']),
+    'bazis.877ba2f68d92':wallDoor('ВМД2','wall.standard.d2.600','877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3','ВМД2-600..fr3d',['left','right'])
+  });
+  const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION});
   const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:60,plinthMaterialId:null,
     countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
   function isKitchenModule(it){const p=PILOT_PRODUCTION[it.bazis_id];return Boolean(p&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
@@ -136,7 +160,7 @@
    * Orientation identifies the length/width/thickness axes of each board blank.
    */
   function productionParts(it,template,materialLookup=()=>null){
-    const p=template?.production;if(p?.carcass?.type!=='bottom_side_two_rails')return null;
+    const p=template?.production;if(!p?.carcass)return null;
     const {width:W,height:H,depth:D}=it,{body_height:B,base_height:base}=heights(it);
     const t=p.carcass.panel_thickness,rail=p.carcass.rail_depth||80,inner=W-2*t,parts=[];
     const add=(key,name,role,size,position,axes,variant=null,material=null,extra={})=>{
@@ -145,6 +169,34 @@
         material:{variant_id:variant||null,name:material||null},length:size[length_axis],width:size[width_axis],thickness:size[thickness_axis],
         position,orientation:{length_axis,width_axis,thickness_axis},size,...extra});
     };
+    if(p.carcass.type==='wall_box'){
+      for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,side==='L'?'Левая Боковая':'Правая Боковая','body',
+        {x:t,y:B,z:D},{x:sign*(W-t)/2,y:base+B/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
+      add('top','Крыша','body',{x:inner,y:t,z:D},{x:0,y:base+B-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
+      add('bottom','Дно','body',{x:inner,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
+      for(const shelf of it.shelves??p.shelves??[])if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
+        {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
+        {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,p.carcass.material_name||null,
+        {shelf_id:shelf.id,placement_source:shelf.placement_source||null});
+      if(p.back){const b=p.back;add('back','З.С','back',
+        {x:W-2*b.inset,y:B-2*b.inset,z:b.thickness},{x:0,y:base+B/2,z:-(D+b.thickness)/2},['y','x','z'],null,b.material_name,{back_type:b.type});}
+      facadeCells(it,template).forEach((f,i)=>{
+        const door=p.doors?.[i]||null,thickness=p.facade?.thickness||18,z=D/2+(p.facade?.clearance_mm??2)+thickness/2;
+        const extra={facade:f};
+        if(door)Object.assign(extra,{hinge_side:door.side,open_angle:door.open_angle,hinge_count:door.hinge_count,
+          pivot:{x:f.cx+(door.side==='left'?-1:1)*f.w/2,y:0,z}});
+        add('door-'+(i+1),'Фасад','front',{x:f.w,y:f.h,z:thickness},{x:f.cx,y:f.cy,z},['y','x','z'],
+          it.front_variant_id,p.facade?.material_name||null,extra);
+      });
+      for(const part of parts){
+        const id=it.part_materials?.[part.key]??(part.role==='back'?it.back_variant_id:null)??part.material.variant_id;
+        const m=id?materialLookup(id):null;
+        part.material={variant_id:id||null,name:m?.name||(id?null:part.material.name),article:m?.article||null,
+          manufacturer:m?.manufacturer||null,material_id:m?.material_id||null};
+      }
+      return parts;
+    }
+    if(p.carcass.type!=='bottom_side_two_rails')return null;
     add('bottom','Дно','body',{x:W,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
     for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,'Боковина '+side,'body',
       {x:t,y:B-t,z:D},{x:sign*(W-t)/2,y:base+t+(B-t)/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
@@ -291,5 +343,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,KITCHEN_DEFAULTS,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,KITCHEN_DEFAULTS,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);
