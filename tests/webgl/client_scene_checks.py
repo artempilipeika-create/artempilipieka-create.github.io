@@ -27,7 +27,7 @@ def test_catalogue_bootstrap_previews_obey_strict_csp(page,api,settings,admin_us
     assert page.evaluate('window.__catalogueCsp')==[]
     page.locator('#csp-preview-probe').evaluate('el=>el.remove()')
     panel(page,'left','catalog')
-    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(8)
+    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(11)
     assert page.locator('#module-catalogue img[src^="data:"]').count()==0
 
 def row(page,api,admin_user):
