@@ -30,8 +30,7 @@
     carcass:{type:'wall_box',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
     facade:{thickness:18,gap_mm:FACADE_GAP_MM,clearance_mm:2,material_name:'Evagloss P004'},
-    shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:38,depth_clearance:0,
-      placement_source:'centered_visual_default'}]
+    shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:38,depth_clearance:0}]
   };
   const wallDoor=(label,key,sha,source_file,sides)=>({...wallBase,label,key,source_sha256:sha,source_file,
     doors:sides.map(side=>({side,hinge_count:2,open_angle:null})),
@@ -177,7 +176,7 @@
       for(const shelf of it.shelves??p.shelves??[])if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
         {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
         {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,p.carcass.material_name||null,
-        {shelf_id:shelf.id,placement_source:shelf.placement_source||null});
+        {shelf_id:shelf.id});
       if(p.back){const b=p.back;add('back','З.С','back',
         {x:W-2*b.inset,y:B-2*b.inset,z:b.thickness},{x:0,y:base+B/2,z:-(D+b.thickness)/2},['y','x','z'],null,b.material_name,{back_type:b.type});}
       facadeCells(it,template).forEach((f,i)=>{
