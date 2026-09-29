@@ -1,7 +1,7 @@
 /** Pricing is a projection of canonical production geometry, never scene state.
  * Money uses integer BYN minor units. No default rates or default markup.
  */
-import {productionParts,kitchenRuns,kitchenLegs,PILOT_PRODUCTION} from './furniture-core.mjs';
+import {productionParts,productionHardware,kitchenRuns,kitchenLegs,PILOT_PRODUCTION} from './furniture-core.mjs';
 export const PRICING_WIDTHS=Object.freeze(Array.from({length:15},(_,i)=>300+i*50));
 export function pricingCategory(actualWidthMm){
   if(!Number.isFinite(actualWidthMm)||actualWidthMm<=0)return {actualWidthMm,pricingWidthMm:null,status:'INVALID_WIDTH'};
@@ -42,13 +42,14 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
   // The same production generator calculates a quote at the next standard width.
   // Only this isolated copy is resized. Actual scene/export geometry is untouched.
   const categoryParts=category.status==='STANDARD'&&actualParts?productionParts({...item,width:category.pricingWidthMm},template,materialLookup):null;
-  const parts=categoryParts||actualParts||[],hardware=template?.production?.hardware,legs=kitchenLegs(item),hardwareRows=[];
+  const parts=categoryParts||actualParts||[],hardware=productionHardware(item,template?.production),legs=kitchenLegs(item),hardwareRows=[];
   if(Number.isInteger(hardware?.hinge_count))hardwareRows.push(
     row('hinges:'+String(hardware.hinge_article||hardware.hinge_name||'missing'),hardware.hinge_name||'Петли',hardware.hinge_count,'pcs','FR3D donor',{article:hardware.hinge_article||null}));
   if(Number.isInteger(hardware?.drawer_count))hardwareRows.push(
-    row('drawer-slides:'+String(hardware.drawer_system||'unknown')+':'+String(hardware.slide_length_mm||''),
-      'Направляющие шариковые с доводчиком',hardware.drawer_count,'set','FR3D donor',
-      {manufacturer:hardware.drawer_system||null,lengthMm:hardware.slide_length_mm||null}));
+    row('drawer-slides:'+String(hardware.drawer_system||'unknown')+':'+String(hardware.slide_length_mm||'auto'),
+      hardware.slide_length_mm?'Направляющие шариковые с доводчиком':'Направляющие шариковые с доводчиком · автоподбор по глубине',
+      hardware.drawer_count,'set','FR3D donor',
+      {manufacturer:hardware.drawer_system||null,lengthMm:hardware.slide_length_mm||null,selection:hardware.slide_selection||null}));
   for(const h of hardware?.items||[])hardwareRows.push(
     row('hardware:'+h.key,h.name,Number.isFinite(h.quantity)?h.quantity:null,h.unit||'pcs','FR3D donor'));
   const sections={sheetMaterials:panelRows(parts),

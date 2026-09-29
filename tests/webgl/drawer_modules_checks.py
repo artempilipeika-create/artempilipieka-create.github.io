@@ -39,7 +39,7 @@ def state(page):
       parts=MF_FURNITURE_CORE.productionParts(it,t),fronts=MF_FURNITURE_CORE.facadeCells(it,t),roles={};
       p.scene.entries.get(it.item_id).group.traverse(m=>{if(m.isMesh){const r=m.userData.role||'none';roles[r]=(roles[r]||0)+1;}});
       return {item:{id:it.item_id,bazis_id:it.bazis_id,bazis_sha256:it.bazis_sha256,width:it.width,height:it.height,depth:it.depth},
-        label:t.label,hardware:t.production.hardware,fronts,roles,
+        label:t.label,hardware:MF_FURNITURE_CORE.productionHardware(it,t.production),fronts,roles,
         parts:parts.map(x=>({key:x.key,name:x.name,role:x.role,length:x.length,width:x.width,thickness:x.thickness,material:x.material?.name||null}))};}""")
 
 def dims(parts,name):
@@ -54,9 +54,9 @@ def export_payload(page):
 def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api,settings,admin_user):
     open_verified_planner(page,admin_user)
     panel(page,'left','catalog')
-    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(8)
+    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(11)
     assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==[
-        'Д1 L','Д1 P','Д2',DONORS['bazis.39f282e08f0c']['label'],DONORS['bazis.5f5697e39e27']['label'],'ВМД1 L','ВМД1 P','ВМД2'
+        'Д1 L','Д1 P','Д2',DONORS['bazis.39f282e08f0c']['label'],DONORS['bazis.5f5697e39e27']['label'],'ВМД1 L','ВМД1 P','ВМД2','ВМД1 L · Сушка','ВМД1 P · Сушка','ВМД2 · Сушка'
     ]
 
     item_ids=[]
@@ -83,12 +83,26 @@ def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api
         assert all(p['material']=='Evagloss P004' for p in parts if p['role']=='front')
         assert all(p['material']=='ЛДСП- БЕЛЫЙ' for p in parts if p['role']=='drawer')
         assert all(p['material']=='ЛХДФ 3ММ Белый' for p in parts if p['name'] in {'Задняя стенка','З.С'})
-        assert actual['hardware']=={
-            'drawer_system':'AKS','slide_type':'ball_bearing_soft_close',
-            'slide_length_mm':500,'drawer_count':len(expected['fronts'])
-        }
+        assert actual['hardware']['drawer_system']=='AKS'
+        assert actual['hardware']['slide_type']=='ball_bearing_soft_close'
+        assert actual['hardware']['native_slide_length_mm']==500
+        assert actual['hardware']['slide_length_mm']==500
+        assert actual['hardware']['slide_selection']=='native_auto_by_depth'
+        assert actual['hardware']['drawer_count']==len(expected['fronts'])
+        assert actual['hardware']['slide_rule']['control_points']['250']==[[250,0],[300,1],[1000,0]]
+        assert actual['hardware']['slide_rule']['control_points']['600']==[[600,0],[1000,1]]
         assert actual['roles']['front']==len(expected['fronts'])
         assert actual['roles']['drawer']==4*len(expected['fronts'])
+
+        panel(page,'right')
+        page.locator('#depth').fill('450');page.locator('#depth').press('Tab')
+        resized=state(page)
+        assert resized['item']['depth']==450
+        assert resized['hardware']['slide_length_mm'] is None
+        assert resized['hardware']['slide_selection']=='native_auto_by_depth'
+        page.locator('#depth').fill('510');page.locator('#depth').press('Tab')
+        assert state(page)['hardware']['slide_length_mm']==500
+        panel(page,'left','catalog')
 
     close_panels(page)
     page.locator('#save-project').click()

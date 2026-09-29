@@ -24,7 +24,7 @@ DONORS={
         'fronts':[(717,297),(717,297)],'hinges':4,'sides':['left','right'],
     },
 }
-CATALOGUE=['Д1 L','Д1 P','Д2','Нижний 2 ящика · с доводчиком','Нижний 3 ящика · с доводчиком','ВМД1 L','ВМД1 P','ВМД2']
+CATALOGUE=['Д1 L','Д1 P','Д2','Нижний 2 ящика · с доводчиком','Нижний 3 ящика · с доводчиком','ВМД1 L','ВМД1 P','ВМД2','ВМД1 L · Сушка','ВМД1 P · Сушка','ВМД2 · Сушка']
 
 def open_verified_planner(page,admin_user):
     login_ui(page,admin_user['email'])
@@ -41,7 +41,7 @@ def state(page):
       });
       return {item:{id:it.item_id,bazis_id:it.bazis_id,bazis_file:it.bazis_file,bazis_sha256:it.bazis_sha256,module_type:it.module_type,
         width:it.width,height:it.height,depth:it.depth,base:it.base,body_height:it.body_height,base_height:it.base_height,worktop_thickness:it.worktop_thickness},
-        label:t.label,hardware:t.production.hardware,cells,roles,pivots,elevation:MF_FURNITURE_CORE.elevation(it,p.adapter.room),
+        label:t.label,hardware:MF_FURNITURE_CORE.productionHardware(it,t.production),cells,roles,pivots,elevation:MF_FURNITURE_CORE.elevation(it,p.adapter.room),
         kitchen:MF_FURNITURE_CORE.kitchenSettings(it),legs:MF_FURNITURE_CORE.kitchenLegs(it),
         parts:parts.map(x=>({key:x.key,name:x.name,role:x.role,length:x.length,width:x.width,thickness:x.thickness,material:x.material?.name||null}))};}""")
 
@@ -57,7 +57,7 @@ def export_payload(page):
 def test_vmd_upper_modules_exact_render_save_load_and_native_export(page,api,settings,admin_user):
     open_verified_planner(page,admin_user)
     panel(page,'left','catalog')
-    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(8)
+    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(11)
     assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE
     for bazis_id,expected in DONORS.items():
         page.locator(f'[data-bazis="{bazis_id}"]').click()
