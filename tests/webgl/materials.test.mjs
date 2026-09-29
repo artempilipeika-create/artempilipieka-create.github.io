@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
 import {materialVisual} from '../../backend/v2/cabinet_assets/planner/material-visuals.mjs';
-import {PILOT_PRODUCTION,productionParts,bounds,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {PILOT_PRODUCTION,PRODUCTION_MODELS,productionParts,bounds,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 const room={width:6200,depth:3600,height:2700};
 const item={item_id:'module',module_type:'base_cabinet',width:600,height:820,body_height:720,base_height:100,depth:510,x:0,z:0,rotation:0,base:'plinth',handles:'handles',layout:'doors',drawers:0};
 const meshes=g=>{const out=[];g.traverse(m=>{if(m.isMesh)out.push(m)});return out;};
@@ -53,6 +53,24 @@ test('Body/front/back/part material identities update existing meshes and restor
  it.body_variant_id='white';f.updateAppearance(g,it);assert.deepEqual(mats(),before);
  assert.equal(all.find(m=>m.userData.part?.key==='bottom').userData.part.material.article,'article-white');f.dispose();
 });
+test('Drawer box interior inherits carcass material while HDF bottom stays separate',()=>{
+ const production=PRODUCTION_MODELS['bazis.39f282e08f0c'],template={production};
+ const data=id=>id?({variant_id:id,article:id,name:id,visual:{render_color:id==='body-a'?'#aa3333':'#3355aa'}}):null;
+ const f=new MeshFactory({room,template:()=>template,material:data},()=>{});
+ const it={...item,bazis_id:'bazis.39f282e08f0c',width:600,height:820,depth:510,body_height:720,base_height:100,
+   body_variant_id:'body-a',front_variant_id:'front-a',shelves:[],doors_open:false};
+ const g=f.build(it),all=meshes(g);
+ const drawerParts=all.filter(m=>m.userData.part?.role==='drawer');
+ const drawerBottoms=all.filter(m=>m.userData.part?.drawer_index&&m.userData.part?.role==='back');
+ assert.ok(drawerParts.length&&drawerBottoms.length);
+ assert.ok(drawerParts.every(m=>m.material.userData.variantId==='body-a'));
+ assert.ok(drawerBottoms.every(m=>m.material.userData.variantId===null));
+ it.body_variant_id='body-b';f.updateAppearance(g,it);
+ assert.ok(drawerParts.every(m=>m.material.userData.variantId==='body-b'));
+ assert.ok(drawerBottoms.every(m=>m.material.userData.variantId===null));
+ f.dispose();
+});
+
 test('Textures use sRGB, fixed physical scale, grain rotation, matt surfaces and bounded cache',()=>{
  const load=THREE.TextureLoader.prototype.load;THREE.TextureLoader.prototype.load=()=>new THREE.Texture();
  try{
