@@ -107,6 +107,7 @@ def test_vmd_upper_modules_exact_render_save_load_and_native_export(page,api,set
         assert item['source_sha256']==expected['sha']
         assert item['source_default']=={'width':600,'height':720,'depth':317}
         assert item['target']=={'width':600,'height':720,'depth':317}
+        assert item['position']['y']==1480
         assert item['construction']['hardware']['hinge_count']==expected['hinges']
         assert item['construction']['hardware']['hinge_name'].startswith('Петля накладная с доводчиком 48мм h2 clip-on PRIME')
         assert item['construction']['legs'] is None
