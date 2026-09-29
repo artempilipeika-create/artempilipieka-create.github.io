@@ -106,10 +106,15 @@ test('Legacy lower native target remains 720 and old worktop remains 32 without 
  const json=JSON.stringify(legacy);assert.equal(heights(legacy).module_height,720);assert.equal(heights(legacy).overall_height_with_worktop,752);
  assert.equal(dimensionPatch(legacy,{worktop_thickness:38}).height,720);assert.equal(JSON.stringify(legacy),json);
 });
-for(const module_type of ['base_cabinet','wall_cabinet','tall_cabinet'])test('Every swing handle axis is exactly 50 by 50: '+module_type,()=>{
+for(const module_type of ['base_cabinet','wall_cabinet','tall_cabinet'])test('Every swing handle uses the correct vertical edge: '+module_type,()=>{
  for(const count of [1,2]){const f=make({kind:'doors',count}),g=f.build({...separated,module_type,base:module_type==='wall_cabinet'?'wall':'plinth'});
  const fronts=roles(g,'front'),handles=roles(g,'handle');assert.equal(handles.length,count);
- for(let i=0;i<count;i++){const a=fronts[i].userData.facade,h=handles[i];assert.ok(Math.abs(a.cy+a.h/2-h.position.y*1000-50)<1e-6);assert.ok(Math.abs(a.w/2-Math.abs(h.position.x*1000-a.cx)-50)<1e-6);}
+ for(let i=0;i<count;i++){
+  const a=fronts[i].userData.facade,h=handles[i],y=h.position.y*1000;
+  if(module_type==='wall_cabinet')assert.ok(Math.abs(y-(a.cy-a.h/2+50))<1e-6);
+  else assert.ok(Math.abs(a.cy+a.h/2-y-50)<1e-6);
+  assert.ok(Math.abs(a.w/2-Math.abs(h.position.x*1000-a.cx)-50)<1e-6);
+ }
  if(module_type!=='base_cabinet')assert.equal(f.dress([{...separated,module_type}]).children.length,0);f.dispose();}
 });
 test('Different worktop thicknesses and zero worktop do not create doubled shared slabs',()=>{
