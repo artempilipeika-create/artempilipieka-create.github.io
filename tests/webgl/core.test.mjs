@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {facadeCells,bounds,rotateXZ,elevation,placementError,rightAnchoredWidth} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {facadeCells,bounds,rotateXZ,elevation,placementError,rightAnchoredWidth,scopeMatches} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {snapItem,findSpace} from '../../backend/v2/cabinet_assets/planner/placement.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
@@ -23,6 +23,12 @@ for(const [r,x,z]of [[0,0,1],[90,-1,0],[180,0,-1],[270,1,0]])test('Rotation '+r+
  assert.deepEqual(rotateXZ(0,1,r),{x,z});const b=bounds(item({rotation:r}),room,false);assert.equal(b.maxX-b.minX,r%180===0?600:560);assert.equal(b.maxZ-b.minZ,r%180===0?560:600);
 });
 test('Elevation fallback is exactly the saved v2 rule',()=>{assert.equal(elevation(item({module_type:'wall_cabinet'}),room),1480);assert.equal(elevation(item(),room),0);assert.equal(elevation(item({elevation_mm:1550}),room),1550);});
+test('Kitchen selection scopes include upper cabinets instead of only lower production settings',()=>{
+ const lower=item({module_type:'base_cabinet'}),upper=item({module_type:'wall_cabinet'}),tall=item({module_type:'tall_cabinet'}),other=item({module_type:'wardrobe'});
+ assert.equal(scopeMatches(lower,'kitchen'),true);assert.equal(scopeMatches(upper,'kitchen'),true);assert.equal(scopeMatches(tall,'kitchen'),true);assert.equal(scopeMatches(other,'kitchen'),false);
+ assert.equal(scopeMatches(lower,'lower'),true);assert.equal(scopeMatches(upper,'lower'),false);
+ assert.equal(scopeMatches(lower,'upper'),false);assert.equal(scopeMatches(upper,'upper'),true);
+});
 test('Upper over lower is not a collision; upper inside tall is',()=>{
  const upper=item({item_id:'upper',module_type:'wall_cabinet',depth:320});
  assert.equal(placementError(upper,[item()],room),'');assert.match(placementError(upper,[item({height:2200,module_type:'tall_cabinet'})],room),/Пересечение/);
