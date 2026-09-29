@@ -330,10 +330,10 @@
       const sideX=fbW/2+pt/2,frontZ=sideD/2-pt/2;
       frontCells.forEach((f,i)=>{
         const boxH=Math.max(1,mmNumber(f.h-(d.facade_to_box_delta||57))),cy=f.cy,key='drawer-'+(i+1)+'-';
-        add(key+'rear','ЗАДНЯЯ ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:-frontZ},['y','x','z'],null,d.material_name,{drawer_index:i+1});
-        add(key+'front','Фронтальная ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:frontZ},['y','x','z'],null,d.material_name,{drawer_index:i+1});
-        add(key+'side-P','Боковая напр.P','drawer',{x:pt,y:boxH,z:sideD},{x:sideX,y:cy,z:0},['y','z','x'],null,d.material_name,{drawer_index:i+1});
-        add(key+'side-L','Боковая напр.L','drawer',{x:pt,y:boxH,z:sideD},{x:-sideX,y:cy,z:0},['y','z','x'],null,d.material_name,{drawer_index:i+1});
+        add(key+'rear','ЗАДНЯЯ ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:-frontZ},['y','x','z'],it.body_variant_id,d.material_name,{drawer_index:i+1});
+        add(key+'front','Фронтальная ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:frontZ},['y','x','z'],it.body_variant_id,d.material_name,{drawer_index:i+1});
+        add(key+'side-P','Боковая напр.P','drawer',{x:pt,y:boxH,z:sideD},{x:sideX,y:cy,z:0},['y','z','x'],it.body_variant_id,d.material_name,{drawer_index:i+1});
+        add(key+'side-L','Боковая напр.L','drawer',{x:pt,y:boxH,z:sideD},{x:-sideX,y:cy,z:0},['y','z','x'],it.body_variant_id,d.material_name,{drawer_index:i+1});
         add(key+'bottom','З.С','back',{x:bottomW,y:bt,z:bottomD},{x:0,y:cy-boxH/2+bt/2,z:0},['x','z','y'],null,d.bottom_material_name,{drawer_index:i+1,back_type:'drawer_bottom'});
       });
     }
