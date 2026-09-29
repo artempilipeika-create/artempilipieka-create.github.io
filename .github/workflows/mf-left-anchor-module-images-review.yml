@@ -1,0 +1,71 @@
+name: Left anchor and module image acceptance
+on:
+  push:
+    branches: [mf-left-anchor-module-images-20260930]
+    paths:
+      - 'backend/v2/cabinet_assets/**'
+      - 'backend/v2/three_d_api.py'
+      - 'backend/v2/three_d_document.py'
+      - 'tests/webgl/**'
+      - '.github/workflows/mf-left-anchor-module-images-review.yml'
+permissions:
+  contents: read
+concurrency:
+  group: left-anchor-module-images-review
+  cancel-in-progress: true
+jobs:
+  pure-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax and deterministic geometry
+        run: |
+          node --check backend/v2/cabinet_assets/3d.js
+          node --check backend/v2/cabinet_assets/planner/furniture-core.js
+          node --check backend/v2/cabinet_assets/planner/placement.mjs
+          node --check backend/v2/cabinet_assets/planner/interaction.mjs
+          python -m py_compile backend/v2/three_d_api.py backend/v2/three_d_document.py
+          node --test tests/webgl/core.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/upper.test.mjs
+      - name: Build staging image
+        run: docker build -t martin-forest-left-anchor:ci .
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_EMAIL_PROVIDER: fake
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser dependencies
+        run: |
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Layout and PDF browser acceptance
+        run: |
+          python -m pytest tests/webgl/layout_anchor_checks.py tests/webgl/pdf_kitchen_report_checks.py -vv --timeout=180 --maxfail=2
+          git diff --exit-code
