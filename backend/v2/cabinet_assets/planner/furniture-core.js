@@ -16,6 +16,8 @@
   const pilotDoor=(label,key,sha,sides)=>({...doorBase,label,key,source_sha256:sha,
     doors:sides.map(side=>({side,hinge_count:2,open_angle:105})),hardware:{hinge_article:'112602',hinge_count:2*sides.length}});
   const pilotDrawer=(label,key,sha,source_file,heights)=>({...kitchenBase,label,key,source_sha256:sha,source_file,
+    carcass:{...kitchenBase.carcass,material_name:'ЛДСП- БЕЛЫЙ'},
+    facade:{...kitchenBase.facade,material_name:'Evagloss P004'},
     front:{kind:'drawers',count:heights.length},shelves:[],doors:[],
     front_layout:{kind:'drawer',heights,gaps:heights.length===2?[1.5,3,1.5]:[1.5,2,2,1.5]},
     drawer_box:{panel_thickness:18,bottom_thickness:3,facade_to_box_delta:57,
