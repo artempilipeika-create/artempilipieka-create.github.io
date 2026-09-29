@@ -1,0 +1,63 @@
+name: Collision and selection scopes acceptance
+on:
+  push:
+    branches: [mf-collision-selection-scopes-20260930]
+    paths:
+      - 'backend/v2/cabinet_assets/**'
+      - 'tests/webgl/**'
+      - '.github/workflows/mf-collision-selection-scopes-review.yml'
+permissions:
+  contents: read
+concurrency:
+  group: collision-selection-scopes-review
+  cancel-in-progress: true
+jobs:
+  pure-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and deterministic geometry
+        run: |
+          for source in backend/v2/cabinet_assets/3d.js backend/v2/cabinet_assets/planner/furniture-core.js backend/v2/cabinet_assets/planner/furniture-core.mjs backend/v2/cabinet_assets/planner/interaction.mjs backend/v2/cabinet_assets/planner/scene.mjs backend/v2/cabinet_assets/planner/entry.mjs; do node --check "$source"; done
+          node --test tests/webgl/core.test.mjs tests/webgl/kitchen.test.mjs tests/webgl/materials.test.mjs tests/webgl/upper.test.mjs
+          git diff --exit-code
+      - name: Build staging image
+        run: docker build -t martin-forest-collision-scopes:ci .
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_EMAIL_PROVIDER: fake
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser dependencies
+        run: |
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 pytest-timeout==2.4.0 httpx==0.28.1 pypdf==6.9.1 playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Real collision and selection-scope acceptance
+        run: |
+          python -m pytest tests/webgl/collision_scope_checks.py -vv --timeout=180 --maxfail=2
+          git diff --exit-code
