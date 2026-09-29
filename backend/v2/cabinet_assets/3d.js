@@ -982,7 +982,11 @@ function exportBazisProject(){
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,
           back:p.back,
-          shelves:(it.shelves||p.shelves||[]).map(shelf=>({...shelf,material_variant_id:shelf.material_variant_id||null})),
+          shelves:(it.shelves||p.shelves||[]).map(shelf=>({
+            id:shelf.id,enabled:shelf.enabled!==false,offset_mm:shelf.offset_mm,thickness:shelf.thickness,
+            width_clearance:shelf.width_clearance,depth_clearance:shelf.depth_clearance,
+            source_component:shelf.source_component||null,material_variant_id:shelf.material_variant_id||null
+          })),
           doors:p.doors||[],
           hardware:p.hardware||null,
           base_height:Number.isFinite(it.base_height)?it.base_height:p.base_height,
