@@ -441,6 +441,9 @@ function capturePdfPreviews(){
     const preview_data_url=pdfPreviewDataUrl(canvas,1200,680);
     for(const it of (adapter?.items||[]).slice(0,40)){
       adapter.select(it.item_id);scene.sync();scene.fit('selected');
+      for(const [id,entry] of scene.entries)entry.group.visible=id===it.item_id;
+      if(scene.dressing)scene.dressing.visible=false;
+      if(scene.contacts)scene.contacts.visible=false;
       if(scene.selectedBox)scene.selectedBox.visible=false;
       if(scene.hoverBox)scene.hoverBox.visible=false;
       scene.renderer.render(scene.scene,scene.camera);
