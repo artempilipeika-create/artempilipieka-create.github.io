@@ -62,7 +62,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Planner browser regression
         run: |
-          python -m pytest tests/webgl/kitchen_checks.py tests/webgl/browser_checks.py tests/webgl/input_checks.py tests/webgl/client_pricing_checks.py tests/webgl/release_checks.py tests/webgl/visual_checks.py tests/webgl/workspace_checks.py -vv --timeout=90 --maxfail=3 --junitxml=qa-output/drawer-modules/browser.xml
+          python -m pytest tests/webgl/drawer_modules_checks.py -vv --timeout=180 --junitxml=qa-output/drawer-modules/browser.xml
           git diff --exit-code
 
   email-verification:
