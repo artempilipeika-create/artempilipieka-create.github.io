@@ -10,7 +10,8 @@ from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
 from .document_renderer import FONTS
 
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');MINT=colors.HexColor('#e8efe9');PALE=colors.HexColor('#f7f9f5')
@@ -107,7 +108,26 @@ def module_contents(it):
         return f"корпус; {'1 фасад' if bid in D1 else '2 фасада'}; задняя стенка; полка; основание/ножки"
     return 'состав определяется выбранным модулем'
 
-def render(name,scene,materials):
+def module_materials(it,body,front):
+    bid=it.get('bazis_id');known=bid in DRAWERS|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2
+    if known and (not body or body=='Не выбран'):body='ЛДСП- БЕЛЫЙ'
+    if known and (not front or front=='Не выбран'):front='Evagloss P004'
+    rows=[('Корпус',body or 'Не выбран'),('Фасад',front or 'Не выбран')]
+    if bid in D1|D2|DRAWERS|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2:rows.append(('Задняя стенка','ЛХДФ 3ММ Белый'))
+    if bid in DRAWERS:
+        rows.extend([('Короба ящиков','ЛДСП- БЕЛЫЙ'),('Днища ящиков','ЛХДФ 3ММ Белый')])
+    return rows
+
+def preview_image(raw):
+    if not raw:return None
+    reader=ImageReader(BytesIO(raw));w,h=reader.getSize()
+    max_w,max_h=WIDTH,92*mm
+    scale=min(max_w/w,max_h/h)
+    image=RLImage(BytesIO(raw),width=w*scale,height=h*scale)
+    image.hAlign='CENTER'
+    return image
+
+def render(name,scene,materials,preview_png=None):
     root=Path(__file__).parent/'document_assets'
     for file,expected in FONTS.items():
         path=root/file
@@ -134,6 +154,8 @@ def render(name,scene,materials):
             p(body,'small'),p(front,'small')])
     story=[p('Martin Forest · 3D-проект','title'),p(name,'head'),
       p(f"Помещение: {room.get('width')} x {room.get('depth')} x {room.get('height')} мм · Модулей: {len(items)}",'body')]
+    hero=preview_image(preview_png)
+    if hero:story.extend([Spacer(1,2*mm),hero,Spacer(1,2*mm)])
     table=Table([[p(x,'head') for x in ['№','Модуль','Ш x В x Г, мм','Положение','Корпус','Фасад']]]+summary,
       colWidths=[WIDTH*.04,WIDTH*.17,WIDTH*.14,WIDTH*.16,WIDTH*.245,WIDTH*.245],repeatRows=1)
     table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('LINEBELOW',(0,0),(-1,-1),.3,RULE),
@@ -161,9 +183,15 @@ def render(name,scene,materials):
         hwtable.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('BACKGROUND',(0,1),(-1,-1),PALE),
           ('GRID',(0,0),(-1,-1),.3,RULE),('VALIGN',(0,0),(-1,-1),'TOP'),
           ('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
-        block=[p(title,'module'),p('Состав: '+module_contents(it),'body'),p('Материалы: корпус - '+body+'; фасад - '+front,'small'),Spacer(1,1.5*mm),hwtable]
+        material_rows=[[p('Материал','head'),p('Значение','head')]]
+        material_rows.extend([[p(kind),p(value)] for kind,value in module_materials(it,body,front)])
+        material_table=Table(material_rows,colWidths=[WIDTH*.22,WIDTH*.72])
+        material_table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('GRID',(0,0),(-1,-1),.3,RULE),
+          ('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),
+          ('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
+        block=[p(title,'module'),p('Состав: '+module_contents(it),'body'),Spacer(1,1.5*mm),p('Фурнитура','section'),hwtable]
         if note:block.extend([Spacer(1,1*mm),p(note,'small')])
-        block.append(Spacer(1,4*mm))
+        block.extend([Spacer(1,2*mm),p('Материалы','section'),material_table,Spacer(1,3*mm)])
         story.append(KeepTogether(block))
     story.extend([PageBreak(),p('Сводная закупка фурнитуры','title'),p('Количество суммируется по модулям. Цена и сумма оставлены пустыми до подключения/ввода актуального прайса.','small')])
     rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Всего','Ед.','Цена BYN','Сумма BYN','Компл.']]]
