@@ -416,14 +416,43 @@ async function copyShare(){
     status('Скопируйте выделенную ссылку.');
   }
 }
+function captureKitchenPdfPreview(){
+  const canvas=$('scene'),planner=globalThis.MF_PLANNER,scene=planner?.scene;
+  if(!canvas)return null;
+  if(!scene){
+    try{return canvas.toDataURL('image/png')}catch{return null}
+  }
+  const view=scene.captureView?.(),client=Boolean(scene.client),selectedVisible=Boolean(scene.selectedBox?.visible),hoverVisible=Boolean(scene.hoverBox?.visible);
+  try{
+    scene.setPresentation(true);
+    scene.fit('kitchen');
+    if(scene.selectedBox)scene.selectedBox.visible=false;
+    if(scene.hoverBox)scene.hoverBox.visible=false;
+    scene.renderer.render(scene.scene,scene.camera);
+    return canvas.toDataURL('image/png');
+  }catch{return null}
+  finally{
+    scene.setPresentation(client);
+    if(view)scene.restoreView(view);
+    if(scene.selectedBox)scene.selectedBox.visible=selectedVisible;
+    if(scene.hoverBox)scene.hoverBox.visible=hoverVisible;
+    scene.render();
+  }
+}
 async function downloadSpec(){
   if(!project)await saveProject();
-  const a=document.createElement('a');
-  a.href='/api/v2/3d-projects/'+project.project_id+'/specification.pdf';
-  a.download='Martin_Forest_3D_Project.pdf';
-  document.body.append(a);
-  a.click();
-  a.remove();
+  const preview_data_url=captureKitchenPdfPreview();
+  const r=await fetch('/api/v2/3d-projects/'+project.project_id+'/specification.pdf',{
+    method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({preview_data_url})
+  });
+  if(!r.ok){
+    const d=await r.json().catch(()=>({}));
+    throw new Error(d.detail?.code||'Не удалось сформировать PDF');
+  }
+  const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='Martin_Forest_3D_Project.pdf';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
   status('PDF проекта сформирован.');
 }
 
