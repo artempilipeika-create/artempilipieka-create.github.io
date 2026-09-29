@@ -3,21 +3,33 @@
 (function(root){
   const FACADE_GAP_MM=1.5, MM_TO_WORLD=0.001;
   const mmNumber=v=>Math.round(Number(v)*10)/10;
-  // Versioned FR3D donor data. D1 L/P share every construction parameter except hinges.
-  const pilotBase={
+  // Versioned FR3D donor data. Old donor hashes remain valid through 3d.js legacyBazisById.
+  const kitchenBase={
     native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
     carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:18,rail_depth:80,rail_orientation:'horizontal'},
     back:{type:'overlay_nails',thickness:3,inset:2,material_name:'ЛХДФ 3ММ Белый'},
-    facade:{thickness:18,gap_mm:FACADE_GAP_MM,clearance_mm:2},
+    facade:{thickness:18,gap_mm:FACADE_GAP_MM,clearance_mm:2}
+  };
+  const doorBase={...kitchenBase,
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:36,depth_clearance:1,source_component:'_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d'}]
   };
-  const pilot=(label,key,sha,sides)=>({...pilotBase,label,key,source_sha256:sha,
+  const pilotDoor=(label,key,sha,sides)=>({...doorBase,label,key,source_sha256:sha,
     doors:sides.map(side=>({side,hinge_count:2,open_angle:105})),hardware:{hinge_article:'112602',hinge_count:2*sides.length}});
+  const pilotDrawer=(label,key,sha,source_file,heights)=>({...kitchenBase,label,key,source_sha256:sha,source_file,
+    front:{kind:'drawers',count:heights.length},shelves:[],doors:[],
+    front_layout:{kind:'drawer',heights,gaps:heights.length===2?[1.5,3,1.5]:[1.5,2,2,1.5]},
+    drawer_box:{panel_thickness:18,bottom_thickness:3,facade_to_box_delta:57,
+      front_back_width_clearance:99,side_depth_clearance:10,bottom_width_clearance:67,bottom_depth_clearance:14,
+      material_name:'ЛДСП- БЕЛЫЙ',bottom_material_name:'ЛХДФ 3ММ Белый'},
+    hardware:{drawer_system:'AKS',slide_type:'ball_bearing_soft_close',slide_length_mm:500,drawer_count:heights.length}
+  });
   const freeze=value=>{Object.values(value).forEach(v=>{if(v&&typeof v==='object')freeze(v);});return Object.freeze(value);};
   const PILOT_PRODUCTION=freeze({
-    'bazis.0211e4f77fc4':pilot('Д1 L','base.standard.d1.left.600','7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',['left']),
-    'bazis.784bf9af84f8':pilot('Д1 P','base.standard.d1.right.600','5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb',['right']),
-    'bazis.3079d0656398':pilot('Д2','base.standard.d2.600','7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',['left','right'])
+    'bazis.0211e4f77fc4':pilotDoor('Д1 L','base.standard.d1.left.600','7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',['left']),
+    'bazis.784bf9af84f8':pilotDoor('Д1 P','base.standard.d1.right.600','5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb',['right']),
+    'bazis.3079d0656398':pilotDoor('Д2','base.standard.d2.600','7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',['left','right']),
+    'bazis.39f282e08f0c':pilotDrawer('Нижний 2 ящика · с доводчиком','base.standard.drawers2.softclose.600','f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2','НМРШ2-600.З.С 3мм Гвозди Шариковые напр с довод.fr3d',[357,357]),
+    'bazis.5f5697e39e27':pilotDrawer('Нижний 3 ящика · с доводчиком','base.standard.drawers3.softclose.600','f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0','НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.fr3d',[357,178,178])
   });
   const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:60,plinthMaterialId:null,
     countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
@@ -78,13 +90,25 @@
   }
   // Arithmetic transferred from the accepted 8937f3e constructor, not redesigned.
   function facadeCells(it,template){
-    const spec=template?.production?.doors?.length?{kind:'doors',count:template.production.doors.length}:template?.front||legacyFrontSpec(it);
+    const production=template?.production,custom=production?.front_layout;
+    const spec=production?.doors?.length?{kind:'doors',count:production.doors.length}:template?.front||legacyFrontSpec(it);
     const baseH=heights(it).base_height;
     const x0=-it.width/2,y0=baseH,W=it.width,H=Math.max(1,it.height-baseH),g=FACADE_GAP_MM,cells=[];
     const cell=(kind,x,y,w,h)=>{
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(custom?.heights?.length){
+      const gaps=custom.gaps||Array(custom.heights.length+1).fill(g),gapTotal=gaps.reduce((n,v)=>n+Number(v||0),0);
+      const nominal=custom.heights.reduce((n,v)=>n+Number(v||0),0),scale=Math.max(1,H-gapTotal)/Math.max(1,nominal);
+      let y=y0+Number(gaps[0]||0);
+      for(let i=0;i<custom.heights.length;i++){
+        const fh=mmNumber(Number(custom.heights[i])*scale),fw=mmNumber(Math.max(1,W-2*g));
+        cells.push({kind:custom.kind||'drawer',w:fw,h:fh,cx:0,cy:mmNumber(y+fh/2)});
+        y+=fh+Number(gaps[i+1]||0);
+      }
+      return cells;
+    }
     if(spec.kind==='none')return cells;
     if(spec.kind==='doors'){
       const n=Math.max(1,spec.count||1),cw=W/n;
@@ -119,22 +143,39 @@
         material:{variant_id:variant||null,name:material||null},length:size[length_axis],width:size[width_axis],thickness:size[thickness_axis],
         position,orientation:{length_axis,width_axis,thickness_axis},size,...extra});
     };
-    add('bottom','Дно','body',{x:W,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id);
+    add('bottom','Дно','body',{x:W,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
     for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,'Боковина '+side,'body',
-      {x:t,y:B-t,z:D},{x:sign*(W-t)/2,y:base+t+(B-t)/2,z:0},['y','z','x'],it.body_variant_id);
+      {x:t,y:B-t,z:D},{x:sign*(W-t)/2,y:base+t+(B-t)/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
     for(const [key,name,sign]of [['rear','задняя',-1],['front','передняя',1]])add('rail-'+key,'Царга '+name,'body',
-      {x:inner,y:t,z:rail},{x:0,y:H-t/2,z:sign*(D-rail)/2},['z','x','y'],it.body_variant_id);
+      {x:inner,y:t,z:rail},{x:0,y:H-t/2,z:sign*(D-rail)/2},['z','x','y'],it.body_variant_id,p.carcass.material_name||null);
     for(const shelf of it.shelves??p.shelves??[])if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
       {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
       {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,null,
       {source_component:shelf.source_component||null,shelf_id:shelf.id});
     if(p.back){const b=p.back;add('back','Задняя стенка','back',
       {x:W-2*b.inset,y:B-2*b.inset,z:b.thickness},{x:0,y:base+B/2,z:-(D+b.thickness)/2},['y','x','z'],null,b.material_name,{back_type:b.type});}
-    facadeCells(it,template).forEach((f,i)=>{
-      const door=p.doors[i],thickness=p.facade?.thickness||18,z=D/2+(p.facade?.clearance_mm??2)+thickness/2;
-      add('door-'+(i+1),'Фасад двери','front',{x:f.w,y:f.h,z:thickness},{x:f.cx,y:f.cy,z},['x','y','z'],it.front_variant_id,null,
-        {facade:f,hinge_side:door.side,open_angle:door.open_angle,hinge_count:door.hinge_count,
-          pivot:{x:f.cx+(door.side==='left'?-1:1)*f.w/2,y:0,z}});
+    const frontCells=facadeCells(it,template);
+    if(p.drawer_box){
+      const d=p.drawer_box,pt=d.panel_thickness||18,bt=d.bottom_thickness||3;
+      const fbW=Math.max(1,W-(d.front_back_width_clearance||99)),sideD=Math.max(1,D-(d.side_depth_clearance||10));
+      const bottomW=Math.max(1,W-(d.bottom_width_clearance||67)),bottomD=Math.max(1,D-(d.bottom_depth_clearance||14));
+      const sideX=fbW/2+pt/2,frontZ=sideD/2-pt/2;
+      frontCells.forEach((f,i)=>{
+        const boxH=Math.max(1,mmNumber(f.h-(d.facade_to_box_delta||57))),cy=f.cy,key='drawer-'+(i+1)+'-';
+        add(key+'rear','ЗАДНЯЯ ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:-frontZ},['y','x','z'],null,d.material_name,{drawer_index:i+1});
+        add(key+'front','Фронтальная ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:frontZ},['y','x','z'],null,d.material_name,{drawer_index:i+1});
+        add(key+'side-P','Боковая напр.P','drawer',{x:pt,y:boxH,z:sideD},{x:sideX,y:cy,z:0},['y','z','x'],null,d.material_name,{drawer_index:i+1});
+        add(key+'side-L','Боковая напр.L','drawer',{x:pt,y:boxH,z:sideD},{x:-sideX,y:cy,z:0},['y','z','x'],null,d.material_name,{drawer_index:i+1});
+        add(key+'bottom','З.С','back',{x:bottomW,y:bt,z:bottomD},{x:0,y:cy-boxH/2+bt/2,z:0},['x','z','y'],null,d.bottom_material_name,{drawer_index:i+1,back_type:'drawer_bottom'});
+      });
+    }
+    frontCells.forEach((f,i)=>{
+      const door=p.doors?.[i]||null,thickness=p.facade?.thickness||18,z=D/2+(p.facade?.clearance_mm??2)+thickness/2;
+      const extra={facade:f,drawer_index:f.kind==='drawer'?i+1:null};
+      if(door)Object.assign(extra,{hinge_side:door.side,open_angle:door.open_angle,hinge_count:door.hinge_count,
+        pivot:{x:f.cx+(door.side==='left'?-1:1)*f.w/2,y:0,z}});
+      add('front-'+(i+1),f.kind==='drawer'?'Фасад ящика':'Фасад двери','front',
+        {x:f.w,y:f.h,z:thickness},{x:f.cx,y:f.cy,z},['x','y','z'],it.front_variant_id,p.facade?.material_name||null,extra);
     });
     for(const part of parts){
       const id=it.part_materials?.[part.key]??(part.role==='back'?it.back_variant_id:null)??part.material.variant_id;
