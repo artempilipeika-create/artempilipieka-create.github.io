@@ -89,6 +89,17 @@ def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api
         assert actual['hardware']['slide_length_mm']==500
         assert actual['hardware']['slide_selection']=='native_auto_by_depth'
         assert actual['hardware']['drawer_count']==len(expected['fronts'])
+        items={x['key']:x for x in actual['hardware']['items']}
+        assert items['confirmat-7x50']['quantity']==24
+        assert items['support-base-h5']['quantity']==2
+        assert items['support-h100']['quantity']==2
+        assert items['plastic-leg-100']['quantity']==2
+        assert items['plastic-leg-base']['quantity']==2
+        assert items['clip-plate']['quantity']==2 and items['clip-heavy']['quantity']==2
+        assert items['nails-1.4x25']['quantity']==51
+        assert items['screw-5x30']['quantity']==(10 if len(expected['fronts'])==2 else 13)
+        assert items['screw-3.5x16-d5']['quantity']==len(expected['fronts'])*3
+        assert items['screw-3.5x16-zn']['quantity']==len(expected['fronts'])*18
         assert actual['hardware']['slide_rule']['control_points']['250']==[[250,0],[300,1],[1000,0]]
         assert actual['hardware']['slide_rule']['control_points']['600']==[[600,0],[1000,1]]
         assert actual['roles']['front']==len(expected['fronts'])
@@ -102,8 +113,9 @@ def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api
         page.locator('#depth').fill('450');page.locator('#depth').press('Tab')
         resized=state(page)
         assert resized['item']['depth']==450
-        assert resized['hardware']['slide_length_mm'] is None
+        assert resized['hardware']['slide_length_mm']==400
         assert resized['hardware']['slide_selection']=='native_auto_by_depth'
+        expect(page.locator('#production-hardware-summary')).to_contain_text('400 мм')
         page.locator('#depth').fill('510');page.locator('#depth').press('Tab')
         assert state(page)['hardware']['slide_length_mm']==500
         panel(page,'left','catalog')

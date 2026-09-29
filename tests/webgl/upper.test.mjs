@@ -75,15 +75,18 @@ for(const [id,label,sha,file,fronts,hinges,sides] of [
   assert.equal(tallHw.items.find(x=>x.key==='shelf-support-marcopol').quantity,4);
 });
 
-test('Drawer guide selection remains native FR3D logic and fixed 500 is only donor depth',()=>{
+test('Drawer guide selection follows Martin Forest depth mapping and native FR3D metadata',()=>{
   assert.deepEqual(DRAWER_SLIDE_RULE.control_points[250],[[250,0],[300,1],[1000,0]]);
   assert.deepEqual(DRAWER_SLIDE_RULE.control_points[600],[[600,0],[1000,1]]);
   for(const id of ['bazis.39f282e08f0c','bazis.5f5697e39e27']){
     const p=PILOT_PRODUCTION[id],native=item(id),nativeHw=productionHardware(native,p);
     assert.equal(native.depth,510);assert.equal(nativeHw.slide_length_mm,500);
-    const resized={...native,depth:450},resizedHw=productionHardware(resized,p);
-    assert.equal(resizedHw.slide_length_mm,null);
-    assert.equal(resizedHw.slide_selection,'native_auto_by_depth');
-    assert.equal(resizedHw.slide_rule.mode,'native_fr3d_parameter_table');
+    const expected=new Map([[300,250],[350,300],[400,350],[450,400],[500,450],[510,500],[550,500],[600,550],[1000,600]]);
+    for(const [depth,length] of expected){
+      const resizedHw=productionHardware({...native,depth},p);
+      assert.equal(resizedHw.slide_length_mm,length);
+      assert.equal(resizedHw.slide_selection,'native_auto_by_depth');
+      assert.equal(resizedHw.slide_rule.mode,'native_fr3d_parameter_table');
+    }
   }
 });

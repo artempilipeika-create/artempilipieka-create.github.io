@@ -20,7 +20,8 @@ for(const id of ids)test(PILOT_PRODUCTION[id].label+': quote uses canonical BOM 
   assert.equal(slides.quantity,t.production.hardware.drawer_count);assert.equal(slides.unit,'set');
   assert.equal(slides.manufacturer,'AKS');assert.equal(slides.lengthMm,500);
  }
- assert.equal(b.hardware.find(r=>r.key.startsWith('legs:')).quantity,4);
+ const confirmat=b.hardware.find(r=>r.key==='hardware:confirmat-7x50');assert.ok(confirmat);assert.equal(confirmat.quantity,t.production.front_layout?.kind==='drawer'?24:12);
+ assert.equal(b.hardware.some(r=>r.key==='fasteners'||r.key==='shelf-fittings'||r.key==='handles'||r.key.startsWith('legs:')),false);
  for(const section of ['sheetMaterials','edging','hardware','operations'])for(const r of b[section]){assert.equal(r.unitPriceMinor,null);assert.equal(r.amountMinor,null);assert.equal(r.status,r.quantity===null?'PRICING_RULE_MISSING':'PRICE_DATA_MISSING');}
  assert.equal(b.totals.costMinor,null);assert.equal(b.totals.saleMinor,null);assert.equal(b.totals.markupMinor,null);
 });
