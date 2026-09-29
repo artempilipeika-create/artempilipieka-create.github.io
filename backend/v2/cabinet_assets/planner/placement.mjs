@@ -66,7 +66,30 @@ export function snapItem(raw,items,room,options={},previous={}){
 /** Click/duplicate placement never silently moves an existing cabinet. */
 export function findSpace(draft,items,room,selected,options={}){
   const initial={...draft,elevation_mm:elevation(draft,room)};
-  const starts=[];
+  const starts=[],clearance=(options.wallOffset||0)+(kitchenSettings(initial)?.rearServiceGapMm||0);
+  // Click placement follows a deterministic local left-to-right row. The first
+  // cabinet starts at the left room boundary; later cabinets extend that row to
+  // the right. "Left/right" is local to the cabinet front, so side walls work too.
+  const rotations=[selected?.rotation??0,0].filter((r,i,a)=>a.indexOf(r)===i);
+  for(const r of rotations){
+    const along=rotateXZ(1,0,r),front=rotateXZ(0,1,r);
+    const alongSpan=r%180===0?room.width:room.depth,frontSpan=r%180===0?room.depth:room.width;
+    const v=-frontSpan/2+initial.depth/2+clearance;
+    const rowPeers=items.filter(peer=>{
+      if(peer.rotation!==r||!verticalPeers(initial,peer,room))return false;
+      const peerV=peer.x*front.x+peer.z*front.z;
+      const peerClearance=(options.wallOffset||0)+(kitchenSettings(peer)?.rearServiceGapMm||0);
+      const expected=-frontSpan/2+peer.depth/2+peerClearance;
+      return Math.abs(peerV-expected)<2;
+    });
+    const firstU=-alongSpan/2+initial.width/2;
+    const make=u=>({...initial,rotation:r,x:along.x*u+front.x*v,z:along.z*u+front.z*v});
+    starts.push(make(firstU));
+    if(rowPeers.length){
+      const right=Math.max(...rowPeers.map(peer=>peer.x*along.x+peer.z*along.z+peer.width/2));
+      starts.push(make(right+initial.width/2));
+    }
+  }
   const peers=[selected,...items].filter((x,i,a)=>x&&a.indexOf(x)===i&&verticalPeers(initial,x,room));
   for(const peer of peers){
     const r=peer.rotation||0,axis=r===90||r===270?'z':'x',cross=axis==='x'?'z':'x';
@@ -77,8 +100,6 @@ export function findSpace(draft,items,room,selected,options={}){
       starts.push(p);
     }
   }
-  const clearance=(options.wallOffset||0)+(kitchenSettings(initial)?.rearServiceGapMm||0);
-  starts.push({...initial,rotation:0,x:0,z:-room.depth/2+initial.depth/2+clearance});
   for(const p of starts)if(!placementError(p,items,room))return rounded(p);
   // A bounded grid search is used only for click placement, never in pointermove.
   for(const r of[0,90,180,270]){
