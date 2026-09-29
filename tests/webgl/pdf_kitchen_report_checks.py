@@ -30,6 +30,8 @@ def test_pdf_uses_actual_kitchen_canvas_and_hardware_before_materials(page,api,s
     page.locator('#save-project').click()
     expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
 
+    page.locator('.studio-menu > summary').click()
+    expect(page.locator('#download-spec')).to_be_visible()
     with page.expect_download() as download:
         page.locator('#download-spec').click()
     raw=Path(download.value.path()).read_bytes()
