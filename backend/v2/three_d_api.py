@@ -133,15 +133,26 @@ class Update(Create):
 
 class SpecificationRender(StrictModel):
     preview_data_url: str|None=Field(default=None,max_length=6_000_000)
+    module_preview_data_urls: dict[str,str]=Field(default_factory=dict,max_length=40)
 
-def _preview_png(value):
+def _preview_png(value,max_bytes=4_000_000):
     if not value:return None
     prefix='data:image/png;base64,'
     if not value.startswith(prefix):error(400,'INVALID_3D_PREVIEW')
     try:data=base64.b64decode(value[len(prefix):],validate=True)
     except (binascii.Error,ValueError):error(400,'INVALID_3D_PREVIEW')
-    if not data or len(data)>4_000_000 or not data.startswith(b'\x89PNG\r\n\x1a\n'):error(400,'INVALID_3D_PREVIEW')
+    if not data or len(data)>max_bytes or not data.startswith(b'\x89PNG\r\n\x1a\n'):error(400,'INVALID_3D_PREVIEW')
     return data
+
+def _module_previews(scene,values):
+    allowed={str(x.get('item_id')) for x in scene.get('items',[]) if x.get('item_id')}
+    result={};total=0
+    for key,value in (values or {}).items():
+        if key not in allowed:continue
+        data=_preview_png(value,800_000);total+=len(data)
+        if total>12_000_000:error(400,'INVALID_3D_PREVIEW')
+        result[key]=data
+    return result
 
 def projection(row):
     return {k:row[k] for k in ('project_id','name','module_type','scene','version','created_at','updated_at')}
@@ -201,7 +212,7 @@ def router(settings):
             record_event(conn,settings,actor=user['user_id'],action='3d.project.duplicated',object_type='3d_project',object_id=pid,reason='User duplicated 3D project')
             return projection(row)
 
-    def specification_bytes(conn,row,preview_png=None):
+    def specification_bytes(conn,row,preview_png=None,module_previews=None):
         scene=row['scene'];release=catalogue.active(conn);materials={}
         ids=set()
         if scene.get('items'):
@@ -214,7 +225,7 @@ def router(settings):
                 found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()
                 if found:
                     m=found['snapshot'];materials[ident]=' · '.join(str(x) for x in (m.get('manufacturer'),m.get('article'),m.get('name')) if x)
-        return render_spec(row['name'],scene,materials,preview_png)
+        return render_spec(row['name'],scene,materials,preview_png,module_previews or {})
 
     def specification_response(data):
         filename='Martin_Forest_3D_Project.pdf'
@@ -230,7 +241,9 @@ def router(settings):
     def specification_with_preview(project_id:UUID,body:SpecificationRender,request:Request):
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
-            return specification_response(specification_bytes(conn,row,_preview_png(body.preview_data_url)))
+            preview=_preview_png(body.preview_data_url)
+            module_previews=_module_previews(row['scene'],body.module_preview_data_urls)
+            return specification_response(specification_bytes(conn,row,preview,module_previews))
 
     @api.post('/3d-projects/{project_id}/shares',status_code=201)
     def create_share(project_id:UUID,request:Request):

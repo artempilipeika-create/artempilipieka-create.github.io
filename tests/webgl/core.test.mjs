@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {facadeCells,bounds,rotateXZ,elevation,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {facadeCells,bounds,rotateXZ,elevation,placementError,rightAnchoredWidth} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {snapItem,findSpace} from '../../backend/v2/cabinet_assets/planner/placement.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
@@ -45,8 +45,16 @@ test('Wall hysteresis release radius is larger than capture radius',()=>{
  assert.equal(held.item.z,-1320);assert.equal(free.item.z,-1265);
 });
 test('Snapping can be disabled and still rejects collisions',()=>{const res=snapItem(item({item_id:'b',x:30}),[item()],room,{enabled:false,allowElevation:false});assert.equal(res.item.x,30);assert.match(res.error,/Пересечение/);assert.equal(res.guides.length,0);});
-test('findSpace puts a new cabinet beside an existing one without moving it',()=>{
- const first=item({z:-1320}),before=JSON.stringify(first);const it=findSpace(item({item_id:'b'}),[first],room,first);assert.ok(it);assert.equal(Math.abs(it.x),600);assert.equal(JSON.stringify(first),before);assert.equal(placementError(it,[first],room),'');
+test('findSpace starts at the local left edge and continues left-to-right',()=>{
+ const first=findSpace(item(),[],room,null);assert.ok(first);assert.equal(first.x,-1800);assert.equal(first.z,-1320);
+ const before=JSON.stringify(first),second=findSpace(item({item_id:'b'}),[first],room,first);assert.ok(second);
+ assert.equal(second.x,-1200);assert.equal(second.z,first.z);assert.equal(JSON.stringify(first),before);assert.equal(placementError(second,[first],room),'');
+});
+for(const [rotation,x,z]of [[0,100,0],[90,0,100],[180,-100,0],[270,0,-100]])test('Width resize keeps local left edge fixed at rotation '+rotation,()=>{
+ const source=item({rotation,x:0,z:0,width:600}),next=rightAnchoredWidth(source,{...source,width:800});
+ assert.equal(next.x,x);assert.equal(next.z,z);
+ const along=rotateXZ(1,0,rotation),beforeLeft=source.x*along.x+source.z*along.z-source.width/2,afterLeft=next.x*along.x+next.z*along.z-next.width/2;
+ assert.equal(afterLeft,beforeLeft);
 });
 function harness(){
  let state={items:[item()],room:{...room},selected_item_id:'a',schema_version:2},name='Кухня';

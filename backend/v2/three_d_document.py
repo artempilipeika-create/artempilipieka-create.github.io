@@ -118,16 +118,16 @@ def module_materials(it,body,front):
         rows.extend([('Короба ящиков','ЛДСП- БЕЛЫЙ'),('Днища ящиков','ЛХДФ 3ММ Белый')])
     return rows
 
-def preview_image(raw):
+def preview_image(raw,max_w=WIDTH,max_h=92*mm):
     if not raw:return None
     reader=ImageReader(BytesIO(raw));w,h=reader.getSize()
-    max_w,max_h=WIDTH,92*mm
     scale=min(max_w/w,max_h/h)
     image=RLImage(BytesIO(raw),width=w*scale,height=h*scale)
     image.hAlign='CENTER'
     return image
 
-def render(name,scene,materials,preview_png=None):
+def render(name,scene,materials,preview_png=None,module_previews=None):
+    module_previews=module_previews or {}
     root=Path(__file__).parent/'document_assets'
     for file,expected in FONTS.items():
         path=root/file
@@ -191,7 +191,10 @@ def render(name,scene,materials,preview_png=None):
           ('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
         block=[p(title,'module'),p('Состав: '+module_contents(it),'body'),Spacer(1,1.5*mm),p('Фурнитура','section'),hwtable]
         if note:block.extend([Spacer(1,1*mm),p(note,'small')])
-        block.extend([Spacer(1,2*mm),p('Материалы','section'),material_table,Spacer(1,3*mm)])
+        block.extend([Spacer(1,2*mm),p('Материалы','section'),material_table])
+        module_image=preview_image(module_previews.get(str(it.get('item_id'))),110*mm,38*mm)
+        if module_image:block.extend([Spacer(1,2*mm),p('Вид модуля','section'),module_image])
+        block.append(Spacer(1,2*mm))
         story.append(KeepTogether(block))
     story.extend([PageBreak(),p('Сводная закупка фурнитуры','title'),p('Количество суммируется по модулям. Цена и сумма оставлены пустыми до подключения/ввода актуального прайса.','small')])
     rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Всего','Ед.','Цена BYN','Сумма BYN','Компл.']]]

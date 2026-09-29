@@ -181,6 +181,11 @@
     return {body_height:it.height-base,base_height:base,module_height:it.height,
       worktop_thickness:worktop,overall_height_with_worktop:it.height+worktop};
   }
+  function rightAnchoredWidth(source,next){
+    if(!Number.isFinite(source?.width)||!Number.isFinite(next?.width)||next.width===source.width)return next;
+    const shift=rotateXZ((next.width-source.width)/2,0,source.rotation||0);
+    return {...next,x:Math.round(source.x+shift.x),z:Math.round(source.z+shift.z)};
+  }
   function dimensionPatch(source,patch){
     if(isKitchenModule(source)){
       const old=heights(source),it=normalizeKitchen({...source,...patch});
@@ -436,5 +441,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

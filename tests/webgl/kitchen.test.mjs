@@ -68,8 +68,8 @@ test('Adding, removing, resizing, moving and snapping rebuild only actual contig
  const moved=items.map((it,i)=>i===2?{...it,x:850}:it);assert.equal(kitchenRuns(moved,room).length,2);
  const snapped=snapItem({...moved[2],x:625},moved,room);moved[2]=snapped.item;assert.equal(kitchenRuns(moved,room).length,1);
  const resized=items.map((it,i)=>i===2?dimensionPatch(it,{width:800,x:700}):it);assert.equal(kitchenRuns(resized,room)[0].countertopActualLengthMm,2000);
- const first=findSpace(item(),[],room,null);assert.equal(first.z,-1485);
- const added=findSpace(item(ids[2]),[first],room,first);assert.equal(added.z,first.z);assert.equal(Math.abs(added.x-first.x),600);
+ const first=findSpace(item(),[],room,null);assert.equal(first.z,-1485);assert.equal(first.x,-2800);
+ const added=findSpace(item(ids[2]),[first],room,first);assert.equal(added.z,first.z);assert.equal(added.x,-2200);
 });
 test('General overhang formula, stock length is never substituted for row length',()=>{
  for(const depth of [450,510,530,610])for(const rearServiceGapMm of [50,60,80]){

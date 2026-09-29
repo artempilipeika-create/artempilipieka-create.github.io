@@ -416,35 +416,56 @@ async function copyShare(){
     status('Скопируйте выделенную ссылку.');
   }
 }
-function captureKitchenPdfPreview(){
-  const canvas=$('scene'),planner=globalThis.MF_PLANNER,scene=planner?.scene;
-  if(!canvas)return null;
-  if(!scene){
-    try{return canvas.toDataURL('image/png')}catch{return null}
-  }
-  const view=scene.captureView?.(),client=Boolean(scene.client),selectedVisible=Boolean(scene.selectedBox?.visible),hoverVisible=Boolean(scene.hoverBox?.visible);
+function pdfPreviewDataUrl(canvas,maxW,maxH){
+  try{
+    const sw=canvas.width,sh=canvas.height;
+    if(!sw||!sh)return null;
+    const scale=Math.min(1,maxW/sw,maxH/sh),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
+    c.getContext('2d').drawImage(canvas,0,0,c.width,c.height);
+    return c.toDataURL('image/png');
+  }catch{return null}
+}
+function capturePdfPreviews(){
+  const canvas=$('scene'),planner=globalThis.MF_PLANNER,scene=planner?.scene,adapter=planner?.adapter;
+  if(!canvas)return{preview_data_url:null,module_preview_data_urls:{}};
+  if(!scene||scene.isFallback)return{preview_data_url:pdfPreviewDataUrl(canvas,1100,650),module_preview_data_urls:{}};
+  const view=scene.captureView?.(),client=Boolean(scene.client),selected=adapter?.selected?.item_id||null;
+  const selectedVisible=Boolean(scene.selectedBox?.visible),hoverVisible=Boolean(scene.hoverBox?.visible),modules={};
   try{
     scene.setPresentation(true);
     scene.fit('kitchen');
     if(scene.selectedBox)scene.selectedBox.visible=false;
     if(scene.hoverBox)scene.hoverBox.visible=false;
     scene.renderer.render(scene.scene,scene.camera);
-    return canvas.toDataURL('image/png');
-  }catch{return null}
+    const preview_data_url=pdfPreviewDataUrl(canvas,1200,680);
+    for(const it of (adapter?.items||[]).slice(0,40)){
+      adapter.select(it.item_id);scene.sync();scene.fit('selected');
+      for(const [id,entry] of scene.entries)entry.group.visible=id===it.item_id;
+      if(scene.dressing)scene.dressing.visible=false;
+      if(scene.contacts)scene.contacts.visible=false;
+      if(scene.selectedBox)scene.selectedBox.visible=false;
+      if(scene.hoverBox)scene.hoverBox.visible=false;
+      scene.renderer.render(scene.scene,scene.camera);
+      const data=pdfPreviewDataUrl(canvas,560,360);if(data)modules[it.item_id]=data;
+    }
+    return{preview_data_url,module_preview_data_urls:modules};
+  }catch{return{preview_data_url:null,module_preview_data_urls:{}}}
   finally{
+    if(adapter)adapter.select(selected);
     scene.setPresentation(client);
     if(view)scene.restoreView(view);
     if(scene.selectedBox)scene.selectedBox.visible=selectedVisible;
     if(scene.hoverBox)scene.hoverBox.visible=hoverVisible;
-    scene.render();
+    scene.sync();scene.render();
   }
 }
 async function downloadSpec(){
   if(!project)await saveProject();
-  const preview_data_url=captureKitchenPdfPreview();
+  const previews=capturePdfPreviews();
   const r=await fetch('/api/v2/3d-projects/'+project.project_id+'/specification.pdf',{
     method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({preview_data_url})
+    body:JSON.stringify(previews)
   });
   if(!r.ok){
     const d=await r.json().catch(()=>({}));
