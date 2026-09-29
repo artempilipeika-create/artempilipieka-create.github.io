@@ -209,7 +209,7 @@ export class MeshFactory{
         group.add(pivot);parent=pivot;px=part.position.x-hingeX;pz=0;handleZ=part.thickness/2;
       }
       const panel=this.box(parent,'front',f.w,f.h,part?.thickness??18,px,f.cy,pz,part?.material.variant_id??front,ghost);panel.userData.facade={...f};
-      if(part){panel.userData.part=part;panel.userData.hingeSide=spec.side;}
+      if(part){panel.userData.part=part;if(spec)panel.userData.hingeSide=spec.side;}
       if(it.handles==='handles'&&f.w>140&&f.h>100){
         const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
         const side=rowDoors.length>1?(f.cx<0?1:-1):spec?(spec.side==='right'?-1:1):/отк P/.test(it.bazis_file||'')?-1:1;
