@@ -43,7 +43,11 @@ def test_pdf_uses_actual_kitchen_canvas_and_hardware_before_materials(page,api,s
     for value in ['Martin Forest · 3D-проект','Модулей: 3','Д1 L','Нижний 2 ящика · с доводчиком','ВМД1 P']:
         assert value in cover
 
+    for index in [1,2,3]:
+        assert page_has_image(reader.pages[index])
+        assert 'Вид модуля' in (reader.pages[index].extract_text() or '')
+
     first_module=reader.pages[1].extract_text() or ''
     assert 'Фурнитура' in first_module and 'Материалы' in first_module
-    assert first_module.index('Фурнитура')<first_module.index('Материалы')
+    assert first_module.index('Фурнитура')<first_module.index('Материалы')<first_module.index('Вид модуля')
     assert 'Корпус' in first_module and 'Фасад' in first_module
