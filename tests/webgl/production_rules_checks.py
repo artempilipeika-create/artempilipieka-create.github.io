@@ -39,6 +39,7 @@ def test_native_production_rules(page,api,settings,admin_user):
     assert dryer['width_mm']==600 and '600 MOUNT' in dryer['name']
     assert 'shelf-support-marcopol' not in [x['key'] for x in s['hardware']['items']]
 
+    panel(page,'right')
     page.locator('#width').fill('700');page.locator('#width').press('Tab')
     s=state(page)
     assert s['item']['width']==700
@@ -71,6 +72,7 @@ def test_native_production_rules(page,api,settings,admin_user):
     panel(page,'left','catalog')
     page.locator('[data-bazis="bazis.2175c60e84a6"]').click()
     assert len(state(page)['shelves'])==1
+    panel(page,'right')
     page.locator('#height').fill('900');page.locator('#height').press('Tab')
     s=state(page)
     assert [x['offset_mm'] for x in s['shelves']]==[300,600]
@@ -85,6 +87,7 @@ def test_native_production_rules(page,api,settings,admin_user):
     page.locator('[data-bazis="bazis.39f282e08f0c"]').click()
     s=state(page)
     assert s['item']['depth']==510 and s['hardware']['slide_length_mm']==500
+    panel(page,'right')
     page.locator('#depth').fill('450');page.locator('#depth').press('Tab')
     s=state(page)
     assert s['item']['depth']==450
