@@ -11,7 +11,7 @@ permissions:
   contents: read
 concurrency:
   group: bazis-elevation-review
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   syntax:
     runs-on: ubuntu-latest
