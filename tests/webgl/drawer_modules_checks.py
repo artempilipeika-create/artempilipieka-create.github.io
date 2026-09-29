@@ -102,6 +102,7 @@ def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api
         assert resized['hardware']['slide_selection']=='native_auto_by_depth'
         page.locator('#depth').fill('510');page.locator('#depth').press('Tab')
         assert state(page)['hardware']['slide_length_mm']==500
+        panel(page,'left','catalog')
 
     close_panels(page)
     page.locator('#save-project').click()
