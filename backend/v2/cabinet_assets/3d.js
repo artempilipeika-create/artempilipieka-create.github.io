@@ -526,7 +526,9 @@ function renderQuickWidths(it,t){
   root.replaceChildren();
   const lim=t?.limits?.w||[300,3000];
   const step=t?.production?.dryer?.width_step_mm||null;
-  const values=STANDARD_WIDTHS.filter(v=>v>=lim[0]&&v<=lim[1]&&(!step||v%step===0));
+  const values=step
+    ?Array.from({length:Math.floor(lim[1]/step)-Math.ceil(lim[0]/step)+1},(_,i)=>(Math.ceil(lim[0]/step)+i)*step)
+    :STANDARD_WIDTHS.filter(v=>v>=lim[0]&&v<=lim[1]);
   if(!values.includes(Number(it.width)))values.push(Number(it.width));
   values.sort((a,b)=>a-b);
   for(const v of values){
