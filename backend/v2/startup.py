@@ -85,6 +85,28 @@ def prepare(settings):
     if '0006_production_protocol.sql' in versions and '0007_manual_attachments.sql' not in versions:
         from .stage84_operator import pre_backup
         pre_backup(settings)
+    email_base={f'{i:04d}_'+name for i,name in [
+        (1,'foundation.sql'),(2,'auth_security.sql'),(3,'catalogue_imports.sql'),(4,'order_calculation.sql'),
+        (5,'client_documents.sql'),(6,'production_protocol.sql'),(7,'manual_attachments.sql'),
+        (8,'3d_projects.sql'),(9,'3d_shares.sql')]}
+    if versions==email_base:
+        from .storage import sha256
+        destination=settings.storage_root.parent/'backups'/'pre-email-verification'
+        if destination.exists():
+            manifest=json.loads((destination/'manifest.json').read_text())
+            if (manifest['namespace']!=settings.namespace or manifest['database']!=settings.database_name
+                or sha256((destination/'database.dump').read_bytes())!=manifest['database_sha256']):
+                raise ValueError('Pre-email-verification backup integrity mismatch')
+            for f in manifest['files']:
+                if f['present']:
+                    data=(destination/'blobs'/f['storage_key']).read_bytes()
+                    if len(data)!=f['size_bytes'] or sha256(data)!=f['sha256']:
+                        raise ValueError('Pre-email-verification private backup integrity mismatch')
+        else:
+            manifest=backup(settings,destination)
+        print('MF_EMAIL_VERIFICATION_PRE_MIGRATION='+json.dumps({
+            'verified':True,'database_sha256':manifest['database_sha256'],'file_count':len(manifest['files'])
+        }),flush=True)
     migrate(settings)
     mode=os.environ.get('MF_STAGE01_PROBE_MODE','off')
     manifest_path=Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH','/mf-private'))/'stage01-probe.json'

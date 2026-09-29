@@ -104,15 +104,17 @@ def create_app(settings=None, policy=None):
     def verification_page():
         nonce = secrets.token_urlsafe(24)
         html = """<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="robots" content="noindex">
-        <meta name="referrer" content="no-referrer"><title>Подтверждение email</title>
-        <h1>Подтверждение email</h1><button id="confirm" type="button">Подтвердить адрес</button><p id="state"></p>
+        <meta name="referrer" content="no-referrer"><title>Подтверждение email — Martin Forest</title>
+        <h1>Подтверждение email</h1><p id="state">Проверяем ссылку…</p><p><a id="login" href="/login" hidden>Войти в кабинет</a></p>
         <script nonce="NONCE">const token=new URLSearchParams(location.hash.slice(1)).get('token');
         history.replaceState(null,'','/verify-email');
-        document.getElementById('confirm').onclick=async()=>{
+        (async()=>{const state=document.getElementById('state'),login=document.getElementById('login');
+          if(!token){state.textContent='Ссылка недействительна. Запросите новое письмо.';return;}
           const response=await fetch('/api/v2/auth/email-verification/confirm',{method:'POST',credentials:'same-origin',
             headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
-          document.getElementById('state').textContent=response.ok?'Адрес подтверждён.':'Ссылка недействительна или истекла. Запросите новую.';
-        };</script></html>""".replace('NONCE',nonce)
+          if(response.ok){state.textContent='Email подтверждён. Теперь можно войти в личный кабинет.';login.hidden=false;}
+          else state.textContent='Ссылка недействительна или истекла. Запросите новое письмо.';
+        })();</script></html>""".replace('NONCE',nonce)
         return HTMLResponse(html,headers={'Content-Security-Policy':
             f"default-src 'none'; script-src 'nonce-{nonce}'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"})
 

@@ -5,11 +5,14 @@ from .app import create_app
 from .config import Settings
 from .security import WebPolicy
 from .startup import prepare
+from .mail import validate_mail_config
 
 
 def main():
     settings=Settings.from_env()
     policy=WebPolicy.from_env() if os.environ.get('MF_SECURITY_API','enabled')=='enabled' else None
+    provider=validate_mail_config()
+    print('Email verification provider: '+provider,flush=True)
     print('Stage 6 validating staging database and migrations',flush=True)
     prepare(settings)
     print('Stage 6 starting HTTP server; legacy transport and outbox dispatch disabled',flush=True)
