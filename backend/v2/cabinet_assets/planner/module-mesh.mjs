@@ -6,8 +6,9 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,prod
 export const VISUAL_FINISHES=Object.freeze({
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
   shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
+  drawer:{color:'#f5f5f1',roughness:.90,metalness:0},
   front:{color:'#e5e3d8',roughness:.74,metalness:0},
-  back:{color:'#a6afa7',roughness:.94,metalness:0},
+  back:{color:'#f3f3ef',roughness:.94,metalness:0},
   plinth:{color:'#536158',roughness:.87,metalness:0},
   handle:{color:'#343e3b',roughness:.48,metalness:.38},
   counter:{color:'#929b94',roughness:.67,metalness:0},
@@ -93,8 +94,11 @@ export class MeshFactory{
       if(role==='front'||role==='reveal'||m.userData.frontAccessory){if(m.visible!==visible){m.visible=visible;changed=true;}}
       const shell=part?part.role==='front'||part.key.startsWith('side-'):role==='front';
       const inspection=mode==='inspection'&&shell;
-      const id=part?part.material.variant_id:role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
-      const material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
+      const id=part?part.material.variant_id:role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:role==='body'?it.body_variant_id:null;
+      // Drawer boxes and their HDF bottoms are production-fixed white materials.
+      // They must never inherit the selected carcass decor.
+      const visualRole=part?.drawer_index&&part.role==='back'?'drawer':role==='leg'?'handle':role;
+      const material=this.material(visualRole,id,Boolean(group.userData.ghost),inspection);
       if(m.material!==material){m.material=material;changed=true;}
       m.castShadow=!group.userData.ghost&&!inspection&&role!=='reveal';m.receiveShadow=!group.userData.ghost&&!inspection;m.renderOrder=inspection?5:0;
     });
