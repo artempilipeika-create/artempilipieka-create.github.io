@@ -97,7 +97,7 @@ for(const m of bazisModules){
   m.defaults={...m.defaults,w:600,h:p.body_height+p.base_height,d:p.scene_depth};
   m.limits=p.tier==='wall'
     ?{...m.limits,w:m.limits?.w||[300,1200],h:[300,1400],d:[250,500]}
-    :{...m.limits,h:[p.base_height+600,p.base_height+1000],d:[250,1000]};
+    :{...m.limits,h:[p.base_height+600,p.base_height+1000],d:p.front_layout?.kind==='drawer'?[250,1000]:[450,700]};
 }
 const bazisById=new Map(bazisModules.map(x=>[x.id,x]));
 
