@@ -91,12 +91,12 @@ def test_native_production_rules(page,api,settings,admin_user):
     page.locator('#depth').fill('450');page.locator('#depth').press('Tab')
     s=state(page)
     assert s['item']['depth']==450
-    assert s['hardware']['slide_length_mm'] is None
+    assert s['hardware']['slide_length_mm']==400
     assert s['hardware']['slide_selection']=='native_auto_by_depth'
     assert s['hardware']['slide_rule']['control_points']['250']==[[250,0],[300,1],[1000,0]]
     assert s['hardware']['slide_rule']['control_points']['600']==[[600,0],[1000,1]]
     native=export_payload(page)['items'][0]
     assert native['target']['depth']==450
-    assert native['construction']['hardware']['slide_length_mm'] is None
+    assert native['construction']['hardware']['slide_length_mm']==400
     assert native['construction']['hardware']['slide_selection']=='native_auto_by_depth'
     assert native['construction']['hardware']['slide_rule']['mode']=='native_fr3d_parameter_table'
