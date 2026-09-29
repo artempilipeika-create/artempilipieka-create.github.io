@@ -51,10 +51,11 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
       hardware.drawer_count,'set','FR3D donor',
       {manufacturer:hardware.drawer_system||null,lengthMm:hardware.slide_length_mm||null,selection:hardware.slide_selection||null}));
   for(const h of hardware?.items||[])hardwareRows.push(
-    row('hardware:'+h.key,h.name,Number.isFinite(h.quantity)?h.quantity:null,h.unit||'pcs','FR3D donor'));
+    row('hardware:'+h.key,h.name,Number.isFinite(h.quantity)?h.quantity:null,h.unit||'pcs','FR3D donor',{article:h.article||null}));
+  const productionKnown=Boolean(template?.production?.hardware);
   const sections={sheetMaterials:panelRows(parts),
     edging:[row('edging','Кромка: тип и метраж',null,'m','Edge assignments not defined by production model')],
-    hardware:[...hardwareRows,
+    hardware:productionKnown?hardwareRows:[...hardwareRows,
       ...(legs?[row('legs:'+String(item.legHeightMm??item.base_height??''),'Ножки',legs.length,'pcs','kitchenLegs')]:[]),
       row('fasteners','Крепёж',null,'pcs','Quantity rule not supplied'),
       ...(parts.some(p=>p.role==='shelf')?[row('shelf-fittings','Крепление полки',null,'pcs','Quantity rule not supplied')]:[]),
