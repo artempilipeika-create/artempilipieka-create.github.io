@@ -32,6 +32,8 @@ for(const [id,heights,boxHeights,sha,file]of [
  assert.deepEqual(bom.filter(x=>x.name==='Боковая напр.P').map(x=>[x.length,x.width]),boxHeights.map(h=>[h,500]));
  assert.deepEqual(bom.filter(x=>x.name==='Боковая напр.L').map(x=>[x.length,x.width]),boxHeights.map(h=>[h,500]));
  assert.deepEqual(bom.filter(x=>x.name==='З.С').map(x=>[x.length,x.width]),boxHeights.map(()=>[533,496]));
+ assert.ok(bom.filter(x=>x.role==='body').every(x=>x.material.name==='ЛДСП- БЕЛЫЙ'));
+ assert.ok(bom.filter(x=>x.role==='front').every(x=>x.material.name==='Evagloss P004'));
  assert.ok(bom.filter(x=>x.name==='ЗАДНЯЯ ШУФ'||x.name==='Фронтальная ШУФ'||x.name.startsWith('Боковая напр.')).every(x=>x.material.name==='ЛДСП- БЕЛЫЙ'));
  assert.ok(bom.filter(x=>x.name==='З.С').every(x=>x.material.name==='ЛХДФ 3ММ Белый'));
 });
