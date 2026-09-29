@@ -94,6 +94,7 @@ def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api
         assert actual['roles']['front']==len(expected['fronts'])
         assert actual['roles']['drawer']==4*len(expected['fronts'])
 
+        panel(page,'right')
         page.locator('#depth').fill('450');page.locator('#depth').press('Tab')
         resized=state(page)
         assert resized['item']['depth']==450
