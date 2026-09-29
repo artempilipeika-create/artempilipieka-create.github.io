@@ -15,6 +15,19 @@
   };
   const pilotDoor=(label,key,sha,sides)=>({...doorBase,label,key,source_sha256:sha,
     doors:sides.map(side=>({side,hinge_count:2,open_angle:105})),hardware:{hinge_article:'112602',hinge_count:2*sides.length}});
+  const DRAWER_SLIDE_RULE=Object.freeze({
+    mode:'native_fr3d_parameter_table',depth_drives_slide:true,
+    control_points:{
+      250:[[250,0],[300,1],[1000,0]],
+      300:[[300,0],[350,1],[1000,0]],
+      350:[[350,0],[400,1],[1000,0]],
+      400:[[400,0],[450,1],[1000,0]],
+      450:[[450,0],[500,1],[1000,0]],
+      500:[[500,0],[550,1],[1000,0]],
+      550:[[550,0],[600,1],[1000,0]],
+      600:[[600,0],[1000,1]]
+    }
+  });
   const pilotDrawer=(label,key,sha,source_file,heights)=>({...kitchenBase,label,key,source_sha256:sha,source_file,
     carcass:{...kitchenBase.carcass,material_name:'ЛДСП- БЕЛЫЙ'},
     facade:{...kitchenBase.facade,material_name:'Evagloss P004'},
@@ -23,7 +36,8 @@
     drawer_box:{panel_thickness:18,bottom_thickness:3,facade_to_box_delta:57,
       front_back_width_clearance:99,side_depth_clearance:10,bottom_width_clearance:67,bottom_depth_clearance:14,
       material_name:'ЛДСП- БЕЛЫЙ',bottom_material_name:'ЛХДФ 3ММ Белый'},
-    hardware:{drawer_system:'AKS',slide_type:'ball_bearing_soft_close',slide_length_mm:500,drawer_count:heights.length}
+    hardware:{drawer_system:'AKS',slide_type:'ball_bearing_soft_close',native_slide_length_mm:500,
+      slide_length_mm:500,slide_rule:DRAWER_SLIDE_RULE,drawer_count:heights.length}
   });
   const wallBase={
     tier:'wall',native_defaults:{width:600,height:720,depth:317},body_height:720,base_height:0,worktop_thickness:0,scene_depth:317,
@@ -32,16 +46,22 @@
     facade:{thickness:18,gap_mm:FACADE_GAP_MM,clearance_mm:2,material_name:'Evagloss P004'},
     shelves:[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:38,depth_clearance:0}]
   };
+  const wallHardware=(sides,extra=[])=>({hinge_name:'Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)',
+    hinge_article:null,hinge_count:2*sides.length,items:[
+      {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:8,unit:'pcs'},
+      {key:'hanger-white',name:'Навес простой, белый',quantity:2,unit:'pcs'},
+      {key:'screw-3x30',name:'Шуруп 3*30 мм,Zn',quantity:4,unit:'pcs'},
+      {key:'nails-1.4x25',name:'Гвозди 1,4*25 РМЗ',quantity:52,unit:'pcs'},
+      ...extra
+    ]});
   const wallDoor=(label,key,sha,source_file,sides)=>({...wallBase,label,key,source_sha256:sha,source_file,
+    shelf_rule:{threshold_mm:850,base_count:1,tall_count:2,mode:'even'},
+    doors:sides.map(side=>({side,hinge_count:2,open_angle:null})),hardware:wallHardware(sides)});
+  const wallDryer=(label,key,sha,source_file,sides)=>({...wallBase,label,key,source_sha256:sha,source_file,
+    shelves:[],shelf_rule:{threshold_mm:850,base_count:0,tall_count:1,mode:'upper'},
+    dryer:{manufacturer:'AKS',series:'MOUNT',width_equals_module:true,width_step_mm:100},
     doors:sides.map(side=>({side,hinge_count:2,open_angle:null})),
-    hardware:{hinge_name:'Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)',
-      hinge_article:null,hinge_count:2*sides.length,items:[
-        {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:8,unit:'pcs'},
-        {key:'hanger-white',name:'Навес простой, белый',quantity:2,unit:'pcs'},
-        {key:'screw-3x30',name:'Шуруп 3*30 мм,Zn',quantity:4,unit:'pcs'},
-        {key:'nails-1.4x25',name:'Гвозди 1,4*25 РМЗ',quantity:52,unit:'pcs'},
-        {key:'shelf-support-marcopol',name:'Полкодержатель, Marcopol, оцинкованный',quantity:4,unit:'pcs'}
-      ]}});
+    hardware:wallHardware(sides,[{key:'dish-dryer',name:'Сушка для посуды 600 MOUNT, белый AKS',quantity:1,unit:'pcs',width_mm:600}])});
   const freeze=value=>{Object.values(value).forEach(v=>{if(v&&typeof v==='object')freeze(v);});return Object.freeze(value);};
   const PILOT_PRODUCTION=freeze({
     'bazis.0211e4f77fc4':pilotDoor('Д1 L','base.standard.d1.left.600','7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',['left']),
@@ -53,9 +73,42 @@
   const WALL_PRODUCTION=freeze({
     'bazis.858266606bc5':wallDoor('ВМД1 L','wall.standard.d1.left.600','858266606bc5e6f36a96635c155beb8f86161ce869956a8f961f27406db7ebc2','ВМД1-600. отк L.fr3d',['left']),
     'bazis.2175c60e84a6':wallDoor('ВМД1 P','wall.standard.d1.right.600','2175c60e84a6eb6eeefa62eaddc611f2180b6a3060a0ea3aa1b5305ffbcc6ed5','ВМД1-600. отк P.fr3d',['right']),
-    'bazis.877ba2f68d92':wallDoor('ВМД2','wall.standard.d2.600','877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3','ВМД2-600..fr3d',['left','right'])
+    'bazis.877ba2f68d92':wallDoor('ВМД2','wall.standard.d2.600','877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3','ВМД2-600..fr3d',['left','right']),
+    'bazis.b89bf9852860':wallDryer('ВМД1 L · Сушка','wall.dryer.d1.left.600','b89bf98528601e2bc74e52bc19cc6904a20ff90ed6f0785c1d599c7aac4250fd','ВМД1-600. отк L. (Сушка).fr3d',['left']),
+    'bazis.60f79b573cd1':wallDryer('ВМД1 P · Сушка','wall.dryer.d1.right.600','60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005','ВМД1-600. отк P. (Сушка).fr3d',['right']),
+    'bazis.1ac4fadd97b7':wallDryer('ВМД2 · Сушка','wall.dryer.d2.600','1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b','ВМД2-600.(Сушка).fr3d',['left','right'])
   });
   const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION});
+  function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(!p)return [];
+    if(!p.shelf_rule)return (it?.shelves??p.shelves??[]).map(x=>({...x}));
+    const H=Number(it?.height??p.body_height+p.base_height)-Number(p.base_height||0),r=p.shelf_rule;
+    const count=H>r.threshold_mm?r.tall_count:r.base_count;
+    if(!count)return [];
+    const offsets=r.mode==='upper'?[Math.round(H*2/3)]
+      :Array.from({length:count},(_,i)=>Math.round(H*(i+1)/(count+1)));
+    return offsets.map((offset_mm,i)=>({id:'shelf-'+(i+1),enabled:true,offset_mm,thickness:18,width_clearance:38,depth_clearance:0,
+      source_component:null,material_variant_id:null}));
+  }
+  function productionHardware(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(!p?.hardware)return null;
+    const hw={...p.hardware,items:(p.hardware.items||[]).map(x=>({...x}))};
+    if(hw.slide_rule){
+      hw.slide_selection='native_auto_by_depth';
+      hw.slide_length_mm=Number(it?.depth)===Number(p.native_defaults?.depth)?hw.native_slide_length_mm:null;
+    }
+    if(p.dryer){
+      const width=Number(it?.width)||p.native_defaults.width;
+      hw.items=hw.items.map(x=>x.key==='dish-dryer'?{...x,width_mm:width,name:'Сушка для посуды '+width+' MOUNT, белый AKS'}:x);
+    }
+    const shelfCount=productionShelves(it,p).length;
+    const support=hw.items.find(x=>x.key==='shelf-support-marcopol');
+    if(shelfCount){
+      if(support)support.quantity=shelfCount*4;
+      else hw.items.push({key:'shelf-support-marcopol',name:'Полкодержатель, Marcopol, оцинкованный',quantity:shelfCount*4,unit:'pcs'});
+    }else hw.items=hw.items.filter(x=>x.key!=='shelf-support-marcopol');
+    return hw;
+  }
   const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:60,plinthMaterialId:null,
     countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
   function isKitchenModule(it){const p=PILOT_PRODUCTION[it.bazis_id];return Boolean(p&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
@@ -104,6 +157,8 @@
       const body=patch.body_height??(Object.hasOwn(patch,'height')?patch.height-base:source.bazis_id?source.height-base:old.body_height);
       Object.assign(it,{base_height:base,body_height:body,height:base+body});
     }
+    const p=PRODUCTION_MODELS[it.bazis_id];
+    if(p?.tier==='wall'&&p.shelf_rule)it.shelves=productionShelves(it,p);
     return it;
   }
   function legacyFrontSpec(it){
@@ -173,7 +228,7 @@
         {x:t,y:B,z:D},{x:sign*(W-t)/2,y:base+B/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
       add('top','Крыша','body',{x:inner,y:t,z:D},{x:0,y:base+B-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
       add('bottom','Дно','body',{x:inner,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
-      for(const shelf of it.shelves??p.shelves??[])if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
+      for(const shelf of productionShelves(it,p))if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
         {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
         {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,p.carcass.material_name||null,
         {shelf_id:shelf.id});
@@ -342,5 +397,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,KITCHEN_DEFAULTS,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,productionShelves,productionHardware,isKitchenModule,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);
