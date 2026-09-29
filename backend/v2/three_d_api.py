@@ -1,7 +1,7 @@
 """Authenticated user-owned 3D furniture projects. No production side effects."""
 from typing import Literal
 from uuid import UUID,uuid4
-import hashlib,secrets
+import base64,binascii,hashlib,secrets
 from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
@@ -131,6 +131,18 @@ class Create(StrictModel):
 class Update(Create):
     version: int=Field(ge=1)
 
+class SpecificationRender(StrictModel):
+    preview_data_url: str|None=Field(default=None,max_length=6_000_000)
+
+def _preview_png(value):
+    if not value:return None
+    prefix='data:image/png;base64,'
+    if not value.startswith(prefix):error(400,'INVALID_3D_PREVIEW')
+    try:data=base64.b64decode(value[len(prefix):],validate=True)
+    except (binascii.Error,ValueError):error(400,'INVALID_3D_PREVIEW')
+    if not data or len(data)>4_000_000 or not data.startswith(b'\x89PNG\r\n\x1a\n'):error(400,'INVALID_3D_PREVIEW')
+    return data
+
 def projection(row):
     return {k:row[k] for k in ('project_id','name','module_type','scene','version','created_at','updated_at')}
 
@@ -189,25 +201,36 @@ def router(settings):
             record_event(conn,settings,actor=user['user_id'],action='3d.project.duplicated',object_type='3d_project',object_id=pid,reason='User duplicated 3D project')
             return projection(row)
 
+    def specification_bytes(conn,row,preview_png=None):
+        scene=row['scene'];release=catalogue.active(conn);materials={}
+        ids=set()
+        if scene.get('items'):
+            for item in scene['items']:
+                ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id')) if x)
+        else:
+            ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
+        if release:
+            for ident in ids:
+                found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()
+                if found:
+                    m=found['snapshot'];materials[ident]=' · '.join(str(x) for x in (m.get('manufacturer'),m.get('article'),m.get('name')) if x)
+        return render_spec(row['name'],scene,materials,preview_png)
+
+    def specification_response(data):
+        filename='Martin_Forest_3D_Project.pdf'
+        return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename='+filename})
+
     @api.get('/3d-projects/{project_id}/specification.pdf')
     def specification(project_id:UUID,request:Request):
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
-            scene=row['scene'];release=catalogue.active(conn);materials={}
-            ids=set()
-            if scene.get('items'):
-                for item in scene['items']:
-                    ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id')) if x)
-            else:
-                ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
-            if release:
-                for ident in ids:
-                    found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()
-                    if found:
-                        m=found['snapshot'];materials[ident]=' · '.join(str(x) for x in (m.get('manufacturer'),m.get('article'),m.get('name')) if x)
-            data=render_spec(row['name'],scene,materials)
-            filename='Martin_Forest_3D_Project.pdf'
-            return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename='+filename})
+            return specification_response(specification_bytes(conn,row))
+
+    @api.post('/3d-projects/{project_id}/specification.pdf')
+    def specification_with_preview(project_id:UUID,body:SpecificationRender,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            return specification_response(specification_bytes(conn,row,_preview_png(body.preview_data_url)))
 
     @api.post('/3d-projects/{project_id}/shares',status_code=201)
     def create_share(project_id:UUID,request:Request):
