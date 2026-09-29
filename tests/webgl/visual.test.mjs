@@ -118,7 +118,7 @@ test('Different worktop thicknesses and zero worktop do not create doubled share
 });
 
 for(const [id,production] of Object.entries(PILOT_PRODUCTION))test(production.label+' canonical parts survive resizing, rendering and persistence',()=>{
- const template={production},initial={...pilotItem,bazis_id:id,bazis_sha256:production.source_sha256};
+ const template={production},initial={...pilotItem,bazis_id:id,bazis_sha256:production.source_sha256,shelves:structuredClone(production.shelves||[]),layout:production.front_layout?'drawers':'doors',drawers:production.front_layout?.heights?.length||0};
  const old=productionParts(initial,template),resized=dimensionPatch(initial,{width:800,height:920,depth:610});
  const parts=productionParts(resized,template),byKey=Object.fromEntries(parts.map(p=>[p.key,p]));
  assert.deepEqual(byKey['bottom'].size,{x:800,y:18,z:610});
@@ -126,9 +126,15 @@ for(const [id,production] of Object.entries(PILOT_PRODUCTION))test(production.la
  assert.deepEqual(byKey['side-P'].position,{x:391,y:519,z:0});
  assert.deepEqual(byKey['back'].size,{x:796,y:816,z:3});
  assert.deepEqual(byKey['back'].position,{x:0,y:510,z:-306.5});
- assert.deepEqual(byKey['shelf-1'].size,{x:764,y:18,z:609});
+ if(production.shelves?.length)assert.deepEqual(byKey['shelf-1'].size,{x:764,y:18,z:609});
+ else assert.equal(byKey['shelf-1'],undefined);
  assert.deepEqual(byKey['rail-front'].position,{x:0,y:911,z:265});
- assert.deepEqual(byKey['door-1'].size,{x:800/production.doors.length-3,y:817,z:18});
+ if(production.doors.length)assert.deepEqual(byKey['door-1'].size,{x:800/production.doors.length-3,y:817,z:18});
+ else{
+  const cells=facadeCells(resized,template),fronts=parts.filter(p=>p.role==='front');
+  assert.deepEqual(fronts.map(p=>p.size),cells.map(c=>({x:c.w,y:c.h,z:18})));
+  assert.ok(fronts.every(p=>p.key.startsWith('drawer-front-')));
+ }
  assert.equal(new Set(parts.map(p=>p.part_id)).size,parts.length);
  assert.deepEqual(parts.map(p=>p.part_id),old.map(p=>p.part_id));
  assert.ok(parts.every(p=>p.module_id===resized.item_id&&p.length>0&&p.width>0&&p.thickness>0));
@@ -138,7 +144,7 @@ for(const [id,production] of Object.entries(PILOT_PRODUCTION))test(production.la
  assert.ok(copy.every(p=>p.module_id==='copy'&&!parts.some(q=>p.part_id===q.part_id)));
  const factory=new MeshFactory({room,material:()=>null,template:()=>template},()=>{}),g=factory.build(resized),rendered=[];
  g.updateMatrixWorld(true);g.traverse(m=>{const p=m.userData.part;if(!p)return;rendered.push(p);assert.deepEqual(size(m.geometry),[p.size.x,p.size.y,p.size.z]);
- const pos=m.getWorldPosition(m.position.clone());assert.deepEqual(pos.toArray().map(v=>Math.round(v*10000)/10),[p.position.x,p.position.y,p.position.z]);});
+ const pos=m.getWorldPosition(m.position.clone()).toArray().map(v=>v*1000),expected=[p.position.x,p.position.y,p.position.z];assert.ok(pos.every((v,i)=>Math.abs(v-expected[i])<=.051));});
  assert.deepEqual(rendered,parts);factory.dispose();
 });
 test('D1 L and P share identical manufactured carcass, shelf and back at custom dimensions',()=>{

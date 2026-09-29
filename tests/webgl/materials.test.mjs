@@ -35,7 +35,7 @@ for(const [id,production]of Object.entries(PILOT_PRODUCTION))test(production.lab
    assert.ok(all.filter(m=>m.userData.frontAccessory).every(m=>visible(m)===(mode!=='facadesHidden')));
    if(mode==='facadesHidden'){
     const hits=new THREE.Raycaster(new THREE.Vector3(0,.28,1),new THREE.Vector3(0,0,-1)).intersectObject(g,true).filter(h=>visible(h.object));
-    assert.equal(hits[0].object.userData.role,'back');
+    assert.equal(hits[0].object.userData.role,production.drawer_box?'drawer':'back');
    }
   }
   f.release(g);

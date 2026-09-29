@@ -42,10 +42,16 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
   // The same production generator calculates a quote at the next standard width.
   // Only this isolated copy is resized. Actual scene/export geometry is untouched.
   const categoryParts=category.status==='STANDARD'&&actualParts?productionParts({...item,width:category.pricingWidthMm},template,materialLookup):null;
-  const parts=categoryParts||actualParts||[],hardware=template?.production?.hardware,legs=kitchenLegs(item);
+  const parts=categoryParts||actualParts||[],hardware=template?.production?.hardware,legs=kitchenLegs(item),hardwareRows=[];
+  if(Number.isInteger(hardware?.hinge_count))hardwareRows.push(
+    row('hinges:'+String(hardware.hinge_article||'missing'),'Петли',hardware.hinge_count,'pcs','FR3D donor',{article:hardware.hinge_article||null}));
+  if(Number.isInteger(hardware?.drawer_count))hardwareRows.push(
+    row('drawer-slides:'+String(hardware.drawer_system||'unknown')+':'+String(hardware.slide_length_mm||''),
+      'Направляющие шариковые с доводчиком',hardware.drawer_count,'set','FR3D donor',
+      {manufacturer:hardware.drawer_system||null,lengthMm:hardware.slide_length_mm||null}));
   const sections={sheetMaterials:panelRows(parts),
     edging:[row('edging','Кромка: тип и метраж',null,'m','Edge assignments not defined by production model')],
-    hardware:[row('hinges:'+String(hardware?.hinge_article||'missing'),'Петли',Number.isInteger(hardware?.hinge_count)?hardware.hinge_count:null,'pcs','FR3D donor',{article:hardware?.hinge_article||null}),
+    hardware:[...hardwareRows,
       row('legs:'+String(item.legHeightMm??item.base_height??''),'Ножки',legs?legs.length:null,'pcs','kitchenLegs'),
       row('fasteners','Крепёж',null,'pcs','Quantity rule not supplied'),
       ...(parts.some(p=>p.role==='shelf')?[row('shelf-fittings','Крепление полки',null,'pcs','Quantity rule not supplied')]:[]),
