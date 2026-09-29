@@ -144,7 +144,7 @@ for(const [id,production] of Object.entries(PILOT_PRODUCTION))test(production.la
  assert.ok(copy.every(p=>p.module_id==='copy'&&!parts.some(q=>p.part_id===q.part_id)));
  const factory=new MeshFactory({room,material:()=>null,template:()=>template},()=>{}),g=factory.build(resized),rendered=[];
  g.updateMatrixWorld(true);g.traverse(m=>{const p=m.userData.part;if(!p)return;rendered.push(p);assert.deepEqual(size(m.geometry),[p.size.x,p.size.y,p.size.z]);
- const pos=m.getWorldPosition(m.position.clone());assert.deepEqual(pos.toArray().map(v=>Math.round(v*10000)/10),[p.position.x,p.position.y,p.position.z]);});
+ const pos=m.getWorldPosition(m.position.clone()).toArray().map(v=>v*1000),expected=[p.position.x,p.position.y,p.position.z];assert.ok(pos.every((v,i)=>Math.abs(v-expected[i])<=.051));});
  assert.deepEqual(rendered,parts);factory.dispose();
 });
 test('D1 L and P share identical manufactured carcass, shelf and back at custom dimensions',()=>{
