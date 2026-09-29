@@ -19,8 +19,8 @@ for(const id of ids)test(PILOT_PRODUCTION[id].label+': horizontal rails have the
  }
 });
 for(const [id,heights,boxHeights,sha,file]of [
- ['bazis.39f282e08f0c',[357,357],[300,300],'f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2','НМРШ2-600.З.С 3мм Гвозди Шариковые напр с довод.fr3d'],
- ['bazis.5f5697e39e27',[357,178,178],[300,121,121],'f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0','НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.fr3d']
+ ['bazis.39f282e08f0c',[357,357],[300,300],'f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2','НМРШ2-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d'],
+ ['bazis.5f5697e39e27',[357,178,178],[300,121,121],'f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0','НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d']
 ])test(PILOT_PRODUCTION[id].label+': exact donor facades, drawer boxes and soft-close hardware',()=>{
  const p=PILOT_PRODUCTION[id],it=item(id,{layout:'drawers',drawers:heights.length}),cells=facadeCells(it,{production:p}),bom=parts(it);
  assert.equal(p.source_sha256,sha);assert.equal(p.source_file,file);assert.equal(p.hardware.drawer_system,'AKS');

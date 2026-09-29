@@ -15,12 +15,14 @@ DONORS={
     'bazis.39f282e08f0c':{
         'label':'Нижний 2 ящика · с доводчиком',
         'sha':'f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2',
+        'file':'НМРШ2-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d',
         'fronts':[357,357],
         'boxes':[300,300],
     },
     'bazis.5f5697e39e27':{
         'label':'Нижний 3 ящика · с доводчиком',
         'sha':'f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0',
+        'file':'НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d',
         'fronts':[357,178,178],
         'boxes':[300,121,121],
     },
@@ -100,6 +102,7 @@ def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api
     assert [it['bazis_id'] for it in native['items']]==list(DONORS)
     for item,(bazis_id,expected) in zip(native['items'],DONORS.items()):
         assert item['source_sha256']==expected['sha']
+        assert item['source_file']==expected['file']
         assert item['construction']['hardware']['drawer_count']==len(expected['fronts'])
         assert item['construction']['hardware']['slide_type']=='ball_bearing_soft_close'
 
