@@ -1043,7 +1043,7 @@ function exportBazisProject(){
         // Legacy native elastic resize has no separate leg-height channel. Keep its donor base
         // so changing legs cannot stretch the exported carcass; full kitchen parameters follow below.
         target:{width:it.width,height:p?globalThis.MF_FURNITURE_CORE.heights(it).body_height+p.base_height:it.height,depth:it.depth},
-        position:{x:it.x,y:0,z:it.z},
+        position:{x:it.x,y:globalThis.MF_FURNITURE_CORE.elevation(it,state.room),z:it.z},
         rotation:it.rotation,
         name:it.name,
         body_variant_id:it.body_variant_id||null,
