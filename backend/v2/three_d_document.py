@@ -45,6 +45,37 @@ UPPER_COMMON=[
     _row('Гвозди 1,4x25 РМЗ',52),
 ]
 
+def drawer_slide_length(depth):
+    d=int(depth or 0)
+    if d==510:return 500
+    if d>=1000:return 600
+    if d>=600:return 550
+    if d>=550:return 500
+    if d>=500:return 450
+    if d>=450:return 400
+    if d>=400:return 350
+    if d>=350:return 300
+    if d>=300:return 250
+    return None
+
+def drawer_hardware(count,depth):
+    guide=drawer_slide_length(depth)
+    rows=[
+      _row('Конфермат 7x50 мм, Zn',24),
+      _row('Основание для кухонной опоры крепление H5 под саморезы',2),
+      _row('Опора регулируемая H100 мм без основания, регулировка -5 +20 мм, черная',2),
+      _row('1031 Ножка пластиковая без базы, высота 100 мм',2),
+      _row('1031 База для пластиковой ножки с упором под саморез',2),
+      _row('Площадка клипсы усиленной (06.152)',2),
+      _row('Клипса усиленная',2),
+      _row('Гвозди 1,4x25 РМЗ',51),
+      _row('Саморез универсальный 5,0x30 желтый цинк AKS',10 if count==2 else 13),
+      _row('Шурупы 3.5x16 д5',count*3),
+    ]
+    rows.append(_row(f'Направляющая шариковая L-{guide} h=45 PRIME by AKS SOFT CLOSE' if guide else 'Направляющая шариковая PRIME by AKS SOFT CLOSE - длина не определена',count,'set'))
+    rows.append(_row('Шуруп 3.5x16 мм, Zn',count*18))
+    return rows
+
 def hardware_for(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
     if bid in D1|D2:
@@ -52,12 +83,7 @@ def hardware_for(it):
         rows.insert(6,_row('Петля накладная с доводчиком 48мм h2 clip-on PRIME',2 if bid in D1 else 4,'pcs','112602'))
         return rows,None
     if bid in DRAWERS:
-        count=DRAWERS[bid]
-        depth=int(it.get('depth') or 0)
-        guide='Направляющие шариковые с доводчиком AKS'
-        if depth==510: guide+=' 500 мм'
-        else: guide+=f' · автоподбор по глубине {depth} мм'
-        return [_row(guide,count,'set')],'Крепёж коробов ящиков не включён в количество: отдельная подтверждённая спецификация фурнитуры для этого донора пока не приложена.'
+        return drawer_hardware(DRAWERS[bid],int(it.get('depth') or 0)),None
     if bid in WALL_D1|WALL_D2|DRYER_D1|DRYER_D2:
         rows=[dict(x) for x in UPPER_COMMON]
         rows.append(_row('Петля накладная с доводчиком 48мм h2 clip-on PRIME',2 if bid in WALL_D1|DRYER_D1 else 4))
@@ -113,10 +139,11 @@ def render(name,scene,materials):
     table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('LINEBELOW',(0,0),(-1,-1),.3,RULE),
       ('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),
       ('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
-    story.extend([table,Spacer(1,3*mm),p('Предварительная 3D-спецификация. Ниже - комплектовочная часть по производственным донорам. Цены заполняются по фактическому прайсу.','small'),PageBreak()])
-    story.append(p('Комплектация по модулям','title'))
+    story.extend([table,Spacer(1,3*mm),p('Предварительная 3D-спецификация. Далее каждый модуль расположен на отдельном листе, затем идёт сводная закупка. Цены заполняются по фактическому прайсу.','small'),PageBreak()])
     aggregate=OrderedDict()
     for i,it in enumerate(items,1):
+        if i>1: story.append(PageBreak())
+        story.append(p('Комплектация по модулям','title'))
         title=f"{i}. {it.get('name') or MODULES.get(it.get('module_type'),'Модуль')} · {it.get('width')} x {it.get('height')} x {it.get('depth')} мм"
         body=materials.get(str(it.get('body_variant_id')),'Не выбран');front=materials.get(str(it.get('front_variant_id')),'Не выбран')
         hardware,note=hardware_for(it)
