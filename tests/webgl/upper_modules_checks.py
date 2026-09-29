@@ -34,14 +34,14 @@ def open_verified_planner(page,admin_user):
 
 def state(page):
     return page.evaluate("""()=>{const p=MF_PLANNER,it=p.adapter.selected,t=p.adapter.template(it),
-      parts=MF_FURNITURE_CORE.productionParts(it,t),cells=MF_FURNITURE_CORE.facadeCells(it,t),roles={},pivots=[];
+      parts=MF_FURNITURE_CORE.productionParts(it,t),cells=MF_FURNITURE_CORE.facadeCells(it,t),roles={},pivots=[],handles=[];
       p.scene.entries.get(it.item_id).group.traverse(m=>{
-        if(m.isMesh){const r=m.userData.role||'none';roles[r]=(roles[r]||0)+1;}
+        if(m.isMesh){const r=m.userData.role||'none';roles[r]=(roles[r]||0)+1;if(r==='handle')handles.push(Math.round(m.position.y*10000)/10);}
         if(m.userData?.role==='door-pivot')pivots.push(m.userData.hingeSide);
       });
       return {item:{id:it.item_id,bazis_id:it.bazis_id,bazis_file:it.bazis_file,bazis_sha256:it.bazis_sha256,module_type:it.module_type,
         width:it.width,height:it.height,depth:it.depth,base:it.base,body_height:it.body_height,base_height:it.base_height,worktop_thickness:it.worktop_thickness},
-        label:t.label,hardware:MF_FURNITURE_CORE.productionHardware(it,t.production),cells,roles,pivots,elevation:MF_FURNITURE_CORE.elevation(it,p.adapter.room),
+        label:t.label,hardware:MF_FURNITURE_CORE.productionHardware(it,t.production),cells,roles,pivots,handles,elevation:MF_FURNITURE_CORE.elevation(it,p.adapter.room),
         kitchen:MF_FURNITURE_CORE.kitchenSettings(it),legs:MF_FURNITURE_CORE.kitchenLegs(it),
         parts:parts.map(x=>({key:x.key,name:x.name,role:x.role,length:x.length,width:x.width,thickness:x.thickness,material:x.material?.name||null}))};}""")
 
@@ -79,6 +79,7 @@ def test_vmd_upper_modules_exact_render_save_load_and_native_export(page,api,set
         assert [(p['length'],p['width']) for p in parts if p['role']=='front']==expected['fronts']
         assert [(c['h'],c['w']) for c in actual['cells']]==expected['fronts']
         assert actual['pivots']==expected['sides']
+        assert actual['handles']==[51.5]*len(expected['fronts'])
         assert actual['hardware']['hinge_count']==expected['hinges']
         assert actual['hardware']['hinge_name'].startswith('Петля накладная с доводчиком 48мм h2 clip-on PRIME')
         assert {x['key']:x['quantity'] for x in actual['hardware']['items']}=={
