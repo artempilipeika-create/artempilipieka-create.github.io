@@ -102,7 +102,9 @@ for(const m of bazisModules){
 }
 for(const m of [...bazisModules,...Object.values(kitchenTemplates)]){
   const p=m.production,front=p?.doors?.length?{kind:'doors',count:p.doors.length}:m.front;
-  if((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))m.limits.w=[Math.min(m.limits.w[0],600),600];
+  if(m.resize!==false&&((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))){
+    m.limits.w=[Math.min(m.limits.w[0],600),600];m.defaults.w=Math.min(m.defaults.w,600);
+  }
   if(p?.constraints?.fixed_width_mm)m.limits.w=[p.constraints.fixed_width_mm,p.constraints.fixed_width_mm];
   if(p?.constraints?.min_body_height_mm)m.limits.h[0]=p.base_height+p.constraints.min_body_height_mm;
 }

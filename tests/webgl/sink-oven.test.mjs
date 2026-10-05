@@ -64,3 +64,10 @@ test('Four new modules join continuous kitchen surfaces and preserve exact donor
  assert.equal(kitchenRuns(row,room)[0].countertopActualLengthMm,2400);
  for(const it of row)assert.equal(it.bazis_sha256.length,64);
 });
+
+test('Legacy donors keep their geometry envelope without silently acquiring the new niche construction',()=>{
+ const old={...item(oven),bazis_sha256:'b1d83b58fc32f95f5a1924bad1c60f50267f38f13de122db4def7f0610d1df65',height:720,base_height:80};
+ delete old.legHeightMm;delete old.body_height;
+ assert.equal(dimensionError(old,{front:{kind:'none'}}),'');
+ assert.match(dimensionError({...old,width:599},{front:{kind:'none'}}),/600/);
+});

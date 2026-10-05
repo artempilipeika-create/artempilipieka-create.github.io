@@ -90,7 +90,7 @@ class FurnitureItem(StrictModel):
         body=self.height-base
         single_door_ids={'bazis.0211e4f77fc4','bazis.784bf9af84f8','bazis.facfa0cd038b','bazis.b226370aab54',
                          'bazis.858266606bc5','bazis.2175c60e84a6','bazis.b89bf9852860','bazis.60f79b573cd1','bazis.460987c9a8e8'}
-        if (self.bazis_id in single_door_ids or self.template_id in {'base.one_door','wall.one_door','tall.one_door','base.combo'}) and self.width>600:
+        if (self.bazis_id in single_door_ids or self.template_id in {'base.one_door','wall.one_door','tall.one_door','base.drawer_door','base.drawers2_door','wall.horizontal'}) and self.width>600:
             raise ValueError('Ширина модуля с одной дверью не должна превышать 600 мм')
         if self.bazis_id=='bazis.9e77f4333545':
             if self.width!=600:

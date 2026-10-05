@@ -145,11 +145,11 @@
   });
   const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION});
   function dimensionError(it,template){
-    const p=template?.production||PRODUCTION_MODELS[it?.bazis_id],c=p?.constraints;
-    if(c?.fixed_width_mm&&it.width!==c.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
+    const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
+    if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
     const front=p?.doors?.length?{kind:'doors',count:p.doors.length}:template?.front;
-    if(((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))&&it.width>600)
+    if(template?.resize!==false&&((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))&&it.width>600)
       return 'Ширина модуля с одной дверью — не больше 600 мм';
     return '';
   }
