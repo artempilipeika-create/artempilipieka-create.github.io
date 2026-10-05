@@ -57,8 +57,8 @@ def export_payload(page):
 def test_vmd_upper_modules_exact_render_save_load_and_native_export(page,api,settings,admin_user):
     open_verified_planner(page,admin_user)
     panel(page,'left','catalog')
-    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(11)
-    assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE
+    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(15)
+    assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE+['НМД1 L · Мойка','НМД1 P · Мойка','НМД2 · Мойка','НШД-600 · ниша 595']
     for bazis_id,expected in DONORS.items():
         page.locator(f'[data-bazis="{bazis_id}"]').click()
         actual=state(page);parts=actual['parts']

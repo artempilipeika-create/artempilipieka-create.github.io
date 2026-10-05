@@ -103,7 +103,57 @@
     'bazis.60f79b573cd1':wallDryer('ВМД1 P · Сушка','wall.dryer.d1.right.600','60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005','ВМД1-600. отк P. (Сушка).fr3d',['right']),
     'bazis.1ac4fadd97b7':wallDryer('ВМД2 · Сушка','wall.dryer.d2.600','1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b','ВМД2-600.(Сушка).fr3d',['left','right'])
   });
-  const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION});
+  // Source: 2026-10-05 FR3D + panel/hardware specifications. No invented articles.
+  const sinkDoor=(label,key,sha,file,sides)=>({...kitchenBase,label,key,source_sha256:sha,source_file:file,
+    carcass:{type:'sink_three_vertical_rails',panel_thickness:18,rail_height:80,rail_depth:18,rail_orientation:'vertical',material_name:'ЛДСП- БЕЛЫЙ'},
+    facade:{...kitchenBase.facade,clearance_mm:0,material_name:'Evagloss P004'},
+    back:null,shelves:[],doors:sides.map(side=>({side,hinge_count:2,open_angle:105})),
+    hardware:{hinge_name:'Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)',hinge_count:2*sides.length,items:[
+      {key:'plastic-leg-base',name:'1031 База для пластиковой ножки с упором под саморез',quantity:2,unit:'pcs'},
+      {key:'plastic-leg-100',name:'1031 Ножка пластиковая без базы, высота 100 мм',quantity:2,unit:'pcs'},
+      {key:'clip-heavy',name:'Клипса усиленная',quantity:2,unit:'pcs'},
+      {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:10,unit:'pcs'},
+      {key:'support-h100',name:'Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',quantity:2,unit:'pcs'},
+      {key:'support-base-h5',name:'Основание для кухонной опоры крепление Н5 под саморезы',quantity:2,unit:'pcs'},
+      {key:'clip-plate',name:'Площадка клипсы усиленной (06.152)',quantity:2,unit:'pcs'},
+      {key:'angle-cast',name:'Уголок №1 (литой)',quantity:4,unit:'pcs'},
+      {key:'screw-3.5x16-zn',name:'Шуруп 3.5х16 мм,Zn',quantity:8,unit:'pcs'}]}});
+  const SPECIAL_BASE_PRODUCTION=freeze({
+    'bazis.facfa0cd038b':sinkDoor('НМД1 L · Мойка','base.sink.d1.left.600','bbba352bdfc26ec529ecef60d927f00420974d974ac96a936e6f966a62f88f48','НМД1-600. Отк L Мойка.fr3d',['left']),
+    'bazis.b226370aab54':sinkDoor('НМД1 P · Мойка','base.sink.d1.right.600','98456bd9400b38b245301722500677efdaadb6410ccd622c2b34980962f756b8','НМД1-600. Отк P Мойка.fr3d',['right']),
+    'bazis.5731630ddd87':sinkDoor('НМД2 · Мойка','base.sink.d2.600','8c04f7bcfd7dce2c1209f7f2c2b5b3d88769fbe98b11d3ef2de086380bb0f58a','НМД2-600.Мойка(1).fr3d',['left','right']),
+    'bazis.9e77f4333545':{...kitchenBase,label:'НШД-600 · ниша 595',key:'base.oven.drawer.600',
+      source_sha256:'7de5d86b28ad697749e0e47f5f313da2df667817910500dfe4fd569641680206',source_file:'НШД-600. 595мм (1).fr3d',
+      native_defaults:{width:600,height:820,depth:500},scene_depth:500,
+      constraints:{fixed_width_mm:600,min_body_height_mm:720,niche_height_mm:595},
+      carcass:{type:'oven_fixed_niche',panel_thickness:18,bottom_depth_clearance:20,material_name:'ЛДСП- БЕЛЫЙ'},
+      facade:{...kitchenBase.facade,clearance_mm:0,material_name:'Evagloss P004'},
+      front:{kind:'niche',drawerRows:1},back:null,shelves:[],doors:[],
+      drawer_box:{panel_thickness:18,bottom_thickness:3,facade_to_box_delta:56,
+        front_back_width_clearance:100,side_depth_clearance:0,bottom_width_clearance:68,bottom_depth_clearance:4,
+        center_x_mm:-0.5,wall_bottom_offset_mm:31,bottom_below_walls:true,
+        material_name:'ЛДСП- БЕЛЫЙ',bottom_material_name:'ЛХДФ 3ММ Белый'},
+      hardware:{drawer_system:'AKS PLUS',slide_type:'ball_bearing',native_slide_length_mm:500,slide_length_mm:500,drawer_count:1,items:[
+        {key:'support-base-h5',name:'Основание для кухонной опоры крепление Н5 под саморезы',quantity:4,unit:'pcs'},
+        {key:'support-h100',name:'Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',quantity:4,unit:'pcs'},
+        {key:'plinth-clip-mount',name:'Крепление клипсы к цоколю из ДСП',quantity:2,unit:'pcs'},
+        {key:'plinth-clip',name:'Клипса к пластиковой ножке (универсальная, без крепления)',quantity:2,unit:'pcs'},
+        {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:12,unit:'pcs'},
+        {key:'screw-5x30',name:'Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS',quantity:2,unit:'pcs'},
+        {key:'screw-3.5x16-d5',name:'Шурупы 3.5х16 д5',quantity:2,unit:'pcs'},
+        {key:'screw-3.5x16-zn',name:'Шуруп 3.5х16 мм,Zn',quantity:16,unit:'pcs'}]}}
+  });
+  const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION});
+  function dimensionError(it,template){
+    const p=template?.production||PRODUCTION_MODELS[it?.bazis_id],c=p?.constraints;
+    if(c?.fixed_width_mm&&it.width!==c.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
+    if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
+    const front=p?.doors?.length?{kind:'doors',count:p.doors.length}:template?.front;
+    if(((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))&&it.width>600)
+      return 'Ширина модуля с одной дверью — не больше 600 мм';
+    return '';
+  }
+
   function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
     if(!p)return [];
     if(!p.shelf_rule)return (it?.shelves??p.shelves??[]).map(x=>({...x}));
@@ -150,7 +200,7 @@
   }
   const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:60,plinthMaterialId:null,
     countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
-  function isKitchenModule(it){const p=PILOT_PRODUCTION[it.bazis_id];return Boolean(p&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
+  function isKitchenModule(it){const p=PRODUCTION_MODELS[it.bazis_id];return Boolean(p?.tier==='base'&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
   function kitchenGroup(it){
     const p=PRODUCTION_MODELS[it?.bazis_id];
     if(p?.tier==='base')return 'lower';
@@ -238,6 +288,9 @@
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(production?.constraints?.niche_height_mm){
+      cell('drawer',x0,y0,W,H-production.constraints.niche_height_mm);return cells;
+    }
     if(custom?.heights?.length){
       const gaps=custom.gaps||Array(custom.heights.length+1).fill(g),gapTotal=gaps.reduce((n,v)=>n+Number(v||0),0);
       const nominal=custom.heights.reduce((n,v)=>n+Number(v||0),0),scale=Math.max(1,H-gapTotal)/Math.max(1,nominal);
@@ -310,12 +363,20 @@
       }
       return parts;
     }
-    if(p.carcass.type!=='bottom_side_two_rails')return null;
-    add('bottom','Дно','body',{x:W,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
+    if(!['bottom_side_two_rails','sink_three_vertical_rails','oven_fixed_niche'].includes(p.carcass.type))return null;
+    const bottomInset=p.carcass.bottom_depth_clearance||0;
+    add('bottom','Дно','body',{x:W,y:t,z:D-bottomInset},{x:0,y:base+t/2,z:-bottomInset/2},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
     for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,'Боковина '+side,'body',
       {x:t,y:B-t,z:D},{x:sign*(W-t)/2,y:base+t+(B-t)/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
+    if(p.carcass.type==='sink_three_vertical_rails'){
+      for(const [key,name,sign,cy]of [['rear','задняя',-1,H-40],['front','передняя',1,H-40],['rear-lower','задняя нижняя',-1,base+t+40]])
+        add('rail-'+key,'Царга '+name,'body',{x:inner,y:80,z:t},{x:0,y:cy,z:sign*(D-t)/2},['y','x','z'],it.body_variant_id,p.carcass.material_name);
+    }else if(p.carcass.type==='oven_fixed_niche'){
+      add('oven-divider','Перегородка','body',{x:inner,y:t,z:D},{x:0,y:H-p.constraints.niche_height_mm-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name);
+    }else{
     for(const [key,name,sign]of [['rear','задняя',-1],['front','передняя',1]])add('rail-'+key,'Царга '+name,'body',
       {x:inner,y:t,z:rail},{x:0,y:H-t/2,z:sign*(D-rail)/2},['z','x','y'],it.body_variant_id,p.carcass.material_name||null);
+    }
     for(const shelf of it.shelves??p.shelves??[])if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
       {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
       {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,null,
@@ -325,16 +386,17 @@
     const frontCells=facadeCells(it,template);
     if(p.drawer_box){
       const d=p.drawer_box,pt=d.panel_thickness||18,bt=d.bottom_thickness||3;
-      const fbW=Math.max(1,W-(d.front_back_width_clearance||99)),sideD=Math.max(1,D-(d.side_depth_clearance||10));
+      const fbW=Math.max(1,W-(d.front_back_width_clearance||99)),sideD=Math.max(1,D-(d.side_depth_clearance??10));
       const bottomW=Math.max(1,W-(d.bottom_width_clearance||67)),bottomD=Math.max(1,D-(d.bottom_depth_clearance||14));
       const sideX=fbW/2+pt/2,frontZ=sideD/2-pt/2;
       frontCells.forEach((f,i)=>{
-        const boxH=Math.max(1,mmNumber(f.h-(d.facade_to_box_delta||57))),cy=f.cy,key='drawer-'+(i+1)+'-';
-        add(key+'rear','ЗАДНЯЯ ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:-frontZ},['y','x','z'],it.body_variant_id,d.material_name,{drawer_index:i+1});
-        add(key+'front','Фронтальная ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:0,y:cy,z:frontZ},['y','x','z'],it.body_variant_id,d.material_name,{drawer_index:i+1});
-        add(key+'side-P','Боковая напр.P','drawer',{x:pt,y:boxH,z:sideD},{x:sideX,y:cy,z:0},['y','z','x'],it.body_variant_id,d.material_name,{drawer_index:i+1});
-        add(key+'side-L','Боковая напр.L','drawer',{x:pt,y:boxH,z:sideD},{x:-sideX,y:cy,z:0},['y','z','x'],it.body_variant_id,d.material_name,{drawer_index:i+1});
-        add(key+'bottom','З.С','back',{x:bottomW,y:bt,z:bottomD},{x:0,y:cy-boxH/2+bt/2,z:0},['x','z','y'],null,d.bottom_material_name,{drawer_index:i+1,back_type:'drawer_bottom'});
+        const boxH=Math.max(1,mmNumber(f.h-(d.facade_to_box_delta||57))),cy=d.wall_bottom_offset_mm!=null?base+d.wall_bottom_offset_mm+boxH/2:f.cy,key='drawer-'+(i+1)+'-';
+        const cx=d.center_x_mm||0;
+        add(key+'rear','ЗАДНЯЯ ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:cx,y:cy,z:-frontZ},['y','x','z'],it.body_variant_id,d.material_name,{drawer_index:i+1});
+        add(key+'front','Фронтальная ШУФ','drawer',{x:fbW,y:boxH,z:pt},{x:cx,y:cy,z:frontZ},['y','x','z'],it.body_variant_id,d.material_name,{drawer_index:i+1});
+        add(key+'side-P','Боковая напр.P','drawer',{x:pt,y:boxH,z:sideD},{x:cx+sideX,y:cy,z:0},['y','z','x'],it.body_variant_id,d.material_name,{drawer_index:i+1});
+        add(key+'side-L','Боковая напр.L','drawer',{x:pt,y:boxH,z:sideD},{x:cx-sideX,y:cy,z:0},['y','z','x'],it.body_variant_id,d.material_name,{drawer_index:i+1});
+        add(key+'bottom','З.С','back',{x:bottomW,y:bt,z:bottomD},{x:cx,y:cy-boxH/2+(d.bottom_below_walls?-bt/2:bt/2),z:0},['x','z','y'],null,d.bottom_material_name,{drawer_index:i+1,back_type:'drawer_bottom'});
       });
     }
     frontCells.forEach((f,i)=>{
@@ -457,5 +519,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,PRODUCTION_MODELS,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,PRODUCTION_MODELS,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

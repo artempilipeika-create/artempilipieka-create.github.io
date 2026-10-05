@@ -94,10 +94,17 @@ const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
   const p=pilotProductionById[m.id];if(!p)continue;
   m.source_sha256=p.source_sha256;m.source_file=p.source_file||m.source_file;m.production=p;m.label=p.label;
-  m.defaults={...m.defaults,w:600,h:p.body_height+p.base_height,d:p.scene_depth};
+  m.defaults={...m.defaults,w:600,h:p.body_height+p.base_height,d:p.scene_depth,...(p.constraints?.niche_height_mm?{layout:'niche',drawers:1}:{})};
+  if(p.front)m.front=p.front;
   m.limits=p.tier==='wall'
     ?{...m.limits,w:m.limits?.w||[300,1200],h:[300,1400],d:[250,500]}
     :{...m.limits,h:[p.base_height+600,p.base_height+1000],d:p.front_layout?.kind==='drawer'?[250,1000]:[450,700]};
+}
+for(const m of [...bazisModules,...Object.values(kitchenTemplates)]){
+  const p=m.production,front=p?.doors?.length?{kind:'doors',count:p.doors.length}:m.front;
+  if((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))m.limits.w=[Math.min(m.limits.w[0],600),600];
+  if(p?.constraints?.fixed_width_mm)m.limits.w=[p.constraints.fixed_width_mm,p.constraints.fixed_width_mm];
+  if(p?.constraints?.min_body_height_mm)m.limits.h[0]=p.base_height+p.constraints.min_body_height_mm;
 }
 const bazisById=new Map(bazisModules.map(x=>[x.id,x]));
 
@@ -290,7 +297,11 @@ function renderModuleCatalogue(){
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=drawerCount
+    const description=p.constraints?.niche_height_mm
+      ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
+      :p.carcass.type==='sink_three_vertical_rails'
+        ?'Мойка · 3 вертикальные царги · нижняя царга сзади'
+      :drawerCount
       ?drawerCount+' ящика · AKS · направляющие с доводчиком · автоподбор по глубине'
       :p.dryer
         ?(p.doors.length===2?'Верхний · сушка AKS по ширине · 2 фасада · PRIME':'Верхний · сушка AKS по ширине · 1 фасад · PRIME')
@@ -566,7 +577,7 @@ function applyLimits(it,t){
     const lim=t?.limits?.[key]||defs[key];
     $(id).min=String(lim[0]);
     $(id).max=String(lim[1]);
-    if(id==='width')$(id).step=String(t?.production?.dryer?.width_step_mm||1);
+    if(id==='width'){$(id).step=String(t?.production?.dryer?.width_step_mm||1);$(id).disabled=lim[0]===lim[1];}
   }
 }
 const STANDARD_WIDTHS=[300,350,400,450,500,600,700,800,900,1000,1200];
@@ -650,7 +661,7 @@ async function syncControls(){
       if($('production-hardware-summary')){
         const unit=u=>({pcs:'шт.',set:'компл.'}[u]||u||'шт.'),bits=[];
         if(Number.isInteger(hw?.hinge_count))bits.push('Петли PRIME'+(hw.hinge_article?' '+hw.hinge_article:'')+' · '+hw.hinge_count+' шт.');
-        if(Number.isInteger(hw?.drawer_count))bits.push('Направляющие AKS с доводчиком · '+hw.drawer_count+' компл.'+(hw.slide_length_mm?' · '+hw.slide_length_mm+' мм':' · автоподбор по глубине'));
+        if(Number.isInteger(hw?.drawer_count))bits.push((hw.slide_type==='ball_bearing'?'Направляющие AKS PLUS':'Направляющие AKS с доводчиком')+' · '+hw.drawer_count+' компл.'+(hw.slide_length_mm?' · '+hw.slide_length_mm+' мм':' · автоподбор по глубине'));
         for(const row of hw?.items||[])bits.push(row.name+' · '+row.quantity+' '+unit(row.unit));
         $('production-hardware-summary').textContent=bits.length?'Фурнитура: '+bits.join(' · '):'Фурнитура не задана для этого производственного донора';
       }
@@ -664,7 +675,11 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.front_layout?.kind==='drawer'
+        $('production-rule-note').textContent=production.constraints?.niche_height_mm
+          ?'Ширина всегда 600 мм. Верхняя ниша всегда 595 мм. При изменении высоты корпуса меняется только высота секции шуфляды.'
+          :production.carcass.type==='sink_three_vertical_rails'
+            ?'Три вертикальные царги: передняя и задняя сверху, третья сзади над дном. Полки и задней стенки нет.'
+          :production.front_layout?.kind==='drawer'
           ?'Полка в модуле не предусмотрена. Направляющие подбираются родным FR3D по глубине модуля.'
           :production.dryer
             ?'Сушка равна ширине модуля с шагом 100 мм. При высоте больше 850 мм автоматически добавляется верхняя полка.'
@@ -1012,6 +1027,8 @@ function exportSafeName(value,max=48){
   return s.slice(0,max);
 }
 function exportBazisProject(){
+  const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
+  if(invalid){status(invalid);return;}
   const bazisItems=state.items.filter(x=>x.bazis_file);
   const missing=state.items.filter(x=>!x.bazis_file);
   if(!bazisItems.length){
@@ -1054,6 +1071,7 @@ function exportBazisProject(){
         front_variant_id:it.front_variant_id||null,
         construction:p?{
           key:p.key,
+          constraints:p.constraints||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,

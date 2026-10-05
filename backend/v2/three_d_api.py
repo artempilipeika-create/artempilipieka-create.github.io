@@ -88,6 +88,15 @@ class FurnitureItem(StrictModel):
         if self.worktop_thickness and (self.module_type!='base_cabinet' or self.depth>750):
             raise ValueError('Worktop is supported only for compatible lower modules')
         body=self.height-base
+        single_door_ids={'bazis.0211e4f77fc4','bazis.784bf9af84f8','bazis.facfa0cd038b','bazis.b226370aab54',
+                         'bazis.858266606bc5','bazis.2175c60e84a6','bazis.b89bf9852860','bazis.60f79b573cd1','bazis.460987c9a8e8'}
+        if (self.bazis_id in single_door_ids or self.template_id in {'base.one_door','wall.one_door','tall.one_door','base.combo'}) and self.width>600:
+            raise ValueError('Ширина модуля с одной дверью не должна превышать 600 мм')
+        if self.bazis_id=='bazis.9e77f4333545':
+            if self.width!=600:
+                raise ValueError('Ширина НШД-600 всегда 600 мм')
+            if self.bazis_sha256=='7de5d86b28ad697749e0e47f5f313da2df667817910500dfe4fd569641680206' and body<720:
+                raise ValueError('Высота корпуса НШД с нишей 595 мм должна быть не меньше 720 мм')
         for shelf in self.shelves:
             if shelf.enabled and (shelf.offset_mm-shelf.thickness/2<0 or shelf.offset_mm+shelf.thickness/2>body):
                 raise ValueError('Shelf position must stay inside the cabinet body')

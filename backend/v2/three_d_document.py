@@ -19,6 +19,9 @@ PAGE=landscape(A4);WIDTH=PAGE[0]-16*mm
 MODULES={'chest':'Комод','base_cabinet':'Кухня · нижний','wall_cabinet':'Кухня · верхний','tall_cabinet':'Пенал','wardrobe':'Шкаф','vanity':'Тумба'}
 D1={'bazis.0211e4f77fc4','bazis.784bf9af84f8'}
 D2={'bazis.3079d0656398'}
+SINK_D1={'bazis.facfa0cd038b','bazis.b226370aab54'}
+SINK_D2={'bazis.5731630ddd87'}
+OVEN={'bazis.9e77f4333545'}
 DRAWERS={'bazis.39f282e08f0c':2,'bazis.5f5697e39e27':3}
 WALL_D1={'bazis.858266606bc5','bazis.2175c60e84a6'}
 WALL_D2={'bazis.877ba2f68d92'}
@@ -79,6 +82,22 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
+    if bid in SINK_D1|SINK_D2:
+        rows=[_row('1031 База для пластиковой ножки с упором под саморез',2),
+              _row('1031 Ножка пластиковая без базы, высота 100 мм',2),_row('Клипса усиленная',2),
+              _row('Конфермат 7х50 мм,Zn',10),
+              _row('Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',2),
+              _row('Основание для кухонной опоры крепление Н5 под саморезы',2),
+              _row('Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)',2 if bid in SINK_D1 else 4),
+              _row('Площадка клипсы усиленной (06.152)',2),_row('Уголок №1 (литой)',4),_row('Шуруп 3.5х16 мм,Zn',8)]
+        return rows,None
+    if bid in OVEN:
+        return [_row('Основание для кухонной опоры крепление Н5 под саморезы',4),
+                _row('Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',4),
+                _row('Крепление клипсы к цоколю из ДСП',2),_row('Клипса к пластиковой ножке (универсальная, без крепления)',2),
+                _row('Конфермат 7х50 мм,Zn',12),_row('Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS',2),
+                _row('Шурупы 3.5х16 д5',2),_row('Направляющая шариковая h=45 L-500 AKS PLUS',1),
+                _row('Шуруп 3.5х16 мм,Zn',16)],None
     if bid in D1|D2:
         rows=[dict(x) for x in LOWER_COMMON]
         rows.insert(6,_row('Петля накладная с доводчиком 48мм h2 clip-on PRIME',2 if bid in D1 else 4,'pcs','112602'))
@@ -98,6 +117,10 @@ def hardware_for(it):
 
 def module_contents(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0)
+    if bid in SINK_D1|SINK_D2:
+        return 'корпус; '+('1 фасад' if bid in SINK_D1 else '2 фасада')+'; 3 вертикальные царги (2 сверху, 1 сзади над дном); ножки'
+    if bid in OVEN:
+        return 'корпус шириной 600 мм; верхняя ниша 595 мм; перегородка; нижняя шуфляда; направляющие; ножки'
     if bid in DRAWERS:
         return f"корпус; фасады ящиков; {DRAWERS[bid]} ящика; задняя стенка; днища ящиков; направляющие"
     if bid in DRYER_D1|DRYER_D2:
@@ -109,12 +132,12 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front):
-    bid=it.get('bazis_id');known=bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2
+    bid=it.get('bazis_id');known=bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2|SINK_D1|SINK_D2|OVEN
     if known and (not body or body=='Не выбран'):body='ЛДСП- БЕЛЫЙ'
     if known and (not front or front=='Не выбран'):front='Evagloss P004'
     rows=[('Корпус',body or 'Не выбран'),('Фасад',front or 'Не выбран')]
     if bid in D1|D2|set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2:rows.append(('Задняя стенка','ЛХДФ 3ММ Белый'))
-    if bid in DRAWERS:
+    if bid in set(DRAWERS)|OVEN:
         rows.extend([('Короба ящиков','ЛДСП- БЕЛЫЙ'),('Днища ящиков','ЛХДФ 3ММ Белый')])
     return rows
 
