@@ -574,7 +574,9 @@ function syncRoom(){
 function applyLimits(it,t){
   const defs={w:[300,3000],h:[300,3000],d:[200,1200]};
   for(const [id,key] of[['width','w'],['height','h'],['depth','d']]){
-    const lim=t?.limits?.[key]||defs[key];
+    const kitchen=globalThis.MF_FURNITURE_CORE.kitchenSettings(it);
+    const offset=key==='h'&&kitchen&&t?.production?kitchen.legHeightMm-t.production.base_height:0;
+    const lim=(t?.limits?.[key]||defs[key]).map(v=>v+offset);
     $(id).min=String(lim[0]);
     $(id).max=String(lim[1]);
     if(id==='width'){$(id).step=String(t?.production?.dryer?.width_step_mm||1);$(id).disabled=lim[0]===lim[1];}

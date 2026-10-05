@@ -65,7 +65,9 @@ export class StateAdapter{
     if(elevation(it,this.room)+h.overall_height_with_worktop>this.room.height)return 'Столешница выходит за высоту помещения';
     const t=this.template(it),limits=t?.limits||{w:[300,3000],h:[300,3000],d:[200,1200]};
     for(const [k,axis]of[['width','w'],['height','h'],['depth','d']]){
-      if(!Number.isFinite(it[k])||it[k]<limits[axis][0]||it[k]>limits[axis][1])return 'Допустимый размер: '+limits[axis].join('–')+' мм';
+      const offset=axis==='h'&&kitchen&&production?kitchen.legHeightMm-production.base_height:0;
+      const range=limits[axis].map(v=>v+offset);
+      if(!Number.isFinite(it[k])||it[k]<range[0]||it[k]>range[1])return 'Допустимый размер: '+range.join('–')+' мм';
     }
     if(![0,90,180,270].includes(it.rotation))return 'Допустим поворот с шагом 90°';
     if(t?.resize===false&&(it.width!==t.defaults.w||it.height!==t.defaults.h||it.depth!==t.defaults.d))return 'Этот модуль БАЗИС имеет фиксированный габарит';

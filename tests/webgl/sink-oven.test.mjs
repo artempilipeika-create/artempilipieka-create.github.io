@@ -4,7 +4,7 @@ import {SPECIAL_BASE_PRODUCTION as models,PRODUCTION_MODELS,normalizeKitchen,pro
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 const oven='bazis.9e77f4333545',room={width:6200,depth:4000,height:2700};
 const item=(id,extra={})=>{const p=models[id];return normalizeKitchen({item_id:id,bazis_id:id,bazis_sha256:p.source_sha256,name:p.label,module_type:'base_cabinet',width:600,height:820,body_height:720,base_height:100,depth:p.scene_depth,base:'plinth',layout:id===oven?'niche':'doors',drawers:id===oven?1:0,handles:'handles',x:0,z:0,rotation:0,shelves:[],...extra});};
-const template=it=>({production:models[it.bazis_id]});
+const template=it=>({production:models[it.bazis_id],limits:{w:it.bazis_id===oven?[600,600]:[300,1200],h:it.bazis_id===oven?[820,1100]:[700,1100],d:[450,700]}});
 const parts=it=>productionParts(it,template(it));
 const dims=p=>[p.length,p.width,p.thickness];
 for(const id of Object.keys(models).filter(x=>x!==oven))test(models[id].label+': exact PDF parts and vertical top/top/bottom FR3D rails',()=>{
@@ -37,6 +37,7 @@ test('NSHD exact drawer and support panel match uploaded specification and FR3D 
 test('NSHD clear upper niche remains 595 for body resizing, leg changes and saved state',()=>{
  for(const body_height of [720,750,800,900,1000])for(const legHeightMm of [80,100,150]){
   const it=dimensionPatch(item(oven),{body_height,legHeightMm}),bom=parts(it),split=bom.find(x=>x.key==='oven-divider'),front=facadeCells(it,template(it))[0];
+  const adapter=new StateAdapter({state:()=>({room,items:[it]}),template});assert.equal(adapter.validate(it),'');
   assert.equal(it.height-(split.position.y+split.size.y/2),595);
   assert.equal(front.h,body_height-598);assert.equal(front.w,597);
   assert.equal(bom.find(x=>x.key==='drawer-1-rear').size.y,66+body_height-720);

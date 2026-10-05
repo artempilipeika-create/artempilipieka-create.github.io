@@ -50,6 +50,8 @@ def test_sink_oven_controls_save_reload_export(page,api,settings,admin_user):
   assert state['niche']==595;assert state['cells'][0]['h']==122
   panel(page,'right');expect(page.locator('#width')).to_be_disabled()
   expect(page.locator('#production-rule-note')).to_contain_text('595')
+  page.locator('#leg-height').select_option('80')
+  assert geometry(page)['niche']==595 and geometry(page)['height']==800
   page.locator('#body-height').fill('800');page.locator('#body-height').press('Tab')
   assert geometry(page)['niche']==595 and geometry(page)['cells'][0]['h']==202
   page.locator('#leg-height').select_option('150')
