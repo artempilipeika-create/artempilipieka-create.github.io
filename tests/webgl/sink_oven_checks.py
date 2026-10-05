@@ -1,5 +1,5 @@
 """Source-specific geometry, public controls, persistence, export and API boundary."""
-import json,os
+import json,os,base64
 from pathlib import Path
 import pytest
 from pydantic import ValidationError
@@ -73,3 +73,7 @@ def test_sink_oven_controls_save_reload_export(page,api,settings,admin_user):
  close_panels(page)
  out=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/sink-oven'));out.mkdir(parents=True,exist_ok=True)
  page.screenshot(path=str(out/'sink-oven.png'),full_page=True)
+ encoded=base64.b64encode(page.screenshot(type='jpeg',quality=65)).decode()
+ print('MF_MODULES_IMAGE_BEGIN')
+ for i in range(0,len(encoded),3000):print('MF_MODULES_IMAGE '+encoded[i:i+3000])
+ print('MF_MODULES_IMAGE_END')

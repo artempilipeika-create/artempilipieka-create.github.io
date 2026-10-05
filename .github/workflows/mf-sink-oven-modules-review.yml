@@ -52,7 +52,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: UI, real API persistence and native export
         run: |
-          python -m pytest tests/webgl/sink_oven_checks.py tests/webgl/drawer_modules_checks.py tests/webgl/upper_modules_checks.py -vv --timeout=180 --junitxml=qa-output/sink-oven/results.xml
+          python -m pytest tests/webgl/sink_oven_checks.py tests/webgl/drawer_modules_checks.py tests/webgl/upper_modules_checks.py -vv -s --timeout=180 --junitxml=qa-output/sink-oven/results.xml
           git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()

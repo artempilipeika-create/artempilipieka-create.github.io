@@ -16,6 +16,7 @@ for(const id of Object.keys(models).filter(x=>x!==oven))test(models[id].label+':
  assert.deepEqual(rails.map(x=>x.size),Array(3).fill({x:564,y:80,z:18}));
  assert.deepEqual(rails.map(x=>x.position),[{x:0,y:780,z:-246},{x:0,y:780,z:246},{x:0,y:158,z:-246}]);
  assert.deepEqual(facadeCells(it,template(it)).map(x=>[x.w,x.h]),id==='bazis.5731630ddd87'?[[297,717],[297,717]]:[[597,717]]);
+ assert.deepEqual(bom.filter(x=>x.role==='front').map(dims),id==='bazis.5731630ddd87'?[[717,297,18],[717,297,18]]:[[717,597,18]]);
  const tall=dimensionPatch(it,{body_height:850}),tallRails=parts(tall).filter(x=>x.key.startsWith('rail-'));
  assert.deepEqual(tallRails.map(x=>x.position.y),[910,910,158]);
  const hw=productionHardware(it);assert.equal(hw.hinge_count,id==='bazis.5731630ddd87'?4:2);
