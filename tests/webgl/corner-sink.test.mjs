@@ -117,3 +117,19 @@ test('Odd widths and depths keep the exact 50 mm wall space with half-millimetre
   const placed=findSpace(single,[],room,null);assert.equal(placed.z-511/2+3100,50);assert.equal(placed.x-599/2+3100,0);
  }
 });
+
+test('Wide corner worktops clip covered return areas without overlaps or negative boards',()=>{
+ for(const mainDepth of [600,800,1200])for(const returnDepth of [600,1200])for(const width of [300,600]){
+  const a=item(id,{countertopDepthMm:mainDepth}),b=cornerReturnPlacement(a,item('bazis.0211e4f77fc4',{width,countertopDepthMm:returnDepth}));
+  const runs=kitchenRuns([a,b],room),rects=[];
+  for(const r of runs)for(const q of r.parts.filter(v=>v.role==='counter')){
+   assert.ok(q.length>0&&q.width>0&&q.length<=4100);
+   const v=rotateXZ(q.position.x,q.position.z,r.rotation);
+   rects.push(bounds({x:r.position.x+v.x,z:r.position.z+v.z,width:q.size.x,depth:q.size.z,height:38,rotation:r.rotation},room,false));
+  }
+  for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++)assert.equal(overlaps(rects[i],rects[j]),false);
+  const area=rects.reduce((s,r)=>s+(r.maxX-r.minX)*(r.maxZ-r.minZ),0);
+  const extension=Math.max(0,628-mainDepth),overlap=Math.min(Math.max(0,mainDepth-628),width)*Math.min(returnDepth,1000);
+  assert.equal(area,1000*mainDepth+returnDepth*(width+extension)-overlap);
+ }
+});

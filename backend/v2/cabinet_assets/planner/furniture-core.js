@@ -556,10 +556,28 @@
       turned.parts=turned.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x+p.size.x/2-end)<1));
       for(const p of turned.parts){
         if(p.orientation.length_axis!=='x'||Math.abs(p.position.x+p.size.x/2-end)>1)continue;
-        const target=p.role==='counter'?counterEnd:plinthEnd,lo=p.position.x-p.size.x/2;
+        const target=p.role==='counter'?Math.max(end,counterEnd):plinthEnd,lo=p.position.x-p.size.x/2;
         p.size.x=target-lo;p.length=p.size.x;p.position.x=(lo+target)/2;
       }
-      turned.countertopActualLengthMm+=counterEnd-end;
+      // A deeper main worktop can cover an entire short return cabinet. Clip
+      // rectangles, including different worktop depths, instead of creating a
+      // negative-length board or leaving two slabs on top of each other.
+      for(const cover of main.parts.filter(p=>p.role==='counter')){
+        const world=rotateXZ(cover.position.x,cover.position.z,main.rotation);
+        const center=rotateXZ(main.position.x+world.x-turned.position.x,main.position.z+world.z-turned.position.z,-turned.rotation);
+        const cut={x0:center.x-cover.size.z/2,x1:center.x+cover.size.z/2,z0:center.z-cover.size.x/2,z1:center.z+cover.size.x/2};
+        turned.parts=turned.parts.flatMap(p=>{
+          if(p.role!=='counter')return [p];
+          const a={x0:p.position.x-p.size.x/2,x1:p.position.x+p.size.x/2,z0:p.position.z-p.size.z/2,z1:p.position.z+p.size.z/2};
+          const x0=Math.max(a.x0,cut.x0),x1=Math.min(a.x1,cut.x1),z0=Math.max(a.z0,cut.z0),z1=Math.min(a.z1,cut.z1);
+          if(x1<=x0||z1<=z0)return [p];
+          return [[a.x0,x0,a.z0,a.z1],[x1,a.x1,a.z0,a.z1],[x0,x1,a.z0,z0],[x0,x1,z1,a.z1]]
+            .filter(([l,r,b,t])=>r>l&&t>b).map(([l,r,b,t],i)=>({...p,part_id:p.part_id+':corner-cut-'+i,length:r-l,width:t-b,
+              size:{...p.size,x:r-l,z:t-b},position:{...p.position,x:(l+r)/2,z:(b+t)/2}}));
+        });
+      }
+      const topParts=turned.parts.filter(p=>p.role==='counter');
+      turned.countertopActualLengthMm=topParts.length?Math.max(...topParts.map(p=>p.position.x+p.size.x/2))-Math.min(...topParts.map(p=>p.position.x-p.size.x/2)):0;
       const left=rotateXZ(corner.x-main.position.x,corner.z-main.position.z,-main.rotation).x-corner.width/2;
       const joint=left+50+mate.depth-60+9;
       main.parts=main.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x-p.size.x/2-left-50)<1));
