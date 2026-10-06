@@ -1,5 +1,5 @@
 import {bounds,elevation,tier,rotateXZ,placementError,kitchenSettings,cornerSpec,cornerReturnPlacement} from './furniture-core.mjs';
-const rounded=it=>({...it,x:Math.round(it.x),z:Math.round(it.z),elevation_mm:Math.round(it.elevation_mm)});
+const rounded=it=>({...it,x:Math.round(it.x*2)/2,z:Math.round(it.z*2)/2,elevation_mm:Math.round(it.elevation_mm)});
 const verticalPeers=(a,b,room)=>{
   const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
   const ay=elevation(a,room),by=elevation(b,room);

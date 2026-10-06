@@ -38,8 +38,8 @@ class FurnitureItem(StrictModel):
     bazis_sha256: str|None=Field(default=None,min_length=64,max_length=64)
     bazis_resize: bool=False
     name: str=Field(min_length=1,max_length=160)
-    x: int=Field(default=0,ge=-12000,le=12000)
-    z: int=Field(default=0,ge=-12000,le=12000)
+    x: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.5)
+    z: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.5)
     rotation: Literal[0,90,180,270]=0
     width: int=Field(ge=150,le=3000)
     height: int=Field(ge=250,le=3000)

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CORNER_PRODUCTION,PRODUCTION_MODELS,cornerSpec,cornerReturnPlacement,normalizeKitchen,kitchenSettings,productionParts,facadeCells,productionHardware,kitchenLegs,dimensionPatch,dimensionError,kitchenRuns,rotateXZ,bounds,overlaps,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {CORNER_PRODUCTION,PRODUCTION_MODELS,cornerSpec,cornerReturnPlacement,normalizeKitchen,kitchenSettings,productionParts,facadeCells,productionHardware,kitchenLegs,dimensionPatch,rightAnchoredWidth,dimensionError,kitchenRuns,rotateXZ,bounds,overlaps,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {findSpace,snapItem} from '../../backend/v2/cabinet_assets/planner/placement.mjs';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
@@ -102,4 +102,18 @@ test('New 50 mm gap migrates wall-attached 60/80 mm projects once and preserves 
  assert.equal(kitchenSettings(floating).rearServiceGapMm,50);
  const legacy={...item(),bazis_sha256:'5bc821b8f246c9e93a777dab38a032d900731b92b14be0839b9c5a5116117764'};
  assert.equal(cornerSpec(legacy),null);assert.equal(kitchenSettings(legacy),null);
+});
+
+test('Odd widths and depths keep the exact 50 mm wall space with half-millimetre centres',()=>{
+ for(const rotation of [0,90,180,270]){
+  const a=item(id,{rotation,...rotateXZ(-2600,-2795,rotation)});
+  const changed=rightAnchoredWidth(a,dimensionPatch(a,{width:1231}));
+  const v=rotateXZ(changed.x,changed.z,-rotation);
+  assert.equal(v.x-1231/2+3100,0);
+  const adapter=new StateAdapter({state:()=>({room,items:[changed]}),template});assert.equal(adapter.validate(changed),'');
+  const snapped=snapItem({...changed,x:changed.x+10,z:changed.z+10},[],room).item;
+  const loc=rotateXZ(snapped.x,snapped.z,-rotation);assert.equal(loc.x-1231/2+3100,0);
+  const single=item('bazis.0211e4f77fc4',{width:599,depth:511});
+  const placed=findSpace(single,[],room,null);assert.equal(placed.z-511/2+3100,50);assert.equal(placed.x-599/2+3100,0);
+ }
 });

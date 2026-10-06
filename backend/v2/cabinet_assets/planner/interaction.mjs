@@ -127,14 +127,14 @@ export class Interaction {
       const kitchen=kitchenSettings(source),nextKitchen=kitchenSettings(it);
       if(kitchen&&(Number.isFinite(patch.depth)||Number.isFinite(patch.rearServiceGapMm))){
         const delta=(it.depth-source.depth)/2+nextKitchen.rearServiceGapMm-kitchen.rearServiceGapMm,n=rotateXZ(0,1,source.rotation||0);
-        it.x=Math.round(it.x+n.x*delta);it.z=Math.round(it.z+n.z*delta);
+        it.x+=n.x*delta;it.z+=n.z*delta;
       }else if(Number.isFinite(patch.depth)&&patch.depth!==source.depth){
         const r=this.adapter.room,delta=(patch.depth-source.depth)/2,clearance=this.options().wallOffset||0;
         if(source.rotation===0&&Math.abs(source.z-source.depth/2+r.depth/2-clearance)<1)it.z+=delta;
         if(source.rotation===180&&Math.abs(r.depth/2-source.z-source.depth/2-clearance)<1)it.z-=delta;
         if(source.rotation===90&&Math.abs(r.width/2-source.x-source.depth/2-clearance)<1)it.x-=delta;
         if(source.rotation===270&&Math.abs(source.x-source.depth/2+r.width/2-clearance)<1)it.x+=delta;
-        it.x=Math.round(it.x);it.z=Math.round(it.z);
+        it.x=Math.round(it.x*2)/2;it.z=Math.round(it.z*2)/2;
       }
       const error=this.adapter.validate(it);if(error)throw new Error(error);this.adapter.replace(it);
     });

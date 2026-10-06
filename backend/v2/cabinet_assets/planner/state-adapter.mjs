@@ -42,7 +42,7 @@ export class StateAdapter{
   replace(it){const idx=this.items.findIndex(x=>x.item_id===it.item_id);if(idx<0)return;this.items[idx]=this.persistent(it);this.notify();}
   remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
   validate(it){
-    if(!['x','z','width','height','depth'].every(k=>Number.isInteger(it[k])))return 'Размеры и координаты должны быть целыми миллиметрами';
+    if(!['width','height','depth'].every(k=>Number.isInteger(it[k]))||!['x','z'].every(k=>Number.isInteger(it[k]*2)))return 'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
     const ruleError=dimensionError(it,this.template(it));if(ruleError)return ruleError;
     const h=heights(it);
     if(h.body_height<150||h.base_height<0||h.base_height>300||h.worktop_thickness<0||h.worktop_thickness>100||

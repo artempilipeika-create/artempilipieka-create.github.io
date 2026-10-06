@@ -23,7 +23,8 @@ def test_corner_api_and_pdf_match_uploaded_parts_and_hardware():
     it=sample();FurnitureItem(**it)
     for patch in [{'width':1232},{'depth':449},{'body_height':590,'height':690},{'rearServiceGapMm':60}]:
         with pytest.raises(ValidationError):FurnitureItem(**(it|patch))
-    FurnitureItem(**(it|{'width':1231}))
+    FurnitureItem(**(it|{'width':1231,'x':115.5,'z':-1295.5}))
+    with pytest.raises(ValidationError):FurnitureItem(**(it|{'x':0.25}))
     rows,_=hardware_for(it);assert [r['qty'] for r in rows]==[6,12,10,3,3,3,3,3,3,5,4,2]
     assert all(not r['article'] for r in rows)
     assert '950' in module_contents(it) and '369' in module_contents(it)
@@ -60,6 +61,9 @@ def test_corner_controls_assembly_save_reload_native(page,api,settings,admin_use
     assert 'PRIME' not in page.locator('#production-hardware-summary').inner_text()
     page.locator('#width').fill('1100');page.locator('#width').press('Tab');assert state(page)['fronts'][0]['w']==469
     page.locator('#width').fill('1232');page.locator('#width').press('Tab');assert state(page)['item']['width']==1100
+    page.locator('#width').fill('1231');page.locator('#width').press('Tab')
+    assert state(page)['fronts'][0]['w']==600
+    assert state(page)['item']['x']-1231/2==-2100
     page.locator('#width').fill('1000');page.locator('#width').press('Tab')
     page.locator('#body-height').fill('800');page.locator('#body-height').press('Tab');assert state(page)['fronts'][0]['h']==796
     page.locator('#body-height').fill('720');page.locator('#body-height').press('Tab')

@@ -175,7 +175,7 @@
     const c=cornerSpec(corner);
     if(!c||cornerSpec(it)||!isKitchenModule(it)||it.depth!==c.return_body_depth_mm)return null;
     const local=rotateXZ(-corner.width/2+c.wall_gap_mm+it.depth/2,corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
-    return {...it,x:Math.round(corner.x+local.x),z:Math.round(corner.z+local.z),rotation:((corner.rotation||0)+270)%360};
+    return {...it,x:corner.x+local.x,z:corner.z+local.z,rotation:((corner.rotation||0)+270)%360};
   }
   function dimensionError(it,template){
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
@@ -290,7 +290,7 @@
   function rightAnchoredWidth(source,next){
     if(!Number.isFinite(source?.width)||!Number.isFinite(next?.width)||next.width===source.width)return next;
     const shift=rotateXZ((next.width-source.width)/2,0,source.rotation||0);
-    return {...next,x:Math.round(source.x+shift.x),z:Math.round(source.z+shift.z)};
+    return {...next,x:source.x+shift.x,z:source.z+shift.z};
   }
   function dimensionPatch(source,patch){
     if(isKitchenModule(source)){
