@@ -46,7 +46,7 @@ test('NSHD clear upper niche remains 595 for body resizing, leg changes and save
  }
 });
 test('All single-door production modules reject width 601; NSHD rejects both width directions',()=>{
- for(const [id,p]of Object.entries(PRODUCTION_MODELS))if(p.doors?.length===1){
+ for(const [id,p]of Object.entries(PRODUCTION_MODELS))if(p.doors?.length===1&&!p.corner){
   const base={bazis_id:id,width:600,height:p.body_height+p.base_height,base_height:p.base_height};
   assert.equal(dimensionError(base,{production:p}),'');
   assert.match(dimensionError({...base,width:601},{production:p}),/600/);

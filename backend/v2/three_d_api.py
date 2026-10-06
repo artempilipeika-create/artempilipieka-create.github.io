@@ -47,7 +47,7 @@ class FurnitureItem(StrictModel):
     base_height: int|None=Field(default=None,ge=0,le=300)
     worktop_thickness: int|None=Field(default=None,ge=0,le=100)
     legHeightMm: Literal[80,100,150]|None=None
-    rearServiceGapMm: int|None=Field(default=None,ge=50,le=80)
+    rearServiceGapMm: int|None=Field(default=None,ge=50,le=50)
     plinthMaterialId: UUID|None=None
     countertopDepthMm: int|None=Field(default=None,ge=300,le=1200)
     countertopStockLengthMm: Literal[4100]|None=None
@@ -97,6 +97,11 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Ширина НШД-600 всегда 600 мм')
             if self.bazis_sha256=='7de5d86b28ad697749e0e47f5f313da2df667817910500dfe4fd569641680206' and body<720:
                 raise ValueError('Высота корпуса НШД с нишей 595 мм должна быть не меньше 720 мм')
+        if self.bazis_id=='bazis.b4420a0b4bbc' and self.bazis_sha256=='e5145e6878304cde87b0344685ac309ed92302216394e01c6bb2fbdebb5b7b60':
+            if not 800<=self.width<=1231:
+                raise ValueError('Установочная ширина углового модуля 800–1231 мм; дверца не больше 600 мм')
+            if not 450<=self.depth<=700 or not 600<=body<=1000:
+                raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
         for shelf in self.shelves:
             if shelf.enabled and (shelf.offset_mm-shelf.thickness/2<0 or shelf.offset_mm+shelf.thickness/2>body):
                 raise ValueError('Shelf position must stay inside the cabinet body')

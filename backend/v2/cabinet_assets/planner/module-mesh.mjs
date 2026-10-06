@@ -160,7 +160,7 @@ export class MeshFactory{
     group.userData.visualApproximation=Boolean(it.bazis_id&&!production);
     const parts=productionParts(it,template,id=>this.adapter.material(id));
     if(parts){
-      for(const part of parts.filter(p=>p.role!=='front')){
+      for(const part of parts.filter(p=>p.role!=='front'||p.fixed)){
         const d=part.size,c=part.position,m=this.box(group,part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.material.variant_id,ghost);
         m.userData.part=part;m.userData.productionPart=part.role;
         if(part.back_type)m.userData.backType=part.back_type;
@@ -190,13 +190,13 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.corner&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
     }
 
-    const fronts=parts?.filter(p=>p.role==='front');let doorIndex=0;
+    const fronts=parts?.filter(p=>p.role==='front'&&!p.fixed);let doorIndex=0;
     for(const f of cells){
       const drawer=f.kind==='drawer',part=fronts?.[doorIndex++],hasPivot=Boolean(part?.pivot)&&!drawer;
       const spec=hasPivot?{side:part.hinge_side,open_angle:Number.isFinite(part.open_angle)?part.open_angle:105}:null;

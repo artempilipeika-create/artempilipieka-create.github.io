@@ -94,15 +94,17 @@ const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
   const p=pilotProductionById[m.id];if(!p)continue;
   m.source_sha256=p.source_sha256;m.source_file=p.source_file||m.source_file;m.production=p;m.label=p.label;
-  m.defaults={...m.defaults,w:600,h:p.body_height+p.base_height,d:p.scene_depth,...(p.constraints?.niche_height_mm?{layout:'niche',drawers:1}:{})};
+  m.resize=p.resize??m.resize;
+  m.defaults={...m.defaults,w:p.native_defaults.width,h:p.body_height+p.base_height,d:p.scene_depth,...(p.constraints?.niche_height_mm?{layout:'niche',drawers:1}:{})};
   if(p.front)m.front=p.front;
   m.limits=p.tier==='wall'
     ?{...m.limits,w:m.limits?.w||[300,1200],h:[300,1400],d:[250,500]}
     :{...m.limits,h:[p.base_height+600,p.base_height+1000],d:p.front_layout?.kind==='drawer'?[250,1000]:[450,700]};
+  if(p.limits)m.limits=structuredClone(p.limits);
 }
 for(const m of [...bazisModules,...Object.values(kitchenTemplates)]){
   const p=m.production,front=p?.doors?.length?{kind:'doors',count:p.doors.length}:m.front;
-  if(m.resize!==false&&((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))){
+  if(!p?.corner&&m.resize!==false&&((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))){
     m.limits.w=[Math.min(m.limits.w[0],600),600];m.defaults.w=Math.min(m.defaults.w,600);
   }
   if(p?.constraints?.fixed_width_mm)m.limits.w=[p.constraints.fixed_width_mm,p.constraints.fixed_width_mm];
@@ -299,7 +301,9 @@ function renderModuleCatalogue(){
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=p.constraints?.niche_height_mm
+    const description=p.corner
+      ?'Угловая мойка · корпус 950 × 510 · отступ 50 · фальшпанель и бленды'
+      :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
       :p.carcass.type==='sink_three_vertical_rails'
         ?'Мойка · 3 вертикальные царги · нижняя царга сзади'
@@ -664,7 +668,7 @@ async function syncControls(){
       $('production-back-summary').textContent=back?'Задняя стенка: '+(back.type==='overlay_nails'?'накладная, гвозди':'производственная')+' · '+back.thickness+' мм · '+(back.material_name||'материал из донора'):'Задняя стенка не задана';
       if($('production-hardware-summary')){
         const unit=u=>({pcs:'шт.',set:'компл.'}[u]||u||'шт.'),bits=[];
-        if(Number.isInteger(hw?.hinge_count))bits.push('Петли PRIME'+(hw.hinge_article?' '+hw.hinge_article:'')+' · '+hw.hinge_count+' шт.');
+        if(Number.isInteger(hw?.hinge_count))bits.push((production.corner?'Петли HCKT под фальшпанель':'Петли PRIME')+(hw.hinge_article?' '+hw.hinge_article:'')+' · '+hw.hinge_count+' шт.');
         if(Number.isInteger(hw?.drawer_count))bits.push((hw.slide_type==='ball_bearing'?'Направляющие AKS PLUS':'Направляющие AKS с доводчиком')+' · '+hw.drawer_count+' компл.'+(hw.slide_length_mm?' · '+hw.slide_length_mm+' мм':' · автоподбор по глубине'));
         for(const row of hw?.items||[])bits.push(row.name+' · '+row.quantity+' '+unit(row.unit));
         $('production-hardware-summary').textContent=bits.length?'Фурнитура: '+bits.join(' · '):'Фурнитура не задана для этого производственного донора';
@@ -679,7 +683,9 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.constraints?.niche_height_mm
+        $('production-rule-note').textContent=production.corner
+          ?'Установочная ширина '+it.width+' мм = корпус '+(it.width-50)+' мм + отступ от стены 50 мм. Фальшпанель 578 мм, бленды 50 мм. Дверца '+(it.width-631)+' мм. Вертикальные зазоры 2 мм — по исходному FR3D. Три вертикальные царги, шесть опор.'
+          :production.constraints?.niche_height_mm
           ?'Ширина всегда 600 мм. Верхняя ниша всегда 595 мм. При изменении высоты корпуса меняется только высота секции шуфляды.'
           :production.carcass.type==='sink_three_vertical_rails'
             ?'Три вертикальные царги: передняя и задняя сверху, третья сзади над дном. Полки и задней стенки нет.'
@@ -1076,6 +1082,7 @@ function exportBazisProject(){
         construction:p?{
           key:p.key,
           constraints:p.constraints||null,
+          corner:p.corner||null,facade:p.facade||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,

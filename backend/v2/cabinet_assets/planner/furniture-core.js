@@ -143,11 +143,49 @@
         {key:'screw-3.5x16-d5',name:'Шурупы 3.5х16 д5',quantity:2,unit:'pcs'},
         {key:'screw-3.5x16-zn',name:'Шуруп 3.5х16 мм,Zn',quantity:16,unit:'pcs'}]}}
   });
-  const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION});
+  // FR3D 2026-10-07: the 1000 mm installation frame includes 50 mm of EMPTY
+  // space at local left. The actual bottom is 950 x 510, not a 1000 mm board.
+  const CORNER_PRODUCTION=freeze({
+    'bazis.b4420a0b4bbc':{...kitchenBase,label:'НМУ-1000 Д1 L · Мойка',key:'base.corner.sink.d1.left.1000',
+      source_file:'НМУ-1000. Д1 (Мойка) L(1).fr3d',source_sha256:'e5145e6878304cde87b0344685ac309ed92302216394e01c6bb2fbdebb5b7b60',
+      native_defaults:{width:1000,height:820,depth:510},scene_depth:510,resize:true,
+      limits:{w:[800,1231],h:[700,1100],d:[450,700]},
+      corner:{side:'left',wall_gap_mm:50,blind_width_mm:578,door_start_mm:629.5,door_right_gap_mm:1.5,
+        vertical_gap_mm:2,filler_depth_mm:50,front_extension_mm:68,return_body_depth_mm:510},
+      constraints:{max_door_width_mm:600,wall_gap_mm:50},
+      carcass:{type:'sink_three_vertical_rails',panel_thickness:18,rail_height:80,rail_depth:18,rail_orientation:'vertical',material_name:'ЛДСП- БЕЛЫЙ'},
+      facade:{...kitchenBase.facade,clearance_mm:0,vertical_gap_mm:2,material_name:'Evagloss P004'},
+      front:{kind:'doors',count:1},doors:[{side:'left',hinge_count:2,open_angle:90}],back:null,shelves:[],
+      hardware:{hinge_name:'Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0',hinge_count:2,items:[
+        {key:'angle-cast',name:'Уголок №1 (литой)',quantity:6,unit:'pcs'},
+        {key:'screw-3.5x16-zn',name:'Шуруп 3.5х16 мм,Zn',quantity:12,unit:'pcs'},
+        {key:'confirmat-7x50',name:'Конфермат 7х50 мм,Zn',quantity:10,unit:'pcs'},
+        {key:'support-base-h5',name:'Основание для кухонной опоры крепление Н5 под саморезы',quantity:3,unit:'pcs'},
+        {key:'support-h100',name:'Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',quantity:3,unit:'pcs'},
+        {key:'plastic-leg-100',name:'1031 Ножка пластиковая без базы, высота 100 мм',quantity:3,unit:'pcs'},
+        {key:'plastic-leg-base',name:'1031 База для пластиковой ножки с упором под саморез',quantity:3,unit:'pcs'},
+        {key:'clip-plate',name:'Площадка клипсы усиленной (06.152)',quantity:3,unit:'pcs'},
+        {key:'clip-heavy',name:'Клипса усиленная',quantity:3,unit:'pcs'},
+        {key:'euroscrew-marcopol',name:'Стяжка-евровинт с потайной головкой под шестигранник, оцинкованный, Marcopol',quantity:5,unit:'pcs'},
+        {key:'screw-4x16',name:'Шуруп 4х16',quantity:4,unit:'pcs'}]}}
+  });
+  const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION});
+  function cornerSpec(it){const p=PRODUCTION_MODELS[it?.bazis_id];return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;}
+  function cornerReturnPlacement(corner,it){
+    const c=cornerSpec(corner);
+    if(!c||cornerSpec(it)||!isKitchenModule(it)||it.depth!==c.return_body_depth_mm)return null;
+    const local=rotateXZ(-corner.width/2+c.wall_gap_mm+it.depth/2,corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
+    return {...it,x:Math.round(corner.x+local.x),z:Math.round(corner.z+local.z),rotation:((corner.rotation||0)+270)%360};
+  }
   function dimensionError(it,template){
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
+    if(p?.corner){
+      const doorWidth=it.width-p.corner.door_start_mm-p.corner.door_right_gap_mm;
+      if(doorWidth>600||doorWidth<=0)return 'Ширина дверцы углового модуля — не больше 600 мм';
+      return '';
+    }
     const front=p?.doors?.length?{kind:'doors',count:p.doors.length}:template?.front;
     if(template?.resize!==false&&((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))&&it.width>600)
       return 'Ширина модуля с одной дверью — не больше 600 мм';
@@ -198,7 +236,7 @@
     }else hw.items=hw.items.filter(x=>x.key!=='shelf-support-marcopol');
     return hw;
   }
-  const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:60,plinthMaterialId:null,
+  const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:50,plinthMaterialId:null,
     countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
   function isKitchenModule(it){const p=PRODUCTION_MODELS[it.bazis_id];return Boolean(p?.tier==='base'&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
   function kitchenGroup(it){
@@ -220,6 +258,7 @@
   function kitchenSettings(it){
     if(!isKitchenModule(it))return null;
     const k={...KITCHEN_DEFAULTS};for(const key of Object.keys(k))if(it[key]!=null)k[key]=it[key];
+    k.rearServiceGapMm=50;
     k.legHeightMm=it.legHeightMm??it.base_height??100;
     k.countertopThicknessMm=it.countertopThicknessMm??it.worktop_thickness??38;
     k.frontOverhangMm=k.countertopDepthMm-k.rearServiceGapMm-it.depth;
@@ -232,9 +271,10 @@
       worktop_thickness:k.countertopThicknessMm};
     // Only old flush-to-wall pilot projects need the newly introduced service space.
     // Free-standing saved positions and projects already carrying the gap are untouched.
-    if(room&&it.rearServiceGapMm==null){
+    if(room){
       const n=rotateXZ(0,1,it.rotation||0),axis=n.x?'x':'z',wall=(axis==='x'?room.width:room.depth)/2;
-      if(Math.abs(it[axis]*n[axis]-it.depth/2+wall)<1)result[axis]+=n[axis]*k.rearServiceGapMm;
+      const oldGap=it.rearServiceGapMm??0;
+      if(Math.abs(it[axis]*n[axis]-it.depth/2-oldGap+wall)<1)result[axis]+=n[axis]*(k.rearServiceGapMm-oldGap);
     }
     return result;
   }
@@ -288,6 +328,10 @@
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(production?.corner){
+      const c=production.corner,left=c.door_start_mm,right=W-c.door_right_gap_mm;
+      return [{kind:'door',w:mmNumber(right-left),h:H-2*c.vertical_gap_mm,cx:mmNumber(x0+(left+right)/2),cy:y0+H/2}];
+    }
     if(production?.constraints?.niche_height_mm){
       cell('drawer',x0,y0,W,H-production.constraints.niche_height_mm);return cells;
     }
@@ -329,7 +373,7 @@
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(!p?.carcass)return null;
     const {width:W,height:H,depth:D}=it,{body_height:B,base_height:base}=heights(it);
-    const t=p.carcass.panel_thickness,rail=p.carcass.rail_depth||80,inner=W-2*t,parts=[];
+    const t=p.carcass.panel_thickness,rail=p.carcass.rail_depth||80,inset=p.corner?.wall_gap_mm||0,C=W-inset,cx=inset/2,inner=C-2*t,parts=[];
     const add=(key,name,role,size,position,axes,variant=null,material=null,extra={})=>{
       const [length_axis,width_axis,thickness_axis]=axes;
       parts.push({part_id:it.item_id+':'+key,key,module_id:it.item_id,name,role,type:'panel',
@@ -365,12 +409,12 @@
     }
     if(!['bottom_side_two_rails','sink_three_vertical_rails','oven_fixed_niche'].includes(p.carcass.type))return null;
     const bottomInset=p.carcass.bottom_depth_clearance||0;
-    add('bottom','Дно','body',{x:W,y:t,z:D-bottomInset},{x:0,y:base+t/2,z:-bottomInset/2},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
+    add('bottom','Дно','body',{x:C,y:t,z:D-bottomInset},{x:cx,y:base+t/2,z:-bottomInset/2},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
     for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,'Боковина '+side,'body',
-      {x:t,y:B-t,z:D},{x:sign*(W-t)/2,y:base+t+(B-t)/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
+      {x:t,y:B-t,z:D},{x:cx+sign*(C-t)/2,y:base+t+(B-t)/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
     if(p.carcass.type==='sink_three_vertical_rails'){
       for(const [key,name,sign,cy]of [['rear','задняя',-1,H-40],['front','передняя',1,H-40],['rear-lower','задняя нижняя',-1,base+t+40]])
-        add('rail-'+key,'Царга '+name,'body',{x:inner,y:80,z:t},{x:0,y:cy,z:sign*(D-t)/2},['y','x','z'],it.body_variant_id,p.carcass.material_name);
+        add('rail-'+key,'Царга '+name,'body',{x:inner,y:80,z:t},{x:cx,y:cy,z:sign*(D-t)/2},['y','x','z'],it.body_variant_id,p.carcass.material_name);
     }else if(p.carcass.type==='oven_fixed_niche'){
       add('oven-divider','Перегородка','body',{x:inner,y:t,z:D},{x:0,y:H-p.constraints.niche_height_mm-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name);
     }else{
@@ -383,6 +427,12 @@
       {source_component:shelf.source_component||null,shelf_id:shelf.id});
     if(p.back){const b=p.back;add('back','Задняя стенка','back',
       {x:W-2*b.inset,y:B-2*b.inset,z:b.thickness},{x:0,y:base+B/2,z:-(D+b.thickness)/2},['y','x','z'],null,b.material_name,{back_type:b.type});}
+    if(p.corner){
+      const c=p.corner,h=B-2*c.vertical_gap_mm,y=base+B/2;
+      add('blind-panel','ФП','front',{x:c.blind_width_mm,y:h,z:t},{x:-W/2+inset+c.blind_width_mm/2,y,z:D/2+t/2},['y','x','z'],it.front_variant_id,p.facade.material_name,{fixed:true});
+      for(const [key,x,facade]of [['filler-support-left',123,false],['filler-support-right',551,false],['filler-front',569,true]])
+        add(key,'Бленда',facade?'front':'body',{x:t,y:h,z:c.filler_depth_mm},{x:x-W/2,y,z:D/2+t+c.filler_depth_mm/2},['z','y','x'],facade?it.front_variant_id:it.body_variant_id,facade?p.facade.material_name:p.carcass.material_name,{fixed:true});
+    }
     const frontCells=facadeCells(it,template);
     if(p.drawer_box){
       const d=p.drawer_box,pt=d.panel_thickness||18,bt=d.bottom_thickness||3;
@@ -462,9 +512,10 @@
             const z=role==='counter'?k.countertopDepthMm/2:k.rearServiceGapMm+it.depth-60;
             const y=role==='counter'?m.top+k.countertopThicknessMm/2:m.level+k.legHeightMm/2;
             const height=role==='counter'?k.countertopThicknessMm:k.legHeightMm,depth=role==='counter'?k.countertopDepthMm:18;
+            const lo=m.lo+(role==='plinth'?(cornerSpec(it)?.wall_gap_mm||0):0);
             const last=sections.at(-1);
-            if(last&&last.id===id&&last.z===z&&last.y===y&&last.height===height){last.hi=m.hi;last.ids.push(it.item_id);}
-            else sections.push({lo:m.lo,hi:m.hi,z,y,height,depth,id,ids:[it.item_id]});
+            if(last&&last.hi===lo&&last.id===id&&last.z===z&&last.y===y&&last.height===height){last.hi=m.hi;last.ids.push(it.item_id);}
+            else sections.push({lo,hi:m.hi,z,y,height,depth,id,ids:[it.item_id]});
           }
           for(const s of sections){
             // Stock is a physical limit, not the displayed length of the kitchen.
@@ -478,24 +529,64 @@
         }
         // Returns at the two exposed ends; no doubled side panels between neighbours.
         for(const [m,sign]of [[run.members[0],-1],[run.members.at(-1),1]]){
-          const d=m.it.depth-100,x=sign<0?run.lo:run.hi-18;
+          const d=m.it.depth-100,x=sign<0?run.lo+(cornerSpec(m.it)?.wall_gap_mm||0):run.hi-18;
           add('plinth',x,x+18,m.k.rearServiceGapMm+m.it.depth/2-10,d,m.level+m.k.legHeightMm/2,m.k.legHeightMm,m.k.plinthMaterialId,[m.it.item_id],':return');
           const p=plan.parts.at(-1);p.length=d;p.width=m.k.legHeightMm;p.thickness=18;p.orientation={length_axis:'z',width_axis:'y',thickness_axis:'x'};
         }
         runs.push(plan);
       }
     }
+    // A return cabinet abuts the OUTER edge of the 50 mm filler. Join worktops
+    // at the main run's front edge; do not leave the resulting 28 mm hole or
+    // stack two 600 mm boards over each other. Plinths meet at a butt joint.
+    for(const corner of items){
+      if(!cornerSpec(corner))continue;
+      const main=runs.find(r=>r.members.includes(corner.item_id));if(!main)continue;
+      const mate=items.find(it=>{
+        if(it.item_id===corner.item_id||it.height!==corner.height)return false;
+        const expected=cornerReturnPlacement(corner,it);
+        return expected&&it.rotation===expected.rotation&&Math.abs(it.x-expected.x)<1&&Math.abs(it.z-expected.z)<1&&elevation(it,room)===elevation(corner,room);
+      });
+      const turned=mate&&runs.find(r=>r.members.includes(mate.item_id));if(!turned)continue;
+      const ck=kitchenSettings(corner),mk=kitchenSettings(mate);
+      const end=rotateXZ(mate.x-turned.position.x,mate.z-turned.position.z,-turned.rotation).x+mate.width/2;
+      const inTurn=(x,z)=>{const v=rotateXZ(x,z,corner.rotation||0);return rotateXZ(corner.x+v.x-turned.position.x,corner.z+v.z-turned.position.z,-turned.rotation).x;};
+      const counterEnd=inTurn(0,-corner.depth/2-ck.rearServiceGapMm+ck.countertopDepthMm);
+      const plinthEnd=inTurn(0,corner.depth/2-60-9);
+      turned.parts=turned.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x+p.size.x/2-end)<1));
+      for(const p of turned.parts){
+        if(p.orientation.length_axis!=='x'||Math.abs(p.position.x+p.size.x/2-end)>1)continue;
+        const target=p.role==='counter'?counterEnd:plinthEnd,lo=p.position.x-p.size.x/2;
+        p.size.x=target-lo;p.length=p.size.x;p.position.x=(lo+target)/2;
+      }
+      turned.countertopActualLengthMm+=counterEnd-end;
+      const left=rotateXZ(corner.x-main.position.x,corner.z-main.position.z,-main.rotation).x-corner.width/2;
+      const joint=left+50+mate.depth-60+9;
+      main.parts=main.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x-p.size.x/2-left-50)<1));
+      for(const p of main.parts)if(p.role==='plinth'&&p.orientation.length_axis==='x'&&p.module_ids.includes(corner.item_id)&&p.position.x-p.size.x/2<joint){
+        const hi=p.position.x+p.size.x/2;p.position.x=(joint+hi)/2;p.size.x=hi-joint;p.length=p.size.x;
+      }
+      main.corner_joints=(main.corner_joints||[]).concat({corner_id:corner.item_id,return_id:mate.item_id,wall_gap_mm:50,filler_depth_mm:50});
+    }
+    for(const run of runs)run.parts=run.parts.flatMap(p=>{
+      if(p.role!=='counter'||p.length<=4100)return [p];
+      const out=[],start=p.position.x-p.size.x/2;
+      for(let x=0;x<p.length;x+=4100){const length=Math.min(4100,p.length-x);out.push({...p,part_id:p.part_id+':stock-'+out.length,length,size:{...p.size,x:length},position:{...p.position,x:start+x+length/2}});}
+      return out;
+    });
     return runs;
   }
   function kitchenLegs(it){
     const k=kitchenSettings(it);if(!k)return null;
-    return [-it.width/2+45,it.width/2-45].flatMap((x,i)=>[-it.depth/2+45,it.depth/2-95].map((z,j)=>({
+    const corner=cornerSpec(it),xs=corner?[104-it.width/2,520-it.width/2,it.width/2-64]:[-it.width/2+45,it.width/2-45];
+    const zs=corner?[-it.depth/2+57,it.depth/2-80]:[-it.depth/2+45,it.depth/2-95];
+    return xs.flatMap((x,i)=>zs.map((z,j)=>({
       part_id:it.item_id+':leg-'+(i*2+j+1),module_id:it.item_id,name:'Опора регулируемая',role:'leg',type:'hardware',
       height:k.legHeightMm,position:{x,y:k.legHeightMm/2,z},orientation:{axis:'y'}})));
   }
   function bounds(it,room,includeFront=true){
     const points=[];
-    const extension=includeFront?20:0;
+    const extension=includeFront?(cornerSpec(it)?.front_extension_mm||20):0;
     for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2,it.depth/2+extension]){
       const p=rotateXZ(x,z,it.rotation||0);points.push({x:p.x+it.x,z:p.z+it.z});
     }
@@ -519,5 +610,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,PRODUCTION_MODELS,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

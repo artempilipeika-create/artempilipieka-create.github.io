@@ -122,7 +122,7 @@ class PlannerApplication {
       this.interaction.change('Параметры кухонного ряда',()=>{
         const changed=targets.map(source=>{
           const it=dimensionPatch(source,{[key]:value});
-          if(key==='rearServiceGapMm'){const n=rotateXZ(0,1,it.rotation||0),delta=value-kitchenSettings(source).rearServiceGapMm;it.x+=n.x*delta;it.z+=n.z*delta;}
+          if(key==='rearServiceGapMm'){const n=rotateXZ(0,1,it.rotation||0),delta=kitchenSettings(it).rearServiceGapMm-kitchenSettings(source).rearServiceGapMm;it.x+=n.x*delta;it.z+=n.z*delta;}
           return it;
         });
         const next=this.adapter.items.map(it=>changed.find(x=>x.item_id===it.item_id)||it);

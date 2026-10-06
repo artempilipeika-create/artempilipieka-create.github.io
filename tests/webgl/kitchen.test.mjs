@@ -6,7 +6,7 @@ import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapte
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
 import {Box3} from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
 const room={width:6200,depth:3600,height:2700},ids=Object.keys(PILOT_PRODUCTION);
-const item=(id=ids[0],changes={})=>normalizeKitchen({item_id:id,bazis_id:id,bazis_sha256:PILOT_PRODUCTION[id].source_sha256,module_type:'base_cabinet',name:PILOT_PRODUCTION[id].label,width:600,height:820,depth:510,base_height:100,body_height:720,base:'plinth',layout:'doors',handles:'handles',x:0,z:-1485,rotation:0,shelves:structuredClone(PILOT_PRODUCTION[id].shelves),...changes});
+const item=(id=ids[0],changes={})=>normalizeKitchen({item_id:id,bazis_id:id,bazis_sha256:PILOT_PRODUCTION[id].source_sha256,module_type:'base_cabinet',name:PILOT_PRODUCTION[id].label,width:600,height:820,depth:510,base_height:100,body_height:720,base:'plinth',layout:'doors',handles:'handles',x:0,z:-1495,rotation:0,shelves:structuredClone(PILOT_PRODUCTION[id].shelves),...changes});
 const row=()=>[item(ids[0],{x:-600}),item(ids[2]),item(ids[1],{x:600})];
 const parts=it=>productionParts(it,{production:PILOT_PRODUCTION[it.bazis_id]});
 for(const id of ids)test(PILOT_PRODUCTION[id].label+': horizontal rails have the right blank, axes and top/rear/front positions',()=>{
@@ -50,7 +50,7 @@ for(const leg of [80,100,150])test('Leg '+leg+' shifts every cabinet panel witho
 });
 for(const rotation of [0,90,180,270])test('Continuous row and wall service gap at '+rotation+' degrees',()=>{
  const wall=rotation%180?room.width/2:room.depth/2;
- const items=row().map(it=>({...it,rotation,...rotateXZ(it.x,-wall+315,rotation)}));
+ const items=row().map(it=>({...it,rotation,...rotateXZ(it.x,-wall+305,rotation)}));
  const runs=kitchenRuns(items,room);assert.equal(runs.length,1);const run=runs[0];
  assert.equal(run.countertopActualLengthMm,1800);assert.equal(run.countertopStockLengthMm,4100);
  assert.equal(run.parts.filter(p=>p.role==='counter').length,1);assert.equal(run.parts.filter(p=>p.role==='plinth').length,3);
@@ -68,12 +68,12 @@ test('Adding, removing, resizing, moving and snapping rebuild only actual contig
  const moved=items.map((it,i)=>i===2?{...it,x:850}:it);assert.equal(kitchenRuns(moved,room).length,2);
  const snapped=snapItem({...moved[2],x:625},moved,room);moved[2]=snapped.item;assert.equal(kitchenRuns(moved,room).length,1);
  const resized=items.map((it,i)=>i===2?dimensionPatch(it,{width:800,x:700}):it);assert.equal(kitchenRuns(resized,room)[0].countertopActualLengthMm,2000);
- const first=findSpace(item(),[],room,null);assert.equal(first.z,-1485);assert.equal(first.x,-2800);
+ const first=findSpace(item(),[],room,null);assert.equal(first.z,-1495);assert.equal(first.x,-2800);
  const added=findSpace(item(ids[2]),[first],room,first);assert.equal(added.z,first.z);assert.equal(added.x,-2200);
 });
 test('General overhang formula, stock length is never substituted for row length',()=>{
  for(const depth of [450,510,530,610])for(const rearServiceGapMm of [50,60,80]){
-  const it=item(ids[0],{depth,rearServiceGapMm});assert.equal(kitchenSettings(it).frontOverhangMm,600-rearServiceGapMm-depth);
+  const it=item(ids[0],{depth,rearServiceGapMm});assert.equal(kitchenSettings(it).frontOverhangMm,600-50-depth);
  }
  const long=Array.from({length:8},(_,i)=>item(ids[i%3],{item_id:'long-'+i,x:i*600,z:0}));
  const run=kitchenRuns(long,room)[0];assert.equal(run.countertopActualLengthMm,4800);assert.equal(run.countertopStockLengthMm,4100);
@@ -100,7 +100,7 @@ test('Old flush pilot projects gain service space once; saved/free-standing coor
  for(const rotation of [0,90,180,270]){
   const wall=rotation%180?room.width/2:room.depth/2,it=item(ids[0],{rotation,...rotateXZ(0,-wall+255,rotation)});delete it.rearServiceGapMm;
   const normalized=normalizeKitchen(it,room),n=rotateXZ(0,1,rotation);
-  assert.equal(normalized.x,it.x+n.x*60);assert.equal(normalized.z,it.z+n.z*60);
+  assert.equal(normalized.x,it.x+n.x*50);assert.equal(normalized.z,it.z+n.z*50);
   assert.deepEqual(normalizeKitchen(normalized,room),normalized);assert.equal(placementError(normalized,[],room),'');
   assert.match(placementError({...it,rearServiceGapMm:60},[],room),/Столешница/);
  }

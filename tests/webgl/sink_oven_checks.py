@@ -36,7 +36,7 @@ def geometry(page):
 def test_sink_oven_controls_save_reload_export(page,api,settings,admin_user):
  login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
  expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
- panel(page,'left','catalog');expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(15)
+ panel(page,'left','catalog');expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(16)
  for bid in IDS:
   panel(page,'left','catalog');page.locator(f'[data-bazis="{bid}"]').click()
   state=geometry(page);assert state['width']==600

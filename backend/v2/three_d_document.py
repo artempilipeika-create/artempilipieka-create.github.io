@@ -22,6 +22,8 @@ D2={'bazis.3079d0656398'}
 SINK_D1={'bazis.facfa0cd038b','bazis.b226370aab54'}
 SINK_D2={'bazis.5731630ddd87'}
 OVEN={'bazis.9e77f4333545'}
+CORNER={'bazis.b4420a0b4bbc'}
+CORNER_SHA='e5145e6878304cde87b0344685ac309ed92302216394e01c6bb2fbdebb5b7b60'
 DRAWERS={'bazis.39f282e08f0c':2,'bazis.5f5697e39e27':3}
 WALL_D1={'bazis.858266606bc5','bazis.2175c60e84a6'}
 WALL_D2={'bazis.877ba2f68d92'}
@@ -82,6 +84,15 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
+    if bid in CORNER and it.get('bazis_sha256')==CORNER_SHA:
+        return [_row('Уголок №1 (литой)',6),_row('Шуруп 3.5х16 мм,Zn',12),_row('Конфермат 7х50 мм,Zn',10),
+                _row('Основание для кухонной опоры крепление Н5 под саморезы',3),
+                _row('Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная',3),
+                _row('1031 Ножка пластиковая без базы, высота 100 мм',3),
+                _row('1031 База для пластиковой ножки с упором под саморез',3),
+                _row('Площадка клипсы усиленной (06.152)',3),_row('Клипса усиленная',3),
+                _row('Стяжка-евровинт с потайной головкой под шестигранник, оцинкованный, Marcopol',5),
+                _row('Шуруп 4х16',4),_row('Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0',2)],None
     if bid in SINK_D1|SINK_D2:
         rows=[_row('1031 База для пластиковой ножки с упором под саморез',2),
               _row('1031 Ножка пластиковая без базы, высота 100 мм',2),_row('Клипса усиленная',2),
@@ -117,6 +128,8 @@ def hardware_for(it):
 
 def module_contents(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0)
+    if bid in CORNER and it.get('bazis_sha256')==CORNER_SHA:
+        return f'установочная ширина {w} мм = корпус {w-50} мм + отступ 50 мм; фальшпанель 578 мм; дверца {w-631} мм; три бленды 50 мм; три вертикальные царги; шесть ножек'
     if bid in SINK_D1|SINK_D2:
         return 'корпус; '+('1 фасад' if bid in SINK_D1 else '2 фасада')+'; 3 вертикальные царги (2 сверху, 1 сзади над дном); ножки'
     if bid in OVEN:
@@ -132,7 +145,7 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front):
-    bid=it.get('bazis_id');known=bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2|SINK_D1|SINK_D2|OVEN
+    bid=it.get('bazis_id');known=bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2|SINK_D1|SINK_D2|OVEN or (bid in CORNER and it.get('bazis_sha256')==CORNER_SHA)
     if known and (not body or body=='Не выбран'):body='ЛДСП- БЕЛЫЙ'
     if known and (not front or front=='Не выбран'):front='Evagloss P004'
     rows=[('Корпус',body or 'Не выбран'),('Фасад',front or 'Не выбран')]

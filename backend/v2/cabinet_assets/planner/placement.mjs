@@ -1,4 +1,4 @@
-import {bounds,elevation,tier,rotateXZ,placementError,kitchenSettings} from './furniture-core.mjs';
+import {bounds,elevation,tier,rotateXZ,placementError,kitchenSettings,cornerSpec,cornerReturnPlacement} from './furniture-core.mjs';
 const rounded=it=>({...it,x:Math.round(it.x),z:Math.round(it.z),elevation_mm:Math.round(it.elevation_mm)});
 const verticalPeers=(a,b,room)=>{
   const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
@@ -13,7 +13,7 @@ export function snapItem(raw,items,room,options={},previous={}){
   if(options.enabled===false)return{item:rounded(it),anchors,error:placementError(it,items,room),guides};
   const walls=[{r:0,axis:'z',edge:-room.depth/2,sign:1},{r:90,axis:'x',edge:room.width/2,sign:-1},
     {r:180,axis:'z',edge:room.depth/2,sign:-1},{r:270,axis:'x',edge:-room.width/2,sign:1}];
-  const kitchen=kitchenSettings(it),wallOffset=(Number(options.wallOffset)||0)+(kitchen?.rearServiceGapMm||0);
+  const kitchen=kitchenSettings(it),wallOffset=kitchen?50:(Number(options.wallOffset)||0);
   const candidates=[];
   for(const wall of walls){
     const position=wall.edge+wall.sign*(it.depth/2+wallOffset);
@@ -26,6 +26,11 @@ export function snapItem(raw,items,room,options={},previous={}){
     const {wall,position}=candidates[0];it.rotation=wall.r;it[wall.axis]=position;
     anchors.wall=wall.r;anchors[wall.axis]=position;
     guides.push({axis:wall.axis,value:wall.edge,text:kitchen?'К стене · задний край столешницы · зазор '+wallOffset+' мм':'К стене · отступ '+wallOffset+' мм'});
+  }
+  if(cornerSpec(it)){
+    const along=rotateXZ(1,0,it.rotation||0),sideAxis=along.x?'x':'z',span=along.x?room.width:room.depth;
+    const side=(-span/2+it.width/2)*along[sideAxis];
+    if(Math.abs(it[sideAxis]-side)<threshold){it[sideAxis]=side;anchors[sideAxis]=side;guides.push({axis:sideAxis,value:side-it.width/2*along[sideAxis],text:'Угловой корпус · от стены 50 мм'});}
   }
   const b=bounds(it,room,false),axis=it.rotation===90||it.rotation===270?'z':'x',cross=axis==='x'?'z':'x';
   const min=axis==='x'?'minX':'minZ',max=axis==='x'?'maxX':'maxZ';
@@ -60,13 +65,21 @@ export function snapItem(raw,items,room,options={},previous={}){
       it.elevation_mm=ys[0];anchors.y=ys[0];guides.push({axis:'y',value:ys[0],text:'Навеска · '+ys[0]+' мм'});
     }
   }
+  for(const corner of items){
+    if(corner.item_id===it.item_id)continue;
+    const target=cornerReturnPlacement(corner,it);
+    if(target&&(options.autoRotate!==false||it.rotation===target.rotation)&&Math.hypot(raw.x-target.x,raw.z-target.z)<threshold*1.65){
+      it=target;anchors.corner=corner.item_id;guides.push({axis:target.rotation%180?'x':'z',value:target.rotation%180?target.x:target.z,text:'Угловой стык · бленда 50 мм'});break;
+    }
+  }
   it=rounded(it);
   return{item:it,anchors,error:placementError(it,items,room),guides};
 }
 /** Click/duplicate placement never silently moves an existing cabinet. */
 export function findSpace(draft,items,room,selected,options={}){
   const initial={...draft,elevation_mm:elevation(draft,room)};
-  const starts=[],clearance=(options.wallOffset||0)+(kitchenSettings(initial)?.rearServiceGapMm||0);
+  const starts=[],clearance=kitchenSettings(initial)?50:(options.wallOffset||0);
+  if(selected){const turned=cornerReturnPlacement(selected,initial);if(turned)starts.push(turned);}
   // Click placement follows a deterministic local left-to-right row. The first
   // cabinet starts at the left room boundary; later cabinets extend that row to
   // the right. "Left/right" is local to the cabinet front, so side walls work too.
@@ -78,7 +91,7 @@ export function findSpace(draft,items,room,selected,options={}){
     const rowPeers=items.filter(peer=>{
       if(peer.rotation!==r||!verticalPeers(initial,peer,room))return false;
       const peerV=peer.x*front.x+peer.z*front.z;
-      const peerClearance=(options.wallOffset||0)+(kitchenSettings(peer)?.rearServiceGapMm||0);
+      const peerClearance=kitchenSettings(peer)?50:(options.wallOffset||0);
       const expected=-frontSpan/2+peer.depth/2+peerClearance;
       return Math.abs(peerV-expected)<2;
     });
