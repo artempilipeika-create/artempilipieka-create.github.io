@@ -13,6 +13,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
 from .document_renderer import FONTS
+from .three_d_corner import corner_variant
 
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');MINT=colors.HexColor('#e8efe9');PALE=colors.HexColor('#f7f9f5')
 PAGE=landscape(A4);WIDTH=PAGE[0]-16*mm
@@ -84,6 +85,9 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
+    corner=corner_variant(it)
+    if corner:
+        return [_row(r['name'],r['quantity'],r['unit'],r.get('article','')) for r in corner['hardware_items']],None
     if bid in CORNER and it.get('bazis_sha256')==CORNER_SHA:
         return [_row('Уголок №1 (литой)',6),_row('Шуруп 3.5х16 мм,Zn',12),_row('Конфермат 7х50 мм,Zn',10),
                 _row('Основание для кухонной опоры крепление Н5 под саморезы',3),
@@ -128,6 +132,12 @@ def hardware_for(it):
 
 def module_contents(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0)
+    corner=corner_variant(it)
+    if corner:
+        n=corner['door_count'];door_width=(w-631-3*(n-1))/n
+        side='левый' if corner['side']=='left' else 'правый'
+        fill='три вертикальные царги, нижняя сзади над дном' if corner['purpose']=='sink' else 'полка; задняя стенка 3 мм; две горизонтальные царги'
+        return f'{side} угол; установочная ширина {w} мм = корпус {w-50} мм + отступ 50 мм; фальшпанель 120 мм (фасад) + 458 мм (корпус); {n} дверц. шириной {door_width:g} мм; бленда 50 мм; {fill}; шесть ножек'
     if bid in CORNER and it.get('bazis_sha256')==CORNER_SHA:
         return f'установочная ширина {w} мм = корпус {w-50} мм + отступ 50 мм; фальшпанель 578 мм; дверца {w-631} мм; три бленды 50 мм; три вертикальные царги; шесть ножек'
     if bid in SINK_D1|SINK_D2:
@@ -145,11 +155,11 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front):
-    bid=it.get('bazis_id');known=bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2|SINK_D1|SINK_D2|OVEN or (bid in CORNER and it.get('bazis_sha256')==CORNER_SHA)
+    bid=it.get('bazis_id');corner=corner_variant(it);known=bool(corner) or bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2|SINK_D1|SINK_D2|OVEN or (bid in CORNER and it.get('bazis_sha256')==CORNER_SHA)
     if known and (not body or body=='Не выбран'):body='ЛДСП- БЕЛЫЙ'
     if known and (not front or front=='Не выбран'):front='Evagloss P004'
     rows=[('Корпус',body or 'Не выбран'),('Фасад',front or 'Не выбран')]
-    if bid in D1|D2|set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2:rows.append(('Задняя стенка','ЛХДФ 3ММ Белый'))
+    if (corner and corner['purpose']=='shelf') or bid in D1|D2|set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2:rows.append(('Задняя стенка','ЛХДФ 3ММ Белый'))
     if bid in set(DRAWERS)|OVEN:
         rows.extend([('Короба ящиков','ЛДСП- БЕЛЫЙ'),('Днища ящиков','ЛХДФ 3ММ Белый')])
     return rows

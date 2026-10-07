@@ -12,6 +12,7 @@ from .domain_api import require
 from .events import record_event
 from . import catalogue
 from .three_d_document import render as render_spec
+from .three_d_corner import corner_variant
 
 class Room(StrictModel):
     width: int=Field(default=4200,ge=1500,le=12000)
@@ -102,7 +103,15 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Установочная ширина углового модуля 800–1231 мм; дверца не больше 600 мм')
             if not 450<=self.depth<=700 or not 600<=body<=1000:
                 raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
+        corner=corner_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
+        if corner:
+            maximum=1231 if corner['door_count']==1 else 1834
+            if not 800<=self.width<=maximum:
+                raise ValueError(f'Установочная ширина углового модуля 800–{maximum} мм; каждая дверца не больше 600 мм')
+            if not 450<=self.depth<=700 or not 600<=body<=1000:
+                raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
         for shelf in self.shelves:
+            if corner and corner['purpose']=='sink':continue
             if shelf.enabled and (shelf.offset_mm-shelf.thickness/2<0 or shelf.offset_mm+shelf.thickness/2>body):
                 raise ValueError('Shelf position must stay inside the cabinet body')
         return self

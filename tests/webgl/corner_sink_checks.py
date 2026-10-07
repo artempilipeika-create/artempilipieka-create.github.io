@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from pypdf import PdfReader
 from playwright.sync_api import expect
 from tests.stage07.browser_checks import page,settings,api,admin_user,login_ui
-from tests.webgl.navigation import panel,close_panels
+from tests.webgl.navigation import panel,close_panels,add_legacy
 from tests.webgl.drawer_modules_checks import export_payload
 from backend.v2.three_d_api import FurnitureItem
 from backend.v2.three_d_document import hardware_for,module_contents,module_materials,render
@@ -51,7 +51,7 @@ def test_corner_controls_assembly_save_reload_native(page,api,settings,admin_use
     login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
     panel(page,'left','catalog');expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(12)
-    page.locator(f'[data-bazis="{ID}"]').click();s=state(page);corner_id=s['item']['item_id']
+    add_legacy(page,{'bazis':ID});s=state(page);corner_id=s['item']['item_id']
     assert (s['item']['width'],s['item']['height'],s['item']['depth'])==(1000,820,510)
     assert s['error']=='' and len(s['parts'])==11 and s['fronts'][0]['w']==369
     panel(page,'right');expect(page.locator('#rear-service-gap')).to_be_disabled()

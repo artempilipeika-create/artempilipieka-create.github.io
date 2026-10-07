@@ -7,6 +7,7 @@
 <link rel="icon" href="/ui/favicon.svg">
 <link rel="stylesheet" href="/account/app.css"><link rel="stylesheet" href="/account/3d.css">
 <link rel="stylesheet" href="/account/3d-studio.css?v=20260925-1">
+<script defer src="/account/planner/corner-variants.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
@@ -78,6 +79,26 @@
    <label class="studio-rename">Название в проекте<input id="studio-item-name" type="text" maxlength="160" placeholder="Например, шкаф у окна"></label>
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
+   <div id="corner-options-controls" class="mf3d-control-card" hidden>
+    <div class="mf3d-control-title"><strong>Угловой шкаф</strong></div>
+    <div class="mf3d-option-label">Угол</div>
+    <div class="mf3d-door-options mf3d-corner-sides" role="group" aria-label="Угол шкафа">
+     <button type="button" class="secondary" data-corner-option="side" data-corner-value="left" aria-pressed="false"><svg viewBox="0 0 84 64" aria-hidden="true"><path class="corner-fill" d="M5 5h74v22H29v32H5z"/><path d="M5 5h74v22H29v32H5zM5 27h24M30 5v22M52 29h25M31 32v24"/><path class="corner-blind" d="M10 10h15v12H10z"/></svg><span>Левый</span></button>
+     <button type="button" class="secondary" data-corner-option="side" data-corner-value="right" aria-pressed="false"><svg viewBox="0 0 84 64" aria-hidden="true"><g transform="translate(84 0) scale(-1 1)"><path class="corner-fill" d="M5 5h74v22H29v32H5z"/><path d="M5 5h74v22H29v32H5zM5 27h24M30 5v22M52 29h25M31 32v24"/><path class="corner-blind" d="M10 10h15v12H10z"/></g></svg><span>Правый</span></button>
+    </div>
+    <p class="studio-hint">Вид сверху. Угол — со стороны глухой части шкафа.</p>
+    <div class="mf3d-option-label">Назначение</div>
+    <div class="mf3d-door-options" role="group" aria-label="Назначение углового шкафа">
+     <button type="button" class="secondary" data-corner-option="purpose" data-corner-value="sink" aria-pressed="false"><svg viewBox="0 0 32 40" aria-hidden="true"><rect x="3" y="16" width="26" height="15" rx="4"/><path d="M16 20V9a5 5 0 0 1 10 0v3M7 35h18"/></svg><span>Под мойку</span></button>
+     <button type="button" class="secondary" data-corner-option="purpose" data-corner-value="shelf" aria-pressed="false"><svg viewBox="0 0 32 40" aria-hidden="true"><rect x="5" y="3" width="22" height="34" rx="1"/><path d="M5 21h22M8 24h2m12 0h2"/></svg><span>С полкой</span></button>
+    </div>
+    <div class="mf3d-option-label">Дверцы</div>
+    <div class="mf3d-door-options" role="group" aria-label="Количество дверей углового шкафа">
+     <button type="button" class="secondary" data-corner-option="door_count" data-corner-value="1" aria-pressed="false"><svg viewBox="0 0 32 40" aria-hidden="true"><rect x="5" y="3" width="22" height="34" rx="1"/><path d="M23 18v6"/></svg><span>Одна</span></button>
+     <button type="button" class="secondary" data-corner-option="door_count" data-corner-value="2" aria-pressed="false"><svg viewBox="0 0 32 40" aria-hidden="true"><rect x="3" y="3" width="26" height="34" rx="1"/><path d="M16 3v34M12 18v6m8-6v6"/></svg><span>Две</span></button>
+    </div>
+    <p id="corner-options-note" class="studio-hint" aria-live="polite"></p>
+   </div>
    <div id="door-opening-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong>Открывание двери</strong></div>
     <div class="mf3d-door-options" role="group" aria-label="Открывание двери">

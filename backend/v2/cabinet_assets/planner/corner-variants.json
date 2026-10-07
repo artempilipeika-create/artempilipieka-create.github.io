@@ -1,0 +1,748 @@
+[
+  {
+    "id": "bazis.a310afbf587f",
+    "side": "left",
+    "purpose": "sink",
+    "door_count": 1,
+    "label": "НМУ-1000 Д1 L · Мойка",
+    "source_file": "НМУ-1000. Д1 (Мойка) L(3).fr3d",
+    "source_sha256": "a310afbf587f4de0fbd02874b6c8254021ee9cabca422d87b2b82003511f28ad",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 10,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "euroscrew-marcopol",
+        "name": "Стяжка-евровинт с потайной головкой под шестигранник, оцинкованный, Marcopol",
+        "quantity": 5,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "Деталировка Д1 ЛЕВО.pdf",
+    "hardware_pdf": "фурнитура(20261007-124008).pdf"
+  },
+  {
+    "id": "bazis.7978c3a98bf8",
+    "side": "right",
+    "purpose": "sink",
+    "door_count": 1,
+    "label": "НМУ-1000 Д1 P · Мойка",
+    "source_file": "НМУ-1000. Д1 (Мойка) P(1).fr3d",
+    "source_sha256": "7978c3a98bf8e0c40cdf69f9c1b30d93ce600c44db7dccac0280ac31c2306638",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "eccentric-18",
+        "name": "Эксцентриковая стяжка 18мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "dowel-8x35",
+        "name": "Шкант деревянный 8*35 (1 уп= 50шт.)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "Деталировка Д1 ПРАВО.pdf",
+    "hardware_pdf": "фурнитура Д1 ПРАВО.pdf"
+  },
+  {
+    "id": "bazis.4f35b7ae7fa7",
+    "side": "left",
+    "purpose": "shelf",
+    "door_count": 1,
+    "label": "НМУ-1000 Д1 L · Полка",
+    "source_file": "НМУ-1000. Д1 (Полка) L(2).fr3d",
+    "source_sha256": "4f35b7ae7fa751f63ddd64bcb8e2656f79db697485cfc8a2ef57fc4e07ce7e0d",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "eccentric-18",
+        "name": "Эксцентриковая стяжка 18мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "dowel-8x35",
+        "name": "Шкант деревянный 8*35 (1 уп= 50шт.)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "Деталировка Д1 ЛЕВО + ПОЛКА.pdf",
+    "hardware_pdf": "фурнитура Д1 + ПОЛКА.pdf"
+  },
+  {
+    "id": "bazis.0843131e63bb",
+    "side": "right",
+    "purpose": "shelf",
+    "door_count": 1,
+    "label": "НМУ-1000 Д1 P · Полка",
+    "source_file": "НМУ-1000. Д1 (Полка) P(1).fr3d",
+    "source_sha256": "0843131e63bb2f056bbf7270e9492afdbb34b72cbab7629ac323fbe39bf15e2e",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 23,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "eccentric-18",
+        "name": "Эксцентриковая стяжка 18мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "dowel-8x35",
+        "name": "Шкант деревянный 8*35 (1 уп= 50шт.)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "ДЕТАЛИРОВКА + ПОЛКА ПРАВО.pdf",
+    "hardware_pdf": "ПОЛКА ПРАВО.pdf"
+  },
+  {
+    "id": "bazis.33f5a50f71d3",
+    "side": "left",
+    "purpose": "sink",
+    "door_count": 2,
+    "label": "НМУ-1000 Д2 L · Мойка",
+    "source_file": "НМУ-1000. Д2 (Мойка) L(1).fr3d",
+    "source_sha256": "33f5a50f71d39713000977131f07ee44fa09f448c7e76334d0000c1d43a03bc9",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "eccentric-18",
+        "name": "Эксцентриковая стяжка 18мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "dowel-8x35",
+        "name": "Шкант деревянный 8*35 (1 уп= 50шт.)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "МОЙКА Д2 ЛЕВО.pdf",
+    "hardware_pdf": "ФУРНИТУРА Д2 МОЙКА ЛЕВО.pdf"
+  },
+  {
+    "id": "bazis.b0f0037a933b",
+    "side": "right",
+    "purpose": "sink",
+    "door_count": 2,
+    "label": "НМУ-1000 Д2 P · Мойка",
+    "source_file": "НМУ-1000. Д2 (Мойка) P(1).fr3d",
+    "source_sha256": "b0f0037a933b8ad13dd1dff545729b20b5b70ee03fb350ec6de6ee6d6ef74aaf",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "eccentric-18",
+        "name": "Эксцентриковая стяжка 18мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "dowel-8x35",
+        "name": "Шкант деревянный 8*35 (1 уп= 50шт.)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "МОЙКА Д2 ПРАВО.pdf",
+    "hardware_pdf": "ФУРНИТУРА Д2 МОЙКА ПРАВО.pdf"
+  },
+  {
+    "id": "bazis.73465be5d565",
+    "side": "left",
+    "purpose": "shelf",
+    "door_count": 2,
+    "label": "НМУ-1000 Д2 L · Полка",
+    "source_file": "НМУ-1000. Д2 (Полка) L(1).fr3d",
+    "source_sha256": "73465be5d5658b662a20ca1c4f5dc347a5482d3975ef75765e25471c73368df8",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "eccentric-18",
+        "name": "Эксцентриковая стяжка 18мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "dowel-8x35",
+        "name": "Шкант деревянный 8*35 (1 уп= 50шт.)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "ПОЛКАД2 ПРАВО.pdf",
+    "hardware_pdf": "ФУРНИТУРА Д2 ПОЛКА ПРАВО.pdf"
+  },
+  {
+    "id": "bazis.54cffd5bd970",
+    "side": "right",
+    "purpose": "shelf",
+    "door_count": 2,
+    "label": "НМУ-1000 Д2 P · Полка",
+    "source_file": "НМУ-1000. Д2 (Полка) P(1).fr3d",
+    "source_sha256": "54cffd5bd9708f3063537bcfbb5ed40be192c14a857c142a5aa6972d39963b5c",
+    "hardware_items": [
+      {
+        "key": "angle-cast",
+        "name": "Уголок №1 (литой)",
+        "quantity": 6,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-3.5x16-zn",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 12,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 23,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "eccentric-18",
+        "name": "Эксцентриковая стяжка 18мм",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "dowel-8x35",
+        "name": "Шкант деревянный 8*35 (1 уп= 50шт.)",
+        "quantity": 3,
+        "unit": "pcs"
+      },
+      {
+        "key": "screw-4x16",
+        "name": "Шуруп 4х16",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-hckt",
+        "name": "Петля гидравлическая HCKT под фальшпанель с эксцентриком, Clip-On H=0",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs"
+      }
+    ],
+    "panel_pdf": "Деталировка Д2(2).pdf",
+    "hardware_pdf": "фурнитура Д2(1).pdf"
+  }
+]

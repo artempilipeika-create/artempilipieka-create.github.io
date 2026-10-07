@@ -212,7 +212,7 @@ export class MeshFactory{
       if(part){panel.userData.part=part;if(spec)panel.userData.hingeSide=spec.side;}
       if(it.handles==='handles'&&f.w>140&&f.h>100){
         const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
-        const side=rowDoors.length>1?(f.cx<0?1:-1):spec?(spec.side==='right'?-1:1):/отк P/.test(it.bazis_file||'')?-1:1;
+        const side=spec?(spec.side==='right'?-1:1):rowDoors.length>1?(f.cx<0?1:-1):/отк P/.test(it.bazis_file||'')?-1:1;
         const x=drawer?f.cx:f.cx+side*(f.w/2-50),localX=spec?x-(f.cx+(spec.side==='right'?f.w/2:-f.w/2)):x;
         const wallDoor=!drawer&&(production?.tier==='wall'||it.module_type==='wall_cabinet');
         const y=drawer?f.cy+f.h/2-36:wallDoor?f.cy-f.h/2+50:f.cy+f.h/2-50;

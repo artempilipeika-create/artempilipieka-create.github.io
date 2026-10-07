@@ -27,7 +27,7 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
-        'entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs',
+        'entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js',
         'state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','placement.mjs',
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-pricing-ui.mjs','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',

@@ -26,11 +26,13 @@ DOOR_PAIRS={
 CATALOGUE_LABELS=[
     'Нижний шкаф · 1 дверь','Д2','Нижний 2 ящика · с доводчиком','Нижний 3 ящика · с доводчиком',
     'Верхний шкаф · 1 дверь','ВМД2','Верхний с сушкой · 1 дверь','ВМД2 · Сушка',
-    'Нижний под мойку · 1 дверь','НМД2 · Мойка','НШД-600 · ниша 595','НМУ-1000 Д1 L · Мойка',
+    'Нижний под мойку · 1 дверь','НМД2 · Мойка','НШД-600 · ниша 595','Нижний угловой шкаф',
 ]
 
 def add_production_variant(page,bazis_id):
     """Use the family card and real opening control to choose an exact donor."""
+    if bazis_id=='bazis.b4420a0b4bbc':
+        add_legacy(page,{'bazis':bazis_id});return
     panel(page,'left','catalog')
     card=DOOR_PAIRS.get(bazis_id,bazis_id)
     page.locator(f'[data-bazis="{card}"]').click()

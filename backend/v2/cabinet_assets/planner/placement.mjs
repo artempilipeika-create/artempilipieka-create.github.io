@@ -29,8 +29,8 @@ export function snapItem(raw,items,room,options={},previous={}){
   }
   if(cornerSpec(it)){
     const along=rotateXZ(1,0,it.rotation||0),sideAxis=along.x?'x':'z',span=along.x?room.width:room.depth;
-    const side=(-span/2+it.width/2)*along[sideAxis];
-    if(Math.abs(it[sideAxis]-side)<threshold){it[sideAxis]=side;anchors[sideAxis]=side;guides.push({axis:sideAxis,value:side-it.width/2*along[sideAxis],text:'Угловой корпус · от стены 50 мм'});}
+    const sign=cornerSpec(it).side==='right'?-1:1,side=sign*(-span/2+it.width/2)*along[sideAxis];
+    if(Math.abs(it[sideAxis]-side)<threshold){it[sideAxis]=side;anchors[sideAxis]=side;guides.push({axis:sideAxis,value:side-sign*it.width/2*along[sideAxis],text:'Угловой корпус · от стены 50 мм'});}
   }
   const b=bounds(it,room,false),axis=it.rotation===90||it.rotation===270?'z':'x',cross=axis==='x'?'z':'x';
   const min=axis==='x'?'minX':'minZ',max=axis==='x'?'maxX':'maxZ';
@@ -95,7 +95,7 @@ export function findSpace(draft,items,room,selected,options={}){
       const expected=-frontSpan/2+peer.depth/2+peerClearance;
       return Math.abs(peerV-expected)<2;
     });
-    const firstU=-alongSpan/2+initial.width/2;
+    const firstU=(cornerSpec(initial)?.side==='right'?-1:1)*(-alongSpan/2+initial.width/2);
     const make=u=>({...initial,rotation:r,x:along.x*u+front.x*v,z:along.z*u+front.z*v});
     starts.push(make(firstU));
     if(rowPeers.length){

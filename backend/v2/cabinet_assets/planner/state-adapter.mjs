@@ -56,7 +56,7 @@ export class StateAdapter{
     const production=this.template(it)?.production;
     if(production?.dryer?.width_step_mm&&it.width%production.dryer.width_step_mm!==0)
       return 'Для сушки ширина модуля должна изменяться шагом '+production.dryer.width_step_mm+' мм';
-    if(Array.isArray(it.shelves))for(const shelf of it.shelves){
+    if(Array.isArray(it.shelves))for(const shelf of production?productionShelves(it,production):it.shelves){
       const thickness=Number(shelf?.thickness)||18,offset=Number(shelf?.offset_mm);
       if(shelf?.enabled!==false&&(!Number.isInteger(offset)||offset<(production?.carcass?.panel_thickness||0)+thickness/2||offset>h.body_height-(production?.carcass?.rail_height||0)-thickness/2))
         return 'Полка выходит за внутреннюю высоту корпуса';

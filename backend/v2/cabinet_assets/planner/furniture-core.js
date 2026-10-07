@@ -145,6 +145,26 @@
   });
   // FR3D 2026-10-07: the 1000 mm installation frame includes 50 mm of EMPTY
   // space at local left. The actual bottom is 950 x 510, not a 1000 mm board.
+  const CORNER_VARIANTS=freeze(root.MF_CORNER_VARIANTS||[]);
+  const CORNER_FAMILY=freeze({key:'base.corner',label:'Нижний угловой шкаф',default_id:'bazis.a310afbf587f'});
+  const cornerModel=v=>({...kitchenBase,label:v.label,key:`base.corner.${v.purpose}.d${v.door_count}.${v.side}.1000`,
+    source_file:v.source_file,source_sha256:v.source_sha256,
+    native_defaults:{width:1000,height:820,depth:510},scene_depth:510,resize:true,
+    limits:{w:[800,v.door_count===1?1231:1834],h:[700,1100],d:[450,700]},
+    corner:{side:v.side,purpose:v.purpose,door_count:v.door_count,split_blind:true,
+      wall_gap_mm:50,blind_width_mm:578,blind_front_width_mm:120,door_start_mm:629.5,door_right_gap_mm:1.5,
+      vertical_gap_mm:1.5,filler_depth_mm:50,front_extension_mm:68,return_body_depth_mm:510},
+    constraints:{max_door_width_mm:600,wall_gap_mm:50},
+    carcass:{type:v.purpose==='sink'?'sink_three_vertical_rails':'bottom_side_two_rails',panel_thickness:18,
+      rail_height:v.purpose==='sink'?80:18,rail_depth:v.purpose==='sink'?18:80,
+      front_rail_depth:90,rail_orientation:v.purpose==='sink'?'vertical':'horizontal',material_name:'ЛДСП- БЕЛЫЙ'},
+    facade:{...kitchenBase.facade,clearance_mm:0,vertical_gap_mm:1.5,material_name:'Evagloss P004'},
+    front:{kind:'doors',count:v.door_count},
+    doors:Array.from({length:v.door_count},(_,i)=>({side:i===0?v.side:v.side==='left'?'right':'left',hinge_count:2,open_angle:i===0?90:105})),
+    back:v.purpose==='shelf'?{...kitchenBase.back}:null,
+    shelves:v.purpose==='shelf'?[{id:'shelf-1',enabled:true,offset_mm:360,thickness:18,width_clearance:86,depth_clearance:0}]:[],
+    hardware:{hinge_count:v.door_count*2,hinges_in_items:true,shelf_fixing:'confirmat',items:v.hardware_items}
+  });
   const CORNER_PRODUCTION=freeze({
     'bazis.b4420a0b4bbc':{...kitchenBase,label:'НМУ-1000 Д1 L · Мойка',key:'base.corner.sink.d1.left.1000',
       source_file:'НМУ-1000. Д1 (Мойка) L(1).fr3d',source_sha256:'e5145e6878304cde87b0344685ac309ed92302216394e01c6bb2fbdebb5b7b60',
@@ -167,7 +187,8 @@
         {key:'clip-plate',name:'Площадка клипсы усиленной (06.152)',quantity:3,unit:'pcs'},
         {key:'clip-heavy',name:'Клипса усиленная',quantity:3,unit:'pcs'},
         {key:'euroscrew-marcopol',name:'Стяжка-евровинт с потайной головкой под шестигранник, оцинкованный, Marcopol',quantity:5,unit:'pcs'},
-        {key:'screw-4x16',name:'Шуруп 4х16',quantity:4,unit:'pcs'}]}}
+        {key:'screw-4x16',name:'Шуруп 4х16',quantity:4,unit:'pcs'}]}},
+    ...Object.fromEntries(CORNER_VARIANTS.map(v=>[v.id,cornerModel(v)]))
   });
   const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION});
   // Catalogue families only group verified L/P donors. The scene persists the
@@ -197,18 +218,33 @@
       bazis_resize:Boolean(target.resize),name:automatic?p.label+suffix:it.name};
   }
   function cornerSpec(it){const p=PRODUCTION_MODELS[it?.bazis_id];return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;}
+  function cornerVariantInfo(it){return CORNER_VARIANTS.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
+  function cornerVariant(it,patch,catalogue){
+    const current=cornerVariantInfo(it);
+    if(!current)throw new Error('Для этого исходного углового модуля переключение недоступно');
+    const options={side:current.side,purpose:current.purpose,door_count:current.door_count,...patch};
+    const next=CORNER_VARIANTS.find(v=>['side','purpose','door_count'].every(k=>v[k]===options[k]));
+    const target=next&&catalogue.find(m=>m.id===next.id);
+    if(!target||target.source_sha256!==next.source_sha256)throw new Error('Исходный вариант углового шкафа не найден');
+    if(next.id===it.bazis_id)return {...it};
+    const suffix=String(it.name||'').slice(current.label.length),automatic=String(it.name||'').startsWith(current.label)&&(!suffix||/^ \d+$/.test(suffix));
+    const shelves=it.shelves?.length?it.shelves:PRODUCTION_MODELS[next.id].shelves;
+    return {...it,bazis_id:next.id,bazis_file:next.source_file,bazis_sha256:next.source_sha256,bazis_resize:Boolean(target.resize),
+      name:automatic?next.label+suffix:it.name,shelves:shelves.map(s=>({...s}))};
+  }
   function cornerReturnPlacement(corner,it){
     const c=cornerSpec(corner);
     if(!c||cornerSpec(it)||!isKitchenModule(it)||it.depth!==c.return_body_depth_mm)return null;
-    const local=rotateXZ(-corner.width/2+c.wall_gap_mm+it.depth/2,corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
-    return {...it,x:corner.x+local.x,z:corner.z+local.z,rotation:((corner.rotation||0)+270)%360};
+    const sign=c.side==='right'?-1:1;
+    const local=rotateXZ(sign*(-corner.width/2+c.wall_gap_mm+it.depth/2),corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
+    return {...it,x:corner.x+local.x,z:corner.z+local.z,rotation:((corner.rotation||0)+(sign===1?270:90))%360};
   }
   function dimensionError(it,template){
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
     if(p?.corner){
-      const doorWidth=it.width-p.corner.door_start_mm-p.corner.door_right_gap_mm;
+      const count=p.corner.door_count||1,doorWidth=(it.width-p.corner.door_start_mm-p.corner.door_right_gap_mm-3*(count-1))/count;
       if(doorWidth>600||doorWidth<=0)return 'Ширина дверцы углового модуля — не больше 600 мм';
       return '';
     }
@@ -220,6 +256,7 @@
 
   function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
     if(!p)return [];
+    if(p.corner?.purpose==='sink')return [];
     if(!p.shelf_rule)return (it?.shelves??p.shelves??[]).map(x=>({...x}));
     const H=Number(it?.height??p.body_height+p.base_height)-Number(p.base_height||0),r=p.shelf_rule;
     const count=H>r.threshold_mm?r.tall_count:r.base_count;
@@ -256,7 +293,7 @@
     }
     const shelfCount=productionShelves(it,p).length;
     const support=hw.items.find(x=>x.key==='shelf-support-marcopol');
-    if(shelfCount){
+    if(shelfCount&&hw.shelf_fixing!=='confirmat'){
       if(support)support.quantity=shelfCount*4;
       else hw.items.push({key:'shelf-support-marcopol',name:'Полкодержатель, Marcopol, оцинкованный',quantity:shelfCount*4,unit:'pcs'});
     }else hw.items=hw.items.filter(x=>x.key!=='shelf-support-marcopol');
@@ -355,8 +392,9 @@
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
     if(production?.corner){
-      const c=production.corner,left=c.door_start_mm,right=W-c.door_right_gap_mm;
-      return [{kind:'door',w:mmNumber(right-left),h:H-2*c.vertical_gap_mm,cx:mmNumber(x0+(left+right)/2),cy:y0+H/2}];
+      const c=production.corner,n=c.door_count||1,fw=(W-c.door_start_mm-c.door_right_gap_mm-3*(n-1))/n,sign=c.side==='right'?-1:1;
+      return Array.from({length:n},(_,i)=>({kind:'door',w:fw,h:H-2*c.vertical_gap_mm,
+        cx:sign*(x0+c.door_start_mm+fw/2+i*(fw+3)),cy:y0+H/2}));
     }
     if(production?.constraints?.niche_height_mm){
       cell('drawer',x0,y0,W,H-production.constraints.niche_height_mm);return cells;
@@ -399,7 +437,8 @@
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(!p?.carcass)return null;
     const {width:W,height:H,depth:D}=it,{body_height:B,base_height:base}=heights(it);
-    const t=p.carcass.panel_thickness,rail=p.carcass.rail_depth||80,inset=p.corner?.wall_gap_mm||0,C=W-inset,cx=inset/2,inner=C-2*t,parts=[];
+    const t=p.carcass.panel_thickness,rail=p.carcass.rail_depth||80,inset=p.corner?.wall_gap_mm||0,C=W-inset,
+      cornerSign=p.corner?.side==='right'?-1:1,cx=cornerSign*inset/2,inner=C-2*t,parts=[];
     const add=(key,name,role,size,position,axes,variant=null,material=null,extra={})=>{
       const [length_axis,width_axis,thickness_axis]=axes;
       parts.push({part_id:it.item_id+':'+key,key,module_id:it.item_id,name,role,type:'panel',
@@ -444,20 +483,25 @@
     }else if(p.carcass.type==='oven_fixed_niche'){
       add('oven-divider','Перегородка','body',{x:inner,y:t,z:D},{x:0,y:H-p.constraints.niche_height_mm-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name);
     }else{
-    for(const [key,name,sign]of [['rear','задняя',-1],['front','передняя',1]])add('rail-'+key,'Царга '+name,'body',
-      {x:inner,y:t,z:rail},{x:0,y:H-t/2,z:sign*(D-rail)/2},['z','x','y'],it.body_variant_id,p.carcass.material_name||null);
+    for(const [key,name,sign]of [['rear','задняя',-1],['front','передняя',1]]){
+      const depth=key==='front'?(p.carcass.front_rail_depth||rail):rail;
+      add('rail-'+key,'Царга '+name,'body',
+        {x:inner,y:t,z:depth},{x:cx,y:H-t/2,z:sign*(D-depth)/2},['z','x','y'],it.body_variant_id,p.carcass.material_name||null);
     }
-    for(const shelf of it.shelves??p.shelves??[])if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
+    }
+    for(const shelf of productionShelves(it,p))if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
       {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
-      {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,null,
+      {x:cx,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,p.carcass.material_name||null,
       {source_component:shelf.source_component||null,shelf_id:shelf.id});
     if(p.back){const b=p.back;add('back','Задняя стенка','back',
-      {x:W-2*b.inset,y:B-2*b.inset,z:b.thickness},{x:0,y:base+B/2,z:-(D+b.thickness)/2},['y','x','z'],null,b.material_name,{back_type:b.type});}
+      {x:C-2*b.inset,y:B-2*b.inset,z:b.thickness},{x:cx,y:base+B/2,z:-(D+b.thickness)/2},['y','x','z'],null,b.material_name,{back_type:b.type});}
     if(p.corner){
       const c=p.corner,h=B-2*c.vertical_gap_mm,y=base+B/2;
-      add('blind-panel','ФП','front',{x:c.blind_width_mm,y:h,z:t},{x:-W/2+inset+c.blind_width_mm/2,y,z:D/2+t/2},['y','x','z'],it.front_variant_id,p.facade.material_name,{fixed:true});
-      for(const [key,x,facade]of [['filler-support-left',123,false],['filler-support-right',551,false],['filler-front',569,true]])
-        add(key,'Бленда',facade?'front':'body',{x:t,y:h,z:c.filler_depth_mm},{x:x-W/2,y,z:D/2+t+c.filler_depth_mm/2},['z','y','x'],facade?it.front_variant_id:it.body_variant_id,facade?p.facade.material_name:p.carcass.material_name,{fixed:true});
+      const frontWidth=c.split_blind?c.blind_front_width_mm:c.blind_width_mm,bodyWidth=c.blind_width_mm-frontWidth;
+      if(bodyWidth)add('blind-body','ФП (корпус)','body',{x:bodyWidth,y:h,z:t},{x:cornerSign*(-W/2+inset+bodyWidth/2),y,z:D/2+t/2},['y','x','z'],it.body_variant_id,p.carcass.material_name,{fixed:true});
+      add('blind-panel','ФП','front',{x:frontWidth,y:h,z:t},{x:cornerSign*(-W/2+inset+bodyWidth+frontWidth/2),y,z:D/2+t/2},['y','x','z'],it.front_variant_id,p.facade.material_name,{fixed:true});
+      for(const [key,x,facade]of [['filler-support-left',c.side==='right'?123.04:123,false],['filler-support-right',551,false],['filler-front',569,true]])
+        add(key,facade||!c.split_blind?'Бленда':'Вставка',facade?'front':'body',{x:t,y:h,z:c.filler_depth_mm},{x:cornerSign*(x-W/2),y,z:D/2+t+c.filler_depth_mm/2},['z','y','x'],facade?it.front_variant_id:it.body_variant_id,facade?p.facade.material_name:p.carcass.material_name,{fixed:true});
     }
     const frontCells=facadeCells(it,template);
     if(p.drawer_box){
@@ -481,7 +525,7 @@
       if(door)Object.assign(extra,{hinge_side:door.side,open_angle:door.open_angle,hinge_count:door.hinge_count,
         pivot:{x:f.cx+(door.side==='left'?-1:1)*f.w/2,y:0,z}});
       add((f.kind==='drawer'?'drawer-front-':'door-')+(i+1),f.kind==='drawer'?'Фасад ящика':'Фасад двери','front',
-        {x:f.w,y:f.h,z:thickness},{x:f.cx,y:f.cy,z},f.kind==='drawer'||p.carcass.type==='sink_three_vertical_rails'?['y','x','z']:['x','y','z'],
+        {x:f.w,y:f.h,z:thickness},{x:f.cx,y:f.cy,z},f.kind==='drawer'||p.corner||p.carcass.type==='sink_three_vertical_rails'?['y','x','z']:['x','y','z'],
         it.front_variant_id,p.facade?.material_name||null,extra);
     });
     for(const part of parts){
@@ -538,10 +582,11 @@
             const z=role==='counter'?k.countertopDepthMm/2:k.rearServiceGapMm+it.depth-60;
             const y=role==='counter'?m.top+k.countertopThicknessMm/2:m.level+k.legHeightMm/2;
             const height=role==='counter'?k.countertopThicknessMm:k.legHeightMm,depth=role==='counter'?k.countertopDepthMm:18;
-            const lo=m.lo+(role==='plinth'?(cornerSpec(it)?.wall_gap_mm||0):0);
+            const c=cornerSpec(it),lo=m.lo+(role==='plinth'&&c?.side!=='right'?(c?.wall_gap_mm||0):0),
+              hi=m.hi-(role==='plinth'&&c?.side==='right'?c.wall_gap_mm:0);
             const last=sections.at(-1);
-            if(last&&last.hi===lo&&last.id===id&&last.z===z&&last.y===y&&last.height===height){last.hi=m.hi;last.ids.push(it.item_id);}
-            else sections.push({lo,hi:m.hi,z,y,height,depth,id,ids:[it.item_id]});
+            if(last&&last.hi===lo&&last.id===id&&last.z===z&&last.y===y&&last.height===height){last.hi=hi;last.ids.push(it.item_id);}
+            else sections.push({lo,hi,z,y,height,depth,id,ids:[it.item_id]});
           }
           for(const s of sections){
             // Stock is a physical limit, not the displayed length of the kitchen.
@@ -555,7 +600,7 @@
         }
         // Returns at the two exposed ends; no doubled side panels between neighbours.
         for(const [m,sign]of [[run.members[0],-1],[run.members.at(-1),1]]){
-          const d=m.it.depth-100,x=sign<0?run.lo+(cornerSpec(m.it)?.wall_gap_mm||0):run.hi-18;
+          const c=cornerSpec(m.it),d=m.it.depth-100,x=sign<0?run.lo+(c?.side!=='right'?(c?.wall_gap_mm||0):0):run.hi-18-(c?.side==='right'?c.wall_gap_mm:0);
           add('plinth',x,x+18,m.k.rearServiceGapMm+m.it.depth/2-10,d,m.level+m.k.legHeightMm/2,m.k.legHeightMm,m.k.plinthMaterialId,[m.it.item_id],':return');
           const p=plan.parts.at(-1);p.length=d;p.width=m.k.legHeightMm;p.thickness=18;p.orientation={length_axis:'z',width_axis:'y',thickness_axis:'x'};
         }
@@ -574,16 +619,16 @@
         return expected&&it.rotation===expected.rotation&&Math.abs(it.x-expected.x)<1&&Math.abs(it.z-expected.z)<1&&elevation(it,room)===elevation(corner,room);
       });
       const turned=mate&&runs.find(r=>r.members.includes(mate.item_id));if(!turned)continue;
-      const ck=kitchenSettings(corner),mk=kitchenSettings(mate);
-      const end=rotateXZ(mate.x-turned.position.x,mate.z-turned.position.z,-turned.rotation).x+mate.width/2;
+      const ck=kitchenSettings(corner),mk=kitchenSettings(mate),sign=cornerSpec(corner).side==='right'?-1:1;
+      const end=rotateXZ(mate.x-turned.position.x,mate.z-turned.position.z,-turned.rotation).x+sign*mate.width/2;
       const inTurn=(x,z)=>{const v=rotateXZ(x,z,corner.rotation||0);return rotateXZ(corner.x+v.x-turned.position.x,corner.z+v.z-turned.position.z,-turned.rotation).x;};
       const counterEnd=inTurn(0,-corner.depth/2-ck.rearServiceGapMm+ck.countertopDepthMm);
       const plinthEnd=inTurn(0,corner.depth/2-60-9);
-      turned.parts=turned.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x+p.size.x/2-end)<1));
+      turned.parts=turned.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x+sign*p.size.x/2-end)<1));
       for(const p of turned.parts){
-        if(p.orientation.length_axis!=='x'||Math.abs(p.position.x+p.size.x/2-end)>1)continue;
-        const target=p.role==='counter'?Math.max(end,counterEnd):plinthEnd,lo=p.position.x-p.size.x/2;
-        p.size.x=target-lo;p.length=p.size.x;p.position.x=(lo+target)/2;
+        if(p.orientation.length_axis!=='x'||Math.abs(p.position.x+sign*p.size.x/2-end)>1)continue;
+        const target=p.role==='counter'?sign*Math.max(sign*end,sign*counterEnd):plinthEnd,other=p.position.x-sign*p.size.x/2;
+        p.size.x=sign*(target-other);p.length=p.size.x;p.position.x=(other+target)/2;
       }
       // A deeper main worktop can cover an entire short return cabinet. Clip
       // rectangles, including different worktop depths, instead of creating a
@@ -604,11 +649,11 @@
       }
       const topParts=turned.parts.filter(p=>p.role==='counter');
       turned.countertopActualLengthMm=topParts.length?Math.max(...topParts.map(p=>p.position.x+p.size.x/2))-Math.min(...topParts.map(p=>p.position.x-p.size.x/2)):0;
-      const left=rotateXZ(corner.x-main.position.x,corner.z-main.position.z,-main.rotation).x-corner.width/2;
-      const joint=left+50+mate.depth-60+9;
-      main.parts=main.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x-p.size.x/2-left-50)<1));
-      for(const p of main.parts)if(p.role==='plinth'&&p.orientation.length_axis==='x'&&p.module_ids.includes(corner.item_id)&&p.position.x-p.size.x/2<joint){
-        const hi=p.position.x+p.size.x/2;p.position.x=(joint+hi)/2;p.size.x=hi-joint;p.length=p.size.x;
+      const edge=rotateXZ(corner.x-main.position.x,corner.z-main.position.z,-main.rotation).x-sign*corner.width/2;
+      const joint=edge+sign*(50+mate.depth-60+9);
+      main.parts=main.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x-sign*p.size.x/2-edge-sign*50)<1));
+      for(const p of main.parts)if(p.role==='plinth'&&p.orientation.length_axis==='x'&&p.module_ids.includes(corner.item_id)&&sign*(p.position.x-sign*p.size.x/2-joint)<0){
+        const other=p.position.x+sign*p.size.x/2;p.position.x=(joint+other)/2;p.size.x=sign*(other-joint);p.length=p.size.x;
       }
       main.corner_joints=(main.corner_joints||[]).concat({corner_id:corner.item_id,return_id:mate.item_id,wall_gap_mm:50,filler_depth_mm:50});
     }
@@ -622,7 +667,7 @@
   }
   function kitchenLegs(it){
     const k=kitchenSettings(it);if(!k)return null;
-    const corner=cornerSpec(it),xs=corner?[104-it.width/2,520-it.width/2,it.width/2-64]:[-it.width/2+45,it.width/2-45];
+    const corner=cornerSpec(it),sign=corner?.side==='right'?-1:1,xs=corner?[104-it.width/2,520-it.width/2,it.width/2-64].map(x=>sign*x):[-it.width/2+45,it.width/2-45];
     const zs=corner?[-it.depth/2+57,it.depth/2-80]:[-it.depth/2+45,it.depth/2-95];
     return xs.flatMap((x,i)=>zs.map((z,j)=>({
       part_id:it.item_id+':leg-'+(i*2+j+1),module_id:it.item_id,name:'Опора регулируемая',role:'leg',type:'hardware',
@@ -654,5 +699,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

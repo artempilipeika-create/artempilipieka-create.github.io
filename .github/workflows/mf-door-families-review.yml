@@ -28,6 +28,7 @@ jobs:
       - name: Planner geometry and regression
         run: |
           node --check backend/v2/cabinet_assets/3d.js
+          python scripts/build-corner-variants.py
           node --test tests/webgl/*.test.mjs
           git diff --exit-code
       - name: Build staging image
@@ -46,7 +47,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: UI, real API persistence and native export
         run: |
-          python -m pytest tests/webgl/door_families_checks.py tests/webgl/corner_sink_checks.py tests/webgl/sink_oven_checks.py tests/webgl/drawer_modules_checks.py tests/webgl/upper_modules_checks.py -vv -s --timeout=180 --junitxml=qa-output/door-families/results.xml
+          python -m pytest tests/webgl/corner_family_checks.py tests/webgl/door_families_checks.py tests/webgl/corner_sink_checks.py tests/webgl/sink_oven_checks.py tests/webgl/drawer_modules_checks.py tests/webgl/upper_modules_checks.py -vv -s --timeout=180 --junitxml=qa-output/door-families/results.xml
           git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()

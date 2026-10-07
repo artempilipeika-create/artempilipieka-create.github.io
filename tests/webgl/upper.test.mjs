@@ -17,8 +17,8 @@ const item=(id,changes={})=>{
 const parts=it=>productionParts(it,{production:PRODUCTION_MODELS[it.bazis_id]});
 const byName=(ps,name)=>ps.filter(p=>p.name===name).map(p=>[p.length,p.width,p.thickness]);
 
-test('Production registry keeps ten lower modules plus six upper modules',()=>{
-  assert.equal(Object.keys(PRODUCTION_MODELS).length,16);
+test('Production registry keeps previous donors and eight new corner variants',()=>{
+  assert.equal(Object.keys(PRODUCTION_MODELS).length,24);
   assert.deepEqual(Object.keys(WALL_PRODUCTION),[...regularIds,...dryerIds]);
 });
 
