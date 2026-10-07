@@ -71,7 +71,7 @@
   }
   addCatalogueButton=function studioCatalogueButton(root,opt){
     const it=defaultItem(opt),b=make('button','mf3d-module');b.type='button';
-    b.dataset.category=itemGroup(it);b.dataset.search=titleText(opt.label+' '+opt.description);
+    b.dataset.category=itemGroup(it);b.dataset.search=titleText(opt.label+' '+opt.description+' '+(opt.search||''));
     if(opt.module)b.dataset.module=opt.module;if(opt.template)b.dataset.template=opt.template;if(opt.bazis)b.dataset.bazis=opt.bazis;
     b.dataset.width=String(it.width);b.dataset.tags=[...cardTags(opt,it)].join(' ');
     b.setAttribute('aria-label','Добавить: '+opt.label+', '+it.width+' × '+it.height+' × '+it.depth+' мм');
