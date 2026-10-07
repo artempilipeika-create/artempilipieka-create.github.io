@@ -17,6 +17,28 @@ def close_panels(page):
         if button.is_visible():button.click()
 
 
+DOOR_PAIRS={
+    'bazis.784bf9af84f8':'bazis.0211e4f77fc4',
+    'bazis.b226370aab54':'bazis.facfa0cd038b',
+    'bazis.2175c60e84a6':'bazis.858266606bc5',
+    'bazis.60f79b573cd1':'bazis.b89bf9852860',
+}
+CATALOGUE_LABELS=[
+    'Нижний шкаф · 1 дверь','Д2','Нижний 2 ящика · с доводчиком','Нижний 3 ящика · с доводчиком',
+    'Верхний шкаф · 1 дверь','ВМД2','Верхний с сушкой · 1 дверь','ВМД2 · Сушка',
+    'Нижний под мойку · 1 дверь','НМД2 · Мойка','НШД-600 · ниша 595','НМУ-1000 Д1 L · Мойка',
+]
+
+def add_production_variant(page,bazis_id):
+    """Use the family card and real opening control to choose an exact donor."""
+    panel(page,'left','catalog')
+    card=DOOR_PAIRS.get(bazis_id,bazis_id)
+    page.locator(f'[data-bazis="{card}"]').click()
+    if card!=bazis_id:
+        panel(page,'right')
+        page.locator('[data-door-side="right"]').click()
+
+
 def add_legacy(page,options):
     """Load a retained legacy definition through the planner for compatibility tests.
     It is deliberately absent from the active customer catalogue.

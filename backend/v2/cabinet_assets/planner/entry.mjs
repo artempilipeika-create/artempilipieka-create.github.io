@@ -3,7 +3,7 @@ import {StateAdapter} from './state-adapter.mjs';
 import {History} from './history.mjs';
 import {Interaction} from './interaction.mjs';
 import {FallbackPlan} from './fallback.mjs';
-import {placementError,elevation,tier,kitchenSettings,dimensionPatch,rotateXZ} from './furniture-core.mjs';
+import {placementError,elevation,tier,kitchenSettings,dimensionPatch,rotateXZ,doorFamily,doorVariant} from './furniture-core.mjs';
 const get=id=>document.getElementById(id);
 const make=(tag,id,text)=>{const el=document.createElement(tag);if(id)el.id=id;if(text!==undefined)el.textContent=text;return el;};
 const button=(id,text,title)=>{const b=make('button',id,text);b.type='button';b.className='secondary';if(title){b.title=title;b.setAttribute('aria-label',title);}return b;};
@@ -92,6 +92,19 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
+    this.listen(get('door-opening-controls'),'click',e=>{
+      const button=e.target.closest('[data-door-side]'),it=this.adapter.selected;
+      if(!button||!it)return;
+      const family=doorFamily(it),side=button.dataset.doorSide;
+      if(!family||family[side]===it.bazis_id)return;
+      this.interaction.change('Открывание двери',()=>{
+        const next=doorVariant(it,side,this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);
+        this.adapter.replace(next);
+        this.adapter.status('Открывание: '+(side==='left'?'левое':'правое'));
+      });
+      this.bridge.refresh();
+    });
     for(const [id,key]of [['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z'],['body-height','body_height'],['base-height','base_height'],['worktop-thickness','worktop_thickness']]){
       const input=get(id);input.oninput=null;input.onchange=null;
       this.listen(input,'change',()=>{if(!this.interaction)return;const value=Number(input.value);this.interaction.modify({[key]:value},['x','z'].includes(key)?'Точное положение':'Изменение размера');this.bridge.refresh();});

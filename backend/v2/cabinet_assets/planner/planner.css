@@ -75,6 +75,12 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 /* Clipped labels retain accessibility without inheriting offscreen static positions. */
 .mf-webgl .studio-sr{top:0;left:0}
 
+.mf3d-door-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.mf3d-door-options button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;font-size:13px}
+.mf3d-door-options svg{width:24px;height:30px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.mf3d-door-options button[aria-pressed=true]{background:#e4efe6;border-color:#527a5f;color:#214b32;box-shadow:inset 0 0 0 1px #527a5f}
+.mf3d-door-options button:focus-visible{outline:2px solid #527a5f;outline-offset:3px}
+
 /* Furniture-first presentation; the working shell and all controls are retained. */
 .mf-webgl #planner-dimension{background:#fffffcf2;border-color:#a5bbab;color:#285a40;padding:6px 11px;border-radius:7px;box-shadow:0 3px 12px #193d2b12}
 .mf-webgl #planner-feedback{background:#f5faf4f2;border-color:#aabfac;color:#315c3d;font-size:10px;padding:7px 12px}

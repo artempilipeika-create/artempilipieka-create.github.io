@@ -19,7 +19,7 @@ export class StateAdapter{
     if(opt.bazis&&!t)throw new Error('Исходный модуль БАЗИС не найден');
     const type=t?.module_type||opt.module||'chest',d=t?.defaults||all.moduleDefs[type];
     if(!d)throw new Error('Шаблон не найден');
-    const name=t?.itemName||t?.label||d.name;
+    const name=t?.itemName||t?.catalogue_label||t?.label||d.name;
     const number=this.items.filter(x=>x.name===name||x.name.startsWith(name+' ')).length;
     const it={item_id:crypto.randomUUID(),module_type:type,template_id:opt.template||null,
       name:(name+(number?' '+(number+1):'')).slice(0,160),x:0,z:0,rotation:0,

@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 from playwright.sync_api import expect
 from tests.stage07.browser_checks import page,settings,api,admin_user,login_ui
-from tests.webgl.navigation import panel,close_panels
+from tests.webgl.navigation import panel,close_panels,add_production_variant,CATALOGUE_LABELS
 from tests.webgl.drawer_modules_checks import export_payload
 from backend.v2.three_d_api import FurnitureItem
 from backend.v2.three_d_document import hardware_for,module_contents
@@ -36,9 +36,9 @@ def geometry(page):
 def test_sink_oven_controls_save_reload_export(page,api,settings,admin_user):
  login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
  expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
- panel(page,'left','catalog');expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(16)
+ panel(page,'left','catalog');expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(12)
  for bid in IDS:
-  panel(page,'left','catalog');page.locator(f'[data-bazis="{bid}"]').click()
+  add_production_variant(page,bid)
   state=geometry(page);assert state['width']==600
   if bid!=OVEN:
    assert len([p for p in state['parts'] if p['key'].startswith('rail-')])==3

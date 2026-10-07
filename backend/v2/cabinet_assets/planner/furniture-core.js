@@ -170,6 +170,32 @@
         {key:'screw-4x16',name:'Шуруп 4х16',quantity:4,unit:'pcs'}]}}
   });
   const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION});
+  // Catalogue families only group verified L/P donors. The scene persists the
+  // real donor identity, so existing projects and native imports stay explicit.
+  const DOOR_FAMILIES=freeze([
+    {key:'base.one-door',label:'Нижний шкаф · 1 дверь',left:'bazis.0211e4f77fc4',right:'bazis.784bf9af84f8'},
+    {key:'base.sink.one-door',label:'Нижний под мойку · 1 дверь',left:'bazis.facfa0cd038b',right:'bazis.b226370aab54'},
+    {key:'wall.one-door',label:'Верхний шкаф · 1 дверь',left:'bazis.858266606bc5',right:'bazis.2175c60e84a6'},
+    {key:'wall.dryer.one-door',label:'Верхний с сушкой · 1 дверь',left:'bazis.b89bf9852860',right:'bazis.60f79b573cd1'}
+  ]);
+  function doorFamilyById(id){return DOOR_FAMILIES.find(f=>f.left===id||f.right===id)||null;}
+  function doorFamily(it){
+    const f=doorFamilyById(it?.bazis_id),p=PRODUCTION_MODELS[it?.bazis_id];
+    return f&&p&&it.bazis_sha256===p.source_sha256?f:null;
+  }
+  function doorVariant(it,side,catalogue){
+    const f=doorFamily(it);
+    if(!f||!['left','right'].includes(side))throw new Error('Для этого модуля нет выбранного варианта открывания');
+    const target=catalogue.find(m=>m.id===f[side]),p=PRODUCTION_MODELS[f[side]];
+    if(!target||target.source_sha256!==p.source_sha256)throw new Error('Исходный вариант открывания не найден');
+    if(it.bazis_id===target.id)return {...it};
+    const oldLabel=PRODUCTION_MODELS[it.bazis_id].label;
+    // Keep designer names. Only an old automatic name with L/P changes its side.
+    const suffix=String(it.name||'').slice(oldLabel.length);
+    const automatic=String(it.name||'').startsWith(oldLabel)&&(!suffix||/^ \d+$/.test(suffix));
+    return {...it,bazis_id:target.id,bazis_file:target.source_file,bazis_sha256:target.source_sha256,
+      bazis_resize:Boolean(target.resize),name:automatic?p.label+suffix:it.name};
+  }
   function cornerSpec(it){const p=PRODUCTION_MODELS[it?.bazis_id];return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;}
   function cornerReturnPlacement(corner,it){
     const c=cornerSpec(corner);
@@ -628,5 +654,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

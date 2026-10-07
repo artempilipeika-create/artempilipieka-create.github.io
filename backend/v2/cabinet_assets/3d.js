@@ -111,6 +111,10 @@ for(const m of [...bazisModules,...Object.values(kitchenTemplates)]){
   if(p?.constraints?.min_body_height_mm)m.limits.h[0]=p.base_height+p.constraints.min_body_height_mm;
 }
 const bazisById=new Map(bazisModules.map(x=>[x.id,x]));
+for(const m of bazisModules){
+  const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(m.id);
+  if(family)m.catalogue_label=family.label;
+}
 
 let user=null,projects=[],project=null,state=null,selectedId=null,viewMode='3d';
 let rotY=-.55,rotX=.2,zoom=1,drag=false,px=0,py=0,boxes=[],materials=new Map();
@@ -244,7 +248,7 @@ function addCatalogueButton(root,opt){
   b.className='mf3d-module';
   b.type='button';
   b.dataset.category=opt.category||'other';
-  b.dataset.search=(opt.label+' '+opt.description).toLowerCase();
+  b.dataset.search=(opt.label+' '+opt.description+' '+(opt.search||'')).toLowerCase();
   if(opt.module)b.dataset.module=opt.module;
   if(opt.template)b.dataset.template=opt.template;
   if(opt.bazis)b.dataset.bazis=opt.bazis;
@@ -300,6 +304,8 @@ function renderModuleCatalogue(){
   const heading=document.createElement('h3');heading.textContent='Производственные модули';group.append(heading);
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
+    const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(id);
+    if(family&&id!==family.left)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
     const description=p.corner
       ?'Угловая мойка · корпус 950 × 510 · отступ 50 · фальшпанель и бленды'
@@ -314,7 +320,12 @@ function renderModuleCatalogue(){
       :isWall
         ?(p.doors.length===2?'Верхний · 2 фасада · полки по высоте · задник 3 мм · PRIME':p.doors[0].side==='left'?'Верхний · левое открывание · полки по высоте · PRIME':'Верхний · правое открывание · полки по высоте · PRIME')
         :p.doors.length===2?'Две двери · полка · задник':p.doors[0].side==='left'?'Левое открывание · полка · задник':'Правое открывание · полка · задник';
-    addCatalogueButton(group,{bazis:id,category:categoryKey(m),label:m.label,description});
+    const familyDescription=family?(p.carcass.type==='sink_three_vertical_rails'
+      ?'Левое / правое · 3 вертикальные царги'
+      :p.dryer?'Левое / правое · сушка AKS по ширине'
+      :isWall?'Левое / правое · полки по высоте':'Левое / правое · полка · задник'):description;
+    const search=family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
+    addCatalogueButton(group,{bazis:id,category:categoryKey(m),label:family?.label||m.label,description:familyDescription,search});
   }
   root.append(group);
   applyCatalogueFilter();
@@ -518,10 +529,11 @@ function addTemplate(templateId,announce=true){
 function addBazisModule(bazisId,announce=true){
   const m=bazisById.get(bazisId);
   if(!m||m.component)return;
-  const d=m.defaults,n=state.items.filter(x=>x.bazis_id===bazisId).length+1;
+  const d=m.defaults,family=globalThis.MF_FURNITURE_CORE.doorFamilyById(bazisId),
+    n=state.items.filter(x=>family?[family.left,family.right].includes(x.bazis_id):x.bazis_id===bazisId).length+1;
   const it={
     item_id:uid(),module_type:m.module_type,template_id:null,bazis_id:m.id,bazis_file:m.source_file,
-    bazis_sha256:m.source_sha256,bazis_resize:Boolean(m.resize),name:m.label+(n>1?' '+n:''),
+    bazis_sha256:m.source_sha256,bazis_resize:Boolean(m.resize),name:(m.catalogue_label||m.label)+(n>1?' '+n:''),
     x:Math.min(1200,state.items.length*250),z:-Math.max(0,state.room.depth/2-d.d/2-100),rotation:0,
     width:d.w,height:d.h,depth:d.d,layout:d.layout,drawers:d.drawers,base:d.base,handles:'handles',
     body_variant_id:null,front_variant_id:null
@@ -637,6 +649,15 @@ async function syncControls(){
     return;
   }
   const t=templateFor(it);
+  const family=globalThis.MF_FURNITURE_CORE.doorFamily(it),opening=$('door-opening-controls');
+  if(opening){
+    opening.hidden=!family;
+    for(const b of opening.querySelectorAll('[data-door-side]')){
+      const active=Boolean(family&&family[b.dataset.doorSide]===it.bazis_id);
+      b.setAttribute('aria-pressed',String(active));
+    }
+    $('door-opening-note').textContent=family?'Петли '+(it.bazis_id===family.left?'слева':'справа')+', если смотреть на шкаф спереди. Меняется выбранный модуль.':'';
+  }
   $('item-title').textContent=it.name;
   $('template-info').textContent=it.bazis_id
     ?'БАЗИС · '+it.bazis_file+' · привязан к исходному .fr3d.'

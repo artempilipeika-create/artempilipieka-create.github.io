@@ -5,7 +5,7 @@ from pathlib import Path
 from playwright.sync_api import expect
 
 from tests.stage07.browser_checks import page,settings,api,admin_user,login_ui
-from tests.webgl.navigation import panel,close_panels
+from tests.webgl.navigation import panel,close_panels,add_production_variant,CATALOGUE_LABELS
 
 DONORS={
     'bazis.858266606bc5':{
@@ -24,7 +24,6 @@ DONORS={
         'fronts':[(717,297),(717,297)],'hinges':4,'sides':['left','right'],
     },
 }
-CATALOGUE=['Д1 L','Д1 P','Д2','Нижний 2 ящика · с доводчиком','Нижний 3 ящика · с доводчиком','ВМД1 L','ВМД1 P','ВМД2','ВМД1 L · Сушка','ВМД1 P · Сушка','ВМД2 · Сушка']
 
 def open_verified_planner(page,admin_user):
     login_ui(page,admin_user['email'])
@@ -57,10 +56,10 @@ def export_payload(page):
 def test_vmd_upper_modules_exact_render_save_load_and_native_export(page,api,settings,admin_user):
     open_verified_planner(page,admin_user)
     panel(page,'left','catalog')
-    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(16)
-    assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE+['НМД1 L · Мойка','НМД1 P · Мойка','НМД2 · Мойка','НШД-600 · ниша 595','НМУ-1000 Д1 L · Мойка']
+    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(12)
+    assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE_LABELS
     for bazis_id,expected in DONORS.items():
-        page.locator(f'[data-bazis="{bazis_id}"]').click()
+        add_production_variant(page,bazis_id)
         actual=state(page);parts=actual['parts']
         assert actual['label']==expected['label']
         assert actual['item']=={
