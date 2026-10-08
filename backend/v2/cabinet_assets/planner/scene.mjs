@@ -3,6 +3,8 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
 import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings,scopeMatches} from './furniture-core.mjs';
 import {roomSettings,LIGHTS} from './room-state.mjs';
+import {wallPanels} from './room-plan.mjs';
+import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
 export class PlannerScene{
   constructor(canvas,adapter,onLost){
@@ -51,6 +53,7 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();
     const r=this.adapter.room;
     if(this.walls)this.walls.forEach(w=>{w.visible=this.mode!=='top'&&(w.userData.axis==='x'?this.camera.position.x*w.userData.sign<r.width*S/2-.02:this.camera.position.z*w.userData.sign<r.depth*S/2-.02);if(w.userData.trim)w.userData.trim.visible=w.visible;});
+    for(const f of this.roomFeatures||[]){f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
     if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
     if(this.grid){this.grid.visible=!this.client;this.grid.material.opacity=this.mode==='top'?.14:.035;}
     if(this.clientFloor)this.clientFloor.visible=Boolean(this.client);
@@ -65,7 +68,7 @@ export class PlannerScene{
     const span=this.orthoSpan||3;this.ortho.left=-span*this.width/this.height;this.ortho.right=-this.ortho.left;this.ortho.top=span;this.ortho.bottom=-span;this.ortho.updateProjectionMatrix();this.invalidate();
   }
   disposeTree(group){
-    if(!group)return;group.traverse(o=>{if(o.geometry&&!this.factory.ownsGeometry(o.geometry))o.geometry.dispose();if(o.userData.ownMaterial)o.material?.dispose();});group.removeFromParent();
+    if(!group)return;group.traverse(o=>{if(o.geometry&&!this.factory.ownsGeometry(o.geometry))o.geometry.dispose();if(o.userData.ownMap)o.material?.map?.dispose();if(o.userData.ownMaterial)o.material?.dispose();});group.removeFromParent();
   }
   roomMesh(){
     this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.floorTexture=null;this.clientFloor=null;this.floorJoints=null;this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room,settings=roomSettings(this.adapter.state?.displaySettings);
@@ -92,12 +95,16 @@ export class PlannerScene{
       const material=new THREE.MeshStandardMaterial({color:'#d8d5cd',map:texture,roughness:.88,metalness:0,vertexColors:true});
       this.clientFloor=new THREE.Mesh(geometry,material);this.clientFloor.userData={ownMaterial:true,visualOnly:true,plankSizeMm:[width,length],scanSizeMm:[1300,2800]};this.clientFloor.receiveShadow=true;this.clientFloor.raycast=()=>{};this.roomRoot.add(this.clientFloor);
     }
-    for(const sign of[-1,1]){
-      const z=make(r.width,r.height,20,0,r.height/2,sign*(r.depth/2+10),settings.wallColor,true);z.userData.axis='z';z.userData.sign=sign;this.walls.push(z);
-      const x=make(20,r.height,r.depth,sign*(r.width/2+10),r.height/2,0,settings.wallColor,true);x.userData.axis='x';x.userData.sign=sign;this.walls.push(x);
-      z.userData.trim=make(r.width,65,9,0,32.5,sign*(r.depth/2-4),'#edece7');
-      x.userData.trim=make(9,65,r.depth,sign*(r.width/2-4),32.5,0,'#edece7');
+    for(const wall of ['a','b','c','d']){
+      const horizontal=['a','c'].includes(wall),axis=horizontal?'z':'x',sign=['a','d'].includes(wall)?-1:1;
+      for(const p of wallPanels(r,wall)){
+        const along=-(horizontal?r.width:r.depth)/2+p.offset+p.width/2;
+        const m=horizontal?make(p.width,p.height,20,along,p.elevation+p.height/2,sign*(r.depth/2+10),settings.wallColor,true):make(20,p.height,p.width,sign*(r.width/2+10),p.elevation+p.height/2,along,settings.wallColor,true);
+        Object.assign(m.userData,{axis,sign});this.walls.push(m);
+        if(p.elevation===0)m.userData.trim=horizontal?make(p.width,65,9,along,32.5,sign*(r.depth/2-4),'#edece7'):make(9,65,p.width,sign*(r.width/2-4),32.5,along,'#edece7');
+      }
     }
+    this.roomFeatures=measuredFeatures(this);
     const joints=[],plank=settings.floorMaterial==='oak',step=plank?190:600;
     if(settings.floorMaterial!=='concrete'){
       for(let x=-r.width/2+step;x<r.width/2;x+=step)joints.push(x*S,-.0015,-r.depth*S/2,x*S,-.0015,r.depth*S/2);

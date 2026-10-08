@@ -1,5 +1,6 @@
 import {clone,MM_TO_WORLD,elevation,placementError,rightAnchoredWidth,dimensionPatch,kitchenSettings,rotateXZ} from './furniture-core.mjs';
 import {snapItem,findSpace} from './placement.mjs';
+import {roomReady} from './room-plan.mjs';
 
 /** One furniture gesture, one history entry; previews never mutate project data. */
 export class Interaction {
@@ -39,7 +40,7 @@ export class Interaction {
   decorateCatalogue(){this.catalogue?.querySelectorAll('.mf3d-module').forEach(b=>{b.draggable=true;});}
   cardOptions(card){return {template:card.dataset.template||null,bazis:card.dataset.bazis||null,module:card.dataset.module||null};}
   consume(e){e.preventDefault();e.stopImmediatePropagation();}
-  editable(){return !this.suspended&&!document.body.classList.contains('planner-client');}
+  editable(){return !this.suspended&&roomReady(this.adapter.room)&&!document.body.classList.contains('planner-client');}
   feedback(result){
     const el=document.getElementById('planner-feedback');if(!el)return;
     el.hidden=!result;el.dataset.error=String(Boolean(result?.error));
@@ -109,6 +110,7 @@ export class Interaction {
     if(this.catalogueDraft)this.catalogueEnd();
   }
   change(label,fn){
+    if(!roomReady(this.adapter.room)){this.adapter.status('Сначала задайте размеры и заполните замер в разделе «Комната».');document.dispatchEvent(new Event('mf:room-required'));return false;}
     if(!this.editable())return false;
     this.cancel();
     try {this.history.run(label,fn);return true;}catch(error){this.adapter.status(error.message);return false;}

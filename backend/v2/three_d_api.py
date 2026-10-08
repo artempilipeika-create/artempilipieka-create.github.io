@@ -14,11 +14,7 @@ from . import catalogue
 from .three_d_document import render as render_spec
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
-
-class Room(StrictModel):
-    width: int=Field(default=4200,ge=1500,le=12000)
-    depth: int=Field(default=3200,ge=1500,le=12000)
-    height: int=Field(default=2700,ge=2000,le=5000)
+from .three_d_room import Room
 
 class ShelfState(StrictModel):
     id: str=Field(min_length=1,max_length=80)

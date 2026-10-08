@@ -191,7 +191,7 @@ function normalizeScene(s={}){
   const items=Array.isArray(s.items)?s.items.map(x=>normalizeItem(x,room)):[legacyItem(s)];
   return{
     schema_version:2,
-    room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700},
+    room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700,setup_complete:room.setup_complete??null,survey:room.survey??null,features:Array.isArray(room.features)?room.features:[]},
     displaySettings:s.displaySettings||{},
     materialIdentities:s.materialIdentities||{},
     items,
@@ -418,7 +418,7 @@ async function saveProject(){
 }
 async function newProject(){
   project=null;
-  state={schema_version:2,room:{width:4200,depth:3200,height:2700},items:[],selected_item_id:null,view_mode:'3d'};
+  state={schema_version:2,room:{width:4200,depth:3200,height:2700,setup_complete:false,survey:null,features:[]},items:[],selected_item_id:null,view_mode:'3d'};
   selectedId=null;
   $('project-name').value='Новый 3D-проект';
   syncRoom();

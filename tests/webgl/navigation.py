@@ -1,8 +1,21 @@
 """Real UI navigation for collapsible panels. No state or visibility overrides.
 All regression actions open the actual drawer before editing its existing controls.
 """
+def complete_room_setup(page):
+    """Confirm measured synthetic fixture dimensions through the real new-project flow."""
+    dialog=page.locator('#room-setup')
+    if not dialog.count() or not dialog.is_visible():return
+    for key,value in [('width',4200),('depth',3200),('height',2700)]:
+        page.locator('#room-setup-'+key).fill(str(value))
+    page.locator('#room-setup-next').click()
+    page.locator('#room-survey-none').click()
+    page.locator('#room-setup-apply').click()
+
 def panel(page,side,tab=None):
     if not page.locator('#planner-workspace').count():return
+    if page.locator('#room-setup').is_visible():
+        if side=='left' and tab=='projects':page.locator('#room-setup-projects').click()
+        else:complete_room_setup(page)
     target=page.locator('.mf3d-left' if side=='left' else '.mf3d-right')
     if not target.is_visible():
         mobile=page.viewport_size['width']<=760
@@ -46,4 +59,5 @@ def add_legacy(page,options):
     It is deliberately absent from the active customer catalogue.
     """
     page.wait_for_function('Boolean(window.MF_PLANNER?.interaction)')
+    complete_room_setup(page)
     assert page.evaluate('(options)=>MF_PLANNER.interaction.add(options)',options)
