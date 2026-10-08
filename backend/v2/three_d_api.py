@@ -66,6 +66,7 @@ class FurnitureItem(StrictModel):
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
+    upper_shelf_count: int|None=Field(default=None,ge=0,le=8,strict=True)
 
     @model_validator(mode='after')
     def separated_heights(self):
@@ -112,6 +113,8 @@ class FurnitureItem(StrictModel):
             if not 450<=self.depth<=700 or not 600<=body<=1000:
                 raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
         tall=tall_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
+        if self.upper_shelf_count is not None and not tall:
+            raise ValueError('Количество верхних полок доступно только для проверенного пенала')
         if tall:
             if self.module_type!='tall_cabinet' or base!=100 or self.base=='wall':
                 raise ValueError('Пенал устанавливается на цоколь 100 мм')

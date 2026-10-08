@@ -679,6 +679,21 @@ async function syncControls(){
     $('tall-options-note').textContent=tallInfo?`База ${tallInfo.row_height} = корпус нижнего ряда ${tallInfo.row_height-100} + цоколь 100 мм. `+
       (tallInfo.opening==='double'?'Д2: две створки в каждой секции, всего четыре фасада.':'Две секции, по одной двери; петли '+(tallInfo.opening==='left'?'слева.':'справа.')):'';
   }
+  const shelfControls=$('tall-shelf-controls');
+  if(shelfControls){
+    shelfControls.hidden=!tallInfo;
+    if(tallInfo){
+      const core=globalThis.MF_FURNITURE_CORE,count=core.tallUpperShelves(it,t.production).length,custom=it.upper_shelf_count!=null;
+      $('tall-shelf-count').textContent=String(count);
+      $('tall-shelf-minus').disabled=count<=0;$('tall-shelf-plus').disabled=count>=8;
+      $('tall-shelf-reset').disabled=!custom;
+      const gap=(it.height-18-tallInfo.row_height-count*18)/(count+1);
+      $('tall-shelf-note').textContent=custom
+        ?count+' полк. · '+(count+1)+' отдел. по '+mmText(gap)+' мм. При изменении высоты промежутки пересчитываются.'
+        :'Исходное наполнение. Добавляйте или убирайте полки — они распределятся равномерно.';
+      $('tall-shelf-native-note').hidden=!core.tallShelfAdjustment(it,t.production);
+    }
+  }
   const family=globalThis.MF_FURNITURE_CORE.doorFamily(it),opening=$('door-opening-controls');
   if(opening){
     opening.hidden=!family;
@@ -735,7 +750,7 @@ async function syncControls(){
       }
       if($('production-rule-note')){
         $('production-rule-note').textContent=production.tall
-          ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+production.tall.upper_shelves.length+' съёмн. При изменении общей высоты растёт верхняя секция. Столешница в высоту базы не входит.'
+          ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+core.tallUpperShelves(it,production).length+' съёмн. При изменении общей высоты растёт верхняя секция, выбранные полки распределяются равномерно. Столешница в высоту базы не входит.'
           :production.corner
           ?'Установочная ширина '+it.width+' мм = корпус '+(it.width-50)+' мм + отступ от стены 50 мм. '+(production.corner.split_blind?'Фальшпанель: 120 мм в материале фасада + 458 мм в материале корпуса. ':'Фальшпанель 578 мм. ')+'Бленда 50 мм. Дверцы: '+core.facadeCells(it,t).map(f=>f.h+' × '+f.w).join('; ')+' мм. '+(production.corner.purpose==='shelf'?'Полка, задник 3 мм, две горизонтальные царги.':'Три вертикальные царги, нижняя — сзади над дном.')+' Шесть опор.'
           :production.constraints?.niche_height_mm
@@ -1135,7 +1150,9 @@ function exportBazisProject(){
         construction:p?{
           key:p.key,
           constraints:p.constraints||null,
-          corner:p.corner||null,tall:p.tall||null,facade:p.facade||null,
+          corner:p.corner||null,tall:p.tall?{...p.tall,upper_shelf_count:globalThis.MF_FURNITURE_CORE.tallUpperShelves(it,p).length,
+            upper_shelves:globalThis.MF_FURNITURE_CORE.tallUpperShelves(it,p),shelf_layout:it.upper_shelf_count==null?'native':'even'}:null,
+          native_adjustment:globalThis.MF_FURNITURE_CORE.tallShelfAdjustment(it,p),facade:p.facade||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,
@@ -1164,7 +1181,8 @@ function exportBazisProject(){
   a.download=exportSafeName($('project-name').value.trim()||'Martin_Forest_Project')+'.mf-bazis.json';
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей.');
+  const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей.'+(adjusted.length?' Верхние полки в '+adjusted.length+' пенал. нужно скорректировать в БАЗИС по данным файла.':''));
 }
 
 async function toOrder(){

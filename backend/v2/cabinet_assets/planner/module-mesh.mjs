@@ -293,7 +293,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

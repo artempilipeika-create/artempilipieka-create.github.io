@@ -95,6 +95,17 @@
      <button type="button" class="secondary" data-tall-option="opening" data-tall-value="double" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M17.5 2v40M14 17v5m7-5v5M14 33v5m7-5v5"/></svg><span>Д2 · две двери</span></button>
     </div><p id="tall-options-note" class="studio-hint" aria-live="polite"></p>
    </div>
+   <div id="tall-shelf-controls" class="mf3d-control-card" hidden>
+    <div class="mf3d-control-title"><strong>Полки верхнего отделения</strong></div>
+    <div class="mf3d-shelf-stepper" role="group" aria-label="Количество верхних полок">
+     <button id="tall-shelf-minus" type="button" class="secondary" aria-label="Убрать верхнюю полку">−</button>
+     <output id="tall-shelf-count" aria-live="polite">1</output>
+     <button id="tall-shelf-plus" type="button" class="secondary" aria-label="Добавить верхнюю полку">+</button>
+    </div>
+    <p id="tall-shelf-note" class="studio-hint"></p>
+    <div class="mf3d-door-options"><button id="tall-shelf-show" type="button" class="secondary">Показать полки</button><button id="tall-shelf-reset" type="button" class="secondary">Исходное наполнение</button></div>
+    <p id="tall-shelf-native-note" class="studio-hint" hidden>Полки учтены в 3D, деталировке и спецификации. В родном FR3D количество и положение полок нужно скорректировать в БАЗИС.</p>
+   </div>
    <div id="corner-options-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong>Угловой шкаф</strong></div>
     <div class="mf3d-option-label">Угол</div>

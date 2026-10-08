@@ -105,3 +105,56 @@ def test_tall_backend_validation_hardware_and_pdf(v):
     text='\n'.join(p.extract_text() for p in PdfReader(BytesIO(render('Пенал',{'items':[it]},{}))).pages)
     assert str(v['row_height']) in text and '1,5' in text and 'Полкодержатель' in text
     assert str(2000-v['row_height']-1.5) in module_contents(it)
+
+def test_upper_shelf_controls_mesh_resize_history_and_persistence(page,api,settings,admin_user):
+    login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
+    expect(page.locator('body')).to_have_attribute('data-planner-ready','true');panel(page,'left','catalog')
+    page.locator(f'[data-bazis="{DEFAULT}"]').click();panel(page,'right')
+    expect(page.locator('#tall-shelf-count')).to_have_text('1')
+    def mesh_shelves():
+        return page.evaluate("""()=>{const p=MF_PLANNER,it=p.adapter.selected,parts=[];p.scene.entries.get(it.item_id).group.traverse(m=>{
+          const part=m.userData.part;if(part?.key.startsWith('shelf-'))parts.push({key:part.key,y:part.position.y});});return parts;}""")
+    original=mesh_shelves()
+    for _ in range(3):page.locator('#tall-shelf-plus').click()
+    expect(page.locator('#tall-shelf-count')).to_have_text('4')
+    assert selected(page)['upper_shelf_count']==4
+    assert len(mesh_shelves())==5
+    assert page.evaluate('MF_PLANNER.scene.displayMode')=='inspection'
+    page.locator('#height').fill('2400');page.locator('#height').press('Tab')
+    assert len(mesh_shelves())==5
+    choose(page,'row_height',900);choose(page,'opening','double')
+    assert selected(page)['upper_shelf_count']==4
+    assert [p['y'] for p in mesh_shelves() if p['key'].startswith('shelf-upper-')]==[1191,1491,1791,2091]
+    panel(page,'right');before=selected(page)
+    page.locator('#tall-shelf-minus').click();assert selected(page)['upper_shelf_count']==3
+    close_panels(page);page.locator('#planner-undo').click();assert selected(page)==before
+    page.locator('#planner-redo').click();assert selected(page)['upper_shelf_count']==3
+    panel(page,'right');page.locator('#tall-shelf-plus').click()
+    native=export_payload(page)['items'][0]
+    assert native['construction']['tall']['upper_shelf_count']==4
+    assert native['construction']['tall']['upper_shelves']==[1191,1491,1791,2091]
+    assert native['construction']['native_adjustment']['requires_manual_native_adjustment'] is True
+    assert next(p for p in native['construction']['hardware']['items'] if p['key']=='shelf-support-marcopol')['quantity']==16
+    close_panels(page);page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
+    pid=page.evaluate('MF_PLANNER.adapter.projectId')
+    assert api.get('/api/v2/3d-projects/'+pid).json()['scene']['items'][0]['upper_shelf_count']==4
+    page.goto('https://testserver/constructor');expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
+    panel(page,'left','projects');page.locator('#projects .mf3d-project').first.click()
+    page.wait_for_function('()=>MF_PLANNER.adapter.items.length===1')
+    panel(page,'right');expect(page.locator('#tall-shelf-count')).to_have_text('4')
+    assert len(mesh_shelves())==5
+    page.locator('#tall-shelf-show').click();page.evaluate('MF_PLANNER.scene.fit("selected")')
+    screenshot(page,'tall-four-upper-shelves')
+    page.locator('#tall-shelf-reset').click();expect(page.locator('#tall-shelf-count')).to_have_text('2')
+    assert selected(page)['upper_shelf_count'] is None
+    assert [p['y'] for p in mesh_shelves() if p['key'].startswith('shelf-upper-')]==VARIANTS[-1]['upper_shelves']
+    for _ in range(2):page.locator('#tall-shelf-minus').click()
+    expect(page.locator('#tall-shelf-count')).to_have_text('0');expect(page.locator('#tall-shelf-minus')).to_be_disabled()
+    assert len(mesh_shelves())==1
+    close_panels(page);page.locator('#save-project').click();expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
+    assert api.get('/api/v2/3d-projects/'+pid).json()['scene']['items'][0]['upper_shelf_count']==0
+    page.set_viewport_size({'width':390,'height':844});panel(page,'right')
+    for _ in range(8):page.locator('#tall-shelf-plus').click()
+    expect(page.locator('#tall-shelf-count')).to_have_text('8');expect(page.locator('#tall-shelf-plus')).to_be_disabled()
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
+    screenshot(page,'tall-shelves-mobile')

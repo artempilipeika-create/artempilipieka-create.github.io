@@ -3,7 +3,7 @@ import {StateAdapter} from './state-adapter.mjs';
 import {History} from './history.mjs';
 import {Interaction} from './interaction.mjs';
 import {FallbackPlan} from './fallback.mjs';
-import {placementError,elevation,tier,kitchenSettings,dimensionPatch,rotateXZ,doorFamily,doorVariant,cornerVariantInfo,cornerVariant,tallVariantInfo,tallVariant} from './furniture-core.mjs';
+import {placementError,elevation,tier,kitchenSettings,dimensionPatch,rotateXZ,doorFamily,doorVariant,cornerVariantInfo,cornerVariant,tallVariantInfo,tallVariant,tallUpperShelves} from './furniture-core.mjs';
 const get=id=>document.getElementById(id);
 const make=(tag,id,text)=>{const el=document.createElement(tag);if(id)el.id=id;if(text!==undefined)el.textContent=text;return el;};
 const button=(id,text,title)=>{const b=make('button',id,text);b.type='button';b.className='secondary';if(title){b.title=title;b.setAttribute('aria-label',title);}return b;};
@@ -92,6 +92,22 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
+    const showTallShelves=()=>{
+      this.scene?.setDisplayMode?.('inspection');
+      get('module-display').value='inspection';
+    };
+    for(const [id,delta]of [['tall-shelf-minus',-1],['tall-shelf-plus',1]])this.listen(get(id),'click',()=>{
+      const it=this.adapter.selected;if(!tallVariantInfo(it))return;
+      const count=tallUpperShelves(it).length+delta;if(count<0||count>8)return;
+      this.interaction.modify({upper_shelf_count:count},'Количество верхних полок');
+      this.bridge.refresh();showTallShelves();
+    });
+    this.listen(get('tall-shelf-reset'),'click',()=>{
+      const it=this.adapter.selected;if(!tallVariantInfo(it))return;
+      this.interaction.modify({upper_shelf_count:null},'Исходные верхние полки');this.bridge.refresh();showTallShelves();
+    });
+    this.listen(get('tall-shelf-show'),'click',showTallShelves);
+
     this.listen(get('tall-options-controls'),'click',e=>{
       const b=e.target.closest('[data-tall-option]'),it=this.adapter.selected,current=tallVariantInfo(it);
       if(!b||!current)return;

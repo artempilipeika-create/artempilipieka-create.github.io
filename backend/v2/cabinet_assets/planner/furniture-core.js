@@ -220,6 +220,22 @@
     return {...it,bazis_id:next.id,bazis_file:next.source_file,bazis_sha256:next.source_sha256,
       bazis_resize:Boolean(target.resize),name:automatic?next.label+suffix:it.name};
   }
+  function tallUpperShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(!p?.tall)return [];
+    // Null preserves the original donor and previously saved projects.
+    if(it.upper_shelf_count==null)return [...p.tall.upper_shelves];
+    const count=it.upper_shelf_count,t=p.carcass.panel_thickness,bottom=p.tall.row_height,top=it.height-t;
+    const gap=(top-bottom-count*t)/(count+1);
+    return Array.from({length:count},(_,i)=>bottom+gap+t/2+i*(gap+t));
+  }
+  function tallShelfAdjustment(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(!p?.tall)return null;
+    const positions=tallUpperShelves(it,p),source=p.tall.upper_shelves;
+    if(positions.length===source.length&&positions.every((y,i)=>Math.abs(y-source[i])<.001))return null;
+    return {kind:'tall_upper_shelves',requires_manual_native_adjustment:true,count:positions.length,
+      centers_from_floor_mm:positions,thickness_mm:p.carcass.panel_thickness,
+      note:'В родном FR3D вручную измените количество и положение верхних полок по этим отметкам. Нижняя полка и перегородка остаются на месте.'};
+  }
   function tallDefaultId(items,selected){
     const lower=isKitchenModule(selected||{})?selected:[...items].reverse().find(isKitchenModule);
     const row=lower?heights(lower).body_height+100:820;
@@ -278,6 +294,7 @@
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
     if(p?.tall){
+      if(it.upper_shelf_count!=null&&(!Number.isInteger(it.upper_shelf_count)||it.upper_shelf_count<0||it.upper_shelf_count>8))return 'Количество верхних полок — от 0 до 8';
       if(it.base==='wall'||heights(it).base_height!==100)return 'Пенал устанавливается на цоколь 100 мм';
       if(it.width>(p.tall.doors_per_section===2?1200:600))return 'Ширина одной створки — не больше 600 мм';
       if(it.height<1800||it.height>2800)return 'Высота пенала — от 1800 до 2800 мм';
@@ -330,6 +347,10 @@
     if(p.dryer){
       const width=Number(it?.width)||p.native_defaults.width;
       hw.items=hw.items.map(x=>x.key==='dish-dryer'?{...x,width_mm:width,name:'Сушка для посуды '+width+' MOUNT, белый AKS'}:x);
+    }
+    if(p.tall){
+      const support=hw.items.find(x=>x.key==='shelf-support-marcopol');
+      if(support)support.quantity=tallUpperShelves(it,p).length*4;
     }
     if(hw.native_fixed_items)return hw;
     const shelfCount=productionShelves(it,p).length;
@@ -413,6 +434,8 @@
     }
     const p=PRODUCTION_MODELS[it.bazis_id];
     if(p?.tier==='wall'&&p.shelf_rule)it.shelves=productionShelves(it,p);
+    if(p?.tall&&it.height!==source.height&&['height','body_height'].some(k=>Object.hasOwn(patch,k)))
+      it.upper_shelf_count=it.upper_shelf_count??p.tall.upper_shelves.length;
     return it;
   }
   function legacyFrontSpec(it){
@@ -501,7 +524,7 @@
       if(p.tall){
         add('divider','Перегородка','body',{x:inner,y:t,z:D},{x:0,y:p.tall.row_height-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name);
         add('shelf-fixed','Полка на конфирматах','shelf',{x:inner,y:t,z:D},{x:0,y:p.tall.fixed_shelf_y,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name,{fixed:true});
-        p.tall.upper_shelves.forEach((y,i)=>add('shelf-upper-'+(i+1),'Полка съёмная','shelf',
+        tallUpperShelves(it,p).forEach((y,i)=>add('shelf-upper-'+(i+1),'Полка съёмная','shelf',
           {x:W-38,y:t,z:D},{x:0,y,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name,{fixed:true}));
       }
       for(const shelf of productionShelves(it,p))if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
@@ -753,5 +776,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

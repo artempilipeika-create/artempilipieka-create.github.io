@@ -14,7 +14,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
-from .three_d_tall import tall_variant
+from .three_d_tall import tall_variant,tall_shelf_count
 
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');MINT=colors.HexColor('#e8efe9');PALE=colors.HexColor('#f7f9f5')
 PAGE=landscape(A4);WIDTH=PAGE[0]-16*mm
@@ -88,7 +88,7 @@ def hardware_for(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
     tall=tall_variant(it)
     if tall:
-        return [_row(r['name'],r['quantity'],r['unit'],r.get('article','')) for r in tall['hardware_items']],None
+        return [_row(r['name'],tall_shelf_count(it)*4 if r['key']=='shelf-support-marcopol' else r['quantity'],r['unit'],r.get('article','')) for r in tall['hardware_items']],None
     corner=corner_variant(it)
     if corner:
         return [_row(r['name'],r['quantity'],r['unit'],r.get('article','')) for r in corner['hardware_items']],None
@@ -142,7 +142,7 @@ def module_contents(it):
         opening={'left':'L, петли слева','right':'P, петли справа','double':'Д2, две створки в каждой секции'}[tall['opening']]
         return (f'база нижнего ряда {row} мм = корпус {row-100} + цоколь 100 мм, без столешницы; '
                 f'{opening}; {n*2} фасадов: нижние {row-103:g} × {fw:g} мм, верхние {h-row-1.5:g} × {fw:g} мм; '
-                f'горизонтальный зазор 1,5 мм; нижняя полка на конфирматах; {len(tall["upper_shelves"])} съёмн. полк. сверху; задняя стенка 3 мм')
+                f'горизонтальный зазор 1,5 мм; нижняя полка на конфирматах; {tall_shelf_count(it)} съёмн. полк. сверху; задняя стенка 3 мм')
     corner=corner_variant(it)
     if corner:
         n=corner['door_count'];door_width=(w-631-3*(n-1))/n

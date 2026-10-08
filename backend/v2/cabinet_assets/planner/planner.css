@@ -132,3 +132,7 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 .mf3d-tall-openings{grid-template-columns:repeat(3,minmax(0,1fr))}
 .mf3d-tall-openings button{flex-direction:column;gap:6px;padding:10px 3px;font-size:11px}
 #tall-options-controls svg{height:43px;width:34px;stroke-width:1.6}
+
+.mf3d-shelf-stepper{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:10px;margin-top:12px}
+.mf3d-shelf-stepper button{min-height:44px;font-size:24px;padding:4px}
+.mf3d-shelf-stepper output{text-align:center;font-size:24px;font-weight:600}
