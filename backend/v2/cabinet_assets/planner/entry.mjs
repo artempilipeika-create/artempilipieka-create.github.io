@@ -3,7 +3,7 @@ import {StateAdapter} from './state-adapter.mjs';
 import {History} from './history.mjs';
 import {Interaction} from './interaction.mjs';
 import {FallbackPlan} from './fallback.mjs';
-import {placementError,elevation,tier,kitchenSettings,dimensionPatch,rotateXZ,doorFamily,doorVariant,cornerVariantInfo,cornerVariant} from './furniture-core.mjs';
+import {placementError,elevation,tier,kitchenSettings,dimensionPatch,rotateXZ,doorFamily,doorVariant,cornerVariantInfo,cornerVariant,tallVariantInfo,tallVariant} from './furniture-core.mjs';
 const get=id=>document.getElementById(id);
 const make=(tag,id,text)=>{const el=document.createElement(tag);if(id)el.id=id;if(text!==undefined)el.textContent=text;return el;};
 const button=(id,text,title)=>{const b=make('button',id,text);b.type='button';b.className='secondary';if(title){b.title=title;b.setAttribute('aria-label',title);}return b;};
@@ -92,6 +92,18 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
+    this.listen(get('tall-options-controls'),'click',e=>{
+      const b=e.target.closest('[data-tall-option]'),it=this.adapter.selected,current=tallVariantInfo(it);
+      if(!b||!current)return;
+      const key=b.dataset.tallOption,value=key==='row_height'?Number(b.dataset.tallValue):b.dataset.tallValue;
+      if(current[key]===value)return;
+      this.interaction.change('Исполнение пенала',()=>{
+        const next=tallVariant(it,{[key]:value},this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);
+        this.adapter.replace(next);this.adapter.status('Исполнение пенала изменено');
+      });
+      this.bridge.refresh();
+    });
     this.listen(get('corner-options-controls'),'click',e=>{
       const b=e.target.closest('[data-corner-option]'),it=this.adapter.selected,current=cornerVariantInfo(it);
       if(!b||!current)return;

@@ -190,7 +190,41 @@
         {key:'screw-4x16',name:'Шуруп 4х16',quantity:4,unit:'pcs'}]}},
     ...Object.fromEntries(CORNER_VARIANTS.map(v=>[v.id,cornerModel(v)]))
   });
-  const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION});
+  const TALL_VARIANTS=freeze(root.MF_TALL_VARIANTS||[]);
+  const TALL_FAMILY=freeze({key:'tall.shelves',label:'Пенал с полками ПН-600',default_id:'bazis.107f19943761'});
+  const tallModel=v=>({tier:'tall',label:v.label,key:`tall.shelves.${v.row_height}.${v.opening}`,
+    source_file:v.source_file,source_sha256:v.source_sha256,
+    native_defaults:{width:600,height:2000,depth:600},body_height:1900,base_height:100,worktop_thickness:0,scene_depth:600,
+    resize:true,limits:{w:[300,v.doors_per_section===2?1200:600],h:[1800,2800],d:[450,700]},
+    tall:{row_height:v.row_height,opening:v.opening,doors_per_section:v.doors_per_section,
+      fixed_shelf_y:v.fixed_shelf_y,upper_shelves:v.upper_shelves,horizontal_gap_mm:1.5},
+    carcass:{type:'tall_shelves',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
+    facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},
+    back:{type:'overlay_nails',thickness:3,inset:1.5,material_name:'ЛХДФ 3ММ Белый'},shelves:[],
+    front:{kind:'doors',count:v.doors_per_section*2},
+    doors:[2,3].flatMap(hinge_count=>Array.from({length:v.doors_per_section},(_,i)=>({
+      side:v.opening==='double'?(i===0?'left':'right'):v.opening,hinge_count,open_angle:105}))),
+    hardware:{hinge_count:v.doors_per_section*5,hinges_in_items:true,native_fixed_items:true,items:v.hardware_items}
+  });
+  const TALL_PRODUCTION=freeze(Object.fromEntries(TALL_VARIANTS.map(v=>[v.id,tallModel(v)])));
+  const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  function tallVariantInfo(it){return TALL_VARIANTS.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
+  function tallVariant(it,patch,catalogue){
+    const current=tallVariantInfo(it);
+    if(!current)throw new Error('Исходный вариант пенала не найден');
+    const options={row_height:current.row_height,opening:current.opening,...patch};
+    const next=TALL_VARIANTS.find(v=>v.row_height===options.row_height&&v.opening===options.opening);
+    const target=next&&catalogue.find(m=>m.id===next.id);
+    if(!target||target.source_sha256!==next.source_sha256)throw new Error('Исходный вариант пенала не найден');
+    const suffix=String(it.name||'').slice(current.label.length),automatic=String(it.name||'').startsWith(current.label)&&(!suffix||/^ \d+$/.test(suffix));
+    return {...it,bazis_id:next.id,bazis_file:next.source_file,bazis_sha256:next.source_sha256,
+      bazis_resize:Boolean(target.resize),name:automatic?next.label+suffix:it.name};
+  }
+  function tallDefaultId(items,selected){
+    const lower=isKitchenModule(selected||{})?selected:[...items].reverse().find(isKitchenModule);
+    const row=lower?heights(lower).body_height+100:820;
+    return TALL_VARIANTS.find(v=>v.row_height===(row===900?900:820)&&v.opening==='left')?.id||TALL_FAMILY.default_id;
+  }
   // Catalogue families only group verified L/P donors. The scene persists the
   // real donor identity, so existing projects and native imports stay explicit.
   const DOOR_FAMILIES=freeze([
@@ -243,6 +277,12 @@
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
+    if(p?.tall){
+      if(it.base==='wall'||heights(it).base_height!==100)return 'Пенал устанавливается на цоколь 100 мм';
+      if(it.width>(p.tall.doors_per_section===2?1200:600))return 'Ширина одной створки — не больше 600 мм';
+      if(it.height<1800||it.height>2800)return 'Высота пенала — от 1800 до 2800 мм';
+      return '';
+    }
     if(p?.corner){
       const count=p.corner.door_count||1,doorWidth=(it.width-p.corner.door_start_mm-p.corner.door_right_gap_mm-3*(count-1))/count;
       if(doorWidth>600||doorWidth<=0)return 'Ширина дверцы углового модуля — не больше 600 мм';
@@ -255,7 +295,7 @@
   }
 
   function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
-    if(!p)return [];
+    if(!p||p.tall)return [];
     if(p.corner?.purpose==='sink')return [];
     if(!p.shelf_rule)return (it?.shelves??p.shelves??[]).map(x=>({...x}));
     const H=Number(it?.height??p.body_height+p.base_height)-Number(p.base_height||0),r=p.shelf_rule;
@@ -291,6 +331,7 @@
       const width=Number(it?.width)||p.native_defaults.width;
       hw.items=hw.items.map(x=>x.key==='dish-dryer'?{...x,width_mm:width,name:'Сушка для посуды '+width+' MOUNT, белый AKS'}:x);
     }
+    if(hw.native_fixed_items)return hw;
     const shelfCount=productionShelves(it,p).length;
     const support=hw.items.find(x=>x.key==='shelf-support-marcopol');
     if(shelfCount&&hw.shelf_fixing!=='confirmat'){
@@ -391,6 +432,13 @@
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(production?.tall){
+      const a=production.tall,n=a.doors_per_section,fw=W/n-3;
+      // Native lower front ends 1.5 mm below the row datum; upper starts at it.
+      for(const [bottom,top]of [[baseH+1.5,a.row_height-1.5],[a.row_height,it.height-1.5]])
+        for(let i=0;i<n;i++)cells.push({kind:'door',w:fw,h:top-bottom,cx:x0+(i+.5)*W/n,cy:(bottom+top)/2});
+      return cells;
+    }
     if(production?.corner){
       const c=production.corner,n=c.door_count||1,fw=(W-c.door_start_mm-c.door_right_gap_mm-3*(n-1))/n,sign=c.side==='right'?-1:1;
       return Array.from({length:n},(_,i)=>({kind:'door',w:fw,h:H-2*c.vertical_gap_mm,
@@ -445,11 +493,17 @@
         material:{variant_id:variant||null,name:material||null},length:size[length_axis],width:size[width_axis],thickness:size[thickness_axis],
         position,orientation:{length_axis,width_axis,thickness_axis},size,...extra});
     };
-    if(p.carcass.type==='wall_box'){
+    if(p.carcass.type==='wall_box'||p.tall){
       for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,side==='L'?'Левая Боковая':'Правая Боковая','body',
-        {x:t,y:B,z:D},{x:sign*(W-t)/2,y:base+B/2,z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
+        {x:t,y:B-(p.tall?t:0),z:D},{x:sign*(W-t)/2,y:base+B/2+(p.tall?t/2:0),z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
       add('top','Крыша','body',{x:inner,y:t,z:D},{x:0,y:base+B-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
-      add('bottom','Дно','body',{x:inner,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
+      add('bottom','Дно','body',{x:p.tall?W:inner,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
+      if(p.tall){
+        add('divider','Перегородка','body',{x:inner,y:t,z:D},{x:0,y:p.tall.row_height-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name);
+        add('shelf-fixed','Полка на конфирматах','shelf',{x:inner,y:t,z:D},{x:0,y:p.tall.fixed_shelf_y,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name,{fixed:true});
+        p.tall.upper_shelves.forEach((y,i)=>add('shelf-upper-'+(i+1),'Полка съёмная','shelf',
+          {x:W-38,y:t,z:D},{x:0,y,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name,{fixed:true}));
+      }
       for(const shelf of productionShelves(it,p))if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
         {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
         {x:0,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,p.carcass.material_name||null,
@@ -699,5 +753,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

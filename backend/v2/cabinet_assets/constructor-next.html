@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/account/app.css"><link rel="stylesheet" href="/account/3d.css">
 <link rel="stylesheet" href="/account/3d-studio.css?v=20260925-1">
 <script defer src="/account/planner/corner-variants.js"></script>
+<script defer src="/account/planner/tall-variants.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
@@ -39,13 +40,13 @@
   <section id="pane-catalog" class="mf3d-catalog-section studio-pane" role="tabpanel" aria-labelledby="tab-catalog">
    <div class="mf3d-catalog-tools"><label class="studio-sr" for="module-search">Поиск по каталогу</label><input id="module-search" type="search" placeholder="Название, тип или файл БАЗИС…">
     <div id="module-tabs" class="mf3d-tabs" role="group" aria-label="Категории модулей">
-     <button type="button" class="active" data-module-filter="all" aria-pressed="true">Все</button><button type="button" data-module-filter="base">Нижние</button>
+     <button type="button" class="active" data-module-filter="all" aria-pressed="true">Все</button><button type="button" data-module-filter="base" aria-pressed="false">Нижние модули</button><button type="button" data-module-filter="wall" aria-pressed="false">Верхние модули</button><button type="button" data-module-filter="tall" aria-pressed="false">Пеналы</button>
     </div>
     <div class="studio-catalog-meta"><span id="studio-catalog-count">Каталог модулей</span><label><span class="studio-sr">Сортировка каталога</span><select id="studio-sort"><option value="default">По типу</option><option value="name">По названию</option><option value="width">По ширине</option></select></label></div>
    </div>
    <div id="module-catalogue" class="mf3d-modules" aria-label="Каталог мебельных модулей"></div>
    <div id="studio-catalog-empty" class="studio-empty-small" hidden><strong>Ничего не найдено</strong><p>Попробуйте другое название или категорию.</p><button id="studio-clear-search" class="secondary">Сбросить поиск</button></div>
-   <p class="studio-footnote">Д1 L, Д1 P и Д2: корпус, задник, полка и фасады по производственным данным.</p>
+   <p class="studio-footnote">Исполнения одного шкафа выбираются в его параметрах. Корпус, наполнение и фасады — по производственным данным.</p>
   </section>
   <section id="pane-items" class="studio-pane" role="tabpanel" aria-labelledby="tab-items" hidden>
    <div class="mf3d-section-head"><h2>Модули в проекте</h2></div><p class="studio-sub">Выберите шкаф в списке — он выделится на сцене.</p>
@@ -79,6 +80,21 @@
    <label class="studio-rename">Название в проекте<input id="studio-item-name" type="text" maxlength="160" placeholder="Например, шкаф у окна"></label>
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
+   <div id="tall-options-controls" class="mf3d-control-card" hidden>
+    <div class="mf3d-control-title"><strong>Пенал с полками</strong></div>
+    <div class="mf3d-option-label">Высота базы нижнего ряда</div>
+    <div class="mf3d-door-options" role="group" aria-label="Высота базы пенала">
+     <button type="button" class="secondary" data-tall-option="row_height" data-tall-value="820" aria-pressed="false"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M5 2h18v40H5zM5 28h30v16H5M5 46h30M28 28V42M31 24v-7m-3 3 3-3 3 3"/></svg><span>820 мм</span></button>
+     <button type="button" class="secondary" data-tall-option="row_height" data-tall-value="900" aria-pressed="false"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M5 2h18v40H5zM5 26h30v16H5M5 46h30M28 26V42M31 22v-7m-3 3 3-3 3 3"/></svg><span>900 мм</span></button>
+    </div>
+    <p class="studio-hint">С учётом цоколя 100 мм, без столешницы. Общая высота пенала задаётся ниже.</p>
+    <div class="mf3d-option-label">Двери в каждой секции</div>
+    <div class="mf3d-door-options mf3d-tall-openings" role="group" aria-label="Открывание пенала">
+     <button type="button" class="secondary" data-tall-option="opening" data-tall-value="left" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M6 7h3m-3 14h3m-3 10h3m-3 7h3M25 17v5m0 11v5"/></svg><span>L · левое</span></button>
+     <button type="button" class="secondary" data-tall-option="opening" data-tall-value="right" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M29 7h-3m3 14h-3m3 10h-3m3 7h-3M10 17v5m0 11v5"/></svg><span>P · правое</span></button>
+     <button type="button" class="secondary" data-tall-option="opening" data-tall-value="double" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M17.5 2v40M14 17v5m7-5v5M14 33v5m7-5v5"/></svg><span>Д2 · две двери</span></button>
+    </div><p id="tall-options-note" class="studio-hint" aria-live="polite"></p>
+   </div>
    <div id="corner-options-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong>Угловой шкаф</strong></div>
     <div class="mf3d-option-label">Угол</div>

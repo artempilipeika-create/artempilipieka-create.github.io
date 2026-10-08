@@ -1,4 +1,4 @@
-import {clone,elevation,tier,heights,dimensionError,placementError,normalizeKitchen,kitchenSettings,productionShelves} from './furniture-core.mjs';
+import {clone,elevation,tier,heights,dimensionError,placementError,normalizeKitchen,kitchenSettings,productionShelves,TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -15,6 +15,7 @@ export class StateAdapter{
   status(message){this.bridge.status(message);}
   createDraft(opt){
     const all=this.bridge.catalogue;
+    if(opt.bazis===TALL_FAMILY.default_id)opt={...opt,bazis:tallDefaultId(this.items,this.selected)};
     const t=opt.bazis?all.bazisModules.find(x=>x.id===opt.bazis):opt.template?all.templates[opt.template]:null;
     if(opt.bazis&&!t)throw new Error('Исходный модуль БАЗИС не найден');
     const type=t?.module_type||opt.module||'chest',d=t?.defaults||all.moduleDefs[type];

@@ -94,6 +94,10 @@ for(const v of globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS)bazisModules.push({
   defaults:{w:1000,h:820,d:510,layout:'doors',drawers:0,base:'plinth'},limits:{w:[800,1834],h:[700,1100],d:[450,700]},
   front:{kind:'doors',count:v.door_count},resize:true
 });
+for(const v of globalThis.MF_FURNITURE_CORE.TALL_VARIANTS)bazisModules.push({
+  id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Пеналы БАЗИС',module_type:'tall_cabinet',
+  defaults:{w:600,h:2000,d:600,layout:'doors',drawers:0,base:'plinth'},resize:true
+});
 // Existing saved projects still refer to the earlier donor bytes and dimensions.
 const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
@@ -119,6 +123,7 @@ const bazisById=new Map(bazisModules.map(x=>[x.id,x]));
 for(const m of bazisModules){
   const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(m.id);
   if(family)m.catalogue_label=family.label;
+  if(m.production?.tall)m.catalogue_label=globalThis.MF_FURNITURE_CORE.TALL_FAMILY.label;
   if(globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.some(v=>v.id===m.id))m.catalogue_label=globalThis.MF_FURNITURE_CORE.CORNER_FAMILY.label;
 }
 
@@ -305,17 +310,22 @@ function bindCatalogueControls(){
 function renderModuleCatalogue(){
   const root=$('module-catalogue');
   root.replaceChildren();
-  const group=document.createElement('div');
-  group.className='mf3d-module-group';
-  const heading=document.createElement('h3');heading.textContent='Производственные модули';group.append(heading);
+  const groups=new Map();
+  for(const [category,label] of [['base','Нижние модули'],['wall','Верхние модули'],['tall','Пеналы']]){
+    const group=document.createElement('div');
+    group.className='mf3d-module-group';group.dataset.category=category;
+    const heading=document.createElement('h3');heading.textContent=label;group.append(heading);
+    groups.set(category,group);root.append(group);
+  }
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
     const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(id);
     if(family&&id!==family.left)continue;
     const cornerFamily=globalThis.MF_FURNITURE_CORE.CORNER_FAMILY;
     if(m.production.corner&&id!==cornerFamily.default_id)continue;
+    if(m.production.tall&&id!==globalThis.MF_FURNITURE_CORE.TALL_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=p.corner
+    const description=p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -332,10 +342,9 @@ function renderModuleCatalogue(){
       ?'Левое / правое · 3 вертикальные царги'
       :p.dryer?'Левое / правое · сушка AKS по ширине'
       :isWall?'Левое / правое · полки по высоте':'Левое / правое · полка · задник'):description;
-    const search=p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
-    addCatalogueButton(group,{bazis:id,category:categoryKey(m),label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
+    const search=p.tall?globalThis.MF_FURNITURE_CORE.TALL_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
+    addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:p.tall?globalThis.MF_FURNITURE_CORE.TALL_FAMILY.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
   }
-  root.append(group);
   applyCatalogueFilter();
 }
 
@@ -663,6 +672,13 @@ async function syncControls(){
     for(const b of cornerControls.querySelectorAll('[data-corner-option]'))b.setAttribute('aria-pressed',String(Boolean(cornerInfo&&String(cornerInfo[b.dataset.cornerOption])===b.dataset.cornerValue)));
     $('corner-options-note').textContent=cornerInfo?`${cornerInfo.side==='left'?'Левый':'Правый'} угол · ${cornerInfo.purpose==='sink'?'под мойку':'с полкой'} · ${cornerInfo.door_count===1?'одна дверца':'две дверцы'}`:'';
   }
+  const tallInfo=globalThis.MF_FURNITURE_CORE.tallVariantInfo(it),tallControls=$('tall-options-controls');
+  if(tallControls){
+    tallControls.hidden=!tallInfo;
+    for(const b of tallControls.querySelectorAll('[data-tall-option]'))b.setAttribute('aria-pressed',String(Boolean(tallInfo&&String(tallInfo[b.dataset.tallOption])===b.dataset.tallValue)));
+    $('tall-options-note').textContent=tallInfo?`База ${tallInfo.row_height} = корпус нижнего ряда ${tallInfo.row_height-100} + цоколь 100 мм. `+
+      (tallInfo.opening==='double'?'Д2: две створки в каждой секции, всего четыре фасада.':'Две секции, по одной двери; петли '+(tallInfo.opening==='left'?'слева.':'справа.')):'';
+  }
   const family=globalThis.MF_FURNITURE_CORE.doorFamily(it),opening=$('door-opening-controls');
   if(opening){
     opening.hidden=!family;
@@ -684,7 +700,7 @@ async function syncControls(){
     const input=$(key.replaceAll('_','-'));if(input)input.value=String(h[key]);
   }
   const kitchen=globalThis.MF_FURNITURE_CORE.kitchenSettings(it);
-  $('base').disabled=Boolean(kitchen);
+  $('base').disabled=Boolean(kitchen)||Boolean(t?.production?.tall);
   if($('kitchen-controls'))$('kitchen-controls').hidden=!kitchen;
   if($('base-height')){$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);$('base-height').parentElement.hidden=Boolean(kitchen);}
   if(kitchen){
@@ -718,7 +734,9 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.corner
+        $('production-rule-note').textContent=production.tall
+          ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+production.tall.upper_shelves.length+' съёмн. При изменении общей высоты растёт верхняя секция. Столешница в высоту базы не входит.'
+          :production.corner
           ?'Установочная ширина '+it.width+' мм = корпус '+(it.width-50)+' мм + отступ от стены 50 мм. '+(production.corner.split_blind?'Фальшпанель: 120 мм в материале фасада + 458 мм в материале корпуса. ':'Фальшпанель 578 мм. ')+'Бленда 50 мм. Дверцы: '+core.facadeCells(it,t).map(f=>f.h+' × '+f.w).join('; ')+' мм. '+(production.corner.purpose==='shelf'?'Полка, задник 3 мм, две горизонтальные царги.':'Три вертикальные царги, нижняя — сзади над дном.')+' Шесть опор.'
           :production.constraints?.niche_height_mm
           ?'Ширина всегда 600 мм. Верхняя ниша всегда 595 мм. При изменении высоты корпуса меняется только высота секции шуфляды.'
@@ -1117,7 +1135,7 @@ function exportBazisProject(){
         construction:p?{
           key:p.key,
           constraints:p.constraints||null,
-          corner:p.corner||null,facade:p.facade||null,
+          corner:p.corner||null,tall:p.tall||null,facade:p.facade||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,

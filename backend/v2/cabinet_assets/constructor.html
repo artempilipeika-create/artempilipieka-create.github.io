@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/account/app.css"><link rel="stylesheet" href="/account/3d.css">
 <link rel="stylesheet" href="/account/3d-studio.css?v=20260925-1">
 <script defer src="/account/planner/corner-variants.js"></script>
+<script defer src="/account/planner/tall-variants.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 </head>
@@ -34,7 +35,7 @@
   <section id="pane-catalog" class="mf3d-catalog-section studio-pane" role="tabpanel" aria-labelledby="tab-catalog">
    <div class="mf3d-catalog-tools"><label class="studio-sr" for="module-search">Поиск по каталогу</label><input id="module-search" type="search" placeholder="Название, тип или файл БАЗИС…">
     <div id="module-tabs" class="mf3d-tabs" role="group" aria-label="Категории модулей">
-     <button type="button" class="active" data-module-filter="all" aria-pressed="true">Все</button><button type="button" data-module-filter="base">Нижние</button><button type="button" data-module-filter="wall">Верхние</button><button type="button" data-module-filter="tall">Пеналы</button><button type="button" data-module-filter="corner">Угловые</button><button type="button" data-module-filter="drawers">Ящики</button><button type="button" data-module-filter="sink">Мойки</button><button type="button" data-module-filter="cargo">Карго</button><button type="button" data-module-filter="bazis">Мои БАЗИС</button><button type="button" data-module-filter="other">Прочее</button>
+     <button type="button" class="active" data-module-filter="all" aria-pressed="true">Все</button><button type="button" data-module-filter="base" aria-pressed="false">Нижние модули</button><button type="button" data-module-filter="wall" aria-pressed="false">Верхние модули</button><button type="button" data-module-filter="tall" aria-pressed="false">Пеналы</button>
     </div>
     <div class="studio-catalog-meta"><span id="studio-catalog-count">Каталог модулей</span><label><span class="studio-sr">Сортировка каталога</span><select id="studio-sort"><option value="default">По типу</option><option value="name">По названию</option><option value="width">По ширине</option></select></label></div>
    </div>

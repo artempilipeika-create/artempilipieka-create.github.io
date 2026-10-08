@@ -13,6 +13,7 @@ from .events import record_event
 from . import catalogue
 from .three_d_document import render as render_spec
 from .three_d_corner import corner_variant
+from .three_d_tall import tall_variant
 
 class Room(StrictModel):
     width: int=Field(default=4200,ge=1500,le=12000)
@@ -110,6 +111,12 @@ class FurnitureItem(StrictModel):
                 raise ValueError(f'Установочная ширина углового модуля 800–{maximum} мм; каждая дверца не больше 600 мм')
             if not 450<=self.depth<=700 or not 600<=body<=1000:
                 raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
+        tall=tall_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
+        if tall:
+            if self.module_type!='tall_cabinet' or base!=100 or self.base=='wall':
+                raise ValueError('Пенал устанавливается на цоколь 100 мм')
+            if not 300<=self.width<=600*tall['doors_per_section'] or not 1800<=self.height<=2800 or not 450<=self.depth<=700:
+                raise ValueError('Проверьте размеры пенала; ширина одной створки не больше 600 мм')
         for shelf in self.shelves:
             if corner and corner['purpose']=='sink':continue
             if shelf.enabled and (shelf.offset_mm-shelf.thickness/2<0 or shelf.offset_mm+shelf.thickness/2>body):

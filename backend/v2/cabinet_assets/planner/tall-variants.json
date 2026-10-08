@@ -1,0 +1,455 @@
+[
+  {
+    "id": "bazis.107f19943761",
+    "row_height": 820,
+    "opening": "left",
+    "doors_per_section": 1,
+    "label": "ПН-600 · база 820 · L",
+    "source_file": "ПН-600.База 820 +З.С_гв отк L.fr3d",
+    "source_sha256": "107f1994376167b7014e3a53f6cd5eac73074cbb48cd52aae04cbf813be8972f",
+    "hardware_items": [
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "nails-1.4x25",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт) РМЗ",
+        "quantity": 110,
+        "unit": "pcs"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 5,
+        "unit": "pcs"
+      }
+    ],
+    "upper_shelves": [
+      1401
+    ],
+    "fixed_shelf_y": 460
+  },
+  {
+    "id": "bazis.14b5253ba014",
+    "row_height": 820,
+    "opening": "right",
+    "doors_per_section": 1,
+    "label": "ПН-600 · база 820 · P",
+    "source_file": "ПН-600.База 820 +З.С_гв отк P.fr3d",
+    "source_sha256": "14b5253ba01454af6bfeb40919dc408e766e3eae367e6d54fdc37af10ff20246",
+    "hardware_items": [
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "nails-1.4x25",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт) РМЗ",
+        "quantity": 110,
+        "unit": "pcs"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 5,
+        "unit": "pcs"
+      }
+    ],
+    "upper_shelves": [
+      1401
+    ],
+    "fixed_shelf_y": 460
+  },
+  {
+    "id": "bazis.e68c9bd4dee3",
+    "row_height": 820,
+    "opening": "double",
+    "doors_per_section": 2,
+    "label": "ПН-600 · база 820 · Д2",
+    "source_file": "ПН-600.База 820 +З.С_гв Д2(2).fr3d",
+    "source_sha256": "e68c9bd4dee3728e74ec9105d12a04144bfac6315fc75616a3e0b5ce798f2d59",
+    "hardware_items": [
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "nails-1.4x25",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт) РМЗ",
+        "quantity": 110,
+        "unit": "pcs"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 10,
+        "unit": "pcs"
+      }
+    ],
+    "upper_shelves": [
+      1401
+    ],
+    "fixed_shelf_y": 460
+  },
+  {
+    "id": "bazis.e5ef0e9138fb",
+    "row_height": 900,
+    "opening": "left",
+    "doors_per_section": 1,
+    "label": "ПН-600 · база 900 · L",
+    "source_file": "ПН-600.База 900 +З.С_гв отк L.fr3d",
+    "source_sha256": "e5ef0e9138fbbb4916fffc5f53fcc27d78071cab6febafbded78c7fbf8bbe557",
+    "hardware_items": [
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "nails-1.4x25",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт) РМЗ",
+        "quantity": 110,
+        "unit": "pcs"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 8,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 5,
+        "unit": "pcs"
+      }
+    ],
+    "upper_shelves": [
+      1257.666667,
+      1624.333333
+    ],
+    "fixed_shelf_y": 500
+  },
+  {
+    "id": "bazis.b9a5d095ea2c",
+    "row_height": 900,
+    "opening": "right",
+    "doors_per_section": 1,
+    "label": "ПН-600 · база 900 · P",
+    "source_file": "ПН-600.База 900+З.С_гв отк P.fr3d",
+    "source_sha256": "b9a5d095ea2c23384bb28209c8138dfa7f68154b78e17c44f3f52cff9eb84d18",
+    "hardware_items": [
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "nails-1.4x25",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт) РМЗ",
+        "quantity": 110,
+        "unit": "pcs"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 8,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 5,
+        "unit": "pcs"
+      }
+    ],
+    "upper_shelves": [
+      1257.666667,
+      1624.333333
+    ],
+    "fixed_shelf_y": 500
+  },
+  {
+    "id": "bazis.b76fb9fab8ca",
+    "row_height": 900,
+    "opening": "double",
+    "doors_per_section": 2,
+    "label": "ПН-600 · база 900 · Д2",
+    "source_file": "ПН-600.База 900 +З.С_гв Д2(2).fr3d",
+    "source_sha256": "b76fb9fab8ca1c718b7f7d3fd98ada3096418e88f2cd447a8e5c46e0969c10f1",
+    "hardware_items": [
+      {
+        "key": "support-base-h5",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "support-h100",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-100",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "plastic-leg-base",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-plate",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "clip-heavy",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "confirmat-7x50",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 16,
+        "unit": "pcs"
+      },
+      {
+        "key": "nails-1.4x25",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт) РМЗ",
+        "quantity": 110,
+        "unit": "pcs"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 8,
+        "unit": "pcs"
+      },
+      {
+        "key": "hinge-prime",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 10,
+        "unit": "pcs"
+      }
+    ],
+    "upper_shelves": [
+      1257.666667,
+      1624.333333
+    ],
+    "fixed_shelf_y": 500
+  }
+]
