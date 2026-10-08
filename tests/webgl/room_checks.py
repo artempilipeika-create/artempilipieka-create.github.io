@@ -1,11 +1,22 @@
 """Room survey is a real user prerequisite; saved projects retain exact measurements."""
 import pytest
+import os,base64
+from pathlib import Path
 from playwright.sync_api import expect
 from tests.stage07.browser_checks import page,settings,api,admin_user,login_ui
 from tests.webgl.navigation import panel,close_panels
-from tests.webgl.tall_checks import screenshot
 from tests.webgl.drawer_modules_checks import export_payload
 from backend.v2.three_d_room import Room
+
+def screenshot(page,name):
+    # One viewport capture avoids duplicate full-page GPU readback under SwiftShader.
+    out=Path(os.environ.get('MF_TEST_EVIDENCE_DIR','qa-output/room'));out.mkdir(parents=True,exist_ok=True)
+    data=page.screenshot(type='jpeg',quality=70,timeout=60000)
+    (out/(name+'.jpg')).write_bytes(data)
+    encoded=base64.b64encode(data).decode()
+    print('MF_ROOM_IMAGE_BEGIN '+name,flush=True)
+    for i in range(0,len(encoded),3000):print('MF_ROOM_IMAGE '+encoded[i:i+3000],flush=True)
+    print('MF_ROOM_IMAGE_END '+name,flush=True)
 
 def dimensions(page,w=4600,d=3400,h=2800):
     for k,v in [('width',w),('depth',d),('height',h)]:page.locator('#room-setup-'+k).fill(str(v))
