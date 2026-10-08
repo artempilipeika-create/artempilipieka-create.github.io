@@ -123,7 +123,7 @@ def test_3d_project_scene_v2_room_and_multiple_items(api,settings,admin_user):
     created=post(api,'/3d-projects',{'name':'Комната с мебелью','scene':scene},status=201)
     read=api.get('/api/v2/3d-projects/'+created['project_id']).json()
     assert read['scene']['schema_version']==2
-    assert read['scene']['room']=={'width':5200,'depth':3600,'height':2800}
+    assert read['scene']['room']=={'width':5200,'depth':3600,'height':2800,'setup_complete':None,'survey':None,'features':[]}
     assert [x['module_type'] for x in read['scene']['items']]==['base_cabinet','wardrobe']
     assert read['scene']['selected_item_id']=='wardrobe-1'
 

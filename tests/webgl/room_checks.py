@@ -21,6 +21,7 @@ def test_room_measured_flow_visuals_history_and_persistence(page,api,settings,ad
     login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
     expect(page.locator('#room-setup')).to_be_visible();expect(page.locator('#room-setup-width')).to_have_value('')
+    screenshot(page,'room-start-desktop')
     page.locator('#room-setup-next').click();expect(page.locator('#room-setup-error')).to_contain_text('Длина')
     assert page.evaluate('MF_PLANNER.adapter.items.length')==0
     dimensions(page);page.locator('#room-setup-apply').click();expect(page.locator('#room-setup-error')).to_contain_text('Укажите, есть ли')
@@ -32,11 +33,14 @@ def test_room_measured_flow_visuals_history_and_persistence(page,api,settings,ad
     feature(page,'meter','b',500,1500,250,350,130,'Газовый счётчик')
     expect(page.locator('#room-feature-list article')).to_have_count(5)
     page.locator('#room-survey-none').click();expect(page.locator('#room-setup-error')).to_contain_text('Сначала удалите')
+    expect(page.locator('#room-setup-error')).to_be_visible()
+    page.locator('#room-survey-present').click();page.locator('#room-setup').evaluate('e=>e.scrollTop=0')
     screenshot(page,'room-survey-desktop')
     page.locator('#room-setup-apply').click();expect(page.locator('#room-setup')).not_to_be_visible()
     expect(page.locator('body')).to_have_attribute('data-room-ready','true')
     original=page.evaluate('MF_PLANNER.adapter.room');assert len(original['features'])==5 and original['width']==4600
     assert page.evaluate('MF_PLANNER.scene.roomFeatures.length')==5
+    expect(page.locator('#studio-empty-scene')).not_to_be_visible()
     close_panels(page);page.locator('#mode-2d').click();screenshot(page,'room-measured-plan')
     page.locator('#mode-3d').click();screenshot(page,'room-measured-3d')
     panel(page,'left','catalog');page.locator('[data-bazis="bazis.0211e4f77fc4"]').click();close_panels(page)
@@ -57,6 +61,7 @@ def test_room_measured_flow_visuals_history_and_persistence(page,api,settings,ad
     expect(page.locator('#room-setup')).to_be_visible();assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
     feature(page,'sewer','d',900,100,100,100,50)
     page.locator('#room-setup').evaluate('e=>e.scrollTop=0');screenshot(page,'room-survey-mobile')
+    assert page.locator('#room-setup header').evaluate("e=>getComputedStyle(e).display")=='block'
     page.locator('#room-setup-apply').click();assert len(page.evaluate('MF_PLANNER.adapter.room.features'))==6
 
 def test_empty_survey_gate_cancel_new_project_and_legacy(page,api,settings,admin_user):

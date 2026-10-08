@@ -418,7 +418,7 @@ async function saveProject(){
 }
 async function newProject(){
   project=null;
-  state={schema_version:2,room:{width:4200,depth:3200,height:2700,setup_complete:false,survey:null,features:[]},items:[],selected_item_id:null,view_mode:'3d'};
+  state={schema_version:2,room:{width:4200,depth:3200,height:2700,setup_complete:document.body.dataset.plannerRequested==='webgl'?false:null,survey:null,features:[]},items:[],selected_item_id:null,view_mode:'3d'};
   selectedId=null;
   $('project-name').value='Новый 3D-проект';
   syncRoom();

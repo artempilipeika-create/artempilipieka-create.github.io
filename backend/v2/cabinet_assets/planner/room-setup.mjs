@@ -50,7 +50,7 @@ export class RoomSetup{
     app.listen(document,'mf:room-required',()=>{if(!this.dialog.open)this.open();});
     const start=document.getElementById('studio-first-module');start.onclick=()=>{if(!roomReady(app.adapter.room))this.open();else{app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('catalog');}};
   }
-  error(message){this.alert.textContent=message;this.alert.hidden=!message;}
+  error(message){this.alert.textContent=message;this.alert.hidden=!message;if(message)this.alert.scrollIntoView({block:'nearest'});}
   open(){
     this.app.interaction?.cancel();this.app.workspace.closePanels();
     this.draft=clone(this.app.adapter.room);this.draft.features??=[];this.wasReady=roomReady(this.draft);
@@ -124,7 +124,7 @@ export class RoomSetup{
     }
   }
   sync(){
-    const ready=roomReady(this.app.adapter.room),empty=document.getElementById('studio-empty-scene');document.body.dataset.roomReady=String(ready);
+    const ready=roomReady(this.app.adapter.room),empty=document.getElementById('studio-empty-scene');document.body.dataset.roomReady=String(ready);document.body.dataset.roomHasFeatures=String(Boolean(this.app.adapter.room.features?.length));
     empty.querySelector('h2').textContent=ready?'Начните с первого модуля':'Сначала — замер комнаты';
     empty.querySelector('p').textContent=ready?'Выберите шкаф в каталоге. Его размеры и материалы доступны справа.':'Задайте размеры, затем отметьте проёмы и коммуникации.';
     document.getElementById('studio-first-module').textContent=ready?'Выбрать модуль':'Задать комнату';
