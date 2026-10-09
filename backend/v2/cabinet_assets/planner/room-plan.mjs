@@ -28,7 +28,8 @@ export function roomError(room,complete=true){
   if(new Set(features.map(f=>f.id)).size!==features.length)return 'Идентификаторы объектов должны быть уникальны.';
   for(const f of features){const e=featureError(f,room);if(e)return (f.label||FEATURES[f.kind]?.[0]||'Объект')+': '+e;}
   if(complete){
-    if(!['none','present'].includes(room.survey))return 'Укажите, есть ли проёмы, коммуникации и другие объекты.';
+    // The dimensions-only setup does not claim a utility survey took place.
+    if(room.survey!=null&&!['none','present'].includes(room.survey))return 'Некорректное состояние замера.';
     if(room.survey==='present'&&!features.length)return 'Добавьте хотя бы один объект по замеру.';
     if(room.survey==='none'&&features.length)return 'В комнате уже есть объекты. Выберите «Есть» или удалите их.';
   }

@@ -7,8 +7,6 @@ def complete_room_setup(page):
     if not dialog.count() or not dialog.is_visible():return
     for key,value in [('width',4200),('depth',3200),('height',2700)]:
         page.locator('#room-setup-'+key).fill(str(value))
-    page.locator('#room-setup-next').click()
-    page.locator('#room-survey-none').click()
     page.locator('#room-setup-apply').click()
 
 def panel(page,side,tab=None):

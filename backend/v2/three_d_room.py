@@ -35,7 +35,7 @@ class Room(StrictModel):
             if f.offset+f.width>span or f.elevation+f.height>self.height or f.projection>cross:
                 raise ValueError('Room feature outside measured envelope')
             if f.kind=='door' and f.elevation!=0:raise ValueError('Door must start at floor')
-        if self.setup_complete:
-            if self.survey is None:raise ValueError('Room survey must be confirmed')
+        # Dimensions are sufficient to start; retain explicit surveys in existing projects.
+        if self.setup_complete and self.survey is not None:
             if (self.survey=='present')!=bool(self.features):raise ValueError('Room survey and features disagree')
         return self

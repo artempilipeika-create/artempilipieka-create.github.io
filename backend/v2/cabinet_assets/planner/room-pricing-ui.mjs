@@ -7,7 +7,7 @@ export class RoomPricingUI{
     this.app=app;
     const d=el('details',undefined,'planner-room-settings');d.append(el('summary','Комната'));
     const controls=el('div');controls.className='room-controls';
-    const measure=el('button','Размеры и коммуникации','room-open-measure');measure.type='button';measure.onclick=()=>app.roomSetup.open();controls.append(measure);
+    const measure=el('button','Размеры комнаты','room-open-measure');measure.type='button';measure.onclick=()=>app.roomSetup.open();controls.append(measure);
     this.measureSummary=el('p',undefined,'room-measure-summary');controls.append(this.measureSummary);
     controls.append(select('room-preset','Обстановка',Object.fromEntries(Object.entries(ROOM_PRESETS).map(([k,v])=>[k,v.label]))));
     const wall=el('label','Стены'),input=el('input',undefined,'room-wall-color');input.type='color';input.setAttribute('aria-label','Цвет стен');wall.append(input);controls.append(wall);
@@ -26,7 +26,7 @@ export class RoomPricingUI{
   }
   sync(){
     const p=this.app,a=p.adapter,s=roomSettings(a.state.displaySettings);
-    this.measureSummary.textContent=`${a.room.width} × ${a.room.depth} × ${a.room.height} мм · `+(a.room.setup_complete===true?((a.room.features||[]).length+' объектов'):a.room.setup_complete===false?'требуется замер':'замер не подтверждён');
+    this.measureSummary.textContent=`${a.room.width} × ${a.room.depth} × ${a.room.height} мм · `+(a.room.setup_complete===true?'размеры заданы':a.room.setup_complete===false?'требуется замер':'замер не подтверждён');
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']])document.getElementById(id).value=s[key];
     const it=a.selected;
     this.module.replaceChildren(el('h3','Стоимость'));

@@ -1,7 +1,7 @@
-name: Room survey acceptance
+name: Room dimensions acceptance
 on:
   push:
-    branches: [mf-room-survey-20261009]
+    branches: [mf-room-survey-20261009, mf-room-dimensions-20261009]
 permissions:
   contents: read
 concurrency:

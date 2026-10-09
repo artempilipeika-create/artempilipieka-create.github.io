@@ -52,7 +52,7 @@ class PlannerApplication {
     const bar=document.querySelector('.mf3d-stagebar');
     get('mode-2d').textContent='Сверху';get('reset-view').textContent='Кухня';
     const front=button('planner-front','Спереди','Фронтальный вид');get('mode-3d').parentElement.append(front);
-    const room=button('planner-fit-room','Комната','Размеры помещения, проёмы и коммуникации');get('reset-view').after(room);
+    const room=button('planner-fit-room','Комната','Длина, глубина и высота помещения');get('reset-view').after(room);
     const tools=make('div','planner-tools');
     tools.append(button('planner-undo','↶','Отменить · Ctrl+Z'),button('planner-redo','↷','Повторить · Ctrl+Shift+Z'));
     const layer=select('planner-layer','Показать ярус',[['all','Все модули'],['base','Нижние'],['wall','Верхние'],['tall','Пеналы'],['other','Прочее']]);tools.append(layer);
