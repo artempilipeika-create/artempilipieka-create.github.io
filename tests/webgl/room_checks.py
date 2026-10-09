@@ -62,7 +62,11 @@ def test_room_gate_legacy_features_cancel_and_new_project(page,api,settings,admi
     assert export_payload(page)['room']['features']==[f]
     page.locator('#planner-fit-room').click();dimensions(page,3900,2800,2600);page.locator('#room-setup-close').click()
     assert page.evaluate('MF_PLANNER.adapter.room.width')==3700
-    page.locator('#new-project').click();expect(page.locator('#room-setup')).to_be_visible()
+    page.once('dialog',lambda dialog:dialog.dismiss());page.locator('#new-project').click()
+    assert page.evaluate('MF_PLANNER.adapter.room.width')==3700
+    expect(page.locator('#room-setup')).not_to_be_visible()
+    page.once('dialog',lambda dialog:dialog.accept());page.locator('#new-project').click()
+    expect(page.locator('#room-setup')).to_be_visible()
     expect(page.locator('#room-setup-width')).to_have_value('');assert page.evaluate('MF_PLANNER.adapter.items.length')==0
 
 def test_room_api_accepts_dimensions_without_asserting_a_survey():
