@@ -227,8 +227,11 @@ export class MeshFactory{
     if(production?.tall?.family==='appliance'){
       const a=production.tall;
       for(const [kind,bottom,h] of [['oven',a.oven_bottom,595],...(a.microwave?[['microwave',a.oven_bottom+613,380]]:[])]){
-        // Illustrative appliance faces only: excluded from manufactured panels and hardware.
-        for(const [role,w,ph,y,z]of [['appliance',562,h-2,bottom+h/2,D/2+4],['applianceGlass',468,h-145,bottom+(h-145)/2+40,D/2+10],['handle',392,10,bottom+h-66,D/2+14]]){
+        // Visual-only faceplates bridge the visible 18 mm divider. Native FR3D panels, support, niche
+        // clearances (595 / 380 mm), cutlist, collision geometry and BAZIS export are NOT modified.
+        const extension=a.microwave?9.5:0;
+        const faceHeight=h-2+extension,faceCenter=bottom+h/2+(kind==='oven'?extension/2:-extension/2);
+        for(const [role,w,ph,y,z]of [['appliance',562,faceHeight,faceCenter,D/2+4],['applianceGlass',468,h-145,bottom+(h-145)/2+40,D/2+10],['handle',392,10,bottom+h-66,D/2+14]]){
           const face=this.box(group,role,w,ph,8,0,y,z,null,ghost);
           face.userData.visualOnly=true;face.userData.appliance=kind;
         }

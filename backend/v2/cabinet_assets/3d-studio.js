@@ -260,7 +260,7 @@
     }
     ctx.font='10px "Segoe UI",Arial,sans-serif';ctx.fillStyle='#8c9b7c';ctx.textAlign='center';ctx.fillText(r.width+' мм',w/2,top-10);
   };
-  function digest(){return state?JSON.stringify([get('project-name').value,state.room,state.items]):null;}
+  function digest(){return state?JSON.stringify([get('project-name').value,state.room,state.items,state.production_note||'']):null;}
   function updateSaveState(){
     const el=get('studio-save-state'),dirty=baseline!==null&&digest()!==baseline;
     el.textContent=saving?'Сохранение…':dirty?'Есть несохранённые изменения':project?'Проект сохранён':'Новый проект · сохраните после настройки';el.dataset.dirty=String(dirty);

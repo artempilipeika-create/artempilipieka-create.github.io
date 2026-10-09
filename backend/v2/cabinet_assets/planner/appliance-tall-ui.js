@@ -6,8 +6,8 @@
     const rect=(x,b,w,h,cls)=>`<rect class="${cls}" x="${x}" y="${y(b+h)}" width="${w}" height="${h}"/>`;
     let s=rect(0,100,600,H-100,'ap-carcass');
     for(const p of [lower,upper]){const h=p.size[1]+(p===upper?H-v.native_height:0);s+=rect(1.5,p.center[1]-p.size[1]/2,597,h,'ap-front');}
-    function appliance(bottom,h){s+=rect(18,bottom,564,h,'ap-device')+rect(64,bottom+40,472,h-145,'ap-glass')+`<path class="ap-handle" d="M100 ${y(bottom+h-65)}H500"/>`;}
-    appliance(v.oven_bottom,595);if(v.microwave)appliance(v.oven_bottom+613,380);
+    function appliance(bottom,h,extendBefore=0,extendAfter=0){s+=rect(18,bottom-extendBefore,564,h+extendBefore+extendAfter,'ap-device')+rect(64,bottom+40,472,h-145,'ap-glass')+`<path class="ap-handle" d="M100 ${y(bottom+h-65)}H500"/>`;}
+    appliance(v.oven_bottom,595,0,v.microwave?9:0);if(v.microwave)appliance(v.oven_bottom+613,380,9,0);
     const hx=v.opening==='left'?535:65,upperY=y(upper.center[1]-upper.size[1]/2+60),lowerY=y(lower.center[1]+lower.size[1]/2-60);
     s+=`<path class="ap-handle" d="M${hx} ${upperY}v-95${v.drawer?` M210 ${lowerY}h180`:` M${hx} ${lowerY}v95`}"/>`;
     s+=`<path class="ap-leg" d="M65 ${y(100)}v100M535 ${y(100)}v100"/>`;

@@ -11,7 +11,9 @@
 <script defer src="/account/planner/tall-variants.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/planner/appliance-tall-ui.js"></script>
+<script defer src="/account/planner/production-notes.js"></script>
 <link rel="stylesheet" href="/account/planner/appliance-tall.css">
+<link rel="stylesheet" href="/account/planner/production-notes.css">
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
 <link rel="stylesheet" href="/account/planner/workspace.css">
@@ -28,6 +30,7 @@
   <button id="new-project" class="studio-icon secondary" title="Новый проект" aria-label="Новый проект">＋</button>
   <button id="save-project" class="secondary">Сохранить</button>
   <button id="export-bazis" class="secondary">Экспорт БАЗИС</button>
+  <button id="production-brief-button" class="secondary" type="button" title="Заметки дизайнера и техническое задание">Задание</button>
   <button id="to-order">В заказ <span aria-hidden="true">↗</span></button>
   <details class="studio-menu"><summary aria-label="Другие действия">•••</summary><div class="studio-menu-panel"><button id="download-spec" class="secondary">PDF проекта</button><button id="studio-help" class="secondary">Как пользоваться</button><a href="/account">Личный кабинет</a></div></details>
  </div>
@@ -81,6 +84,7 @@
   <section id="item-controls" hidden>
    <div class="mf3d-section-head"><div><span id="studio-item-type" class="studio-type-badge">Модуль</span><h2 id="item-title">Модуль</h2></div></div>
    <label class="studio-rename">Название в проекте<input id="studio-item-name" type="text" maxlength="160" placeholder="Например, шкаф у окна"></label>
+   <details class="studio-details" id="item-brief-details"><summary>Заметка конструктору по этому модулю</summary><label>Особенности изготовления и монтажа<textarea id="item-production-note" maxlength="2000" rows="3" placeholder="Например, оставить доступ к счётчику, учесть розетку, согласовать открывание…"></textarea></label></details>
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
    <div id="tall-options-controls" class="mf3d-control-card" hidden>
@@ -89,6 +93,35 @@
      <div class="ap-selected"><div id="appliance-tall-preview"></div><div id="appliance-tall-size" aria-live="polite"></div></div>
      <strong>Что будет в пенале?</strong>
      <div class="ap-layouts" role="group" aria-label="Компоновка пенала"><button type="button" class="secondary" data-tall-option="layout" data-tall-value="door_oven" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Дверь + духовка</span></button><button type="button" class="secondary" data-tall-option="layout" data-tall-value="door_oven_micro" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Дверь + духовка + микроволновка</span></button><button type="button" class="secondary" data-tall-option="layout" data-tall-value="drawer_oven" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Шуфляда + духовка</span></button><button type="button" class="secondary" data-tall-option="layout" data-tall-value="drawer_oven_micro" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Шуфляда + духовка + микроволновка</span></button></div><label for="appliance-tall-height">Общая высота с ножками 100 мм</label><select id="appliance-tall-height"></select><p id="appliance-tall-niches" class="studio-hint"></p></div>
+    <details id="appliance-brief-controls" class="studio-details ap-brief" hidden>
+      <summary>Техника и монтажные документы</summary>
+      <p class="studio-hint">Стандарт — ниши 564 × 595 мм (духовка) и 564 × 380 мм (СВЧ). Если модель клиента известна, укажите её — конструктор проверит фактический монтаж.</p>
+      <section class="ap-brief-device" data-device="oven">
+        <h3>Духовой шкаф</h3>
+        <label>Как рассчитываем нишу
+          <select data-appliance-kind="oven" data-appliance-field="mode"><option value="standard">Стандартная ниша · модель уточнить</option><option value="model">Техника клиента · модель известна</option></select>
+        </label>
+        <div data-appliance-extra="oven" class="ap-brief-fields" hidden>
+          <label>Производитель<input type="text" maxlength="160" data-appliance-kind="oven" data-appliance-field="manufacturer" placeholder="Bosch, Electrolux…"></label>
+          <label>Модель<input type="text" maxlength="200" data-appliance-kind="oven" data-appliance-field="model" placeholder="Модель производителя"></label>
+          <label>Артикул<input type="text" maxlength="200" data-appliance-kind="oven" data-appliance-field="article" placeholder="Артикул / код техники"></label>
+          <label>Ссылка на инструкцию или монтажную схему<input type="url" maxlength="500" data-appliance-kind="oven" data-appliance-field="documentation_url" placeholder="https://…"></label>
+        </div>
+      </section>
+      <section class="ap-brief-device" data-device="microwave">
+        <h3>Микроволновка</h3>
+        <label>Как рассчитываем нишу
+          <select data-appliance-kind="microwave" data-appliance-field="mode"><option value="standard">Стандартная ниша · модель уточнить</option><option value="model">Техника клиента · модель известна</option></select>
+        </label>
+        <div data-appliance-extra="microwave" class="ap-brief-fields" hidden>
+          <label>Производитель<input type="text" maxlength="160" data-appliance-kind="microwave" data-appliance-field="manufacturer" placeholder="Bosch, Samsung…"></label>
+          <label>Модель<input type="text" maxlength="200" data-appliance-kind="microwave" data-appliance-field="model" placeholder="Модель производителя"></label>
+          <label>Артикул<input type="text" maxlength="200" data-appliance-kind="microwave" data-appliance-field="article" placeholder="Артикул / код техники"></label>
+          <label>Ссылка на инструкцию или монтажную схему<input type="url" maxlength="500" data-appliance-kind="microwave" data-appliance-field="documentation_url" placeholder="https://…"></label>
+        </div>
+      </section>
+      <label>Особые указания по технике<textarea id="appliance-remarks" maxlength="1500" rows="3" placeholder="Например, техника закупается клиентом, уточнить розетку и вентиляцию…"></textarea></label>
+    </details>
     <div class="mf3d-option-label">Высота базы нижнего ряда</div>
     <div class="mf3d-door-options" role="group" aria-label="Высота базы пенала">
      <button type="button" class="secondary" data-tall-option="row_height" data-tall-value="820" aria-pressed="false"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M5 2h18v40H5zM5 28h30v16H5M5 46h30M28 28V42M31 24v-7m-3 3 3-3 3 3"/></svg><span>820 мм</span></button>
@@ -169,6 +202,17 @@
  </aside>
 </main>
 <footer class="studio-statusbar"><p id="status" class="mf3d-status" role="status" aria-live="polite">Загрузка конструктора…</p><span>Martin Forest · Конструктор мебели</span></footer>
+<dialog id="production-brief-dialog" class="production-brief-dialog">
+  <button id="production-brief-close" class="secondary" type="button" aria-label="Закрыть задание">✕</button>
+  <span class="mf3d-kicker">MARTIN FOREST / ПЕРЕДАЧА ПРОЕКТА</span>
+  <h2>Задание конструктору</h2>
+  <p>Укажите общие замечания дизайнера. Данные о технике заполняются в параметрах каждого пенала. Всё сохраняется с проектом, переносится в заказ и записывается скриптом в заметки БАЗИС.</p>
+  <label>Общие замечания к заказу<textarea id="production-brief-text" maxlength="2500" rows="5" placeholder="Обмеры, коммуникации, пожелания клиента, монтажные особенности…"></textarea></label>
+  <h3>Заметка для производства</h3>
+  <pre id="production-brief-summary" aria-live="polite"></pre>
+  <p class="studio-hint">Стандартная ниша не означает согласование конкретной техники. Перед запуском в производство монтажные схемы нужно проверить.</p>
+  <button id="production-brief-to-order" type="button" hidden>Подтвердить и перейти в заказ</button>
+</dialog>
 <dialog id="studio-help-dialog"><button id="studio-help-close" class="secondary" aria-label="Закрыть помощь">✕</button><span class="mf3d-kicker">ОТ ИДЕИ ДО ПРОЕКТА</span><h2>Всё начинается с одного модуля</h2><p><strong>1. Выберите.</strong> В каталоге есть нижние, верхние, пеналы и ваши шаблоны БАЗИС. Нажмите карточку, чтобы добавить модуль.</p><p><strong>2. Настройте.</strong> Выберите шкаф на сцене или в списке «В проекте». Справа доступны размеры, положение, фасады и материалы.</p><p><strong>3. Расставьте.</strong> Перетаскивайте модуль мышью. Стрелки клавиатуры сдвигают его на 10 мм, Shift + стрелки — на 100 мм. В 3D фон вращает комнату, колесо меняет масштаб.</p><p><strong>4. Сохраните.</strong> Сохранение выполняется кнопкой сверху. Затем можно подготовить родной экспорт БАЗИС или перенести деталировку в заказ.</p><p class="studio-hint">Геометрия на сцене — визуальное представление шаблона, не точная копия внутренней конструкции .fr3d. Технологический зазор накладного фасада: 1,5 мм по каждой стороне.</p></dialog>
 </div>
 </body></html>

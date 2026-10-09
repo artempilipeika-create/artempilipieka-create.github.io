@@ -26,6 +26,18 @@ class ShelfState(StrictModel):
     source_component: str|None=Field(default=None,max_length=500)
     material_variant_id: UUID|None=None
 
+class ApplianceReference(StrictModel):
+    mode: Literal['standard','model']='standard'
+    manufacturer: str=Field(default='',max_length=160)
+    model: str=Field(default='',max_length=200)
+    article: str=Field(default='',max_length=200)
+    documentation_url: str=Field(default='',max_length=500)
+
+class ApplianceDetails(StrictModel):
+    oven: ApplianceReference=Field(default_factory=ApplianceReference)
+    microwave: ApplianceReference=Field(default_factory=ApplianceReference)
+    remarks: str=Field(default='',max_length=1500)
+
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
@@ -63,6 +75,8 @@ class FurnitureItem(StrictModel):
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
     upper_shelf_count: int|None=Field(default=None,ge=0,le=8,strict=True)
+    production_note: str=Field(default='',max_length=2000)
+    appliance_details: ApplianceDetails|None=None
 
     @model_validator(mode='after')
     def separated_heights(self):
@@ -158,6 +172,7 @@ class Scene(StrictModel):
     materialIdentities: dict[UUID,MaterialIdentity]=Field(default_factory=dict,max_length=500)
     items: list[FurnitureItem]=Field(default_factory=list,max_length=100)
     selected_item_id: str|None=Field(default=None,max_length=80)
+    production_note: str=Field(default='',max_length=2500)
 
 class Create(StrictModel):
     name: str=Field(min_length=1,max_length=200)

@@ -1,0 +1,23 @@
+
+/* Production briefs are compact and available only in the designer's authenticated studio. */
+.mf3d-studio textarea{font:inherit;letter-spacing:inherit;max-width:100%;border:1px solid #d9e1da;color:#233b32;background:#fff;border-radius:8px;padding:10px;resize:vertical;width:100%;min-height:68px;box-sizing:border-box}
+.mf3d-studio textarea:focus{border-color:#678d76;outline:2px solid #e9f0e8;outline-offset:1px}
+#item-brief-details{margin:8px 0 12px;padding:8px 0;border-bottom:1px solid #e5e9e0}
+#item-brief-details summary{cursor:pointer;color:#4f715c;font-size:11px}
+#item-brief-details label,.ap-brief label{display:block;font-size:11px;margin:8px 0;color:#63776a}
+#item-brief-details textarea,.ap-brief textarea{font-size:11px}
+.ap-brief{border-top:1px solid #e4eae0;border-bottom:1px solid #e4eae0;margin:12px 0;padding:11px 0}
+.ap-brief summary{cursor:pointer;font-size:11px;font-weight:600;color:#365441;line-height:1.4}
+.ap-brief-device{margin:12px 0;padding:10px 11px;background:#f5f7f2;border-radius:8px}
+.ap-brief h3{margin:0 0 7px;font-size:12px;color:#284532}
+.ap-brief-fields{padding-top:5px}
+.ap-brief-fields[hidden],.ap-brief[hidden]{display:none}
+.ap-brief-device label select,.ap-brief-device label input{width:100%;margin:4px 0 0}
+.production-brief-dialog{width:min(540px,calc(100vw - 32px));max-height:87vh;overflow-y:auto;box-sizing:border-box}
+.production-brief-dialog label{display:block;margin:8px 0;font-size:12px}
+.production-brief-dialog textarea{margin:6px 0;font-size:12px}
+.production-brief-dialog h3{font-size:13px;margin:17px 0 6px}
+.production-brief-dialog pre{font-family:inherit;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.55;border:1px solid #dce6d9;border-radius:9px;padding:12px;max-height:220px;overflow-y:auto;background:#f4f7f1}
+.mf3d-studio #production-brief-close{float:right;min-height:30px;padding:4px 9px}
+.mf3d-studio #production-brief-to-order{width:100%;margin-top:16px}
+@media(max-width:760px){.mf3d-studio #production-brief-button{padding-inline:8px}}

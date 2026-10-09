@@ -572,7 +572,20 @@ function prepareProject(payload, root) {
   return { entries, scan };
 }
 
-function importProject(prepared, root) {
+function writeProductionNote(obj, item, projectNote, log) {
+  const general = String(projectNote || '').trim();
+  const specific = String(item.production_note || '').trim();
+  if (!general && !specific) return;
+  if (typeof objectData === 'undefined' || typeof objectData.SetObjectNotes !== 'function')
+    throw new Error('В API БАЗИС недоступна запись заметок объекта');
+  const existing = typeof objectData.GetObjectNotes === 'function' ? String(objectData.GetObjectNotes(obj) || '').trim() : '';
+  const incoming = [general ? 'MARTIN FOREST / ОБЩИЕ УКАЗАНИЯ\r\n' + general : '',
+    specific ? 'MARTIN FOREST / ЗАМЕТКИ МОДУЛЯ\r\n' + specific : ''].filter(Boolean).join('\r\n\r\n');
+  objectData.SetObjectNotes(obj, [existing, incoming].filter(Boolean).join('\r\n\r\n'));
+  log.push('ЗАМЕТКИ ЗАПИСАНЫ: ' + (item.name || item.source_file));
+}
+
+function importProject(prepared, root, projectNote) {
   const log = ['ПАПКА ПОИСКА: ' + root,
     'ПРОСМОТРЕНО ПАПОК: ' + prepared.scan.directories + '; FR3D: ' + prepared.scan.files.length];
   let loaded = 0, failed = 0;
@@ -585,6 +598,7 @@ function importProject(prepared, root) {
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');
       obj.Name = item.name || item.source_file;
       resizeAndPlace(obj, item, log);
+      writeProductionNote(obj, item, projectNote, log);
       loaded++;
     } catch (e) {
       failed++;
@@ -630,7 +644,7 @@ function saveNativeModel(projectFilename) {
     // Resolve and hash-check every donor before starting a new model.
     const prepared = prepareProject(project.payload, root);
     modelIOOperations.NewModel();
-    const result = importProject(prepared, root);
+    const result = importProject(prepared, root, project.payload.project_note);
     let logFilename = '';
     try { logFilename = saveImportLog(project.filename, result); }
     catch (e) { result.log.push('Лог не сохранён: ' + e.message); }

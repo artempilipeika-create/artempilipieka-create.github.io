@@ -25,7 +25,7 @@ class PlannerApplication {
   async init(){
     if(this.ready)return this;await waitReady();
     this.bridge=window.MF_PLANNER_BRIDGE;this.adapter=new StateAdapter(this.bridge);this.history=new History(this.adapter);
-    this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.roomPricing=new RoomPricingUI(this);
+    this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.bindBrief();this.roomPricing=new RoomPricingUI(this);
     await this.startRenderer();
     this.roomSetup=new RoomSetup(this);
     this.previousCount=this.adapter.items.length;
@@ -221,6 +221,90 @@ class PlannerApplication {
     this.listen(get('project-name'),'focus',()=>this.history.begin('Название проекта'));
     this.listen(get('project-name'),'change',()=>this.history.commit());
   }
+  bindBrief(){
+    const brief=globalThis.MF_PRODUCTION_NOTES;
+    const notesInput=get('item-production-note'),tech=get('appliance-brief-controls');
+    this.listen(notesInput,'change',()=>{
+      const it=this.adapter.selected;
+      if(!it||notesInput.value===(it.production_note||''))return;
+      this.interaction.modify({production_note:notesInput.value},'Заметка по модулю');
+      this.bridge.refresh();
+    });
+    this.listen(tech,'change',event=>{
+      const target=event.target,it=this.adapter.selected;
+      if(!it||!brief?.family(it))return;
+      const details=structuredClone(it.appliance_details||{});
+      if(target.id==='appliance-remarks'){
+        details.remarks=target.value;
+      }else{
+        const kind=target.dataset.applianceKind,field=target.dataset.applianceField;
+        if(!['oven','microwave'].includes(kind)||!['mode','manufacturer','model','article','documentation_url'].includes(field))return;
+        details[kind]={mode:'standard',manufacturer:'',model:'',article:'',documentation_url:'',...(details[kind]||{})};
+        details[kind][field]=target.value;
+      }
+      this.interaction.modify({appliance_details:details},'Данные встроенной техники');
+      this.bridge.refresh();
+    });
+    const dialog=get('production-brief-dialog'),input=get('production-brief-text'),
+      preview=get('production-brief-summary'),continueButton=get('production-brief-to-order');
+    const render=()=>{
+      const scene={...this.adapter.state,production_note:input.value};
+      preview.textContent=brief?.projectText(scene)||'Замечаний нет. Модель техники по умолчанию считается неуточнённой.';
+    };
+    const commit=()=>{
+      if(!this.adapter.state||input.value===(this.adapter.state.production_note||''))return;
+      this.history.run('Общие указания к заказу',()=>{
+        this.adapter.state.production_note=input.value;
+        this.bridge.refresh();
+      });
+    };
+    const show=handoff=>{
+      if(!this.adapter.state)return;
+      input.value=this.adapter.state.production_note||'';
+      continueButton.hidden=!handoff;
+      render();if(!dialog.open)dialog.showModal();
+    };
+    this.listen(get('production-brief-button'),'click',()=>show(false));
+    // Intercept the existing legacy order handler before its bubble phase:
+    // the designer must see the collected technical brief first.
+    this.listen(get('to-order'),'click',event=>{
+      event.preventDefault();event.stopImmediatePropagation();
+      show(true);
+    },true);
+    this.listen(input,'input',render);
+    this.listen(input,'change',commit);
+    this.listen(dialog,'close',commit);
+    this.listen(get('production-brief-close'),'click',()=>{commit();dialog.close();});
+    this.listen(continueButton,'click',async()=>{
+      commit();
+      const err=brief?.validate(this.adapter.state);
+      if(err){this.adapter.status(err);alert(err);return;}
+      continueButton.disabled=true;
+      try{await this.bridge.toOrder();}
+      catch(error){this.adapter.status(error.message||String(error));}
+      finally{continueButton.disabled=false;}
+    });
+  }
+  syncBrief(){
+    const selected=this.adapter.selected,notesInput=get('item-production-note'),brief=globalThis.MF_PRODUCTION_NOTES;
+    if(notesInput&&document.activeElement!==notesInput)notesInput.value=selected?.production_note||'';
+    const control=get('appliance-brief-controls');
+    if(!control)return;
+    const variant=brief?.family(selected);control.hidden=!variant;
+    if(!variant)return;
+    const microwave=control.querySelector('[data-device="microwave"]');
+    if(microwave)microwave.hidden=!variant.microwave;
+    for(const kind of ['oven','microwave']){
+      const reference=brief.appliance(selected,kind);
+      for(const input of control.querySelectorAll('[data-appliance-kind="'+kind+'"]')){
+        if(document.activeElement!==input)input.value=reference[input.dataset.applianceField]||'';
+      }
+      const extra=control.querySelector('[data-appliance-extra="'+kind+'"]');
+      if(extra)extra.hidden=reference.mode!=='model';
+    }
+    const remarks=get('appliance-remarks');
+    if(remarks&&document.activeElement!==remarks)remarks.value=selected?.appliance_details?.remarks||'';
+  }
   ensureSelectedVisible(){const it=this.adapter.selected;if(it&&this.scene.layer!=='all'&&this.scene.layer!==tier(it)){this.scene.layer='all';get('planner-layer').value='all';this.scene.sync();}}
   async startRenderer(){
     this.interaction?.dispose();this.scene?.dispose();
@@ -255,7 +339,7 @@ class PlannerApplication {
     const selectedId=this.adapter.state?.selected_item_id;
     if(selectedId&&!this.adapter.items.some(it=>it.item_id===selectedId)){this.adapter.select(null);return;}
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.scene.sync();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();
+    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;

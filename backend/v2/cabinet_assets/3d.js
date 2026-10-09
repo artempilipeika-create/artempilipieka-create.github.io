@@ -194,6 +194,7 @@ function normalizeScene(s={}){
     room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700,setup_complete:room.setup_complete??null,survey:room.survey??null,features:Array.isArray(room.features)?room.features:[]},
     displaySettings:s.displaySettings||{},
     materialIdentities:s.materialIdentities||{},
+    production_note:s.production_note||'',
     items,
     selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
       ?s.selected_item_id:(items[0]?.item_id||null),
@@ -214,6 +215,7 @@ function scenePayload(){
     front_variant_id:first.front_variant_id,view_mode:viewMode,schema_version:2,room:{...state.room},
     displaySettings:state.displaySettings||{},
     materialIdentities,
+    production_note:state.production_note||'',
     items:state.items.map(x=>({...x})),selected_item_id:selectedId
   };
 }
@@ -419,7 +421,7 @@ async function saveProject(){
 }
 async function newProject(){
   project=null;
-  state={schema_version:2,room:{width:4200,depth:3200,height:2700,setup_complete:document.body.dataset.plannerRequested==='webgl'?false:null,survey:null,features:[]},items:[],selected_item_id:null,view_mode:'3d'};
+  state={schema_version:2,room:{width:4200,depth:3200,height:2700,setup_complete:document.body.dataset.plannerRequested==='webgl'?false:null,survey:null,features:[]},items:[],selected_item_id:null,view_mode:'3d',production_note:''};
   selectedId=null;
   $('project-name').value='Новый 3D-проект';
   syncRoom();
@@ -1109,6 +1111,8 @@ function exportSafeName(value,max=48){
   return s.slice(0,max);
 }
 function exportBazisProject(){
+  const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
+  if(briefError){status(briefError);return;}
   const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
   if(invalid){status(invalid);return;}
   const bazisItems=state.items.filter(x=>x.bazis_file);
@@ -1125,6 +1129,7 @@ function exportBazisProject(){
   const payload={
     format:'martin-forest-bazis-native-v2',
     project_name:$('project-name').value.trim()||'3D-проект',
+    project_note:state.production_note||'',
     exported_at:new Date().toISOString(),
     room:{...state.room},
     facade_gap_mm:FACADE_GAP_MM,
@@ -1149,6 +1154,8 @@ function exportBazisProject(){
         position:{x:it.x,y:globalThis.MF_FURNITURE_CORE.elevation(it,state.room),z:it.z},
         rotation:it.rotation,
         name:it.name,
+        production_note:globalThis.MF_PRODUCTION_NOTES?.moduleText(it)||'',
+        appliance_details:it.appliance_details||null,
         body_variant_id:it.body_variant_id||null,
         front_variant_id:it.front_variant_id||null,
         construction:p?{
@@ -1190,8 +1197,13 @@ function exportBazisProject(){
 }
 
 async function toOrder(){
+  const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
+  if(briefError)throw new Error(briefError);
   for(const it of state.items)if(!it.body_variant_id||!it.front_variant_id)throw new Error('Выберите материалы корпуса и фасадов для всех модулей.');
   await saveProject();
+  const projectBrief=globalThis.MF_PRODUCTION_NOTES?.projectText(state)||'';
+  const orderComment='Создано из сохранённого 3D-проекта '+project.project_id+(projectBrief?'\n\nЗАДАНИЕ КОНСТРУКТОРУ\n'+projectBrief:'');
+  if(orderComment.length>4000)throw new Error('Задание превышает 4000 символов для комментария заказа. Сократите заметки перед передачей.');
   const o=await api('/orders','POST',{business_name:$('project-name').value.trim()||'3D-проект',preparation_mode:'self_prepared'});
   const rel=await api('/catalogue/releases'),rows=allCutlist();
   const details=rows.map(r=>({
@@ -1202,7 +1214,7 @@ async function toOrder(){
   }));
   await api('/orders/'+o.order_id+'/revisions','POST',{
     parent_revision_id:null,catalogue_release_id:rel.active_release,reason:'Перенос из 3D-проекта',
-    comment:'Создано из сохранённого 3D-проекта '+project.project_id,details
+    comment:orderComment,details
   },{'If-Match':String(o.optimistic_lock_version)});
   location.assign('/editor?order='+encodeURIComponent(o.order_id));
 }
