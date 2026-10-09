@@ -1,0 +1,22 @@
+name: BAZIS native notes v9.4 acceptance
+on:
+  push:
+    branches: [mf-bazis-notes-v94-20261009]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check tools/bazis_import/Martin_Forest_Import_v9_4_NOTES_VERIFIED_ONE_CLICK.js
+          node --check tests/webgl/bazis-notes-v94.test.mjs
+      - name: Notes verification with mocked native API
+        run: node --test tests/webgl/bazis-notes-v94.test.mjs
