@@ -246,7 +246,8 @@ class PlannerApplication {
       this.bridge.refresh();
     });
     const dialog=get('production-brief-dialog'),input=get('production-brief-text'),
-      preview=get('production-brief-summary'),continueButton=get('production-brief-to-order');
+      preview=get('production-brief-summary'),continueButton=get('production-brief-to-order'),
+      errorBox=get('production-brief-error');
     const render=()=>{
       const scene={...this.adapter.state,production_note:input.value};
       preview.textContent=brief?.projectText(scene)||'Замечаний нет. Модель техники по умолчанию считается неуточнённой.';
@@ -262,7 +263,7 @@ class PlannerApplication {
       if(!this.adapter.state)return;
       input.value=this.adapter.state.production_note||'';
       continueButton.hidden=!handoff;
-      render();if(!dialog.open)dialog.showModal();
+      errorBox.hidden=true;errorBox.textContent='';render();if(!dialog.open)dialog.showModal();
     };
     this.listen(get('production-brief-button'),'click',()=>show(false));
     // Intercept the existing legacy order handler before its bubble phase:
@@ -278,10 +279,13 @@ class PlannerApplication {
     this.listen(continueButton,'click',async()=>{
       commit();
       const err=brief?.validate(this.adapter.state);
-      if(err){this.adapter.status(err);alert(err);return;}
+      if(err){this.adapter.status(err);errorBox.textContent=err;errorBox.hidden=false;return;}
       continueButton.disabled=true;
       try{await this.bridge.toOrder();}
-      catch(error){this.adapter.status(error.message||String(error));}
+      catch(error){
+        const message=error.message||String(error);
+        this.adapter.status(message);errorBox.textContent=message;errorBox.hidden=false;
+      }
       finally{continueButton.disabled=false;}
     });
   }

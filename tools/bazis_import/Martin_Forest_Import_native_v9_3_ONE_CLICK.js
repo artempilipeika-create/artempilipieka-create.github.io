@@ -576,13 +576,22 @@ function writeProductionNote(obj, item, projectNote, log) {
   const general = String(projectNote || '').trim();
   const specific = String(item.production_note || '').trim();
   if (!general && !specific) return;
-  if (typeof objectData === 'undefined' || typeof objectData.SetObjectNotes !== 'function')
-    throw new Error('В API БАЗИС недоступна запись заметок объекта');
-  const existing = typeof objectData.GetObjectNotes === 'function' ? String(objectData.GetObjectNotes(obj) || '').trim() : '';
-  const incoming = [general ? 'MARTIN FOREST / ОБЩИЕ УКАЗАНИЯ\r\n' + general : '',
-    specific ? 'MARTIN FOREST / ЗАМЕТКИ МОДУЛЯ\r\n' + specific : ''].filter(Boolean).join('\r\n\r\n');
-  objectData.SetObjectNotes(obj, [existing, incoming].filter(Boolean).join('\r\n\r\n'));
-  log.push('ЗАМЕТКИ ЗАПИСАНЫ: ' + (item.name || item.source_file));
+  const label = item.name || item.source_file;
+  if (typeof objectData === 'undefined' || typeof objectData.SetObjectNotes !== 'function'
+      || typeof objectData.GetObjectNotes !== 'function') {
+    log.push('ПРЕДУПРЕЖДЕНИЕ: заметки не записаны (' + label + '): API заметок недоступен; геометрия импортирована.');
+    return;
+  }
+  try {
+    const existing = String(objectData.GetObjectNotes(obj) || '').trim();
+    const incoming = [general ? 'MARTIN FOREST / ОБЩИЕ УКАЗАНИЯ\r\n' + general : '',
+      specific ? 'MARTIN FOREST / ЗАМЕТКИ МОДУЛЯ\r\n' + specific : ''].filter(Boolean).join('\r\n\r\n');
+    objectData.SetObjectNotes(obj, [existing, incoming].filter(Boolean).join('\r\n\r\n'));
+    log.push('ЗАМЕТКИ ЗАПИСАНЫ: ' + label);
+  } catch (error) {
+    // Notes must never prevent a valid production fragment from importing.
+    log.push('ПРЕДУПРЕЖДЕНИЕ: не удалось записать заметки (' + label + '): ' + (error.message || String(error)));
+  }
 }
 
 function importProject(prepared, root, projectNote) {

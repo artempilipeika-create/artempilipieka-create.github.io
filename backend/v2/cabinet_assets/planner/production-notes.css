@@ -21,3 +21,5 @@
 .mf3d-studio #production-brief-close{float:right;min-height:30px;padding:4px 9px}
 .mf3d-studio #production-brief-to-order{width:100%;margin-top:16px}
 @media(max-width:760px){.mf3d-studio #production-brief-button{padding-inline:8px}}
+
+.production-brief-error{color:#a94332;font-size:12px;line-height:1.5;margin:10px 0}

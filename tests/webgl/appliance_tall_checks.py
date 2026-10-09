@@ -25,6 +25,76 @@ def choice_layout(page):
       icons:[...root.querySelectorAll('.ap-option-image svg')].every(s=>s.getBoundingClientRect().height>=80)};}''')
     assert geometry['height']>=150 and geometry['fits'] and geometry['labels'] and geometry['icons'],geometry
 
+def test_designer_brief_persists_and_reaches_native_export_and_order(page,api,settings,admin_user):
+    from urllib.parse import urlparse,parse_qs
+    from backend.v2.db import connect
+    publish(api,master([[a,'ЛДСП EGGER 18мм '+a,'кв.м',0,2800,2070,18,a.split()[1],'','M1','false',''] for a in ['W1000 ST9','U999 ST7']]))
+    login_ui(page,admin_user['email'])
+    page.goto('https://testserver/constructor')
+    expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
+    panel(page,'left','catalog')
+    page.locator(f'[data-bazis="{DEFAULT}"]').click()
+    choose(page,'layout','door_oven_micro')
+    panel(page,'right')
+    page.locator('#appliance-brief-controls summary').click()
+    expect(page.locator('#appliance-brief-controls')).to_be_visible()
+    page.locator('[data-appliance-kind="oven"][data-appliance-field="mode"]').select_option('model')
+    page.locator('[data-appliance-kind="oven"][data-appliance-field="manufacturer"]').fill('Bosch')
+    page.locator('[data-appliance-kind="oven"][data-appliance-field="model"]').fill('TEST-HBG-595')
+    page.locator('[data-appliance-kind="oven"][data-appliance-field="article"]').fill('ART-595')
+    page.locator('[data-appliance-kind="oven"][data-appliance-field="documentation_url"]').fill('https://example.com/installation.pdf')
+    page.locator('[data-appliance-kind="oven"][data-appliance-field="documentation_url"]').press('Tab')
+    page.locator('#appliance-remarks').fill('Согласовать вентиляцию')
+    page.locator('#appliance-remarks').press('Tab')
+    page.locator('#item-brief-details summary').click()
+    page.locator('#item-production-note').fill('Установить справа от колонны')
+    page.locator('#item-production-note').press('Tab')
+    page.locator('#production-brief-button').click()
+    expect(page.locator('#production-brief-dialog')).to_be_visible()
+    page.locator('#production-brief-text').fill('Проверить розетки перед выпуском')
+    page.locator('#production-brief-text').press('Tab')
+    summary=page.locator('#production-brief-summary').inner_text()
+    assert 'Bosch' in summary and 'ART-595' in summary and 'СТАНДАРТНАЯ НИША' in summary
+    page.locator('#production-brief-close').click()
+    choose_material(page,'body','W1000 ST9')
+    choose_material(page,'front','U999 ST7')
+    close_panels(page)
+    page.locator('#save-project').click()
+    expect(page.locator('#studio-save-state')).to_have_text('Проект сохранён')
+    pid=page.evaluate('MF_PLANNER.adapter.projectId')
+    saved=api.get('/api/v2/3d-projects/'+pid)
+    assert saved.status_code==200,saved.text
+    scene=saved.json()['scene'];item=scene['items'][0]
+    assert scene['production_note']=='Проверить розетки перед выпуском'
+    assert item['production_note']=='Установить справа от колонны'
+    assert item['appliance_details']['oven']['article']=='ART-595'
+    assert item['appliance_details']['oven']['documentation_url']=='https://example.com/installation.pdf'
+    exported=export_payload(page)
+    assert exported['project_note']=='Проверить розетки перед выпуском'
+    assert 'ART-595' in exported['items'][0]['production_note']
+    assert 'https://example.com/installation.pdf' in exported['items'][0]['production_note']
+    assert 'Согласовать вентиляцию' in exported['items'][0]['production_note']
+    page.goto('https://testserver/constructor')
+    expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
+    panel(page,'left','projects')
+    page.locator('#projects .mf3d-project').first.click()
+    page.wait_for_function('MF_PLANNER.adapter.items.length===1')
+    assert page.evaluate('MF_PLANNER.adapter.state.production_note')=='Проверить розетки перед выпуском'
+    close_panels(page)
+    page.locator('#to-order').click()
+    expect(page.locator('#production-brief-dialog')).to_be_visible()
+    expect(page.locator('#production-brief-to-order')).to_be_visible()
+    assert 'ART-595' in page.locator('#production-brief-summary').inner_text()
+    page.locator('#production-brief-to-order').click()
+    page.wait_for_url('**/editor?order=*',timeout=20000)
+    order_id=parse_qs(urlparse(page.url).query)['order'][0]
+    with connect(settings) as conn:
+        rev=conn.execute('SELECT content FROM mf_order_revisions WHERE order_id=%s',(order_id,)).fetchone()
+        assert rev and 'ART-595' in rev['content']['comment']
+        assert 'Проверить розетки перед выпуском' in rev['content']['comment']
+        assert 'https://example.com/installation.pdf' in rev['content']['comment']
+
+
 def test_appliance_tall_choices_save_reopen_export_history_and_mobile(page,api,settings,admin_user):
     publish(api,master([[a,'ЛДСП EGGER 18мм '+a,'кв.м',0,2800,2070,18,a.split()[1],'','M1','false',''] for a in ['W1000 ST9','U999 ST7']]))
     login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
