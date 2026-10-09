@@ -86,7 +86,12 @@ def test_designer_brief_persists_and_reaches_native_export_and_order(page,api,se
     expect(page.locator('#production-brief-to-order')).to_be_visible()
     assert 'ART-595' in page.locator('#production-brief-summary').inner_text()
     page.locator('#production-brief-to-order').click()
-    page.wait_for_url('**/editor?order=*',timeout=20000)
+    try:
+        page.wait_for_url('**/editor?order=*',timeout=12000)
+    except Exception as exc:
+        issue=page.locator('#production-brief-error').inner_text()
+        status=page.locator('#status').inner_text()
+        raise AssertionError(f'Заказ не открылся: url={page.url}, error={issue!r}, status={status!r}') from exc
     order_id=parse_qs(urlparse(page.url).query)['order'][0]
     with connect(settings) as conn:
         rev=conn.execute('SELECT content FROM mf_order_revisions WHERE order_id=%s',(order_id,)).fetchone()
