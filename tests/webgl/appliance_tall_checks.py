@@ -94,12 +94,16 @@ def test_designer_brief_persists_and_reaches_native_export_and_order(page,api,se
         raise AssertionError(f'Заказ не открылся: url={page.url}, error={issue!r}, status={status!r}') from exc
     order_id=parse_qs(urlparse(page.url).query)['order'][0]
     with connect(settings) as conn:
-        rev=conn.execute('SELECT content FROM mf_order_revisions WHERE order_id=%s',(order_id,)).fetchone()
+        rev=conn.execute('SELECT revision_id,content FROM mf_order_revisions WHERE order_id=%s',(order_id,)).fetchone()
         assert rev and 'ART-595' in rev['content']['comment']
         assert 'Проверить розетки перед выпуском' in rev['content']['comment']
         assert 'https://example.com/installation.pdf' in rev['content']['comment']
         # Decorative catalogue visuals must not leak floating roughness into immutable financial content.
         assert all('visual' not in d['material'] for d in rev['content']['details'] if d['material'])
+    r=api.get('/api/v2/orders/'+order_id+'/revisions/'+str(rev['revision_id']))
+    assert r.status_code==200,r.text
+    assert 'ART-595' in r.json()['comment']
+    expect(page.locator('.mf-order-production-brief')).to_contain_text('ART-595')
 
 
 def test_appliance_tall_choices_save_reopen_export_history_and_mobile(page,api,settings,admin_user):

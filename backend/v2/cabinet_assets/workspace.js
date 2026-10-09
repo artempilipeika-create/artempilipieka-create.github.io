@@ -61,7 +61,7 @@ async function openEditor(id){
  editorOrder=await api('/orders/'+encodeURIComponent(id));
  if(!currentUser.roles.some(r=>['client','manager','admin'].includes(r))){heading('Доступ ограничен');return;}
  manualRows=[];catalogueRelease=null;revisionComment='';dirty=false;managerEditing=false;
- if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.map(fromRevision);}
+ if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.map(fromRevision);revisionComment=r.comment||'';}
  const draft=await api('/orders/'+id+'/draft/rows');editorOrder.optimistic_lock_version=draft.optimistic_lock_version;
  for(const r of draft.rows){if(!r.excluded_reason&&!manualRows.some(d=>d.draft_row_id===r.draft_row_id||d.glue_backing?.draft_row_id===r.draft_row_id))manualRows.push(fromImported(r));}
  if(editorOrder.preparation_mode==='self_prepared'||!currentUser.roles.includes('client')){
@@ -94,6 +94,14 @@ async function editorView(){
  heading(editorOrder.business_name||'Деталировка');content.append(node('p',statusLabels[editorOrder.workflow_status]||'В обработке','badge'));
  const bar=node('div',undefined,'toolbar');bar.append(link(currentUser.roles.includes('client')?'Мои заказы':'Рабочая очередь',currentUser.roles.includes('client')?'/account':'/staff','button secondary'));content.append(bar);
  const client=currentUser.roles.includes('client');
+ // Surface the immutable designer handoff immediately on opening the order,
+ // rather than burying it after the detail grid or silently discarding it.
+ if(!client&&revisionComment.includes('ЗАДАНИЕ КОНСТРУКТОРУ')){
+  const brief=node('section',undefined,'panel'),preview=node('pre',revisionComment,'mf-order-production-brief');
+  preview.style.whiteSpace='pre-wrap';preview.style.overflowWrap='anywhere';
+  preview.style.fontFamily='inherit';preview.style.fontSize='13px';preview.style.lineHeight='1.55';
+  brief.append(node('h2','Задание конструктора'),preview);content.append(brief);
+ }
  if(editorOrder.preparation_mode==='manager_assisted'&&(client||(!editorOrder.active_revision_id&&!managerEditing))){
   if(editorOrder.workflow_status==='draft'){await managerPreparation();if(!client)content.append(button('Заполнить деталировку',()=>{managerEditing=true;return editorView();},true));}else{content.append(node('p','Заявка у менеджера. После проверки он отправит вам предварительный расчёт.'));await sourceList(content);}
   return;
