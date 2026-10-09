@@ -89,8 +89,8 @@ def test_designer_brief_persists_and_reaches_native_export_and_order(page,api,se
     try:
         page.wait_for_url('**/editor?order=*',timeout=12000)
     except Exception as exc:
-        issue=page.locator('#production-brief-error').inner_text()
-        status=page.locator('#status').inner_text()
+        issue=page.locator('#production-brief-error').text_content(timeout=2000) or ''
+        status=page.locator('#status').text_content(timeout=2000) or ''
         raise AssertionError(f'Заказ не открылся: url={page.url}, error={issue!r}, status={status!r}') from exc
     order_id=parse_qs(urlparse(page.url).query)['order'][0]
     with connect(settings) as conn:
@@ -98,6 +98,8 @@ def test_designer_brief_persists_and_reaches_native_export_and_order(page,api,se
         assert rev and 'ART-595' in rev['content']['comment']
         assert 'Проверить розетки перед выпуском' in rev['content']['comment']
         assert 'https://example.com/installation.pdf' in rev['content']['comment']
+        # Decorative catalogue visuals must not leak floating roughness into immutable financial content.
+        assert all('visual' not in d['material'] for d in rev['content']['details'] if d['material'])
 
 
 def test_appliance_tall_choices_save_reopen_export_history_and_mobile(page,api,settings,admin_user):

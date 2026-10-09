@@ -31,7 +31,12 @@ def released(conn,release,ident,kind):
     row=conn.execute('SELECT snapshot,kind FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s',(release,ident)).fetchone()
     if not row or row['kind']!=kind: error(422,'EXACT_RELEASED_ITEM_REQUIRED')
     from .catalogue_model import safe_item
-    return safe_item(row['snapshot'],release)
+    item=safe_item(row['snapshot'],release)
+    # Catalog visuals are presentation metadata, not production/financial identity.
+    # Some verified decors carry a float `roughness` (e.g. 0.85), forbidden in
+    # hashed immutable financial snapshots. Keep them in catalogue/UI, not revisions.
+    item.pop('visual',None)
+    return item
 
 def _material_choice(conn,release,variant,custom):
     material=released(conn,release,variant,'material') if variant else None
