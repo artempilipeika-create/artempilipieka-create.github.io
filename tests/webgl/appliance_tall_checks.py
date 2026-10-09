@@ -17,6 +17,14 @@ from backend.v2.three_d_document import hardware_for,module_contents,render
 
 DEFAULT=next(v['id'] for v in VARIANTS if v['row_height']==820 and v['opening']=='left' and v['layout']=='door_oven')
 
+def choice_layout(page):
+    geometry=page.evaluate('''()=>{const root=document.querySelector('#appliance-tall-choice'),panel=document.querySelector('.mf3d-right');return {
+      height:root.querySelector('#appliance-tall-preview svg').getBoundingClientRect().height,
+      fits:panel.scrollWidth<=panel.clientWidth+1,
+      labels:[...root.querySelectorAll('.ap-layouts button')].every(b=>b.scrollWidth<=b.clientWidth+1),
+      icons:[...root.querySelectorAll('.ap-option-image svg')].every(s=>s.getBoundingClientRect().height>=80)};}''')
+    assert geometry['height']>=150 and geometry['fits'] and geometry['labels'] and geometry['icons'],geometry
+
 def test_appliance_tall_choices_save_reopen_export_history_and_mobile(page,api,settings,admin_user):
     publish(api,master([[a,'ЛДСП EGGER 18мм '+a,'кв.м',0,2800,2070,18,a.split()[1],'','M1','false',''] for a in ['W1000 ST9','U999 ST7']]))
     login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
@@ -28,6 +36,7 @@ def test_appliance_tall_choices_save_reopen_export_history_and_mobile(page,api,s
     expect(page.locator('#appliance-tall-choice')).to_be_visible()
     expect(page.locator('[data-tall-value="double"]')).to_be_hidden()
     expect(page.locator('#appliance-tall-choice [data-tall-option="layout"]')).to_have_count(4)
+    choice_layout(page)
     page.locator('#appliance-tall-height').select_option('2400')
     page.locator('#studio-item-name').fill('Пенал с техникой у окна');page.locator('#studio-item-name').press('Tab')
     choose_material(page,'body','W1000 ST9');choose_material(page,'front','U999 ST7')
@@ -57,9 +66,10 @@ def test_appliance_tall_choices_save_reopen_export_history_and_mobile(page,api,s
     page.goto('https://testserver/constructor');expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
     panel(page,'left','projects');page.locator('#projects .mf3d-project').first.click();page.wait_for_function('MF_PLANNER.adapter.items.length===1')
     assert export_payload(page)['items']==native['items']
-    panel(page,'right');page.locator('#module-display').select_option('normal');page.evaluate('document.querySelector(".mf3d-right").scrollTop=0;MF_PLANNER.scene.fit("selected")')
+    panel(page,'right');page.locator('#module-display').select_option('normal');page.evaluate('document.querySelector("#tall-options-controls").scrollIntoView({block:"start"});MF_PLANNER.scene.fit("selected")')
     screenshot(page,'appliance-desktop')
-    page.set_viewport_size({'width':390,'height':844});panel(page,'right');page.evaluate('document.querySelector(".mf3d-right").scrollTop=0')
+    page.set_viewport_size({'width':390,'height':844});panel(page,'right');page.evaluate('document.querySelector("#tall-options-controls").scrollIntoView({block:"start"})')
+    choice_layout(page)
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
     screenshot(page,'appliance-mobile')
     choose(page,'layout','door_oven');expect(page.locator('[data-tall-value="door_oven"]')).to_have_attribute('aria-pressed','true')

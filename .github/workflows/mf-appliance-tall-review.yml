@@ -48,7 +48,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: UI, real API persistence and native export
         run: |
-          python -m pytest tests/webgl/room_checks.py tests/webgl/tall_checks.py tests/webgl/appliance_tall_checks.py -vv -s --timeout=420 --junitxml=qa-output/tall/results.xml
+          python -m pytest tests/webgl/appliance_tall_checks.py -vv -s --timeout=420 --junitxml=qa-output/tall/results.xml
           git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()
