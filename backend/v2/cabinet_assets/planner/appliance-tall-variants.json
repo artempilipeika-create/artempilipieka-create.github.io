@@ -1,0 +1,7022 @@
+[
+  {
+    "id": "bazis.d9c0c30544f4",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "door_oven",
+    "drawer": false,
+    "microwave": false,
+    "label": "ПН-600 · дверь + духовка · база 820 · L",
+    "source_file": "ПН-600.База 820+ДШ +З.С_паз+отк L.fr3d",
+    "source_sha256": "d9c0c30544f457dc1c3dbfb2e6c7d0c25759b4029781b450a0972a05794989e7",
+    "source_attachment": "ПН-600.База 820+ДШ +З.С_паз+отк L.fr3d",
+    "detail_pdf": "Деталировка 16.pdf",
+    "native_height": 2000.0,
+    "min_height": 1800,
+    "oven_bottom": 820.0,
+    "upper_bottom": 1433.0,
+    "upper_shelves": [
+      1707.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 20,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          582.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1707.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1424.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          705.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          466.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1707.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          717.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          582.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1707.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.3b743f21468c",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "door_oven",
+    "drawer": false,
+    "microwave": false,
+    "label": "ПН-600 · дверь + духовка · база 820 · P",
+    "source_file": "ПН-600.База 820+ДШ +З.С_паз+отк P.fr3d",
+    "source_sha256": "3b743f21468c96ab9601295aebcaade15b53b6f77998955e1a3b4bd4c2c5af68",
+    "source_attachment": "ПН-600.База 820+ДШ +З.С_паз+отк P.fr3d",
+    "detail_pdf": "Деталировка 15.pdf",
+    "native_height": 2000.0,
+    "min_height": 1800,
+    "oven_bottom": 820.0,
+    "upper_bottom": 1433.0,
+    "upper_shelves": [
+      1707.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 20,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          582.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1707.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1424.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          705.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          466.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1707.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          717.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          582.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1707.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.30c3239bf826",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "door_oven_micro",
+    "drawer": false,
+    "microwave": true,
+    "label": "ПН-600 · дверь + духовка + СВЧ · база 820 · L",
+    "source_file": "ПН-600.База 820+ДШ+СВЧ+З.С_паз отк L.fr3d",
+    "source_sha256": "30c3239bf826d835a5a0464e3de309fe6d6e7b2b51cf5c3b4f997033d32e6b4a",
+    "source_attachment": "ПН-600.База 820+ДШ+СВЧ+З.С_паз отк L.fr3d",
+    "detail_pdf": "Деталировка 14.pdf",
+    "native_height": 2200.0,
+    "min_height": 2100,
+    "oven_bottom": 820.0,
+    "upper_bottom": 1831.0,
+    "upper_shelves": [
+      2006.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          384.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          2006.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1424.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          705.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          466.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2006.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1822.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          717.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          384.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          2006.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.57a3f9b6c93c",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "door_oven_micro",
+    "drawer": false,
+    "microwave": true,
+    "label": "ПН-600 · дверь + духовка + СВЧ · база 820 · P",
+    "source_file": "ПН-600.База 820+ДШ+СВЧ+З.С_паз отк P.fr3d",
+    "source_sha256": "57a3f9b6c93c00f21124c5f65a51f90ebab744bcd9bbdf7c825d969952ef723f",
+    "source_attachment": "ПН-600.База 820+ДШ+СВЧ+З.С_паз отк P.fr3d",
+    "detail_pdf": "Деталировка 13.pdf",
+    "native_height": 2200.0,
+    "min_height": 2100,
+    "oven_bottom": 820.0,
+    "upper_bottom": 1831.0,
+    "upper_shelves": [
+      2006.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          384.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          2006.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1424.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          705.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          466.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2006.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1822.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          717.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          384.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          2006.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.3880731ae86a",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "drawer_oven",
+    "drawer": true,
+    "microwave": false,
+    "label": "ПН-600 · шуфляда + духовка · база 820 · L",
+    "source_file": "ПН-600.База 820+РШ1+ДШ+З.С_паз отк L.fr3d",
+    "source_sha256": "3880731ae86a332c3290560810a71aacbb5fb3821a9e2e75f6ffee0bca1faca4",
+    "source_attachment": "ПН-600.База 820+РШ1+ДШ+З.С_паз отк L.fr3d",
+    "detail_pdf": "Деталировка 12.pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 460.5,
+    "upper_bottom": 1073.5,
+    "upper_shelves": [
+      1440.0,
+      1815.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 8,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          1142.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1627.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          451.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1064.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          345.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          286.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1440.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-2",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1815.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          1141.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1627.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 3
+      }
+    ]
+  },
+  {
+    "id": "bazis.3cc4dc7211b2",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "drawer_oven",
+    "drawer": true,
+    "microwave": false,
+    "label": "ПН-600 · шуфляда + духовка · база 820 · P",
+    "source_file": "ПН-600.База 820+РШ1+ДШ+З.С_паз отк P.fr3d",
+    "source_sha256": "3cc4dc7211b23901e1fa9390310ebc190bc0a11aa16617e15daa8e42a7f95698",
+    "source_attachment": "ПН-600.База 820+РШ1+ДШ+З.С_паз отк P.fr3d",
+    "detail_pdf": "Деталировка 11.pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 460.5,
+    "upper_bottom": 1073.5,
+    "upper_shelves": [
+      1440.0,
+      1815.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 8,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          1142.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1627.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          451.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1064.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          345.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          286.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1440.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-2",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1815.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          1141.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1627.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 3
+      }
+    ]
+  },
+  {
+    "id": "bazis.4eef1f854e00",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "drawer_oven_micro",
+    "drawer": true,
+    "microwave": true,
+    "label": "ПН-600 · шуфляда + духовка + СВЧ · база 820 · L",
+    "source_file": "ПН-600.База 820+РШ1+ДШ+СВЧ+З.С_паз отк L.fr3d",
+    "source_sha256": "4eef1f854e00c5f01f0bdae4e7305466e5f1754fd991192e34147d112b659cf4",
+    "source_attachment": "ПН-600.База 820+РШ1+ДШ+СВЧ+З.С_паз отк L(1).fr3d",
+    "detail_pdf": "Деталировка 10.pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 460.5,
+    "upper_bottom": 1471.5,
+    "upper_shelves": [
+      1826.75
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 28,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          744.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1826.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          451.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1064.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          345.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          286.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1826.75,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1462.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          743.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1826.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.c432f96c661e",
+    "family": "appliance",
+    "row_height": 820,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "drawer_oven_micro",
+    "drawer": true,
+    "microwave": true,
+    "label": "ПН-600 · шуфляда + духовка + СВЧ · база 820 · P",
+    "source_file": "ПН-600.База 820+РШ1+ДШ+СВЧ+З.С_паз отк P.fr3d",
+    "source_sha256": "c432f96c661e9687955bb8d5397e43cbe214bbdaccde235f88a9828d1eb47fb1",
+    "source_attachment": "ПН-600.База 820+РШ1+ДШ+СВЧ+З.С_паз отк P(1).fr3d",
+    "detail_pdf": "Деталировка 9.pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 460.5,
+    "upper_bottom": 1471.5,
+    "upper_shelves": [
+      1826.75
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 28,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          744.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1826.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          451.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1064.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          345.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          286.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1826.75,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1462.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          301.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          281.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          301.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          281.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          743.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1826.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.46b3a47666f1",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "door_oven",
+    "drawer": false,
+    "microwave": false,
+    "label": "ПН-600 · дверь + духовка · база 900 · L",
+    "source_file": "ПН-600.База 900 +ДШ+З.С_паз+отк L.fr3d",
+    "source_sha256": "46b3a47666f17684589d61c9dbb090b1d2278f4cdf53672ea48f0e1ea02708ba",
+    "source_attachment": "ПН-600.База 900 +ДШ+З.С_паз+отк L.fr3d",
+    "detail_pdf": "Деталировка 8.pdf",
+    "native_height": 2000.0,
+    "min_height": 1800,
+    "oven_bottom": 900.0,
+    "upper_bottom": 1513.0,
+    "upper_shelves": [
+      1747.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 20,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          502.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1747.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          891.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1504.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          785.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          506.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1747.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          797.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          502.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1747.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.aa301bfd0e16",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "door_oven",
+    "drawer": false,
+    "microwave": false,
+    "label": "ПН-600 · дверь + духовка · база 900 · P",
+    "source_file": "ПН-600.База 900 +ДШ+З.С_паз+отк P.fr3d",
+    "source_sha256": "aa301bfd0e16613df5ce2933921fa5fd79178af465a2aeec0f716346caf22809",
+    "source_attachment": "ПН-600.База 900 +ДШ+З.С_паз+отк P.fr3d",
+    "detail_pdf": "Деталировка 7.pdf",
+    "native_height": 2000.0,
+    "min_height": 1800,
+    "oven_bottom": 900.0,
+    "upper_bottom": 1513.0,
+    "upper_shelves": [
+      1747.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 20,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          502.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1747.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          891.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1504.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          1882.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1059.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          785.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          506.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1747.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          797.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          502.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1747.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.0de39c7a52e4",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "door_oven_micro",
+    "drawer": false,
+    "microwave": true,
+    "label": "ПН-600 · дверь + духовка + СВЧ · база 900 · L",
+    "source_file": "ПН-600.База 900 +ДШ+СВЧ+З.С_паз+отк L.fr3d",
+    "source_sha256": "0de39c7a52e4ce509e0c692777314d6d404db05f7650286e7babf72d9f31a7ac",
+    "source_attachment": "ПН-600.База 900 +ДШ+СВЧ+З.С_паз+отк L.fr3d",
+    "detail_pdf": "Деталировка 6(1).pdf",
+    "native_height": 2400.0,
+    "min_height": 2200,
+    "oven_bottom": 900.0,
+    "upper_bottom": 1911.0,
+    "upper_shelves": [
+      2146.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2391.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          504.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          2146.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          891.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1504.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2282.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1259.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2282.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1259.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          785.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          506.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2146.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1902.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          797.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          504.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          2146.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.dbc2052298d8",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "door_oven_micro",
+    "drawer": false,
+    "microwave": true,
+    "label": "ПН-600 · дверь + духовка + СВЧ · база 900 · P",
+    "source_file": "ПН-600.База 900 +ДШ+СВЧ+З.С_паз+отк P.fr3d",
+    "source_sha256": "dbc2052298d81f504d151d43776ad9f628937229bd09725642d27e7bd1b049f6",
+    "source_attachment": "ПН-600.База 900 +ДШ+СВЧ+З.С_паз+отк P.fr3d",
+    "detail_pdf": "Деталировка 5(1).pdf",
+    "native_height": 2400.0,
+    "min_height": 2200,
+    "oven_bottom": 900.0,
+    "upper_bottom": 1911.0,
+    "upper_shelves": [
+      2146.5
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2391.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          504.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          2146.25,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          891.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1504.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2282.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1259.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2282.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1259.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          785.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          506.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-fixed",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2146.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1902.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          797.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          500.0,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          504.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          2146.5,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.bb3568f351d7",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "drawer_oven",
+    "drawer": true,
+    "microwave": false,
+    "label": "ПН-600 · шуфляда + духовка · база 900 · L",
+    "source_file": "ПН-600.База 900+РШ1+ДШ+З.С_паз отк L.fr3d",
+    "source_sha256": "bb3568f351d7beb3fcdbcb3f628014f9e9a2ef37667e489855c78297bd376002",
+    "source_attachment": "ПН-600.База 900+РШ1+ДШ+З.С_паз отк L.fr3d",
+    "detail_pdf": "Деталировка 4(1).pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 500.5,
+    "upper_bottom": 1113.5,
+    "upper_shelves": [
+      1466.667,
+      1828.833
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 8,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          1102.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1647.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          491.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1104.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          385.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          306.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1466.667,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-2",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1828.833,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          397.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          300.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          1101.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1647.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 3
+      }
+    ]
+  },
+  {
+    "id": "bazis.83bbd07dfce4",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "drawer_oven",
+    "drawer": true,
+    "microwave": false,
+    "label": "ПН-600 · шуфляда + духовка · база 900 · P",
+    "source_file": "ПН-600.База 900+РШ1+ДШ+З.С_паз отк P.fr3d",
+    "source_sha256": "83bbd07dfce453e302e4f4581dff46bbdbe8a81459eca118f728c9a0a6d83830",
+    "source_attachment": "ПН-600.База 900+РШ1+ДШ+З.С_паз отк P.fr3d",
+    "detail_pdf": "Деталировка 3(1).pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 500.5,
+    "upper_bottom": 1113.5,
+    "upper_shelves": [
+      1466.667,
+      1828.833
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 24,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 8,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          1102.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1647.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          491.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1104.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          385.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          306.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1466.667,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "shelf-upper-2",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1828.833,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          397.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          300.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          1101.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1647.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 3
+      }
+    ]
+  },
+  {
+    "id": "bazis.48b61809c340",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "left",
+    "doors_per_section": 1,
+    "layout": "drawer_oven_micro",
+    "drawer": true,
+    "microwave": true,
+    "label": "ПН-600 · шуфляда + духовка + СВЧ · база 900 · L",
+    "source_file": "ПН-600.База 900+РШ1+ДШ+СВЧ+З.С_паз отк L.fr3d",
+    "source_sha256": "48b61809c340c752fc15be48da4a602f1bbf028400b8cd187b6d91f0f6f983ea",
+    "source_attachment": "ПН-600.База 900+РШ1+ДШ+СВЧ+З.С_паз отк L.fr3d",
+    "detail_pdf": "Деталировка 2(1).pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 500.5,
+    "upper_bottom": 1511.5,
+    "upper_shelves": [
+      1846.75
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 28,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          704.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1846.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          491.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1104.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          385.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          306.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1846.75,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1502.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          397.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          300.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          703.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1846.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  },
+  {
+    "id": "bazis.cdc10b040df8",
+    "family": "appliance",
+    "row_height": 900,
+    "opening": "right",
+    "doors_per_section": 1,
+    "layout": "drawer_oven_micro",
+    "drawer": true,
+    "microwave": true,
+    "label": "ПН-600 · шуфляда + духовка + СВЧ · база 900 · P",
+    "source_file": "ПН-600.База 900+РШ1+ДШ+СВЧ+З.С_паз отк P.fr3d",
+    "source_sha256": "cdc10b040df8617932724db68bb31c8451651cb3b596903073ced1146d46b931",
+    "source_attachment": "ПН-600.База 900+РШ1+ДШ+СВЧ+З.С_паз отк P.fr3d",
+    "detail_pdf": "Деталировка 1(1).pdf",
+    "native_height": 2200.0,
+    "min_height": 1800,
+    "oven_bottom": 500.5,
+    "upper_bottom": 1511.5,
+    "upper_shelves": [
+      1846.75
+    ],
+    "hardware_items": [
+      {
+        "key": "native-03f6da3a9a86",
+        "name": "Фиксатор задней стенки ДВП с шурупом 3,5*20, белый",
+        "quantity": 16,
+        "unit": "pcs",
+        "article": "79318"
+      },
+      {
+        "key": "native-04e174f27a7f",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "native-06997a13719a",
+        "name": "Клипса усиленная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.152"
+      },
+      {
+        "key": "native-2be46c7e9329",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "415 10 P2 0Z 02"
+      },
+      {
+        "key": "native-8381387b5400",
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "quantity": 18,
+        "unit": "pcs",
+        "article": "81320"
+      },
+      {
+        "key": "native-888928c239c8",
+        "name": "Конфермат 7х50 мм,Zn",
+        "quantity": 28,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-8bfd9e1fecfd",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "112602"
+      },
+      {
+        "key": "native-9f97ea10f437",
+        "name": "Шурупы 3.5х16 д5",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": ""
+      },
+      {
+        "key": "native-d9d276cc8384",
+        "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+        "quantity": 1,
+        "unit": "pcs",
+        "article": "114797"
+      },
+      {
+        "key": "native-e8dc07a5e5b9",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "06.080"
+      },
+      {
+        "key": "native-ea3712cd7ac8",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "840 00 P2 H5 00"
+      },
+      {
+        "key": "native-f54c2d695e2f",
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "quantity": 3,
+        "unit": "pcs",
+        "article": "12867"
+      },
+      {
+        "key": "native-fc64c579cbe0",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "quantity": 2,
+        "unit": "pcs",
+        "article": "05.0360"
+      },
+      {
+        "key": "shelf-support-marcopol",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "quantity": 4,
+        "unit": "pcs",
+        "article": "PK 5.0X16B"
+      }
+    ],
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "top",
+        "name": "Крыша",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          2191.0,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "top",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-upper",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          704.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          1846.5,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "support-oven",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          491.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-microwave",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1104.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая Стойка P",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая Стойка L",
+        "role": "body",
+        "size": [
+          18.0,
+          2082.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1159.0,
+          0.0
+        ],
+        "axes": [
+          "y",
+          "z",
+          "x"
+        ],
+        "stretch": "height",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "back-lower",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          572.0,
+          385.5,
+          3.0
+        ],
+        "center": [
+          0.0,
+          306.75,
+          -251.5
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "shelf-upper-1",
+        "name": "Полка",
+        "role": "shelf",
+        "size": [
+          562.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1846.75,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "shelf",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "support-upper",
+        "name": "Перегородка",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          550.0
+        ],
+        "center": [
+          0.0,
+          1502.5,
+          25.0
+        ],
+        "axes": [
+          "x",
+          "z",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-rear",
+        "name": "ЗАДНЯЯ ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          -191.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-front",
+        "name": "Фронтальная ШУФ",
+        "role": "body",
+        "size": [
+          501.0,
+          341.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          301.5,
+          291.0
+        ],
+        "axes": [
+          "x",
+          "y",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-P",
+        "name": "Боковая напр.P",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-side-L",
+        "name": "Боковая напр.L",
+        "role": "body",
+        "size": [
+          18.0,
+          341.0,
+          500.0
+        ],
+        "center": [
+          -259.5,
+          301.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "y",
+          "x"
+        ],
+        "stretch": "fixed",
+        "material": "ЛДСП- БЕЛЫЙ\rDSP-18"
+      },
+      {
+        "key": "drawer-bottom",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          533.0,
+          3.0,
+          496.0
+        ],
+        "center": [
+          0.0,
+          129.5,
+          50.0
+        ],
+        "axes": [
+          "z",
+          "x",
+          "y"
+        ],
+        "stretch": "fixed",
+        "material": "ЛХДФ 3ММ Белый, 2800х2070 мм"
+      },
+      {
+        "key": "front-lower",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          397.54,
+          18.0
+        ],
+        "center": [
+          0.0,
+          300.27,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "fixed",
+        "material": "Evagloss P004\r1",
+        "kind": "drawer",
+        "hinge_count": 0
+      },
+      {
+        "key": "door-upper",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          703.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1846.75,
+          309.0
+        ],
+        "axes": [
+          "y",
+          "x",
+          "z"
+        ],
+        "stretch": "height",
+        "material": "Evagloss P004\r1",
+        "kind": "door",
+        "hinge_count": 2
+      }
+    ]
+  }
+]

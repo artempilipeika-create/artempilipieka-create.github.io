@@ -192,6 +192,20 @@
   });
   const TALL_VARIANTS=freeze(root.MF_TALL_VARIANTS||[]);
   const TALL_FAMILY=freeze({key:'tall.shelves',label:'Пенал с полками ПН-600',default_id:'bazis.107f19943761'});
+  const APPLIANCE_TALL_VARIANTS=freeze(root.MF_APPLIANCE_TALL_VARIANTS||[]);
+  const APPLIANCE_TALL_FAMILY=freeze({key:'tall.appliance',label:'Пенал под технику ПН-600',default_id:APPLIANCE_TALL_VARIANTS.find(v=>v.row_height===820&&v.layout==='door_oven'&&v.opening==='left')?.id});
+  const allTallVariants=[...TALL_VARIANTS,...APPLIANCE_TALL_VARIANTS];
+  const applianceTallModel=v=>({tier:'tall',label:v.label,key:`tall.appliance.${v.layout}.${v.row_height}.${v.opening}`,
+    source_file:v.source_file,source_sha256:v.source_sha256,
+    native_defaults:{width:600,height:v.native_height,depth:600},body_height:v.native_height-100,base_height:100,worktop_thickness:0,scene_depth:600,
+    resize:true,limits:{w:[600,600],h:[v.min_height,2800],d:[600,600]},
+    tall:{...v,horizontal_gap_mm:1.5},
+    carcass:{type:'tall_appliance',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
+    facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},
+    back:{type:'groove',thickness:3,material_name:'ЛХДФ 3ММ Белый'},shelves:[],front:{kind:v.drawer?'combo':'doors',count:2},
+    doors:v.panels.filter(p=>p.kind==='door').map(p=>({side:v.opening,hinge_count:p.hinge_count,open_angle:105})),
+    hardware:{hinge_count:v.hardware_items.filter(h=>h.name.startsWith('Петля')).reduce((n,h)=>n+h.quantity,0),hinges_in_items:true,native_fixed_items:true,items:v.hardware_items}
+  });
   const tallModel=v=>({tier:'tall',label:v.label,key:`tall.shelves.${v.row_height}.${v.opening}`,
     source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:2000,depth:600},body_height:1900,base_height:100,worktop_thickness:0,scene_depth:600,
@@ -206,25 +220,30 @@
       side:v.opening==='double'?(i===0?'left':'right'):v.opening,hinge_count,open_angle:105}))),
     hardware:{hinge_count:v.doors_per_section*5,hinges_in_items:true,native_fixed_items:true,items:v.hardware_items}
   });
-  const TALL_PRODUCTION=freeze(Object.fromEntries(TALL_VARIANTS.map(v=>[v.id,tallModel(v)])));
+  const TALL_PRODUCTION=freeze(Object.fromEntries(allTallVariants.map(v=>[v.id,v.family==='appliance'?applianceTallModel(v):tallModel(v)])));
   const PRODUCTION_MODELS=Object.freeze({...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
-  function tallVariantInfo(it){return TALL_VARIANTS.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
+  function tallVariantInfo(it){return allTallVariants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function tallVariant(it,patch,catalogue){
     const current=tallVariantInfo(it);
     if(!current)throw new Error('Исходный вариант пенала не найден');
-    const options={row_height:current.row_height,opening:current.opening,...patch};
-    const next=TALL_VARIANTS.find(v=>v.row_height===options.row_height&&v.opening===options.opening);
+    const options={row_height:current.row_height,opening:current.opening,layout:current.layout,...patch};
+    const next=allTallVariants.find(v=>v.family===current.family&&v.row_height===options.row_height&&v.opening===options.opening&&v.layout===options.layout);
     const target=next&&catalogue.find(m=>m.id===next.id);
     if(!target||target.source_sha256!==next.source_sha256)throw new Error('Исходный вариант пенала не найден');
     const suffix=String(it.name||'').slice(current.label.length),automatic=String(it.name||'').startsWith(current.label)&&(!suffix||/^ \d+$/.test(suffix));
-    return {...it,bazis_id:next.id,bazis_file:next.source_file,bazis_sha256:next.source_sha256,
+    const result={...it,bazis_id:next.id,bazis_file:next.source_file,bazis_sha256:next.source_sha256,
       bazis_resize:Boolean(target.resize),name:automatic?next.label+suffix:it.name};
+    if(next.family==='appliance'){
+      result.height=Math.max(it.height,next.min_height);result.body_height=result.height-100;
+      result.layout=next.drawer?'combo':'doors';result.drawers=next.drawer?1:0;
+    }
+    return result;
   }
   function tallUpperShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
     if(!p?.tall)return [];
     // Null preserves the original donor and previously saved projects.
-    if(it.upper_shelf_count==null)return [...p.tall.upper_shelves];
-    const count=it.upper_shelf_count,t=p.carcass.panel_thickness,bottom=p.tall.row_height,top=it.height-t;
+    if(it.upper_shelf_count==null&&!(p.tall.family==='appliance'&&it.height!==p.native_defaults.height))return [...p.tall.upper_shelves];
+    const count=it.upper_shelf_count??p.tall.upper_shelves.length,t=p.carcass.panel_thickness,bottom=p.tall.upper_bottom??p.tall.row_height,top=it.height-t;
     const gap=(top-bottom-count*t)/(count+1);
     return Array.from({length:count},(_,i)=>bottom+gap+t/2+i*(gap+t));
   }
@@ -236,10 +255,11 @@
       centers_from_floor_mm:positions,thickness_mm:p.carcass.panel_thickness,
       note:'В родном FR3D вручную измените количество и положение верхних полок по этим отметкам. Нижняя полка и перегородка остаются на месте.'};
   }
-  function tallDefaultId(items,selected){
+  function tallDefaultId(items,selected,family=TALL_FAMILY){
     const lower=isKitchenModule(selected||{})?selected:[...items].reverse().find(isKitchenModule);
     const row=lower?heights(lower).body_height+100:820;
-    return TALL_VARIANTS.find(v=>v.row_height===(row===900?900:820)&&v.opening==='left')?.id||TALL_FAMILY.default_id;
+    const variants=family===APPLIANCE_TALL_FAMILY?APPLIANCE_TALL_VARIANTS:TALL_VARIANTS;
+    return variants.find(v=>v.row_height===(row===900?900:820)&&v.opening==='left'&&(!v.layout||v.layout==='door_oven'))?.id||family.default_id;
   }
   // Catalogue families only group verified L/P donors. The scene persists the
   // real donor identity, so existing projects and native imports stay explicit.
@@ -296,6 +316,13 @@
     if(p?.tall){
       if(it.upper_shelf_count!=null&&(!Number.isInteger(it.upper_shelf_count)||it.upper_shelf_count<0||it.upper_shelf_count>8))return 'Количество верхних полок — от 0 до 8';
       if(it.base==='wall'||heights(it).base_height!==100)return 'Пенал устанавливается на цоколь 100 мм';
+      if(p.tall.family==='appliance'){
+        if(it.width!==600||it.depth!==600)return 'Пенал под технику: ширина и глубина корпуса — 600 мм';
+        if(it.height<p.tall.min_height||it.height>2800)return 'Высота для этой компоновки — от '+p.tall.min_height+' до 2800 мм';
+        const count=it.upper_shelf_count??p.tall.upper_shelves.length;
+        if(it.height-18-p.tall.upper_bottom-count*18<=0)return 'Полки не помещаются в верхнем отделении';
+        return '';
+      }
       if(it.width>(p.tall.doors_per_section===2?1200:600))return 'Ширина одной створки — не больше 600 мм';
       if(it.height<1800||it.height>2800)return 'Высота пенала — от 1800 до 2800 мм';
       return '';
@@ -456,6 +483,10 @@
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
     if(production?.tall){
+      if(production.tall.family==='appliance')return production.tall.panels.filter(p=>p.role==='front').map(p=>{
+        const dh=p.stretch==='height'?it.height-production.native_defaults.height:0;
+        return {kind:p.kind,w:p.size[0],h:p.size[1]+dh,cx:p.center[0],cy:p.center[1]+dh/2};
+      });
       const a=production.tall,n=a.doors_per_section,fw=W/n-3;
       // Native lower front ends 1.5 mm below the row datum; upper starts at it.
       for(const [bottom,top]of [[baseH+1.5,a.row_height-1.5],[a.row_height,it.height-1.5]])
@@ -505,8 +536,31 @@
    * Meshes, cutlist and native export all consume this same deterministic part list.
    * Orientation identifies the length/width/thickness axes of each board blank.
    */
+  function applianceTallParts(it,p,materialLookup){
+    const dh=it.height-p.native_defaults.height,a=p.tall,positions=tallUpperShelves(it,p);
+    const shelf=a.panels.find(s=>s.stretch==='shelf');
+    const specs=[...a.panels.filter(s=>s.stretch!=='shelf'),...positions.map((y,i)=>({...shelf,key:'shelf-upper-'+(i+1),center:[shelf.center[0],y,shelf.center[2]]}))];
+    return specs.map(s=>{
+      const size=Object.fromEntries(['x','y','z'].map((k,i)=>[k,s.size[i]])),position=Object.fromEntries(['x','y','z'].map((k,i)=>[k,s.center[i]]));
+      if(s.stretch==='height'){size.y+=dh;position.y+=dh/2;}
+      if(s.stretch==='top')position.y+=dh;
+      const id=it.part_materials?.[s.key]??(s.role==='front'?it.front_variant_id:s.role==='back'?it.back_variant_id:it.body_variant_id),m=id?materialLookup(id):null;
+      const [length_axis,width_axis,thickness_axis]=s.axes;
+      const part={part_id:it.item_id+':'+s.key,key:s.key,module_id:it.item_id,name:s.name,role:s.role,type:'panel',size,position,
+        length:size[length_axis],width:size[width_axis],thickness:size[thickness_axis],orientation:{length_axis,width_axis,thickness_axis},
+        material:{variant_id:id||null,name:m?.name||(id?null:s.material),article:m?.article||null,manufacturer:m?.manufacturer||null,material_id:m?.material_id||null}};
+      if(s.role==='back')part.back_type=s.key==='drawer-bottom'?'drawer_bottom':'groove';
+      if(s.role==='shelf')part.fixed=true;
+      if(s.role==='front'){
+        part.facade={kind:s.kind,w:size.x,h:size.y,cx:position.x,cy:position.y};
+        if(s.kind==='door')Object.assign(part,{hinge_side:a.opening,hinge_count:s.hinge_count,open_angle:105,pivot:{x:position.x+(a.opening==='left'?-1:1)*size.x/2,y:0,z:position.z}});
+      }
+      return part;
+    });
+  }
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(!p?.carcass)return null;
+    if(p.tall?.family==='appliance')return applianceTallParts(it,p,materialLookup);
     const {width:W,height:H,depth:D}=it,{body_height:B,base_height:base}=heights(it);
     const t=p.carcass.panel_thickness,rail=p.carcass.rail_depth||80,inset=p.corner?.wall_gap_mm||0,C=W-inset,
       cornerSign=p.corner?.side==='right'?-1:1,cx=cornerSign*inset/2,inner=C-2*t,parts=[];
@@ -776,5 +830,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
 })(globalThis);

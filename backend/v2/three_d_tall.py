@@ -2,7 +2,8 @@
 import json
 from pathlib import Path
 VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/tall-variants.json').read_text())
-BY_ID={v['id']:v for v in VARIANTS}
+APPLIANCE_VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/appliance-tall-variants.json').read_text())
+BY_ID={v['id']:v for v in VARIANTS+APPLIANCE_VARIANTS}
 
 def tall_variant(it):
     v=BY_ID.get(it.get('bazis_id'))

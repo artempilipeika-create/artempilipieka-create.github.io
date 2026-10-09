@@ -96,6 +96,10 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
+    this.listen(document,'mf:appliance-choice',()=>{
+      this.workspace.panel('right',true);
+      get('tall-options-controls').scrollIntoView({block:'start'});
+    });
     const showTallShelves=()=>{
       this.scene?.setDisplayMode?.('inspection');
       get('module-display').value='inspection';
@@ -111,6 +115,7 @@ class PlannerApplication {
       this.interaction.modify({upper_shelf_count:null},'Исходные верхние полки');this.bridge.refresh();showTallShelves();
     });
     this.listen(get('tall-shelf-show'),'click',showTallShelves);
+    this.listen(get('appliance-tall-height'),'change',e=>{this.interaction.modify({height:Number(e.target.value)},'Высота пенала');this.bridge.refresh();});
 
     this.listen(get('tall-options-controls'),'click',e=>{
       const b=e.target.closest('[data-tall-option]'),it=this.adapter.selected,current=tallVariantInfo(it);

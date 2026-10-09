@@ -50,7 +50,7 @@ def shot(page,name):
 def test_corner_controls_assembly_save_reload_native(page,api,settings,admin_user):
     login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
-    panel(page,'left','catalog');expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(13)
+    panel(page,'left','catalog');expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(14)
     add_legacy(page,{'bazis':ID});s=state(page);corner_id=s['item']['item_id']
     assert (s['item']['width'],s['item']['height'],s['item']['depth'])==(1000,820,510)
     assert s['error']=='' and len(s['parts'])==11 and s['fronts'][0]['w']==369

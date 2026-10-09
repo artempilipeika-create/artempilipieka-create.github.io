@@ -140,6 +140,15 @@ def module_contents(it):
     if tall:
         row=tall['row_height'];n=tall['doors_per_section'];fw=w/n-3
         opening={'left':'L, петли слева','right':'P, петли справа','double':'Д2, две створки в каждой секции'}[tall['opening']]
+        if tall.get('family')=='appliance':
+            lower=next(p for p in tall['panels'] if p['key']=='front-lower')
+            upper=next(p for p in tall['panels'] if p['key']=='door-upper')
+            return (f"база нижнего ряда {row} мм, цоколь 100 мм; {opening}; "
+                    +('шуфляда' if tall['drawer'] else 'дверь')+' + духовка'+(' + микроволновка' if tall['microwave'] else '')
+                    +f"; ниша духовки 564 × 595 мм на отметке {tall['oven_bottom']:g} мм от пола"
+                    +('; ниша СВЧ 564 × 380 мм' if tall['microwave'] else '')
+                    +f"; фасады {lower['size'][1]:g} × 597 и {upper['size'][1]+h-tall['native_height']:g} × 597 мм; "
+                    +f"{tall_shelf_count(it)} съёмн. полк. сверху; задние стенки 3 мм в пазу; за техникой открытый проём")
         return (f'база нижнего ряда {row} мм = корпус {row-100} + цоколь 100 мм, без столешницы; '
                 f'{opening}; {n*2} фасадов: нижние {row-103:g} × {fw:g} мм, верхние {h-row-1.5:g} × {fw:g} мм; '
                 f'горизонтальный зазор 1,5 мм; нижняя полка на конфирматах; {tall_shelf_count(it)} съёмн. полк. сверху; задняя стенка 3 мм')

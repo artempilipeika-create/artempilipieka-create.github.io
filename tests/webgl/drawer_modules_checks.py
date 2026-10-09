@@ -54,7 +54,7 @@ def export_payload(page):
 def test_nmrsh2_nmrsh3_exact_library_render_save_load_and_native_export(page,api,settings,admin_user):
     open_verified_planner(page,admin_user)
     panel(page,'left','catalog')
-    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(13)
+    expect(page.locator('#module-catalogue [data-bazis]')).to_have_count(14)
     assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE_LABELS
 
     item_ids=[]

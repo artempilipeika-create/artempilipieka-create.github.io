@@ -10,6 +10,8 @@
 <script defer src="/account/planner/corner-variants.js"></script>
 <script defer src="/account/planner/tall-variants.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
+<script defer src="/account/planner/appliance-tall-ui.js"></script>
+<link rel="stylesheet" href="/account/planner/appliance-tall.css">
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
 <link rel="stylesheet" href="/account/planner/workspace.css">
@@ -82,17 +84,21 @@
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
    <div id="tall-options-controls" class="mf3d-control-card" hidden>
-    <div class="mf3d-control-title"><strong>Пенал с полками</strong></div>
+    <div class="mf3d-control-title"><strong id="tall-options-title">Пенал с полками</strong></div>
+    <div id="appliance-tall-choice" hidden>
+     <div class="ap-selected"><div id="appliance-tall-preview"></div><div id="appliance-tall-size" aria-live="polite"></div></div>
+     <strong>Что будет в пенале?</strong>
+     <div class="ap-layouts" role="group" aria-label="Компоновка пенала"><button type="button" class="secondary" data-tall-option="layout" data-tall-value="door_oven" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Дверь + духовка</span></button><button type="button" class="secondary" data-tall-option="layout" data-tall-value="door_oven_micro" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Дверь + духовка + микроволновка</span></button><button type="button" class="secondary" data-tall-option="layout" data-tall-value="drawer_oven" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Шуфляда + духовка</span></button><button type="button" class="secondary" data-tall-option="layout" data-tall-value="drawer_oven_micro" aria-pressed="false"><span class="ap-option-image" aria-hidden="true"></span><span>Шуфляда + духовка + микроволновка</span></button></div><label for="appliance-tall-height">Общая высота с ножками 100 мм</label><select id="appliance-tall-height"></select><p id="appliance-tall-niches" class="studio-hint"></p></div>
     <div class="mf3d-option-label">Высота базы нижнего ряда</div>
     <div class="mf3d-door-options" role="group" aria-label="Высота базы пенала">
      <button type="button" class="secondary" data-tall-option="row_height" data-tall-value="820" aria-pressed="false"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M5 2h18v40H5zM5 28h30v16H5M5 46h30M28 28V42M31 24v-7m-3 3 3-3 3 3"/></svg><span>820 мм</span></button>
      <button type="button" class="secondary" data-tall-option="row_height" data-tall-value="900" aria-pressed="false"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M5 2h18v40H5zM5 26h30v16H5M5 46h30M28 26V42M31 22v-7m-3 3 3-3 3 3"/></svg><span>900 мм</span></button>
     </div>
     <p class="studio-hint">С учётом цоколя 100 мм, без столешницы. Общая высота пенала задаётся ниже.</p>
-    <div class="mf3d-option-label">Двери в каждой секции</div>
+    <div class="mf3d-option-label">Сторона петель</div>
     <div class="mf3d-door-options mf3d-tall-openings" role="group" aria-label="Открывание пенала">
-     <button type="button" class="secondary" data-tall-option="opening" data-tall-value="left" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M6 7h3m-3 14h3m-3 10h3m-3 7h3M25 17v5m0 11v5"/></svg><span>L · левое</span></button>
-     <button type="button" class="secondary" data-tall-option="opening" data-tall-value="right" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M29 7h-3m3 14h-3m3 10h-3m3 7h-3M10 17v5m0 11v5"/></svg><span>P · правое</span></button>
+     <button type="button" class="secondary" data-tall-option="opening" data-tall-value="left" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M6 7h3m-3 14h3m-3 10h3m-3 7h3M25 17v5m0 11v5"/></svg><span>Слева · L</span></button>
+     <button type="button" class="secondary" data-tall-option="opening" data-tall-value="right" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M29 7h-3m3 14h-3m3 10h-3m3 7h-3M10 17v5m0 11v5"/></svg><span>Справа · P</span></button>
      <button type="button" class="secondary" data-tall-option="opening" data-tall-value="double" aria-pressed="false"><svg viewBox="0 0 35 48" aria-hidden="true"><path d="M6 2h23v40H6zM6 27h23M6 46h23M17.5 2v40M14 17v5m7-5v5M14 33v5m7-5v5"/></svg><span>Д2 · две двери</span></button>
     </div><p id="tall-options-note" class="studio-hint" aria-live="polite"></p>
    </div>

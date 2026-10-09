@@ -12,6 +12,8 @@ export const VISUAL_FINISHES=Object.freeze({
   handle:{color:'#343e3b',roughness:.48,metalness:.38},
   counter:{color:'#929b94',roughness:.67,metalness:0},
   reveal:{color:'#49544d',roughness:1,metalness:0}
+  ,appliance:{color:'#414a46',roughness:.4,metalness:0}
+  ,applianceGlass:{color:'#16251e',roughness:.2,metalness:0}
 });
 
 /** Low-poly rounded edges INSIDE the exact envelope. 108 triangles, not a bevel modifier. */
@@ -89,8 +91,8 @@ export class MeshFactory{
       if(!m.isMesh)return;
       const role=m.userData.role,part=byKey.get(m.userData.part?.key);
       if(part)m.userData.part=part;
-      const visible=role==='reveal'?mode==='normal'&&!it.doors_open:(role==='front'||m.userData.frontAccessory)?mode!=='facadesHidden':true;
-      if(role==='front'||role==='reveal'||m.userData.frontAccessory){if(m.visible!==visible){m.visible=visible;changed=true;}}
+      const visible=m.userData.appliance?mode==='normal':role==='reveal'?mode==='normal'&&!it.doors_open:(role==='front'||m.userData.frontAccessory)?mode!=='facadesHidden':true;
+      if(m.userData.appliance||role==='front'||role==='reveal'||m.userData.frontAccessory){if(m.visible!==visible){m.visible=visible;changed=true;}}
       const shell=part?part.role==='front'||part.key.startsWith('side-'):role==='front';
       const inspection=mode==='inspection'&&shell;
       const id=part?part.material.variant_id:role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
@@ -190,7 +192,7 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!production?.corner&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
@@ -220,6 +222,16 @@ export class MeshFactory{
         // Tall upper and lower handles meet at the section joint; wall handles use the bottom edge.
         // The pilot swing doors keep the handle on the rotating facade.
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
+      }
+    }
+    if(production?.tall?.family==='appliance'){
+      const a=production.tall;
+      for(const [kind,bottom,h] of [['oven',a.oven_bottom,595],...(a.microwave?[['microwave',a.oven_bottom+613,380]]:[])]){
+        // Illustrative appliance faces only: excluded from manufactured panels and hardware.
+        for(const [role,w,ph,y,z]of [['appliance',562,h-2,bottom+h/2,D/2+4],['applianceGlass',468,h-145,bottom+(h-145)/2+40,D/2+10],['handle',392,10,bottom+h-66,D/2+14]]){
+          const face=this.box(group,role,w,ph,8,0,y,z,null,ghost);
+          face.userData.visualOnly=true;face.userData.appliance=kind;
+        }
       }
     }
     this.updateAppearance(group,it);this.position(group,it);return group;

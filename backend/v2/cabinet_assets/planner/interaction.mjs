@@ -26,7 +26,8 @@ export class Interaction {
     this.catalogue=document.getElementById('module-catalogue');
     listen(this.catalogue,'click',e=>{
       const card=e.target.closest('.mf3d-module');if(!card||this.suspended)return;
-      e.preventDefault();e.stopImmediatePropagation();this.add(this.cardOptions(card));
+      e.preventDefault();e.stopImmediatePropagation();
+      if(this.add(this.cardOptions(card))&&this.adapter.template(this.adapter.selected)?.production?.tall?.family==='appliance')document.dispatchEvent(new Event('mf:appliance-choice'));
     },true);
     listen(this.catalogue,'dragstart',e=>this.catalogueStart(e));
     listen(document,'dragend',()=>this.catalogueEnd());

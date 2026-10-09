@@ -34,7 +34,7 @@ def test_tall_catalogue_variants_history_save_export_and_mobile(page,api,setting
     login_ui(page,admin_user['email']);page.goto('https://testserver/constructor')
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true');panel(page,'left','catalog')
     assert page.locator('#module-catalogue .mf3d-module strong').all_text_contents()==CATALOGUE_LABELS
-    for category,count in [('base',8),('wall',4),('tall',1)]:
+    for category,count in [('base',8),('wall',4),('tall',2)]:
         page.locator(f'[data-module-filter="{category}"]').click()
         expect(page.locator('#module-catalogue .mf3d-module:visible')).to_have_count(count)
     screenshot(page,'tall-catalogue')

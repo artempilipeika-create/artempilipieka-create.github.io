@@ -116,6 +116,12 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Пенал устанавливается на цоколь 100 мм')
             if not 300<=self.width<=600*tall['doors_per_section'] or not 1800<=self.height<=2800 or not 450<=self.depth<=700:
                 raise ValueError('Проверьте размеры пенала; ширина одной створки не больше 600 мм')
+            if tall.get('family')=='appliance':
+                if self.width!=600 or self.depth!=600 or self.height<tall['min_height']:
+                    raise ValueError(f"Пенал под технику: корпус 600 × 600 мм, высота от {tall['min_height']} мм")
+                count=self.upper_shelf_count if self.upper_shelf_count is not None else len(tall['upper_shelves'])
+                if self.height-18-tall['upper_bottom']-count*18<=0:
+                    raise ValueError('Полки не помещаются в верхнем отделении')
         for shelf in self.shelves:
             if corner and corner['purpose']=='sink':continue
             if shelf.enabled and (shelf.offset_mm-shelf.thickness/2<0 or shelf.offset_mm+shelf.thickness/2>body):
