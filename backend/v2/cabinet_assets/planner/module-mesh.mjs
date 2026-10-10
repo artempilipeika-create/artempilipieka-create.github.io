@@ -6,6 +6,7 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,prod
 export const VISUAL_FINISHES=Object.freeze({
   glass:{color:'#d0e5df',roughness:.13,metalness:0},
   frame:{color:'#171e1a',roughness:.45,metalness:.55},
+  hinge:{color:'#b9bdc1',roughness:.32,metalness:.72},
   led:{color:'#fff7d9',roughness:.5,metalness:0,emissive:'#fff0b9',emissiveIntensity:1.2},
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
   shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
@@ -65,7 +66,7 @@ export class MeshFactory{
     if(!this.materials.has(key)){
       const color=visual.color||(id?'#aeb2b0':finish.color);
       const m=new THREE.MeshStandardMaterial({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:['handle','frame'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter',
+        metalness:['handle','frame','hinge'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter',
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color};
@@ -157,6 +158,51 @@ export class MeshFactory{
       new THREE.CylinderGeometry(.017,.017,pad*S,10).translate(0,(-height+pad)*S/2,0)
     ]));const m=this.mesh(group,'handle',g,key,x,height/2,z,null,ghost);m.userData.visualOnly=true;m.userData.role='leg';
   }
+  vitrineHinges(group,pivot,it,side,ghost){
+    // Visual CLIP top narrow-frame fittings, not drilling or manufacturer CAD.
+    // Insertion heights are measured independently in the L/P FR3D donors.
+    const left=side==='left',sign=left?-1:1,inward=-sign,W=it.width,D=it.depth;
+    const levels=left?[230,776.1667,1322.3333,1868.5]:[231.5,777.1667,1322.8333,1868.5];
+    const caseX=sign*(W/2-18),frameX=sign*(W/2-11.5),frontZ=D/2;
+    const screw=(axis,x,y,z)=>{
+      const g=new THREE.CylinderGeometry(3*S,3*S,1.6*S,10);
+      if(axis==='x')g.rotateZ(Math.PI/2);else g.rotateX(Math.PI/2);
+      return g.translate(x*S,y*S,z*S);
+    };
+    const add=(parent,key,create,x,y,z,index,component)=>{
+      const m=this.mesh(parent,'hinge',this.acquire(key,create),key,x,y,z,null,ghost);
+      Object.assign(m.userData,{visualOnly:true,visualApproximation:true,hingeIndex:index,hingeSide:side,hingeComponent:component});
+      return m;
+    };
+    levels.forEach((sourceY,index)=>{
+      // The native global Y stretch plane is at 1770 mm: only the upper hinge moves.
+      const y=sourceY+(sourceY>1770?it.height-2000:0);
+      const mount=add(group,'vitrine-hinge:mount',()=>combine([
+        panelGeometry(3,20,50,.6).translate(1.5*S,0,-36*S),
+        panelGeometry(8,13,28,1).translate(7*S,0,-32*S),
+        panelGeometry(8,11,29,1).translate(10*S,0,-17*S),
+        screw('x',3.8,0,-20),screw('x',3.8,0,-52)
+      ]),caseX,y,frontZ,index,'mount');
+      mount.scale.x=inward;
+      mount.userData.article='175H3100';
+      mount.userData.nativeAnchorMM=[left?18:W-20,y,D+2];
+      const frame=add(pivot,'vitrine-hinge:frame',()=>combine([
+        panelGeometry(12,52,3,.7),
+        new THREE.CylinderGeometry(3*S,3*S,16*S,10).translate(0,0,-3*S),
+        screw('z',0,-19,-2.3),screw('z',0,19,-2.3)
+      ]),frameX-pivot.position.x/S,y,frontZ+.5-pivot.position.z/S,index,'frame');
+      frame.userData.frontAccessory=true;frame.userData.article='70T950A.TLMB';
+      // Keep the visual linkage attached to both ends in the closed and open views.
+      // The cabinet plate stays fixed; the slim bracket follows the black frame.
+      const a=new THREE.Vector3(caseX+inward*10,y,frontZ-4);
+      const b=new THREE.Vector3((frameX+inward*5)*S-pivot.position.x,y*S,(frontZ-1.5)*S-pivot.position.z)
+        .applyAxisAngle(new THREE.Vector3(0,1,0),pivot.rotation.y).add(pivot.position).divideScalar(S);
+      const length=a.distanceTo(b),mid=a.clone().add(b).multiplyScalar(.5);
+      const link=add(group,'vitrine-hinge:link:'+length,()=>combine([-1,1].map(s=>
+        panelGeometry(4,3.5,length,.6).translate(0,s*5*S,0))),mid.x,mid.y,mid.z,index,'link');
+      link.rotation.y=Math.atan2(b.x-a.x,b.z-a.z);link.userData.frontAccessory=true;
+    });
+  }
   build(it,ghost=false){
     const group=new THREE.Group();group.userData={itemId:it.item_id,ghost,visualApproximation:false};
     const {width:W,height:H,depth:D}=it,t=18,base=heights(it).base_height,bodyH=H-base;
@@ -236,6 +282,7 @@ export class MeshFactory{
         const d=part.size,c=part.position,m=this.box(pivot,part.optical_material,d.x,d.y,d.z,c.x-hingeX,c.y,c.z-hingeZ,null,ghost,.15);
         m.userData.part=part;m.userData.frontAccessory=true;m.userData.facade=cells[0];
       }
+      this.vitrineHinges(group,pivot,it,side,ghost);
       const light=globalThis.MF_VITRINE.metrics(it);
       for(const side of light.lighting_sides){
         const sign=side==='left'?-1:1,m=this.box(group,'led',.6,H-136,4,sign*(W/2-18-.3),(H+100)/2,9,null,ghost,0);
