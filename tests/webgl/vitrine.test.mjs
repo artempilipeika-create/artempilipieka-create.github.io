@@ -38,10 +38,10 @@ test('All 144 independent system/light/opening changes preserve placement, custo
     assert.equal(b.bazis_sha256,to.source_sha256);assert.equal(V.info(b).light_system,to.light_system);assert.equal(dimensionError(b),'');assert.equal(b.bazis_resize,to.global_elastic_defined);
   }
 });
-test('Missing global elasticity is guarded; resized quantities, LED cutting and shelves stay consistent',()=>{
+test('All twelve donors resize; quantities, LED cutting and shelves stay consistent',()=>{
   for(const v of V.variants){
     const it={...item(v),width:550,height:2211,body_height:2111,depth:550,glass_shelf_count:3};
-    if(!v.global_elastic_defined){assert.match(dimensionError(it),/600 × 2000 × 600/);continue;}
+    assert.equal(v.global_elastic_defined,true);
     assert.equal(dimensionError(it),'');assert.equal(parts(it).filter(p=>p.role==='shelf').length,3);
     const m=V.metrics(it),n=v.lighting==='both'?2:1;
     assert.equal(m.led_length_m,2.111*n);assert.equal(m.led_order_length_m,2.125*n);
@@ -51,10 +51,8 @@ test('Missing global elasticity is guarded; resized quantities, LED cutting and 
   }
   assert.match(dimensionError({...item(V.variants[0]),bazis_sha256:'0'.repeat(64)}),/не совпадает/);
 });
-test('Corrected 4 mm donors resize; known saved source versions upgrade without losing design state',()=>{
-  assert.ok(V.variants.filter(v=>v.light_system==='aq-4x8').every(v=>v.global_elastic_defined));
-  const fixed=V.variants.filter(v=>!v.global_elastic_defined);
-  assert.equal(fixed.length,1);assert.equal(fixed[0].light_system,'lira-17.5x6.5');
+test('Corrected donors resize; known saved source versions upgrade without losing design state',()=>{
+  assert.ok(V.variants.every(v=>v.global_elastic_defined));
   for(const v of V.variants)for(const source of v.previous_sources||[]){
     const old={...item(v),bazis_file:source.source_file,bazis_sha256:source.source_sha256,bazis_resize:false,glass_shelf_count:3,production_note:'Сохранить полки'};
     const snapshot=structuredClone(old),updated=normalizeKitchen(old);

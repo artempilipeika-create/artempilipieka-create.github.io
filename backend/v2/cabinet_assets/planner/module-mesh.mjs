@@ -178,7 +178,7 @@ export class MeshFactory{
       return m;
     };
     levels.forEach((sourceY,index)=>{
-      // The corrected AQ both/L donor uses Y1720; the other donors use Y1770.
+      // Source-specific stretch planes: corrected AQ Y1720, LIRA Y1700, others Y1770.
       const stretchY=globalThis.MF_VITRINE.info(it)?.global_elastic_planes?.find(p=>p.Axis===1)?.Pos??1770;
       const y=sourceY+(sourceY>stretchY?it.height-2000:0);
       const mount=add(group,'vitrine-hinge:mount',()=>combine([

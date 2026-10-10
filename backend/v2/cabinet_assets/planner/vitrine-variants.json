@@ -1224,11 +1224,11 @@
     "id": "bazis.076d752ac1cf",
     "family": "vitrine.z1",
     "label": "Пенал-витрина ПН-600",
-    "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм.(1).fr3d",
-    "source_sha256": "076d752ac1cf119230d8db984f76fc74e82e7b14828472436daf1ef0484f1259",
+    "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм.(2).fr3d",
+    "source_sha256": "605a0bfbc114fc4ba57857f77ca7f728e0d8ed7147380908e668a0e8ce7ab35a",
     "lighting": "both",
     "opening": "left",
-    "global_elastic_defined": false,
+    "global_elastic_defined": true,
     "hardware_items": [
       {
         "name": "Основание для кухонной опоры крепление Н5 под саморезы",
@@ -1336,14 +1336,40 @@
       }
     ],
     "light_system": "lira-17.5x6.5",
-    "global_elastic_planes": [],
-    "source_note": "Повторная загрузка 11.10.2026 побайтно совпадает с предыдущей версией; общая эластичность модели не задана."
+    "global_elastic_planes": [
+      {
+        "Axis": 0,
+        "Pos": 460.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1700.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 440.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 165.00000000000003,
+        "Weight": 1.0
+      }
+    ],
+    "previous_sources": [
+      {
+        "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм.(1).fr3d",
+        "source_sha256": "076d752ac1cf119230d8db984f76fc74e82e7b14828472436daf1ef0484f1259"
+      }
+    ]
   },
   {
     "id": "bazis.7ed7202afb11",
     "family": "vitrine.z1",
     "label": "Пенал-витрина ПН-600",
-    "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_P.Пл_4-9мм..fr3d",
+    "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_P.Пл_4-9мм.(1).fr3d",
     "source_sha256": "7ed7202afb11dec8cf9f188ef5bd1cf2278326ba0997edfb93477ced39f774fb",
     "lighting": "both",
     "opening": "right",
@@ -1454,6 +1480,34 @@
         "source": "FR3D donor"
       }
     ],
-    "light_system": "lira-17.5x6.5"
+    "light_system": "lira-17.5x6.5",
+    "previous_sources": [
+      {
+        "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_P.Пл_4-9мм..fr3d",
+        "source_sha256": "7ed7202afb11dec8cf9f188ef5bd1cf2278326ba0997edfb93477ced39f774fb"
+      }
+    ],
+    "global_elastic_planes": [
+      {
+        "Axis": 0,
+        "Pos": 455.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1770.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 445.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 160.00000000000003,
+        "Weight": 1.0
+      }
+    ]
   }
 ]

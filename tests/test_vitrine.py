@@ -29,15 +29,16 @@ def test_roundtrip_all_donors_and_shelf_options():
             assert saved.glass_shelf_count==n
             assert len(glass_shelves(saved.model_dump()))==(1 if n is None else n)
 
-def test_validation_prevents_invalid_donors_and_fixed_size_resize():
+def test_validation_prevents_invalid_donors_and_sizes():
     base=item(VARIANTS[0])
-    for patch in [dict(bazis_sha256='0'*64),dict(width=601),dict(base_height=150),dict(glass_shelf_count=9),dict(glass_shelf_count=True)]:
+    for patch in [dict(bazis_sha256='0'*64),dict(width=601),dict(height=2801,body_height=2701),dict(depth=701),dict(base_height=150),dict(glass_shelf_count=9),dict(glass_shelf_count=True)]:
         with pytest.raises(ValidationError):FurnitureItem(**(base|patch))
-    fixed=item(next(v for v in VARIANTS if not v['global_elastic_defined']))
-    with pytest.raises(ValidationError):FurnitureItem(**(fixed|dict(height=2200,body_height=2100)))
+    for v in VARIANTS:
+        saved=FurnitureItem(**dict(item(v),width=550,height=2200,body_height=2100,depth=550))
+        assert saved.bazis_resize
 
-def test_corrected_sources_upgrade_saved_projects_and_unlock_aq_resize():
-    assert all(v['global_elastic_defined'] for v in VARIANTS if v['light_system']=='aq-4x8')
+def test_corrected_sources_upgrade_saved_projects_and_unlock_all_resize():
+    assert all(v['global_elastic_defined'] for v in VARIANTS)
     for v in VARIANTS:
         for old in v.get('previous_sources', []):
             raw=dict(item(v),bazis_file=old['source_file'],bazis_sha256=old['source_sha256'],

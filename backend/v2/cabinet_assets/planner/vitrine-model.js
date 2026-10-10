@@ -41,7 +41,7 @@
     return '';
   }
   function shelves(it){
-    // Both native Y stretch planes (1720/1770) are above the original shelf at 1043.
+    // All native Y stretch planes are above the original shelf at 1043.
     if(it.glass_shelf_count==null)return [1043];
     const n=it.glass_shelf_count,gap=(it.height-136-n*4)/(n+1);
     return Array.from({length:n},(_,i)=>round(118+gap+2+i*(gap+4)));
