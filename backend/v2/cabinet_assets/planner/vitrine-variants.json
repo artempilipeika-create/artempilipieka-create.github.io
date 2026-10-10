@@ -471,11 +471,11 @@
     "id": "bazis.c917ea2f3d9c",
     "family": "vitrine.z1",
     "label": "Пенал-витрина ПН-600",
-    "source_file": "ПН-600.Витрина. Фр_4мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм(1).fr3d",
-    "source_sha256": "c917ea2f3d9c2c03e271f23682f5f98d8a71f112d2881bfaf1e8b730dae70697",
+    "source_file": "ПН-600.Витрина. Фр_4мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм(2).fr3d",
+    "source_sha256": "104baef026a61709d71314d5f31e5bd11a84bfbb728109686131f7b1b13ddb37",
     "lighting": "both",
     "opening": "left",
-    "global_elastic_defined": false,
+    "global_elastic_defined": true,
     "hardware_items": [
       {
         "name": "Основание для кухонной опоры крепление Н5 под саморезы",
@@ -582,13 +582,41 @@
         "source": "FR3D donor"
       }
     ],
-    "light_system": "aq-4x8"
+    "light_system": "aq-4x8",
+    "previous_sources": [
+      {
+        "source_file": "ПН-600.Витрина. Фр_4мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм(1).fr3d",
+        "source_sha256": "c917ea2f3d9c2c03e271f23682f5f98d8a71f112d2881bfaf1e8b730dae70697"
+      }
+    ],
+    "global_elastic_planes": [
+      {
+        "Axis": 0,
+        "Pos": 435.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1720.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 420.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 185.00000000000003,
+        "Weight": 1.0
+      }
+    ]
   },
   {
     "id": "bazis.9f3d56c01179",
     "family": "vitrine.z1",
     "label": "Пенал-витрина ПН-600",
-    "source_file": "ПН-600.Витрина. Фр_4мм_Две стороны_Центр.Z1_отк_P.Пл_4-9мм.(2).fr3d",
+    "source_file": "ПН-600.Витрина. Фр_4мм_Две стороны_Центр.Z1_отк_P.Пл_4-9мм.(3).fr3d",
     "source_sha256": "9f3d56c0117949747b8c0190832a2e716e0da5b0ca46f1403f894f0565eb7947",
     "lighting": "both",
     "opening": "right",
@@ -699,7 +727,29 @@
         "source": "FR3D donor"
       }
     ],
-    "light_system": "aq-4x8"
+    "light_system": "aq-4x8",
+    "global_elastic_planes": [
+      {
+        "Axis": 0,
+        "Pos": 455.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1770.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 445.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 160.00000000000003,
+        "Weight": 1.0
+      }
+    ]
   },
   {
     "id": "bazis.298ec5f7d35c",
@@ -817,7 +867,7 @@
       }
     ],
     "light_system": "lira-17.5x6.5",
-    "source_note": "Внутреннее имя содержит отк_P; фактическая геометрия петель — L, проверена по FR3D."
+    "source_note": "Корпус заменён автором; пользователь подтвердил текущую модель 11.10.2026. Фактическое открывание L проверено по геометрии."
   },
   {
     "id": "bazis.69ff72d5af28",
@@ -1174,7 +1224,7 @@
     "id": "bazis.076d752ac1cf",
     "family": "vitrine.z1",
     "label": "Пенал-витрина ПН-600",
-    "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм..fr3d",
+    "source_file": "ПН-600.Витрина. Фр_17.5мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм.(1).fr3d",
     "source_sha256": "076d752ac1cf119230d8db984f76fc74e82e7b14828472436daf1ef0484f1259",
     "lighting": "both",
     "opening": "left",
@@ -1285,7 +1335,9 @@
         "source": "FR3D donor"
       }
     ],
-    "light_system": "lira-17.5x6.5"
+    "light_system": "lira-17.5x6.5",
+    "global_elastic_planes": [],
+    "source_note": "Повторная загрузка 11.10.2026 побайтно совпадает с предыдущей версией; общая эластичность модели не задана."
   },
   {
     "id": "bazis.7ed7202afb11",

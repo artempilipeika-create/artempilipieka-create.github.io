@@ -36,6 +36,19 @@ def test_validation_prevents_invalid_donors_and_fixed_size_resize():
     fixed=item(next(v for v in VARIANTS if not v['global_elastic_defined']))
     with pytest.raises(ValidationError):FurnitureItem(**(fixed|dict(height=2200,body_height=2100)))
 
+def test_corrected_sources_upgrade_saved_projects_and_unlock_aq_resize():
+    assert all(v['global_elastic_defined'] for v in VARIANTS if v['light_system']=='aq-4x8')
+    for v in VARIANTS:
+        for old in v.get('previous_sources', []):
+            raw=dict(item(v),bazis_file=old['source_file'],bazis_sha256=old['source_sha256'],
+                     height=2200,body_height=2100,width=550,depth=550,glass_shelf_count=3,production_note='Сохранить полки')
+            saved=FurnitureItem(**raw).model_dump()
+            assert saved['bazis_sha256']==v['source_sha256']
+            assert saved['bazis_file']==v['source_file'] and saved['bazis_resize']
+            for key in ['item_id','name','width','height','depth','x','z','rotation','glass_shelf_count','production_note']:
+                assert saved[key]==raw[key]
+            assert vitrine_metrics(raw)==vitrine_metrics(saved)
+
 def test_js_python_metrics_and_hardware_parity():
     specimens=[dict(item(v),glass_shelf_count=n,height=2201 if v['global_elastic_defined'] else 2000) for v in VARIANTS for n in (None,0,3)]
     js="""import {VITRINE as V,productionHardware} from './backend/v2/cabinet_assets/planner/furniture-core.mjs';

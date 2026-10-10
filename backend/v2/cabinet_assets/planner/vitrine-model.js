@@ -10,7 +10,11 @@
   const urls={led:'https://wline.by/svetodiodnaya_lenta_gibkaya_aq-220923-p/220925',
     profile:'https://petroplav.by/shop/profil-fasadnyj-z1-6mm/',seal:'https://petroplav.by/shop/uplotnitel-z1/',corner:'https://petroplav.by/shop/ugolki-z1/'};
   const round=n=>Math.round(n*1e6)/1e6;
-  const info=it=>variants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
+  const info=it=>variants.find(v=>v.id===it?.bazis_id&&(v.source_sha256===it.bazis_sha256||v.previous_sources?.some(s=>s.source_sha256===it.bazis_sha256)))||null;
+  function normalizeSource(it){
+    const v=info(it);if(!v)return it;
+    return {...it,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:v.global_elastic_defined};
+  }
   const model=v=>({tier:'tall',label:family.label,key:family.key+'.'+(v.light_system==='aq-4x8'?'':v.light_system+'.')+v.lighting+'.'+v.opening,
     source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:2000,depth:600},body_height:1900,base_height:100,scene_depth:600,worktop_thickness:0,
@@ -37,7 +41,7 @@
     return '';
   }
   function shelves(it){
-    // Native Y elastic plane is above the shelf: the original shelf stays at 1043.
+    // Both native Y stretch planes (1720/1770) are above the original shelf at 1043.
     if(it.glass_shelf_count==null)return [1043];
     const n=it.glass_shelf_count,gap=(it.height-136-n*4)/(n+1);
     return Array.from({length:n},(_,i)=>round(118+gap+2+i*(gap+4)));
@@ -129,5 +133,5 @@
     const a=adjustment(it);if(a)lines.push(a.note+' Центры от пола: '+a.centers_from_floor_mm.join('; ')+' мм.');
     return lines.join('\n');
   }
-  root.MF_VITRINE=Object.freeze({variants,family,model,info,select,dimensionError,shelves,adjustment,metrics,hardware,parts,brief,urls,lighting,lightingSystems});
+  root.MF_VITRINE=Object.freeze({variants,family,model,info,normalizeSource,select,dimensionError,shelves,adjustment,metrics,hardware,parts,brief,urls,lighting,lightingSystems});
 })(globalThis);

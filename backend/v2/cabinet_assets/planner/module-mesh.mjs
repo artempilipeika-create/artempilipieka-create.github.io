@@ -178,8 +178,9 @@ export class MeshFactory{
       return m;
     };
     levels.forEach((sourceY,index)=>{
-      // The native global Y stretch plane is at 1770 mm: only the upper hinge moves.
-      const y=sourceY+(sourceY>1770?it.height-2000:0);
+      // The corrected AQ both/L donor uses Y1720; the other donors use Y1770.
+      const stretchY=globalThis.MF_VITRINE.info(it)?.global_elastic_planes?.find(p=>p.Axis===1)?.Pos??1770;
+      const y=sourceY+(sourceY>stretchY?it.height-2000:0);
       const mount=add(group,'vitrine-hinge:mount',()=>combine([
         panelGeometry(3,20,50,.6).translate(1.5*S,0,-36*S),
         panelGeometry(8,13,28,1).translate(7*S,0,-32*S),

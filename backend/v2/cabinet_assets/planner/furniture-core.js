@@ -421,6 +421,7 @@
     return k;
   }
   function normalizeKitchen(it,room){
+    it=VITRINE?.normalizeSource(it)||it;
     const k=kitchenSettings(it);if(!k)return it;
     const {frontOverhangMm,...saved}=k;
     const result={...it,...saved,base_height:k.legHeightMm,body_height:it.body_height??it.height-k.legHeightMm,

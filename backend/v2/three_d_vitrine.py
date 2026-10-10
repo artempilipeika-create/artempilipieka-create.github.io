@@ -16,7 +16,8 @@ URLS = {
 
 def vitrine_variant(it):
     v = BY_ID.get(it.get('bazis_id'))
-    return v if v and v['source_sha256'] == it.get('bazis_sha256') else None
+    known = v and [v['source_sha256'], *[s['source_sha256'] for s in v.get('previous_sources', [])]]
+    return v if known and it.get('bazis_sha256') in known else None
 
 
 def glass_shelves(it):

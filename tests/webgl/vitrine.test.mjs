@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {VITRINE as V,PRODUCTION_MODELS as models,productionParts,productionHardware,dimensionError,facadeCells} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {VITRINE as V,PRODUCTION_MODELS as models,productionParts,productionHardware,dimensionError,facadeCells,normalizeKitchen} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {modulePriceBreakdown} from '../../backend/v2/cabinet_assets/planner/pricing.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
 import '../../backend/v2/cabinet_assets/planner/production-notes.js';
@@ -50,6 +50,20 @@ test('Missing global elasticity is guarded; resized quantities, LED cutting and 
     assert.ok(V.adjustment(it).requires_manual_native_adjustment);
   }
   assert.match(dimensionError({...item(V.variants[0]),bazis_sha256:'0'.repeat(64)}),/не совпадает/);
+});
+test('Corrected 4 mm donors resize; known saved source versions upgrade without losing design state',()=>{
+  assert.ok(V.variants.filter(v=>v.light_system==='aq-4x8').every(v=>v.global_elastic_defined));
+  const fixed=V.variants.filter(v=>!v.global_elastic_defined);
+  assert.equal(fixed.length,1);assert.equal(fixed[0].light_system,'lira-17.5x6.5');
+  for(const v of V.variants)for(const source of v.previous_sources||[]){
+    const old={...item(v),bazis_file:source.source_file,bazis_sha256:source.source_sha256,bazis_resize:false,glass_shelf_count:3,production_note:'Сохранить полки'};
+    const snapshot=structuredClone(old),updated=normalizeKitchen(old);
+    assert.deepEqual(old,snapshot);
+    assert.deepEqual(updated,{...old,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:v.global_elastic_defined});
+    assert.equal(dimensionError({...updated,width:550,height:2200,body_height:2100,depth:550}),'');
+    assert.equal(productionHardware(old).items.find(h=>h.key==='glass-shelf-support').quantity,12);
+    const bad={...old,bazis_sha256:'0'.repeat(64)};assert.equal(V.info(bad),null);assert.deepEqual(normalizeKitchen(bad),bad);
+  }
 });
 test('Estimate does not bill profiles as sheet materials or duplicate native hinges; missing prices remain null',()=>{
   const it=item(V.variants[0]),b=modulePriceBreakdown(it,template(it));

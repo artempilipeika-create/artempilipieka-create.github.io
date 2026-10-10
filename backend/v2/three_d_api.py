@@ -137,6 +137,8 @@ class FurnitureItem(StrictModel):
             if not vitrine['global_elastic_defined'] and (self.width,self.height,self.depth)!=(600,2000,600):
                 raise ValueError('Две стороны + L: исходная витрина имеет фиксированный размер 600 × 2000 × 600 мм')
             self.bazis_resize=vitrine['global_elastic_defined']
+            self.bazis_file=vitrine['source_file']
+            self.bazis_sha256=vitrine['source_sha256']
             self.handles='handleless'
             self.front_variant_id=None
         tall=tall_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
