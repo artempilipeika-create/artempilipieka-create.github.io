@@ -330,7 +330,7 @@ function renderModuleCatalogue(){
     if(m.production.tall&&id!==tallFamily.default_id)continue;
     if(m.production.vitrine&&id!==globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=p.vitrine?'Чёрный Z1 · стекло · подсветка L / P / две стороны · паз 4 × 8 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
+    const description=p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -347,7 +347,7 @@ function renderModuleCatalogue(){
       ?'Левое / правое · 3 вертикальные царги'
       :p.dryer?'Левое / правое · сушка AKS по ширине'
       :isWall?'Левое / правое · полки по высоте':'Левое / правое · полка · задник'):description;
-    const search=p.vitrine?'витрина стекло подсветка Z1 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
+    const search=p.vitrine?'витрина стекло подсветка Z1 LIRA 17.5 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
     addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
   }
   applyCatalogueFilter();
@@ -759,7 +759,7 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. Паз под ленту: ширина 4 мм, глубина 8 мм.':production.tall?.family==='appliance'
+        $('production-rule-note').textContent=production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. '+globalThis.MF_VITRINE.lighting(it).ui_note:production.tall?.family==='appliance'
           ?'Корпус 600 × 600 мм. Духовка: ниша 564 × 595 мм.'+(production.tall.microwave?' СВЧ: ниша 564 × 380 мм.':'')+' Общая высота меняет только верхнее отделение. Задняя стенка в пазу, за техникой остаётся открытый проём.'
           :production.tall
           ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+core.tallUpperShelves(it,production).length+' съёмн. При изменении общей высоты растёт верхняя секция, выбранные полки распределяются равномерно. Столешница в высоту базы не входит.'

@@ -13,6 +13,8 @@
     const el=document.getElementById('vitrine-options-controls');if(!el)return;
     const v=p?.vitrine;el.hidden=!v;if(!v)return;
     const V=root.MF_VITRINE,m=V.metrics(it),n=V.shelves(it).length;
+    el.querySelector('#vitrine-light-system').value=v.light_system;
+    el.querySelector('#vitrine-light-note').textContent=V.lighting(it).ui_note;
     for(const b of el.querySelectorAll('[data-vitrine-option]')){
       b.setAttribute('aria-pressed',String(v[b.dataset.vitrineOption]===b.dataset.vitrineValue));
       const icon=b.querySelector('.vt-option-image');if(icon)icon.innerHTML=drawing(b.dataset.vitrineValue,v.opening,n);
@@ -21,7 +23,7 @@
     el.querySelector('#vitrine-shelf-minus').disabled=n===0;el.querySelector('#vitrine-shelf-plus').disabled=n===8;
     el.querySelector('#vitrine-shelf-reset').disabled=it.glass_shelf_count==null;
     el.querySelector('#vitrine-shelf-note').textContent=it.glass_shelf_count==null?'Исходная стеклянная полка 4 мм.':n+' полк. · равные промежутки. Количество и отметки переданы конструктору для изменения полок в БАЗИС.';
-    el.querySelector('#vitrine-quantities').textContent=`Лента: ${m.led_order_length_m} м · Z1: ${m.profile_length_m} м · уплотнитель: ≈ ${m.seal_length_m} м · уголки: 4 шт.`;
+    el.querySelector('#vitrine-quantities').textContent=`Лента: ${m.led_order_length_m} м${m.light_profile_length_m?` · LIRA с экраном: ${m.light_profile_stock_count} × ${m.light_profile_stock_mm/1000} м · заглушки: ${m.light_profile_end_caps} шт.`:''} · Z1: ${m.profile_length_m} м · уплотнитель: ≈ ${m.seal_length_m} м · уголки: 4 шт. · KUBIC: ${n*4} шт.`;
     el.querySelector('#vitrine-native-size-note').hidden=v.global_elastic_defined;
   }
   root.MF_VITRINE_UI=Object.freeze({drawing,sync});

@@ -245,10 +245,9 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
         for n,r in enumerate(hardware,1):
             qty=r.get('qty');unit={'pcs':'шт.','set':'компл.','m':'м'}.get(r.get('unit'),r.get('unit',''))
             rows.append([p(n),p(r['name']),p(r.get('article') or '', 'small'),p(qty if qty is not None else ''),p(unit),p(''),p(''),p('[ ]')])
-            if isinstance(qty,(int,float)):
-                k=(r['name'],r.get('article') or '',unit)
-                if k not in aggregate: aggregate[k]=0
-                aggregate[k]=round(aggregate[k]+qty,6)
+            k=(r['name'],r.get('article') or '',unit)
+            if k not in aggregate: aggregate[k]=0
+            aggregate[k]=round(aggregate[k]+qty,6) if isinstance(qty,(int,float)) and aggregate[k] is not None else None
         if not hardware:
             rows.append([p(''),p('Фурнитура для этого модуля не описана подтверждённой спецификацией.'),p(''),p(''),p(''),p(''),p(''),p('')])
         hwtable=Table(rows,colWidths=[WIDTH*.035,WIDTH*.35,WIDTH*.15,WIDTH*.075,WIDTH*.07,WIDTH*.10,WIDTH*.11,WIDTH*.07],repeatRows=1)
@@ -257,21 +256,27 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
           ('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
         material_rows=[[p('Материал','head'),p('Значение','head')]]
         material_rows.extend([[p(kind),p(value)] for kind,value in module_materials(it,body,front)])
-        material_table=Table(material_rows,colWidths=[WIDTH*.22,WIDTH*.72])
+        module_image=preview_image(module_previews.get(str(it.get('item_id'))),110*mm,38*mm)
+        side_preview=bool(vitrine_variant(it) and module_image)
+        material_table=Table(material_rows,colWidths=[WIDTH*(.20 if side_preview else .22),WIDTH*(.31 if side_preview else .72)])
         material_table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('GRID',(0,0),(-1,-1),.3,RULE),
           ('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),
           ('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
         block=[p(title,'module'),p('Состав: '+module_contents(it),'body'),Spacer(1,1.5*mm),p('Фурнитура','section'),hwtable]
         if note:block.extend([Spacer(1,1*mm),p(note,'small')])
-        block.extend([Spacer(1,2*mm),p('Материалы','section'),material_table])
-        module_image=preview_image(module_previews.get(str(it.get('item_id'))),110*mm,38*mm)
-        if module_image:block.extend([Spacer(1,2*mm),p('Вид модуля','section'),module_image])
+        if side_preview:
+            footer=Table([[[p('Материалы','section'),material_table],[p('Вид модуля','section'),module_image]]],colWidths=[WIDTH*.54,WIDTH*.46])
+            footer.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0)]))
+            block.extend([Spacer(1,2*mm),footer])
+        else:
+            block.extend([Spacer(1,2*mm),p('Материалы','section'),material_table])
+            if module_image:block.extend([Spacer(1,2*mm),p('Вид модуля','section'),module_image])
         block.append(Spacer(1,2*mm))
         story.append(KeepTogether(block))
     story.extend([PageBreak(),p('Сводная закупка фурнитуры','title'),p('Количество суммируется по модулям. Цена и сумма оставлены пустыми до подключения/ввода актуального прайса.','small')])
     rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Всего','Ед.','Цена BYN','Сумма BYN','Компл.']]]
     for n,((label,article,unit),qty) in enumerate(aggregate.items(),1):
-        rows.append([p(n),p(label),p(article,'small'),p(qty),p(unit),p(''),p(''),p('[ ]')])
+        rows.append([p(n),p(label),p(article,'small'),p(qty if qty is not None else 'Уточнить'),p(unit),p(''),p(''),p('[ ]')])
     if len(rows)==1: rows.append([p(''),p('Нет подтверждённых строк фурнитуры для суммирования.'),p(''),p(''),p(''),p(''),p(''),p('')])
     total=Table(rows,colWidths=[WIDTH*.035,WIDTH*.35,WIDTH*.15,WIDTH*.075,WIDTH*.07,WIDTH*.10,WIDTH*.11,WIDTH*.07],repeatRows=1)
     total.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('GRID',(0,0),(-1,-1),.3,RULE),('VALIGN',(0,0),(-1,-1),'TOP'),

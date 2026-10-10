@@ -17,8 +17,8 @@ const item=(id,changes={})=>{
 const parts=it=>productionParts(it,{production:PRODUCTION_MODELS[it.bazis_id]});
 const byName=(ps,name)=>ps.filter(p=>p.name===name).map(p=>[p.length,p.width,p.thickness]);
 
-test('Production registry retains base, wall, corner 22 tall and 6 vitrine donors',()=>{
-  assert.equal(Object.keys(PRODUCTION_MODELS).length,52);
+test('Production registry retains base, wall, corner 22 tall and 12 vitrine donors',()=>{
+  assert.equal(Object.keys(PRODUCTION_MODELS).length,58);
   assert.deepEqual(Object.keys(WALL_PRODUCTION),[...regularIds,...dryerIds]);
 });
 

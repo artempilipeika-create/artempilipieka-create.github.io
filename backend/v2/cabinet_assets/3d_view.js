@@ -76,7 +76,16 @@ function buildItem(it){
       add(scaled,d.x/500,d.y/500,d.z/500,c.x/500,c.y/500,c.z/500,part.optical_material==='frame'?'#171e1a':part.optical_material==='glass'?'#d0e5df':'#d9ddd4');
       boxes.at(-1).opacity=part.optical_material==='glass'?.16:1;
     }
-    for(const side of V.metrics(it).lighting_sides)add(scaled,.8/500,(it.height-136)/500,4/500,(side==='left'?-1:1)*(it.width/2-18-.4)/500,(it.height+100)/1000,9/500,'#fff6ce');
+    const light=V.metrics(it);
+    for(const side of light.lighting_sides){
+      const sign=side==='left'?-1:1;
+      if(light.light_profile_length_m)add(scaled,.6/500,(it.height-136)/500,24.4/500,sign*(it.width/2-18-.3)/500,(it.height+100)/1000,9/500,'#171e1a');
+      add(scaled,.3/500,(it.height-136)/500,(light.light_profile_length_m?12:4)/500,sign*(it.width/2-18-.75)/500,(it.height+100)/1000,9/500,'#fff6ce');
+    }
+    for(const cy of V.shelves(it))for(const sign of [-1,1])for(const z of [-it.depth/2+68,it.depth/2-52]){
+      add(scaled,11/500,11/500,15.5/500,sign*(it.width/2-23.5)/500,(cy-8.5)/500,z/500,'#656766');
+      add(scaled,15.5/500,1.5/500,15.5/500,sign*(it.width/2-25.75)/500,(cy+3.65)/500,z/500,'#656766');
+    }
     for(const x of [-it.width/2+45,it.width/2-45])for(const z of [-it.depth/2+45,it.depth/2-95])add(scaled,30/500,100/500,30/500,x/500,50/500,z/500,'#536158');
     return;
   }

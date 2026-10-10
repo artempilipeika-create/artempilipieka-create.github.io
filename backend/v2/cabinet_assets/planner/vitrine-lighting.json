@@ -1,0 +1,51 @@
+{
+  "aq-4x8": {
+    "label": "AQ LED-LINE",
+    "groove_width_mm": 4,
+    "groove_depth_mm": 8,
+    "led_key": "led-aq-15.0341",
+    "led_article": "15.0341",
+    "led_name": "Лента AQ LED-LINE 4 мм · 12 В · нейтральный свет",
+    "led_url": "https://wline.by/svetodiodnaya_lenta_gibkaya_aq-220923-p/220925",
+    "led_voltage_v": 12,
+    "led_power_w_per_m": 7.5,
+    "led_cut_step_mm": 25,
+    "ui_note": "Паз: ширина 4, глубина 8 мм. AQ LED-LINE 4 мм, нейтральный свет, 12 В. Рамка Z1, чёрная."
+  },
+  "lira-17.5x6.5": {
+    "label": "LIRA-1707 с экраном",
+    "groove_width_mm": 17.5,
+    "groove_depth_mm": 6.5,
+    "led_key": "led-aks-75069",
+    "led_article": "75069",
+    "led_name": "Лента AKS 75069 · 8 мм · 12 В · 9,6 Вт/м · 4000 K",
+    "led_url": "https://aks.by/78017-109105-p?OFFER_ID=113290",
+    "led_voltage_v": 12,
+    "led_power_w_per_m": 9.6,
+    "led_cut_step_mm": 25,
+    "ui_note": "Паз: ширина 17,5, глубина 6,5 мм. Чёрный LIRA-1707 с экраном; лента AKS 75069, 4000 K, 12 В. Рамка Z1, чёрная.",
+    "profile": {
+      "stock": [
+        {
+          "length_mm": 2000,
+          "article": "89609",
+          "url": "https://aks.by/79036-109715-p?OFFER_ID=118550"
+        },
+        {
+          "length_mm": 3000,
+          "article": "89672",
+          "url": "https://aks.by/79036-109715-p?OFFER_ID=118552"
+        }
+      ],
+      "end_cap": {
+        "article": "89610",
+        "url": "https://aks.by/80990-110547-p?OFFER_ID=118554"
+      },
+      "holder": {
+        "article": "77267",
+        "url": "https://aks.by/80995-110548-p?OFFER_ID=110552"
+      },
+      "mount_note": "Держатель врезного профиля 77267: количество и крепёж уточнить по монтажу. Лента режется по контактным площадкам через 25 мм."
+    }
+  }
+}

@@ -4,12 +4,14 @@
 (function(root){
   'use strict';
   const variants=root.MF_VITRINE_VARIANTS||[];
+  const lightingSystems=root.MF_VITRINE_LIGHTING;
+  const lighting=it=>lightingSystems[info(it)?.light_system||'aq-4x8'];
   const family={key:'vitrine.z1',label:'Пенал-витрина ПН-600',default_id:variants[0]?.id};
   const urls={led:'https://wline.by/svetodiodnaya_lenta_gibkaya_aq-220923-p/220925',
     profile:'https://petroplav.by/shop/profil-fasadnyj-z1-6mm/',seal:'https://petroplav.by/shop/uplotnitel-z1/',corner:'https://petroplav.by/shop/ugolki-z1/'};
   const round=n=>Math.round(n*1e6)/1e6;
   const info=it=>variants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
-  const model=v=>({tier:'tall',label:family.label,key:family.key+'.'+v.lighting+'.'+v.opening,
+  const model=v=>({tier:'tall',label:family.label,key:family.key+'.'+(v.light_system==='aq-4x8'?'':v.light_system+'.')+v.lighting+'.'+v.opening,
     source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:2000,depth:600},body_height:1900,base_height:100,scene_depth:600,worktop_thickness:0,
     resize:v.global_elastic_defined,limits:v.global_elastic_defined?{w:[300,600],h:[1800,2800],d:[450,700]}:{w:[600,600],h:[2000,2000],d:[600,600]},
@@ -20,7 +22,7 @@
     hardware:{hinge_count:4,hinges_in_items:true,native_fixed_items:true,items:v.hardware_items}});
   function select(it,patch,catalogue){
     const current=info(it);if(!current)throw new Error('Исходная витрина не найдена');
-    const options={...current,...patch},v=variants.find(v=>v.lighting===options.lighting&&v.opening===options.opening);
+    const options={...current,...patch},v=variants.find(v=>v.lighting===options.lighting&&v.opening===options.opening&&v.light_system===options.light_system);
     const target=v&&catalogue.find(m=>m.id===v.id&&m.source_sha256===v.source_sha256);
     if(!target)throw new Error('Исходный вариант витрины не найден');
     return {...it,bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:v.global_elastic_defined};
@@ -48,16 +50,22 @@
   }
   function metrics(it){
     const v=info(it);if(!v)return null;
-    const count=v.lighting==='both'?2:1,length=it.height-100;
+    const count=v.lighting==='both'?2:1,length=it.height-100,system=lighting(it),step=system.led_cut_step_mm;
+    const ledCut=step?Math.ceil(length/step)*step:length;
     const cuts=[it.height-104,it.height-104,it.width-4,it.width-4];
-    return {profile:'Z1',finish:'black',groove_width_mm:4,groove_depth_mm:8,
+    const stock=system.profile?system.profile.stock.find(s=>s.length_mm>=length):null;
+    return {profile:'Z1',finish:'black',light_system:v.light_system,groove_width_mm:system.groove_width_mm,groove_depth_mm:system.groove_depth_mm,
       groove_length_each_mm:length,groove_total_m:round(length*count/1000),
       groove_z_from_back_mm:(it.depth+18)/2,
       lighting_sides:v.lighting==='both'?['left','right']:[v.lighting],
-      led_article:'15.0341',led_length_m:round(length*count/1000),led_voltage_v:12,led_power_w:round(length*count/1000*7.5),
-      led_cut_step_mm:25,led_cut_length_each_mm:Math.ceil(length/25)*25,
-      led_order_length_m:round(Math.ceil(length/25)*25*count/1000),led_roll_length_m:5,
-      led_basis:'Расчёт по полной траектории паза; окончательный отрезок проверить при монтаже',
+      led_article:system.led_article,led_length_m:round(length*count/1000),led_voltage_v:system.led_voltage_v,led_power_w:round(length*count/1000*system.led_power_w_per_m),
+      led_cut_step_mm:step,led_cut_length_each_mm:step?ledCut:null,
+      led_order_length_m:round(ledCut*count/1000),led_roll_length_m:5,
+      light_profile_length_m:system.profile?round(length*count/1000):0,
+      light_profile_cuts_mm:system.profile?Array(count).fill(length):[],
+      light_profile_stock_mm:stock?.length_mm||null,light_profile_article:stock?.article||null,
+      light_profile_stock_count:stock?count:0,light_profile_end_caps:system.profile?count*2:0,
+      led_basis:step?'Расчёт по полной траектории паза; окончательный отрезок проверить при монтаже':'Предварительный метраж по траектории паза. Кратность резки уточнить по контактным площадкам ленты; окончательный отрезок проверить при монтаже',
       profile_cuts_mm:cuts,profile_length_m:round(cuts.reduce((n,x)=>n+x,0)/1000),profile_stock_mm:6000,
       seal_length_m:round(2*(it.width-31.5+it.height-131.5)/1000),
       seal_basis:'Расчёт по периметру стекла; расход и совместимость уплотнителя Z1 уточнить у поставщика',
@@ -65,12 +73,23 @@
   }
   function hardware(it,p){
     const m=metrics(it);if(!m)return null;
+    const system=lighting(it);
     const items=p.hardware.items.map(h=>({...h,quantity:h.key==='glass-shelf-support'?shelves(it).length*4:h.quantity}));
     const add=(key,name,quantity,unit,source_url,extra={})=>items.push({key,name,quantity,unit,article:null,source:'Расчёт по геометрии; товар поставщика',source_url,...extra});
-    add('led-aq-15.0341','Лента AQ LED-LINE 4 мм · 12 В · нейтральный свет',m.led_order_length_m,'m',urls.led,{article:m.led_article,note:m.led_basis,net_length_m:m.led_length_m,cut_step_mm:25});
+    add(system.led_key,system.led_name,m.led_order_length_m,'m',system.led_url,{article:m.led_article,note:m.led_basis,net_length_m:m.led_length_m,cut_step_mm:m.led_cut_step_mm});
+    if(system.profile){
+      const profile=system.profile,stock=profile.stock.find(s=>s.length_mm===m.light_profile_stock_mm);
+      add('light-profile-lira-'+m.light_profile_article,'LIRA-1707 · чёрный профиль с экраном · '+m.light_profile_stock_mm+' мм',m.light_profile_stock_count,'pcs',stock.url,
+        {article:m.light_profile_article,cuts_mm:m.light_profile_cuts_mm,stock_length_mm:m.light_profile_stock_mm,net_length_m:m.light_profile_length_m,note:'Экран включён в комплект. По одному цельному отрезку на сторону; припуск на заглушки проверить при монтаже.'});
+      add('light-profile-lira-end-cap','Заглушка LIRA-1707, чёрная',m.light_profile_end_caps,'pcs',profile.end_cap.url,{article:profile.end_cap.article,note:'По две на световую линию; вывод кабеля по месту.'});
+      add('light-profile-lira-holder','Держатель врезного профиля LIRA-1707 · количество по монтажу',null,'pcs',profile.holder.url,{article:profile.holder.article,note:profile.mount_note});
+      add('light-profile-lira-fasteners','Крепёж держателей LIRA-1707 · подбор по монтажу',null,'set',profile.holder.url,{note:'Размер и количество крепежа не заданы поставщиком; не включены в 20 корпусных саморезов.'});
+    }
     add('profile-z1-black','Профиль фасадный Z1, чёрный',m.profile_length_m,'m',urls.profile,{cuts_mm:m.profile_cuts_mm,stock_length_mm:6000,note:'Чистый метраж. Хлысты 6 м и отходы рассчитываются по раскрою рамок всего заказа.'});
     add('seal-z1','Уплотнитель Z1 · расчёт по периметру стекла',m.seal_length_m,'m',urls.seal,{note:m.seal_basis,quantity_basis:'glass_perimeter_estimate'});
     add('corner-z1','Уголки Z1 для сборки рамки',4,'pcs',urls.corner,{note:'Четыре угла прямоугольной рамки; комплектацию винтами уточнить.'});
+    add('kubic-screws','Саморез 3,5 × 16 мм, потайная головка · KUBIC',shelves(it).length*4,'pcs','https://www.italianaferramenta.it/en/catalog/kubic-209',
+      {note:'По одному на KUBIC; отдельно от 20 исходных саморезов опор и клипс. Артикул поставщика подобрать.'});
     return {...p.hardware,items};
   }
   function parts(it,p,lookup=()=>null){
@@ -87,7 +106,7 @@
     add('top','Крыша','body',{x:W-36,y:18,z:D},{x:0,y:H-9,z:0},['x','z','y']);
     for(const [side,sign]of [['left',-1],['right',1]]){
       const part=add('side-'+(side==='left'?'L':'P'),'Боковая Стойка '+(side==='left'?'L':'P'),'body',{x:18,y:B,z:D},{x:sign*(W/2-9),y:100+B/2,z:0},['y','z','x']);
-      if(m.lighting_sides.includes(side))part.machining=[{kind:'led_groove',width_mm:4,depth_mm:8,length_mm:B,surface:'inner',
+      if(m.lighting_sides.includes(side))part.machining=[{kind:'led_groove',width_mm:m.groove_width_mm,depth_mm:m.groove_depth_mm,length_mm:B,surface:'inner',
         start:{x:sign*(W/2-18),y:100,z:9},end:{x:sign*(W/2-18),y:H,z:9}}];
     }
     add('back','З.С','back',{x:W-36,y:B-36,z:18},{x:0,y:100+B/2,z:-D/2+9},['y','x','z'],{back_type:'inset'});
@@ -99,14 +118,16 @@
   }
   function brief(it){
     const v=info(it),m=metrics(it);if(!v)return '';
+    const system=lighting(it);
     const lines=['ВИТРИНА Z1 · чёрный профиль. Петли '+(v.opening==='left'?'слева':'справа')+'. Подсветка: '+({left:'слева',right:'справа',both:'с двух сторон'}[v.lighting])+'.',
-      'Паз: ширина 4 мм, глубина 8 мм; ось '+m.groove_z_from_back_mm+' мм от заднего края. Общая фрезеровка '+m.groove_total_m+' м.',
-      'Лента AQ 15.0341: '+m.led_order_length_m+' м (12 В, '+m.led_power_w+' Вт по чистой длине). '+m.led_basis+'. Питание и управление подобрать для группы.',
+      'Паз: ширина '+m.groove_width_mm+' мм, глубина '+m.groove_depth_mm+' мм; ось '+m.groove_z_from_back_mm+' мм от заднего края. Общая фрезеровка '+m.groove_total_m+' м.',
+      system.led_name+' · '+m.led_article+': '+m.led_order_length_m+' м (12 В, '+m.led_power_w+' Вт по чистой длине). '+m.led_basis+'. Питание, управление, провод и соединения подобрать для группы.',
       'Профиль Z1: '+m.profile_cuts_mm.join(' + ')+' мм = '+m.profile_length_m+' м, рез 45°. Уголки Z1: 4 шт.',
       'Уплотнитель Z1: ориентир '+m.seal_length_m+' м. '+m.seal_basis+'.',
-      'Стекло и рамка — отдельные позиции от распила ЛДСП. Стекло фасада '+m.glass_size_mm.join(' × ')+' мм. Полки '+(it.width-44)+' × '+(it.depth-20)+' × 4 мм: '+shelves(it).length+' шт.; KUBIC: '+shelves(it).length*4+' шт.'];
+      'Стекло и рамка — отдельные позиции от распила ЛДСП. Стекло фасада '+m.glass_size_mm.join(' × ')+' мм. Полки '+(it.width-44)+' × '+(it.depth-20)+' × 4 мм: '+shelves(it).length+' шт.; KUBIC: '+shelves(it).length*4+' шт.; саморез 3,5 × 16 мм с потайной головкой: '+shelves(it).length*4+' шт. дополнительно к исходным крепежам.'];
+    if(system.profile)lines.push('LIRA-1707 с экраном: '+m.light_profile_cuts_mm.join(' + ')+' мм; '+m.light_profile_stock_count+' хлыст(а) '+m.light_profile_stock_mm+' мм, арт. '+m.light_profile_article+'. Заглушки '+system.profile.end_cap.article+': '+m.light_profile_end_caps+' шт. Экран отдельно не добавлять. '+system.profile.mount_note);
     const a=adjustment(it);if(a)lines.push(a.note+' Центры от пола: '+a.centers_from_floor_mm.join('; ')+' мм.');
     return lines.join('\n');
   }
-  root.MF_VITRINE=Object.freeze({variants,family,model,info,select,dimensionError,shelves,adjustment,metrics,hardware,parts,brief,urls});
+  root.MF_VITRINE=Object.freeze({variants,family,model,info,select,dimensionError,shelves,adjustment,metrics,hardware,parts,brief,urls,lighting,lightingSystems});
 })(globalThis);

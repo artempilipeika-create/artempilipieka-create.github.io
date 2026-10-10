@@ -4,6 +4,7 @@ import subprocess
 from io import BytesIO
 from pathlib import Path
 import pytest
+from PIL import Image
 from pydantic import ValidationError
 from pypdf import PdfReader
 from backend.v2.three_d_api import FurnitureItem, Scene
@@ -53,3 +54,24 @@ def test_pdf_contains_separate_lighting_profile_seal_and_glass(tmp_path):
         assert value in text,value
     assert all('ЛХДФ' not in str(r) for r in module_materials(it,None,None))
     (tmp_path/'vitrine-check.pdf').write_bytes(data)
+
+def test_lira_pdf_contains_selected_stock_and_unresolved_mounting_quantities(tmp_path):
+    v=next(v for v in VARIANTS if v['light_system']=='lira-17.5x6.5' and v['lighting']=='both' and v['opening']=='right')
+    it=dict(item(v),height=2201,body_height=2101,glass_shelf_count=3)
+    data=render('Витрина LIRA · проверка',dict(items=[it],room=dict(width=4200,depth=3200,height=2700)),{})
+    text='\n'.join(p.extract_text() for p in PdfReader(BytesIO(data)).pages)
+    for value in ['17.5','6.5','LIRA-1707','89672','89610','77267','75069','4.25','количество по монтажу','KUBIC']:
+        assert value in text,value
+    hw=vitrine_hardware(it)
+    assert next(h for h in hw if h['article']=='89672')['quantity']==2
+    assert next(h for h in hw if h['article']=='77267')['quantity'] is None
+    assert next(h for h in hw if h['key']=='kubic-screws')['quantity']==12
+    assert '89609' not in text
+    (tmp_path/'lira-check.pdf').write_bytes(data)
+    preview=BytesIO();Image.new('RGB',(300,180),'#edf1ea').save(preview,format='PNG')
+    illustrated=render('Витрина LIRA · проверка эскиза',dict(items=[it],room=dict(width=4200,depth=3200,height=2700)),{},module_previews={it['item_id']:preview.getvalue()})
+    pages=PdfReader(BytesIO(illustrated)).pages
+    assert len(pages)==3
+    assert all(word in pages[1].extract_text() for word in ['75069','Материалы','Вид модуля'])
+    assert '77267' in pages[2].extract_text() and 'Уточнить' in pages[2].extract_text()
+    (tmp_path/'lira-preview-check.pdf').write_bytes(illustrated)

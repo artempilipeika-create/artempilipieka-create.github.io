@@ -97,6 +97,14 @@ class PlannerApplication {
   }
   bindInspector(){
     const V=globalThis.MF_VITRINE;
+    this.listen(get('vitrine-light-system'),'change',e=>{
+      const it=this.adapter.selected;if(!V.info(it))return;
+      this.interaction.change('Подсветка витрины',()=>{
+        const next=V.select(it,{light_system:e.target.value},this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);
+        this.adapter.replace(next);this.adapter.status('Подсветка и фрезеровка изменены');
+      });this.bridge.refresh();
+    });
     this.listen(get('vitrine-options-controls'),'click',e=>{
       const b=e.target.closest('[data-vitrine-option]'),it=this.adapter.selected;
       if(!b||!V.info(it))return;

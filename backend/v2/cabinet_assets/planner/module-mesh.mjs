@@ -7,6 +7,9 @@ export const VISUAL_FINISHES=Object.freeze({
   glass:{color:'#d0e5df',roughness:.13,metalness:0},
   frame:{color:'#171e1a',roughness:.45,metalness:.55},
   hinge:{color:'#b9bdc1',roughness:.32,metalness:.72},
+  shelfSupport:{color:'#656766',roughness:.3,metalness:.58},
+  supportPad:{color:'#969c98',roughness:.85,metalness:0},
+  lightProfile:{color:'#171e1a',roughness:.45,metalness:.55},
   led:{color:'#fff7d9',roughness:.5,metalness:0,emissive:'#fff0b9',emissiveIntensity:1.2},
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
   shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
@@ -66,7 +69,7 @@ export class MeshFactory{
     if(!this.materials.has(key)){
       const color=visual.color||(id?'#aeb2b0':finish.color);
       const m=new THREE.MeshStandardMaterial({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:['handle','frame','hinge'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter',
+        metalness:['handle','frame','hinge','shelfSupport','lightProfile'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter',
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color};
@@ -203,6 +206,30 @@ export class MeshFactory{
       link.rotation.y=Math.atan2(b.x-a.x,b.z-a.z);link.userData.frontAccessory=true;
     });
   }
+  vitrineShelfSupports(group,it,ghost){
+    // KUBIC visual model: a compact body, removable top clip and protective pads.
+    // Anchors are from FR3D; silhouettes are illustrative, not machining geometry.
+    const V=globalThis.MF_VITRINE;
+    V.shelves(it).forEach((centerY,shelfIndex)=>{
+      for(const sign of [-1,1])for(const z of [-it.depth/2+68,it.depth/2-52]){
+        const x=sign*(it.width/2-18),y=centerY-2;
+        for(const [role,key,create]of [
+          ['shelfSupport','kubic:body',()=>combine([
+            panelGeometry(11,11,15.5,1).translate(5.5*S,-6.5*S,0),
+            panelGeometry(3,8,13,.35).translate(1.5*S,2*S,0),
+            panelGeometry(15.5,1.5,15.5,.35).translate(7.75*S,5.65*S,0)
+          ])],
+          ['supportPad','kubic:pads',()=>combine([
+            panelGeometry(10,.8,13,.2).translate(6*S,-.4*S,0),
+            panelGeometry(10,.8,13,.2).translate(7*S,4.4*S,0)
+          ])]
+        ]){
+          const m=this.mesh(group,role,this.acquire(key,create),key,x,y,z,null,ghost);m.scale.x=-sign;
+          Object.assign(m.userData,{visualOnly:true,visualApproximation:true,shelfIndex,shelfSupport:true,article:'1 60200 50 BA'});
+        }
+      }
+    });
+  }
   build(it,ghost=false){
     const group=new THREE.Group();group.userData={itemId:it.item_id,ghost,visualApproximation:false};
     const {width:W,height:H,depth:D}=it,t=18,base=heights(it).base_height,bodyH=H-base;
@@ -283,9 +310,15 @@ export class MeshFactory{
         m.userData.part=part;m.userData.frontAccessory=true;m.userData.facade=cells[0];
       }
       this.vitrineHinges(group,pivot,it,side,ghost);
+      this.vitrineShelfSupports(group,it,ghost);
       const light=globalThis.MF_VITRINE.metrics(it);
       for(const side of light.lighting_sides){
-        const sign=side==='left'?-1:1,m=this.box(group,'led',.6,H-136,4,sign*(W/2-18-.3),(H+100)/2,9,null,ghost,0);
+        const sign=side==='left'?-1:1,profile=light.light_profile_length_m>0;
+        if(profile){
+          const trim=this.box(group,'lightProfile',.6,H-136,24.4,sign*(W/2-18-.3),(H+100)/2,9,null,ghost,.15);
+          trim.userData.visualOnly=true;trim.userData.lightingSide=side;
+        }
+        const m=this.box(group,'led',profile?.3:.6,H-136,profile?12:4,sign*(W/2-18-(profile?.75:.3)),(H+100)/2,9,null,ghost,0);
         m.userData.visualOnly=true;m.userData.lightingSide=side;
       }
     }

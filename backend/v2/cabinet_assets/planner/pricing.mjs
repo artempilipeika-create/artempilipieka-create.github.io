@@ -65,8 +65,8 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
     extras:[]};
   if(template?.production?.vitrine){
     const m=globalThis.MF_VITRINE.metrics(item);
-    sections.operations.push(row('operation:led-groove-4x8','Фрезеровка паза · ширина 4 мм / глубина 8 мм',m.groove_total_m,'m','FR3D groove trajectory'));
-    sections.extras.push(row('lighting:power-control','Питание 12 В и управление подсветкой · подбор для группы',null,'set','Состав и мощность блока питания не заданы'));
+    sections.operations.push(row('operation:led-groove-'+m.groove_width_mm+'x'+m.groove_depth_mm,'Фрезеровка паза · ширина '+m.groove_width_mm+' мм / глубина '+m.groove_depth_mm+' мм',m.groove_total_m,'m','FR3D groove trajectory'));
+    sections.extras.push(row('lighting:power-control','Питание 12 В, управление, провод и соединения · подбор для группы',null,'set','Схема подключения не задана',{note:'Нагрузка ленты этого модуля: '+m.led_power_w+' Вт. Блок питания выбрать с запасом по суммарной нагрузке группы.'}));
   }
   if(!actualParts)sections.operations.push(row('production','Производственная модель',null,'module','Unsupported donor'));
   for(const key of Object.keys(sections))sections[key]=priceRows(sections[key],priceList?.rates);
