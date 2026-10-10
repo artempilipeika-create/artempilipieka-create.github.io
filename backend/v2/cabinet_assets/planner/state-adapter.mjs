@@ -29,6 +29,7 @@ export class StateAdapter{
     if(opt.bazis)Object.assign(it,{bazis_id:t.id,bazis_file:t.source_file,bazis_sha256:t.source_sha256,bazis_resize:Boolean(t.resize)});
     if(opt.bazis&&t.production){
       const p=t.production;
+      if(p.vitrine)it.handles='handleless';
       Object.assign(it,{height:p.body_height+p.base_height,depth:p.scene_depth??it.depth,
         body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
       it.shelves=clone(productionShelves(it,p));

@@ -36,7 +36,7 @@ export class RoomPricingUI{
       const lines=[b.label,'Фактическая ширина: '+b.actualWidthMm+' мм','Ценовая категория: '+(b.status==='CUSTOM'?'CUSTOM · нестандарт':b.pricingWidthMm+' мм'),'Цена: не настроена'];
       lines.forEach(t=>this.module.append(el('p',t)));
       const details=el('details'),summary=el('summary','Состав расчёта');details.append(summary);
-      for(const [title,rows]of [['Листовые материалы',b.sheetMaterials],['Кромка',b.edging],['Фурнитура',b.hardware],['Операции',b.operations]]){
+      for(const [title,rows]of [['Листовые материалы',b.sheetMaterials],['Кромка',b.edging],['Фурнитура',b.hardware],['Операции',b.operations],['Подсветка: комплектование',b.extras]]){
         details.append(el('strong',title));
         for(const r of rows)details.append(el('p',r.label+': '+(r.quantity===null?'правило расчёта не задано':r.quantity.toLocaleString('ru-RU',{maximumFractionDigits:3})+' '+({m2:'м²',pcs:'шт.',m:'м'}[r.unit]||r.unit)+' · цена не настроена')));
       }

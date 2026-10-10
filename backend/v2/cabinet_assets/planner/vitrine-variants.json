@@ -1,0 +1,698 @@
+[
+  {
+    "id": "bazis.1109a1bd41e0",
+    "family": "vitrine.z1",
+    "label": "Пенал-витрина ПН-600",
+    "source_file": "ПН-600.Витрина. Фр_4мм_L_Центр.Z1_отк_L.Пл_4-9мм..fr3d",
+    "source_sha256": "1109a1bd41e06794e2a8f189dab1ca3835e65e1925706e8b0fc7926258edeb6b",
+    "lighting": "left",
+    "opening": "left",
+    "global_elastic_defined": true,
+    "hardware_items": [
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "z1-native-0",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Саморез универсальный 3,5*16, белый цинк (1уп.=1 тыс.шт), AKS",
+        "article": "20646",
+        "quantity": 20,
+        "key": "z1-native-1",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "z1-native-2",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-3",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-4",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "z1-native-5",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "z1-native-6",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 22,
+        "key": "z1-native-7",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 22,
+        "key": "z1-native-8",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Толкатель AQ ONE-PUSH врезной с магнитным оконч. графит",
+        "article": "09.0016",
+        "quantity": 1,
+        "key": "z1-native-9",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP top петля для узких АЛЮМ. рамок, накладная БЕЗ ПРУЖИНЫ, чашка петли на саморезы",
+        "article": "70T950A.TLMB V50 NI",
+        "quantity": 4,
+        "key": "z1-native-10",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP ответная планка, прям. (20/32 мм), 0 мм, сталь, на саморезы, с эксцентриком",
+        "article": "175H3100 MPL V500 NI",
+        "quantity": 4,
+        "key": "z1-native-11",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "KUBIC Полкодержатель для стеклянных полок толщиной 4-9 мм, под саморез, черный никель",
+        "article": "1 60200 50 BA",
+        "quantity": 4,
+        "key": "glass-shelf-support",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      }
+    ]
+  },
+  {
+    "id": "bazis.4b283b9bdf55",
+    "family": "vitrine.z1",
+    "label": "Пенал-витрина ПН-600",
+    "source_file": "ПН-600.Витрина. Фр_4мм_L_Центр.Z1_отк_P.Пл_4-9мм..fr3d",
+    "source_sha256": "4b283b9bdf5564de069de644b3f669acd21034c08d54a9206430732d8aaa3baf",
+    "lighting": "left",
+    "opening": "right",
+    "global_elastic_defined": true,
+    "hardware_items": [
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "z1-native-0",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Саморез универсальный 3,5*16, белый цинк (1уп.=1 тыс.шт), AKS",
+        "article": "20646",
+        "quantity": 20,
+        "key": "z1-native-1",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "z1-native-2",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-3",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-4",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "z1-native-5",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "z1-native-6",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 22,
+        "key": "z1-native-7",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 22,
+        "key": "z1-native-8",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Толкатель AQ ONE-PUSH врезной с магнитным оконч. графит",
+        "article": "09.0016",
+        "quantity": 1,
+        "key": "z1-native-9",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP top петля для узких АЛЮМ. рамок, накладная БЕЗ ПРУЖИНЫ, чашка петли на саморезы",
+        "article": "70T950A.TLMB V50 NI",
+        "quantity": 4,
+        "key": "z1-native-10",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP ответная планка, прям. (20/32 мм), 0 мм, сталь, на саморезы, с эксцентриком",
+        "article": "175H3100 MPL V500 NI",
+        "quantity": 4,
+        "key": "z1-native-11",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "KUBIC Полкодержатель для стеклянных полок толщиной 4-9 мм, под саморез, черный никель",
+        "article": "1 60200 50 BA",
+        "quantity": 4,
+        "key": "glass-shelf-support",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      }
+    ]
+  },
+  {
+    "id": "bazis.54b9c4cbcb76",
+    "family": "vitrine.z1",
+    "label": "Пенал-витрина ПН-600",
+    "source_file": "ПН-600.Витрина. Фр_4мм_P_Центр.Z1_отк_L.Пл_4-9мм..fr3d",
+    "source_sha256": "54b9c4cbcb76c73e4c9a81ff2da3dd183af44f4908cccca6dfdda1a0c9eb6b90",
+    "lighting": "right",
+    "opening": "left",
+    "global_elastic_defined": true,
+    "hardware_items": [
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "z1-native-0",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Саморез универсальный 3,5*16, белый цинк (1уп.=1 тыс.шт), AKS",
+        "article": "20646",
+        "quantity": 20,
+        "key": "z1-native-1",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "z1-native-2",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-3",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-4",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "z1-native-5",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "z1-native-6",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 22,
+        "key": "z1-native-7",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 22,
+        "key": "z1-native-8",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Толкатель AQ ONE-PUSH врезной с магнитным оконч. графит",
+        "article": "09.0016",
+        "quantity": 1,
+        "key": "z1-native-9",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP top петля для узких АЛЮМ. рамок, накладная БЕЗ ПРУЖИНЫ, чашка петли на саморезы",
+        "article": "70T950A.TLMB V50 NI",
+        "quantity": 4,
+        "key": "z1-native-10",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP ответная планка, прям. (20/32 мм), 0 мм, сталь, на саморезы, с эксцентриком",
+        "article": "175H3100 MPL V500 NI",
+        "quantity": 4,
+        "key": "z1-native-11",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "KUBIC Полкодержатель для стеклянных полок толщиной 4-9 мм, под саморез, черный никель",
+        "article": "1 60200 50 BA",
+        "quantity": 4,
+        "key": "glass-shelf-support",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      }
+    ]
+  },
+  {
+    "id": "bazis.eac900b6f7c1",
+    "family": "vitrine.z1",
+    "label": "Пенал-витрина ПН-600",
+    "source_file": "ПН-600.Витрина. Фр_4мм_P_Центр.Z1_отк_P.Пл_4-9мм.(1).fr3d",
+    "source_sha256": "eac900b6f7c150becec4d6203d8c1870c6eec81b57a6ac241f1150fddb9bd57e",
+    "lighting": "right",
+    "opening": "right",
+    "global_elastic_defined": true,
+    "hardware_items": [
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "z1-native-0",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Саморез универсальный 3,5*16, белый цинк (1уп.=1 тыс.шт), AKS",
+        "article": "20646",
+        "quantity": 20,
+        "key": "z1-native-1",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "z1-native-2",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-3",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-4",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "z1-native-5",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "z1-native-6",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 22,
+        "key": "z1-native-7",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 22,
+        "key": "z1-native-8",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Толкатель AQ ONE-PUSH врезной с магнитным оконч. графит",
+        "article": "09.0016",
+        "quantity": 1,
+        "key": "z1-native-9",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP top петля для узких АЛЮМ. рамок, накладная БЕЗ ПРУЖИНЫ, чашка петли на саморезы",
+        "article": "70T950A.TLMB V50 NI",
+        "quantity": 4,
+        "key": "z1-native-10",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP ответная планка, прям. (20/32 мм), 0 мм, сталь, на саморезы, с эксцентриком",
+        "article": "175H3100 MPL V500 NI",
+        "quantity": 4,
+        "key": "z1-native-11",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "KUBIC Полкодержатель для стеклянных полок толщиной 4-9 мм, под саморез, черный никель",
+        "article": "1 60200 50 BA",
+        "quantity": 4,
+        "key": "glass-shelf-support",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      }
+    ]
+  },
+  {
+    "id": "bazis.c917ea2f3d9c",
+    "family": "vitrine.z1",
+    "label": "Пенал-витрина ПН-600",
+    "source_file": "ПН-600.Витрина. Фр_4мм_Две стороны_Центр.Z1_отк_L.Пл_4-9мм(1).fr3d",
+    "source_sha256": "c917ea2f3d9c2c03e271f23682f5f98d8a71f112d2881bfaf1e8b730dae70697",
+    "lighting": "both",
+    "opening": "left",
+    "global_elastic_defined": false,
+    "hardware_items": [
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "z1-native-0",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Саморез универсальный 3,5*16, белый цинк (1уп.=1 тыс.шт), AKS",
+        "article": "20646",
+        "quantity": 20,
+        "key": "z1-native-1",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "z1-native-2",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-3",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-4",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "z1-native-5",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "z1-native-6",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 22,
+        "key": "z1-native-7",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 22,
+        "key": "z1-native-8",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Толкатель AQ ONE-PUSH врезной с магнитным оконч. графит",
+        "article": "09.0016",
+        "quantity": 1,
+        "key": "z1-native-9",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP top петля для узких АЛЮМ. рамок, накладная БЕЗ ПРУЖИНЫ, чашка петли на саморезы",
+        "article": "70T950A.TLMB V50 NI",
+        "quantity": 4,
+        "key": "z1-native-10",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP ответная планка, прям. (20/32 мм), 0 мм, сталь, на саморезы, с эксцентриком",
+        "article": "175H3100 MPL V500 NI",
+        "quantity": 4,
+        "key": "z1-native-11",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "KUBIC Полкодержатель для стеклянных полок толщиной 4-9 мм, под саморез, черный никель",
+        "article": "1 60200 50 BA",
+        "quantity": 4,
+        "key": "glass-shelf-support",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      }
+    ]
+  },
+  {
+    "id": "bazis.9f3d56c01179",
+    "family": "vitrine.z1",
+    "label": "Пенал-витрина ПН-600",
+    "source_file": "ПН-600.Витрина. Фр_4мм_Две стороны_Центр.Z1_отк_P.Пл_4-9мм.(2).fr3d",
+    "source_sha256": "9f3d56c0117949747b8c0190832a2e716e0da5b0ca46f1403f894f0565eb7947",
+    "lighting": "both",
+    "opening": "right",
+    "global_elastic_defined": true,
+    "hardware_items": [
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "z1-native-0",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Саморез универсальный 3,5*16, белый цинк (1уп.=1 тыс.шт), AKS",
+        "article": "20646",
+        "quantity": 20,
+        "key": "z1-native-1",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "z1-native-2",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-3",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "z1-native-4",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "z1-native-5",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "z1-native-6",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 22,
+        "key": "z1-native-7",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 22,
+        "key": "z1-native-8",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "Толкатель AQ ONE-PUSH врезной с магнитным оконч. графит",
+        "article": "09.0016",
+        "quantity": 1,
+        "key": "z1-native-9",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP top петля для узких АЛЮМ. рамок, накладная БЕЗ ПРУЖИНЫ, чашка петли на саморезы",
+        "article": "70T950A.TLMB V50 NI",
+        "quantity": 4,
+        "key": "z1-native-10",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "CLIP ответная планка, прям. (20/32 мм), 0 мм, сталь, на саморезы, с эксцентриком",
+        "article": "175H3100 MPL V500 NI",
+        "quantity": 4,
+        "key": "z1-native-11",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      },
+      {
+        "name": "KUBIC Полкодержатель для стеклянных полок толщиной 4-9 мм, под саморез, черный никель",
+        "article": "1 60200 50 BA",
+        "quantity": 4,
+        "key": "glass-shelf-support",
+        "unit": "pcs",
+        "source": "FR3D donor"
+      }
+    ]
+  }
+]

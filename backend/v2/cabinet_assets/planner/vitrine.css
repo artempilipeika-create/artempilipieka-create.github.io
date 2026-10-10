@@ -1,0 +1,14 @@
+#vitrine-options-controls{scroll-margin-top:60px}
+#vitrine-options-controls .vt-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+#vitrine-options-controls .vt-badge{font-size:11px;padding:5px 8px;background:#263c30;color:#fff;border-radius:5px;white-space:nowrap}
+#vitrine-options-controls .vt-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:8px 0 15px}
+#vitrine-options-controls .vt-options button{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;min-height:148px;white-space:normal;padding:10px 5px!important;font-size:12px!important;line-height:1.3;text-align:center}
+#vitrine-options-controls .vt-option-image svg{display:block;width:34px;height:108px}
+#vitrine-options-controls .vt-opening{grid-template-columns:repeat(2,minmax(0,1fr))}
+#vitrine-options-controls .vt-opening button{min-height:44px;justify-content:center}
+#vitrine-options-controls button[aria-pressed=true]{background:#e3ecd9!important;border-color:#617c4e!important;box-shadow:inset 0 0 0 1px #617c4e}
+#vitrine-options-controls button:focus-visible{outline:3px solid #7b965f;outline-offset:2px}
+#vitrine-options-controls .vt-shelves{display:flex;align-items:center;gap:9px;margin:8px 0}
+#vitrine-options-controls .vt-shelves button{min-width:36px;min-height:36px}
+#vitrine-options-controls .vt-quantities{font-size:12px;line-height:1.7;padding:10px;background:#f0f3ea;border-radius:6px;margin-top:12px;overflow-wrap:anywhere}
+#vitrine-native-size-note{font-size:12px;line-height:1.5;padding:9px;border-left:3px solid #8c986d;background:#f4f4e9}

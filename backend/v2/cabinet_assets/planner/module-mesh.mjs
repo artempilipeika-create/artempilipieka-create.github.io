@@ -4,6 +4,9 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,prod
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
+  glass:{color:'#d0e5df',roughness:.13,metalness:0},
+  frame:{color:'#171e1a',roughness:.45,metalness:.55},
+  led:{color:'#fff7d9',roughness:.5,metalness:0,emissive:'#fff0b9',emissiveIntensity:1.2},
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
   shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
   front:{color:'#e5e3d8',roughness:.74,metalness:0},
@@ -62,9 +65,9 @@ export class MeshFactory{
     if(!this.materials.has(key)){
       const color=visual.color||(id?'#aeb2b0':finish.color);
       const m=new THREE.MeshStandardMaterial({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:role==='handle'?finish.metalness:0,vertexColors:role==='front'||role==='counter',
-        transparent:ghost||inspection,opacity:ghost?.36:inspection?.16:1,depthWrite:!ghost&&!inspection,
-        side:inspection?THREE.DoubleSide:THREE.FrontSide});
+        metalness:['handle','frame'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter',
+        transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
+        side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color};
       if(visual.url&&!ghost&&!inspection){
         const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);
@@ -98,7 +101,7 @@ export class MeshFactory{
       const id=part?part.material.variant_id:role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
       const material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
       if(m.material!==material){m.material=material;changed=true;}
-      m.castShadow=!group.userData.ghost&&!inspection&&role!=='reveal';m.receiveShadow=!group.userData.ghost&&!inspection;m.renderOrder=inspection?5:0;
+      m.castShadow=!group.userData.ghost&&!inspection&&!['reveal','glass','led'].includes(role);m.receiveShadow=!group.userData.ghost&&!inspection;m.renderOrder=inspection?5:0;
     });
     return changed;
   }
@@ -163,7 +166,7 @@ export class MeshFactory{
     const parts=productionParts(it,template,id=>this.adapter.material(id));
     if(parts){
       for(const part of parts.filter(p=>p.role!=='front'||p.fixed)){
-        const d=part.size,c=part.position,m=this.box(group,part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.material.variant_id,ghost);
+        const d=part.size,c=part.position,m=this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.material.variant_id,ghost);
         m.userData.part=part;m.userData.productionPart=part.role;
         if(part.back_type)m.userData.backType=part.back_type;
         if(part.shelf_id)m.userData.shelfId=part.shelf_id;
@@ -192,14 +195,14 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
     }
 
     const fronts=parts?.filter(p=>p.role==='front'&&!p.fixed);let doorIndex=0;
-    for(const f of cells){
+    for(const f of production?.vitrine?[]:cells){
       const drawer=f.kind==='drawer',part=fronts?.[doorIndex++],hasPivot=Boolean(part?.pivot)&&!drawer;
       const spec=hasPivot?{side:part.hinge_side,open_angle:Number.isFinite(part.open_angle)?part.open_angle:105}:null;
       let parent=group,px=f.cx,pz=part?.position.z??D/2+11,handleZ=pz+9;
@@ -222,6 +225,21 @@ export class MeshFactory{
         // Tall upper and lower handles meet at the section joint; wall handles use the bottom edge.
         // The pilot swing doors keep the handle on the rotating facade.
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
+      }
+    }
+    if(production?.vitrine){
+      const side=production.vitrine.opening,pivot=new THREE.Group(),hingeX=(side==='left'?-1:1)*(W/2-2),hingeZ=D/2+2;
+      pivot.userData={itemId:it.item_id,role:'door-pivot',visualOnly:true,hingeSide:side};pivot.position.set(hingeX*S,0,hingeZ*S);
+      if(it.doors_open)pivot.rotation.y=(side==='left'?-1:1)*105*Math.PI/180;
+      group.add(pivot);
+      for(const part of parts.filter(p=>p.facade_component)){
+        const d=part.size,c=part.position,m=this.box(pivot,part.optical_material,d.x,d.y,d.z,c.x-hingeX,c.y,c.z-hingeZ,null,ghost,.15);
+        m.userData.part=part;m.userData.frontAccessory=true;m.userData.facade=cells[0];
+      }
+      const light=globalThis.MF_VITRINE.metrics(it);
+      for(const side of light.lighting_sides){
+        const sign=side==='left'?-1:1,m=this.box(group,'led',.6,H-136,4,sign*(W/2-18-.3),(H+100)/2,9,null,ghost,0);
+        m.userData.visualOnly=true;m.userData.lightingSide=side;
       }
     }
     if(production?.tall?.family==='appliance'){
@@ -308,7 +326,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

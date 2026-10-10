@@ -47,6 +47,16 @@
     polygon([[bx+W,by],[bx+W+D,by-rise],[bx+W+D,by+H-rise],[bx+W,by+H]],'#c7b89b','#a99e86');
     polygon([[bx,by],[bx+D,by-rise],[bx+W+D,by-rise],[bx+W,by]],'#dfd8c6','#c0b8a4');
     x.fillStyle='#8e8a75';x.fillRect(bx,by,W,H);
+    const vitrine=globalThis.MF_VITRINE.info(it);
+    if(vitrine){
+      const top=by,bottom=by+H-100*s,fw=W-4*s;
+      x.fillStyle='#d1dfd7';x.fillRect(bx+2*s,top,fw,bottom-top);
+      x.strokeStyle='#758f80';x.lineWidth=Math.max(.7,4*s);
+      for(const y of globalThis.MF_VITRINE.shelves(it)){const sy=by+H-y*s;x.beginPath();x.moveTo(bx+20*s,sy);x.lineTo(bx+W-20*s,sy);x.stroke();}
+      for(const side of (vitrine.lighting==='both'?['left','right']:[vitrine.lighting])){x.fillStyle='#fff6c5';x.fillRect(side==='left'?bx+22*s:bx+W-26*s,top+4*s,Math.max(1.5,4*s),bottom-top-8*s);}
+      x.strokeStyle='#202a25';x.lineWidth=Math.max(1.2,19*s);x.strokeRect(bx+11.5*s,top+9.5*s,W-23*s,bottom-top-19*s);
+      x.fillStyle='#536158';x.fillRect(bx+30*s,bottom,20*s,100*s);x.fillRect(bx+W-50*s,bottom,20*s,100*s);return;
+    }
     const cells=facadeCells(it);
     for(const f of cells){
       const px=bx+(f.cx+it.width/2-f.w/2)*s,py=by+H-(f.cy+f.h/2)*s;

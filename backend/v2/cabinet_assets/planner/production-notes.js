@@ -21,6 +21,7 @@
   }
   function moduleText(item){
     const v=family(item),lines=[];
+    const vitrine=root.MF_VITRINE?.brief(item);if(vitrine)lines.push(vitrine);
     if(v){
       lines.push('ТЕХНИКА ПЕНАЛА '+(item.name||item.item_id||''));
       lines.push(deviceLine(item,'oven'));

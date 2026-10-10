@@ -69,6 +69,17 @@ function facadeCells(it){
   return cells;
 }
 function buildItem(it){
+  const V=globalThis.MF_VITRINE,v=V?.info(it);
+  if(v){
+    const scaled={...it,x:(it.x||0)/500,z:(it.z||0)/500};
+    for(const part of V.parts(it,V.model(v))){const d=part.size,c=part.position;
+      add(scaled,d.x/500,d.y/500,d.z/500,c.x/500,c.y/500,c.z/500,part.optical_material==='frame'?'#171e1a':part.optical_material==='glass'?'#d0e5df':'#d9ddd4');
+      boxes.at(-1).opacity=part.optical_material==='glass'?.16:1;
+    }
+    for(const side of V.metrics(it).lighting_sides)add(scaled,.8/500,(it.height-136)/500,4/500,(side==='left'?-1:1)*(it.width/2-18-.4)/500,(it.height+100)/1000,9/500,'#fff6ce');
+    for(const x of [-it.width/2+45,it.width/2-45])for(const z of [-it.depth/2+45,it.depth/2-95])add(scaled,30/500,100/500,30/500,x/500,50/500,z/500,'#536158');
+    return;
+  }
   const S=1/500,W=it.width*S,H=it.height*S,D=it.depth*S,t=18*S,bc='#a47d59',fc='#78927e';
   const baseH=it.base==='plinth'?80*S:0;
   const wallLift=it.module_type==='wall_cabinet'?Math.max(0,(state.room.height-it.height-500))*S:0,y0=wallLift;
@@ -109,7 +120,7 @@ function proj(p,w,h){
 function faces(b){
   const x0=b.x-b.w/2,x1=b.x+b.w/2,y0=b.y-b.h/2,y1=b.y+b.h/2,z0=b.z-b.d/2,z1=b.z+b.d/2;
   const v=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]].map(x=>({x:x[0],y:x[1],z:x[2]}));
-  return[[0,1,2,3,.72],[4,5,6,7,1.05],[0,4,7,3,.84],[1,5,6,2,.92],[3,2,6,7,1.15],[0,1,5,4,.65]].map(f=>({verts:f.slice(0,4).map(i=>v[i]),sh:f[4],c:b.color}));
+  return[[0,1,2,3,.72],[4,5,6,7,1.05],[0,4,7,3,.84],[1,5,6,2,.92],[3,2,6,7,1.15],[0,1,5,4,.65]].map(f=>({verts:f.slice(0,4).map(i=>v[i]),sh:f[4],c:b.color,opacity:b.opacity??1}));
 }
 const canvas=$('scene'),ctx=canvas.getContext('2d');
 function size(){
@@ -141,7 +152,7 @@ function draw3d(w,h){
   fs.sort((a,b)=>a.z-b.z);
   for(const f of fs){
     ctx.beginPath();ctx.moveTo(f.p[0].x,f.p[0].y);for(let i=1;i<4;i++)ctx.lineTo(f.p[i].x,f.p[i].y);ctx.closePath();
-    ctx.fillStyle=shade(f.c,f.sh);ctx.fill();ctx.strokeStyle='rgba(25,45,31,.16)';ctx.stroke();
+    ctx.globalAlpha=f.opacity;ctx.fillStyle=shade(f.c,f.sh);ctx.fill();ctx.strokeStyle='rgba(25,45,31,.16)';ctx.stroke();ctx.globalAlpha=1;
   }
 }
 function loop(){const{w,h}=size();if(state){viewMode==='2d'?draw2d(w,h):draw3d(w,h)}requestAnimationFrame(loop)}

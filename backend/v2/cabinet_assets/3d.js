@@ -94,7 +94,7 @@ for(const v of globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS)bazisModules.push({
   defaults:{w:1000,h:820,d:510,layout:'doors',drawers:0,base:'plinth'},limits:{w:[800,1834],h:[700,1100],d:[450,700]},
   front:{kind:'doors',count:v.door_count},resize:true
 });
-for(const v of [...globalThis.MF_FURNITURE_CORE.TALL_VARIANTS,...globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS])bazisModules.push({
+for(const v of [...globalThis.MF_FURNITURE_CORE.TALL_VARIANTS,...globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS,...globalThis.MF_FURNITURE_CORE.VITRINE_VARIANTS])bazisModules.push({
   id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Пеналы БАЗИС',module_type:'tall_cabinet',
   defaults:{w:600,h:v.native_height||2000,d:600,layout:v.drawer?'combo':'doors',drawers:v.drawer?1:0,base:'plinth'},resize:true
 });
@@ -123,6 +123,7 @@ const bazisById=new Map(bazisModules.map(x=>[x.id,x]));
 for(const m of bazisModules){
   const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(m.id);
   if(family)m.catalogue_label=family.label;
+  if(m.production?.vitrine)m.catalogue_label=globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.label;
   if(m.production?.tall)m.catalogue_label=(m.production.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_FAMILY:globalThis.MF_FURNITURE_CORE.TALL_FAMILY).label;
   if(globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.some(v=>v.id===m.id))m.catalogue_label=globalThis.MF_FURNITURE_CORE.CORNER_FAMILY.label;
 }
@@ -327,8 +328,9 @@ function renderModuleCatalogue(){
     if(m.production.corner&&id!==cornerFamily.default_id)continue;
     const tallFamily=m.production.tall?.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_FAMILY:globalThis.MF_FURNITURE_CORE.TALL_FAMILY;
     if(m.production.tall&&id!==tallFamily.default_id)continue;
+    if(m.production.vitrine&&id!==globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
+    const description=p.vitrine?'Чёрный Z1 · стекло · подсветка L / P / две стороны · паз 4 × 8 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -345,7 +347,7 @@ function renderModuleCatalogue(){
       ?'Левое / правое · 3 вертикальные царги'
       :p.dryer?'Левое / правое · сушка AKS по ширине'
       :isWall?'Левое / правое · полки по высоте':'Левое / правое · полка · задник'):description;
-    const search=p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
+    const search=p.vitrine?'витрина стекло подсветка Z1 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
     addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
   }
   applyCatalogueFilter();
@@ -560,6 +562,7 @@ function addBazisModule(bazisId,announce=true){
   };
   if(m.production){
     const p=m.production;
+    if(p.vitrine)it.handles='handleless';
     Object.assign(it,{body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
     it.shelves=JSON.parse(JSON.stringify(globalThis.MF_FURNITURE_CORE.productionShelves(it,p)));
   }
@@ -698,6 +701,7 @@ async function syncControls(){
       $('tall-shelf-native-note').hidden=!core.tallShelfAdjustment(it,t.production);
     }
   }
+  globalThis.MF_VITRINE_UI?.sync(it,t?.production);
   const family=globalThis.MF_FURNITURE_CORE.doorFamily(it),opening=$('door-opening-controls');
   if(opening){
     opening.hidden=!family;
@@ -719,7 +723,9 @@ async function syncControls(){
     const input=$(key.replaceAll('_','-'));if(input)input.value=String(h[key]);
   }
   const kitchen=globalThis.MF_FURNITURE_CORE.kitchenSettings(it);
-  $('base').disabled=Boolean(kitchen)||Boolean(t?.production?.tall);
+  $('base').disabled=Boolean(kitchen)||Boolean(t?.production?.tall)||Boolean(t?.production?.vitrine);
+  $('handles').disabled=Boolean(t?.production?.vitrine);
+  if(t?.production?.vitrine)$('handles').value='handleless';
   if($('kitchen-controls'))$('kitchen-controls').hidden=!kitchen;
   if($('base-height')){$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);$('base-height').parentElement.hidden=Boolean(kitchen);}
   if(kitchen){
@@ -753,7 +759,7 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.tall?.family==='appliance'
+        $('production-rule-note').textContent=production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. Паз под ленту: ширина 4 мм, глубина 8 мм.':production.tall?.family==='appliance'
           ?'Корпус 600 × 600 мм. Духовка: ниша 564 × 595 мм.'+(production.tall.microwave?' СВЧ: ниша 564 × 380 мм.':'')+' Общая высота меняет только верхнее отделение. Задняя стенка в пазу, за техникой остаётся открытый проём.'
           :production.tall
           ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+core.tallUpperShelves(it,production).length+' съёмн. При изменении общей высоты растёт верхняя секция, выбранные полки распределяются равномерно. Столешница в высоту базы не входит.'
@@ -788,6 +794,11 @@ async function syncControls(){
   if(selected()?.item_id!==it.item_id)return;
   for(const [kind,m]of [['plinth',plinthMaterial],['countertop',countertopMaterial]])if($(kind+'-selected'))$(kind+'-selected').textContent=label(m);
   for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial],['plinth',plinthMaterial],['countertop',countertopMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=!m?'':m.visual?.texture_url?'Точная текстура · '+(m.article||''):m.visual?.preview_url?'Официальный preview, масштаб ориентировочный · '+(m.article||''):m.visual?.render_color?'Подтверждённый цвет; текстура отсутствует':'Нет точного изображения · '+(m.article||m.name||'')+' · нейтральный вид';}
+  if($('front-search')){
+    const glass=Boolean(t?.production?.vitrine);$('front-search').disabled=glass;
+    const group=$('front-search').closest('section');if(group)group.hidden=glass;
+    if(glass)$('front-results').replaceChildren();
+  }
   renderItems();
 }
 async function searchMaterial(input,results,kind){
@@ -802,10 +813,12 @@ async function searchMaterial(input,results,kind){
     b.onclick=()=>{
       const it=selected();
       if(!it)return;
+      if(kind==='front'&&templateFor(it)?.production?.vitrine)return;
       if(['body','front','plinth'].includes(kind)&&templateFor(it)?.production&&Number(m.thickness)!==18){status('Для корпуса, фасадов и цоколя выберите материал толщиной 18 мм.');return;}
       materials.set(String(m.variant_id),m);
       const scope=$('material-scope')?.value||'module',core=globalThis.MF_FURNITURE_CORE;
       let targets=scope==='module'?[it]:state.items.filter(x=>core.scopeMatches(x,scope));
+      if(kind==='front')targets=targets.filter(x=>!templateFor(x)?.production?.vitrine);
       if(kind==='plinth'||kind==='countertop')targets=targets.filter(x=>core.kitchenSettings(x));
       if(!targets.length){status('В выбранной группе нет модулей для этого материала.');return;}
       const field={body:'body_variant_id',front:'front_variant_id',plinth:'plinthMaterialId',countertop:'countertopMaterialId'}[kind];
@@ -897,9 +910,9 @@ function cutlistItem(it){
   const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
   const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it),id=>materials.get(String(id)));
   if(parts){
-    for(const part of parts){
-      const role=part.role==='back'?'fixed':part.role==='front'?'front':'body';
-      a.push([prefix+part.name,part.length,part.width,1,role,part.role==='shelf'?{...it,body_variant_id:part.material.variant_id}:it,part.material.name]);
+    for(const part of parts.filter(p=>p.type==='panel')){
+      const role=part.optical_material==='glass'?'fixed':part.role==='back'?'fixed':part.role==='front'?'front':'body';
+      a.push([prefix+part.name,part.length,part.width,1,role,part.role==='shelf'?{...it,body_variant_id:part.material.variant_id}:it,part.material.name,part]);
     }
     return a;
   }else{
@@ -1163,7 +1176,8 @@ function exportBazisProject(){
           constraints:p.constraints||null,
           corner:p.corner||null,tall:p.tall?{...p.tall,upper_shelf_count:globalThis.MF_FURNITURE_CORE.tallUpperShelves(it,p).length,
             upper_shelves:globalThis.MF_FURNITURE_CORE.tallUpperShelves(it,p),shelf_layout:it.upper_shelf_count==null?'native':'even'}:null,
-          native_adjustment:globalThis.MF_FURNITURE_CORE.tallShelfAdjustment(it,p),facade:p.facade||null,
+          vitrine:p.vitrine?{...p.vitrine,...globalThis.MF_VITRINE.metrics(it)}:null,
+          native_adjustment:p.vitrine?globalThis.MF_VITRINE.adjustment(it):globalThis.MF_FURNITURE_CORE.tallShelfAdjustment(it,p),facade:p.facade||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,
@@ -1193,19 +1207,19 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей.'+(adjusted.length?' Верхние полки в '+adjusted.length+' пенал. нужно скорректировать в БАЗИС по данным файла.':''));
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей.'+(adjusted.length?' Полки в '+adjusted.length+' пенал. нужно скорректировать в БАЗИС по данным файла.':''));
 }
 
 async function toOrder(){
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError)throw new Error(briefError);
-  for(const it of state.items)if(!it.body_variant_id||!it.front_variant_id)throw new Error('Выберите материалы корпуса и фасадов для всех модулей.');
+  for(const it of state.items)if(!it.body_variant_id||(!templateFor(it)?.production?.vitrine&&!it.front_variant_id))throw new Error('Выберите материалы корпуса и фасадов для всех модулей.');
   await saveProject();
   const projectBrief=globalThis.MF_PRODUCTION_NOTES?.projectText(state)||'';
   const orderComment='Создано из сохранённого 3D-проекта '+project.project_id+(projectBrief?'\n\nЗАДАНИЕ КОНСТРУКТОРУ\n'+projectBrief:'');
   if(orderComment.length>4000)throw new Error('Задание превышает 4000 символов для комментария заказа. Сократите заметки перед передачей.');
   const o=await api('/orders','POST',{business_name:$('project-name').value.trim()||'3D-проект',preparation_mode:'self_prepared'});
-  const rel=await api('/catalogue/releases'),rows=allCutlist();
+  const rel=await api('/catalogue/releases'),rows=allCutlist().filter(r=>r[7]?.optical_material!=='glass');
   const details=rows.map(r=>({
     detail_id:uid(),name:r[0],comments:'Из 3D-проекта '+$('project-name').value,
     length:String(mmNumber(r[1])),width:String(mmNumber(r[2])),qty:r[3],

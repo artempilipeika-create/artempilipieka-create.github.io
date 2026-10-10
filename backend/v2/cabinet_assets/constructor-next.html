@@ -9,8 +9,11 @@
 <link rel="stylesheet" href="/account/3d-studio.css?v=20260925-1">
 <script defer src="/account/planner/corner-variants.js"></script>
 <script defer src="/account/planner/tall-variants.js"></script>
+<script defer src="/account/planner/vitrine-model.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/planner/appliance-tall-ui.js"></script>
+<script defer src="/account/planner/vitrine-ui.js"></script>
+<link rel="stylesheet" href="/account/planner/vitrine.css">
 <script defer src="/account/planner/production-notes.js"></script>
 <link rel="stylesheet" href="/account/planner/appliance-tall.css">
 <link rel="stylesheet" href="/account/planner/production-notes.css">
@@ -87,6 +90,29 @@
    <details class="studio-details" id="item-brief-details"><summary>Заметка конструктору по этому модулю</summary><label>Особенности изготовления и монтажа<textarea id="item-production-note" maxlength="2000" rows="3" placeholder="Например, оставить доступ к счётчику, учесть розетку, согласовать открывание…"></textarea></label></details>
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
+   <div id="vitrine-options-controls" class="mf3d-control-card" hidden>
+    <div class="vt-title"><strong>Пенал-витрина</strong><span class="vt-badge">Z1 · чёрный</span></div>
+    <strong>Где расположить подсветку?</strong>
+    <div class="vt-options" role="group" aria-label="Сторона подсветки">
+     <button type="button" class="secondary" data-vitrine-option="lighting" data-vitrine-value="left" aria-pressed="false"><span class="vt-option-image" aria-hidden="true"></span><span>Слева</span></button>
+     <button type="button" class="secondary" data-vitrine-option="lighting" data-vitrine-value="right" aria-pressed="false"><span class="vt-option-image" aria-hidden="true"></span><span>Справа</span></button>
+     <button type="button" class="secondary" data-vitrine-option="lighting" data-vitrine-value="both" aria-pressed="false"><span class="vt-option-image" aria-hidden="true"></span><span>Две стороны</span></button>
+    </div>
+    <label>Подсветка и фрезеровка<select id="vitrine-light-system" disabled><option>AQ LED-LINE · паз: ширина 4 / глубина 8 мм</option></select></label>
+    <p class="studio-hint">Нейтральный свет · лента 4 мм · 12 В. Профиль рамки — Z1.</p>
+    <strong>Сторона петель</strong>
+    <div class="vt-options vt-opening" role="group" aria-label="Открывание витрины">
+     <button type="button" class="secondary" data-vitrine-option="opening" data-vitrine-value="left" aria-pressed="false">Слева · L</button>
+     <button type="button" class="secondary" data-vitrine-option="opening" data-vitrine-value="right" aria-pressed="false">Справа · P</button>
+    </div>
+    <p class="studio-hint">Стороны указаны при взгляде спереди.</p>
+    <p id="vitrine-native-size-note" hidden>Этот вариант пока доступен в исходном размере 600 × 2000 × 600 мм. Для изменения размеров нужна настройка исходной модели.</p>
+    <strong>Стеклянные полки</strong>
+    <div class="vt-shelves"><button id="vitrine-shelf-minus" class="secondary" type="button" aria-label="Убрать стеклянную полку">−</button><output id="vitrine-shelf-count" aria-live="polite">1</output><button id="vitrine-shelf-plus" class="secondary" type="button" aria-label="Добавить стеклянную полку">+</button><button id="vitrine-shelf-reset" class="secondary" type="button">Как в исходнике</button></div>
+    <p id="vitrine-shelf-note" class="studio-hint"></p>
+    <div id="vitrine-quantities" class="vt-quantities" aria-live="polite"></div>
+    <p class="studio-hint">Уплотнитель рассчитан по периметру стекла. Отпускной метраж и совместимость уточняются у поставщика; хлысты Z1 — по раскрою.</p>
+   </div>
    <div id="tall-options-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong id="tall-options-title">Пенал с полками</strong></div>
     <div id="appliance-tall-choice" hidden>

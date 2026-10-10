@@ -14,6 +14,7 @@ from . import catalogue
 from .three_d_document import render as render_spec
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
+from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
 from .three_d_room import Room
 
 class ShelfState(StrictModel):
@@ -74,6 +75,7 @@ class FurnitureItem(StrictModel):
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
+    glass_shelf_count: int|None=Field(default=None,ge=0,le=8,strict=True)
     upper_shelf_count: int|None=Field(default=None,ge=0,le=8,strict=True)
     production_note: str=Field(default='',max_length=2000)
     appliance_details: ApplianceDetails|None=None
@@ -122,6 +124,21 @@ class FurnitureItem(StrictModel):
                 raise ValueError(f'Установочная ширина углового модуля 800–{maximum} мм; каждая дверца не больше 600 мм')
             if not 450<=self.depth<=700 or not 600<=body<=1000:
                 raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
+        vitrine=vitrine_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
+        if self.bazis_id in VITRINE_BY_ID and not vitrine:
+            raise ValueError('Исходный файл витрины не совпадает с проверенной моделью')
+        if self.glass_shelf_count is not None and not vitrine:
+            raise ValueError('Стеклянные полки доступны только для проверенной витрины')
+        if vitrine:
+            if self.module_type!='tall_cabinet' or base!=100 or self.base=='wall':
+                raise ValueError('Витрина устанавливается на опоры 100 мм')
+            if not 300<=self.width<=600 or not 1800<=self.height<=2800 or not 450<=self.depth<=700:
+                raise ValueError('Проверьте размеры витрины: 300–600 × 1800–2800 × 450–700 мм')
+            if not vitrine['global_elastic_defined'] and (self.width,self.height,self.depth)!=(600,2000,600):
+                raise ValueError('Две стороны + L: исходная витрина имеет фиксированный размер 600 × 2000 × 600 мм')
+            self.bazis_resize=vitrine['global_elastic_defined']
+            self.handles='handleless'
+            self.front_variant_id=None
         tall=tall_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
         if self.upper_shelf_count is not None and not tall:
             raise ValueError('Количество верхних полок доступно только для проверенного пенала')

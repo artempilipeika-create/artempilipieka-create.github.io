@@ -96,6 +96,25 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
+    const V=globalThis.MF_VITRINE;
+    this.listen(get('vitrine-options-controls'),'click',e=>{
+      const b=e.target.closest('[data-vitrine-option]'),it=this.adapter.selected;
+      if(!b||!V.info(it))return;
+      this.interaction.change('Исполнение витрины',()=>{
+        const next=V.select(it,{[b.dataset.vitrineOption]:b.dataset.vitrineValue},this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);
+        this.adapter.replace(next);this.adapter.status('Исполнение витрины изменено');
+      });this.bridge.refresh();
+    });
+    for(const [id,delta]of [['vitrine-shelf-minus',-1],['vitrine-shelf-plus',1]])this.listen(get(id),'click',()=>{
+      const it=this.adapter.selected;if(!V.info(it))return;
+      const n=V.shelves(it).length+delta;if(n<0||n>8)return;
+      this.interaction.modify({glass_shelf_count:n},'Стеклянные полки');this.bridge.refresh();
+    });
+    this.listen(get('vitrine-shelf-reset'),'click',()=>{
+      if(!V.info(this.adapter.selected))return;
+      this.interaction.modify({glass_shelf_count:null},'Исходная стеклянная полка');this.bridge.refresh();
+    });
     this.listen(document,'mf:appliance-choice',()=>{
       this.workspace.panel('right',true);
       get('tall-options-controls').scrollIntoView({block:'start'});

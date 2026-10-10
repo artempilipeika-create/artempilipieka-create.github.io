@@ -12,9 +12,10 @@ const row=(key,label,quantity,unit,source,extra={})=>({key,label,quantity,unit,s
 function panelRows(parts){
   const groups=new Map();
   for(const p of parts){
-    const role=p.role==='front'?'front':p.role==='back'?'back':['body','shelf'].includes(p.role)?'body':p.role;
+    if(p.type!=='panel')continue;
+    const role=p.optical_material==='glass'?'glass':p.role==='front'?'front':p.role==='back'?'back':['body','shelf'].includes(p.role)?'body':p.role;
     const key=[role,p.material.variant_id||p.material.name||'unassigned',p.thickness].join(':');
-    if(!groups.has(key))groups.set(key,row('sheet:'+key,{body:'Корпус',front:'Фасады',back:'Задник',counter:'Столешница',plinth:'Цоколь'}[role]||'Другие детали',0,'m2','productionParts',
+    if(!groups.has(key))groups.set(key,row('sheet:'+key,{glass:'Стекло 4 мм',body:'Корпус',front:'Фасады',back:'Задник',counter:'Столешница',plinth:'Цоколь'}[role]||'Другие детали',0,'m2','productionParts',
       {role,material:{...p.material},thicknessMm:p.thickness,partIds:[],partCount:0}));
     const r=groups.get(key);r.quantity+=p.length*p.width/1e6;r.partIds.push(p.part_id);r.partCount++;
   }
@@ -43,7 +44,7 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
   // Only this isolated copy is resized. Actual scene/export geometry is untouched.
   const categoryParts=category.status==='STANDARD'&&actualParts?productionParts({...item,width:category.pricingWidthMm},template,materialLookup):null;
   const parts=categoryParts||actualParts||[],hardware=productionHardware(item,template?.production),legs=kitchenLegs(item),hardwareRows=[];
-  if(Number.isInteger(hardware?.hinge_count))hardwareRows.push(
+  if(Number.isInteger(hardware?.hinge_count)&&!hardware.hinges_in_items)hardwareRows.push(
     row('hinges:'+String(hardware.hinge_article||hardware.hinge_name||'missing'),hardware.hinge_name||'Петли',hardware.hinge_count,'pcs','FR3D donor',{article:hardware.hinge_article||null}));
   if(Number.isInteger(hardware?.drawer_count))hardwareRows.push(
     row('drawer-slides:'+String(hardware.drawer_system||'unknown')+':'+String(hardware.slide_length_mm||'auto'),
@@ -51,7 +52,7 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
       hardware.drawer_count,'set','FR3D donor',
       {manufacturer:hardware.drawer_system||null,lengthMm:hardware.slide_length_mm||null,selection:hardware.slide_selection||null}));
   for(const h of hardware?.items||[])hardwareRows.push(
-    row('hardware:'+h.key,h.name,Number.isFinite(h.quantity)?h.quantity:null,h.unit||'pcs','FR3D donor',{article:h.article||null}));
+    row('hardware:'+h.key,h.name,Number.isFinite(h.quantity)?h.quantity:null,h.unit||'pcs',h.source||'FR3D donor',{article:h.article||null,source_url:h.source_url||null,note:h.note||null,cuts_mm:h.cuts_mm||null,quantity_basis:h.quantity_basis||null}));
   const productionKnown=Boolean(template?.production?.hardware);
   const sections={sheetMaterials:panelRows(parts),
     edging:[row('edging','Кромка: тип и метраж',null,'m','Edge assignments not defined by production model')],
@@ -62,6 +63,11 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
       ...(item.handles!=='handleless'?[row('handles','Ручки',null,'pcs','Article and quantity rule not supplied')]:[])],
     operations:['Распил','Кромкооблицовка','Присадка','Сборка'].map((label,i)=>row('operation:'+i,label,null,'operation','Billing quantity rule not supplied')),
     extras:[]};
+  if(template?.production?.vitrine){
+    const m=globalThis.MF_VITRINE.metrics(item);
+    sections.operations.push(row('operation:led-groove-4x8','Фрезеровка паза · ширина 4 мм / глубина 8 мм',m.groove_total_m,'m','FR3D groove trajectory'));
+    sections.extras.push(row('lighting:power-control','Питание 12 В и управление подсветкой · подбор для группы',null,'set','Состав и мощность блока питания не заданы'));
+  }
   if(!actualParts)sections.operations.push(row('production','Производственная модель',null,'module','Unsupported donor'));
   for(const key of Object.keys(sections))sections[key]=priceRows(sections[key],priceList?.rates);
   const all=Object.values(sections).flat(),calculated=totals(all,priceList?.markupBasisPoints);

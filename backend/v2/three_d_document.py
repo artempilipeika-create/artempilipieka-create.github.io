@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spac
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant,tall_shelf_count
+from .three_d_vitrine import vitrine_variant,vitrine_hardware,vitrine_contents
 
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');MINT=colors.HexColor('#e8efe9');PALE=colors.HexColor('#f7f9f5')
 PAGE=landscape(A4);WIDTH=PAGE[0]-16*mm
@@ -86,6 +87,8 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
+    if vitrine_variant(it):
+        return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in vitrine_hardware(it)],None
     tall=tall_variant(it)
     if tall:
         return [_row(r['name'],tall_shelf_count(it)*4 if r['key']=='shelf-support-marcopol' else r['quantity'],r['unit'],r.get('article','')) for r in tall['hardware_items']],None
@@ -135,6 +138,7 @@ def hardware_for(it):
     return [],None
 
 def module_contents(it):
+    if vitrine_variant(it):return vitrine_contents(it)
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0)
     tall=tall_variant(it)
     if tall:
@@ -175,6 +179,8 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front):
+    if vitrine_variant(it):
+        return [('Корпус и задняя стенка 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),('Фасад и полки','Стекло 4 мм'),('Рамка','Z1, чёрный'),('Уплотнитель','Уплотнитель Z1, совместимость уточнить у поставщика')]
     bid=it.get('bazis_id');corner=corner_variant(it);tall=tall_variant(it);known=bool(corner or tall) or bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2|SINK_D1|SINK_D2|OVEN or (bid in CORNER and it.get('bazis_sha256')==CORNER_SHA)
     if known and (not body or body=='Не выбран'):body='ЛДСП- БЕЛЫЙ'
     if known and (not front or front=='Не выбран'):front='Evagloss P004'
@@ -214,7 +220,7 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
     summary=[]
     for i,it in enumerate(items,1):
         body=materials.get(str(it.get('body_variant_id')),'Не выбран')
-        front=materials.get(str(it.get('front_variant_id')),'Не выбран')
+        front='Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
         summary.append([p(i),p(it.get('name') or MODULES.get(it.get('module_type'),'Модуль')),
             p(f"{it.get('width')} x {it.get('height')} x {it.get('depth')}"),p(f"X {it.get('x',0)} · Z {it.get('z',0)} · {it.get('rotation',0)}°"),
             p(body,'small'),p(front,'small')])
@@ -233,16 +239,16 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
         if i>1: story.append(PageBreak())
         story.append(p('Комплектация по модулям','title'))
         title=f"{i}. {it.get('name') or MODULES.get(it.get('module_type'),'Модуль')} · {it.get('width')} x {it.get('height')} x {it.get('depth')} мм"
-        body=materials.get(str(it.get('body_variant_id')),'Не выбран');front=materials.get(str(it.get('front_variant_id')),'Не выбран')
+        body=materials.get(str(it.get('body_variant_id')),'Не выбран');front='Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
         hardware,note=hardware_for(it)
         rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Кол-во','Ед.','Цена BYN','Сумма BYN','Компл.']]]
         for n,r in enumerate(hardware,1):
-            qty=r.get('qty');unit={'pcs':'шт.','set':'компл.'}.get(r.get('unit'),r.get('unit',''))
+            qty=r.get('qty');unit={'pcs':'шт.','set':'компл.','m':'м'}.get(r.get('unit'),r.get('unit',''))
             rows.append([p(n),p(r['name']),p(r.get('article') or '', 'small'),p(qty if qty is not None else ''),p(unit),p(''),p(''),p('[ ]')])
             if isinstance(qty,(int,float)):
                 k=(r['name'],r.get('article') or '',unit)
                 if k not in aggregate: aggregate[k]=0
-                aggregate[k]+=qty
+                aggregate[k]=round(aggregate[k]+qty,6)
         if not hardware:
             rows.append([p(''),p('Фурнитура для этого модуля не описана подтверждённой спецификацией.'),p(''),p(''),p(''),p(''),p(''),p('')])
         hwtable=Table(rows,colWidths=[WIDTH*.035,WIDTH*.35,WIDTH*.15,WIDTH*.075,WIDTH*.07,WIDTH*.10,WIDTH*.11,WIDTH*.07],repeatRows=1)
