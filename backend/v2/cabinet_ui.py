@@ -33,9 +33,10 @@ def router():
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
-    from .material_visuals import manifest
+    from .material_visuals import manifest,user_textures,user_texture_bytes
     material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}
     planner_files.update(material_assets)
+    planner_files.update('materials/'+asset for asset in user_textures()['assets'])
     import json
     countertops=json.loads((root/'planner/countertop-variants.json').read_text())
     planner_files.update('countertop-sources/'+v['source_file'] for v in countertops)
@@ -43,6 +44,11 @@ def router():
     @api.get('/account/planner/{asset:path}')
     def planner_asset(asset:str):
         if asset not in planner_files:return Response(status_code=404)
+        if asset.startswith('materials/user-'):
+            image=user_texture_bytes(asset.removeprefix('materials/'))
+            if image is not None:
+                mime='image/png' if asset.endswith('.png') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg'
+                return Response(image,media_type=mime,headers={'Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'})
         file=root/'planner'/asset
         if not file.is_file():return Response(status_code=404)
         mime='application/octet-stream' if asset.endswith('.fr3d') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'

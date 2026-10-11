@@ -4,9 +4,10 @@ import re
 from functools import lru_cache
 from pathlib import Path
 from collections import Counter
+from zipfile import ZipFile
 
 ROOT=Path(__file__).parent/'cabinet_assets'/'planner'/'materials'
-STATUSES=('EXACT_TEXTURE','OFFICIAL_PREVIEW','COLOR_ONLY','MISSING_VISUAL')
+STATUSES=('EXACT_TEXTURE','OFFICIAL_PREVIEW','USER_TEXTURE','COLOR_ONLY','MISSING_VISUAL')
 
 def visual_manufacturer(item):
     explicit=str(item.get('manufacturer') or '').strip().upper()
@@ -19,7 +20,7 @@ def visual_status(visual):
     v=visual or {}
     def local(url):
         return isinstance(url,str) and re.fullmatch(r'/(?!/)[\w/.-]+\.(?:png|jpe?g|webp)',url,re.I) and '..' not in url
-    if local(v.get('texture_url')):return 'EXACT_TEXTURE'
+    if local(v.get('texture_url')):return 'USER_TEXTURE' if v.get('visual_status')=='USER_TEXTURE' else 'EXACT_TEXTURE'
     if local(v.get('preview_url')):return 'OFFICIAL_PREVIEW'
     if re.fullmatch(r'#[\da-fA-F]{6}',str(v.get('render_color') or '')):return 'COLOR_ONLY'
     return 'MISSING_VISUAL'
@@ -53,6 +54,32 @@ def coverage(items,release=None):
 def manifest():
     return json.loads((ROOT/'manifest.json').read_text())
 
+@lru_cache(maxsize=1)
+def user_textures():
+    return json.loads((ROOT/'user-textures.json').read_text())
+
+@lru_cache(maxsize=8)
+def user_texture_bytes(asset):
+    record=user_textures()['assets'].get(asset)
+    if not record or not re.fullmatch(r'user-[0-9a-f]{24}\.(jpg|png|webp)',asset):return None
+    archive=record.get('archive','')
+    if not re.fullmatch(r'user-textures-\d{2}\.zip',archive):return None
+    with ZipFile(ROOT/archive) as pack:
+        return pack.read(asset)
+
+def exact_user_texture(item):
+    record=user_textures()['variants'].get(str(item.get('variant_id') or ''))
+    if not record:return None
+    # A saved ID alone must not attach an image to a changed/imported identity.
+    for key in ('article','material_id','name'):
+        if str(item.get(key) or '').strip()!=str(record.get(key) or '').strip():return None
+    for key in ('thickness','length','width'):
+        try:
+            if float(item.get(key))!=float(record[key]):return None
+        except (TypeError,ValueError):return None
+    keys=('texture_url','visual_status','texture_size_mm','scale_confirmed','scale_note','rotation_deg','grain_direction','roughness','source_kind')
+    return {k:record[k] for k in keys}
+
 def visual_metadata(item):
     # Explicit per-variant metadata always wins over the small verified decor registry.
     if isinstance(item.get('visual'),dict):
@@ -63,6 +90,8 @@ def visual_metadata(item):
             'textureScale':'texture_size_mm','texture_size_mm':'texture_size_mm','grainDirection':'grain_direction','rotation':'rotation_deg'}
     visual={target:item[key] for key,target in fields.items() if item.get(key) is not None}
     if visual:return visual
+    attached=exact_user_texture(item)
+    if attached:return attached
     article=re.sub(r'\s+',' ',str(item.get('article') or '').strip().upper())
     manufacturer=visual_manufacturer(item)
     # The imported master intentionally leaves manufacturer null. An explicit EGGER
