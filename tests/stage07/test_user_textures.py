@@ -25,7 +25,7 @@ def test_changed_identity_does_not_inherit_texture(field,value):
     item=item_for('LNEDS18D.302.W04');item[field]=value
     assert visual_metadata(item) is None
 
-def test_all_original_image_bytes_match_uploads_and_only_images_are_served():
+def test_all_published_image_bytes_match_verified_assets_and_only_images_are_served():
     app=FastAPI();app.include_router(router());client=TestClient(app)
     records=user_textures()['assets']
     for asset,record in records.items():

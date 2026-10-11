@@ -805,6 +805,7 @@ async function syncControls(){
 }
 function materialVisualLabel(m){
   const v=m?.visual||{};
+  if(v.visual_status==='USER_PREVIEW')return 'Твой образец · цвет в 3D приблизительный';
   if(v.texture_url)return v.scale_confirmed===false?'Твоя текстура · масштаб ориентировочный':v.visual_status==='USER_TEXTURE'?'Твоя текстура':'Точная текстура';
   if(v.preview_url)return 'Образец производителя · масштаб ориентировочный';
   return v.render_color?'Только цвет · без текстуры':'Изображение ещё не подключено';

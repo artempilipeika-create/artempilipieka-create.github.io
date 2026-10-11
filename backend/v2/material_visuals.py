@@ -7,7 +7,7 @@ from collections import Counter
 from zipfile import ZipFile
 
 ROOT=Path(__file__).parent/'cabinet_assets'/'planner'/'materials'
-STATUSES=('EXACT_TEXTURE','OFFICIAL_PREVIEW','USER_TEXTURE','COLOR_ONLY','MISSING_VISUAL')
+STATUSES=('EXACT_TEXTURE','OFFICIAL_PREVIEW','USER_TEXTURE','USER_PREVIEW','COLOR_ONLY','MISSING_VISUAL')
 
 def visual_manufacturer(item):
     explicit=str(item.get('manufacturer') or '').strip().upper()
@@ -21,7 +21,7 @@ def visual_status(visual):
     def local(url):
         return isinstance(url,str) and re.fullmatch(r'/(?!/)[\w/.-]+\.(?:png|jpe?g|webp)',url,re.I) and '..' not in url
     if local(v.get('texture_url')):return 'USER_TEXTURE' if v.get('visual_status')=='USER_TEXTURE' else 'EXACT_TEXTURE'
-    if local(v.get('preview_url')):return 'OFFICIAL_PREVIEW'
+    if local(v.get('preview_url')):return 'USER_PREVIEW' if v.get('visual_status')=='USER_PREVIEW' else 'OFFICIAL_PREVIEW'
     if re.fullmatch(r'#[\da-fA-F]{6}',str(v.get('render_color') or '')):return 'COLOR_ONLY'
     return 'MISSING_VISUAL'
 
@@ -77,13 +77,13 @@ def exact_user_texture(item):
         try:
             if float(item.get(key))!=float(record[key]):return None
         except (TypeError,ValueError):return None
-    keys=('texture_url','visual_status','texture_size_mm','scale_confirmed','scale_note','rotation_deg','grain_direction','roughness','source_kind')
-    return {k:record[k] for k in keys}
+    keys=('texture_url','preview_url','render_color','visual_status','texture_size_mm','scale_confirmed','scale_note','rotation_deg','grain_direction','roughness','source_kind','map_to_surface','color_confirmed','color_note')
+    return {k:record[k] for k in keys if k in record}
 
 def visual_metadata(item):
     # Explicit per-variant metadata always wins over the small verified decor registry.
     if isinstance(item.get('visual'),dict):
-        keys=('texture_url','preview_url','render_color','texture_size_mm','rotation_deg','grain_direction','roughness','source_url','visual_status','scale_confirmed','scale_note','source_kind')
+        keys=('texture_url','preview_url','render_color','texture_size_mm','rotation_deg','grain_direction','roughness','source_url','visual_status','scale_confirmed','scale_note','source_kind','map_to_surface','color_confirmed','color_note')
         explicit={k:item['visual'][k] for k in keys if k in item['visual']}
         if visual_status(explicit)!='MISSING_VISUAL':return explicit
     fields={'renderTexture':'texture_url','texture_preview':'texture_url','preview':'preview_url','preview_url':'preview_url',

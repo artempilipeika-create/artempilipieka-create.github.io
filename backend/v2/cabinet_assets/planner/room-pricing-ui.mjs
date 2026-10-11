@@ -52,15 +52,17 @@ export class RoomPricingUI{
     this.syncVisualNotice();
   }
   syncVisualNotice(){
-    const a=this.app.adapter,missing=new Set(),approximate=new Set();
+    const a=this.app.adapter,missing=new Set(),approximate=new Set(),sampleColors=new Set();
     for(const item of a.items)for(const id of [item.body_variant_id,item.front_variant_id,item.back_variant_id,item.plinthMaterialId,item.countertopMaterialId,...Object.values(item.part_materials||{}),...(item.shelves||[]).map(s=>s.material_variant_id)]){
       if(!id)continue;const m=a.material(id);if(!m?.visual?.texture_url&&!m?.visual?.preview_url&&!m?.visual?.render_color)missing.add(id);
       if(m?.visual?.scale_confirmed===false)approximate.add(id);
+      if(m?.visual?.color_confirmed===false)sampleColors.add(id);
     }
     for(const root of [this.app.scene?.root,this.app.scene?.dressing])root?.traverse(m=>{if(m.material?.userData?.variantId&&m.material.userData.visualStatus==='MISSING_VISUAL')missing.add(m.material.userData.variantId);});
     const notices=[];
     if(missing.size)notices.push('Без точного изображения: '+missing.size+' · показан нейтральный материал');
     if(approximate.size)notices.push('Для '+approximate.size+' материалов масштаб рисунка ориентировочный');
+    if(sampleColors.size)notices.push('Для '+sampleColors.size+' материалов показан приблизительный цвет по образцу');
     this.visualNotice.hidden=!notices.length;this.visualNotice.textContent=notices.join('. ');
   }
 }
