@@ -59,7 +59,7 @@ def decor_code(article, maker):
     elif maker == 'BYSPAN':
         m = re.fullmatch(r'(\d{3,4})\s*(SWN|SWO|SWM|WML|PO|PE|SM|TM)', s)
     elif maker in ('ULTRADECOR', 'KRONOSPAN'):
-        m = re.fullmatch(r'(K\d{3}|\d{3,4})\s*([A-Z]{2})', s)
+        m = re.fullmatch(r'([KC]\d{3}|\d{3,4})\s*([A-Z]{2})', s)
     elif maker == 'SENOSAN':
         m = re.fullmatch(r'(\d{4,5})\s*(TOPMATT|TOPX)', s)
     elif maker == 'EVOGLOSS':
@@ -82,8 +82,8 @@ def _image_codes(path, maker):
     patterns = {
         'EGGER': r'(?<![A-Z0-9])(A?[HUFW]\d{3,4})[ _-]*(ST\d{1,2}|SM|HG|PM)(?![A-Z0-9])',
         'BYSPAN': r'(?<![A-Z0-9.])(\d{3,4})[ _-]*(SWN|SWO|SWM|WML|PO|PE|SM|TM)(?![A-Z0-9])',
-        'ULTRADECOR': r'(?<![A-Z0-9])(K\d{3}|\d{3,4})[ _-]*([A-Z]{2})(?![A-Z0-9])',
-        'KRONOSPAN': r'(?<![A-Z0-9])(K\d{3}|\d{3,4})[ _-]*([A-Z]{2})(?![A-Z0-9])',
+        'ULTRADECOR': r'(?<![A-Z0-9])([KC]\d{3}|\d{3,4})[ _-]*([A-Z]{2})(?![A-Z0-9])',
+        'KRONOSPAN': r'(?<![A-Z0-9])([KC]\d{3}|\d{3,4})[ _-]*([A-Z]{2})(?![A-Z0-9])',
         'SENOSAN': r'(?<![A-Z0-9])(\d{4,5})[ _-]*(TOPMATT|TOPX|TX)(?![A-Z0-9])',
         'EVOGLOSS': r'(?<![A-Z0-9])(P\d{3})(?![A-Z0-9])',
     }
@@ -136,3 +136,17 @@ def choose(hits):
     if len(signatures) != 1:
         return None
     return min(hits, key=lambda im: (len(im['source_relative_path']), im['source_relative_path']))
+
+def confirmed_ultradecor_candidates(row, images):
+    """User's 2026-10-12 approval, directional and limited to complete finishes.
+
+    Keep the normal matching function strict. The approved release applies this
+    only to the 216 variants listed in the previous unresolved-conflict report.
+    """
+    if (row[0] or brand(row[2])) != 'ULTRADECOR':
+        return []
+    code = decor_code(row[1], 'ULTRADECOR')
+    if not code:
+        return []
+    return [im for im in images if image_brand(im['source_relative_path']) == 'KRONOSPAN'
+            and code in image_codes(im, 'KRONOSPAN')]
