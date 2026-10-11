@@ -317,7 +317,7 @@ export class MeshFactory{
     if(production?.vitrine){
       const side=production.vitrine.opening,pivot=new THREE.Group(),hingeX=(side==='left'?-1:1)*(W/2-2),hingeZ=D/2+2;
       pivot.userData={itemId:it.item_id,role:'door-pivot',visualOnly:true,hingeSide:side};pivot.position.set(hingeX*S,0,hingeZ*S);
-      if(it.doors_open)pivot.rotation.y=(side==='left'?-1:1)*105*Math.PI/180;
+      if(it.doors_open)pivot.rotation.y=(side==='left'?-1:1)*production.doors[0].open_angle*Math.PI/180;
       group.add(pivot);
       for(const part of parts.filter(p=>p.facade_component)){
         const d=part.size,c=part.position,m=this.box(pivot,part.optical_material,d.x,d.y,d.z,c.x-hingeX,c.y,c.z-hingeZ,null,ghost,.15);

@@ -22,7 +22,7 @@
     vitrine:v,carcass:{type:'vitrine',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
     facade:{thickness:4,gap_mm:2,clearance_mm:2,material_name:'Стекло 4 мм',profile:'Z1',finish:'black'},
     back:{type:'inset',thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},shelves:[],front:{kind:'doors',count:1},
-    doors:[{side:v.opening,hinge_count:4,open_angle:105}],
+    doors:[{side:v.opening,hinge_count:4,open_angle:90}],
     hardware:{hinge_count:4,hinges_in_items:true,native_fixed_items:true,items:v.hardware_items}});
   function select(it,patch,catalogue){
     const current=info(it);if(!current)throw new Error('Исходная витрина не найдена');
