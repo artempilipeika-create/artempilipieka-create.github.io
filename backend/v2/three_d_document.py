@@ -262,7 +262,14 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
         material_table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('GRID',(0,0),(-1,-1),.3,RULE),
           ('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),
           ('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
-        block=[p(title,'module'),p('Состав: '+module_contents(it),'body'),Spacer(1,1.5*mm),p('Фурнитура','section'),hwtable]
+        countertop=''
+        if it.get('module_type')=='base_cabinet':
+            thickness=it.get('countertopThicknessMm') or it.get('worktop_thickness') or 38
+            countertop=(' Столешница над модулем отключена.' if it.get('countertopEnabled') is False else
+                f" Столешница {thickness} мм, глубина {it.get('countertopDepthMm') or 600} мм; "+
+                ('еврозапил на угловых стыках' if it.get('countertopJoint')=='euro' else 'обычное соединение')+
+                f". Высота со столешницей: {it['height']+thickness} мм.")
+        block=[p(title,'module'),p('Состав: '+module_contents(it)+countertop,'body'),Spacer(1,1.5*mm),p('Фурнитура','section'),hwtable]
         if note:block.extend([Spacer(1,1*mm),p(note,'small')])
         if side_preview:
             footer=Table([[[p('Материалы','section'),material_table],[p('Вид модуля','section'),module_image]]],colWidths=[WIDTH*.54,WIDTH*.46])

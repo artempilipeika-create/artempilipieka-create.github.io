@@ -27,6 +27,7 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
+        'countertop-variants.js','countertop-variants.json','countertops.js','countertop-ui.mjs','countertop.css',
         'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',
         'state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','placement.mjs',
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
@@ -35,12 +36,16 @@ def router():
     from .material_visuals import manifest
     material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}
     planner_files.update(material_assets)
+    import json
+    countertops=json.loads((root/'planner/countertop-variants.json').read_text())
+    planner_files.update('countertop-sources/'+v['source_file'] for v in countertops)
+    planner_files.update('countertop-sources/'+v['joint']+'-'+v['shape']+'.png' for v in countertops)
     @api.get('/account/planner/{asset:path}')
     def planner_asset(asset:str):
         if asset not in planner_files:return Response(status_code=404)
         file=root/'planner'/asset
         if not file.is_file():return Response(status_code=404)
-        mime='image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
+        mime='application/octet-stream' if asset.endswith('.fr3d') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
         return Response(file.read_bytes(),media_type=mime,headers={'Content-Security-Policy':CSP,'X-Content-Type-Options':'nosniff'})
     @api.get('/3d-view')
     @api.get('/3d-view.html')

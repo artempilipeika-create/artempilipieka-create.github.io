@@ -393,7 +393,8 @@
     return hw;
   }
   const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:50,plinthMaterialId:null,
-    countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null});
+    countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null,
+    countertopEnabled:true,countertopJoint:'standard'});
   function isKitchenModule(it){const p=PRODUCTION_MODELS[it.bazis_id];return Boolean(p?.tier==='base'&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
   function kitchenGroup(it){
     const p=PRODUCTION_MODELS[it?.bazis_id];
@@ -439,7 +440,7 @@
   // Old projects keep that envelope; a worktop has never been part of it.
   function heights(it){
     const k=kitchenSettings(it),base=k?k.legHeightMm:it.base==='wall'?0:(Number.isFinite(it.base_height)?it.base_height:it.base==='plinth'?80:60);
-    const worktop=it.module_type==='base_cabinet'&&it.depth<=750
+    const worktop=it.countertopEnabled!==false&&it.module_type==='base_cabinet'&&it.depth<=750
       ?(k?k.countertopThicknessMm:Number.isFinite(it.worktop_thickness)?it.worktop_thickness:32):0;
     return {body_height:it.height-base,base_height:base,module_height:it.height,
       worktop_thickness:worktop,overall_height_with_worktop:it.height+worktop};
@@ -454,7 +455,7 @@
       const old=heights(source),it=normalizeKitchen({...source,...patch});
       const leg=patch.legHeightMm??patch.base_height??old.base_height;
       const body=patch.body_height??(Object.hasOwn(patch,'height')?patch.height-leg:old.body_height);
-      const thickness=patch.countertopThicknessMm??patch.worktop_thickness??old.worktop_thickness;
+      const thickness=patch.countertopThicknessMm??patch.worktop_thickness??kitchenSettings(source).countertopThicknessMm;
       return {...it,legHeightMm:leg,base_height:leg,body_height:body,height:body+leg,
         countertopThicknessMm:thickness,worktop_thickness:thickness};
     }
@@ -716,6 +717,7 @@
         for(const role of ['counter','plinth']){
           const sections=[];
           for(const m of run.members){
+            if(role==='counter'&&!m.k.countertopEnabled)continue;
             const {k,it}=m,id=role==='counter'?k.countertopMaterialId:k.plinthMaterialId;
             const z=role==='counter'?k.countertopDepthMm/2:k.rearServiceGapMm+it.depth-60;
             const y=role==='counter'?m.top+k.countertopThicknessMm/2:m.level+k.legHeightMm/2;
@@ -758,12 +760,14 @@
       });
       const turned=mate&&runs.find(r=>r.members.includes(mate.item_id));if(!turned)continue;
       const ck=kitchenSettings(corner),mk=kitchenSettings(mate),sign=cornerSpec(corner).side==='right'?-1:1;
+      const joinCounter=ck.countertopEnabled&&mk.countertopEnabled;
       const end=rotateXZ(mate.x-turned.position.x,mate.z-turned.position.z,-turned.rotation).x+sign*mate.width/2;
       const inTurn=(x,z)=>{const v=rotateXZ(x,z,corner.rotation||0);return rotateXZ(corner.x+v.x-turned.position.x,corner.z+v.z-turned.position.z,-turned.rotation).x;};
       const counterEnd=inTurn(0,-corner.depth/2-ck.rearServiceGapMm+ck.countertopDepthMm);
       const plinthEnd=inTurn(0,corner.depth/2-60-9);
       turned.parts=turned.parts.filter(p=>!(p.role==='plinth'&&p.orientation.thickness_axis==='x'&&Math.abs(p.position.x+sign*p.size.x/2-end)<1));
       for(const p of turned.parts){
+        if(p.role==='counter'&&!joinCounter)continue;
         if(p.orientation.length_axis!=='x'||Math.abs(p.position.x+sign*p.size.x/2-end)>1)continue;
         const target=p.role==='counter'?sign*Math.max(sign*end,sign*counterEnd):plinthEnd,other=p.position.x-sign*p.size.x/2;
         p.size.x=sign*(target-other);p.length=p.size.x;p.position.x=(other+target)/2;
@@ -771,7 +775,7 @@
       // A deeper main worktop can cover an entire short return cabinet. Clip
       // rectangles, including different worktop depths, instead of creating a
       // negative-length board or leaving two slabs on top of each other.
-      for(const cover of main.parts.filter(p=>p.role==='counter')){
+      for(const cover of main.parts.filter(p=>p.role==='counter'&&joinCounter)){
         const world=rotateXZ(cover.position.x,cover.position.z,main.rotation);
         const center=rotateXZ(main.position.x+world.x-turned.position.x,main.position.z+world.z-turned.position.z,-turned.rotation);
         const cut={x0:center.x-cover.size.z/2,x1:center.x+cover.size.z/2,z0:center.z-cover.size.x/2,z1:center.z+cover.size.x/2};
@@ -793,7 +797,7 @@
       for(const p of main.parts)if(p.role==='plinth'&&p.orientation.length_axis==='x'&&p.module_ids.includes(corner.item_id)&&sign*(p.position.x-sign*p.size.x/2-joint)<0){
         const other=p.position.x+sign*p.size.x/2;p.position.x=(joint+other)/2;p.size.x=sign*(other-joint);p.length=p.size.x;
       }
-      main.corner_joints=(main.corner_joints||[]).concat({corner_id:corner.item_id,return_id:mate.item_id,wall_gap_mm:50,filler_depth_mm:50});
+      main.corner_joints=(main.corner_joints||[]).concat({corner_id:corner.item_id,return_id:mate.item_id,wall_gap_mm:50,filler_depth_mm:50,countertop_enabled:joinCounter,side:cornerSpec(corner).side||'left',joint:ck.countertopJoint});
     }
     for(const run of runs)run.parts=run.parts.flatMap(p=>{
       if(p.role!=='counter'||p.length<=4100)return [p];
@@ -801,6 +805,7 @@
       for(let x=0;x<p.length;x+=4100){const length=Math.min(4100,p.length-x);out.push({...p,part_id:p.part_id+':stock-'+out.length,length,size:{...p.size,x:length},position:{...p.position,x:start+x+length/2}});}
       return out;
     });
+    root.MF_COUNTERTOPS?.decorate(runs,items,{rotateXZ,cornerSpec,kitchenSettings});
     return runs;
   }
   function kitchenLegs(it){
@@ -829,7 +834,7 @@
     const b=bounds(it,room);
     if(b.minX<-room.width/2-.5||b.maxX>room.width/2+.5||b.minZ<-room.depth/2-.5||b.maxZ>room.depth/2+.5)return 'Модуль выходит за границы помещения';
     const k=kitchenSettings(it);
-    if(k)for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2-k.rearServiceGapMm,-it.depth/2-k.rearServiceGapMm+k.countertopDepthMm]){
+    if(k?.countertopEnabled)for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2-k.rearServiceGapMm,-it.depth/2-k.rearServiceGapMm+k.countertopDepthMm]){
       const p=rotateXZ(x,z,it.rotation||0);
       if(Math.abs(p.x+it.x)>room.width/2+.5||Math.abs(p.z+it.z)>room.depth/2+.5)return 'Столешница выходит за границы помещения';
     }

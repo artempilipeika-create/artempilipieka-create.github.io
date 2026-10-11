@@ -64,6 +64,8 @@ class FurnitureItem(StrictModel):
     countertopStockLengthMm: Literal[4100]|None=None
     countertopThicknessMm: int|None=Field(default=None,ge=12,le=100)
     countertopMaterialId: UUID|None=None
+    countertopEnabled: bool=True
+    countertopJoint: Literal['standard','euro']='standard'
     depth: int=Field(ge=200,le=1200)
     layout: Literal['drawers','doors','combo','niche']='doors'
     drawers: int=Field(default=2,ge=0,le=8)
@@ -172,6 +174,9 @@ class MaterialIdentity(StrictModel):
     article: str|None=Field(default=None,max_length=500)
     manufacturer: str|None=Field(default=None,max_length=200)
 
+class CountertopSettings(StrictModel):
+    joint: Literal['standard','euro']='standard'
+
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
@@ -192,6 +197,7 @@ class Scene(StrictModel):
     items: list[FurnitureItem]=Field(default_factory=list,max_length=100)
     selected_item_id: str|None=Field(default=None,max_length=80)
     production_note: str=Field(default='',max_length=2500)
+    countertopSettings: CountertopSettings=Field(default_factory=CountertopSettings)
 
 class Create(StrictModel):
     name: str=Field(min_length=1,max_length=200)

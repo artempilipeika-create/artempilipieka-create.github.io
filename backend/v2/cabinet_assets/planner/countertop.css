@@ -1,0 +1,7 @@
+.countertop-card{margin:12px 0;padding:14px!important;border:1px solid #c9d6c6;border-radius:14px;background:#f7f9f3}
+.countertop-card h3{margin:0 0 8px;font-size:16px}.countertop-card p{font-size:12px;line-height:1.5}
+.countertop-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}.countertop-choices button{display:grid;place-items:center;padding:7px;border:1px solid #c7d2c3;border-radius:10px;color:#244331;background:#fff;font-size:12px}
+.countertop-choices button[aria-pressed=true]{background:#e0ecd9;border:2px solid #3c6449;padding:6px}.countertop-choices svg{width:100%;max-height:70px}
+.countertop-outline{display:flex;align-items:center;gap:8px;font-size:11px;margin:8px 0}.countertop-outline svg{width:78px;flex-shrink:0}
+.countertop-card details{font-size:11px;margin-top:10px}.countertop-card details a{display:block;padding:5px 0;color:#315942}
+#countertop-module-control label{display:flex;align-items:center;gap:9px;font-size:13px}#countertop-enabled{width:18px;height:18px;accent-color:#335d41}

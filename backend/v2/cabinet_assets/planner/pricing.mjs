@@ -80,8 +80,12 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
 }
 export function kitchenPriceBreakdown(items,room,templateLookup,materialLookup=()=>null,priceList=null){
   const modules=items.map(it=>modulePriceBreakdown(it,templateLookup(it),materialLookup,priceList));
-  const parts=kitchenRuns(items,room,materialLookup).flatMap(run=>run.parts);
-  const extras=priceRows(panelRows(parts).map(r=>({...r,source:'kitchenRuns',key:'shared:'+r.key})),priceList?.rates);
+  const runs=kitchenRuns(items,room,materialLookup),parts=runs.flatMap(run=>run.parts),operations=new Map();
+  for(const op of runs.flatMap(r=>r.countertop_operations||[])){
+    if(!operations.has(op.key))operations.set(op.key,row(op.key,op.label,0,op.unit,'countertop joints'));
+    operations.get(op.key).quantity+=op.quantity;
+  }
+  const extras=priceRows([...panelRows(parts).map(r=>({...r,source:'kitchenRuns',key:'shared:'+r.key})),...operations.values()],priceList?.rates);
   const summary=totals([...modules.map(m=>({status:m.totals.status,amountMinor:m.totals.costMinor})),...extras],priceList?.markupBasisPoints);
   return {schema:'KitchenPriceBreakdown/1',modules,extras,totals:summary,status:summary.status,
     notice:summary.saleMinor===null?'Расчёт цены требует прайс-листа':''};

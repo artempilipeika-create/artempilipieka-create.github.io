@@ -46,7 +46,7 @@ export class RoomPricingUI{
     const k=kitchenPriceBreakdown(a.items,a.room,it=>a.template(it),id=>a.material(id));
     this.kitchen.dataset.priceStatus=k.status;this.kitchen.replaceChildren(el('h3','Стоимость кухни'),el('p',k.notice));
     for(const m of k.modules)this.kitchen.append(el('p',m.label+' · '+(m.pricingWidthMm===null?'нестандарт':m.pricingWidthMm+' мм')+' · цена не настроена'));
-    if(k.extras.length){this.kitchen.append(el('strong','Общие элементы кухни'));for(const r of k.extras)this.kitchen.append(el('p',r.label+': '+r.quantity.toLocaleString('ru-RU',{maximumFractionDigits:3})+' м² · цена не настроена'));}
+    if(k.extras.length){this.kitchen.append(el('strong','Общие элементы кухни'));for(const r of k.extras)this.kitchen.append(el('p',r.label+': '+r.quantity.toLocaleString('ru-RU',{maximumFractionDigits:3})+' '+({m2:'м²',joint:'стык.',m:'м',pcs:'шт.'}[r.unit]||r.unit)+' · цена не настроена'));}
     this.kitchen.append(el('p','Себестоимость, наценка и цена продажи: не рассчитаны'));
     this.kitchen.append(el('p','Материалы и фасады — в составе модулей. Столешница, цоколь и дополнительные элементы — отдельные позиции.'));
     this.syncVisualNotice();

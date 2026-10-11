@@ -196,6 +196,7 @@ function normalizeScene(s={}){
     displaySettings:s.displaySettings||{},
     materialIdentities:s.materialIdentities||{},
     production_note:s.production_note||'',
+    countertopSettings:s.countertopSettings||{joint:'standard'},
     items,
     selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
       ?s.selected_item_id:(items[0]?.item_id||null),
@@ -217,6 +218,7 @@ function scenePayload(){
     displaySettings:state.displaySettings||{},
     materialIdentities,
     production_note:state.production_note||'',
+    countertopSettings:state.countertopSettings||{joint:'standard'},
     items:state.items.map(x=>({...x})),selected_item_id:selectedId
   };
 }
@@ -731,7 +733,7 @@ async function syncControls(){
   if(kitchen){
     for(const [id,key]of [['leg-height','legHeightMm'],['rear-service-gap','rearServiceGapMm'],['countertop-depth','countertopDepthMm'],['countertop-thickness','countertopThicknessMm']])if($(id))$(id).value=String(kitchen[key]);
     const run=globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room).find(r=>r.members.includes(it.item_id));
-    if($('kitchen-summary'))$('kitchen-summary').textContent='Столешница ряда: '+(run?.countertopActualLengthMm||it.width)+' × '+kitchen.countertopDepthMm+' × '+kitchen.countertopThicknessMm+' мм · заготовка 4100 мм. Сзади '+kitchen.rearServiceGapMm+' мм · спереди '+kitchen.frontOverhangMm+' мм.'+(kitchen.frontOverhangMm<20?' Увеличьте глубину столешницы для переднего свеса.':'')+(run?.countertopActualLengthMm>4100?' Ряд длиннее заготовки: потребуется стык.':'');
+    if($('kitchen-summary'))$('kitchen-summary').textContent=!kitchen.countertopEnabled?'Столешница над этим модулем отключена.':'Столешница ряда: '+(run?.countertopActualLengthMm||it.width)+' × '+kitchen.countertopDepthMm+' × '+kitchen.countertopThicknessMm+' мм · заготовка 4100 мм. Сзади '+kitchen.rearServiceGapMm+' мм · спереди '+kitchen.frontOverhangMm+' мм.'+(kitchen.frontOverhangMm<20?' Увеличьте глубину столешницы для переднего свеса.':'')+(run?.countertopActualLengthMm>4100?' Ряд длиннее заготовки: потребуется стык.':'');
   }
   if($('body-height'))$('body-height').disabled=Boolean(it.bazis_id&&!t?.production);
   if($('worktop-control'))$('worktop-control').hidden=Boolean(kitchen)||it.module_type!=='base_cabinet'||it.depth>750;
@@ -1199,6 +1201,13 @@ function exportBazisProject(){
       };
     })
   };
+  const counter=globalThis.MF_COUNTERTOPS;
+  const countertops=counter?.nativeItems(payload.kitchen_production.runs)||[];
+  for(const item of countertops){item.index=payload.items.length+1;payload.items.push(item);}
+  const pendingCountertops=counter?.assemblies(payload.kitchen_production.runs).filter(a=>!a.native_supported)||[];
+  payload.kitchen_production.native_countertops_included=countertops.length;
+  payload.kitchen_production.countertops_requiring_adjustment=pendingCountertops;
+  if(pendingCountertops.length)payload.project_note+="\nСТОЛЕШНИЦЫ ДЛЯ ДОРАБОТКИ В БАЗИС (исходный блок не импортирован автоматически):\n"+pendingCountertops.map(a=>a.label+' · '+a.target.width+' × '+a.target.depth+' × '+a.target.height+' мм. '+a.native_notes.join(' ')).join('\n');
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1207,7 +1216,7 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей.'+(adjusted.length?' Полки в '+adjusted.length+' пенал. нужно скорректировать в БАЗИС по данным файла.':''));
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, столешниц: '+countertops.length+'.'+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Полки в '+adjusted.length+' пенал. нужно скорректировать в БАЗИС по данным файла.':''));
 }
 
 async function toOrder(){

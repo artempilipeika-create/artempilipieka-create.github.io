@@ -340,11 +340,32 @@ export class MeshFactory{
   }
   position(group,it){group.position.set(it.x*S,elevation(it,this.adapter.room)*S,it.z*S);group.rotation.y=-(it.rotation||0)*Math.PI/180;}
   /** Pilot runs derive from production data; the old visual dressing stays for legacy projects. */
+  countertop(group,part){
+    const key='countertop-contour:'+JSON.stringify([part.contour,part.thickness]);
+    const geometry=this.acquire(key,()=>{
+      const shape=new THREE.Shape(part.contour.map(([x,z])=>new THREE.Vector2(x*S,-z*S)));
+      const g=new THREE.ExtrudeGeometry(shape,{depth:part.thickness*S,bevelEnabled:false,steps:1});g.rotateX(-Math.PI/2);
+      const n=g.attributes.normal,colors=new Float32Array(n.count*3);
+      for(let i=0;i<n.count;i++)colors.fill(.76+.24*Math.max(0,n.getY(i)),i*3,i*3+3);
+      g.setAttribute('color',new THREE.BufferAttribute(colors,3));g.computeBoundingBox();return g;
+    });
+    return this.mesh(group,'counter',geometry,key,0,part.position.y-part.thickness/2,0,part.material.variant_id);
+  }
+  countertopOutline(group,part){
+    const p=part.position,d=part.size;
+    const points=part.contour||[[p.x-d.x/2,p.z-d.z/2],[p.x+d.x/2,p.z-d.z/2],[p.x+d.x/2,p.z+d.z/2],[p.x-d.x/2,p.z+d.z/2]];
+    const y=p.y+d.y/2+.3,key='countertop-outline:'+JSON.stringify([points,y]);
+    const geometry=this.acquire(key,()=>new THREE.BufferGeometry().setFromPoints(points.map(([x,z])=>new THREE.Vector3(x*S,y*S,z*S))));
+    const materialKey='countertop-outline';
+    if(!this.materials.has(materialKey))this.materials.set(materialKey,new THREE.LineBasicMaterial({color:'#3b4940',transparent:true,opacity:.32,depthWrite:false}));
+    const line=new THREE.LineLoop(geometry,this.materials.get(materialKey));line.userData={geometryKey:key,visualOnly:true,role:'countertop-outline'};
+    line.raycast=()=>{};group.add(line);
+  }
   dress(items){
     const root=new THREE.Group();root.userData={visualOnly:true,mergedPlinthIds:[]};const groups=new Map();
     for(const plan of kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id))){
       const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
-      for(const part of plan.parts){const d=part.size,p=part.position,m=this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;}
+      for(const part of plan.parts){const d=part.size,p=part.position,m=part.contour?this.countertop(g,part):this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;if(part.role==='counter')this.countertopOutline(g,part);}
       g.position.set(plan.position.x*S,0,plan.position.z*S);g.rotation.y=-plan.rotation*Math.PI/180;root.add(g);
       root.userData.mergedPlinthIds.push(...plan.members);
     }

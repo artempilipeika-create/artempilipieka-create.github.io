@@ -37,6 +37,7 @@ export class StateAdapter{
       const base=it.base==='wall'?0:type==='base_cabinet'?100:it.base==='plinth'?80:60;
       Object.assign(it,{body_height:it.height-base,base_height:base,worktop_thickness:type==='base_cabinet'&&it.depth<=750?38:0});
     }
+    if(type==='base_cabinet')it.countertopJoint=this.state?.countertopSettings?.joint||'standard';
     return normalizeKitchen(it);
   }
   persistent(it){const value=clone(it);if(!this.bridge.supportsElevation)delete value.elevation_mm;return value;}
