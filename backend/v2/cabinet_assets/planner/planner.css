@@ -136,3 +136,14 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 .mf3d-shelf-stepper{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:10px;margin-top:12px}
 .mf3d-shelf-stepper button{min-height:44px;font-size:24px;padding:4px}
 .mf3d-shelf-stepper output{text-align:center;font-size:24px;font-weight:600}
+.mf3d-results .material-result{display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:center;text-align:left;width:100%;white-space:normal}
+.material-result strong,.material-result small{display:block;overflow-wrap:anywhere}
+.material-result small{font-size:11px;line-height:1.4;opacity:.8;margin-top:4px}
+.material-swatch{width:48px;height:48px;display:grid;place-items:center;background:#ecefe9;border:1px solid #d4dcd0;border-radius:5px;overflow:hidden;color:#727c6b}
+.material-swatch img{width:100%;height:100%;object-fit:cover}
+#module-replacement{max-width:100%;overflow:hidden}
+#module-replacement select{max-width:100%;width:100%}
+#module-replacement p{font-size:12px;line-height:1.5;color:#64705f}
+#module-replacement label{display:block;margin:10px 0}
+#module-replacement .mf3d-mobility-check,.mf3d-mobility-check{display:flex;align-items:flex-start;gap:8px;margin:10px 0;line-height:1.5}
+#module-replacement .mf3d-mobility-check input,.mf3d-mobility-check input{flex:0 0 18px;width:18px;height:18px;min-height:0;margin:2px 0 0;padding:0;accent-color:#365c43}

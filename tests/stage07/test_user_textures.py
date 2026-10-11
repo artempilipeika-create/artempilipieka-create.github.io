@@ -41,3 +41,10 @@ def test_all_original_image_bytes_match_uploads_and_only_images_are_served():
 
 def test_ambiguous_sources_are_not_assigned():
     assert not any(r['article']=='LNEDS18D.515.W04' for r in user_textures()['variants'].values())
+
+def test_empty_visual_or_scale_only_fields_do_not_hide_verified_texture():
+    item=item_for('LNEDS18D.302.W04')
+    for extra in ({'visual':{}},{'visual':{'texture_size_mm':[1000,1000]}},{'texture_size_mm':[1000,1000]}):
+        assert visual_metadata({**item,**extra})['visual_status']=='USER_TEXTURE'
+    visual=visual_metadata(item)
+    assert visual_metadata({'visual':visual})['scale_confirmed'] is False

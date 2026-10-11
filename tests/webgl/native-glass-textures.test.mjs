@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
 import vm from 'node:vm';
 import {VITRINE_VARIANTS} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {materialVisual} from '../../backend/v2/cabinet_assets/planner/material-visuals.mjs';
-const source=fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_5_ONE_CLICK_NOTES_GLASS_TEXTURES.js',import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_6_ONE_CLICK_NOTES_GLASS_TEXTURES.js',import.meta.url),'utf8');
 const bindings=JSON.parse(source.match(/const NATIVE_TEXTURE_BINDINGS = (.*);\n/)[1]);
 const uid=Object.keys(bindings).find(k=>bindings[k].article==='LNEDS18D.302.W04');
 const descriptor={...bindings[uid],variant_id:uid};

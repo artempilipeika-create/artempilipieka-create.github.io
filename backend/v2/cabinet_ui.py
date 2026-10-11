@@ -29,7 +29,7 @@ def router():
     planner_files={
         'countertop-variants.js','countertop-variants.json','countertops.js','countertop-ui.mjs','countertop.css',
         'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',
-        'state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','placement.mjs',
+        'state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','placement.mjs','mobility.mjs','mobility-ui.mjs',
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }

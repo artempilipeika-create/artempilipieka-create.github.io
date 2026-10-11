@@ -44,7 +44,7 @@ export class StateAdapter{
   insert(it){if(this.items.length>=100)throw new Error('В одном проекте поддерживается до 100 модулей');this.items.push(this.persistent(it));this.bridge.select(it.item_id);}
   replace(it){const idx=this.items.findIndex(x=>x.item_id===it.item_id);if(idx<0)return;this.items[idx]=this.persistent(it);this.notify();}
   remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
-  validate(it){
+  validate(it,items=this.items){
     if(!['width','height','depth'].every(k=>Number.isInteger(it[k]))||!['x','z'].every(k=>Number.isInteger(it[k]*2)))return 'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
     const ruleError=dimensionError(it,this.template(it));if(ruleError)return ruleError;
     const h=heights(it);
@@ -74,7 +74,7 @@ export class StateAdapter{
     }
     if(![0,90,180,270].includes(it.rotation))return 'Допустим поворот с шагом 90°';
     if(t?.resize===false&&(it.width!==t.defaults.w||it.height!==t.defaults.h||it.depth!==t.defaults.d))return 'Этот модуль БАЗИС имеет фиксированный габарит';
-    return placementError(it,this.items,this.room);
+    return placementError(it,items,this.room);
   }
   setElevation(){throw new Error('Отдельная высота навески недоступна в совместимом формате v2');}
 }

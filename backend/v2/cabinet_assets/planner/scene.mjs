@@ -125,6 +125,7 @@ export class PlannerScene{
     this.kitchenBoxes.clear();this.placeLabel();
   }
   resetProject(){
+    this.clearGroupPreview();
     this.clearSelection();
     this.factory.release(this.preview);this.preview=null;this.previewSignature=null;
     this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);
@@ -348,7 +349,20 @@ export class PlannerScene{
     }
     this.invalidate();
   }
-  clearPreview(){this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
+  clearGroupPreview(){for(const entry of this.groupPreviews?.values()||[])this.factory.release(entry.group);this.groupPreviews=new Map();if(this.dressing)this.dressing.visible=true;}
+  showGroupPreview(items,error,guides=[]){
+    this.showPreview(items[0],error,guides);this.groupPreviews??=new Map();
+    const ids=new Set(items.slice(1).map(it=>it.item_id));
+    for(const [id,entry]of this.groupPreviews)if(!ids.has(id)){this.factory.release(entry.group);this.groupPreviews.delete(id);}
+    for(const it of items.slice(1)){
+      let entry=this.groupPreviews.get(it.item_id),signature=this.factory.signature(it);
+      if(!entry||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it,true),signature};this.groupPreviews.set(it.item_id,entry);this.scene.add(entry.group);}
+      this.factory.position(entry.group,it);entry.group.traverse(m=>{if(m.isMesh)m.material.color.set(error?'#d1976d':'#b9cfb4');});
+      const original=this.entries.get(it.item_id);if(original)original.group.visible=false;
+    }
+    if(this.dressing)this.dressing.visible=false;this.renderer.shadowMap.needsUpdate=true;this.invalidate();
+  }
+  clearPreview(){this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
   dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

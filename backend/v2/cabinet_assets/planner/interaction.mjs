@@ -1,6 +1,7 @@
 import {clone,MM_TO_WORLD,elevation,placementError,rightAnchoredWidth,dimensionPatch,kitchenSettings,rotateXZ} from './furniture-core.mjs';
 import {snapItem,findSpace} from './placement.mjs';
 import {roomReady} from './room-plan.mjs';
+import {movementTargets,translateItems,widthChange,validateChanges,applyChanges,replacement} from './mobility.mjs';
 
 /** One furniture gesture, one history entry; previews never mutate project data. */
 export class Interaction {
@@ -42,6 +43,11 @@ export class Interaction {
   cardOptions(card){return {template:card.dataset.template||null,bazis:card.dataset.bazis||null,module:card.dataset.module||null};}
   consume(e){e.preventDefault();e.stopImmediatePropagation();}
   editable(){return !this.suspended&&roomReady(this.adapter.room)&&!document.body.classList.contains('planner-client');}
+  targets(it=this.adapter.selected){return movementTargets(it,this.adapter.items,this.scene.selectionScope||'module');}
+  preview(result){
+    if(result.items?.length>1)this.scene.showGroupPreview(result.items,result.error,result.guides);
+    else this.scene.showPreview(result.item,result.error,result.guides||[]);
+  }
   feedback(result){
     const el=document.getElementById('planner-feedback');if(!el)return;
     el.hidden=!result;el.dataset.error=String(Boolean(result?.error));
@@ -61,9 +67,10 @@ export class Interaction {
     this.consume(e);this.adapter.select(it.item_id);
     const plane=this.scene.makePlane(it,hit.point),start=this.scene.planePoint(e.clientX,e.clientY,plane);
     if(!start)return;
-    this.history.begin('Перемещение модуля');
-    this.gesture={pointerId:e.pointerId,item:clone(it),plane,start,x:e.clientX,y:e.clientY,moved:false,anchors:{},result:null,
-      lastValid:{item:clone(it),anchors:{},error:'',guides:[]}};
+    const targets=this.targets(it).map(clone);
+    this.history.begin(targets.length>1?'Перемещение группы':'Перемещение модуля');
+    this.gesture={pointerId:e.pointerId,item:clone(it),items:targets,plane,start,x:e.clientX,y:e.clientY,moved:false,anchors:{},result:null,
+      lastValid:{item:clone(it),items:targets,anchors:{},error:'',guides:[]}};
     this.scene.controls.enabled=false;this.scene.hover(null);
     this.canvas.setPointerCapture(e.pointerId);this.canvas.style.cursor='grabbing';
   }
@@ -77,18 +84,20 @@ export class Interaction {
     g.moved=true;
     // First release keeps the existing v2 elevation rule. No unsavable Y field.
     const raw={...g.item,x:g.item.x+(point.x-g.start.x)/MM_TO_WORLD,z:g.item.z+(point.z-g.start.z)/MM_TO_WORLD};
-    const opts={...this.options(),threshold:this.scene.pixelThreshold(raw),allowElevation:false};
-    const candidate=snapItem(raw,this.adapter.items,this.adapter.room,opts,g.anchors);g.anchors=candidate.anchors;
-    candidate.error=candidate.error||this.adapter.validate(candidate.item);
-    if(candidate.error?.startsWith('Пересечение:')){
-      const blocked=candidate.error.replace('Пересечение:','').trim();
+    const grouped=g.items.length>1,ids=new Set(g.items.map(it=>it.item_id));
+    const opts={...this.options(),threshold:this.scene.pixelThreshold(raw),allowElevation:false,...(grouped?{autoRotate:false}:{})};
+    const candidate=snapItem(raw,grouped?this.adapter.items.filter(it=>!ids.has(it.item_id)):this.adapter.items,this.adapter.room,opts,g.anchors);g.anchors=candidate.anchors;
+    candidate.items=grouped?translateItems(g.items,candidate.item.x-g.item.x,candidate.item.z-g.item.z):[candidate.item];
+    try{validateChanges(this.adapter,candidate.items);}catch(error){candidate.error=candidate.error||error.message;}
+    if(candidate.error?.includes('Пересечение:')){
+      const blocked=candidate.error.split('Пересечение:').pop().trim();
       g.result=g.lastValid;
-      this.scene.showPreview(g.lastValid.item,'',g.lastValid.guides||[]);
+      this.preview(g.lastValid);
       this.feedback({error:'Упор: '+blocked+' · пересечение запрещено',guides:[]});
     }else{
       g.result=candidate;
-      if(!candidate.error)g.lastValid={item:clone(candidate.item),anchors:{...candidate.anchors},error:'',guides:[...(candidate.guides||[])]};
-      this.scene.showPreview(candidate.item,candidate.error,candidate.guides);this.feedback(candidate);
+      if(!candidate.error)g.lastValid={item:clone(candidate.item),items:clone(candidate.items),anchors:{...candidate.anchors},error:'',guides:[...(candidate.guides||[])]};
+      this.preview(candidate);this.feedback(candidate);
     }
   }
   up(e){
@@ -96,9 +105,10 @@ export class Interaction {
     const g=this.gesture;if(!g||e.pointerId!==g.pointerId)return;
     this.consume(e);this.gesture=null;
     try{
-      if(g.moved&&g.result&&!g.result.error){this.adapter.replace(g.result.item);this.history.commit();this.adapter.status('Модуль установлен.');}
+      if(g.moved&&g.result&&!g.result.error){applyChanges(this.adapter,g.result.items||[g.result.item]);this.history.commit();this.adapter.status(g.items.length>1?'Группа установлена.':'Модуль установлен.');}
       else {this.history.cancel();if(g.result?.error)this.adapter.status(g.result.error+' — положение не изменено.');}
-    }finally{this.finishPointer(e.pointerId);}
+    }catch(error){this.history.cancel();this.adapter.status(error.message);}
+    finally{this.finishPointer(e.pointerId);}
   }
   cancelPointer(e){this.touches.delete(e.pointerId);if(!this.touches.size)this.touchBlocked=false;if(this.gesture){this.consume(e);this.cancel();}}
   finishPointer(id){
@@ -125,6 +135,9 @@ export class Interaction {
   modify(patch,label='Изменение модуля'){
     const source=this.adapter.selected;if(!source)return false;
     return this.change(label,()=>{
+      if(Object.keys(patch).every(k=>['x','z'].includes(k))&&this.targets().length>1){
+        applyChanges(this.adapter,translateItems(this.targets(),(patch.x??source.x)-source.x,(patch.z??source.z)-source.z));return;
+      }
       let it=dimensionPatch(source,patch);
       if(Number.isFinite(patch.width)&&patch.width!==source.width)it=rightAnchoredWidth(source,it);
       const kitchen=kitchenSettings(source),nextKitchen=kitchenSettings(it);
@@ -139,7 +152,16 @@ export class Interaction {
         if(source.rotation===270&&Math.abs(source.x-source.depth/2+r.width/2-clearance)<1)it.x+=delta;
         it.x=Math.round(it.x*2)/2;it.z=Math.round(it.z*2)/2;
       }
-      const error=this.adapter.validate(it);if(error)throw new Error(error);this.adapter.replace(it);
+      applyChanges(this.adapter,widthChange(source,it,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
+    });
+  }
+  replaceModule(opt,keepDimensions=true){
+    const source=this.adapter.selected;if(!source)return false;
+    return this.change('Замена модуля',()=>{
+      const draft=this.adapter.createDraft(opt);
+      const next=replacement(source,draft,this.adapter.template(source),this.adapter.template(draft),keepDimensions);
+      applyChanges(this.adapter,widthChange(source,next,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
+      this.adapter.status('Модуль заменён. Материалы, положение и заметка сохранены.');
     });
   }
   remove(){const id=this.adapter.selected?.item_id;if(id)this.change('Удаление модуля',()=>this.adapter.remove(id));}
@@ -153,7 +175,7 @@ export class Interaction {
     });
   }
   rotate(){const it=this.adapter.selected;if(it)this.modify({rotation:(it.rotation+90)%360},'Поворот модуля');}
-  nudge(dx,dz){const it=this.adapter.selected;if(it)this.modify({x:it.x+dx,z:it.z+dz},'Точное перемещение');}
+  nudge(dx,dz){const targets=this.targets();if(targets.length)this.change(targets.length>1?'Перемещение группы':'Точное перемещение',()=>applyChanges(this.adapter,translateItems(targets,dx,dz)));}
   key(e){
     if(e.key==='Escape'&&(this.gesture||this.catalogueDraft)){this.consume(e);this.cancel();return;}
     if(!this.editable()||document.querySelector('dialog[open]')||e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;

@@ -26,7 +26,7 @@ export class FallbackPlan {
     for(let x=500;x<r.width;x+=500){c.beginPath();c.moveTo(left+x*m.scale,top);c.lineTo(left+x*m.scale,top+r.depth*m.scale);c.stroke();}
     for(let z=500;z<r.depth;z+=500){c.beginPath();c.moveTo(left,top+z*m.scale);c.lineTo(left+r.width*m.scale,top+z*m.scale);c.stroke();}
     for(const it of this.adapter.items){
-      if(this.layer!=='all'&&tier(it)!==this.layer)continue;if(this.preview?.item.item_id===it.item_id)continue;
+      if(this.layer!=='all'&&tier(it)!==this.layer)continue;if(this.preview?.items?.some(p=>p.item_id===it.item_id)||this.preview?.item.item_id===it.item_id)continue;
       const b=this.rectangle(it),on=it.item_id===this.adapter.selected?.item_id;
       c.fillStyle=tier(it)==='wall'?'#e4ece2':'#dce0d1';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=on?'#39704c':'#8d9d86';c.lineWidth=on?2:1;
       if(tier(it)==='wall')c.setLineDash([5,3]);c.strokeRect(b.x,b.y,b.w,b.h);c.setLineDash([]);
@@ -36,7 +36,7 @@ export class FallbackPlan {
       const b=featureBox(f,r,70),x=m.ox+(b.x-b.w/2-m.cx)*m.scale,y=m.oy+(b.z-b.d/2-m.cz)*m.scale;
       c.fillStyle=FEATURES[f.kind][1];c.fillRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));c.font='bold 12px Arial';c.fillStyle='#243e30';c.textAlign='center';c.fillText(String(i+1),x+b.w*m.scale/2,y+b.d*m.scale/2-5);
     }
-    if(this.preview){const b=this.rectangle(this.preview.item);c.fillStyle=this.preview.error?'#dab09188':'#8db18388';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=this.preview.error?'#a86b44':'#4b7b4a';c.strokeRect(b.x,b.y,b.w,b.h);}
+    if(this.preview)for(const it of this.preview.items||[this.preview.item]){const b=this.rectangle(it);c.fillStyle=this.preview.error?'#dab09188':'#8db18388';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=this.preview.error?'#a86b44':'#4b7b4a';c.strokeRect(b.x,b.y,b.w,b.h);}
   }
   sync(){this.invalidate();}
   setLayer(value){this.layer=value;this.invalidate();}
@@ -53,6 +53,7 @@ export class FallbackPlan {
   makePlane(it,hit){return {y:hit?.y??elevation(it,this.adapter.room)*S};}
   pixelThreshold(){return Math.max(12,Math.min(85,14/this.metrics().scale));}
   showPreview(item,error,guides){this.preview={item,error,guides};this.invalidate();}
+  showGroupPreview(items,error,guides){this.preview={item:items[0],items,error,guides};this.invalidate();}
   clearPreview(){this.preview=null;this.invalidate();}
   projectPoint(point){const r=this.canvas.getBoundingClientRect(),m=this.metrics();return{x:r.left+m.ox+(point.x-m.cx)*m.scale,y:r.top+m.oy+(point.z-m.cz)*m.scale};}
   dispose(){this.dead=true;cancelAnimationFrame(this.frame);this.observer.disconnect();}

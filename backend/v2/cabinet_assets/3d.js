@@ -795,7 +795,7 @@ async function syncControls(){
   const plinthMaterial=await material(it.plinthMaterialId),countertopMaterial=await material(it.countertopMaterialId);
   if(selected()?.item_id!==it.item_id)return;
   for(const [kind,m]of [['plinth',plinthMaterial],['countertop',countertopMaterial]])if($(kind+'-selected'))$(kind+'-selected').textContent=label(m);
-  for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial],['plinth',plinthMaterial],['countertop',countertopMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=!m?'':m.visual?.texture_url?'Точная текстура · '+(m.article||''):m.visual?.preview_url?'Официальный preview, масштаб ориентировочный · '+(m.article||''):m.visual?.render_color?'Подтверждённый цвет; текстура отсутствует':'Нет точного изображения · '+(m.article||m.name||'')+' · нейтральный вид';}
+  for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial],['plinth',plinthMaterial],['countertop',countertopMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=m?materialVisualLabel(m)+' · '+(m.article||m.name||''):'';}
   if($('front-search')){
     const glass=Boolean(t?.production?.vitrine);$('front-search').disabled=glass;
     const group=$('front-search').closest('section');if(group)group.hidden=glass;
@@ -803,15 +803,31 @@ async function syncControls(){
   }
   renderItems();
 }
+function materialVisualLabel(m){
+  const v=m?.visual||{};
+  if(v.texture_url)return v.scale_confirmed===false?'Твоя текстура · масштаб ориентировочный':v.visual_status==='USER_TEXTURE'?'Твоя текстура':'Точная текстура';
+  if(v.preview_url)return 'Образец производителя · масштаб ориентировочный';
+  return v.render_color?'Только цвет · без текстуры':'Изображение ещё не подключено';
+}
 async function searchMaterial(input,results,kind){
+  const requestId=String(Number(input.dataset.materialRequest||0)+1);input.dataset.materialRequest=requestId;
   const q=input.value.trim();
   results.replaceChildren();
   if(q.length<2)return;
   const d=await api('/catalogue/materials?q='+encodeURIComponent(q)+'&limit=8');
+  if(input.dataset.materialRequest!==requestId||input.value.trim()!==q)return;
+  if(!d.items.length){const empty=document.createElement('p');empty.textContent='Материал не найден. Уточните артикул или название.';results.append(empty);}
   for(const m of d.items){
     const b=document.createElement('button');
     b.type='button';
-    b.textContent=label(m);
+    b.className='material-result';b.setAttribute('aria-label',label(m));
+    const visual=m.visual||{},url=visual.texture_url||visual.preview_url;
+    const swatch=document.createElement('span');swatch.className='material-swatch';swatch.textContent='—';
+    if(typeof url==='string'&&/^\/(?!\/)[\w/.-]+\.(?:png|jpe?g|webp)$/i.test(url)&&!url.includes('..')){
+      const img=document.createElement('img');img.alt='';img.loading='lazy';img.src=url;img.onerror=()=>{swatch.replaceChildren(document.createTextNode('—'));};swatch.replaceChildren(img);
+    }
+    const text=document.createElement('span'),name=document.createElement('strong'),hint=document.createElement('small');
+    name.textContent=label(m);hint.textContent=materialVisualLabel(m);text.append(name,hint);b.append(swatch,text);
     b.onclick=()=>{
       const it=selected();
       if(!it)return;
@@ -836,6 +852,7 @@ async function searchMaterial(input,results,kind){
       status('Материал: '+(scopeLabel?scopeLabel+' · '+targets.length+' модулей':it.name));
       $(kind+'-selected').textContent=label(m);
       results.replaceChildren();
+      input.dataset.materialRequest=String(Number(input.dataset.materialRequest||0)+1);
       input.value='';
       updateAll();
     };

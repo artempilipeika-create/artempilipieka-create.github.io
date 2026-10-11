@@ -83,13 +83,14 @@ def exact_user_texture(item):
 def visual_metadata(item):
     # Explicit per-variant metadata always wins over the small verified decor registry.
     if isinstance(item.get('visual'),dict):
-        keys=('texture_url','preview_url','render_color','texture_size_mm','rotation_deg','grain_direction','roughness','source_url','visual_status')
-        return {k:item['visual'][k] for k in keys if k in item['visual']}
+        keys=('texture_url','preview_url','render_color','texture_size_mm','rotation_deg','grain_direction','roughness','source_url','visual_status','scale_confirmed','scale_note','source_kind')
+        explicit={k:item['visual'][k] for k in keys if k in item['visual']}
+        if visual_status(explicit)!='MISSING_VISUAL':return explicit
     fields={'renderTexture':'texture_url','texture_preview':'texture_url','preview':'preview_url','preview_url':'preview_url',
             'renderColor':'render_color','render_color':'render_color','preview_color':'render_color','color_hex':'render_color',
             'textureScale':'texture_size_mm','texture_size_mm':'texture_size_mm','grainDirection':'grain_direction','rotation':'rotation_deg'}
     visual={target:item[key] for key,target in fields.items() if item.get(key) is not None}
-    if visual:return visual
+    if visual_status(visual)!='MISSING_VISUAL':return visual
     attached=exact_user_texture(item)
     if attached:return attached
     article=re.sub(r'\s+',' ',str(item.get('article') or '').strip().upper())
