@@ -272,6 +272,7 @@
   };
   function digest(){return state?JSON.stringify([get('project-name').value,state.room,state.items,state.production_note||'']):null;}
   function updateSaveState(){
+    if(window.MF_PROJECT_SAFETY)return;
     const el=get('studio-save-state'),dirty=baseline!==null&&digest()!==baseline;
     el.textContent=saving?'Сохранение…':dirty?'Есть несохранённые изменения':project?'Проект сохранён':'Новый проект · сохраните после настройки';el.dataset.dirty=String(dirty);
   }
@@ -289,6 +290,7 @@
     const r=await original.newProject(...args);baseline=digest();fitRoom();updateSaveState();return r;
   };
   function guardDiscard(event){
+    if(window.MF_PROJECT_SAFETY)return;
     if(!event.target.closest('button')||baseline===null||digest()===baseline)return;
     if(!confirm('Продолжить без сохранения текущих изменений?')){event.preventDefault();event.stopImmediatePropagation();}
   }
@@ -305,7 +307,7 @@
   },true);
   // Avoid destructive legacy keyboard shortcuts on focused interactive controls.
   document.addEventListener('keydown',e=>{if(e.target.closest?.('button,summary,a,[role=tablist]')&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Delete','Backspace'].includes(e.key))e.stopPropagation();});
-  window.addEventListener('beforeunload',e=>{if(baseline!==null&&digest()!==baseline){e.preventDefault();e.returnValue='';}});
+  window.addEventListener('beforeunload',e=>{if(!window.MF_PROJECT_SAFETY&&baseline!==null&&digest()!==baseline){e.preventDefault();e.returnValue='';}});
   window.addEventListener('resize',()=>{drawKey='';});
   document.body.dataset.studioVersion='1.0';
   // Auth startup may already have rendered the catalogue before this adapter loaded.

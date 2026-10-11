@@ -1,0 +1,14 @@
+.mf3d-studio dialog.mf-project-dialog{width:calc(100vw - 32px);max-width:780px;max-height:85dvh;padding:24px;border:1px solid #d9e1d8;border-radius:16px;background:#fafbf8;color:#243e31;box-sizing:border-box;box-shadow:0 24px 80px #10281c30;overflow:auto}
+.mf-project-dialog::backdrop{background:#152b2380}
+.mf-project-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.mf3d-studio dialog.mf-project-dialog h2{margin:0;font-size:23px}.mf-project-dialog button{white-space:normal;flex-shrink:0;min-height:38px}
+.mf-project-hint{font-size:13px;line-height:1.6;color:#657269}
+.mf-version-form{display:flex;align-items:end;gap:10px;margin:18px 0}.mf-version-form label{display:grid;gap:7px;flex:1;min-width:0;font-size:13px}.mf-version-form input{width:100%;box-sizing:border-box}
+.mf-version-presets{display:flex;gap:6px;flex-wrap:wrap}.mf-version-presets button{font-size:12px;padding:8px 10px}
+.mf-version-list,.mf-check-list{display:grid;gap:10px}.mf-version-row,.mf-check-row{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #dfe5db;border-radius:9px;background:#fff}
+.mf-version-row>div,.mf-check-row>div{flex:1;min-width:0}.mf-version-row strong,.mf-version-row small,.mf-check-row small,.mf-check-row strong{display:block;overflow-wrap:anywhere}
+.mf-version-row small,.mf-check-row small{font-size:12px;color:#657269;margin:5px 0}.mf-check-row p{font-size:12px;color:#657269;margin:6px 0 0;line-height:1.5}.mf-check-row strong{font-size:14px;line-height:1.45;font-weight:500}
+.mf-check-row[data-severity=error]{border-left:3px solid #b25242}.mf-check-row[data-severity=warning]{border-left:3px solid #be954b}.mf-check-row[data-severity=info]{border-left:3px solid #789488}
+.mf-check-row[data-actionable=true]{cursor:pointer}.mf-check-row[data-actionable=true]:hover{background:#f5f8f1}
+.mf-project-warning{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 20px;background:#fbf1d9;color:#614721;font-size:13px;z-index:4}.mf-project-warning[hidden]{display:none}.mf-project-warning span{flex:1;min-width:220px}.mf-project-warning button{font-size:12px;padding:6px 10px}
+@media(max-width:700px){.mf3d-studio dialog.mf-project-dialog{padding:16px}.mf3d-studio dialog.mf-project-dialog h2{font-size:19px}.mf-version-row,.mf-check-row{flex-wrap:wrap}.mf-version-row>div,.mf-check-row>div{flex-basis:100%}.mf-version-form{align-items:stretch;flex-direction:column}.mf3d-top-actions #check-project{font-size:12px}}

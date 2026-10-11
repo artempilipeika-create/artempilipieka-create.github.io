@@ -7,17 +7,38 @@
   const oldUpdate=updateAll;
   updateAll=function(){const result=oldUpdate();emit('state');return result;};
   const oldNew=newProject,oldOpen=openProject;
-  newProject=async function(...args){emit('before-project');const result=await oldNew(...args);emit('project');return result;};
-  openProject=async function(...args){emit('before-project');const result=await oldOpen(...args);emit('project');return result;};
+  const switchProject=async action=>{emit('before-project');const result=await action();emit('project');return result;};
+  const navigate=action=>window.MF_PROJECT_SAFETY?window.MF_PROJECT_SAFETY.navigate(action):action();
+  newProject=(...args)=>navigate(()=>switchProject(()=>oldNew(...args)));
+  openProject=(...args)=>navigate(()=>switchProject(()=>oldOpen(...args)));
+  const oldSave=saveProject;
+  saveProject=()=>window.MF_PROJECT_SAFETY?window.MF_PROJECT_SAFETY.flush(true):oldSave();
+  const oldDelete=deleteProject;
+  deleteProject=()=>window.MF_PROJECT_SAFETY?window.MF_PROJECT_SAFETY.removeProject():oldDelete();
   const oldShare=shareProject,oldCopy=duplicateProject,oldPdf=downloadSpec;
   shareProject=async function(){await saveProject();return oldShare();};
-  duplicateProject=async function(){await saveProject();return oldCopy();};
+  duplicateProject=async function(){if(window.MF_PROJECT_SAFETY)return window.MF_PROJECT_SAFETY.duplicate();await saveProject();return oldCopy();};
   downloadSpec=async function(){await saveProject();return oldPdf();};
   const bridge={
     supportsElevation:false,
     state:()=>state,
     selected:()=>selected(),
     projectId:()=>project?.project_id||null,
+    userId:()=>user?.user_id,
+    projectMeta:()=>project?copy({project_id:project.project_id,version:project.version}):null,
+    request:(path,method,body)=>api(path,method,body,{}, {timeoutMs:20000}),
+    saveSnapshot:(snapshot,meta,request_id)=>api('/3d-projects'+(meta?'/'+meta.project_id:''),meta?'PATCH':'POST',
+      {name:snapshot.name.trim()||'3D-проект',scene:snapshot.scene,request_id,...(meta?{version:meta.version}:{})},{},{timeoutMs:20000}),
+    acknowledge:row=>{
+      project=copy(row);projects=projects.filter(p=>p.project_id!==row.project_id);projects.unshift(copy(row));renderProjects();
+    },
+    loadSnapshot:async(snapshot,meta)=>{
+      emit('before-project');project=meta?{...meta,name:snapshot.name,scene:copy(snapshot.scene)}:null;
+      state=normalizeScene(copy(snapshot.scene));selectedId=state.selected_item_id;viewMode=state.view_mode;$('project-name').value=snapshot.name;
+      await hydrateMaterials();syncRoom();await syncControls();updateAll();renderProjects();emit('project');
+    },
+    resetProject:()=>switchProject(()=>oldNew()),
+    reloadProjects:loadProjects,
     catalogue:{templates:kitchenTemplates,bazisModules,moduleDefs},
     template:item=>templateFor(item),
     material:id=>materials.get(String(id))||null,

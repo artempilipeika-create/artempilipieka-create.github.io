@@ -131,11 +131,11 @@ for(const m of bazisModules){
 let user=null,projects=[],project=null,state=null,selectedId=null,viewMode='3d';
 let rotY=-.55,rotX=.2,zoom=1,drag=false,px=0,py=0,boxes=[],materials=new Map();
 
-async function api(path,method='GET',body,headers={}){
-  const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});
+async function api(path,method='GET',body,headers={},options={}){
+  const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',...(options.timeoutMs?{signal:AbortSignal.timeout(options.timeoutMs)}:{}),headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});
   if(!r.ok){
     const d=await r.json().catch(()=>({}));
-    throw new Error(d.detail?.code||'Действие недоступно');
+    throw Object.assign(new Error(d.detail?.code||(r.status===422?'Проверьте параметры проекта':'Действие недоступно')),{status:r.status});
   }
   return r.status===204?null:r.json();
 }

@@ -1,7 +1,8 @@
 """Authenticated user-owned 3D furniture projects. No production side effects."""
 from typing import Literal
 from uuid import UUID,uuid4
-import base64,binascii,hashlib,secrets
+import base64,binascii,hashlib,secrets,json
+from fastapi.encoders import jsonable_encoder
 from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
@@ -202,9 +203,39 @@ class Scene(StrictModel):
 class Create(StrictModel):
     name: str=Field(min_length=1,max_length=200)
     scene: Scene
+    request_id: UUID|None=None
 
 class Update(Create):
     version: int=Field(ge=1)
+
+class Checkpoint(StrictModel):
+    label: str=Field(min_length=1,max_length=120,pattern=r'\S')
+    version: int=Field(ge=1)
+    request_id: UUID
+
+class RestoreCheckpoint(StrictModel):
+    version: int=Field(ge=1)
+    request_id: UUID
+
+def request_receipt(conn,user,body,operation):
+    if not body.request_id:return None,None
+    digest=hashlib.sha256(json.dumps([operation,body.model_dump(mode='json')],sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    # Same lock order for all mutations; lock is released with the transaction.
+    conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',(str(user['user_id'])+str(body.request_id),))
+    found=conn.execute('SELECT * FROM mf_3d_project_requests WHERE owner_user_id=%s AND request_id=%s',
+                       (user['user_id'],body.request_id)).fetchone()
+    if found and found['request_hash']!=digest:error(409,'PROJECT_3D_REQUEST_REUSED')
+    return digest,found['result'] if found else None
+
+def save_receipt(conn,user,body,digest,result):
+    if digest:
+        metadata={k:v for k,v in result.items() if k!='scene'}
+        conn.execute('INSERT INTO mf_3d_project_requests(owner_user_id,request_id,request_hash,result) VALUES(%s,%s,%s,%s)',
+                     (user['user_id'],body.request_id,digest,Jsonb(jsonable_encoder(metadata))))
+    return result
+
+def checkpoint_projection(row):
+    return {k:row[k] for k in ('version_id','label','kind','project_version','name','created_at')}
 
 class SpecificationRender(StrictModel):
     preview_data_url: str|None=Field(default=None,max_length=6_000_000)
@@ -255,11 +286,15 @@ def router(settings):
     def create_project(body:Create,request:Request):
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'orders.draft.write');pid=uuid4()
+            digest,replayed=request_receipt(conn,user,body,'create')
+            if replayed:
+                own(conn,user,replayed['project_id'])
+                return {**replayed,'scene':body.scene.model_dump(mode='json')}
             row=conn.execute('''INSERT INTO mf_3d_projects(project_id,owner_user_id,name,module_type,scene)
                 VALUES(%s,%s,%s,%s,%s) RETURNING *''',
                 (pid,user['user_id'],body.name,'chest',Jsonb(body.scene.model_dump(mode='json')))).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.created',object_type='3d_project',object_id=pid,reason='User created 3D project')
-            return projection(row)
+            return save_receipt(conn,user,body,digest,projection(row))
 
     @api.get('/3d-projects/{project_id}')
     def read_project(project_id:UUID,request:Request):
@@ -269,13 +304,55 @@ def router(settings):
     @api.patch('/3d-projects/{project_id}')
     def update_project(project_id:UUID,body:Update,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id,True)
+            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            digest,replayed=request_receipt(conn,user,body,'update:'+str(project_id))
+            row=own(conn,user,project_id,True)
+            if replayed:return {**replayed,'scene':body.scene.model_dump(mode='json')}
             if row['version']!=body.version: error(409,'PROJECT_3D_VERSION_CONFLICT')
             row=conn.execute('''UPDATE mf_3d_projects SET name=%s,module_type=%s,scene=%s,version=version+1,updated_at=now()
                 WHERE project_id=%s RETURNING *''',
                 (body.name,'chest',Jsonb(body.scene.model_dump(mode='json')),project_id)).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.updated',object_type='3d_project',object_id=project_id,reason='User updated 3D project',version=row['version'])
-            return projection(row)
+            return save_receipt(conn,user,body,digest,projection(row))
+
+    @api.get('/3d-projects/{project_id}/versions')
+    def list_versions(project_id:UUID,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');own(conn,user,project_id)
+            rows=conn.execute('SELECT version_id,label,kind,project_version,name,created_at FROM mf_3d_project_versions WHERE project_id=%s ORDER BY created_at DESC,version_id', (project_id,)).fetchall()
+            return {'items':rows}
+
+    @api.post('/3d-projects/{project_id}/versions',status_code=201)
+    def create_version(project_id:UUID,body:Checkpoint,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            digest,replayed=request_receipt(conn,user,body,'checkpoint:'+str(project_id))
+            row=own(conn,user,project_id,True)
+            if replayed:return replayed
+            if row['version']!=body.version:error(409,'PROJECT_3D_VERSION_CONFLICT')
+            saved=conn.execute('''INSERT INTO mf_3d_project_versions(version_id,project_id,label,kind,project_version,name,scene)
+                VALUES(%s,%s,%s,'named',%s,%s,%s) RETURNING *''',
+                (uuid4(),project_id,body.label.strip(),row['version'],row['name'],Jsonb(row['scene']))).fetchone()
+            record_event(conn,settings,actor=user['user_id'],action='3d.project.version.created',object_type='3d_project',object_id=project_id,reason='User saved named project version',version=row['version'])
+            return save_receipt(conn,user,body,digest,checkpoint_projection(saved))
+
+    @api.post('/3d-projects/{project_id}/versions/{version_id}/restore')
+    def restore_version(project_id:UUID,version_id:UUID,body:RestoreCheckpoint,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            digest,replayed=request_receipt(conn,user,body,'restore:'+str(project_id)+':'+str(version_id))
+            row=own(conn,user,project_id,True)
+            target=conn.execute('SELECT * FROM mf_3d_project_versions WHERE project_id=%s AND version_id=%s',(project_id,version_id)).fetchone()
+            if not target:error(404,'PROJECT_3D_VERSION_NOT_FOUND')
+            if replayed:return {**replayed,'scene':target['scene']}
+            if row['version']!=body.version:error(409,'PROJECT_3D_VERSION_CONFLICT')
+            conn.execute('''INSERT INTO mf_3d_project_versions(version_id,project_id,label,kind,project_version,name,scene)
+                VALUES(%s,%s,%s,'before_restore',%s,%s,%s)''',
+                (uuid4(),project_id,'Перед восстановлением · '+target['label'][:90],row['version'],row['name'],Jsonb(row['scene'])))
+            restored=conn.execute('''UPDATE mf_3d_projects SET name=%s,scene=%s,version=version+1,updated_at=now()
+                WHERE project_id=%s RETURNING *''',(target['name'],Jsonb(target['scene']),project_id)).fetchone()
+            record_event(conn,settings,actor=user['user_id'],action='3d.project.version.restored',object_type='3d_project',object_id=project_id,reason='User restored named version; previous state checkpointed',version=restored['version'])
+            return save_receipt(conn,user,body,digest,projection(restored))
 
     @api.post('/3d-projects/{project_id}/duplicate',status_code=201)
     def duplicate_project(project_id:UUID,request:Request):
