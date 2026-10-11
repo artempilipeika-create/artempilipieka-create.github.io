@@ -18,7 +18,7 @@ for _ in range(40):
     try:urllib.request.urlopen(base+'/constructor');break
     except OSError:time.sleep(.1)
 records=user_textures()['variants']
-materials=[safe_item({'kind':'material','variant_id':uid,**{k:r[k] for k in ('article','material_id','name','thickness','length','width')}},'synthetic') for uid,r in records.items() if r['article'] in ('LNEDS18D.302.W04','816 PO','LNEDS18M.100.S02','1982 TopX')]
+materials=[safe_item({'kind':'material','variant_id':uid,**{k:r[k] for k in ('article','material_id','name','thickness','length','width')}},'synthetic') for uid,r in records.items() if r['article'] in ('LNEDS18D.302.W04','816 PO','LNEDS18M.100.S02','1982 TopX','537 WML','EVS001','EVS003','EVS007','P013')]
 if len(materials)<2:
     uid,r=next((uid,r) for uid,r in records.items() if r['texture_url']!=materials[0]['visual']['texture_url'])
     materials.append(safe_item({'kind':'material','variant_id':uid,**{k:r[k] for k in ('article','material_id','name','thickness','length','width')}},'synthetic'))

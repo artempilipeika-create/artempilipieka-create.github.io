@@ -1,5 +1,7 @@
 import hashlib
 import importlib.util
+import json
+import re
 from pathlib import Path
 
 from backend.v2.catalogue_model import safe_item
@@ -50,3 +52,40 @@ def test_different_images_are_never_selected_by_similarity():
     a={'source_relative_path':'one.jpg','width':100,'height':100,'rgb_sha256':'same','rgba_sha256':'one'}
     b={**a,'source_relative_path':'two.jpg','rgba_sha256':'two'}
     assert matching.choose([a,b]) is None
+
+def test_cedar_decor_does_not_override_byspan_folder():
+    assert matching.image_brand('Bayspan\\Кедр Орегон 537 WML.jpg') == 'BYSPAN'
+    assert matching.image_brand('Столешницы Кедр\\690S.jpg') == 'KEDR'
+    assert matching.image_brand('Evaglos\\Столешница Slotex Мрамор бланко R5.jpg') == 'SLOTEX'
+    row=['BYSPAN','537 WML','ЛДСП BYSPAN 18мм Кедр Орегон 537 WML',None,'m','v',None,None,18,2800,2070]
+    im={'source_relative_path':'Bayspan\\Кедр Орегон 537 WML.jpg','article_candidate':'Кедр Орегон 537 WML'}
+    hits,_,conflicts=matching.candidates(row,[im])
+    assert hits == [im] and not conflicts
+
+def test_complete_title_article_match_keeps_nearby_codes_and_brands_separate():
+    row=[None,'P013','Р013 Светло-серый матовый',None,'m','v',None,None,18,2800,1220]
+    im={'source_relative_path':'Evaglos\\Р013 Светло-серый матовый.jpg','article_candidate':'Р013 Светло-серый матовый'}
+    assert matching.candidates(row,[im])[0] == [im]
+    wrong=row.copy();wrong[1]='P01'
+    assert not matching.candidates(wrong,[im])[0]
+    wrong=row.copy();wrong[0]='BYSPAN'
+    assert not matching.candidates(wrong,[im])[0]
+    wrong=row.copy();wrong[2]='Р013 Светло-серый глянцевый'
+    assert not matching.candidates(wrong,[im])[0]
+    wrong=row.copy();wrong[1]=None
+    assert not matching.candidates(wrong,[im])[0]
+
+def test_patch_adds_only_cedar_to_native_and_keeps_samples_as_previews():
+    root=Path(__file__).parents[2]/'tools/bazis_import'
+    def bindings(version):
+        source=(root/f'Martin_Forest_Import_v{version}_ONE_CLICK_NOTES_GLASS_TEXTURES.js').read_text(encoding='utf-8-sig')
+        return json.loads(re.search(r'const NATIVE_TEXTURE_BINDINGS = (.*);\n',source)[1])
+    old,new=bindings('9_7'),bindings('9_7_1')
+    assert all(new[k]==v for k,v in old.items())
+    added=[new[k] for k in new.keys()-old.keys()]
+    assert len(added)==1 and added[0]['article']=='537 WML'
+    for article in ('EVS001','EVS003','EVS007','P013'):
+        v=visual_metadata(item(article))
+        assert v['visual_status']=='USER_PREVIEW' and v['map_to_surface'] is False
+        assert v['color_confirmed'] is False and v['render_color'] and v['preview_url']
+        assert 'texture_url' not in v

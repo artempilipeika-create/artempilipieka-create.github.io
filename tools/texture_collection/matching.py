@@ -33,7 +33,13 @@ def brand(value):
 @lru_cache(maxsize=8192)
 def image_brand(path):
     # A brand explicitly written in the filename is more specific than an old folder name.
-    return brand(PureWindowsPath(path).stem) or brand(path)
+    file = PureWindowsPath(path)
+    filename_brand = brand(file.stem)
+    folder_brand = brand(str(file.parent))
+    # "Кедр Орегон" is a decor name, not a KEDR manufacturer declaration.
+    if filename_brand == 'KEDR' and folder_brand and folder_brand != 'KEDR':
+        return folder_brand
+    return filename_brand or folder_brand
 
 def without_thickness(article):
     s = norm(article)
@@ -107,12 +113,17 @@ def candidates(row, images):
     for im in images:
         ib = image_brand(im['source_relative_path'])
         exact = article and norm(im['article_candidate']) == article
-        match = (code is not None and code in image_codes(im, maker)) or exact
+        # Some titles repeat the complete filename, including the article. This
+        # is also exact evidence when Latin/Cyrillic lookalikes differ. Require
+        # the entire title and a complete bounded article, never just a colour.
+        title_exact = bool(article and code_text(row[2]) == code_text(PureWindowsPath(im['source_relative_path']).stem)
+                           and re.search(r'(?<![A-Z0-9])' + re.escape(code_text(article)) + r'(?![A-Z0-9])', code_text(row[2])))
+        match = (code is not None and code in image_codes(im, maker)) or exact or title_exact
         if not match:
             continue
         if maker and ib and maker != ib:
             conflicts.append(im['source_relative_path']); continue
-        if not exact and maker in ('SENOSAN', 'EVOGLOSS', 'BMATT') and ib != maker:
+        if not exact and not title_exact and maker in ('SENOSAN', 'EVOGLOSS', 'BMATT') and ib != maker:
             continue
         hits.append(im)
     return hits, method if code else 'exact_full_article_filename', conflicts
