@@ -1,15 +1,16 @@
 import * as THREE from './vendor/three.module.js';
 import {materialVisual,physicalPanelUV} from './material-visuals.mjs';
+import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
 import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts,kitchenRuns,kitchenLegs,isKitchenModule} from './furniture-core.mjs';
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
-  glass:{color:'#d0e5df',roughness:.13,metalness:0},
-  frame:{color:'#171e1a',roughness:.45,metalness:.55},
+  glass:{color:'#f4faf7',roughness:.075,metalness:0},
+  frame:{color:'#202321',roughness:.3,metalness:.72},
   hinge:{color:'#b9bdc1',roughness:.32,metalness:.72},
-  shelfSupport:{color:'#656766',roughness:.3,metalness:.58},
+  shelfSupport:{color:'#656766',roughness:.24,metalness:.78},
   supportPad:{color:'#969c98',roughness:.85,metalness:0},
-  lightProfile:{color:'#171e1a',roughness:.45,metalness:.55},
+  lightProfile:{color:'#202321',roughness:.3,metalness:.72},
   led:{color:'#fff7d9',roughness:.5,metalness:0,emissive:'#fff0b9',emissiveIntensity:1.2},
   body:{color:'#b9c1b9',roughness:.88,metalness:0},
   shelf:{color:'#b9c1b9',roughness:.88,metalness:0},
@@ -68,10 +69,12 @@ export class MeshFactory{
     const key=JSON.stringify([role,id||'',visual,ghost,inspection]);
     if(!this.materials.has(key)){
       const color=visual.color||(id?'#aeb2b0':finish.color);
-      const m=new THREE.MeshStandardMaterial({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:['handle','frame','hinge','shelfSupport','lightProfile'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter',
+      const glass=role==='glass'&&!ghost&&!inspection,Material=glass?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
+      const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
+        metalness:['handle','frame','hinge','shelfSupport','lightProfile'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
+      if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color};
       if(visual.url&&!ghost&&!inspection){
         const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);
@@ -103,7 +106,16 @@ export class MeshFactory{
       const shell=part?part.role==='front'||part.key.startsWith('side-'):role==='front';
       const inspection=mode==='inspection'&&shell;
       const id=part?part.material.variant_id:role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
-      const material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
+      let material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
+      const light=!group.userData.ghost&&!inspection&&vitrineLightSpec(it,part);
+      if(light){
+        const key='vitrine-lit:'+material.uuid+':'+JSON.stringify(light);
+        if(!this.materials.has(key)){
+          const lit=material.clone();lit.onBeforeCompile=material.onBeforeCompile;lit.customProgramCacheKey=material.customProgramCacheKey;
+          this.materials.set(key,lightVitrineSurface(lit,light));
+        }
+        material=this.materials.get(key);
+      }
       if(m.material!==material){m.material=material;changed=true;}
       m.castShadow=!group.userData.ghost&&!inspection&&!['reveal','glass','led'].includes(role);m.receiveShadow=!group.userData.ghost&&!inspection;m.renderOrder=inspection?5:0;
     });
@@ -132,6 +144,7 @@ export class MeshFactory{
       const g=panelGeometry(w,h,d,r);
       const grainAxis=role==='front'||role==='back'||w<h&&w<d?'y':'x';
       physicalPanelUV(g,{x:w,y:h,z:d},grainAxis);
+      if(role==='glass')glassVertices(g,[w,h,d]);
       // Edge occlusion lives on the actual panel sides, not lines painted over fronts.
       // It costs no extra draw calls and never enlarges the 1.5 mm production gaps.
       if(role==='front'||role==='counter'){
