@@ -22,6 +22,7 @@ import {CountertopUI} from './countertop-ui.mjs';
 import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
 import {ProjectSafety} from './project-safety.mjs';
+import {SceneDimensions} from './dimensions.mjs';
 
 class PlannerApplication {
   constructor(){this.version='1.0.0';this.ready=false;this.options={enabled:true,alignment:'front',wallOffset:0,autoRotate:true,allowElevation:false};}
@@ -32,6 +33,7 @@ class PlannerApplication {
     this.countertops=new CountertopUI(this);
     this.mobility=new MobilityUI(this);
     await this.startRenderer();
+    this.dimensions=new SceneDimensions(this);
     this.roomSetup=new RoomSetup(this);
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
@@ -350,6 +352,7 @@ class PlannerApplication {
     catch(error){console.warn('Planner switched to 2D:',error.message);this.installFallback(canvas);}
     this.scene.onVisualChanged=()=>this.roomPricing?.syncVisualNotice();
     this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);
+    this.dimensions?.attach();
     this.scene.fit(this.adapter.items.length?'kitchen':'room');this.paintMode();
   }
   installFallback(canvas){
@@ -359,7 +362,7 @@ class PlannerApplication {
   fallback(){
     if(this.scene?.isFallback)return;
     this.interaction?.dispose();this.scene?.dispose();this.installFallback(get('scene'));
-    this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);this.sync();this.paintMode();
+    this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);this.dimensions?.attach();this.sync();this.paintMode();
     this.adapter.status('WebGL-контекст потерян. Открыт резервный 2D-план; проект не перезагружался.');
   }
   setView(mode){if(!this.scene)return;this.interaction?.cancel();if(this.scene.isFallback)mode='top';this.scene.setView(mode);this.bridge.view(mode);this.paintMode();}
@@ -385,7 +388,7 @@ class PlannerApplication {
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
     get('studio-empty-scene').hidden=Boolean(count);this.paintMode();
   }
-  dispose(){this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
+  dispose(){this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
 }
 export const planner=new PlannerApplication();
 window.MF_PLANNER=planner;

@@ -1,0 +1,103 @@
+"""Actual WebGL/UI acceptance; every API read/write is intercepted synthetic data."""
+import copy,json,os,sys
+from pathlib import Path
+from urllib.parse import urlsplit
+from uuid import uuid4
+from datetime import datetime,timezone
+ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from playwright.sync_api import sync_playwright,expect
+from backend.v2.cabinet_ui import router
+out=Path('/tmp/mf-dimensions-qa');out.mkdir(exist_ok=True)
+app=FastAPI();app.include_router(router());client=TestClient(app)
+base='https://dimensions.test';projects={};errors=[];writes=[]
+def gate(route):
+    req=route.request;path=urlsplit(req.url).path
+    def reply(data,status=200):route.fulfill(status=status,content_type='application/json',body=json.dumps(data))
+    if not req.url.startswith(base+'/'):errors.append('External request '+req.url);route.abort();return
+    if path.startswith('/api/v2/'):
+        if path=='/api/v2/3d-projects' and req.method=='GET':reply({'items':list(projects.values())});return
+        if path.startswith('/api/v2/3d-projects'):
+            pid=path.rsplit('/',1)[-1]
+            if req.method=='GET':reply(projects.get(pid,{}));return
+            if req.method not in ('POST','PATCH'):errors.append(req.method+' '+path);route.abort();return
+            body=json.loads(req.post_data);pid=str(uuid4()) if req.method=='POST' else pid
+            now=datetime.now(timezone.utc).isoformat();result={**body,'project_id':pid,'version':projects.get(pid,{}).get('version',0)+1,'created_at':now,'updated_at':now}
+            projects[pid]=copy.deepcopy(result);writes.append(body);reply(result);return
+        if req.method!='GET':errors.append('Forbidden write '+path);route.abort();return
+        reply({'user_id':'dimension-qa'} if path.endswith('auth/me') else {'items':[]} if path.endswith('catalogue/materials') else {'active_release':None} if path.endswith('catalogue/releases') else {});return
+    if path=='/ui/favicon.svg':route.fulfill(status=200,content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg"/>');return
+    response=client.get(path)
+    if response.status_code!=200:errors.append(str(response.status_code)+' '+path)
+    route.fulfill(status=response.status_code,headers=dict(response.headers),body=response.content)
+
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(headless=True,executable_path=os.environ.get('MF_TEST_BROWSER'),args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
+    context=browser.new_context(viewport={'width':1500,'height':1000});context.route('**/*',gate)
+    page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
+    def dim(axis='width',id='lower-2'):return page.locator(f'button.dimension-label[data-item-id="{id}"][data-axis="{axis}"]')
+    def edit(axis,value):
+        dim(axis).click();page.locator('#dimension-editor-value').fill(str(value));page.locator('#dimension-editor button[type=submit]').click()
+    def selected():return page.evaluate('MF_PLANNER.adapter.selected')
+    def saved():expect(page.locator('#studio-save-state')).to_have_text('Сохранено',timeout=12000)
+    def fixture(rotation=0):
+        page.evaluate('''rotation=>{
+          const p=MF_PLANNER,c=MF_FURNITURE_CORE,room={width:6000,depth:5000,height:2800,setup_complete:true,survey:'none',features:[]};
+          const items=[0,1,2].map(i=>Object.assign(p.adapter.createDraft({bazis:'bazis.3079d0656398'}),{item_id:'lower-'+i,name:'Нижний шкаф '+(i+1),...c.rotateXZ(-600+i*600,-900,rotation),rotation}));
+          const wall=Object.entries(c.PRODUCTION_MODELS).find(([id,m])=>m.tier==='wall')[0];
+          items.push(Object.assign(p.adapter.createDraft({bazis:wall}),{item_id:'upper',name:'Верхний шкаф',...c.rotateXZ(-600,-980,rotation),rotation}));
+          p.bridge.restore({name:'Размеры на модели',scene:{schema_version:2,room,items,selected_item_id:'lower-2',view_mode:'3d'},selectedId:'lower-2'});
+          p.roomSetup.projectChanged();p.history.reset();p.workspace.closePanels();p.setView('3d');p.scene.fit('kitchen');
+        }''',rotation)
+        expect(dim()).to_be_visible();expect(page.locator('.dimension-run.dimension-label')).to_have_text('Ряд 1800')
+    try:
+        page.goto(base+'/constructor');expect(page.locator('#check-project')).to_be_attached(timeout=30000)
+        expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl');page.locator('#room-setup-close').click()
+        fixture();saved();page.screenshot(path=str(out/'desktop.png'))
+        assert page.locator('button.dimension-label[data-axis=width]:visible').count()==4
+        expect(dim('height')).to_have_text('В 858');expect(page.locator('.dimension-summary')).to_contain_text('Корпус 720 + Ножки 100 + Столешница 38 = 858 мм')
+        before=selected();edit('width',800);expect(page.locator('#dimension-editor')).not_to_be_visible()
+        assert selected()['width']==800 and selected()['x']==before['x']+100
+        expect(page.locator('.dimension-run.dimension-label')).to_have_text('Ряд 2000')
+        assert page.evaluate('MF_PLANNER.history.undoStack.length')==1
+        page.locator('#planner-undo').click();assert selected()['width']==600
+        page.locator('#planner-redo').click();assert selected()['width']==800
+        edit('height',900);assert selected()['height']==862 and selected()['body_height']==762
+        expect(dim('height')).to_have_text('В 900');saved()
+        assert list(projects.values())[-1]['scene']['items'][2]['height']==862
+        edit('depth',530);assert selected()['depth']==530
+        previous=page.evaluate('MF_PLANNER.bridge.payload()');count=page.evaluate('MF_PLANNER.history.undoStack.length')
+        edit('width',20000);expect(page.locator('#dimension-editor-error')).to_be_visible()
+        assert page.evaluate('MF_PLANNER.bridge.payload()')==previous and page.evaluate('MF_PLANNER.history.undoStack.length')==count
+        page.locator('#dimension-editor-value').press('Escape');expect(page.locator('#dimension-editor')).not_to_be_visible()
+        dim().click();page.locator('#dimension-editor-value').fill('700');page.locator('#dimension-editor-value').press('Escape');assert page.evaluate('MF_PLANNER.bridge.payload()')==previous
+        # Input overlap rejection keeps both original cabinets and history intact.
+        fixture();dim('width','lower-1').click();page.locator('#dimension-editor-value').fill('800');page.locator('#dimension-editor button[type=submit]').click()
+        expect(page.locator('#dimension-editor-error')).to_be_visible();assert page.evaluate('MF_PLANNER.adapter.items.slice(0,3).map(it=>it.width)')==[600,600,600]
+        page.locator('#dimension-editor-value').press('Escape')
+        for rotation in [90,180,270,0]:fixture(rotation)
+        page.locator('#planner-front').click();expect(dim('depth')).to_be_visible();page.screenshot(path=str(out/'front.png'))
+        page.locator('#mode-2d').click();expect(dim('height')).to_be_visible();page.screenshot(path=str(out/'top.png'))
+        # Real pointer drag previews show measured gaps without writing before drop.
+        pos=page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.selected;return p.scene.projectPoint({x:it.x,y:it.height,z:it.z});}''')
+        before=page.evaluate('MF_PLANNER.bridge.payload()')
+        page.mouse.move(pos['x'],pos['y']);page.mouse.down();page.mouse.move(pos['x']+80,pos['y']+45,steps=6)
+        expect(page.locator('.dimension-label.dimension-gap').first).to_be_visible();assert page.evaluate('MF_PLANNER.bridge.payload()')==before
+        page.screenshot(path=str(out/'drag.png'));page.keyboard.press('Escape');page.mouse.up();assert page.evaluate('MF_PLANNER.bridge.payload()')==before
+        page.locator('#planner-dimensions').click();expect(page.locator('#scene-dimensions')).to_be_hidden()
+        page.locator('#planner-dimensions').click();expect(page.locator('#scene-dimensions')).to_be_visible()
+        page.locator('#planner-client').click();expect(page.locator('#scene-dimensions')).to_be_hidden()
+        page.locator('#planner-client').click();expect(page.locator('#scene-dimensions')).to_be_visible()
+        fixture();page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(200);page.evaluate("MF_PLANNER.workspace.closePanels();MF_PLANNER.scene.fit('kitchen')")
+        expect(dim()).to_be_visible();expect(page.locator('.dimension-run.dimension-label')).to_be_visible();page.screenshot(path=str(out/'mobile.png'));dim().click();page.screenshot(path=str(out/'mobile-editor.png'))
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        page.locator('#dimension-editor-value').fill('700');page.locator('#dimension-editor button[type=submit]').click();assert selected()['width']==700
+        # Rendering mode failure removes overlays and an open editor cleanly.
+        dim().click();page.evaluate('MF_PLANNER.fallback()');expect(page.locator('#dimension-editor')).not_to_be_visible();expect(page.locator('#scene-dimensions')).to_be_hidden()
+        assert not errors,errors
+        (out/'report.json').write_text(json.dumps({'passed':True,'checks':['widths + total','all four rotations','click edit width/height/depth','overall/base/top accounting','left anchor','one-step undo/redo','invalid and collision rollback','Escape cancel','autosave payload','top/front views','live drag clearances','dimensions toggle','client view','mobile edit','fallback cleanup'],'writes':len(writes),'errors':errors},ensure_ascii=False,indent=2))
+        print((out/'report.json').read_text())
+    except Exception:
+        print({'errors':errors,'status':page.locator('#status').text_content()});page.screenshot(path=str(out/'failure.png'));raise
+    finally:browser.close()

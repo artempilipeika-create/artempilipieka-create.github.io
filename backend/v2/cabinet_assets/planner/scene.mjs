@@ -125,6 +125,7 @@ export class PlannerScene{
     this.kitchenBoxes.clear();this.placeLabel();
   }
   resetProject(){
+    this.previewItems=null;
     this.clearGroupPreview();
     this.clearSelection();
     this.factory.release(this.preview);this.preview=null;this.previewSignature=null;
@@ -223,6 +224,7 @@ export class PlannerScene{
   }
   hover(id){const entry=this.liveEntry(id);this.hoverBox.visible=Boolean(entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview&&!document.body.classList.contains('planner-client'));if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group).expandByScalar(.003);else this.hoverBox.box.makeEmpty();this.invalidate();}
   placeLabel(){
+    if(this.onDimensionsRender){this.onDimensionsRender();return;}
     const label=document.getElementById('planner-dimension');if(!label)return;
     const it=this.adapter.selected;
     label.hidden=!it||!this.selectedBox.visible||Boolean(this.preview)||document.body.classList.contains('planner-client');if(label.hidden)return;
@@ -252,7 +254,7 @@ export class PlannerScene{
       // kitchen now uses the canvas instead of leaving a room-sized margin.
       const presentation=this.client&&which!=='room';
       const dir=(which==='room'?new THREE.Vector3(.65,.42,1):presentation?new THREE.Vector3(.24,.22,1).applyAxisAngle(new THREE.Vector3(0,1,0),-this.kitchenRotation()*Math.PI/180):new THREE.Vector3(.50,.29,1)).normalize();
-      const padH=which==='room'?.84:presentation?.82:.90,padV=which==='room'?.78:presentation?.73:.85;
+      const padH=which==='room'?.84:presentation?.82:.80,padV=which==='room'?.78:presentation?.73:.74;
       const right=new THREE.Vector3(0,1,0).cross(dir).normalize();
       const up=dir.clone().cross(right).normalize();
       const tanV=Math.tan(this.perspective.fov*Math.PI/360),tanH=tanV*this.perspective.aspect;
@@ -336,6 +338,7 @@ export class PlannerScene{
   }
   pixelThreshold(it){const distance=this.camera.position.distanceTo(this.controls.target);return this.mode==='3d'?Math.max(15,Math.min(85,distance*1000*.018)):Math.max(12,Math.min(85,2*this.orthoSpan/this.camera.zoom/this.height*1000*14));}
   showPreview(it,error,guides=[]){
+    this.previewItems=[it];
     if(!this.preview||this.preview.userData.itemId!==it.item_id||this.previewSignature!==this.factory.signature(it)){
       this.factory.release(this.preview);this.preview=this.factory.build(it,true);this.previewSignature=this.factory.signature(it);this.scene.add(this.preview);
     }
@@ -352,6 +355,7 @@ export class PlannerScene{
   clearGroupPreview(){for(const entry of this.groupPreviews?.values()||[])this.factory.release(entry.group);this.groupPreviews=new Map();if(this.dressing)this.dressing.visible=true;}
   showGroupPreview(items,error,guides=[]){
     this.showPreview(items[0],error,guides);this.groupPreviews??=new Map();
+    this.previewItems=items;
     const ids=new Set(items.slice(1).map(it=>it.item_id));
     for(const [id,entry]of this.groupPreviews)if(!ids.has(id)){this.factory.release(entry.group);this.groupPreviews.delete(id);}
     for(const it of items.slice(1)){
@@ -362,7 +366,7 @@ export class PlannerScene{
     }
     if(this.dressing)this.dressing.visible=false;this.renderer.shadowMap.needsUpdate=true;this.invalidate();
   }
-  clearPreview(){this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
+  clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
   dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }
