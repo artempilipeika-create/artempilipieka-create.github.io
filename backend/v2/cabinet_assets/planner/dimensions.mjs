@@ -100,7 +100,9 @@ export class SceneDimensions{
       let show=a.visible&&b.visible&&mx>viewport.left-80&&mx<viewport.right+80&&my>viewport.top-80&&my<viewport.bottom+80&&(length>12||d.kind==='gap');
       const width=Math.max(48,node.label.textContent.length*7.3+18),height=30;
       let box,cx,cy,placed=false;
-      const ux=length>0?dx/length:1,uy=length>0?dy/length:0,shift=Math.min(56,length/4);
+      // A room wall can span the whole viewport: move its label along the
+      // measured wall when the centred overview occupies the first lanes.
+      const ux=length>0?dx/length:1,uy=length>0?dy/length:0,shift=d.kind==='room'?length/3:Math.min(56,length/4);
       for(let lane=0;show&&!placed&&lane<8;lane++)for(const along of [0,-shift,shift]){
         const distance=d.offset+12+lane*30;cx=mx+nx*distance+ux*along;cy=my+ny*distance+uy*along;
         cx=Math.max(viewport.left+width/2,Math.min(viewport.right-width/2,cx));cy=Math.max(viewport.top+height/2,Math.min(viewport.bottom-height/2,cy));
