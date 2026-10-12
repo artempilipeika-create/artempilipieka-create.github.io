@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {dimensionRuns,sceneDimensions,clearanceDimensions,dimensionValue,dimensionEdit} from '../../backend/v2/cabinet_assets/planner/dimension-geometry.mjs';
+import {dimensionRuns,sceneDimensions,overallDimensions,clearanceDimensions,dimensionValue,dimensionEdit} from '../../backend/v2/cabinet_assets/planner/dimension-geometry.mjs';
 import {rotateXZ,dimensionPatch,heights} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 const room={width:6000,depth:5000,height:2800};
 const item=(id,x=0,extra={})=>({item_id:id,name:id,module_type:'base_cabinet',width:600,height:820,depth:510,base:'legs',legHeightMm:100,base_height:100,body_height:720,countertopThicknessMm:38,worktop_thickness:38,rotation:0,x,z:0,...extra});
@@ -11,6 +11,19 @@ for(const rotation of [0,90,180,270])test('Dimensions follow cabinet axes and ro
   for(const d of dims.filter(d=>d.kind==='module'))assert.equal(Math.round(Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y,d.b.z-d.a.z)),d.value);
   assert.equal(dims.filter(d=>d.axis==='width').length,3);assert.equal(dims.filter(d=>d.axis==='height').length,1);
   const w=dims.find(d=>d.id==='1:width'),axis=rotateXZ(600,0,rotation);assert.equal(w.b.x-w.a.x,axis.x);assert.equal(w.b.z-w.a.z,axis.z);
+  const normal=rotateXZ(0,1,rotation);
+  for(const d of dims)for(const p of [d.a,d.b,d.sourceA,d.sourceB].filter(Boolean))assert.equal(p.x*normal.x+p.z*normal.z,-255);
+});
+test('Overall wall extent includes a gap without counting an island or the opposite wall',()=>{
+  const items=[item('a',0),item('b',800),item('island',2500,{z:1200}),item('opposite',2700,{z:2000,rotation:180})];
+  assert.equal(dimensionRuns(items,room).length,4);
+  const dims=overallDimensions(items,room);assert.equal(dims.length,1);assert.equal(dims[0].value,1400);
+});
+for(const rotation of [0,90,180,270])test('Overall includes the perpendicular countertop at '+rotation,()=>{
+  const items=[item('a'),item('b',600),item('return',1200,{z:-5,rotation:270})].map(it=>({...it,bazis_id:'bazis.3079d0656398',...rotateXZ(it.x,it.z,rotation),rotation:(it.rotation+rotation)%360}));
+  const d=overallDimensions(items,room).find(d=>d.id.startsWith('overall:'+rotation+':'));
+  // Main modules: -300..900; return worktop: 895..1495.
+  assert.equal(d.value,1795);
 });
 test('Rows stop at gaps and split tiers and perpendicular returns',()=>{
   const items=[item('a'),item('b',600),item('gap',1220),item('upper',0,{module_type:'wall_cabinet',base:'wall',height:720}),item('corner-return',600,{z:900,rotation:90})];

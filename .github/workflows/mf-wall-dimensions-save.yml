@@ -1,0 +1,36 @@
+name: Wall dimensions and save contract
+on:
+  push:
+    branches: [mf-wall-dimensions-save-20261013]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Planner regression
+        run: node --test tests/webgl/*.test.mjs
+      - name: Dependencies
+        run: |
+          pip install -r backend/v2/requirements.txt pytest==9.1.1 playwright==1.58.0 pypdf==6.9.1
+          python -m playwright install --with-deps chromium
+      - name: Safe save errors and browser acceptance with real server validation
+        run: |
+          python -m pytest tests/test_project_validation.py -q
+          python scripts/verify-scene-dimensions-browser.py
+          git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wall-dimensions-save-evidence
+          path: /tmp/mf-dimension-chains-qa/

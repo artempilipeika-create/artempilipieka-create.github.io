@@ -98,7 +98,11 @@ def create_app(settings=None, policy=None):
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, exc):
         # FastAPI's default error echoes submitted fields, including passwords/tokens.
-        return JSONResponse({'detail':{'code':'VALIDATION_ERROR'}},status_code=422)
+        detail={'code':'VALIDATION_ERROR'}
+        if request.url.path.startswith('/api/v2/3d-projects'):
+            from .project_validation import project_validation_issues
+            detail['issues']=project_validation_issues(exc.errors())
+        return JSONResponse({'detail':detail},status_code=422)
 
     @app.get('/verify-email',response_class=HTMLResponse)
     def verification_page():

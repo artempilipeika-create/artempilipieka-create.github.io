@@ -1,4 +1,4 @@
-import {bounds,elevation,heights,rotateXZ,tier} from './furniture-core.mjs';
+import {bounds,elevation,heights,rotateXZ,tier,kitchenSettings} from './furniture-core.mjs';
 
 export const formatMm=value=>Number.isInteger(value)?String(value):String(Math.round(value*10)/10).replace('.',',');
 export function dimensionValue(it,axis){return axis==='height'?heights(it).overall_height_with_worktop:it[axis];}
@@ -8,6 +8,7 @@ export function dimensionEdit(it,axis,value){
 }
 const local=(it,x,y,z)=>{const p=rotateXZ(x,z,it.rotation||0);return {x:it.x+p.x,y,z:it.z+p.z};};
 const dot=(it,axis)=>it.x*axis.x+it.z*axis.z;
+const backDatum=it=>dot(it,rotateXZ(0,1,it.rotation||0))-it.depth/2-(kitchenSettings(it)?.rearServiceGapMm||0);
 
 // Physical straight runs only: never sum across a gap, another tier or a corner return.
 export function dimensionRuns(items,room){
@@ -22,29 +23,60 @@ export function dimensionRuns(items,room){
     let run;
     for(const it of aligned){
       remaining.delete(it);const lo=dot(it,u)-it.width/2,hi=dot(it,u)+it.width/2;
-      if(run&&Math.abs(lo-run.hi)<.6){run.items.push(it);run.hi=hi;run.front=Math.max(run.front,dot(it,n)+it.depth/2);}
-      else{run={items:[it],lo,hi,front:dot(it,n)+it.depth/2,u,n,level:elevation(it,room)};runs.push(run);}
+      if(run&&Math.abs(lo-run.hi)<.6){run.items.push(it);run.hi=hi;run.back=Math.min(run.back,backDatum(it));}
+      else{run={items:[it],lo,hi,back:backDatum(it),u,n,level:elevation(it,room)};runs.push(run);}
     }
   }
   return runs;
+}
+// Overall installation extent along each rear line. Deliberate gaps count, and
+// a perpendicular cabinet contributes its footprint only where it meets that
+// line. An island or an opposite wall must not enlarge another wall's total.
+export function overallDimensions(items,room){
+  const groups=[];
+  for(const it of items){
+    const back=backDatum(it),rotation=it.rotation||0,level=elevation(it,room),top=level+dimensionValue(it,'height');
+    let g=groups.find(g=>g.rotation===rotation&&g.tier===tier(it)&&Math.abs(g.back-back)<.6);
+    if(!g){g={rotation,tier:tier(it),back,items:[],top};groups.push(g);}
+    g.items.push(it);g.top=Math.max(g.top,top);
+  }
+  return groups.flatMap(g=>{
+    const u=rotateXZ(1,0,g.rotation),n=rotateXZ(0,1,g.rotation),members=[...g.items];
+    const points=it=>{
+      const k=kitchenSettings(it),rear=k?-it.depth/2-k.rearServiceGapMm:-it.depth/2;
+      const front=k&&k.countertopEnabled?rear+k.countertopDepthMm:it.depth/2;
+      return [-it.width/2,it.width/2].flatMap(x=>[rear,front].map(z=>local(it,x,0,z)));
+    };
+    const interval=(it,axis)=>{const values=points(it).map(p=>dot(p,axis));return [Math.min(...values),Math.max(...values)];};
+    let lo=Math.min(...g.items.map(it=>interval(it,u)[0])),hi=Math.max(...g.items.map(it=>interval(it,u)[1]));
+    for(const it of items){
+      if(members.includes(it)||tier(it)!==g.tier||Math.abs(((it.rotation||0)-g.rotation)%180)!==90)continue;
+      const [near,far]=interval(it,n),[left,right]=interval(it,u);
+      if(near<=g.back+.6&&far>=g.back-.6&&left<=hi+.6&&right>=lo-.6){
+        members.push(it);lo=Math.min(lo,left);hi=Math.max(hi,right);g.top=Math.max(g.top,elevation(it,room)+dimensionValue(it,'height'));
+      }
+    }
+    if(members.length<2)return [];
+    const point=(x,y)=>({x:u.x*x+n.x*g.back,y,z:u.z*x+n.z*g.back});
+    return [{id:'overall:'+g.rotation+':'+g.items.map(it=>it.item_id).sort().join(':'),kind:'run',overall:true,value:hi-lo,
+      a:point(lo,g.top),b:point(hi,g.top),out:point((lo+hi)/2,g.top+200),offset:65}];
+  });
 }
 export function sceneDimensions(items,room,selectedId){
   const result=[];
   for(const run of dimensionRuns(items,room)){
     const top=Math.max(...run.items.map(it=>elevation(it,room)+dimensionValue(it,'height')));
-    const point=(x,y,z=run.front)=>({x:run.u.x*x+run.n.x*z,y,z:run.u.z*x+run.n.z*z});
+    const point=(x,y,z=run.back)=>({x:run.u.x*x+run.n.x*z,y,z:run.u.z*x+run.n.z*z});
     for(const it of run.items){
       const x=dot(it,run.u),y=elevation(it,room)+dimensionValue(it,'height'),w=it.width/2;
       result.push({id:it.item_id+':width',itemId:it.item_id,axis:'width',value:it.width,kind:'module',selected:it.item_id===selectedId,
-        a:point(x-w,top),b:point(x+w,top),sourceA:local(it,-w,y,it.depth/2),sourceB:local(it,w,y,it.depth/2),out:point(x,top+200,run.front+100),offset:26});
+        a:point(x-w,top),b:point(x+w,top),sourceA:point(x-w,y),sourceB:point(x+w,y),out:point(x,top+200),offset:26});
     }
     const representative=run.items.find(it=>it.item_id===selectedId)||run.items[0],level=elevation(representative,room),height=dimensionValue(representative,'height');
     result.push({id:representative.item_id+':height',itemId:representative.item_id,axis:'height',value:height,kind:'module',selected:representative.item_id===selectedId,
       a:point(run.lo,level),b:point(run.lo,level+height),out:point(run.lo-200,level+height/2),offset:32});
-    if(run.items.length>1)result.push({id:'run:'+run.items.map(it=>it.item_id).join(':'),kind:'run',value:run.hi-run.lo,
-      a:point(run.lo,top),b:point(run.hi,top),out:point((run.lo+run.hi)/2,top+200,run.front+100),offset:65});
   }
-  return result;
+  return result.concat(overallDimensions(items,room));
 }
 export function clearanceDimensions(it,items,room,ignoredIds=[]){
   const group=Array.isArray(it)?it:[it],boxes=group.map(it=>bounds(it,room));if(!boxes.length)return [];

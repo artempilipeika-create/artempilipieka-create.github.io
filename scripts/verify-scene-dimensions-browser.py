@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from playwright.sync_api import sync_playwright,expect
 from backend.v2.cabinet_ui import router
+from backend.v2.three_d_api import Create,Update
 out=Path('/tmp/mf-dimension-chains-qa');out.mkdir(exist_ok=True)
 app=FastAPI();app.include_router(router());client=TestClient(app)
 base='https://dimensions.test';projects={};errors=[];writes=[]
@@ -22,7 +23,13 @@ def gate(route):
             pid=path.rsplit('/',1)[-1]
             if req.method=='GET':reply(projects.get(pid,{}));return
             if req.method not in ('POST','PATCH'):errors.append(req.method+' '+path);route.abort();return
-            body=json.loads(req.post_data);pid=str(uuid4()) if req.method=='POST' else pid
+            body=json.loads(req.post_data)
+            # Use the real server contract; a permissive fake previously hid
+            # save failures even while browser acceptance reported success.
+            try:(Create if req.method=='POST' else Update).model_validate(body)
+            except Exception as error:
+                errors.append(str(error));reply({'detail':{'code':'VALIDATION_ERROR'}},422);return
+            pid=str(uuid4()) if req.method=='POST' else pid
             now=datetime.now(timezone.utc).isoformat();result={**body,'project_id':pid,'version':projects.get(pid,{}).get('version',0)+1,'created_at':now,'updated_at':now}
             projects[pid]=copy.deepcopy(result);writes.append(body);reply(result);return
         if req.method!='GET':errors.append('Forbidden write '+path);route.abort();return

@@ -84,7 +84,7 @@ export class SceneDimensions{
       node.dimension=d;node.label.dataset.kind=d.kind;node.label.dataset.axis=d.axis||'';node.label.dataset.itemId=d.itemId||'';
       node.label.className='dimension-label'+(d.selected?' is-selected':'')+' dimension-'+d.kind;node.path.setAttribute('class','dimension-line dimension-'+d.kind+(d.selected?' is-selected':''));
       node.label.textContent=(d.kind==='gap'?'Зазор ':'')+formatMm(d.value);
-      node.label.title=d.kind==='module'?`${names[d.axis]}: ${formatMm(d.value)} мм — ${items.find(it=>it.item_id===d.itemId)?.name}. Нажмите, чтобы изменить.`:d.kind==='run'?'Общая длина сомкнутого прямого ряда, мм':`${d.title}: ${formatMm(d.value)} мм. По габариту закрытых фасадов; без свеса столешницы.`;
+      node.label.title=d.kind==='module'?`${names[d.axis]}: ${formatMm(d.value)} мм — ${items.find(it=>it.item_id===d.itemId)?.name}. Нажмите, чтобы изменить.`:d.kind==='run'?'Общий габарит вдоль стены, включая промежутки и примыкающую угловую часть, мм':`${d.title}: ${formatMm(d.value)} мм. По габариту закрытых фасадов; без свеса столешницы.`;
       if(d.kind==='module')node.label.setAttribute('aria-label',node.label.title);
       const a=this.project(d.a,s),b=this.project(d.b,s),out=this.project(d.out,s),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
       let nx=length>2?-dy/length:1,ny=length>2?dx/length:0;if(nx*(out.x-mx)+ny*(out.y-my)<0){nx=-nx;ny=-ny;}

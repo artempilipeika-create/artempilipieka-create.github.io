@@ -135,7 +135,7 @@ async function api(path,method='GET',body,headers={},options={}){
   const r=await fetch('/api/v2'+path,{method,credentials:'same-origin',...(options.timeoutMs?{signal:AbortSignal.timeout(options.timeoutMs)}:{}),headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});
   if(!r.ok){
     const d=await r.json().catch(()=>({}));
-    throw Object.assign(new Error(d.detail?.code||(r.status===422?'Проверьте параметры проекта':'Действие недоступно')),{status:r.status});
+    throw Object.assign(new Error(d.detail?.code||(r.status===422?'Проверьте параметры проекта':'Действие недоступно')),{status:r.status,issues:d.detail?.issues});
   }
   return r.status===204?null:r.json();
 }

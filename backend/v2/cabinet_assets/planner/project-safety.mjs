@@ -6,7 +6,7 @@ const date=value=>new Date(value).toLocaleString('ru-RU');
 const message=error=>error?.status===401?'Сессия завершена. Войдите в кабинет; черновик останется на этом устройстве.':
   error?.status===403?'Сохранение недоступно для этой учётной записи.':error?.status===404?'Проект удалён или недоступен. Сохраните черновик отдельной копией.':
   error?.status===409?'Проект изменён в другой вкладке. Ваши правки сохранены отдельным черновиком.':
-  error?.status===422?'Сервер не принял параметры проекта. Проверьте размеры и материалы.':'Связь с сервером прервана. Повторим сохранение при подключении.';
+  error?.status===422?'Проект сохранён на устройстве. '+(error.issues?.map(x=>x.message).join(' · ')||'Проверьте параметры через «Проверить проект».'):'Связь с сервером прервана. Повторим сохранение при подключении.';
 
 export class ProjectSafety {
   constructor(app){
@@ -78,7 +78,8 @@ export class ProjectSafety {
     state.dataset.dirty=String(e.dirty);state.setAttribute('aria-live','polite');
     this.warning.hidden=!e.error&&!e.localError&&!e.operation;
     this.warningText.textContent=e.localError?'Не удалось сохранить черновик на устройстве. Сохраните на сервере перед закрытием вкладки.':e.operation?'Есть незавершённая операция с версией. Нажмите «Повторить».':e.error?message(e.error):'';
-    this.serverButton.hidden=!e.meta;this.copyButton.hidden=!e.error||Boolean(e.operation);this.retryButton.hidden=e.conflict&&!e.operation;
+    this.serverButton.hidden=!e.meta;this.copyButton.hidden=!e.error||e.error.status===422||Boolean(e.operation);this.retryButton.hidden=e.conflict&&!e.operation;
+    this.checkErrorButton.hidden=e.error?.status!==422;
     this.updateDraftCount();
   }
   dialog(id,title){
@@ -95,7 +96,8 @@ export class ProjectSafety {
     this.warningText=el('span');this.retryButton=button('Повторить',()=>this.flush().catch(()=>{}));
     this.copyButton=button('Сохранить копией',()=>this.saveCopy().catch(e=>this.bridge.status(message(e))));
     this.serverButton=button('Открыть с сервера',()=>this.openServer());
-    this.warning.append(this.warningText,this.retryButton,this.copyButton,this.serverButton);actions.closest('header').after(this.warning);
+    this.checkErrorButton=button('Проверить параметры',()=>this.showChecks());
+    this.warning.append(this.warningText,this.checkErrorButton,this.retryButton,this.copyButton,this.serverButton);actions.closest('header').after(this.warning);
     this.versionsDialog=this.dialog('project-versions-dialog','Версии проекта');
     this.versionForm=el('form',null,'mf-version-form');const label=el('label','Название версии');this.labelInput=el('input');this.labelInput.id='project-version-label';this.labelInput.maxLength=120;this.labelInput.required=true;this.labelInput.placeholder='Например, После правок клиента';label.append(this.labelInput);
     const presets=el('div',null,'mf-version-presets');for(const name of ['Первоначальный','После правок клиента','Согласованный'])presets.append(button(name,()=>{this.labelInput.value=name;this.labelInput.focus();}));
