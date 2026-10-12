@@ -205,6 +205,13 @@ export class ProjectSafety {
   }
   showChecks(){
     this.app.interaction?.cancel();const report=checkProject(this.bridge.state(),{template:this.bridge.template,material:this.bridge.material});
+    const rejected=this.engine.error?.status===422?this.engine.error.issues||[]:[];
+    for(const issue of rejected){
+      const it=Number.isInteger(issue.item_index)?this.bridge.state().items[issue.item_index]:null;
+      report.issues.unshift({severity:'error',code:'server-validation',name:it?.name||'Сохранение проекта',message:issue.message,
+        detail:'Причина последнего отказа сервера. После исправления нажмите «Сохранить».',itemId:it?.item_id});
+      report.counts.error++;
+    }
     this.checkSummary.textContent=`Ошибки: ${report.counts.error} · Проверить: ${report.counts.warning} · Примечания: ${report.counts.info}. Механизмов проверено: ${report.mechanisms}.`;
     this.checkList.replaceChildren();
     if(!report.issues.length)this.checkList.append(el('p','Замечаний по доступным данным не найдено.'));

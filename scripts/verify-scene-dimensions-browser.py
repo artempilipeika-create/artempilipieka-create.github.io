@@ -10,9 +10,10 @@ from fastapi.testclient import TestClient
 from playwright.sync_api import sync_playwright,expect
 from backend.v2.cabinet_ui import router
 from backend.v2.three_d_api import Create,Update
+from backend.v2.project_validation import project_validation_issues
 out=Path('/tmp/mf-dimension-chains-qa');out.mkdir(exist_ok=True)
 app=FastAPI();app.include_router(router());client=TestClient(app)
-base='https://dimensions.test';projects={};errors=[];writes=[]
+base='https://dimensions.test';projects={};errors=[];writes=[];expected_rejection=False
 def gate(route):
     req=route.request;path=urlsplit(req.url).path
     def reply(data,status=200):route.fulfill(status=status,content_type='application/json',body=json.dumps(data))
@@ -28,7 +29,8 @@ def gate(route):
             # save failures even while browser acceptance reported success.
             try:(Create if req.method=='POST' else Update).model_validate(body)
             except Exception as error:
-                errors.append(str(error));reply({'detail':{'code':'VALIDATION_ERROR'}},422);return
+                if not expected_rejection:errors.append(str(error))
+                reply({'detail':{'code':'VALIDATION_ERROR','issues':project_validation_issues(error.errors())}},422);return
             pid=str(uuid4()) if req.method=='POST' else pid
             now=datetime.now(timezone.utc).isoformat();result={**body,'project_id':pid,'version':projects.get(pid,{}).get('version',0)+1,'created_at':now,'updated_at':now}
             projects[pid]=copy.deepcopy(result);writes.append(body);reply(result);return
@@ -62,6 +64,18 @@ with sync_playwright() as pw:
         page.goto(base+'/constructor');expect(page.locator('#check-project')).to_be_attached(timeout=30000)
         expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl');page.locator('#room-setup-close').click()
         fixture();saved();page.screenshot(path=str(out/'desktop.png'))
+        # A rejected browser draft remains recoverable, points to the module,
+        # and can synchronize once its invalid coordinate is corrected.
+        expected_rejection=True
+        page.evaluate('()=>{MF_PLANNER.adapter.selected.x+=0.25;MF_PLANNER.bridge.refresh();}')
+        expect(page.locator('#project-save-warning')).to_contain_text('Модуль 3 · Положение X',timeout=12000)
+        expect(page.get_by_role('button',name='Сохранить копией',exact=True)).to_be_hidden()
+        page.get_by_role('button',name='Проверить параметры',exact=True).click()
+        expect(page.locator('[data-code=server-validation]')).to_contain_text('Положение X')
+        page.locator('#project-checks-dialog').get_by_role('button',name='Закрыть',exact=True).click()
+        page.evaluate('()=>{MF_PLANNER.adapter.selected.x-=0.25;MF_PLANNER.bridge.refresh();}')
+        saved();expect(page.locator('#project-save-warning')).to_be_hidden();expected_rejection=False
+        fixture();saved()
         assert page.locator('button.dimension-label[data-axis=width]:visible').count()==4
         expect(dim('height')).to_have_text('858');expect(page.locator('.dimension-summary')).to_contain_text('Корпус 720 + Ножки 100 + Столешница 38 = 858 мм')
         before=selected();edit('width',800);expect(page.locator('#dimension-editor')).not_to_be_visible()
@@ -111,6 +125,7 @@ with sync_playwright() as pw:
           p.workspace.closePanels();p.setView('3d');p.scene.fit('kitchen');
         }''')
         expect(page.locator('.dimension-run.dimension-label')).to_have_count(3);expect(page.locator('button.dimension-label[data-axis=depth]')).to_have_count(0)
+        assert '1828' in page.locator('.dimension-run.dimension-label').all_text_contents()
         page.locator('#mode-3d').click();page.locator('#reset-view').click();assert page.evaluate('MF_PLANNER.scene.mode')=='3d'
         expect(page.locator('.dimension-run.dimension-label:visible')).to_have_count(3);page.screenshot(path=str(out/'corner-kitchen.png'))
         fixture();page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(200);page.evaluate('MF_PLANNER.workspace.closePanels()');page.locator('#reset-view').click()

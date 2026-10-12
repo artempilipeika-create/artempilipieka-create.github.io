@@ -40,3 +40,11 @@ test('definitive validation failure permits corrected payload with new request i
 test('clean project and initial blank scene do not create redundant writes',async()=>{
   let calls=0;const {e}=setup(async()=>{calls++;return {project_id:'p',version:1};});await e.flush();assert.equal(calls,0);await e.flush(true);await e.flush(true);assert.equal(calls,1);
 });
+test('undo after a 422 clears its warning only when back at the acknowledged scene',async()=>{
+  let calls=0;
+  const {e,record}=setup(async()=>{calls++;throw Object.assign(Error('invalid'),{status:422});},{meta:{project_id:'p',version:4}});
+  e.capture(snap('Неверный'));await assert.rejects(e.flush());
+  e.capture(snap('Другие правки'));assert.ok(e.error);assert.equal(e.dirty,true);
+  e.capture(snap());assert.equal(e.error,null);assert.equal(e.dirty,false);assert.equal(record(),null);
+  await e.flush();assert.equal(calls,1);assert.equal(e.meta.version,4);
+});

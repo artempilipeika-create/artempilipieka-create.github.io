@@ -52,7 +52,7 @@ export function overallDimensions(items,room){
     for(const it of items){
       if(members.includes(it)||tier(it)!==g.tier||Math.abs(((it.rotation||0)-g.rotation)%180)!==90)continue;
       const [near,far]=interval(it,n),[left,right]=interval(it,u);
-      if(near<=g.back+.6&&far>=g.back-.6&&left<=hi+.6&&right>=lo-.6){
+      if(Math.abs(near-g.back)<.6||Math.abs(far-g.back)<.6){
         members.push(it);lo=Math.min(lo,left);hi=Math.max(hi,right);g.top=Math.max(g.top,elevation(it,room)+dimensionValue(it,'height'));
       }
     }

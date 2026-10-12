@@ -19,7 +19,13 @@ export class ProjectAutosave {
   get conflict(){return this.error?.status===409||this.error?.message==='PROJECT_3D_VERSION_CONFLICT';}
   record(){return copy({format:1,id:this.id,meta:this.meta,snapshot:this.snapshot,baseline:this.baseline,pending:this.pending,operation:this.operation,updated_at:new Date().toISOString()});}
   write(){try{this.persist(this.record(),this.dirty||Boolean(this.operation));this.localError=null;}catch(error){this.localError=error;}this.changed();}
-  capture(snapshot){this.snapshot=copy(snapshot);this.write();}
+  capture(snapshot){
+    this.snapshot=copy(snapshot);
+    // A definite validation rejection wrote nothing. Undo back to the last
+    // acknowledged scene is already safe, and needs no redundant save/retry.
+    if(!this.dirty&&this.error?.status===422)this.error=null;
+    this.write();
+  }
   flush(force=false){
     if(this.busy)return this.busy;
     if(this.conflict)return Promise.reject(this.error);

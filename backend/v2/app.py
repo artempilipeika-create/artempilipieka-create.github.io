@@ -102,6 +102,8 @@ def create_app(settings=None, policy=None):
         if request.url.path.startswith('/api/v2/3d-projects'):
             from .project_validation import project_validation_issues
             detail['issues']=project_validation_issues(exc.errors())
+            import logging
+            logging.getLogger(__name__).warning('Project validation rejected: %s', detail['issues'])
         return JSONResponse({'detail':detail},status_code=422)
 
     @app.get('/verify-email',response_class=HTMLResponse)

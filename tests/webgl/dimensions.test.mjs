@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {dimensionRuns,sceneDimensions,overallDimensions,clearanceDimensions,dimensionValue,dimensionEdit} from '../../backend/v2/cabinet_assets/planner/dimension-geometry.mjs';
-import {rotateXZ,dimensionPatch,heights} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {rotateXZ,dimensionPatch,heights,CORNER_VARIANTS,PRODUCTION_MODELS,cornerReturnPlacement} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 const room={width:6000,depth:5000,height:2800};
 const item=(id,x=0,extra={})=>({item_id:id,name:id,module_type:'base_cabinet',width:600,height:820,depth:510,base:'legs',legHeightMm:100,base_height:100,body_height:720,countertopThicknessMm:38,worktop_thickness:38,rotation:0,x,z:0,...extra});
 for(const rotation of [0,90,180,270])test('Dimensions follow cabinet axes and row at '+rotation,()=>{
@@ -28,6 +28,14 @@ for(const rotation of [0,90,180,270])test('Overall includes the perpendicular co
 test('Rows stop at gaps and split tiers and perpendicular returns',()=>{
   const items=[item('a'),item('b',600),item('gap',1220),item('upper',0,{module_type:'wall_cabinet',base:'wall',height:720}),item('corner-return',600,{z:900,rotation:90})];
   assert.deepEqual(dimensionRuns(items,room).filter(r=>r.items.length>1).map(r=>r.items.map(i=>i.item_id)),[['a','b']]);
+});
+test('Verified corner return total includes corner depth and its construction gap',()=>{
+  const v=CORNER_VARIANTS.find(v=>v.side==='right'&&v.purpose==='sink'&&v.door_count===1);
+  const corner=item('corner',500,{z:-900,width:1000,bazis_id:v.id,bazis_sha256:v.source_sha256});
+  const a=cornerReturnPlacement(corner,item('a',0,{bazis_id:'bazis.3079d0656398',bazis_sha256:PRODUCTION_MODELS['bazis.3079d0656398'].source_sha256}));
+  const b={...a,item_id:'b',z:a.z+600};
+  const d=overallDimensions([corner,a,b],room).find(d=>d.id.startsWith('overall:90:'));
+  assert.equal(d.value,1828);assert.equal(d.a.z,-1205);assert.equal(d.b.z,623);
 });
 test('Overall height edit preserves base and thickness and respects disabled countertop',()=>{
   const it=item('a');assert.equal(dimensionValue(it,'height'),858);
