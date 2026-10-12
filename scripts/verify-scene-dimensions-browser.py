@@ -82,7 +82,7 @@ with sync_playwright() as pw:
         expect(room_summary).to_have_text('Комната 6400 × 5400 · H 3000 мм');expect(room_dim('wall:a')).to_have_text('A · 6400');expect(room_dim('wall:d')).to_have_text('D · 5400')
         page.locator('#planner-undo').click();expect(room_summary).to_have_text('Комната 6000 × 5000 · H 2800 мм')
         # Empty rooms also have dimensions; no module or selection is required.
-        page.evaluate('''()=>{const p=MF_PLANNER,v=p.bridge.payload();v.scene.items=[];v.scene.selected_item_id=null;p.bridge.restore({...v,selectedId:null});p.roomSetup.projectChanged();p.workspace.closePanels();p.setView('3d');p.scene.fit('room');}''')
+        page.evaluate('''()=>{const p=MF_PLANNER,v=p.bridge.snapshot();v.scene.items=[];v.scene.selected_item_id=null;p.bridge.restore({...v,selectedId:null});p.roomSetup.projectChanged();p.workspace.closePanels();p.setView('3d');p.scene.fit('room');}''')
         expect(page.locator('.dimension-room.dimension-label:visible')).to_have_count(3);expect(room_summary).to_be_visible()
         page.screenshot(path=str(out/'room-empty.png'))
         fixture();saved()
