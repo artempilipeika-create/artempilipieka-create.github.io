@@ -1,7 +1,7 @@
-name: Wall dimensions and save contract
+name: Room and furniture dimensions
 on:
   push:
-    branches: [mf-wall-dimensions-save-20261013]
+    branches: [mf-wall-dimensions-save-20261013, mf-room-overall-dimensions-20261013]
 permissions:
   contents: read
 jobs:

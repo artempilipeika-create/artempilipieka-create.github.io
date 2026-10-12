@@ -1,6 +1,8 @@
 import * as THREE from './vendor/three.module.js';
 import {MM_TO_WORLD,heights,tier} from './furniture-core.mjs';
 import {sceneDimensions,clearanceDimensions,dimensionValue,dimensionEdit,formatMm} from './dimension-geometry.mjs';
+import {roomDimensions} from './room-dimensions.mjs';
+import {roomReady} from './room-plan.mjs';
 const names={width:'Ширина',height:'Общая высота'};
 const element=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el;};
 const svgNode=tag=>document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -9,9 +11,12 @@ const overlap=(a,b)=>a.left<b.right+5&&a.right>b.left-5&&a.top<b.bottom+5&&a.bot
 export class SceneDimensions{
   constructor(app){
     this.app=app;this.enabled=true;this.nodes=new Map();this.vector=new THREE.Vector3();
-    this.root=element('div','scene-dimensions');this.root.id='scene-dimensions';this.root.setAttribute('aria-label','Размеры мебели в миллиметрах');
+    this.root=element('div','scene-dimensions');this.root.id='scene-dimensions';this.root.setAttribute('aria-label','Размеры комнаты и мебели в миллиметрах');
     this.svg=svgNode('svg');this.svg.setAttribute('aria-hidden','true');this.root.append(this.svg);
-    this.summary=element('div','dimension-summary');this.summary.hidden=true;this.root.append(this.summary);
+    this.overview=element('div','dimension-overview');this.root.append(this.overview);
+    this.roomSummary=element('button','dimension-room-summary');this.roomSummary.type='button';this.roomSummary.id='room-overall-dimensions';
+    this.roomSummary.title='Показать всю комнату и размеры стен';this.roomSummary.onclick=()=>{app.interaction.cancel();app.scene.fit('room');};
+    this.summary=element('div','dimension-summary');this.summary.hidden=true;this.overview.append(this.roomSummary,this.summary);
     document.querySelector('.mf3d-canvas-wrap').append(this.root);
     this.toggle=element('button','secondary','Размеры');this.toggle.type='button';this.toggle.id='planner-dimensions';this.toggle.setAttribute('aria-pressed','true');this.toggle.title='Размеры в мм. Нажмите на размер шкафа, чтобы изменить его.';
     document.getElementById('planner-snap').after(this.toggle);
@@ -66,25 +71,29 @@ export class SceneDimensions{
     const preview=s.previewItems||[],ids=new Set(preview.map(it=>it.item_id));
     const items=app.adapter.items.map(it=>preview.find(p=>p.item_id===it.item_id)||it).concat(preview.filter(it=>!app.adapter.items.some(p=>p.item_id===it.item_id))).filter(it=>s.layer==='all'||tier(it)===s.layer);
     const selected=items.find(it=>it.item_id===(preview[0]?.item_id||app.adapter.selected?.item_id));
-    const dims=sceneDimensions(items,app.adapter.room,selected?.item_id);
+    const room=app.adapter.room,dims=sceneDimensions(items,room,selected?.item_id);
+    dims.push(...roomDimensions(room,{mode:s.mode,camera:{x:s.camera.position.x/MM_TO_WORLD,z:s.camera.position.z/MM_TO_WORLD}}));
     if(preview.length&&selected)dims.push(...clearanceDimensions(preview,app.adapter.items,app.adapter.room,[...ids]));
     const wanted=new Set(dims.map(d=>d.id));
     for(const [id,n]of this.nodes)if(!wanted.has(id)){n.path.remove();n.label.remove();this.nodes.delete(id);}
     const viewport={left:8,top:70,right:s.width-8,bottom:s.height-(s.width<=760?112:65)},occupied=[];
+    this.roomSummary.hidden=!roomReady(room);
+    this.roomSummary.textContent=`Комната ${formatMm(room.width)} × ${formatMm(room.depth)} · H ${formatMm(room.height)} мм`;
     this.summary.hidden=!selected||Boolean(preview.length);
     if(selected&&!preview.length){
       const h=heights(selected),terms=[`Корпус ${formatMm(h.body_height)}`];if(h.base_height)terms.push(`${selected.base==='legs'||selected.module_type==='base_cabinet'?'Ножки':'Основание'} ${formatMm(h.base_height)}`);if(h.worktop_thickness)terms.push(`Столешница ${formatMm(h.worktop_thickness)}`);
       this.summary.textContent=terms.join(' + ')+(terms.length>1?` = ${formatMm(h.overall_height_with_worktop)} мм`:' мм');
-      const box=this.summary.getBoundingClientRect(),canvas=s.canvas.getBoundingClientRect();occupied.push({left:box.left-canvas.left,right:box.right-canvas.left,top:box.top-canvas.top,bottom:box.bottom-canvas.top});
     }
-    dims.sort((a,b)=>(a.selected?0:a.kind==='gap'?1:a.kind==='run'?3:2)-(b.selected?0:b.kind==='gap'?1:b.kind==='run'?3:2));
+    const overview=this.overview.getBoundingClientRect(),canvas=s.canvas.getBoundingClientRect();occupied.push({left:overview.left-canvas.left,right:overview.right-canvas.left,top:overview.top-canvas.top,bottom:overview.bottom-canvas.top});
+    const priority=d=>d.selected?0:d.kind==='gap'?1:d.kind==='run'?3:d.kind==='room'?4:2;
+    dims.sort((a,b)=>priority(a)-priority(b));
     for(const d of dims){
       let node=this.nodes.get(d.id);
       if(!node){const path=svgNode('path'),label=element(d.kind==='module'?'button':'span','dimension-label');if(d.kind==='module'){label.type='button';label.onclick=()=>this.open(node.dimension);}this.svg.append(path);this.root.append(label);node={path,label};this.nodes.set(d.id,node);}
-      node.dimension=d;node.label.dataset.kind=d.kind;node.label.dataset.axis=d.axis||'';node.label.dataset.itemId=d.itemId||'';
+      node.dimension=d;node.label.dataset.kind=d.kind;node.label.dataset.axis=d.axis||'';node.label.dataset.itemId=d.itemId||'';node.label.dataset.dimensionId=d.id;
       node.label.className='dimension-label'+(d.selected?' is-selected':'')+' dimension-'+d.kind;node.path.setAttribute('class','dimension-line dimension-'+d.kind+(d.selected?' is-selected':''));
-      node.label.textContent=(d.kind==='gap'?'Зазор ':'')+formatMm(d.value);
-      node.label.title=d.kind==='module'?`${names[d.axis]}: ${formatMm(d.value)} мм — ${items.find(it=>it.item_id===d.itemId)?.name}. Нажмите, чтобы изменить.`:d.kind==='run'?'Общий габарит вдоль стены, включая промежутки и примыкающую угловую часть, мм':`${d.title}: ${formatMm(d.value)} мм. По габариту закрытых фасадов; без свеса столешницы.`;
+      node.label.textContent=(d.prefix||(d.kind==='gap'?'Зазор ':''))+formatMm(d.value);
+      node.label.title=d.kind==='module'?`${names[d.axis]}: ${formatMm(d.value)} мм — ${items.find(it=>it.item_id===d.itemId)?.name}. Нажмите, чтобы изменить.`:d.kind==='run'?'Общий габарит вдоль стены, включая промежутки и примыкающую угловую часть, мм':d.kind==='room'?`${d.title}: ${formatMm(d.value)} мм`:`${d.title}: ${formatMm(d.value)} мм. По габариту закрытых фасадов; без свеса столешницы.`;
       if(d.kind==='module')node.label.setAttribute('aria-label',node.label.title);
       const a=this.project(d.a,s),b=this.project(d.b,s),out=this.project(d.out,s),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
       let nx=length>2?-dy/length:1,ny=length>2?dx/length:0;if(nx*(out.x-mx)+ny*(out.y-my)<0){nx=-nx;ny=-ny;}

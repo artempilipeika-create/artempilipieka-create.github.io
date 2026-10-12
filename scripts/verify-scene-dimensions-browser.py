@@ -46,6 +46,7 @@ with sync_playwright() as pw:
     context=browser.new_context(viewport={'width':1500,'height':1000});context.route('**/*',gate)
     page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
     def dim(axis='width',id='lower-2'):return page.locator(f'button.dimension-label[data-item-id="{id}"][data-axis="{axis}"]')
+    def room_dim(id):return page.locator(f'.dimension-label[data-dimension-id="room:{id}"]')
     def edit(axis,value):
         dim(axis).click();page.locator('#dimension-editor-value').fill(str(value));page.locator('#dimension-editor button[type=submit]').click()
     def selected():return page.evaluate('MF_PLANNER.adapter.selected')
@@ -64,6 +65,27 @@ with sync_playwright() as pw:
         page.goto(base+'/constructor');expect(page.locator('#check-project')).to_be_attached(timeout=30000)
         expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl');page.locator('#room-setup-close').click()
         fixture();saved();page.screenshot(path=str(out/'desktop.png'))
+        # Overall room dimensions persist when zoomed into furniture, while
+        # world-space wall lines follow the room cutaway and the top plan.
+        room_summary=page.locator('#room-overall-dimensions')
+        expect(room_summary).to_have_text('Комната 6000 × 5000 · H 2800 мм');room_summary.click()
+        for id,text in [('wall:a','A · 6000'),('wall:d','D · 5000'),('height','H · 2800')]:
+            expect(room_dim(id)).to_be_visible();expect(room_dim(id)).to_have_text(text)
+        page.screenshot(path=str(out/'room-3d.png'))
+        page.locator('#mode-2d').click();room_summary.click()
+        expect(page.locator('.dimension-room.dimension-label:visible')).to_have_count(4)
+        page.screenshot(path=str(out/'room-top.png'))
+        # Resize through the actual room form and undo: labels use current room data.
+        page.locator('#planner-fit-room').click()
+        for axis,value in [('width',6400),('depth',5400),('height',3000)]:page.locator('#room-setup-'+axis).fill(str(value))
+        page.locator('#room-setup-apply').click();expect(page.locator('#room-setup')).to_be_hidden()
+        expect(room_summary).to_have_text('Комната 6400 × 5400 · H 3000 мм');expect(room_dim('wall:a')).to_have_text('A · 6400');expect(room_dim('wall:d')).to_have_text('D · 5400')
+        page.locator('#planner-undo').click();expect(room_summary).to_have_text('Комната 6000 × 5000 · H 2800 мм')
+        # Empty rooms also have dimensions; no module or selection is required.
+        page.evaluate('''()=>{const p=MF_PLANNER,v=p.bridge.payload();v.scene.items=[];v.scene.selected_item_id=null;p.bridge.restore({...v,selectedId:null});p.roomSetup.projectChanged();p.workspace.closePanels();p.setView('3d');p.scene.fit('room');}''')
+        expect(page.locator('.dimension-room.dimension-label:visible')).to_have_count(3);expect(room_summary).to_be_visible()
+        page.screenshot(path=str(out/'room-empty.png'))
+        fixture();saved()
         # A rejected browser draft remains recoverable, points to the module,
         # and can synchronize once its invalid coordinate is corrected.
         expected_rejection=True
@@ -132,10 +154,13 @@ with sync_playwright() as pw:
         expect(dim()).to_be_visible();expect(page.locator('.dimension-run.dimension-label')).to_be_visible();page.screenshot(path=str(out/'mobile.png'));dim().click();page.screenshot(path=str(out/'mobile-editor.png'))
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
         page.locator('#dimension-editor-value').fill('700');page.locator('#dimension-editor button[type=submit]').click();assert selected()['width']==700
+        expect(room_summary).to_be_visible();room_summary.click()
+        expect(page.locator('.dimension-room.dimension-label:visible')).to_have_count(3);page.screenshot(path=str(out/'room-mobile.png'))
+        page.locator('#reset-view').click();expect(dim()).to_be_visible()
         # Rendering mode failure removes overlays and an open editor cleanly.
         dim().click();page.evaluate('MF_PLANNER.fallback()');expect(page.locator('#dimension-editor')).not_to_be_visible();expect(page.locator('#scene-dimensions')).to_be_hidden()
         assert not errors,errors
-        (out/'report.json').write_text(json.dumps({'passed':True,'checks':['widths + total','all four rotations','click edit width/height; no depth on scene','overall/base/top accounting','left anchor','one-step undo/redo','invalid and collision rollback','Escape cancel','autosave payload','top/front views','live drag clearances','dimensions toggle','client view','mobile edit','fallback cleanup'],'writes':len(writes),'errors':errors},ensure_ascii=False,indent=2))
+        (out/'report.json').write_text(json.dumps({'passed':True,'checks':['room wall lengths + height in 3D','four walls in room plan','room overview while zoomed into furniture','room resize + undo','empty room dimensions','mobile room dimensions','widths + total','all four rotations','click edit width/height; no depth on scene','overall/base/top accounting','left anchor','one-step undo/redo','invalid and collision rollback','Escape cancel','autosave payload','top/front views','live drag clearances','dimensions toggle','client view','mobile edit','fallback cleanup'],'writes':len(writes),'errors':errors},ensure_ascii=False,indent=2))
         print((out/'report.json').read_text())
     except Exception:
         print({'errors':errors,'status':page.locator('#status').text_content()});page.screenshot(path=str(out/'failure.png'));raise
