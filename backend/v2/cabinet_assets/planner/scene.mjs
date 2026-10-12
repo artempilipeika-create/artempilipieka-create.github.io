@@ -269,7 +269,8 @@ export class PlannerScene{
       const direction=this.mode==='top'?new THREE.Vector3(0,1,0):this.mode==='left'?new THREE.Vector3(-1,0,0):this.mode==='right'?new THREE.Vector3(1,0,0):new THREE.Vector3(0,0,1);
       this.camera.up.set(0,this.mode==='top'?0:1,this.mode==='top'?-1:0);this.camera.position.copy(center).addScaledVector(direction,distance);
       const horizontal=this.mode==='left'||this.mode==='right'?size.z:size.x,vertical=this.mode==='top'?size.z:size.y;
-      this.orthoSpan=Math.max(.35,vertical/2,horizontal/2/(this.width/this.height))*1.4;this.camera.zoom=1;this.resize();
+      // Keep room wall dimensions clear of the toolbar and size overview.
+      this.orthoSpan=Math.max(.35,vertical/2,horizontal/2/(this.width/this.height))*(which==='room'?1.65:1.4);this.camera.zoom=1;this.resize();
     }
     this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
   }
