@@ -84,7 +84,8 @@ export class SceneDimensions{
       const h=heights(selected),terms=[`Корпус ${formatMm(h.body_height)}`];if(h.base_height)terms.push(`${selected.base==='legs'||selected.module_type==='base_cabinet'?'Ножки':'Основание'} ${formatMm(h.base_height)}`);if(h.worktop_thickness)terms.push(`Столешница ${formatMm(h.worktop_thickness)}`);
       this.summary.textContent=terms.join(' + ')+(terms.length>1?` = ${formatMm(h.overall_height_with_worktop)} мм`:' мм');
     }
-    const overview=this.overview.getBoundingClientRect(),canvas=s.canvas.getBoundingClientRect();occupied.push({left:overview.left-canvas.left,right:overview.right-canvas.left,top:overview.top-canvas.top,bottom:overview.bottom-canvas.top});
+    const canvas=s.canvas.getBoundingClientRect();
+    for(const panel of [this.summary,this.roomSummary])if(!panel.hidden){const box=panel.getBoundingClientRect();occupied.push({left:box.left-canvas.left,right:box.right-canvas.left,top:box.top-canvas.top,bottom:box.bottom-canvas.top});}
     const priority=d=>d.selected?0:d.kind==='gap'?1:d.kind==='run'?3:d.kind==='room'?4:2;
     dims.sort((a,b)=>priority(a)-priority(b));
     for(const d of dims){
