@@ -245,8 +245,8 @@ export class PlannerScene{
   }
   fit(which='kitchen'){
     if(this.client&&this.mode==='3d'&&which==='kitchen')return this.fitKitchenForClient();
+    this.resize();this.stopOrbitInertia();
     this.perspective.clearViewOffset();
-    if(this.client)this.stopOrbitInertia();
     const box=this.cameraBox(which),center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3());
     this.controls.target.copy(center);
     if(this.mode==='3d'){
@@ -254,7 +254,7 @@ export class PlannerScene{
       // kitchen now uses the canvas instead of leaving a room-sized margin.
       const presentation=this.client&&which!=='room';
       const dir=(which==='room'?new THREE.Vector3(.65,.42,1):presentation?new THREE.Vector3(.24,.22,1).applyAxisAngle(new THREE.Vector3(0,1,0),-this.kitchenRotation()*Math.PI/180):new THREE.Vector3(.50,.29,1)).normalize();
-      const padH=which==='room'?.84:presentation?.82:.80,padV=which==='room'?.78:presentation?.73:.74;
+      const padH=which==='room'?.84:presentation?.82:this.width<=760?.66:.80,padV=which==='room'?.78:presentation?.73:.70;
       const right=new THREE.Vector3(0,1,0).cross(dir).normalize();
       const up=dir.clone().cross(right).normalize();
       const tanV=Math.tan(this.perspective.fov*Math.PI/360),tanH=tanV*this.perspective.aspect;
@@ -269,7 +269,7 @@ export class PlannerScene{
       const direction=this.mode==='top'?new THREE.Vector3(0,1,0):this.mode==='left'?new THREE.Vector3(-1,0,0):this.mode==='right'?new THREE.Vector3(1,0,0):new THREE.Vector3(0,0,1);
       this.camera.up.set(0,this.mode==='top'?0:1,this.mode==='top'?-1:0);this.camera.position.copy(center).addScaledVector(direction,distance);
       const horizontal=this.mode==='left'||this.mode==='right'?size.z:size.x,vertical=this.mode==='top'?size.z:size.y;
-      this.orthoSpan=Math.max(.35,vertical/2,horizontal/2/(this.width/this.height))*1.16;this.camera.zoom=1;this.resize();
+      this.orthoSpan=Math.max(.35,vertical/2,horizontal/2/(this.width/this.height))*1.4;this.camera.zoom=1;this.resize();
     }
     this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
   }

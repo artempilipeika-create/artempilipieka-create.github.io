@@ -16,7 +16,7 @@ export function dimensionRuns(items,room){
     if(!remaining.has(first))continue;
     const u=rotateXZ(1,0,first.rotation||0),n=rotateXZ(0,1,first.rotation||0);
     const aligned=items.filter(it=>remaining.has(it)&&(it.rotation||0)===(first.rotation||0)&&tier(it)===tier(first)&&
-      Math.abs(elevation(it,room)-elevation(first,room))<.6&&
+      (Math.abs(elevation(it,room)-elevation(first,room))<.6||Math.abs(elevation(it,room)+dimensionValue(it,'height')-elevation(first,room)-dimensionValue(first,'height'))<.6)&&
       (Math.abs(dot(it,n)-it.depth/2-dot(first,n)+first.depth/2)<.6||Math.abs(dot(it,n)+it.depth/2-dot(first,n)-first.depth/2)<.6))
       .sort((a,b)=>dot(a,u)-dot(b,u));
     let run;
@@ -30,19 +30,19 @@ export function dimensionRuns(items,room){
 }
 export function sceneDimensions(items,room,selectedId){
   const result=[];
-  for(const it of items){
-    const y=elevation(it,room),w=it.width/2,d=it.depth/2,h=dimensionValue(it,'height'),selected=it.item_id===selectedId;
-    const add=(axis,a,b,out)=>result.push({id:it.item_id+':'+axis,itemId:it.item_id,axis,value:dimensionValue(it,axis),kind:'module',selected,a,b,out,offset:26});
-    add('width',local(it,-w,y,d),local(it,w,y,d),local(it,0,y-200,d+200));
-    if(selected){
-      add('height',local(it,w,y,d),local(it,w,y+h,d),local(it,w+200,y+h/2,d));
-      add('depth',local(it,w,y+h,-d),local(it,w,y+h,d),local(it,w+200,y+h,0));
-    }
-  }
   for(const run of dimensionRuns(items,room)){
-    if(run.items.length<2)continue;
-    const point=(x,z)=>({x:run.u.x*x+run.n.x*z,y:run.level,z:run.u.z*x+run.n.z*z});
-    result.push({id:'run:'+run.items.map(it=>it.item_id).join(':'),kind:'run',value:run.hi-run.lo,a:point(run.lo,run.front),b:point(run.hi,run.front),out:{...point((run.lo+run.hi)/2,run.front+200),y:run.level-200},offset:66});
+    const top=Math.max(...run.items.map(it=>elevation(it,room)+dimensionValue(it,'height')));
+    const point=(x,y,z=run.front)=>({x:run.u.x*x+run.n.x*z,y,z:run.u.z*x+run.n.z*z});
+    for(const it of run.items){
+      const x=dot(it,run.u),y=elevation(it,room)+dimensionValue(it,'height'),w=it.width/2;
+      result.push({id:it.item_id+':width',itemId:it.item_id,axis:'width',value:it.width,kind:'module',selected:it.item_id===selectedId,
+        a:point(x-w,top),b:point(x+w,top),sourceA:local(it,-w,y,it.depth/2),sourceB:local(it,w,y,it.depth/2),out:point(x,top+200,run.front+100),offset:26});
+    }
+    const representative=run.items.find(it=>it.item_id===selectedId)||run.items[0],level=elevation(representative,room),height=dimensionValue(representative,'height');
+    result.push({id:representative.item_id+':height',itemId:representative.item_id,axis:'height',value:height,kind:'module',selected:representative.item_id===selectedId,
+      a:point(run.lo,level),b:point(run.lo,level+height),out:point(run.lo-200,level+height/2),offset:32});
+    if(run.items.length>1)result.push({id:'run:'+run.items.map(it=>it.item_id).join(':'),kind:'run',value:run.hi-run.lo,
+      a:point(run.lo,top),b:point(run.hi,top),out:point((run.lo+run.hi)/2,top+200,run.front+100),offset:65});
   }
   return result;
 }

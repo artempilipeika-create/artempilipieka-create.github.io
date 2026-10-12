@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {MM_TO_WORLD,heights,tier} from './furniture-core.mjs';
 import {sceneDimensions,clearanceDimensions,dimensionValue,dimensionEdit,formatMm} from './dimension-geometry.mjs';
-const names={width:'Ширина',height:'Общая высота',depth:'Глубина корпуса'},short={width:'Ш',height:'В',depth:'Г'};
+const names={width:'Ширина',height:'Общая высота'};
 const element=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el;};
 const svgNode=tag=>document.createElementNS('http://www.w3.org/2000/svg',tag);
 const overlap=(a,b)=>a.left<b.right+5&&a.right>b.left-5&&a.top<b.bottom+5&&a.bottom>b.top-5;
@@ -83,25 +83,29 @@ export class SceneDimensions{
       if(!node){const path=svgNode('path'),label=element(d.kind==='module'?'button':'span','dimension-label');if(d.kind==='module'){label.type='button';label.onclick=()=>this.open(node.dimension);}this.svg.append(path);this.root.append(label);node={path,label};this.nodes.set(d.id,node);}
       node.dimension=d;node.label.dataset.kind=d.kind;node.label.dataset.axis=d.axis||'';node.label.dataset.itemId=d.itemId||'';
       node.label.className='dimension-label'+(d.selected?' is-selected':'')+' dimension-'+d.kind;node.path.setAttribute('class','dimension-line dimension-'+d.kind+(d.selected?' is-selected':''));
-      node.label.textContent=(d.kind==='run'?'Ряд ':d.kind==='gap'?'Зазор ':d.selected?short[d.axis]+' ':'')+formatMm(d.value);
+      node.label.textContent=(d.kind==='gap'?'Зазор ':'')+formatMm(d.value);
       node.label.title=d.kind==='module'?`${names[d.axis]}: ${formatMm(d.value)} мм — ${items.find(it=>it.item_id===d.itemId)?.name}. Нажмите, чтобы изменить.`:d.kind==='run'?'Общая длина сомкнутого прямого ряда, мм':`${d.title}: ${formatMm(d.value)} мм. По габариту закрытых фасадов; без свеса столешницы.`;
       if(d.kind==='module')node.label.setAttribute('aria-label',node.label.title);
       const a=this.project(d.a,s),b=this.project(d.b,s),out=this.project(d.out,s),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
       let nx=length>2?-dy/length:1,ny=length>2?dx/length:0;if(nx*(out.x-mx)+ny*(out.y-my)<0){nx=-nx;ny=-ny;}
-      let show=a.visible&&b.visible&&mx>viewport.left-80&&mx<viewport.right+80&&my>viewport.top-80&&my<viewport.bottom+80&&(length>12||d.selected||d.kind==='gap');
+      let show=a.visible&&b.visible&&mx>viewport.left-80&&mx<viewport.right+80&&my>viewport.top-80&&my<viewport.bottom+80&&(length>12||d.kind==='gap');
       const width=Math.max(48,node.label.textContent.length*7.3+18),height=30;
-      let box,cx,cy;
-      for(let lane=0;show&&lane<8;lane++){
-        const distance=d.offset+lane*34;cx=mx+nx*distance;cy=my+ny*distance;
+      let box,cx,cy,placed=false;
+      const ux=length>0?dx/length:1,uy=length>0?dy/length:0,shift=Math.min(56,length/4);
+      for(let lane=0;show&&!placed&&lane<8;lane++)for(const along of [0,-shift,shift]){
+        const distance=d.offset+12+lane*30;cx=mx+nx*distance+ux*along;cy=my+ny*distance+uy*along;
         cx=Math.max(viewport.left+width/2,Math.min(viewport.right-width/2,cx));cy=Math.max(viewport.top+height/2,Math.min(viewport.bottom-height/2,cy));
         box={left:cx-width/2,right:cx+width/2,top:cy-height/2,bottom:cy+height/2};
-        if(!occupied.some(other=>overlap(box,other)))break;if(lane===7)show=false;
+        if(!occupied.some(other=>overlap(box,other))){placed=true;break;}
       }
+      show=show&&placed;
       node.label.hidden=!show;node.path.style.display=show?'':'none';if(!show)continue;
       occupied.push(box);node.label.style.left=cx+'px';node.label.style.top=cy+'px';
       const ax=a.x+nx*d.offset,ay=a.y+ny*d.offset,bx=b.x+nx*d.offset,by=b.y+ny*d.offset;
-      const tick=(x,y)=>`M${x-nx*4},${y-ny*4}L${x+nx*4},${y+ny*4}`;
-      node.path.setAttribute('d',`M${a.x},${a.y}L${ax+nx*5},${ay+ny*5}M${b.x},${b.y}L${bx+nx*5},${by+ny*5}M${ax},${ay}L${bx},${by}${tick(ax,ay)}${tick(bx,by)}M${(ax+bx)/2},${(ay+by)/2}L${cx},${cy}`);
+      const fromA=d.sourceA?this.project(d.sourceA,s):a,fromB=d.sourceB?this.project(d.sourceB,s):b;
+      const arrow=(x,y,sign)=>`M${x},${y}L${x+ux*sign*6+nx*2},${y+uy*sign*6+ny*2}L${x+ux*sign*6-nx*2},${y+uy*sign*6-ny*2}Z`;
+      const leader=Math.hypot(cx-mx-nx*(d.offset+12),cy-my-ny*(d.offset+12))>20?`M${(ax+bx)/2},${(ay+by)/2}L${cx},${cy}`:'';
+      node.path.setAttribute('d',`M${fromA.x},${fromA.y}L${ax+nx*5},${ay+ny*5}M${fromB.x},${fromB.y}L${bx+nx*5},${by+ny*5}M${ax},${ay}L${bx},${by}${length>18?arrow(ax,ay,1)+arrow(bx,by,-1):''}${leader}`);
       if(d.kind==='module')node.label.disabled=Boolean(preview.length)||!app.interaction.editable();
     }
   }

@@ -33,7 +33,15 @@ test('Dimension calculation does not change saved scene or extend open-door boun
   const it=item('a',0,{doors_open:true}),items=[it],before=JSON.stringify(items);
   sceneDimensions(items,room,'a');clearanceDimensions(it,items,room);dimensionRuns(items,room);
   assert.equal(JSON.stringify(items),before);
-  assert.equal(sceneDimensions(items,room,'a').find(d=>d.axis==='depth').value,510);
+  assert.equal(sceneDimensions(items,room,'a').some(d=>d.axis==='depth'),false);
+});
+test('Width chains are above each tier and upper cabinets share their top datum',()=>{
+  const lower=item('a'),upper=item('b',0,{module_type:'wall_cabinet',base:'wall',height:720}),short=item('c',600,{module_type:'wall_cabinet',base:'wall',height:500});
+  const dims=sceneDimensions([lower,upper,short],room,'a');
+  assert.equal(dims.find(d=>d.id==='a:width').a.y,858);
+  assert.equal(dims.find(d=>d.id==='b:width').a.y,2300);assert.equal(dims.find(d=>d.id==='c:width').a.y,2300);
+  assert.equal(dims.find(d=>d.kind==='run').value,1200);
+  assert.equal(dims.filter(d=>d.axis==='height').length,2);assert.ok(dims.every(d=>d.axis!=='depth'));
 });
 test('Group move clearance starts at its outer envelope',()=>{
   const a=item('a'),b=item('b',600),outside=item('c',1400);
