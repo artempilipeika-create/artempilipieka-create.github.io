@@ -9,6 +9,22 @@ from backend.v2.three_d_api import FurnitureItem
 from backend.v2.three_d_drawers import VARIANTS
 from backend.v2.three_d_document import hardware_for,module_contents,module_materials,render
 ROOT=Path(__file__).resolve().parents[1]
+def test_drawer_assets_are_served_by_constructor_router():
+ from fastapi import FastAPI
+ from fastapi.testclient import TestClient
+ from backend.v2.cabinet_ui import router
+ app=FastAPI();app.include_router(router())
+ with TestClient(app) as client:
+  page=client.get('/constructor')
+  assert page.status_code==200 and 'drawer-options-controls' in page.text
+  for name in ('drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js'):
+   response=client.get('/account/planner/'+name)
+   assert response.status_code==200,name
+   assert response.content==(ROOT/'backend/v2/cabinet_assets/planner'/name).read_bytes(),name
+   expected='text/css' if name.endswith('.css') else 'application/json' if name.endswith('.json') else 'application/javascript'
+   assert response.headers['content-type'].startswith(expected),name
+  assert client.get('/account/planner/not-a-public-asset.py').status_code==404
+
 def item(v):
  return dict(item_id=v['id'],name=v['label'],module_type='base_cabinet',bazis_id=v['id'],bazis_file=v['source_file'],bazis_sha256=v['source_sha256'],width=600,height=820,depth=510,body_height=720,base_height=100,base='legs',x=0,z=0,rotation=0)
 @pytest.mark.parametrize('v',VARIANTS,ids=lambda v:v['id'])
