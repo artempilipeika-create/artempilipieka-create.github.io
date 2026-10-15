@@ -326,7 +326,6 @@ function renderModuleCatalogue(){
   }
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
-    if(['bazis.39f282e08f0c','bazis.5f5697e39e27'].includes(id))continue;
     if(m.production.metal_drawers&&id!==globalThis.MF_DRAWERS.family.default_id)continue;
     const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(id);
     if(family&&id!==family.left)continue;
@@ -343,7 +342,7 @@ function renderModuleCatalogue(){
       :p.carcass.type==='sink_three_vertical_rails'
         ?'Мойка · 3 вертикальные царги · нижняя царга сзади'
       :drawerCount
-      ?drawerCount+' ящика · AKS · направляющие с доводчиком · автоподбор по глубине'
+      ?drawerCount+' ящика · AKS · шариковые направляющие с доводчиком · автоподбор по глубине'
       :p.dryer
         ?(p.doors.length===2?'Верхний · сушка AKS по ширине · 2 фасада · PRIME':'Верхний · сушка AKS по ширине · 1 фасад · PRIME')
       :isWall
