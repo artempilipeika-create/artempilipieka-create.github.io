@@ -53,12 +53,12 @@ test('Legs translate all boards without stretching body or changing facades',()=
   for(let i=0;i<a.length;i++){assert.deepEqual(a[i].size,b[i].size);assert.ok(Math.abs(b[i].position.y-a[i].position.y-legHeightMm+100)<1e-8);}
  }
 });
-test('Width changes match both native X planes and unsupported depth/height stay blocked',()=>{
+test('Width changes match both native X planes; height and depth are elastic',()=>{
  for(const v of D.variants){
   const it=item(v),wide={...it,width:800},p=productionParts(wide,template(wide));
   assert.equal(p.find(p=>p.key==='bottom').size.x,800);assert.equal(p.find(p=>p.key==='drawer-1-bottom').size.x,689);
   assert.equal(p.find(p=>p.key==='side-P').position.x,391);assert.equal(p.find(p=>p.key==='front-1').size.x,797);
-  assert.match(dimensionError({...it,depth:560}),/510/);assert.match(dimensionError({...it,height:900,body_height:800}),/720/);
+  assert.equal(dimensionError({...it,depth:560}),'');assert.equal(dimensionError({...it,height:900,body_height:800}),'');
  }
  assert.ok(PILOT_PRODUCTION['bazis.39f282e08f0c']);assert.ok(PILOT_PRODUCTION['bazis.5f5697e39e27']);
 });

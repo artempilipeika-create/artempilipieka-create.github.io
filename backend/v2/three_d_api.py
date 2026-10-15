@@ -15,7 +15,7 @@ from . import catalogue
 from .three_d_document import render as render_spec
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
-from .three_d_drawers import drawer_variant, BY_ID as DRAWER_BY_ID
+from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
 from .three_d_room import Room
 
@@ -133,8 +133,10 @@ class FurnitureItem(StrictModel):
             if not drawer:raise ValueError('Фрагмент ящиков не совпадает с проверенным исходником')
             if self.module_type!='base_cabinet' or self.base=='wall' or base not in (80,100,150):
                 raise ValueError('Ящики: нижний модуль на ножках 80, 100 или 150 мм')
-            if not 400<=self.width<=1200 or body!=720 or self.depth!=510:
-                raise ValueError('Ящики: ширина 400–1200 мм, корпус 720 мм, глубина 510 мм')
+            if not 400<=self.width<=1200 or not 600<=body<=1000 or not 300<=self.depth<=700:
+                raise ValueError('Размеры шкафа: корпус 600–1000 мм, глубина 300–700 мм, ширина 400–1200 мм.')
+            _,error=drawer_configuration(dict(bazis_id=self.bazis_id,bazis_sha256=self.bazis_sha256,height=self.height,base_height=base,depth=self.depth))
+            if error:raise ValueError(error)
             self.bazis_file=drawer['source_file'];self.bazis_resize=True
             self.layout='drawers';self.drawers=drawer['drawer_count']
             if drawer['opening']=='push':self.handles='handleless'

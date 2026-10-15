@@ -745,7 +745,7 @@ async function syncControls(){
     const run=globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room).find(r=>r.members.includes(it.item_id));
     if($('kitchen-summary'))$('kitchen-summary').textContent=!kitchen.countertopEnabled?'Столешница над этим модулем отключена.':'Столешница ряда: '+(run?.countertopActualLengthMm||it.width)+' × '+kitchen.countertopDepthMm+' × '+kitchen.countertopThicknessMm+' мм · заготовка 4100 мм. Сзади '+kitchen.rearServiceGapMm+' мм · спереди '+kitchen.frontOverhangMm+' мм.'+(kitchen.frontOverhangMm<20?' Увеличьте глубину столешницы для переднего свеса.':'')+(run?.countertopActualLengthMm>4100?' Ряд длиннее заготовки: потребуется стык.':'');
   }
-  if($('body-height'))$('body-height').disabled=Boolean(it.bazis_id&&!t?.production)||Boolean(t?.production?.metal_drawers);
+  if($('body-height'))$('body-height').disabled=Boolean(it.bazis_id&&!t?.production);
   if($('worktop-control'))$('worktop-control').hidden=Boolean(kitchen)||it.module_type!=='base_cabinet'||it.depth>750;
   if($('height-breakdown'))$('height-breakdown').textContent='Корпус '+h.body_height+' + основание '+h.base_height+' = модуль '+h.module_height+' мм'+(h.worktop_thickness?' · со столешницей '+h.overall_height_with_worktop+' мм':'');
   const production=t?.production||null,prodRoot=$('production-controls');
@@ -1211,7 +1211,7 @@ function exportBazisProject(){
           constraints:p.constraints||null,
           corner:p.corner||null,tall:p.tall?{...p.tall,upper_shelf_count:globalThis.MF_FURNITURE_CORE.tallUpperShelves(it,p).length,
             upper_shelves:globalThis.MF_FURNITURE_CORE.tallUpperShelves(it,p),shelf_layout:it.upper_shelf_count==null?'native':'even'}:null,
-          metal_drawers:p.metal_drawers?{system:p.metal_drawers.system,series:p.metal_drawers.series,manufacturer:p.metal_drawers.manufacturer,layout:p.metal_drawers.layout,opening:p.metal_drawers.opening,color:'white',length_mm:500,front_heights_mm:p.metal_drawers.front_heights,native_front_heights_mm:p.metal_drawers.native_front_heights,nominal_tolerance_mm:.1}:null,
+          metal_drawers:p.metal_drawers?{system:p.metal_drawers.system,series:p.metal_drawers.series,manufacturer:p.metal_drawers.manufacturer,layout:p.metal_drawers.layout,opening:p.metal_drawers.opening,color:'white',length_mm:globalThis.MF_DRAWERS.railLengths(it).length===1?globalThis.MF_DRAWERS.railLengths(it)[0]:null,lengths_mm:globalThis.MF_DRAWERS.railLengths(it),drawers:globalThis.MF_DRAWERS.configuration(it).drawers.map(d=>({index:d.index,length_mm:d.kit.length_mm,height_mm:d.kit.height_mm,article:d.kit.article})),front_heights_mm:globalThis.MF_DRAWERS.frontHeights(it),native_front_heights_mm:p.metal_drawers.native_front_heights,nominal_tolerance_mm:.1}:null,
           vitrine:p.vitrine?{...p.vitrine,...globalThis.MF_VITRINE.metrics(it)}:null,
           native_adjustment:p.metal_drawers?globalThis.MF_DRAWERS.adjustment(it):p.vitrine?globalThis.MF_VITRINE.adjustment(it):globalThis.MF_FURNITURE_CORE.tallShelfAdjustment(it,p),facade:p.facade||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),

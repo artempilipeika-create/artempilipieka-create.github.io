@@ -80,7 +80,7 @@ test('Unsupported combinations and incompatible metal dimensions cannot silently
   assert.equal(D.available(v,{opening:'push'}),null);assert.equal(D.available(v,{layout:'inner'}),null);
   assert.throws(()=>D.select(it,{opening:'push'},choices),/сочетания/);
   const narrow={...it,width:350};assert.throws(()=>D.select(narrow,{system:'aq'},choices),/400–1200/);
-  const shallow={...it,depth:450};assert.throws(()=>D.select(shallow,{system:'slimbox'},choices),/510/);assert.equal(shallow.depth,450);
+  const shallow={...it,depth:450};assert.throws(()=>D.select(shallow,{system:'slimbox'},choices),/глубины/);assert.equal(shallow.depth,450);
   assert.equal(D.select(shallow,{layout:v.layout==='two'?'three':'two'},choices).depth,450);
  }
 });
@@ -104,8 +104,9 @@ test('Shared controls describe ordinary and metal construction accurately and di
   assert.equal(buttons.find(b=>b.dataset.drawerValue==='push').disabled,true);
   assert.equal(buttons.find(b=>b.dataset.drawerValue==='inner').disabled,true);
   MF_DRAWER_UI.sync({...item(ball[0]),depth:450},models[ball[0].id]);
-  assert.equal(buttons.find(b=>b.dataset.drawerValue==='aq').disabled,true);
-  assert.match(buttons.find(b=>b.dataset.drawerValue==='aq').title,/510/);
+  assert.equal(buttons.find(b=>b.dataset.drawerValue==='aq').disabled,false);
+  assert.equal(buttons.find(b=>b.dataset.drawerValue==='slimbox').disabled,true);
+  assert.match(buttons.find(b=>b.dataset.drawerValue==='slimbox').title,/глубины/);
   MF_DRAWER_UI.sync(item(D.variants[0]),models[D.variants[0].id]);
   assert.equal(node('#drawer-board-material-controls').hidden,false);assert.match(node('#drawer-construction').textContent,/16 мм/);
   assert.equal(buttons.find(b=>b.dataset.drawerValue==='ball').disabled,false);

@@ -21,7 +21,7 @@
   el.querySelector('#drawer-inner-note').hidden=v.layout!=='inner';
   el.querySelector('#drawer-construction').textContent=ordinary
    ?'Ящики из ЛДСП 18 мм в декоре корпуса, днища — ЛХДФ 3 мм. Шариковые направляющие с доводчиком · '+root.MF_FURNITURE_CORE.drawerSlideLengthMm(it.depth)+' мм · подбор по глубине корпуса.'
-   :'Белая фурнитура · длина 500 мм. Корпус 720 мм, глубина 510 мм. Дно и задние стенки ящиков — 16 мм в декоре корпуса.';
+   :'Белая фурнитура · направляющие '+D.railLengths(it).join(' / ')+' мм. Корпус '+(it.height-(it.legHeightMm??it.base_height??100))+' мм, глубина '+it.depth+' мм. Типы ящиков и длины направляющих подбираются по правилам фрагмента. Дно и задние стенки ящиков — 16 мм в декоре корпуса.';
   el.querySelector('#drawer-board-material-controls').hidden=ordinary;
   el.querySelector('#drawer-material-note').textContent=ordinary
    ?'Стенки ящиков используют выбранный материал корпуса 18 мм. Для днищ и задника выберите ЛХДФ 3 мм.'
