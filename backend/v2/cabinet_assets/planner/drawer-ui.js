@@ -7,18 +7,30 @@
  }
  function sync(it,p){
   const el=document.getElementById('drawer-options-controls');if(!el)return;
-  const v=p?.metal_drawers;el.hidden=!v;if(!v)return;
+  const v=D.familyInfo(it);el.hidden=!v;if(!v)return;
+  const ordinary=v.system==='ball';
   for(const b of el.querySelectorAll('[data-drawer-option]')){
-   const key=b.dataset.drawerOption,value=b.dataset.drawerValue,ok=D.available(v,{[key]:value});
-   b.disabled=!ok;b.setAttribute('aria-pressed',String(v[key]===value));
-   b.title=ok?'':'Нет такого сочетания в загруженных фрагментах';
+   const key=b.dataset.drawerOption,value=b.dataset.drawerValue,target=D.available(v,{[key]:value}),error=D.selectionError(it,target);
+   b.disabled=Boolean(error);b.setAttribute('aria-pressed',String(v[key]===value));
+   b.title=error;
    const icon=b.querySelector('.drawer-option-image');if(icon)icon.innerHTML=drawing(value);
   }
   el.querySelector('#drawer-selection').textContent=v.manufacturer+' · '+v.series+' · '+D.openings[v.opening];
   el.querySelector('#drawer-leg-note').textContent=D.adjustment(it)?.note||'';
-  el.querySelector('#drawer-fronts').textContent='Фасады снизу вверх: '+v.front_heights.map(x=>String(x).replace('.',',')).join(' + ')+' мм';
+  el.querySelector('#drawer-fronts').textContent='Фасады снизу вверх: '+D.frontHeights(it).map(x=>String(x).replace('.',',')).join(' + ')+' мм';
   el.querySelector('#drawer-inner-note').hidden=v.layout!=='inner';
-  el.querySelector('#drawer-availability').textContent=v.system==='aq'?'AQ LineBox: 2 или 3 ящика с доводчиком. Для Push to open и внутреннего ящика выберите Slimbox Evolution.':(v.opening==='push'||v.layout==='inner')?'Для перехода на AQ LineBox выберите 2 или 3 ящика и доводчик.':'';
+  el.querySelector('#drawer-construction').textContent=ordinary
+   ?'Ящики из ЛДСП 18 мм в декоре корпуса, днища — ЛХДФ 3 мм. Шариковые направляющие с доводчиком · '+root.MF_FURNITURE_CORE.drawerSlideLengthMm(it.depth)+' мм · подбор по глубине корпуса.'
+   :'Белая фурнитура · длина 500 мм. Корпус 720 мм, глубина 510 мм. Дно и задние стенки ящиков — 16 мм в декоре корпуса.';
+  el.querySelector('#drawer-board-material-controls').hidden=ordinary;
+  el.querySelector('#drawer-material-note').textContent=ordinary
+   ?'Стенки ящиков используют выбранный материал корпуса 18 мм. Для днищ и задника выберите ЛХДФ 3 мм.'
+   :'В 3D ящики наследуют декор корпуса. Для распила выберите тот же декор в толщине 16 мм и материал задника 3 мм.';
+  el.querySelector('#drawer-back-label').textContent=ordinary?'Днища ящиков и задник корпуса · 3 мм':'Задник корпуса · 3 мм';
+  const restriction=ordinary?D.selectionError(it,D.available(v,{system:'aq'})):'';
+  el.querySelector('#drawer-availability').textContent=(restriction?restriction+' ':'')+(v.system==='slimbox'&&(v.opening==='push'||v.layout==='inner')
+   ?'Для перехода на обычные шариковые или AQ LineBox выберите 2 или 3 ящика и доводчик.'
+   :'Обычные шариковые и AQ LineBox: 2 или 3 ящика с доводчиком. Push to open и внутренний ящик доступны у Slimbox Evolution.');
  }
  root.MF_DRAWER_UI=Object.freeze({drawing,sync});
 })(globalThis);

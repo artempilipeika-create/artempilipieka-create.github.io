@@ -106,11 +106,12 @@ class PlannerApplication {
   bindInspector(){
     this.listen(get('drawer-options-controls'),'click',e=>{
       const b=e.target.closest('[data-drawer-option]'),it=this.adapter.selected,D=globalThis.MF_DRAWERS;
-      if(!b||b.disabled||!D.info(it)||b.getAttribute('aria-pressed')==='true')return;
+      if(!b||b.disabled||!D.familyInfo(it)||b.getAttribute('aria-pressed')==='true')return;
       this.interaction.change('Исполнение ящиков',()=>{
         const next=D.select(it,{[b.dataset.drawerOption]:b.dataset.drawerValue},this.bridge.catalogue.bazisModules);
         const error=this.adapter.validate(next);if(error)throw new Error(error);
-        this.adapter.replace(next);this.adapter.status('Исполнение ящиков изменено');
+        const reset=Object.keys(it.part_materials||{}).length>Object.keys(next.part_materials||{}).length;
+        this.adapter.replace(next);this.adapter.status('Исполнение ящиков изменено'+(reset?'. Материал деталей другой толщины выберите заново.':''));
       });this.bridge.refresh();
     });
     const V=globalThis.MF_VITRINE;

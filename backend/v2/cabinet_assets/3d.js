@@ -124,7 +124,7 @@ const bazisById=new Map(bazisModules.map(x=>[x.id,x]));
 for(const m of bazisModules){
   const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(m.id);
   if(family)m.catalogue_label=family.label;
-  if(m.production?.metal_drawers)m.catalogue_label=globalThis.MF_DRAWERS.family.label;
+  if(globalThis.MF_DRAWERS.choice(m.id))m.catalogue_label=globalThis.MF_DRAWERS.family.label;
   if(m.production?.vitrine)m.catalogue_label=globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.label;
   if(m.production?.tall)m.catalogue_label=(m.production.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_FAMILY:globalThis.MF_FURNITURE_CORE.TALL_FAMILY).label;
   if(globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.some(v=>v.id===m.id))m.catalogue_label=globalThis.MF_FURNITURE_CORE.CORNER_FAMILY.label;
@@ -326,7 +326,8 @@ function renderModuleCatalogue(){
   }
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
-    if(m.production.metal_drawers&&id!==globalThis.MF_DRAWERS.family.default_id)continue;
+    const drawerChoice=globalThis.MF_DRAWERS.choice(id);
+    if(drawerChoice&&id!==globalThis.MF_DRAWERS.family.default_id)continue;
     const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(id);
     if(family&&id!==family.left)continue;
     const cornerFamily=globalThis.MF_FURNITURE_CORE.CORNER_FAMILY;
@@ -335,7 +336,7 @@ function renderModuleCatalogue(){
     if(m.production.tall&&id!==tallFamily.default_id)continue;
     if(m.production.vitrine&&id!==globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=p.metal_drawers?'2 / 3 / 2 + внутренний · Westline / AKS · доводчик / Push to open':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
+    const description=drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -352,8 +353,8 @@ function renderModuleCatalogue(){
       ?'Левое / правое · 3 вертикальные царги'
       :p.dryer?'Левое / правое · сушка AKS по ширине'
       :isWall?'Левое / правое · полки по высоте':'Левое / правое · полка · задник'):description;
-    const search=p.metal_drawers?'ящики AQ LineBox Westline AKS Slimbox Evolution Push to open внутренний доводчик':p.vitrine?'витрина стекло подсветка Z1 LIRA 17.5 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
-    addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
+    const search=drawerChoice?'ящики обычные шариковые направляющие AQ LineBox Westline AKS Slimbox Evolution Push to open внутренний доводчик':p.vitrine?'витрина стекло подсветка Z1 LIRA 17.5 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
+    addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:drawerChoice?globalThis.MF_DRAWERS.family.label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
   }
   applyCatalogueFilter();
 }
@@ -709,8 +710,8 @@ async function syncControls(){
   }
   globalThis.MF_VITRINE_UI?.sync(it,t?.production);
   globalThis.MF_DRAWER_UI?.sync(it,t?.production);
-  if(t?.production?.metal_drawers&&$('drawer-selected')){
-    $('drawer-selected').textContent=it.part_materials?.['drawer-1-bottom']?label(materials.get(String(it.part_materials['drawer-1-bottom']))):'Декор корпуса · материал 16 мм для распила не выбран';
+  if(globalThis.MF_DRAWERS.familyInfo(it)&&$('drawer-selected')){
+    if(t?.production?.metal_drawers)$('drawer-selected').textContent=it.part_materials?.['drawer-1-bottom']?label(materials.get(String(it.part_materials['drawer-1-bottom']))):'Декор корпуса · материал 16 мм для распила не выбран';
     $('drawerback-selected').textContent=it.back_variant_id?label(materials.get(String(it.back_variant_id))):'ЛХДФ белый · материал 3 мм для распила не выбран';
   }
   const family=globalThis.MF_FURNITURE_CORE.doorFamily(it),opening=$('door-opening-controls');
@@ -847,7 +848,8 @@ async function searchMaterial(input,results,kind){
       materials.set(String(m.variant_id),m);
       const scope=$('material-scope')?.value||'module',core=globalThis.MF_FURNITURE_CORE;
       let targets=scope==='module'?[it]:state.items.filter(x=>core.scopeMatches(x,scope));
-      if(['drawer','drawerback'].includes(kind))targets=targets.filter(x=>templateFor(x)?.production?.metal_drawers);
+      if(kind==='drawer')targets=targets.filter(x=>templateFor(x)?.production?.metal_drawers);
+      if(kind==='drawerback')targets=targets.filter(x=>globalThis.MF_DRAWERS.familyInfo(x));
       if(kind==='front')targets=targets.filter(x=>!templateFor(x)?.production?.vitrine);
       if(kind==='plinth'||kind==='countertop')targets=targets.filter(x=>core.kitchenSettings(x));
       if(!targets.length){status('В выбранной группе нет модулей для этого материала.');return;}
@@ -868,7 +870,7 @@ async function searchMaterial(input,results,kind){
       results.replaceChildren();
       input.dataset.materialRequest=String(Number(input.dataset.materialRequest||0)+1);
       input.value='';
-      updateAll();if(templateFor(it)?.production?.metal_drawers)syncControls();
+      updateAll();if(globalThis.MF_DRAWERS.familyInfo(it))syncControls();
     };
     results.append(b);
   }
