@@ -3,6 +3,7 @@
 /*
  Martin Forest -> BAZIS native importer v9.7.2 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-15)
  v9.7.2: preserve AQ helper surfaces; use the selected 16 mm drawer board material.
+ Thickness fix: metal drawer boards never fall back to the 18 mm carcass SKU.
  v9.7.1: preserve glass and Z1, bind exact verified local textures; retain v9.4.3 notes.
  v9.4.3: accept a new model's native TModelLimits frame and temporary МодельNN title.
  Recognize the frame by native type, never by its display name. Keep it unchanged.
@@ -411,7 +412,14 @@ function materialPalette(item) {
   const front = firstMaterial(parts, p => p && p.role === 'front');
   const hdf = firstMaterial(parts, p => p && p.role === 'back' && Number(p.thickness) <= 6) ||
               firstMaterial(parts, p => p && p.role === 'back');
-  const drawer = firstMaterial(parts, p => p && p.role === 'drawer' && Number(p.thickness) === 16) || body;
+  const metal = METAL_DRAWER_SOURCES.has(String(item && item.source_sha256 || '').toLowerCase());
+  const drawer = firstMaterial(parts, p => {
+    if (!p || p.role !== 'drawer' || Number(p.thickness) !== 16) return false;
+    if (!metal) return true;
+    const m = p.material || {};
+    return (m.thickness == null || Number(m.thickness) === 16) &&
+      (!m.variant_id || m.variant_id !== ((body && body.variant_id) || item.body_variant_id));
+  }) || (metal ? null : body);
   return { body, front, hdf, drawer, parts };
 }
 
@@ -563,10 +571,12 @@ function walkPanels(obj, callback, seen) {
 
 function applyProjectMaterials(obj, item, log) {
   const palette = materialPalette(item);
-  if (!palette.body && !palette.front && !palette.hdf) {
+  if (!palette.body && !palette.front && !palette.hdf && !palette.drawer) {
     log.push('МАТЕРИАЛЫ ПРОПУЩЕНЫ: ' + item.name + ' — в JSON нет данных материалов');
     return;
   }
+  if (METAL_DRAWER_SOURCES.has(String(item && item.source_sha256 || '').toLowerCase()) && !palette.drawer)
+    log.push('ЯЩИКИ: материал 16 мм не выбран — материал деталей сохранён из FR3D, корпус 18 мм не подставляется.');
 
   const cache = new Map();
   const stats = { body:0, front:0, hdf:0, drawer:0, skipped:0 };

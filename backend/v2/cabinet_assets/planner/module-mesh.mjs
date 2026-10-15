@@ -106,7 +106,7 @@ export class MeshFactory{
       if(m.userData.appliance||role==='front'||role==='reveal'||m.userData.frontAccessory){if(m.visible!==visible){m.visible=visible;changed=true;}}
       const shell=part?part.role==='front'||part.key.startsWith('side-'):role==='front';
       const inspection=mode==='inspection'&&shell;
-      const id=part?part.material.variant_id:role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
+      const id=part?(part.visual_variant_id??part.material.variant_id):role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
       let material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
       const light=!group.userData.ghost&&!inspection&&vitrineLightSpec(it,part);
       if(light){
@@ -254,7 +254,7 @@ export class MeshFactory{
     const parts=productionParts(it,template,id=>this.adapter.material(id));
     if(parts){
       for(const part of parts.filter(p=>p.role!=='front'||p.fixed)){
-        const d=part.size,c=part.position,m=this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.material.variant_id,ghost);
+        const d=part.size,c=part.position,m=this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.visual_variant_id??part.material.variant_id,ghost);
         m.userData.part=part;m.userData.productionPart=part.role;
         if(part.back_type)m.userData.backType=part.back_type;
         if(part.shelf_id)m.userData.shelfId=part.shelf_id;

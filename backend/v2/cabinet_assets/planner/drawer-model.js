@@ -86,11 +86,15 @@
         sizes=hi.map((x,i)=>round(x-lo[i]));centers=hi.map((x,i)=>round((x+lo[i])/2));
       }
       const size={x:sizes[0],y:sizes[1],z:sizes[2]},position={x:centers[0],y:centers[1],z:centers[2]};
-      const id=it.part_materials?.[s.key]??(s.role==='front'?it.front_variant_id:s.role==='back'?it.back_variant_id:it.body_variant_id),mat=id?lookup(id):null;
+      let id=it.part_materials?.[s.key]??(s.role==='drawer'?null:s.role==='front'?it.front_variant_id:s.role==='back'?it.back_variant_id:it.body_variant_id),mat=id?lookup(id):null;
+      // Inherit only the carcass appearance. An 18 mm SKU must never be emitted as
+      // the purchasing/native material of a 16 mm board, including old bad overrides.
+      if(s.role==='drawer'&&(id===it.body_variant_id||(mat&&Number(mat.thickness)!==16))){id=null;mat=null;}
       const [length_axis,width_axis,thickness_axis]=s.axes.map(i=>['x','y','z'][i]);
       return {part_id:it.item_id+':'+s.key,module_id:it.item_id,key:s.key,name:s.name,role:s.role,type:'panel',size,position,
         length:size[length_axis],width:size[width_axis],thickness:size[thickness_axis],orientation:{length_axis,width_axis,thickness_axis},
-        material:{variant_id:id||null,name:mat?.name||(id?null:s.role==='front'?'Evagloss P004':s.role==='back'?'ЛХДФ 3ММ Белый':'ЛДСП- БЕЛЫЙ'),article:mat?.article||null,manufacturer:mat?.manufacturer||null,material_id:mat?.material_id||null},
+        material:{variant_id:id||null,name:mat?.name||(id||s.role==='drawer'?null:s.role==='front'?'Evagloss P004':s.role==='back'?'ЛХДФ 3ММ Белый':'ЛДСП- БЕЛЫЙ'),article:mat?.article||null,manufacturer:mat?.manufacturer||null,material_id:mat?.material_id||null,thickness:mat?.thickness??null},
+        ...(s.role==='drawer'?{visual_variant_id:id||it.body_variant_id||null}:{}),
         ...(s.role==='front'?{facade:{kind:'drawer',w:size.x,h:size.y,cx:position.x,cy:position.y},drawer_index:Number(s.key.split('-')[1])}:{}),
         ...(s.drawer_index?{drawer_index:s.drawer_index}:{}),...(s.role==='back'?{back_type:'overlay_nails'}:{})};
     });

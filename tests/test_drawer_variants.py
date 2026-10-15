@@ -73,3 +73,10 @@ def test_elastic_pdf_uses_current_kits_and_fronts(tmp_path):
  text='\n'.join(p.extract_text() for p in PdfReader(BytesIO(data)).pages)
  for expected in ('457','227,5','550','12.0069','117828','117833','Корпус 920'):assert expected in text,expected
  (tmp_path/'drawers-elastic-check.pdf').write_bytes(data)
+
+def test_drawer_pdf_does_not_substitute_carcass_material_when_16_mm_is_unassigned():
+ it=item(VARIANTS[0])
+ assert '18 мм' not in module_materials(it,'Декор корпуса 18 мм','Фасад 18 мм')[2][1]
+ assert '16 мм' in module_materials(it,'Декор корпуса 18 мм','Фасад 18 мм')[2][1]
+ it['part_materials']={'drawer-1-bottom':'selected16','drawer-1-rear':'selected16'}
+ assert module_materials(it,'Новый корпус 18 мм','Фасад 18 мм',{'selected16':'Выбранная плита 16 мм'})[2][1]=='Выбранная плита 16 мм'

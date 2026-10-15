@@ -25,7 +25,7 @@
   el.querySelector('#drawer-board-material-controls').hidden=ordinary;
   el.querySelector('#drawer-material-note').textContent=ordinary
    ?'Стенки ящиков используют выбранный материал корпуса 18 мм. Для днищ и задника выберите ЛХДФ 3 мм.'
-   :'В 3D ящики наследуют декор корпуса. Для распила выберите тот же декор в толщине 16 мм и материал задника 3 мм.';
+   :'Без отдельного выбора ящики в 3D наследуют цвет корпуса. Для распила выберите плиту 16 мм и задник 3 мм. Выбранный материал ящиков 16 мм сохраняется при смене корпуса.';
   el.querySelector('#drawer-back-label').textContent=ordinary?'Днища ящиков и задник корпуса · 3 мм':'Задник корпуса · 3 мм';
   const restriction=ordinary?D.selectionError(it,D.available(v,{system:'aq'})):'';
   el.querySelector('#drawer-availability').textContent=(restriction?restriction+' ':'')+(v.system==='slimbox'&&(v.opening==='push'||v.layout==='inner')

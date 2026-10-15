@@ -18,7 +18,7 @@ for(const v of D.variants)test(v.label+': cutlist vs independent binary FR3D aud
   const p=parts[i],n=expected[i];assert.equal(p.name,n.name);assert.equal(p.thickness,n.thickness);
   Object.values(p.size).forEach((x,j)=>assert.ok(Math.abs(x-n.bounds.size[j])<.1,`${p.key} axis${j}`));
   Object.values(p.position).forEach((x,j)=>assert.ok(Math.abs(x-((n.bounds.lo[j]+n.bounds.hi[j])/2-[300,0,255][j]))<.1,`${p.key} position${j}`));
-  if(p.role==='drawer'){assert.equal(p.material.variant_id,'wood');assert.equal(p.thickness,16);}
+  if(p.role==='drawer'){assert.equal(p.material.variant_id,null);assert.equal(p.visual_variant_id,'wood');assert.equal(p.thickness,16);}
  }
  assert.deepEqual(facadeCells(it,template(it)).map(f=>f.h),v.front_heights);
  assert.equal(dimensionError(it,template(it)),'');

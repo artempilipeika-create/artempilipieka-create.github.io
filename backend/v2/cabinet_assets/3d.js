@@ -711,7 +711,10 @@ async function syncControls(){
   globalThis.MF_VITRINE_UI?.sync(it,t?.production);
   globalThis.MF_DRAWER_UI?.sync(it,t?.production);
   if(globalThis.MF_DRAWERS.familyInfo(it)&&$('drawer-selected')){
-    if(t?.production?.metal_drawers)$('drawer-selected').textContent=it.part_materials?.['drawer-1-bottom']?label(materials.get(String(it.part_materials['drawer-1-bottom']))):'Декор корпуса · материал 16 мм для распила не выбран';
+    if(t?.production?.metal_drawers){
+      const id=globalThis.MF_FURNITURE_CORE.productionParts(it,t,id=>materials.get(String(id))).find(p=>p.key==='drawer-1-bottom')?.material.variant_id;
+      $('drawer-selected').textContent=id?label(materials.get(String(id))):'Декор корпуса · материал 16 мм для распила не выбран';
+    }
     $('drawerback-selected').textContent=it.back_variant_id?label(materials.get(String(it.back_variant_id))):'ЛХДФ белый · материал 3 мм для распила не выбран';
   }
   const family=globalThis.MF_FURNITURE_CORE.doorFamily(it),opening=$('door-opening-controls');
@@ -860,7 +863,8 @@ async function searchMaterial(input,results,kind){
         else target[field]=m.variant_id;
         if(kind==='body'||kind==='front'){
           const parts=globalThis.MF_FURNITURE_CORE.productionParts(target,templateFor(target))||[];
-          for(const part of parts)if(kind==='front'?part.role==='front':['body','shelf',...(templateFor(target)?.production?.metal_drawers?['drawer']:[])].includes(part.role))if(target.part_materials)delete target.part_materials[part.key];
+          // A separately selected 16 mm drawer board is not an 18 mm carcass override.
+          for(const part of parts)if(kind==='front'?part.role==='front':['body','shelf'].includes(part.role))if(target.part_materials)delete target.part_materials[part.key];
           if(kind==='body')for(const shelf of target.shelves||[])shelf.material_variant_id=null;
         }
       }
@@ -911,7 +915,7 @@ function buildItem(it){
   const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it),id=>materials.get(String(id)));
   if(parts){
     for(const part of parts){const d=part.size,c=part.position;
-      addItemBox(it,d.x/500,d.y/500,d.z/500,c.x/500,c.y/500,c.z/500,colorFor(materials.get(String(part.material.variant_id)),part.role==='front'));
+      addItemBox(it,d.x/500,d.y/500,d.z/500,c.x/500,c.y/500,c.z/500,colorFor(materials.get(String(part.visual_variant_id??part.material.variant_id)),part.role==='front'));
     }
     return;
   }
@@ -947,7 +951,8 @@ function cutlistItem(it){
   if(parts){
     for(const part of parts.filter(p=>p.type==='panel')){
       const role=part.optical_material==='glass'?'fixed':part.role==='back'?'fixed':part.role==='front'?'front':'body';
-      a.push([prefix+part.name,part.length,part.width,1,role,part.role==='shelf'?{...it,body_variant_id:part.material.variant_id}:it,part.material.name,part]);
+      const materialName=part.role==='drawer'&&part.thickness===16&&!part.material.variant_id?'Не выбран · ЛДСП 16 мм':part.material.name;
+      a.push([prefix+part.name,part.length,part.width,1,role,part.role==='shelf'?{...it,body_variant_id:part.material.variant_id}:it,materialName,part]);
     }
     return a;
   }else{

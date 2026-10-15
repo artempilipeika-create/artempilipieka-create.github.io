@@ -186,7 +186,7 @@ def module_materials(it,body,front,materials=None):
     if drawer_variant(it):
         materials=materials or {}
         ids={str(v) for k,v in it.get('part_materials',{}).items() if k.startswith('drawer-')}
-        drawer_names='; '.join(sorted({materials.get(v,'Материал '+v) for v in ids})) if ids else (body or 'ЛДСП- БЕЛЫЙ')+' · декор; 16 мм для распила уточнить'
+        drawer_names='; '.join(sorted({materials.get(v,'Материал '+v) for v in ids})) if ids else 'Не выбран · требуется ЛДСП 16 мм; цвет в 3D — по корпусу'
         return [('Корпус 18 мм',body or 'ЛДСП- БЕЛЫЙ'),('Фасады 18 мм',front or 'Evagloss P004'),('Днища и задние стенки ящиков 16 мм',drawer_names),('Фурнитура','Белая'),('Задник корпуса 3 мм',materials.get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый'))]
     if vitrine_variant(it):
         return [('Корпус и задняя стенка 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),('Фасад и полки','Стекло 4 мм'),('Рамка','Z1, чёрный'),('Уплотнитель','Уплотнитель Z1, совместимость уточнить у поставщика')]
