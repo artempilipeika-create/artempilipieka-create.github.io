@@ -104,6 +104,15 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
+    this.listen(get('drawer-options-controls'),'click',e=>{
+      const b=e.target.closest('[data-drawer-option]'),it=this.adapter.selected,D=globalThis.MF_DRAWERS;
+      if(!b||b.disabled||!D.info(it)||b.getAttribute('aria-pressed')==='true')return;
+      this.interaction.change('Исполнение ящиков',()=>{
+        const next=D.select(it,{[b.dataset.drawerOption]:b.dataset.drawerValue},this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);
+        this.adapter.replace(next);this.adapter.status('Исполнение ящиков изменено');
+      });this.bridge.refresh();
+    });
     const V=globalThis.MF_VITRINE;
     this.listen(get('vitrine-light-system'),'change',e=>{
       const it=this.adapter.selected;if(!V.info(it))return;

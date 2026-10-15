@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spac
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant,tall_shelf_count
+from .three_d_drawers import drawer_variant, drawer_contents, drawer_hardware as metal_drawer_hardware
 from .three_d_vitrine import vitrine_variant,vitrine_hardware,vitrine_contents
 
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');MINT=colors.HexColor('#e8efe9');PALE=colors.HexColor('#f7f9f5')
@@ -87,6 +88,8 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
+    drawer=drawer_variant(it)
+    if drawer:return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in metal_drawer_hardware(it)],('Опоры отличаются от исходных 100 мм; артикулы подобрать. В БАЗИС заменить опоры и выставить корпус на новую отметку без растяжения.' if (it.get('legHeightMm') or it.get('base_height') or 100)!=100 else None)
     if vitrine_variant(it):
         return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in vitrine_hardware(it)],None
     tall=tall_variant(it)
@@ -138,6 +141,7 @@ def hardware_for(it):
     return [],None
 
 def module_contents(it):
+    if drawer_variant(it):return drawer_contents(it)
     if vitrine_variant(it):return vitrine_contents(it)
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0)
     tall=tall_variant(it)
@@ -178,7 +182,12 @@ def module_contents(it):
         return f"корпус; {'1 фасад' if bid in D1 else '2 фасада'}; задняя стенка; полка; основание/ножки"
     return 'состав определяется выбранным модулем'
 
-def module_materials(it,body,front):
+def module_materials(it,body,front,materials=None):
+    if drawer_variant(it):
+        materials=materials or {}
+        ids={str(v) for k,v in it.get('part_materials',{}).items() if k.startswith('drawer-')}
+        drawer_names='; '.join(sorted({materials.get(v,'Материал '+v) for v in ids})) if ids else (body or 'ЛДСП- БЕЛЫЙ')+' · декор; 16 мм для распила уточнить'
+        return [('Корпус 18 мм',body or 'ЛДСП- БЕЛЫЙ'),('Фасады 18 мм',front or 'Evagloss P004'),('Днища и задние стенки ящиков 16 мм',drawer_names),('Фурнитура','Белая'),('Задник корпуса 3 мм',materials.get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый'))]
     if vitrine_variant(it):
         return [('Корпус и задняя стенка 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),('Фасад и полки','Стекло 4 мм'),('Рамка','Z1, чёрный'),('Уплотнитель','Уплотнитель Z1, совместимость уточнить у поставщика')]
     bid=it.get('bazis_id');corner=corner_variant(it);tall=tall_variant(it);known=bool(corner or tall) or bid in set(DRAWERS)|WALL_D1|WALL_D2|DRYER_D1|DRYER_D2|SINK_D1|SINK_D2|OVEN or (bid in CORNER and it.get('bazis_sha256')==CORNER_SHA)
@@ -255,7 +264,7 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
           ('GRID',(0,0),(-1,-1),.3,RULE),('VALIGN',(0,0),(-1,-1),'TOP'),
           ('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
         material_rows=[[p('Материал','head'),p('Значение','head')]]
-        material_rows.extend([[p(kind),p(value)] for kind,value in module_materials(it,body,front)])
+        material_rows.extend([[p(kind),p(value)] for kind,value in module_materials(it,body,front,materials)])
         module_image=preview_image(module_previews.get(str(it.get('item_id'))),110*mm,38*mm)
         side_preview=bool(vitrine_variant(it) and module_image)
         material_table=Table(material_rows,colWidths=[WIDTH*(.20 if side_preview else .22),WIDTH*(.31 if side_preview else .72)])

@@ -1,6 +1,8 @@
 import './corner-variants.js';
 import './tall-variants.js';
 import './vitrine-model.js';
+import './drawer-variants.js';
+import './drawer-model.js';
 import './countertop-variants.js';
 import './countertops.js';
 import './furniture-core.js';

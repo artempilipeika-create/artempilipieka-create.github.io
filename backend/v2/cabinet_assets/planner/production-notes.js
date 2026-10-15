@@ -23,6 +23,7 @@
     const v=family(item),lines=[];
     const kitchen=root.MF_FURNITURE_CORE?.kitchenSettings?.(item);
     if(kitchen)lines.push(kitchen.countertopEnabled?'Столешница: '+kitchen.countertopThicknessMm+' мм; глубина '+kitchen.countertopDepthMm+' мм; '+(kitchen.countertopJoint==='euro'?'еврозапил на угловых стыках':'обычное соединение')+'. Верх со столешницей: '+(item.height+kitchen.countertopThicknessMm)+' мм.':'Столешница над этим модулем отключена.');
+    const drawers=root.MF_DRAWERS?.brief(item);if(drawers)lines.push(drawers);
     const vitrine=root.MF_VITRINE?.brief(item);if(vitrine)lines.push(vitrine);
     if(v){
       lines.push('ТЕХНИКА ПЕНАЛА '+(item.name||item.item_id||''));

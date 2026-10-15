@@ -1,0 +1,3453 @@
+[
+  {
+    "id": "bazis.c57da518f157",
+    "system": "aq",
+    "manufacturer": "Westline",
+    "series": "AQ LineBox",
+    "layout": "two",
+    "opening": "soft",
+    "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox(1).fr3d",
+    "source_sha256": "c57da518f15764641ada032a8f9b542619a933072ee089d06bbff1b858ba741f",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 2,
+    "front_heights": [
+      357,
+      357
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 795.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "AQ LineBox · 2 ящика · с доводчиком",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          639.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "З/С AQ LineBox",
+        "role": "drawer",
+        "size": [
+          477.0,
+          183.0,
+          16.0
+        ],
+        "center": [
+          0.0,
+          253.2222,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно AQ LineBox",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          490.0
+        ],
+        "center": [
+          0.0,
+          153.7222,
+          10.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "З/С AQ LineBox",
+        "role": "drawer",
+        "size": [
+          477.0,
+          183.0,
+          16.0
+        ],
+        "center": [
+          0.0,
+          595.7222,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно AQ LineBox",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          490.0
+        ],
+        "center": [
+          0.0,
+          496.2222,
+          10.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "drawer_index": 2
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      357.04
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "AQ LineBox Направляющая, 500",
+        "article": null,
+        "quantity": 4,
+        "key": "drawer-hw-10",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "article": "81320",
+        "quantity": 8,
+        "key": "drawer-hw-11",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Ограничитель высоты ящика AQ",
+        "article": null,
+        "quantity": 4,
+        "key": "drawer-hw-12",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Ящик высокий AQ LineBox NL=500 H=203 белый",
+        "article": "12.0068",
+        "quantity": 2,
+        "key": "drawer-hw-13",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  },
+  {
+    "id": "bazis.444e228ac466",
+    "system": "slimbox",
+    "manufacturer": "AKS",
+    "series": "Slimbox Evolution",
+    "layout": "two",
+    "opening": "soft",
+    "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик Slimbox Evolution(1).fr3d",
+    "source_sha256": "444e228ac466b7a5ea0390579760d84dd4b6d2184bec461ed381b2e93f95e4d4",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 2,
+    "front_heights": [
+      357,
+      357
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 795.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "Slimbox Evolution · 2 ящика · с доводчиком",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          639.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          254.3,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          162.8,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          596.8,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          505.3,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 2
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      357.04
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=199 белый SOFT CLOSE ДСП16мм",
+        "article": "117352",
+        "quantity": 2,
+        "key": "drawer-hw-10",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  },
+  {
+    "id": "bazis.0cb917bf58fb",
+    "system": "slimbox",
+    "manufacturer": "AKS",
+    "series": "Slimbox Evolution",
+    "layout": "inner",
+    "opening": "soft",
+    "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик Slimbox Evolution. + Внутренний ящик.(1).fr3d",
+    "source_sha256": "0cb917bf58fbca1aefc1d437c317d18d9dab531322ecea6bcbd0ba7a8a8c3fde",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 3,
+    "front_heights": [
+      357,
+      357
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 625.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "Slimbox Evolution · 2 + внутренний · с доводчиком",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          639.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          254.3,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          162.8,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          116.0,
+          16.0
+        ],
+        "center": [
+          0.014400000000023283,
+          556.6,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          505.3,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-3-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          84.0,
+          16.0
+        ],
+        "center": [
+          -0.0072000000000116415,
+          705.6,
+          -231.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 3
+      },
+      {
+        "key": "drawer-3-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          -0.0072000000000116415,
+          670.3,
+          15.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 3
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      357.04
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=199 белый SOFT CLOSE ДСП16мм",
+        "article": "117352",
+        "quantity": 1,
+        "key": "drawer-hw-10",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=116 белый SOFT CLOSE ДСП16мм",
+        "article": "117348",
+        "quantity": 1,
+        "key": "drawer-hw-11",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Держатель передней стенки внутреннего ящика H=84 Slimbox Evolution белый",
+        "article": "113187",
+        "quantity": 1,
+        "key": "drawer-hw-12",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Ручка с поводком внутреннего ящика Slimbox AKS 8,5-16мм белая",
+        "article": "94123",
+        "quantity": 1,
+        "key": "drawer-hw-13",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=84 белый SOFT CLOSE ДСП16мм",
+        "article": "117346",
+        "quantity": 1,
+        "key": "drawer-hw-14",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  },
+  {
+    "id": "bazis.1b7d55d6cae9",
+    "system": "slimbox",
+    "manufacturer": "AKS",
+    "series": "Slimbox Evolution",
+    "layout": "two",
+    "opening": "push",
+    "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик Slimbox Evolution. Push to open(1).fr3d",
+    "source_sha256": "1b7d55d6cae912141e15c4e83587e8f07d195aa10fc526631410c98fc4f04dfa",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 2,
+    "front_heights": [
+      357,
+      357
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 645.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "Slimbox Evolution · 2 ящика · Push to open",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          639.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          254.3,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          162.8,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          596.8,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          505.3,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 2
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      357.04
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=199 белый PUSH TO OPEN ДСП16мм",
+        "article": "117360",
+        "quantity": 2,
+        "key": "drawer-hw-10",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  },
+  {
+    "id": "bazis.82344a8f7a81",
+    "system": "slimbox",
+    "manufacturer": "AKS",
+    "series": "Slimbox Evolution",
+    "layout": "inner",
+    "opening": "push",
+    "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик Slimbox Evolution. Push to open. + внутренний шкафчик.(1).fr3d",
+    "source_sha256": "82344a8f7a812cc348dbd2a6bbc8382e1ff809fdec69dc8a12486202b25bdc47",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 3,
+    "front_heights": [
+      357,
+      357
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 625.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "Slimbox Evolution · 2 + внутренний · Push to open",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          639.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          254.3,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          162.8,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          116.0,
+          16.0
+        ],
+        "center": [
+          0.014400000000023283,
+          556.6,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          505.3,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-3-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          84.0,
+          16.0
+        ],
+        "center": [
+          -0.0072000000000116415,
+          710.6,
+          -231.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 3
+      },
+      {
+        "key": "drawer-3-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          -0.0072000000000116415,
+          675.3,
+          15.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 3
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      357.04
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=199 белый PUSH TO OPEN ДСП16мм",
+        "article": "117360",
+        "quantity": 1,
+        "key": "drawer-hw-10",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=116 белый PUSH TO OPEN ДСП16мм",
+        "article": "117356",
+        "quantity": 1,
+        "key": "drawer-hw-11",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Держатель передней стенки внутреннего ящика H=84 Slimbox Evolution белый",
+        "article": "113187",
+        "quantity": 1,
+        "key": "drawer-hw-12",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Ручка с поводком внутреннего ящика Slimbox AKS 8,5-16мм белая",
+        "article": "94123",
+        "quantity": 1,
+        "key": "drawer-hw-13",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=84 белый SOFT CLOSE ДСП16мм",
+        "article": "117346",
+        "quantity": 1,
+        "key": "drawer-hw-14",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  },
+  {
+    "id": "bazis.7365c51eeff6",
+    "system": "aq",
+    "manufacturer": "Westline",
+    "series": "AQ LineBox",
+    "layout": "three",
+    "opening": "soft",
+    "source_file": "НМРШ3-600.З.С 3мм Гвозди. Ящик AQ LineBox(1).fr3d",
+    "source_sha256": "7365c51eeff6a6840e000157a2f9736ac081c76c658de02771894f2b94a313a6",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 3,
+    "front_heights": [
+      357,
+      177.5,
+      177.5
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 2.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 625.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 795.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "AQ LineBox · 3 ящика · с доводчиком",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          177.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          549.25,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-3",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          177.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          728.75,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "З/С AQ LineBox",
+        "role": "drawer",
+        "size": [
+          477.0,
+          183.0,
+          16.0
+        ],
+        "center": [
+          0.0,
+          253.2222,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно AQ LineBox",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          490.0
+        ],
+        "center": [
+          0.0,
+          153.7222,
+          10.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "З/С AQ LineBox",
+        "role": "drawer",
+        "size": [
+          477.0,
+          100.0,
+          16.0
+        ],
+        "center": [
+          0.0,
+          554.2222,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно AQ LineBox",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          490.0
+        ],
+        "center": [
+          0.0,
+          496.2222,
+          10.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-3-rear",
+        "name": "З/С AQ LineBox",
+        "role": "drawer",
+        "size": [
+          477.0,
+          100.0,
+          16.0
+        ],
+        "center": [
+          0.0,
+          733.7622,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 3
+      },
+      {
+        "key": "drawer-3-bottom",
+        "name": "Дно AQ LineBox",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          490.0
+        ],
+        "center": [
+          0.0,
+          675.7622,
+          10.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "drawer_index": 3
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      177.54,
+      177.54
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "AQ LineBox Направляющая, 500",
+        "article": null,
+        "quantity": 6,
+        "key": "drawer-hw-10",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Шуруп 3.5х16 мм,Zn",
+        "article": "81320",
+        "quantity": 12,
+        "key": "drawer-hw-11",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Ограничитель высоты ящика AQ",
+        "article": null,
+        "quantity": 6,
+        "key": "drawer-hw-12",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Ящик высокий AQ LineBox NL=500 H=203 белый",
+        "article": "12.0068",
+        "quantity": 1,
+        "key": "drawer-hw-13",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Ящик средний AQ LineBox NL=500 H=120 белый",
+        "article": "12.0095",
+        "quantity": 2,
+        "key": "drawer-hw-14",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  },
+  {
+    "id": "bazis.28c4a476ffd0",
+    "system": "slimbox",
+    "manufacturer": "AKS",
+    "series": "Slimbox Evolution",
+    "layout": "three",
+    "opening": "soft",
+    "source_file": "НМРШ3-600.З.С 3мм Гвозди. Ящик SLIMBOX EVOLUTION.(1).fr3d",
+    "source_sha256": "28c4a476ffd0cffe407fc20f85167ef4d2643511bad913f2959b5f202edc4846",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 3,
+    "front_heights": [
+      357,
+      177.5,
+      177.5
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 2.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 625.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 795.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "Slimbox Evolution · 3 ящика · с доводчиком",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          177.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          549.25,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-3",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          177.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          728.75,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          254.3,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          162.8,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          116.0,
+          16.0
+        ],
+        "center": [
+          0.014400000000023283,
+          556.6,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          505.3,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-3-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          116.0,
+          16.0
+        ],
+        "center": [
+          0.014400000000023283,
+          736.14,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 3
+      },
+      {
+        "key": "drawer-3-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          684.84,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 3
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      177.54,
+      177.54
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=199 белый SOFT CLOSE ДСП16мм",
+        "article": "117352",
+        "quantity": 1,
+        "key": "drawer-hw-10",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=116 белый SOFT CLOSE ДСП16мм",
+        "article": "117348",
+        "quantity": 2,
+        "key": "drawer-hw-11",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  },
+  {
+    "id": "bazis.29655c4686b0",
+    "system": "slimbox",
+    "manufacturer": "AKS",
+    "series": "Slimbox Evolution",
+    "layout": "three",
+    "opening": "push",
+    "source_file": "НМРШ3-600.З.С 3мм Гвозди. Ящик SLIMBOX EVOLUTION.Push to open(1).fr3d",
+    "source_sha256": "29655c4686b03d3fd4305763abbda0ff021a34cf1a7969606d8af03511f23fe1",
+    "color": "white",
+    "length_mm": 500,
+    "drawer_count": 3,
+    "front_heights": [
+      357,
+      177.5,
+      177.5
+    ],
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 405.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 215.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 450.0,
+        "Weight": 2.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 625.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 795.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 370.0,
+        "Weight": 1.0
+      }
+    ],
+    "label": "Slimbox Evolution · 3 ящика · Push to open",
+    "panels": [
+      {
+        "key": "bottom",
+        "name": "Дно",
+        "role": "body",
+        "size": [
+          600.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "side-L",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "side-P",
+        "name": "Боковая - L",
+        "role": "body",
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          291.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "key": "rail-rear",
+        "name": "Царга задняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "rail-front",
+        "name": "Царга Передняя",
+        "role": "body",
+        "size": [
+          564.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "key": "back",
+        "name": "З.С",
+        "role": "back",
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "key": "front-1",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          357,
+          18.0
+        ],
+        "center": [
+          0.0,
+          280.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-2",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          177.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          549.25,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "front-3",
+        "name": "Фасад",
+        "role": "front",
+        "size": [
+          597.0,
+          177.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          728.75,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "key": "drawer-1-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          199.0,
+          16.0
+        ],
+        "center": [
+          0.043200000000013006,
+          254.3,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-1-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          162.8,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 1
+      },
+      {
+        "key": "drawer-2-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          116.0,
+          16.0
+        ],
+        "center": [
+          0.014400000000023283,
+          556.6,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-2-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          505.3,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 2
+      },
+      {
+        "key": "drawer-3-rear",
+        "name": "Ст. задн. ящика",
+        "role": "drawer",
+        "size": [
+          477.0,
+          116.0,
+          16.0
+        ],
+        "center": [
+          0.014400000000023283,
+          736.14,
+          -229.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "drawer_index": 3
+      },
+      {
+        "key": "drawer-3-bottom",
+        "name": "Дно ящика",
+        "role": "drawer",
+        "size": [
+          489.0,
+          16.0,
+          476.0
+        ],
+        "center": [
+          0.014400000000023283,
+          684.84,
+          17.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "drawer_index": 3
+      }
+    ],
+    "native_front_heights": [
+      357.04,
+      177.54,
+      177.54
+    ],
+    "nominal_tolerance_mm": 0.1,
+    "hardware_items": [
+      {
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "key": "drawer-hw-1",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "key": "drawer-hw-2",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "key": "drawer-hw-3",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-4",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "key": "drawer-hw-5",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "key": "drawer-hw-6",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "key": "drawer-hw-7",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 51,
+        "key": "drawer-hw-8",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+        "article": "12867",
+        "quantity": 4,
+        "key": "drawer-hw-9",
+        "unit": "pcs",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=199 белый PUSH TO OPEN ДСП16мм",
+        "article": "117360",
+        "quantity": 1,
+        "key": "drawer-hw-10",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      },
+      {
+        "name": "Система ящиков Slimbox Evolution L-500 H=116 белый PUSH TO OPEN ДСП16мм",
+        "article": "117356",
+        "quantity": 2,
+        "key": "drawer-hw-11",
+        "unit": "set",
+        "source": "Спецификация пользователя; артикул из активного узла FR3D"
+      }
+    ]
+  }
+]

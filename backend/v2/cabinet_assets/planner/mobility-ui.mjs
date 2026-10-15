@@ -30,6 +30,8 @@ export class MobilityUI{
       if(p.corner&&t.id!==CORNER_FAMILY.default_id)continue;
       if(p.tall&&t.id!==(p.tall.family==='appliance'?APPLIANCE_TALL_FAMILY:TALL_FAMILY).default_id)continue;
       if(p.vitrine&&t.id!==VITRINE_FAMILY.default_id)continue;
+      if(p.metal_drawers&&t.id!==globalThis.MF_DRAWERS.family.default_id)continue;
+      if(['bazis.39f282e08f0c','bazis.5f5697e39e27'].includes(t.id))continue;
       if(t.id===selected.bazis_id)continue;
       const label=p.tall?(p.tall.family==='appliance'?APPLIANCE_TALL_FAMILY:TALL_FAMILY).label:p.corner?CORNER_FAMILY.label:family?.label||t.catalogue_label||t.label;
       this.select.append(new Option(label,t.id));

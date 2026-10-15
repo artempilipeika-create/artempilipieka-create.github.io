@@ -13,6 +13,10 @@
 <script defer src="/account/planner/countertop-variants.js"></script>
 <script defer src="/account/planner/countertops.js"></script>
 <link rel="stylesheet" href="/account/planner/countertop.css">
+<script defer src="/account/planner/drawer-variants.js"></script>
+<script defer src="/account/planner/drawer-model.js"></script>
+<script defer src="/account/planner/drawer-ui.js"></script>
+<link rel="stylesheet" href="/account/planner/drawer.css">
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/planner/appliance-tall-ui.js"></script>
 <script defer src="/account/planner/vitrine-ui.js"></script>
@@ -95,6 +99,39 @@
    <details class="studio-details" id="item-brief-details"><summary>Заметка конструктору по этому модулю</summary><label>Особенности изготовления и монтажа<textarea id="item-production-note" maxlength="2000" rows="3" placeholder="Например, оставить доступ к счётчику, учесть розетку, согласовать открывание…"></textarea></label></details>
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
+   <div id="drawer-options-controls" class="mf3d-control-card" hidden>
+    <h3>Нижний шкаф с ящиками</h3>
+    <p id="drawer-selection"></p>
+    <div class="drawer-label">Компоновка</div>
+    <div class="drawer-layouts" role="group" aria-label="Компоновка ящиков">
+<button type="button" class="secondary" data-drawer-option="layout" data-drawer-value="two" aria-pressed="false"><span class="drawer-option-image"></span><span>2 ящика</span></button>
+<button type="button" class="secondary" data-drawer-option="layout" data-drawer-value="three" aria-pressed="false"><span class="drawer-option-image"></span><span>3 ящика</span></button>
+<button type="button" class="secondary" data-drawer-option="layout" data-drawer-value="inner" aria-pressed="false"><span class="drawer-option-image"></span><span>2 + внутренний</span></button>
+    </div>
+    <div class="drawer-label">Система ящиков</div>
+    <div class="drawer-systems" role="group" aria-label="Система ящиков">
+     <button type="button" class="secondary" data-drawer-option="system" data-drawer-value="aq" aria-pressed="false"><small>WESTLINE</small>AQ LineBox</button>
+     <button type="button" class="secondary" data-drawer-option="system" data-drawer-value="slimbox" aria-pressed="false"><small>AKS</small>Slimbox Evolution</button>
+    </div>
+    <div class="drawer-label">Открывание</div>
+    <div class="drawer-opening" role="group" aria-label="Открывание ящиков">
+     <button type="button" class="secondary" data-drawer-option="opening" data-drawer-value="soft" aria-pressed="false">С доводчиком</button>
+     <button type="button" class="secondary" data-drawer-option="opening" data-drawer-value="push" aria-pressed="false">Push to open</button>
+    </div>
+    <p id="drawer-fronts"></p>
+    <p id="drawer-leg-note" class="studio-hint"></p>
+    <p id="drawer-inner-note" hidden>Внутренний ящик H84 — с доводчиком, держателем передней стенки и ручкой с поводком.</p>
+    <p class="studio-hint">Белая фурнитура · длина 500 мм. Корпус 720 мм, глубина 510 мм. Дно и задние стенки ящиков — 16 мм в декоре корпуса.</p>
+    <p id="drawer-availability" class="studio-hint" aria-live="polite"></p>
+    <p class="studio-hint"><a href="/account/planner/bazis-drawers-import.js" download="Martin_Forest_Import_v9_7_2_DRAWER_MATERIALS.js">Импортёр для БАЗИС · с материалами ящиков</a></p>
+    <details><summary>Материалы для распила</summary>
+     <p class="studio-hint">В 3D ящики наследуют декор корпуса. Для распила выберите тот же декор в толщине 16 мм и материал задника 3 мм.</p>
+     <label>Дно и задние стенки ящиков · 16 мм<input id="drawer-search" type="search" placeholder="Артикул декора корпуса"></label>
+     <div id="drawer-selected" class="studio-hint"></div><div id="drawer-results"></div>
+     <label>Задник корпуса · 3 мм<input id="drawerback-search" type="search" placeholder="ЛХДФ белый 3 мм"></label>
+     <div id="drawerback-selected" class="studio-hint"></div><div id="drawerback-results"></div>
+    </details>
+   </div>
    <div id="vitrine-options-controls" class="mf3d-control-card" hidden>
     <div class="vt-title"><strong>Пенал-витрина</strong><span class="vt-badge">Z1 · чёрный</span></div>
     <strong>Где расположить подсветку?</strong>

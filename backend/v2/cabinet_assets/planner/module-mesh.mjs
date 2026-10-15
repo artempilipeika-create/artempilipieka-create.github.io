@@ -5,6 +5,7 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,prod
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
+  drawerMetal:{color:'#f4f4f1',roughness:.4,metalness:.3},
   glass:{color:'#f4faf7',roughness:.075,metalness:0},
   frame:{color:'#202321',roughness:.3,metalness:.72},
   hinge:{color:'#b9bdc1',roughness:.32,metalness:.72},
@@ -71,7 +72,7 @@ export class MeshFactory{
       const color=visual.color||(id?'#aeb2b0':finish.color);
       const glass=role==='glass'&&!ghost&&!inspection,Material=glass?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:['handle','frame','hinge','shelfSupport','lightProfile'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
+        metalness:['handle','frame','hinge','shelfSupport','lightProfile','drawerMetal'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
@@ -282,7 +283,7 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
@@ -313,6 +314,10 @@ export class MeshFactory{
         // The pilot swing doors keep the handle on the rotating facade.
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
+    }
+    if(production?.metal_drawers)for(const part of globalThis.MF_DRAWERS.metalParts(it,production)){
+      const d=part.size,c=part.position,m=this.box(group,'drawerMetal',d.x,d.y,d.z,c.x,c.y,c.z,null,ghost);
+      m.userData.visualOnly=true;m.userData.drawerMetal=true;m.userData.drawerIndex=part.drawer_index;
     }
     if(production?.vitrine){
       const side=production.vitrine.opening,pivot=new THREE.Group(),hingeX=(side==='left'?-1:1)*(W/2-2),hingeZ=D/2+2;

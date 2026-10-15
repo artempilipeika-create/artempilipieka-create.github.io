@@ -15,6 +15,7 @@ from . import catalogue
 from .three_d_document import render as render_spec
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
+from .three_d_drawers import drawer_variant, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
 from .three_d_room import Room
 
@@ -127,6 +128,16 @@ class FurnitureItem(StrictModel):
                 raise ValueError(f'Установочная ширина углового модуля 800–{maximum} мм; каждая дверца не больше 600 мм')
             if not 450<=self.depth<=700 or not 600<=body<=1000:
                 raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
+        drawer=drawer_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
+        if self.bazis_id in DRAWER_BY_ID:
+            if not drawer:raise ValueError('Фрагмент ящиков не совпадает с проверенным исходником')
+            if self.module_type!='base_cabinet' or self.base=='wall' or base not in (80,100,150):
+                raise ValueError('Ящики: нижний модуль на ножках 80, 100 или 150 мм')
+            if not 400<=self.width<=1200 or body!=720 or self.depth!=510:
+                raise ValueError('Ящики: ширина 400–1200 мм, корпус 720 мм, глубина 510 мм')
+            self.bazis_file=drawer['source_file'];self.bazis_resize=True
+            self.layout='drawers';self.drawers=drawer['drawer_count']
+            if drawer['opening']=='push':self.handles='handleless'
         vitrine=vitrine_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
         if self.bazis_id in VITRINE_BY_ID and not vitrine:
             raise ValueError('Исходный файл витрины не совпадает с проверенной моделью')
@@ -369,7 +380,7 @@ def router(settings):
         ids=set()
         if scene.get('items'):
             for item in scene['items']:
-                ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id')) if x)
+                ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id'),item.get('back_variant_id'),*item.get('part_materials',{}).values()) if x)
         else:
             ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
         if release:
