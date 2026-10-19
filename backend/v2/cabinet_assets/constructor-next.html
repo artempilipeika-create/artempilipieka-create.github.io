@@ -17,6 +17,9 @@
 <script defer src="/account/planner/drawer-model.js"></script>
 <script defer src="/account/planner/drawer-ui.js"></script>
 <link rel="stylesheet" href="/account/planner/drawer.css">
+<script defer src="/account/planner/upper-variants.js"></script>
+<script defer src="/account/planner/upper-model.js"></script>
+<script defer src="/account/planner/upper-ui.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/planner/appliance-tall-ui.js"></script>
 <script defer src="/account/planner/vitrine-ui.js"></script>
@@ -124,7 +127,7 @@
     <p id="drawer-inner-note" hidden>Внутренний ящик H84 — с доводчиком, держателем передней стенки и ручкой с поводком.</p>
     <p id="drawer-construction" class="studio-hint"></p>
     <p id="drawer-availability" class="studio-hint" aria-live="polite"></p>
-    <p class="studio-hint"><a href="/account/planner/bazis-drawers-import.js" download="Martin_Forest_Import_v9_7_2_DRAWER_MATERIALS.js">Импортёр для БАЗИС · с материалами ящиков</a></p>
+    <p class="studio-hint"><a href="/account/planner/bazis-drawers-import.js" download="Martin_Forest_Import_v9_8_0_UPPERS.js">Импортёр для БАЗИС · с материалами ящиков</a></p>
     <details><summary>Материалы для распила</summary>
      <p id="drawer-material-note" class="studio-hint"></p>
      <div id="drawer-board-material-controls">
@@ -237,6 +240,20 @@
      <button type="button" class="secondary" data-corner-option="door_count" data-corner-value="2" aria-pressed="false"><svg viewBox="0 0 32 40" aria-hidden="true"><rect x="3" y="3" width="26" height="34" rx="1"/><path d="M16 3v34M12 18v6m8-6v6"/></svg><span>Две</span></button>
     </div>
     <p id="corner-options-note" class="studio-hint" aria-live="polite"></p>
+   </div>
+   <div id="upper-options-controls" class="mf3d-control-card" hidden>
+    <div class="mf3d-control-title"><strong>Исполнение верхнего шкафа</strong></div>
+    <p class="studio-hint">Наполнение</p><div class="mf3d-quick-widths" role="group" aria-label="Наполнение верхнего шкафа">
+     <button class="secondary" data-upper-option="filling" data-upper-value="shelves" aria-pressed="false">Полки</button>
+     <button class="secondary" data-upper-option="filling" data-upper-value="dryer" aria-pressed="false">Сушка</button>
+    </div><p class="studio-hint">Открывание фасада</p><div class="mf3d-quick-widths" role="group" aria-label="Исполнение фасада">
+     <button class="secondary" data-upper-option="execution" data-upper-value="handles" aria-pressed="false">Накладные ручки</button>
+     <button class="secondary" data-upper-option="execution" data-upper-value="handleless" aria-pressed="false">Без ручек</button>
+     <button class="secondary" data-upper-option="execution" data-upper-value="push" aria-pressed="false">Нажатие (tip-on)</button>
+    </div><div id="upper-side-options"><p class="studio-hint">Петли, если смотреть спереди</p><div class="mf3d-quick-widths" role="group" aria-label="Сторона петель">
+     <button class="secondary" data-upper-option="side" data-upper-value="left" aria-pressed="false">Слева · L</button>
+     <button class="secondary" data-upper-option="side" data-upper-value="right" aria-pressed="false">Справа · P</button>
+    </div></div><p id="upper-selection" class="studio-hint"></p><p class="studio-hint"><a href="/account/planner/bazis-drawers-import.js" download="Martin_Forest_Import_v9_8_0_UPPERS.js">Импортёр для БАЗИС · версия 9.8.0</a></p>
    </div>
    <div id="door-opening-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong>Открывание двери</strong></div>

@@ -5,6 +5,8 @@ import './drawer-variants.js';
 import './drawer-model.js';
 import './countertop-variants.js';
 import './countertops.js';
+import './upper-variants.js';
+import './upper-model.js';
 import './furniture-core.js';
 export const {VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY}=globalThis.MF_FURNITURE_CORE;
 export const {APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment}=globalThis.MF_FURNITURE_CORE;

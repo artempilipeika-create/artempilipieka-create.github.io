@@ -17,7 +17,7 @@ const item=v=>normalizeKitchen({item_id:'drawer',name:'У мойки',module_typ
 
 function catalogueContext(){
  const cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}});
- const c=vm.createContext({document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D});
+ const c=vm.createContext({document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_UPPERS:globalThis.MF_UPPERS});
  vm.runInContext(source.slice(0,source.indexOf('let user=null')),c);
  c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};
  c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';

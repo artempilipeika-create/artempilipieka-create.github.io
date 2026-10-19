@@ -104,6 +104,15 @@ class PlannerApplication {
     const help=get('studio-help-dialog');const text=make('p',null,'Новая сцена: тяните шкаф мышью или перетащите карточку из каталога. Фон вращает камеру; правая кнопка сдвигает вид; колесо меняет масштаб. Ctrl+Z отменяет действие, Escape отменяет перенос. На телефоне карточка добавляется нажатием. Спереди высота остаётся по совместимому правилу проекта.');help.insertBefore(text,help.lastElementChild);
   }
   bindInspector(){
+    this.listen(get('upper-options-controls'),'click',e=>{
+      const b=e.target.closest('[data-upper-option]'),it=this.adapter.selected,U=globalThis.MF_UPPERS;
+      if(!b||b.disabled||!U.info(it)||b.getAttribute('aria-pressed')==='true')return;
+      this.interaction.change('Исполнение верхнего шкафа',()=>{
+        const next=U.select(it,{[b.dataset.upperOption]:b.dataset.upperValue},this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);
+        this.adapter.replace(next);this.adapter.status('Исполнение верхнего шкафа изменено');
+      });this.bridge.refresh();
+    });
     this.listen(get('drawer-options-controls'),'click',e=>{
       const b=e.target.closest('[data-drawer-option]'),it=this.adapter.selected,D=globalThis.MF_DRAWERS;
       if(!b||b.disabled||!D.familyInfo(it)||b.getAttribute('aria-pressed')==='true')return;

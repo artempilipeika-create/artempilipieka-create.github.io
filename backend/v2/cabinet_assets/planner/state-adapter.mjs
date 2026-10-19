@@ -29,7 +29,7 @@ export class StateAdapter{
     if(opt.bazis)Object.assign(it,{bazis_id:t.id,bazis_file:t.source_file,bazis_sha256:t.source_sha256,bazis_resize:Boolean(t.resize)});
     if(opt.bazis&&t.production){
       const p=t.production;
-      if(p.vitrine||p.metal_drawers?.opening==='push')it.handles='handleless';
+      if(p.upper&&p.upper.execution!=='handles'||p.vitrine||p.metal_drawers?.opening==='push')it.handles='handleless';
       Object.assign(it,{height:p.body_height+p.base_height,depth:p.scene_depth??it.depth,
         body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
       it.shelves=clone(productionShelves(it,p));
@@ -61,7 +61,7 @@ export class StateAdapter{
       return 'Для сушки ширина модуля должна изменяться шагом '+production.dryer.width_step_mm+' мм';
     if(Array.isArray(it.shelves))for(const shelf of production?productionShelves(it,production):it.shelves){
       const thickness=Number(shelf?.thickness)||18,offset=Number(shelf?.offset_mm);
-      if(shelf?.enabled!==false&&(!Number.isInteger(offset)||offset<(production?.carcass?.panel_thickness||0)+thickness/2||offset>h.body_height-(production?.carcass?.rail_height||0)-thickness/2))
+      if(shelf?.enabled!==false&&(!Number.isInteger(offset*2)||offset<(production?.carcass?.panel_thickness||0)+thickness/2||offset>h.body_height-(production?.carcass?.rail_height||0)-thickness/2))
         return 'Полка выходит за внутреннюю высоту корпуса';
       if(shelf?.enabled!==false&&(it.width-shelf.width_clearance<=0||it.depth-shelf.depth_clearance<=0))return 'Полка не помещается в корпус';
     }

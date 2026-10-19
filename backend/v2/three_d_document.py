@@ -16,6 +16,7 @@ from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant,tall_shelf_count
 from .three_d_drawers import drawer_variant, drawer_contents, drawer_hardware as metal_drawer_hardware
+from .three_d_upper import upper_variant, upper_contents, upper_hardware, upper_adjustment_note
 from .three_d_vitrine import vitrine_variant,vitrine_hardware,vitrine_contents
 
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');MINT=colors.HexColor('#e8efe9');PALE=colors.HexColor('#f7f9f5')
@@ -87,6 +88,9 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    upper=upper_variant(it)
+    if upper and not upper['legacy']:
+        return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in upper_hardware(it)],upper_adjustment_note(it)
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0);rows=[]
     drawer=drawer_variant(it)
     if drawer:return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in metal_drawer_hardware(it)],('Опоры отличаются от исходных 100 мм; артикулы подобрать. В БАЗИС заменить опоры и выставить корпус на новую отметку без растяжения.' if (it.get('legHeightMm') or it.get('base_height') or 100)!=100 else None)
@@ -141,6 +145,7 @@ def hardware_for(it):
     return [],None
 
 def module_contents(it):
+    if upper_variant(it):return upper_contents(it)
     if drawer_variant(it):return drawer_contents(it)
     if vitrine_variant(it):return vitrine_contents(it)
     bid=it.get('bazis_id');h=int(it.get('height') or 0);w=int(it.get('width') or 0)
@@ -183,6 +188,11 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front,materials=None):
+    if upper_variant(it):
+        materials=materials or {}
+        return [('Корпус 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),
+                ('Фасады 18 мм',front if front and front!='Не выбран' else 'Evagloss P004'),
+                ('Задняя стенка 3 мм',materials.get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый'))]
     if drawer_variant(it):
         materials=materials or {}
         ids={str(v) for k,v in it.get('part_materials',{}).items() if k.startswith('drawer-')}

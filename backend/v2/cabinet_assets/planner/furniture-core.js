@@ -224,7 +224,8 @@
   const VITRINE=root.MF_VITRINE,VITRINE_VARIANTS=freeze(VITRINE?.variants||[]),VITRINE_FAMILY=freeze(VITRINE?.family||{});
   const VITRINE_PRODUCTION=freeze(Object.fromEntries(VITRINE_VARIANTS.map(v=>[v.id,VITRINE.model(v)])));
   const DRAWER_PRODUCTION=freeze(Object.fromEntries((root.MF_DRAWERS?.variants||[]).map(v=>[v.id,root.MF_DRAWERS.model(v)])));
-  const PRODUCTION_MODELS=Object.freeze({...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.variants||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
+  const PRODUCTION_MODELS=Object.freeze({...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
   function tallVariantInfo(it){return allTallVariants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function tallVariant(it,patch,catalogue){
     const current=tallVariantInfo(it);
@@ -316,6 +317,7 @@
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
+    if(p?.upper)return root.MF_UPPERS.dimensionError(it);
     if(known?.metal_drawers)return root.MF_DRAWERS.dimensionError(it);
     if(p?.vitrine)return VITRINE.dimensionError(it);
     if(p?.tall){
@@ -344,6 +346,7 @@
   }
 
   function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.shelves(it,p);
     if(!p||p.tall||p.vitrine||p.metal_drawers)return [];
     if(p.corner?.purpose==='sink')return [];
     if(!p.shelf_rule)return (it?.shelves??p.shelves??[]).map(x=>({...x}));
@@ -370,6 +373,7 @@
     return null;
   }
   function productionHardware(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.hardware(it,p);
     if(p?.metal_drawers)return root.MF_DRAWERS.hardware(it,p);
     if(p?.vitrine)return VITRINE.hardware(it,p);
     if(!p?.hardware)return null;
@@ -587,7 +591,7 @@
       for(const [side,sign]of [['L',-1],['P',1]])add('side-'+side,side==='L'?'Левая Боковая':'Правая Боковая','body',
         {x:t,y:B-(p.tall?t:0),z:D},{x:sign*(W-t)/2,y:base+B/2+(p.tall?t/2:0),z:0},['y','z','x'],it.body_variant_id,p.carcass.material_name||null);
       add('top','Крыша','body',{x:inner,y:t,z:D},{x:0,y:base+B-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
-      add('bottom','Дно','body',{x:p.tall?W:inner,y:t,z:D},{x:0,y:base+t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
+      add('bottom','Дно','body',{x:p.tall?W:inner,y:t,z:D-(p.carcass.bottom_front_inset_mm||0)},{x:0,y:base+t/2,z:-(p.carcass.bottom_front_inset_mm||0)/2},['x','z','y'],it.body_variant_id,p.carcass.material_name||null);
       if(p.tall){
         add('divider','Перегородка','body',{x:inner,y:t,z:D},{x:0,y:p.tall.row_height-t/2,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name);
         add('shelf-fixed','Полка на конфирматах','shelf',{x:inner,y:t,z:D},{x:0,y:p.tall.fixed_shelf_y,z:0},['x','z','y'],it.body_variant_id,p.carcass.material_name,{fixed:true});

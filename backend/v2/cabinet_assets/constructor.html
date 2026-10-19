@@ -17,6 +17,9 @@
 <script defer src="/account/planner/drawer-model.js"></script>
 <script defer src="/account/planner/drawer-ui.js"></script>
 <link rel="stylesheet" href="/account/planner/drawer.css">
+<script defer src="/account/planner/upper-variants.js"></script>
+<script defer src="/account/planner/upper-model.js"></script>
+<script defer src="/account/planner/upper-ui.js"></script>
 <script defer src="/account/planner/furniture-core.js"></script>
 <script defer src="/account/3d.js"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 </head>
@@ -81,6 +84,20 @@
   <section id="item-controls" hidden>
    <div class="mf3d-section-head"><div><span id="studio-item-type" class="studio-type-badge">Модуль</span><h2 id="item-title">Модуль</h2></div></div>
    <label class="studio-rename">Название в проекте<input id="studio-item-name" type="text" maxlength="160" placeholder="Например, шкаф у окна"></label>
+   <div id="upper-options-controls" class="mf3d-control-card" hidden>
+    <div class="mf3d-control-title"><strong>Исполнение верхнего шкафа</strong></div>
+    <p class="studio-hint">Наполнение</p><div class="mf3d-quick-widths" role="group" aria-label="Наполнение верхнего шкафа">
+     <button class="secondary" data-upper-option="filling" data-upper-value="shelves" aria-pressed="false">Полки</button>
+     <button class="secondary" data-upper-option="filling" data-upper-value="dryer" aria-pressed="false">Сушка</button>
+    </div><p class="studio-hint">Открывание фасада</p><div class="mf3d-quick-widths" role="group" aria-label="Исполнение фасада">
+     <button class="secondary" data-upper-option="execution" data-upper-value="handles" aria-pressed="false">Накладные ручки</button>
+     <button class="secondary" data-upper-option="execution" data-upper-value="handleless" aria-pressed="false">Без ручек</button>
+     <button class="secondary" data-upper-option="execution" data-upper-value="push" aria-pressed="false">Нажатие (tip-on)</button>
+    </div><div id="upper-side-options"><p class="studio-hint">Петли, если смотреть спереди</p><div class="mf3d-quick-widths" role="group" aria-label="Сторона петель">
+     <button class="secondary" data-upper-option="side" data-upper-value="left" aria-pressed="false">Слева · L</button>
+     <button class="secondary" data-upper-option="side" data-upper-value="right" aria-pressed="false">Справа · P</button>
+    </div></div><p id="upper-selection" class="studio-hint"></p><p class="studio-hint"><a href="/account/planner/bazis-drawers-import.js" download="Martin_Forest_Import_v9_8_0_UPPERS.js">Импортёр для БАЗИС · версия 9.8.0</a></p>
+   </div>
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
    <div class="mf3d-control-card"><div class="mf3d-control-title"><strong>01 <span>Габариты</span></strong><span id="size-hint">мм</span></div><div class="mf3d-grid"><label>Ширина<input id="width" type="number" min="300" max="3000" step="1"></label><label>Высота<input id="height" type="number" min="300" max="3000" step="1"></label><label>Глубина<input id="depth" type="number" min="200" max="1200" step="1"></label></div><div id="quick-widths" class="mf3d-quick-widths" aria-label="Стандартная ширина"></div><p id="studio-size-limits" class="studio-hint"></p></div>

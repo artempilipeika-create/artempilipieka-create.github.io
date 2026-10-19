@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.7.2 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-15)
+ Martin Forest -> BAZIS native importer v9.8.0 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-19)
+ v9.8.0: 12 verified upper handleless/push donors, rear frame inset 3 mm.
  v9.7.2: preserve AQ helper surfaces; use the selected 16 mm drawer board material.
  Thickness fix: metal drawer boards never fall back to the 18 mm carcass SKU.
  v9.7.1: preserve glass and Z1, bind exact verified local textures; retain v9.4.3 notes.
@@ -271,6 +272,19 @@ const PLACEMENT_TOLERANCE_MM = 0.05;
 // frame Z=0..320; overlay back Z=0..3; carcass Z=3..320 (depth 317).
 // Unknown hashes retain the strict zero-offset profile. Source files are never changed.
 const NATIVE_FRAME_PROFILES = Object.freeze({
+  'c5fe428fbf4c168de733fc25b37cccdb06df120ffe16e8449ce58354d974d805': { rearInsetMm: 3 }, // ВМД1-600. отк L. (Сушка).tip-on.fr3d
+  '986ddb9b5997f1a304e83f25ee98b05b9e3ce0c95bc43516d8f6d9962799e400': { rearInsetMm: 3 }, // ВМД1-600. отк L. (Сушка).без ручек.fr3d
+  '1a8874e856344d3a545246210c51604abc6bfa07b90b5ddb5b61249549394cba': { rearInsetMm: 3 }, // ВМД1-600. отк L. tip-on.fr3d
+  '6ef58de6514ad23641880b8e79e21f423833c58449f5c25c911f8842ad3412f7': { rearInsetMm: 3 }, // ВМД1-600. отк L.Без ручек.fr3d
+  '48b7a8d9e4bbe3c44479cd411ada9583eb366f8da478ab6ab9ca2e465476e609': { rearInsetMm: 3 }, // ВМД1-600. отк P. (Сушка). без ручек..fr3d
+  '09f5f653393afbd4d59ab07f6222852892fa42e957f76904946137497e766607': { rearInsetMm: 3 }, // ВМД1-600. отк P. (Сушка).tip-on.fr3d
+  '597377025a028867d73577fb074037c4180777dce3ceefe729cab68470c042d1': { rearInsetMm: 3 }, // ВМД1-600. отк P. tip-on.fr3d
+  'a8aa6355acd15bfb41b490bfd14ebe5f472b1ba5e5ef5ce3bb5321bfd0d8f831': { rearInsetMm: 3 }, // ВМД1-600. отк P.Без ручек.fr3d
+  '4c416abd988a3a8d99f11768fc51da588bc2477d68a34a0fe849abc273617857': { rearInsetMm: 3 }, // ВМД2-600. tip-on..fr3d
+  '76e5a7bf2a65d932848a94ca1b2c17c8be7f74df75a4c0c12cf7cf3b1b54784d': { rearInsetMm: 3 }, // ВМД2-600.(Сушка).tip-on.fr3d
+  'c98de01845cf9c395f198b32f2214c26c759f764f663c8d8d9c7b84e865da525': { rearInsetMm: 3 }, // ВМД2-600.(Сушка).без ручек(1).fr3d
+  '85f493fc1d177af91734d7a40d7daa105b2c00e08dc4ee7c34d694ed97c456da': { rearInsetMm: 3 }, // ВМД2-600.без ручек(1).fr3d
+
   // ВМД1-600. отк P. (Сушка).fr3d
   '60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005': { rearInsetMm: 3 },
   // ВМД1-600. отк L. (Сушка).fr3d

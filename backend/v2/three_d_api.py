@@ -17,12 +17,13 @@ from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
+from .three_d_upper import upper_variant, upper_error, BY_ID as UPPER_BY_ID
 from .three_d_room import Room
 
 class ShelfState(StrictModel):
     id: str=Field(min_length=1,max_length=80)
     enabled: bool=True
-    offset_mm: int=Field(ge=0,le=3000)
+    offset_mm: float=Field(ge=0,le=3000,multiple_of=0.5)
     thickness: int=Field(default=18,ge=3,le=60)
     width_clearance: int=Field(default=36,ge=0,le=300)
     depth_clearance: int=Field(default=1,ge=0,le=300)
@@ -128,6 +129,16 @@ class FurnitureItem(StrictModel):
                 raise ValueError(f'Установочная ширина углового модуля 800–{maximum} мм; каждая дверца не больше 600 мм')
             if not 450<=self.depth<=700 or not 600<=body<=1000:
                 raise ValueError('Проверьте глубину и высоту корпуса углового модуля')
+        upper=upper_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
+        if self.bazis_id in UPPER_BY_ID:
+            if not upper:raise ValueError('Фрагмент верхнего шкафа не совпадает с проверенным исходником')
+            if self.module_type!='wall_cabinet' or self.base!='wall' or base!=0:
+                raise ValueError('Верхний шкаф — навесной, без основания')
+            error=upper_error(dict(width=self.width,height=self.height,depth=self.depth),upper)
+            if error:raise ValueError(error)
+            self.bazis_file=upper['source_file'];self.bazis_resize=True
+            self.layout='doors';self.drawers=0
+            if not upper['legacy']:self.handles='handleless'
         drawer=drawer_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
         if self.bazis_id in DRAWER_BY_ID:
             if not drawer:raise ValueError('Фрагмент ящиков не совпадает с проверенным исходником')
