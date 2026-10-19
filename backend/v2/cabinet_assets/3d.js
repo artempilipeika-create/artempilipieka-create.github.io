@@ -186,8 +186,20 @@ function legacyItem(s){
   it.template_id=it.template_id||inferTemplate(it);
   return it;
 }
+// Allow only the two reviewed dryer donor revisions in already-saved projects.
+// No geometry, placement, materials or notes are rewritten.
+const UPPER_SOURCE_REFRESH=Object.freeze({
+  'bazis.60f79b573cd1':['60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005','64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d'],
+  'bazis.1ac4fadd97b7':['1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b','91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0']
+});
 function normalizeItem(x,room){
   const it={...x};
+  const revision=UPPER_SOURCE_REFRESH[it.bazis_id];
+  const donor=revision&&globalThis.MF_UPPERS?.choice(it.bazis_id);
+  if(revision&&it.bazis_sha256===revision[0]&&donor?.source_sha256===revision[1]){
+    it.bazis_sha256=donor.source_sha256;
+    it.bazis_file=donor.source_file;
+  }
   if(!it.template_id)it.template_id=inferTemplate(it);
   return globalThis.MF_FURNITURE_CORE.normalizeKitchen(it,room);
 }

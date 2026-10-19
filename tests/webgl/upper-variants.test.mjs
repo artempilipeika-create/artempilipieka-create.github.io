@@ -95,3 +95,26 @@ test('Actual JSON export and importer profiles keep all eighteen exact identitie
  payload.items.forEach((out,i)=>{const v=U.variants[i];assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.source_file,v.source_file);assert.equal(out.construction.upper_variant.execution,v.execution);
   assert.equal(ic.nativeFrameProfile(out).rearInsetMm,3);assert.match(out.production_note,new RegExp(v.execution==='push'?'tip-on':U.executions[v.execution]));});
 });
+
+
+test('Previously saved dryer donors refresh only the two approved source hashes',()=>{
+ const start=source.indexOf('const UPPER_SOURCE_REFRESH='),end=source.indexOf('function scenePayload(){');
+ assert.ok(start>=0&&end>start);
+ const ctx=vm.createContext({MF_UPPERS:U,MF_FURNITURE_CORE:core});
+ vm.runInContext(source.slice(start,end),ctx);
+ const revisions=[
+  ['bazis.60f79b573cd1','60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005'],
+  ['bazis.1ac4fadd97b7','1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b']
+ ];
+ for(const [id,oldSha] of revisions){
+  const donor=U.choice(id),previous={...item(donor),bazis_sha256:oldSha,production_note:'Не менять заметку',x:125,z:350};
+  const room={width:4200,depth:3200,height:2700};
+  const revived=ctx.normalizeScene({room,items:[previous]}).items[0];
+  assert.equal(revived.bazis_sha256,donor.source_sha256);
+  assert.equal(revived.bazis_file,donor.source_file);
+  for(const field of ['name','width','height','depth','x','z','rotation','body_variant_id','front_variant_id','production_note'])assert.equal(revived[field],previous[field]);
+  assert.equal(previous.bazis_sha256,oldSha);
+  const unknown=ctx.normalizeScene({room,items:[{...previous,bazis_sha256:'0'.repeat(64)}]}).items[0];
+  assert.equal(unknown.bazis_sha256,'0'.repeat(64));
+ }
+});
