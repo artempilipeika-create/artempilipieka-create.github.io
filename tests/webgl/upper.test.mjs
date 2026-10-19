@@ -53,8 +53,8 @@ for(const id of regularIds)test(WALL_PRODUCTION[id].label+': height above 850 cr
 
 for(const [id,label,sha,file,fronts,hinges,sides] of [
   ['bazis.b89bf9852860','ВМД1 L · Сушка','b89bf98528601e2bc74e52bc19cc6904a20ff90ed6f0785c1d599c7aac4250fd','ВМД1-600. отк L. (Сушка).fr3d',[[717,597]],2,['left']],
-  ['bazis.60f79b573cd1','ВМД1 P · Сушка','60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005','ВМД1-600. отк P. (Сушка).fr3d',[[717,597]],2,['right']],
-  ['bazis.1ac4fadd97b7','ВМД2 · Сушка','1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b','ВМД2-600.(Сушка).fr3d',[[717,297],[717,297]],4,['left','right']]
+  ['bazis.60f79b573cd1','ВМД1 P · Сушка','64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d','ВМД1-600. отк P. (Сушка).fr3d',[[717,597]],2,['right']],
+  ['bazis.1ac4fadd97b7','ВМД2 · Сушка','91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0','ВМД2-600.(Сушка).fr3d',[[717,297],[717,297]],4,['left','right']]
 ])test(label+': dryer width follows module width and shelf appears only above 850',()=>{
   const p=WALL_PRODUCTION[id],it=item(id),bom=parts(it),hw=productionHardware(it,p);
   assert.equal(p.source_sha256,sha);assert.equal(p.source_file,file);

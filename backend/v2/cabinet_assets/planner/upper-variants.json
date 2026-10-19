@@ -35,7 +35,7 @@
   {
     "id": "bazis.60f79b573cd1",
     "source_file": "ВМД1-600. отк P. (Сушка).fr3d",
-    "source_sha256": "60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005",
+    "source_sha256": "64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d",
     "door_count": 1,
     "side": "right",
     "filling": "dryer",
@@ -46,7 +46,7 @@
   {
     "id": "bazis.1ac4fadd97b7",
     "source_file": "ВМД2-600.(Сушка).fr3d",
-    "source_sha256": "1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b",
+    "source_sha256": "91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0",
     "door_count": 2,
     "side": "double",
     "filling": "dryer",

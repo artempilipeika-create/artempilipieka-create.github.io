@@ -100,8 +100,8 @@
     'bazis.2175c60e84a6':wallDoor('ВМД1 P','wall.standard.d1.right.600','2175c60e84a6eb6eeefa62eaddc611f2180b6a3060a0ea3aa1b5305ffbcc6ed5','ВМД1-600. отк P.fr3d',['right']),
     'bazis.877ba2f68d92':wallDoor('ВМД2','wall.standard.d2.600','877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3','ВМД2-600..fr3d',['left','right']),
     'bazis.b89bf9852860':wallDryer('ВМД1 L · Сушка','wall.dryer.d1.left.600','b89bf98528601e2bc74e52bc19cc6904a20ff90ed6f0785c1d599c7aac4250fd','ВМД1-600. отк L. (Сушка).fr3d',['left']),
-    'bazis.60f79b573cd1':wallDryer('ВМД1 P · Сушка','wall.dryer.d1.right.600','60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005','ВМД1-600. отк P. (Сушка).fr3d',['right']),
-    'bazis.1ac4fadd97b7':wallDryer('ВМД2 · Сушка','wall.dryer.d2.600','1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b','ВМД2-600.(Сушка).fr3d',['left','right'])
+    'bazis.60f79b573cd1':wallDryer('ВМД1 P · Сушка','wall.dryer.d1.right.600','64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d','ВМД1-600. отк P. (Сушка).fr3d',['right']),
+    'bazis.1ac4fadd97b7':wallDryer('ВМД2 · Сушка','wall.dryer.d2.600','91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0','ВМД2-600.(Сушка).fr3d',['left','right'])
   });
   // Source: 2026-10-05 FR3D + panel/hardware specifications. No invented articles.
   const sinkDoor=(label,key,sha,file,sides)=>({...kitchenBase,label,key,source_sha256:sha,source_file:file,
