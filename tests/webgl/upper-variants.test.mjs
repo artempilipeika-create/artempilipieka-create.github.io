@@ -101,7 +101,9 @@ test('Previously saved dryer donors refresh only the two approved source hashes'
  const start=source.indexOf('const UPPER_SOURCE_REFRESH='),end=source.indexOf('function scenePayload(){');
  assert.ok(start>=0&&end>start);
  const ctx=vm.createContext({MF_UPPERS:U,MF_FURNITURE_CORE:core});
- vm.runInContext(source.slice(start,end),ctx);
+ const inferStart=source.indexOf('function inferTemplate('),inferEnd=source.indexOf('function legacyItem(');
+ assert.ok(inferStart>=0&&inferEnd>inferStart);
+ vm.runInContext(source.slice(inferStart,inferEnd)+'\n'+source.slice(start,end),ctx);
  const revisions=[
   ['bazis.60f79b573cd1','60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005'],
   ['bazis.1ac4fadd97b7','1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b']
