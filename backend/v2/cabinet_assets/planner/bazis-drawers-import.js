@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.8.1 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-19)
+ Martin Forest -> BAZIS native importer v9.8.2 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-19)
  v9.8.1: corrected D2 handle donor, accurate version label and source mismatch details.
  v9.8.0: 12 verified upper handleless/push donors, rear frame inset 3 mm.
  v9.7.2: preserve AQ helper surfaces; use the selected 16 mm drawer board material.
@@ -180,6 +180,26 @@ function sha256File(filename) {
   }
 }
 
+// Upgrade only two manually verified upper dryer donors.
+// The new source still MUST match SHA-256 byte-for-byte. No bypass.
+const VERIFIED_UPPER_DRYER_REVISIONS = Object.freeze({
+  'bazis.60f79b573cd1': Object.freeze({
+    file: 'ВМД1-600. отк P. (Сушка).fr3d',
+    previous: '60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005',
+    current: '64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d'
+  }),
+  'bazis.1ac4fadd97b7': Object.freeze({
+    file: 'ВМД2-600.(Сушка).fr3d',
+    previous: '1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b',
+    current: '91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0'
+  })
+});
+function canonicalUpperDonor(item) {
+  const record = VERIFIED_UPPER_DRYER_REVISIONS[String(item && item.bazis_id || '')];
+  if (!record || String(item.source_sha256 || '').toLowerCase() !== record.previous ||
+      normalizeSourceName(item.source_file) !== normalizeSourceName(record.file)) return item;
+  return { ...item, source_file: record.file, source_sha256: record.current };
+}
 function resolveSourceFile(root, item, scan) {
   if (!item || !item.source_file) return '';
   const files = scan && Array.isArray(scan.files) ? scan.files : collectSourceFiles(root).files;
@@ -296,6 +316,9 @@ const NATIVE_FRAME_PROFILES = Object.freeze({
   '858266606bc5e6f36a96635c155beb8f86161ce869956a8f961f27406db7ebc2': { rearInsetMm: 3 },
   // ВМД2-600.(Сушка).fr3d
   '1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b': { rearInsetMm: 3 },
+  // Approved 2026-10-19 upper dryer replacements; rear overlay remains 3 mm.
+  '64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d': { rearInsetMm: 3 },
+  '91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0': { rearInsetMm: 3 },
   // Corrected ВМД2-600.(2).fr3d, audited 2026-10-19; old identity remains separate.
   '6c187245284ab1651e01e4ff805f554cbedd5fef67ce5d9dabf67fde30351ae7': { rearInsetMm: 3 },
   // ВМД2-600..fr3d
@@ -703,13 +726,15 @@ function resizeAndPlace(obj, item, log) {
 function prepareProject(payload, root) {
   const scan = collectSourceFiles(root);
   const entries = [], errors = [];
-  for (const item of payload.items) {
+  for (const original of payload.items) {
+    const item = canonicalUpperDonor(original);
     const source = resolveSourceFile(root, item, scan);
     if (!source) errors.push(item.source_file + ' — точный FR3D по SHA-256 не найден' +
       '\nОжидаемый SHA-256: ' + (item.source_sha256 || 'не указан') +
+      (item !== original ? '\nОбнаружен старый SHA экспорта: нужен обновлённый FR3D из пакета 19.10.2026.' : '') +
       (item.source_sha256 === '877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3'
         ? '\nДля обновлённого ВМД2: на сайте выберите шкаф, повторно нажмите «Накладные ручки» и скачайте новый экспорт.' : ''));
-    else entries.push({ item, source });
+    else entries.push({ item, source, previous_source_sha256: item !== original ? original.source_sha256 : '' });
   }
   if (errors.length) throw new Error('Проверьте исходные FR3D в библиотеке:\n' + errors.join('\n') +
     '\nПапка поиска: ' + root + '\nНайдено FR3D: ' + scan.files.length +
@@ -718,7 +743,7 @@ function prepareProject(payload, root) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.8.1 ONE CLICK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.8.2 ONE CLICK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -839,6 +864,8 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
+      if (entry.previous_source_sha256) log.push('ОБНОВЛЕНА ПРИВЯЗКА ВМД: ' + entry.previous_source_sha256 +
+        ' -> ' + item.source_sha256 + '; файл проверен по SHA-256');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');
