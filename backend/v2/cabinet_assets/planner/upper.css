@@ -1,0 +1,13 @@
+#upper-options-controls h3{margin:0 0 9px}
+#upper-selection{font-size:12px;font-weight:600;line-height:1.5;margin:0 0 12px}
+.upper-label{font-size:11px;color:#667365;margin:12px 0 6px}
+.upper-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.upper-cards.upper-executions{grid-template-columns:repeat(3,minmax(0,1fr))}
+.upper-cards button{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;padding:9px 3px;min-width:0;white-space:normal;font-size:11px;line-height:1.35;text-align:center}
+.upper-option-image{display:block;width:72px;max-width:100%;height:76px}
+.upper-option-image svg{display:block;width:100%;height:100%}
+.upper-cards button>span:last-child{min-height:2.7em;display:flex;align-items:center;justify-content:center}
+#upper-options-controls [aria-pressed=true]{background:#e4ede1;color:#183d2b;border-color:#6b8b64;box-shadow:inset 0 0 0 1px #6b8b64}
+#upper-options-controls button:disabled{opacity:.4;cursor:not-allowed}
+#upper-options-controls button:focus-visible{outline:2px solid #526850;outline-offset:2px}
+.upper-import{margin-top:12px}

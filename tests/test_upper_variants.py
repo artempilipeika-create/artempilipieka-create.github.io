@@ -48,8 +48,8 @@ def test_new_assets_are_served_with_correct_mime_and_controls():
    r=client.get(url);assert r.status_code==200
    assert r.text.count('id="upper-options-controls"')==1
    for label in ['Накладные ручки','Без ручек','Нажатие (tip-on)']:assert label in r.text
-  for asset in ['upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','bazis-drawers-import.js']:
+  for asset in ['upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css','bazis-drawers-import.js']:
    r=client.get('/account/planner/'+asset);assert r.status_code==200
    assert r.content==(ROOT/'backend/v2/cabinet_assets/planner'/asset).read_bytes()
-   assert r.headers['content-type'].startswith('application/json' if asset.endswith('.json') else 'application/javascript')
+   assert r.headers['content-type'].startswith('application/json' if asset.endswith('.json') else 'text/css' if asset.endswith('.css') else 'application/javascript')
   assert client.get('/account/planner/../three_d_upper.py').status_code==404

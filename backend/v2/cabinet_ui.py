@@ -27,7 +27,7 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
-        'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js',
+        'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',
         'drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
         'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css',
         'project-autosave.mjs','project-safety.mjs','project-checks.mjs','project-safety.css',
