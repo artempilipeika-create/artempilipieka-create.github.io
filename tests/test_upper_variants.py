@@ -6,12 +6,12 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 from backend.v2.three_d_api import FurnitureItem,Scene
-from backend.v2.three_d_upper import VARIANTS
+from backend.v2.three_d_upper import VARIANTS,ARCHIVED
 from backend.v2.three_d_document import hardware_for,module_contents,module_materials
 ROOT=Path(__file__).resolve().parents[1]
 def item(v):
  return dict(item_id=v['id'],name='Над чайником',module_type='wall_cabinet',bazis_id=v['id'],bazis_file=v['source_file'],bazis_sha256=v['source_sha256'],width=600,height=720,depth=317,body_height=720,base_height=0,base='wall',layout='doors',x=0,z=0,rotation=0,handles='handles' if v['execution']=='handles' else 'handleless')
-@pytest.mark.parametrize('v',VARIANTS,ids=lambda v:v['label'])
+@pytest.mark.parametrize('v',VARIANTS+ARCHIVED,ids=lambda v:v['id'])
 def test_donor_roundtrip_preserves_data_and_execution(v):
  data=item(v)
  if v['filling']=='shelves':data['shelves']=[dict(id='shelf-1',offset_mm=360 if v['legacy'] else 359.5)]
@@ -26,7 +26,7 @@ def test_invalid_identity_and_dimensions_are_rejected(patch):
  v=next(v for v in VARIANTS if not v['legacy'] and v['door_count']==1)
  with pytest.raises(ValidationError):FurnitureItem(**dict(item(v),**patch))
 def test_corrected_d2_donors_have_no_push_or_extra_hinges():
- for sha in ['c98de01845cf','85f493fc1d17']:
+ for sha in ['c98de01845cf','85f493fc1d17','6c187245284a']:
   v=next(v for v in VARIANTS if v['id']=='bazis.'+sha);rows,_=hardware_for(item(v))
   assert sum(h['qty'] for h in rows if h['article']=='112602')==4
   assert not any(h['article'] in ('09.0019','09.0021') for h in rows)

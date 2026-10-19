@@ -1,10 +1,10 @@
 /* Verified upper donor selection. Identity remains the exact FR3D SHA in saved projects. */
 (function(root){
  'use strict';
- const variants=root.MF_UPPER_VARIANTS||[],byId=new Map(variants.map(v=>[v.id,v]));
+ const variants=root.MF_UPPER_VARIANTS||[],archived=variants.flatMap(v=>v.previous_sources||[]),all=[...variants,...archived],byId=new Map(all.map(v=>[v.id,v]));
  const executions={handles:'Накладные ручки',handleless:'Без ручек',push:'Нажатие (tip-on)'};
  const families=[{door_count:1,label:'ВМД1 · верхний шкаф с одной дверью',default_id:'bazis.858266606bc5'},
-  {door_count:2,label:'ВМД2 · верхний шкаф с двумя дверями',default_id:'bazis.877ba2f68d92'}];
+  {door_count:2,label:'ВМД2 · верхний шкаф с двумя дверями',default_id:'bazis.6c187245284a'}];
  const choice=id=>byId.get(id)||null;
  const info=it=>{const v=choice(it?.bazis_id);return v&&(!it.bazis_sha256||it.bazis_sha256===v.source_sha256)?v:null;};
  const family=v=>families.find(f=>f.door_count===v?.door_count)||null;
@@ -68,5 +68,5 @@
    doors:(v.door_count===2?['left','right']:[v.side]).map(side=>({side,hinge_count:2,open_angle:null})),
    hardware:{hinges_in_items:true,hinge_count:2*v.door_count,hinge_article:'112602',native_fixed_items:true,items:v.hardware_items}};
  }
- root.MF_UPPERS=Object.freeze({variants,executions,families,choice,info,family,available,limits,dimensionError,shelves,hardware,adjustment,brief,select,model});
+ root.MF_UPPERS=Object.freeze({variants,archived,all,executions,families,choice,info,family,available,limits,dimensionError,shelves,hardware,adjustment,brief,select,model});
 })(globalThis);

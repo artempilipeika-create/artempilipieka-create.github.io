@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.8.0 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-19)
+ Martin Forest -> BAZIS native importer v9.8.1 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-19)
+ v9.8.1: corrected D2 handle donor, accurate version label and source mismatch details.
  v9.8.0: 12 verified upper handleless/push donors, rear frame inset 3 mm.
  v9.7.2: preserve AQ helper surfaces; use the selected 16 mm drawer board material.
  Thickness fix: metal drawer boards never fall back to the 18 mm carcass SKU.
@@ -295,6 +296,8 @@ const NATIVE_FRAME_PROFILES = Object.freeze({
   '858266606bc5e6f36a96635c155beb8f86161ce869956a8f961f27406db7ebc2': { rearInsetMm: 3 },
   // ВМД2-600.(Сушка).fr3d
   '1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b': { rearInsetMm: 3 },
+  // Corrected ВМД2-600.(2).fr3d, audited 2026-10-19; old identity remains separate.
+  '6c187245284ab1651e01e4ff805f554cbedd5fef67ce5d9dabf67fde30351ae7': { rearInsetMm: 3 },
   // ВМД2-600..fr3d
   '877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3': { rearInsetMm: 3 }
 });
@@ -702,15 +705,20 @@ function prepareProject(payload, root) {
   const entries = [], errors = [];
   for (const item of payload.items) {
     const source = resolveSourceFile(root, item, scan);
-    if (!source) errors.push(item.source_file + ' — точный FR3D по SHA-256 не найден');
+    if (!source) errors.push(item.source_file + ' — точный FR3D по SHA-256 не найден' +
+      '\nОжидаемый SHA-256: ' + (item.source_sha256 || 'не указан') +
+      (item.source_sha256 === '877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3'
+        ? '\nДля обновлённого ВМД2: на сайте выберите шкаф, повторно нажмите «Накладные ручки» и скачайте новый экспорт.' : ''));
     else entries.push({ item, source });
   }
-  if (errors.length) throw new Error('Проверьте исходные FR3D в библиотеке:\n' + errors.join('\n'));
+  if (errors.length) throw new Error('Проверьте исходные FR3D в библиотеке:\n' + errors.join('\n') +
+    '\nПапка поиска: ' + root + '\nНайдено FR3D: ' + scan.files.length +
+    (scan.truncated ? '\nДостигнут предел обхода папок.' : ''));
   return { entries, scan };
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.7.1 ONE CLICK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.8.1 ONE CLICK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

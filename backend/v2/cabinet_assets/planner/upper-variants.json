@@ -22,17 +22,6 @@
     "label": "ВМД1 P · Полки · Накладные ручки"
   },
   {
-    "id": "bazis.877ba2f68d92",
-    "source_file": "ВМД2-600..fr3d",
-    "source_sha256": "877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3",
-    "door_count": 2,
-    "side": "double",
-    "filling": "shelves",
-    "execution": "handles",
-    "legacy": true,
-    "label": "ВМД2 · Полки · Накладные ручки"
-  },
-  {
     "id": "bazis.b89bf9852860",
     "source_file": "ВМД1-600. отк L. (Сушка).fr3d",
     "source_sha256": "b89bf98528601e2bc74e52bc19cc6904a20ff90ed6f0785c1d599c7aac4250fd",
@@ -2104,6 +2093,256 @@
       }
     ],
     "label": "ВМД2 · Полки · Нажатие (tip-on)"
+  },
+  {
+    "id": "bazis.6c187245284a",
+    "source_file": "ВМД2-600.(2).fr3d",
+    "source_sha256": "6c187245284ab1651e01e4ff805f554cbedd5fef67ce5d9dabf67fde30351ae7",
+    "door_count": 2,
+    "side": "double",
+    "filling": "shelves",
+    "execution": "handles",
+    "legacy": false,
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        720.0,
+        320.0
+      ]
+    },
+    "panels": [
+      {
+        "name": "Левая Боковая",
+        "lo": [
+          0.0,
+          0.0,
+          3.0
+        ],
+        "size": [
+          18.0,
+          720.0,
+          317.0
+        ]
+      },
+      {
+        "name": "Правая Боковая",
+        "lo": [
+          582.0,
+          0.0,
+          3.0
+        ],
+        "size": [
+          18.0,
+          720.0,
+          317.0
+        ]
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          702.0,
+          3.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          317.0
+        ]
+      },
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          -0.0,
+          3.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          317.0
+        ]
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          2.0,
+          2.0,
+          0.0
+        ],
+        "size": [
+          596.0,
+          716.0,
+          3.0
+        ]
+      },
+      {
+        "name": "Фасад",
+        "lo": [
+          1.5,
+          1.5,
+          320.0
+        ],
+        "size": [
+          297.0,
+          717.0,
+          18.0
+        ]
+      },
+      {
+        "name": "Фасад",
+        "lo": [
+          301.5,
+          1.5,
+          320.0
+        ],
+        "size": [
+          297.0,
+          717.0,
+          18.0
+        ]
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          19.0,
+          350.5,
+          3.0
+        ],
+        "size": [
+          562.0,
+          18.0,
+          317.0
+        ]
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "upper-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "unit": "pcs"
+      },
+      {
+        "key": "upper-hw-2",
+        "name": "Навес простой, белый",
+        "article": "13198",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "upper-hw-3",
+        "name": "Шуруп 3*30 мм,Zn",
+        "article": "12867",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "upper-hw-4",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 52,
+        "unit": "pcs"
+      },
+      {
+        "key": "upper-hw-5",
+        "name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+        "article": "112602",
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "upper-hw-6",
+        "name": "Полкодержатель, Marcopol, оцинкованный",
+        "article": "PK 5.0X16B",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "bottom_front_inset_mm": 0.0,
+    "facade_clearance_mm": 0.0,
+    "shelf_rules": [
+      {
+        "name": "Параметрическая полка Баченок",
+        "rules": [
+          {
+            "Count": 1,
+            "Length": 0.0
+          }
+        ],
+        "mount_direction": 1,
+        "parameters": {
+          "PrimStep": 0.0,
+          "StartIndent": 0.0,
+          "EndIndent": 0.0,
+          "SizeParam": 1,
+          "AroundStep": false
+        },
+        "cached": {
+          "name": "Полка",
+          "rules": [
+            {
+              "Count": 1,
+              "Length": 0.0
+            }
+          ],
+          "frame": {
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "size": [
+              600.0,
+              18.0,
+              500.0
+            ]
+          },
+          "panels": [
+            {
+              "name": "Полка",
+              "lo": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "size": [
+                598.0,
+                18.0,
+                500.0
+              ]
+            }
+          ],
+          "hardware": [
+            {
+              "name": "Полкодержатель, Marcopol, оцинкованный",
+              "article": "PK 5.0X16B",
+              "quantity": 4
+            }
+          ]
+        }
+      }
+    ],
+    "previous_sources": [
+      {
+        "id": "bazis.877ba2f68d92",
+        "source_file": "ВМД2-600..fr3d",
+        "source_sha256": "877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3",
+        "door_count": 2,
+        "side": "double",
+        "filling": "shelves",
+        "execution": "handles",
+        "legacy": true,
+        "label": "ВМД2 · Полки · Накладные ручки"
+      }
+    ],
+    "label": "ВМД2 · Полки · Накладные ручки"
   },
   {
     "id": "bazis.76e5a7bf2a65",

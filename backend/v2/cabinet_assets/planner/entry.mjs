@@ -106,7 +106,9 @@ class PlannerApplication {
   bindInspector(){
     this.listen(get('upper-options-controls'),'click',e=>{
       const b=e.target.closest('[data-upper-option]'),it=this.adapter.selected,U=globalThis.MF_UPPERS;
-      if(!b||b.disabled||!U.info(it)||b.getAttribute('aria-pressed')==='true')return;
+      if(!b||b.disabled||!U.info(it))return;
+      const target=U.available(U.info(it),{[b.dataset.upperOption]:b.dataset.upperValue});
+      if(b.getAttribute('aria-pressed')==='true'&&target?.id===it.bazis_id)return;
       this.interaction.change('Исполнение верхнего шкафа',()=>{
         const next=U.select(it,{[b.dataset.upperOption]:b.dataset.upperValue},this.bridge.catalogue.bazisModules);
         const error=this.adapter.validate(next);if(error)throw new Error(error);

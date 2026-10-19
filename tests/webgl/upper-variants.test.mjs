@@ -12,6 +12,20 @@ const item=v=>({item_id:'upper',name:'Над чайником',module_type:'wall
  body_variant_id:'body18',front_variant_id:'front18',back_variant_id:'hdf3',part_materials:{'side-L':'board18'},production_note:'Оставить заметку',doors_open:true});
 const template=it=>({production:models[it.bazis_id]});
 
+test('Corrected D2 replaces the current choice without rewriting saved source identity',()=>{
+ const previous=U.choice('bazis.877ba2f68d92'),current=U.choice('bazis.6c187245284a');
+ assert.equal(current.source_sha256,'6c187245284ab1651e01e4ff805f554cbedd5fef67ce5d9dabf67fde30351ae7');
+ assert.equal(current.source_file,'ВМД2-600.(2).fr3d');
+ assert.equal(U.family(current).default_id,current.id);
+ assert.ok(!U.variants.includes(previous));assert.equal(U.info(item(previous)),previous);
+ const old=item(previous),copy=structuredClone(old),updated=U.select(old,{execution:'handles'});
+ assert.deepEqual(old,copy);assert.equal(U.info(updated),current);
+ for(const key of ['item_id','name','width','height','depth','x','z','rotation','body_variant_id','front_variant_id','back_variant_id','part_materials','production_note'])assert.deepEqual(updated[key],old[key]);
+ assert.equal(updated.handles,'handles');assert.equal(productionShelves(updated)[0].offset_mm,359.5);
+ const hardware=productionHardware(updated);assert.equal(hardware.items.find(h=>h.article==='112602').quantity,4);
+ assert.equal(models[previous.id].source_sha256,previous.source_sha256);
+});
+
 test('Exactly two catalogue cards expose all eighteen combinations',()=>{
  const cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}});
  const c=vm.createContext({document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:core,MF_DRAWERS:globalThis.MF_DRAWERS,MF_UPPERS:U});
@@ -19,7 +33,7 @@ test('Exactly two catalogue cards expose all eighteen combinations',()=>{
  c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';
  vm.runInContext(source.slice(source.indexOf('function renderModuleCatalogue()'),source.indexOf('async function loadProjects()')),c);c.renderModuleCatalogue();
  const uppers=cards.filter(c=>U.choice(c.bazis));assert.deepEqual(uppers.map(c=>c.bazis),U.families.map(f=>f.default_id));
- assert.equal(U.variants.length,18);assert.equal(U.variants.filter(v=>v.legacy).length,6);
+ assert.equal(U.variants.length,18);assert.equal(U.all.filter(v=>v.legacy).length,6);
  for(const card of uppers){assert.match(card.description,/накладные ручки/);assert.match(card.description,/сушка/);assert.match(card.description,/нажатие/);}
 });
 

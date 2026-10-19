@@ -26,3 +26,13 @@ The stable importer URL `/account/planner/bazis-drawers-import.js` serves versio
 109 Node checks passed: upper variants, original upper geometry, door families, drawer family/materials/elastic rules, vitrines and core. 26 Python checks passed: schema round trips, asset routes, corrected source hardware and JS/Python purchasing parity across dimensions. Tests use no production orders, messages or database. Browser visual QA was unavailable in this managed environment.
 
 Deploy only the existing `martin-forest-v2-staging` service from branch `mf-upper-variants-20261019`. Previous live commit: `597321e66fc1785d64d42431f8e258f771d83e52` on `mf-drawer-variants-20261015`. Main and production integrations are unchanged.
+
+## Corrected D2 handle source — 19 October, second upload
+
+The current shelves + surface handles choice now uses `ВМД2-600.(2).fr3d`, SHA-256 `6c187245284ab1651e01e4ff805f554cbedd5fef67ce5d9dabf67fde30351ae7`. Its eight panels, 359.5 mm shelf center, zero facade clearance and four PRIME 112602 hinges were audited from the actual upload. The preceding `(1)` upload had four duplicate hinge assemblies inside the shelf block at the same positions as the door hinges; it was rejected and never published.
+
+The old `877ba2f68d92…` source remains an archived identity with its original geometry and exact hash for existing projects. It is hidden from the two-card catalogue. Selecting «Накладные ручки» again on an old D2 explicitly switches to the corrected source while preserving module identity, placement, materials and notes, with one undo entry. The selection panel explains this update. Other upper options remain unchanged; there are still 18 current combinations, plus the archived D2 source.
+
+Importer 9.8.1 includes the corrected source's 3 mm rear inset. Its runtime version now matches its header and download label (the earlier 9.8.0 download mistakenly retained a 9.7.1 dialog label). Source preflight failures report the requested SHA, searched directory and FR3D count, and explain how to refresh the old D2 export. No hash bypass or substitution is introduced. The compatibility tools mirror remains byte-identical.
+
+Verification for this correction: 70 Node checks and 27 Python checks passed. The real uploaded `(2)` file was successfully resolved by the actual importer's source preflight; native execution in Windows BAZIS remains untested. The source resolver regression also confirms that renamed exact bytes work while a same-named wrong file is rejected.

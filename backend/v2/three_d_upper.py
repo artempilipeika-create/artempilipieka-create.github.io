@@ -2,7 +2,8 @@
 import json
 from pathlib import Path
 VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/upper-variants.json').read_text())
-BY_ID={v['id']:v for v in VARIANTS}
+ARCHIVED=[old for v in VARIANTS for old in v.get('previous_sources',[])]
+BY_ID={v['id']:v for v in VARIANTS+ARCHIVED}
 EXECUTIONS={'handles':'Накладные ручки','handleless':'Без ручек','push':'Нажатие (tip-on)'}
 
 def upper_variant(it):

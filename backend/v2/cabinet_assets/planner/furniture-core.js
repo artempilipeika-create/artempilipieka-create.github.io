@@ -224,7 +224,7 @@
   const VITRINE=root.MF_VITRINE,VITRINE_VARIANTS=freeze(VITRINE?.variants||[]),VITRINE_FAMILY=freeze(VITRINE?.family||{});
   const VITRINE_PRODUCTION=freeze(Object.fromEntries(VITRINE_VARIANTS.map(v=>[v.id,VITRINE.model(v)])));
   const DRAWER_PRODUCTION=freeze(Object.fromEntries((root.MF_DRAWERS?.variants||[]).map(v=>[v.id,root.MF_DRAWERS.model(v)])));
-  const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.variants||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
+  const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.all||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
   const PRODUCTION_MODELS=Object.freeze({...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
   function tallVariantInfo(it){return allTallVariants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function tallVariant(it,patch,catalogue){

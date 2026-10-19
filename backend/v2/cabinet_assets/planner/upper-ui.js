@@ -38,7 +38,8 @@
    b.disabled=Boolean(error);b.setAttribute('aria-pressed',String(v[key]===value));b.title=error;
    const icon=b.querySelector('.upper-option-image');if(icon)icon.innerHTML=drawing(key,value,v);
   }
-  el.querySelector('#upper-selection').textContent=(v.filling==='dryer'?'Сушка':'Полки')+' · '+U.executions[v.execution]+(v.door_count===1?' · '+(v.side==='left'?'L':'P'):'');
+  el.querySelector('#upper-selection').textContent=(v.filling==='dryer'?'Сушка':'Полки')+' · '+U.executions[v.execution]+(v.door_count===1?' · '+(v.side==='left'?'L':'P'):'')+
+   (U.available(v,{})?.id!==v.id?' · Для перехода на обновлённый фрагмент нажмите «'+U.executions[v.execution]+'».':'');
  }
  root.MF_UPPER_UI=Object.freeze({drawing,sync});
 })(globalThis);

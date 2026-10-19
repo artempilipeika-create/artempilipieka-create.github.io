@@ -138,7 +138,7 @@ class FurnitureItem(StrictModel):
             if error:raise ValueError(error)
             self.bazis_file=upper['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0
-            if not upper['legacy']:self.handles='handleless'
+            if upper['execution']!='handles':self.handles='handleless'
         drawer=drawer_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
         if self.bazis_id in DRAWER_BY_ID:
             if not drawer:raise ValueError('Фрагмент ящиков не совпадает с проверенным исходником')
