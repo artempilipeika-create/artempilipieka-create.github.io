@@ -4,6 +4,19 @@ from pathlib import Path
 VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/upper-variants.json').read_text())
 ARCHIVED=[old for v in VARIANTS for old in v.get('previous_sources',[])]
 BY_ID={v['id']:v for v in VARIANTS+ARCHIVED}
+# Approved revisions supplied on 2026-10-19. Old saved project records are
+# upgraded on read without changing the stored project or its other properties.
+PREVIOUS_DRYER_SHA={
+    'bazis.60f79b573cd1':'60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005',
+    'bazis.1ac4fadd97b7':'1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b',
+}
+def refresh_upper_source(item):
+    if not isinstance(item,dict):return item
+    v=BY_ID.get(item.get('bazis_id'))
+    old=PREVIOUS_DRYER_SHA.get(item.get('bazis_id'))
+    if not v or not old or item.get('bazis_sha256')!=old:return item
+    if item.get('bazis_file') not in (None,v['source_file']):return item
+    return {**item,'bazis_sha256':v['source_sha256'],'bazis_file':v['source_file']}
 EXECUTIONS={'handles':'Накладные ручки','handleless':'Без ручек','push':'Нажатие (tip-on)'}
 
 def upper_variant(it):

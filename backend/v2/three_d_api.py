@@ -17,7 +17,7 @@ from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
-from .three_d_upper import upper_variant, upper_error, BY_ID as UPPER_BY_ID
+from .three_d_upper import upper_variant, upper_error, refresh_upper_source, BY_ID as UPPER_BY_ID
 from .three_d_room import Room
 
 class ShelfState(StrictModel):
@@ -87,6 +87,9 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        refreshed=refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file})
+        self.bazis_sha256=refreshed.get('bazis_sha256')
+        self.bazis_file=refreshed.get('bazis_file')
         if any(not key or len(key)>80 or not all(c.isalnum() or c in '-_' for c in key) for key in self.part_materials):
             raise ValueError('Invalid production part material key')
         if self.legHeightMm is not None:
@@ -285,7 +288,13 @@ def _module_previews(scene,values):
     return result
 
 def projection(row):
-    return {k:row[k] for k in ('project_id','name','module_type','scene','version','created_at','updated_at')}
+    result={k:row[k] for k in ('project_id','name','module_type','scene','version','created_at','updated_at')}
+    scene=result.get('scene')
+    if isinstance(scene,dict) and isinstance(scene.get('items'),list):
+        refreshed=[refresh_upper_source(it) for it in scene['items']]
+        if any(updated is not original for updated,original in zip(refreshed,scene['items'])):
+            result['scene']={**scene,'items':refreshed}
+    return result
 
 def router(settings):
     api=APIRouter(prefix='/api/v2')

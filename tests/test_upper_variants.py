@@ -5,8 +5,8 @@ import json,subprocess
 from pathlib import Path
 import pytest
 from pydantic import ValidationError
-from backend.v2.three_d_api import FurnitureItem,Scene
-from backend.v2.three_d_upper import VARIANTS,ARCHIVED
+from backend.v2.three_d_api import FurnitureItem,Scene,projection
+from backend.v2.three_d_upper import VARIANTS,ARCHIVED,PREVIOUS_DRYER_SHA,refresh_upper_source
 from backend.v2.three_d_document import hardware_for,module_contents,module_materials
 ROOT=Path(__file__).resolve().parents[1]
 def item(v):
@@ -53,3 +53,21 @@ def test_new_assets_are_served_with_correct_mime_and_controls():
    assert r.content==(ROOT/'backend/v2/cabinet_assets/planner'/asset).read_bytes()
    assert r.headers['content-type'].startswith('application/json' if asset.endswith('.json') else 'text/css' if asset.endswith('.css') else 'application/javascript')
   assert client.get('/account/planner/../three_d_upper.py').status_code==404
+
+def test_two_old_dryer_hashes_migrate_on_read_and_save_without_rewriting_other_data():
+ for donor_id,previous_sha in PREVIOUS_DRYER_SHA.items():
+  donor=next(v for v in VARIANTS if v['id']==donor_id)
+  original=dict(item(donor),bazis_sha256=previous_sha,production_note='Сохранить запись',x=125,z=300)
+  updated=FurnitureItem(**original)
+  assert updated.bazis_sha256==donor['source_sha256']
+  assert updated.bazis_file==donor['source_file']
+  assert updated.production_note=='Сохранить запись' and updated.x==125 and updated.z==300
+  fake={k:None for k in ('project_id','name','module_type','scene','version','created_at','updated_at')}
+  fake['scene']={'items':[original]}
+  projected=projection(fake)['scene']['items'][0]
+  assert projected['bazis_sha256']==donor['source_sha256']
+  assert original['bazis_sha256']==previous_sha
+  assert projected['production_note']==original['production_note'] and projected['x']==original['x']
+  unknown=dict(original,bazis_sha256='0'*64)
+  assert refresh_upper_source(unknown) is unknown
+  with pytest.raises(ValidationError):FurnitureItem(**unknown)
