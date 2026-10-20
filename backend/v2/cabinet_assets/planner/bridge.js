@@ -64,7 +64,7 @@
     newProject:()=>newProject(),
     duplicateProject:()=>duplicateProject(),
     share:()=>shareProject(),
-    exportBazis:()=>exportBazisProject(),
+    exportBazis:()=>exportBazisProjectReady(),
     toOrder:()=>toOrder(),
     rendererState:()=>({legacyLoopEnabled:document.body.dataset.plannerRequested!=='webgl',legacyPointerEnabled:document.body.dataset.plannerRequested!=='webgl'})
   };
