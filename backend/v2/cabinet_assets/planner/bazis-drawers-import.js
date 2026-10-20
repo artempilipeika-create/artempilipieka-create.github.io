@@ -1,9 +1,11 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.1 X0 + FOLDERS + NOTES + GLASS + TEXTURES (2026-10-21)
- v9.9.1: align the entire imported assembly's native global left bound to X=0.
- Preserve relative positions, rotations, Y and Z. Recursively resolve FR3D subfolders.
+ Martin Forest -> BAZIS native importer v9.9.2 XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-21)
+ v9.9.2: align global assembly minimum X/Z to 0; preserve Y and relative transforms.
+ Verify assigned materials by native readback, retain 18/16/3 mm thickness rules.
+ Native runtime confirmation is required; user confirmed X-only v9.9.1.
+ Recursively resolve FR3D subfolders.
  v9.8.1: corrected D2 handle donor, accurate version label and source mismatch details.
  v9.8.0: 12 verified upper handleless/push donors, rear frame inset 3 mm.
  v9.7.2: preserve AQ helper surfaces; use the selected 16 mm drawer board material.
@@ -43,6 +45,8 @@ const LIBRARY_ROOT = String.raw`D:\BAZIS MEBEL 25\#_Фрагменты\#_Биб�
 const EXPORT_FOLDER = '';
 // Global X coordinate of the leftmost native bound of the WHOLE assembly, in mm.
 const ASSEMBLY_LEFT_X_MM = 0;
+// Minimum native global Z bound of the whole assembly, in mm. Y stays unchanged.
+const ASSEMBLY_MIN_Z_MM = 0;
 // Texture source is read-only. Only the imported model receives new paths.
 const TEXTURE_ROOT = String.raw`D:\BAZIS MEBEL 25\#_Текстуры материалов`;
 const VITRINE_GLASS_SOURCES = new Set(["076d752ac1cf119230d8db984f76fc74e82e7b14828472436daf1ef0484f1259", "104baef026a61709d71314d5f31e5bd11a84bfbb728109686131f7b1b13ddb37", "1109a1bd41e06794e2a8f189dab1ca3835e65e1925706e8b0fc7926258edeb6b", "298ec5f7d35c1d45a895e17200e03b69d511b84a6ce578eb1046315f36629af1", "4b283b9bdf5564de069de644b3f669acd21034c08d54a9206430732d8aaa3baf", "54b9c4cbcb76c73e4c9a81ff2da3dd183af44f4908cccca6dfdda1a0c9eb6b90", "605a0bfbc114fc4ba57857f77ca7f728e0d8ed7147380908e668a0e8ce7ab35a", "69ff72d5af283cccb1cf68f620525badaa113a0d946ba36566c2a01a921c234c", "7ed7202afb11dec8cf9f188ef5bd1cf2278326ba0997edfb93477ced39f774fb", "9f3d56c0117949747b8c0190832a2e716e0da5b0ca46f1403f894f0565eb7947", "c897428ff8730054b986035423aa3ff6dbac4e737eb6c4a515870cce86b2a040", "c8d619028d9d7cf9f429c4e6855672144083e74fe469759b18e1e04bbdc4351c", "c917ea2f3d9c2c03e271f23682f5f98d8a71f112d2881bfaf1e8b730dae70697", "eac900b6f7c150becec4d6203d8c1870c6eec81b57a6ac241f1150fddb9bd57e"]);
@@ -406,42 +410,54 @@ function placeByFrame(obj, frame, item, log) {
     '; min рамки=' + fmtSize(frame.min));
 }
 
-function globalLeftX(obj) {
+function globalMinimum(obj) {
   // GabMin/GabMax are native GLOBAL bounds, including protruding fronts/fittings.
   // GMin/GMax are local bounds and must not be used as global coordinates.
   const min = vector(obj.GabMin, 'GabMin'), max = vector(obj.GabMax, 'GabMax');
   if (['x', 'y', 'z'].some(axis => min[axis] > max[axis]) || distance(min, max) === 0) {
     throw new Error('Некорректный габарит объекта: ' + obj.Name);
   }
-  return min.x;
+  return min;
 }
 
+function globalLeftX(obj) { return globalMinimum(obj).x; }
+
 function alignAssemblyX(objects, targetX, log) {
+  return alignAssemblyXZ(objects, targetX, null, log);
+}
+
+function alignAssemblyXZ(objects, targetX, targetZ, log) {
   if (!Number.isFinite(targetX)) throw new Error('Некорректная координата левого края сборки');
-  if (!objects.length) return { applied: false, targetX, reason: 'Нет загруженных модулей' };
+  if (targetZ !== null && !Number.isFinite(targetZ)) throw new Error('Некорректная координата Z сборки');
+  if (!objects.length) return { applied: false, targetX, targetZ, reason: 'Нет загруженных модулей' };
   const probes = [{x:0,y:0,z:0}, {x:100,y:0,z:0}, {x:0,y:100,z:0}, {x:0,y:0,z:100}];
   // Validate every object before moving any; preserve the native transform for rollback.
   const snapshots = objects.map(obj => {
     if (typeof obj.TranslateGCS !== 'function') throw new Error('БАЗИС не предоставил TranslateGCS');
-    return { obj, leftX: globalLeftX(obj),
+    return { obj, minimum: globalMinimum(obj),
       position: vector({x:obj.PositionX,y:obj.PositionY,z:obj.PositionZ}, 'Position'),
       points: probes.map(p => vector(obj.ToGlobal(p), 'assembly.before')) };
   });
-  const beforeX = Math.min(...snapshots.map(s => s.leftX));
-  const shiftX = targetX - beforeX;
-  let afterX;
+  const beforeX = Math.min(...snapshots.map(s => s.minimum.x));
+  const beforeZ = Math.min(...snapshots.map(s => s.minimum.z));
+  const shiftX = targetX - beforeX, shiftZ = targetZ === null ? 0 : targetZ - beforeZ;
+  let afterX, afterZ;
   try {
-    for (const s of snapshots) s.obj.TranslateGCS({x:shiftX,y:0,z:0});
+    for (const s of snapshots) s.obj.TranslateGCS({x:shiftX,y:0,z:shiftZ});
     for (const s of snapshots) {
       for (let i = 0; i < probes.length; i++) {
         const actual = vector(s.obj.ToGlobal(probes[i]), 'assembly.after');
-        const expected = {x:s.points[i].x+shiftX,y:s.points[i].y,z:s.points[i].z};
+        const expected = {x:s.points[i].x+shiftX,y:s.points[i].y,z:s.points[i].z+shiftZ};
         if (distance(actual, expected) > PLACEMENT_TOLERANCE_MM) {
           throw new Error('Общий сдвиг изменил взаимное положение или поворот: ' + s.obj.Name);
         }
       }
     }
     afterX = Math.min(...objects.map(globalLeftX));
+    afterZ = Math.min(...objects.map(obj => globalMinimum(obj).z));
+    if (targetZ !== null && Math.abs(afterZ-targetZ) > PLACEMENT_TOLERANCE_MM) {
+      throw new Error('Габарит сборки Z=' + afterZ.toFixed(3) + ', нужен ' + targetZ);
+    }
     if (Math.abs(afterX-targetX) > PLACEMENT_TOLERANCE_MM) {
       throw new Error('Левый край сборки X=' + afterX.toFixed(3) + ', нужен ' + targetX);
     }
@@ -454,9 +470,10 @@ function alignAssemblyX(objects, targetX, log) {
     throw new Error(String(error.message || error) + (rollbackErrors.length
       ? '; ОШИБКА ВОЗВРАТА: ' + rollbackErrors.join('; ') : '; общий сдвиг отменён'));
   }
-  log.push('СБОРКА X OK: левый габарит=' + afterX.toFixed(3) + ' мм; общий сдвиг=' +
-    shiftX.toFixed(3) + ' мм; взаимное положение, Y/Z и повороты сохранены.');
-  return { applied: true, targetX, beforeX, afterX, shiftX, objectCount: objects.length };
+  log.push('СБОРКА X/Z OK: X=' + afterX.toFixed(3) + '; Z=' + afterZ.toFixed(3) +
+    ' мм; общий сдвиг X=' + shiftX.toFixed(3) + '; Z=' + shiftZ.toFixed(3) +
+    ' мм; взаимное положение, высоты Y и повороты сохранены.');
+  return { applied: true, targetX, targetZ, beforeX, beforeZ, afterX, afterZ, shiftX, shiftZ, objectCount: objects.length };
 }
 
 
@@ -505,10 +522,12 @@ const METAL_DRAWER_SOURCES = new Set(["c57da518f15764641ada032a8f9b542619a933072
 function materialPalette(item) {
   const construction = item && item.construction;
   const parts = construction && Array.isArray(construction.parts) ? construction.parts : [];
-  const body = firstMaterial(parts, p => p && (p.role === 'body' || p.role === 'shelf'));
-  const front = firstMaterial(parts, p => p && p.role === 'front');
+  const assigned = item.material_assignments || {};
+  const usable = material => material && (material.name || material.article) ? material : null;
+  const body = firstMaterial(parts, p => p && (p.role === 'body' || p.role === 'shelf')) || usable(assigned.body);
+  const front = firstMaterial(parts, p => p && p.role === 'front') || usable(assigned.front);
   const hdf = firstMaterial(parts, p => p && p.role === 'back' && Number(p.thickness) <= 6) ||
-              firstMaterial(parts, p => p && p.role === 'back');
+              firstMaterial(parts, p => p && p.role === 'back') || usable(assigned.hdf);
   const metal = METAL_DRAWER_SOURCES.has(String(item && item.source_sha256 || '').toLowerCase());
   const drawer = firstMaterial(parts, p => {
     if (!p || p.role !== 'drawer' || Number(p.thickness) !== 16) return false;
@@ -633,17 +652,19 @@ function panelMaterialKind(panelName, panel, item) {
       return null;
     }
   }
+  // Facades and thin bottoms must be identified before the generic drawer-name rule.
+  if (/фасад/.test(n)) return 'front';
+  if (Number(panel && panel.Thickness) <= 6 && /дно|днищ|задн|з с|двп|хдф|hdf/.test(n)) return 'hdf';
   // Internal drawer box panels are carcass material by user rule.
   if (/шуф|ящик|боковая напр|фронтальная шуф/.test(n)) return 'body';
   // HDF cabinet backs and drawer bottoms stay their own thin material.
   if (n === 'з с' || /задняя стен|задн стен|двп|хдф|hdf/.test(n)) return 'hdf';
-  if (/фасад/.test(n)) return 'front';
   return 'body';
 }
 
 function childAt(list, index) {
-  try { return list.Objects[index]; } catch (_) {}
-  try { return list.Objects(index); } catch (_) {}
+  try { const child = list.Objects[index]; if (child) return child; } catch (_) {}
+  try { if (typeof list.Objects === 'function') return list.Objects(index); } catch (_) {}
   return null;
 }
 
@@ -652,9 +673,10 @@ function walkPanels(obj, callback, seen) {
   seen = seen || new Set();
   let key = null;
   try { key = obj; if (seen.has(key)) return; seen.add(key); } catch (_) {}
-  try {
-    if (objectTypeChecker.ObjectIsPanel(obj)) callback(obj);
-  } catch (_) {}
+  // Do not swallow material-assignment/readback failures inside a type probe.
+  let isPanel = false;
+  try { isPanel = objectTypeChecker.ObjectIsPanel(obj); } catch (_) {}
+  if (isPanel) callback(obj);
   let list = null;
   try { list = obj.AsList(); } catch (_) {}
   if (!list) return;
@@ -662,20 +684,56 @@ function walkPanels(obj, callback, seen) {
   try { count = Number(list.Count) || 0; } catch (_) { return; }
   for (let i = 0; i < count; i++) {
     const child = childAt(list, i);
+    if (!child) throw new Error('Не прочитан вложенный объект ' + i + ': ' + String(obj.Name || 'блок'));
     if (child && child !== obj) walkPanels(child, callback, seen);
   }
+}
+
+function nativeMaterialName(panel) {
+  return String(panel.MaterialName || (panel.Material && panel.Material.MaterialName) || '');
+}
+
+function sameMaterialName(actual, expected) {
+  // BAZIS full material name separates the article with a carriage return.
+  const normalize = value => String(value).replace(/\r\n?/g, '\n').split('\n').map(s => s.trim()).join('\n');
+  return normalize(actual) === normalize(expected);
+}
+
+function assignVerifiedMaterial(panel, material, descriptor, log) {
+  const expected = materialNameForBazis(descriptor);
+  const thickness = Number(panel.Thickness);
+  const before = {name:nativeMaterialName(panel), texture:String(panel.Material && panel.Material.Path || '')};
+  materialData.SetupObjectMaterial(panel, material, false);
+  if (typeof panel.Build === 'function') panel.Build();
+  if (!sameMaterialName(nativeMaterialName(panel), expected)) {
+    // Some native objects retain the donor's full name after SetupObjectMaterial.
+    // MaterialName is the documented full native name, including its article.
+    panel.MaterialName = expected;
+    if (typeof panel.Build === 'function') panel.Build();
+  }
+  if (!sameMaterialName(nativeMaterialName(panel), expected)) {
+    throw new Error('Материал не применился: ожидался «' + expected.replace(/\r/g, ' / ') +
+      '», прочитан «' + nativeMaterialName(panel).replace(/\r/g, ' / ') + '»');
+  }
+  if (!Number.isFinite(thickness) || Math.abs(Number(panel.Thickness)-thickness) > 0.01) {
+    throw new Error('Изменилась толщина панели при назначении материала');
+  }
+  setProjectTexture(panel, descriptor, before, log);
+  if (typeof panel.Build === 'function') panel.Build();
+  if (!sameMaterialName(nativeMaterialName(panel), expected)) throw new Error('Материал изменился после обновления текстуры');
+  return { panel, expected, thickness };
 }
 
 function applyProjectMaterials(obj, item, log) {
   const palette = materialPalette(item);
   if (!palette.body && !palette.front && !palette.hdf && !palette.drawer) {
-    log.push('МАТЕРИАЛЫ ПРОПУЩЕНЫ: ' + item.name + ' — в JSON нет данных материалов');
-    return;
+    log.push('ОШИБКА МАТЕРИАЛА: ' + item.name + ' — в JSON нет данных материалов; скачайте новый экспорт после выбора материалов.');
+    return [];
   }
   if (METAL_DRAWER_SOURCES.has(String(item && item.source_sha256 || '').toLowerCase()) && !palette.drawer)
     log.push('ЯЩИКИ: материал 16 мм не выбран — материал деталей сохранён из FR3D, корпус 18 мм не подставляется.');
 
-  const cache = new Map();
+  const cache = new Map(), checks = [];
   const stats = { body:0, front:0, hdf:0, drawer:0, skipped:0 };
   const getMaterial = (kind, thickness) => {
     const descriptor = palette[kind] || (kind === 'front' ? palette.body : null);
@@ -695,21 +753,21 @@ function applyProjectMaterials(obj, item, log) {
       log.push('МАТЕРИАЛ СОХРАНЁН ИЗ FR3D: ' + item.name + ' / ' + panel.Name + (protectedOpticalKind(panel.Name, panel, item) ? ' — стекло/профиль защищены' : ' — служебная поверхность или размер ФП не распознан'));
       return;
     }
-    const descriptor = palette[kind] || (kind === 'front' ? palette.body : null);
-    if (!descriptor) { stats.skipped++; return; }
-    let thickness = Number(descriptor.thickness) || 0;
-    try { if (Number(panel.Thickness) > 0) thickness = Number(panel.Thickness); } catch (_) {}
-    const material = getMaterial(kind, thickness);
-    if (!material) { stats.skipped++; return; }
     try {
+      const descriptor = palette[kind] || (kind === 'front' ? palette.body : null);
+      if (!descriptor) throw new Error('В экспорте не задан материал: ' + kind + '; материал FR3D сохранён');
+      let thickness = Number(panel.Thickness);
+      if (!Number.isFinite(thickness) || thickness <= 0) throw new Error('Не прочитана толщина панели');
+      if (descriptor.thickness && Math.abs(thickness-descriptor.thickness) > 0.01) {
+        throw new Error('Материал ' + descriptor.thickness + ' мм не соответствует детали ' + thickness + ' мм');
+      }
+      const material = getMaterial(kind, thickness);
+      if (!material) throw new Error('БАЗИС не создал параметры материала: ' + materialNameForBazis(descriptor));
       try { historyOperations.RegisterObjectChanging(panel); } catch (_) {}
-      // false = do not alter panel thickness; only assign the material parameters.
-      const before = {name:'', texture:''};
-      try { before.name = String(panel.MaterialName || ''); before.texture = String(panel.Material.Path || ''); } catch (_) {}
-      materialData.SetupObjectMaterial(panel, material, false);
-      setProjectTexture(panel, descriptor, before, log);
-      if (typeof panel.Build === 'function') panel.Build();
+      checks.push(assignVerifiedMaterial(panel, material, descriptor, log));
       stats[kind]++;
+      log.push('МАТЕРИАЛ OK: ' + item.name + ' / ' + panel.Name + ' → ' +
+        nativeMaterialName(panel).replace(/\r/g, ' / ') + '; ' + thickness + ' мм');
     } catch (e) {
       stats.skipped++;
       log.push('ОШИБКА МАТЕРИАЛА: ' + item.name + ' / ' + String(panel.Name || 'панель') + ' — ' + e.message);
@@ -721,6 +779,8 @@ function applyProjectMaterials(obj, item, log) {
     ', фасады=' + stats.front + ', ЛХДФ=' + stats.hdf +
     (stats.skipped ? ', пропущено=' + stats.skipped : '')
   );
+  if (!checks.length && !stats.skipped) log.push('ОШИБКА МАТЕРИАЛА: ' + item.name + ' — панели для назначения не найдены');
+  return checks;
 }
 
 function setObjectPosition(obj, p) {
@@ -772,12 +832,12 @@ function resizeAndPlace(obj, item, log) {
   if (distance(after.size, target) > PLACEMENT_TOLERANCE_MM) {
     throw new Error('БАЗИС не применил размер: ' + fmtSize(after.size) + ', нужен ' + fmtSize(target));
   }
-  applyProjectMaterials(obj, item, log);
+  const materialChecks = applyProjectMaterials(obj, item, log);
   const placementFrame = sceneFrame(after, profile);
   if (profile.rearInsetMm) log.push('РАМКА ' + item.name + ': корпус=' + fmtSize(placementFrame.size) +
     '; с задником=' + fmtSize(after.size) + '; задник=' + profile.rearInsetMm + ' мм');
   placeByFrame(obj, placementFrame, item, log);
-  return { frame: after, placementFrame };
+  return { frame: after, placementFrame, materialChecks };
 }
 
 function prepareProject(payload, root) {
@@ -800,7 +860,7 @@ function prepareProject(payload, root) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.1 X0 + FOLDERS + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.2 XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -913,7 +973,7 @@ function importProject(prepared, root, payload) {
   const brief = projectBrief(payload);
   const log = ['ИМПОРТЁР: Martin Forest ' + IMPORT_VERSION, 'СКРИПТ: ' + IMPORT_SCRIPT_PATH,
     'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКА ПОИСКА: ' + root];
-  const noteChecks = [], liveChecks = [], importedObjects = [];
+  const noteChecks = [], liveChecks = [], importedObjects = [], liveMaterials = [];
   let loaded = 0, failed = 0;
   const notesRequested = payload.items.filter(i => hasNote(i.production_note)).length + (brief ? 1 : 0);
   for (let index = 0; index < prepared.entries.length; index++) {
@@ -927,7 +987,7 @@ function importProject(prepared, root, payload) {
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');
       obj.Name = item.name || item.source_file;
-      resizeAndPlace(obj, item, log);
+      const placement = resizeAndPlace(obj, item, log);
       if (hasNote(item.production_note)) {
         const result = verifiedObjectNote(obj, 'MARTIN FOREST / УКАЗАНИЯ ПО МОДУЛЮ\n' +
           normalizedNote(item.production_note), label, log);
@@ -946,6 +1006,7 @@ function importProject(prepared, root, payload) {
         liveChecks.push({ obj, result });
       }
       importedObjects.push(obj);
+      for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;
     } catch (e) {
       failed++;
@@ -959,9 +1020,9 @@ function importProject(prepared, root, payload) {
     }
   }
   let assemblyPlacement;
-  try { assemblyPlacement = alignAssemblyX(importedObjects, ASSEMBLY_LEFT_X_MM, log); }
+  try { assemblyPlacement = alignAssemblyXZ(importedObjects, ASSEMBLY_LEFT_X_MM, ASSEMBLY_MIN_Z_MM, log); }
   catch (error) {
-    assemblyPlacement = { applied: false, targetX: ASSEMBLY_LEFT_X_MM, error: String(error.message || error) };
+    assemblyPlacement = { applied: false, targetX: ASSEMBLY_LEFT_X_MM, targetZ: ASSEMBLY_MIN_Z_MM, error: String(error.message || error) };
     log.push('ОШИБКА ПРИВЯЗКИ СБОРКИ: ' + assemblyPlacement.error);
   }
   let modelResult = { requested: false, verified: false };
@@ -972,6 +1033,21 @@ function importProject(prepared, root, payload) {
     if (loaded) liveChecks.push({ obj: currentFileData.model, result: modelResult });
   } else log.push('ВНИМАНИЕ: в выбранном экспорте нет заметок. Проверять сохранность нечего.');
   historyOperations.CommitCurrentChanges('Martin Forest ' + IMPORT_VERSION + ' — импорт и заметки');
+  const materialChecks = liveMaterials.map(check => {
+    const result = { moduleName: check.moduleName, panelName: String(check.panel.Name || ''),
+      expected: check.expected, expectedThickness: check.thickness, verified: false };
+    try {
+      result.actual = nativeMaterialName(check.panel);
+      result.actualThickness = Number(check.panel.Thickness);
+      if (!sameMaterialName(result.actual, result.expected) || !Number.isFinite(result.actualThickness) || Math.abs(result.actualThickness-check.thickness) > 0.01)
+        throw new Error('Материал или толщина изменились после Commit');
+      result.verified = true;
+    } catch (error) {
+      result.error = String(error.message || error);
+      log.push('ОШИБКА МАТЕРИАЛА: ' + result.moduleName + ' / ' + result.panelName + ' — ' + result.error);
+    }
+    return result;
+  });
   // Commit is not disk persistence. Read the complete text again after commit.
   for (const check of liveChecks) {
     if (!check.result.verified) continue;
@@ -985,7 +1061,7 @@ function importProject(prepared, root, payload) {
       log.push('ЗАМЕТКИ ОШИБКА: ' + check.result.label + ' — ' + check.result.error);
     }
   }
-  return { loaded, failed, log, brief, notesRequested, noteChecks, assemblyPlacement,
+  return { loaded, failed, log, brief, notesRequested, noteChecks, assemblyPlacement, materialChecks,
     modelObjectCount: Number(asList(currentFileData.model).Count),
     notesVerified: noteChecks.filter(c => c.verified).length,
     materialErrors: log.filter(line => line.startsWith('ОШИБКА МАТЕРИАЛА:')).length,
@@ -1121,9 +1197,10 @@ function showNotesWindow(summaryLines, noteLines) {
       'Версия: ' + IMPORT_VERSION, 'Экспорт: ' + project.filename,
       'Выбор файла: ' + (project.automatic ? 'автоматически — последний в Загрузках' : 'вручную — в Загрузках экспорт не найден'),
       'Загружено модулей: ' + result.loaded + '/' + project.payload.items.length + '; ошибок загрузки: ' + result.failed,
-      result.assemblyPlacement.applied ? 'Левый габарит всей сборки: X=' + result.assemblyPlacement.afterX.toFixed(3) + ' мм.' :
-        'Привязка сборки по X НЕ ВЫПОЛНЕНА: ' + (result.assemblyPlacement.error || result.assemblyPlacement.reason),
+      result.assemblyPlacement.applied ? 'Левый габарит всей сборки: X=' + result.assemblyPlacement.afterX.toFixed(3) + ' мм; минимальный Z=' + result.assemblyPlacement.afterZ.toFixed(3) + ' мм.' :
+        'Привязка сборки по X/Z НЕ ВЫПОЛНЕНА: ' + (result.assemblyPlacement.error || result.assemblyPlacement.reason),
       'Ошибок назначения материала: ' + result.materialErrors,
+      'Материалы прочитаны после Commit: ' + result.materialChecks.filter(c => c.verified).length + '/' + result.materialChecks.length + ' панелей.',
       'Заметки через GetObjectNotes после Commit: ' + result.notesVerified + '/' + result.notesRequested,
       'Общая заметка: ' + (result.modelNotesVerified ? 'ПРОЧИТАНА В ПАМЯТИ' : brief ? 'НЕ ПОДТВЕРЖДЕНА' : 'НЕТ В JSON'),
       'Сохранение и повторное открытие .b3d: НЕ ПРОВЕРЕНО.',

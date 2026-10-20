@@ -72,5 +72,5 @@ test('Current native importer protects all five Gola metal donors from 18 mm sub
   const it=item(v);it.body_variant_id='body18';const parts=C.productionParts(it,template(it));parts.find(p=>p.role==='body').material={name:'White 18',variant_id:'body18'};
   assert.equal(c.materialPalette({source_sha256:v.source_sha256,body_variant_id:'body18',construction:{parts}}).drawer,null);
  }
- assert.equal(script,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_1_X0_FOLDERS.js',import.meta.url),'utf8'));
+ assert.equal(script,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_2_XZ0_MATERIALS.js',import.meta.url),'utf8'));
 });

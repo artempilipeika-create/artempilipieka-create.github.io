@@ -60,6 +60,25 @@ test('Native protruding front determines left bound at 90 degrees',()=>{
   close(c.alignAssemblyX([o],0,[]).shiftX,-690);
 });
 
+test('X/Z alignment preserves Y, every relative point and all angles, and rolls back both axes on failure',()=>{
+ const c=runtime(),objects=[0,90,180,270,37].map((rotation,i)=>{
+  const o=moduleObject();
+  c.placeByFrame(o,{min:o.min,size:o.size},{name:o.Name,position:{x:2700-i*500,y:i*350,z:-7400+i*220},rotation},[]);
+  return o;
+ });
+ const before=objects.map(o=>({points:o.points,angle:o.angle}));
+ const result=c.alignAssemblyXZ(objects,0,0,[]);
+ close(Math.min(...objects.map(o=>o.GabMin.x)),0);close(Math.min(...objects.map(o=>o.GabMin.z)),0);
+ objects.forEach((o,i)=>{assert.equal(o.angle,before[i].angle);o.points.forEach((p,j)=>{
+  close(p.x,before[i].points[j].x+result.shiftX);close(p.y,before[i].points[j].y);close(p.z,before[i].points[j].z+result.shiftZ);
+ });});
+ const repeat=c.alignAssemblyXZ(objects,0,0,[]);close(repeat.shiftX,0);close(repeat.shiftZ,0);
+ const positions=objects.map(o=>({x:o.PositionX,y:o.PositionY,z:o.PositionZ}));
+ objects[2].TranslateGCS=()=>{throw Error('blocked');};
+ assert.throws(()=>c.alignAssemblyXZ(objects,100,150,[]),/blocked/);
+ objects.forEach((o,i)=>assert.deepEqual({x:o.PositionX,y:o.PositionY,z:o.PositionZ},positions[i]));
+});
+
 test('Missing native bounds fail before moving; interrupted translation rolls all objects back',()=>{
   const c=runtime(),a=moduleObject(),b=moduleObject();a.PositionX=1500;b.PositionX=2300;
   Object.defineProperty(b,'GabMin',{get(){return undefined;},configurable:true});
@@ -76,7 +95,7 @@ test('Import aligns only successful modules before commit and reports the measur
   let committed=false;
   const c=runtime({currentFileData:{model},modelIOOperations:{LoadFastenerOrFragment(file){
     if(file==='bad')throw Error('Cannot load donor');const obj=moduleObject();objects.push(obj);return obj;
-  }},historyOperations:{CommitCurrentChanges(){close(Math.min(...objects.map(o=>o.GabMin.x)),0);committed=true;}}});
+    }},historyOperations:{CommitCurrentChanges(){close(Math.min(...objects.map(o=>o.GabMin.x)),0);close(Math.min(...objects.map(o=>o.GabMin.z)),0);committed=true;}}});
   const items=[-5000,2000,2600].map((x,i)=>({name:'Шкаф '+i,source_file:i===0?'bad':'good',
     source_default:{width:600,height:720,depth:510},target:{width:600,height:720,depth:510},
     position:{x,y:100,z:0},rotation:0}));

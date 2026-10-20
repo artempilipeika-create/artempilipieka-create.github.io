@@ -1187,6 +1187,31 @@ function exportSafeName(value,max=48){
   const s=String(value||'project').normalize('NFKD').replace(/[^A-Za-z0-9_.-]+/g,'_').replace(/^_+|_+$/g,'')||'project';
   return s.slice(0,max);
 }
+function exportMaterialDescriptor(id){
+  const m=materials.get(String(id));
+  return m?{variant_id:m.variant_id,material_id:m.material_id||null,name:m.name||null,
+    article:m.article||null,thickness:m.thickness||null}:null;
+}
+async function exportBazisProjectReady(){
+  const button=$('export-bazis');
+  if(button.disabled)return;
+  button.disabled=true;
+  try{
+    await hydrateMaterials();
+    const missing=[];
+    for(const it of state.items.filter(x=>x.bazis_file)){
+      const ids=[it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,
+        ...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)];
+      for(const id of ids.filter(Boolean)){
+        const m=materials.get(String(id));
+        if(!m||!(m.name||m.article))missing.push(it.name+' · '+id);
+      }
+    }
+    if(missing.length){status('Экспорт не создан: не удалось загрузить выбранные материалы. Повторите экспорт или выберите материал заново. '+[...new Set(missing)].join('; '));return;}
+    return exportBazisProject();
+  }catch(error){status('Экспорт не создан: '+(error.message||String(error)));}
+  finally{button.disabled=false;}
+}
 function exportBazisProject(){
   // Even an already-open scene must not export superseded dryer donor hashes.
   state.items=state.items.map(refreshUpperSource);
@@ -1237,6 +1262,11 @@ function exportBazisProject(){
         appliance_details:it.appliance_details||null,
         body_variant_id:it.body_variant_id||null,
         front_variant_id:it.front_variant_id||null,
+        material_assignments:{
+          body:exportMaterialDescriptor(it.body_variant_id),
+          front:exportMaterialDescriptor(it.front_variant_id),
+          hdf:exportMaterialDescriptor(it.back_variant_id)
+        },
         construction:p?{
           key:p.key,
           constraints:p.constraints||null,
@@ -1417,7 +1447,7 @@ $('to-order').onclick=()=>toOrder().catch(e=>status(e.message));
 $('share-project').onclick=()=>shareProject().catch(e=>status(e.message));
 $('copy-share').onclick=()=>copyShare();
 $('download-spec').onclick=()=>downloadSpec().catch(e=>status(e.message));
-$('export-bazis').onclick=exportBazisProject;
+$('export-bazis').onclick=exportBazisProjectReady;
 window.addEventListener('keydown',e=>{
   if(plannerRequested)return;
   const tag=document.activeElement?.tagName;
