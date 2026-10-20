@@ -48,3 +48,23 @@ test('Only two reviewed historical dryer SHA-256 values are remapped, then still
   }finally{fs.rmSync(root,{recursive:true,force:true});}
  }
 });
+
+test('Library categories can be reorganized several levels deep without changing the export',()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'mf-categories-'));
+ try{
+  const items=['Нижние/Gola/Ящики','Верхние/Сушка','Пеналы/Духовка'].map((category,i)=>{
+   const bytes=Buffer.from('verified module '+i),source_file='Модуль '+i+'.FR3D';
+   const dir=path.join(root,category);fs.mkdirSync(dir,{recursive:true});
+   fs.writeFileSync(path.join(dir,source_file),bytes);
+   fs.writeFileSync(path.join(root,source_file),'outdated same-name donor');
+   return {source_file,source_sha256:crypto.createHash('sha256').update(bytes).digest('hex')};
+  });
+  const before=c.prepareProject({items},root);
+  assert.equal(before.entries.length,3);assert.equal(before.scan.truncated,false);
+  const destination=path.join(root,'Пересортировано/Нижние/Gola/AQ');fs.mkdirSync(destination,{recursive:true});
+  const moved=path.join(destination,'Переименованный шкаф.fr3d');fs.renameSync(before.entries[0].source,moved);
+  const after=c.prepareProject({items},root);
+  assert.equal(after.entries[0].source,moved);
+  for(let i=1;i<items.length;i++)assert.equal(after.entries[i].source,before.entries[i].source);
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});

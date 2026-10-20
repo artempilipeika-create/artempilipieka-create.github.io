@@ -1,7 +1,9 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.0 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-21)
+ Martin Forest -> BAZIS native importer v9.9.1 X0 + FOLDERS + NOTES + GLASS + TEXTURES (2026-10-21)
+ v9.9.1: align the entire imported assembly's native global left bound to X=0.
+ Preserve relative positions, rotations, Y and Z. Recursively resolve FR3D subfolders.
  v9.8.1: corrected D2 handle donor, accurate version label and source mismatch details.
  v9.8.0: 12 verified upper handleless/push donors, rear frame inset 3 mm.
  v9.7.2: preserve AQ helper surfaces; use the selected 16 mm drawer board material.
@@ -39,6 +41,8 @@ const LIBRARY_ROOT = String.raw`D:\BAZIS MEBEL 25\#_Фрагменты\#_Биб�
 // Optional explicit export folder for a browser configured outside Windows Downloads.
 // Leave empty to use standard Downloads / Загрузки and OneDrive download folders.
 const EXPORT_FOLDER = '';
+// Global X coordinate of the leftmost native bound of the WHOLE assembly, in mm.
+const ASSEMBLY_LEFT_X_MM = 0;
 // Texture source is read-only. Only the imported model receives new paths.
 const TEXTURE_ROOT = String.raw`D:\BAZIS MEBEL 25\#_Текстуры материалов`;
 const VITRINE_GLASS_SOURCES = new Set(["076d752ac1cf119230d8db984f76fc74e82e7b14828472436daf1ef0484f1259", "104baef026a61709d71314d5f31e5bd11a84bfbb728109686131f7b1b13ddb37", "1109a1bd41e06794e2a8f189dab1ca3835e65e1925706e8b0fc7926258edeb6b", "298ec5f7d35c1d45a895e17200e03b69d511b84a6ce578eb1046315f36629af1", "4b283b9bdf5564de069de644b3f669acd21034c08d54a9206430732d8aaa3baf", "54b9c4cbcb76c73e4c9a81ff2da3dd183af44f4908cccca6dfdda1a0c9eb6b90", "605a0bfbc114fc4ba57857f77ca7f728e0d8ed7147380908e668a0e8ce7ab35a", "69ff72d5af283cccb1cf68f620525badaa113a0d946ba36566c2a01a921c234c", "7ed7202afb11dec8cf9f188ef5bd1cf2278326ba0997edfb93477ced39f774fb", "9f3d56c0117949747b8c0190832a2e716e0da5b0ca46f1403f894f0565eb7947", "c897428ff8730054b986035423aa3ff6dbac4e737eb6c4a515870cce86b2a040", "c8d619028d9d7cf9f429c4e6855672144083e74fe469759b18e1e04bbdc4351c", "c917ea2f3d9c2c03e271f23682f5f98d8a71f112d2881bfaf1e8b730dae70697", "eac900b6f7c150becec4d6203d8c1870c6eec81b57a6ac241f1150fddb9bd57e"]);
@@ -402,6 +406,59 @@ function placeByFrame(obj, frame, item, log) {
     '; min рамки=' + fmtSize(frame.min));
 }
 
+function globalLeftX(obj) {
+  // GabMin/GabMax are native GLOBAL bounds, including protruding fronts/fittings.
+  // GMin/GMax are local bounds and must not be used as global coordinates.
+  const min = vector(obj.GabMin, 'GabMin'), max = vector(obj.GabMax, 'GabMax');
+  if (['x', 'y', 'z'].some(axis => min[axis] > max[axis]) || distance(min, max) === 0) {
+    throw new Error('Некорректный габарит объекта: ' + obj.Name);
+  }
+  return min.x;
+}
+
+function alignAssemblyX(objects, targetX, log) {
+  if (!Number.isFinite(targetX)) throw new Error('Некорректная координата левого края сборки');
+  if (!objects.length) return { applied: false, targetX, reason: 'Нет загруженных модулей' };
+  const probes = [{x:0,y:0,z:0}, {x:100,y:0,z:0}, {x:0,y:100,z:0}, {x:0,y:0,z:100}];
+  // Validate every object before moving any; preserve the native transform for rollback.
+  const snapshots = objects.map(obj => {
+    if (typeof obj.TranslateGCS !== 'function') throw new Error('БАЗИС не предоставил TranslateGCS');
+    return { obj, leftX: globalLeftX(obj),
+      position: vector({x:obj.PositionX,y:obj.PositionY,z:obj.PositionZ}, 'Position'),
+      points: probes.map(p => vector(obj.ToGlobal(p), 'assembly.before')) };
+  });
+  const beforeX = Math.min(...snapshots.map(s => s.leftX));
+  const shiftX = targetX - beforeX;
+  let afterX;
+  try {
+    for (const s of snapshots) s.obj.TranslateGCS({x:shiftX,y:0,z:0});
+    for (const s of snapshots) {
+      for (let i = 0; i < probes.length; i++) {
+        const actual = vector(s.obj.ToGlobal(probes[i]), 'assembly.after');
+        const expected = {x:s.points[i].x+shiftX,y:s.points[i].y,z:s.points[i].z};
+        if (distance(actual, expected) > PLACEMENT_TOLERANCE_MM) {
+          throw new Error('Общий сдвиг изменил взаимное положение или поворот: ' + s.obj.Name);
+        }
+      }
+    }
+    afterX = Math.min(...objects.map(globalLeftX));
+    if (Math.abs(afterX-targetX) > PLACEMENT_TOLERANCE_MM) {
+      throw new Error('Левый край сборки X=' + afterX.toFixed(3) + ', нужен ' + targetX);
+    }
+  } catch (error) {
+    const rollbackErrors = [];
+    for (const s of snapshots) {
+      try { setObjectPosition(s.obj, s.position); }
+      catch (rollbackError) { rollbackErrors.push(String(rollbackError.message || rollbackError)); }
+    }
+    throw new Error(String(error.message || error) + (rollbackErrors.length
+      ? '; ОШИБКА ВОЗВРАТА: ' + rollbackErrors.join('; ') : '; общий сдвиг отменён'));
+  }
+  log.push('СБОРКА X OK: левый габарит=' + afterX.toFixed(3) + ' мм; общий сдвиг=' +
+    shiftX.toFixed(3) + ' мм; взаимное положение, Y/Z и повороты сохранены.');
+  return { applied: true, targetX, beforeX, afterX, shiftX, objectCount: objects.length };
+}
+
 
 function normalizePanelName(value) {
   return String(value || '')
@@ -743,7 +800,7 @@ function prepareProject(payload, root) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.0 ONE CLICK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.1 X0 + FOLDERS + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -856,7 +913,7 @@ function importProject(prepared, root, payload) {
   const brief = projectBrief(payload);
   const log = ['ИМПОРТЁР: Martin Forest ' + IMPORT_VERSION, 'СКРИПТ: ' + IMPORT_SCRIPT_PATH,
     'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКА ПОИСКА: ' + root];
-  const noteChecks = [], liveChecks = [];
+  const noteChecks = [], liveChecks = [], importedObjects = [];
   let loaded = 0, failed = 0;
   const notesRequested = payload.items.filter(i => hasNote(i.production_note)).length + (brief ? 1 : 0);
   for (let index = 0; index < prepared.entries.length; index++) {
@@ -888,6 +945,7 @@ function importProject(prepared, root, payload) {
         noteChecks.push(result);
         liveChecks.push({ obj, result });
       }
+      importedObjects.push(obj);
       loaded++;
     } catch (e) {
       failed++;
@@ -899,6 +957,12 @@ function importProject(prepared, root, payload) {
         catch (cleanupError) { throw new Error('Не удалось удалить ошибочный тестовый модуль: ' + cleanupError.message); }
       }
     }
+  }
+  let assemblyPlacement;
+  try { assemblyPlacement = alignAssemblyX(importedObjects, ASSEMBLY_LEFT_X_MM, log); }
+  catch (error) {
+    assemblyPlacement = { applied: false, targetX: ASSEMBLY_LEFT_X_MM, error: String(error.message || error) };
+    log.push('ОШИБКА ПРИВЯЗКИ СБОРКИ: ' + assemblyPlacement.error);
   }
   let modelResult = { requested: false, verified: false };
   if (brief) {
@@ -921,7 +985,7 @@ function importProject(prepared, root, payload) {
       log.push('ЗАМЕТКИ ОШИБКА: ' + check.result.label + ' — ' + check.result.error);
     }
   }
-  return { loaded, failed, log, brief, notesRequested, noteChecks,
+  return { loaded, failed, log, brief, notesRequested, noteChecks, assemblyPlacement,
     modelObjectCount: Number(asList(currentFileData.model).Count),
     notesVerified: noteChecks.filter(c => c.verified).length,
     materialErrors: log.filter(line => line.startsWith('ОШИБКА МАТЕРИАЛА:')).length,
@@ -1052,11 +1116,13 @@ function showNotesWindow(summaryLines, noteLines) {
     try { logFilename = saveImportLog(project.filename, result, runId); }
     catch (e) { evidenceError = 'ОШИБКА СОХРАНЕНИЯ ДИАГНОСТИКИ: ' + e.message; result.log.push(evidenceError); }
     for (const line of result.log) console.log(line);
-    const hasErrors = result.failed || result.materialErrors || evidenceError || display.errors.length || result.notesVerified < result.notesRequested;
+    const hasErrors = result.failed || result.materialErrors || result.assemblyPlacement.error || evidenceError || display.errors.length || result.notesVerified < result.notesRequested;
     const lines = [hasErrors ? 'ИМПОРТ С ОШИБКАМИ — см. диагностику ниже.' : 'Импорт выполнен. Заметки показаны ниже.',
       'Версия: ' + IMPORT_VERSION, 'Экспорт: ' + project.filename,
       'Выбор файла: ' + (project.automatic ? 'автоматически — последний в Загрузках' : 'вручную — в Загрузках экспорт не найден'),
       'Загружено модулей: ' + result.loaded + '/' + project.payload.items.length + '; ошибок загрузки: ' + result.failed,
+      result.assemblyPlacement.applied ? 'Левый габарит всей сборки: X=' + result.assemblyPlacement.afterX.toFixed(3) + ' мм.' :
+        'Привязка сборки по X НЕ ВЫПОЛНЕНА: ' + (result.assemblyPlacement.error || result.assemblyPlacement.reason),
       'Ошибок назначения материала: ' + result.materialErrors,
       'Заметки через GetObjectNotes после Commit: ' + result.notesVerified + '/' + result.notesRequested,
       'Общая заметка: ' + (result.modelNotesVerified ? 'ПРОЧИТАНА В ПАМЯТИ' : brief ? 'НЕ ПОДТВЕРЖДЕНА' : 'НЕТ В JSON'),
