@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/account/planner/countertop.css">
 <script defer src="/account/planner/drawer-variants.js?v=20261021-gola"></script>
 <script defer src="/account/planner/drawer-model.js?v=20261021-gola"></script>
-<script defer src="/account/planner/drawer-ui.js?v=20261021-gola"></script>
+<script defer src="/account/planner/drawer-ui.js?v=20261021-cards"></script>
 <link rel="stylesheet" href="/account/planner/drawer.css">
 <script defer src="/account/planner/upper-variants.js?v=20261021-gola"></script>
 <script defer src="/account/planner/upper-model.js?v=20261021-gola"></script>
@@ -23,9 +23,10 @@
 <link rel="stylesheet" href="/account/planner/upper.css">
 <script defer src="/account/planner/gola-variants.js?v=20261021-gola"></script>
 <script defer src="/account/planner/gola-model.js?v=20261021-gola"></script>
-<script defer src="/account/planner/gola-ui.js?v=20261021-gola"></script>
+<script defer src="/account/planner/gola-ui.js?v=20261021-cards"></script>
+<link rel="stylesheet" href="/account/planner/gola.css?v=20261021-cards">
 <script defer src="/account/planner/furniture-core.js?v=20261021-gola"></script>
-<script defer src="/account/3d.js?v=20261021-gola"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
+<script defer src="/account/3d.js?v=20261021-gola"></script><script defer src="/account/3d-studio.js?v=20261021-cards"></script>
 </head>
 <body class="mf-3d-page mf3d-studio">
 <header class="mf3d-top">
@@ -114,19 +115,19 @@
    <div id="base-options-controls" class="mf3d-control-card" hidden>
     <h3 id="base-selection">Нижний шкаф</h3>
     <div class="drawer-label">Назначение</div>
-    <div class="drawer-opening" role="group" aria-label="Назначение нижнего шкафа">
-     <button type="button" class="secondary" data-base-option="purpose" data-base-value="shelf">С полками</button>
-     <button type="button" class="secondary" data-base-option="purpose" data-base-value="sink">Под мойку</button>
+    <div class="base-cards" role="group" aria-label="Назначение нижнего шкафа">
+     <button type="button" class="secondary" data-base-option="purpose" data-base-value="shelf" aria-pressed="false"><span class="gola-option-image"></span><strong>С полками</strong><small>Хранение</small></button>
+     <button type="button" class="secondary" data-base-option="purpose" data-base-value="sink" aria-pressed="false"><span class="gola-option-image"></span><strong>Под мойку</strong><small>Без задней стенки</small></button>
     </div>
     <div class="drawer-label">Исполнение</div>
-    <div class="drawer-opening" role="group" aria-label="Исполнение нижнего шкафа">
-     <button type="button" class="secondary" data-base-option="execution" data-base-value="standard">Обычное</button>
-     <button type="button" class="secondary" data-base-option="execution" data-base-value="gola">Gola L</button>
+    <div class="base-cards" role="group" aria-label="Исполнение нижнего шкафа">
+     <button type="button" class="secondary" data-base-option="execution" data-base-value="standard" aria-pressed="false"><span class="gola-option-image"></span><strong>Обычное</strong><small>Накладные ручки</small></button>
+     <button type="button" class="secondary" data-base-option="execution" data-base-value="gola" aria-pressed="false"><span class="gola-option-image"></span><strong>Gola L</strong><small>Чёрный профиль сверху</small></button>
     </div>
     <div id="base-side-label" class="drawer-label">Петли</div>
-    <div class="drawer-opening" role="group" aria-label="Сторона петель">
-     <button type="button" class="secondary" data-base-option="side" data-base-value="left">Слева · L</button>
-     <button type="button" class="secondary" data-base-option="side" data-base-value="right">Справа · P</button>
+    <div class="base-cards" role="group" aria-label="Сторона петель">
+     <button type="button" class="secondary" data-base-option="side" data-base-value="left" aria-pressed="false"><span class="gola-option-image"></span><strong>Петли слева</strong><small>Открывание L</small></button>
+     <button type="button" class="secondary" data-base-option="side" data-base-value="right" aria-pressed="false"><span class="gola-option-image"></span><strong>Петли справа</strong><small>Открывание P</small></button>
     </div>
     <p id="base-source-note" class="studio-hint" aria-live="polite"></p>
    </div>

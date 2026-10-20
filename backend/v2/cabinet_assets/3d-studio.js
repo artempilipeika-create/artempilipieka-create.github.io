@@ -90,7 +90,14 @@
     const copy=make('span','mf3d-module-copy');copy.append(make('strong','',opt.label),make('span','',descriptionFor(it,opt.description)));
     const meta=make('span','studio-card-meta');meta.append(make('span','',it.width+' × '+it.height+' × '+it.depth));
     if(opt.bazis)meta.append(make('span','studio-source','БАЗИС'));
-    b.append(c,copy,meta);
+    b.append(c,copy);
+    const baseChoice=globalThis.MF_GOLA?.baseChoice(opt.bazis),drawerChoice=globalThis.MF_DRAWERS?.choice(opt.bazis);
+    if(baseChoice||drawerChoice){
+      const badges=make('span','studio-gola-badges'),choices=baseChoice?globalThis.MF_GOLA.baseChoices().filter(v=>v.door_count===baseChoice.door_count):globalThis.MF_DRAWERS.choices();
+      badges.append(make('span','',baseChoice?'Gola L':'Gola II'),make('span','',choices.length+' вариантов'));
+      b.append(badges);
+    }
+    b.append(meta);
     b.onclick=()=>{if(!state)return;opt.bazis?addBazisModule(opt.bazis):opt.template?addTemplate(opt.template):addModule(opt.module);b.classList.add('studio-added');};
     catalogue.set(b,{opt,it});root.append(b);
   };

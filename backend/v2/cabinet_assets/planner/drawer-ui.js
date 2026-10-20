@@ -14,6 +14,8 @@
    b.disabled=Boolean(error);b.setAttribute('aria-pressed',String(v[key]===value));
    b.title=error;
    const icon=b.querySelector('.drawer-option-image');if(icon)icon.innerHTML=drawing(value,v.execution==='gola');
+   if(key==='execution'&&value==='standard'){const caption=b.querySelector('small');if(caption)caption.textContent=target?.opening==='push'?'Push to open':'Накладные ручки';}
+   const executionImage=b.querySelector('.gola-option-image');if(executionImage)executionImage.innerHTML=root.MF_GOLA_UI?.drawing(target||D.choices().find(n=>n.execution===value&&n.system===v.system&&n.layout===v.layout))||'';
   }
   el.querySelector('#drawer-selection').textContent=v.manufacturer+' · '+v.series+' · '+D.openings[v.opening]+(v.execution==='gola'?' · Gola II':'');
   el.querySelector('#drawer-leg-note').textContent=(v.execution==='gola'?root.MF_GOLA.adjustment(it):D.adjustment(it))?.note||'';
