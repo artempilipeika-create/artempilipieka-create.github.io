@@ -8,7 +8,7 @@ import {MobilityUI} from '../../backend/v2/cabinet_assets/planner/mobility-ui.mj
 import '../../backend/v2/cabinet_assets/planner/drawer-ui.js';
 import '../../backend/v2/cabinet_assets/planner/production-notes.js';
 
-const D=globalThis.MF_DRAWERS,choices=D.choices(),ball=choices.filter(v=>v.system==='ball');
+const D=globalThis.MF_DRAWERS,choices=D.choices().filter(v=>v.execution==='standard'),ball=choices.filter(v=>v.system==='ball');
 const source=readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8');
 const template=it=>({production:models[it.bazis_id]});
 const item=v=>normalizeKitchen({item_id:'drawer',name:'У мойки',module_type:'base_cabinet',bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:true,
@@ -17,7 +17,7 @@ const item=v=>normalizeKitchen({item_id:'drawer',name:'У мойки',module_typ
 
 function catalogueContext(){
  const cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}});
- const c=vm.createContext({document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_UPPERS:globalThis.MF_UPPERS});
+ const c=vm.createContext({document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,MF_UPPERS:globalThis.MF_UPPERS});
  vm.runInContext(source.slice(0,source.indexOf('let user=null')),c);
  c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};
  c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';
@@ -127,9 +127,10 @@ test('Actual export follows the final selected source and ordinary construction 
  const items=choices.map(v=>D.select(item(D.variants[0]),v,choices));let blob;
  const state={room:{width:6000,height:2700,depth:4000},items,production_note:''};
  const c=vm.createContext({state,templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,
- MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,
+ MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,
  $:()=>({value:'Unified drawer QA'}),status:()=>{},setTimeout:()=>{},alert:m=>assert.fail(m),confirm:()=>true,
  URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL:()=>{}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
+ vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);vm.runInContext('exportBazisProject()',c);
  const payload=JSON.parse(await blob.text());assert.equal(payload.items.length,10);
  for(let i=0;i<choices.length;i++){

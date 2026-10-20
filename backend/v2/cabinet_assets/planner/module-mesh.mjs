@@ -254,7 +254,7 @@ export class MeshFactory{
     const parts=productionParts(it,template,id=>this.adapter.material(id));
     if(parts){
       for(const part of parts.filter(p=>p.role!=='front'||p.fixed)){
-        const d=part.size,c=part.position,m=this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.visual_variant_id??part.material.variant_id,ghost);
+        const d=part.size,c=part.position,m=part.contour_yz?this.contourPanel(group,part,ghost):this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.visual_variant_id??part.material.variant_id,ghost);
         m.userData.part=part;m.userData.productionPart=part.role;
         if(part.back_type)m.userData.backType=part.back_type;
         if(part.shelf_id)m.userData.shelfId=part.shelf_id;
@@ -283,7 +283,7 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
@@ -314,6 +314,10 @@ export class MeshFactory{
         // The pilot swing doors keep the handle on the rotating facade.
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
+    }
+    if(production?.gola)for(const profile of globalThis.MF_GOLA.profiles(it)){
+      const mesh=this.contourPanel(group,{...profile,role:'lightProfile',position:{x:profile.x+profile.length/2},size:{x:profile.length},material:{}},ghost);
+      mesh.userData.visualOnly=true;mesh.userData.golaProfile=profile.name;
     }
     if(production?.metal_drawers)for(const part of globalThis.MF_DRAWERS.metalParts(it,production)){
       const d=part.size,c=part.position,m=this.box(group,'drawerMetal',d.x,d.y,d.z,c.x,c.y,c.z,null,ghost);
@@ -355,6 +359,15 @@ export class MeshFactory{
       }
     }
     this.updateAppearance(group,it);this.position(group,it);return group;
+  }
+  contourPanel(group,part,ghost=false){
+    const key='gola-contour:'+JSON.stringify([part.contour_yz,part.size.x]);
+    const geometry=this.acquire(key,()=>{
+      const shape=new THREE.Shape(part.contour_yz.map(([y,z])=>new THREE.Vector2(-z*S,y*S)));
+      const g=new THREE.ExtrudeGeometry(shape,{depth:part.size.x*S,bevelEnabled:false,steps:1});
+      g.rotateY(Math.PI/2);g.computeBoundingBox();g.computeBoundingSphere();return g;
+    });
+    return this.mesh(group,part.role,geometry,key,part.position.x-part.size.x/2,0,0,part.material.variant_id,ghost);
   }
   position(group,it){group.position.set(it.x*S,elevation(it,this.adapter.room)*S,it.z*S);group.rotation.y=-(it.rotation||0)*Math.PI/180;}
   /** Pilot runs derive from production data; the old visual dressing stays for legacy projects. */

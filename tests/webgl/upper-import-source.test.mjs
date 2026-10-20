@@ -39,7 +39,7 @@ test('Only two reviewed historical dryer SHA-256 values are remapped, then still
   assert.equal(input.source_sha256,previous);
   assert.equal(c.nativeFrameProfile(canonical).rearInsetMm,3);
   assert.equal(c.canonicalUpperDonor({...input,source_sha256:'0'.repeat(64)}).source_sha256,'0'.repeat(64));
-  assert.equal(c.canonicalUpperDonor({...input,bazis_id:'bazis.unknown'}),input);
+  const unknown={...input,bazis_id:'bazis.unknown'};assert.equal(c.canonicalUpperDonor(unknown),unknown);
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'mf-old-upper-'));
   try{
    fs.writeFileSync(path.join(root,source_file),'incorrect stale bytes');

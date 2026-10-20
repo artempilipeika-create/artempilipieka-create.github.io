@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spac
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant,tall_shelf_count
+from .three_d_gola import gola_variant, gola_contents, gola_hardware, gola_note
 from .three_d_drawers import drawer_variant, drawer_contents, drawer_hardware as metal_drawer_hardware
 from .three_d_upper import upper_variant, upper_contents, upper_hardware, upper_adjustment_note
 from .three_d_vitrine import vitrine_variant,vitrine_hardware,vitrine_contents
@@ -88,6 +89,7 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    if gola_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in gola_hardware(it)],gola_note(it)
     upper=upper_variant(it)
     if upper and not upper['legacy']:
         return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in upper_hardware(it)],upper_adjustment_note(it)
@@ -145,6 +147,7 @@ def hardware_for(it):
     return [],None
 
 def module_contents(it):
+    if gola_variant(it):return gola_contents(it)
     if upper_variant(it):return upper_contents(it)
     if drawer_variant(it):return drawer_contents(it)
     if vitrine_variant(it):return vitrine_contents(it)
@@ -188,6 +191,13 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front,materials=None):
+    gola=gola_variant(it)
+    if gola and not drawer_variant(it):
+        materials=materials or {}
+        rows=[('Корпус 18 мм',body or 'ЛДСП- БЕЛЫЙ'),('Фасады 18 мм',front or 'Evagloss P004'),('Профиль','Gola AKS, чёрный')]
+        if gola['purpose']!='sink':rows.append(('ЛХДФ 3 мм',materials.get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый')))
+        if gola['system']=='ball':rows.append(('Стенки ящиков 18 мм',body or 'ЛДСП- БЕЛЫЙ'))
+        return rows
     if upper_variant(it):
         materials=materials or {}
         return [('Корпус 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),

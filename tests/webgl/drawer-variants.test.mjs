@@ -86,15 +86,16 @@ test('Actual native export carries eight matching files, nominal fronts and sepa
  const source=readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8');let blob;
  const state={room:{width:6000,height:2700,depth:4000},items:D.variants.map(v=>dimensionPatch(item(v),{legHeightMm:150})),production_note:''};
  const c=vm.createContext({state,templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,
- MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,
+ MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,
  $:()=>({value:'Drawer QA'}),status:()=>{},setTimeout:()=>{},alert:m=>assert.fail(m),confirm:()=>true,
  URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL:()=>{}},document:{createElement:()=>({style:{},click:()=>{},remove:()=>{}}),body:{append:()=>{}}}});
+ vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);vm.runInContext('exportBazisProject()',c);
  const payload=JSON.parse(await blob.text());assert.equal(payload.items.length,8);
  for(let i=0;i<8;i++){const out=payload.items[i],v=D.variants[i];assert.equal(out.source_file,v.source_file);assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.target.height,820);assert.equal(out.construction.base_height,150);assert.deepEqual(out.construction.metal_drawers.front_heights_mm,v.front_heights);assert.ok(out.production_note.includes(v.series));}
 });
 test('Native importer protects service-only AQ surface and keeps 16 mm board material',()=>{
- const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_7_2_DRAWER_MATERIALS.js',import.meta.url),'utf8');
+ const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_0_GOLA.js',import.meta.url),'utf8');
  const c=vm.createContext({require:()=>({}),console,process});vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),c);
  for(const v of D.variants){
   const it={source_sha256:v.source_sha256,construction:{parts:[{role:'body',thickness:18,material:{name:'Decor18'}},{role:'drawer',thickness:16,material:{name:'Decor16'}}]}};
@@ -109,7 +110,7 @@ test('Actual order transfer refuses wrong-thickness material before any write an
  const source=readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8'),requests=[];
  const it=item(D.variants[1]);it.part_materials={};
  const state={items:[it],room:{width:4200,depth:3200,height:2700}},materials=new Map([['wood',{thickness:18}],['front',{thickness:18}],['wood16',{thickness:16}],['hdf3',{thickness:3}]]);
- const c=vm.createContext({state,materials,templateFor:template,project:{project_id:'qa'},MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,
+ const c=vm.createContext({state,materials,templateFor:template,project:{project_id:'qa'},MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,
  $:()=>({value:'Drawer QA'}),saveProject:async()=>{requests.push({path:'save'})},uid:()=>String(requests.length),mmNumber:n=>n,location:{assign:()=>{}},api:async(path,method,body)=>{requests.push({path,method,body});return path==='/orders'?{order_id:'mock',optimistic_lock_version:1}:{active_release:'release'}}});
  vm.runInContext(source.slice(source.indexOf('function cutlistItem('),source.indexOf('function renderCutlist(')),c);vm.runInContext(source.slice(source.indexOf('async function toOrder('),source.indexOf('async function start(')),c);
  await assert.rejects(()=>vm.runInContext('toOrder()',c),/материал 3 мм|материал 16 мм/);assert.equal(requests.length,0);

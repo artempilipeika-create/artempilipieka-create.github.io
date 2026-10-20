@@ -2,7 +2,8 @@
 import json
 from pathlib import Path
 VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/drawer-variants.json').read_text())
-BY_ID={v['id']:v for v in VARIANTS}
+GOLA_METAL=[v for v in json.loads((Path(__file__).parent/'cabinet_assets/planner/gola-variants.json').read_text()) if v['kind']=='drawers' and v['system']!='ball']
+BY_ID={v['id']:v for v in VARIANTS+GOLA_METAL}
 
 def drawer_variant(it):
     v=BY_ID.get(it.get('bazis_id'))
@@ -16,8 +17,8 @@ def elastic(v,axis,value,delta):
 def matches(rules,value):
     return next((r['Count'] for r in rules if value<=r['Length']+1e-7),0)==1
 
-def drawer_configuration(it):
-    v=drawer_variant(it)
+def drawer_configuration(it,v=None):
+    v=v or drawer_variant(it)
     if not v:return [],'Фрагмент ящиков не совпадает с проверенным исходником'
     delta=it['height']-(it.get('legHeightMm') or it.get('base_height') or 100)-720
     rows=[]

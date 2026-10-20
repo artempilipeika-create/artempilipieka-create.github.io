@@ -225,7 +225,8 @@
   const VITRINE_PRODUCTION=freeze(Object.fromEntries(VITRINE_VARIANTS.map(v=>[v.id,VITRINE.model(v)])));
   const DRAWER_PRODUCTION=freeze(Object.fromEntries((root.MF_DRAWERS?.variants||[]).map(v=>[v.id,root.MF_DRAWERS.model(v)])));
   const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.all||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
-  const PRODUCTION_MODELS=Object.freeze({...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  const GOLA_PRODUCTION=freeze(Object.fromEntries((root.MF_GOLA?.variants||[]).map(v=>[v.id,root.MF_GOLA.model(v)])));
+  const PRODUCTION_MODELS=Object.freeze({...GOLA_PRODUCTION,...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
   function tallVariantInfo(it){return allTallVariants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function tallVariant(it,patch,catalogue){
     const current=tallVariantInfo(it);
@@ -317,6 +318,7 @@
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
+    if(p?.gola)return root.MF_GOLA.dimensionError(it);
     if(p?.upper)return root.MF_UPPERS.dimensionError(it);
     if(known?.metal_drawers)return root.MF_DRAWERS.dimensionError(it);
     if(p?.vitrine)return VITRINE.dimensionError(it);
@@ -346,6 +348,7 @@
   }
 
   function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(p?.gola)return [];
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.shelves(it,p);
     if(!p||p.tall||p.vitrine||p.metal_drawers)return [];
     if(p.corner?.purpose==='sink')return [];
@@ -373,6 +376,7 @@
     return null;
   }
   function productionHardware(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(p?.gola)return root.MF_GOLA.hardware(it,p);
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.hardware(it,p);
     if(p?.metal_drawers)return root.MF_DRAWERS.hardware(it,p);
     if(p?.vitrine)return VITRINE.hardware(it,p);
@@ -495,6 +499,7 @@
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(production?.gola)return root.MF_GOLA.facades(it,production);
     if(production?.metal_drawers)return root.MF_DRAWERS.facades(it,production);
     if(production?.vitrine)return [{kind:'door',w:W-4,h:H-4,cx:0,cy:baseH+H/2}];
     if(production?.tall){
@@ -575,6 +580,7 @@
   }
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(!p?.carcass)return null;
+    if(p.gola)return root.MF_GOLA.parts(it,p,materialLookup);
     if(p.metal_drawers)return root.MF_DRAWERS.parts(it,p,materialLookup);
     if(p.vitrine)return VITRINE.parts(it,p,materialLookup);
     if(p.tall?.family==='appliance')return applianceTallParts(it,p,materialLookup);

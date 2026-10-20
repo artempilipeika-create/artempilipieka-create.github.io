@@ -2,21 +2,22 @@
 (function(root){
   'use strict';
   const ballIds=['bazis.39f282e08f0c','bazis.5f5697e39e27'];
-  const variants=root.MF_DRAWER_VARIANTS||[],family={label:'Нижний шкаф с ящиками',default_id:ballIds[0]};
+  const variants=(root.MF_DRAWER_VARIANTS||[]).map(v=>({...v,execution:'standard'})),family={label:'Нижний шкаф с ящиками',default_id:ballIds[0]};
   const layouts={two:'2 ящика',three:'3 ящика',inner:'2 + внутренний'},openings={soft:'С доводчиком',push:'Push to open'};
-  const info=it=>variants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
+  const metalChoices=()=>[...variants,...(root.MF_GOLA?.variants||[]).filter(v=>v.kind==='drawers'&&v.system!=='ball')];
+  const info=it=>metalChoices().find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
   function choice(id){
-    const metal=variants.find(v=>v.id===id);if(metal)return metal;
+    const metal=variants.find(v=>v.id===id)||(root.MF_GOLA?.choice(id)?.kind==='drawers'?root.MF_GOLA.choice(id):null);if(metal)return metal;
     const p=ballIds.includes(id)&&root.MF_FURNITURE_CORE?.PILOT_PRODUCTION[id];
-    return p?{id,system:'ball',manufacturer:'AKS',series:'Обычные шариковые',layout:p.front_layout.heights.length===2?'two':'three',opening:'soft',
+    return p?{id,execution:'standard',system:'ball',manufacturer:'AKS',series:'Обычные шариковые',layout:p.front_layout.heights.length===2?'two':'three',opening:'soft',
       drawer_count:p.front_layout.heights.length,front_heights:p.front_layout.heights,source_file:p.source_file,source_sha256:p.source_sha256,label:p.label}:null;
   }
-  const choices=()=>[...ballIds.map(choice).filter(Boolean),...variants];
+  const choices=()=>[...ballIds.map(choice).filter(Boolean),...variants,...(root.MF_GOLA?.variants||[]).filter(v=>v.kind==='drawers')];
   const familyInfo=it=>{const v=choice(it?.bazis_id);return v&&v.source_sha256===it.bazis_sha256?v:null;};
-  const available=(v,patch)=>v?choices().find(n=>['system','layout','opening'].every(k=>n[k]===(patch[k]??v[k])))||null:null;
+  const available=(v,patch)=>v?choices().find(n=>['system','layout','opening','execution'].every(k=>n[k]===(patch[k]??v[k])))||null:null;
   const selectedSource=(it,v)=>({...it,bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:true,layout:'drawers',drawers:v.drawer_count,
-    ...(v.opening==='push'?{handles:'handleless'}:{})});
-  const selectionError=(it,v)=>!v?'Такого сочетания нет среди проверенных фрагментов':v.system==='ball'?'':dimensionError(selectedSource(it,v));
+    handles:v.opening==='push'||v.execution==='gola'?'handleless':'handles'});
+  const selectionError=(it,v)=>!v?'Такого сочетания нет среди проверенных фрагментов':v.execution==='gola'?root.MF_GOLA.dimensionError(selectedSource(it,v)):v.system==='ball'?'':dimensionError(selectedSource(it,v));
   function model(v){return {tier:'base',key:'base.metal-drawers.'+v.system+'.'+v.layout+'.'+v.opening,label:family.label,source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,scene_depth:510,worktop_thickness:38,resize:true,
     limits:{w:[400,1200],h:[700,1100],d:[300,700]},metal_drawers:v,
@@ -29,7 +30,7 @@
     if(!v||!catalogue.some(m=>m.id===v.id&&m.source_sha256===v.source_sha256))throw new Error('Такого сочетания нет среди проверенных фрагментов. Выберите доступную систему и открывание.');
     const error=selectionError(it,v);if(error)throw new Error(error);
     const next=selectedSource(it,v);
-    if((current.system==='ball')!==(v.system==='ball')&&it.part_materials){
+    if((current.system!==v.system||current.execution!==v.execution)&&it.part_materials){
       const core=root.MF_FURNITURE_CORE,parts=value=>core.productionParts(value,{production:core.PRODUCTION_MODELS[value.bazis_id]});
       const old=parts(it),fresh=parts(next),materials={};
       for(const target of fresh){
@@ -77,7 +78,7 @@
       let sizes,centers;
       if(s.role==='drawer'){
         const d=selected.drawers[s.drawer_index-1],key=s.key.split('-').pop(),b=d.kit.boards[key],correction=v.elastic_drawers[s.drawer_index-1].native_corrections[key];
-        sizes=[b.size[0]+dw,b.size[1],b.size[2]];
+        sizes=[b.size[0]+dw,b.size[1],b.size[2]].map((x,i)=>round(x+(v.elastic_drawers[s.drawer_index-1].native_size_corrections?.[key]?.[i]||0)));
         centers=[b.center[0]+18-300,b.center[1]+d.y+dy,b.center[2]+it.depth/2].map((x,i)=>round(x+correction[i]));
       }else{
         const offset=[300,0,255],delta=[dw,dh,dd],target=[it.width/2,-dy,it.depth/2];
@@ -120,7 +121,7 @@
     const v=familyInfo(it);if(!v)return [];
     return root.MF_FURNITURE_CORE.facadeCells(it,{production:root.MF_FURNITURE_CORE.PRODUCTION_MODELS[v.id]}).map(f=>f.h);
   }
-  function brief(it){const v=familyInfo(it);if(!v)return '';
+  function brief(it){const v=familyInfo(it);if(!v)return '';if(v.execution==='gola')return root.MF_GOLA.brief(it);
     if(v.system==='ball')return `AKS · обычные шариковые направляющие с доводчиком; ${layouts[v.layout]}. Длина направляющих ${root.MF_FURNITURE_CORE.drawerSlideLengthMm(it.depth)} мм, подбор по глубине корпуса. Стенки ящиков: ЛДСП 18 мм в декоре корпуса; днища ящиков и задник корпуса: ЛХДФ 3 мм. Фасады снизу вверх: ${frontHeights(it).join(' + ')} мм.`;
     return `${v.manufacturer} · ${v.series}; ${layouts[v.layout]}; ${openings[v.opening]}. Белая фурнитура, направляющие ${railLengths(it).join(' / ')} мм. Фасады снизу вверх: ${frontHeights(it).join(' + ')} мм. Дно и задние стенки ящиков: ЛДСП 16 мм в декоре корпуса. Задник корпуса: ЛХДФ 3 мм.`+
       (v.layout==='inner'?' Внутренний ящик H84 — с доводчиком; держатель 113187 и ручка с поводком 94123.':'')+

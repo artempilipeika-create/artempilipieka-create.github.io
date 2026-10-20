@@ -18,6 +18,7 @@ from .three_d_tall import tall_variant
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
 from .three_d_upper import upper_variant, upper_error, refresh_upper_source, BY_ID as UPPER_BY_ID
+from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
 
 class ShelfState(StrictModel):
@@ -142,6 +143,11 @@ class FurnitureItem(StrictModel):
             self.bazis_file=upper['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0
             if upper['execution']!='handles':self.handles='handleless'
+        if self.bazis_id in GOLA_BY_ID:
+            data=self.model_dump();error=gola_error(data)
+            if error:raise ValueError(error)
+            gola=gola_variant(data);self.bazis_file=gola['source_file'];self.bazis_resize=True;self.handles='handleless'
+            self.layout=gola['kind'];self.drawers=gola['drawer_count']
         drawer=drawer_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
         if self.bazis_id in DRAWER_BY_ID:
             if not drawer:raise ValueError('Фрагмент ящиков не совпадает с проверенным исходником')

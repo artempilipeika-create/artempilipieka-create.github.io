@@ -13,12 +13,13 @@ const materials=new Map([['body-a',material('body-a',18,'#aa2200')],['body-b',ma
 const lookup=id=>materials.get(id),parts=it=>productionParts(it,template(it),lookup);
 function node(){return {dataset:{},children:[],append(...xs){this.children.push(...xs)},replaceChildren(...xs){this.children=xs},setAttribute(){}};}
 function picker(items,scope='module'){
- const c=vm.createContext({state:{items},selected:()=>items[0],templateFor:template,materials:new Map(materials),MF_FURNITURE_CORE:core,MF_DRAWERS:D,label:m=>m?.name||'',status:()=>{},updateAll:()=>{},syncControls:()=>{},$:id=>id==='material-scope'?{value:scope}:node(),document:{createElement:node},api:async()=>({items:[]})});
+ const c=vm.createContext({state:{items},selected:()=>items[0],templateFor:template,materials:new Map(materials),MF_FURNITURE_CORE:core,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,label:m=>m?.name||'',status:()=>{},updateAll:()=>{},syncControls:()=>{},$:id=>id==='material-scope'?{value:scope}:node(),document:{createElement:node},api:async()=>({items:[]})});
  vm.runInContext(source.slice(source.indexOf('function materialVisualLabel('),source.indexOf('function setMode(')),c);
  return async(kind,id)=>{c.api=async()=>({items:[materials.get(id)]});const input={value:'плита',dataset:{}},results=node();await c.searchMaterial(input,results,kind);assert.equal(results.children.length,1);results.children[0].onclick();};
 }
 async function exported(items){
- let blob;const c=vm.createContext({state:{items,room:{width:6000,depth:4000,height:2700},production_note:''},templateFor:template,materials,MF_FURNITURE_CORE:core,MF_DRAWERS:D,Blob,Date,JSON,Math,FACADE_GAP_MM:1.5,$:()=>({value:'Materials QA'}),status:()=>{},alert:m=>assert.fail(m),confirm:()=>true,setTimeout:()=>{},URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL(){}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
+ let blob;const c=vm.createContext({state:{items,room:{width:6000,depth:4000,height:2700},production_note:''},templateFor:template,materials,MF_FURNITURE_CORE:core,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,Blob,Date,JSON,Math,FACADE_GAP_MM:1.5,$:()=>({value:'Materials QA'}),status:()=>{},alert:m=>assert.fail(m),confirm:()=>true,setTimeout:()=>{},URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL(){}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
+ vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);c.exportBazisProject();return JSON.parse(await blob.text());
 }
 
@@ -67,7 +68,7 @@ test('Ordinary ball-bearing drawer walls continue using the carcass 18 mm materi
 });
 
 test('Native importer never substitutes carcass material for an unassigned metal drawer and preserves panel thickness',async()=>{
- const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_7_2_DRAWER_MATERIALS.js',import.meta.url),'utf8');
+ const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_0_GOLA.js',import.meta.url),'utf8');
  const c=vm.createContext({require:()=>({}),console,process,objectTypeChecker:{ObjectIsPanel:p=>Boolean(p.isPanel)},materialData:{CreateMaterialData:(name,thickness)=>({name,thickness}),SetupObjectMaterial:(panel,material,changeThickness)=>{assert.equal(changeThickness,false);panel.assigned=material;}},historyOperations:{RegisterObjectChanging(){}}});
  vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),c);
  for(const selected of [false,true]){

@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.8.2 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-19)
+ Martin Forest -> BAZIS native importer v9.9.0 ONE CLICK + NOTES + GLASS + TEXTURES (2026-10-21)
  v9.8.1: corrected D2 handle donor, accurate version label and source mismatch details.
  v9.8.0: 12 verified upper handleless/push donors, rear frame inset 3 mm.
  v9.7.2: preserve AQ helper surfaces; use the selected 16 mm drawer board material.
@@ -443,7 +443,7 @@ function firstMaterial(parts, predicate) {
   return null;
 }
 
-const METAL_DRAWER_SOURCES = new Set(["c57da518f15764641ada032a8f9b542619a933072ee089d06bbff1b858ba741f", "444e228ac466b7a5ea0390579760d84dd4b6d2184bec461ed381b2e93f95e4d4", "0cb917bf58fbca1aefc1d437c317d18d9dab531322ecea6bcbd0ba7a8a8c3fde", "1b7d55d6cae912141e15c4e83587e8f07d195aa10fc526631410c98fc4f04dfa", "82344a8f7a812cc348dbd2a6bbc8382e1ff809fdec69dc8a12486202b25bdc47", "7365c51eeff6a6840e000157a2f9736ac081c76c658de02771894f2b94a313a6", "28c4a476ffd0cffe407fc20f85167ef4d2643511bad913f2959b5f202edc4846", "29655c4686b03d3fd4305763abbda0ff021a34cf1a7969606d8af03511f23fe1"]);
+const METAL_DRAWER_SOURCES = new Set(["c57da518f15764641ada032a8f9b542619a933072ee089d06bbff1b858ba741f", "444e228ac466b7a5ea0390579760d84dd4b6d2184bec461ed381b2e93f95e4d4", "0cb917bf58fbca1aefc1d437c317d18d9dab531322ecea6bcbd0ba7a8a8c3fde", "1b7d55d6cae912141e15c4e83587e8f07d195aa10fc526631410c98fc4f04dfa", "82344a8f7a812cc348dbd2a6bbc8382e1ff809fdec69dc8a12486202b25bdc47", "7365c51eeff6a6840e000157a2f9736ac081c76c658de02771894f2b94a313a6", "28c4a476ffd0cffe407fc20f85167ef4d2643511bad913f2959b5f202edc4846", "29655c4686b03d3fd4305763abbda0ff021a34cf1a7969606d8af03511f23fe1", "71f55f265ba42ab271c32400f84f1dd5b0228d1ddac310a7f63f1a54ba75cfd0", "4340fa69215fccf9f91c85292a959b8f040292042432799b7f501ed7bf69e150", "053826e33ec1e10d791eea8ec56b247a4bca1dfe45541269adfdb21843183734", "99f651b86d4dc7b965e7682a7e4e7eb57912ff9e604bf93dabe768a7fc8519f3", "87237b2461fe1a8338f9a767dbaca75010539cc1f95484c9bdebf33d5b183f79"]);
 
 function materialPalette(item) {
   const construction = item && item.construction;
@@ -743,7 +743,7 @@ function prepareProject(payload, root) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.8.2 ONE CLICK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.0 ONE CLICK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

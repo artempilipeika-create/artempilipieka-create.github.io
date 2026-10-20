@@ -23,6 +23,7 @@
     const v=family(item),lines=[];
     const kitchen=root.MF_FURNITURE_CORE?.kitchenSettings?.(item);
     if(kitchen)lines.push(kitchen.countertopEnabled?'Столешница: '+kitchen.countertopThicknessMm+' мм; глубина '+kitchen.countertopDepthMm+' мм; '+(kitchen.countertopJoint==='euro'?'еврозапил на угловых стыках':'обычное соединение')+'. Верх со столешницей: '+(item.height+kitchen.countertopThicknessMm)+' мм.':'Столешница над этим модулем отключена.');
+    const gola=root.MF_GOLA?.info(item);if(gola?.kind==='doors')lines.push(root.MF_GOLA.brief(item));
     const upper=root.MF_UPPERS?.brief(item);if(upper)lines.push(upper);
     const upperAdjustment=root.MF_UPPERS?.adjustment(item);if(upperAdjustment)lines.push('Отметки центров полок от низа корпуса, мм: '+(upperAdjustment.centers_from_bottom_mm.join(', ')||'нет'));
     const drawers=root.MF_DRAWERS?.brief(item);if(drawers)lines.push(drawers);

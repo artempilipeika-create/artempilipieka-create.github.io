@@ -17,7 +17,7 @@ def test_drawer_assets_are_served_by_constructor_router():
  with TestClient(app) as client:
   page=client.get('/constructor')
   assert page.status_code==200 and 'drawer-options-controls' in page.text
-  for name in ('drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js'):
+  for name in ('drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js','gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js'):
    response=client.get('/account/planner/'+name)
    assert response.status_code==200,name
    assert response.content==(ROOT/'backend/v2/cabinet_assets/planner'/name).read_bytes(),name

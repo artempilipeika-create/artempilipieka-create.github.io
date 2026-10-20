@@ -13,16 +13,19 @@
 <script defer src="/account/planner/countertop-variants.js"></script>
 <script defer src="/account/planner/countertops.js"></script>
 <link rel="stylesheet" href="/account/planner/countertop.css">
-<script defer src="/account/planner/drawer-variants.js"></script>
-<script defer src="/account/planner/drawer-model.js"></script>
-<script defer src="/account/planner/drawer-ui.js"></script>
+<script defer src="/account/planner/drawer-variants.js?v=20261021-gola"></script>
+<script defer src="/account/planner/drawer-model.js?v=20261021-gola"></script>
+<script defer src="/account/planner/drawer-ui.js?v=20261021-gola"></script>
 <link rel="stylesheet" href="/account/planner/drawer.css">
-<script defer src="/account/planner/upper-variants.js?v=20261019-source-2"></script>
-<script defer src="/account/planner/upper-model.js?v=20261019-source-2"></script>
-<script defer src="/account/planner/upper-ui.js?v=20261019-source-2"></script>
+<script defer src="/account/planner/upper-variants.js?v=20261021-gola"></script>
+<script defer src="/account/planner/upper-model.js?v=20261021-gola"></script>
+<script defer src="/account/planner/upper-ui.js?v=20261021-gola"></script>
 <link rel="stylesheet" href="/account/planner/upper.css">
-<script defer src="/account/planner/furniture-core.js?v=20261019-source-2"></script>
-<script defer src="/account/3d.js?v=20261019-source-2"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
+<script defer src="/account/planner/gola-variants.js?v=20261021-gola"></script>
+<script defer src="/account/planner/gola-model.js?v=20261021-gola"></script>
+<script defer src="/account/planner/gola-ui.js?v=20261021-gola"></script>
+<script defer src="/account/planner/furniture-core.js?v=20261021-gola"></script>
+<script defer src="/account/3d.js?v=20261021-gola"></script><script defer src="/account/3d-studio.js?v=20260925-1"></script>
 </head>
 <body class="mf-3d-page mf3d-studio">
 <header class="mf3d-top">
@@ -106,7 +109,26 @@
      <button type="button" class="secondary" data-upper-option="side" data-upper-value="right" aria-pressed="false"><span class="upper-option-image"></span><span>Справа · P</span></button>
      </div>
     </div>
-    <p class="studio-hint upper-import"><a href="/account/planner/bazis-drawers-import.js?v=20261019-source-2" download="Martin_Forest_Import_v9_8_2_UPPERS.js">Импортёр для БАЗИС · версия 9.8.2</a></p>
+    <p class="studio-hint upper-import"><a href="/account/planner/bazis-drawers-import.js?v=20261021-gola" download="Martin_Forest_Import_v9_9_0_GOLA.js">Импортёр для БАЗИС · версия 9.9.0</a></p>
+   </div>
+   <div id="base-options-controls" class="mf3d-control-card" hidden>
+    <h3 id="base-selection">Нижний шкаф</h3>
+    <div class="drawer-label">Назначение</div>
+    <div class="drawer-opening" role="group" aria-label="Назначение нижнего шкафа">
+     <button type="button" class="secondary" data-base-option="purpose" data-base-value="shelf">С полками</button>
+     <button type="button" class="secondary" data-base-option="purpose" data-base-value="sink">Под мойку</button>
+    </div>
+    <div class="drawer-label">Исполнение</div>
+    <div class="drawer-opening" role="group" aria-label="Исполнение нижнего шкафа">
+     <button type="button" class="secondary" data-base-option="execution" data-base-value="standard">Обычное</button>
+     <button type="button" class="secondary" data-base-option="execution" data-base-value="gola">Gola L</button>
+    </div>
+    <div id="base-side-label" class="drawer-label">Петли</div>
+    <div class="drawer-opening" role="group" aria-label="Сторона петель">
+     <button type="button" class="secondary" data-base-option="side" data-base-value="left">Слева · L</button>
+     <button type="button" class="secondary" data-base-option="side" data-base-value="right">Справа · P</button>
+    </div>
+    <p id="base-source-note" class="studio-hint" aria-live="polite"></p>
    </div>
    <div id="template-info" class="mf3d-template-info"></div>
    <div class="mf3d-item-head-actions"><button id="duplicate-item" class="secondary">Копировать</button><button id="remove-item" class="secondary studio-danger">Удалить</button></div>
