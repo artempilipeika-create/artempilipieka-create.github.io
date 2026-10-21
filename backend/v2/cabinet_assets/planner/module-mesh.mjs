@@ -283,7 +283,7 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.dishwasher&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
@@ -315,7 +315,7 @@ export class MeshFactory{
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
     }
-    if(production?.gola)for(const profile of globalThis.MF_GOLA.profiles(it)){
+    if(production?.gola||production?.dishwasher)for(const profile of production.dishwasher?globalThis.MF_ACCESSORIES.profiles(it):globalThis.MF_GOLA.profiles(it)){
       const mesh=this.contourPanel(group,{...profile,role:'lightProfile',position:{x:profile.x+profile.length/2},size:{x:profile.length},material:{}},ghost);
       mesh.userData.visualOnly=true;mesh.userData.golaProfile=profile.name;
     }
@@ -396,9 +396,15 @@ export class MeshFactory{
     const root=new THREE.Group();root.userData={visualOnly:true,mergedPlinthIds:[]};const groups=new Map();
     for(const plan of kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id))){
       const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
-      for(const part of plan.parts){const d=part.size,p=part.position,m=part.contour?this.countertop(g,part):this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;if(part.role==='counter')this.countertopOutline(g,part);}
+      for(const part of plan.parts.filter(p=>p.role!=='plinth')){const d=part.size,p=part.position,m=part.contour?this.countertop(g,part):this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;if(part.role==='counter')this.countertopOutline(g,part);}
       g.position.set(plan.position.x*S,0,plan.position.z*S);g.rotation.y=-plan.rotation*Math.PI/180;root.add(g);
       root.userData.mergedPlinthIds.push(...plan.members);
+    }
+    for(const plan of globalThis.MF_ACCESSORIES?.plans(this.adapter.state||{items,room:this.adapter.room},id=>this.adapter.material(id))||[]){
+      if(plan.error)continue;
+      const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
+      for(const p of plan.parts){const d=p.size,c=p.position,m=this.box(g,'plinth',d.x,d.y,d.z,c.x,c.y,c.z,p.material.variant_id);m.userData.part=p;m.userData.productionPart='plinth';}
+      g.position.set(plan.position.x*S,plan.position.y*S,plan.position.z*S);g.rotation.y=-plan.rotation*Math.PI/180;root.add(g);
     }
     for(const it of items){
       if(isKitchenModule(it)||tier(it)!=='base'||it.depth>750)continue;

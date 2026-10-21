@@ -42,6 +42,7 @@
     catalogue:{templates:kitchenTemplates,bazisModules,moduleDefs},
     template:item=>templateFor(item),
     material:id=>materials.get(String(id))||null,
+    cacheMaterial:m=>materials.set(String(m.variant_id),m),
     facadeCells:item=>facadeCells(item),
     status:message=>status(message),
     subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener);},

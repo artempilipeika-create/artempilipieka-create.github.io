@@ -78,9 +78,9 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
     ...sections,extrasScope:'KITCHEN_SHARED_RUNS',totals:calculated,
     missing:all.filter(r=>r.status!=='PRICED').map(r=>({key:r.key,status:r.status}))};
 }
-export function kitchenPriceBreakdown(items,room,templateLookup,materialLookup=()=>null,priceList=null){
+export function kitchenPriceBreakdown(items,room,templateLookup,materialLookup=()=>null,priceList=null,plinths=null){
   const modules=items.map(it=>modulePriceBreakdown(it,templateLookup(it),materialLookup,priceList));
-  const runs=kitchenRuns(items,room,materialLookup),parts=runs.flatMap(run=>run.parts),operations=new Map();
+  const runs=kitchenRuns(items,room,materialLookup),parts=plinths===null?runs.flatMap(run=>run.parts):[...runs.flatMap(run=>run.parts.filter(p=>p.role!=='plinth')),...(globalThis.MF_ACCESSORIES?.plans({items,room,plinths},materialLookup)||[]).flatMap(p=>p.parts)],operations=new Map();
   for(const op of runs.flatMap(r=>r.countertop_operations||[])){
     if(!operations.has(op.key))operations.set(op.key,row(op.key,op.label,0,op.unit,'countertop joints'));
     operations.get(op.key).quantity+=op.quantity;

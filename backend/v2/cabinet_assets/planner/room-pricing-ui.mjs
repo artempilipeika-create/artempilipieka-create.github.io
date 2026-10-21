@@ -43,7 +43,7 @@ export class RoomPricingUI{
       details.append(el('strong','Итого'),el('p','Себестоимость: не рассчитана'),el('p','Наценка: правило не задано'),el('p','Цена продажи: не рассчитана'));
       details.append(el('p','Количество для цены — по ценовой категории. Столешница и цоколь учитываются один раз в стоимости кухни.'));this.module.append(details);
     }
-    const k=kitchenPriceBreakdown(a.items,a.room,it=>a.template(it),id=>a.material(id));
+    const k=kitchenPriceBreakdown(a.items,a.room,it=>a.template(it),id=>a.material(id),null,a.state.plinths||[]);
     this.kitchen.dataset.priceStatus=k.status;this.kitchen.replaceChildren(el('h3','Стоимость кухни'),el('p',k.notice));
     for(const m of k.modules)this.kitchen.append(el('p',m.label+' · '+(m.pricingWidthMm===null?'нестандарт':m.pricingWidthMm+' мм')+' · цена не настроена'));
     if(k.extras.length){this.kitchen.append(el('strong','Общие элементы кухни'));for(const r of k.extras)this.kitchen.append(el('p',r.label+': '+r.quantity.toLocaleString('ru-RU',{maximumFractionDigits:3})+' '+({m2:'м²',joint:'стык.',m:'м',pcs:'шт.'}[r.unit]||r.unit)+' · цена не настроена'));}

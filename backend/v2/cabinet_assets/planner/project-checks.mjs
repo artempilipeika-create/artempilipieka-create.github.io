@@ -107,8 +107,11 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
       a.joint==='euro'?'Выбран еврозапил; операции должны быть учтены в цене.':'Выбрано обычное соединение.');
     if(!a.native_supported)add('counter-native','warning','Столешница требует доработки в БАЗИС.',it,a.native_notes.join(' '));
   }
-  for(const run of runs)if(run.parts.some(p=>p.role==='plinth'&&!p.material?.variant_id))add('plinth-material','error','Не назначен материал цоколя.',items.find(i=>run.parts.some(p=>p.module_ids?.includes(i.item_id))));
-  const shared=kitchenPriceBreakdown(items,room,template,material,priceList).extras;
+  for(const p of globalThis.MF_ACCESSORIES?.plans(scene,material)||[]){
+    if(p.error)add('plinth-row','error',p.error);
+    else if(!p.material_id)add('plinth-material','error','Не назначен материал цоколя.',items.find(i=>p.members.includes(i.item_id)));
+  }
+  const shared=kitchenPriceBreakdown(items,room,template,material,priceList,scene.plinths||[]).extras;
   if(shared.some(r=>r.status!=='PRICED'))add('shared-price','warning','Не полностью рассчитана цена столешниц, цоколей или соединений.');
   issues.sort((a,b)=>({error:0,warning:1,info:2}[a.severity]-{error:0,warning:1,info:2}[b.severity]));
   return {issues,mechanisms,counts:Object.fromEntries(['error','warning','info'].map(s=>[s,issues.filter(i=>i.severity===s).length]))};

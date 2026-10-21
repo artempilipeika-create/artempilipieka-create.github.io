@@ -44,6 +44,14 @@
     const bg=x.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#f6f6f0');bg.addColorStop(1,'#ecefe6');x.fillStyle=bg;x.fillRect(0,0,w,h);
     x.save();x.translate(w/2,h*.83);x.scale(1,.21);const shadow=x.createRadialGradient(0,0,0,0,0,Math.max(15,(W+D)*.75));shadow.addColorStop(0,'rgba(60,73,45,.20)');shadow.addColorStop(1,'rgba(60,73,45,0)');x.fillStyle=shadow;x.beginPath();x.arc(0,0,Math.max(15,(W+D)*.75),0,Math.PI*2);x.fill();x.restore();
     function polygon(points,fill,stroke){x.beginPath();points.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.closePath();x.fillStyle=fill;x.fill();if(stroke){x.strokeStyle=stroke;x.lineWidth=.8;x.stroke();}}
+    if(globalThis.MF_ACCESSORIES?.info(it)){
+      for(const f of facadeCells(it)){const px=bx+(f.cx+it.width/2-f.w/2)*s,py=by+H-(f.cy+f.h/2)*s,fw=f.w*s,fh=f.h*s;
+        polygon([[px+fw,py],[px+fw+7,py-3],[px+fw+7,py+fh-3],[px+fw,py+fh]],'#cbd1c2','#899681');
+        x.fillStyle='#f3f2e8';x.fillRect(px,py,fw,fh);x.strokeStyle='#899681';x.lineWidth=1;x.strokeRect(px,py,fw,fh);
+        x.fillStyle='#34473c';x.fillRect(px+fw*.32,py+8,fw*.36,3);
+      }
+      x.fillStyle='#52644c';x.font='11px sans-serif';x.textAlign='center';x.fillText('ПМ · обычное / Gola L',w/2,h-12);return;
+    }
     polygon([[bx+W,by],[bx+W+D,by-rise],[bx+W+D,by+H-rise],[bx+W,by+H]],'#c7b89b','#a99e86');
     polygon([[bx,by],[bx+D,by-rise],[bx+W+D,by-rise],[bx+W,by]],'#dfd8c6','#c0b8a4');
     x.fillStyle='#8e8a75';x.fillRect(bx,by,W,H);

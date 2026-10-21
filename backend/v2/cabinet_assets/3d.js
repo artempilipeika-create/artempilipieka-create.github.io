@@ -101,6 +101,7 @@ for(const v of [...globalThis.MF_FURNITURE_CORE.TALL_VARIANTS,...globalThis.MF_F
 for(const v of globalThis.MF_GOLA.variants)bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:v.kind==='drawers'?'Ящики БАЗИС':'Нижние БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:v.kind,drawers:v.drawer_count,base:'plinth'},front:{kind:v.kind,count:v.kind==='drawers'?v.front_heights.length:v.door_count},resize:true});
 for(const v of globalThis.MF_DRAWERS.variants)bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Ящики БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'drawers',drawers:v.drawer_count,base:'plinth'},resize:true});
 for(const v of globalThis.MF_UPPERS.variants.filter(v=>!v.legacy))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Верхние шкафы БАЗИС',module_type:'wall_cabinet',defaults:{w:600,h:720,d:317,layout:'doors',drawers:0,base:'wall'},front:{kind:'doors',count:v.door_count},resize:true});
+for(const v of Object.values(pilotProductionById).filter(p=>p.dishwasher).map(p=>p.dishwasher))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:'Посудомойка',group:'Техника БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'doors',drawers:0,base:'legs'},front:{kind:'doors',count:1},resize:true});
 // Existing saved projects still refer to the earlier donor bytes and dimensions.
 const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
@@ -216,6 +217,7 @@ function normalizeScene(s={}){
     materialIdentities:s.materialIdentities||{},
     production_note:s.production_note||'',
     countertopSettings:s.countertopSettings||{joint:'standard'},
+    plinths:s.plinths||[],
     items,
     selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
       ?s.selected_item_id:(items[0]?.item_id||null),
@@ -225,6 +227,7 @@ function normalizeScene(s={}){
 function scenePayload(){
   const first=state.items[0]||legacyItem({});
   const materialIdentities={};
+  for(const p of state.plinths||[])if(p.material_id){const m=materials.get(String(p.material_id));if(m)materialIdentities[p.material_id]={materialId:m.material_id||null,article:m.article||null,manufacturer:m.manufacturer||null};else if(state.materialIdentities?.[p.material_id])materialIdentities[p.material_id]=state.materialIdentities[p.material_id];}
   for(const it of state.items)for(const id of [it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id){
     const m=materials.get(String(id));
     if(m)materialIdentities[id]={materialId:m.material_id||null,article:m.article||null,manufacturer:m.manufacturer||m.visual_identity?.manufacturer||null};
@@ -238,6 +241,7 @@ function scenePayload(){
     materialIdentities,
     production_note:state.production_note||'',
     countertopSettings:state.countertopSettings||{joint:'standard'},
+    plinths:state.plinths||[],
     items:state.items.map(x=>({...x})),selected_item_id:selectedId
   };
 }
@@ -343,6 +347,7 @@ function renderModuleCatalogue(){
   }
   for(const id of Object.keys(pilotProductionById)){
     const m=bazisById.get(id);
+    if(m?.production?.dishwasher&&m.production.dishwasher.variant!=='standard')continue;
     const baseChoice=globalThis.MF_GOLA.baseChoice(id);
     if(baseChoice&&id!==globalThis.MF_GOLA.family(baseChoice).default_id)continue;
     const upperChoice=globalThis.MF_UPPERS.choice(id);
@@ -357,7 +362,7 @@ function renderModuleCatalogue(){
     if(m.production.tall&&id!==tallFamily.default_id)continue;
     if(m.production.vitrine&&id!==globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
+    const description=p.dishwasher?'Фасад для ПМ · обычное / Gola L · ширина 450–600 мм':drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -437,6 +442,7 @@ async function openProject(id){
   status('Проект открыт.');
 }
 async function hydrateMaterials(){
+  for(const p of state.plinths||[])if(p.material_id)await material(p.material_id);
   for(const it of state.items)for(const id of[it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id)await material(id);
 }
 async function saveProject(){
@@ -798,7 +804,7 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.gola?globalThis.MF_GOLA.brief(it):production.upper?globalThis.MF_UPPERS.brief(it):production.metal_drawers?globalThis.MF_DRAWERS.brief(it):production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. '+globalThis.MF_VITRINE.lighting(it).ui_note:production.tall?.family==='appliance'
+        $('production-rule-note').textContent=production.dishwasher?'Фасад для посудомоечной машины, без корпуса, задней стенки и мебельных ножек. Посадочная отметка исходника — 100 мм.':production.gola?globalThis.MF_GOLA.brief(it):production.upper?globalThis.MF_UPPERS.brief(it):production.metal_drawers?globalThis.MF_DRAWERS.brief(it):production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. '+globalThis.MF_VITRINE.lighting(it).ui_note:production.tall?.family==='appliance'
           ?'Корпус 600 × 600 мм. Духовка: ниша 564 × 595 мм.'+(production.tall.microwave?' СВЧ: ниша 564 × 380 мм.':'')+' Общая высота меняет только верхнее отделение. Задняя стенка в пазу, за техникой остаётся открытый проём.'
           :production.tall
           ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+core.tallUpperShelves(it,production).length+' съёмн. При изменении общей высоты растёт верхняя секция, выбранные полки распределяются равномерно. Столешница в высоту базы не входит.'
@@ -999,8 +1005,9 @@ function cutlistItem(it){
 }
 function allCutlist(includeKitchen=false){
   const rows=state.items.flatMap(cutlistItem);
-  if(includeKitchen)for(const run of globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room,id=>materials.get(String(id))))for(const p of run.parts)
+  if(includeKitchen)for(const run of globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room,id=>materials.get(String(id))))for(const p of run.parts.filter(p=>p.role!=='plinth'))
     rows.push(['Кухонный ряд · '+p.name,p.length,p.width,1,'fixed',{body_variant_id:p.material.variant_id},p.material.name]);
+  for(const plan of globalThis.MF_ACCESSORIES?.plans(state,id=>materials.get(String(id)))||[])for(const p of plan.parts)rows.push(['Цоколь ряда · '+p.name,p.length,p.width,1,'fixed',{body_variant_id:p.material.variant_id},p.material.name]);
   return rows;
 }
 function renderCutlist(){
@@ -1207,6 +1214,7 @@ async function exportBazisProjectReady(){
         if(!m||!(m.name||m.article))missing.push(it.name+' · '+id);
       }
     }
+    for(const p of state.plinths||[])if(p.material_id){const m=materials.get(String(p.material_id));if(!m||!(m.name||m.article))missing.push('Цоколь · '+p.material_id);}
     if(missing.length){status('Экспорт не создан: не удалось загрузить выбранные материалы. Повторите экспорт или выберите материал заново. '+[...new Set(missing)].join('; '));return;}
     return exportBazisProject();
   }catch(error){status('Экспорт не создан: '+(error.message||String(error)));}
@@ -1217,6 +1225,7 @@ function exportBazisProject(){
   state.items=state.items.map(refreshUpperSource);
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError){status(briefError);return;}
+  const plinthError=globalThis.MF_ACCESSORIES?.plans(state).find(p=>p.error)?.error;if(plinthError){status(plinthError);return;}
   const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
   if(invalid){status(invalid);return;}
   const bazisItems=state.items.filter(x=>x.bazis_file);
@@ -1240,7 +1249,7 @@ function exportBazisProject(){
     production_schema:1,
     // Additive preparation data. Existing native importer still owns source/target placement.
     kitchen_production:{native_accessories_supported:false,
-      runs:globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room,id=>materials.get(String(id)))},
+      runs:globalThis.MF_FURNITURE_CORE.kitchenRuns(state.items,state.room,id=>materials.get(String(id))).map(r=>({...r,parts:r.parts.filter(p=>p.role!=='plinth')}))},
     skipped_non_bazis:missing.map(x=>({name:x.name,module_type:x.module_type})),
     items:bazisItems.map((it,index)=>{
       const src=templateFor(it),p=src?.production||null;
@@ -1298,6 +1307,9 @@ function exportBazisProject(){
       };
     })
   };
+  const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];
+  for(const item of plinthItems){item.index=payload.items.length+1;payload.items.push(item);}
+  payload.kitchen_production.native_plinths_included=plinthItems.length;
   const counter=globalThis.MF_COUNTERTOPS;
   const countertops=counter?.nativeItems(payload.kitchen_production.runs)||[];
   for(const item of countertops){item.index=payload.items.length+1;payload.items.push(item);}

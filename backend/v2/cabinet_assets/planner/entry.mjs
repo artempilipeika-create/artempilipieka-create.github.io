@@ -19,6 +19,7 @@ function waitReady(){return new Promise((resolve,reject)=>{
 import {RoomPricingUI} from './room-pricing-ui.mjs';
 import {RoomSetup} from './room-setup.mjs';
 import {CountertopUI} from './countertop-ui.mjs';
+import {AccessoryUI} from './accessory-ui.mjs?v=20261021-accessories';
 import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
 import {ProjectSafety} from './project-safety.mjs';
@@ -30,7 +31,7 @@ class PlannerApplication {
     if(this.ready)return this;await waitReady();
     this.bridge=window.MF_PLANNER_BRIDGE;this.adapter=new StateAdapter(this.bridge);this.history=new History(this.adapter);
     this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.bindBrief();this.roomPricing=new RoomPricingUI(this);
-    this.countertops=new CountertopUI(this);
+    this.countertops=new CountertopUI(this);this.accessories=new AccessoryUI(this);
     this.mobility=new MobilityUI(this);
     await this.startRenderer();
     this.dimensions=new SceneDimensions(this);
@@ -409,7 +410,7 @@ class PlannerApplication {
     const selectedId=this.adapter.state?.selected_item_id;
     if(selectedId&&!this.adapter.items.some(it=>it.item_id===selectedId)){this.adapter.select(null);return;}
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.mobility?.sync();
+    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.accessories?.sync();this.mobility?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;

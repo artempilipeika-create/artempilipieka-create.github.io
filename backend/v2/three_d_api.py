@@ -18,6 +18,7 @@ from .three_d_tall import tall_variant
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
 from .three_d_upper import upper_variant, upper_error, refresh_upper_source, BY_ID as UPPER_BY_ID
+from .three_d_accessories import dishwasher, dishwasher_error, BY_ID as DISHWASHER_BY_ID
 from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
 
@@ -143,6 +144,11 @@ class FurnitureItem(StrictModel):
             self.bazis_file=upper['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0
             if upper['execution']!='handles':self.handles='handleless'
+        if self.bazis_id in DISHWASHER_BY_ID:
+            error=dishwasher_error(self.model_dump())
+            if error:raise ValueError(error)
+            v=dishwasher(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            self.layout='doors';self.drawers=0;self.handles='handleless' if v['variant']=='gola' else self.handles
         if self.bazis_id in GOLA_BY_ID:
             data=self.model_dump();error=gola_error(data)
             if error:raise ValueError(error)
@@ -211,6 +217,16 @@ class MaterialIdentity(StrictModel):
 class CountertopSettings(StrictModel):
     joint: Literal['standard','euro']='standard'
 
+class RowPlinth(StrictModel):
+    id: str=Field(min_length=1,max_length=80)
+    members: list[str]=Field(min_length=1,max_length=100)
+    shape: Literal['straight','left','right','u']='straight'
+    width: int|None=Field(default=None,ge=100,le=6000)
+    height: int|None=Field(default=None,ge=40,le=300)
+    depth: int|None=Field(default=None,ge=40,le=1200)
+    inset: int=Field(default=40,ge=0,le=300)
+    material_id: UUID|None=None
+
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
@@ -232,6 +248,7 @@ class Scene(StrictModel):
     selected_item_id: str|None=Field(default=None,max_length=80)
     production_note: str=Field(default='',max_length=2500)
     countertopSettings: CountertopSettings=Field(default_factory=CountertopSettings)
+    plinths: list[RowPlinth]=Field(default_factory=list,max_length=100)
 
 class Create(StrictModel):
     name: str=Field(min_length=1,max_length=200)
@@ -411,6 +428,8 @@ def router(settings):
                 ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id'),item.get('back_variant_id'),*item.get('part_materials',{}).values()) if x)
         else:
             ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
+        ids.update(str(p['material_id']) for p in scene.get('plinths',[]) if p.get('material_id'))
+        ids.update(str(it['plinthMaterialId']) for it in scene.get('items',[]) if it.get('plinthMaterialId'))
         if release:
             for ident in ids:
                 found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()

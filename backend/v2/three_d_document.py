@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spac
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant,tall_shelf_count
+from .three_d_accessories import dishwasher, dishwasher_hardware, dishwasher_contents, plinth_summary
 from .three_d_gola import gola_variant, gola_contents, gola_hardware, gola_note
 from .three_d_drawers import drawer_variant, drawer_contents, drawer_hardware as metal_drawer_hardware
 from .three_d_upper import upper_variant, upper_contents, upper_hardware, upper_adjustment_note
@@ -89,6 +90,7 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    if dishwasher(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dishwasher_hardware(it)],None
     if gola_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in gola_hardware(it)],gola_note(it)
     upper=upper_variant(it)
     if upper and not upper['legacy']:
@@ -147,6 +149,7 @@ def hardware_for(it):
     return [],None
 
 def module_contents(it):
+    if dishwasher(it):return dishwasher_contents(it)
     if gola_variant(it):return gola_contents(it)
     if upper_variant(it):return upper_contents(it)
     if drawer_variant(it):return drawer_contents(it)
@@ -191,6 +194,7 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front,materials=None):
+    if dishwasher(it):return [('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004')]+([('Профиль',dishwasher(it)['profiles'][0]['material_name'])] if dishwasher(it)['profiles'] else [])
     gola=gola_variant(it)
     if gola and not drawer_variant(it):
         materials=materials or {}
@@ -309,6 +313,11 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
             if module_image:block.extend([Spacer(1,2*mm),p('Вид модуля','section'),module_image])
         block.append(Spacer(1,2*mm))
         story.append(KeepTogether(block))
+    if scene.get('plinths'):
+        story.extend([PageBreak(),p('Цоколи по рядам','title')])
+        for i,entry in enumerate(scene['plinths'],1):
+            material_id=entry.get('material_id') or next((it.get('plinthMaterialId') for it in items if it['item_id'] in entry['members']),None)
+            story.extend([p(f'Цоколь ряда {i}','module'),p(plinth_summary(scene,entry),'body'),p('Материал: '+str(materials.get(str(material_id),'Evagloss P004 · из исходного FR3D')),'small'),Spacer(1,3*mm)])
     story.extend([PageBreak(),p('Сводная закупка фурнитуры','title'),p('Количество суммируется по модулям. Цена и сумма оставлены пустыми до подключения/ввода актуального прайса.','small')])
     rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Всего','Ед.','Цена BYN','Сумма BYN','Компл.']]]
     for n,((label,article,unit),qty) in enumerate(aggregate.items(),1):

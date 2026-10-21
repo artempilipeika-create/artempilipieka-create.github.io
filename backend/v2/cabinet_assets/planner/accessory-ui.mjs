@@ -1,0 +1,80 @@
+const A=globalThis.MF_ACCESSORIES;
+const el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
+const button=text=>{const b=el('button',text);b.type='button';b.className='secondary';return b;};
+export class AccessoryUI{
+ constructor(app){
+  this.app=app;
+  const card=el('section');card.id='plinth-card';card.className='mf3d-control-card accessory-card';
+  card.append(el('h3','Цоколь на ряд'),el('p','Выберите любой нижний модуль нужного ряда. Цоколь подстроится под длину участка, включая посудомойку.'));
+  const preview=el('div');preview.className='accessory-preview';preview.innerHTML=A.drawing('straight');card.append(preview);
+  this.add=button('Добавить цоколь на выбранный ряд');card.append(this.add);
+  this.note=el('p');this.note.className='studio-hint';this.note.setAttribute('aria-live','polite');card.append(this.note);
+  this.list=el('div');card.append(this.list);document.getElementById('module-catalogue').before(card);
+  app.listen(this.add,'click',()=>{
+   const s=app.adapter.state,run=A.runFor(s,app.adapter.selected?.item_id);if(!run)return;
+   this.change('Добавить цоколь',()=>{
+    s.plinths=s.plinths||[];
+    if(s.plinths.some(p=>p.members.some(id=>run.members.includes(id))))throw new Error('Для этого ряда цоколь уже добавлен. Настройки — в карточке ниже.');
+    s.plinths.push({id:crypto.randomUUID(),members:run.members,shape:'straight',inset:40});
+   });
+  });
+  this.dish=el('section');this.dish.id='dishwasher-options';this.dish.className='mf3d-control-card accessory-card';
+  this.dish.append(el('h3','Посудомойка'),el('p','Фасад без мебельного корпуса. Размер ниши и зазоры сверяйте с выбранной техникой.'));
+  const choices=el('div');choices.className='accessory-choices';this.dishButtons=[];
+  for(const [key,label]of [['standard','Обычное'],['gola','Gola L']]){
+   const b=button(label);b.dataset.variant=key;choices.append(b);this.dishButtons.push(b);
+   app.listen(b,'click',()=>this.change('Исполнение посудомойки',()=>{
+    const next=A.select(app.adapter.selected,key),error=app.adapter.validate(next);if(error)throw new Error(error);app.adapter.replace(next);
+   }));
+  }
+  this.dish.append(choices);const copy=button('Фасад как у соседнего шкафа');this.dish.append(copy);
+  app.listen(copy,'click',()=>this.change('Материал фасада посудомойки',()=>{
+   const it=app.adapter.selected,run=A.runFor(app.adapter.state,it.item_id);
+   const neighbour=app.adapter.items.filter(n=>n.item_id!==it.item_id&&run?.members.includes(n.item_id)&&n.front_variant_id).sort((a,b)=>Math.hypot(a.x-it.x,a.z-it.z)-Math.hypot(b.x-it.x,b.z-it.z))[0];
+   if(!neighbour)throw new Error('В этом ряду нет соседнего шкафа с выбранным материалом фасада.');
+   const part_materials={...it.part_materials};delete part_materials['front-1'];app.adapter.replace({...it,front_variant_id:neighbour.front_variant_id,part_materials});
+  }));
+  this.frontNote=el('p');this.frontNote.className='studio-hint';this.dish.append(this.frontNote);
+  document.getElementById('kitchen-controls').before(this.dish);
+ }
+ change(label,fn){try{this.app.interaction.change(label,()=>{fn();this.app.bridge.refresh();});}catch(e){this.app.adapter.status(e.message);}}
+ patch(id,patch){this.change('Параметры цоколя',()=>{
+  const s=this.app.adapter.state,next=s.plinths.map(p=>p.id===id?{...p,...patch}:p),plan=A.plans({...s,plinths:next}).find(p=>p.id===id);
+  if(plan?.error)throw new Error(plan.error);s.plinths=next;
+ });}
+ sync(){
+  const a=this.app.adapter,s=a.state,run=A.runFor(s,a.selected?.item_id),dish=A.info(a.selected);
+  this.dish.hidden=!dish;for(const b of this.dishButtons)b.setAttribute('aria-pressed',String(b.dataset.variant===dish?.variant));
+  if(dish){const p=A.parts(a.selected,{dishwasher:dish})[0];this.frontNote.textContent=`Фасад ${p.length} × ${p.width} × ${p.thickness} мм. Материал выбирается в разделе «Фасады».`;}
+  this.add.disabled=!run;this.note.textContent=run?`Выбран ряд: ${run.members.length} мод. · ${run.countertopActualLengthMm} мм`:'Выберите нижний шкаф или посудомойку на плане.';
+  const plans=A.plans(s,id=>a.material(id)),key=JSON.stringify(plans);
+  if(key===this.key)return;this.key=key;this.list.replaceChildren();
+  for(const [index,p]of plans.entries()){
+   const saved=s.plinths.find(e=>e.id===p.id),section=el('section');section.className='plinth-settings';section.append(el('h4','Цоколь ряда '+(index+1)));
+   if(p.error)section.append(el('p',p.error));
+   else{
+    const choices=el('div');choices.className='plinth-shapes';
+    for(const [shape,label]of Object.entries(A.names)){const b=button('');b.innerHTML=A.drawing(shape);b.append(el('span',label));b.setAttribute('aria-pressed',String(p.shape===shape));this.app.listen(b,'click',()=>this.patch(p.id,{shape}));choices.append(b);}
+    section.append(choices);const grid=el('div');grid.className='plinth-dimensions';
+    for(const [field,label,min,max]of [['width','Длина, мм',100,6000],['height','Рамка по высоте, мм',40,300],['depth','Глубина возвратов, мм',40,1200],['inset','Отступ от модуля, мм',0,300]]){
+     if(field==='depth'&&p.shape==='straight')continue;
+     const wrap=el('label',label),input=el('input');input.type='number';input.min=min;input.max=max;input.step=1;input.value=p[field];input.setAttribute('aria-label',label);wrap.append(input);grid.append(wrap);
+     this.app.listen(input,'change',()=>{const value=Number(input.value);if(!input.value||!Number.isInteger(value)||value<min||value>max){a.status('Проверьте размер: '+min+'–'+max+' мм');input.value=p[field];return;}this.patch(p.id,{[field]:value});});
+    }
+    section.append(grid,el('p','Детали: '+p.parts.map(x=>x.length+' × '+x.width+' × '+x.thickness).join(' / ')+' мм.'));
+    const reset=button('Снова взять размеры ряда');this.app.listen(reset,'click',()=>this.patch(p.id,{width:null,height:null,depth:null,inset:40}));section.append(reset);
+    const current=a.material(p.material_id),label=el('p','Материал: '+(current?.name||p.parts[0]?.material.name||'из исходного фрагмента'));label.className='studio-hint';section.append(label);
+    const search=el('input');search.type='search';search.placeholder='Найти материал цоколя · 18 мм';search.setAttribute('aria-label','Материал цоколя');section.append(search);const results=el('div');results.className='material-results';section.append(results);let request=0;
+    this.app.listen(search,'input',async()=>{
+     const token=++request,q=search.value.trim();results.replaceChildren();if(q.length<2)return;
+     try{const data=await this.app.bridge.request('/catalogue/materials?q='+encodeURIComponent(q)+'&limit=8','GET');if(token!==request||!search.isConnected)return;
+      const options=data.items.filter(m=>Number(m.thickness)===18);if(!options.length)results.append(el('p','Материал 18 мм не найден.'));
+      for(const m of options){const b=button(m.name+(m.article?' · '+m.article:''));this.app.listen(b,'click',()=>{this.app.bridge.cacheMaterial(m);this.patch(p.id,{material_id:m.variant_id});});results.append(b);}
+     }catch(e){if(token===request)a.status(e.message);}
+    });
+    const link=el('a','Скачать исходный FR3D');link.href='/account/planner/accessory-sources/'+encodeURIComponent(p.source.source_file);link.download=p.source.source_file;section.append(link);
+   }
+   const remove=button('Удалить цоколь');this.app.listen(remove,'click',()=>this.change('Удалить цоколь',()=>{s.plinths=s.plinths.filter(e=>e.id!==saved.id);}));section.append(remove);this.list.append(section);
+  }
+ }
+}

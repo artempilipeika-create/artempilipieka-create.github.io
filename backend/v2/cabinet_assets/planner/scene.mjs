@@ -155,7 +155,7 @@ export class PlannerScene{
       const groupedDisplay=this.selectionScope!=='module'&&scopeMatches(it,this.selectionScope);
       if(this.factory.updateAppearance(entry.group,it,groupedDisplay||it.item_id===this.displayItemId?this.displayMode:'normal'))this.renderer.shadowMap.needsUpdate=true;
     }
-    const dressing=JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.worktop_thickness,kitchenSettings(it)]));
+    const dressing=JSON.stringify(this.adapter.state?.plinths)+JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.worktop_thickness,kitchenSettings(it)]));
     if(this.dressingKey!==dressing){this.dressingKey=dressing;this.factory.release(this.dressing);this.dressing=this.factory.dress(this.adapter.items);this.scene.add(this.dressing);this.contacts?.removeFromParent();this.contacts=this.factory.contacts(this.adapter.items);this.scene.add(this.contacts);this.fitShadow();}
     if(this.dressing){
       const merged=new Set(this.dressing.userData.mergedPlinthIds||[]);

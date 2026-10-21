@@ -27,6 +27,7 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
+        'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
         'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',
         'gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js','gola.css','drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
         'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css',
@@ -42,6 +43,8 @@ def router():
     planner_files.update(material_assets)
     planner_files.update('materials/'+asset for asset in user_textures()['assets'])
     import json
+    accessories=json.loads((root/'planner/accessory-variants.json').read_text())
+    planner_files.update('accessory-sources/'+v['source_file'] for v in accessories)
     countertops=json.loads((root/'planner/countertop-variants.json').read_text())
     planner_files.update('countertop-sources/'+v['source_file'] for v in countertops)
     planner_files.update('countertop-sources/'+v['joint']+'-'+v['shape']+'.png' for v in countertops)
