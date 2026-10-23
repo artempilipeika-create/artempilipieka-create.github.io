@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three.module.js';
+import {trimApplianceBody,buildApplianceFront} from './appliance-finish.mjs';
 
 const KINDS=new Set(['oven','microwave']);
 export const applianceAssetURL=kind=>{
@@ -53,7 +54,10 @@ export class ApplianceAssets{
     const meta=await response.json();
     if(meta.kind!==kind||meta.buffer!==kind+'-tripo.bin'||['color','rm','normal'].some(k=>meta.textures?.[k]!==kind+'-tripo-'+k+'.webp'))throw Error('Unknown appliance file');
     const mesh=await fetch(new URL(meta.buffer,url),{signal:this.abort.signal});if(!mesh.ok)throw Error('Appliance mesh unavailable');
-    const buffer=await mesh.arrayBuffer();if(this.disposed)throw Error('Appliances disposed');entry.geometry=readApplianceGeometry(buffer,meta);
+    const buffer=await mesh.arrayBuffer();if(this.disposed)throw Error('Appliances disposed');
+    const source=readApplianceGeometry(buffer,meta);entry.geometry=trimApplianceBody(source);source.dispose();
+    const front=buildApplianceFront(kind);entry.frontGeometry=front.geometry;entry.frontMaterials=front.materials;
+    entry.frontGhostMaterials=front.materials.map(m=>{const copy=m.clone();copy.transparent=true;copy.opacity=.36;copy.depthWrite=false;return copy;});
     const loader=new THREE.TextureLoader(),results=await Promise.allSettled(['color','rm','normal'].map(key=>new Promise((resolve,reject)=>{
       const texture=loader.load(new URL(meta.textures[key],url).href,()=>{if(this.disposed){texture.dispose();reject(Error('Appliances disposed'));}else resolve(texture);},undefined,reject);
       texture.flipY=false;texture.colorSpace=key==='color'?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.anisotropy=4;entry.textures.push(texture);
@@ -72,12 +76,18 @@ export class ApplianceAssets{
       mesh.position.set(0,layout.y*.001,(layout.front-layout.depth/2)*.001);
       mesh.castShadow=!ghost;mesh.receiveShadow=!ghost;
       mesh.userData={visualOnly:true,sharedApplianceAsset:true,appliance:layout.kind,role:'appliance-model',itemId:slot.userData.itemId};
-      slot.add(mesh);fallback.visible=false;slot.userData.assetAttached=true;this.onChange?.();
+      slot.add(mesh);fallback.visible=false;slot.userData.assetAttached=true;
+      if(entry.frontGeometry){
+        const fascia=new THREE.Mesh(entry.frontGeometry,ghost?entry.frontGhostMaterials:entry.frontMaterials);
+        fascia.scale.copy(mesh.scale);fascia.position.copy(mesh.position);fascia.castShadow=!ghost;fascia.receiveShadow=!ghost;
+        fascia.userData={...mesh.userData,role:'appliance-front'};slot.add(fascia);
+      }
+      this.onChange?.();
     };
     const entry=this.entries.get(layout.kind);
     if(entry?.ready)mount(entry);else this.load(layout.kind).then(mount).catch(()=>{ /* Keep the measured fallback. */ });
   }
-  ownsGeometry(g){return [...this.entries.values()].some(e=>e.geometry===g);}
-  releaseEntry(e){e.geometry?.dispose();e.material?.dispose();e.ghost?.dispose();for(const t of e.textures)t.dispose();e.textures=[];e.ready=false;}
+  ownsGeometry(g){return [...this.entries.values()].some(e=>e.geometry===g||e.frontGeometry===g);}
+  releaseEntry(e){e.geometry?.dispose();e.frontGeometry?.dispose();e.material?.dispose();e.ghost?.dispose();for(const m of [...(e.frontMaterials||[]),...(e.frontGhostMaterials||[])])m.dispose();for(const t of e.textures)t.dispose();e.textures=[];e.ready=false;}
   dispose(){this.disposed=true;this.abort.abort();for(const e of this.entries.values())this.releaseEntry(e);this.entries.clear();}
 }
