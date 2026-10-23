@@ -76,7 +76,7 @@ def main():
             panel(page, 'left', 'catalog')
             page.evaluate(SEED, 13)
             before = page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
-            page.locator('canvas.studio-preview').first.scroll_into_view_if_needed()
+            page.locator('#module-catalogue .mf3d-module').first.scroll_into_view_if_needed()
             expect(page.locator('canvas[data-model-preview="mesh-v2"]').first).to_be_visible(timeout=20000)
             page.wait_for_timeout(1500)
             shot('desktop-catalogue')
@@ -109,6 +109,7 @@ def main():
             for width, height, name in [(1024, 768, 'tablet-catalogue'), (390, 844, 'mobile-catalogue')]:
                 page.set_viewport_size({'width': width, 'height': height})
                 panel(page, 'left', 'catalog')
+                page.locator('#module-catalogue .mf3d-module').first.scroll_into_view_if_needed()
                 page.wait_for_timeout(600)
                 shot(name)
                 close_panels(page)

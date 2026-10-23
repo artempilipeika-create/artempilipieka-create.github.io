@@ -482,10 +482,10 @@ export class CataloguePreviews{
     this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=.65;
     this.scene.add(new THREE.HemisphereLight('#fffefa','#c4c8c2',1));
     this.key=new THREE.DirectionalLight('#fffaf3',1.8);this.key.castShadow=true;
-    this.key.shadow.mapSize.set(512,512);this.key.shadow.bias=-.00004;this.key.shadow.normalBias=.0007;this.key.shadow.intensity=.4;
+    this.key.shadow.mapSize.set(512,512);this.key.shadow.bias=-.00004;this.key.shadow.normalBias=.0007;this.key.shadow.intensity=1;this.key.shadow.radius=4;
     this.scene.add(this.key,this.key.target);
     const fill=new THREE.DirectionalLight('#eef3ff',.6);fill.position.set(4,2,1);this.scene.add(fill);
-    this.floor=new THREE.Mesh(owner.factory.plane,new THREE.MeshStandardMaterial({color:'#f0eee8',roughness:1}));
+    this.floor=new THREE.Mesh(owner.factory.plane,new THREE.ShadowMaterial({color:'#435047',opacity:.18,depthWrite:false}));
     this.floor.rotation.x=-Math.PI/2;this.floor.receiveShadow=true;this.scene.add(this.floor);
     this.contact=new THREE.Mesh(owner.factory.plane,owner.factory.contactMaterials.floor);
     this.contact.rotation.x=-Math.PI/2;this.scene.add(this.contact);
