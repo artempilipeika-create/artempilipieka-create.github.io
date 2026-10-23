@@ -8,11 +8,15 @@ export const applianceAssetURL=kind=>{
 
 /** Presentation envelopes only; the native 595 / 380 mm mounting niches stay intact. */
 export function applianceLayout(item,production){
+  if(production?.carcass?.type==='oven_fixed_niche'){
+    const h=production.constraints.niche_height_mm,bottom=item.height-h;
+    return [{kind:'oven',width:595,height:h-2,depth:550,y:bottom+h/2,front:item.depth/2+42,nicheBottom:bottom,nicheHeight:h}];
+  }
   const a=production?.tall;if(a?.family!=='appliance')return[];
   const extension=a.microwave?9.5:0;
   return [['oven',a.oven_bottom,595],...(a.microwave?[['microwave',a.oven_bottom+613,380]]:[])].map(([kind,bottom,h])=>({
     kind,width:595,height:h-2+extension,depth:kind==='oven'?550:350,
-    y:bottom+h/2+(kind==='oven'?extension/2:-extension/2),front:item.depth/2+42
+    y:bottom+h/2+(kind==='oven'?extension/2:-extension/2),front:item.depth/2+42,nicheBottom:bottom,nicheHeight:h
   }));
 }
 

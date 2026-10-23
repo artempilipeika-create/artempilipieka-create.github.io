@@ -352,22 +352,17 @@ export class MeshFactory{
         m.userData.visualOnly=true;m.userData.lightingSide=side;
       }
     }
-    if(production?.tall?.family==='appliance'){
-      const a=production.tall,layouts=applianceLayout(it,production);
-      for(const [kind,bottom,h] of [['oven',a.oven_bottom,595],...(a.microwave?[['microwave',a.oven_bottom+613,380]]:[])]){
-        const slot=new THREE.Group(),fallback=new THREE.Group();
-        slot.userData={visualOnly:true,role:'appliance-slot',appliance:kind,itemId:group.userData.itemId};
-        fallback.userData.itemId=group.userData.itemId;slot.add(fallback);group.add(slot);
-        // Visual-only faceplates bridge the visible 18 mm divider. Native FR3D panels, support, niche
-        // clearances (595 / 380 mm), cutlist, collision geometry and BAZIS export are NOT modified.
-        const extension=a.microwave?9.5:0;
-        const faceHeight=h-2+extension,faceCenter=bottom+h/2+(kind==='oven'?extension/2:-extension/2);
-        for(const [role,w,ph,y,z]of [['appliance',562,faceHeight,faceCenter,D/2+4],['applianceGlass',468,h-145,bottom+(h-145)/2+40,D/2+10],['handle',392,10,bottom+h-66,D/2+14]]){
-          const face=this.box(fallback,role,w,ph,8,0,y,z,null,ghost);
-          face.userData.visualOnly=true;face.userData.appliance=kind;
-        }
-        this.applianceAssets.attach(slot,fallback,layouts.find(l=>l.kind===kind),ghost,()=>!this.dead&&!group.userData.released);
+    for(const layout of applianceLayout(it,production)){
+      const {kind,nicheBottom:bottom,nicheHeight:h,height:faceHeight,y:faceCenter}=layout;
+      const slot=new THREE.Group(),fallback=new THREE.Group();
+      slot.userData={visualOnly:true,role:'appliance-slot',appliance:kind,itemId:group.userData.itemId};
+      fallback.userData.itemId=group.userData.itemId;slot.add(fallback);group.add(slot);
+      // Presentation only: native niche clearances, panels, drawer, cutlist and export stay intact.
+      for(const [role,w,ph,y,z]of [['appliance',562,faceHeight,faceCenter,D/2+4],['applianceGlass',468,h-145,bottom+(h-145)/2+40,D/2+10],['handle',392,10,bottom+h-66,D/2+14]]){
+        const face=this.box(fallback,role,w,ph,8,0,y,z,null,ghost);
+        face.userData.visualOnly=true;face.userData.appliance=kind;
       }
+      this.applianceAssets.attach(slot,fallback,layout,ghost,()=>!this.dead&&!group.userData.released);
     }
     this.updateAppearance(group,it);this.position(group,it);return group;
   }
@@ -536,7 +531,7 @@ export class CataloguePreviews{
   }
   paint(canvas,opt){
     const {adapter,factory,renderer}=this.owner,it=adapter.createDraft(opt),scene=this.scene;
-    if(adapter.template(it)?.production?.tall?.family==='appliance')canvas.dataset.appliancePreview='true';
+    if(applianceLayout(it,adapter.template(it)?.production).length)canvas.dataset.appliancePreview='true';
     it.x=it.z=it.rotation=0;it.elevation_mm=0;
     const model=factory.build(it),dress=factory.dress([it]);scene.add(model,dress);
     const b=new THREE.Box3().setFromObject(model).expandByObject(dress),center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3());
