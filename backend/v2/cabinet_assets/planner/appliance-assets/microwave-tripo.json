@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "microwave",
+  "generator": "Tripo H3.1",
+  "taskId": "d8ea151a-d744-4e31-8ea1-39a4d550d3c6",
+  "sourceSha256": "816cf78a56ccf814647914e5b0bc9a0e59c9681727322efe8817d75705e9e2a7",
+  "sourceBytes": 62551632,
+  "sourceTriangles": 1900414,
+  "triangles": 24000,
+  "vertices": 19112,
+  "sourceBounds": [
+    [
+      -0.489990234375,
+      0.0,
+      -0.4719085693359375
+    ],
+    [
+      0.489990234375,
+      0.8061829209327698,
+      0.4719085693359375
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.4900151543008187,
+      4.493309834605593e-06,
+      -0.47196285275940203
+    ],
+    [
+      0.48991051103758165,
+      0.8062319177131267,
+      0.471753589305918
+    ]
+  ],
+  "cleanup": [],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "microwave-tripo.bin",
+  "byteLength": 899584,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 19112,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 229344,
+      "count": 19112,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 458688,
+      "count": 19112,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 611584,
+      "count": 72000,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "microwave-tripo-color.webp",
+    "rm": "microwave-tripo-rm.webp",
+    "normal": "microwave-tripo-normal.webp"
+  }
+}

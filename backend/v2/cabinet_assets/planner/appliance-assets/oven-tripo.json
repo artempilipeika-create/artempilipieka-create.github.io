@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "kind": "oven",
+  "generator": "Tripo H3.1",
+  "taskId": "493c506e-da6b-4ff3-bca2-846002d13cb8",
+  "sourceSha256": "8e643a5f6b62275d8ebb33c9ddadbd5fa147751d21b7a65b5127074292258606",
+  "sourceBytes": 62016216,
+  "sourceTriangles": 1950841,
+  "triangles": 22504,
+  "vertices": 18942,
+  "sourceBounds": [
+    [
+      -0.48980712890625,
+      0.0,
+      -0.3853759765625
+    ],
+    [
+      0.48980712890625,
+      0.7084960341453552,
+      0.3853759765625
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.335,
+      -0.00011989894893772222,
+      -0.38512196136996657
+    ],
+    [
+      0.369,
+      0.7083831380135297,
+      0.38530452079024513
+    ]
+  ],
+  "cleanup": [
+    "Trim generated top flange to source X [-0.335, 0.369]"
+  ],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "oven-tripo.bin",
+  "byteLength": 876192,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 18942,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 227304,
+      "count": 18942,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 454608,
+      "count": 18942,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 606144,
+      "count": 67512,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "oven-tripo-color.webp",
+    "rm": "oven-tripo-rm.webp",
+    "normal": "oven-tripo-normal.webp"
+  }
+}
