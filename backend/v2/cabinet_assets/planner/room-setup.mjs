@@ -1,5 +1,6 @@
 import {FEATURES,dimensionsError,roomError,roomReady,featureBox} from './room-plan.mjs';
 import {placementError} from './furniture-core.mjs';
+import {SocketEditor} from './socket-editor.mjs';
 const el=(tag,text,id)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(id)e.id=id;return e;};
 const btn=(text,id,fn)=>{const b=el('button',text,id);b.type='button';b.onclick=fn;return b;};
 const svg=(tag,attrs={},text)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;};
@@ -17,6 +18,7 @@ export class RoomSetup{
       const l=el('label',label),i=el('input',undefined,'room-setup-'+key);Object.assign(i,{type:'number',min:String(min),max:String(max),step:'1',placeholder:'Укажите, мм'});i.setAttribute('aria-label',label);i.oninput=()=>this.preview();l.append(i,el('small',`${min}–${max} мм`));grid.append(l);this.fields[key]=i;
     }
     this.dimensions.append(grid);this.body.append(this.dimensions);
+    this.sockets=new SocketEditor(this);
     this.previewRoot=el('aside',undefined,'room-measure-preview');this.body.append(this.previewRoot);
     this.alert=el('p',undefined,'room-setup-error');this.alert.setAttribute('role','alert');this.alert.hidden=true;d.append(this.alert);
     const foot=el('footer');this.projects=btn('Мои проекты','room-setup-projects',()=>{d.close();this.app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('projects');});this.apply=btn('Начать проектирование','room-setup-apply',()=>this.commit());foot.append(this.projects,this.apply);d.append(foot);document.body.append(d);
@@ -32,6 +34,7 @@ export class RoomSetup{
     for(const [key,i]of Object.entries(this.fields))i.value=this.wasReady?String(this.draft[key]):'';
     this.apply.textContent=this.wasReady?'Сохранить комнату':'Начать проектирование';
     document.getElementById('room-setup-eyebrow').textContent=this.wasReady?'ЗАМЕР ПОМЕЩЕНИЯ':'ПЕРЕД ПРОЕКТИРОВАНИЕМ';
+    this.sockets.render();
     this.error('');this.preview();if(!this.dialog.open)this.dialog.showModal();this.fields.width.focus();
   }
   projectChanged(){if(this.dialog.open)this.dialog.close();if(!roomReady(this.app.adapter.room))this.open();}
@@ -53,7 +56,7 @@ export class RoomSetup{
     plan.append(svg('rect',{x,y,width:w,height:h,rx:2,fill:'#f4f3ed',stroke:'#738577','stroke-width':3}));
     for(const [text,tx,ty]of [[`A → · ${r.width} мм`,260,y-18],[`C →`,260,y+h+26],['D ↓',x-28,y+h/2],['B ↓',x+w+28,y+h/2]])plan.append(svg('text',{x:tx,y:ty,'text-anchor':'middle',fill:'#385849','font-size':14},text));
     plan.append(svg('text',{x:260,y:y+h+52,'text-anchor':'middle',fill:'#637367','font-size':13},`Глубина ${r.depth} мм · высота ${r.height} мм`));
-    features.forEach((f,n)=>{const b=featureBox(f,r,Math.max(70,8/scale)),color=FEATURES[f.kind]?.[1]||'#888';plan.append(svg('rect',{x:x+(b.x-b.w/2+r.width/2)*scale,y:y+(b.z-b.d/2+r.depth/2)*scale,width:Math.max(4,b.w*scale),height:Math.max(4,b.d*scale),fill:color}));const cx=x+(b.x+r.width/2)*scale,cy=y+(b.z+r.depth/2)*scale;plan.append(svg('circle',{cx,cy,r:10,fill:'#fff',stroke:color,'stroke-width':2}),svg('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#243d32','font-size':11},String(n+1)));});
+    features.forEach((f,n)=>{const b=featureBox(f,r,Math.max(70,8/scale));if(!Object.values(b).every(Number.isFinite))return;const color=FEATURES[f.kind]?.[1]||'#888';plan.append(svg('rect',{x:x+(b.x-b.w/2+r.width/2)*scale,y:y+(b.z-b.d/2+r.depth/2)*scale,width:Math.max(4,b.w*scale),height:Math.max(4,b.d*scale),fill:color}));const cx=x+(b.x+r.width/2)*scale,cy=y+(b.z+r.depth/2)*scale;plan.append(svg('circle',{cx,cy,r:10,fill:'#fff',stroke:color,'stroke-width':2}),svg('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#243d32','font-size':11},String(n+1)));});
     this.previewRoot.append(plan);
   }
 
