@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
 import {panelSegments,surfaceOffset,finishError,subtractRects,segmentOpenings,finishSchedule} from '../../backend/v2/cabinet_assets/planner/wall-finishes.mjs';
 import {WallFinishMesh} from '../../backend/v2/cabinet_assets/planner/wall-finish-mesh.mjs';
+import {PlannerScene} from '../../backend/v2/cabinet_assets/planner/scene.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {WallFinishUI} from '../../backend/v2/cabinet_assets/planner/wall-finish-ui.mjs';
 import {normalizeKitchen,PRODUCTION_MODELS} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
@@ -46,4 +47,11 @@ test('save snapshots undo and redo panel dimensions and wall light state',()=>{
 for(const [rotation,wall]of [[0,'a'],[90,'b'],[180,'c'],[270,'d']])test(`selected row auto placement uses correct wall at rotation ${rotation}`,()=>{
  const [donorId,donor]=Object.entries(PRODUCTION_MODELS).find(([id,p])=>p.tier==='base');const it=normalizeKitchen({bazis_id:donorId,bazis_sha256:donor.source_sha256,item_id:'cab',module_type:'base_cabinet',template_id:'base',width:600,height:820,depth:510,x:0,z:0,rotation},room),state={items:[it],room};
  const p=WallFinishUI.prototype.placement.call({app:{adapter:{selected:it,items:[it],state,room}}});assert.equal(p.wall,wall);assert.equal(p.width,600);assert.equal(p.elevation,858);
+});
+
+test('kitchen camera envelope includes tall backsplash and profile without altering module selection',()=>{
+ const {mesh,scene}=setup([panel()],[light()]);mesh.sync();
+ const cabinet=new THREE.Mesh(new THREE.BoxGeometry(.6,.858,.51),new THREE.MeshBasicMaterial());cabinet.position.y=.429;
+ scene.adapter.items=[{item_id:'cab'}];scene.adapter.selected={item_id:'cab'};scene.entries=new Map([['cab',{group:cabinet}]]);scene.wallFinishes=mesh;
+ const box=PlannerScene.prototype.cameraBox.call(scene,'kitchen'),selected=PlannerScene.prototype.cameraBox.call(scene,'selected');assert.ok(box.max.y>=1.458-1e-6);assert.ok(selected.max.y<.86);mesh.dispose();cabinet.geometry.dispose();cabinet.material.dispose();
 });

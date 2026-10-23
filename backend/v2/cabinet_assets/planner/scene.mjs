@@ -260,6 +260,7 @@ export class PlannerScene{
       // Fit the slab too, without changing the cabinet collision/export envelope.
       if(which!=='selected'||g.userData.members.length===1)b.expandByObject(g);
     }
+    if(which!=='selected'&&this.wallFinishes)b.expandByObject(this.wallFinishes.root);
     return b.isEmpty()?this.cameraBox('room'):b;
   }
   fit(which='kitchen'){
@@ -308,10 +309,11 @@ export class PlannerScene{
     return {left,top,width:Math.max(120,right-left),height:Math.max(120,bottom-top)};
   }
   fitKitchenForClient(view=this.clientView||'threeQuarter'){
-    // Furniture and derived kitchen pieces only. No walls, floor, guides or labels.
+    // Kitchen, backsplash and wall profiles; exclude the room shell and labels.
     const box=new THREE.Box3();
     for(const e of this.entries.values())if(e.group.visible)box.expandByObject(e.group);
     for(const g of this.dressing?.children||[])if(g.visible)box.expandByObject(g);
+    if(this.wallFinishes)box.expandByObject(this.wallFinishes.root);
     if(box.isEmpty())return this.fit('room');
     this.stopOrbitInertia();this.clientView=view;this.mode='3d';this.camera=this.perspective;
     this.controls.object=this.camera;this.controls.enableRotate=true;this.controls.minPolarAngle=0;this.controls.maxPolarAngle=Math.PI*.495;
