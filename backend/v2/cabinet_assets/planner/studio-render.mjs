@@ -39,6 +39,7 @@ function installStudioShadows(){
 export class StudioRender{
   constructor(renderer){
     this.renderer=renderer;
+    this.maxDimension=2560;
     installStudioShadows();
     this.available=renderer.extensions.has('EXT_color_buffer_float');
     if(!this.available)return;
@@ -104,7 +105,7 @@ export class StudioRender{
     const r=this.renderer;
     // Screenshots/catalogue render targets and technical orthographic views retain their own path.
     if(!this.available||r.getRenderTarget()||!camera.isPerspectiveCamera){r.render(scene,camera);return;}
-    const size=r.getDrawingBufferSize(new THREE.Vector2()),scale=Math.min(1,2100/Math.max(size.x,size.y));
+    const size=r.getDrawingBufferSize(new THREE.Vector2()),scale=Math.min(1,this.maxDimension/Math.max(size.x,size.y));
     const w=Math.max(1,Math.round(size.x*scale)),h=Math.max(1,Math.round(size.y*scale));
     if(this.target.width!==w||this.target.height!==h)this.target.setSize(w,h);
     const u=this.material.uniforms;u.texel.value.set(1/w,1/h);

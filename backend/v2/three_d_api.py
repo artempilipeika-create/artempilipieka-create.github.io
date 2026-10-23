@@ -1,5 +1,5 @@
 """Authenticated user-owned 3D furniture projects. No production side effects."""
-from typing import Literal
+from typing import Literal,Annotated
 from uuid import UUID,uuid4
 import base64,binascii,hashlib,secrets,json
 from fastapi.encoders import jsonable_encoder
@@ -288,6 +288,25 @@ class WallLight(StrictModel):
     temperature: Literal[2700,3000,4000]=3000
     finish: Literal['aluminium','black']='aluminium'
 
+CameraNumber=Annotated[float,Field(ge=-1000,le=1000,allow_inf_nan=False)]
+class PresentationView(StrictModel):
+    id: str=Field(min_length=1,max_length=80)
+    name: str=Field(min_length=1,max_length=60)
+    mode: Literal['3d','top','front','left','right']='3d'
+    position: tuple[CameraNumber,CameraNumber,CameraNumber]
+    target: tuple[CameraNumber,CameraNumber,CameraNumber]
+    up: tuple[CameraNumber,CameraNumber,CameraNumber]=(0,1,0)
+    zoom: float=Field(default=1,ge=.01,le=100,allow_inf_nan=False)
+    orthoSpan: float=Field(default=3,gt=0,le=1000,allow_inf_nan=False)
+    fov: float=Field(default=32,ge=10,le=100,allow_inf_nan=False)
+    viewOffset: tuple[Annotated[float,Field(ge=-2,le=2,allow_inf_nan=False)],Annotated[float,Field(ge=-2,le=2,allow_inf_nan=False)]]=(0,0)
+
+    @model_validator(mode='after')
+    def valid_camera(self):
+        if sum((a-b)**2 for a,b in zip(self.position,self.target))<.0001 or not .99<=sum(v*v for v in self.up)<=1.01:
+            raise ValueError('Camera needs a direction and a unit up vector')
+        return self
+
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
@@ -312,9 +331,12 @@ class Scene(StrictModel):
     plinths: list[RowPlinth]=Field(default_factory=list,max_length=100)
     wallPanels: list[WallPanel]=Field(default_factory=list,max_length=16)
     wallLights: list[WallLight]=Field(default_factory=list,max_length=4)
+    presentationViews: list[PresentationView]=Field(default_factory=list,max_length=6)
 
     @model_validator(mode='after')
     def wall_finish_placement(self):
+        if len({v.id for v in self.presentationViews})!=len(self.presentationViews):
+            raise ValueError('Presentation view IDs must be unique')
         for collection in (self.wallPanels,self.wallLights):
             if len({p.id for p in collection})!=len(collection):
                 raise ValueError('Wall finish IDs must be unique')

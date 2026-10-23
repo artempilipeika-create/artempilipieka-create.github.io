@@ -9,15 +9,19 @@ import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
 import {StudioRender} from './studio-render.mjs';
 import {WallFinishMesh} from './wall-finish-mesh.mjs';
+import {qualityProfile,RenderBudget} from './presentation.mjs';
 export class PlannerScene{
   constructor(canvas,adapter,onLost){
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
     this.displayMode='normal';this.displayItemId=null;this.selectionScope='module';this.kitchenBoxes=new Map();
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
+    this.qualityMode='auto';try{this.qualityMode=localStorage.getItem('mf.scene-quality')||'auto';}catch{}
+    this.renderBudget=new RenderBudget();this.quality=qualityProfile(this.qualityMode,{memory:navigator.deviceMemory,cores:navigator.hardwareConcurrency});
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality.ratio));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.03;
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
     this.studioRender=new StudioRender(this.renderer);
+    this.studioRender.maxDimension=this.quality.limit;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#ede9e2');
     this.hemi=new THREE.HemisphereLight('#fffdf8','#b9ab94',1.0);this.scene.add(this.hemi);
     this.studioEnvironment=studioEnvironment(this.renderer);
@@ -45,7 +49,7 @@ export class PlannerScene{
   }
   invalidate(){if(!this.dead&&!this.frame)this.frame=requestAnimationFrame(()=>this.render());}
   render(){
-    this.frame=0;if(this.dead)return;
+    this.frame=0;if(this.dead)return;const started=performance.now();
     this.controls.update();this.camera.updateMatrixWorld();
     const r=this.adapter.room;
     this.wallFinishes?.visibility();
@@ -61,9 +65,17 @@ export class PlannerScene{
     if(this.floorJoints)this.floorJoints.visible=!this.client||!this.clientFloor;
     if(this.studioGround)this.studioGround.visible=Boolean(this.client&&this.mode==='3d');
     if(this.mode==='3d')this.studioRender.render(this.scene,this.camera);else this.renderer.render(this.scene,this.camera);this.placeLabel();
+    if(!this.exportSize&&this.qualityMode==='auto'&&this.quality.name==='high'&&!document.hidden&&this.renderBudget.record(performance.now()-started))this.applyQuality('auto',true);
+  }
+  applyQuality(mode='auto',reduced=false){
+    this.qualityMode=['auto','balanced','high'].includes(mode)?mode:'auto';
+    this.quality=qualityProfile(reduced?'balanced':this.qualityMode,{memory:navigator.deviceMemory,cores:navigator.hardwareConcurrency});
+    if(!reduced)this.renderBudget=new RenderBudget();
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality.ratio));this.studioRender.maxDimension=this.quality.limit;
+    try{localStorage.setItem('mf.scene-quality',this.qualityMode);}catch{}this.resize();
   }
   resize(){
-    if(this.dead)return;const r=this.canvas.parentElement.getBoundingClientRect();this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);
+    if(this.dead)return;const r=this.exportSize||this.canvas.parentElement.getBoundingClientRect();this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);
     this.renderer.setSize(this.width,this.height,false);this.perspective.aspect=this.width/this.height;
     const v=this.perspective.view;if(v?.enabled)this.perspective.setViewOffset(this.width,this.height,v.offsetX*this.width/v.fullWidth,v.offsetY*this.height/v.fullHeight,this.width,this.height);
     this.perspective.updateProjectionMatrix();
@@ -295,6 +307,7 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
   }
   clientViewport(){
+    if(this.exportSize)return {left:0,top:0,width:this.width,height:this.height};
     const r=this.canvas.getBoundingClientRect();let left=16,top=16,right=r.width-16,bottom=r.height-16;
     const visible=el=>el&&el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden';
     const bar=document.querySelector('.mf3d-stagebar');if(visible(bar))top=Math.max(top,bar.getBoundingClientRect().bottom-r.top+16);
@@ -319,7 +332,7 @@ export class PlannerScene{
     this.controls.object=this.camera;this.controls.enableRotate=true;this.controls.minPolarAngle=0;this.controls.maxPolarAngle=Math.PI*.495;
     this.camera.fov=32;this.camera.zoom=1;this.camera.clearViewOffset();this.resize();
     const center=box.getCenter(new THREE.Vector3()),axis=new THREE.Vector3(0,1,0);
-    const dir=(view==='front'?new THREE.Vector3(.035,.055,1):new THREE.Vector3(.38,.14,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
+    const dir=(view==='front'?new THREE.Vector3(.035,.055,1):view==='left'?new THREE.Vector3(-.6,.22,1):view==='right'?new THREE.Vector3(.6,.22,1):new THREE.Vector3(.38,.14,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
     const right=axis.clone().cross(dir).normalize(),up=dir.clone().cross(right).normalize(),points=[];
     for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z]){
       const p=new THREE.Vector3(x,y,z).sub(center);points.push({x:p.dot(right),y:p.dot(up),z:p.dot(dir)});
@@ -332,12 +345,15 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
     this.clientFit={...frame,viewport,view,fov:this.camera.fov};return this.clientFit;
   }
-  captureView(){return {mode:this.mode,position:this.camera.position.toArray(),target:this.controls.target.toArray(),up:this.camera.up.toArray(),zoom:this.camera.zoom,orthoSpan:this.orthoSpan};}
+  captureView(){const v=this.perspective.view;return {mode:this.mode,position:this.camera.position.toArray(),target:this.controls.target.toArray(),up:this.camera.up.toArray(),zoom:this.camera.zoom,orthoSpan:this.orthoSpan||3,fov:this.perspective.fov,viewOffset:v?.enabled?[v.offsetX/v.fullWidth,v.offsetY/v.fullHeight]:[0,0]};}
   stopOrbitInertia(){const damping=this.controls.enableDamping;this.controls.enableDamping=false;this.controls.update();this.controls.enableDamping=damping;}
   restoreView(view){
     if(!view)return;this.stopOrbitInertia();this.mode=view.mode;this.camera=this.mode==='3d'?this.perspective:this.ortho;this.controls.object=this.camera;this.controls.enableRotate=this.mode==='3d';
     this.controls.minPolarAngle=0;this.controls.maxPolarAngle=this.mode==='3d'?Math.PI*.495:Math.PI;
-    this.camera.position.fromArray(view.position);this.controls.target.fromArray(view.target);this.camera.up.fromArray(view.up);this.camera.zoom=view.zoom;this.orthoSpan=view.orthoSpan;this.resize();this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
+    this.camera.position.fromArray(view.position);this.controls.target.fromArray(view.target);this.camera.up.fromArray(view.up);this.camera.zoom=view.zoom;this.orthoSpan=view.orthoSpan;
+    this.perspective.fov=view.fov||32;this.perspective.clearViewOffset();this.resize();
+    if(view.viewOffset?.some(Boolean))this.perspective.setViewOffset(this.width,this.height,view.viewOffset[0]*this.width,view.viewOffset[1]*this.height,this.width,this.height);
+    this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
   }
   setView(mode){
     this.mode=mode;this.camera=mode==='3d'?this.perspective:this.ortho;this.controls.object=this.camera;this.controls.enableRotate=mode==='3d';

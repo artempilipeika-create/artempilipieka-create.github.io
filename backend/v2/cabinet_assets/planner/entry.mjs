@@ -22,6 +22,7 @@ import {CountertopUI} from './countertop-ui.mjs';
 import {WorktopFixtureUI} from './worktop-fixture-ui.mjs';
 import {MaterialAppearanceUI} from './material-appearance-ui.mjs';
 import {WallFinishUI} from './wall-finish-ui.mjs';
+import {PresentationUI} from './presentation-ui.mjs';
 import {AccessoryUI} from './accessory-ui.mjs?v=20261021-accessories';
 import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
@@ -37,6 +38,7 @@ class PlannerApplication {
     this.countertops=new CountertopUI(this);this.worktopFixtures=new WorktopFixtureUI(this);this.accessories=new AccessoryUI(this);
     this.wallFinishes=new WallFinishUI(this);this.mobility=new MobilityUI(this);this.materialAppearance=new MaterialAppearanceUI(this);
     await this.startRenderer();
+    this.presentation=new PresentationUI(this);
     this.dimensions=new SceneDimensions(this);
     this.roomSetup=new RoomSetup(this);
     this.previousCount=this.adapter.items.length;
@@ -422,7 +424,7 @@ class PlannerApplication {
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
     get('studio-empty-scene').hidden=Boolean(count);this.paintMode();
   }
-  dispose(){this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
+  dispose(){this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
 }
 export const planner=new PlannerApplication();
 window.MF_PLANNER=planner;

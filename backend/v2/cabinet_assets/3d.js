@@ -219,6 +219,7 @@ function normalizeScene(s={}){
     countertopSettings:s.countertopSettings||{joint:'standard'},
     plinths:s.plinths||[],
     wallPanels:s.wallPanels||[],wallLights:s.wallLights||[],
+    presentationViews:s.presentationViews||[],
     items,
     selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
       ?s.selected_item_id:(items[0]?.item_id||null),
@@ -244,6 +245,7 @@ function scenePayload(){
     countertopSettings:state.countertopSettings||{joint:'standard'},
     plinths:state.plinths||[],
     wallPanels:state.wallPanels||[],wallLights:state.wallLights||[],
+    presentationViews:state.presentationViews||[],
     items:state.items.map(x=>({...x})),selected_item_id:selectedId
   };
 }
