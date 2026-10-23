@@ -21,6 +21,7 @@ import {RoomSetup} from './room-setup.mjs';
 import {CountertopUI} from './countertop-ui.mjs';
 import {WorktopFixtureUI} from './worktop-fixture-ui.mjs';
 import {MaterialAppearanceUI} from './material-appearance-ui.mjs';
+import {WallFinishUI} from './wall-finish-ui.mjs';
 import {AccessoryUI} from './accessory-ui.mjs?v=20261021-accessories';
 import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
@@ -34,7 +35,7 @@ class PlannerApplication {
     this.bridge=window.MF_PLANNER_BRIDGE;this.adapter=new StateAdapter(this.bridge);this.history=new History(this.adapter);
     this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.bindBrief();this.roomPricing=new RoomPricingUI(this);
     this.countertops=new CountertopUI(this);this.worktopFixtures=new WorktopFixtureUI(this);this.accessories=new AccessoryUI(this);
-    this.mobility=new MobilityUI(this);this.materialAppearance=new MaterialAppearanceUI(this);
+    this.wallFinishes=new WallFinishUI(this);this.mobility=new MobilityUI(this);this.materialAppearance=new MaterialAppearanceUI(this);
     await this.startRenderer();
     this.dimensions=new SceneDimensions(this);
     this.roomSetup=new RoomSetup(this);
@@ -412,7 +413,7 @@ class PlannerApplication {
     const selectedId=this.adapter.state?.selected_item_id;
     if(selectedId&&!this.adapter.items.some(it=>it.item_id===selectedId)){this.adapter.select(null);return;}
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.mobility?.sync();this.materialAppearance?.sync();
+    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.wallFinishes?.sync();this.mobility?.sync();this.materialAppearance?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;

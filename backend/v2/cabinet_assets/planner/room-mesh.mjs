@@ -2,6 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import {FEATURES,featureBox,featureWall,socketCount,socketSurface} from './room-plan.mjs';
 import {SocketAssets,socketRotation,socketLayout} from './socket-asset.mjs';
 import {roomSettings} from './room-state.mjs';
+import {allSegments,surfaceOffset,normals} from './wall-finishes.mjs';
 const S=.001;
 export function measuredFeatures(scene){
   const r=scene.adapter.room,entries=[];
@@ -28,6 +29,9 @@ export function measuredFeatures(scene){
         box(group,f.width,trimHeight,9,0,y,-sign*(depth/2+4),'#edece7');
         for(const x of[-f.width/2-4,f.width/2+4])box(group,9,trimHeight,depth,x,y,0,'#edece7');}
     }else if(f.kind==='socket'){
+      const n=normals[wall],projection=Math.max(8,f.projection),point={x:b.x-n.x*projection/2,z:b.z-n.z*projection/2};
+      const cover=surfaceOffset(allSegments(scene.adapter.state),point,n,f.width,f.elevation,f.height);
+      group.position.x+=n.x*cover*S;group.position.z+=n.z*cover*S;
       group.rotation.y=socketRotation(wall);
       if(socketCount(f)>1){const depth=Math.max(8,f.projection);box(group,f.width,f.height,Math.min(4,depth),0,0,-depth/2+Math.min(4,depth)/2,'#f1f0e9');}
       const fallback=new THREE.Group();group.add(fallback);

@@ -36,6 +36,7 @@ def router():
         'gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js','gola.css','drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
         'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css',
         'project-autosave.mjs','project-safety.mjs','project-checks.mjs','project-safety.css',
+        'wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json',
         'countertop-variants.js','countertop-variants.json','countertops.js','countertop-ui.mjs','countertop.css',
         'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',
         'studio-environment.mjs','studio-render.mjs','state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','vitrine-visuals.mjs','countertop-visuals.mjs','placement.mjs','mobility.mjs','mobility-ui.mjs',
@@ -48,6 +49,8 @@ def router():
     planner_files.update(material_assets)
     planner_files.update('materials/'+asset for asset in user_textures()['assets'])
     import json
+    panels=json.loads((root/'planner/wall-panel-sources.json').read_text())
+    planner_files.update('wall-panel-sources/'+v['source_file'] for v in panels)
     accessories=json.loads((root/'planner/accessory-variants.json').read_text())
     planner_files.update('accessory-sources/'+v['source_file'] for v in accessories)
     countertops=json.loads((root/'planner/countertop-variants.json').read_text())

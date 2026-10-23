@@ -218,6 +218,7 @@ function normalizeScene(s={}){
     production_note:s.production_note||'',
     countertopSettings:s.countertopSettings||{joint:'standard'},
     plinths:s.plinths||[],
+    wallPanels:s.wallPanels||[],wallLights:s.wallLights||[],
     items,
     selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
       ?s.selected_item_id:(items[0]?.item_id||null),
@@ -227,7 +228,7 @@ function normalizeScene(s={}){
 function scenePayload(){
   const first=state.items[0]||legacyItem({});
   const materialIdentities={};
-  for(const p of state.plinths||[])if(p.material_id){const m=materials.get(String(p.material_id));if(m)materialIdentities[p.material_id]={materialId:m.material_id||null,article:m.article||null,manufacturer:m.manufacturer||null};else if(state.materialIdentities?.[p.material_id])materialIdentities[p.material_id]=state.materialIdentities[p.material_id];}
+  for(const p of [...(state.plinths||[]),...(state.wallPanels||[])])if(p.material_id){const m=materials.get(String(p.material_id));if(m)materialIdentities[p.material_id]={materialId:m.material_id||null,article:m.article||null,manufacturer:m.manufacturer||null};else if(state.materialIdentities?.[p.material_id])materialIdentities[p.material_id]=state.materialIdentities[p.material_id];}
   for(const it of state.items)for(const id of [it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id){
     const m=materials.get(String(id));
     if(m)materialIdentities[id]={materialId:m.material_id||null,article:m.article||null,manufacturer:m.manufacturer||m.visual_identity?.manufacturer||null};
@@ -242,6 +243,7 @@ function scenePayload(){
     production_note:state.production_note||'',
     countertopSettings:state.countertopSettings||{joint:'standard'},
     plinths:state.plinths||[],
+    wallPanels:state.wallPanels||[],wallLights:state.wallLights||[],
     items:state.items.map(x=>({...x})),selected_item_id:selectedId
   };
 }
@@ -442,7 +444,7 @@ async function openProject(id){
   status('Проект открыт.');
 }
 async function hydrateMaterials(){
-  for(const p of state.plinths||[])if(p.material_id)await material(p.material_id);
+  for(const p of [...(state.plinths||[]),...(state.wallPanels||[])])if(p.material_id)await material(p.material_id);
   for(const it of state.items)for(const id of[it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)])if(id)await material(id);
 }
 async function saveProject(){
@@ -1214,7 +1216,7 @@ async function exportBazisProjectReady(){
         if(!m||!(m.name||m.article))missing.push(it.name+' · '+id);
       }
     }
-    for(const p of state.plinths||[])if(p.material_id){const m=materials.get(String(p.material_id));if(!m||!(m.name||m.article))missing.push('Цоколь · '+p.material_id);}
+    for(const p of [...(state.plinths||[]),...(state.wallPanels||[])])if(p.material_id){const m=materials.get(String(p.material_id));if(!m||!(m.name||m.article))missing.push('Цоколь · '+p.material_id);}
     if(missing.length){status('Экспорт не создан: не удалось загрузить выбранные материалы. Повторите экспорт или выберите материал заново. '+[...new Set(missing)].join('; '));return;}
     return exportBazisProject();
   }catch(error){status('Экспорт не создан: '+(error.message||String(error)));}
@@ -1307,6 +1309,8 @@ function exportBazisProject(){
       };
     })
   };
+  payload.wall_finishes=globalThis.MF_WALL_FINISHES?.schedule(state)||{panels:[],lights:[]};
+  const finishNote=globalThis.MF_WALL_FINISHES?.text(state);if(finishNote&&!payload.project_note.includes(finishNote))payload.project_note+='\n'+finishNote;
   const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];
   for(const item of plinthItems){item.index=payload.items.length+1;payload.items.push(item);}
   payload.kitchen_production.native_plinths_included=plinthItems.length;

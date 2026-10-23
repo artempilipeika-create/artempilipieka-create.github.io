@@ -43,6 +43,7 @@
     const lines=[];
     const note=trimmed(scene&&scene.production_note,2500);
     if(note)lines.push('ОБЩИЕ УКАЗАНИЯ ДИЗАЙНЕРА:\n'+note);
+    const finishes=globalThis.MF_WALL_FINISHES?.text(scene);if(finishes)lines.push(finishes);
     for(const item of (scene&&scene.items)||[]){
       const brief=moduleText(item);
       if(brief)lines.push(brief);

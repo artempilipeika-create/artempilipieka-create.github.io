@@ -251,6 +251,43 @@ class RowPlinth(StrictModel):
     inset: int=Field(default=40,ge=0,le=300)
     material_id: UUID|None=None
 
+class WallPanel(StrictModel):
+    id: str=Field(min_length=1,max_length=80)
+    kind: Literal['skinali','ldsp','tile']='skinali'
+    shape: Literal['straight','left','right','u']='straight'
+    wall: Literal['a','b','c','d']='a'
+    offset: int=Field(default=0,ge=0,le=12000)
+    width: int=Field(default=2000,ge=100,le=6000)
+    height: int=Field(default=600,ge=100,le=2000)
+    elevation: int=Field(default=858,ge=0,le=4900)
+    depth: int=Field(default=400,ge=50,le=6000)
+    thickness: int=Field(default=6,ge=3,le=40)
+    color: str=Field(default='#e7e3da',pattern=r'^#[0-9a-fA-F]{6}$')
+    material_id: UUID|None=None
+    tile_width: int=Field(default=600,ge=100,le=1200)
+    tile_height: int=Field(default=300,ge=100,le=1200)
+    grout: int=Field(default=2,ge=1,le=10)
+    grout_color: str=Field(default='#bcb8af',pattern=r'^#[0-9a-fA-F]{6}$')
+
+    @model_validator(mode='after')
+    def finish_thickness(self):
+        if self.thickness not in {'skinali':(6,),'ldsp':(16,18),'tile':(8,10,12)}[self.kind]:
+            raise ValueError('Thickness does not match wall panel kind')
+        if self.kind!='ldsp' and self.material_id is not None:
+            raise ValueError('Catalogue sheet material is only supported for LDSP backsplash')
+        return self
+
+class WallLight(StrictModel):
+    id: str=Field(min_length=1,max_length=80)
+    wall: Literal['a','b','c','d']='a'
+    offset: int=Field(default=0,ge=0,le=12000)
+    width: int=Field(default=2000,ge=100,le=6000)
+    elevation: int=Field(default=1444,ge=30,le=4900)
+    enabled: bool=True
+    brightness: int=Field(default=80,ge=0,le=100)
+    temperature: Literal[2700,3000,4000]=3000
+    finish: Literal['aluminium','black']='aluminium'
+
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
@@ -273,6 +310,21 @@ class Scene(StrictModel):
     production_note: str=Field(default='',max_length=2500)
     countertopSettings: CountertopSettings=Field(default_factory=CountertopSettings)
     plinths: list[RowPlinth]=Field(default_factory=list,max_length=100)
+    wallPanels: list[WallPanel]=Field(default_factory=list,max_length=16)
+    wallLights: list[WallLight]=Field(default_factory=list,max_length=4)
+
+    @model_validator(mode='after')
+    def wall_finish_placement(self):
+        for collection in (self.wallPanels,self.wallLights):
+            if len({p.id for p in collection})!=len(collection):
+                raise ValueError('Wall finish IDs must be unique')
+            for p in collection:
+                length=self.room.width if p.wall in ('a','c') else self.room.depth
+                if p.offset+p.width>length or p.elevation+(p.height if isinstance(p,WallPanel) else 14)>self.room.height:
+                    raise ValueError('Wall finish extends outside room')
+                if isinstance(p,WallPanel) and p.shape!='straight' and p.depth>(self.room.depth if p.wall in ('a','c') else self.room.width):
+                    raise ValueError('Wall panel return extends outside room')
+        return self
 
 class Create(StrictModel):
     name: str=Field(min_length=1,max_length=200)
