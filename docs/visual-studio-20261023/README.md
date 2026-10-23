@@ -22,3 +22,11 @@ The showroom GLB reader supports only the fixed, texture-free asset layout shipp
 ## Editing
 
 Current Railway public presentation source: backend/v2/ui_assets; scripts/build-showroom.py rebuilds just the studio and homepage module section from the accepted shell. scripts/build-stage07-ui.py invokes it after its legacy page pass. The active editor is backend/v2/cabinet_assets/constructor-next.html, not the old public/constructor.html.
+
+## Live review
+
+The first deployment succeeded on Railway. In the connected browser the desktop and 390 px mobile showroom loaded the real GLB successfully; front/back presets and keyboard rotation worked, with no reported console errors or horizontal overflow. All new asset routes returned 200 in isolated FastAPI checks; non-allowlisted paths remained 404. Four presentation checks (links, contrast, landmarks and legacy API boundaries) passed.
+
+The final visual refinement replaces the hard floor shadow with a soft contact shadow and applies the reviewed render to the native NMD2-600 catalogue card only at its exact default dimensions. On image failure that card falls back to the normal mesh preview. Insertion and parameterized model generation are unchanged.
+
+The authenticated constructor redirected to login in the connected browser. Its geometry/unit checks passed; direct browser review of the authenticated catalogue requires the user to sign in.

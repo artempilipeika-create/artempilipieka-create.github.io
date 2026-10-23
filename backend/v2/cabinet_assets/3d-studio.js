@@ -98,7 +98,13 @@
     const copy=make('span','mf3d-module-copy');copy.append(make('strong','',opt.label),make('span','',descriptionFor(it,opt.description)));
     const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions',it.width+' × '+it.height+' × '+it.depth+' мм'));
     if(opt.bazis)meta.append(make('span','studio-source','БАЗИС'));
-    const visual=make('span','studio-card-visual');visual.append(c);
+    const visual=make('span','studio-card-visual');
+    // The reviewed Tripo export is a poster for this exact default module only.
+    // Runtime geometry, dimensions and insertion still use the native BAZIS item.
+    if(opt.bazis==='bazis.3079d0656398'&&it.width===600&&it.height===820&&it.depth===510){
+      const poster=make('img','studio-preview studio-preview-imported');poster.src='/ui/showroom/nmd2-front.webp';poster.alt='';poster.width=1200;poster.height=1080;poster.loading='lazy';
+      poster.addEventListener('error',()=>poster.replaceWith(c),{once:true});visual.append(poster);
+    }else visual.append(c);
     const category=make('span','studio-card-category',categoryNames[itemGroup(it)]||'Модуль');
     const add=make('span','studio-card-add','+');add.setAttribute('aria-hidden','true');
     visual.append(category,add);b.append(visual,copy);
