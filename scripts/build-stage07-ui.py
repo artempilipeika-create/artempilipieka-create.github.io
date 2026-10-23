@@ -74,3 +74,7 @@ fetch('/api/v2/auth/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null)
 document.querySelectorAll('.mf-menu').forEach(menu=>{menu.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.open=false;menu.querySelector('summary').focus();}});});
 """)
 print('Stage 7: nine accepted public pages, explicit assets; no legacy scripts copied.')
+
+# Preserve the current public product studio when rebuilding legacy page mirrors.
+import runpy
+runpy.run_path(str(ROOT/"scripts/build-showroom.py"))

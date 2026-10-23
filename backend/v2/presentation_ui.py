@@ -9,6 +9,14 @@ PAGES={'/':'index.html','/index.html':'index.html','/about/':'about/index.html',
        '/services/kromka/':'services/kromka/index.html','/how-it-works/':'how-it-works/index.html',
        '/contacts/':'contacts/index.html','/order/':'order/index.html','/3d/':'3d/index.html'}
 ASSETS={'site-v2.css':'text/css','site-nav.js':'application/javascript','favicon.svg':'image/svg+xml','panels.webp':'image/webp'}
+ASSETS.update({
+    'showroom/showroom.css':'text/css',
+    'showroom/model.mjs':'application/javascript',
+    'showroom/viewer.mjs':'application/javascript',
+    'showroom/nmd2-600.glb':'model/gltf-binary',
+    'showroom/nmd2-front.webp':'image/webp',
+    'showroom/nmd2-back.webp':'image/webp',
+})
 
 def router():
     api=APIRouter()

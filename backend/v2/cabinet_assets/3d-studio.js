@@ -96,9 +96,12 @@
     b.title=opt.label+' · '+(opt.description||'');
     const c=make('canvas','studio-preview');c.width=300;c.height=207;c.setAttribute('aria-hidden','true');paintPreview(c,it);
     const copy=make('span','mf3d-module-copy');copy.append(make('strong','',opt.label),make('span','',descriptionFor(it,opt.description)));
-    const meta=make('span','studio-card-meta');meta.append(make('span','',it.width+' × '+it.height+' × '+it.depth));
+    const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions',it.width+' × '+it.height+' × '+it.depth+' мм'));
     if(opt.bazis)meta.append(make('span','studio-source','БАЗИС'));
-    b.append(c,copy);
+    const visual=make('span','studio-card-visual');visual.append(c);
+    const category=make('span','studio-card-category',categoryNames[itemGroup(it)]||'Модуль');
+    const add=make('span','studio-card-add','+');add.setAttribute('aria-hidden','true');
+    visual.append(category,add);b.append(visual,copy);
     const baseChoice=globalThis.MF_GOLA?.baseChoice(opt.bazis),drawerChoice=globalThis.MF_DRAWERS?.choice(opt.bazis);
     if(baseChoice||drawerChoice){
       const badges=make('span','studio-gola-badges'),choices=baseChoice?globalThis.MF_GOLA.baseChoices().filter(v=>v.door_count===baseChoice.door_count):globalThis.MF_DRAWERS.choices();
