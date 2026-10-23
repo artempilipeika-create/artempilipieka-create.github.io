@@ -107,7 +107,7 @@ export class PlannerScene{
     // It has no raycast, collision, dimensions or export representation.
     this.studioGround=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:'#c9c4ba',roughness:.94}));
     this.studioGround.rotation.x=-Math.PI/2;this.studioGround.position.y=-.025;
-    this.studioGround.receiveShadow=true;this.studioGround.raycast=()=>{};
+    this.studioGround.receiveShadow=false;this.studioGround.raycast=()=>{};
     this.studioGround.userData={ownMaterial:true,visualOnly:true};this.roomRoot.add(this.studioGround);
     this.roomFeatures=measuredFeatures(this);
     const joints=[],plank=settings.floorMaterial==='oak',step=plank?190:600;
@@ -189,11 +189,11 @@ export class PlannerScene{
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.perspective.fov=client?32:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
     // Cached key shadow plus depth-based ambient occlusion in the presentation pass.
-    this.sun.shadow.intensity=client?.62:.5;this.sun.shadow.radius=client?8:5;
-    this.sun.shadow.normalBias=.0012;this.renderer.shadowMap.type=THREE.PCFShadowMap;
+    this.sun.shadow.intensity=client?.52:.48;this.sun.shadow.radius=client?48:32;
+    this.sun.shadow.normalBias=.0025;this.sun.shadow.bias=-.00015;this.renderer.shadowMap.type=THREE.PCFShadowMap;
     this.factory.contactMaterials.floor.opacity=client?.16:.14;this.factory.contactMaterials.wall.opacity=client?.10:.19;
     for(const m of Object.values(this.factory.contactMaterials))m.color.set(client?'#292b29':'#35443b');
-    if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;this.floorTexture.needsUpdate=true;}
+    if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;if(this.floorTexture.image)this.floorTexture.needsUpdate=true;}
     this.fitShadow();this.highlight();this.renderer.shadowMap.needsUpdate=true;this.invalidate();
   }
   kitchenRotation(){
@@ -208,7 +208,7 @@ export class PlannerScene{
     const c=this.sun.shadow.camera;c.position.copy(this.sun.position);c.lookAt(center);c.updateMatrixWorld();
     const local=new THREE.Box3();
     for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z])local.expandByPoint(new THREE.Vector3(x,y,z).applyMatrix4(c.matrixWorldInverse));
-    c.left=local.min.x-.7;c.right=local.max.x+.7;c.bottom=local.min.y-1.2;c.top=local.max.y+.6;c.near=.1;c.far=60;c.updateProjectionMatrix();
+    c.left=local.min.x-.7;c.right=local.max.x+.7;c.bottom=local.min.y-1.2;c.top=local.max.y+.6;c.near=Math.max(.1,-local.max.z-1);c.far=Math.max(c.near+1,-local.min.z+3);c.updateProjectionMatrix();
     this.renderer.shadowMap.needsUpdate=true;
   }
   setLayer(value){this.layer=value;this.renderer.shadowMap.needsUpdate=true;this.sync();}

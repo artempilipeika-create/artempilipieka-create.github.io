@@ -1,10 +1,45 @@
 import * as THREE from './vendor/three.module.js';
 
+// Three r180's fixed PCF kernel cannot make contact-hardening area shadows.
+// Keep its public shadow API, but widen the disk only as receiver/blocker separation grows.
+let shadowsInstalled=false;
+function installStudioShadows(){
+  if(shadowsInstalled)return;
+  const source=THREE.ShaderChunk.shadowmap_pars_fragment;
+  const start=source.indexOf('#if defined( SHADOWMAP_TYPE_PCF )',source.indexOf('float getShadow('));
+  const end=source.indexOf('#elif defined( SHADOWMAP_TYPE_PCF_SOFT )',start);
+  if(start<0||end<0)return;
+  THREE.ShaderChunk.shadowmap_pars_fragment=source.slice(0,start)+`
+    #if defined( SHADOWMAP_TYPE_PCF )
+      vec2 texelSize=1.0/shadowMapSize;
+      float blockerSum=0.0,blockers=0.0;
+      for(int i=0;i<12;i++){
+        float a=float(i)*2.39996323;
+        vec2 offset=vec2(cos(a),sin(a))*sqrt((float(i)+.5)/12.0)*shadowRadius*texelSize;
+        float sampleDepth=unpackRGBAToDepth(texture2D(shadowMap,shadowCoord.xy+offset));
+        if(sampleDepth<shadowCoord.z){blockerSum+=sampleDepth;blockers+=1.0;}
+      }
+      if(blockers>0.0){
+        float separation=max(0.0,shadowCoord.z-blockerSum/blockers);
+        float penumbra=clamp(separation*shadowRadius*12.0,1.25,shadowRadius);
+        shadow=0.0;
+        for(int i=0;i<24;i++){
+          float a=float(i)*2.39996323;
+          vec2 offset=vec2(cos(a),sin(a))*sqrt((float(i)+.5)/24.0)*penumbra*texelSize;
+          shadow+=texture2DCompare(shadowMap,shadowCoord.xy+offset,shadowCoord.z);
+        }
+        shadow/=24.0;
+      }
+    `+source.slice(end);
+  shadowsInstalled=true;
+}
+
 // Presentation only: colour + depth from the real scene, never proxy cabinet geometry.
 // One scene draw and one bounded 16-tap pass; no temporal history or render loop.
 export class StudioRender{
   constructor(renderer){
     this.renderer=renderer;
+    installStudioShadows();
     this.available=renderer.extensions.has('EXT_color_buffer_float');
     if(!this.available)return;
     this.target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,
