@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "generator": "Tripo H3.1",
+  "taskId": "092f8fb2-22f5-43e0-be1e-740d633766b3",
+  "sourceSha256": "c96677c0f95420b47d9362a1d35c04586995d5f68c6e17d558b545f8b90b69ef",
+  "sourceBytes": 60499980,
+  "sourceTriangles": 1947155,
+  "triangles": 19999,
+  "vertices": 15218,
+  "sourceBounds": [
+    [
+      -0.490421791994169,
+      -0.0007449911053537297,
+      -0.20825387372265977
+    ],
+    [
+      0.48985529169156705,
+      0.9783571513207887,
+      0.20848386095332958
+    ]
+  ],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "socket-tripo.bin",
+  "byteLength": 726964,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 15218,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 182616,
+      "count": 15218,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 365232,
+      "count": 15218,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 486976,
+      "count": 59997,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "socket-tripo-color.webp",
+    "rm": "socket-tripo-rm.webp",
+    "normal": "socket-tripo-normal.webp"
+  }
+}

@@ -46,7 +46,7 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();
     const r=this.adapter.room;
     if(this.walls)this.walls.forEach(w=>{w.visible=this.mode!=='top'&&(w.userData.axis==='x'?this.camera.position.x*w.userData.sign<r.width*S/2-.02:this.camera.position.z*w.userData.sign<r.depth*S/2-.02);if(w.userData.trim)w.userData.trim.visible=w.visible;});
-    for(const f of this.roomFeatures||[]){f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
+    for(const f of this.roomFeatures||[]){if(f.group.userData.kind==='socket')f.marker.visible=!this.client;f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
     if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
     if(this.grid){this.grid.visible=!this.client;this.grid.material.opacity=this.mode==='top'?.14:.035;}
     if(this.clientFloor)this.clientFloor.visible=Boolean(this.client);
@@ -62,7 +62,7 @@ export class PlannerScene{
     const span=this.orthoSpan||3;this.ortho.left=-span*this.width/this.height;this.ortho.right=-this.ortho.left;this.ortho.top=span;this.ortho.bottom=-span;this.ortho.updateProjectionMatrix();this.invalidate();
   }
   disposeTree(group){
-    if(!group)return;group.traverse(o=>{if(o.geometry&&!this.factory.ownsGeometry(o.geometry))o.geometry.dispose();if(o.userData.ownMap)o.material?.map?.dispose();if(o.userData.ownMaterial)o.material?.dispose();});group.removeFromParent();
+    if(!group)return;group.traverse(o=>{if(o.geometry&&!o.userData.sharedSocketAsset&&!this.factory.ownsGeometry(o.geometry))o.geometry.dispose();if(o.userData.ownMap)o.material?.map?.dispose();if(o.userData.ownMaterial)o.material?.dispose();});group.removeFromParent();
   }
   roomMesh(){
     this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.surfaceTexture=null;this.floorTexture=null;this.clientFloor=null;this.floorJoints=null;this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room,settings=roomSettings(this.adapter.state?.displaySettings);
@@ -376,5 +376,5 @@ export class PlannerScene{
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;this.socketAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

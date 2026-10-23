@@ -27,7 +27,8 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
-        'showroom.css',
+        'showroom.css','socket-editor.mjs','socket-asset.mjs',
+        'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
         'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',
         'gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js','gola.css','drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
@@ -59,7 +60,7 @@ def router():
                 return Response(image,media_type=mime,headers={'Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'})
         file=root/'planner'/asset
         if not file.is_file():return Response(status_code=404)
-        mime='application/octet-stream' if asset.endswith('.fr3d') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
+        mime='application/octet-stream' if asset.endswith(('.fr3d','.bin')) else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
         return Response(file.read_bytes(),media_type=mime,headers={'Content-Security-Policy':CSP,'X-Content-Type-Options':'nosniff'})
     @api.get('/3d-view')
     @api.get('/3d-view.html')
