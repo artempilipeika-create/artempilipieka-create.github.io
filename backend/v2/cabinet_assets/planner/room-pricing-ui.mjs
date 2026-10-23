@@ -16,7 +16,7 @@ export class RoomPricingUI{
       document.getElementById(id).onchange=e=>{
         const value=e.target.value;
         app.history.begin('Комната');
-        app.adapter.state.displaySettings=key==='environmentPreset'?presetSettings(value):roomSettings({...roomSettings(app.adapter.state.displaySettings),[key]:value});
+        app.adapter.state.displaySettings={...app.adapter.state.displaySettings,...(key==='environmentPreset'?presetSettings(value):roomSettings({...roomSettings(app.adapter.state.displaySettings),[key]:value}))};
         app.bridge.refresh();app.history.commit();
       };
     }

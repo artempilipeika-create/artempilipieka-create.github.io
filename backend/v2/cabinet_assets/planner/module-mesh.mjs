@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {materialVisual,physicalPanelUV} from './material-visuals.mjs';
+import {materialVisual,physicalPanelUV,surfaceFinish} from './material-visuals.mjs';
 import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
 import {countertopSurfaces,countertopGeometry} from './countertop-visuals.mjs';
 import {fixturePlans} from './worktop-fixtures.mjs';
@@ -34,6 +34,7 @@ export function panelGeometry(w,h,d,r=.8){
   r=Math.min(r,w/4,h/4,d/4);
   if(r<=0){const g=new THREE.BoxGeometry(w*S,h*S,d*S);g.computeBoundingBox();return g;}
   const g=new THREE.BoxGeometry(1,1,1,3,3,3),p=g.attributes.position,n=g.attributes.normal;
+  g.userData.uvFaceAxes=Array.from({length:n.count},(_,i)=>['x','y','z'].find((_,a)=>Math.abs(n.getComponent(i,a))>.9));
   const halves=[w/2,h/2,d/2],q=new THREE.Vector3(),core=new THREE.Vector3(),normal=new THREE.Vector3();
   for(let i=0;i<p.count;i++){
     for(let a=0;a<3;a++){
@@ -71,18 +72,20 @@ export class MeshFactory{
     for(const [kind,opacity]of [['floor',.14],['wall',.19]])this.contactMaterials[kind]=new THREE.MeshBasicMaterial({color:'#35443b',alphaMap:this.contactMap,transparent:true,opacity,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
   }
   material(role,id,ghost=false,inspection=false){
-    const data=id?this.adapter.material(id):null,visual=materialVisual(data),finish=VISUAL_FINISHES[role]||VISUAL_FINISHES.body;
+    const data=id?this.adapter.material(id):null,visual=materialVisual(data,this.adapter.state?.displaySettings?.materialAppearance?.[id]),finish=VISUAL_FINISHES[role]||VISUAL_FINISHES.body;
     const key=JSON.stringify([role,id||'',visual,ghost,inspection]);
     if(!this.materials.has(key)){
       const color=visual.color||(id?'#aeb2b0':finish.color);
-      const glass=role==='glass'&&!ghost&&!inspection,counter=role==='counter'&&!ghost&&!inspection,Material=glass||counter?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
+      const glass=role==='glass'&&!ghost&&!inspection,counter=role==='counter'&&!ghost&&!inspection;
+      const sheet=['body','front','back','shelf','plinth','counter'].includes(role),optics=surfaceFinish(visual,role,Boolean(id));
+      const Material=glass||counter||sheet&&!ghost&&!inspection&&optics.clearcoat>0?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
         metalness:['handle','frame','hinge','shelfSupport','lightProfile','drawerMetal'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
-      if(counter){m.roughness=Number.isFinite(data?.visual?.roughness)?visual.roughness:.58;m.clearcoat=.16;m.clearcoatRoughness=.38;m.ior=1.48;m.envMapIntensity=.9;}
-      m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color};
+      if(sheet&&!ghost&&!inspection){if(optics.roughness!==null)m.roughness=optics.roughness;if(m.isMeshPhysicalMaterial){m.clearcoat=optics.clearcoat;m.clearcoatRoughness=optics.clearcoatRoughness;m.ior=optics.ior;}m.envMapIntensity=.9;}
+      m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color,surfaceFinish:visual.finish};
       if(visual.url&&!ghost&&!inspection){
         const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);
         if(!this.textures.has(txKey)){

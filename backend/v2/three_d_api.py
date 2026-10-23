@@ -221,11 +221,17 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Shelf position must stay inside the cabinet body')
         return self
 
+class MaterialAppearance(StrictModel):
+    scale: float=Field(default=1,ge=.25,le=4,allow_inf_nan=False)
+    rotation: Literal[0,90,180,270]=0
+    finish: Literal['auto','matte','satin','gloss']='auto'
+
 class DisplaySettings(StrictModel):
     environmentPreset: Literal['studio','warm','showroom']='showroom'
     wallColor: str=Field(default='#eeeae2',pattern=r'^#[0-9a-fA-F]{6}$')
     floorMaterial: Literal['light-stone','oak','concrete']='concrete'
     lightingPreset: Literal['daylight','warm','neutral']='neutral'
+    materialAppearance: dict[UUID,MaterialAppearance]=Field(default_factory=dict,max_length=500)
 
 class MaterialIdentity(StrictModel):
     materialId: UUID|None=None
