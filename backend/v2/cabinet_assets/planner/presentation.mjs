@@ -7,7 +7,9 @@ export function exportSize(choice,maxSize=4096){
 }
 export function fileName(name,view,branded,date=new Date()){
   const clean=value=>String(value).normalize('NFC').replace(/[<>:"/\\|?*\u0000-\u001f]/g,'').replace(/\s+/g,' ').trim().slice(0,80)||'Проект';
-  return `Martin Forest — ${clean(name)} — ${clean(view)}${branded?' — Презентация':''} — ${date.toISOString().slice(0,10)}.png`;
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Minsk',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
+  const part=type=>parts.find(p=>p.type===type).value,stamp=`${part('year')}-${part('month')}-${part('day')}`;
+  return `Martin Forest — ${clean(name)} — ${clean(view)}${branded?' — Презентация':''} — ${stamp}.png`;
 }
 export function qualityProfile(mode='auto',hints={}){
   const low=(hints.memory>0&&hints.memory<=4)||(hints.cores>0&&hints.cores<=4);

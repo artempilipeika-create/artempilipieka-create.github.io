@@ -12,6 +12,7 @@ test('export size respects GPU limit and has 16:9 aspect',()=>{
 test('download filenames preserve Cyrillic without filesystem controls',()=>{
   const name=fileName('Кухня / <Анна>\n','Фасадный',true,new Date('2026-10-24T10:00:00Z'));
   assert.match(name,/Кухня Анна/);assert.match(name,/2026-10-24\.png$/);assert.doesNotMatch(name,/[<>:"/\\|?*\n]/);
+  assert.match(fileName('Кухня','Общий',true,new Date('2026-10-23T22:30:00Z')),/2026-10-24\.png$/);
 });
 test('automatic quality responds to sustained cost, not a single shader stall',()=>{
   assert.equal(qualityProfile('auto',{memory:4,cores:8}).name,'balanced');
