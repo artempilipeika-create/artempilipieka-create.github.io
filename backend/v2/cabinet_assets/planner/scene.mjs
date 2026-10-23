@@ -179,8 +179,8 @@ export class PlannerScene{
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.perspective.fov=client?36:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
     // Cached shadow map plus analytic contact masks: no fullscreen AO pass.
-    this.sun.shadow.intensity=client?.48:.58;this.sun.shadow.radius=client?3:2;
-    this.sun.shadow.normalBias=.0012;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    this.sun.shadow.intensity=client?.36:.5;this.sun.shadow.radius=client?12:5;
+    this.sun.shadow.normalBias=.0012;this.renderer.shadowMap.type=THREE.PCFShadowMap;
     this.factory.contactMaterials.floor.opacity=client?.32:.14;this.factory.contactMaterials.wall.opacity=client?.20:.19;
     for(const m of Object.values(this.factory.contactMaterials))m.color.set(client?'#292b29':'#35443b');
     if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;this.floorTexture.needsUpdate=true;}

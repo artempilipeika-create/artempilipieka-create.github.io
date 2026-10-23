@@ -72,12 +72,12 @@ start.addEventListener('click',async()=>{
     const model=readShowroomModel(await response.arrayBuffer(),THREE);
     renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
     renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
+    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
     scene=new THREE.Scene();scene.background=new THREE.Color('#e9e5dc');scene.add(model);
     environment=studioEnvironment(renderer);scene.environment=environment.texture;
     hemi=new THREE.HemisphereLight('#fffaf3','#b7aa98',.55);scene.add(hemi);
     key=new THREE.DirectionalLight('#fffaf1',2.65);key.position.set(-2.4,3.4,3.8);key.target.position.set(0,.4,0);key.castShadow=true;
-    key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-1.25,right:1.25,top:1.4,bottom:-1.2,near:.1,far:14});key.shadow.bias=-.00008;key.shadow.normalBias=.001;key.shadow.intensity=.65;scene.add(key,key.target);
+    key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-1.25,right:1.25,top:1.4,bottom:-1.2,near:.1,far:14});key.shadow.bias=-.00008;key.shadow.normalBias=.001;key.shadow.intensity=.42;key.shadow.radius=12;scene.add(key,key.target);
     fill=new THREE.DirectionalLight('#e8f0ff',.45);fill.position.set(3,2,1);scene.add(fill);
     roomMesh();
     // Analytic ambient contact supplements the real, cached directional shadows.
