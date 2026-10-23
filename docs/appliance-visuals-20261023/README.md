@@ -1,6 +1,6 @@
 # Oven and microwave visuals — 23 October 2026
 
-Optimized Tripo oven and microwave presentation models for the existing tall-appliance family. Deployed to the existing isolated constructor; final live visual verification is blocked by the disconnected browser.
+Optimized Tripo oven and microwave presentation models for the existing tall-appliance family. Deployed to the existing isolated constructor. The browser connection was restored and the live scene, catalogue and inspection modes were visually checked.
 
 ## Source assets
 
@@ -42,7 +42,22 @@ The appearance is an unbranded presentation model, not a specific manufacturer's
 - URL: https://martin-forest-v2-staging-production.up.railway.app/constructor.html
 - Branch: `mf-appliance-visuals-20261023`.
 - Browser demo: **Техника — визуальный пример**, separate from the user's existing projects, saved before deployment. A combined oven/microwave tall cabinet was added using the normal UI. Its pre-deployment console had no errors/warnings.
-- Final browser QA remains outstanding: the connected browser reported an unavailable approval session, then `No connected browser was found for the originating browser instance`. The new live cabinet, catalogue repaint and inspection mode have automated coverage but were not visually rechecked after deployment. No browser-security workaround was used.
+- Browser QA completed after reconnection on 23 October: both models were visible in the saved combined cabinet; the catalogue oven preview refreshed; Client 3D and front views were checked; both appliances disappeared in inspection and without-facade modes and returned in normal mode. No console errors or warnings were observed.
+- Live QA showed that generated metal trim has visible waviness. The material follow-up reduces normal-map strength to 0.22, clearcoat to 0.08 and environment intensity to 0.85. This softens specular noise but does not change or fully repair the source mesh silhouette. All five appliance asset tests passed after the material change.
+- Material follow-up runtime commit: `f7eb5124925eb82875a5a103a0a78df69648c4dc`; Railway deployment `52617cd4-7a68-4f41-918d-c335c437ab3c` reached **SUCCESS** at 2026-10-23 18:53:44 UTC.
+- After rollout, the served loader returned HTTP 200 and matched the new committed bytes. Browser reload restored **Техника — визуальный пример** with both assets. Client 3D screenshot below was captured from the live site; the browser console remained empty of errors/warnings. The small material adjustment softened reflections, while generated trim/handle waviness remains a known visual limitation.
+
+## Live verification
+
+![After material refinement: live Client 3D](after.jpg)
+
+![Catalogue and combined cabinet](catalogue.jpg)
+
+![Inspection mode: appliances hidden, structure visible](inspection.jpg)
+
+![Without-facade mode](without-facades.jpg)
+
+![Before the material refinement, same Client 3D view](before-material-polish.jpg)
 
 ## Optimized asset previews (offline)
 
