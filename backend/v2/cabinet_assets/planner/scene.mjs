@@ -51,6 +51,7 @@ export class PlannerScene{
       for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
     if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
     if(this.floorOutline)this.floorOutline.visible=this.mode==='top';
+    for(const line of this.countertopOutlines||[])line.visible=this.mode==='top';
     if(this.grid){this.grid.visible=!this.client;this.grid.material.opacity=this.mode==='top'?.14:.035;}
     if(this.clientFloor)this.clientFloor.visible=Boolean(this.client);
     if(this.floorJoints)this.floorJoints.visible=!this.client||!this.clientFloor;
@@ -167,7 +168,7 @@ export class PlannerScene{
       if(this.factory.updateAppearance(entry.group,it,groupedDisplay||it.item_id===this.displayItemId?this.displayMode:'normal'))this.renderer.shadowMap.needsUpdate=true;
     }
     const dressing=JSON.stringify(this.adapter.state?.plinths)+JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.worktop_thickness,kitchenSettings(it)]));
-    if(this.dressingKey!==dressing){this.dressingKey=dressing;this.factory.release(this.dressing);this.dressing=this.factory.dress(this.adapter.items);this.scene.add(this.dressing);this.contacts?.removeFromParent();this.contacts=this.factory.contacts(this.adapter.items);this.scene.add(this.contacts);this.fitShadow();}
+    if(this.dressingKey!==dressing){this.dressingKey=dressing;this.factory.release(this.dressing);this.dressing=this.factory.dress(this.adapter.items);this.countertopOutlines=[];this.dressing.traverse(m=>{if(m.userData.role==='countertop-outline')this.countertopOutlines.push(m);});this.scene.add(this.dressing);this.contacts?.removeFromParent();this.contacts=this.factory.contacts(this.adapter.items);this.scene.add(this.contacts);this.fitShadow();}
     if(this.dressing){
       const merged=new Set(this.dressing.userData.mergedPlinthIds||[]);
       for(const [id,entry]of this.entries)entry.group.traverse(m=>{if(m.userData.role==='plinth')m.visible=!merged.has(id);});

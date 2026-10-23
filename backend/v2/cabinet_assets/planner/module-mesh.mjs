@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {materialVisual,physicalPanelUV} from './material-visuals.mjs';
 import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
+import {countertopSurfaces,countertopGeometry} from './countertop-visuals.mjs';
 import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts,kitchenRuns,kitchenLegs,isKitchenModule} from './furniture-core.mjs';
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
@@ -70,12 +71,13 @@ export class MeshFactory{
     const key=JSON.stringify([role,id||'',visual,ghost,inspection]);
     if(!this.materials.has(key)){
       const color=visual.color||(id?'#aeb2b0':finish.color);
-      const glass=role==='glass'&&!ghost&&!inspection,Material=glass?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
+      const glass=role==='glass'&&!ghost&&!inspection,counter=role==='counter'&&!ghost&&!inspection,Material=glass||counter?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
         metalness:['handle','frame','hinge','shelfSupport','lightProfile','drawerMetal'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
+      if(counter){m.roughness=Number.isFinite(data?.visual?.roughness)?visual.roughness:.58;m.clearcoat=.16;m.clearcoatRoughness=.38;m.ior=1.48;m.envMapIntensity=.9;}
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color};
       if(visual.url&&!ghost&&!inspection){
         const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);
@@ -142,6 +144,7 @@ export class MeshFactory{
     const r=bevel??(role==='front'?.85:role==='counter'?1.2:role==='body'?.45:.25);
     const key=['panel',role,w,h,d,r].join(':');
     const geometry=this.acquire(key,()=>{
+      if(role==='counter'&&Math.abs(h-38)<.001)return countertopGeometry({points:[[-w/2,-d/2],[w/2,-d/2],[w/2,d/2],[-w/2,d/2]],radii:[.35,.65,4,.65]},h).translate(0,-h*S/2,0);
       const g=panelGeometry(w,h,d,r);
       const grainAxis=role==='front'||role==='back'||w<h&&w<d?'y':'x';
       physicalPanelUV(g,{x:w,y:h,z:d},grainAxis);
@@ -371,7 +374,12 @@ export class MeshFactory{
   }
   position(group,it){group.position.set(it.x*S,elevation(it,this.adapter.room)*S,it.z*S);group.rotation.y=-(it.rotation||0)*Math.PI/180;}
   /** Pilot runs derive from production data; the old visual dressing stays for legacy projects. */
-  countertop(group,part){
+  countertop(group,part,surface){
+    if(surface&&Math.abs(part.thickness-38)<.001){
+      const key='countertop-postform:'+JSON.stringify([surface.points,surface.radii,part.thickness]);
+      return this.mesh(group,'counter',this.acquire(key,()=>countertopGeometry(surface,part.thickness)),key,0,part.position.y-part.thickness/2,0,part.material.variant_id);
+    }
+    if(!part.contour){const d=part.size,p=part.position;return this.box(group,'counter',d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);}
     const key='countertop-contour:'+JSON.stringify([part.contour,part.thickness]);
     const geometry=this.acquire(key,()=>{
       const shape=new THREE.Shape(part.contour.map(([x,z])=>new THREE.Vector2(x*S,-z*S)));
@@ -390,13 +398,22 @@ export class MeshFactory{
     const materialKey='countertop-outline';
     if(!this.materials.has(materialKey))this.materials.set(materialKey,new THREE.LineBasicMaterial({color:'#3b4940',transparent:true,opacity:.32,depthWrite:false}));
     const line=new THREE.LineLoop(geometry,this.materials.get(materialKey));line.userData={geometryKey:key,visualOnly:true,role:'countertop-outline'};
-    line.raycast=()=>{};group.add(line);
+    line.visible=false;line.raycast=()=>{};group.add(line);
+  }
+  countertopJoints(group,part,surface){
+    if(!surface?.joints.length)return;
+    const y=part.position.y+part.thickness/2+.08,key='countertop-seams:'+JSON.stringify([surface.joints,y]);
+    const geometry=this.acquire(key,()=>new THREE.BufferGeometry().setFromPoints(surface.joints.flat().map(([x,z])=>new THREE.Vector3(x*S,y*S,z*S))));
+    const materialKey='countertop-seams';
+    if(!this.materials.has(materialKey))this.materials.set(materialKey,new THREE.LineBasicMaterial({color:'#544f46',transparent:true,opacity:.2,depthWrite:false}));
+    const line=new THREE.LineSegments(geometry,this.materials.get(materialKey));line.userData={geometryKey:key,visualOnly:true,role:'countertop-seam'};line.raycast=()=>{};group.add(line);
   }
   dress(items){
     const root=new THREE.Group();root.userData={visualOnly:true,mergedPlinthIds:[]};const groups=new Map();
-    for(const plan of kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id))){
+    const plans=kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id)),surfaces=countertopSurfaces(plans);
+    for(const plan of plans){
       const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
-      for(const part of plan.parts.filter(p=>p.role!=='plinth')){const d=part.size,p=part.position,m=part.contour?this.countertop(g,part):this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;if(part.role==='counter')this.countertopOutline(g,part);}
+      for(const part of plan.parts.filter(p=>p.role!=='plinth')){const d=part.size,p=part.position,m=part.role==='counter'?this.countertop(g,part,surfaces.get(part)):this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;if(part.role==='counter'){this.countertopOutline(g,part);this.countertopJoints(g,part,surfaces.get(part));}}
       g.position.set(plan.position.x*S,0,plan.position.z*S);g.rotation.y=-plan.rotation*Math.PI/180;root.add(g);
       root.userData.mergedPlinthIds.push(...plan.members);
     }

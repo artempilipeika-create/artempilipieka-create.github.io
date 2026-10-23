@@ -38,6 +38,15 @@ def test_exact_donors_download_with_hash_and_mime():
         assert client.get('/account/planner/countertop-sources/'+quote('Столешница_Обычная_Лево_38мм..fr3d')).status_code==404
         assert client.get('/account/planner/countertop-sources/unknown.fr3d').status_code==404
 
+def test_visual_module_is_public_without_exposing_other_files():
+    app=FastAPI();app.include_router(router())
+    with TestClient(app) as client:
+        response=client.get('/account/planner/countertop-visuals.mjs')
+        assert response.status_code==200
+        assert 'javascript' in response.headers['content-type']
+        assert 'countertopGeometry' in response.text
+        assert client.get('/account/planner/unknown-visuals.mjs').status_code==404
+
 @pytest.mark.parametrize('enabled',[True,False])
 def test_pdf_height_and_disabled_note(enabled):
     item=BASE|dict(countertopEnabled=enabled,countertopJoint='euro',countertopThicknessMm=38,countertopDepthMm=600)
