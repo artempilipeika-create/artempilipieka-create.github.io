@@ -1,4 +1,4 @@
-"""Catalogue rendering regression with synthetic API reads; never writes remote data."""
+"""Catalogue rendering regression with synthetic API responses; never writes remote data."""
 from pathlib import Path
 from urllib.parse import urlparse
 import argparse, json, mimetypes, sys
@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from playwright.sync_api import sync_playwright, expect
 from tests.webgl.visual_capture import CSP, SEED
 from tests.webgl.navigation import panel, close_panels
+from tests.webgl.synthetic_projects import SyntheticProjects
 
 
 def main():
@@ -19,10 +20,18 @@ def main():
         browser = pw.chromium.launch(headless=True, args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
         context = browser.new_context(viewport={'width': 1600, 'height': 1000})
 
+        projects = SyntheticProjects()
+
         def gate(route):
             req = route.request
             path = urlparse(req.url).path
-            if not req.url.startswith('https://testserver/') or req.method != 'GET':
+            if not req.url.startswith('https://testserver/'):
+                report['blocked'].append(req.method + ' ' + req.url)
+                route.abort()
+                return
+            if projects.route(route, path):
+                return
+            if req.method != 'GET':
                 report['blocked'].append(req.method + ' ' + req.url)
                 route.abort()
                 return
@@ -67,6 +76,7 @@ def main():
             panel(page, 'left', 'catalog')
             page.evaluate(SEED, 13)
             before = page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
+            page.locator('canvas.studio-preview').first.scroll_into_view_if_needed()
             expect(page.locator('canvas[data-model-preview="mesh-v2"]').first).to_be_visible(timeout=20000)
             page.wait_for_timeout(1500)
             shot('desktop-catalogue')
@@ -109,6 +119,7 @@ def main():
             page.screenshot(path=str(args.out / 'failure.png'))
             raise
         finally:
+            report['syntheticProjectWrites'] = projects.writes
             (args.out / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
             browser.close()
     print(json.dumps(report, ensure_ascii=False, indent=2))
