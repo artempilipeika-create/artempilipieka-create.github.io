@@ -1,7 +1,7 @@
 """Catalogue rendering regression with synthetic API responses; never writes remote data."""
 from pathlib import Path
 from urllib.parse import urlparse
-import argparse, json, mimetypes, sys
+import argparse, json, mimetypes, os, sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from playwright.sync_api import sync_playwright, expect
 from tests.webgl.visual_capture import CSP, SEED
@@ -17,7 +17,7 @@ def main():
     assets = Path(__file__).resolve().parents[2] / 'backend/v2/cabinet_assets'
     report = {'errors': [], 'blocked': [], 'previews': {}, 'screenshots': []}
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True, args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
+        browser = pw.chromium.launch(executable_path=os.environ.get('MF_TEST_CHROME'), headless=True, args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
         context = browser.new_context(viewport={'width': 1600, 'height': 1000})
 
         projects = SyntheticProjects()

@@ -23,7 +23,11 @@ jobs:
       - name: Install browser
         run: |
           pip install playwright==1.58.0
-          python -m playwright install --with-deps chromium
+          if command -v google-chrome >/dev/null; then
+            echo "MF_TEST_CHROME=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+          fi
       - name: Catalogue and editor regression with synthetic data
         run: python tests/webgl/catalogue_studio_capture.py --out qa-output/catalogue-studio
       - uses: actions/upload-artifact@v4
