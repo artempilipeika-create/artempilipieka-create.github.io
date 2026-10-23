@@ -27,3 +27,18 @@
 .mf3d-studio .studio-card-meta{display:flex;gap:4px}
 
 .mf3d-display-control{display:flex;align-items:center;gap:8px;margin-top:10px}.mf3d-display-control select{flex:1;min-width:0}
+
+/* Catalogue studio: readable labels and the shared 480 x 352 mesh preview. */
+.mf3d-studio .mf3d-module-group{gap:10px}
+.mf3d-studio .mf3d-module-group h3{font-size:11px;color:#59695f;letter-spacing:.04em;line-height:1.5;margin:4px 0}
+.mf3d-studio .mf3d-modules .mf3d-module{border-color:#dce2d9;border-radius:12px;box-shadow:0 2px 8px #17382b06;transition:border-color .16s,box-shadow .16s,transform .16s}
+.mf3d-studio .mf3d-modules .mf3d-module:hover{border-color:#8ea28b;box-shadow:0 7px 20px #204c3515}
+.mf3d-studio .mf3d-modules .mf3d-module:focus-visible{outline:3px solid #386746;outline-offset:2px}
+.mf3d-studio .studio-preview{aspect-ratio:15/11;background:#f0eee8;border-bottom:1px solid #e8e7df}
+.mf3d-studio .mf3d-module-copy{padding:11px 10px 5px}
+.mf3d-studio .mf3d-module-copy strong{font-size:13px;line-height:1.4;font-weight:600;color:#293d31;overflow-wrap:anywhere}
+.mf3d-studio .mf3d-module-copy span{font-size:11px;line-height:1.5;color:#607064;-webkit-line-clamp:3}
+.mf3d-studio .studio-card-meta{padding:6px 10px 11px;gap:5px;color:#56675a}
+.mf3d-studio .studio-card-meta,.mf3d-studio .studio-card-meta span{font-size:10px;line-height:1.5}
+.mf3d-studio .studio-card-meta .studio-source{font-size:9px;color:#41664b;letter-spacing:.03em}
+@media(prefers-reduced-motion:reduce){.mf3d-studio .mf3d-modules .mf3d-module{transition:none}.mf3d-studio .mf3d-modules .mf3d-module:hover{transform:none}}

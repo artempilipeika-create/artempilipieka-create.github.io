@@ -474,7 +474,21 @@ export class CataloguePreviews{
   constructor(owner){
     this.owner=owner;this.queue=new Set();this.closed=false;
     const root=document.getElementById('module-catalogue');if(!root)return;
-    this.target=new THREE.WebGLRenderTarget(240,176,{depthBuffer:true,samples:4});this.target.texture.colorSpace=THREE.SRGBColorSpace;
+    this.width=480;this.height=352;
+    this.target=new THREE.WebGLRenderTarget(this.width,this.height,{depthBuffer:true,samples:4});this.target.texture.colorSpace=THREE.SRGBColorSpace;
+    this.pixels=new Uint8Array(this.width*this.height*4);
+    // Reuse one small studio and the editor's WebGL context for visible cards only.
+    this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#f0eee8');
+    this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=.65;
+    this.scene.add(new THREE.HemisphereLight('#fffefa','#c4c8c2',1));
+    this.key=new THREE.DirectionalLight('#fffaf3',1.8);this.key.castShadow=true;
+    this.key.shadow.mapSize.set(512,512);this.key.shadow.bias=-.00004;this.key.shadow.normalBias=.0007;this.key.shadow.intensity=.4;
+    this.scene.add(this.key,this.key.target);
+    const fill=new THREE.DirectionalLight('#eef3ff',.6);fill.position.set(4,2,1);this.scene.add(fill);
+    this.floor=new THREE.Mesh(owner.factory.plane,new THREE.MeshStandardMaterial({color:'#f0eee8',roughness:1}));
+    this.floor.rotation.x=-Math.PI/2;this.floor.receiveShadow=true;this.scene.add(this.floor);
+    this.contact=new THREE.Mesh(owner.factory.plane,owner.factory.contactMaterials.floor);
+    this.contact.rotation.x=-Math.PI/2;this.scene.add(this.contact);
     root.querySelectorAll('canvas.studio-preview').forEach(c=>delete c.dataset.meshObserved);
     this.observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting&&e.target.dataset.modelPreview!=='mesh-v2'){this.queue.add(e.target);this.schedule();}},{root:document.getElementById('pane-catalog'),rootMargin:'30px'});
     const scan=()=>root.querySelectorAll('canvas.studio-preview').forEach(c=>{if(c.dataset.meshObserved)return;c.dataset.meshObserved='true';this.observer.observe(c);});
@@ -492,23 +506,28 @@ export class CataloguePreviews{
     if(this.queue.size)this.schedule();
   }
   paint(canvas,opt){
-    const {adapter,factory,renderer}=this.owner,it=adapter.createDraft(opt),scene=new THREE.Scene();
+    const {adapter,factory,renderer}=this.owner,it=adapter.createDraft(opt),scene=this.scene;
     it.x=it.z=it.rotation=0;it.elevation_mm=0;
-    scene.background=new THREE.Color('#eef0eb');scene.environment=this.owner.scene.environment;scene.environmentIntensity=.65;scene.add(new THREE.HemisphereLight('#ffffff','#c9d0c8',1.4));
-    const key=new THREE.DirectionalLight('#fffaf1',1.5);key.position.set(-3,5,7);scene.add(key);
-    const fill=new THREE.DirectionalLight('#f0f5ff',.55);fill.position.set(4,2,1);scene.add(fill);
     const model=factory.build(it),dress=factory.dress([it]);scene.add(model,dress);
-    const b=new THREE.Box3().setFromObject(model).expandByObject(dress),center=b.getCenter(new THREE.Vector3());
-    const camera=new THREE.PerspectiveCamera(32,240/176,.01,50),dir=new THREE.Vector3(.65,.35,1).normalize(),right=new THREE.Vector3(0,1,0).cross(dir).normalize(),up=dir.clone().cross(right).normalize();
+    const b=new THREE.Box3().setFromObject(model).expandByObject(dress),center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3());
+    const span=Math.max(size.x,size.y,size.z,.1);
+    this.floor.position.set(center.x,b.min.y-.003,center.z);this.floor.scale.set(span*8,span*8,1);
+    this.contact.position.set(center.x,b.min.y-.002,center.z);this.contact.scale.set(size.x+.06,size.z+.06,1);
+    this.key.position.copy(center).add(new THREE.Vector3(-3,5,7).multiplyScalar(span*.5));this.key.target.position.copy(center);
+    Object.assign(this.key.shadow.camera,{left:-span*1.5,right:span*1.5,top:span*1.5,bottom:-span*1.5,near:.01,far:span*10});
+    this.key.shadow.camera.updateProjectionMatrix();
+    const camera=new THREE.PerspectiveCamera(32,this.width/this.height,.01,Math.max(50,span*20)),dir=new THREE.Vector3(.65,.35,1).normalize(),right=new THREE.Vector3(0,1,0).cross(dir).normalize(),up=dir.clone().cross(right).normalize();
     const tan=Math.tan(camera.fov*Math.PI/360);let distance=.3;
     for(const x of[b.min.x,b.max.x])for(const y of[b.min.y,b.max.y])for(const z of[b.min.z,b.max.z]){const d=new THREE.Vector3(x,y,z).sub(center);distance=Math.max(distance,d.dot(dir)+Math.abs(d.dot(right))/(tan*camera.aspect*.78),d.dot(dir)+Math.abs(d.dot(up))/(tan*.80));}
     camera.position.copy(center).addScaledVector(dir,distance);camera.lookAt(center);
-    const oldTarget=renderer.getRenderTarget(),shadows=renderer.shadowMap.enabled;
+    const oldTarget=renderer.getRenderTarget(),shadows=renderer.shadowMap.enabled,shadowUpdate=renderer.shadowMap.needsUpdate,exposure=renderer.toneMappingExposure;
     try{
-      renderer.shadowMap.enabled=false;renderer.setRenderTarget(this.target);renderer.render(scene,camera);
-      const pixels=new Uint8Array(240*176*4);renderer.readRenderTargetPixels(this.target,0,0,240,176,pixels);
-      const ctx=canvas.getContext('2d');if(ctx){canvas.width=240;canvas.height=176;const image=ctx.createImageData(240,176);for(let y=0;y<176;y++)image.data.set(pixels.subarray((175-y)*240*4,(176-y)*240*4),y*240*4);ctx.putImageData(image,0,0);canvas.dataset.modelPreview='mesh-v2';}
-    }finally{renderer.setRenderTarget(oldTarget);renderer.shadowMap.enabled=shadows;factory.release(model);factory.release(dress);this.owner.invalidate();}
+      // Keep previews independent of the selected room-light preset, and restore editor state.
+      renderer.toneMappingExposure=1.03;renderer.shadowMap.enabled=true;renderer.shadowMap.needsUpdate=true;
+      renderer.setRenderTarget(this.target);renderer.render(scene,camera);
+      const {width,height,pixels}=this;renderer.readRenderTargetPixels(this.target,0,0,width,height,pixels);
+      const ctx=canvas.getContext('2d');if(ctx){canvas.width=width;canvas.height=height;const image=ctx.createImageData(width,height);for(let y=0;y<height;y++)image.data.set(pixels.subarray((height-1-y)*width*4,(height-y)*width*4),y*width*4);ctx.putImageData(image,0,0);canvas.dataset.modelPreview='mesh-v2';}
+    }finally{renderer.setRenderTarget(oldTarget);renderer.shadowMap.enabled=shadows;renderer.shadowMap.needsUpdate=shadowUpdate;renderer.toneMappingExposure=exposure;factory.release(model);factory.release(dress);this.owner.invalidate();}
   }
-  dispose(){this.closed=true;clearTimeout(this.timer);this.observer?.disconnect();this.mutations?.disconnect();this.target?.dispose();this.queue.clear();}
+  dispose(){this.closed=true;clearTimeout(this.timer);this.observer?.disconnect();this.mutations?.disconnect();this.target?.dispose();this.key?.shadow.dispose();this.floor?.material.dispose();this.scene?.clear();this.queue.clear();this.pixels=null;}
 }

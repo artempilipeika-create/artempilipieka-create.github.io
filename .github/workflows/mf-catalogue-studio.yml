@@ -1,0 +1,34 @@
+name: Catalogue studio visual verification
+on:
+  push:
+    branches: [mf-visual-catalogue-20261023]
+permissions:
+  contents: read
+jobs:
+  visual-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Geometry, materials and camera regression
+        run: node --test tests/webgl/visual.test.mjs tests/webgl/materials.test.mjs tests/webgl/client-camera.test.mjs
+      - name: Install browser
+        run: |
+          pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Catalogue and editor regression with synthetic data
+        run: python tests/webgl/catalogue_studio_capture.py --out qa-output/catalogue-studio
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catalogue-studio-review
+          path: qa-output/catalogue-studio
+          retention-days: 7
