@@ -15,7 +15,7 @@ export function roomSettings(value={}){
 }
 export const presetSettings=name=>roomSettings({environmentPreset:name});
 export const LIGHTS=Object.freeze({
-  daylight:{key:'#fffdf8',fill:'#f4f7ff',sky:'#ffffff',ground:'#cbc8c0',sun:1.8,fillPower:.65,hemi:.85,exposure:1,environment:.7},
-  warm:{key:'#fff2e2',fill:'#faf8f4',sky:'#fffaf3',ground:'#c6bcac',sun:1.75,fillPower:.65,hemi:.85,exposure:1,environment:.7},
-  neutral:{key:'#fffdf9',fill:'#ffffff',sky:'#ffffff',ground:'#c6c5c2',sun:1.95,fillPower:.5,hemi:.8,exposure:1,environment:.65}
+  daylight:{key:'#fffdf8',fill:'#f4f7ff',sky:'#ffffff',ground:'#cbc8c0',sun:2.45,fillPower:.45,hemi:.55,exposure:1.02,environment:.65},
+  warm:{key:'#fff2e2',fill:'#faf8f4',sky:'#fffaf3',ground:'#c6bcac',sun:2.25,fillPower:.4,hemi:.6,exposure:1.02,environment:.65},
+  neutral:{key:'#fffdf9',fill:'#ffffff',sky:'#ffffff',ground:'#c6c5c2',sun:2.35,fillPower:.4,hemi:.55,exposure:1.02,environment:.6}
 });

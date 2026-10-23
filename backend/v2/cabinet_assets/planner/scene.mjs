@@ -6,6 +6,7 @@ import {roomSettings,LIGHTS} from './room-state.mjs';
 import {wallPanels} from './room-plan.mjs';
 import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
+import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
 export class PlannerScene{
   constructor(canvas,adapter,onLost){
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
@@ -16,17 +17,7 @@ export class PlannerScene{
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#ede9e2');
     this.hemi=new THREE.HemisphereLight('#fffdf8','#b9ab94',1.0);this.scene.add(this.hemi);
-    // Small procedural studio environment: 128x64 source, no HDRI download or room decor.
-    const ew=128,eh=64,data=new Float32Array(ew*eh*4);
-    const keyDirection=new THREE.Vector3(-.45,.65,1).normalize(),fillDirection=new THREE.Vector3(.85,.35,.5).normalize(),n=new THREE.Vector3();
-    for(let y=0;y<eh;y++)for(let x=0;x<ew;x++){
-      const theta=(y+.5)/eh*Math.PI,phi=(x+.5)/ew*Math.PI*2;
-      n.set(Math.sin(theta)*Math.cos(phi),Math.cos(theta),Math.sin(theta)*Math.sin(phi));
-      const light=.18+.25*(n.y+1)/2+3*Math.pow(Math.max(0,n.dot(keyDirection)),10)+1.5*Math.pow(Math.max(0,n.dot(fillDirection)),8),i=(y*ew+x)*4;
-      data[i]=light;data[i+1]=light*.995;data[i+2]=light*.98;data[i+3]=1;
-    }
-    const source=new THREE.DataTexture(data,ew,eh,THREE.RGBAFormat,THREE.FloatType);source.mapping=THREE.EquirectangularReflectionMapping;source.needsUpdate=true;
-    const pmrem=new THREE.PMREMGenerator(this.renderer);this.studioEnvironment=pmrem.fromEquirectangular(source);source.dispose();pmrem.dispose();
+    this.studioEnvironment=studioEnvironment(this.renderer);
     this.scene.environment=this.studioEnvironment.texture;this.scene.environmentIntensity=.55;
     this.sun=new THREE.DirectionalLight('#fff7e9',2.1);this.sun.position.set(-3,5,7);this.sun.castShadow=true;
     this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.1,far:30});
@@ -71,11 +62,16 @@ export class PlannerScene{
     if(!group)return;group.traverse(o=>{if(o.geometry&&!this.factory.ownsGeometry(o.geometry))o.geometry.dispose();if(o.userData.ownMap)o.material?.map?.dispose();if(o.userData.ownMaterial)o.material?.dispose();});group.removeFromParent();
   }
   roomMesh(){
-    this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.floorTexture=null;this.clientFloor=null;this.floorJoints=null;this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room,settings=roomSettings(this.adapter.state?.displaySettings);
+    this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.surfaceTexture=null;this.floorTexture=null;this.clientFloor=null;this.floorJoints=null;this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room,settings=roomSettings(this.adapter.state?.displaySettings);
     // Flush overlay backs share the wall plane. Bias only the visual room surface, never cabinet geometry.
     const make=(w,h,d,x,y,z,color,wall=false)=>{const material=new THREE.MeshStandardMaterial({color,roughness:wall?.92:.82,polygonOffset:wall,polygonOffsetFactor:1,polygonOffsetUnits:4});const m=new THREE.Mesh(this.factory.geometry,material);m.userData.ownMaterial=true;m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.receiveShadow=true;this.roomRoot.add(m);return m;};
     const floor=make(r.width,20,r.depth,0,-12,0,settings.floorMaterial==='oak'?'#ffffff':settings.floorMaterial==='concrete'?'#b8b7b3':'#d9d8d1');this.walls=[];
-    floor.material.roughness=settings.floorMaterial==='oak'?.78:.94;
+    floor.material.roughness=settings.floorMaterial==='oak'?.78:.84;
+    if(settings.floorMaterial!=='oak'){
+      this.surfaceTexture=roomSurfaceTexture(r.width*S,r.depth*S);
+      floor.material.bumpMap=this.surfaceTexture;floor.material.bumpScale=.0012;
+      floor.material.color.set(settings.floorMaterial==='concrete'?'#c7c4bd':'#ddd8cd');
+    }
     if(settings.floorMaterial==='oak'){
       const texture=new THREE.TextureLoader().load('/account/planner/materials/egger-h1180-st37.jpg',()=>this.invalidate(),undefined,()=>{if(this.floorTexture===texture){for(const m of [floor,this.clientFloor].filter(Boolean)){m.material.map=null;m.material.color.set('#bca585');m.material.needsUpdate=true;}this.invalidate();}});
       texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(r.width/1300,r.depth/2800);texture.anisotropy=4;floor.material.map=texture;this.floorTexture=texture;
@@ -183,7 +179,8 @@ export class PlannerScene{
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.perspective.fov=client?36:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
     // Cached shadow map plus analytic contact masks: no fullscreen AO pass.
-    this.sun.shadow.intensity=client?.32:.58;this.sun.shadow.radius=client?12:5;this.renderer.shadowMap.type=THREE.PCFShadowMap;
+    this.sun.shadow.intensity=client?.48:.58;this.sun.shadow.radius=client?3:2;
+    this.sun.shadow.normalBias=.0012;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.factory.contactMaterials.floor.opacity=client?.32:.14;this.factory.contactMaterials.wall.opacity=client?.20:.19;
     for(const m of Object.values(this.factory.contactMaterials))m.color.set(client?'#292b29':'#35443b');
     if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;this.floorTexture.needsUpdate=true;}
@@ -215,9 +212,9 @@ export class PlannerScene{
       const item=items.find(it=>it.item_id===id);if(!item||!this.liveEntry(id,items))continue;
       let box=this.kitchenBoxes.get(id);
       if(grouped&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
-      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(grouped&&show&&e.group.visible&&scopeMatches(item,this.selectionScope));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
+      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(!this.client&&grouped&&show&&e.group.visible&&scopeMatches(item,this.selectionScope));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
     }
-    this.selectedBox.visible=Boolean(!grouped&&entry?.group.visible&&show);
+    this.selectedBox.visible=Boolean(!this.client&&!grouped&&entry?.group.visible&&show);
     if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':this.client?'#79796b':'#346d4a');}
     else this.selectedBox.box.makeEmpty();
     this.placeLabel();
@@ -369,5 +366,5 @@ export class PlannerScene{
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

@@ -10,7 +10,8 @@ content='''<main id="content" class="mf-showroom">
 <section class="mf-wrap mf-product" aria-label="Модель НМД2-600">
 <div class="mf-product-media"><span class="mf-product-badge">Нижний кухонный модуль</span>
 <div class="mf-product-stage" id="showroom-stage"><img src="/ui/showroom/nmd2-front.webp" alt="НМД2-600 — фасады и регулируемые опоры" width="1200" height="1080" fetchpriority="high"></div>
-<div class="mf-product-controls" aria-label="Ракурс модели"><button type="button" data-showroom-view="front" aria-pressed="true">Фасады</button><button type="button" data-showroom-view="back" aria-pressed="false">Корпус</button></div>
+<div class="mf-product-controls" aria-label="Ракурс модели"><button type="button" data-showroom-view="front" aria-pressed="true">Фасады</button><button type="button" data-showroom-view="back" aria-pressed="false">Корпус</button><button type="button" data-showroom-view="detail" aria-pressed="false">Деталь</button></div>
+<div class="mf-scene-settings"><div role="group" aria-label="Обстановка"><span>Обстановка</span><button type="button" data-showroom-room="room" aria-pressed="true" disabled>Шоурум</button><button type="button" data-showroom-room="studio" aria-pressed="false" disabled>Студия</button></div><div role="group" aria-label="Освещение"><span>Свет</span><button type="button" data-showroom-light="daylight" aria-pressed="true" disabled>Дневной</button><button type="button" data-showroom-light="warm" aria-pressed="false" disabled>Тёплый</button></div></div>
 <p class="mf-product-status" id="showroom-status" role="status" aria-live="polite">Включите 3D, чтобы вращать модель.</p></div>
 <div class="mf-product-info"><p class="mf-kicker">КОЛЛЕКЦИЯ КУХОННЫХ МОДУЛЕЙ</p><h2>НМД2-600</h2><p class="mf-product-description">Две распашные двери, внутренняя полка и регулируемые опоры. Лаконичная основа для вашей кухни.</p>
 <dl class="mf-product-dimensions"><div><dt>Ширина</dt><dd>600 <small>мм</small></dd></div><div><dt>Высота с опорами</dt><dd>820 <small>мм</small></dd></div><div><dt>Глубина корпуса</dt><dd>510 <small>мм</small></dd></div></dl>
@@ -20,7 +21,7 @@ content='''<main id="content" class="mf-showroom">
 </section>
 <section class="mf-wrap mf-showroom-notes" aria-label="Возможности конструктора"><article class="mf-showroom-note"><span>01</span><h3>Выберите модуль</h3><p>Нижние и верхние шкафы, пеналы и угловые решения — в едином каталоге.</p></article><article class="mf-showroom-note"><span>02</span><h3>Настройте под себя</h3><p>Измените размеры, выберите компоновку и материалы корпуса и фасадов.</p></article><article class="mf-showroom-note"><span>03</span><h3>Сохраните проект</h3><p>Продолжайте работу в личном кабинете. Деталировка проверяется перед изготовлением.</p></article></section>
 </main>'''
-text=re.sub(r'<main id="content">.*?</main>',lambda _:content,text,flags=re.S)
+text=re.sub(r'<main id="content"[^>]*>.*?</main>',lambda _:content,text,flags=re.S)
 text=re.sub(r'<title>.*?</title>','<title>Студия мебели · НМД2-600 — Martin Forest</title>',text)
 text=re.sub(r'<meta name="description" content="[^"]*">','<meta name="description" content="Кухонный модуль НМД2-600 в 3D: размеры, корпус, фасады и конструктор кухни Martin Forest.">',text)
 if '/ui/showroom/showroom.css' not in text:text=text.replace('</head>','<link rel="stylesheet" href="/ui/showroom/showroom.css"></head>')
