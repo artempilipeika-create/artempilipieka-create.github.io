@@ -7,6 +7,7 @@ import {wallPanels} from './room-plan.mjs';
 import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
+import {StudioRender} from './studio-render.mjs';
 export class PlannerScene{
   constructor(canvas,adapter,onLost){
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
@@ -15,6 +16,7 @@ export class PlannerScene{
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.03;
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
+    this.studioRender=new StudioRender(this.renderer);
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#ede9e2');
     this.hemi=new THREE.HemisphereLight('#fffdf8','#b9ab94',1.0);this.scene.add(this.hemi);
     this.studioEnvironment=studioEnvironment(this.renderer);
@@ -49,7 +51,8 @@ export class PlannerScene{
     if(this.grid){this.grid.visible=!this.client;this.grid.material.opacity=this.mode==='top'?.14:.035;}
     if(this.clientFloor)this.clientFloor.visible=Boolean(this.client);
     if(this.floorJoints)this.floorJoints.visible=!this.client||!this.clientFloor;
-    this.renderer.render(this.scene,this.camera);this.placeLabel();
+    if(this.studioGround)this.studioGround.visible=Boolean(this.client&&this.mode==='3d');
+    if(this.mode==='3d')this.studioRender.render(this.scene,this.camera);else this.renderer.render(this.scene,this.camera);this.placeLabel();
   }
   resize(){
     if(this.dead)return;const r=this.canvas.parentElement.getBoundingClientRect();this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);
@@ -100,6 +103,12 @@ export class PlannerScene{
         if(p.elevation===0)m.userData.trim=horizontal?make(p.width,65,9,along,32.5,sign*(r.depth/2-4),'#edece7'):make(9,65,p.width,sign*(r.width/2-4),32.5,along,'#edece7');
       }
     }
+    // A seamless presentation ground continues beyond the measured room footprint.
+    // It has no raycast, collision, dimensions or export representation.
+    this.studioGround=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:'#c9c4ba',roughness:.94}));
+    this.studioGround.rotation.x=-Math.PI/2;this.studioGround.position.y=-.025;
+    this.studioGround.receiveShadow=true;this.studioGround.raycast=()=>{};
+    this.studioGround.userData={ownMaterial:true,visualOnly:true};this.roomRoot.add(this.studioGround);
     this.roomFeatures=measuredFeatures(this);
     const joints=[],plank=settings.floorMaterial==='oak',step=plank?190:600;
     if(settings.floorMaterial!=='concrete'){
@@ -170,18 +179,19 @@ export class PlannerScene{
   }
   setPresentation(client){
     this.client=client;const p=LIGHTS[roomSettings(this.adapter.state?.displaySettings).lightingPreset];
-    this.sun.color.set(client?p.key:'#fff7e9');this.sun.intensity=client?p.sun:2.1;
-    this.fill.color.set(client?p.fill:'#eaf1ff');this.fill.intensity=client?p.fillPower:.65;
-    this.hemi.color.set(client?p.sky:'#fffdf8');this.hemi.groundColor.set(client?p.ground:'#b9ab94');this.hemi.intensity=client?p.hemi:1;
-    this.scene.background.set(roomSettings(this.adapter.state?.displaySettings).wallColor);
-    this.scene.environmentIntensity=client?p.environment:.55;this.renderer.toneMappingExposure=client?p.exposure:1.03;
+    this.sun.color.set(client?p.key:'#fff7e9');this.sun.intensity=client?p.sun:p.sun*.9;
+    this.fill.color.set(client?p.fill:'#eaf1ff');this.fill.intensity=p.fillPower;
+    this.hemi.color.set(client?p.sky:'#fffdf8');this.hemi.groundColor.set(client?p.ground:'#b9ab94');this.hemi.intensity=client?p.hemi:.4;
+    this.scene.background.set(client?'#d9d5cd':roomSettings(this.adapter.state?.displaySettings).wallColor);
+    this.scene.fog=client?new THREE.Fog('#d9d5cd',14,42):null;
+    this.scene.environmentIntensity=p.environment;this.renderer.toneMappingExposure=client?p.exposure:1.03;
     // ACES kept after comparing the real U708 preview in the neutral showroom.
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.perspective.fov=client?36:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
-    // Cached shadow map plus analytic contact masks: no fullscreen AO pass.
-    this.sun.shadow.intensity=client?.36:.5;this.sun.shadow.radius=client?12:5;
+    this.perspective.fov=client?32:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
+    // Cached key shadow plus depth-based ambient occlusion in the presentation pass.
+    this.sun.shadow.intensity=client?.62:.5;this.sun.shadow.radius=client?8:5;
     this.sun.shadow.normalBias=.0012;this.renderer.shadowMap.type=THREE.PCFShadowMap;
-    this.factory.contactMaterials.floor.opacity=client?.32:.14;this.factory.contactMaterials.wall.opacity=client?.20:.19;
+    this.factory.contactMaterials.floor.opacity=client?.16:.14;this.factory.contactMaterials.wall.opacity=client?.10:.19;
     for(const m of Object.values(this.factory.contactMaterials))m.color.set(client?'#292b29':'#35443b');
     if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;this.floorTexture.needsUpdate=true;}
     this.fitShadow();this.highlight();this.renderer.shadowMap.needsUpdate=true;this.invalidate();
@@ -193,7 +203,7 @@ export class PlannerScene{
   fitShadow(){
     const box=this.cameraBox('kitchen'),center=box.getCenter(new THREE.Vector3());
     const rotation=-this.kitchenRotation()*Math.PI/180;
-    this.sun.target.position.copy(center);this.sun.position.copy(center).add(this.client?new THREE.Vector3(-4,3.8,5).applyAxisAngle(new THREE.Vector3(0,1,0),rotation):new THREE.Vector3(-3,5,7));
+    this.sun.target.position.copy(center);this.sun.position.copy(center).add(this.client?new THREE.Vector3(-3.8,5.8,3.5).applyAxisAngle(new THREE.Vector3(0,1,0),rotation):new THREE.Vector3(-3,5,7));
     this.fill.position.copy(this.client?center.clone().add(new THREE.Vector3(4,2.3,4).applyAxisAngle(new THREE.Vector3(0,1,0),rotation)):new THREE.Vector3(4,3,1));this.fill.target.position.copy(this.client?center:new THREE.Vector3());this.fill.target.updateMatrixWorld();
     const c=this.sun.shadow.camera;c.position.copy(this.sun.position);c.lookAt(center);c.updateMatrixWorld();
     const local=new THREE.Box3();
@@ -293,9 +303,9 @@ export class PlannerScene{
     if(box.isEmpty())return this.fit('room');
     this.stopOrbitInertia();this.clientView=view;this.mode='3d';this.camera=this.perspective;
     this.controls.object=this.camera;this.controls.enableRotate=true;this.controls.minPolarAngle=0;this.controls.maxPolarAngle=Math.PI*.495;
-    this.camera.fov=36;this.camera.zoom=1;this.camera.clearViewOffset();this.resize();
+    this.camera.fov=32;this.camera.zoom=1;this.camera.clearViewOffset();this.resize();
     const center=box.getCenter(new THREE.Vector3()),axis=new THREE.Vector3(0,1,0);
-    const dir=(view==='front'?new THREE.Vector3(.035,.22,1):new THREE.Vector3(.30,.32,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
+    const dir=(view==='front'?new THREE.Vector3(.035,.055,1):new THREE.Vector3(.38,.14,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
     const right=axis.clone().cross(dir).normalize(),up=dir.clone().cross(right).normalize(),points=[];
     for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z]){
       const p=new THREE.Vector3(x,y,z).sub(center);points.push({x:p.dot(right),y:p.dot(up),z:p.dot(dir)});
@@ -366,5 +376,5 @@ export class PlannerScene{
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

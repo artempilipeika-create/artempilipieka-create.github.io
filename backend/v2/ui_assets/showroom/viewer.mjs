@@ -1,17 +1,18 @@
 import * as THREE from '/account/planner/vendor/three.module.js';
 import {OrbitControls} from '/account/planner/vendor/OrbitControls.js';
 import {studioEnvironment,roomSurfaceTexture} from '/account/planner/studio-environment.mjs';
+import {StudioRender} from '/account/planner/studio-render.mjs';
 import {readShowroomModel} from './model.mjs';
 
 const host=document.getElementById('showroom-stage'),start=document.getElementById('showroom-start'),status=document.getElementById('showroom-status');
 const views=[...document.querySelectorAll('[data-showroom-view]')],environments=[...document.querySelectorAll('[data-showroom-room]')],lights=[...document.querySelectorAll('[data-showroom-light]')];
-let renderer,scene,camera,controls,environment,frame=0,resizeObserver,active=false,room,ground,key,fill,hemi,roomName='room',lightName='daylight',viewName='front';
+let renderer,scene,camera,controls,environment,studioRender,frame=0,resizeObserver,active=false,room,ground,key,fill,hemi,roomName='room',lightName='daylight',viewName='front';
 const textures=new Set(),walls=[];
-const positions={front:[1.35,1.05,1.85],back:[-1.35,1.05,-1.85],detail:[.83,.82,1.1]};
+const positions={front:[1.25,.79,1.85],back:[-1.25,.79,-1.85],detail:[.83,.82,1.1]};
 function render(){
   frame=0;if(!active)return;
   for(const wall of walls)wall.visible=camera.position[wall.userData.axis]>wall.userData.limit;
-  renderer.render(scene,camera);
+  studioRender.render(scene,camera);
 }
 function invalidate(){if(active&&!frame)frame=requestAnimationFrame(render);}
 function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();invalidate();}
@@ -27,9 +28,9 @@ function setRoom(name){
 function setLight(name){
   lightName=name;lights.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.showroomLight===name)));
   if(!active)return;
-  const warm=name==='warm';key.color.set(warm?'#ffe4c5':'#fffaf1');key.intensity=warm?2.4:2.65;
-  fill.color.set(warm?'#fff4e7':'#e8f0ff');fill.intensity=.45;hemi.intensity=warm?.65:.55;
-  scene.environmentIntensity=warm?.55:.65;renderer.toneMappingExposure=1.03;
+  const warm=name==='warm';key.color.set(warm?'#ffe4c5':'#fffaf1');key.intensity=warm?2.9:3.2;
+  fill.color.set(warm?'#fff4e7':'#e8f0ff');fill.intensity=.5;hemi.intensity=warm?.35:.3;
+  scene.environmentIntensity=warm?.78:.82;renderer.toneMappingExposure=1.06;
   renderer.shadowMap.needsUpdate=true;invalidate();
 }
 views.forEach(b=>b.addEventListener('click',()=>view(b.dataset.showroomView)));
@@ -63,7 +64,7 @@ function release(){
   active=false;cancelAnimationFrame(frame);frame=0;resizeObserver?.disconnect();controls?.dispose();
   const geometries=new Set(),materials=new Set();scene?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});
   geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());textures.clear();walls.length=0;
-  environment?.dispose();key?.shadow.dispose();renderer?.dispose();renderer?.domElement.remove();scene=null;
+  environment?.dispose();studioRender?.dispose();key?.shadow.dispose();renderer?.dispose();renderer?.domElement.remove();scene=null;
 }
 start.addEventListener('click',async()=>{
   start.disabled=true;status.textContent='Готовим свет и загружаем модель…';
@@ -73,11 +74,12 @@ start.addEventListener('click',async()=>{
     renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
     renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
     renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
+    studioRender=new StudioRender(renderer);
     scene=new THREE.Scene();scene.background=new THREE.Color('#e9e5dc');scene.add(model);
     environment=studioEnvironment(renderer);scene.environment=environment.texture;
     hemi=new THREE.HemisphereLight('#fffaf3','#b7aa98',.55);scene.add(hemi);
     key=new THREE.DirectionalLight('#fffaf1',2.65);key.position.set(-2.4,3.4,3.8);key.target.position.set(0,.4,0);key.castShadow=true;
-    key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-1.25,right:1.25,top:1.4,bottom:-1.2,near:.1,far:14});key.shadow.bias=-.00008;key.shadow.normalBias=.001;key.shadow.intensity=.42;key.shadow.radius=12;scene.add(key,key.target);
+    key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-1.25,right:1.25,top:1.4,bottom:-1.2,near:.1,far:14});key.shadow.bias=-.00008;key.shadow.normalBias=.001;key.shadow.intensity=.6;key.shadow.radius=8;scene.add(key,key.target);
     fill=new THREE.DirectionalLight('#e8f0ff',.45);fill.position.set(3,2,1);scene.add(fill);
     roomMesh();
     // Analytic ambient contact supplements the real, cached directional shadows.
