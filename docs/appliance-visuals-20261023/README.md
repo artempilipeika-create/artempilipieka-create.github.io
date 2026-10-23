@@ -1,6 +1,6 @@
 # Oven and microwave visuals — 23 October 2026
 
-Optimized Tripo oven and microwave presentation models for the existing tall-appliance family. Runtime assets are ready; deployment and browser verification are in progress.
+Optimized Tripo oven and microwave presentation models for the existing tall-appliance family. Deployed to the existing isolated constructor; final live visual verification is blocked by the disconnected browser.
 
 ## Source assets
 
@@ -35,9 +35,26 @@ The appearance is an unbranded presentation model, not a specific manufacturer's
 
 - 65 relevant Node checks passed (the 64 scaffold/production/mesh checks plus actual asset bounds, normals, UV, provenance and byte budgets).
 - 62 Python checks passed for static resource MIME/CSP/allowlist boundaries and existing socket/shaft regression coverage. Existing Starlette/httpx deprecation warning only.
-- Offline front/oblique/rear views inspected. Final browser checks and deployment details follow after release.
+- Offline front/oblique/rear views inspected (below). These are geometry/PBR previews, not screenshots of the live constructor.
+- Public HTTP checks after deployment: `/health`, loader module, both manifests, both binary meshes and all six WebP textures returned 200. Every checked asset matched the committed local bytes by SHA-256.
+- Runtime commit: `91309144205258fdb6a085c8d3240c2d6f0e99e0`.
+- Railway deployment: `8921b95b-119f-4eb1-a06d-c66aaa1a3ef5`, status **SUCCESS**, observed 2026-10-23 18:34:38 UTC.
+- URL: https://martin-forest-v2-staging-production.up.railway.app/constructor.html
 - Branch: `mf-appliance-visuals-20261023`.
-- Browser demo: **Техника — визуальный пример**, separate from the user's existing projects.
+- Browser demo: **Техника — визуальный пример**, separate from the user's existing projects, saved before deployment. A combined oven/microwave tall cabinet was added using the normal UI. Its pre-deployment console had no errors/warnings.
+- Final browser QA remains outstanding: the connected browser reported an unavailable approval session, then `No connected browser was found for the originating browser instance`. The new live cabinet, catalogue repaint and inspection mode have automated coverage but were not visually rechecked after deployment. No browser-security workaround was used.
+
+## Optimized asset previews (offline)
+
+![Optimized oven: oblique, front and rear](oven-optimized-views.jpg)
+
+![Optimized microwave: oblique, front and rear](microwave-optimized-views.jpg)
+
+## Constructor before deployment
+
+This screenshot records the old fallback faceplates in the saved demonstration project. It is not an after screenshot.
+
+![Before deployment: old appliance placeholders](before.jpg)
 
 ## Original Tripo previews (before trimming and fitting)
 
