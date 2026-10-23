@@ -56,7 +56,8 @@ export class ApplianceAssets{
     })));
     if(this.disposed||results.some(r=>r.status==='rejected'))throw Error('Appliance textures unavailable');
     const [map,rm,normalMap]=results.map(r=>r.value);
-    entry.material=new THREE.MeshPhysicalMaterial({map,roughnessMap:rm,metalnessMap:rm,normalMap,roughness:1,metalness:1,clearcoat:.22,clearcoatRoughness:.18,envMapIntensity:1.05});
+    // Generated normal maps exaggerate ripples on the thin metal trim at room scale.
+    entry.material=new THREE.MeshPhysicalMaterial({map,roughnessMap:rm,metalnessMap:rm,normalMap,normalScale:new THREE.Vector2(.22,.22),roughness:1,metalness:1,clearcoat:.08,clearcoatRoughness:.35,envMapIntensity:.85});
     entry.ghost=entry.material.clone();entry.ghost.transparent=true;entry.ghost.opacity=.36;entry.ghost.depthWrite=false;
   }
   attach(slot,fallback,layout,ghost,isCurrent){
