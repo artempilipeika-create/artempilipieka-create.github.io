@@ -1,6 +1,6 @@
 #planner-workspace #presentation-open{display:inline-flex!important;background:#244a38;color:#fff;border-color:#244a38;white-space:nowrap}
-.mf-presentation{box-sizing:border-box;width:min(1380px,calc(100vw - 40px));max-width:none;max-height:calc(100dvh - 40px);padding:0;border:1px solid #d7ddd4;border-radius:16px;background:#faf9f5;color:#233d2e;box-shadow:0 25px 100px #12291e40}
-.mf-presentation::backdrop{background:#17241dcc;backdrop-filter:blur(5px)}
+#presentation-dialog{box-sizing:border-box;width:min(1380px,calc(100vw - 40px));max-width:none;max-height:calc(100dvh - 40px);padding:0;border:1px solid #d7ddd4;border-radius:16px;background:#faf9f5;color:#233d2e;box-shadow:0 25px 100px #12291e40}
+#presentation-dialog::backdrop{background:#17241dcc;backdrop-filter:blur(5px)}
 .presentation-head{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:25px 30px;border-bottom:1px solid #dce0d6}
 .presentation-kicker{font:10px Arial,sans-serif;letter-spacing:.18em;color:#70806d}
 .presentation-head h2{font:normal 29px/1.2 Georgia,serif;margin:8px 0 0;color:#244a38}
@@ -12,15 +12,21 @@
 .presentation-controls h3{font:600 14px Arial,sans-serif;margin:0 0 3px}
 .presentation-controls label{display:flex;flex-direction:column;gap:6px;font:12px Arial,sans-serif;color:#586b59}
 .presentation-controls select,.presentation-controls input{box-sizing:border-box;min-height:40px;width:100%;border:1px solid #d3dccc;border-radius:7px;padding:8px 10px;background:#fff;color:#263e2e;font:12px Arial,sans-serif}
-.mf-presentation button{font:12px Arial,sans-serif;min-height:36px;padding:8px 11px;border:1px solid #d5ddcf;border-radius:7px;background:#fff;color:#304d37;cursor:pointer}
-.mf-presentation button:disabled{opacity:.45;cursor:default}
-.mf-presentation summary{cursor:pointer;font:12px Arial,sans-serif;line-height:1.5;color:#38583d;padding:6px 0}
-.mf-presentation details{border-top:1px solid #dce0d6;padding-top:7px}
-.mf-presentation details p,.presentation-status{font:11px/1.6 Arial,sans-serif;color:#73806f;margin:8px 0}
+#presentation-dialog button{font:12px Arial,sans-serif;min-height:36px;padding:8px 11px;border:1px solid #d5ddcf;border-radius:7px;background:#fff;color:#304d37;cursor:pointer}
+#presentation-dialog button:disabled{opacity:.45;cursor:default}
+#presentation-dialog summary{cursor:pointer;font:12px Arial,sans-serif;line-height:1.5;color:#38583d;padding:6px 0}
+#presentation-dialog details{border-top:1px solid #dce0d6;padding-top:7px}
+#presentation-dialog details p,.presentation-status{font:11px/1.6 Arial,sans-serif;color:#73806f;margin:8px 0}
 .presentation-saved>button{margin:8px 0}.presentation-saved-list>div{display:flex;gap:5px;margin:5px 0}.presentation-saved-list>div>button:first-child{flex:1;text-align:left;overflow-wrap:anywhere}
 .presentation-status{margin-top:auto;min-height:36px}
 .presentation-download{display:block;text-align:center;text-decoration:none;padding:14px 8px;border-radius:7px;background:#244a38;color:#fff;font:600 13px Arial,sans-serif}
 .presentation-download[aria-disabled=true]{opacity:.45;pointer-events:none}
-.mf-presentation :focus-visible{outline:3px solid #a98048;outline-offset:3px}
-@media(max-width:900px){.mf-presentation{width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}.presentation-body{grid-template-columns:1fr}.presentation-preview{padding:18px}.presentation-preview canvas{max-height:45dvh}.presentation-controls{border-left:0;border-top:1px solid #dce0d6;display:grid;grid-template-columns:1fr 1fr;gap:12px}.presentation-controls h3,.presentation-status,.presentation-download,.presentation-controls>details{grid-column:1/-1}.presentation-head{padding:18px}.presentation-head h2{font-size:23px}}
+#presentation-dialog :focus-visible{outline:3px solid #a98048;outline-offset:3px}
+@media(max-width:900px){#presentation-dialog{width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}.presentation-body{grid-template-columns:1fr}.presentation-preview{padding:18px}.presentation-preview canvas{max-height:45dvh}.presentation-controls{border-left:0;border-top:1px solid #dce0d6;display:grid;grid-template-columns:1fr 1fr;gap:12px}.presentation-controls h3,.presentation-status,.presentation-download,.presentation-controls>details{grid-column:1/-1}.presentation-head{padding:18px}.presentation-head h2{font-size:23px}}
 @media(max-width:600px){#planner-workspace #presentation-open{font-size:10px;padding:7px;max-width:100px;white-space:normal;line-height:1.2}.presentation-controls{padding:18px}.presentation-kicker{font-size:8px}.presentation-head h2{font-size:20px}.presentation-head{gap:10px}}
+
+#presentation-dialog .presentation-head{background:#faf9f5;color:#244a38;position:relative;min-height:0}
+#presentation-dialog .presentation-head h2{margin:8px 0 0;color:#244a38}
+#presentation-dialog label,#presentation-dialog select,#presentation-dialog input,#presentation-dialog details{margin:0}
+#presentation-dialog .presentation-body>section{margin:0}
+#presentation-dialog summary{background:transparent}
