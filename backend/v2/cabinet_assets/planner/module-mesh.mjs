@@ -2,6 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import {materialVisual,physicalPanelUV} from './material-visuals.mjs';
 import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
 import {countertopSurfaces,countertopGeometry} from './countertop-visuals.mjs';
+import {ApplianceAssets,applianceLayout} from './appliance-assets.mjs';
 import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts,kitchenRuns,kitchenLegs,isKitchenModule} from './furniture-core.mjs';
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
@@ -56,6 +57,7 @@ export class MeshFactory{
   constructor(adapter,invalidate){
     this.adapter=adapter;this.invalidate=invalidate;this.geometry=new THREE.BoxGeometry(1,1,1);
     this.plane=new THREE.PlaneGeometry(1,1);this.pool=new Map();this.materials=new Map();this.textures=new Map();
+    this.applianceAssets=new ApplianceAssets(ready=>{if(this.dead)return;this.invalidate();if(ready)this.onAssetsReady?.();});
     // A tiny analytic opacity mask, not an invented wood/stone texture or HDRI.
     const size=64,bytes=new Uint8Array(size*size*4);
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){
@@ -101,11 +103,13 @@ export class MeshFactory{
     const parts=productionParts(it,this.adapter.template(it),id=>this.adapter.material(id)),byKey=new Map((parts||[]).map(p=>[p.key,p]));let changed=false;
     group.traverse(m=>{
       if(m.userData.role==='door-pivot'){const visible=mode!=='facadesHidden';if(m.visible!==visible){m.visible=visible;changed=true;}}
+      if(m.userData.role==='appliance-slot'){const visible=mode==='normal';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(!m.isMesh)return;
       const role=m.userData.role,part=byKey.get(m.userData.part?.key);
       if(part)m.userData.part=part;
       const visible=m.userData.appliance?mode==='normal':role==='reveal'?mode==='normal'&&!it.doors_open:(role==='front'||m.userData.frontAccessory)?mode!=='facadesHidden':true;
       if(m.userData.appliance||role==='front'||role==='reveal'||m.userData.frontAccessory){if(m.visible!==visible){m.visible=visible;changed=true;}}
+      if(m.userData.sharedApplianceAsset)return;
       const shell=part?part.role==='front'||part.key.startsWith('side-'):role==='front';
       const inspection=mode==='inspection'&&shell;
       const id=part?(part.visual_variant_id??part.material.variant_id):role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
@@ -134,7 +138,7 @@ export class MeshFactory{
     }
   }
   acquire(key,create){let value=this.pool.get(key);if(!value){value={geometry:create(),refs:0};this.pool.set(key,value);}value.refs++;return value.geometry;}
-  ownsGeometry(g){return g===this.geometry||g===this.plane||[...this.pool.values()].some(v=>v.geometry===g);}
+  ownsGeometry(g){return g===this.geometry||g===this.plane||this.applianceAssets.ownsGeometry(g)||[...this.pool.values()].some(v=>v.geometry===g);}
   mesh(group,role,geometry,key,x,y,z,id,ghost){
     const m=new THREE.Mesh(geometry,this.material(role,id,ghost));m.position.set(x*S,y*S,z*S);
     m.castShadow=!ghost&&role!=='reveal';m.receiveShadow=!ghost;m.userData={itemId:group.userData.itemId,role,geometryKey:key};group.add(m);return m;
@@ -349,16 +353,20 @@ export class MeshFactory{
       }
     }
     if(production?.tall?.family==='appliance'){
-      const a=production.tall;
+      const a=production.tall,layouts=applianceLayout(it,production);
       for(const [kind,bottom,h] of [['oven',a.oven_bottom,595],...(a.microwave?[['microwave',a.oven_bottom+613,380]]:[])]){
+        const slot=new THREE.Group(),fallback=new THREE.Group();
+        slot.userData={visualOnly:true,role:'appliance-slot',appliance:kind,itemId:group.userData.itemId};
+        fallback.userData.itemId=group.userData.itemId;slot.add(fallback);group.add(slot);
         // Visual-only faceplates bridge the visible 18 mm divider. Native FR3D panels, support, niche
         // clearances (595 / 380 mm), cutlist, collision geometry and BAZIS export are NOT modified.
         const extension=a.microwave?9.5:0;
         const faceHeight=h-2+extension,faceCenter=bottom+h/2+(kind==='oven'?extension/2:-extension/2);
         for(const [role,w,ph,y,z]of [['appliance',562,faceHeight,faceCenter,D/2+4],['applianceGlass',468,h-145,bottom+(h-145)/2+40,D/2+10],['handle',392,10,bottom+h-66,D/2+14]]){
-          const face=this.box(group,role,w,ph,8,0,y,z,null,ghost);
+          const face=this.box(fallback,role,w,ph,8,0,y,z,null,ghost);
           face.userData.visualOnly=true;face.userData.appliance=kind;
         }
+        this.applianceAssets.attach(slot,fallback,layouts.find(l=>l.kind===kind),ghost,()=>!this.dead&&!group.userData.released);
       }
     }
     this.updateAppearance(group,it);this.position(group,it);return group;
@@ -478,12 +486,12 @@ export class MeshFactory{
     return root;
   }
   release(group){
-    if(!group)return;group.traverse(o=>{const entry=this.pool.get(o.userData.geometryKey);if(entry)entry.refs=Math.max(0,entry.refs-1);});group.removeFromParent();
+    if(!group||group.userData.released)return;group.userData.released=true;group.traverse(o=>{const entry=this.pool.get(o.userData.geometryKey);if(entry)entry.refs=Math.max(0,entry.refs-1);});group.removeFromParent();
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
   signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
-  dispose(){this.dead=true;this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
+  dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 
 /** Lazy catalogue thumbnails from the SAME mesh factory and SAME WebGL context. */
@@ -511,6 +519,10 @@ export class CataloguePreviews{
     const scan=()=>root.querySelectorAll('canvas.studio-preview').forEach(c=>{if(c.dataset.meshObserved)return;c.dataset.meshObserved='true';this.observer.observe(c);});
     this.mutations=new MutationObserver(scan);this.mutations.observe(root,{subtree:true,childList:true});scan();
   }
+  refreshAppliances(){
+    if(this.closed)return;
+    document.querySelectorAll('canvas.studio-preview[data-appliance-preview]').forEach(c=>{delete c.dataset.modelPreview;this.observer?.observe(c);});
+  }
   schedule(){if(this.closed||this.timer)return;this.timer=setTimeout(()=>{this.timer=0;this.tick();},40);}
   tick(){
     if(this.closed||this.owner.dead)return;
@@ -524,6 +536,7 @@ export class CataloguePreviews{
   }
   paint(canvas,opt){
     const {adapter,factory,renderer}=this.owner,it=adapter.createDraft(opt),scene=this.scene;
+    if(adapter.template(it)?.production?.tall?.family==='appliance')canvas.dataset.appliancePreview='true';
     it.x=it.z=it.rotation=0;it.elevation_mm=0;
     const model=factory.build(it),dress=factory.dress([it]);scene.add(model,dress);
     const b=new THREE.Box3().setFromObject(model).expandByObject(dress),center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3());
