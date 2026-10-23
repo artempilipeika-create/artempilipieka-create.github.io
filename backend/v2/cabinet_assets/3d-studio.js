@@ -120,6 +120,7 @@
   };
   applyCatalogueFilter=function studioCatalogueFilter(){
     const q=titleText(get('module-search').value.trim());let count=0;
+    get('pane-catalog').dataset.category=activeModuleFilter;
     for(const b of get('module-catalogue').querySelectorAll('.mf3d-module')){
       const tags=new Set((b.dataset.tags||b.dataset.category||'other').split(' '));
       const matches=activeModuleFilter==='all'||(activeModuleFilter==='kitchen'?tags.has('base')||tags.has('wall')||tags.has('tall'):tags.has(activeModuleFilter));
@@ -133,12 +134,26 @@
       else cards.sort((a,b)=>Number(a.dataset.studioOrder)-Number(b.dataset.studioOrder));
       cards.forEach(b=>group.append(b));group.hidden=!cards.some(b=>!b.hidden);
     }
-    get('studio-catalog-count').textContent=plural(count);
+    get('studio-catalog-count').textContent=plural(count,['позиция','позиции','позиций']);
     get('studio-catalog-empty').hidden=count>0;
     get('module-tabs').querySelectorAll('button').forEach(b=>{const on=b.dataset.moduleFilter===activeModuleFilter;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));});
   };
   renderModuleCatalogue=function studioCatalogue(){
     catalogue.clear();original.renderModuleCatalogue();
+    if(document.body.dataset.plannerRequested==='webgl'){
+      const group=make('div','mf3d-module-group studio-communications');group.dataset.category='communications';
+      group.append(make('h3','','Коммуникации'));
+      const b=make('button','mf3d-module');b.type='button';b.dataset.category='communications';b.dataset.tags='communications';b.dataset.roomFeature='socket';b.dataset.width='86';
+      b.dataset.search='розетка розетки с заземлением белая электричество коммуникации tripo';b.setAttribute('aria-label','Добавить: Розетка с заземлением');
+      const visual=make('span','studio-card-visual'),picture=make('img','studio-preview studio-socket-preview');
+      picture.src='/account/planner/room-assets/socket-tripo-preview.webp';picture.alt='Белая розетка с заземлением';picture.width=600;picture.height=600;picture.loading='lazy';picture.draggable=false;
+      visual.append(picture,make('span','studio-card-category','Коммуникации'),make('span','studio-card-add','+'));
+      const copy=make('span','mf3d-module-copy');copy.append(make('strong','','Розетка с заземлением'),make('span','','Выберите стену, отступ от угла и высоту от пола.'));
+      const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions','86 × 86 мм · размер изменяется'),make('span','studio-source','TRIPO'));
+      b.append(visual,copy,meta);b.onclick=()=>document.dispatchEvent(new CustomEvent('mf:socket-add'));
+      const edit=make('button','secondary studio-sockets-edit','Расположение розеток');edit.type='button';edit.onclick=()=>document.dispatchEvent(new CustomEvent('mf:sockets-edit'));
+      group.append(b,edit);get('module-catalogue').append(group);
+    }
     get('module-catalogue').querySelectorAll('.mf3d-module').forEach((b,i)=>b.dataset.studioOrder=String(i));
     applyCatalogueFilter();
   };

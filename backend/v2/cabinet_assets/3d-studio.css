@@ -42,3 +42,9 @@
 .mf3d-studio .studio-card-meta,.mf3d-studio .studio-card-meta span{font-size:10px;line-height:1.5}
 .mf3d-studio .studio-card-meta .studio-source{font-size:9px;color:#41664b;letter-spacing:.03em}
 @media(prefers-reduced-motion:reduce){.mf3d-studio .mf3d-modules .mf3d-module{transition:none}.mf3d-studio .mf3d-modules .mf3d-module:hover{transform:none}}
+
+/* Room utilities share catalogue filtering but keep measured wall placement. */
+#pane-catalog[data-category="communications"] #countertop-card,#pane-catalog[data-category="communications"] #plinth-card,#pane-catalog[data-category="communications"]>.studio-footnote{display:none}
+.mf3d-studio .studio-communications .mf3d-module,.studio-sockets-edit{grid-column:1/-1}
+.mf3d-studio .studio-socket-preview{object-fit:contain;max-height:220px}
+.mf3d-studio .studio-sockets-edit{font-size:12px;min-height:40px;margin-top:4px}

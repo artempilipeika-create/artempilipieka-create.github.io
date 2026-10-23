@@ -25,10 +25,13 @@ export class RoomSetup{
     d.addEventListener('close',()=>{this.app.sync();});
     document.getElementById('planner-fit-room').onclick=()=>this.open();
     app.listen(document,'mf:room-required',()=>{if(!this.dialog.open)this.open();});
+    app.listen(document,'mf:socket-add',()=>this.openSockets(true));
+    app.listen(document,'mf:sockets-edit',()=>this.openSockets(false));
     const start=document.getElementById('studio-first-module');start.onclick=()=>{if(!roomReady(app.adapter.room))this.open();else{app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('catalog');}};
   }
   error(message){this.alert.textContent=message;this.alert.hidden=!message;if(message)this.alert.scrollIntoView({block:'nearest'});}
   open(){
+    this.dialog.dataset.section='room';document.getElementById('room-setup-title').textContent='Комната';
     this.app.interaction?.cancel();this.app.workspace.closePanels();
     this.draft=clone(this.app.adapter.room);this.draft.features??=[];this.wasReady=roomReady(this.draft);
     for(const [key,i]of Object.entries(this.fields))i.value=this.wasReady?String(this.draft[key]):'';
@@ -36,6 +39,15 @@ export class RoomSetup{
     document.getElementById('room-setup-eyebrow').textContent=this.wasReady?'ЗАМЕР ПОМЕЩЕНИЯ':'ПЕРЕД ПРОЕКТИРОВАНИЕМ';
     this.sockets.render();
     this.error('');this.preview();if(!this.dialog.open)this.dialog.showModal();this.fields.width.focus();
+  }
+  openSockets(add=false){
+    this.open();
+    if(!this.wasReady){this.error('Сначала укажите размеры комнаты, затем добавьте розетку ниже.');return;}
+    this.dialog.dataset.section='sockets';document.getElementById('room-setup-title').textContent='Расположение розеток';
+    document.getElementById('room-setup-eyebrow').textContent='КОММУНИКАЦИИ';this.apply.textContent='Сохранить расположение';
+    if(add)this.sockets.add();
+    else this.sockets.render(this.draft.features.find(f=>f.kind==='socket')?.id);
+    this.sockets.list.querySelector('details[open] select')?.focus();this.dialog.scrollTop=0;
   }
   projectChanged(){if(this.dialog.open)this.dialog.close();if(!roomReady(this.app.adapter.room))this.open();}
   readDimensions(){return {...this.draft,...Object.fromEntries(Object.entries(this.fields).map(([key,i])=>[key,i.value===''?NaN:Number(i.value)]))};}

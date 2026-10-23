@@ -26,7 +26,7 @@ export class Interaction {
     listen(window,'blur',()=>{this.cancel();this.touches.clear();this.touchBlocked=false;});
     this.catalogue=document.getElementById('module-catalogue');
     listen(this.catalogue,'click',e=>{
-      const card=e.target.closest('.mf3d-module');if(!card||this.suspended)return;
+      const card=e.target.closest('.mf3d-module');if(!card||this.suspended||card.dataset.roomFeature)return;
       e.preventDefault();e.stopImmediatePropagation();
       if(this.add(this.cardOptions(card))&&this.adapter.template(this.adapter.selected)?.production?.tall?.family==='appliance')document.dispatchEvent(new Event('mf:appliance-choice'));
     },true);
@@ -39,7 +39,7 @@ export class Interaction {
     this.observer=new MutationObserver(()=>this.decorateCatalogue());
     if(this.catalogue)this.observer.observe(this.catalogue,{childList:true,subtree:true});
   }
-  decorateCatalogue(){this.catalogue?.querySelectorAll('.mf3d-module').forEach(b=>{b.draggable=true;});}
+  decorateCatalogue(){this.catalogue?.querySelectorAll('.mf3d-module').forEach(b=>{b.draggable=!b.dataset.roomFeature;});}
   cardOptions(card){return {template:card.dataset.template||null,bazis:card.dataset.bazis||null,module:card.dataset.module||null};}
   consume(e){e.preventDefault();e.stopImmediatePropagation();}
   editable(){return !this.suspended&&roomReady(this.adapter.room)&&!document.body.classList.contains('planner-client');}
@@ -188,7 +188,7 @@ export class Interaction {
     if(steps[e.key]&&this.adapter.selected){this.consume(e);this.nudge(...steps[e.key]);}
   }
   catalogueStart(e){
-    const card=e.target.closest('.mf3d-module');if(!card||!this.editable()){e.preventDefault();return;}
+    const card=e.target.closest('.mf3d-module');if(!card||card.dataset.roomFeature||!this.editable()){e.preventDefault();return;}
     this.cancel();
     try{
       this.catalogueDraft=this.adapter.createDraft(this.cardOptions(card));this.dropAnchors={};this.dropResult=null;
