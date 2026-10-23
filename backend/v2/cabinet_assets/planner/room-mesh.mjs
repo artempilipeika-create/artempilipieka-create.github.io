@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
-import {FEATURES,featureBox} from './room-plan.mjs';
-import {SocketAssets,socketRotation} from './socket-asset.mjs';
+import {FEATURES,featureBox,featureWall,socketCount,socketSurface} from './room-plan.mjs';
+import {SocketAssets,socketRotation,socketLayout} from './socket-asset.mjs';
 import {roomSettings} from './room-state.mjs';
 const S=.001;
 export function measuredFeatures(scene){
@@ -12,8 +12,8 @@ export function measuredFeatures(scene){
   };
   for(const [i,f]of (r.features||[]).entries()){
     const color=FEATURES[f.kind][1],group=new THREE.Group(),plan=new THREE.Group();scene.roomRoot.add(group,plan);
-    group.userData={roomFeatureId:f.id,kind:f.kind};plan.userData={roomFeatureId:f.id,plan:true};
-    const horizontal=['a','c'].includes(f.wall),axis=horizontal?'z':'x',sign=['a','d'].includes(f.wall)?-1:1;
+    group.userData={roomFeatureId:f.id,kind:f.kind,hostWall:socketSurface(f,r)?.host.wall};plan.userData={roomFeatureId:f.id,plan:true};
+    const wall=featureWall(f,r),horizontal=['a','c'].includes(wall),axis=horizontal?'z':'x',sign=['a','d'].includes(wall)?-1:1;
     const b=featureBox(f.kind==='window'?{...f,projection:0}:f,r,['shaft','column'].includes(f.kind)?0:8),extras=[];group.position.set(b.x*S,b.y*S,b.z*S);group.rotation.y=horizontal?0:Math.PI/2;
     if(f.kind==='window'){
       box(group,f.width,f.height,6,0,0,0,'#b9d4dd');const t=Math.min(45,f.width/6,f.height/6);
@@ -28,10 +28,13 @@ export function measuredFeatures(scene){
         box(group,f.width,trimHeight,9,0,y,-sign*(depth/2+4),'#edece7');
         for(const x of[-f.width/2-4,f.width/2+4])box(group,9,trimHeight,depth,x,y,0,'#edece7');}
     }else if(f.kind==='socket'){
-      group.rotation.y=socketRotation(f.wall);
+      group.rotation.y=socketRotation(wall);
+      if(socketCount(f)>1){const depth=Math.max(8,f.projection);box(group,f.width,f.height,Math.min(4,depth),0,0,-depth/2+Math.min(4,depth)/2,'#f1f0e9');}
       const fallback=new THREE.Group();group.add(fallback);
-      box(fallback,f.width,f.height,Math.max(8,f.projection),0,0,0,'#f1f0e9');
-      for(const x of[-f.width*.18,f.width*.18])box(fallback,Math.min(10,f.width/10),Math.min(10,f.height/10),1,x,0,Math.max(8,f.projection)/2+.5,'#576559');
+      for(const slot of socketLayout(f)){
+        box(fallback,slot.width,slot.height,Math.max(8,f.projection),slot.x,0,0,'#f1f0e9');
+        for(const x of[-slot.width*.18,slot.width*.18])box(fallback,Math.min(10,slot.width/10),Math.min(10,slot.height/10),1,slot.x+x,0,Math.max(8,f.projection)/2+.5,'#576559');
+      }
       const root=scene.roomRoot;
       scene.socketAssets??=new SocketAssets(()=>{scene.renderer.shadowMap.needsUpdate=true;scene.invalidate();});
       scene.socketAssets.attach(group,fallback,f,()=>!scene.dead&&scene.roomRoot===root&&group.parent===root);

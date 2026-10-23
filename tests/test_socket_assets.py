@@ -19,4 +19,5 @@ def test_socket_room_roundtrip_preserves_all_wall_measurements():
     features=[dict(id='s-'+w,kind='socket',wall=w,offset=750,elevation=1080,width=86,height=86,projection=12,label='Розетка',notes='') for w in 'abcd']
     room=Room(width=4200,depth=3200,height=2700,setup_complete=True,survey='present',features=features)
     restored=Room.model_validate_json(room.model_dump_json())
-    assert [f.model_dump() for f in restored.features]==features
+    assert [{key:getattr(f,key) for key in original} for f,original in zip(restored.features,features)]==features
+    assert all(f.socket_count==1 and f.mount_id is None for f in restored.features)

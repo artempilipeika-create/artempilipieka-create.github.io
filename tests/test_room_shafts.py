@@ -12,7 +12,8 @@ def shaft(**changes):
 def test_shaft_schema_roundtrip(wall):
     feature=shaft(wall=wall)
     room=Room(width=3000,depth=2800,height=2700,setup_complete=True,features=[feature])
-    assert Room.model_validate_json(room.model_dump_json()).features[0].model_dump()==feature
+    restored=Room.model_validate_json(room.model_dump_json()).features[0]
+    assert {key:getattr(restored,key) for key in feature}==feature
 
 @pytest.mark.parametrize('changes',[{'projection':0},{'elevation':10,'height':2600},{'width':3100},{'height':2800},{'projection':2900}])
 def test_shaft_schema_rejects_invalid_envelope(changes):

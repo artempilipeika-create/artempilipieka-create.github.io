@@ -17,7 +17,7 @@ export class ShaftEditor{
     const s=this.setup,r=s.readDimensions(),error=dimensionsError(r);
     if(error){s.error(error);return;}if(r.features.length>=100){s.error('В комнате поддерживается до 100 объектов.');return;}
     const f=newShaft(r,'shaft-'+crypto.randomUUID());s.draft.features.push(f);reconcileSurvey(s.draft);
-    s.error('');this.render(f.id);s.preview();this.list.lastElementChild?.scrollIntoView({block:'nearest'});
+    s.error('');this.render(f.id);s.sockets.render();s.preview();this.list.lastElementChild?.scrollIntoView({block:'nearest'});
   }
   resizeRoomHeight(next){
     if(!Number.isInteger(next)||next<2000||next>5000)return;
@@ -41,9 +41,9 @@ export class ShaftEditor{
         Object.assign(input,{type:'number',min:String(min),max:String(max),step:'1',value:String(f[key])});input.setAttribute('aria-label',`${label}, вентшахта ${index+1}`);
         input.oninput=()=>{f[key]=input.value===''?NaN:Number(input.value);s.preview();};l.append(caption,input);grid.append(l);
       }
-      wall.onchange=()=>{f.wall=wall.value;offsetLabel.textContent='Отступ от '+ORIGINS[f.wall];offsetInput.setAttribute('aria-label',`${offsetLabel.textContent}, вентшахта ${index+1}`);updateTitle();s.preview();};
+      wall.onchange=()=>{f.wall=wall.value;offsetLabel.textContent='Отступ от '+ORIGINS[f.wall];offsetInput.setAttribute('aria-label',`${offsetLabel.textContent}, вентшахта ${index+1}`);updateTitle();s.sockets.render();s.preview();};
       const ceiling=el('button','До потолка');ceiling.type='button';ceiling.onclick=()=>{f.height=s.readDimensions().height;this.heightInputs.get(f.id).value=String(f.height);s.preview();};
-      const remove=el('button','Удалить вентшахту');remove.type='button';remove.className='room-socket-remove';remove.onclick=()=>{s.draft.features=s.draft.features.filter(x=>x.id!==f.id);reconcileSurvey(s.draft);this.render();s.preview();};
+      const remove=el('button','Удалить вентшахту');remove.type='button';remove.className='room-socket-remove';remove.onclick=()=>{if(s.draft.features.some(x=>x.mount_id===f.id)){s.error('Сначала перенесите или удалите розетки с этой вентшахты.');return;}s.draft.features=s.draft.features.filter(x=>x.id!==f.id);reconcileSurvey(s.draft);this.render();s.sockets.render();s.preview();};
       const actions=el('div');actions.className='room-inline-actions';actions.append(ceiling,remove);card.append(actions);this.list.append(card);
     }
   }

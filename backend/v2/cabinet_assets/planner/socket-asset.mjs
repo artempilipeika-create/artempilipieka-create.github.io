@@ -1,6 +1,12 @@
 import * as THREE from './vendor/three.module.js';
+import {socketCount} from './room-plan.mjs';
 export const SOCKET_ASSET_URL=new URL('./room-assets/socket-tripo.json',import.meta.url);
 export const socketRotation=wall=>({a:0,b:-Math.PI/2,c:Math.PI,d:Math.PI/2})[wall];
+export function socketLayout(f){
+  const count=socketCount(f);if(count===1)return [{x:0,width:f.width,height:f.height}];
+  const size=Math.min(f.height*71/86,f.width/count),margin=Math.min(f.height*7.5/86,Math.max(0,(f.width-size*count)/2)),pitch=(f.width-size-2*margin)/(count-1);
+  return Array.from({length:count},(_,i)=>({x:(i-(count-1)/2)*pitch,width:size,height:size}));
+}
 
 // Fixed, build-time validated asset; this is not a general user mesh importer.
 export function readSocketGeometry(buffer,meta){
@@ -50,7 +56,7 @@ export class SocketAssets{
   attach(group,fallback,feature,isCurrent){
     this.load().then(()=>{
       if(this.disposed||!isCurrent())return;
-      const mesh=placeSocket(new THREE.Mesh(this.geometry,this.material),feature);group.add(mesh);
+      for(const slot of socketLayout(feature)){const mesh=placeSocket(new THREE.Mesh(this.geometry,this.material),{...feature,width:slot.width,height:slot.height});mesh.position.x=slot.x*.001;group.add(mesh);}
       fallback.removeFromParent();fallback.traverse(m=>{if(m.userData.ownMaterial)m.material.dispose();});
       this.onChange();
     }).catch(()=>{ /* Keep the measured placeholder if loading fails. */ });

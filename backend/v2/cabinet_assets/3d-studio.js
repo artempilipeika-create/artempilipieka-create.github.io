@@ -144,7 +144,7 @@
       const group=make('div','mf3d-module-group studio-communications');group.dataset.category='communications';
       group.append(make('h3','','Коммуникации'));
       for(const [kind,label,description,metaText,editLabel,search]of [
-        ['socket','Розетка с заземлением','Выберите стену, отступ от угла и высоту от пола.','86 × 86 мм · размер изменяется','Расположение розеток','розетка розетки с заземлением белая электричество tripo'],
+        ['socket','Розетка с заземлением','На стене или вентшахте — с привязкой по замеру.','1–4 розетки · размеры рамки изменяются','Расположение розеток','розетка розетки блок двойная тройная четверная с заземлением белая электричество tripo'],
         ['shaft','Вентшахта / выступ стены','Выступ внутрь комнаты: у угла или на любом участке стены.','Ширина, глубина и высота по замеру','Расположение вентшахт','вентшахта вентшахты вент шахта вентиляция короб выступ стена']]){
         const b=make('button','mf3d-module');b.type='button';b.dataset.category='communications';b.dataset.tags='communications';b.dataset.roomFeature=kind;b.dataset.width=kind==='shaft'?'600':'86';
         b.dataset.search=search+' коммуникации';b.setAttribute('aria-label','Добавить: '+label);
