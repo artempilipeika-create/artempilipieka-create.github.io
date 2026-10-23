@@ -1,4 +1,4 @@
-import {bounds,elevation,tier,rotateXZ,placementError,kitchenSettings,cornerSpec,cornerReturnPlacement} from './furniture-core.mjs';
+import {bounds,elevation,tier,rotateXZ,placementError,kitchenSettings,cornerSpec,cornerReturnPlacement,roomObstacles} from './furniture-core.mjs';
 const rounded=it=>({...it,x:Math.round(it.x*2)/2,z:Math.round(it.z*2)/2,elevation_mm:Math.round(it.elevation_mm)});
 const verticalPeers=(a,b,room)=>{
   const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
@@ -13,19 +13,26 @@ export function snapItem(raw,items,room,options={},previous={}){
   if(options.enabled===false)return{item:rounded(it),anchors,error:placementError(it,items,room),guides};
   const walls=[{r:0,axis:'z',edge:-room.depth/2,sign:1},{r:90,axis:'x',edge:room.width/2,sign:-1},
     {r:180,axis:'z',edge:room.depth/2,sign:-1},{r:270,axis:'x',edge:-room.width/2,sign:1}];
+  for(const o of roomObstacles(room)){
+    if(it.elevation_mm>=o.maxY-.5||it.elevation_mm+it.height<=o.minY+.5)continue;
+    for(const face of [{r:0,axis:'z',edge:o.maxZ,sign:1,min:o.minX,max:o.maxX},{r:180,axis:'z',edge:o.minZ,sign:-1,min:o.minX,max:o.maxX},{r:90,axis:'x',edge:o.minX,sign:-1,min:o.minZ,max:o.maxZ},{r:270,axis:'x',edge:o.maxX,sign:1,min:o.minZ,max:o.maxZ}]){
+      const along=it[face.axis==='x'?'z':'x'];if(along+it.width/2>face.min&&along-it.width/2<face.max)walls.push({...face,id:o.id+':'+face.r,name:o.name});
+    }
+  }
   const kitchen=kitchenSettings(it),wallOffset=kitchen?50:(Number(options.wallOffset)||0);
   const candidates=[];
   for(const wall of walls){
     const position=wall.edge+wall.sign*(it.depth/2+wallOffset);
     const distance=Math.abs(it[wall.axis]-position);
-    const limit=previous.wall===wall.r?threshold*1.65:threshold;
+    const limit=previous.wall===wall.r&&(!wall.id||previous.boundary===wall.id)?threshold*1.65:threshold;
     if(distance<limit&&(options.autoRotate!==false||it.rotation===wall.r))candidates.push({wall,position,distance});
   }
   candidates.sort((a,b)=>a.distance-b.distance);
   if(candidates.length){
     const {wall,position}=candidates[0];it.rotation=wall.r;it[wall.axis]=position;
     anchors.wall=wall.r;anchors[wall.axis]=position;
-    guides.push({axis:wall.axis,value:wall.edge,text:kitchen?'К стене · задний край столешницы · зазор '+wallOffset+' мм':'К стене · отступ '+wallOffset+' мм'});
+    if(wall.id)anchors.boundary=wall.id;
+    guides.push({axis:wall.axis,value:wall.edge,text:wall.id?'К выступу · '+wall.name+' · отступ '+wallOffset+' мм':kitchen?'К стене · задний край столешницы · зазор '+wallOffset+' мм':'К стене · отступ '+wallOffset+' мм'});
   }
   if(cornerSpec(it)){
     const along=rotateXZ(1,0,it.rotation||0),sideAxis=along.x?'x':'z',span=along.x?room.width:room.depth;

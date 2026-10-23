@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {FEATURES,featureBox} from './room-plan.mjs';
 import {SocketAssets,socketRotation} from './socket-asset.mjs';
+import {roomSettings} from './room-state.mjs';
 const S=.001;
 export function measuredFeatures(scene){
   const r=scene.adapter.room,entries=[];
@@ -13,7 +14,7 @@ export function measuredFeatures(scene){
     const color=FEATURES[f.kind][1],group=new THREE.Group(),plan=new THREE.Group();scene.roomRoot.add(group,plan);
     group.userData={roomFeatureId:f.id,kind:f.kind};plan.userData={roomFeatureId:f.id,plan:true};
     const horizontal=['a','c'].includes(f.wall),axis=horizontal?'z':'x',sign=['a','d'].includes(f.wall)?-1:1;
-    const b=featureBox(f.kind==='window'?{...f,projection:0}:f,r,8),extras=[];group.position.set(b.x*S,b.y*S,b.z*S);group.rotation.y=horizontal?0:Math.PI/2;
+    const b=featureBox(f.kind==='window'?{...f,projection:0}:f,r,['shaft','column'].includes(f.kind)?0:8),extras=[];group.position.set(b.x*S,b.y*S,b.z*S);group.rotation.y=horizontal?0:Math.PI/2;
     if(f.kind==='window'){
       box(group,f.width,f.height,6,0,0,0,'#b9d4dd');const t=Math.min(45,f.width/6,f.height/6);
       for(const x of[-(f.width-t)/2,(f.width-t)/2])box(group,t,f.height,26,x,0,0,'#f5f4ec');
@@ -21,6 +22,11 @@ export function measuredFeatures(scene){
       box(group,t,f.height,26,0,0,0,'#f5f4ec');
       // Sill projection is measured from the wall, not from the glass centre.
       if(f.projection){const sill=featureBox({...f,height:20,projection:f.projection},r);extras.push(box(scene.roomRoot,sill.w,20,sill.d,sill.x,f.elevation,sill.z,'#e6e4d8'));}
+    }else if(f.kind==='shaft'||f.kind==='column'){
+      const solid=box(group,f.width,f.height,f.projection,0,0,0,roomSettings(scene.adapter.state?.displaySettings).wallColor);solid.castShadow=true;solid.receiveShadow=true;solid.material.roughness=.92;
+      if(f.elevation===0){const depth=f.projection,trimHeight=Math.min(65,f.height),y=-f.height/2+trimHeight/2;
+        box(group,f.width,trimHeight,9,0,y,-sign*(depth/2+4),'#edece7');
+        for(const x of[-f.width/2-4,f.width/2+4])box(group,9,trimHeight,depth,x,y,0,'#edece7');}
     }else if(f.kind==='socket'){
       group.rotation.y=socketRotation(f.wall);
       const fallback=new THREE.Group();group.add(fallback);
@@ -34,7 +40,7 @@ export function measuredFeatures(scene){
       if(f.kind==='radiator')for(let x=-f.width/2+25;x<f.width/2;x+=60)box(group,8,f.height*.85,Math.max(10,f.projection+2),x,0,0,'#f0e8df');
     }
     const marker=badge(group,String(i+1),color,0,f.height/2+95,0);
-    const p=featureBox(f,r,70);box(plan,p.w,7,p.d,p.x,6,p.z,color);badge(plan,String(i+1),color,p.x,80,p.z);
+    const p=featureBox(f,r,['shaft','column'].includes(f.kind)?0:70);box(plan,p.w,7,p.d,p.x,6,p.z,color);badge(plan,String(i+1),color,p.x,80,p.z);
     entries.push({group,plan,axis,sign,extras,marker});
   }
   return entries;

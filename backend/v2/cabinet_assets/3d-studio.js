@@ -132,7 +132,7 @@
       if(sort==='name')cards.sort((a,b)=>(a.dataset.search||'').localeCompare(b.dataset.search||'','ru'));
       else if(sort==='width')cards.sort((a,b)=>+a.dataset.width-+b.dataset.width);
       else cards.sort((a,b)=>Number(a.dataset.studioOrder)-Number(b.dataset.studioOrder));
-      cards.forEach(b=>group.append(b));group.hidden=!cards.some(b=>!b.hidden);
+      cards.forEach(b=>{group.append(b);if(b.dataset.roomFeature){const edit=group.querySelector('[data-edit-feature="'+b.dataset.roomFeature+'"]');if(edit){edit.hidden=b.hidden;group.append(edit);}}});group.hidden=!cards.some(b=>!b.hidden);
     }
     get('studio-catalog-count').textContent=plural(count,['позиция','позиции','позиций']);
     get('studio-catalog-empty').hidden=count>0;
@@ -143,16 +143,27 @@
     if(document.body.dataset.plannerRequested==='webgl'){
       const group=make('div','mf3d-module-group studio-communications');group.dataset.category='communications';
       group.append(make('h3','','Коммуникации'));
-      const b=make('button','mf3d-module');b.type='button';b.dataset.category='communications';b.dataset.tags='communications';b.dataset.roomFeature='socket';b.dataset.width='86';
-      b.dataset.search='розетка розетки с заземлением белая электричество коммуникации tripo';b.setAttribute('aria-label','Добавить: Розетка с заземлением');
-      const visual=make('span','studio-card-visual'),picture=make('img','studio-preview studio-socket-preview');
-      picture.src='/account/planner/room-assets/socket-tripo-preview.webp';picture.alt='Белая розетка с заземлением';picture.width=600;picture.height=600;picture.loading='lazy';picture.draggable=false;
-      visual.append(picture,make('span','studio-card-category','Коммуникации'),make('span','studio-card-add','+'));
-      const copy=make('span','mf3d-module-copy');copy.append(make('strong','','Розетка с заземлением'),make('span','','Выберите стену, отступ от угла и высоту от пола.'));
-      const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions','86 × 86 мм · размер изменяется'),make('span','studio-source','TRIPO'));
-      b.append(visual,copy,meta);b.onclick=()=>document.dispatchEvent(new CustomEvent('mf:socket-add'));
-      const edit=make('button','secondary studio-sockets-edit','Расположение розеток');edit.type='button';edit.onclick=()=>document.dispatchEvent(new CustomEvent('mf:sockets-edit'));
-      group.append(b,edit);get('module-catalogue').append(group);
+      for(const [kind,label,description,metaText,editLabel,search]of [
+        ['socket','Розетка с заземлением','Выберите стену, отступ от угла и высоту от пола.','86 × 86 мм · размер изменяется','Расположение розеток','розетка розетки с заземлением белая электричество tripo'],
+        ['shaft','Вентшахта / выступ стены','Выступ внутрь комнаты: у угла или на любом участке стены.','Ширина, глубина и высота по замеру','Расположение вентшахт','вентшахта вентшахты вент шахта вентиляция короб выступ стена']]){
+        const b=make('button','mf3d-module');b.type='button';b.dataset.category='communications';b.dataset.tags='communications';b.dataset.roomFeature=kind;b.dataset.width=kind==='shaft'?'600':'86';
+        b.dataset.search=search+' коммуникации';b.setAttribute('aria-label','Добавить: '+label);
+        const visual=make('span','studio-card-visual');
+        if(kind==='socket'){
+          const picture=make('img','studio-preview studio-socket-preview');picture.src='/account/planner/room-assets/socket-tripo-preview.webp';picture.alt='Белая розетка с заземлением';picture.width=600;picture.height=600;picture.loading='lazy';picture.draggable=false;visual.append(picture);
+        }else{
+          const picture=document.createElementNS('http://www.w3.org/2000/svg','svg');picture.setAttribute('viewBox','0 0 600 400');picture.setAttribute('class','studio-preview studio-shaft-preview');picture.setAttribute('role','img');picture.setAttribute('aria-label','Вентшахта выступает из стены в комнату');
+          picture.innerHTML='<rect width="600" height="400" fill="#efede6"/><path d="M65 326 340 380 535 313 258 260Z" fill="#d5d0c2"/><path d="M65 80 340 133 340 380 65 326Z" fill="#e3e0d7"/><path d="M340 133 535 66 535 313 340 380Z" fill="#f5f2e9"/><path d="M238 73 320 89 381 68 300 52Z" fill="#fbf9f1"/><path d="M238 73 320 89 320 344 238 328Z" fill="#d4d1c6"/><path d="M320 89 381 68 381 323 320 344Z" fill="#ede9df"/><path d="m238 328 82 16 61-21" fill="none" stroke="#a6aa9a" stroke-width="3"/>';
+          visual.append(picture);
+        }
+        visual.append(make('span','studio-card-category','Коммуникации'),make('span','studio-card-add','+'));
+        const copy=make('span','mf3d-module-copy');copy.append(make('strong','',label),make('span','',description));
+        const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions',metaText));if(kind==='socket')meta.append(make('span','studio-source','TRIPO'));
+        b.append(visual,copy,meta);b.onclick=()=>document.dispatchEvent(new CustomEvent('mf:'+kind+'-add'));
+        const edit=make('button','secondary studio-sockets-edit',editLabel);edit.type='button';edit.dataset.editFeature=kind;edit.onclick=()=>document.dispatchEvent(new CustomEvent('mf:'+kind+'s-edit'));
+        group.append(b,edit);
+      }
+      get('module-catalogue').append(group);
     }
     get('module-catalogue').querySelectorAll('.mf3d-module').forEach((b,i)=>b.dataset.studioOrder=String(i));
     applyCatalogueFilter();

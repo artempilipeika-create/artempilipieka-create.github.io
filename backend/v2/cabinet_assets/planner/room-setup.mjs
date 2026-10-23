@@ -1,5 +1,6 @@
-import {FEATURES,dimensionsError,roomError,roomReady,featureBox} from './room-plan.mjs';
+import {FEATURES,dimensionsError,roomError,roomReady,featureBox,floorOutline} from './room-plan.mjs';
 import {placementError} from './furniture-core.mjs';
+import {ShaftEditor} from './shaft-editor.mjs';
 import {SocketEditor} from './socket-editor.mjs';
 const el=(tag,text,id)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(id)e.id=id;return e;};
 const btn=(text,id,fn)=>{const b=el('button',text,id);b.type='button';b.onclick=fn;return b;};
@@ -12,13 +13,13 @@ export class RoomSetup{
     const head=el('header');head.append(el('p','ПЕРЕД ПРОЕКТИРОВАНИЕМ','room-setup-eyebrow'),el('h2','Комната','room-setup-title'));
     head.append(btn('Закрыть','room-setup-close',()=>d.close()));d.append(head);
     this.body=el('div');this.body.className='room-setup-body';d.append(this.body);
-    this.dimensions=el('section',undefined,'room-dimensions-step');this.dimensions.append(el('h3','Какие размеры у помещения?'),el('p','Укажите внутренние размеры по чистовым стенам. Прямоугольное помещение, все размеры в миллиметрах.'));
+    this.dimensions=el('section',undefined,'room-dimensions-step');this.dimensions.append(el('h3','Какие размеры у помещения?'),el('p','Укажите внутренние размеры по основным чистовым стенам. Вентшахты и выступы добавьте ниже. Все размеры в миллиметрах.'));
     const grid=el('div');grid.className='room-dimension-grid';
     for(const [key,label,min,max]of [['width','Длина · стены A и C',1500,12000],['depth','Глубина · стены B и D',1500,12000],['height','Высота до потолка',2000,5000]]){
-      const l=el('label',label),i=el('input',undefined,'room-setup-'+key);Object.assign(i,{type:'number',min:String(min),max:String(max),step:'1',placeholder:'Укажите, мм'});i.setAttribute('aria-label',label);i.oninput=()=>this.preview();l.append(i,el('small',`${min}–${max} мм`));grid.append(l);this.fields[key]=i;
+      const l=el('label',label),i=el('input',undefined,'room-setup-'+key);Object.assign(i,{type:'number',min:String(min),max:String(max),step:'1',placeholder:'Укажите, мм'});i.setAttribute('aria-label',label);i.oninput=()=>{if(key==='height')this.shafts?.resizeRoomHeight(Number(i.value));this.preview();};l.append(i,el('small',`${min}–${max} мм`));grid.append(l);this.fields[key]=i;
     }
     this.dimensions.append(grid);this.body.append(this.dimensions);
-    this.sockets=new SocketEditor(this);
+    this.sockets=new SocketEditor(this);this.shafts=new ShaftEditor(this);
     this.previewRoot=el('aside',undefined,'room-measure-preview');this.body.append(this.previewRoot);
     this.alert=el('p',undefined,'room-setup-error');this.alert.setAttribute('role','alert');this.alert.hidden=true;d.append(this.alert);
     const foot=el('footer');this.projects=btn('Мои проекты','room-setup-projects',()=>{d.close();this.app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('projects');});this.apply=btn('Начать проектирование','room-setup-apply',()=>this.commit());foot.append(this.projects,this.apply);d.append(foot);document.body.append(d);
@@ -27,6 +28,8 @@ export class RoomSetup{
     app.listen(document,'mf:room-required',()=>{if(!this.dialog.open)this.open();});
     app.listen(document,'mf:socket-add',()=>this.openSockets(true));
     app.listen(document,'mf:sockets-edit',()=>this.openSockets(false));
+    app.listen(document,'mf:shaft-add',()=>this.openShafts(true));
+    app.listen(document,'mf:shafts-edit',()=>this.openShafts(false));
     const start=document.getElementById('studio-first-module');start.onclick=()=>{if(!roomReady(app.adapter.room))this.open();else{app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('catalog');}};
   }
   error(message){this.alert.textContent=message;this.alert.hidden=!message;if(message)this.alert.scrollIntoView({block:'nearest'});}
@@ -37,7 +40,7 @@ export class RoomSetup{
     for(const [key,i]of Object.entries(this.fields))i.value=this.wasReady?String(this.draft[key]):'';
     this.apply.textContent=this.wasReady?'Сохранить комнату':'Начать проектирование';
     document.getElementById('room-setup-eyebrow').textContent=this.wasReady?'ЗАМЕР ПОМЕЩЕНИЯ':'ПЕРЕД ПРОЕКТИРОВАНИЕМ';
-    this.sockets.render();
+    this.sockets.render();this.shafts.render();
     this.error('');this.preview();if(!this.dialog.open)this.dialog.showModal();this.fields.width.focus();
   }
   openSockets(add=false){
@@ -49,11 +52,19 @@ export class RoomSetup{
     else this.sockets.render(this.draft.features.find(f=>f.kind==='socket')?.id);
     this.sockets.list.querySelector('details[open] select')?.focus();this.dialog.scrollTop=0;
   }
+  openShafts(add=false){
+    this.open();
+    if(!this.wasReady){this.error('Сначала укажите размеры комнаты, затем добавьте вентшахту ниже.');return;}
+    this.dialog.dataset.section='shafts';document.getElementById('room-setup-title').textContent='Расположение вентшахт';
+    document.getElementById('room-setup-eyebrow').textContent='КОММУНИКАЦИИ';this.apply.textContent='Сохранить расположение';
+    if(add)this.shafts.add();else this.shafts.render(this.draft.features.find(f=>f.kind==='shaft')?.id);
+    this.shafts.list.querySelector('details[open] select')?.focus();this.dialog.scrollTop=0;
+  }
   projectChanged(){if(this.dialog.open)this.dialog.close();if(!roomReady(this.app.adapter.room))this.open();}
   readDimensions(){return {...this.draft,...Object.fromEntries(Object.entries(this.fields).map(([key,i])=>[key,i.value===''?NaN:Number(i.value)]))};}
   commit(){
     const r={...this.readDimensions(),setup_complete:true},error=roomError(r);if(error){this.error(error);return;}
-    const outside=this.app.adapter.items.find(it=>placementError(it,[],r));if(outside){this.error('Новый размер не вмещает модуль: '+outside.name);return;}
+    const outside=this.app.adapter.items.find(it=>placementError(it,[],r));if(outside){this.error(outside.name+': '+placementError(outside,[],r)+'. Измените выступ или сначала переместите модуль.');return;}
     this.app.history.run('Замер комнаты',()=>{this.app.adapter.state.room=clone(r);this.app.bridge.refresh();});
     for(const k of ['width','depth','height'])document.getElementById('room-'+k).value=String(r[k]);
     this.dialog.close();this.app.scene.fit('room');this.app.adapter.status('Комната сохранена. Можно расставлять мебель.');
@@ -65,10 +76,11 @@ export class RoomSetup{
     const features=r.features||[];
     const scale=Math.min(410/r.width,255/r.depth),w=r.width*scale,h=r.depth*scale,x=(520-w)/2,y=45;
     const plan=svg('svg',{viewBox:`0 0 520 ${h+105}`,role:'img','aria-label':'План комнаты сверху, стены A B C D'});
-    plan.append(svg('rect',{x,y,width:w,height:h,rx:2,fill:'#f4f3ed',stroke:'#738577','stroke-width':3}));
+    plan.append(svg('rect',{x,y,width:w,height:h,rx:2,fill:'#f4f3ed',stroke:'none'}));
     for(const [text,tx,ty]of [[`A → · ${r.width} мм`,260,y-18],[`C →`,260,y+h+26],['D ↓',x-28,y+h/2],['B ↓',x+w+28,y+h/2]])plan.append(svg('text',{x:tx,y:ty,'text-anchor':'middle',fill:'#385849','font-size':14},text));
     plan.append(svg('text',{x:260,y:y+h+52,'text-anchor':'middle',fill:'#637367','font-size':13},`Глубина ${r.depth} мм · высота ${r.height} мм`));
-    features.forEach((f,n)=>{const b=featureBox(f,r,Math.max(70,8/scale));if(!Object.values(b).every(Number.isFinite))return;const color=FEATURES[f.kind]?.[1]||'#888';plan.append(svg('rect',{x:x+(b.x-b.w/2+r.width/2)*scale,y:y+(b.z-b.d/2+r.depth/2)*scale,width:Math.max(4,b.w*scale),height:Math.max(4,b.d*scale),fill:color}));const cx=x+(b.x+r.width/2)*scale,cy=y+(b.z+r.depth/2)*scale;plan.append(svg('circle',{cx,cy,r:10,fill:'#fff',stroke:color,'stroke-width':2}),svg('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#243d32','font-size':11},String(n+1)));});
+    features.forEach((f,n)=>{const b=featureBox(f,r,['shaft','column'].includes(f.kind)?0:Math.max(70,8/scale));if(!Object.values(b).every(Number.isFinite))return;const color=FEATURES[f.kind]?.[1]||'#888';plan.append(svg('rect',{x:x+(b.x-b.w/2+r.width/2)*scale,y:y+(b.z-b.d/2+r.depth/2)*scale,width:Math.max(4,b.w*scale),height:Math.max(4,b.d*scale),fill:color}));const cx=x+(b.x+r.width/2)*scale,cy=y+(b.z+r.depth/2)*scale;plan.append(svg('circle',{cx,cy,r:10,fill:'#fff',stroke:color,'stroke-width':2}),svg('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#243d32','font-size':11},String(n+1)));});
+    for(const edge of floorOutline(r))plan.append(svg('line',{x1:x+(edge.x1+r.width/2)*scale,y1:y+(edge.z1+r.depth/2)*scale,x2:x+(edge.x2+r.width/2)*scale,y2:y+(edge.z2+r.depth/2)*scale,stroke:'#526c59','stroke-width':3}));
     this.previewRoot.append(plan);
   }
 

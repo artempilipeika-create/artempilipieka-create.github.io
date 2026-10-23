@@ -1,5 +1,5 @@
 import {bounds,elevation,tier,MM_TO_WORLD as S} from './furniture-core.mjs';
-import {FEATURES,featureBox} from './room-plan.mjs';
+import {FEATURES,featureBox,floorOutline} from './room-plan.mjs';
 /** Used only after the WebGL renderer is disposed. Same adapter, no page reload. */
 export class FallbackPlan {
   constructor(canvas,adapter){
@@ -33,9 +33,10 @@ export class FallbackPlan {
       c.save();c.beginPath();c.rect(b.x+3,b.y+3,Math.max(0,b.w-6),Math.max(0,b.h-6));c.clip();c.font='10px Arial';c.fillStyle='#47603e';c.textAlign='center';c.fillText(it.name,b.x+b.w/2,b.y+b.h/2+3);c.restore();
     }
     for(const [i,f]of (r.features||[]).entries()){
-      const b=featureBox(f,r,70),x=m.ox+(b.x-b.w/2-m.cx)*m.scale,y=m.oy+(b.z-b.d/2-m.cz)*m.scale;
+      const b=featureBox(f,r,['shaft','column'].includes(f.kind)?0:70),x=m.ox+(b.x-b.w/2-m.cx)*m.scale,y=m.oy+(b.z-b.d/2-m.cz)*m.scale;
       c.fillStyle=FEATURES[f.kind][1];c.fillRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));c.font='bold 12px Arial';c.fillStyle='#243e30';c.textAlign='center';c.fillText(String(i+1),x+b.w*m.scale/2,y+b.d*m.scale/2-5);
     }
+    c.strokeStyle='#536958';c.lineWidth=2;c.beginPath();for(const e of floorOutline(r)){c.moveTo(m.ox+(e.x1-m.cx)*m.scale,m.oy+(e.z1-m.cz)*m.scale);c.lineTo(m.ox+(e.x2-m.cx)*m.scale,m.oy+(e.z2-m.cz)*m.scale);}c.stroke();
     if(this.preview)for(const it of this.preview.items||[this.preview.item]){const b=this.rectangle(it);c.fillStyle=this.preview.error?'#dab09188':'#8db18388';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=this.preview.error?'#a86b44':'#4b7b4a';c.strokeRect(b.x,b.y,b.w,b.h);}
   }
   sync(){this.invalidate();}

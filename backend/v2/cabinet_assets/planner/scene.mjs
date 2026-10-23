@@ -3,7 +3,7 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
 import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings,scopeMatches} from './furniture-core.mjs';
 import {roomSettings,LIGHTS} from './room-state.mjs';
-import {wallPanels} from './room-plan.mjs';
+import {wallPanels,floorOutline} from './room-plan.mjs';
 import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
@@ -46,8 +46,9 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();
     const r=this.adapter.room;
     if(this.walls)this.walls.forEach(w=>{w.visible=this.mode!=='top'&&(w.userData.axis==='x'?this.camera.position.x*w.userData.sign<r.width*S/2-.02:this.camera.position.z*w.userData.sign<r.depth*S/2-.02);if(w.userData.trim)w.userData.trim.visible=w.visible;});
-    for(const f of this.roomFeatures||[]){if(f.group.userData.kind==='socket')f.marker.visible=!this.client;f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
+    for(const f of this.roomFeatures||[]){if(['socket','shaft','column'].includes(f.group.userData.kind))f.marker.visible=!this.client;f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
     if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
+    if(this.floorOutline)this.floorOutline.visible=this.mode==='top';
     if(this.grid){this.grid.visible=!this.client;this.grid.material.opacity=this.mode==='top'?.14:.035;}
     if(this.clientFloor)this.clientFloor.visible=Boolean(this.client);
     if(this.floorJoints)this.floorJoints.visible=!this.client||!this.clientFloor;
@@ -110,6 +111,9 @@ export class PlannerScene{
     this.studioGround.receiveShadow=false;this.studioGround.raycast=()=>{};
     this.studioGround.userData={ownMaterial:true,visualOnly:true};this.roomRoot.add(this.studioGround);
     this.roomFeatures=measuredFeatures(this);
+    const outlinePoints=floorOutline(r).flatMap(e=>[e.x1*S,.016,e.z1*S,e.x2*S,.016,e.z2*S]);
+    const outlineGeometry=new THREE.BufferGeometry();outlineGeometry.setAttribute('position',new THREE.Float32BufferAttribute(outlinePoints,3));
+    this.floorOutline=new THREE.LineSegments(outlineGeometry,new THREE.LineBasicMaterial({color:'#536958'}));this.floorOutline.userData.ownMaterial=true;this.roomRoot.add(this.floorOutline);
     const joints=[],plank=settings.floorMaterial==='oak',step=plank?190:600;
     if(settings.floorMaterial!=='concrete'){
       for(let x=-r.width/2+step;x<r.width/2;x+=step)joints.push(x*S,-.0015,-r.depth*S/2,x*S,-.0015,r.depth*S/2);

@@ -5,7 +5,7 @@ from .auth_api import StrictModel
 
 class RoomFeature(StrictModel):
     id: str=Field(min_length=1,max_length=80)
-    kind: Literal['window','door','socket','switch','water','sewer','gas','ventilation','meter','radiator','column']
+    kind: Literal['window','door','socket','switch','water','sewer','gas','ventilation','meter','radiator','column','shaft']
     wall: Literal['a','b','c','d']
     label: str=Field(default='',max_length=100)
     offset: int=Field(ge=0,le=12000)
@@ -34,6 +34,7 @@ class Room(StrictModel):
             cross=self.depth if f.wall in ('a','c') else self.width
             if f.offset+f.width>span or f.elevation+f.height>self.height or f.projection>cross:
                 raise ValueError('Room feature outside measured envelope')
+            if f.kind=='shaft' and (f.elevation!=0 or f.projection<1):raise ValueError('Shaft must start at floor and have positive depth')
             if f.kind=='door' and f.elevation!=0:raise ValueError('Door must start at floor')
         # Dimensions are sufficient to start; retain explicit surveys in existing projects.
         if self.setup_complete and self.survey is not None:

@@ -21,3 +21,7 @@ body[data-room-ready=true][data-room-has-features=true] #studio-empty-scene{disp
 
 #room-setup[data-section="sockets"] #room-dimensions-step>h3,#room-setup[data-section="sockets"] #room-dimensions-step>p,#room-setup[data-section="sockets"] .room-dimension-grid{display:none}
 #room-setup[data-section="sockets"] #room-sockets{border:0;margin:0;padding:0}
+
+#room-shafts{margin-top:30px;padding-top:24px;border-top:1px solid #dce2d6}#room-shafts>p{font-size:12px}#room-shaft-add{width:100%;border-style:dashed!important}.room-shaft-card .room-socket-remove{margin-top:0}
+#room-setup[data-section="shafts"] #room-dimensions-step>h3,#room-setup[data-section="shafts"] #room-dimensions-step>p,#room-setup[data-section="shafts"] .room-dimension-grid,#room-setup[data-section="shafts"] #room-sockets,#room-setup[data-section="sockets"] #room-shafts{display:none}
+#room-setup[data-section="shafts"] #room-shafts{border:0;margin:0;padding:0}

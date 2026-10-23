@@ -849,6 +849,14 @@
   }
   const overlaps=(a,b,tolerance=.5)=>a.minX<b.maxX-tolerance&&a.maxX>b.minX+tolerance&&
     a.minZ<b.maxZ-tolerance&&a.maxZ>b.minZ+tolerance&&a.minY<b.maxY-tolerance&&a.maxY>b.minY+tolerance;
+  function roomObstacles(room){
+    return (room.features||[]).filter(f=>['shaft','column'].includes(f.kind)&&f.projection>0).map(f=>{
+      const horizontal=['a','c'].includes(f.wall),span=horizontal?room.width:room.depth,along=-span/2+f.offset;
+      const minX=f.wall==='b'?room.width/2-f.projection:f.wall==='d'?-room.width/2:along;
+      const minZ=f.wall==='a'?-room.depth/2:f.wall==='c'?room.depth/2-f.projection:along;
+      return {id:f.id,name:f.label||(f.kind==='shaft'?'Вентшахта':'Выступ стены'),minX,maxX:minX+(horizontal?f.width:f.projection),minZ,maxZ:minZ+(horizontal?f.projection:f.width),minY:f.elevation,maxY:f.elevation+f.height};
+    });
+  }
   function placementError(it,items,room){
     if(![it.x,it.z,it.width,it.height,it.depth,elevation(it,room)].every(Number.isFinite))return 'Некорректные размеры или положение';
     if(it.width<150||it.height<250||it.depth<200)return 'Размер меньше допустимого';
@@ -860,8 +868,16 @@
       if(Math.abs(p.x+it.x)>room.width/2+.5||Math.abs(p.z+it.z)>room.depth/2+.5)return 'Столешница выходит за границы помещения';
     }
     if(b.minY<0||b.maxY>room.height+.5)return 'Модуль выходит за высоту помещения';
+    const obstacles=roomObstacles(room),blocked=obstacles.find(o=>overlaps(b,o));
+    if(blocked)return 'Пересечение с выступом стены: '+blocked.name;
+    if(k?.countertopEnabled&&obstacles.length){
+      const points=[];
+      for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2-k.rearServiceGapMm,-it.depth/2-k.rearServiceGapMm+k.countertopDepthMm]){const p=rotateXZ(x,z,it.rotation||0);points.push({x:p.x+it.x,z:p.z+it.z});}
+      const top={minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z)),minY:b.maxY,maxY:b.maxY+k.countertopThicknessMm};
+      const obstruction=obstacles.find(o=>overlaps(top,o));if(obstruction)return 'Столешница пересекает выступ стены: '+obstruction.name;
+    }
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);
