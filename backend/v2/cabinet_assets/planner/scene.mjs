@@ -54,12 +54,12 @@ export class PlannerScene{
     const r=this.adapter.room;
     this.wallFinishes?.visibility();
     if(this.walls)this.walls.forEach(w=>{w.visible=this.mode!=='top'&&(w.userData.axis==='x'?this.camera.position.x*w.userData.sign<r.width*S/2-.02:this.camera.position.z*w.userData.sign<r.depth*S/2-.02);if(w.userData.trim)w.userData.trim.visible=w.visible;});
-    for(const f of this.roomFeatures||[]){if(['socket','shaft','column'].includes(f.group.userData.kind))f.marker.visible=!this.client;f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;
+    for(const f of this.roomFeatures||[]){f.marker.visible=!this.client;for(const marker of f.plan.children)if(marker.isSprite)marker.visible=!this.client;f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;
       const host=f.group.userData.hostWall;if(host){const axis=['a','c'].includes(host)?'z':'x',sign=['a','d'].includes(host)?-1:1;f.group.visible&&=this.camera.position[axis]*sign<(axis==='x'?r.width:r.depth)*S/2-.02;}
       for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
     if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
-    if(this.floorOutline)this.floorOutline.visible=this.mode==='top';
-    for(const line of this.countertopOutlines||[])line.visible=this.mode==='top';
+    if(this.floorOutline)this.floorOutline.visible=this.mode==='top'&&!this.client;
+    for(const line of this.countertopOutlines||[])line.visible=this.mode==='top'&&!this.client;
     if(this.grid){this.grid.visible=!this.client;this.grid.material.opacity=this.mode==='top'?.14:.035;}
     if(this.clientFloor)this.clientFloor.visible=Boolean(this.client);
     if(this.floorJoints)this.floorJoints.visible=!this.client||!this.clientFloor;
