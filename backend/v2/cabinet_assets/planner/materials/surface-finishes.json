@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "source_url": "https://www.egger.com/en/furniture-interior-design/decorative-collection/solutions/perfectsense-portfolio",
+  "checked_at": "2026-10-23",
+  "note": "EGGER identifies PG as high-gloss lacquer. Roughness is a renderer presentation preset, not a measured manufacturer value. Exact existing variant, material and full article identities only; image and scale metadata are unchanged.",
+  "variants": {
+    "2d574e26-0642-5d74-94be-80d469efa0c8": {
+      "article": "F206 PG",
+      "material_id": "4a2d012c-8da8-57b5-b0ae-111413260b1e",
+      "name": "МДФ PerfectSense 18мм Камень Пьетра Гриджиа чёрный  F206 PG",
+      "roughness": 0.18
+    },
+    "7ebcae92-e223-572d-a02a-8170fe5081c8": {
+      "article": "U323 PG",
+      "material_id": "6d38f9b1-5444-59ff-ae5e-00b036935837",
+      "name": "МДФ PerfectSense 18мм Ярко-красный  U323 PG",
+      "roughness": 0.18
+    },
+    "4013f602-5264-56e5-aad9-5a3459bc7171": {
+      "article": "U708 PG",
+      "material_id": "d3ca8869-572a-54b3-b5db-ebf3499bc89e",
+      "name": "МДФ PerfectSense 18мм Светло-серый  U708 PG",
+      "roughness": 0.18
+    },
+    "41bbb85c-1231-5235-9d1b-7801b6c98204": {
+      "article": "U727 PG",
+      "material_id": "868772de-7ad9-59d8-82e9-42cfc8fc1551",
+      "name": "МДФ PerfectSense 18мм Серый камень  U727 PG",
+      "roughness": 0.18
+    },
+    "2feba149-1ce3-506c-ab52-8a642a56d493": {
+      "article": "U732 PG",
+      "material_id": "91826ea2-45d6-597e-a198-b8693acd3246",
+      "name": "МДФ PerfectSense 18мм Серый пыльный  U732 PG",
+      "roughness": 0.18
+    },
+    "8f8fb83e-ce2b-577f-918e-cc1d770ecf96": {
+      "article": "U961 PG",
+      "material_id": "72bb8089-25d3-5def-a4c3-ef78c589120e",
+      "name": "МДФ PerfectSense 18мм Графит чёрный  U961 PG",
+      "roughness": 0.18
+    },
+    "065eff24-14d5-5097-b3e7-fc4eefa7b3b9": {
+      "article": "W1000 PG",
+      "material_id": "193af3e5-ce65-5a17-a20d-b05bff81913e",
+      "name": "МДФ PerfectSense 18мм Белый премиум  W1000 PG",
+      "roughness": 0.18
+    }
+  }
+}

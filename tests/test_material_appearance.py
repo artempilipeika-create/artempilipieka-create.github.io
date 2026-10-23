@@ -27,3 +27,18 @@ def test_new_display_assets_are_served_from_fixed_allowlist():
     for path in ['material-appearance-ui.mjs','material-appearance.css']:
         r=client.get('/account/planner/'+path);assert r.status_code==200
     assert client.get('/account/planner/material-appearance-secret.json').status_code==404
+
+def test_verified_pg_finish_changes_only_optics_of_exact_existing_variants():
+    from backend.v2.material_visuals import user_textures,surface_finishes,exact_user_texture
+    records=user_textures()['variants'];finishes=surface_finishes()['variants']
+    assert len(finishes)==7
+    for uid,finish in finishes.items():
+        original=records[uid];item={**original,'variant_id':uid}
+        visual=exact_user_texture(item)
+        assert visual['roughness']==.18 and original['roughness']==.85
+        for key in ['texture_url','visual_status','texture_size_mm','scale_confirmed']:
+            assert visual[key]==original[key]
+        assert exact_user_texture({**item,'article':finish['article'].replace('PG','PM')}) is None
+        assert exact_user_texture({**item,'material_id':str(uuid4())}) is None
+    uid=next(k for k,v in records.items() if v['article']=='F812 PM')
+    assert exact_user_texture({**records[uid],'variant_id':uid})['roughness']==.85

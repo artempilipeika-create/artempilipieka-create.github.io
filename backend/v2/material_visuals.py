@@ -58,6 +58,10 @@ def manifest():
 def user_textures():
     return json.loads((ROOT/'user-textures.json').read_text())
 
+@lru_cache(maxsize=1)
+def surface_finishes():
+    return json.loads((ROOT/'surface-finishes.json').read_text())
+
 @lru_cache(maxsize=8)
 def user_texture_bytes(asset):
     record=user_textures()['assets'].get(asset)
@@ -78,7 +82,11 @@ def exact_user_texture(item):
             if float(item.get(key))!=float(record[key]):return None
         except (TypeError,ValueError):return None
     keys=('texture_url','preview_url','render_color','visual_status','texture_size_mm','scale_confirmed','scale_note','rotation_deg','grain_direction','roughness','source_kind','map_to_surface','color_confirmed','color_note')
-    return {k:record[k] for k in keys if k in record}
+    visual={k:record[k] for k in keys if k in record}
+    finish=surface_finishes()['variants'].get(str(item.get('variant_id') or ''))
+    if finish and all(finish.get(k)==record.get(k) for k in ('article','material_id','name')):
+        visual['roughness']=finish['roughness']
+    return visual
 
 def visual_metadata(item):
     # Explicit per-variant metadata always wins over the small verified decor registry.
