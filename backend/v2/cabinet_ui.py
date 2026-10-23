@@ -27,6 +27,7 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
+        'worktop-fixtures.mjs','worktop-fixture-mesh.mjs','worktop-fixture-ui.mjs','worktop-fixtures.css',
         'showroom.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','socket-editor.mjs','socket-asset.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',

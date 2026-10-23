@@ -95,11 +95,17 @@ export function countertopGeometry(surface,thickness=38){
     for(let k=0;k<ys.length-1;k++){triangle(v(k,i),v(k,j),v(k+1,j));triangle(v(k,i),v(k+1,j),v(k+1,i));}
   }
   for(const [k,sign]of [[0,-1],[ys.length-1,1]]){
-    const ring=rings[k],contour=ring.map(p=>new THREE.Vector2(p[0],p[2]));
-    for(const face of THREE.ShapeUtils.triangulateShape(contour,[]))triangle(...face.map(i=>vertex(ring[i],[0,sign,0],[ring[i][2],ring[i][0]])));
+    const ring=rings[k],holes=(surface.holes||[]).map(points=>points.map(([x,z])=>[x,ys[k],z])),all=[...ring,...holes.flat()];
+    const contour=ring.map(p=>new THREE.Vector2(p[0],p[2]));
+    for(const face of THREE.ShapeUtils.triangulateShape(contour,holes.map(h=>h.map(p=>new THREE.Vector2(p[0],p[2])))))triangle(...face.map(i=>vertex(all[i],[0,sign,0],[all[i][2],all[i][0]])));
+  }
+  for(const hole of surface.holes||[])for(let i=0;i<hole.length;i++){
+    const a=hole[i],b=hole[(i+1)%hole.length],e=edge(a,b),sign=area(hole)>0?-1:1,n=[e.n[0]*sign,0,e.n[1]*sign];
+    const v=(p,y)=>vertex([p[0],y,p[1]],n,[p[0]+p[1],y]);
+    triangle(v(a,0),v(b,0),v(b,thickness));triangle(v(a,0),v(b,thickness),v(a,thickness));
   }
   const g=new THREE.BufferGeometry();
   for(const [name,array,size]of [['position',positions,3],['normal',normals,3],['uv',uvs,2],['color',colors,3]])g.setAttribute(name,new THREE.Float32BufferAttribute(array,size));
-  g.computeBoundingBox();g.computeBoundingSphere();g.userData={visualOnly:true,profile:'postformed-38',frontRadiusMM:FRONT_RADIUS,thicknessMM:thickness};
+  g.computeBoundingBox();g.computeBoundingSphere();g.userData={visualOnly:true,profile:'postformed-38',frontRadiusMM:FRONT_RADIUS,thicknessMM:thickness,visualCutouts:surface.holes?.length||0};
   return g;
 }

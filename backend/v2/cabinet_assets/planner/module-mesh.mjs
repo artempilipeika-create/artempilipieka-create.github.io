@@ -2,6 +2,8 @@ import * as THREE from './vendor/three.module.js';
 import {materialVisual,physicalPanelUV} from './material-visuals.mjs';
 import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
 import {countertopSurfaces,countertopGeometry} from './countertop-visuals.mjs';
+import {fixturePlans} from './worktop-fixtures.mjs';
+import {buildWorktopFixture} from './worktop-fixture-mesh.mjs';
 import {ApplianceAssets,applianceLayout} from './appliance-assets.mjs';
 import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts,kitchenRuns,kitchenLegs,isKitchenModule} from './furniture-core.mjs';
 
@@ -378,8 +380,8 @@ export class MeshFactory{
   position(group,it){group.position.set(it.x*S,elevation(it,this.adapter.room)*S,it.z*S);group.rotation.y=-(it.rotation||0)*Math.PI/180;}
   /** Pilot runs derive from production data; the old visual dressing stays for legacy projects. */
   countertop(group,part,surface){
-    if(surface&&Math.abs(part.thickness-38)<.001){
-      const key='countertop-postform:'+JSON.stringify([surface.points,surface.radii,part.thickness]);
+    if(surface&&(Math.abs(part.thickness-38)<.001||surface.holes?.length)){
+      const key='countertop-postform:'+JSON.stringify([surface.points,surface.radii,surface.holes,part.thickness]);
       return this.mesh(group,'counter',this.acquire(key,()=>countertopGeometry(surface,part.thickness)),key,0,part.position.y-part.thickness/2,0,part.material.variant_id);
     }
     if(!part.contour){const d=part.size,p=part.position;return this.box(group,'counter',d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);}
@@ -414,6 +416,8 @@ export class MeshFactory{
   dress(items){
     const root=new THREE.Group();root.userData={visualOnly:true,mergedPlinthIds:[]};const groups=new Map();
     const plans=kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id)),surfaces=countertopSurfaces(plans);
+    const fixtures=fixturePlans(items,this.adapter.room,plans);
+    for(const f of fixtures){if(f.error)continue;const surface=surfaces.get(f.part);(surface.holes??=[]).push(f.hole);root.add(buildWorktopFixture(f));}
     for(const plan of plans){
       const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
       for(const part of plan.parts.filter(p=>p.role!=='plinth')){const d=part.size,p=part.position,m=part.role==='counter'?this.countertop(g,part,surfaces.get(part)):this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;if(part.role==='counter'){this.countertopOutline(g,part);this.countertopJoints(g,part,surfaces.get(part));}}
@@ -481,7 +485,7 @@ export class MeshFactory{
     return root;
   }
   release(group){
-    if(!group||group.userData.released)return;group.userData.released=true;group.traverse(o=>{const entry=this.pool.get(o.userData.geometryKey);if(entry)entry.refs=Math.max(0,entry.refs-1);});group.removeFromParent();
+    if(!group||group.userData.released)return;group.userData.released=true;group.traverse(o=>{if(o.userData.ownGeometry)o.geometry?.dispose();for(const material of o.userData.ownedMaterials||[])material.dispose();const entry=this.pool.get(o.userData.geometryKey);if(entry)entry.refs=Math.max(0,entry.refs-1);});group.removeFromParent();
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }

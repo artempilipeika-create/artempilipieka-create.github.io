@@ -1,5 +1,6 @@
 import {bounds,elevation,tier,MM_TO_WORLD as S} from './furniture-core.mjs';
 import {FEATURES,featureBox,floorOutline} from './room-plan.mjs';
+import {fixturePlans,roundedOutline} from './worktop-fixtures.mjs';
 /** Used only after the WebGL renderer is disposed. Same adapter, no page reload. */
 export class FallbackPlan {
   constructor(canvas,adapter){
@@ -31,6 +32,13 @@ export class FallbackPlan {
       c.fillStyle=tier(it)==='wall'?'#e4ece2':'#dce0d1';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=on?'#39704c':'#8d9d86';c.lineWidth=on?2:1;
       if(tier(it)==='wall')c.setLineDash([5,3]);c.strokeRect(b.x,b.y,b.w,b.h);c.setLineDash([]);
       c.save();c.beginPath();c.rect(b.x+3,b.y+3,Math.max(0,b.w-6),Math.max(0,b.h-6));c.clip();c.font='10px Arial';c.fillStyle='#47603e';c.textAlign='center';c.fillText(it.name,b.x+b.w/2,b.y+b.h/2+3);c.restore();
+    }
+    for(const f of fixturePlans(this.adapter.items,r)){
+      if(f.error||this.layer!=='all'&&this.layer!=='base')continue;
+      const angle=f.rotation*Math.PI/180;c.save();c.translate(m.ox+(f.x-m.cx)*m.scale,m.oy+(f.z-m.cz)*m.scale);c.rotate(angle);
+      c.beginPath();roundedOutline(f.width,f.depth).forEach(([x,z],i)=>i?c.lineTo(x*m.scale,z*m.scale):c.moveTo(x*m.scale,z*m.scale));c.closePath();c.fillStyle=f.kind==='sink'?'#a6b0b1':'#263033';c.fill();c.strokeStyle='#536367';c.stroke();
+      if(f.kind==='sink'){c.strokeRect(-f.width*.42*m.scale,(-f.depth/2+85)*m.scale,f.width*.84*m.scale,(f.depth-110)*m.scale);}
+      else for(const x of [-.25,.25])for(const z of [-.23,.2]){c.beginPath();c.arc(x*f.width*m.scale,z*f.depth*m.scale,65*m.scale,0,Math.PI*2);c.strokeStyle='#9da7a9';c.stroke();}c.restore();
     }
     for(const [i,f]of (r.features||[]).entries()){
       const b=featureBox(f,r,['shaft','column'].includes(f.kind)?0:70),x=m.ox+(b.x-b.w/2-m.cx)*m.scale,y=m.oy+(b.z-b.d/2-m.cz)*m.scale;

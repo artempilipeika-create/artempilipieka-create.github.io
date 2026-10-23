@@ -1,3 +1,4 @@
+import {fixtureError} from './worktop-fixtures.mjs';
 import {clone,elevation,tier,heights,dimensionError,placementError,normalizeKitchen,kitchenSettings,productionShelves,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
@@ -46,6 +47,7 @@ export class StateAdapter{
   remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
   validate(it,items=this.items){
     if(!['width','height','depth'].every(k=>Number.isInteger(it[k]))||!['x','z'].every(k=>Number.isInteger(it[k]*2)))return 'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
+    const worktopError=fixtureError(it);if(worktopError)return worktopError;
     const ruleError=dimensionError(it,this.template(it));if(ruleError)return ruleError;
     const h=heights(it);
     if(h.body_height<150||h.base_height<0||h.base_height>300||h.worktop_thickness<0||h.worktop_thickness>100||

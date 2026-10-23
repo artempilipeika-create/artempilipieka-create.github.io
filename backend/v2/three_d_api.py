@@ -44,6 +44,16 @@ class ApplianceDetails(StrictModel):
     microwave: ApplianceReference=Field(default_factory=ApplianceReference)
     remarks: str=Field(default='',max_length=1500)
 
+class WorktopFixture(StrictModel):
+    kind: Literal['sink','hob']
+    width: int=Field(ge=300,le=1000,strict=True)
+    depth: int=Field(ge=300,le=700,strict=True)
+    offset_x: int=Field(default=0,ge=-1500,le=1500,strict=True)
+    front_offset: int=Field(default=50,ge=20,le=880,strict=True)
+    finish: Literal['steel','black']='steel'
+    faucet: Literal['arch','angled','compact']='arch'
+    faucet_finish: Literal['chrome','black']='chrome'
+
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
@@ -86,9 +96,17 @@ class FurnitureItem(StrictModel):
     upper_shelf_count: int|None=Field(default=None,ge=0,le=8,strict=True)
     production_note: str=Field(default='',max_length=2000)
     appliance_details: ApplianceDetails|None=None
+    worktop_fixture: WorktopFixture|None=None
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if f:=self.worktop_fixture:
+            if self.module_type!='base_cabinet' or not self.countertopEnabled:
+                raise ValueError('Worktop fixture requires a lower cabinet with a worktop')
+            if abs(f.offset_x)+f.width/2>self.width/2:
+                raise ValueError('Worktop fixture exceeds cabinet width')
+            if f.front_offset+f.depth>(self.countertopDepthMm or 600)-20:
+                raise ValueError('Worktop fixture requires 20 mm front and rear margins')
         refreshed=refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file})
         self.bazis_sha256=refreshed.get('bazis_sha256')
         self.bazis_file=refreshed.get('bazis_file')

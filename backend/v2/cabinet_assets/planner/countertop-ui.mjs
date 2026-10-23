@@ -28,6 +28,7 @@ export class CountertopUI{
     document.getElementById('kitchen-controls').after(this.control);
     app.listen(this.enabled,'change',()=>{
       const it=app.adapter.selected;if(!kitchenSettings(it))return;
+      if(it.worktop_fixture&&!this.enabled.checked){this.enabled.checked=true;app.adapter.status('Сначала уберите мойку или варочную со столешницы.');return;}
       app.interaction.modify({countertopEnabled:this.enabled.checked},'Столешница над модулем');app.bridge.refresh();
     });
   }
