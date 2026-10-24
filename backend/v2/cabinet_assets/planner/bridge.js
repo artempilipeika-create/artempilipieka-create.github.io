@@ -20,7 +20,7 @@
   duplicateProject=async function(){if(window.MF_PROJECT_SAFETY)return window.MF_PROJECT_SAFETY.duplicate();await saveProject();return oldCopy();};
   downloadSpec=async function(){await saveProject();return oldPdf();};
   const bridge={
-    supportsElevation:false,
+    supportsElevation:true,
     state:()=>state,
     selected:()=>selected(),
     projectId:()=>project?.project_id||null,

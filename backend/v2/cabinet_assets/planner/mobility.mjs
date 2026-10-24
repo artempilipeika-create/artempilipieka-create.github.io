@@ -40,9 +40,10 @@ export function applyChanges(adapter,changed){
   const next=validateChanges(adapter,changed);
   adapter.state.items=next.map(it=>adapter.persistent(it));adapter.notify();
 }
-export function replacement(source,draft,oldTemplate,newTemplate,keepDimensions=true){
+export function replacement(source,draft,oldTemplate,newTemplate,keepDimensions=true,room){
   if(kitchenGroup(source)!==kitchenGroup(draft))throw new Error('Выберите модуль из той же группы: низ, верх или пеналы.');
   let next={...clone(draft),item_id:source.item_id,x:source.x,z:source.z,rotation:source.rotation};
+  if(source.module_type==='wall_cabinet'&&(Number.isFinite(source.elevation_mm)||room))next.elevation_mm=elevation(source,room);
   for(const key of ['body_variant_id','front_variant_id','back_variant_id','plinthMaterialId','countertopMaterialId','production_note','doors_open'])
     if(Object.hasOwn(source,key))next[key]=clone(source[key]);
   if(newTemplate?.production?.vitrine)next.front_variant_id=null;

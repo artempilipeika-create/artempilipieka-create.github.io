@@ -38,7 +38,7 @@ with sync_playwright() as pw:
  const dryer={...p.adapter.createDraft({bazis:corrected.id}),item_id:'dryer',x:-900,z:0,bazis_sha256:old.source_sha256,bazis_file:old.source_file};
  const tall={...p.adapter.createDraft({bazis:c.APPLIANCE_TALL_FAMILY.default_id}),item_id:'tall',x:900,z:0};
  const shallow={...p.adapter.createDraft({bazis:c.TALL_FAMILY.default_id}),item_id:'shallow',x:1700,z:0};
- const upper={...p.adapter.createDraft({bazis:'bazis.877ba2f68d92'}),item_id:'upper',x:0,z:0,height:720,elevation_mm:1458};
+ const upper={...p.adapter.createDraft({bazis:'bazis.877ba2f68d92'}),item_id:'upper',x:0,z:0,height:720};
  await p.bridge.loadSnapshot({name:'Проверка сушки',scene:{schema_version:2,room:{width:5000,depth:4000,height:3000,setup_complete:true,features:[]},items:[dryer,tall,shallow,upper],selected_item_id:'dryer',view_mode:'3d'},selectedId:'dryer'},null);p.roomSetup.projectChanged();p.history.reset();p.scene.fit('kitchen');}''')
  assert page.evaluate('MF_PLANNER.adapter.selected.bazis_sha256===MF_PULLOUT_DRYERS.variants.find(v=>v.previous_sources).source_sha256')
  page.locator('#studio-toggle-inspector').click()
@@ -64,19 +64,40 @@ with sync_playwright() as pw:
  expect(page.locator('#depth')).to_have_attribute('min','300')
  page.locator('#depth').fill('300');page.locator('#depth').press('Tab')
  assert page.evaluate('MF_PLANNER.adapter.selected.depth')==300
+ # Editing an existing legacy upper fixes its bottom and grows upward.
+ page.evaluate("MF_PLANNER.adapter.select('upper');MF_PLANNER.bridge.refresh()")
+ assert page.evaluate('MF_FURNITURE_CORE.elevation(MF_PLANNER.adapter.selected,MF_PLANNER.adapter.room)')==1780
+ page.locator('#height').fill('900');page.locator('#height').press('Tab')
+ assert page.evaluate('MF_PLANNER.adapter.selected.elevation_mm')==1780
+ assert page.evaluate('MF_PLANNER.adapter.selected.height')==900
+ page.locator('#planner-undo').click();assert page.evaluate('MF_PLANNER.adapter.selected.height')==720
+ page.locator('#planner-redo').click();assert page.evaluate('MF_PLANNER.adapter.selected.height')==900
+ for height in [600,900]:
+  page.locator('#height').fill(str(height));page.locator('#height').press('Tab')
+  assert page.evaluate('MF_PLANNER.adapter.selected.elevation_mm')==1780
+ # Above-ceiling growth must be rejected, never lowered to fit.
+ page.locator('#height').fill('1300');page.locator('#height').press('Tab')
+ assert page.evaluate('MF_PLANNER.adapter.selected.height')==900
+ assert page.evaluate('MF_PLANNER.adapter.selected.elevation_mm')==1780
  with page.expect_response(lambda r:'/api/v2/3d-projects' in r.url and r.request.method in ('POST','PATCH')) as saved:
   page.locator('#save-project').click()
  stored=saved.value.json()
  assert next(it for it in stored['scene']['items'] if it['item_id']=='shallow')['depth']==300
  assert next(it for it in stored['scene']['items'] if it['item_id']=='tall')['depth']==500
+ upper=next(it for it in stored['scene']['items'] if it['item_id']=='upper')
+ assert (upper['height'],upper['elevation_mm'])==(900,1780)
  page.evaluate('''async stored=>{await MF_PLANNER.bridge.loadSnapshot({...stored,selectedId:'shallow'},stored);MF_PLANNER.adapter.select('shallow');MF_PLANNER.bridge.refresh()}''',stored)
  expect(page.locator('#depth')).to_have_value('300')
  assert page.evaluate("(()=>{const it=MF_PLANNER.adapter.selected,c=MF_FURNITURE_CORE;return c.productionParts(it,{production:c.PRODUCTION_MODELS[it.bazis_id]}).filter(p=>p.role==='body'||p.role==='shelf').every(p=>p.size.z===300)})()")
+ assert page.evaluate("MF_PLANNER.adapter.items.find(it=>it.item_id==='upper').elevation_mm")==1780
+ assert abs(page.evaluate("MF_PLANNER.scene.entries.get('upper').group.position.y")-1.780)<1e-6
  with page.expect_download() as downloaded:
   page.evaluate("document.getElementById('export-bazis').click()")
  native=json.loads(Path(downloaded.value.path()).read_text())
  assert next(it for it in native['items'] if it['name']==next(it['name'] for it in stored['scene']['items'] if it['item_id']=='tall'))['target']['depth']==500
+ exported_upper=next(it for it in native['items'] if it['bazis_id']==upper['bazis_id'])
+ assert (exported_upper['target']['height'],exported_upper['position']['y'])==(900,1780)
  page.set_viewport_size({'width':390,'height':844});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
  assert not errors and not blocked,dict(errors=errors,blocked=blocked)
- print(json.dumps({'ok':True,'dryer_width':900,'kit':'95551','tall_depth':500,'shallow_tall_depth':300,'saved_and_reopened':True,'native_export':True,'aligned_height':2500,'undo':True,'errors':errors}))
+ print(json.dumps({'ok':True,'dryer_width':900,'kit':'95551','tall_depth':500,'shallow_tall_depth':300,'upper_bottom':1780,'upper_top':2680,'ceiling_guard':True,'saved_and_reopened':True,'native_export':True,'aligned_height':2500,'undo':True,'errors':errors}))
  browser.close()

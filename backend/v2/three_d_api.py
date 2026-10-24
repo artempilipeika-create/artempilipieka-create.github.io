@@ -79,6 +79,7 @@ class FurnitureItem(StrictModel):
     name: str=Field(min_length=1,max_length=160)
     x: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.5)
     z: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.5)
+    elevation_mm: int|None=Field(default=None,ge=0,le=5000,strict=True)
     rotation: Literal[0,90,180,270]=0
     width: int=Field(ge=150,le=3000)
     height: int=Field(ge=250,le=3000)
@@ -113,6 +114,8 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.module_type!='wall_cabinet' and self.elevation_mm not in (None,0):
+            raise ValueError('Высота навески доступна только для верхнего шкафа')
         if f:=self.worktop_fixture:
             if self.module_type!='base_cabinet' or not self.countertopEnabled:
                 raise ValueError('Worktop fixture requires a lower cabinet with a worktop')
@@ -363,6 +366,9 @@ class Scene(StrictModel):
 
     @model_validator(mode='after')
     def wall_finish_placement(self):
+        for item in self.items:
+            if item.module_type=='wall_cabinet' and item.elevation_mm is not None and item.elevation_mm+item.height>self.room.height:
+                raise ValueError('Верх шкафа выходит выше потолка. Уменьшите высоту шкафа.')
         if len({v.id for v in self.presentationViews})!=len(self.presentationViews):
             raise ValueError('Presentation view IDs must be unique')
         for collection in (self.plinths,self.wallPanels):

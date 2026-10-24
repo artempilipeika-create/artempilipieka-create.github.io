@@ -264,8 +264,13 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
     for i,it in enumerate(items,1):
         body=materials.get(str(it.get('body_variant_id')),'Не выбран')
         front='Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
+        position=f"X {it.get('x',0)} · Z {it.get('z',0)} · {it.get('rotation',0)}°"
+        if it.get('module_type')=='wall_cabinet':
+            bottom=it.get('elevation_mm')
+            if bottom is None:bottom=max(0,room.get('height',2700)-it['height']-500)
+            position+=f" · низ {bottom:g} мм · верх {bottom+it['height']:g} мм"
         summary.append([p(i),p(it.get('name') or MODULES.get(it.get('module_type'),'Модуль')),
-            p(f"{it.get('width')} x {it.get('height')} x {it.get('depth')}"),p(f"X {it.get('x',0)} · Z {it.get('z',0)} · {it.get('rotation',0)}°"),
+            p(f"{it.get('width')} x {it.get('height')} x {it.get('depth')}"),p(position),
             p(body,'small'),p(front,'small')])
     story=[p('Martin Forest · 3D-проект','title'),p(name,'head'),
       p(f"Помещение: {room.get('width')} x {room.get('depth')} x {room.get('height')} мм · Модулей: {len(items)}",'body')]

@@ -143,7 +143,7 @@ export class Interaction {
       if(Object.keys(patch).every(k=>['x','z'].includes(k))&&this.targets().length>1){
         applyChanges(this.adapter,translateItems(this.targets(),(patch.x??source.x)-source.x,(patch.z??source.z)-source.z));return;
       }
-      let it=dimensionPatch(source,patch);
+      let it=dimensionPatch(source,patch,this.adapter.room);
       if(Number.isFinite(patch.width)&&patch.width!==source.width)it=rightAnchoredWidth(source,it);
       const kitchen=kitchenSettings(source),nextKitchen=kitchenSettings(it);
       if(kitchen&&(Number.isFinite(patch.depth)||Number.isFinite(patch.rearServiceGapMm))){
@@ -164,7 +164,7 @@ export class Interaction {
     const source=this.adapter.selected;if(!source)return false;
     return this.change('Замена модуля',()=>{
       const draft=this.adapter.createDraft(opt);
-      const next=replacement(source,draft,this.adapter.template(source),this.adapter.template(draft),keepDimensions);
+      const next=replacement(source,draft,this.adapter.template(source),this.adapter.template(draft),keepDimensions,this.adapter.room);
       applyChanges(this.adapter,widthChange(source,next,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
       this.adapter.status('Модуль заменён. Материалы, положение и заметка сохранены.');
     });

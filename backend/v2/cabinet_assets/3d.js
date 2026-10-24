@@ -1052,7 +1052,7 @@ function buildItem(it){
   const S=1/500,W=it.width*S,H=it.height*S,D=it.depth*S,t=18*S;
   const bc=colorFor(materials.get(String(it.body_variant_id))),fc=colorFor(materials.get(String(it.front_variant_id)),true);
   const baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height*S;
-  const wallLift=it.module_type==='wall_cabinet'?Math.max(0,(state.room.height-it.height-500))*S:0;
+  const wallLift=globalThis.MF_FURNITURE_CORE.elevation(it,state.room)*S;
   const y0=wallLift;
   addItemBox(it,t,H-baseH,D,-W/2+t/2,y0+baseH+(H-baseH)/2,0,bc);
   addItemBox(it,t,H-baseH,D,W/2-t/2,y0+baseH+(H-baseH)/2,0,bc);
@@ -1181,7 +1181,7 @@ function hitItem2d(clientX,clientY){
 function itemRect3d(it,w,h){
   const S=1/500,odd=it.rotation===90||it.rotation===270;
   const ww=(odd?it.depth:it.width)*S,dd=(odd?it.width:it.depth)*S,H=it.height*S;
-  const wallLift=it.module_type==='wall_cabinet'?Math.max(0,(state.room.height-it.height-500))*S:0;
+  const wallLift=globalThis.MF_FURNITURE_CORE.elevation(it,state.room)*S;
   const cx=it.x*S,cz=it.z*S,y0=wallLift,y1=wallLift+H;
   const pts=[];
   for(const x of[cx-ww/2,cx+ww/2])for(const y of[y0,y1])for(const z of[cz-dd/2,cz+dd/2])pts.push(proj3({x,y,z},w,h));
@@ -1488,7 +1488,9 @@ for(const id of['room-width','room-depth','room-height'])$(id).oninput=()=>{
 for(const [id,key]of[['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z']])$(id).oninput=()=>{
   const it=selected();
   if(it){
-    it[key]=+$(id).value||0;
+    const value=+$(id).value||0;
+    if(key==='height')Object.assign(it,globalThis.MF_FURNITURE_CORE.dimensionPatch(it,{height:value},state.room));
+    else it[key]=value;
     updateAll();
   }
 };

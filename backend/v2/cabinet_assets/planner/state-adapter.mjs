@@ -41,12 +41,13 @@ export class StateAdapter{
     if(type==='base_cabinet')it.countertopJoint=this.state?.countertopSettings?.joint||'standard';
     return normalizeKitchen(withDefaultMaterials(it));
   }
-  persistent(it){const value=clone(it);if(!this.bridge.supportsElevation)delete value.elevation_mm;return value;}
+  persistent(it){const value=clone(it);if(!this.bridge.supportsElevation||it.module_type!=='wall_cabinet')delete value.elevation_mm;return value;}
   insert(it){if(this.items.length>=100)throw new Error('В одном проекте поддерживается до 100 модулей');this.items.push(this.persistent(it));this.bridge.select(it.item_id);}
   replace(it){const idx=this.items.findIndex(x=>x.item_id===it.item_id);if(idx<0)return;this.items[idx]=this.persistent(it);this.notify();}
   remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
   validate(it,items=this.items){
     if(!['width','height','depth'].every(k=>Number.isInteger(it[k]))||!['x','z'].every(k=>Number.isInteger(it[k]*2)))return 'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
+    if(it.elevation_mm!=null&&(!Number.isInteger(it.elevation_mm)||it.elevation_mm<0))return 'Высота навески — целое неотрицательное число миллиметров';
     const worktopError=fixtureError(it);if(worktopError)return worktopError;
     const ruleError=dimensionError(it,this.template(it));if(ruleError)return ruleError;
     const h=heights(it);
@@ -67,7 +68,7 @@ export class StateAdapter{
         return 'Полка выходит за внутреннюю высоту корпуса';
       if(shelf?.enabled!==false&&(it.width-shelf.width_clearance<=0||it.depth-shelf.depth_clearance<=0))return 'Полка не помещается в корпус';
     }
-    if(elevation(it,this.room)+h.overall_height_with_worktop>this.room.height)return 'Столешница выходит за высоту помещения';
+    if(elevation(it,this.room)+h.overall_height_with_worktop>this.room.height)return it.module_type==='wall_cabinet'?'Верх шкафа выходит выше потолка. Уменьшите высоту шкафа.':'Столешница выходит за высоту помещения';
     const t=this.template(it),limits=t?.limits||{w:[300,3000],h:[300,3000],d:[200,1200]};
     for(const [k,axis]of[['width','w'],['height','h'],['depth','d']]){
       const offset=axis==='h'&&kitchen&&production?kitchen.legHeightMm-production.base_height:0;

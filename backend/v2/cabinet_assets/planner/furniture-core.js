@@ -509,7 +509,7 @@
     const shift=rotateXZ((next.width-source.width)/2,0,source.rotation||0);
     return {...next,x:source.x+shift.x,z:source.z+shift.z};
   }
-  function dimensionPatch(source,patch){
+  function dimensionPatch(source,patch,room){
     if(isKitchenModule(source)){
       const old=heights(source),it=normalizeKitchen({...source,...patch});
       const leg=patch.legHeightMm??patch.base_height??old.base_height;
@@ -524,6 +524,10 @@
       const body=patch.body_height??(Object.hasOwn(patch,'height')?patch.height-base:source.bazis_id?source.height-base:old.body_height);
       Object.assign(it,{base_height:base,body_height:body,height:base+body});
     }
+    // A resized wall cabinet grows from its existing bottom, including legacy
+    // saves whose mounting elevation was previously derived from the ceiling.
+    if(source.module_type==='wall_cabinet'&&it.height!==source.height&&!Object.hasOwn(patch,'elevation_mm')&&
+      (Number.isFinite(source.elevation_mm)||Number.isFinite(room?.height)))it.elevation_mm=elevation(source,room);
     const p=PRODUCTION_MODELS[it.bazis_id];
     if(p?.tier==='wall'&&p.shelf_rule)it.shelves=productionShelves(it,p);
     if(p?.tall&&it.height!==source.height&&['height','body_height'].some(k=>Object.hasOwn(patch,k)))
