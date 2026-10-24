@@ -63,11 +63,11 @@ def router():
         if asset.startswith('materials/user-'):
             image=user_texture_bytes(asset.removeprefix('materials/'))
             if image is not None:
-                mime='image/png' if asset.endswith('.png') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg'
+                mime='image/png' if asset.endswith('.png') else 'image/svg+xml' if asset.endswith('.svg') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg'
                 return Response(image,media_type=mime,headers={'Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'})
         file=root/'planner'/asset
         if not file.is_file():return Response(status_code=404)
-        mime='application/octet-stream' if asset.endswith(('.fr3d','.bin')) else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
+        mime='application/octet-stream' if asset.endswith(('.fr3d','.bin')) else 'image/svg+xml' if asset.endswith('.svg') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
         return Response(file.read_bytes(),media_type=mime,headers={'Content-Security-Policy':CSP,'X-Content-Type-Options':'nosniff'})
     @api.get('/3d-view')
     @api.get('/3d-view.html')

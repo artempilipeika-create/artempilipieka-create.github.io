@@ -57,6 +57,7 @@ export class EquipmentControls{
   sync(force=false){
     if(this.adapter.selected)this.selectedId=null;
     const f=this.selected;if(!f)this.selectedId=null;this.card.hidden=!f;
+    const panel=document.querySelector('.mf3d-right');panel.classList.toggle('equipment-active',Boolean(f));const heading=panel.querySelector('.workspace-drawer-head strong');if(heading)heading.textContent=f?'Параметры объекта':'Параметры модуля';
     if(f){
       get('item-controls').hidden=true;get('studio-inspector-empty').hidden=true;
       this.title.textContent=f.label||FEATURES[f.kind][0];const src=f.kind==='window'?'/account/planner/window-preview.svg':'/account/planner/appliance-assets/'+f.kind+'-tripo-preview.webp';if(this.picture.getAttribute('src')!==src)this.picture.src=src;

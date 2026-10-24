@@ -38,7 +38,9 @@ def test_equipment_wall_gap_round_trip_and_envelope(wall):
 def test_optimized_equipment_assets_are_served():
     app=FastAPI();app.include_router(router());client=TestClient(app)
     for name in ['equipment-controls.mjs','equipment-placement.mjs','window-preview.svg']:
-        assert client.get('/account/planner/'+name).status_code==200
+        response=client.get('/account/planner/'+name)
+        assert response.status_code==200
+        if name.endswith('.svg'):assert response.headers['content-type'].startswith('image/svg+xml')
     for kind in ['gas_cooker','radiator','gas_boiler','water_heater']:
         for suffix in ['.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp']:
             response=client.get('/account/planner/appliance-assets/'+kind+'-tripo'+suffix)

@@ -31,3 +31,5 @@ body[data-room-ready=true][data-room-has-features=true] #studio-empty-scene{disp
 #room-setup[data-section="equipment"] #room-equipment{border:0;margin:0;padding:0}
 
 #equipment-controls{margin:0 0 24px;padding:16px}#equipment-controls .room-feature-grid{margin:18px 0}#equipment-controls input,#equipment-controls select{width:100%;min-width:0}.equipment-inspector-preview{display:block;width:100%;height:150px;object-fit:contain;background:#efede6;border-radius:9px}.equipment-error{color:#9b4c32;font-size:12px}#equipment-project-list{display:grid;gap:8px;margin:18px 0}#equipment-project-list [aria-pressed=true]{border-color:#51734c;background:#e5eeda}
+
+.mf3d-right.equipment-active .studio-native-note{display:none}
