@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 from backend.v2.three_d_api import FurnitureItem
 from backend.v2.three_d_pullout_dryers import VARIANTS,dryer_error
-from backend.v2.three_d_tall import APPLIANCE_VARIANTS
+from backend.v2.three_d_tall import APPLIANCE_VARIANTS,VARIANTS as TALL_VARIANTS
 from backend.v2.three_d_document import hardware_for,module_contents,module_materials
 from backend.v2.three_d_accessories import VARIANTS as ACCESSORIES
 ROOT=Path(__file__).resolve().parents[1]
@@ -39,6 +39,24 @@ def test_tall_depth_and_nonlit_document_profile():
     assert any(r['article']=='60965' for r in rows)
     assert all('LED' not in r['name'] and r['article']!='89731' for r in rows)
     assert 'LED' not in str(module_materials(item(v),None,None))
+
+@pytest.mark.parametrize('v',TALL_VARIANTS,ids=lambda v:v['id'])
+def test_shallow_tall_depth_persists_in_api_and_document(v):
+    from io import BytesIO
+    from pypdf import PdfReader
+    from backend.v2.three_d_document import render
+    from backend.v2.three_d_api import projection
+    for depth in (300,317,400,449,450,600,700):
+        it={**item(v),'module_type':'tall_cabinet','height':2000,'depth':depth,'upper_shelf_count':4}
+        saved=FurnitureItem(**it).model_dump(mode='json')
+        assert FurnitureItem(**saved).depth==depth
+        row=dict(project_id='shallow',name='Пенал',module_type='kitchen',scene={'items':[saved]},version=1,created_at=None,updated_at=None)
+        assert projection(row)['scene']['items'][0]['depth']==depth
+        if depth==300:
+            text='\n'.join(p.extract_text() for p in PdfReader(BytesIO(render('Пенал',{'items':[saved]},{}))).pages)
+            assert '600 x 2000 x 300' in text
+    for depth in (299,701):
+        with pytest.raises(ValidationError):FurnitureItem(**{**it,'depth':depth})
 
 def test_corrected_norwing_source_refreshes_saved_projects_without_loosening_sha_guard():
     from backend.v2.three_d_pullout_dryers import refresh_dryer_source

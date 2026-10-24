@@ -62,6 +62,28 @@ test('Initial family choice follows the lower body datum, with explicit 820 fall
   assert.equal(models[tallDefaultId([{...lower,height:870,body_height:720}],null)].tall.row_height,820);
 });
 
+test('Shallow tall cabinets retain shelves, facades and materials at 300 mm; out-of-range depths are rejected',()=>{
+  for(const v of TALL_VARIANTS){
+    const source={...item(v),upper_shelf_count:4,part_materials:{'shelf-fixed':'custom-shelf'}};
+    assert.deepEqual(models[v.id].limits.d,[300,700]);
+    for(const depth of [300,317,400,449,450,600,700]){
+      const next=dimensionPatch(source,{depth}),ps=parts(next);
+      assert.equal(dimensionError(next),'');assert.equal(next.depth,depth);
+      assert.equal(ps.filter(p=>p.key.startsWith('shelf-upper-')).length,4);
+      for(const p of ps.filter(p=>p.role==='body'||p.role==='shelf')){
+        assert.equal(p.size.z,depth);assert.ok(p.position.z===0);
+        assert.ok(p.length>0&&p.width>0&&p.thickness>0);
+      }
+      assert.equal(ps.find(p=>p.key==='shelf-fixed').material.variant_id,'custom-shelf');
+      for(const p of ps.filter(p=>p.role==='front'))assert.equal(p.position.z-p.size.z/2,depth/2);
+      const back=ps.find(p=>p.key==='back');assert.equal(back.position.z+back.size.z/2,-depth/2);
+      assert.deepEqual(productionHardware(next),productionHardware(source));
+      for(const target of TALL_VARIANTS)assert.equal(tallVariant(next,target,catalogue).depth,depth);
+    }
+    for(const depth of [299,701])assert.match(dimensionError({...source,depth}),/300 до 700/);
+  }
+});
+
 test('Upper shelf count controls equal clear openings, cutlist, supports and native adjustment notes',()=>{
   for(const v of TALL_VARIANTS)for(const count of [0,1,4,8])for(const height of [1800,2000,2400]){
     const it={...item(v),upper_shelf_count:count,height,body_height:height-100},ps=parts(it),upper=ps.filter(p=>p.key.startsWith('shelf-upper-'));

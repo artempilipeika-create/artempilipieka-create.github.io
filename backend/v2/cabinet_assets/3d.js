@@ -72,12 +72,12 @@ const kitchenTemplates={
   'tall.one_door':{
     category:'Пеналы',module_type:'tall_cabinet',label:'Пенал · 1 дверь',itemName:'Пенал',
     description:'Высокий модуль с одним фасадом',defaults:{w:600,h:2200,d:560,layout:'doors',drawers:0,base:'plinth'},
-    limits:{w:[300,700],h:[1600,2800],d:[450,700]},front:{kind:'doors',count:1}
+    limits:{w:[300,700],h:[1600,2800],d:[300,700]},front:{kind:'doors',count:1}
   },
   'tall.two_door':{
     category:'Пеналы',module_type:'tall_cabinet',label:'Пенал · 2 двери',itemName:'Пенал · 2 двери',
     description:'Высокий модуль с двумя фасадами',defaults:{w:900,h:2200,d:560,layout:'doors',drawers:0,base:'plinth'},
-    limits:{w:[700,1400],h:[1600,2800],d:[450,700]},front:{kind:'doors',count:2}
+    limits:{w:[700,1400],h:[1600,2800],d:[300,700]},front:{kind:'doors',count:2}
   }
 };
 

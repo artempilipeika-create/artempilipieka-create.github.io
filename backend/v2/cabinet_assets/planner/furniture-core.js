@@ -236,7 +236,7 @@
   const tallModel=v=>({tier:'tall',label:v.label,key:`tall.shelves.${v.row_height}.${v.opening}`,
     source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:2000,depth:600},body_height:1900,base_height:100,worktop_thickness:0,scene_depth:600,
-    resize:true,limits:{w:[300,v.doors_per_section===2?1200:600],h:[1800,2800],d:[450,700]},
+    resize:true,limits:{w:[300,v.doors_per_section===2?1200:600],h:[1800,2800],d:[300,700]},
     tall:{row_height:v.row_height,opening:v.opening,doors_per_section:v.doors_per_section,
       fixed_shelf_y:v.fixed_shelf_y,upper_shelves:v.upper_shelves,horizontal_gap_mm:1.5},
     carcass:{type:'tall_shelves',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
@@ -364,6 +364,7 @@
       }
       if(it.width>(p.tall.doors_per_section===2?1200:600))return 'Ширина одной створки — не больше 600 мм';
       if(it.height<1800||it.height>2800)return 'Высота пенала — от 1800 до 2800 мм';
+      if(it.depth<300||it.depth>700)return 'Глубина пенала — от 300 до 700 мм';
       return '';
     }
     if(p?.corner){

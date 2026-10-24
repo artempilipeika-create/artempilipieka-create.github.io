@@ -225,8 +225,8 @@ class FurnitureItem(StrictModel):
         if tall:
             if self.module_type!='tall_cabinet' or base!=100 or self.base=='wall':
                 raise ValueError('Пенал устанавливается на цоколь 100 мм')
-            if not 300<=self.width<=600*tall['doors_per_section'] or not 1800<=self.height<=2800 or not 450<=self.depth<=700:
-                raise ValueError('Проверьте размеры пенала; ширина одной створки не больше 600 мм')
+            if not 300<=self.width<=600*tall['doors_per_section'] or not 1800<=self.height<=2800 or not 300<=self.depth<=700:
+                raise ValueError('Проверьте размеры пенала: глубина 300–700 мм, высота 1800–2800 мм; ширина одной створки не больше 600 мм')
             if tall.get('family')=='appliance':
                 if self.width!=600 or not 600<=self.depth<=700 or self.height<tall['min_height']:
                     raise ValueError(f"Пенал под технику: ширина 600 мм, глубина 600–700 мм, высота от {tall['min_height']} мм")
