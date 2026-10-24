@@ -13,6 +13,8 @@ from .domain_api import require
 from .events import record_event
 from . import catalogue
 from .three_d_document import render as render_spec
+from .sales_album import render as render_sales, image_bytes as sales_image
+from . import sales_render
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
@@ -413,6 +415,17 @@ class SpecificationRender(StrictModel):
     preview_data_url: str|None=Field(default=None,max_length=6_000_000)
     module_preview_data_urls: dict[str,str]=Field(default_factory=dict,max_length=40)
 
+class SalesAlbumRender(StrictModel):
+    version: int=Field(ge=1)
+    hero_data_url: str=Field(max_length=11_000_000)
+    detail_data_url: str|None=Field(default=None,max_length=11_000_000)
+    module_preview_data_urls: dict[str,str]=Field(default_factory=dict,max_length=40)
+    photo: bool=True
+
+class SalesPhotoRender(StrictModel):
+    version: int=Field(ge=1)
+    preview_data_url: str=Field(max_length=11_000_000)
+
 def _preview_png(value,max_bytes=4_000_000):
     if not value:return None
     prefix='data:image/png;base64,'
@@ -427,7 +440,9 @@ def _module_previews(scene,values):
     result={};total=0
     for key,value in (values or {}).items():
         if key not in allowed:continue
-        data=_preview_png(value,800_000);total+=len(data)
+        data=_preview_png(value,800_000)
+        if data is None:error(400,'INVALID_3D_PREVIEW')
+        total+=len(data)
         if total>12_000_000:error(400,'INVALID_3D_PREVIEW')
         result[key]=data
     return result
@@ -542,22 +557,25 @@ def router(settings):
             record_event(conn,settings,actor=user['user_id'],action='3d.project.duplicated',object_type='3d_project',object_id=pid,reason='User duplicated 3D project')
             return projection(row)
 
-    def specification_bytes(conn,row,preview_png=None,module_previews=None):
-        scene=row['scene'];release=catalogue.active(conn);materials={}
+    def project_materials(conn,scene):
+        release=catalogue.active(conn);materials={}
         ids=set()
         if scene.get('items'):
             for item in scene['items']:
-                ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id'),item.get('back_variant_id'),*item.get('part_materials',{}).values()) if x)
+                ids.update(str(x) for x in (item.get('body_variant_id'),item.get('front_variant_id'),item.get('back_variant_id'),item.get('countertopMaterialId'),*item.get('part_materials',{}).values(),*(s.get('material_variant_id') for s in item.get('shelves') or [])) if x)
         else:
             ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
-        ids.update(str(p['material_id']) for p in scene.get('plinths',[]) if p.get('material_id'))
+        ids.update(str(p['material_id']) for p in scene.get('plinths',[])+scene.get('wallPanels',[]) if p.get('material_id'))
         ids.update(str(it['plinthMaterialId']) for it in scene.get('items',[]) if it.get('plinthMaterialId'))
         if release:
             for ident in ids:
                 found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()
                 if found:
                     m=found['snapshot'];materials[ident]=' · '.join(str(x) for x in (m.get('manufacturer'),m.get('article'),m.get('name')) if x)
-        return render_spec(row['name'],scene,materials,preview_png,module_previews or {})
+        return materials
+
+    def specification_bytes(conn,row,preview_png=None,module_previews=None):
+        return render_spec(row['name'],row['scene'],project_materials(conn,row['scene']),preview_png,module_previews or {})
 
     def specification_response(data):
         filename='Martin_Forest_3D_Project.pdf'
@@ -576,6 +594,39 @@ def router(settings):
             preview=_preview_png(body.preview_data_url)
             module_previews=_module_previews(row['scene'],body.module_preview_data_urls)
             return specification_response(specification_bytes(conn,row,preview,module_previews))
+
+    @api.get('/3d-sales-capabilities')
+    def sales_capabilities(request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write')
+        return {'automatic_render':sales_render.available(),'max_pages':5}
+
+    @api.post('/3d-projects/{project_id}/sales-album.pdf')
+    def sales_album(project_id:UUID,body:SalesAlbumRender,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
+            materials=project_materials(conn,row['scene'])
+        try:
+            hero=sales_image(body.hero_data_url);detail=sales_image(body.detail_data_url)
+            previews=_module_previews(row['scene'],body.module_preview_data_urls)
+            previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
+            data=render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version)
+        except ValueError as exc:error(400,str(exc))
+        return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Sales_Album.pdf','Cache-Control':'no-store'})
+
+    @api.post('/3d-projects/{project_id}/sales-photo')
+    def sales_photo(project_id:UUID,body:SalesPhotoRender,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
+            materials=project_materials(conn,row['scene'])
+        try: image=sales_render.generate(str(user['user_id']),row['scene'],materials,body.preview_data_url)
+        except ValueError as exc:error(400,str(exc))
+        with transaction(settings) as conn:
+            current=own(conn,user,project_id)
+            if current['version']!=body.version:error(409,'Проект изменился во время рендера. Сформируйте новый вид.')
+        return {'image_data_url':image,'version':body.version}
 
     @api.post('/3d-projects/{project_id}/shares',status_code=201)
     def create_share(project_id:UUID,request:Request):

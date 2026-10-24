@@ -425,7 +425,7 @@
       if(support)support.quantity=tallUpperShelves(it,p).length*4;
     }
     if(hw.native_fixed_items)return hw;
-    const shelfCount=productionShelves(it,p).length;
+    const shelfCount=productionShelves(it,p).filter(s=>s.enabled!==false).length;
     const support=hw.items.find(x=>x.key==='shelf-support-marcopol');
     if(shelfCount&&hw.shelf_fixing!=='confirmat'){
       if(support)support.quantity=shelfCount*4;

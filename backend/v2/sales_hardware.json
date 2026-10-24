@@ -1,0 +1,1456 @@
+{
+  "bazis.0211e4f77fc4": {
+    "source_sha256": "7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64",
+    "label": "Д1 L",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": "112602",
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "article": "840 00 P2 H5 00",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "article": "415 10 P2 0Z 02",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "article": "05.0360",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "article": "05.0360",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "article": "06.080",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "article": "06.152",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 12,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "article": "16181",
+          "quantity": 51,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-5x30",
+          "name": "Саморез универсальный 5,0*30 желтый цинк AKS",
+          "article": "12867",
+          "quantity": 4,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [
+      {
+        "id": "shelf-1",
+        "enabled": true,
+        "offset_mm": 360,
+        "thickness": 18,
+        "width_clearance": 36,
+        "depth_clearance": 1,
+        "source_component": "_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d"
+      }
+    ],
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": 105
+      }
+    ]
+  },
+  "bazis.784bf9af84f8": {
+    "source_sha256": "5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb",
+    "label": "Д1 P",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": "112602",
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "article": "840 00 P2 H5 00",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "article": "415 10 P2 0Z 02",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "article": "05.0360",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "article": "05.0360",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "article": "06.080",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "article": "06.152",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 12,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "article": "16181",
+          "quantity": 51,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-5x30",
+          "name": "Саморез универсальный 5,0*30 желтый цинк AKS",
+          "article": "12867",
+          "quantity": 4,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [
+      {
+        "id": "shelf-1",
+        "enabled": true,
+        "offset_mm": 360,
+        "thickness": 18,
+        "width_clearance": 36,
+        "depth_clearance": 1,
+        "source_component": "_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d"
+      }
+    ],
+    "doors": [
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": 105
+      }
+    ]
+  },
+  "bazis.3079d0656398": {
+    "source_sha256": "a659d5e7a0da816ef74206ec86c76e09fa3a3c728a7247b80be9bac507b689d2",
+    "label": "Д2",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": "112602",
+      "hinge_count": 4,
+      "items": [
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "article": "840 00 P2 H5 00",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "article": "415 10 P2 0Z 02",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "article": "05.0360",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "article": "05.0360",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "article": "06.080",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "article": "06.152",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 12,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "article": "16181",
+          "quantity": 51,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-5x30",
+          "name": "Саморез универсальный 5,0*30 желтый цинк AKS",
+          "article": "12867",
+          "quantity": 4,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [
+      {
+        "id": "shelf-1",
+        "enabled": true,
+        "offset_mm": 360,
+        "thickness": 18,
+        "width_clearance": 36,
+        "depth_clearance": 1,
+        "source_component": "_Базовые Элементы\\05.Общие элементы\\Наполнение\\Секции полок\\Полка на конферматы.fr3d"
+      }
+    ],
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": 105
+      },
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": 105
+      }
+    ]
+  },
+  "bazis.39f282e08f0c": {
+    "source_sha256": "f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2",
+    "label": "Нижний 2 ящика · с доводчиком",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "drawer_system": "AKS",
+      "slide_type": "ball_bearing_soft_close",
+      "native_slide_length_mm": 500,
+      "slide_length_mm": 500,
+      "slide_rule": {
+        "mode": "native_fr3d_parameter_table",
+        "depth_drives_slide": true,
+        "control_points": {
+          "250": [
+            [
+              250,
+              0
+            ],
+            [
+              300,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "300": [
+            [
+              300,
+              0
+            ],
+            [
+              350,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "350": [
+            [
+              350,
+              0
+            ],
+            [
+              400,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "400": [
+            [
+              400,
+              0
+            ],
+            [
+              450,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "450": [
+            [
+              450,
+              0
+            ],
+            [
+              500,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "500": [
+            [
+              500,
+              0
+            ],
+            [
+              550,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "550": [
+            [
+              550,
+              0
+            ],
+            [
+              600,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "600": [
+            [
+              600,
+              0
+            ],
+            [
+              1000,
+              1
+            ]
+          ]
+        }
+      },
+      "drawer_count": 2,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 24,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 51,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-5x30",
+          "name": "Саморез универсальный 5,0*30 желтый цинк AKS",
+          "quantity": 10,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-d5",
+          "name": "Шурупы 3.5х16 д5",
+          "quantity": 6,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-zn",
+          "name": "Шуруп 3.5х16 мм,Zn",
+          "quantity": 36,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [],
+    "doors": [],
+    "front": {
+      "kind": "drawers",
+      "count": 2
+    }
+  },
+  "bazis.5f5697e39e27": {
+    "source_sha256": "f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0",
+    "label": "Нижний 3 ящика · с доводчиком",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "drawer_system": "AKS",
+      "slide_type": "ball_bearing_soft_close",
+      "native_slide_length_mm": 500,
+      "slide_length_mm": 500,
+      "slide_rule": {
+        "mode": "native_fr3d_parameter_table",
+        "depth_drives_slide": true,
+        "control_points": {
+          "250": [
+            [
+              250,
+              0
+            ],
+            [
+              300,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "300": [
+            [
+              300,
+              0
+            ],
+            [
+              350,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "350": [
+            [
+              350,
+              0
+            ],
+            [
+              400,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "400": [
+            [
+              400,
+              0
+            ],
+            [
+              450,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "450": [
+            [
+              450,
+              0
+            ],
+            [
+              500,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "500": [
+            [
+              500,
+              0
+            ],
+            [
+              550,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "550": [
+            [
+              550,
+              0
+            ],
+            [
+              600,
+              1
+            ],
+            [
+              1000,
+              0
+            ]
+          ],
+          "600": [
+            [
+              600,
+              0
+            ],
+            [
+              1000,
+              1
+            ]
+          ]
+        }
+      },
+      "drawer_count": 3,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 24,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 51,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-5x30",
+          "name": "Саморез универсальный 5,0*30 желтый цинк AKS",
+          "quantity": 13,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-d5",
+          "name": "Шурупы 3.5х16 д5",
+          "quantity": 9,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-zn",
+          "name": "Шуруп 3.5х16 мм,Zn",
+          "quantity": 54,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [],
+    "doors": [],
+    "front": {
+      "kind": "drawers",
+      "count": 3
+    }
+  },
+  "bazis.858266606bc5": {
+    "source_sha256": "858266606bc5e6f36a96635c155beb8f86161ce869956a8f961f27406db7ebc2",
+    "label": "ВМД1 L",
+    "tier": "wall",
+    "body_height": 720,
+    "base_height": 0,
+    "native_defaults": {
+      "width": 600,
+      "height": 720,
+      "depth": 317
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": null,
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        },
+        {
+          "key": "hanger-white",
+          "name": "Навес простой, белый",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3x30",
+          "name": "Шуруп 3*30 мм,Zn",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 52,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [
+      {
+        "id": "shelf-1",
+        "enabled": true,
+        "offset_mm": 360,
+        "thickness": 18,
+        "width_clearance": 38,
+        "depth_clearance": 0
+      }
+    ],
+    "shelf_rule": {
+      "threshold_mm": 850,
+      "base_count": 1,
+      "tall_count": 2,
+      "mode": "even"
+    },
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": null
+      }
+    ]
+  },
+  "bazis.2175c60e84a6": {
+    "source_sha256": "2175c60e84a6eb6eeefa62eaddc611f2180b6a3060a0ea3aa1b5305ffbcc6ed5",
+    "label": "ВМД1 P",
+    "tier": "wall",
+    "body_height": 720,
+    "base_height": 0,
+    "native_defaults": {
+      "width": 600,
+      "height": 720,
+      "depth": 317
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": null,
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        },
+        {
+          "key": "hanger-white",
+          "name": "Навес простой, белый",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3x30",
+          "name": "Шуруп 3*30 мм,Zn",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 52,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [
+      {
+        "id": "shelf-1",
+        "enabled": true,
+        "offset_mm": 360,
+        "thickness": 18,
+        "width_clearance": 38,
+        "depth_clearance": 0
+      }
+    ],
+    "shelf_rule": {
+      "threshold_mm": 850,
+      "base_count": 1,
+      "tall_count": 2,
+      "mode": "even"
+    },
+    "doors": [
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": null
+      }
+    ]
+  },
+  "bazis.877ba2f68d92": {
+    "source_sha256": "877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3",
+    "label": "ВМД2",
+    "tier": "wall",
+    "body_height": 720,
+    "base_height": 0,
+    "native_defaults": {
+      "width": 600,
+      "height": 720,
+      "depth": 317
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": null,
+      "hinge_count": 4,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        },
+        {
+          "key": "hanger-white",
+          "name": "Навес простой, белый",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3x30",
+          "name": "Шуруп 3*30 мм,Zn",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 52,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [
+      {
+        "id": "shelf-1",
+        "enabled": true,
+        "offset_mm": 360,
+        "thickness": 18,
+        "width_clearance": 38,
+        "depth_clearance": 0
+      }
+    ],
+    "shelf_rule": {
+      "threshold_mm": 850,
+      "base_count": 1,
+      "tall_count": 2,
+      "mode": "even"
+    },
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": null
+      },
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": null
+      }
+    ]
+  },
+  "bazis.b89bf9852860": {
+    "source_sha256": "b89bf98528601e2bc74e52bc19cc6904a20ff90ed6f0785c1d599c7aac4250fd",
+    "label": "ВМД1 L · Сушка",
+    "tier": "wall",
+    "body_height": 720,
+    "base_height": 0,
+    "native_defaults": {
+      "width": 600,
+      "height": 720,
+      "depth": 317
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": null,
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        },
+        {
+          "key": "hanger-white",
+          "name": "Навес простой, белый",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3x30",
+          "name": "Шуруп 3*30 мм,Zn",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 52,
+          "unit": "pcs"
+        },
+        {
+          "key": "dish-dryer",
+          "name": "Сушка для посуды 600 MOUNT, белый AKS",
+          "quantity": 1,
+          "unit": "pcs",
+          "width_mm": 600
+        }
+      ]
+    },
+    "shelves": [],
+    "shelf_rule": {
+      "threshold_mm": 850,
+      "base_count": 0,
+      "tall_count": 1,
+      "mode": "upper"
+    },
+    "dryer": {
+      "manufacturer": "AKS",
+      "series": "MOUNT",
+      "width_equals_module": true,
+      "width_step_mm": 100
+    },
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": null
+      }
+    ]
+  },
+  "bazis.60f79b573cd1": {
+    "source_sha256": "64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d",
+    "label": "ВМД1 P · Сушка",
+    "tier": "wall",
+    "body_height": 720,
+    "base_height": 0,
+    "native_defaults": {
+      "width": 600,
+      "height": 720,
+      "depth": 317
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": null,
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        },
+        {
+          "key": "hanger-white",
+          "name": "Навес простой, белый",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3x30",
+          "name": "Шуруп 3*30 мм,Zn",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 52,
+          "unit": "pcs"
+        },
+        {
+          "key": "dish-dryer",
+          "name": "Сушка для посуды 600 MOUNT, белый AKS",
+          "quantity": 1,
+          "unit": "pcs",
+          "width_mm": 600
+        }
+      ]
+    },
+    "shelves": [],
+    "shelf_rule": {
+      "threshold_mm": 850,
+      "base_count": 0,
+      "tall_count": 1,
+      "mode": "upper"
+    },
+    "dryer": {
+      "manufacturer": "AKS",
+      "series": "MOUNT",
+      "width_equals_module": true,
+      "width_step_mm": 100
+    },
+    "doors": [
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": null
+      }
+    ]
+  },
+  "bazis.1ac4fadd97b7": {
+    "source_sha256": "91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0",
+    "label": "ВМД2 · Сушка",
+    "tier": "wall",
+    "body_height": 720,
+    "base_height": 0,
+    "native_defaults": {
+      "width": 600,
+      "height": 720,
+      "depth": 317
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки)",
+      "hinge_article": null,
+      "hinge_count": 4,
+      "items": [
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        },
+        {
+          "key": "hanger-white",
+          "name": "Навес простой, белый",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3x30",
+          "name": "Шуруп 3*30 мм,Zn",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "nails-1.4x25",
+          "name": "Гвозди 1,4*25 РМЗ",
+          "quantity": 52,
+          "unit": "pcs"
+        },
+        {
+          "key": "dish-dryer",
+          "name": "Сушка для посуды 600 MOUNT, белый AKS",
+          "quantity": 1,
+          "unit": "pcs",
+          "width_mm": 600
+        }
+      ]
+    },
+    "shelves": [],
+    "shelf_rule": {
+      "threshold_mm": 850,
+      "base_count": 0,
+      "tall_count": 1,
+      "mode": "upper"
+    },
+    "dryer": {
+      "manufacturer": "AKS",
+      "series": "MOUNT",
+      "width_equals_module": true,
+      "width_step_mm": 100
+    },
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": null
+      },
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": null
+      }
+    ]
+  },
+  "bazis.facfa0cd038b": {
+    "source_sha256": "bbba352bdfc26ec529ecef60d927f00420974d974ac96a936e6f966a62f88f48",
+    "label": "НМД1 L · Мойка",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 10,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "angle-cast",
+          "name": "Уголок №1 (литой)",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-zn",
+          "name": "Шуруп 3.5х16 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [],
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": 105
+      }
+    ]
+  },
+  "bazis.b226370aab54": {
+    "source_sha256": "98456bd9400b38b245301722500677efdaadb6410ccd622c2b34980962f756b8",
+    "label": "НМД1 P · Мойка",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+      "hinge_count": 2,
+      "items": [
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 10,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "angle-cast",
+          "name": "Уголок №1 (литой)",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-zn",
+          "name": "Шуруп 3.5х16 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [],
+    "doors": [
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": 105
+      }
+    ]
+  },
+  "bazis.5731630ddd87": {
+    "source_sha256": "8c04f7bcfd7dce2c1209f7f2c2b5b3d88769fbe98b11d3ef2de086380bb0f58a",
+    "label": "НМД2 · Мойка",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 510
+    },
+    "hardware": {
+      "hinge_name": "Петля накладная с доводчиком 48мм h2 clip-on PRIME (саморезы, заглушки) (упак.-2шт.)",
+      "hinge_count": 4,
+      "items": [
+        {
+          "key": "plastic-leg-base",
+          "name": "1031 База для пластиковой ножки с упором под саморез",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plastic-leg-100",
+          "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-heavy",
+          "name": "Клипса усиленная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 10,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "clip-plate",
+          "name": "Площадка клипсы усиленной (06.152)",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "angle-cast",
+          "name": "Уголок №1 (литой)",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-zn",
+          "name": "Шуруп 3.5х16 мм,Zn",
+          "quantity": 8,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [],
+    "doors": [
+      {
+        "side": "left",
+        "hinge_count": 2,
+        "open_angle": 105
+      },
+      {
+        "side": "right",
+        "hinge_count": 2,
+        "open_angle": 105
+      }
+    ]
+  },
+  "bazis.9e77f4333545": {
+    "source_sha256": "7de5d86b28ad697749e0e47f5f313da2df667817910500dfe4fd569641680206",
+    "label": "НШД-600 · ниша 595",
+    "tier": "base",
+    "body_height": 720,
+    "base_height": 100,
+    "native_defaults": {
+      "width": 600,
+      "height": 820,
+      "depth": 500
+    },
+    "hardware": {
+      "drawer_system": "AKS PLUS",
+      "slide_type": "ball_bearing",
+      "native_slide_length_mm": 500,
+      "slide_length_mm": 500,
+      "drawer_count": 1,
+      "items": [
+        {
+          "key": "support-base-h5",
+          "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "support-h100",
+          "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+          "quantity": 4,
+          "unit": "pcs"
+        },
+        {
+          "key": "plinth-clip-mount",
+          "name": "Крепление клипсы к цоколю из ДСП",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "plinth-clip",
+          "name": "Клипса к пластиковой ножке (универсальная, без крепления)",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "confirmat-7x50",
+          "name": "Конфермат 7х50 мм,Zn",
+          "quantity": 12,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-5x30",
+          "name": "Саморез универсальный 5,0*30 желтый цинк (уп/0,5тыс.шт) AKS",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-d5",
+          "name": "Шурупы 3.5х16 д5",
+          "quantity": 2,
+          "unit": "pcs"
+        },
+        {
+          "key": "screw-3.5x16-zn",
+          "name": "Шуруп 3.5х16 мм,Zn",
+          "quantity": 16,
+          "unit": "pcs"
+        }
+      ]
+    },
+    "shelves": [],
+    "doors": [],
+    "front": {
+      "kind": "niche",
+      "drawerRows": 1
+    }
+  }
+}
