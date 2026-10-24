@@ -15,7 +15,7 @@ from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spac
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_pullout_dryers import dryer_variant, dryer_hardware, dryer_contents, refresh_dryer_source
-from .three_d_tall import tall_variant,tall_shelf_count
+from .three_d_tall import tall_variant,tall_shelf_count,tall_hardware,tall_drawer_note
 from .three_d_accessories import dishwasher, dishwasher_hardware, dishwasher_contents, plinth_summary
 from .three_d_gola import gola_variant, gola_contents, gola_hardware, gola_note
 from .three_d_drawers import drawer_variant, drawer_contents, drawer_hardware as metal_drawer_hardware
@@ -105,7 +105,7 @@ def hardware_for(it):
         return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in vitrine_hardware(it)],None
     tall=tall_variant(it)
     if tall:
-        return [_row(r['name'],tall_shelf_count(it)*4 if r['key']=='shelf-support-marcopol' else r['quantity'],r['unit'],r.get('article','')) for r in tall['hardware_items']],None
+        return [_row(r['name'],r['quantity'],r['unit'],r.get('article','')) for r in tall_hardware(it)],tall_drawer_note(it)
     corner=corner_variant(it)
     if corner:
         return [_row(r['name'],r['quantity'],r['unit'],r.get('article','')) for r in corner['hardware_items']],None
@@ -172,7 +172,8 @@ def module_contents(it):
                     +f"; ниша духовки 564 × 595 мм на отметке {tall['oven_bottom']:g} мм от пола"
                     +('; ниша СВЧ 564 × 380 мм' if tall['microwave'] else '')
                     +f"; фасады {lower['size'][1]:g} × 597 и {upper['size'][1]+h-tall['native_height']:g} × 597 мм; "
-                    +f"{tall_shelf_count(it)} съёмн. полк. сверху; задние стенки 3 мм в пазу; за техникой открытый проём")
+                    +f"{tall_shelf_count(it)} съёмн. полк. сверху; задние стенки 3 мм в пазу; за техникой открытый проём"
+                    +('; '+tall_drawer_note(it) if tall_drawer_note(it) else ''))
         return (f'база нижнего ряда {row} мм = корпус {row-100} + цоколь 100 мм, без столешницы; '
                 f'{opening}; {n*2} фасадов: нижние {row-103:g} × {fw:g} мм, верхние {h-row-1.5:g} × {fw:g} мм; '
                 f'горизонтальный зазор 1,5 мм; нижняя полка на конфирматах; {tall_shelf_count(it)} съёмн. полк. сверху; задняя стенка 3 мм')

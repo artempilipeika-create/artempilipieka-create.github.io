@@ -15,7 +15,7 @@ import './pullout-dryer-variants.js';
 import './pullout-dryer-model.js';
 import './furniture-core.js?v=20261024-default-materials';
 export const {VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY}=globalThis.MF_FURNITURE_CORE;
-export const {APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment}=globalThis.MF_FURNITURE_CORE;
+export const {APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote}=globalThis.MF_FURNITURE_CORE;
 export const {CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant}=globalThis.MF_FURNITURE_CORE;
 export const {DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant}=globalThis.MF_FURNITURE_CORE;
 export const {DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError}=globalThis.MF_FURNITURE_CORE;

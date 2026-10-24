@@ -1,0 +1,35 @@
+{
+  "source_id": "bazis.3a209387ab60",
+  "source_sha256": "3a209387ab60dd45d95163e9fe7e8fce8fcb210f0700e811bb08d0ff5ef5d56c",
+  "rear_service_mm": 50,
+  "rear_clearance_mm": 50,
+  "kits": [
+    {
+      "length_mm": 400,
+      "name": "Направляющая шариковая L-400 h=45 PRIME by AKS SOFT CLOSE",
+      "article": "114795",
+      "quantity": 1,
+      "unit": "set",
+      "screw_article": "81320",
+      "screw_quantity": 16
+    },
+    {
+      "length_mm": 450,
+      "name": "Направляющая шариковая L-450 h=45 PRIME by AKS SOFT CLOSE",
+      "article": "114796",
+      "quantity": 1,
+      "unit": "set",
+      "screw_article": "81320",
+      "screw_quantity": 18
+    },
+    {
+      "length_mm": 500,
+      "name": "Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE",
+      "article": "114797",
+      "quantity": 1,
+      "unit": "set",
+      "screw_article": "81320",
+      "screw_quantity": 18
+    }
+  ]
+}

@@ -33,6 +33,7 @@
       lines.push('ТЕХНИКА ПЕНАЛА '+(item.name||item.item_id||''));
       lines.push(deviceLine(item,'oven'));
       if(v.microwave)lines.push(deviceLine(item,'microwave'));
+      const drawerNote=root.MF_FURNITURE_CORE.tallDrawerNote(item);if(drawerNote)lines.push(drawerNote);
       const remarks=trimmed(item.appliance_details&&item.appliance_details.remarks,1500);
       if(remarks)lines.push('Указания по технике: '+remarks);
     }

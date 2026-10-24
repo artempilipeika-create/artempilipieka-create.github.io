@@ -52,8 +52,9 @@ with sync_playwright() as pw:
  assert page.evaluate('MF_PLANNER.adapter.selected.width')==900
  page.screenshot(path='/tmp/dryer-ui.png')
  page.evaluate("MF_PLANNER.adapter.select('tall');MF_PLANNER.bridge.refresh()")
- expect(page.locator('#depth')).to_be_enabled();page.locator('#depth').fill('650');page.locator('#depth').press('Tab')
- assert page.evaluate('MF_PLANNER.adapter.selected.depth')==650
+ expect(page.locator('#depth')).to_be_enabled();expect(page.locator('#depth')).to_have_attribute('min','500')
+ page.locator('#depth').fill('500');page.locator('#depth').press('Tab')
+ assert page.evaluate('MF_PLANNER.adapter.selected.depth')==500
  page.locator('#tall-align-top').click()
  assert page.evaluate('MF_PLANNER.adapter.selected.height')==2500
  # Undo alignment is available through the actual interaction history.
@@ -67,10 +68,15 @@ with sync_playwright() as pw:
   page.locator('#save-project').click()
  stored=saved.value.json()
  assert next(it for it in stored['scene']['items'] if it['item_id']=='shallow')['depth']==300
+ assert next(it for it in stored['scene']['items'] if it['item_id']=='tall')['depth']==500
  page.evaluate('''async stored=>{await MF_PLANNER.bridge.loadSnapshot({...stored,selectedId:'shallow'},stored);MF_PLANNER.adapter.select('shallow');MF_PLANNER.bridge.refresh()}''',stored)
  expect(page.locator('#depth')).to_have_value('300')
  assert page.evaluate("(()=>{const it=MF_PLANNER.adapter.selected,c=MF_FURNITURE_CORE;return c.productionParts(it,{production:c.PRODUCTION_MODELS[it.bazis_id]}).filter(p=>p.role==='body'||p.role==='shelf').every(p=>p.size.z===300)})()")
+ with page.expect_download() as downloaded:
+  page.evaluate("document.getElementById('export-bazis').click()")
+ native=json.loads(Path(downloaded.value.path()).read_text())
+ assert next(it for it in native['items'] if it['name']==next(it['name'] for it in stored['scene']['items'] if it['item_id']=='tall'))['target']['depth']==500
  page.set_viewport_size({'width':390,'height':844});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
  assert not errors and not blocked,dict(errors=errors,blocked=blocked)
- print(json.dumps({'ok':True,'dryer_width':900,'kit':'95551','tall_depth':650,'shallow_tall_depth':300,'saved_and_reopened':True,'aligned_height':2500,'undo':True,'errors':errors}))
+ print(json.dumps({'ok':True,'dryer_width':900,'kit':'95551','tall_depth':500,'shallow_tall_depth':300,'saved_and_reopened':True,'native_export':True,'aligned_height':2500,'undo':True,'errors':errors}))
  browser.close()

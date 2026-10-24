@@ -31,14 +31,39 @@ def test_source_guard(v):
     with pytest.raises(ValidationError):FurnitureItem(**{**item(v),'depth':500})
 def test_tall_depth_and_nonlit_document_profile():
     for v in APPLIANCE_VARIANTS:
-        for depth in (600,650,700):
+        for depth in (500,550,600,650,700):
             FurnitureItem(**{**item(v),'module_type':'tall_cabinet','height':v['native_height'],'depth':depth})
-        with pytest.raises(ValidationError):FurnitureItem(**{**item(v),'module_type':'tall_cabinet','height':v['native_height'],'depth':550})
+        for depth in (499,701):
+            with pytest.raises(ValidationError):FurnitureItem(**{**item(v),'module_type':'tall_cabinet','height':v['native_height'],'depth':depth})
     v=next(v for v in ACCESSORIES if v['kind']=='dishwasher' and v['variant']=='gola')
     rows=hardware_for(item(v))[0]
     assert any(r['article']=='60965' for r in rows)
     assert all('LED' not in r['name'] and r['article']!='89731' for r in rows)
     assert 'LED' not in str(module_materials(item(v),None,None))
+
+def test_shallow_appliance_drawer_geometry_hardware_and_export_brief_agree():
+    from backend.v2.three_d_tall import tall_drawer_kit,tall_drawer_note,DRAWER_KITS
+    from backend.v2.sales_hardware import module_hardware,purchasing_rows
+    specimens=[{**item(v),'module_type':'tall_cabinet','height':v['native_height'],'depth':depth} for v in APPLIANCE_VARIANTS for depth in [500,549,550,599,600,700]]
+    script="""import * as C from './backend/v2/cabinet_assets/planner/furniture-core.mjs';import './backend/v2/cabinet_assets/planner/production-notes.js';let s='';for await(const c of process.stdin)s+=c;console.log(JSON.stringify(JSON.parse(s).map(it=>({items:C.productionHardware(it).items,kit:C.tallDrawerKit(it),note:C.tallDrawerNote(it),brief:MF_PRODUCTION_NOTES.moduleText(it)}))));"""
+    browser=json.loads(subprocess.check_output(['node','--input-type=module','-e',script],input=json.dumps(specimens).encode(),cwd=ROOT))
+    for it,js in zip(specimens,browser):
+        saved=FurnitureItem(**it).model_dump(mode='json');assert FurnitureItem(**saved).depth==it['depth']
+        rows,note=hardware_for(saved)
+        assert rows==[dict(name=r['name'],qty=r['quantity'],unit=r['unit'],article=r.get('article') or '') for r in js['items']]
+        assert js['kit']==tall_drawer_kit(it);assert js['note']==(tall_drawer_note(it) or '')
+        if note:
+            assert note in js['brief'] and note in module_contents(it)
+            sales=purchasing_rows(saved,module_hardware(saved)[0])[0]
+            guide=next(r for r in sales if r['name'].startswith('Направляющая'))
+            assert guide['unit']=='set' and guide['qty']==1 and guide['article']==js['kit']['article']
+    # Catalogue article and screw counts are taken from a verified native kit cache.
+    donors=json.loads((ROOT/'backend/v2/cabinet_assets/planner/gola-variants.json').read_text())
+    donor=next(v for v in donors if v['id']==DRAWER_KITS['source_id']);assert donor['source_sha256']==DRAWER_KITS['source_sha256']
+    for kit in DRAWER_KITS['kits']:
+        native=next(k for h in donor['elastic_drawers'][0]['heights'] for k in h['lengths'] if k['length_mm']==kit['length_mm'])
+        assert any(r['name']==kit['name'] and r.get('article')==kit['article'] and r['quantity']==1 for r in native['hardware'])
+        assert next(r['quantity'] for r in native['hardware'] if r.get('article')=='81320')==kit['screw_quantity']
 
 @pytest.mark.parametrize('v',TALL_VARIANTS,ids=lambda v:v['id'])
 def test_shallow_tall_depth_persists_in_api_and_document(v):

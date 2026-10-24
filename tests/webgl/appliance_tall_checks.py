@@ -160,7 +160,7 @@ def test_appliance_api_pdf_and_hardware(v):
     it=dict(item_id='test',name=v['label'],bazis_id=v['id'],bazis_sha256=v['source_sha256'],bazis_file=v['source_file'],
         module_type='tall_cabinet',width=600,depth=600,height=v['native_height'],body_height=v['native_height']-100,base='plinth',base_height=100,worktop_thickness=0)
     assert FurnitureItem(**it).height==v['native_height']
-    for patch in [dict(width=599),dict(depth=550),dict(height=v['min_height']-1,body_height=v['min_height']-101),dict(upper_shelf_count=9)]:
+    for patch in [dict(width=599),dict(depth=499),dict(height=v['min_height']-1,body_height=v['min_height']-101),dict(upper_shelf_count=9)]:
         with pytest.raises(ValueError):FurnitureItem(**{**it,**patch})
     hw,_=hardware_for(it);assert sum(r['qty'] for r in hw if r['name'].startswith('Петля'))==sum(r['quantity'] for r in v['hardware_items'] if r['name'].startswith('Петля'))
     assert '564 × 595' in module_contents(it)

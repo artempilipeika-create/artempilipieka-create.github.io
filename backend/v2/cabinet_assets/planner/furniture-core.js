@@ -225,7 +225,7 @@
   const applianceTallModel=v=>({tier:'tall',label:v.label,key:`tall.appliance.${v.layout}.${v.row_height}.${v.opening}`,
     source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:v.native_height,depth:600},body_height:v.native_height-100,base_height:100,worktop_thickness:0,scene_depth:600,
-    resize:true,limits:{w:[600,600],h:[v.min_height,2800],d:[600,700]},
+    resize:true,limits:{w:[600,600],h:[v.min_height,2800],d:[500,700]},
     tall:{...v,horizontal_gap_mm:1.5},
     carcass:{type:'tall_appliance',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
     facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},
@@ -283,10 +283,22 @@
   function tallShelfAdjustment(it,p=PRODUCTION_MODELS[it?.bazis_id]){
     if(!p?.tall)return null;
     const positions=tallUpperShelves(it,p),source=p.tall.upper_shelves;
-    if(positions.length===source.length&&positions.every((y,i)=>Math.abs(y-source[i])<.001))return null;
-    return {kind:'tall_upper_shelves',requires_manual_native_adjustment:true,count:positions.length,
+    const shelvesChanged=positions.length!==source.length||positions.some((y,i)=>Math.abs(y-source[i])>=.001);
+    const kit=tallDrawerKit(it,p),drawerChanged=kit&&kit.length_mm!==500;
+    if(!shelvesChanged&&!drawerChanged)return null;
+    return {kind:shelvesChanged?'tall_upper_shelves':'tall_drawer_depth',requires_manual_native_adjustment:true,count:positions.length,
       centers_from_floor_mm:positions,thickness_mm:p.carcass.panel_thickness,
-      note:'В родном FR3D вручную измените количество и положение верхних полок по этим отметкам. Нижняя полка и перегородка остаются на месте.'};
+      ...(drawerChanged?{drawer_length_mm:kit.length_mm,drawer_bottom_depth_mm:kit.length_mm-4,slide_article:kit.article}:{}),
+      note:[shelvesChanged?'В родном FR3D вручную измените количество и положение верхних полок по этим отметкам. Нижняя полка и перегородка остаются на месте.':'',drawerChanged?tallDrawerNote(it,p):''].filter(Boolean).join(' ')};
+  }
+  function tallDrawerKit(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    if(p?.tall?.family!=='appliance'||!p.tall.drawer)return null;
+    const data=root.MF_APPLIANCE_TALL_DRAWER_KITS,available=it.depth-data.rear_service_mm-data.rear_clearance_mm;
+    return [...data.kits].reverse().find(k=>k.length_mm<=available)||null;
+  }
+  function tallDrawerNote(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+    const k=tallDrawerKit(it,p);if(!k||k.length_mm===500)return '';
+    return `Шуфляда: боковины ${k.length_mm} мм, дно ${k.length_mm-4} мм по глубине; направляющие L-${k.length_mm}, арт. ${k.article}, 1 комплект. В БАЗИС проверить и при необходимости вручную заменить направляющие, укоротить боковины и дно, переместить заднюю стенку ящика по деталировке экспорта.`;
   }
   function tallDefaultId(items,selected,family=TALL_FAMILY){
     const lower=isKitchenModule(selected||{})?selected:[...items].reverse().find(isKitchenModule);
@@ -356,7 +368,7 @@
       if(it.upper_shelf_count!=null&&(!Number.isInteger(it.upper_shelf_count)||it.upper_shelf_count<0||it.upper_shelf_count>8))return 'Количество верхних полок — от 0 до 8';
       if(it.base==='wall'||heights(it).base_height!==100)return 'Пенал устанавливается на цоколь 100 мм';
       if(p.tall.family==='appliance'){
-        if(it.width!==600||it.depth<600||it.depth>700)return 'Пенал под технику: ширина 600 мм, глубина 600–700 мм';
+        if(it.width!==600||it.depth<500||it.depth>700)return 'Пенал под технику: ширина 600 мм, глубина 500–700 мм';
         if(it.height<p.tall.min_height||it.height>2800)return 'Высота для этой компоновки — от '+p.tall.min_height+' до 2800 мм';
         const count=it.upper_shelf_count??p.tall.upper_shelves.length;
         if(it.height-18-p.tall.upper_bottom-count*18<=0)return 'Полки не помещаются в верхнем отделении';
@@ -426,6 +438,8 @@
     if(p.tall){
       const support=hw.items.find(x=>x.key==='shelf-support-marcopol');
       if(support)support.quantity=tallUpperShelves(it,p).length*4;
+      const kit=tallDrawerKit(it,p);
+      if(kit&&kit.length_mm!==500)hw.items=hw.items.map(x=>x.article==='114797'?{...x,name:kit.name,article:kit.article,quantity:kit.quantity,unit:kit.unit}:x.article===kit.screw_article?{...x,quantity:kit.screw_quantity}:x);
     }
     if(hw.native_fixed_items)return hw;
     const shelfCount=productionShelves(it,p).filter(s=>s.enabled!==false).length;
@@ -600,7 +614,12 @@
       if(s.stretch==='height'){size.y+=dh;position.y+=dh/2;}
       if(s.stretch==='top')position.y+=dh;
       const dd=it.depth-p.native_defaults.depth;
-      if(!s.key.startsWith('drawer-')&&['body','shelf'].includes(s.role)&&s.size[2]>100)size.z+=dd;
+      if(s.key.startsWith('drawer-')){
+        const dl=tallDrawerKit(it,p).length_mm-500;
+        if(s.key.startsWith('drawer-side-')||s.key==='drawer-bottom'){size.z+=dl;position.z+=dd/2-dl/2;}
+        else position.z+=dd/2-(s.key==='drawer-rear'?dl:0);
+      }
+      else if(['body','shelf'].includes(s.role)&&s.size[2]>100)size.z+=dd;
       else position.z+=(s.role==='back'&&s.key!=='drawer-bottom'?-1:1)*dd/2;
       const id=it.part_materials?.[s.key]??(s.role==='front'?it.front_variant_id:s.role==='back'?it.back_variant_id:it.body_variant_id),m=id?materialLookup(id):null;
       const [length_axis,width_axis,thickness_axis]=s.axes;
@@ -909,5 +928,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

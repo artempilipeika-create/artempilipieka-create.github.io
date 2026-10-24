@@ -49,7 +49,37 @@ test('Height grows upper section only, with equal clear shelf spaces; niche dime
     let bottom=v.upper_bottom;const gaps=[];
     for(const y of tallUpperShelves(next)){gaps.push(y-9-bottom);bottom=y+9;}gaps.push(2600-18-bottom);
     assert.ok(gaps.every(g=>Math.abs(g-gaps[0])<.00001));assert.ok(tallShelfAdjustment(next));
-    for(const patch of [{width:599},{depth:550},{height:v.min_height-1},{base_height:150}])assert.ok(dimensionError({...src,...patch}));
+    for(const patch of [{width:599},{depth:499},{depth:701},{height:v.min_height-1},{base_height:150}])assert.ok(dimensionError({...src,...patch}));
   }
   assert.equal(tallDefaultId([],null,APPLIANCE_TALL_FAMILY),APPLIANCE_TALL_FAMILY.default_id);
+});
+
+test('Depth 500–700 keeps drawer boards behind facades and clear of the cabinet back',()=>{
+  for(const v of variants)for(const depth of [500,501,549,550,599,600,650,700]){
+    const it=dimensionPatch(item(v),{depth}),ps=parts(it);
+    assert.equal(dimensionError(it),'');assert.deepEqual(models[v.id].limits.d,[500,700]);
+    assert.ok(ps.every(p=>Object.values(p.size).every(n=>n>0&&Number.isFinite(n))));
+    for(const key of ['side-L','side-P','bottom'])assert.equal(ps.find(p=>p.key===key).size.z,depth);
+    for(const p of ps.filter(p=>p.role==='shelf'||p.key.startsWith('support-')))assert.equal(p.size.z,depth-50);
+    for(const p of ps.filter(p=>p.role==='front'))assert.equal(p.position.z-p.size.z/2,depth/2);
+    const dividers=ps.filter(p=>p.key.startsWith('support-')).sort((a,b)=>a.position.y-b.position.y);
+    assert.equal(dividers[1].position.y-9-(dividers[0].position.y+9),595);
+    if(v.microwave)assert.equal(dividers[2].position.y-9-(dividers[1].position.y+9),380);
+    if(v.drawer){
+      const length=depth<550?400:depth<600?450:500;
+      const side=ps.find(p=>p.key==='drawer-side-L'),rear=ps.find(p=>p.key==='drawer-rear'),back=ps.find(p=>p.key==='back-lower');
+      assert.equal(side.size.z,length);assert.equal(side.position.z+length/2,depth/2);
+      assert.equal(ps.find(p=>p.key==='drawer-bottom').size.z,length-4);
+      assert.equal(rear.position.z-rear.size.z/2,side.position.z-length/2);
+      assert.ok(rear.position.z-rear.size.z/2-(back.position.z+back.size.z/2)>=50);
+      const hw=productionHardware(it).items,guide=hw.find(r=>r.name.startsWith('Направляющая'));
+      assert.equal(guide.article,{400:'114795',450:'114796',500:'114797'}[length]);
+      assert.equal(guide.quantity,1);assert.equal(hw.find(r=>r.article==='81320').quantity,length===400?16:18);
+      if(depth<600){
+        assert.equal(guide.unit,'set');const adjustment=tallShelfAdjustment(it);
+        assert.equal(adjustment.drawer_length_mm,length);assert.equal(adjustment.slide_article,guide.article);
+        assert.equal(adjustment.requires_manual_native_adjustment,true);
+      }
+    }
+  }
 });

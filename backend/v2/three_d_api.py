@@ -228,8 +228,8 @@ class FurnitureItem(StrictModel):
             if not 300<=self.width<=600*tall['doors_per_section'] or not 1800<=self.height<=2800 or not 300<=self.depth<=700:
                 raise ValueError('Проверьте размеры пенала: глубина 300–700 мм, высота 1800–2800 мм; ширина одной створки не больше 600 мм')
             if tall.get('family')=='appliance':
-                if self.width!=600 or not 600<=self.depth<=700 or self.height<tall['min_height']:
-                    raise ValueError(f"Пенал под технику: ширина 600 мм, глубина 600–700 мм, высота от {tall['min_height']} мм")
+                if self.width!=600 or not 500<=self.depth<=700 or self.height<tall['min_height']:
+                    raise ValueError(f"Пенал под технику: ширина 600 мм, глубина 500–700 мм, высота от {tall['min_height']} мм")
                 count=self.upper_shelf_count if self.upper_shelf_count is not None else len(tall['upper_shelves'])
                 if self.height-18-tall['upper_bottom']-count*18<=0:
                     raise ValueError('Полки не помещаются в верхнем отделении')
