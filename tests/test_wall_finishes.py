@@ -46,6 +46,12 @@ def test_original_source_bytes_and_measured_native_geometry():
         panels=[panelinfo(n,m,path) for n,m,path in walk(model) if vals(n).get('Type')==4002]
         assert len(panels)=={'straight':1,'left':2,'right':2,'u':3}[s['shape']]
         assert all(abs(x['thickness']-6)<.01 for x in panels)
+        if s['shape']=='straight':
+            # Native export relies on this exact frame, panel origin and material.
+            assert frame(model)['origin']==[0,0,0]
+            assert panels[0]['bounds']=={'lo':[0,0,0],'hi':[2000,600,6],'size':[2000,600,6]}
+            assert panels[0]['name']=='Скиналь'
+            assert panels[0]['material']=='Скинали Скиф Дуб Вотан\r111 CH'
 
 def test_new_assets_and_sources_are_fixed_allowlisted():
     from fastapi import FastAPI

@@ -73,18 +73,16 @@
   const items=state.items.filter(it=>!excluded.has(it.item_id)).map(it=>entry.material_id?{...it,plinthMaterialId:entry.material_id}:it);
   const runs=C().kitchenRuns(items,state.room,lookup),source=variants.find(v=>v.kind==='plinth'&&v.variant==='straight'),out=[];
   for(const run of runs)for(const p of run.parts.filter(p=>p.role==='plinth'&&p.length>0)){
-   const side=p.orientation.length_axis==='z',rotation=(run.rotation+(side?90:0))%360;
+   const rotation=run.rotation;
    const center=C().rotateXZ(p.position.x,p.position.z,run.rotation),id=entry.id+':'+p.part_id;
-   // End returns meet the BACK face of the front board without a 9 mm overlap.
-   const length=p.length-(side?9:0),target={width:length,height:p.size.y,depth:600};
+   const length=p.length,target={width:length,height:p.size.y,depth:600};
    const materialId=p.material.variant_id,ps=panels(source,target,lookup,materialId,id),part=ps[0];
    if(length<=75||ps.some(p=>p.length<=0||p.width<=0)){
     out.push({id,setting_id:entry.id,automatic:true,members:run.members,parts:[],error:'Автоматический цоколь: участок слишком короткий для исходного FR3D.'});continue;
    }
    const nativeCenter=C().rotateXZ(part.position.x,part.position.z,rotation);
-   const trim=side?C().rotateXZ(0,-4.5,run.rotation):{x:0,z:0};
    out.push({id,setting_id:entry.id,automatic:true,run_id:'plinth:'+id,members:p.module_ids,shape:'straight',source,target,rotation,
-    position:{x:round(run.position.x+center.x+trim.x-nativeCenter.x),y:round(p.position.y-p.size.y/2),z:round(run.position.z+center.z+trim.z-nativeCenter.z)},
+    position:{x:round(run.position.x+center.x-nativeCenter.x),y:round(p.position.y-p.size.y/2),z:round(run.position.z+center.z-nativeCenter.z)},
     parts:ps,width:length,height:p.size.y,depth:600,inset:51,material_id:materialId});
   }
   return [...manual,...out];

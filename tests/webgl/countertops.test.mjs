@@ -37,7 +37,7 @@ test('Off switch cuts a real gap; plinth and body heights stay unchanged and re-
  const off=dimensionPatch(b,{countertopEnabled:false});assert.equal(heights(off).overall_height_with_worktop,820);
  assert.equal(off.height,820);assert.equal(off.body_height,720);assert.equal(off.countertopThicknessMm,38);
  assert.deepEqual(tops([a,off,c]).map(p=>p.length),[600,600]);assert.equal(groups([a,off,c]).length,2);
- assert.equal(kitchenRuns([a,off,c],room)[0].parts.filter(p=>p.role==='plinth').length,3);
+ assert.equal(kitchenRuns([a,off,c],room)[0].parts.filter(p=>p.role==='plinth').length,1);
  const on=dimensionPatch(off,{countertopEnabled:true});assert.equal(heights(on).overall_height_with_worktop,858);
  assert.equal(tops([a,on,c]).length,1);
  for(const leg of [80,100,150]){const moved=dimensionPatch(off,{legHeightMm:leg});assert.equal(moved.body_height,720);assert.equal(moved.countertopThicknessMm,38);}

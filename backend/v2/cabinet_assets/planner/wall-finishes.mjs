@@ -1,5 +1,5 @@
 import {automaticPanelSegments} from './automatic-finishes.mjs';
-// Wall finishes are independent presentation assemblies, measured in millimetres.
+// Wall finishes are independent assemblies, measured in millimetres.
 export const panelNames={skinali:'Скиналь',ldsp:'Фартук из ЛДСП',tile:'Плитка'};
 export const shapeNames={straight:'Прямая',left:'Левая',right:'Правая',u:'П-образная'};
 export const sources=[{"shape": "straight", "source_file": "Скиналь.Прямая.fr3d", "source_sha256": "8bc8c1cdbad74e25ba11cc9b9000de7135de18bef5dda61a2f9f69e6c12e12b2", "default_size_mm": [2000, 600, 6], "thickness_mm": 6, "material": "Скинали Скиф Дуб Вотан · 111 CH", "elastic_planes_mm": {"x": 1800, "y": 425}}, {"shape": "left", "source_file": "Скиналь.Лево.fr3d", "source_sha256": "c0cc4a0286897293d659e01e024a452d6a24fd4e8e18c1ff4a9e90b661d55a66", "default_size_mm": [2000, 600, 400], "thickness_mm": 6, "material": "Скинали Скиф Дуб Вотан · 111 CH", "elastic_planes_mm": {"x": 1800, "y": 425, "z": 230}}, {"shape": "right", "source_file": "Скиналь.Угол.Право.fr3d", "source_sha256": "3d78e2569c06c5321d3c7b2e6da0c55a585e8e607b3633249a9045661385d917", "default_size_mm": [2000, 600, 400], "thickness_mm": 6, "material": "Скинали Скиф Дуб Вотан · 111 CH", "elastic_planes_mm": {"x": 1800, "y": 425, "z": 230}}, {"shape": "u", "source_file": "Скиналь.П-образная.fr3d", "source_sha256": "bebf714eebffd9b5b7d26447231c00c4ab53408f62c702152ac68b652a03305a", "default_size_mm": [2000, 600, 400], "thickness_mm": 6, "material": "Скинали Скиф Дуб Вотан · 111 CH", "elastic_planes_mm": {"x": 1800, "y": 425, "z": 230}}];
@@ -70,12 +70,41 @@ export function segmentOpenings(s,r){
   cuts.push({x:dx*s.u.x+dz*s.u.z,y:f.elevation-s.bottom,w:f.width,h:f.height});
  }return cuts;
 }
+// Each resolved surface uses the unchanged, measured 6 mm straight FR3D.
+// Separate boards also preserve unequal corner arms and per-module gaps.
+// Native placement uses the frame's bottom centre; +Z faces into the room.
+export function nativePanelItems(state,lookup=()=>null){
+ const source=sources.find(s=>s.shape==='straight'),out=[];
+ for(const p of resolvedPanels(state).filter(p=>p.kind==='skinali')){
+  const error=resolvedFinishError(p,state.room);if(error)throw Error('Скиналь: '+error);
+  const selected=p.material_id?lookup(p.material_id):null;
+  if(p.material_id&&(!selected?.name||Number(selected.thickness)!==6))throw Error('Скиналь: выберите загруженный материал толщиной 6 мм.');
+  const material=selected?{variant_id:p.material_id,material_id:selected.material_id||null,name:selected.name,article:selected.article||null,thickness:6}:
+   {variant_id:null,material_id:null,name:'Скинали Скиф Дуб Вотан',article:'111 CH',thickness:6};
+  for(const [i,s]of panelSegments(p,state.room).entries()){
+   if(![s.length,s.height,s.bottom,s.x,s.z].every(Number.isFinite)||s.length<=0||s.height<=0||s.thickness!==6)throw Error('Скиналь: некорректный участок.');
+   const rotation=s.n.z===1?0:s.n.x===-1?90:s.n.z===-1?180:270;
+   const target={width:s.length,height:s.height,depth:6},id=p.id+':'+i;
+   out.push({name:'Скиналь · '+s.name,source_file:source.source_file,source_sha256:source.source_sha256,
+    source_default:{width:2000,height:600,depth:6},elastic_resize:true,target,rotation,
+    position:{x:s.x+s.u.x*s.length/2+s.n.x*3,y:s.bottom,z:s.z+s.u.z*s.length/2+s.n.z*3},
+    body_variant_id:material.variant_id,material_assignments:{body:material},
+    construction:{key:'wall.skinali',panel_id:p.id,segment_index:i,parts:[{part_id:id,name:'Скиналь',role:'body',type:'panel',
+     size:{x:s.length,y:s.height,z:6},position:{x:0,y:s.height/2,z:0},length:s.length,width:s.height,thickness:6,
+     orientation:{length_axis:'x',width_axis:'y',thickness_axis:'z'},material}]},
+    production_note:'Скиналь '+s.length+' × '+s.height+' × 6 мм. Низ '+s.bottom+' мм. Родной FR3D, отдельный участок.'+
+     (segmentOpenings(s,state.room).length?' Есть пересечение с проёмом: вырез выполнить в БАЗИС по размерам проёма.':'')+
+     ' Вырезы под розетки, крепление и раскрой уточняются конструктором.'});
+  }
+ }
+ return out;
+}
 export function finishSchedule(state){
- const panels=resolvedPanels(state).map(p=>({...p,source:p.kind==='skinali'?sources.find(s=>s.shape===(p.automatic?'straight':p.shape)):null,parts:panelSegments(p,state.room).map(s=>({name:s.name,width:s.length,height:s.height,thickness:s.thickness})),native_import:false}));
- return {panels,lights:state.wallLights||[],note:'Стеновые панели и настенная подсветка: визуализация и размеры. Не включены в распил и автоматический импорт БАЗИС; вырезы, стыки, крепление и электрика уточняются конструктором. Исходные FR3D скинали — 6 мм.'};
+ const panels=resolvedPanels(state).map(p=>({...p,source:p.kind==='skinali'?sources.find(s=>s.shape==='straight'):null,parts:panelSegments(p,state.room).map(s=>({name:s.name,width:s.length,height:s.height,thickness:s.thickness})),native_import:p.kind==='skinali'}));
+ return {panels,lights:state.wallLights||[],note:'Скиналь 6 мм включена в импорт БАЗИС отдельными прямыми участками. ЛДСП, плитка и подсветка передаются только в описании. Не включены в распил; вырезы, стыки, крепление и электрика уточняются конструктором.'};
 }
 export function finishText(s){
  if(!s.wallPanels?.length&&!s.wallLights?.length)return '';
- return ['СТЕНОВЫЕ ПАНЕЛИ И ПОДСВЕТКА (визуализация):',...resolvedPanels(s).map(p=>p.automatic?panelNames[p.kind]+' · по столешнице · '+panelSegments(p,s.room).map(q=>q.length+' × '+q.height+' × '+q.thickness+' мм · низ '+q.bottom+' мм').join(' / '):panelNames[p.kind]+' · '+shapeNames[p.shape]+' · стена '+p.wall.toUpperCase()+' · '+p.width+' × '+p.height+' × '+p.thickness+' мм · низ '+p.elevation+' мм · отступ '+p.offset+' мм'+(p.shape!=='straight'?' · возврат '+p.depth+' мм':'')),...(s.wallLights||[]).map(p=>'Настенная подсветка · стена '+p.wall.toUpperCase()+' · длина '+p.width+' мм · высота '+p.elevation+' мм · '+p.temperature+' K'),finishSchedule(s).note].join('\n');
+ return ['СТЕНОВЫЕ ПАНЕЛИ И ПОДСВЕТКА:',...resolvedPanels(s).map(p=>p.automatic?panelNames[p.kind]+' · по столешнице · '+panelSegments(p,s.room).map(q=>q.length+' × '+q.height+' × '+q.thickness+' мм · низ '+q.bottom+' мм').join(' / '):panelNames[p.kind]+' · '+shapeNames[p.shape]+' · стена '+p.wall.toUpperCase()+' · '+p.width+' × '+p.height+' × '+p.thickness+' мм · низ '+p.elevation+' мм · отступ '+p.offset+' мм'+(p.shape!=='straight'?' · возврат '+p.depth+' мм':'')),...(s.wallLights||[]).map(p=>'Настенная подсветка · стена '+p.wall.toUpperCase()+' · длина '+p.width+' мм · высота '+p.elevation+' мм · '+p.temperature+' K'),finishSchedule(s).note].join('\n');
 }
-globalThis.MF_WALL_FINISHES={schedule:finishSchedule,text:finishText};
+globalThis.MF_WALL_FINISHES={schedule:finishSchedule,text:finishText,nativeItems:nativePanelItems};

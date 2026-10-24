@@ -785,12 +785,8 @@
             }
           }
         }
-        // Returns at the two exposed ends; no doubled side panels between neighbours.
-        for(const [m,sign]of [[run.members[0],-1],[run.members.at(-1),1]]){
-          const c=cornerSpec(m.it),d=m.it.depth-100,x=sign<0?run.lo+(c?.side!=='right'?(c?.wall_gap_mm||0):0):run.hi-18-(c?.side==='right'?c.wall_gap_mm:0);
-          add('plinth',x,x+18,m.k.rearServiceGapMm+m.it.depth/2-10,d,m.level+m.k.legHeightMm/2,m.k.legHeightMm,m.k.plinthMaterialId,[m.it.item_id],':return');
-          const p=plan.parts.at(-1);p.length=d;p.width=m.k.legHeightMm;p.thickness=18;p.orientation={length_axis:'z',width_axis:'y',thickness_axis:'x'};
-        }
+        // Automatic plinths follow cabinet fronts only. Exposed row ends stay open;
+        // an explicitly selected manual L/U plinth is handled by accessories.js.
         runs.push(plan);
       }
     }

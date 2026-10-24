@@ -5,7 +5,7 @@ export class AccessoryUI{
  constructor(app){
   this.app=app;
   const card=el('section');card.id='plinth-card';card.className='mf3d-control-card accessory-card';
-  card.append(el('h3','Цоколь'),el('p','Автоматически следует за нижними шкафами: длина, углы, разрывы и высота опор.'));
+  card.append(el('h3','Цоколь'),el('p','Прямой цоколь по передней линии нижних шкафов, без боковых возвратов на концах ряда. Длина, углы кухни, разрывы и высота опор учитываются автоматически.'));
   this.auto=el('div');this.auto.className='automatic-finish';card.append(this.auto);
   const preview=el('div');preview.className='accessory-preview';preview.innerHTML=A.drawing('straight');card.append(preview);
   this.add=button('Добавить цоколь на выбранный ряд');card.append(this.add);

@@ -13,7 +13,7 @@ export class WallFinishUI{
   this.list=el('div');card.append(this.list);
   card.append(el('h3','Настенная подсветка'),el('p','Накладной профиль на стене. Высота задаётся от пола до центра профиля.'));
   card.append(this.button('Добавить настенную подсветку',()=>this.addLight()));this.lights=el('div');card.append(this.lights);
-  const note=el('p','Элементы для визуализации. Размеры сохраняются в проекте и задании; вырезы, раскрой, крепление и электрика уточняются отдельно.');note.className='studio-hint';card.append(note);
+  const note=el('p','Скиналь 6 мм выгружается в БАЗИС отдельными участками. ЛДСП, плитка и подсветка сохраняются в описании. Вырезы, раскрой, крепление и электрика уточняются отдельно.');note.className='studio-hint';card.append(note);
   const originals=el('details');originals.append(el('summary','Исходные скинали БАЗИС · 6 мм'));
   for(const s of sources){const a=el('a',shapeNames[s.shape]+' · FR3D');a.href='/account/planner/wall-panel-sources/'+encodeURIComponent(s.source_file);a.download=s.source_file;originals.append(a);}card.append(originals);
   document.getElementById('module-catalogue').before(card);

@@ -1222,7 +1222,7 @@ async function exportBazisProjectReady(){
         if(!m||!(m.name||m.article))missing.push(it.name+' · '+id);
       }
     }
-    for(const p of [...(state.plinths||[]),...(state.wallPanels||[])])if(p.material_id){const m=materials.get(String(p.material_id));if(!m||!(m.name||m.article))missing.push('Цоколь · '+p.material_id);}
+    for(const [label,panels]of [['Цоколь',state.plinths||[]],['Стеновая панель',state.wallPanels||[]]])for(const p of panels)if(p.material_id){const m=materials.get(String(p.material_id));if(!m||!(m.name||m.article))missing.push(label+' · '+p.material_id);}
     if(missing.length){status('Экспорт не создан: не удалось загрузить выбранные материалы. Повторите экспорт или выберите материал заново. '+[...new Set(missing)].join('; '));return;}
     return exportBazisProject();
   }catch(error){status('Экспорт не создан: '+(error.message||String(error)));}
@@ -1234,6 +1234,11 @@ function exportBazisProject(){
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError){status(briefError);return;}
   const plinthError=globalThis.MF_ACCESSORIES?.plans(state).find(p=>p.error)?.error;if(plinthError){status(plinthError);return;}
+  let wallPanelItems=[];
+  try{
+    if(state.wallPanels?.some(p=>p.kind==='skinali')&&!globalThis.MF_WALL_FINISHES?.nativeItems)throw Error('Модуль экспорта скинали не загружен. Обновите страницу и повторите экспорт.');
+    wallPanelItems=globalThis.MF_WALL_FINISHES?.nativeItems(state,id=>materials.get(String(id)))||[];
+  }catch(error){status('Экспорт не создан: '+error.message);return;}
   const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
   if(invalid){status(invalid);return;}
   const bazisItems=state.items.filter(x=>x.bazis_file);
@@ -1320,6 +1325,8 @@ function exportBazisProject(){
   const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];
   for(const item of plinthItems){item.index=payload.items.length+1;payload.items.push(item);}
   payload.kitchen_production.native_plinths_included=plinthItems.length;
+  for(const item of wallPanelItems){item.index=payload.items.length+1;payload.items.push(item);}
+  payload.kitchen_production.native_wall_panels_included=wallPanelItems.length;
   const counter=globalThis.MF_COUNTERTOPS;
   const countertops=counter?.nativeItems(payload.kitchen_production.runs)||[];
   for(const item of countertops){item.index=payload.items.length+1;payload.items.push(item);}
@@ -1335,7 +1342,7 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, столешниц: '+countertops.length+'.'+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
 }
 
 async function toOrder(){

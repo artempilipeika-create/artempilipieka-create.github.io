@@ -18,22 +18,22 @@ const close=(a,b)=>assert.ok(Math.abs(a-b)<.001,`${a} != ${b}`);
 function bounds(p){const b=p.parts[0],center=rotateXZ(b.position.x,b.position.z,p.rotation),swap=p.rotation%180!==0;return {x:p.position.x+center.x,z:p.position.z+center.z,dx:(swap?b.size.z:b.size.x)/2,dz:(swap?b.size.x:b.size.z)/2,y:p.position.y,h:b.size.y};}
 test('Automatic strips grow, resize, split, remove, and include future cabinets without changing saved settings',()=>{
  const a=item(),b=item({x:600}),s=state([a]),settings=JSON.stringify([s.plinths,s.wallPanels]);
- assert.deepEqual(backs(s).map(p=>p.length),[600]);assert.equal(A.plans(s).length,3);
- s.items.push(b);assert.deepEqual(backs(s).map(p=>p.length),[1200]);assert.equal(A.plans(s).length,3);assert.equal(A.plans(s)[0].width,1200);
+ assert.deepEqual(backs(s).map(p=>p.length),[600]);assert.equal(A.plans(s).length,1);
+ s.items.push(b);assert.deepEqual(backs(s).map(p=>p.length),[1200]);assert.equal(A.plans(s).length,1);assert.equal(A.plans(s)[0].width,1200);
  b.width=800;b.x=700;assert.equal(backs(s)[0].length,1400);assert.equal(A.plans(s)[0].width,1400);
- b.x=1600;assert.deepEqual(backs(s).map(p=>p.length),[600,800]);assert.equal(A.plans(s).length,6);
+ b.x=1600;assert.deepEqual(backs(s).map(p=>p.length),[600,800]);assert.equal(A.plans(s).length,2);
  s.items=[];assert.deepEqual(backs(s),[]);assert.deepEqual(A.plans(s),[]);assert.equal(JSON.stringify([s.plinths,s.wallPanels]),settings);
 });
 test('Per-module exclusions cut gaps; disabled worktop suppresses backsplash but not plinth',()=>{
  const s=state([item({x:-600}),item(),item({x:600})]),id=s.items[1].item_id;
  s.wallPanels[0].excluded_members=[id];s.plinths[0].excluded_members=[id];
- assert.deepEqual(backs(s).map(p=>p.length),[600,600]);assert.equal(A.plans(s).length,6);
+ assert.deepEqual(backs(s).map(p=>p.length),[600,600]);assert.equal(A.plans(s).length,2);
  s.wallPanels[0].excluded_members=[];s.plinths[0].excluded_members=[];s.items[1].countertopEnabled=false;
- assert.deepEqual(backs(s).map(p=>p.length),[600,600]);assert.equal(A.plans(s).length,3);
+ assert.deepEqual(backs(s).map(p=>p.length),[600,600]);assert.equal(A.plans(s).length,1);
 });
 for(const side of ['left','right'])for(const rotation of [0,90,180,270])test(`Automatic ${side} corner at ${rotation}: full back, exact native boards, no overlap`,()=>{
  const a={...corner(side),rotation},b=cornerReturnPlacement(a,item()),s=state([a,b]),segments=backs(s),plans=A.plans(s);
- assert.equal(segments.length,2);assert.ok(segments.every(p=>p.bottom===858));assert.equal(plans.length,4);assert.ok(plans.every(p=>!p.error));
+ assert.equal(segments.length,2);assert.ok(segments.every(p=>p.bottom===858));assert.equal(plans.length,2);assert.ok(plans.every(p=>!p.error));
  const tops=kitchenRuns(s.items,room).flatMap(r=>r.parts.filter(p=>p.role==='counter'));
  assert.ok(segments.some(p=>p.length>=a.width));assert.ok(segments.every(p=>p.length>=594));
  const native=A.nativeItems(s);assert.equal(native.length,plans.length);
@@ -47,13 +47,13 @@ for(const side of ['left','right'])for(const rotation of [0,90,180,270])test(`Au
 test('Unequal U returns retain lengths, butt once, and split when middle is removed',()=>{
  const left={...corner('left'),x:-1000},right={...corner('right'),x:1000},middle=item({width:1000},'bazis.3079d0656398');
  const s=state([left,middle,right,cornerReturnPlacement(left,item()),cornerReturnPlacement(right,item({width:900}))]);
- const seg=backs(s);assert.equal(seg.length,3);assert.notEqual(seg[1].length,seg[2].length);assert.equal(A.plans(s).length,5);
+ const seg=backs(s);assert.equal(seg.length,3);assert.notEqual(seg[1].length,seg[2].length);assert.equal(A.plans(s).length,3);
  s.items.splice(1,1);assert.equal(backs(s).length,4);assert.ok(A.plans(s).every(p=>!p.error));
 });
 test('Stock seams and material seams do not split the backsplash; plinth materials and heights remain separate',()=>{
  const s=state(Array.from({length:8},(_,i)=>item({x:i*600,plinthMaterialId:i<4?'wood':'white'})));
  assert.equal(backs(s).length,1);assert.equal(backs(s)[0].length,4800);
- const plans=A.plans(s,id=>({name:id}));assert.equal(plans.length,4);assert.deepEqual(plans.slice(0,2).map(p=>p.material_id),['wood','white']);
+ const plans=A.plans(s,id=>({name:id}));assert.equal(plans.length,2);assert.deepEqual(plans.slice(0,2).map(p=>p.material_id),['wood','white']);
  s.items[0].height=870;s.items[0].legHeightMm=150;s.items[0].base_height=150;
  assert.deepEqual(backs(s).map(p=>p.bottom).sort(),[858,908]);assert.ok(A.plans(s).some(p=>p.parts[0].size.y===147));
 });
@@ -66,7 +66,7 @@ test('Saved settings, history, schedule and socket finished face follow the same
  let s=state([item({z:-4695})]);const original=JSON.parse(JSON.stringify(s)),adapter={snapshot:()=>({name:'QA',scene:s}),restore:v=>{s=structuredClone(v.scene);}};const history=new History(adapter);
  history.run('Move',()=>{s.items[0].width=800;s.items[0].x=100;});assert.equal(allSegments(s)[0].length,800);history.undo();assert.deepEqual(s,original);history.redo();assert.equal(allSegments(s)[0].length,800);
  const seg=allSegments(s)[0];assert.equal(seg.z,-5000);assert.equal(surfaceOffset(allSegments(s),{x:0,z:-5000},{x:0,z:1},86,1100,86),6);
- const schedule=finishSchedule(JSON.parse(JSON.stringify(s)));assert.equal(schedule.panels[0].parts[0].width,800);assert.equal(schedule.panels[0].native_import,false);assert.match(finishText(s),/800 × 600 × 6/);
+ const schedule=finishSchedule(JSON.parse(JSON.stringify(s)));assert.equal(schedule.panels[0].parts[0].width,800);assert.equal(schedule.panels[0].native_import,true);assert.match(finishText(s),/800 × 600 × 6/);
  s.wallPanels[0].height=2000;s.room={...room,height:2700};assert.match(resolvedFinishError(resolvedPanels(s)[0],s.room),/потолка/);assert.equal(allSegments(s).length,0);
 });
 test('Actual mesh rebuilds after moving and resizing cabinets, without editing panel settings',()=>{

@@ -53,7 +53,7 @@ for(const rotation of [0,90,180,270])test('Continuous row and wall service gap a
  const items=row().map(it=>({...it,rotation,...rotateXZ(it.x,-wall+305,rotation)}));
  const runs=kitchenRuns(items,room);assert.equal(runs.length,1);const run=runs[0];
  assert.equal(run.countertopActualLengthMm,1800);assert.equal(run.countertopStockLengthMm,4100);
- assert.equal(run.parts.filter(p=>p.role==='counter').length,1);assert.equal(run.parts.filter(p=>p.role==='plinth').length,3);
+ assert.equal(run.parts.filter(p=>p.role==='counter').length,1);assert.equal(run.parts.filter(p=>p.role==='plinth').length,1);
  assert.deepEqual(run.parts[0].size,{x:1800,y:38,z:600});
  const f=new MeshFactory({room,template:it=>({production:PILOT_PRODUCTION[it.bazis_id]}),material:()=>null},()=>{}),g=f.dress(items);g.updateMatrixWorld(true);
  assert.equal(g.children.length,1);const b=new Box3().setFromObject(g.children[0].children.find(x=>x.userData.role==='counter'));
