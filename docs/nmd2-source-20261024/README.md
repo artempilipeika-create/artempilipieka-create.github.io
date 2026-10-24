@@ -35,3 +35,14 @@ Validation:
 
 Installer: `tools/bazis_import/Martin_Forest_Import_v9_9_3_NMD2.zip` contains
 one JS and instructions; original user FR3D is not redistributed.
+
+Live verification:
+- Runtime commit `30144e697734b37046f0ee2c86b4818be8bf94ee`.
+- Railway deployment `37f41393-b781-4f5f-b263-219f3b0a4b9c`: SUCCESS
+  at 2026-10-24 08:25:53 UTC (11:25 Minsk), existing isolated service only.
+- In Chrome, created a separate project “НМД2-600 — проверка выгрузки”, added
+  the standard two-door storage cabinet. Its visible source is now
+  `НМД2-600.(2).fr3d`, with 600 × 820 × 510 dimensions and 720 mm body.
+- The real Export BAZIS button reported one module and one worktop prepared.
+- Screenshot: [nmd2-export.jpg](nmd2-export.jpg). Existing kitchen projects
+  were not edited. The native Windows BAZIS run remains unverified.
