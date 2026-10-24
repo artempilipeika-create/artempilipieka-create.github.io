@@ -34,7 +34,11 @@ test('Appliance depth stretches carcass while retaining drawer length and mounti
   const parts=C.productionParts(it,p);
   for(const part of parts){const source=v.panels.find(s=>s.key===part.key);if(!source)continue;
    assert.equal(part.size.y,source.size[1]);
-   assert.equal(part.size.z,source.size[2]+(['body','shelf'].includes(source.role)&&source.size[2]>100?50:0));
+   if(source.key.startsWith('drawer-')){assert.equal(part.size.z,source.size[2]);assert.equal(part.position.z,source.center[2]+25);}
+   else if(source.key.startsWith('side-'))assert.equal(part.size.z,650);
+   else if(source.role==='shelf')assert.equal(part.size.z,600);
+   else if(source.role==='front'){assert.equal(part.size.z,18);assert.equal(part.position.z,334);}
+   else if(source.role==='back')assert.equal(part.position.z,source.center[2]-25);
   }
  }
 });

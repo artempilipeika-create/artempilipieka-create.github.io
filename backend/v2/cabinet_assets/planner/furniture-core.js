@@ -598,7 +598,7 @@
       if(s.stretch==='height'){size.y+=dh;position.y+=dh/2;}
       if(s.stretch==='top')position.y+=dh;
       const dd=it.depth-p.native_defaults.depth;
-      if(['body','shelf'].includes(s.role)&&s.size[2]>100)size.z+=dd;
+      if(!s.key.startsWith('drawer-')&&['body','shelf'].includes(s.role)&&s.size[2]>100)size.z+=dd;
       else position.z+=(s.role==='back'&&s.key!=='drawer-bottom'?-1:1)*dd/2;
       const id=it.part_materials?.[s.key]??(s.role==='front'?it.front_variant_id:s.role==='back'?it.back_variant_id:it.body_variant_id),m=id?materialLookup(id):null;
       const [length_axis,width_axis,thickness_axis]=s.axes;
