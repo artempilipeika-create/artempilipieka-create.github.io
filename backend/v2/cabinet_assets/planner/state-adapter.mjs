@@ -1,5 +1,5 @@
 import {fixtureError} from './worktop-fixtures.mjs';
-import {clone,elevation,tier,heights,dimensionError,placementError,normalizeKitchen,kitchenSettings,productionShelves,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
+import {clone,elevation,tier,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -39,7 +39,7 @@ export class StateAdapter{
       Object.assign(it,{body_height:it.height-base,base_height:base,worktop_thickness:type==='base_cabinet'&&it.depth<=750?38:0});
     }
     if(type==='base_cabinet')it.countertopJoint=this.state?.countertopSettings?.joint||'standard';
-    return normalizeKitchen(it);
+    return normalizeKitchen(withDefaultMaterials(it));
   }
   persistent(it){const value=clone(it);if(!this.bridge.supportsElevation)delete value.elevation_mm;return value;}
   insert(it){if(this.items.length>=100)throw new Error('В одном проекте поддерживается до 100 модулей');this.items.push(this.persistent(it));this.bridge.select(it.item_id);}

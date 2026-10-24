@@ -579,6 +579,7 @@ function addTemplate(templateId,announce=true){
     layout:d.layout,drawers:d.drawers,base:d.base,handles:'handles',body_variant_id:null,front_variant_id:null
   };
   delete it.item_name;
+  Object.assign(it,globalThis.MF_FURNITURE_CORE.withDefaultMaterials(it));
   state.items.push(it);
   selectedId=it.item_id;
   state.selected_item_id=selectedId;
@@ -604,6 +605,7 @@ function addBazisModule(bazisId,announce=true){
     Object.assign(it,{body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
     it.shelves=JSON.parse(JSON.stringify(globalThis.MF_FURNITURE_CORE.productionShelves(it,p)));
   }
+  Object.assign(it,globalThis.MF_FURNITURE_CORE.withDefaultMaterials(it));
   state.items.push(it);selectedId=it.item_id;state.selected_item_id=selectedId;
   syncControls();updateAll();
   if(announce)status(m.label+' добавлен из библиотеки БАЗИС.');
@@ -617,6 +619,7 @@ function addModule(type,announce=true){
     width:d.w,height:d.h,depth:d.d,layout:d.layout,drawers:d.drawers,base:d.base,handles:'handles',
     body_variant_id:null,front_variant_id:null
   };
+  Object.assign(it,globalThis.MF_FURNITURE_CORE.withDefaultMaterials(it));
   state.items.push(it);
   selectedId=it.item_id;
   state.selected_item_id=selectedId;
@@ -1366,6 +1369,7 @@ async function toOrder(){
 
 async function start(){
   try{user=await api('/auth/me')}catch{location.assign('/login');return}
+  await Promise.all([...new Set(Object.values(globalThis.MF_FURNITURE_CORE.DEFAULT_MATERIALS))].map(material));
   bindCatalogueControls();
   renderModuleCatalogue();
   await loadProjects();

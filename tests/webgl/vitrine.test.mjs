@@ -141,6 +141,7 @@ test('Real native exporter carries exact twelve donor identities, machining, com
     $:()=>({value:'Vitrine QA'}),status:()=>{},setTimeout:()=>{},alert:message=>assert.fail(message),confirm:()=>true,
     URL:{createObjectURL:value=>{blob=value;return 'blob:test';},revokeObjectURL:()=>{}},
     document:{createElement:()=>({style:{},click:()=>{},remove:()=>{}}),body:{append:()=>{}}}});
+  vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),context);
   vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),context);
   vm.runInContext('exportBazisProject()',context);
   const payload=JSON.parse(await blob.text());assert.equal(payload.items.length,12);

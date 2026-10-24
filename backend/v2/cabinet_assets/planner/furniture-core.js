@@ -15,6 +15,21 @@
     return it?.bazis_id===r.id&&[r.previous,r.current].includes(it.bazis_sha256)
       ? {...it,bazis_sha256:r.current,bazis_file:r.file} : it;
   }
+  // Exact 18 mm BYSPAN catalogue variants verified 2026-10-24.
+  // Defaults are applied only when creating a module, never when loading a project.
+  const DEFAULT_MATERIALS=Object.freeze({
+    body_variant_id:'71118e45-0ce3-534b-ad68-db1238304f18', // Белый 605 PO
+    front_variant_id:'389a2abc-c6e2-5214-a41b-60054320d0ff', // Персидский жемчуг 890 PO
+    plinthMaterialId:'389a2abc-c6e2-5214-a41b-60054320d0ff'
+  });
+  function withDefaultMaterials(it){
+    const p=PRODUCTION_MODELS[it.bazis_id];
+    return {...it,
+      body_variant_id:it.body_variant_id??DEFAULT_MATERIALS.body_variant_id,
+      front_variant_id:it.front_variant_id??(p?.vitrine?null:DEFAULT_MATERIALS.front_variant_id),
+      ...(it.base==='wall'?{}:{plinthMaterialId:it.plinthMaterialId??DEFAULT_MATERIALS.plinthMaterialId})
+    };
+  }
   const kitchenBase={
     tier:'base',native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
     carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:18,rail_depth:80,rail_orientation:'horizontal'},
@@ -891,5 +906,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);
