@@ -196,6 +196,7 @@ const UPPER_SOURCE_REFRESH=Object.freeze({
   'bazis.1ac4fadd97b7':['1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b','91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0']
 });
 function refreshUpperSource(x){
+  x=globalThis.MF_FURNITURE_CORE?.refreshBaseSource?.(x)||x;
   const revision=UPPER_SOURCE_REFRESH[x.bazis_id];
   const donor=revision&&globalThis.MF_UPPERS?.choice(x.bazis_id);
   return revision&&x.bazis_sha256===revision[0]&&donor?.source_sha256===revision[1]
@@ -1225,7 +1226,7 @@ async function exportBazisProjectReady(){
   finally{button.disabled=false;}
 }
 function exportBazisProject(){
-  // Even an already-open scene must not export superseded dryer donor hashes.
+  // Even an already-open scene must not export superseded reviewed donor hashes.
   state.items=state.items.map(refreshUpperSource);
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError){status(briefError);return;}

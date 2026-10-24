@@ -4,6 +4,17 @@
   const FACADE_GAP_MM=1.5, MM_TO_WORLD=0.001;
   const mmNumber=v=>Math.round(Number(v)*10)/10;
   // Versioned FR3D donor data. Old donor hashes remain valid through 3d.js legacyBazisById.
+  // Reviewed original НМД2-600.(2).fr3d, 2026-10-24: native frame 600 x 820 x 510.
+  // Never remap the older 720 x 560 donor or any unknown hash by its name alone.
+  const BASE_SOURCE_REVISION=Object.freeze({
+    id:'bazis.3079d0656398',previous:'7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',
+    current:'a659d5e7a0da816ef74206ec86c76e09fa3a3c728a7247b80be9bac507b689d2',file:'НМД2-600.(2).fr3d'
+  });
+  function refreshBaseSource(it){
+    const r=BASE_SOURCE_REVISION;
+    return it?.bazis_id===r.id&&[r.previous,r.current].includes(it.bazis_sha256)
+      ? {...it,bazis_sha256:r.current,bazis_file:r.file} : it;
+  }
   const kitchenBase={
     tier:'base',native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,worktop_thickness:38,scene_depth:510,
     carcass:{type:'bottom_side_two_rails',panel_thickness:18,rail_height:18,rail_depth:80,rail_orientation:'horizontal'},
@@ -91,7 +102,8 @@
   const PILOT_PRODUCTION=freeze({
     'bazis.0211e4f77fc4':pilotDoor('Д1 L','base.standard.d1.left.600','7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64',['left']),
     'bazis.784bf9af84f8':pilotDoor('Д1 P','base.standard.d1.right.600','5ffe31ba623db8b5cdc3d7e65811d6b162da40ef96f30554e9030b2d764c7eeb',['right']),
-    'bazis.3079d0656398':pilotDoor('Д2','base.standard.d2.600','7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',['left','right']),
+    'bazis.3079d0656398':{...pilotDoor('Д2','base.standard.d2.600',BASE_SOURCE_REVISION.current,['left','right']),
+      source_file:BASE_SOURCE_REVISION.file,facade:{...kitchenBase.facade,clearance_mm:0},shelf_depth_origin:'rear'},
     'bazis.39f282e08f0c':pilotDrawer('Нижний 2 ящика · с доводчиком','base.standard.drawers2.softclose.600','f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2','НМРШ2-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d',[357,357]),
     'bazis.5f5697e39e27':pilotDrawer('Нижний 3 ящика · с доводчиком','base.standard.drawers3.softclose.600','f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0','НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d',[357,178,178])
   });
@@ -436,7 +448,7 @@
     return k;
   }
   function normalizeKitchen(it,room){
-    it=VITRINE?.normalizeSource(it)||it;
+    it=refreshBaseSource(VITRINE?.normalizeSource(it)||it);
     const k=kitchenSettings(it);if(!k)return it;
     const {frontOverhangMm,...saved}=k;
     const result={...it,...saved,base_height:k.legHeightMm,body_height:it.body_height??it.height-k.legHeightMm,
@@ -650,7 +662,7 @@
     }
     for(const shelf of productionShelves(it,p))if(shelf.enabled!==false)add(shelf.id,'Полка','shelf',
       {x:W-shelf.width_clearance,y:shelf.thickness,z:D-shelf.depth_clearance},
-      {x:cx,y:base+shelf.offset_mm,z:shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,p.carcass.material_name||null,
+      {x:cx,y:base+shelf.offset_mm,z:(p.shelf_depth_origin==='rear'?-1:1)*shelf.depth_clearance/2},['x','z','y'],shelf.material_variant_id||it.body_variant_id,p.carcass.material_name||null,
       {source_component:shelf.source_component||null,shelf_id:shelf.id});
     if(p.back){const b=p.back;add('back','Задняя стенка','back',
       {x:C-2*b.inset,y:B-2*b.inset,z:b.thickness},{x:cx,y:base+B/2,z:-(D+b.thickness)/2},['y','x','z'],null,b.material_name,{back_type:b.type});}
@@ -879,5 +891,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

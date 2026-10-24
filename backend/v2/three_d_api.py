@@ -21,6 +21,7 @@ from .three_d_upper import upper_variant, upper_error, refresh_upper_source, BY_
 from .three_d_accessories import dishwasher, dishwasher_error, BY_ID as DISHWASHER_BY_ID
 from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
+from .three_d_base import refresh_base_source
 
 class ShelfState(StrictModel):
     id: str=Field(min_length=1,max_length=80)
@@ -107,7 +108,7 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Worktop fixture exceeds cabinet width')
             if f.front_offset+f.depth>(self.countertopDepthMm or 600)-20:
                 raise ValueError('Worktop fixture requires 20 mm front and rear margins')
-        refreshed=refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file})
+        refreshed=refresh_base_source(refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file}))
         self.bazis_sha256=refreshed.get('bazis_sha256')
         self.bazis_file=refreshed.get('bazis_file')
         if any(not key or len(key)>80 or not all(c.isalnum() or c in '-_' for c in key) for key in self.part_materials):
@@ -426,7 +427,7 @@ def projection(row):
     result={k:row[k] for k in ('project_id','name','module_type','scene','version','created_at','updated_at')}
     scene=result.get('scene')
     if isinstance(scene,dict) and isinstance(scene.get('items'),list):
-        refreshed=[refresh_upper_source(it) for it in scene['items']]
+        refreshed=[refresh_base_source(refresh_upper_source(it)) for it in scene['items']]
         if any(updated is not original for updated,original in zip(refreshed,scene['items'])):
             result['scene']={**scene,'items':refreshed}
     return result

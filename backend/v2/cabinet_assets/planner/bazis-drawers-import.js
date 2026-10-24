@@ -1,7 +1,9 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.2 XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-21)
+ Martin Forest -> BAZIS native importer v9.9.3 NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-24)
+ v9.9.3: bind the reviewed НМД2-600.(2).fr3d; upgrade only its known prior production SHA.
+ Exact source hash validation remains mandatory.
  v9.9.2: align global assembly minimum X/Z to 0; preserve Y and relative transforms.
  Verify assigned materials by native readback, retain 18/16/3 mm thickness rules.
  Native runtime confirmation is required; user confirmed X-only v9.9.1.
@@ -207,6 +209,17 @@ function canonicalUpperDonor(item) {
   if (!record || String(item.source_sha256 || '').toLowerCase() !== record.previous ||
       normalizeSourceName(item.source_file) !== normalizeSourceName(record.file)) return item;
   return { ...item, source_file: record.file, source_sha256: record.current };
+}
+// Same reviewed revision as furniture-core.js / three_d_base.py. Standalone BAZIS script.
+const VERIFIED_BASE_REVISION = Object.freeze({
+  id: 'bazis.3079d0656398', previous: '7d6feef0bc55a52460670eaa9f738c2e9764edd947d52ca4269053fd5fed6d29',
+  current: 'a659d5e7a0da816ef74206ec86c76e09fa3a3c728a7247b80be9bac507b689d2', file: 'НМД2-600.(2).fr3d'
+});
+function canonicalBaseDonor(item) {
+  const r = VERIFIED_BASE_REVISION;
+  return item && item.bazis_id === r.id && [r.previous, r.current].includes(String(item.source_sha256 || '').toLowerCase())
+    && (item.source_sha256 !== r.current || item.source_file !== r.file)
+    ? { ...item, source_file: r.file, source_sha256: r.current } : item;
 }
 function resolveSourceFile(root, item, scan) {
   if (!item || !item.source_file) return '';
@@ -844,11 +857,11 @@ function prepareProject(payload, root) {
   const scan = collectSourceFiles(root);
   const entries = [], errors = [];
   for (const original of payload.items) {
-    const item = canonicalUpperDonor(original);
+    const item = canonicalBaseDonor(canonicalUpperDonor(original));
     const source = resolveSourceFile(root, item, scan);
     if (!source) errors.push(item.source_file + ' — точный FR3D по SHA-256 не найден' +
       '\nОжидаемый SHA-256: ' + (item.source_sha256 || 'не указан') +
-      (item !== original ? '\nОбнаружен старый SHA экспорта: нужен обновлённый FR3D из пакета 19.10.2026.' : '') +
+      (item !== original ? '\nОбнаружен старый SHA экспорта или имя: нужен проверенный исходник ' + item.source_file + '.' : '') +
       (item.source_sha256 === '877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3'
         ? '\nДля обновлённого ВМД2: на сайте выберите шкаф, повторно нажмите «Накладные ручки» и скачайте новый экспорт.' : ''));
     else entries.push({ item, source, previous_source_sha256: item !== original ? original.source_sha256 : '' });
@@ -860,7 +873,7 @@ function prepareProject(payload, root) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.2 XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.3 NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -981,7 +994,7 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
-      if (entry.previous_source_sha256) log.push('ОБНОВЛЕНА ПРИВЯЗКА ВМД: ' + entry.previous_source_sha256 +
+      if (entry.previous_source_sha256) log.push('ОБНОВЛЕНА ПРИВЯЗКА FR3D: ' + entry.previous_source_sha256 +
         ' -> ' + item.source_sha256 + '; файл проверен по SHA-256');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
