@@ -557,6 +557,7 @@ async function openSalesAlbum(){
     <canvas data-preview width="900" height="506" aria-label="Предпросмотр визуализации"></canvas>
     <div class="mf-sales-files"><label>Главный фоторендер<input data-hero type="file" accept="image/png,image/jpeg,image/webp"></label><label>Второй вид (необязательно)<input data-detail type="file" accept="image/png,image/jpeg,image/webp"></label></div>
     <button data-generate type="button" class="secondary" disabled>Создать фоторендер</button>
+    <p>Перед новой генерацией выберите материал столешницы. Подсветка и техника должны быть добавлены в проект. Готовый рендер можно использовать повторно.</p>
     <label class="mf-sales-check"><input data-draft type="checkbox">Использовать вид конструктора</label>
     <label class="mf-sales-check"><input data-reviewed type="checkbox">Проверил: шкафчики, фасады и материалы на изображениях соответствуют проекту</label>
     <div class="mf-sales-actions"><button data-download disabled>Скачать PDF · 5 листов</button></div>`;

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from .three_d_document import hardware_for, drawer_slide_length
 from .three_d_base import refresh_base_source
+from .three_d_drawers import drawer_variant, drawer_configuration
 
 LEGACY = json.loads(Path(__file__).with_name('sales_hardware.json').read_text())
 
@@ -52,12 +53,46 @@ def module_hardware(item):
     return [dict(name=r['name'],qty=r['quantity'],unit=r.get('unit','pcs'),article=r.get('article') or '') for r in rows], warnings
 
 
+AQ_COMPONENTS = ('AQ LineBox Направляющая,', 'AQ LineBox Крепление задней стенки',
+                 'AQ LineBox Царга', 'Заглушка AQ', 'Ограничитель высоты ящика AQ')
+
+
+def purchasing_rows(item, rows):
+    """Project BOM stays intact; the sales ledger buys each drawer only once."""
+    rows = deepcopy(rows)
+    notes = []
+    variant = drawer_variant(item)
+    if variant and variant.get('system') == 'aq':
+        drawers, error = drawer_configuration(item, variant)
+        if error:
+            raise ValueError(error)
+        # Only remove assembly children when every selected parent kit is present.
+        expected = {}
+        for drawer in drawers:
+            kit = drawer['kit']
+            key = (kit['name'], kit.get('article') or '')
+            expected[key] = expected.get(key, 0) + 1
+        if expected and all(article and sum(r['qty'] for r in rows
+                if (r['name'], r['article']) == (name, article) and r['unit'] == 'set') == qty
+                for (name, article), qty in expected.items()):
+            rows = [r for r in rows if not r['name'].startswith(AQ_COMPONENTS)]
+            notes.append('AQ LineBox учтены комплектами; направляющие, царги, заглушки и крепления комплекта повторно не закупать. Комплектацию поставки сверить у поставщика.')
+    for row in rows:
+        # This source object represents one complete drawer slide pair, not one rail.
+        # Verified against the AKS 114797 product sold per complete set.
+        if row['article'] == '114797' and row['name'] == 'Направляющая шариковая L-500 h=45 PRIME by AKS SOFT CLOSE':
+            row['unit'] = 'set'
+    return rows, notes
+
+
 def ledger(scene):
     result = OrderedDict(); warnings = []
     items = scene.get('items') or []
     if not items: raise ValueError('Добавьте шкафчики в проект')
     for i, item in enumerate(items, 1):
         rows, notes = module_hardware(item)
+        rows, purchase_notes = purchasing_rows(refresh_base_source(item), rows)
+        notes += purchase_notes
         warnings.extend(f'М{i}: {note}' for note in notes)
         for row in rows:
             # Unknown articles never inherit a similar-looking part's article.

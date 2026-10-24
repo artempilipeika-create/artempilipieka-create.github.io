@@ -13,7 +13,7 @@ An oversized list fails visibly instead of losing rows or producing a sixth page
 Legacy hardware data is generated from the native JS catalogue with
 `node scripts/export-sales-hardware.mjs`. Regenerate it after catalogue edits;
 `--check` and parity tests detect drift. Disabled shelves have no shelf supports.
-Guide quantities are pairs; hinges are pieces. Duplicate part articles are not
+Guide quantities use their explicit units; one ball-slide set is a pair. Hinges are pieces. Duplicate part articles are not
 merged blindly. Missing articles and source conflicts are printed for review.
 The legacy single-door donor still has a shelf-fixing conflict, and article
 05.0360 occurs on both leg and base: these require source/catalogue confirmation.
@@ -35,6 +35,22 @@ Images are transient in this export dialog, not persisted as project assets.
 The user reviews cabinets/materials before including a photo. This is required
 because generative images cannot guarantee manufacturing geometry or exact
 colour appearance. The furniture model itself is never modified by generation.
+
+## Sales review corrections, 2026-10-25
+
+- The purchasing ledger removes AQ drawer assembly children only when every
+  selected complete parent kit is present; the production BOM is preserved.
+  The supplier kit contents remain a procurement confirmation item.
+- AKS 114797 denotes one slide set per drawer, including appliance towers;
+  identical rows now aggregate with the same unit. Product reference:
+  https://aksmebel.ru/catalog/napravlyayushchaya-sharikovaya-l-500-h-45-prime-by-aks-soft-close/
+- Technical QA/test project names are replaced by a client-facing album title;
+  the stored project name is unchanged.
+- The album labels unresolved countertops and unconfigured lighting explicitly.
+  New automatic generations require a selected countertop material before any
+  provider request. Existing images can still be reused without generation.
+- The render prompt describes continuous worktops and disallows invented
+  cabinet lighting. No paid image generation was used for these corrections.
 
 Validation: `python -m pytest -q tests/test_sales_album.py`; the browser script
 `scripts/verify-sales-album-browser.py --hero /path/to/photo.png` intercepts every

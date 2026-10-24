@@ -5,7 +5,7 @@ from copy import deepcopy
 import pytest
 from PIL import Image
 from pypdf import PdfReader
-from backend.v2.sales_album import render,image_bytes
+from backend.v2.sales_album import render,image_bytes,client_title
 from backend.v2.sales_hardware import LEGACY,ledger,module_hardware
 from backend.v2 import sales_render
 
@@ -102,3 +102,49 @@ def test_sales_routes_authorization_revision_and_pdf(monkeypatch):
     auth['ok']=False;assert client.post(url,json=payload).status_code==401
     assert client.get('/api/v2/3d-sales-capabilities').status_code==401
     assert checks
+
+
+def test_purchase_ledger_uses_parent_aq_kits_and_merges_slide_pairs():
+    from backend.v2.three_d_gola import VARIANTS
+    from backend.v2.three_d_tall import APPLIANCE_VARIANTS
+    aq=next(v for v in VARIANTS if v['kind']=='drawers' and v['system']=='aq' and v['layout']=='three')
+    ball=next(v for v in VARIANTS if v['kind']=='drawers' and v['system']=='ball' and v['layout']=='two')
+    tall=next(v for v in APPLIANCE_VARIANTS if v['drawer'] and v['microwave'] and v['row_height']==820)
+    def native(v,**kw):
+        return dict(bazis_id=v['id'],bazis_sha256=v['source_sha256'],width=600,height=820,depth=510,module_type='base_cabinet',legHeightMm=100,**kw)
+    t=native(tall);t.update(height=2100,depth=600,module_type='tall_cabinet')
+    scene={'items':[native(ball),native(ball),native(aq),t]}
+    before=deepcopy(scene)
+    raw,_=module_hardware(scene['items'][2])
+    assert any(r['name'].startswith('AQ LineBox Царга') for r in raw)
+    rows,notes=ledger(scene)
+    assert scene==before
+    assert not any(r['name'].startswith(('AQ LineBox','Заглушка AQ','Ограничитель высоты')) for r in rows)
+    assert next(r for r in rows if r['article']=='12.0068')['qty']==1
+    assert next(r for r in rows if r['article']=='12.0062')['qty']==2
+    slides=[r for r in rows if r['article']=='114797']
+    assert len(slides)==1 and slides[0]['qty']==5 and slides[0]['unit']=='set'
+    assert slides[0]['modules']==['М1: 2','М2: 2','М4: 1']
+    assert any('повторно не закупать' in n for n in notes)
+    assert next(r for r in rows if r['article']=='81320')['qty']==118
+
+
+def test_unresolved_countertop_stops_before_paid_request(monkeypatch):
+    monkeypatch.setenv('MF_IMAGE_API_KEY','synthetic-test-key')
+    monkeypatch.setattr(sales_render.httpx,'Client',lambda *a,**kw:pytest.fail('Provider must not be called'))
+    with pytest.raises(ValueError,match='выберите материал столешницы: М1'):
+        sales_render.generate('test',{'items':[{'module_type':'base_cabinet'}]}, {}, None)
+    sales_render.validate_render_scene({'items':[{'module_type':'base_cabinet','countertopMaterialId':'stone'}]}, {'stone':'Stone'})
+    sales_render.validate_render_scene({'items':[{'module_type':'wall_cabinet'}]}, {})
+    sales_render.validate_render_scene({'items':[{'module_type':'base_cabinet','countertopEnabled':False}]}, {})
+
+
+def test_client_album_technical_name_and_unapproved_visual_details():
+    assert client_title('QA_Equipment_Drag_20261024_new')=='Кухня · индивидуальный проект'
+    assert client_title('Кухня Жанны')=='Кухня Жанны'
+    bid='bazis.39f282e08f0c'
+    pdf=PdfReader(BytesIO(render('QA_Equipment_Drag_20261024_new',{'items':[item(bid,LEGACY[bid])]}, {},preview())))
+    text=' '.join(p.extract_text() for p in pdf.pages)
+    assert 'QA_Equipment' not in text and 'QA_Equipment' not in pdf.metadata.title
+    assert 'Столешница не согласована' in text and 'Подсветка на визуализации' in text
+    assert 'Комплект шариковых направляющих = пара' in text

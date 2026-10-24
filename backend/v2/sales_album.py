@@ -2,7 +2,7 @@
 from io import BytesIO
 from html import escape
 from pathlib import Path
-import base64, binascii, hashlib, warnings
+import base64, binascii, hashlib, warnings, re
 from PIL import Image, ImageOps
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.pdfbase import pdfmetrics
@@ -52,8 +52,28 @@ def material_name(materials,ident):
     return materials.get(str(ident),'Материал требует выбора') if ident else 'Материал требует выбора'
 
 
+def client_title(name):
+    value = str(name or '').strip()
+    if not value or re.match(r'^(qa|test|synthetic|debug)(?:[_\s-]|$)', value, re.I):
+        return 'Кухня · индивидуальный проект'
+    return value
+
+
+def visualization_notes(scene, materials):
+    notes = []
+    bases = [it for it in scene.get('items', []) if it.get('module_type') == 'base_cabinet'
+             and it.get('countertopEnabled', True)]
+    if any(not it.get('countertopMaterialId') or str(it['countertopMaterialId']) not in materials for it in bases):
+        notes.append('Столешница не согласована: материал и окончательный вид рабочей поверхности требуют выбора.')
+    if not scene.get('wallLights'):
+        notes.append('Подсветка на визуализации, если показана, является предложением и в комплектацию не включена.')
+    notes.append('Декор и интерьерное окружение показаны для иллюстрации. Состав поставки определяется спецификацией.')
+    return ' '.join(notes)
+
+
 def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,version=1):
     fonts()
+    name = client_title(name)
     if not hero: raise ValueError('Добавьте визуализацию проекта')
     items=scene.get('items') or []
     hardware,notes=ledger(scene)
@@ -117,7 +137,7 @@ def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,v
         text(title,x,y,10,ACCENT,True);y-=17
         y-=para('\n'.join(values),x,y,w,12);y-=25
     if y<105:raise ValueError('Слишком много материалов для компактного альбома: разделите проект на помещения')
-    para('Размеры и состав шкафчиков приведены на следующем листе. Декор столешницы и другие невыбранные материалы согласовываются отдельно.',M,125,CW*.63,11,MUTED)
+    para(visualization_notes(scene, materials) if photo else 'Размеры и состав шкафчиков приведены на следующем листе. Невыбранные материалы согласовываются отдельно.',M,150,CW*.64,10,MUTED)
     c.showPage()
 
     page(3,'Состав проекта','Размеры указаны в миллиметрах: ширина × высота × глубина. Количество каждого шкафа - 1 шт.')
@@ -131,7 +151,7 @@ def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,v
     # Two sheets of the full ledger, including zeros and unresolved articles.
     split=(len(hardware)+1)//2
     for number,part in [(4,hardware[:split]),(5,hardware[split:])]:
-        page(number,'Фурнитура / '+('01' if number==4 else '02'),'Количество по шкафчикам суммируется в итог. Направляющие указаны парами, петли - штуками.')
+        page(number,'Фурнитура / '+('01' if number==4 else '02'),'Количество по шкафчикам суммируется в итог. Комплект шариковых направляющих = пара; петли - штуками.')
         rows=[[r['name'],r['article'] or 'Уточнить',f"{r['qty']:g}",UNITS.get(r['unit'],r['unit']),'; '.join(r['modules']) or '0'] for r in part]
         note_text='; '.join(notes)
         note_height=0
