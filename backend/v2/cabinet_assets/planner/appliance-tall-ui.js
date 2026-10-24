@@ -20,7 +20,7 @@
     document.querySelector('[data-tall-value="double"]').hidden=v?.family==='appliance';
     if(root.hidden)return;
     root.querySelector('#appliance-tall-preview').innerHTML=drawing(v,it.height);
-    root.querySelector('#appliance-tall-size').textContent=`600 × 600 × ${it.height} мм · с ножками 100 мм`;
+    root.querySelector('#appliance-tall-size').textContent=`600 × ${it.depth} × ${it.height} мм · с ножками 100 мм`;
     for(const b of root.querySelectorAll('[data-tall-option="layout"]')){
       const option=globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS.find(x=>x.layout===b.dataset.tallValue&&x.row_height===v.row_height&&x.opening===v.opening);
       b.querySelector('.ap-option-image').innerHTML=drawing(option,Math.max(it.height,option.min_height));

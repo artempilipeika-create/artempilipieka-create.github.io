@@ -5,7 +5,7 @@
   const variants=(root.MF_DRAWER_VARIANTS||[]).map(v=>({...v,execution:'standard'})),family={label:'Нижний шкаф с ящиками',default_id:ballIds[0]};
   const layouts={two:'2 ящика',three:'3 ящика',inner:'2 + внутренний'},openings={soft:'С доводчиком',push:'Push to open'};
   const metalChoices=()=>[...variants,...(root.MF_GOLA?.variants||[]).filter(v=>v.kind==='drawers'&&v.system!=='ball')];
-  const info=it=>metalChoices().find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
+  const info=it=>[...metalChoices(),...(root.MF_PULLOUT_DRYERS?.variants||[]).filter(v=>v.system!=='ball')].find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
   function choice(id){
     const metal=variants.find(v=>v.id===id)||(root.MF_GOLA?.choice(id)?.kind==='drawers'?root.MF_GOLA.choice(id):null);if(metal)return metal;
     const p=ballIds.includes(id)&&root.MF_FURNITURE_CORE?.PILOT_PRODUCTION[id];
@@ -118,7 +118,7 @@
     return info(it)&&height!==100?{kind:'drawer_legs',requires_manual_native_adjustment:true,leg_height_mm:height,body_height_mm:it.height-height,note:'В БАЗИС заменить исходные опоры 100 мм на '+height+' мм и выставить корпус на эту отметку; высота корпуса '+(it.height-height)+' мм.'}:null;
   }
   function frontHeights(it){
-    const v=familyInfo(it);if(!v)return [];
+    const v=familyInfo(it)||root.MF_PULLOUT_DRYERS?.info(it);if(!v)return [];
     return root.MF_FURNITURE_CORE.facadeCells(it,{production:root.MF_FURNITURE_CORE.PRODUCTION_MODELS[v.id]}).map(f=>f.h);
   }
   function brief(it){const v=familyInfo(it);if(!v)return '';if(v.execution==='gola')return root.MF_GOLA.brief(it);

@@ -25,6 +25,8 @@ export class MobilityUI{
     this.select.replaceChildren(new Option('Выберите модуль',''));
     for(const t of this.app.bridge.catalogue.bazisModules){
       const p=t.production;if(!p||kitchenGroup({module_type:t.module_type,bazis_id:t.id})!==group)continue;
+      const dryer=globalThis.MF_PULLOUT_DRYERS.choice(t.id);
+      if(dryer&&(t.id!==globalThis.MF_PULLOUT_DRYERS.family.default_id||globalThis.MF_PULLOUT_DRYERS.info(selected)))continue;
       const lower=globalThis.MF_GOLA.baseChoice(t.id);
       if(lower&&(t.id!==globalThis.MF_GOLA.family(lower).default_id||globalThis.MF_GOLA.baseInfo(selected)?.door_count===lower.door_count))continue;
       const upper=globalThis.MF_UPPERS.choice(t.id);
@@ -36,7 +38,7 @@ export class MobilityUI{
       if(p.vitrine&&t.id!==VITRINE_FAMILY.default_id)continue;
       if(globalThis.MF_DRAWERS.choice(t.id)&&(t.id!==globalThis.MF_DRAWERS.family.default_id||globalThis.MF_DRAWERS.familyInfo(selected)))continue;
       if(t.id===selected.bazis_id)continue;
-      const label=lower?globalThis.MF_GOLA.family(lower).label:upper?globalThis.MF_UPPERS.family(upper).label:p.tall?(p.tall.family==='appliance'?APPLIANCE_TALL_FAMILY:TALL_FAMILY).label:p.corner?CORNER_FAMILY.label:family?.label||t.catalogue_label||t.label;
+      const label=dryer?globalThis.MF_PULLOUT_DRYERS.family.label:lower?globalThis.MF_GOLA.family(lower).label:upper?globalThis.MF_UPPERS.family(upper).label:p.tall?(p.tall.family==='appliance'?APPLIANCE_TALL_FAMILY:TALL_FAMILY).label:p.corner?CORNER_FAMILY.label:family?.label||t.catalogue_label||t.label;
       this.select.append(new Option(label,t.id));
     }
     this.apply.disabled=this.select.options.length<2;

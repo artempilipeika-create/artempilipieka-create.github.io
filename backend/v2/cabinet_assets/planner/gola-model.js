@@ -29,9 +29,10 @@
  const elastic=(v,a,x,delta)=>{const ps=v.model_elastic.filter(p=>p.Axis===a),w=ps.reduce((s,p)=>s+p.Weight,0);return round(x+(w?delta*ps.filter(p=>x>p.Pos).reduce((s,p)=>s+p.Weight,0)/w:0));};
  const delta=it=>[it.width-600,it.height-(it.legHeightMm??it.base_height??100)-720,it.depth-510];
  const point=(it,v,a,x)=>elastic(v,a,x,delta(it)[a])-[it.width/2,100-(it.legHeightMm??it.base_height??100),it.depth/2][a];
- const configuration=it=>D().configuration(it,info(it));
- function dimensionError(it){
-  const v=info(it);if(!v)return 'Фрагмент Gola не совпадает с проверенным исходником';
+ const source=it=>info(it)||root.MF_PULLOUT_DRYERS?.info(it);
+ const configuration=(it,v=source(it))=>D().configuration(it,v);
+ function dimensionError(it,v=source(it)){
+  if(!v)return 'Фрагмент Gola не совпадает с проверенным исходником';
   const base=it.legHeightMm??it.base_height??100,min=v.kind==='doors'?300:400,max=v.door_count===1?600:1200;
   if(it.module_type!=='base_cabinet'||it.base==='wall'||![80,100,150].includes(base))return 'Gola: нижний модуль на ножках 80, 100 или 150 мм';
   if(it.width<min||it.width>max||it.height-base<600||it.height-base>1000||it.depth<300||it.depth>700)return `Gola: ширина ${min}–${max}, корпус 600–1000, глубина 300–700 мм`;
@@ -74,7 +75,7 @@
   });
  }
  const facades=(it,p)=>parts(it,p).filter(p=>p.facade).map(p=>p.facade);
- const profiles=it=>{const v=info(it);return v?v.profiles.map(s=>({name:s.name,article:s.article,contour_yz:contour(it,v,s),x:-it.width/2,length:it.width})):[];};
+ const profiles=it=>{const v=source(it);return v?v.profiles.map(s=>({name:s.name,article:s.article,contour_yz:contour(it,v,s),x:-it.width/2,length:it.width})):[];};
  function hardware(it,p){
   const v=p.gola,base=it.legHeightMm??it.base_height??100;
   const dynamic=p.metal_drawers?D().hardware(it,p):p.hardware;
@@ -88,7 +89,7 @@
   const merged=[];for(const h of items){const old=merged.find(x=>x.name===h.name&&x.article===h.article&&x.unit===h.unit);if(old)old.quantity+=h.quantity;else merged.push({...h});}
   return {...dynamic,items:merged,hinges_in_items:true,native_fixed_items:true,...(v.system==='ball'?{slide_length_mm:configuration(it).drawers[0]?.kit.length_mm,slide_type:'ball_bearing_soft_close'}:{})};
  }
- function adjustment(it){const v=info(it);if(!v)return null;const base=it.legHeightMm??it.base_height??100,notes=[...v.warnings];if(base!==100)notes.push(`В БАЗИС заменить опоры 100 мм на ${base} мм; высота корпуса ${it.height-base} мм.`);
+ function adjustment(it){const v=source(it);if(!v)return null;const base=it.legHeightMm??it.base_height??100,notes=[...v.warnings];if(base!==100)notes.push(`В БАЗИС заменить опоры 100 мм на ${base} мм; высота корпуса ${it.height-base} мм.`);
   return notes.length?{kind:'gola',requires_manual_native_adjustment:true,note:notes.join(' ')}:null;
  }
  function brief(it){const v=info(it);if(!v)return '';const p=core().PRODUCTION_MODELS[v.id],fronts=facades(it,p).map(f=>String(f.h).replace('.',','));

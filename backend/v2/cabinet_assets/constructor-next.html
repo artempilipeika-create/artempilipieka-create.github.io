@@ -30,6 +30,9 @@
 <link rel="stylesheet" href="/account/planner/gola.css?v=20261021-cards">
 <script defer src="/account/planner/accessory-variants.js?v=20261021-accessories"></script>
 <script defer src="/account/planner/accessories.js?v=20261021-accessories"></script>
+<script defer src="/account/planner/pullout-dryer-variants.js"></script>
+<script defer src="/account/planner/pullout-dryer-model.js"></script>
+<script defer src="/account/planner/pullout-dryer-ui.js"></script>
 <script defer src="/account/planner/furniture-core.js?v=20261024-default-materials"></script>
 <link rel="stylesheet" href="/account/planner/accessories.css?v=20261021-accessories">
 <script defer src="/account/planner/appliance-tall-ui.js"></script>
@@ -134,6 +137,14 @@
     </div>
     <p id="base-source-note" class="studio-hint" aria-live="polite"></p>
    </div>
+   <div id="pullout-dryer-controls" class="mf3d-control-card" hidden>
+    <h3>Шкаф с выдвижной сушкой</h3>
+    <label>Сушка<select data-dryer-option="dryer_brand"><option value="norwing">NORWING · графит · 600 / 700 / 800</option><option value="flat_line">FLAT LINE · хром · 600 / 700 / 800 / 900</option></select></label>
+    <label>Ширина шкафа<select data-dryer-option="width"></select></label>
+    <label>Система нижнего ящика<select data-dryer-option="system"><option value="ball">Обычные шариковые с доводчиком</option><option value="aq">AQ LineBox</option><option value="slimbox">Slimbox Evolution</option></select></label>
+    <label>Исполнение<select data-dryer-option="execution"><option value="standard">Накладные ручки</option><option value="gola">Gola II без подсветки</option></select></label>
+    <p id="pullout-dryer-note" class="studio-hint" aria-live="polite"></p>
+   </div>
    <div id="drawer-options-controls" class="mf3d-control-card" hidden>
     <h3>Нижний шкаф с ящиками</h3>
     <p id="drawer-selection"></p>
@@ -202,6 +213,9 @@
    </div>
    <div id="tall-options-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong id="tall-options-title">Пенал с полками</strong></div>
+    <label>Верхний шкаф для выравнивания<select id="tall-align-target"></select></label>
+    <button type="button" id="tall-align-top" class="secondary">Вровень с верхними</button>
+    <p id="tall-align-note" class="studio-hint">Высота пенала изменится по верху выбранного навесного шкафа.</p>
     <div id="appliance-tall-choice" hidden>
      <div class="ap-selected"><div id="appliance-tall-preview"></div><div id="appliance-tall-size" aria-live="polite"></div></div>
      <strong>Что будет в пенале?</strong>

@@ -3,7 +3,8 @@ import json
 from pathlib import Path
 VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/drawer-variants.json').read_text())
 GOLA_METAL=[v for v in json.loads((Path(__file__).parent/'cabinet_assets/planner/gola-variants.json').read_text()) if v['kind']=='drawers' and v['system']!='ball']
-BY_ID={v['id']:v for v in VARIANTS+GOLA_METAL}
+DRYER_METAL=[v for v in json.loads((Path(__file__).parent/'cabinet_assets/planner/pullout-dryer-variants.json').read_text()) if v['system']!='ball']
+BY_ID={v['id']:v for v in VARIANTS+GOLA_METAL+DRYER_METAL}
 
 def drawer_variant(it):
     v=BY_ID.get(it.get('bazis_id'))

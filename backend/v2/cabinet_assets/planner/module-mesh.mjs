@@ -335,6 +335,23 @@ export class MeshFactory{
       const d=part.size,c=part.position,m=this.box(group,'drawerMetal',d.x,d.y,d.z,c.x,c.y,c.z,null,ghost);
       m.userData.visualOnly=true;m.userData.drawerMetal=true;m.userData.drawerIndex=part.drawer_index;
     }
+    if(production?.pullout_dryer){
+      const b=globalThis.MF_PULLOUT_DRYERS.basket(it),pieces=[];
+      const add=(x,y,z,w,h,d)=>pieces.push({x,y,z,w,h,d});
+      add(b.x,b.y+2,b.z,b.width-26,4,b.depth-20);
+      for(const sign of [-1,1]){
+        add(b.x+sign*(b.width/2-6),b.y+36,b.z,12,28,b.depth);
+        add(b.x+sign*(b.width/2-16),b.y+b.height-8,b.z,4,4,b.depth-20);
+        add(b.x,b.y+b.height-8,b.z+sign*(b.depth/2-12),b.width-30,4,4);
+        for(const end of [-1,1])add(b.x+sign*(b.width/2-16),b.y+b.height/2,b.z+end*(b.depth/2-12),4,b.height-16,4);
+      }
+      for(let x=-b.width/2+28;x<b.width/2-20;x+=32)add(b.x+x,b.y+24,b.z,3,3,b.depth-28);
+      for(const p of pieces){
+        const mesh=this.box(group,'drawerMetal',p.w,p.h,p.d,p.x,p.y,p.z,null,ghost);
+        mesh.material=mesh.material.clone();mesh.material.color.set(production.pullout_dryer.dryer_brand==='norwing'?'#596062':'#b7bdc2');
+        Object.assign(mesh.userData,{visualOnly:true,pulloutDryer:true,drawerIndex:2});
+      }
+    }
     if(production?.vitrine){
       const side=production.vitrine.opening,pivot=new THREE.Group(),hingeX=(side==='left'?-1:1)*(W/2-2),hingeZ=D/2+2;
       pivot.userData={itemId:it.item_id,role:'door-pivot',visualOnly:true,hingeSide:side};pivot.position.set(hingeX*S,0,hingeZ*S);

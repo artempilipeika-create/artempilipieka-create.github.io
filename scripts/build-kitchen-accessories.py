@@ -21,6 +21,11 @@ def build(folder):
    if v.get('Type')==2004:
     xy=g.poly(v['Contour']);pts=np.array([(mat@[*p,z,1])[:3] for p in xy for z in [0,v['Thickness']]])
     row['profiles'].append(dict(name=v['Name'],material_name=v['Mat'].split('\r')[0],article=v['Mat'].split('\r')[-1],bounds=points_bound(pts),contour_yz=r(np.array([(mat@[*p,0,1])[1:3] for p in xy]))))
+  for profile in row['profiles']:
+   if profile['article']=='89731':
+    variants=json.loads((OUT/'gola-variants.json').read_text())
+    ordinary=next(p for v in variants for p in v['profiles'] if p['article']=='60965')
+    profile['documentation_profile']={k:ordinary[k] for k in ('article','material_name')}
   rows.append(row)
   dest=OUT/'accessory-sources'/filename;dest.parent.mkdir(exist_ok=True);dest.write_bytes(source.read_bytes())
  (OUT/'accessory-variants.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2)+'\n')

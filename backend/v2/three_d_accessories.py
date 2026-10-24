@@ -12,10 +12,10 @@ def dishwasher_error(it):
  if not 450<=it['width']<=600 or not 700<=it['height']<=1100 or not 450<=it['depth']<=700:return 'Посудомойка: ширина 450–600, высота 700–1100, глубина 450–700 мм'
  return ''
 def dishwasher_hardware(it):
- return [dict(name=p['material_name'],article=p['article'],quantity=it['width']/1000,unit='m') for p in dishwasher(it)['profiles']]
+ return [dict(name=p['material_name'],article=p['article'],quantity=it['width']/1000,unit='m') for source in dishwasher(it)['profiles'] for p in [source.get('documentation_profile',source)]]
 def dishwasher_contents(it):
  v=dishwasher(it);height=(688.5 if v['variant']=='gola' else 717)+it['height']-820
- return f"Посудомойка · {'Gola L' if v['variant']=='gola' else 'обычное исполнение'}. Фасад {it['width']-3:g} × {height:g} × 18 мм. Без мебельного корпуса. Размер ниши сверить с паспортом техники."
+ return f"Посудомойка · {'Gola L без подсветки' if v['variant']=='gola' else 'обычное исполнение'}. Фасад {it['width']-3:g} × {height:g} × 18 мм. Без мебельного корпуса. Размер ниши сверить с паспортом техники."
 
 def plinth_summary(scene,entry):
  """Same straight-row grouping as the browser; returns source panel blank sizes."""

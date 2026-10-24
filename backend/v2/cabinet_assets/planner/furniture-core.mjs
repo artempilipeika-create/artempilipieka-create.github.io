@@ -11,6 +11,8 @@ import './gola-variants.js?v=20261021-gola';
 import './gola-model.js?v=20261021-gola';
 import './accessory-variants.js?v=20261021-accessories';
 import './accessories.js?v=20261021-accessories';
+import './pullout-dryer-variants.js';
+import './pullout-dryer-model.js';
 import './furniture-core.js?v=20261024-default-materials';
 export const {VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY}=globalThis.MF_FURNITURE_CORE;
 export const {APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment}=globalThis.MF_FURNITURE_CORE;

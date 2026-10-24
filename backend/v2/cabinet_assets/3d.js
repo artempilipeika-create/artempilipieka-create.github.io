@@ -98,6 +98,7 @@ for(const v of [...globalThis.MF_FURNITURE_CORE.TALL_VARIANTS,...globalThis.MF_F
   id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Пеналы БАЗИС',module_type:'tall_cabinet',
   defaults:{w:600,h:v.native_height||2000,d:600,layout:v.drawer?'combo':'doors',drawers:v.drawer?1:0,base:'plinth'},resize:true
 });
+for(const v of (globalThis.MF_PULLOUT_DRYERS?.variants||[]))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Сушки БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'drawers',drawers:2,base:'plinth'},front:{kind:'drawers',count:2},resize:true});
 for(const v of globalThis.MF_GOLA.variants)bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:v.kind==='drawers'?'Ящики БАЗИС':'Нижние БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:v.kind,drawers:v.drawer_count,base:'plinth'},front:{kind:v.kind,count:v.kind==='drawers'?v.front_heights.length:v.door_count},resize:true});
 for(const v of globalThis.MF_DRAWERS.variants)bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Ящики БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'drawers',drawers:v.drawer_count,base:'plinth'},resize:true});
 for(const v of globalThis.MF_UPPERS.variants.filter(v=>!v.legacy))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Верхние шкафы БАЗИС',module_type:'wall_cabinet',defaults:{w:600,h:720,d:317,layout:'doors',drawers:0,base:'wall'},front:{kind:'doors',count:v.door_count},resize:true});
@@ -129,6 +130,7 @@ for(const m of bazisModules){
   if(family)m.catalogue_label=family.label;
   const base=globalThis.MF_GOLA.baseChoice(m.id);if(base)m.catalogue_label=globalThis.MF_GOLA.family(base).label;
   if(globalThis.MF_UPPERS.choice(m.id))m.catalogue_label=globalThis.MF_UPPERS.family(globalThis.MF_UPPERS.choice(m.id)).label;
+  if(globalThis.MF_PULLOUT_DRYERS?.choice(m.id))m.catalogue_label=globalThis.MF_PULLOUT_DRYERS.family.label;
   if(globalThis.MF_DRAWERS.choice(m.id))m.catalogue_label=globalThis.MF_DRAWERS.family.label;
   if(m.production?.vitrine)m.catalogue_label=globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.label;
   if(m.production?.tall)m.catalogue_label=(m.production.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_FAMILY:globalThis.MF_FURNITURE_CORE.TALL_FAMILY).label;
@@ -351,12 +353,14 @@ function renderModuleCatalogue(){
     groups.set(category,group);root.append(group);
   }
   for(const id of Object.keys(pilotProductionById)){
-    const m=bazisById.get(id);
+    const m=bazisById.get(id);if(!m)continue;
     if(m?.production?.dishwasher&&m.production.dishwasher.variant!=='standard')continue;
     const baseChoice=globalThis.MF_GOLA.baseChoice(id);
     if(baseChoice&&id!==globalThis.MF_GOLA.family(baseChoice).default_id)continue;
     const upperChoice=globalThis.MF_UPPERS.choice(id);
     if(upperChoice&&id!==globalThis.MF_UPPERS.family(upperChoice).default_id)continue;
+    const dryerChoice=globalThis.MF_PULLOUT_DRYERS?.choice(id);
+    if(dryerChoice&&id!==globalThis.MF_PULLOUT_DRYERS.family.default_id)continue;
     const drawerChoice=globalThis.MF_DRAWERS.choice(id);
     if(drawerChoice&&id!==globalThis.MF_DRAWERS.family.default_id)continue;
     const family=globalThis.MF_FURNITURE_CORE.doorFamilyById(id);
@@ -367,7 +371,7 @@ function renderModuleCatalogue(){
     if(m.production.tall&&id!==tallFamily.default_id)continue;
     if(m.production.vitrine&&id!==globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=p.dishwasher?'Фасад для ПМ · обычное / Gola L · ширина 450–600 мм':drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
+    const description=dryerChoice?'Выдвижная сушка NORWING / FLAT LINE · 600 / 700 / 800 / 900 · нижний ящик · обычное / Gola II':p.dishwasher?'Фасад для ПМ · обычное / Gola L · ширина 450–600 мм':drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -384,8 +388,8 @@ function renderModuleCatalogue(){
       ?'Левое / правое · 3 вертикальные царги'
       :p.dryer?'Левое / правое · сушка AKS по ширине'
       :isWall?'Левое / правое · полки по высоте':'Левое / правое · полка · задник'):description;
-    const search=baseChoice?'нижний шкаф полки мойка Gola гола ручки '+globalThis.MF_GOLA.baseChoices().filter(v=>v.door_count===baseChoice.door_count).map(v=>v.source_file||'').join(' '):upperChoice?globalThis.MF_UPPERS.variants.filter(v=>v.door_count===upperChoice.door_count).map(v=>v.label+' '+v.source_file).join(' '):drawerChoice?'ящики Gola гола обычные шариковые направляющие AQ LineBox Westline AKS Slimbox Evolution Push to open внутренний доводчик':p.vitrine?'витрина стекло подсветка Z1 LIRA 17.5 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
-    addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:baseChoice?globalThis.MF_GOLA.family(baseChoice).label:upperChoice?globalThis.MF_UPPERS.family(upperChoice).label:drawerChoice?globalThis.MF_DRAWERS.family.label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
+    const search=dryerChoice?'выдвижная сушка NORWING FLAT LINE 600 700 800 900 AQ Slimbox Gola':baseChoice?'нижний шкаф полки мойка Gola гола ручки '+globalThis.MF_GOLA.baseChoices().filter(v=>v.door_count===baseChoice.door_count).map(v=>v.source_file||'').join(' '):upperChoice?globalThis.MF_UPPERS.variants.filter(v=>v.door_count===upperChoice.door_count).map(v=>v.label+' '+v.source_file).join(' '):drawerChoice?'ящики Gola гола обычные шариковые направляющие AQ LineBox Westline AKS Slimbox Evolution Push to open внутренний доводчик':p.vitrine?'витрина стекло подсветка Z1 LIRA 17.5 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
+    addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:dryerChoice?globalThis.MF_PULLOUT_DRYERS.family.label:baseChoice?globalThis.MF_GOLA.family(baseChoice).label:upperChoice?globalThis.MF_UPPERS.family(upperChoice).label:drawerChoice?globalThis.MF_DRAWERS.family.label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
   }
   applyCatalogueFilter();
 }
@@ -740,7 +744,7 @@ function applyLimits(it,t){
     $(id).min=String(lim[0]);
     $(id).max=String(lim[1]);
     $(id).disabled=lim[0]===lim[1];
-    if(id==='width'){$(id).step=String(t?.production?.dryer?.width_step_mm||1);$(id).disabled=lim[0]===lim[1];}
+    if(id==='width'){$(id).step=String((t?.production?.pullout_dryer?100:t?.production?.dryer?.width_step_mm)||1);$(id).disabled=lim[0]===lim[1];}
   }
 }
 const STANDARD_WIDTHS=[300,350,400,450,500,600,700,800,900,1000,1200];
@@ -750,7 +754,7 @@ function renderQuickWidths(it,t){
   root.replaceChildren();
   const lim=t?.limits?.w||[300,3000];
   const step=t?.production?.dryer?.width_step_mm||null;
-  const values=step
+  const values=t?.production?.pullout_dryer?[...t.production.pullout_dryer.allowed_widths]:step
     ?Array.from({length:Math.floor(lim[1]/step)-Math.ceil(lim[0]/step)+1},(_,i)=>(Math.ceil(lim[0]/step)+i)*step)
     :STANDARD_WIDTHS.filter(v=>v>=lim[0]&&v<=lim[1]);
   if(!values.includes(Number(it.width)))values.push(Number(it.width));
@@ -802,6 +806,15 @@ async function syncControls(){
   if(tallControls){
     tallControls.hidden=!tallInfo;
     globalThis.MF_APPLIANCE_TALL_UI?.sync(it,tallInfo);
+    const align=$('tall-align-target');
+    if(align&&tallInfo){
+      const previous=align.value,core=globalThis.MF_FURNITURE_CORE;
+      const walls=state.items.filter(x=>core.tier(x)==='wall').sort((a,b)=>Number(b.rotation===it.rotation)-Number(a.rotation===it.rotation)||Math.hypot(a.x-it.x,a.z-it.z)-Math.hypot(b.x-it.x,b.z-it.z));
+      align.replaceChildren(...walls.map(x=>{const o=document.createElement('option');o.value=x.item_id;o.textContent=x.name+' · верх '+(core.elevation(x,state.room)+x.height)+' мм';return o;}));
+      if(walls.some(x=>x.item_id===previous))align.value=previous;
+      $('tall-align-top').disabled=!walls.length;
+      $('tall-align-note').textContent=walls.length?'Подогнать высоту по верху выбранного шкафа. Ниши под технику сохранят размеры.':'Добавьте навесной шкаф, чтобы выровнять пенал по его верху.';
+    }
     for(const b of tallControls.querySelectorAll('[data-tall-option]'))b.setAttribute('aria-pressed',String(Boolean(tallInfo&&String(tallInfo[b.dataset.tallOption])===b.dataset.tallValue)));
     $('tall-options-note').textContent=tallInfo?`База ${tallInfo.row_height} = корпус нижнего ряда ${tallInfo.row_height-100} + цоколь 100 мм. `+
       (tallInfo.family==='appliance'?'Петли '+(tallInfo.opening==='left'?'слева.':'справа.')+' Ниши и нижняя секция сохраняют размеры при изменении высоты.':tallInfo.opening==='double'?'Д2: две створки в каждой секции, всего четыре фасада.':'Две секции, по одной двери; петли '+(tallInfo.opening==='left'?'слева.':'справа.')):'';
@@ -823,6 +836,7 @@ async function syncControls(){
   }
   globalThis.MF_VITRINE_UI?.sync(it,t?.production);
   globalThis.MF_DRAWER_UI?.sync(it,t?.production);
+  globalThis.MF_PULLOUT_DRYER_UI?.sync(it);
   globalThis.MF_UPPER_UI?.sync(it);
   if(globalThis.MF_DRAWERS.familyInfo(it)&&$('drawer-selected')){
     if(t?.production?.metal_drawers){
@@ -853,9 +867,9 @@ async function syncControls(){
   }
   const kitchen=globalThis.MF_FURNITURE_CORE.kitchenSettings(it);
   $('base').disabled=Boolean(kitchen)||Boolean(t?.production?.tall)||Boolean(t?.production?.vitrine);
-  $('handles').parentElement.hidden=Boolean(globalThis.MF_UPPERS.info(it))||Boolean(globalThis.MF_GOLA.info(it));
+  $('handles').parentElement.hidden=Boolean(globalThis.MF_UPPERS.info(it))||Boolean(globalThis.MF_GOLA.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)?.execution==='gola');
   globalThis.MF_GOLA_UI?.sync(it);
-  $('handles').disabled=Boolean(globalThis.MF_GOLA.info(it))||Boolean(globalThis.MF_UPPERS.info(it))||Boolean(t?.production?.vitrine)||t?.production?.metal_drawers?.opening==='push';
+  $('handles').disabled=Boolean(globalThis.MF_GOLA.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)?.execution==='gola')||Boolean(globalThis.MF_UPPERS.info(it))||Boolean(t?.production?.vitrine)||t?.production?.metal_drawers?.opening==='push';
   if(t?.production?.vitrine)$('handles').value='handleless';
   if($('kitchen-controls'))$('kitchen-controls').hidden=!kitchen;
   if($('base-height')){$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);$('base-height').parentElement.hidden=Boolean(kitchen);}
@@ -890,8 +904,8 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.dishwasher?'Фасад для посудомоечной машины, без корпуса, задней стенки и мебельных ножек. Посадочная отметка исходника — 100 мм.':production.gola?globalThis.MF_GOLA.brief(it):production.upper?globalThis.MF_UPPERS.brief(it):production.metal_drawers?globalThis.MF_DRAWERS.brief(it):production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. '+globalThis.MF_VITRINE.lighting(it).ui_note:production.tall?.family==='appliance'
-          ?'Корпус 600 × 600 мм. Духовка: ниша 564 × 595 мм.'+(production.tall.microwave?' СВЧ: ниша 564 × 380 мм.':'')+' Общая высота меняет только верхнее отделение. Задняя стенка в пазу, за техникой остаётся открытый проём.'
+        $('production-rule-note').textContent=production.pullout_dryer?globalThis.MF_PULLOUT_DRYERS.brief(it):production.dishwasher?'Фасад для посудомоечной машины, без корпуса, задней стенки и мебельных ножек. Посадочная отметка исходника — 100 мм.':production.gola?globalThis.MF_GOLA.brief(it):production.upper?globalThis.MF_UPPERS.brief(it):production.metal_drawers?globalThis.MF_DRAWERS.brief(it):production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. '+globalThis.MF_VITRINE.lighting(it).ui_note:production.tall?.family==='appliance'
+          ?'Ширина 600 мм, глубина 600–700 мм. Духовка: ниша 564 × 595 мм.'+(production.tall.microwave?' СВЧ: ниша 564 × 380 мм.':'')+' Общая высота меняет только верхнее отделение. Задняя стенка в пазу, за техникой остаётся открытый проём.'
           :production.tall
           ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+core.tallUpperShelves(it,production).length+' съёмн. При изменении общей высоты растёт верхняя секция, выбранные полки распределяются равномерно. Столешница в высоту базы не входит.'
           :production.corner
@@ -1375,7 +1389,8 @@ function exportBazisProject(){
           metal_drawers:p.metal_drawers?{system:p.metal_drawers.system,series:p.metal_drawers.series,manufacturer:p.metal_drawers.manufacturer,layout:p.metal_drawers.layout,opening:p.metal_drawers.opening,color:'white',length_mm:globalThis.MF_DRAWERS.railLengths(it).length===1?globalThis.MF_DRAWERS.railLengths(it)[0]:null,lengths_mm:globalThis.MF_DRAWERS.railLengths(it),drawers:globalThis.MF_DRAWERS.configuration(it).drawers.map(d=>({index:d.index,length_mm:d.kit.length_mm,height_mm:d.kit.height_mm,article:d.kit.article})),front_heights_mm:globalThis.MF_DRAWERS.frontHeights(it),native_front_heights_mm:p.metal_drawers.native_front_heights,nominal_tolerance_mm:.1}:null,
           vitrine:p.vitrine?{...p.vitrine,...globalThis.MF_VITRINE.metrics(it)}:null,
           upper_variant:p.upper?{execution:p.upper.execution,filling:p.upper.filling,side:p.upper.side}:null,
-          gola_variant:p.gola?{execution:'gola',kind:p.gola.kind,source_warnings:p.gola.warnings,profiles:globalThis.MF_GOLA.profiles(it)}:null,
+          pullout_dryer:p.pullout_dryer?{brand:p.pullout_dryer.dryer_brand,kit:globalThis.MF_PULLOUT_DRYERS.kit(it)}:null,
+          gola_variant:p.gola?.execution==='gola'?{execution:'gola',kind:p.gola.kind,source_warnings:p.gola.warnings,profiles:globalThis.MF_GOLA.profiles(it)}:null,
           native_adjustment:p.gola?globalThis.MF_GOLA.adjustment(it):p.upper?globalThis.MF_UPPERS.adjustment(it):p.metal_drawers?globalThis.MF_DRAWERS.adjustment(it):p.vitrine?globalThis.MF_VITRINE.adjustment(it):globalThis.MF_FURNITURE_CORE.tallShelfAdjustment(it,p),facade:p.facade||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},

@@ -14,6 +14,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
+from .three_d_pullout_dryers import dryer_variant, dryer_hardware, dryer_contents
 from .three_d_tall import tall_variant,tall_shelf_count
 from .three_d_accessories import dishwasher, dishwasher_hardware, dishwasher_contents, plinth_summary
 from .three_d_gola import gola_variant, gola_contents, gola_hardware, gola_note
@@ -90,6 +91,7 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    if dryer_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dryer_hardware(it)],' '.join(dryer_variant(it)['warnings']) or None
     if dishwasher(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dishwasher_hardware(it)],None
     if gola_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in gola_hardware(it)],gola_note(it)
     upper=upper_variant(it)
@@ -149,6 +151,7 @@ def hardware_for(it):
     return [],None
 
 def module_contents(it):
+    if dryer_variant(it):return dryer_contents(it)
     if dishwasher(it):return dishwasher_contents(it)
     if gola_variant(it):return gola_contents(it)
     if upper_variant(it):return upper_contents(it)

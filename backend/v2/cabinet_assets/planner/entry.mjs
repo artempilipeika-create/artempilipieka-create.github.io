@@ -133,6 +133,19 @@ class PlannerApplication {
         this.adapter.replace(next);this.adapter.status('Исполнение верхнего шкафа изменено');
       });this.bridge.refresh();
     });
+    this.listen(get('pullout-dryer-controls'),'change',e=>{
+      const field=e.target.dataset.dryerOption,it=this.adapter.selected,D=globalThis.MF_PULLOUT_DRYERS;
+      if(!field||!D.info(it))return;
+      this.interaction.change('Исполнение выдвижной сушки',()=>{
+        const next=D.select(it,{[field]:field==='width'?Number(e.target.value):e.target.value},this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);this.adapter.replace(next);
+      });this.bridge.refresh();
+    });
+    this.listen(get('tall-align-top'),'click',()=>{
+      const it=this.adapter.selected,target=this.adapter.items.find(x=>x.item_id===get('tall-align-target').value);
+      if(!tallVariantInfo(it)||!target)return;
+      this.interaction.modify({height:elevation(target,this.adapter.room)+target.height-elevation(it,this.adapter.room)},'Вровень с верхними');this.bridge.refresh();
+    });
     this.listen(get('drawer-options-controls'),'click',e=>{
       const b=e.target.closest('[data-drawer-option]'),it=this.adapter.selected,D=globalThis.MF_DRAWERS;
       if(!b||b.disabled||!D.familyInfo(it)||b.getAttribute('aria-pressed')==='true')return;

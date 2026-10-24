@@ -33,7 +33,7 @@
  const facades=(it,p)=>parts(it,p).map(p=>p.facade);
  const profiles=it=>{const v=info(it);return v?v.profiles.map(s=>({name:s.name,article:s.article,x:-it.width/2,length:it.width,
   contour_yz:s.contour_yz.map(([y,z])=>[elastic(v,1,y,it.height-820),elastic(v,2,z,it.depth-600)-it.depth/2])})):[];};
- const hardware=it=>({native_fixed_items:true,items:(info(it)?.profiles||[]).map(p=>({key:p.article,name:p.material_name,article:p.article,quantity:it.width/1000,unit:'m',cut_length_mm:it.width}))});
+ const hardware=it=>({native_fixed_items:true,items:(info(it)?.profiles||[]).map(p=>p.documentation_profile||p).map(p=>({key:p.article,name:p.material_name,article:p.article,quantity:it.width/1000,unit:'m',cut_length_mm:it.width}))});
  function select(it,variant){const v=dishwashers.find(v=>v.variant===variant);if(!v)throw new Error('Не найдено исполнение посудомойки');return {...it,bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:true,handles:variant==='gola'?'handleless':'handles'};}
  const runFor=(state,id)=>C().kitchenRuns(state.items,state.room).find(r=>r.members.includes(id));
  function manualPlans(state,lookup=()=>null){

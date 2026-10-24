@@ -24,6 +24,7 @@ from .three_d_accessories import dishwasher, dishwasher_error, BY_ID as DISHWASH
 from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
 from .three_d_base import refresh_base_source
+from .three_d_pullout_dryers import dryer_variant, dryer_error, BY_ID as PULLOUT_DRYER_BY_ID
 
 class ShelfState(StrictModel):
     id: str=Field(min_length=1,max_length=80)
@@ -179,6 +180,11 @@ class FurnitureItem(StrictModel):
             if error:raise ValueError(error)
             v=dishwasher(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0;self.handles='handleless' if v['variant']=='gola' else self.handles
+        if self.bazis_id in PULLOUT_DRYER_BY_ID:
+            error=dryer_error(self.model_dump())
+            if error:raise ValueError(error)
+            v=dryer_variant(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            self.layout='drawers';self.drawers=2;self.handles='handleless' if v['execution']=='gola' else 'handles'
         if self.bazis_id in GOLA_BY_ID:
             data=self.model_dump();error=gola_error(data)
             if error:raise ValueError(error)
@@ -222,8 +228,8 @@ class FurnitureItem(StrictModel):
             if not 300<=self.width<=600*tall['doors_per_section'] or not 1800<=self.height<=2800 or not 450<=self.depth<=700:
                 raise ValueError('Проверьте размеры пенала; ширина одной створки не больше 600 мм')
             if tall.get('family')=='appliance':
-                if self.width!=600 or self.depth!=600 or self.height<tall['min_height']:
-                    raise ValueError(f"Пенал под технику: корпус 600 × 600 мм, высота от {tall['min_height']} мм")
+                if self.width!=600 or not 600<=self.depth<=700 or self.height<tall['min_height']:
+                    raise ValueError(f"Пенал под технику: ширина 600 мм, глубина 600–700 мм, высота от {tall['min_height']} мм")
                 count=self.upper_shelf_count if self.upper_shelf_count is not None else len(tall['upper_shelves'])
                 if self.height-18-tall['upper_bottom']-count*18<=0:
                     raise ValueError('Полки не помещаются в верхнем отделении')

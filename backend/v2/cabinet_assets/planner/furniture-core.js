@@ -225,7 +225,7 @@
   const applianceTallModel=v=>({tier:'tall',label:v.label,key:`tall.appliance.${v.layout}.${v.row_height}.${v.opening}`,
     source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:v.native_height,depth:600},body_height:v.native_height-100,base_height:100,worktop_thickness:0,scene_depth:600,
-    resize:true,limits:{w:[600,600],h:[v.min_height,2800],d:[600,600]},
+    resize:true,limits:{w:[600,600],h:[v.min_height,2800],d:[600,700]},
     tall:{...v,horizontal_gap_mm:1.5},
     carcass:{type:'tall_appliance',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
     facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},
@@ -254,7 +254,7 @@
   const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.all||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
   const GOLA_PRODUCTION=freeze(Object.fromEntries((root.MF_GOLA?.variants||[]).map(v=>[v.id,root.MF_GOLA.model(v)])));
   const ACCESSORY_PRODUCTION=freeze(Object.fromEntries((root.MF_ACCESSORIES?.dishwashers||[]).map(v=>[v.id,root.MF_ACCESSORIES.model(v)])));
-  const PRODUCTION_MODELS=Object.freeze({...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  const PRODUCTION_MODELS=Object.freeze({...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
   function tallVariantInfo(it){return allTallVariants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function tallVariant(it,patch,catalogue){
     const current=tallVariantInfo(it);
@@ -347,6 +347,7 @@
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
     if(p?.dishwasher)return root.MF_ACCESSORIES.dimensionError(it);
+    if(p?.pullout_dryer)return root.MF_PULLOUT_DRYERS.dimensionError(it);
     if(p?.gola)return root.MF_GOLA.dimensionError(it);
     if(p?.upper)return root.MF_UPPERS.dimensionError(it);
     if(known?.metal_drawers)return root.MF_DRAWERS.dimensionError(it);
@@ -355,7 +356,7 @@
       if(it.upper_shelf_count!=null&&(!Number.isInteger(it.upper_shelf_count)||it.upper_shelf_count<0||it.upper_shelf_count>8))return 'Количество верхних полок — от 0 до 8';
       if(it.base==='wall'||heights(it).base_height!==100)return 'Пенал устанавливается на цоколь 100 мм';
       if(p.tall.family==='appliance'){
-        if(it.width!==600||it.depth!==600)return 'Пенал под технику: ширина и глубина корпуса — 600 мм';
+        if(it.width!==600||it.depth<600||it.depth>700)return 'Пенал под технику: ширина 600 мм, глубина 600–700 мм';
         if(it.height<p.tall.min_height||it.height>2800)return 'Высота для этой компоновки — от '+p.tall.min_height+' до 2800 мм';
         const count=it.upper_shelf_count??p.tall.upper_shelves.length;
         if(it.height-18-p.tall.upper_bottom-count*18<=0)return 'Полки не помещаются в верхнем отделении';
@@ -406,6 +407,7 @@
   }
   function productionHardware(it,p=PRODUCTION_MODELS[it?.bazis_id]){
     if(p?.dishwasher)return root.MF_ACCESSORIES.hardware(it);
+    if(p?.pullout_dryer)return root.MF_PULLOUT_DRYERS.hardware(it,p);
     if(p?.gola)return root.MF_GOLA.hardware(it,p);
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.hardware(it,p);
     if(p?.metal_drawers)return root.MF_DRAWERS.hardware(it,p);
@@ -595,6 +597,9 @@
       const size=Object.fromEntries(['x','y','z'].map((k,i)=>[k,s.size[i]])),position=Object.fromEntries(['x','y','z'].map((k,i)=>[k,s.center[i]]));
       if(s.stretch==='height'){size.y+=dh;position.y+=dh/2;}
       if(s.stretch==='top')position.y+=dh;
+      const dd=it.depth-p.native_defaults.depth;
+      if(['body','shelf'].includes(s.role)&&s.size[2]>100)size.z+=dd;
+      else position.z+=(s.role==='back'&&s.key!=='drawer-bottom'?-1:1)*dd/2;
       const id=it.part_materials?.[s.key]??(s.role==='front'?it.front_variant_id:s.role==='back'?it.back_variant_id:it.body_variant_id),m=id?materialLookup(id):null;
       const [length_axis,width_axis,thickness_axis]=s.axes;
       const part={part_id:it.item_id+':'+s.key,key:s.key,module_id:it.item_id,name:s.name,role:s.role,type:'panel',size,position,

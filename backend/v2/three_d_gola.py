@@ -7,8 +7,8 @@ BY_ID={v['id']:v for v in VARIANTS}
 def gola_variant(it):
  v=BY_ID.get(it.get('bazis_id'))
  return v if v and v['source_sha256']==it.get('bazis_sha256') else None
-def gola_error(it):
- v=gola_variant(it)
+def gola_error(it,v=None):
+ v=v or gola_variant(it)
  if not v:return 'Фрагмент Gola не совпадает с проверенным исходником'
  base=it.get('legHeightMm') or it.get('base_height') or 100
  minimum=300 if v['kind']=='doors' else 400;maximum=600 if v['door_count']==1 else 1200
@@ -30,8 +30,8 @@ def gola_contents(it):
   if error:raise ValueError(error)
   text+='Направляющие '+' / '.join(str(n) for n in dict.fromkeys(d['kit']['length_mm'] for d in ds))+' мм. '
  return text+(gola_note(it) or '')
-def gola_hardware(it):
- v=gola_variant(it);metal=v['kind']=='drawers' and v['system']!='ball';base=it.get('legHeightMm') or it.get('base_height') or 100
+def gola_hardware(it,v=None):
+ v=v or gola_variant(it);metal=v['kind']=='drawers' and v['system']!='ball';base=it.get('legHeightMm') or it.get('base_height') or 100
  rows=drawer_hardware(it) if metal else [dict(h) for h in v['hardware_items']]
  if v['system']=='ball':
   rows=[h for h in rows if not h['name'].startswith('Направляющая шариковая')]
