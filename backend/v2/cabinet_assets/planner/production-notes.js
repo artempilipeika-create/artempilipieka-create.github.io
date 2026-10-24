@@ -22,6 +22,7 @@
   function moduleText(item){
     const v=family(item),lines=[];
     const kitchen=root.MF_FURNITURE_CORE?.kitchenSettings?.(item);
+    if(kitchen&&root.MF_FURNITURE_CORE.golaCountertop(item))lines.push('Gola: от лицевой поверхности закрытого фасада до переднего края столешницы 0,5 мм; столешница выступает вперёд.');
     if(kitchen)lines.push(kitchen.countertopEnabled?'Столешница: '+kitchen.countertopThicknessMm+' мм; глубина '+kitchen.countertopDepthMm+' мм; '+(kitchen.countertopJoint==='euro'?'еврозапил на угловых стыках':'обычное соединение')+'. Верх со столешницей: '+(item.height+kitchen.countertopThicknessMm)+' мм.':'Столешница над этим модулем отключена.');
     const gola=root.MF_GOLA?.info(item);if(gola?.kind==='doors')lines.push(root.MF_GOLA.brief(item));
     const upper=root.MF_UPPERS?.brief(item);if(upper)lines.push(upper);

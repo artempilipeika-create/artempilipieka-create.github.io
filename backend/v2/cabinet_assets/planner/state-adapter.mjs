@@ -56,7 +56,7 @@ export class StateAdapter{
       (it.body_height!=null&&it.body_height!==h.body_height))return 'Проверьте высоту корпуса, основания и столешницы';
     const kitchen=kitchenSettings(it);
     if(kitchen&&it.base==='wall')return 'Нижний модуль устанавливается на ножки; выберите их высоту в параметрах кухонного ряда';
-    if(kitchen&&(![80,100,150].includes(kitchen.legHeightMm)||!Number.isInteger(kitchen.rearServiceGapMm)||kitchen.rearServiceGapMm!==50||(it.rearServiceGapMm!=null&&it.rearServiceGapMm!==50)||
+    if(kitchen&&(![80,100,150].includes(kitchen.legHeightMm)||!Number.isInteger(kitchen.rearServiceGapMm*2)||(it.rearServiceGapMm!=null&&it.rearServiceGapMm!==kitchen.rearServiceGapMm)||
       !Number.isInteger(kitchen.countertopDepthMm)||kitchen.countertopDepthMm<300||kitchen.countertopDepthMm>1200||kitchen.countertopStockLengthMm!==4100||
       !Number.isInteger(kitchen.countertopThicknessMm)||kitchen.countertopThicknessMm<12||kitchen.countertopThicknessMm>100))return 'Проверьте ножки, задний зазор и размеры столешницы';
     const production=this.template(it)?.production;

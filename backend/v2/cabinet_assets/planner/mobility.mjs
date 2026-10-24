@@ -1,4 +1,4 @@
-import {clone,rotateXZ,elevation,heights,kitchenGroup,scopeMatches,PRODUCTION_MODELS,dimensionPatch,rightAnchoredWidth,productionParts,normalizeKitchen} from './furniture-core.mjs';
+import {clone,rotateXZ,elevation,heights,kitchenGroup,kitchenSettings,golaCountertop,scopeMatches,PRODUCTION_MODELS,dimensionPatch,rightAnchoredWidth,productionParts,normalizeKitchen} from './furniture-core.mjs';
 
 export function movementTargets(selected,items,scope='module'){
   if(!selected)return [];
@@ -17,7 +17,8 @@ export function rightNeighbours(source,items,room){
   const dot=(p,a)=>p.x*a.x+p.z*a.z,group=kitchenGroup(source);
   const candidates=items.filter(it=>it.item_id!==source.item_id&&it.rotation===source.rotation&&kitchenGroup(it)===group&&
     !PRODUCTION_MODELS[it.bazis_id]?.corner&&Math.abs(elevation(it,room)-elevation(source,room))<.1&&
-    (Math.abs(dot(it,n)+it.depth/2-dot(source,n)-source.depth/2)<.6||Math.abs(dot(it,n)-it.depth/2-dot(source,n)+source.depth/2)<.6))
+      (Math.abs(dot(it,n)+it.depth/2-dot(source,n)-source.depth/2)<.6||Math.abs(dot(it,n)-it.depth/2-dot(source,n)+source.depth/2)<.6||
+      (kitchenSettings(it)&&kitchenSettings(source)&&Math.abs(dot(it,n)-it.depth/2-kitchenSettings(it).rearServiceGapMm-dot(source,n)+source.depth/2+kitchenSettings(source).rearServiceGapMm)<.6)))
     .sort((a,b)=>dot(a,u)-dot(b,u));
   const found=[];let edge=dot(source,u)+source.width/2;
   for(const it of candidates){const left=dot(it,u)-it.width/2;if(left<edge-.6)continue;if(left>edge+.6)break;found.push(it);edge=dot(it,u)+it.width/2;}
@@ -51,8 +52,10 @@ export function replacement(source,draft,oldTemplate,newTemplate,keepDimensions=
     if(Object.hasOwn(source,key))next[key]=source[key];
   next=normalizeKitchen(next);
   next=dimensionPatch(next,keepDimensions?{width:source.width,height:source.height,depth:source.depth}:{body_height:heights(draft).body_height});
+  const gola=golaCountertop(source)||golaCountertop(next);
+  if(gola){next.x=source.x;next.z=source.z;}
   next=rightAnchoredWidth(source,next);
-  const n=rotateXZ(0,(next.depth-source.depth)/2,source.rotation||0);next.x+=n.x;next.z+=n.z;
+  const n=rotateXZ(0,(next.depth-source.depth)/2+(gola?(kitchenSettings(next)?.rearServiceGapMm??0)-(kitchenSettings(source)?.rearServiceGapMm??0):0),source.rotation||0);next.x+=n.x;next.z+=n.z;
   next.x=Math.round(next.x*2)/2;next.z=Math.round(next.z*2)/2;
   const baseName=oldTemplate?.itemName||oldTemplate?.catalogue_label||oldTemplate?.label||'';
   const suffix=baseName&&String(source.name).startsWith(baseName)?String(source.name).slice(baseName.length):null;

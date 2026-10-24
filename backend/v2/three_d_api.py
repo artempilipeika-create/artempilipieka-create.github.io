@@ -87,7 +87,7 @@ class FurnitureItem(StrictModel):
     base_height: int|None=Field(default=None,ge=0,le=300)
     worktop_thickness: int|None=Field(default=None,ge=0,le=100)
     legHeightMm: Literal[80,100,150]|None=None
-    rearServiceGapMm: int|None=Field(default=None,ge=50,le=50)
+    rearServiceGapMm: float|None=Field(default=None,ge=-1200,le=1200,multiple_of=0.5,allow_inf_nan=False)
     plinthMaterialId: UUID|None=None
     countertopDepthMm: int|None=Field(default=None,ge=300,le=1200)
     countertopStockLengthMm: Literal[4100]|None=None
@@ -126,6 +126,12 @@ class FurnitureItem(StrictModel):
         refreshed=refresh_dryer_source(refresh_base_source(refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file})))
         self.bazis_sha256=refreshed.get('bazis_sha256')
         self.bazis_file=refreshed.get('bazis_file')
+        v=gola_variant(refreshed) or dryer_variant(refreshed)
+        dish=dishwasher(refreshed)
+        is_gola=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
+        expected_gap=(self.countertopDepthMm or 600)-self.depth-18.5 if is_gola else 50
+        if self.rearServiceGapMm is not None and self.rearServiceGapMm!=expected_gap:
+            raise ValueError('Gola: от фасада до края столешницы должно быть 0,5 мм' if is_gola else 'Задний зазор обычного нижнего шкафа — 50 мм')
         if any(not key or len(key)>80 or not all(c.isalnum() or c in '-_' for c in key) for key in self.part_materials):
             raise ValueError('Invalid production part material key')
         if self.legHeightMm is not None:

@@ -50,6 +50,19 @@ with sync_playwright() as pw:
  page.locator('[data-dryer-option="system"]').select_option('aq');page.locator('[data-dryer-option="execution"]').select_option('gola')
  expect(page.locator('#pullout-dryer-note')).to_contain_text('95551')
  assert page.evaluate('MF_PLANNER.adapter.selected.width')==900
+ assert page.evaluate('MF_PLANNER.adapter.selected.z')==21.5
+ expect(page.locator('#kitchen-summary')).to_contain_text('от фасада до края столешницы 0,5 мм')
+ # Keep the worktop rear edge fixed through actual depth and execution controls.
+ for depth,z in [(560,-3.5),(510,21.5)]:
+  page.locator('#depth').fill(str(depth));page.locator('#depth').press('Tab')
+  assert page.evaluate('MF_PLANNER.adapter.selected.z')==z
+ for depth,z in [(650,71.5),(600,21.5)]:
+  page.locator('#countertop-depth').fill(str(depth));page.locator('#countertop-depth').press('Tab')
+  assert page.evaluate('MF_PLANNER.adapter.selected.z')==z
+ page.locator('[data-dryer-option="execution"]').select_option('standard')
+ assert page.evaluate('MF_PLANNER.adapter.selected.z')==0
+ page.locator('[data-dryer-option="execution"]').select_option('gola')
+ assert page.evaluate('MF_PLANNER.adapter.selected.z')==21.5
  page.screenshot(path='/tmp/dryer-ui.png')
  page.evaluate("MF_PLANNER.adapter.select('tall');MF_PLANNER.bridge.refresh()")
  expect(page.locator('#depth')).to_be_enabled();expect(page.locator('#depth')).to_have_attribute('min','500')
@@ -82,18 +95,24 @@ with sync_playwright() as pw:
  with page.expect_response(lambda r:'/api/v2/3d-projects' in r.url and r.request.method in ('POST','PATCH')) as saved:
   page.locator('#save-project').click()
  stored=saved.value.json()
+ dryer=next(it for it in stored['scene']['items'] if it['item_id']=='dryer')
+ assert (dryer['z'],dryer['rearServiceGapMm'])==(21.5,71.5)
  assert next(it for it in stored['scene']['items'] if it['item_id']=='shallow')['depth']==300
  assert next(it for it in stored['scene']['items'] if it['item_id']=='tall')['depth']==500
  upper=next(it for it in stored['scene']['items'] if it['item_id']=='upper')
  assert (upper['height'],upper['elevation_mm'])==(900,1780)
  page.evaluate('''async stored=>{await MF_PLANNER.bridge.loadSnapshot({...stored,selectedId:'shallow'},stored);MF_PLANNER.adapter.select('shallow');MF_PLANNER.bridge.refresh()}''',stored)
  expect(page.locator('#depth')).to_have_value('300')
+ assert page.evaluate("MF_PLANNER.adapter.items.find(it=>it.item_id==='dryer').z")==21.5
  assert page.evaluate("(()=>{const it=MF_PLANNER.adapter.selected,c=MF_FURNITURE_CORE;return c.productionParts(it,{production:c.PRODUCTION_MODELS[it.bazis_id]}).filter(p=>p.role==='body'||p.role==='shelf').every(p=>p.size.z===300)})()")
  assert page.evaluate("MF_PLANNER.adapter.items.find(it=>it.item_id==='upper').elevation_mm")==1780
  assert abs(page.evaluate("MF_PLANNER.scene.entries.get('upper').group.position.y")-1.780)<1e-6
  with page.expect_download() as downloaded:
   page.evaluate("document.getElementById('export-bazis').click()")
  native=json.loads(Path(downloaded.value.path()).read_text())
+ exported_dryer=next(it for it in native['items'] if it['bazis_id']==dryer['bazis_id'])
+ assert exported_dryer['position']['z']==21.5
+ assert '0,5 мм' in exported_dryer['production_note']
  assert next(it for it in native['items'] if it['name']==next(it['name'] for it in stored['scene']['items'] if it['item_id']=='tall'))['target']['depth']==500
  exported_upper=next(it for it in native['items'] if it['bazis_id']==upper['bazis_id'])
  assert (exported_upper['target']['height'],exported_upper['position']['y'])==(900,1780)

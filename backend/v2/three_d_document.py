@@ -153,9 +153,12 @@ def hardware_for(it):
 
 def module_contents(it):
     it=refresh_dryer_source(it)
-    if dryer_variant(it):return dryer_contents(it)
-    if dishwasher(it):return dishwasher_contents(it)
-    if gola_variant(it):return gola_contents(it)
+    v=gola_variant(it) or dryer_variant(it);dish=dishwasher(it)
+    gola_front=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
+    alignment=' От лицевой поверхности закрытого фасада до переднего края столешницы 0,5 мм.' if gola_front else ''
+    if dryer_variant(it):return dryer_contents(it)+alignment
+    if dish:return dishwasher_contents(it)+alignment
+    if gola_variant(it):return gola_contents(it)+alignment
     if upper_variant(it):return upper_contents(it)
     if drawer_variant(it):return drawer_contents(it)
     if vitrine_variant(it):return vitrine_contents(it)

@@ -117,7 +117,7 @@ class PlannerApplication {
       const b=e.target.closest('[data-base-option]'),it=this.adapter.selected,G=globalThis.MF_GOLA;
       if(!b||b.disabled||!G.baseInfo(it)||b.getAttribute('aria-pressed')==='true')return;
       this.interaction.change('Исполнение нижнего шкафа',()=>{
-        const next=G.select(it,{[b.dataset.baseOption]:b.dataset.baseValue},this.bridge.catalogue.bazisModules);
+        const next=globalThis.MF_FURNITURE_CORE.alignKitchenChange(it,G.select(it,{[b.dataset.baseOption]:b.dataset.baseValue},this.bridge.catalogue.bazisModules));
         const error=this.adapter.validate(next);if(error)throw new Error(error);
         this.adapter.replace(next);this.adapter.status('Исполнение нижнего шкафа изменено');
       });this.bridge.refresh();
@@ -137,7 +137,7 @@ class PlannerApplication {
       const field=e.target.dataset.dryerOption,it=this.adapter.selected,D=globalThis.MF_PULLOUT_DRYERS;
       if(!field||!D.info(it))return;
       this.interaction.change('Исполнение выдвижной сушки',()=>{
-        const next=D.select(it,{[field]:field==='width'?Number(e.target.value):e.target.value},this.bridge.catalogue.bazisModules);
+        const next=globalThis.MF_FURNITURE_CORE.alignKitchenChange(it,D.select(it,{[field]:field==='width'?Number(e.target.value):e.target.value},this.bridge.catalogue.bazisModules));
         const error=this.adapter.validate(next);if(error)throw new Error(error);this.adapter.replace(next);
       });this.bridge.refresh();
     });
@@ -150,7 +150,7 @@ class PlannerApplication {
       const b=e.target.closest('[data-drawer-option]'),it=this.adapter.selected,D=globalThis.MF_DRAWERS;
       if(!b||b.disabled||!D.familyInfo(it)||b.getAttribute('aria-pressed')==='true')return;
       this.interaction.change('Исполнение ящиков',()=>{
-        const next=D.select(it,{[b.dataset.drawerOption]:b.dataset.drawerValue},this.bridge.catalogue.bazisModules);
+        const next=globalThis.MF_FURNITURE_CORE.alignKitchenChange(it,D.select(it,{[b.dataset.drawerOption]:b.dataset.drawerValue},this.bridge.catalogue.bazisModules));
         const error=this.adapter.validate(next);if(error)throw new Error(error);
         const reset=Object.keys(it.part_materials||{}).length>Object.keys(next.part_materials||{}).length;
         this.adapter.replace(next);this.adapter.status('Исполнение ящиков изменено'+(reset?'. Материал деталей другой толщины выберите заново.':''));
@@ -271,7 +271,7 @@ class PlannerApplication {
       this.interaction.change('Параметры кухонного ряда',()=>{
         const changed=targets.map(source=>{
           const it=dimensionPatch(source,{[key]:value});
-          if(key==='rearServiceGapMm'){const n=rotateXZ(0,1,it.rotation||0),delta=kitchenSettings(it).rearServiceGapMm-kitchenSettings(source).rearServiceGapMm;it.x+=n.x*delta;it.z+=n.z*delta;}
+          if(key==='rearServiceGapMm'&&!globalThis.MF_FURNITURE_CORE.golaCountertop(source)){const n=rotateXZ(0,1,it.rotation||0),delta=kitchenSettings(it).rearServiceGapMm-kitchenSettings(source).rearServiceGapMm;it.x+=n.x*delta;it.z+=n.z*delta;}
           return it;
         });
         const next=this.adapter.items.map(it=>changed.find(x=>x.item_id===it.item_id)||it);

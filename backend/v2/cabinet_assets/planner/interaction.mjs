@@ -146,10 +146,10 @@ export class Interaction {
       let it=dimensionPatch(source,patch,this.adapter.room);
       if(Number.isFinite(patch.width)&&patch.width!==source.width)it=rightAnchoredWidth(source,it);
       const kitchen=kitchenSettings(source),nextKitchen=kitchenSettings(it);
-      if(kitchen&&(Number.isFinite(patch.depth)||Number.isFinite(patch.rearServiceGapMm))){
+      if(kitchen&&!globalThis.MF_FURNITURE_CORE.golaCountertop(source)&&(Number.isFinite(patch.depth)||Number.isFinite(patch.rearServiceGapMm))){
         const delta=(it.depth-source.depth)/2+nextKitchen.rearServiceGapMm-kitchen.rearServiceGapMm,n=rotateXZ(0,1,source.rotation||0);
         it.x+=n.x*delta;it.z+=n.z*delta;
-      }else if(Number.isFinite(patch.depth)&&patch.depth!==source.depth){
+      }else if(!kitchen&&Number.isFinite(patch.depth)&&patch.depth!==source.depth){
         const r=this.adapter.room,delta=(patch.depth-source.depth)/2,clearance=this.options().wallOffset||0;
         if(source.rotation===0&&Math.abs(source.z-source.depth/2+r.depth/2-clearance)<1)it.z+=delta;
         if(source.rotation===180&&Math.abs(r.depth/2-source.z-source.depth/2-clearance)<1)it.z-=delta;

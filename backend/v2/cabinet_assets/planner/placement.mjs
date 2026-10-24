@@ -19,7 +19,7 @@ export function snapItem(raw,items,room,options={},previous={}){
       const along=it[face.axis==='x'?'z':'x'];if(along+it.width/2>face.min&&along-it.width/2<face.max)walls.push({...face,id:o.id+':'+face.r,name:o.name});
     }
   }
-  const kitchen=kitchenSettings(it),wallOffset=kitchen?50:(Number(options.wallOffset)||0);
+  const kitchen=kitchenSettings(it),wallOffset=kitchen?kitchen.rearServiceGapMm:(Number(options.wallOffset)||0);
   const candidates=[];
   for(const wall of walls){
     const position=wall.edge+wall.sign*(it.depth/2+wallOffset);
@@ -85,7 +85,7 @@ export function snapItem(raw,items,room,options={},previous={}){
 /** Click/duplicate placement never silently moves an existing cabinet. */
 export function findSpace(draft,items,room,selected,options={}){
   const initial={...draft,elevation_mm:elevation(draft,room)};
-  const starts=[],clearance=kitchenSettings(initial)?50:(options.wallOffset||0);
+  const starts=[],clearance=kitchenSettings(initial)?.rearServiceGapMm??(options.wallOffset||0);
   if(selected){const turned=cornerReturnPlacement(selected,initial);if(turned)starts.push(turned);}
   // Click placement follows a deterministic local left-to-right row. The first
   // cabinet starts at the left room boundary; later cabinets extend that row to
@@ -98,7 +98,7 @@ export function findSpace(draft,items,room,selected,options={}){
     const rowPeers=items.filter(peer=>{
       if(peer.rotation!==r||!verticalPeers(initial,peer,room))return false;
       const peerV=peer.x*front.x+peer.z*front.z;
-      const peerClearance=kitchenSettings(peer)?50:(options.wallOffset||0);
+      const peerClearance=kitchenSettings(peer)?.rearServiceGapMm??(options.wallOffset||0);
       const expected=-frontSpan/2+peer.depth/2+peerClearance;
       return Math.abs(peerV-expected)<2;
     });

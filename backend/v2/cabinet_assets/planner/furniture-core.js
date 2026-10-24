@@ -352,7 +352,9 @@
     if(!c||cornerSpec(it)||!isKitchenModule(it)||it.depth!==c.return_body_depth_mm)return null;
     const sign=c.side==='right'?-1:1;
     const local=rotateXZ(sign*(-corner.width/2+c.wall_gap_mm+it.depth/2),corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
-    return {...it,x:corner.x+local.x,z:corner.z+local.z,rotation:((corner.rotation||0)+(sign===1?270:90))%360};
+    const target={...it,x:corner.x+local.x,z:corner.z+local.z,rotation:((corner.rotation||0)+(sign===1?270:90))%360};
+    if(golaCountertop(it)){const shift=rotateXZ(0,kitchenSettings(it).rearServiceGapMm-50,target.rotation);target.x+=shift.x;target.z+=shift.z;}
+    return target;
   }
   function dimensionError(it,template){
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
@@ -473,11 +475,21 @@
   function kitchenSettings(it){
     if(!isKitchenModule(it))return null;
     const k={...KITCHEN_DEFAULTS};for(const key of Object.keys(k))if(it[key]!=null)k[key]=it[key];
-    k.rearServiceGapMm=50;
+    k.rearServiceGapMm=golaCountertop(it)?k.countertopDepthMm-it.depth-18-.5:50;
     k.legHeightMm=it.legHeightMm??it.base_height??100;
     k.countertopThicknessMm=it.countertopThicknessMm??it.worktop_thickness??38;
     k.frontOverhangMm=k.countertopDepthMm-k.rearServiceGapMm-it.depth;
     return k;
+  }
+  function golaCountertop(it){
+    const p=PRODUCTION_MODELS[it?.bazis_id];
+    return Boolean(isKitchenModule(it)&&(p?.gola?.execution==='gola'||p?.dishwasher?.variant==='gola'));
+  }
+  function alignKitchenChange(source,next){
+    if(!golaCountertop(source)&&!golaCountertop(next))return next;
+    const a=kitchenSettings(source),b=kitchenSettings(next);if(!a||!b)return next;
+    const n=rotateXZ(0,(next.depth-source.depth)/2+b.rearServiceGapMm-a.rearServiceGapMm,next.rotation||0);
+    return {...next,x:next.x+n.x,z:next.z+n.z,rearServiceGapMm:b.rearServiceGapMm};
   }
   function normalizeKitchen(it,room){
     it=refreshBaseSource(VITRINE?.normalizeSource(it)||it);
@@ -486,12 +498,13 @@
     const {frontOverhangMm,...saved}=k;
     const result={...it,...saved,base_height:k.legHeightMm,body_height:it.body_height??it.height-k.legHeightMm,
       worktop_thickness:k.countertopThicknessMm};
-    // Only old flush-to-wall pilot projects need the newly introduced service space.
-    // Free-standing saved positions and projects already carrying the gap are untouched.
+    // Preserve the worktop back datum when migrating Gola to its facade clearance.
+    // Ordinary legacy modules move only when previously flush to the wall.
     if(room){
       const n=rotateXZ(0,1,it.rotation||0),axis=n.x?'x':'z',wall=(axis==='x'?room.width:room.depth)/2;
       const oldGap=it.rearServiceGapMm??0;
-      if(Math.abs(it[axis]*n[axis]-it.depth/2-oldGap+wall)<1)result[axis]+=n[axis]*(k.rearServiceGapMm-oldGap);
+      if(golaCountertop(it))result[axis]+=n[axis]*(k.rearServiceGapMm-(it.rearServiceGapMm??50));
+      else if(Math.abs(it[axis]*n[axis]-it.depth/2-oldGap+wall)<1)result[axis]+=n[axis]*(k.rearServiceGapMm-oldGap);
     }
     return result;
   }
@@ -515,8 +528,8 @@
       const leg=patch.legHeightMm??patch.base_height??old.base_height;
       const body=patch.body_height??(Object.hasOwn(patch,'height')?patch.height-leg:old.body_height);
       const thickness=patch.countertopThicknessMm??patch.worktop_thickness??kitchenSettings(source).countertopThicknessMm;
-      return {...it,legHeightMm:leg,base_height:leg,body_height:body,height:body+leg,
-        countertopThicknessMm:thickness,worktop_thickness:thickness};
+      return alignKitchenChange(source,{...it,legHeightMm:leg,base_height:leg,body_height:body,height:body+leg,
+        countertopThicknessMm:thickness,worktop_thickness:thickness});
     }
     const it={...source,...patch},old=heights(source);
     if(['height','body_height','base_height','base'].some(k=>Object.hasOwn(patch,k))){
@@ -932,5 +945,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

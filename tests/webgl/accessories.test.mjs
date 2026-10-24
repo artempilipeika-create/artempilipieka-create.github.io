@@ -13,7 +13,7 @@ const A=globalThis.MF_ACCESSORIES;
 const room={width:6000,depth:4000,height:2700};
 const item=(v=A.dishwashers[0],patch={})=>C.normalizeKitchen({item_id:'pm',name:'Посудомойка',module_type:'base_cabinet',bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:true,width:600,height:820,depth:510,base_height:100,body_height:720,base:'legs',layout:'doors',drawers:0,handles:'handleless',x:0,z:0,rotation:0,...patch});
 const template=it=>({production:C.PRODUCTION_MODELS[it.bazis_id]});
-const state=(rotation=0,shape='straight')=>({room,items:[item(A.dishwashers[0],{item_id:'a',...C.rotateXZ(-300,0,rotation),rotation}),item(A.dishwashers[1],{item_id:'b',...C.rotateXZ(300,0,rotation),rotation})],plinths:[{id:'p',members:['a','b'],shape,inset:40,material_id:'green18'}]});
+const state=(rotation=0,shape='straight')=>({room,items:[item(A.dishwashers[0],{item_id:'a',...C.rotateXZ(-300,0,rotation),rotation}),C.normalizeKitchen({...item(A.dishwashers[1],{item_id:'b',...C.rotateXZ(300,0,rotation),rotation}),rearServiceGapMm:50},room)],plinths:[{id:'p',members:['a','b'],shape,inset:40,material_id:'green18'}]});
 test('All six donors retain exact SHA and native dimensions',()=>{
  assert.equal(A.variants.length,6);
  for(const v of A.variants){const bytes=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/accessory-sources/'+v.source_file,import.meta.url));assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),v.source_sha256);assert.deepEqual(v.frame.size,[600,v.kind==='dishwasher'?820:100,600]);}
@@ -69,10 +69,11 @@ test('Actual accessory controls add, resize, switch, undo, redo and remove a row
   history.undo();assert.equal(s.plinths[0].width,undefined);history.redo();assert.equal(s.plinths[0].width,1320);
   walk(ui.list).find(n=>n.textContent==='Удалить цоколь').events.click();assert.equal(s.plinths.length,0);history.undo();assert.equal(s.plinths[0].width,1320);
   const auto=walk(ui.auto).find(n=>n.attrs['aria-label']==='Цоколь по расстановке');auto.checked=true;auto.events.change();
-  assert.equal(s.plinths.length,1);assert.equal(s.plinths[0].automatic,true);assert.equal(A.plans(s).length,1);
+  assert.equal(s.plinths.length,1);assert.equal(s.plinths[0].automatic,true);assert.equal(A.plans(s).length,2);
+  assert.equal(Math.abs(A.plans(s)[0].position.z-A.plans(s)[1].position.z),21.5);
   history.undo();assert.equal(s.plinths[0].width,1320);history.redo();assert.equal(s.plinths[0].automatic,true);
   const module=walk(ui.auto).find(n=>n.attrs['aria-label']==='Цоколь у выбранного модуля');module.checked=false;module.events.change();assert.deepEqual(s.plinths[0].excluded_members,[s.items[0].item_id]);
-  s.items.push(item(A.dishwashers[0],{item_id:'future',x:900}));ui.sync();assert.equal(A.plans(s)[0].width,1200);
+  s.items.push(item(A.dishwashers[0],{item_id:'future',x:900}));ui.sync();assert.equal(A.plans(s).reduce((sum,p)=>sum+p.width,0),1200);
  }finally{globalThis.document=doc;}
 });
 test('Real JSON exporter carries dishwasher variants and a native row plinth once',async()=>{

@@ -18,7 +18,7 @@ export function dimensionRuns(items,room){
     const u=rotateXZ(1,0,first.rotation||0),n=rotateXZ(0,1,first.rotation||0);
     const aligned=items.filter(it=>remaining.has(it)&&(it.rotation||0)===(first.rotation||0)&&tier(it)===tier(first)&&
       (Math.abs(elevation(it,room)-elevation(first,room))<.6||Math.abs(elevation(it,room)+dimensionValue(it,'height')-elevation(first,room)-dimensionValue(first,'height'))<.6)&&
-      (Math.abs(dot(it,n)-it.depth/2-dot(first,n)+first.depth/2)<.6||Math.abs(dot(it,n)+it.depth/2-dot(first,n)-first.depth/2)<.6))
+      (Math.abs(backDatum(it)-backDatum(first))<.6||Math.abs(dot(it,n)-it.depth/2-dot(first,n)+first.depth/2)<.6||Math.abs(dot(it,n)+it.depth/2-dot(first,n)-first.depth/2)<.6))
       .sort((a,b)=>dot(a,u)-dot(b,u));
     let run;
     for(const it of aligned){

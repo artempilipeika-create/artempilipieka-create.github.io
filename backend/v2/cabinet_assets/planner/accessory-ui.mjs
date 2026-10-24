@@ -25,7 +25,7 @@ export class AccessoryUI{
   for(const [key,label]of [['standard','Обычное'],['gola','Gola L']]){
    const b=button(label);b.dataset.variant=key;choices.append(b);this.dishButtons.push(b);
    app.listen(b,'click',()=>this.change('Исполнение посудомойки',()=>{
-    const next=A.select(app.adapter.selected,key),error=app.adapter.validate(next);if(error)throw new Error(error);app.adapter.replace(next);
+    const next=globalThis.MF_FURNITURE_CORE.alignKitchenChange(app.adapter.selected,A.select(app.adapter.selected,key)),error=app.adapter.validate(next);if(error)throw new Error(error);app.adapter.replace(next);
    }));
   }
   this.dish.append(choices);const copy=button('Фасад как у соседнего шкафа');this.dish.append(copy);
