@@ -420,7 +420,7 @@ export class MeshFactory{
     const root=new THREE.Group();root.userData={visualOnly:true,mergedPlinthIds:[]};const groups=new Map();
     const plans=kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id)),surfaces=countertopSurfaces(plans);
     const fixtures=fixturePlans(items,this.adapter.room,plans);
-    for(const f of fixtures){if(f.error)continue;const surface=surfaces.get(f.part);(surface.holes??=[]).push(f.hole);root.add(buildWorktopFixture(f));}
+    for(const f of fixtures){if(f.error)continue;const surface=surfaces.get(f.part);(surface.holes??=[]).push(f.hole);root.add(buildWorktopFixture(f,this.applianceAssets,()=>!root.userData.released&&!this.dead));}
     for(const plan of plans){
       const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
       for(const part of plan.parts.filter(p=>p.role!=='plinth')){const d=part.size,p=part.position,m=part.role==='counter'?this.countertop(g,part,surfaces.get(part)):this.box(g,part.role,d.x,d.y,d.z,p.x,p.y,p.z,part.material.variant_id);m.userData.part=part;m.userData.productionPart=part.role;if(part.role==='counter'){this.countertopOutline(g,part);this.countertopJoints(g,part,surfaces.get(part));}}

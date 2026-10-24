@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "kind": "sink",
+  "generator": "Tripo H3.1",
+  "taskId": "b80f60e3-039a-4885-b63e-4cd172188c8a",
+  "sourceSha256": "56bd2e32c1896c6480a583a8a57971491573aca7348b20b6996e038f4d7656f6",
+  "sourceBytes": 60301640,
+  "sourceTriangles": 1867617,
+  "triangles": 23999,
+  "vertices": 21697,
+  "sourceBounds": [
+    [
+      -0.4901123046875,
+      0.0,
+      -0.2387542575597763
+    ],
+    [
+      0.4901123046875,
+      0.7908935546875,
+      0.2387542575597763
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.4903776128494165,
+      -0.23930831240884884,
+      -0.7910605309536634
+    ],
+    [
+      0.48995626564447453,
+      0.23853718244120395,
+      5.5042251156823494e-05
+    ]
+  ],
+  "cleanup": [
+    "Rotate source -90 degrees about X: bowl +Y, rear deck -Z"
+  ],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "sink-tripo.bin",
+  "byteLength": 982292,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 21697,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 260364,
+      "count": 21697,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 520728,
+      "count": 21697,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 694304,
+      "count": 71997,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "sink-tripo-color.webp",
+    "rm": "sink-tripo-rm.webp",
+    "normal": "sink-tripo-normal.webp"
+  }
+}

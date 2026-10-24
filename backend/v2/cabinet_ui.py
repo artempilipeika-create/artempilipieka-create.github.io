@@ -44,7 +44,7 @@ def router():
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
-    planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp'))
+    planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave','sink','faucet','hood') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp'))
     from .material_visuals import manifest,user_textures,user_texture_bytes
     material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}
     planner_files.update(material_assets)

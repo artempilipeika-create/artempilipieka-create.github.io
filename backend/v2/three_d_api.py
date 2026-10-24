@@ -54,6 +54,15 @@ class WorktopFixture(StrictModel):
     finish: Literal['steel','black']='steel'
     faucet: Literal['arch','angled','compact']='arch'
     faucet_finish: Literal['chrome','black']='chrome'
+    hood: Literal['none','chimney']='none'
+    hood_gap: int=Field(default=650,ge=400,le=1200,strict=True)
+    hood_width: int=Field(default=600,ge=400,le=1200,strict=True)
+
+    @model_validator(mode='after')
+    def hood_requires_hob(self):
+        if self.hood!='none' and self.kind!='hob':
+            raise ValueError('Вытяжка доступна над варочной панелью.')
+        return self
 
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class FurnitureItem(StrictModel):

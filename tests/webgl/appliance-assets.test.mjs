@@ -65,9 +65,9 @@ test('Normalized geometry rejects corrupt metadata, positions and indices before
  assert.throws(()=>readApplianceGeometry(buffer.slice(0,-4),meta));new Uint32Array(buffer,96,1)[0]=3;assert.throws(()=>readApplianceGeometry(buffer,meta),/indices/);new Uint32Array(buffer,96,1)[0]=0;new Float32Array(buffer,0,1)[0]=.6;assert.throws(()=>readApplianceGeometry(buffer,meta),/bounds/);
 });
 
-test('Both real Tripo buffers retain finite normalized geometry, UVs, unit normals and the web budget',async()=>{
+test('All real Tripo buffers retain finite normalized geometry, UVs, unit normals and the web budget',async()=>{
  const {readFileSync,statSync}=await import('node:fs');const base=new URL('../../backend/v2/cabinet_assets/planner/appliance-assets/',import.meta.url);
- for(const kind of ['oven','microwave']){
+ for(const kind of ['oven','microwave','sink','faucet','hood']){
   const meta=JSON.parse(readFileSync(new URL(kind+'-tripo.json',base))),bytes=readFileSync(new URL(meta.buffer,base));
   const g=readApplianceGeometry(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),meta);
   assert.ok(meta.triangles<=26000&&meta.triangles>20000);assert.equal(meta.generator,'Tripo H3.1');assert.match(meta.sourceSha256,/^[0-9a-f]{64}$/);

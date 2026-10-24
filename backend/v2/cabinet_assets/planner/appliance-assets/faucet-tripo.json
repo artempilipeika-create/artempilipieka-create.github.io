@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "kind": "faucet",
+  "generator": "Tripo H3.1",
+  "taskId": "4e6061dd-1dbe-440e-be08-8e94f15ca349",
+  "sourceSha256": "c3eda29e408e6762203ea75dee4811766e2853c8beb07f141cba04eed87da2d1",
+  "sourceBytes": 64067396,
+  "sourceTriangles": 1984708,
+  "triangles": 24000,
+  "vertices": 15781,
+  "sourceBounds": [
+    [
+      -0.2870635986328125,
+      0.0,
+      -0.25872802734375
+    ],
+    [
+      0.2870635986328125,
+      0.97943115234375,
+      0.25872802734375
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.1256857789286348,
+      -0.00013285052706488013,
+      -0.308380605548598
+    ],
+    [
+      0.14644429758520083,
+      0.9795284962570652,
+      0.37017351908564283
+    ]
+  ],
+  "cleanup": [
+    "Align faucet arch towards +Z, yaw 41.537519 degrees"
+  ],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "faucet-tripo.bin",
+  "byteLength": 792992,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 15781,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 189372,
+      "count": 15781,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 378744,
+      "count": 15781,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 504992,
+      "count": 72000,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "faucet-tripo-color.webp",
+    "rm": "faucet-tripo-rm.webp",
+    "normal": "faucet-tripo-normal.webp"
+  },
+  "mountAnchor": [
+    -0.20203072157081747,
+    -0.5,
+    -0.33690284933095277
+  ],
+  "nominalSize": [
+    91.66731498017751,
+    330.0,
+    228.57170170524367
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "hood",
+  "generator": "Tripo H3.1",
+  "taskId": "704b7fea-c514-401d-968c-e19ccb3d49ca",
+  "sourceSha256": "a3034c1239801ffd34b78dde101f2bafc194f0259a136307ba1d21dee2a842cb",
+  "sourceBytes": 66628924,
+  "sourceTriangles": 1973010,
+  "triangles": 24000,
+  "vertices": 17265,
+  "sourceBounds": [
+    [
+      -0.490325927734375,
+      0.0,
+      -0.3904571533203125
+    ],
+    [
+      0.490325927734375,
+      0.7372742295265198,
+      0.3904571533203125
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.49038090588020905,
+      -0.00013281072090515325,
+      -0.3904637057507938
+    ],
+    [
+      0.49042887771302884,
+      0.7372886601597214,
+      0.3899438067357426
+    ]
+  ],
+  "cleanup": [],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "hood-tripo.bin",
+  "byteLength": 840480,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 17265,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 207180,
+      "count": 17265,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 414360,
+      "count": 17265,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 552480,
+      "count": 72000,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "hood-tripo-color.webp",
+    "rm": "hood-tripo-rm.webp",
+    "normal": "hood-tripo-normal.webp"
+  }
+}

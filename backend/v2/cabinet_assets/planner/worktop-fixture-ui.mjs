@@ -25,6 +25,17 @@ export class WorktopFixtureUI{
       const wrap=el('label',label),select=el('select');select.setAttribute('aria-label',label);for(const [value,text]of Object.entries(options)){const o=el('option',text);o.value=value;select.append(o);}wrap.append(select);this.sink.append(wrap);this.fields[key]=select;
       app.listen(select,'change',()=>this.patch({...app.adapter.selected.worktop_fixture,[key]:select.value}));
     }
+    this.hob=el('div');this.settings.append(this.hob);
+    const hoodLabel=el('label','Вытяжка над варочной'),hoodSelect=el('select');hoodSelect.setAttribute('aria-label','Вытяжка над варочной');
+    for(const [value,text]of [['none','Без вытяжки'],['chimney','Каминная · нержавеющая сталь']]){const o=el('option',text);o.value=value;hoodSelect.append(o);}
+    hoodLabel.append(hoodSelect);this.hob.append(hoodLabel);this.fields.hood=hoodSelect;
+    app.listen(hoodSelect,'change',()=>this.patch({...app.adapter.selected.worktop_fixture,hood:hoodSelect.value},'Вытяжка над варочной'));
+    this.hoodSettings=el('div');this.hob.append(this.hoodSettings);
+    for(const [key,label,min,max]of [['hood_width','Ширина вытяжки, мм',400,1200],['hood_gap','От столешницы до низа вытяжки, мм',400,1200]]){
+      const wrap=el('label',label),input=el('input');input.type='number';input.step=1;input.min=min;input.max=max;input.setAttribute('aria-label',label);wrap.append(input);this.hoodSettings.append(wrap);this.fields[key]=input;
+      app.listen(input,'change',()=>{if(input.value===''||!Number.isInteger(Number(input.value))){app.adapter.status('Введите размер целыми миллиметрами.');this.sync(true);return;}this.patch({...app.adapter.selected.worktop_fixture,[key]:Number(input.value)},'Размеры и высота вытяжки');});
+    }
+    this.hoodSettings.append(el('p','Высота корпуса вытяжки 525 мм, глубина 450 мм. Высоту установки уточняйте по инструкции выбранной техники.'));
     const remove=el('button','Убрать со столешницы');remove.type='button';remove.className='secondary';this.settings.append(remove);app.listen(remove,'click',()=>this.patch(null,'Убрать мойку или варочную'));
     const hint=el('p','Модель для визуализации. Вырез и внутреннее наполнение шкафа уточняются по монтажной схеме выбранной техники.');hint.className='studio-hint';this.settings.append(hint);
     document.getElementById('countertop-module-control').after(card);
@@ -44,9 +55,9 @@ export class WorktopFixtureUI{
     const a=this.app.adapter,it=a.selected,k=it&&kitchenSettings(it),f=it?.worktop_fixture;
     const available=Boolean(k?.countertopEnabled);this.shortcut.disabled=!available;
     for(const b of this.buttons){b.disabled=!available;b.setAttribute('aria-pressed',String(b.dataset.kind===f?.kind));}
-    this.settings.hidden=!f;this.sink.hidden=f?.kind!=='sink';
+    this.settings.hidden=!f;this.sink.hidden=f?.kind!=='sink';this.hob.hidden=f?.kind!=='hob';this.hoodSettings.hidden=f?.hood!=='chimney';
     const error=f&&fixturePlans(a.items,a.room).find(p=>p.itemId===it.item_id)?.error;
     if(!force)this.note.textContent=error||(available?f?fixtureNames[f.kind]+' · '+f.width+' × '+f.depth+' мм · '+it.name:'Выбран шкаф: '+it.name:'Выберите нижний шкаф со столешницей.');
-    if(f)for(const [key,input]of Object.entries(this.fields))if(force||document.activeElement!==input)input.value=f[key];
+    if(f)for(const [key,input]of Object.entries(this.fields))if(force||document.activeElement!==input)input.value=f[key]??defaultFixture(f.kind)[key];
   }
 }

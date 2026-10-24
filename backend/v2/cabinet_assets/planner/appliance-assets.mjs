@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {trimApplianceBody,buildApplianceFront} from './appliance-finish.mjs';
 
-const KINDS=new Set(['oven','microwave']);
+const KINDS=new Set(['oven','microwave','sink','faucet','hood']);
 export const applianceAssetURL=kind=>{
   if(!KINDS.has(kind))throw Error('Unknown appliance');
   return new URL('./appliance-assets/'+kind+'-tripo.json',import.meta.url);
@@ -53,11 +53,18 @@ export class ApplianceAssets{
     const url=applianceAssetURL(kind),response=await fetch(url,{signal:this.abort.signal});if(!response.ok)throw Error('Appliance manifest unavailable');
     const meta=await response.json();
     if(meta.kind!==kind||meta.buffer!==kind+'-tripo.bin'||['color','rm','normal'].some(k=>meta.textures?.[k]!==kind+'-tripo-'+k+'.webp'))throw Error('Unknown appliance file');
+    if(kind==='faucet'){
+      if(!Array.isArray(meta.mountAnchor)||meta.mountAnchor.length!==3||meta.mountAnchor.some(v=>!Number.isFinite(v)||Math.abs(v)>.5)||!Array.isArray(meta.nominalSize)||meta.nominalSize.length!==3||meta.nominalSize.some(v=>!Number.isFinite(v)||v<=0||v>1000))throw Error('Invalid faucet mounting dimensions');
+      entry.mountAnchor=meta.mountAnchor;entry.nominalSize=meta.nominalSize;
+    }
     const mesh=await fetch(new URL(meta.buffer,url),{signal:this.abort.signal});if(!mesh.ok)throw Error('Appliance mesh unavailable');
     const buffer=await mesh.arrayBuffer();if(this.disposed)throw Error('Appliances disposed');
-    const source=readApplianceGeometry(buffer,meta);entry.geometry=trimApplianceBody(source);source.dispose();
-    const front=buildApplianceFront(kind);entry.frontGeometry=front.geometry;entry.frontMaterials=front.materials;
-    entry.frontGhostMaterials=front.materials.map(m=>{const copy=m.clone();copy.transparent=true;copy.opacity=.36;copy.depthWrite=false;return copy;});
+    const source=readApplianceGeometry(buffer,meta);
+    if(kind==='oven'||kind==='microwave'){
+      entry.geometry=trimApplianceBody(source);source.dispose();
+      const front=buildApplianceFront(kind);entry.frontGeometry=front.geometry;entry.frontMaterials=front.materials;
+      entry.frontGhostMaterials=front.materials.map(m=>{const copy=m.clone();copy.transparent=true;copy.opacity=.36;copy.depthWrite=false;return copy;});
+    }else entry.geometry=source;
     const loader=new THREE.TextureLoader(),results=await Promise.allSettled(['color','rm','normal'].map(key=>new Promise((resolve,reject)=>{
       const texture=loader.load(new URL(meta.textures[key],url).href,()=>{if(this.disposed){texture.dispose();reject(Error('Appliances disposed'));}else resolve(texture);},undefined,reject);
       texture.flipY=false;texture.colorSpace=key==='color'?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.anisotropy=4;entry.textures.push(texture);
@@ -68,12 +75,15 @@ export class ApplianceAssets{
     entry.material=new THREE.MeshPhysicalMaterial({map,roughnessMap:rm,metalnessMap:rm,normalMap,normalScale:new THREE.Vector2(.22,.22),roughness:1,metalness:1,clearcoat:.08,clearcoatRoughness:.35,envMapIntensity:.85});
     entry.ghost=entry.material.clone();entry.ghost.transparent=true;entry.ghost.opacity=.36;entry.ghost.depthWrite=false;
   }
-  attach(slot,fallback,layout,ghost,isCurrent){
+  attach(slot,fallback,layout,ghost,isCurrent,materialOverride=null){
     const mount=entry=>{
       if(this.disposed||!isCurrent()||slot.userData.assetAttached)return;
-      const mesh=new THREE.Mesh(entry.geometry,ghost?entry.ghost:entry.material);
-      mesh.scale.set(layout.width*.001,layout.height*.001,layout.depth*.001);
-      mesh.position.set(0,layout.y*.001,(layout.front-layout.depth/2)*.001);
+      if(layout.sourceSize&&(!entry.nominalSize||!entry.mountAnchor))return;
+      const mesh=new THREE.Mesh(entry.geometry,materialOverride||(ghost?entry.ghost:entry.material));
+      const size=layout.sourceSize?entry.nominalSize.map(v=>v*layout.height/entry.nominalSize[1]):[layout.width,layout.height,layout.depth];
+      mesh.scale.fromArray(size.map(v=>v*.001));
+      mesh.position.set((layout.x||0)*.001,layout.y*.001,(layout.z??(layout.front-layout.depth/2))*.001);
+      if(layout.sourceSize)mesh.position.sub(new THREE.Vector3().fromArray(entry.mountAnchor).multiply(mesh.scale));
       mesh.castShadow=!ghost;mesh.receiveShadow=!ghost;
       mesh.userData={visualOnly:true,sharedApplianceAsset:true,appliance:layout.kind,role:'appliance-model',itemId:slot.userData.itemId};
       slot.add(mesh);fallback.visible=false;slot.userData.assetAttached=true;
