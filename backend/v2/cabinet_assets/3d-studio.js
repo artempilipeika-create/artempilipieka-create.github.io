@@ -173,10 +173,10 @@
         ['water_heater','Бойлер','Вертикальный накопительный водонагреватель.',450]]){
         const b=make('button','mf3d-module');b.type='button';b.dataset.category='communications';b.dataset.tags='communications';b.dataset.roomFeature=kind;b.dataset.width=String(width);
         b.dataset.search=(label+' '+description+' помещение аксессуар оборудование tripo').toLowerCase();b.setAttribute('aria-label','Добавить: '+label);
-        const visual=make('span','studio-card-visual'),picture=make('img','studio-preview studio-equipment-preview');picture.src='/account/planner/appliance-assets/'+kind+'-tripo-preview.webp';picture.alt=label;picture.width=600;picture.height=600;picture.loading='lazy';picture.draggable=false;
+        const visual=make('span','studio-card-visual'),picture=make('img','studio-preview studio-equipment-preview');picture.src=kind==='window'?'/account/planner/window-preview.svg':'/account/planner/appliance-assets/'+kind+'-tripo-preview.webp';picture.alt=label;picture.width=600;picture.height=600;picture.loading='lazy';picture.draggable=false;
         visual.append(picture,make('span','studio-card-category','Помещение'),make('span','studio-card-add','+'));
         const copy=make('span','mf3d-module-copy');copy.append(make('strong','',label),make('span','',description));
-        const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions','Размеры и положение по замеру'),make('span','studio-source','TRIPO'));
+        const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions',kind==='window'?'Размеры и положение по замеру':'Перетащите в сцену · привязка к стенам'),make('span','studio-source',kind==='window'?'ПРОЁМ':'TRIPO'));
         b.append(visual,copy,meta);b.onclick=()=>document.dispatchEvent(new CustomEvent('mf:room-equipment-add',{detail:{kind}}));equipment.append(b);
       }
       const editEquipment=make('button','secondary studio-sockets-edit','Расположение окон и техники');editEquipment.type='button';editEquipment.onclick=()=>document.dispatchEvent(new CustomEvent('mf:room-equipment-edit'));equipment.append(editEquipment);get('module-catalogue').append(equipment);

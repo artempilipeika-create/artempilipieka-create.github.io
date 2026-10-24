@@ -25,3 +25,22 @@ def test_equipment_modules_are_on_fixed_routes():
         assert response.status_code==200
         assert response.headers['content-type'].startswith('application/javascript')
         assert "default-src 'none'" in response.headers['content-security-policy']
+
+@pytest.mark.parametrize('wall',list('abcd'))
+def test_equipment_wall_gap_round_trip_and_envelope(wall):
+    f=dict(id='heater',kind='water_heater',wall=wall,offset=300,elevation=900,width=600,height=700,projection=300,wall_gap=250)
+    room=Room(width=3000,depth=2800,height=2700,features=[f])
+    assert Room.model_validate_json(room.model_dump_json()).features[0].wall_gap==250
+    for gap in [-1,3000]:
+        with pytest.raises(ValidationError):Room(width=3000,depth=2800,height=2700,features=[f|dict(wall_gap=gap)])
+    with pytest.raises(ValidationError):Room(width=3000,depth=2800,height=2700,features=[f|dict(kind='window')])
+
+def test_optimized_equipment_assets_are_served():
+    app=FastAPI();app.include_router(router());client=TestClient(app)
+    for name in ['equipment-controls.mjs','equipment-placement.mjs','window-preview.svg']:
+        assert client.get('/account/planner/'+name).status_code==200
+    for kind in ['gas_cooker','radiator','gas_boiler','water_heater']:
+        for suffix in ['.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp']:
+            response=client.get('/account/planner/appliance-assets/'+kind+'-tripo'+suffix)
+            assert response.status_code==200,(kind,suffix)
+            assert len(response.content)>100

@@ -123,6 +123,7 @@ test('Visual-only details do not intercept real-surface selection',async()=>{
  const ray=new Raycaster(new Vector3(-.2,.4,2),new Vector3(0,0,-1));
  const hits=ray.intersectObject(group,true);assert.ok(hits.length);assert.equal(hits[0].object.userData.role,'front');
  for(const mesh of group.children.filter(o=>o.userData.role==='reveal'||o.isLineSegments))assert.equal(ray.intersectObject(mesh).length,0);
- const scene=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/scene.mjs',import.meta.url),'utf8');
- assert.ok(scene.includes('.find(h=>h.object.isMesh&&h.object.userData.itemId&&visible(h.object))'));factory.dispose();
+ const {PlannerScene}=await import('../../backend/v2/cabinet_assets/planner/scene.mjs');
+ const scene={cast:()=>ray,adapter:{items:[item({width:800})]},liveEntry:()=>({group}),roomFeatures:[]};
+ assert.equal(PlannerScene.prototype.pick.call(scene,0,0).id,'a');group.visible=false;assert.equal(PlannerScene.prototype.pick.call(scene,0,0),null);factory.dispose();
 });

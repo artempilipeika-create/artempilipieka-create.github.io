@@ -18,6 +18,7 @@ function waitReady(){return new Promise((resolve,reject)=>{
 
 import {RoomPricingUI} from './room-pricing-ui.mjs';
 import {RoomSetup} from './room-setup.mjs';
+import {EquipmentControls} from './equipment-controls.mjs';
 import {CountertopUI} from './countertop-ui.mjs';
 import {WorktopFixtureUI} from './worktop-fixture-ui.mjs';
 import {MaterialAppearanceUI} from './material-appearance-ui.mjs';
@@ -37,6 +38,7 @@ class PlannerApplication {
     this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.bindBrief();this.roomPricing=new RoomPricingUI(this);
     this.countertops=new CountertopUI(this);this.worktopFixtures=new WorktopFixtureUI(this);this.accessories=new AccessoryUI(this);
     this.wallFinishes=new WallFinishUI(this);this.mobility=new MobilityUI(this);this.materialAppearance=new MaterialAppearanceUI(this);
+    this.equipment=new EquipmentControls(this);
     await this.startRenderer();
     this.presentation=new PresentationUI(this);
     this.dimensions=new SceneDimensions(this);
@@ -44,6 +46,7 @@ class PlannerApplication {
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
       if(reason==='before-project'){
+        if(this.equipment)this.equipment.selectedId=null;
         this.interaction?.cancel();
         if(get('material-scope'))get('material-scope').value='module';
         if(this.scene)this.scene.selectionScope='module';this.scene?.clearSelection?.();
@@ -387,7 +390,7 @@ class PlannerApplication {
     try{const {PlannerScene}=await import('./scene.mjs');this.scene=new PlannerScene(canvas,this.adapter,()=>this.fallback());get('planner-fallback').hidden=true;document.body.dataset.plannerRenderer='webgl';}
     catch(error){console.warn('Planner switched to 2D:',error.message);this.installFallback(canvas);}
     this.scene.onVisualChanged=()=>this.roomPricing?.syncVisualNotice();
-    this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);
+    this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);this.interaction.equipment=this.equipment;
     this.dimensions?.attach();
     this.scene.fit(this.adapter.items.length?'kitchen':'room');this.paintMode();
   }
@@ -398,7 +401,7 @@ class PlannerApplication {
   fallback(){
     if(this.scene?.isFallback)return;
     this.interaction?.dispose();this.scene?.dispose();this.installFallback(get('scene'));
-    this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);this.dimensions?.attach();this.sync();this.paintMode();
+    this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);this.interaction.equipment=this.equipment;this.dimensions?.attach();this.sync();this.paintMode();
     this.adapter.status('WebGL-контекст потерян. Открыт резервный 2D-план; проект не перезагружался.');
   }
   setView(mode){if(!this.scene)return;this.interaction?.cancel();if(this.scene.isFallback)mode='top';this.scene.setView(mode);this.bridge.view(mode);this.paintMode();}
@@ -422,9 +425,9 @@ class PlannerApplication {
     const display=get('module-display');if(display){display.value=this.scene.displayMode||'normal';display.disabled=Boolean(this.scene.isFallback||!selected);}
     const note=get('planner-elevation-note');note.textContent=selected?.module_type==='wall_cabinet'?'Низ модуля: '+elevation(selected,this.adapter.room)+' мм. Высота вычисляется по прежнему правилу; отдельная регулировка пока недоступна.':'';
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
-    get('studio-empty-scene').hidden=Boolean(count);this.paintMode();
+    get('studio-empty-scene').hidden=Boolean(count||this.adapter.room.features?.some(f=>['window','radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)));this.paintMode();this.equipment?.sync();
   }
-  dispose(){this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
+  dispose(){this.equipment?.dispose();this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
 }
 export const planner=new PlannerApplication();
 window.MF_PLANNER=planner;

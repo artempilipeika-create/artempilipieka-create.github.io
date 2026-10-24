@@ -72,7 +72,7 @@ export class PlannerWorkspace {
     // Escape goes to Interaction unchanged, including its one-command rollback.
     on(window,'keydown',e=>{
       if(e.key!=='Escape'||document.querySelector('dialog[open]'))return;
-      if(this.app.interaction?.gesture||this.app.interaction?.catalogueDraft)return;
+      if(this.app.interaction?.gesture||this.app.interaction?.catalogueDraft||this.app.equipment?.gesture||this.app.equipment?.catalogueDraft)return;
       if(document.fullscreenElement===this.root){document.exitFullscreen().catch(()=>{});e.stopPropagation();return;}
       if(this.left||this.right){this.panel(this.lastPanel,false,{manual:true,focus:true});e.preventDefault();e.stopImmediatePropagation();}
       else if(this.cutlist.open){this.cutlist.open=false;e.preventDefault();e.stopImmediatePropagation();}

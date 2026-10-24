@@ -1,3 +1,4 @@
+import {isEquipment} from './equipment-placement.mjs';
 import {bounds,elevation,tier,MM_TO_WORLD as S} from './furniture-core.mjs';
 import {FEATURES,featureBox,floorOutline} from './room-plan.mjs';
 import {fixturePlans,roundedOutline} from './worktop-fixtures.mjs';
@@ -40,9 +41,11 @@ export class FallbackPlan {
       if(f.kind==='sink'){c.strokeRect(-f.width*.42*m.scale,(-f.depth/2+85)*m.scale,f.width*.84*m.scale,(f.depth-110)*m.scale);}
       else for(const x of [-.25,.25])for(const z of [-.23,.2]){c.beginPath();c.arc(x*f.width*m.scale,z*f.depth*m.scale,65*m.scale,0,Math.PI*2);c.strokeStyle='#9da7a9';c.stroke();}c.restore();
     }
-    for(const [i,f]of (r.features||[]).entries()){
+    const features=[...(r.features||[])];if(this.equipmentPreview&&!features.some(f=>f.id===this.equipmentPreview.feature.id))features.push(this.equipmentPreview.feature);
+    for(const [i,stored]of features.entries()){
+      const f=this.equipmentPreview?.feature.id===stored.id?this.equipmentPreview.feature:stored;
       const b=featureBox(f,r,['shaft','column'].includes(f.kind)?0:70),x=m.ox+(b.x-b.w/2-m.cx)*m.scale,y=m.oy+(b.z-b.d/2-m.cz)*m.scale;
-      c.fillStyle=FEATURES[f.kind][1];c.fillRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));c.font='bold 12px Arial';c.fillStyle='#243e30';c.textAlign='center';c.fillText(String(i+1),x+b.w*m.scale/2,y+b.d*m.scale/2-5);
+      c.fillStyle=FEATURES[f.kind][1];c.fillRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));if(this.equipmentSelected?.id===f.id||this.equipmentPreview?.feature.id===f.id){c.strokeStyle=this.equipmentPreview?.error?'#b65336':'#346d4a';c.lineWidth=2;c.strokeRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));}c.font='bold 12px Arial';c.fillStyle='#243e30';c.textAlign='center';c.fillText(String(i+1),x+b.w*m.scale/2,y+b.d*m.scale/2-5);
     }
     c.strokeStyle='#536958';c.lineWidth=2;c.beginPath();for(const e of floorOutline(r)){c.moveTo(m.ox+(e.x1-m.cx)*m.scale,m.oy+(e.z1-m.cz)*m.scale);c.lineTo(m.ox+(e.x2-m.cx)*m.scale,m.oy+(e.z2-m.cz)*m.scale);}c.stroke();
     if(this.preview)for(const it of this.preview.items||[this.preview.item]){const b=this.rectangle(it);c.fillStyle=this.preview.error?'#dab09188':'#8db18388';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=this.preview.error?'#a86b44':'#4b7b4a';c.strokeRect(b.x,b.y,b.w,b.h);}
@@ -57,7 +60,11 @@ export class FallbackPlan {
   pick(x,y){const r=this.canvas.getBoundingClientRect();for(const it of [...this.adapter.items].reverse()){
     if(this.layer!=='all'&&tier(it)!==this.layer)continue;const b=this.rectangle(it);
     if(x-r.left>=b.x&&x-r.left<=b.x+b.w&&y-r.top>=b.y&&y-r.top<=b.y+b.h)return{id:it.item_id,point:this.planePoint(x,y,{y:elevation(it,this.adapter.room)*S})};
-  }return null;}
+  }const point=this.planePoint(x,y);for(const f of (this.adapter.room.features||[]).filter(isEquipment).reverse()){const b=featureBox(f,this.adapter.room);if(Math.abs(point.x/S-b.x)<=b.w/2&&Math.abs(point.z/S-b.z)<=b.d/2)return {featureId:f.id,point};}return null;}
+  equipmentPlane(f){return {y:(f.elevation+f.height/2)*S};}
+  highlightEquipment(f){this.equipmentSelected=f;this.invalidate();}
+  previewEquipment(feature,error){this.equipmentPreview={feature,error};this.invalidate();}
+  clearEquipmentPreview(){this.equipmentPreview=null;this.invalidate();}
   planePoint(x,y,plane={}){const r=this.canvas.getBoundingClientRect(),m=this.metrics();return{x:(m.cx+(x-r.left-m.ox)/m.scale)*S,y:plane.y||0,z:(m.cz+(y-r.top-m.oy)/m.scale)*S};}
   makePlane(it,hit){return {y:hit?.y??elevation(it,this.adapter.room)*S};}
   pixelThreshold(){return Math.max(12,Math.min(85,14/this.metrics().scale));}

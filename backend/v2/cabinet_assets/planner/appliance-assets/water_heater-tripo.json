@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "water_heater",
+  "generator": "Tripo H3.1",
+  "taskId": "95753287-6a88-454b-ab8d-eafc7e8e66ee",
+  "sourceSha256": "e3b7dd8f07e951d886b922bc51410b7997858e0e06da15731972ead7aaf3c516",
+  "sourceBytes": 59992860,
+  "sourceTriangles": 1909021,
+  "triangles": 23999,
+  "vertices": 17995,
+  "sourceBounds": [
+    [
+      -0.220611572265625,
+      0.0,
+      -0.2503814697265625
+    ],
+    [
+      0.220611572265625,
+      0.978607177734375,
+      0.2503814697265625
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.22058228014469083,
+      -2.662036315080617e-05,
+      -0.25028625522960574
+    ],
+    [
+      0.2205740998079549,
+      0.9786314970147992,
+      0.2503505518544896
+    ]
+  ],
+  "cleanup": [],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "water_heater-tripo.bin",
+  "byteLength": 863828,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 17995,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 215940,
+      "count": 17995,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 431880,
+      "count": 17995,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 575840,
+      "count": 71997,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "water_heater-tripo-color.webp",
+    "rm": "water_heater-tripo-rm.webp",
+    "normal": "water_heater-tripo-normal.webp"
+  }
+}

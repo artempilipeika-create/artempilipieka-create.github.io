@@ -875,8 +875,8 @@
   function roomObstacles(room){
     return (room.features||[]).filter(f=>['shaft','column','radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)&&f.projection>0).map(f=>{
       const horizontal=['a','c'].includes(f.wall),span=horizontal?room.width:room.depth,along=-span/2+f.offset;
-      const minX=f.wall==='b'?room.width/2-f.projection:f.wall==='d'?-room.width/2:along;
-      const minZ=f.wall==='a'?-room.depth/2:f.wall==='c'?room.depth/2-f.projection:along;
+      const gap=f.wall_gap||0,minX=f.wall==='b'?room.width/2-f.projection-gap:f.wall==='d'?-room.width/2+gap:along;
+      const minZ=f.wall==='a'?-room.depth/2+gap:f.wall==='c'?room.depth/2-f.projection-gap:along;
       return {id:f.id,kind:f.kind,name:f.label||({shaft:'Вентшахта',column:'Выступ стены',radiator:'Радиатор',gas_cooker:'Газовая плита',gas_boiler:'Газовый котёл',water_heater:'Бойлер'}[f.kind]),minX,maxX:minX+(horizontal?f.width:f.projection),minZ,maxZ:minZ+(horizontal?f.projection:f.width),minY:f.elevation,maxY:f.elevation+f.height};
     });
   }

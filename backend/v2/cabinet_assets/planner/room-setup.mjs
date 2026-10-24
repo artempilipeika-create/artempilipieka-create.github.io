@@ -31,7 +31,6 @@ export class RoomSetup{
     app.listen(document,'mf:sockets-edit',()=>this.openSockets(false));
     app.listen(document,'mf:shaft-add',()=>this.openShafts(true));
     app.listen(document,'mf:shafts-edit',()=>this.openShafts(false));
-    app.listen(document,'mf:room-equipment-add',e=>{if(Object.hasOwn(EQUIPMENT,e.detail?.kind))this.openEquipment(e.detail.kind);});
     app.listen(document,'mf:room-equipment-edit',()=>this.openEquipment());
     const start=document.getElementById('studio-first-module');start.onclick=()=>{if(!roomReady(app.adapter.room))this.open();else{app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('catalog');}};
   }

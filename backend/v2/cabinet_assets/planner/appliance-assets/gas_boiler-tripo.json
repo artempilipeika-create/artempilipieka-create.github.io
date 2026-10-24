@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "gas_boiler",
+  "generator": "Tripo H3.1",
+  "taskId": "0532e262-3d47-46ce-a57f-6d92c1729c1b",
+  "sourceSha256": "03d9448fea8cbb68963d06cb73d119e407f4dec6b803b9136986800857798ed9",
+  "sourceBytes": 60142248,
+  "sourceTriangles": 1916604,
+  "triangles": 24000,
+  "vertices": 16467,
+  "sourceBounds": [
+    [
+      -0.26641845703125,
+      0.0,
+      -0.17527008056640625
+    ],
+    [
+      0.26641845703125,
+      0.9822998046875,
+      0.17527008056640625
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.26642732479677966,
+      0.0006811540445937093,
+      -0.175273694490287
+    ],
+    [
+      0.2664198614031035,
+      0.9823901935594045,
+      0.1750797291072506
+    ]
+  ],
+  "cleanup": [],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "gas_boiler-tripo.bin",
+  "byteLength": 814944,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 16467,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 197604,
+      "count": 16467,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 395208,
+      "count": 16467,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 526944,
+      "count": 72000,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "gas_boiler-tripo-color.webp",
+    "rm": "gas_boiler-tripo-rm.webp",
+    "normal": "gas_boiler-tripo-normal.webp"
+  }
+}

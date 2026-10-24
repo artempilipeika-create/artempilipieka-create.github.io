@@ -3,7 +3,10 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
 import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings,scopeMatches} from './furniture-core.mjs';
 import {roomSettings,LIGHTS} from './room-state.mjs';
-import {wallPanels,floorOutline} from './room-plan.mjs';
+import {wallPanels,floorOutline,featureBox} from './room-plan.mjs';
+import {isEquipment} from './equipment-placement.mjs';
+import {equipmentFallback,attachRoomEquipment,windowEquipment} from './room-equipment-mesh.mjs';
+import {socketRotation} from './socket-asset.mjs';
 import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
@@ -55,9 +58,9 @@ export class PlannerScene{
     const r=this.adapter.room;
     this.wallFinishes?.visibility();
     if(this.walls)this.walls.forEach(w=>{w.visible=this.mode!=='top'&&(w.userData.axis==='x'?this.camera.position.x*w.userData.sign<r.width*S/2-.02:this.camera.position.z*w.userData.sign<r.depth*S/2-.02);if(w.userData.trim)w.userData.trim.visible=w.visible;});
-    for(const f of this.roomFeatures||[]){f.marker.visible=!this.client;for(const marker of f.plan.children)if(marker.isSprite)marker.visible=!this.client;f.group.visible=this.mode!=='top'&&this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02;
+    for(const f of this.roomFeatures||[]){f.marker.visible=!this.client;for(const marker of f.plan.children)if(marker.isSprite)marker.visible=!this.client;f.group.visible=this.mode!=='top'&&(isEquipment(f.group.userData.kind)||this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02);
       const host=f.group.userData.hostWall;if(host){const axis=['a','c'].includes(host)?'z':'x',sign=['a','d'].includes(host)?-1:1;f.group.visible&&=this.camera.position[axis]*sign<(axis==='x'?r.width:r.depth)*S/2-.02;}
-      for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top';}
+      for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top'&&this.equipmentPreview?.id!==f.group.userData.roomFeatureId;}
     if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
     if(this.floorOutline)this.floorOutline.visible=this.mode==='top'&&!this.client;
     for(const line of this.countertopOutlines||[])line.visible=this.mode==='top'&&!this.client;
@@ -252,7 +255,7 @@ export class PlannerScene{
     this.selectedBox.visible=Boolean(!this.client&&!grouped&&entry?.group.visible&&show);
     if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':this.client?'#79796b':'#346d4a');}
     else this.selectedBox.box.makeEmpty();
-    this.placeLabel();
+    this.placeLabel();if(this.equipmentSelected&&!this.adapter.selected&&!this.equipmentPreview){const f=this.adapter.room.features?.find(f=>f.id===this.equipmentSelected.id);if(f)this.highlightEquipment(f);else this.equipmentSelected=null;}
   }
   hover(id){const entry=this.liveEntry(id);this.hoverBox.visible=Boolean(entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview&&!document.body.classList.contains('planner-client'));if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group).expandByScalar(.003);else this.hoverBox.box.makeEmpty();this.invalidate();}
   placeLabel(){
@@ -367,7 +370,42 @@ export class PlannerScene{
     this.camera.updateMatrixWorld();this.scene.updateMatrixWorld(true);this.raycaster.setFromCamera(this.ndc,this.camera);
     return this.raycaster;
   }
-  pick(x,y){const ray=this.cast(x,y);const visible=o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};const hit=ray.intersectObjects(this.adapter.items.map(it=>this.liveEntry(it.item_id)).filter(e=>e?.group.visible).map(e=>e.group),true).find(h=>h.object.isMesh&&h.object.userData.itemId&&visible(h.object));return hit?{id:hit.object.userData.itemId,point:hit.point}:null;}
+  pick(x,y){
+    const ray=this.cast(x,y),visible=o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};
+    const roots=this.adapter.items.map(it=>this.liveEntry(it.item_id)).filter(e=>e?.group.visible).map(e=>e.group);
+    for(const entry of this.roomFeatures||[])if(isEquipment(entry.group.userData.kind))roots.push(entry.group,entry.plan);
+    for(const hit of ray.intersectObjects(roots,true)){
+      if(!hit.object.isMesh||!visible(hit.object))continue;
+      if(hit.object.userData.itemId)return {id:hit.object.userData.itemId,point:hit.point};
+      for(let p=hit.object;p;p=p.parent)if(p.userData.roomFeatureId)return {featureId:p.userData.roomFeatureId,point:hit.point};
+    }return null;
+  }
+  equipmentPlane(f,hit){
+    if(['front','left','right'].includes(this.mode)){const normal=new THREE.Vector3();this.camera.getWorldDirection(normal);normal.y=0;normal.normalize();const b=featureBox(f,this.adapter.room);return new THREE.Plane().setFromNormalAndCoplanarPoint(normal,hit||new THREE.Vector3(b.x*S,b.y*S,b.z*S));}
+    return new THREE.Plane(new THREE.Vector3(0,1,0),-(hit?.y??(f.elevation+f.height/2)*S));
+  }
+  highlightEquipment(f,error=''){
+    const previous=this.equipmentSelected;this.equipmentSelected=f;if(!f){if(previous&&!this.adapter.selected){this.selectedBox.visible=false;this.invalidate();}return;}
+    const b=featureBox(f,this.adapter.room);this.selectedBox.box.min.set((b.x-b.w/2)*S,(b.y-b.h/2)*S,(b.z-b.d/2)*S);this.selectedBox.box.max.set((b.x+b.w/2)*S,(b.y+b.h/2)*S,(b.z+b.d/2)*S);
+    this.selectedBox.material.color.set(error?'#b65336':'#346d4a');this.selectedBox.visible=!this.client;this.invalidate();
+  }
+  previewEquipment(f,error=''){
+    if(this.equipmentPreview?.id!==f.id){
+      this.clearEquipmentPreview();let entry=(this.roomFeatures||[]).find(e=>e.group.userData.roomFeatureId===f.id),created=false;
+      if(!entry){created=true;const group=new THREE.Group();this.roomRoot.add(group);if(f.kind==='window')group.add(windowEquipment(f,this.factory.geometry));else{const fallback=equipmentFallback(f.kind,this.factory.geometry);fallback.scale.set(f.width*S,f.height*S,f.projection*S);group.add(fallback);attachRoomEquipment(this,group,f,fallback);}entry={group};}
+      this.equipmentPreview={id:f.id,entry,created};
+    }
+    const {entry}=this.equipmentPreview,b=featureBox(f.kind==='window'?{...f,projection:0}:f,this.adapter.room,0);entry.group.position.set(b.x*S,b.y*S,b.z*S);entry.group.rotation.y=socketRotation(f.wall);entry.group.visible=this.mode!=='top';
+    if(entry.plan){entry.plan.visible=false;}
+    // The measured outline remains visible in the top view while the object moves.
+    this.highlightEquipment(f,error);this.renderer.shadowMap.needsUpdate=true;this.invalidate();
+  }
+  clearEquipmentPreview(){
+    const p=this.equipmentPreview;this.equipmentPreview=null;if(!p)return;
+    if(p.created){if(p.entry.group.parent)this.disposeTree(p.entry.group);}
+    else{const f=this.adapter.room.features?.find(f=>f.id===p.id);if(f&&p.entry.group.parent===this.roomRoot){const b=featureBox(f.kind==='window'?{...f,projection:0}:f,this.adapter.room,0);p.entry.group.position.set(b.x*S,b.y*S,b.z*S);p.entry.group.rotation.y=socketRotation(f.wall);}}
+    this.renderer.shadowMap.needsUpdate=true;this.highlight();this.invalidate();
+  }
   planePoint(x,y,plane){const point=new THREE.Vector3();return this.cast(x,y).ray.intersectPlane(plane,point)?point:null;}
   makePlane(it,hit){
     if(this.mode==='front'||this.mode==='left'||this.mode==='right'){

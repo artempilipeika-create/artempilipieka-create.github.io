@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "gas_cooker",
+  "generator": "Tripo H3.1",
+  "taskId": "dc893516-a4e3-49ae-94d4-ffa34766a657",
+  "sourceSha256": "15d830260001f8d4b9cbfe82a7793d1ab0a80561729f351e8ad9b5c50a9c27fd",
+  "sourceBytes": 64643644,
+  "sourceTriangles": 1926763,
+  "triangles": 23999,
+  "vertices": 22809,
+  "sourceBounds": [
+    [
+      -0.353912353515625,
+      0.0,
+      -0.4890899658203125
+    ],
+    [
+      0.353912353515625,
+      0.72283935546875,
+      0.4890899658203125
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.35409347288658755,
+      -4.415803281198405e-05,
+      -0.48942087659425343
+    ],
+    [
+      0.3541488014335552,
+      0.7230829873997363,
+      0.4888672378857667
+    ]
+  ],
+  "cleanup": [],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "gas_cooker-tripo.bin",
+  "byteLength": 1017876,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 22809,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 273708,
+      "count": 22809,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 547416,
+      "count": 22809,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 729888,
+      "count": 71997,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "gas_cooker-tripo-color.webp",
+    "rm": "gas_cooker-tripo-rm.webp",
+    "normal": "gas_cooker-tripo-normal.webp"
+  }
+}

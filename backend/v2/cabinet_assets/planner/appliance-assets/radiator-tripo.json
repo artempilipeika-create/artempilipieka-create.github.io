@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "radiator",
+  "generator": "Tripo H3.1",
+  "taskId": "f2a5a16a-1b01-4903-bd0f-219629975289",
+  "sourceSha256": "7354737ec3e9fe16d67823f9bb3a7a2c328a30a502a5752dcd9c22c561ef502c",
+  "sourceBytes": 64373932,
+  "sourceTriangles": 1903062,
+  "triangles": 24000,
+  "vertices": 24660,
+  "sourceBounds": [
+    [
+      -0.4897918701171875,
+      0.0,
+      -0.09309005737304688
+    ],
+    [
+      0.4897918701171875,
+      0.5251465439796448,
+      0.09309005737304688
+    ]
+  ],
+  "cleanBounds": [
+    [
+      -0.49003632974721706,
+      0.0004833112875899479,
+      -0.09305755794327089
+    ],
+    [
+      0.4895158703478715,
+      0.5252204927937743,
+      0.09313289656188231
+    ]
+  ],
+  "cleanup": [],
+  "front": "+Z",
+  "up": "+Y",
+  "bounds": [
+    [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    [
+      0.5,
+      0.5,
+      0.5
+    ]
+  ],
+  "buffer": "radiator-tripo.bin",
+  "byteLength": 1077120,
+  "attributes": {
+    "position": {
+      "offset": 0,
+      "count": 24660,
+      "size": 3,
+      "type": "float32"
+    },
+    "normal": {
+      "offset": 295920,
+      "count": 24660,
+      "size": 3,
+      "type": "float32"
+    },
+    "uv": {
+      "offset": 591840,
+      "count": 24660,
+      "size": 2,
+      "type": "float32"
+    },
+    "index": {
+      "offset": 789120,
+      "count": 72000,
+      "size": 1,
+      "type": "uint32"
+    }
+  },
+  "textures": {
+    "color": "radiator-tripo-color.webp",
+    "rm": "radiator-tripo-rm.webp",
+    "normal": "radiator-tripo-normal.webp"
+  }
+}

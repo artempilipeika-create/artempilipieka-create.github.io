@@ -1,6 +1,7 @@
 import {clone,MM_TO_WORLD,elevation,placementError,rightAnchoredWidth,dimensionPatch,kitchenSettings,rotateXZ} from './furniture-core.mjs';
 import {snapItem,findSpace} from './placement.mjs';
 import {roomReady} from './room-plan.mjs';
+import {isEquipment} from './equipment-placement.mjs';
 import {movementTargets,translateItems,widthChange,validateChanges,applyChanges,replacement} from './mobility.mjs';
 
 /** One furniture gesture, one history entry; previews never mutate project data. */
@@ -17,8 +18,8 @@ export class Interaction {
     listen(this.canvas,'pointermove',e=>this.move(e),true);
     listen(this.canvas,'pointerup',e=>this.up(e),true);
     listen(this.canvas,'pointercancel',e=>this.cancelPointer(e),true);
-    listen(this.canvas,'pointerleave',()=>{if(!this.gesture)this.scene.hover(null);});
-    listen(this.canvas,'lostpointercapture',()=>{if(this.gesture)this.cancel();});
+    listen(this.canvas,'pointerleave',()=>{if(!this.gesture&&!this.equipment?.gesture)this.scene.hover(null);});
+    listen(this.canvas,'lostpointercapture',()=>{if(this.gesture||this.equipment?.gesture)this.cancel();});
     listen(document,'keydown',e=>this.key(e),true);
     const finishTouch=e=>{if(e.pointerType==='touch'){this.touches.delete(e.pointerId);if(!this.touches.size)this.touchBlocked=false;}};
     listen(document,'pointerup',finishTouch,true);
@@ -34,12 +35,12 @@ export class Interaction {
     listen(document,'dragend',()=>this.catalogueEnd());
     listen(this.canvas,'dragover',e=>this.catalogueOver(e));
     listen(this.canvas,'drop',e=>this.catalogueDrop(e));
-    listen(this.canvas,'dragleave',()=>{if(this.catalogueDraft){this.dropResult=null;this.scene.clearPreview();}});
+    listen(this.canvas,'dragleave',()=>{if(this.equipment?.catalogueDraft){this.equipment.dropResult=null;this.scene.clearEquipmentPreview?.();}else if(this.catalogueDraft){this.dropResult=null;this.scene.clearPreview();}});
     this.decorateCatalogue();
     this.observer=new MutationObserver(()=>this.decorateCatalogue());
     if(this.catalogue)this.observer.observe(this.catalogue,{childList:true,subtree:true});
   }
-  decorateCatalogue(){this.catalogue?.querySelectorAll('.mf3d-module').forEach(b=>{b.draggable=!b.dataset.roomFeature;});}
+  decorateCatalogue(){this.catalogue?.querySelectorAll('.mf3d-module').forEach(b=>{b.draggable=!b.dataset.roomFeature||isEquipment(b.dataset.roomFeature);});}
   cardOptions(card){return {template:card.dataset.template||null,bazis:card.dataset.bazis||null,module:card.dataset.module||null};}
   consume(e){e.preventDefault();e.stopImmediatePropagation();}
   editable(){return !this.suspended&&roomReady(this.adapter.room)&&!document.body.classList.contains('planner-client');}
@@ -57,11 +58,12 @@ export class Interaction {
     if(!this.editable()||e.button!==0)return;
     if(e.pointerType==='touch'){
       this.touches.add(e.pointerId);
-      if(this.touches.size>1&&this.gesture){this.consume(e);this.cancel();this.touchBlocked=true;return;}
+      if(this.touches.size>1&&(this.gesture||this.equipment?.gesture)){this.consume(e);this.cancel();this.touchBlocked=true;return;}
       if(this.touchBlocked){this.consume(e);return;}
     }
-    if(this.gesture)return;
+    if(this.gesture||this.equipment?.gesture)return;
     const hit=this.scene.pick(e.clientX,e.clientY);
+    if(hit?.featureId&&this.equipment?.down(e,hit))return;
     if(!hit?.id){this.scene.hover(null);return;}
     const it=this.adapter.items.find(x=>x.item_id===hit.id);if(!it)return;
     this.consume(e);this.adapter.select(it.item_id);
@@ -76,6 +78,7 @@ export class Interaction {
   }
   move(e){
     if(!this.editable())return;
+    if(this.equipment?.move(e))return;
     const g=this.gesture;
     if(!g){if(!e.buttons&&e.pointerType!=='touch'){const hit=this.scene.pick(e.clientX,e.clientY);this.scene.hover(hit?.id);this.canvas.style.cursor=hit?'grab':'';}return;}
     if(e.pointerId!==g.pointerId)return;this.consume(e);
@@ -102,6 +105,7 @@ export class Interaction {
   }
   up(e){
     if(e.pointerType==='touch'){this.touches.delete(e.pointerId);if(!this.touches.size)this.touchBlocked=false;}
+    if(this.equipment?.up(e))return;
     const g=this.gesture;if(!g||e.pointerId!==g.pointerId)return;
     this.consume(e);this.gesture=null;
     try{
@@ -110,12 +114,13 @@ export class Interaction {
     }catch(error){this.history.cancel();this.adapter.status(error.message);}
     finally{this.finishPointer(e.pointerId);}
   }
-  cancelPointer(e){this.touches.delete(e.pointerId);if(!this.touches.size)this.touchBlocked=false;if(this.gesture){this.consume(e);this.cancel();}}
+  cancelPointer(e){this.touches.delete(e.pointerId);if(!this.touches.size)this.touchBlocked=false;if(this.gesture||this.equipment?.gesture){this.consume(e);this.cancel();}}
   finishPointer(id){
     this.scene.clearPreview();this.feedback(null);this.scene.controls.enabled=true;this.canvas.style.cursor='';
     try{if(this.canvas.hasPointerCapture(id))this.canvas.releasePointerCapture(id);}catch{}
   }
   cancel(){
+    this.equipment?.cancel();
     const g=this.gesture;this.gesture=null;
     if(g){this.history.cancel();this.finishPointer(g.pointerId);}
     if(this.catalogueDraft)this.catalogueEnd();
@@ -164,7 +169,7 @@ export class Interaction {
       this.adapter.status('Модуль заменён. Материалы, положение и заметка сохранены.');
     });
   }
-  remove(){const id=this.adapter.selected?.item_id;if(id)this.change('Удаление модуля',()=>this.adapter.remove(id));}
+  remove(){if(this.equipment?.selected){this.equipment.remove();return;}const id=this.adapter.selected?.item_id;if(id)this.change('Удаление модуля',()=>this.adapter.remove(id));}
   duplicate(){
     const source=this.adapter.selected;if(!source)return;
     this.change('Копирование модуля',()=>{
@@ -177,7 +182,7 @@ export class Interaction {
   rotate(){const it=this.adapter.selected;if(it)this.modify({rotation:(it.rotation+90)%360},'Поворот модуля');}
   nudge(dx,dz){const targets=this.targets();if(targets.length)this.change(targets.length>1?'Перемещение группы':'Точное перемещение',()=>applyChanges(this.adapter,translateItems(targets,dx,dz)));}
   key(e){
-    if(e.key==='Escape'&&(this.gesture||this.catalogueDraft)){this.consume(e);this.cancel();return;}
+    if(e.key==='Escape'&&(this.gesture||this.catalogueDraft||this.equipment?.gesture||this.equipment?.catalogueDraft)){this.consume(e);this.cancel();return;}
     if(!this.editable()||document.querySelector('dialog[open]')||e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
     let k=e.key.toLowerCase();
     if(!['z','y'].includes(k)&&['KeyZ','KeyY'].includes(e.code))k=e.code.slice(3).toLowerCase();
@@ -185,10 +190,13 @@ export class Interaction {
     if(e.target.closest?.('button,summary,a,[role="tab"]'))return;
     if(e.key==='Delete'||e.key==='Backspace'){this.consume(e);this.remove();return;}
     const n=e.shiftKey?100:10,steps={ArrowLeft:[-n,0],ArrowRight:[n,0],ArrowUp:[0,-n],ArrowDown:[0,n]};
+    if(steps[e.key]&&this.equipment?.selected){this.consume(e);this.equipment.nudge(...steps[e.key]);return;}
     if(steps[e.key]&&this.adapter.selected){this.consume(e);this.nudge(...steps[e.key]);}
   }
   catalogueStart(e){
-    const card=e.target.closest('.mf3d-module');if(!card||card.dataset.roomFeature||!this.editable()){e.preventDefault();return;}
+    const card=e.target.closest('.mf3d-module');if(!card||!this.editable()){e.preventDefault();return;}
+    if(isEquipment(card.dataset.roomFeature)&&this.equipment){this.equipment.catalogueStart(e,card.dataset.roomFeature);return;}
+    if(card.dataset.roomFeature){e.preventDefault();return;}
     this.cancel();
     try{
       this.catalogueDraft=this.adapter.createDraft(this.cardOptions(card));this.dropAnchors={};this.dropResult=null;
@@ -197,6 +205,7 @@ export class Interaction {
     }catch(error){e.preventDefault();this.adapter.status(error.message);}
   }
   catalogueOver(e){
+    if(this.editable()&&this.equipment?.catalogueOver(e))return;
     if(!this.catalogueDraft||!this.editable())return;e.preventDefault();e.dataTransfer.dropEffect='copy';
     const draft=this.catalogueDraft,plane=this.scene.makePlane(draft);
     const point=this.scene.planePoint(e.clientX,e.clientY,plane);if(!point)return;
@@ -206,12 +215,14 @@ export class Interaction {
     this.scene.showPreview(this.dropResult.item,this.dropResult.error,this.dropResult.guides);this.feedback(this.dropResult);
   }
   catalogueDrop(e){
+    if(this.equipment?.catalogueDrop(e))return;
     if(!this.catalogueDraft)return;e.preventDefault();
     this.catalogueOver(e);const result=this.dropResult;this.catalogueEnd();
     if(result&&!result.error)this.change('Добавление из каталога',()=>this.adapter.insert(result.item));
     else if(result?.error)this.adapter.status(result.error+' — модуль не добавлен.');
   }
   catalogueEnd(){
+    this.equipment?.catalogueEnd();
     if(!this.catalogueDraft)return;this.catalogueDraft=null;this.dropResult=null;this.dropAnchors={};
     this.scene.clearPreview();this.feedback(null);this.scene.controls.enabled=true;
   }

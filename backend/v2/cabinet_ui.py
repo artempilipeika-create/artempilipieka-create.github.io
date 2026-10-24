@@ -29,7 +29,7 @@ def router():
     planner_files={
         'worktop-fixtures.mjs','worktop-fixture-mesh.mjs','worktop-fixture-ui.mjs','worktop-fixtures.css',
         'material-appearance-ui.mjs','material-appearance.css',
-        'showroom.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','socket-editor.mjs','socket-asset.mjs',
+        'showroom.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
         'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',

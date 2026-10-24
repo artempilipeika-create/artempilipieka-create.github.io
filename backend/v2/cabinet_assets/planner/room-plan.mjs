@@ -33,6 +33,9 @@ export function featureError(f,room){
   if(!f.mount_id&&f.projection>(['a','c'].includes(f.wall)?room.depth:room.width))return 'Выступ больше глубины помещения.';
   if(f.kind==='shaft'&&(f.elevation!==0||f.projection<1))return 'Вентшахта начинается от пола и должна иметь глубину выступа не меньше 1 мм.';
   if(f.kind==='door'&&f.elevation!==0)return 'Дверной проём должен начинаться от пола (0 мм).';
+  const gap=f.wall_gap??0;if(!Number.isInteger(gap)||gap<0||gap>12000)return 'Отступ от стены: укажите целое число от 0 до 12000 мм.';
+  if(gap&&!['radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind))return 'Отступ от стены доступен только для оборудования.';
+  if(gap+f.projection>(['a','c'].includes(f.wall)?room.depth:room.width))return 'Оборудование выходит за границы комнаты.';
   if(f.kind==='gas_cooker'&&f.elevation!==0)return 'Газовая плита должна стоять на полу (0 мм).';
   if(['gas_cooker','gas_boiler','water_heater'].includes(f.kind)&&f.projection<1)return 'Укажите глубину оборудования не меньше 1 мм.';
   if(!Number.isInteger(socketCount(f))||socketCount(f)<1||socketCount(f)>4)return 'Выберите от 1 до 4 розеток.';
@@ -71,8 +74,9 @@ export function featureBox(f,r,minProjection=0){
   const surface=socketSurface(f,r);
   if(surface){const p=Math.max(f.projection,minProjection),horizontal=surface.normal.z!==0;return {x:surface.x+surface.along.x*(f.offset+f.width/2)+surface.normal.x*p/2,y:f.elevation+f.height/2,z:surface.z+surface.along.z*(f.offset+f.width/2)+surface.normal.z*p/2,w:horizontal?f.width:p,h:f.height,d:horizontal?p:f.width};}
   const p=Math.max(f.projection,minProjection),along=-wallLength(r,f.wall)/2+f.offset+f.width/2;
-  const x=f.wall==='b'?r.width/2-p/2:f.wall==='d'?-r.width/2+p/2:along;
-  const z=f.wall==='a'?-r.depth/2+p/2:f.wall==='c'?r.depth/2-p/2:along;
+  const gap=f.wall_gap||0;
+  const x=f.wall==='b'?r.width/2-p/2-gap:f.wall==='d'?-r.width/2+p/2+gap:along;
+  const z=f.wall==='a'?-r.depth/2+p/2+gap:f.wall==='c'?r.depth/2-p/2-gap:along;
   const w=['a','c'].includes(f.wall)?f.width:p,d=['a','c'].includes(f.wall)?p:f.width;
   return {x,y:f.elevation+f.height/2,z,w,h:f.height,d};
 }

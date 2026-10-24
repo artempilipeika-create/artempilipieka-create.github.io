@@ -13,6 +13,7 @@ class RoomFeature(StrictModel):
     width: int=Field(ge=1,le=12000)
     height: int=Field(ge=1,le=5000)
     projection: int=Field(default=0,ge=0,le=3000)
+    wall_gap: int=Field(default=0,ge=0,le=12000)
     notes: str=Field(default='',max_length=500)
     socket_count: int=Field(default=1,ge=1,le=4,strict=True)
     mount_id: str|None=Field(default=None,min_length=1,max_length=80)
@@ -22,8 +23,8 @@ def feature_box(f,room,host=None):
     """Measured XYZ envelope; mounted offsets follow the selected face, not the outer wall."""
     horizontal=f.wall in ('a','c')
     along=-(room.width if horizontal else room.depth)/2+f.offset+f.width/2
-    x=room.width/2-f.projection/2 if f.wall=='b' else -room.width/2+f.projection/2 if f.wall=='d' else along
-    z=-room.depth/2+f.projection/2 if f.wall=='a' else room.depth/2-f.projection/2 if f.wall=='c' else along
+    x=room.width/2-f.projection/2-f.wall_gap if f.wall=='b' else -room.width/2+f.projection/2+f.wall_gap if f.wall=='d' else along
+    z=-room.depth/2+f.projection/2+f.wall_gap if f.wall=='a' else room.depth/2-f.projection/2-f.wall_gap if f.wall=='c' else along
     w,d=(f.width,f.projection) if horizontal else (f.projection,f.width)
     if host:
         hx,_,hz,_,_,_=feature_box(host,room)
@@ -57,10 +58,11 @@ class Room(StrictModel):
             ids.add(f.id)
             span=self.width if f.wall in ('a','c') else self.depth
             cross=self.depth if f.wall in ('a','c') else self.width
-            if (not f.mount_id and (f.offset+f.width>span or f.projection>cross)) or f.elevation+f.height>self.height:
+            if (not f.mount_id and (f.offset+f.width>span or f.projection+f.wall_gap>cross)) or f.elevation+f.height>self.height:
                 raise ValueError('Room feature outside measured envelope')
             if f.kind=='shaft' and (f.elevation!=0 or f.projection<1):raise ValueError('Shaft must start at floor and have positive depth')
             if f.kind=='door' and f.elevation!=0:raise ValueError('Door must start at floor')
+            if f.wall_gap and f.kind not in ('radiator','gas_cooker','gas_boiler','water_heater'):raise ValueError('Wall gap applies only to equipment')
             if f.kind=='gas_cooker' and f.elevation!=0:raise ValueError('Cooker must stand on floor')
             if f.kind in ('gas_cooker','gas_boiler','water_heater') and f.projection<1:raise ValueError('Equipment must have positive depth')
             if f.kind!='socket' and (f.mount_id or f.socket_count!=1 or f.mount_face!='front'):raise ValueError('Mount and count apply only to sockets')

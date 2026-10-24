@@ -29,3 +29,14 @@ export function attachRoomEquipment(scene,group,f,fallback){
   const root=scene.roomRoot;scene.roomEquipmentAssets??=new ApplianceAssets(()=>{scene.renderer.shadowMap.needsUpdate=true;scene.invalidate();});
   scene.roomEquipmentAssets.attach(group,fallback,{kind:f.kind,width:f.width,height:f.height,depth:f.kind==='window'?70:f.projection,x:0,y:0,z:0},false,()=>!scene.dead&&scene.roomRoot===root&&group.parent===root);
 }
+
+/** Analytic window frame and sill; opening dimensions remain exact. */
+export function windowEquipment(f,geometry){
+  const group=new THREE.Group(),box=(w,h,d,x,y,z,color)=>{const m=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,roughness:.6}));m.scale.set(w*.001,h*.001,d*.001);m.position.set(x*.001,y*.001,z*.001);m.userData.ownMaterial=true;group.add(m);};
+  const t=Math.min(45,f.width/6,f.height/6);
+  box(f.width,f.height,6,0,0,0,'#b9d4dd');
+  for(const x of[-(f.width-t)/2,(f.width-t)/2,0])box(t,f.height,70,x,0,0,'#f5f4ec');
+  for(const y of[-(f.height-t)/2,(f.height-t)/2])box(f.width,t,70,0,y,0,'#f5f4ec');
+  if(f.projection)box(f.width,20,f.projection,0,-f.height/2,f.projection/2,'#e6e4d8');
+  return group;
+}
