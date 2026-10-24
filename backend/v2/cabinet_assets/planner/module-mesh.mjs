@@ -416,7 +416,7 @@ export class MeshFactory{
     if(!this.materials.has(materialKey))this.materials.set(materialKey,new THREE.LineBasicMaterial({color:'#544f46',transparent:true,opacity:.2,depthWrite:false}));
     const line=new THREE.LineSegments(geometry,this.materials.get(materialKey));line.userData={geometryKey:key,visualOnly:true,role:'countertop-seam'};line.raycast=()=>{};group.add(line);
   }
-  dress(items){
+  dress(items,decorationState=this.adapter.state||{items,room:this.adapter.room}){
     const root=new THREE.Group();root.userData={visualOnly:true,mergedPlinthIds:[]};const groups=new Map();
     const plans=kitchenRuns(items,this.adapter.room,id=>this.adapter.material(id)),surfaces=countertopSurfaces(plans);
     const fixtures=fixturePlans(items,this.adapter.room,plans);
@@ -427,7 +427,7 @@ export class MeshFactory{
       g.position.set(plan.position.x*S,0,plan.position.z*S);g.rotation.y=-plan.rotation*Math.PI/180;root.add(g);
       root.userData.mergedPlinthIds.push(...plan.members);
     }
-    for(const plan of globalThis.MF_ACCESSORIES?.plans(this.adapter.state||{items,room:this.adapter.room},id=>this.adapter.material(id))||[]){
+    for(const plan of globalThis.MF_ACCESSORIES?.plans(decorationState,id=>this.adapter.material(id))||[]){
       if(plan.error)continue;
       const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
       for(const p of plan.parts){const d=p.size,c=p.position,m=this.box(g,'plinth',d.x,d.y,d.z,c.x,c.y,c.z,p.material.variant_id);m.userData.part=p;m.userData.productionPart='plinth';}
@@ -540,7 +540,11 @@ export class CataloguePreviews{
     const {adapter,factory,renderer}=this.owner,it=adapter.createDraft(opt),scene=this.scene;
     if(applianceLayout(it,adapter.template(it)?.production).length)canvas.dataset.appliancePreview='true';
     it.x=it.z=it.rotation=0;it.elevation_mm=0;
-    const model=factory.build(it),dress=factory.dress([it]);scene.add(model,dress);
+    // A card is its own scene. Project plinths carry world coordinates and must
+    // never enter a thumbnail or affect its bounds/camera. Use the same native
+    // automatic plinth planner, scoped exclusively to this draft cabinet.
+    const previewState={room:adapter.room,items:[it],plinths:[{id:'catalogue-plinth',automatic:true,members:[],shape:'straight',excluded_members:[]}]};
+    const model=factory.build(it),dress=factory.dress([it],previewState);scene.add(model,dress);
     const b=new THREE.Box3().setFromObject(model).expandByObject(dress),center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3());
     const span=Math.max(size.x,size.y,size.z,.1);
     this.floor.position.set(center.x,b.min.y-.003,center.z);this.floor.scale.set(span*8,span*8,1);

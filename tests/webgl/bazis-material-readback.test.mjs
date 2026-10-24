@@ -24,6 +24,22 @@ function item(hash='ordinary'){
  return {name:'Модуль',source_sha256:hash,construction:{parts:[part('body',body),part('drawer',drawer),part('front',front),part('back',hdf)]}};
 }
 
+test('605 PO and 890 PO keep the exact original M1 catalogue identity in native BAZIS names',()=>{
+ const raw=fs.readFileSync(new URL('../../data.js',import.meta.url),'utf8'),catalogue=JSON.parse(raw.slice(raw.indexOf('{')).trim().replace(/;$/,''));
+ const c=runtime(),ids={'605 PO':'71118e45-0ce3-534b-ad68-db1238304f18','890 PO':'389a2abc-c6e2-5214-a41b-60054320d0ff'};
+ for(const article of Object.keys(ids)){
+  const original=catalogue.materials.find(m=>m.article===article&&m.thickness===18);
+  const descriptor={name:original.name.replace(/\s+/g,' '),article,thickness:18,variant_id:ids[article]};
+  const panel18=panel('Корпус',18),log=[];
+  assert.equal(c.applyProjectMaterials(panel18,{name:'Шкаф',material_assignments:{body:descriptor}},log).length,1);
+  assert.equal(panel18.MaterialName,original.name+'\r'+original.article);
+  assert.equal(panel18.Thickness,18);
+ }
+ const custom={name:'Материал 605 PE',article:'605 PE',thickness:16};
+ assert.equal(c.materialNameForBazis(custom),'Материал 605 PE\r605 PE');
+ assert.equal(c.materialNameForBazis({...custom,name:'Материал 605 PE\r605 PE'}),'Материал 605 PE\r605 PE');
+});
+
 test('All audited AQ/Slimbox panels receive distinct 18/16/3 mm materials with native readback',()=>{
  for(const donor of Object.values(donors)){
   const c=runtime(),panels=donor.panels.map(p=>panel(p.name,p.thickness)),log=[];

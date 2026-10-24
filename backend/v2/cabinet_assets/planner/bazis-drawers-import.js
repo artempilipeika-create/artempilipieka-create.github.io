@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.3 NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-24)
+ Martin Forest -> BAZIS native importer v9.9.4 MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-24)
+ v9.9.4: preserve complete catalogue material names, including 605 PO / 890 PO suffixes.
  v9.9.3: bind the reviewed НМД2-600.(2).fr3d; upgrade only its known prior production SHA.
  Exact source hash validation remains mandatory.
  v9.9.2: align global assembly minimum X/Z to 0; preserve Y and relative transforms.
@@ -504,12 +505,22 @@ function materialNameForBazis(material) {
   let name = String(material.name || '').trim();
   const article = String(material.article || '').trim();
   if (!name && !article) return '';
+  // Exact names from the user's original M1 catalogue rows 1501 and 1637.
+  // BAZIS identity includes the complete name AND a separate article field.
+  // Display normalization must not remove the article from the name or collapse
+  // the double space in the original 890 PO name.
+  const defaults = {
+    '71118e45-0ce3-534b-ad68-db1238304f18': {article:'605 PO',name:'ЛДСП BYSPAN 18мм Белый 605 PO'},
+    '389a2abc-c6e2-5214-a41b-60054320d0ff': {article:'890 PO',name:'ЛДСП BYSPAN 18мм  Персидский жемчуг 890 PO'}
+  };
+  const known = defaults[material.variant_id];
+  if (known && article === known.article && Number(material.thickness) === 18 &&
+      name.replace(/\s+/g,' ') === known.name.replace(/\s+/g,' ')) name = known.name;
   if (article) {
-    const lower = name.toLowerCase();
-    const suffix = article.toLowerCase();
-    if (lower.endsWith(suffix)) {
-      name = name.slice(0, Math.max(0, name.length - article.length)).replace(/[\s,;|/\-]+$/u, '').trim();
-    }
+    // An already serialized native full name is idempotent; an article suffix
+    // in ordinary catalogue text is part of the name and must be preserved.
+    const native = name.split(/\r\n?|\n/);
+    if (native.length === 2 && native[1].trim() === article) return native[0] + '\r' + article;
     return (name || article) + '\r' + article;
   }
   return name;
@@ -873,7 +884,7 @@ function prepareProject(payload, root) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.3 NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.4 MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
