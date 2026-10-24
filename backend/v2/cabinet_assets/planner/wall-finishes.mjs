@@ -1,3 +1,4 @@
+import {automaticPanelSegments} from './automatic-finishes.mjs';
 // Wall finishes are independent presentation assemblies, measured in millimetres.
 export const panelNames={skinali:'Скиналь',ldsp:'Фартук из ЛДСП',tile:'Плитка'};
 export const shapeNames={straight:'Прямая',left:'Левая',right:'Правая',u:'П-образная'};
@@ -9,6 +10,7 @@ export function frame(r,w,offset=0){
  return {u,n,x:h?-r.width/2+offset:w==='b'?r.width/2:-r.width/2,z:h?(w==='a'?-r.depth/2:r.depth/2):-r.depth/2+offset};
 }
 export function panelSegments(p,r){
+ if(p.segments)return p.segments;
  const f=frame(r,p.wall,p.offset),t=p.thickness;
  const seg=(name,x,z,u,n,length)=>({name,x,z,u,n,length,height:p.height,bottom:p.elevation,thickness:t,host:p.wall});
  const out=[seg('Основная',f.x,f.z,f.u,f.n,p.width)];
@@ -21,14 +23,14 @@ export function finishError(p,r,light=false){
  for(const [key,min,max]of light?[['offset',0,12000],['width',100,6000],['elevation',30,4900],['brightness',0,100]]:[['offset',0,12000],['width',100,6000],['height',100,2000],['elevation',0,4900],['depth',50,6000],['thickness',3,40],['tile_width',100,1200],['tile_height',100,1200],['grout',1,10]]){
   if(!Number.isInteger(p[key])||p[key]<min||p[key]>max)return 'Проверьте размеры: '+key+' ('+min+'–'+max+').';
  }
- if(p.offset+p.width>wallLength(r,p.wall))return 'Элемент выходит за длину стены.';
- if(p.elevation+(light?14:p.height)>r.height)return 'Элемент выходит выше потолка.';
+ if(!p.automatic&&p.offset+p.width>wallLength(r,p.wall))return 'Элемент выходит за длину стены.';
+ if(!p.automatic&&p.elevation+(light?14:p.height)>r.height)return 'Элемент выходит выше потолка.';
  if(!light){
   if(!shapeNames[p.shape]||!panelNames[p.kind])return 'Неизвестное исполнение панели.';
   if(p.kind==='skinali'&&p.thickness!==6)return 'Исходная скиналь имеет толщину 6 мм.';
   if(p.kind==='ldsp'&&![16,18].includes(p.thickness))return 'Для ЛДСП выберите 16 или 18 мм.';
   if(p.kind==='tile'&&![8,10,12].includes(p.thickness))return 'Для плитки выберите 8, 10 или 12 мм.';
-  if(p.shape!=='straight'&&p.depth>(['a','c'].includes(p.wall)?r.depth:r.width))return 'Боковые участки выходят за комнату.';
+  if(!p.automatic&&p.shape!=='straight'&&p.depth>(['a','c'].includes(p.wall)?r.depth:r.width))return 'Боковые участки выходят за комнату.';
  }else if(![2700,3000,4000].includes(p.temperature))return 'Выберите оттенок света.';
  return '';
 }
@@ -43,7 +45,13 @@ export function surfaceOffset(surfaces,point,normal,width,bottom,height){
  }
  return t;
 }
-export function allSegments(state){return (state.wallPanels||[]).filter(p=>!finishError(p,state.room)).flatMap(p=>panelSegments(p,state.room));}
+export function resolvedPanels(state){return (state.wallPanels||[]).map(p=>p.automatic?{...p,segments:automaticPanelSegments(state,p)}:p);}
+export function resolvedFinishError(p,r){
+ const error=finishError(p,r);if(error)return error;
+ if(p.automatic&&p.segments?.some(s=>s.bottom+s.height>r.height))return 'Фартук выходит выше потолка. Уменьшите высоту.';
+ return '';
+}
+export function allSegments(state){return resolvedPanels(state).filter(p=>!resolvedFinishError(p,state.room)).flatMap(p=>panelSegments(p,state.room));}
 // Subtract architectural openings from the visible surface only, not from the
 // native source or a production CNC file. Handles overlapping/touching openings.
 export function subtractRects(rect,cuts){
@@ -63,11 +71,11 @@ export function segmentOpenings(s,r){
  }return cuts;
 }
 export function finishSchedule(state){
- const panels=(state.wallPanels||[]).map(p=>({...p,source:p.kind==='skinali'?sources.find(s=>s.shape===p.shape):null,parts:panelSegments(p,state.room).map(s=>({name:s.name,width:s.length,height:s.height,thickness:s.thickness})),native_import:false}));
+ const panels=resolvedPanels(state).map(p=>({...p,source:p.kind==='skinali'?sources.find(s=>s.shape===(p.automatic?'straight':p.shape)):null,parts:panelSegments(p,state.room).map(s=>({name:s.name,width:s.length,height:s.height,thickness:s.thickness})),native_import:false}));
  return {panels,lights:state.wallLights||[],note:'Стеновые панели и настенная подсветка: визуализация и размеры. Не включены в распил и автоматический импорт БАЗИС; вырезы, стыки, крепление и электрика уточняются конструктором. Исходные FR3D скинали — 6 мм.'};
 }
 export function finishText(s){
  if(!s.wallPanels?.length&&!s.wallLights?.length)return '';
- return ['СТЕНОВЫЕ ПАНЕЛИ И ПОДСВЕТКА (визуализация):',...(s.wallPanels||[]).map(p=>panelNames[p.kind]+' · '+shapeNames[p.shape]+' · стена '+p.wall.toUpperCase()+' · '+p.width+' × '+p.height+' × '+p.thickness+' мм · низ '+p.elevation+' мм · отступ '+p.offset+' мм'+(p.shape!=='straight'?' · возврат '+p.depth+' мм':'')),...(s.wallLights||[]).map(p=>'Настенная подсветка · стена '+p.wall.toUpperCase()+' · длина '+p.width+' мм · высота '+p.elevation+' мм · '+p.temperature+' K'),finishSchedule(s).note].join('\n');
+ return ['СТЕНОВЫЕ ПАНЕЛИ И ПОДСВЕТКА (визуализация):',...resolvedPanels(s).map(p=>p.automatic?panelNames[p.kind]+' · по столешнице · '+panelSegments(p,s.room).map(q=>q.length+' × '+q.height+' × '+q.thickness+' мм · низ '+q.bottom+' мм').join(' / '):panelNames[p.kind]+' · '+shapeNames[p.shape]+' · стена '+p.wall.toUpperCase()+' · '+p.width+' × '+p.height+' × '+p.thickness+' мм · низ '+p.elevation+' мм · отступ '+p.offset+' мм'+(p.shape!=='straight'?' · возврат '+p.depth+' мм':'')),...(s.wallLights||[]).map(p=>'Настенная подсветка · стена '+p.wall.toUpperCase()+' · длина '+p.width+' мм · высота '+p.elevation+' мм · '+p.temperature+' K'),finishSchedule(s).note].join('\n');
 }
 globalThis.MF_WALL_FINISHES={schedule:finishSchedule,text:finishText};

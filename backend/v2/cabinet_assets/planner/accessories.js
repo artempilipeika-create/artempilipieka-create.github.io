@@ -36,9 +36,9 @@
  const hardware=it=>({native_fixed_items:true,items:(info(it)?.profiles||[]).map(p=>({key:p.article,name:p.material_name,article:p.article,quantity:it.width/1000,unit:'m',cut_length_mm:it.width}))});
  function select(it,variant){const v=dishwashers.find(v=>v.variant===variant);if(!v)throw new Error('Не найдено исполнение посудомойки');return {...it,bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:true,handles:variant==='gola'?'handleless':'handles'};}
  const runFor=(state,id)=>C().kitchenRuns(state.items,state.room).find(r=>r.members.includes(id));
- function plans(state,lookup=()=>null){
+ function manualPlans(state,lookup=()=>null){
   const runs=C().kitchenRuns(state.items,state.room),used=new Set();
-  return (state.plinths||[]).map(e=>{
+  return (state.plinths||[]).filter(e=>!e.automatic).map(e=>{
    const run=runs.find(r=>r.members.some(id=>e.members.includes(id)));
    const error=message=>({id:e.id,error:message,members:e.members,parts:[]});
    if(!run)return error('Ряд для цоколя удалён. Удалите его карточку.');
@@ -64,10 +64,35 @@
     position:{x:run.position.x+shift.x,y:C().elevation(first,state.room),z:run.position.z+shift.z},parts:ps,width,height,depth,inset,material_id:materialId};
   });
  }
+ // Automatic entries are style/settings, never frozen member lists. Rebuild from
+ // current kitchen runs; each physical board uses the verified straight donor.
+ function plans(state,lookup=()=>null){
+  const manual=manualPlans(state,lookup),entry=(state.plinths||[]).find(e=>e.automatic);
+  if(!entry)return manual;
+  const excluded=new Set([...(entry.excluded_members||[]),...manual.flatMap(p=>p.members)]);
+  const items=state.items.filter(it=>!excluded.has(it.item_id)).map(it=>entry.material_id?{...it,plinthMaterialId:entry.material_id}:it);
+  const runs=C().kitchenRuns(items,state.room,lookup),source=variants.find(v=>v.kind==='plinth'&&v.variant==='straight'),out=[];
+  for(const run of runs)for(const p of run.parts.filter(p=>p.role==='plinth'&&p.length>0)){
+   const side=p.orientation.length_axis==='z',rotation=(run.rotation+(side?90:0))%360;
+   const center=C().rotateXZ(p.position.x,p.position.z,run.rotation),id=entry.id+':'+p.part_id;
+   // End returns meet the BACK face of the front board without a 9 mm overlap.
+   const length=p.length-(side?9:0),target={width:length,height:p.size.y,depth:600};
+   const materialId=p.material.variant_id,ps=panels(source,target,lookup,materialId,id),part=ps[0];
+   if(length<=75||ps.some(p=>p.length<=0||p.width<=0)){
+    out.push({id,setting_id:entry.id,automatic:true,members:run.members,parts:[],error:'Автоматический цоколь: участок слишком короткий для исходного FR3D.'});continue;
+   }
+   const nativeCenter=C().rotateXZ(part.position.x,part.position.z,rotation);
+   const trim=side?C().rotateXZ(0,-4.5,run.rotation):{x:0,z:0};
+   out.push({id,setting_id:entry.id,automatic:true,run_id:'plinth:'+id,members:p.module_ids,shape:'straight',source,target,rotation,
+    position:{x:round(run.position.x+center.x+trim.x-nativeCenter.x),y:round(p.position.y-p.size.y/2),z:round(run.position.z+center.z+trim.z-nativeCenter.z)},
+    parts:ps,width:length,height:p.size.y,depth:600,inset:51,material_id:materialId});
+  }
+  return [...manual,...out];
+ }
  function nativeItems(state,lookup){return plans(state,lookup).map(p=>{
   if(p.error)throw new Error(p.error);
   const body=p.parts[0]?.material;
-  return {name:'Цоколь ряда · '+names[p.shape],source_file:p.source.source_file,source_sha256:p.source.source_sha256,
+  return {name:(p.automatic?'Цоколь по расстановке · ':'Цоколь ряда · ')+names[p.shape],source_file:p.source.source_file,source_sha256:p.source.source_sha256,
    source_default:{width:600,height:100,depth:600},target:p.target,position:p.position,rotation:p.rotation,elastic_resize:true,
    material_assignments:{body},construction:{key:'row.plinth',parts:p.parts},production_note:'Цоколь на весь ряд. '+names[p.shape]+'. Детали по исходному FR3D; отступ от передней плоскости модуля '+p.inset+' мм.'};
  });}

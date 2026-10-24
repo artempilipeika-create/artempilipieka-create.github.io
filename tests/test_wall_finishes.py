@@ -24,6 +24,17 @@ def test_duplicates_and_render_budgets():
         with pytest.raises(ValidationError):Scene(**{field:[dict(id=str(i)) for i in range(count)]})
         with pytest.raises(ValidationError):Scene(**{field:[dict(id='same')]*2})
 
+def test_automatic_finish_templates_roundtrip_and_do_not_use_stale_manual_bounds():
+    scene=Scene(wallPanels=[dict(id='back',automatic=True,excluded_members=['off'],width=6000,elevation=4900)],plinths=[dict(id='base',automatic=True,excluded_members=['off'])])
+    saved=scene.model_dump(mode='json')
+    assert Scene(**saved).model_dump(mode='json')==saved
+    assert saved['plinths'][0]['members']==[]
+    assert saved['wallPanels'][0]['excluded_members']==['off']
+    for field in ('wallPanels','plinths'):
+        with pytest.raises(ValidationError):Scene(**{field:[dict(id='one',automatic=True),dict(id='two',automatic=True)]})
+        with pytest.raises(ValidationError):Scene(**{field:[dict(id='one',automatic=True,excluded_members=['x']*101)]})
+    with pytest.raises(ValidationError):Scene(plinths=[dict(id='manual')])
+
 def test_original_source_bytes_and_measured_native_geometry():
     root=Path(__file__).resolve().parents[1];sys.path.insert(0,str(root/'scripts'))
     from fr3d_reader import load,child,frame,walk,vals,panelinfo
@@ -41,6 +52,6 @@ def test_new_assets_and_sources_are_fixed_allowlisted():
     from fastapi.testclient import TestClient
     from backend.v2.cabinet_ui import router
     app=FastAPI();app.include_router(router());client=TestClient(app)
-    for p in ['wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json','wall-panel-sources/Скиналь.Прямая.fr3d']:
+    for p in ['automatic-finishes.mjs','wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json','wall-panel-sources/Скиналь.Прямая.fr3d']:
         assert client.get('/account/planner/'+p).status_code==200
     assert client.get('/account/planner/wall-panel-sources/private.fr3d').status_code==404

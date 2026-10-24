@@ -23,7 +23,7 @@ def test_saved_plinth_settings_and_pdf():
  a,b=[item(v) for v in BY_ID.values()];a['x']=-300;b['x']=300
  plinth=dict(id='plinth-1',members=[a['item_id'],b['item_id']],shape='u',width=1250,depth=450,height=100,inset=40,material_id='11111111-1111-4111-8111-111111111111')
  saved=Scene(items=[a,b],plinths=[plinth]).model_dump(mode='json')
- assert saved['plinths']==[plinth]
+ assert saved['plinths']==[dict(plinth,automatic=False,excluded_members=[])]
  assert '1214 × 100 × 18' in plinth_summary(saved,plinth)
  data=render('Цоколь и ПМ',saved,{plinth['material_id']:'Материал цоколя 18 мм'})
  text='\n'.join(p.extract_text() for p in PdfReader(BytesIO(data)).pages)

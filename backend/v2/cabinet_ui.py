@@ -36,7 +36,7 @@ def router():
         'gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js','gola.css','drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
         'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css',
         'project-autosave.mjs','project-safety.mjs','project-checks.mjs','project-safety.css',
-        'wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json',
+        'automatic-finishes.mjs','wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json',
         'presentation.mjs','presentation-capture.mjs','presentation-ui.mjs','presentation.css',
         'countertop-variants.js','countertop-variants.json','countertops.js','countertop-ui.mjs','countertop.css',
         'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',

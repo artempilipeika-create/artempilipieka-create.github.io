@@ -243,7 +243,9 @@ class CountertopSettings(StrictModel):
 
 class RowPlinth(StrictModel):
     id: str=Field(min_length=1,max_length=80)
-    members: list[str]=Field(min_length=1,max_length=100)
+    members: list[str]=Field(default_factory=list,max_length=100)
+    automatic: bool=False
+    excluded_members: list[str]=Field(default_factory=list,max_length=100)
     shape: Literal['straight','left','right','u']='straight'
     width: int|None=Field(default=None,ge=100,le=6000)
     height: int|None=Field(default=None,ge=40,le=300)
@@ -251,7 +253,15 @@ class RowPlinth(StrictModel):
     inset: int=Field(default=40,ge=0,le=300)
     material_id: UUID|None=None
 
+    @model_validator(mode='after')
+    def manual_members(self):
+        if not self.automatic and not self.members:
+            raise ValueError('Manual plinth requires row members')
+        return self
+
 class WallPanel(StrictModel):
+    automatic: bool=False
+    excluded_members: list[str]=Field(default_factory=list,max_length=100)
     id: str=Field(min_length=1,max_length=80)
     kind: Literal['skinali','ldsp','tile']='skinali'
     shape: Literal['straight','left','right','u']='straight'
@@ -337,10 +347,14 @@ class Scene(StrictModel):
     def wall_finish_placement(self):
         if len({v.id for v in self.presentationViews})!=len(self.presentationViews):
             raise ValueError('Presentation view IDs must be unique')
+        for collection in (self.plinths,self.wallPanels):
+            if sum(p.automatic for p in collection)>1:
+                raise ValueError('Only one automatic finish per kind')
         for collection in (self.wallPanels,self.wallLights):
             if len({p.id for p in collection})!=len(collection):
                 raise ValueError('Wall finish IDs must be unique')
             for p in collection:
+                if isinstance(p,WallPanel) and p.automatic:continue
                 length=self.room.width if p.wall in ('a','c') else self.room.depth
                 if p.offset+p.width>length or p.elevation+(p.height if isinstance(p,WallPanel) else 14)>self.room.height:
                     raise ValueError('Wall finish extends outside room')

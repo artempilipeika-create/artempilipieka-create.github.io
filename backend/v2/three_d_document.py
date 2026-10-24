@@ -317,7 +317,7 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
         story.extend([PageBreak(),p('Цоколи по рядам','title')])
         for i,entry in enumerate(scene['plinths'],1):
             material_id=entry.get('material_id') or next((it.get('plinthMaterialId') for it in items if it['item_id'] in entry['members']),None)
-            story.extend([p(f'Цоколь ряда {i}','module'),p(plinth_summary(scene,entry),'body'),p('Материал: '+str(materials.get(str(material_id),'Evagloss P004 · из исходного FR3D')),'small'),Spacer(1,3*mm)])
+            story.extend([p(f'Цоколь ряда {i}','module'),p(plinth_summary(scene,entry),'body'),p('Материал: '+str('по модулям; см. экспорт БАЗИС' if entry.get('automatic') and not material_id else materials.get(str(material_id),'Evagloss P004 · из исходного FR3D')),'small'),Spacer(1,3*mm)])
     story.extend([PageBreak(),p('Сводная закупка фурнитуры','title'),p('Количество суммируется по модулям. Цена и сумма оставлены пустыми до подключения/ввода актуального прайса.','small')])
     rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Всего','Ед.','Цена BYN','Сумма BYN','Компл.']]]
     for n,((label,article,unit),qty) in enumerate(aggregate.items(),1):

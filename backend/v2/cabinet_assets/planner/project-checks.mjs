@@ -1,5 +1,5 @@
 import {productionParts,productionHardware,bounds,overlaps,elevation,rotateXZ,placementError,dimensionError,kitchenRuns,kitchenSettings,tallShelfAdjustment} from './furniture-core.mjs';
-import {finishError} from './wall-finishes.mjs';
+import {finishError,resolvedPanels,resolvedFinishError} from './wall-finishes.mjs';
 import {modulePriceBreakdown,kitchenPriceBreakdown} from './pricing.mjs';
 import {roomError,featureBox,FEATURES} from './room-plan.mjs';
 
@@ -112,7 +112,7 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
     if(p.error)add('plinth-row','error',p.error);
     else if(!p.material_id)add('plinth-material','error','Не назначен материал цоколя.',items.find(i=>p.members.includes(i.item_id)));
   }
-  for(const [list,light]of [[scene.wallPanels||[],false],[scene.wallLights||[],true]])for(const p of list){const error=finishError(p,room,light);if(error)add('wall-finish','error',error);}
+  for(const [list,light]of [[resolvedPanels(scene),false],[scene.wallLights||[],true]])for(const p of list){const error=light?finishError(p,room,true):resolvedFinishError(p,room);if(error)add('wall-finish','error',error);}
   if(scene.wallPanels?.length||scene.wallLights?.length)add('wall-finish-price','info','Стеновые панели и подсветка показаны для визуализации; в цену и распил не включены.');
   const shared=kitchenPriceBreakdown(items,room,template,material,priceList,scene.plinths||[]).extras;
   if(shared.some(r=>r.status!=='PRICED'))add('shared-price','warning','Не полностью рассчитана цена столешниц, цоколей или соединений.');

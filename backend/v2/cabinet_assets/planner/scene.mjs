@@ -8,6 +8,7 @@ import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
 import {StudioRender} from './studio-render.mjs';
+import {allSegments} from './wall-finishes.mjs';
 import {WallFinishMesh} from './wall-finish-mesh.mjs';
 import {qualityProfile,RenderBudget} from './presentation.mjs';
 export class PlannerScene{
@@ -175,7 +176,7 @@ export class PlannerScene{
     this.hover(null);
     if(this.selectionScope==='kitchen'&&!this.adapter.items.some(it=>kitchenSettings(it)))this.clearSelection();
     if(this.selectionScope!=='kitchen'&&this.displayItemId!==this.adapter.selected?.item_id){this.displayMode='normal';this.displayItemId=this.adapter.selected?.item_id||null;}
-    const roomKey=JSON.stringify([this.adapter.room,this.adapter.state?.wallPanels,roomSettings(this.adapter.state?.displaySettings)]);if(this.roomKey!==roomKey){this.roomKey=roomKey;this.roomMesh();this.setPresentation(document.body.classList.contains('planner-client'));}
+    const roomKey=JSON.stringify([this.adapter.room,this.adapter.state?.wallPanels,allSegments(this.adapter.state),roomSettings(this.adapter.state?.displaySettings)]);if(this.roomKey!==roomKey){this.roomKey=roomKey;this.roomMesh();this.setPresentation(document.body.classList.contains('planner-client'));}
     for(const it of this.adapter.items){
       const signature=this.factory.signature(it);let entry=this.entries.get(it.item_id);
       if(!entry||entry.group.parent!==this.root||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}

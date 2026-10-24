@@ -1,4 +1,4 @@
-import {panelNames,shapeNames,sources,finishError,wallLength,panelSegments} from './wall-finishes.mjs';
+import {panelNames,shapeNames,sources,finishError,wallLength,panelSegments,resolvedPanels,resolvedFinishError} from './wall-finishes.mjs';
 import {WALLS,ORIGINS} from './room-plan.mjs';
 import {kitchenSettings,elevation} from './furniture-core.mjs';
 const el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
@@ -7,7 +7,7 @@ export class WallFinishUI{
  constructor(app){
   this.app=app;
   const card=el('section');this.card=card;card.id='wall-finish-card';card.className='mf3d-control-card wall-finish-card';
-  card.append(el('h3','Стеновые панели'),el('p','Скиналь, фартук из ЛДСП или плитка. Начальные размеры — по выбранному ряду; затем размещение можно менять вручную.'));
+  card.append(el('h3','Стеновые панели'),el('p','Скиналь, фартук из ЛДСП или плитка. Выбор покрытия создаёт единый фартук по столешнице вместо ручных участков. Длина и углы следуют за кухней.'));
   const choices=el('div');choices.className='wall-finish-types';
   for(const [kind,label]of Object.entries(panelNames)){const b=this.button(label,()=>this.addPanel(kind));b.dataset.finish=kind;choices.append(b);}card.append(choices);
   this.list=el('div');card.append(this.list);
@@ -32,20 +32,24 @@ export class WallFinishUI{
   return {wall,width,offset,elevation:Math.min(level,r.height-600)};
  }
  addPanel(kind){this.change('Добавить стеновую панель',()=>{
-  const s=this.app.adapter.state,list=s.wallPanels||[];if(list.length>=16)throw Error('В проекте уже 16 участков фартука.');
-  const p={id:crypto.randomUUID(),...this.placement(),kind,shape:'straight',height:600,depth:400,thickness:kind==='skinali'?6:kind==='ldsp'?18:10,color:kind==='ldsp'?'#c5b99f':'#e7e3da',material_id:null,tile_width:600,tile_height:300,grout:2,grout_color:'#bcb8af'};
-  const error=finishError(p,s.room);if(error)throw Error(error);this.openId=p.id;s.wallPanels=[...list,p];
+  const s=this.app.adapter.state,list=s.wallPanels||[];
+  const existing=list.find(p=>p.automatic);if(existing){this.openId=existing.id;existing.kind=kind;existing.thickness=kind==='skinali'?6:kind==='ldsp'?18:10;existing.material_id=null;return;}
+  const p={id:crypto.randomUUID(),...this.placement(),automatic:true,excluded_members:[],kind,shape:'straight',height:600,depth:400,thickness:kind==='skinali'?6:kind==='ldsp'?18:10,color:kind==='ldsp'?'#c5b99f':'#e7e3da',material_id:null,tile_width:600,tile_height:300,grout:2,grout_color:'#bcb8af'};
+  const error=finishError(p,s.room);if(error)throw Error(error);this.openId=p.id;s.wallPanels=[p];
  });}
  addLight(){this.change('Добавить настенную подсветку',()=>{
   const s=this.app.adapter.state,list=s.wallLights||[];if(list.length>=4)throw Error('В проекте уже 4 настенных профиля.');
-  const p=s.wallPanels?.at(-1)||{...this.placement(),height:600};
+  const p=s.wallPanels?.at(-1)?.automatic?{...this.placement(),height:s.wallPanels.at(-1).height}:s.wallPanels?.at(-1)||{...this.placement(),height:600};
   const light={id:crypto.randomUUID(),wall:p.wall,width:p.width,offset:p.offset,elevation:Math.min(s.room.height-14,p.elevation+p.height-14),enabled:true,brightness:80,temperature:3000,finish:'aluminium'};
   const error=finishError(light,s.room,true);if(error)throw Error(error);this.openId=light.id;s.wallLights=[...list,light];
  });}
  patch(list,id,patch){this.change('Параметры фартука и света',()=>{
   const s=this.app.adapter.state,next=s[list].map(p=>p.id===id?{...p,...patch}:p),p=next.find(p=>p.id===id),error=finishError(p,s.room,list==='wallLights');if(error)throw Error(error);
   if(p.material_id){const m=this.app.adapter.material(p.material_id);if(m&&Number(m.thickness)!==p.thickness)throw Error('Толщина выбранного материала не совпадает с панелью.');}
-  s[list]=next;
+  if(list==='wallPanels'&&patch.automatic!==true&&next.filter(p=>p.automatic).length>1)throw Error('Для всей кухни уже включён автоматический фартук.');
+  const resolved=list==='wallPanels'?resolvedPanels({...s,wallPanels:next}).find(q=>q.id===id):null;
+  if(resolved){const error=resolvedFinishError(resolved,s.room);if(error)throw Error(error);}
+  s[list]=list==='wallPanels'&&patch.automatic===true?[p]:next;
  });}
  field(parent,p,list,key,label,{min,max,options,type='number'}={}){
   const wrap=el('label',label),input=el(options?'select':'input');input.setAttribute('aria-label',label);
@@ -56,25 +60,30 @@ export class WallFinishUI{
   wrap.append(input);parent.append(wrap);return input;
  }
  sync(){
-  const s=this.app.adapter.state,key=JSON.stringify([s.wallPanels,s.wallLights,s.room,(s.wallPanels||[]).map(p=>this.app.adapter.material(p.material_id)?.name)]);if(key===this.key)return;this.key=key;
+  const s=this.app.adapter.state,key=JSON.stringify([s.wallPanels,s.wallLights,s.room,s.items,this.app.adapter.selected?.item_id,(s.wallPanels||[]).map(p=>this.app.adapter.material(p.material_id)?.name)]);if(key===this.key)return;this.key=key;
   const opened=new Set([...this.card.querySelectorAll('details[data-id][open]')].map(d=>d.dataset.id));if(this.openId)opened.add(this.openId);this.openId=null;
   for(const [list,parent]of [['wallPanels',this.list],['wallLights',this.lights]]){
    parent.replaceChildren();const light=list==='wallLights';
    for(const [i,p]of (s[list]||[]).entries()){
     const section=el('details');section.dataset.id=p.id;section.open=opened.has(p.id);section.className='wall-finish-settings';
-    const title=(light?'Подсветка':panelNames[p.kind])+' '+(i+1);section.append(el('summary',title+' · '+p.width+' мм · '+p.wall.toUpperCase()));parent.append(section);
-    const error=finishError(p,s.room,light);if(error){const warning=el('p',error+' Исправьте параметры — элемент скрыт.');warning.className='wall-finish-error';section.append(warning);}
+    const resolved=!light?resolvedPanels(s).find(q=>q.id===p.id):p;
+    const title=(light?'Подсветка':panelNames[p.kind])+' '+(i+1);section.append(el('summary',p.automatic?title+' · по столешнице':title+' · '+p.width+' мм · '+p.wall.toUpperCase()));parent.append(section);
+    const error=light?finishError(p,s.room,true):resolvedFinishError(resolved,s.room);if(error){const warning=el('p',error+' Исправьте параметры — элемент скрыт.');warning.className='wall-finish-error';section.append(warning);}
     if(!light){
      const label=el('label','Исполнение фартука'),select=el('select');select.setAttribute('aria-label','Исполнение фартука');for(const [value,text]of Object.entries(panelNames)){const o=el('option',text);o.value=value;select.append(o);}select.value=p.kind;label.append(select);section.append(label);
      this.app.listen(select,'change',()=>this.patch(list,p.id,{kind:select.value,thickness:select.value==='skinali'?6:select.value==='ldsp'?18:10,material_id:null}));
-     const shapes=el('div');shapes.className='wall-finish-shapes';for(const [shape,text]of Object.entries(shapeNames)){const b=this.button('',()=>this.patch(list,p.id,{shape}));b.innerHTML=drawing(shape);b.append(el('span',text));b.setAttribute('aria-label','Форма фартука: '+text);b.setAttribute('aria-pressed',String(shape===p.shape));shapes.append(b);}section.append(shapes);
+     const mode=el('label','По столешнице'),auto=el('input');auto.type='checkbox';auto.checked=!!p.automatic;auto.setAttribute('aria-label','Фартук по столешнице');mode.append(auto);section.append(mode);this.app.listen(auto,'change',()=>this.patch(list,p.id,{automatic:auto.checked,...(!auto.checked?this.placement():{})}));
+     if(p.automatic){section.append(el('p','Длина и низ панели вычисляются по столешнице. Новые шкафы включаются автоматически.'));
+      const it=this.app.adapter.selected;if(it&&kitchenSettings(it)){const label=el('label','Фартук у выбранного модуля'),input=el('input');input.type='checkbox';input.checked=!(p.excluded_members||[]).includes(it.item_id);input.setAttribute('aria-label','Фартук у выбранного модуля');label.append(input);section.append(label);this.app.listen(input,'change',()=>{const ids=new Set(p.excluded_members||[]);input.checked?ids.delete(it.item_id):ids.add(it.item_id);this.patch(list,p.id,{excluded_members:[...ids]});});}
+     }else{
+     const shapes=el('div');shapes.className='wall-finish-shapes';for(const [shape,text]of Object.entries(shapeNames)){const b=this.button('',()=>this.patch(list,p.id,{shape}));b.innerHTML=drawing(shape);b.append(el('span',text));b.setAttribute('aria-label','Форма фартука: '+text);b.setAttribute('aria-pressed',String(shape===p.shape));shapes.append(b);}section.append(shapes);}
     }
     const grid=el('div');grid.className='wall-finish-grid';section.append(grid);
-    this.field(grid,p,list,'wall','Стена',{options:WALLS});
+    if(!p.automatic){this.field(grid,p,list,'wall','Стена',{options:WALLS});
     this.field(grid,p,list,'offset','Отступ от начала стены, мм',{min:0,max:12000});
     this.field(grid,p,list,'width',light?'Длина подсветки, мм':'Длина фартука, мм',{min:100,max:6000});
     this.field(grid,p,list,'elevation',light?'Высота подсветки, мм':'Низ фартука от пола, мм',{min:light?30:0,max:4900});
-    section.append(el('p','Отступ от '+ORIGINS[p.wall]+'. Боковые участки: «левая» — у начала, «правая» — у конца основной панели.'));
+    section.append(el('p','Отступ от '+ORIGINS[p.wall]+'. Боковые участки: «левая» — у начала, «правая» — у конца основной панели.'));}
     if(light){
      this.field(grid,p,list,'enabled','Включить подсветку',{type:'checkbox'});
      this.field(grid,p,list,'brightness','Яркость, %',{min:0,max:100});
@@ -82,14 +91,14 @@ export class WallFinishUI{
      this.field(grid,p,list,'finish','Профиль',{options:{aluminium:'Алюминий',black:'Чёрный'}});
     }else{
      this.field(grid,p,list,'height','Высота фартука, мм',{min:100,max:2000});
-     if(p.shape!=='straight')this.field(grid,p,list,'depth','Глубина боковых участков, мм',{min:50,max:6000});
+     if(!p.automatic&&p.shape!=='straight')this.field(grid,p,list,'depth','Глубина боковых участков, мм',{min:50,max:6000});
      this.field(grid,p,list,'thickness','Толщина фартука, мм',{options:p.kind==='skinali'?{6:'6 мм'}:p.kind==='ldsp'?{16:'16 мм',18:'18 мм'}:{8:'8 мм',10:'10 мм',12:'12 мм'}});
      if(p.kind!=='ldsp'||!p.material_id)this.field(grid,p,list,'color',p.kind==='tile'?'Цвет плитки':'Цвет панели',{type:'color'});
      if(p.kind==='tile'){
       this.field(grid,p,list,'tile_width','Ширина плитки, мм',{min:100,max:1200});this.field(grid,p,list,'tile_height','Высота плитки, мм',{min:100,max:1200});this.field(grid,p,list,'grout','Ширина шва, мм',{min:1,max:10});this.field(grid,p,list,'grout_color','Цвет шва',{type:'color'});
      }
      if(p.kind==='ldsp')this.material(section,p,list);
-     section.append(el('p','Панели: '+panelSegments(p,s.room).map(q=>q.length+' × '+q.height+' × '+q.thickness).join(' / ')+' мм.'));
+     section.append(el('p','Панели: '+panelSegments(resolved,s.room).map(q=>q.length+' × '+q.height+' × '+q.thickness).join(' / ')+' мм.'));
     }
     section.append(this.button(light?'Удалить подсветку':'Удалить фартук',()=>this.change('Удалить '+title,()=>{this.app.adapter.state[list]=this.app.adapter.state[list].filter(x=>x.id!==p.id);}))); 
    }

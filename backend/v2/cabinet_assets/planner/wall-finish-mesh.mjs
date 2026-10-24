@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {allSegments,panelSegments,finishError,frame,segmentOpenings,subtractRects,surfaceOffset} from './wall-finishes.mjs';
+import {allSegments,panelSegments,finishError,resolvedPanels,resolvedFinishError,frame,segmentOpenings,subtractRects,surfaceOffset} from './wall-finishes.mjs';
 const S=.001;
 const wallVisible=(w,r,c)=>w==='a'?c.z>-r.depth*S/2+.02:w==='c'?c.z<r.depth*S/2-.02:w==='b'?c.x<r.width*S/2-.02:c.x>-r.width*S/2+.02;
 export class WallFinishMesh{
@@ -14,10 +14,10 @@ export class WallFinishMesh{
   const m=new THREE.Mesh(g,material);m.position.set(x*S,y*S,z*S);m.castShadow=true;m.receiveShadow=true;m.raycast=()=>{};group.add(m);return m;
  }
  sync(){
-  const a=this.scene.adapter,s=a.state,r=a.room,panels=s.wallPanels||[],lights=s.wallLights||[];
+  const a=this.scene.adapter,s=a.state,r=a.room,panels=resolvedPanels(s),lights=s.wallLights||[];
   const key=JSON.stringify([r,panels,lights,s.displaySettings?.materialAppearance,panels.map(p=>p.material_id?a.material(p.material_id):null)]);
   if(key===this.key)return;this.key=key;this.clear();const surfaces=allSegments(s);
-  for(const p of panels){if(finishError(p,r))continue;
+  for(const p of panels){if(resolvedFinishError(p,r))continue;
    const material=p.kind==='ldsp'&&p.material_id?this.scene.factory.material('body',p.material_id):this.material({color:p.color,roughness:p.kind==='skinali'?.19:p.kind==='tile'?.3:.68,clearcoat:p.kind==='skinali'?.8:p.kind==='tile'?.25:0,clearcoatRoughness:.12,metalness:0});
    const grout=p.kind==='tile'?this.material({color:p.grout_color,roughness:.95}):null;
    for(const seg of panelSegments(p,r)){

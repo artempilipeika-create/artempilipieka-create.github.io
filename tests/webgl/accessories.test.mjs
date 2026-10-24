@@ -68,6 +68,11 @@ test('Actual accessory controls add, resize, switch, undo, redo and remove a row
   const width=walk(ui.list).find(n=>n.tagName==='input'&&n.attrs['aria-label']==='Длина, мм');width.value='1320';width.events.change();assert.equal(s.plinths[0].width,1320);
   history.undo();assert.equal(s.plinths[0].width,undefined);history.redo();assert.equal(s.plinths[0].width,1320);
   walk(ui.list).find(n=>n.textContent==='Удалить цоколь').events.click();assert.equal(s.plinths.length,0);history.undo();assert.equal(s.plinths[0].width,1320);
+  const auto=walk(ui.auto).find(n=>n.attrs['aria-label']==='Цоколь по расстановке');auto.checked=true;auto.events.change();
+  assert.equal(s.plinths.length,1);assert.equal(s.plinths[0].automatic,true);assert.equal(A.plans(s).length,3);
+  history.undo();assert.equal(s.plinths[0].width,1320);history.redo();assert.equal(s.plinths[0].automatic,true);
+  const module=walk(ui.auto).find(n=>n.attrs['aria-label']==='Цоколь у выбранного модуля');module.checked=false;module.events.change();assert.deepEqual(s.plinths[0].excluded_members,[s.items[0].item_id]);
+  s.items.push(item(A.dishwashers[0],{item_id:'future',x:900}));ui.sync();assert.equal(A.plans(s)[0].width,1200);
  }finally{globalThis.document=doc;}
 });
 test('Real JSON exporter carries dishwasher variants and a native row plinth once',async()=>{
