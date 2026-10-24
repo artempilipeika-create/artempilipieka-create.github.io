@@ -9440,8 +9440,8 @@
   },
   {
     "id": "bazis.2e5a55692728",
-    "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING.fr3d",
-    "source_sha256": "2e5a55692728b4b74e1e479f507c0bffedd8550224c2412bf637c104c3997396",
+    "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING(1).fr3d",
+    "source_sha256": "6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b",
     "execution": "standard",
     "kind": "drawers",
     "system": "aq",
@@ -11261,9 +11261,7 @@
         }
       }
     ],
-    "warnings": [
-      "В исходнике AQ LineBox + NORWING без Gola корзина вынесена за заднюю стенку. В предпросмотре она установлена внутри корпуса; перед изготовлением исправить её положение в БАЗИС."
-    ],
+    "warnings": [],
     "front_heights": [
       357.04,
       357.04
@@ -11363,7 +11361,7 @@
       "lo": [
         18.0,
         478.5,
-        -450.0
+        60.0
       ],
       "size": [
         562.0,
@@ -11371,8 +11369,14 @@
         450.0
       ]
     },
-    "dryer_front_offset": 0,
-    "min_depth": 510
+    "dryer_front_offset": 0.0,
+    "min_depth": 510,
+    "previous_sources": [
+      {
+        "source_file": "НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING.fr3d",
+        "source_sha256": "2e5a55692728b4b74e1e479f507c0bffedd8550224c2412bf637c104c3997396"
+      }
+    ]
   },
   {
     "id": "bazis.8c1edeae6850",

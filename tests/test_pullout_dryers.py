@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from backend.v2.three_d_api import FurnitureItem
 from backend.v2.three_d_pullout_dryers import VARIANTS,dryer_error
 from backend.v2.three_d_tall import APPLIANCE_VARIANTS
-from backend.v2.three_d_document import hardware_for,module_contents
+from backend.v2.three_d_document import hardware_for,module_contents,module_materials
 from backend.v2.three_d_accessories import VARIANTS as ACCESSORIES
 ROOT=Path(__file__).resolve().parents[1]
 def item(v,**patch):
@@ -38,3 +38,31 @@ def test_tall_depth_and_nonlit_document_profile():
     rows=hardware_for(item(v))[0]
     assert any(r['article']=='60965' for r in rows)
     assert all('LED' not in r['name'] and r['article']!='89731' for r in rows)
+    assert 'LED' not in str(module_materials(item(v),None,None))
+
+def test_corrected_norwing_source_refreshes_saved_projects_without_loosening_sha_guard():
+    from backend.v2.three_d_pullout_dryers import refresh_dryer_source
+    from backend.v2.three_d_api import projection
+    from backend.v2.sales_hardware import module_hardware,purchasing_rows
+    v=next(v for v in VARIANTS if v.get('previous_sources'))
+    previous=v['previous_sources'][0]
+    legacy={**item(v),'bazis_sha256':previous['source_sha256'],'bazis_file':previous['source_file'],
+            'production_note':'Сохранить заметку','part_materials':{'drawer-1-bottom':'11111111-1111-4111-8111-111111111111'}}
+    updated=refresh_dryer_source(legacy)
+    assert updated['bazis_sha256']==v['source_sha256']
+    assert updated['bazis_file'].endswith('NORWING(1).fr3d')
+    assert legacy['bazis_sha256']==previous['source_sha256']
+    for key in ['item_id','name','width','height','depth','production_note','part_materials']:
+        assert updated[key]==legacy[key]
+    assert FurnitureItem(**legacy).bazis_sha256==v['source_sha256']
+    row=dict(project_id='saved',name='Кухня',module_type='kitchen',scene={'items':[legacy]},version=7,created_at=None,updated_at=None)
+    assert projection(row)['scene']['items'][0]['bazis_sha256']==v['source_sha256']
+    assert row['scene']['items'][0]['bazis_sha256']==previous['source_sha256']
+    unknown={**legacy,'bazis_sha256':'0'*64}
+    assert refresh_dryer_source(unknown) is unknown
+    with pytest.raises(ValidationError):FurnitureItem(**unknown)
+    assert module_hardware(legacy)==module_hardware(updated)
+    assert purchasing_rows(legacy,module_hardware(legacy)[0])==purchasing_rows(updated,module_hardware(updated)[0])
+    assert not v['warnings'] and v['dryer_bounds']==dict(lo=[18,478.5,60],size=[562,220,450])
+    assert hardware_for(legacy)==hardware_for(updated)
+    assert module_contents(legacy)==module_contents(updated)

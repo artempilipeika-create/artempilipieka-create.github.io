@@ -4,6 +4,11 @@ from pathlib import Path
 from .three_d_gola import gola_error, gola_hardware
 VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/pullout-dryer-variants.json').read_text())
 BY_ID={v['id']:v for v in VARIANTS}
+def refresh_dryer_source(it):
+    v=BY_ID.get(it.get('bazis_id'))
+    if v and any(p['source_sha256']==it.get('bazis_sha256') for p in v.get('previous_sources',[])):
+        return {**it,'bazis_file':v['source_file'],'bazis_sha256':v['source_sha256']}
+    return it
 def dryer_variant(it):
     v=BY_ID.get(it.get('bazis_id'))
     return v if v and v['source_sha256']==it.get('bazis_sha256') else None

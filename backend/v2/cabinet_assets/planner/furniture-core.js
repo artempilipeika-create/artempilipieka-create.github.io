@@ -466,6 +466,7 @@
   }
   function normalizeKitchen(it,room){
     it=refreshBaseSource(VITRINE?.normalizeSource(it)||it);
+    it=root.MF_PULLOUT_DRYERS?.normalizeSource(it)||it;
     const k=kitchenSettings(it);if(!k)return it;
     const {frontOverhangMm,...saved}=k;
     const result={...it,...saved,base_height:k.legHeightMm,body_height:it.body_height??it.height-k.legHeightMm,

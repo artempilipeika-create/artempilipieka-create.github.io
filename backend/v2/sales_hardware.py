@@ -4,6 +4,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 from .three_d_document import hardware_for, drawer_slide_length
+from .three_d_pullout_dryers import refresh_dryer_source
 from .three_d_base import refresh_base_source
 from .three_d_drawers import drawer_variant, drawer_configuration
 
@@ -11,7 +12,7 @@ LEGACY = json.loads(Path(__file__).with_name('sales_hardware.json').read_text())
 
 
 def module_hardware(item):
-    item = refresh_base_source(item)
+    item = refresh_dryer_source(refresh_base_source(item))
     p = LEGACY.get(item.get('bazis_id'))
     if not p:
         rows, note = hardware_for(item)
@@ -61,6 +62,7 @@ def purchasing_rows(item, rows):
     """Project BOM stays intact; the sales ledger buys each drawer only once."""
     rows = deepcopy(rows)
     notes = []
+    item = refresh_dryer_source(item)
     variant = drawer_variant(item)
     if variant and variant.get('system') == 'aq':
         drawers, error = drawer_configuration(item, variant)

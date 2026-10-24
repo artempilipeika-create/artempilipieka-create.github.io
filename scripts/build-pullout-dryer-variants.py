@@ -7,6 +7,9 @@ g=SourceFileLoader("gola_reader",str(Path(__file__).with_name("build-gola-varian
 poly,panel,purchase,slot_data=g.poly,g.panel,g.purchase,g.slot_data
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/"backend/v2/cabinet_assets/planner"
 
+# Reviewed replacement: retain the catalogue identity of existing projects.
+REVISION = {'id': 'bazis.2e5a55692728', 'source_file': 'НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING(1).fr3d', 'source_sha256': '6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b', 'previous_sources': [{'source_file': 'НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING.fr3d', 'source_sha256': '2e5a55692728b4b74e1e479f507c0bffedd8550224c2412bf637c104c3997396'}]}
+
 def add_dryer(v,dryer,t):
  v['dryer_brand']='norwing' if 'norwing' in v['source_file'].lower() else 'flat_line'
  v['allowed_widths']=[600,700,800]+([900] if v['dryer_brand']=='flat_line' else [])
@@ -40,8 +43,7 @@ if __name__=='__main__':
  ap=argparse.ArgumentParser();ap.add_argument('sources',type=Path);args=ap.parse_args();rows=[]
  for source in sorted(args.sources.glob('*.fr3d')):
   if not any(x in source.name.lower() for x in ('flat','norwing')):continue
-  # The user replaced AQ three-drawer revision (1) with revision (2).
-  if source.name=='НМРШ3-600.З.С 3мм Гвозди. Ящик AQ LineBox.Gola II(1).fr3d':continue
+  if source.name in [p['source_file'] for p in REVISION['previous_sources']]:continue
   t=load(source);m=child(t,'Model');sha=hashlib.sha256(source.read_bytes()).hexdigest();isdrawer=source.name.startswith('НМРШ');system=('ball' if 'Шариковые' in source.name else 'aq' if 'AQ' in source.name else 'slimbox') if isdrawer else None
   layout='inner' if 'Внутренний' in source.name else 'three' if source.name.startswith('НМРШ3') else 'two' if isdrawer else None
   v=dict(id='bazis.'+sha[:12],source_file=source.name,source_sha256=sha,execution='gola' if 'Gola' in source.name else 'standard',kind='drawers' if isdrawer else 'doors',system=system,layout=layout,opening='soft',manufacturer='Westline' if system=='aq' else 'AKS',series={'ball':'Обычные шариковые','aq':'AQ LineBox','slimbox':'Slimbox Evolution'}.get(system,''),drawer_count=(3 if layout in ['inner','three'] else 2) if isdrawer else 0,door_count=0 if isdrawer else 2 if source.name.startswith('НМД2') else 1,side='double' if source.name.startswith('НМД2') else 'left' if 'Отк L' in source.name else 'right',purpose='sink' if 'Мойка' in source.name else 'shelf',model_elastic=planeinfo(child(child(t,'ModelParams'),'Params')),panels=[],profiles=[],hardware_items=purchase(t),elastic_drawers=[],warnings=[])
@@ -86,6 +88,10 @@ if __name__=='__main__':
   if counts['shelf']>1:v['warnings'].append('В исходном FR3D две полки на одной отметке: 510 и 509 мм по глубине. Перед изготовлением устранить наложение в БАЗИС. Обе детали сохранены в спецификации.')
   v['label']=('Нижний шкаф · '+{'two':'2 ящика','three':'3 ящика','inner':'2 + внутренний'}[layout]+' · '+v['series']+' · Gola II') if isdrawer else f"НМД{v['door_count']}"+(' · Мойка' if v['purpose']=='sink' else ' · Полки')+' · Gola L'+(' · '+v['side'] if v['door_count']==1 else '')
   add_dryer(v,dryer,t)
+  if source.name==REVISION['source_file']:
+   assert sha==REVISION['source_sha256'], 'Unreviewed source revision'
+   assert not v['warnings'] and v['dryer_bounds']['lo'][2]==60
+   v.update(REVISION)
   rows.append(v)
   print(source.name,'panels',len(v['panels']),'fronts',v['front_heights'],'profiles',[(p['article'],p['bounds']) for p in v['profiles']],'slots',len(slots))
  assert len(rows)==12

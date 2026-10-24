@@ -14,7 +14,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
-from .three_d_pullout_dryers import dryer_variant, dryer_hardware, dryer_contents
+from .three_d_pullout_dryers import dryer_variant, dryer_hardware, dryer_contents, refresh_dryer_source
 from .three_d_tall import tall_variant,tall_shelf_count
 from .three_d_accessories import dishwasher, dishwasher_hardware, dishwasher_contents, plinth_summary
 from .three_d_gola import gola_variant, gola_contents, gola_hardware, gola_note
@@ -91,6 +91,7 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    it=refresh_dryer_source(it)
     if dryer_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dryer_hardware(it)],' '.join(dryer_variant(it)['warnings']) or None
     if dishwasher(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dishwasher_hardware(it)],None
     if gola_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in gola_hardware(it)],gola_note(it)
@@ -151,6 +152,7 @@ def hardware_for(it):
     return [],None
 
 def module_contents(it):
+    it=refresh_dryer_source(it)
     if dryer_variant(it):return dryer_contents(it)
     if dishwasher(it):return dishwasher_contents(it)
     if gola_variant(it):return gola_contents(it)
@@ -197,7 +199,11 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front,materials=None):
-    if dishwasher(it):return [('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004')]+([('Профиль',dishwasher(it)['profiles'][0]['material_name'])] if dishwasher(it)['profiles'] else [])
+    it=refresh_dryer_source(it)
+    if dishwasher(it):
+        profiles=dishwasher(it)['profiles']
+        profile=profiles[0].get('documentation_profile',profiles[0]) if profiles else None
+        return [('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004')]+([('Профиль',profile['material_name'])] if profile else [])
     gola=gola_variant(it)
     if gola and not drawer_variant(it):
         materials=materials or {}

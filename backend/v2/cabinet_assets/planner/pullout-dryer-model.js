@@ -4,6 +4,10 @@
  const variants=root.MF_PULLOUT_DRYER_VARIANTS||[],byId=new Map(variants.map(v=>[v.id,v]));
  const family={label:'Шкаф с выдвижной сушкой',default_id:variants.find(v=>v.dryer_brand==='norwing'&&v.system==='ball'&&v.execution==='standard')?.id};
  const choice=id=>byId.get(id)||null,info=it=>{const v=choice(it?.bazis_id);return v&&v.source_sha256===it.bazis_sha256?v:null;};
+ function normalizeSource(it){
+  const v=choice(it?.bazis_id);
+  return v?.previous_sources?.some(p=>p.source_sha256===it.bazis_sha256)?{...it,bazis_file:v.source_file,bazis_sha256:v.source_sha256}:it;
+ }
  const brand=v=>v.dryer_brand==='norwing'?'NORWING':'FLAT LINE';
  const kit=(it,v=info(it))=>v?.dryer_kits.find(k=>k.width===it.width)||null;
  function dimensionError(it){
@@ -31,5 +35,5 @@
  function basket(it){const v=info(it),k=kit(it);if(!k)return null;const b=v.dryer_bounds,base=it.legHeightMm??it.base_height??100;
   return {width:k.size[0],height:k.size[1],depth:k.size[2],x:b.lo[0]+k.size[0]/2-it.width/2,
    y:root.MF_GOLA.elastic(v,1,b.lo[1],it.height-base-720)+base-100,z:it.depth/2-k.size[2]/2+(v.dryer_front_offset||0)};}
- root.MF_PULLOUT_DRYERS=Object.freeze({variants,choice,info,family,brand,kit,model,select,hardware,brief,basket,dimensionError});
+ root.MF_PULLOUT_DRYERS=Object.freeze({variants,choice,info,normalizeSource,family,brand,kit,model,select,hardware,brief,basket,dimensionError});
 })(globalThis);
