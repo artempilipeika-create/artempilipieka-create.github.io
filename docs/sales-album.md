@@ -42,3 +42,26 @@ API request and exercises local/specified static UI, including fresh save,
 image upload, review, PDF download, mobile layout and stale-scene rejection.
 It never writes actual projects or orders. The provider has not been called
 without a configured key; test the provider connection separately after setup.
+
+## Release validation, 2026-10-24
+
+Application commit: `251c8b402e04da0cafbd58efc4e595ed54829a8b`.
+Isolated service deployment `4486ce7a-4bf2-4ca5-aba0-6af4a1cef84b`
+reached SUCCESS and passed `/health`. No variables, schema, volumes, production
+Bridge/order integrations, or main branch were changed.
+
+- 50 Python checks passed across sales, accessories, appearance and room equipment
+  (49 initial checks plus the added route/auth/revision check).
+- 29 JS checks passed for kitchen geometry, default materials and room equipment.
+- The synthetic full browser flow produced 5 PDF pages and 7 module thumbnails;
+  uploaded photo/review, mobile layout and stale-scene rejection passed.
+- Connected Chrome on the deployed site showed the new dialog and disabled
+  automatic provider state. Export from the pre-existing QA equipment project
+  completed with `Альбом готов: 5 листов.`; console errors/warnings were empty.
+  Browser download-event transport timed out after the application completed;
+  the app success state was verified independently. The five-page deliverable
+  was generated through the same renderer by the synthetic full UI workflow.
+- All five delivered PDF pages were rendered and visually inspected.
+
+Automatic image generation remains untested against the provider and disabled
+until a private API key is configured. No provider request was billed in this work.
