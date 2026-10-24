@@ -2,6 +2,7 @@ import {FEATURES,dimensionsError,roomError,roomReady,featureBox,floorOutline} fr
 import {placementError} from './furniture-core.mjs';
 import {ShaftEditor} from './shaft-editor.mjs';
 import {SocketEditor} from './socket-editor.mjs';
+import {EquipmentEditor,EQUIPMENT} from './room-equipment.mjs';
 const el=(tag,text,id)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(id)e.id=id;return e;};
 const btn=(text,id,fn)=>{const b=el('button',text,id);b.type='button';b.onclick=fn;return b;};
 const svg=(tag,attrs={},text)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;};
@@ -19,7 +20,7 @@ export class RoomSetup{
       const l=el('label',label),i=el('input',undefined,'room-setup-'+key);Object.assign(i,{type:'number',min:String(min),max:String(max),step:'1',placeholder:'Укажите, мм'});i.setAttribute('aria-label',label);i.oninput=()=>{if(key==='height')this.shafts?.resizeRoomHeight(Number(i.value));this.preview();};l.append(i,el('small',`${min}–${max} мм`));grid.append(l);this.fields[key]=i;
     }
     this.dimensions.append(grid);this.body.append(this.dimensions);
-    this.sockets=new SocketEditor(this);this.shafts=new ShaftEditor(this);
+    this.equipment=new EquipmentEditor(this);this.sockets=new SocketEditor(this);this.shafts=new ShaftEditor(this);
     this.previewRoot=el('aside',undefined,'room-measure-preview');this.body.append(this.previewRoot);
     this.alert=el('p',undefined,'room-setup-error');this.alert.setAttribute('role','alert');this.alert.hidden=true;d.append(this.alert);
     const foot=el('footer');this.projects=btn('Мои проекты','room-setup-projects',()=>{d.close();this.app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('projects');});this.apply=btn('Начать проектирование','room-setup-apply',()=>this.commit());foot.append(this.projects,this.apply);d.append(foot);document.body.append(d);
@@ -30,6 +31,8 @@ export class RoomSetup{
     app.listen(document,'mf:sockets-edit',()=>this.openSockets(false));
     app.listen(document,'mf:shaft-add',()=>this.openShafts(true));
     app.listen(document,'mf:shafts-edit',()=>this.openShafts(false));
+    app.listen(document,'mf:room-equipment-add',e=>{if(Object.hasOwn(EQUIPMENT,e.detail?.kind))this.openEquipment(e.detail.kind);});
+    app.listen(document,'mf:room-equipment-edit',()=>this.openEquipment());
     const start=document.getElementById('studio-first-module');start.onclick=()=>{if(!roomReady(app.adapter.room))this.open();else{app.workspace.panel('left',true);window.MF3D_STUDIO.showPane('catalog');}};
   }
   error(message){this.alert.textContent=message;this.alert.hidden=!message;if(message)this.alert.scrollIntoView({block:'nearest'});}
@@ -40,7 +43,7 @@ export class RoomSetup{
     for(const [key,i]of Object.entries(this.fields))i.value=this.wasReady?String(this.draft[key]):'';
     this.apply.textContent=this.wasReady?'Сохранить комнату':'Начать проектирование';
     document.getElementById('room-setup-eyebrow').textContent=this.wasReady?'ЗАМЕР ПОМЕЩЕНИЯ':'ПЕРЕД ПРОЕКТИРОВАНИЕМ';
-    this.sockets.render();this.shafts.render();
+    this.equipment.render();this.sockets.render();this.shafts.render();
     this.error('');this.preview();if(!this.dialog.open)this.dialog.showModal();this.fields.width.focus();
   }
   openSockets(add=false){
@@ -51,6 +54,14 @@ export class RoomSetup{
     if(add)this.sockets.add();
     else this.sockets.render(this.draft.features.find(f=>f.kind==='socket')?.id);
     this.sockets.list.querySelector('details[open] select')?.focus();this.dialog.scrollTop=0;
+  }
+  openEquipment(kind){
+    this.open();
+    if(!this.wasReady){this.error('Сначала укажите размеры комнаты, затем добавьте окно или оборудование ниже.');return;}
+    this.dialog.dataset.section='equipment';document.getElementById('room-setup-title').textContent='Окна и оборудование';
+    document.getElementById('room-setup-eyebrow').textContent='ЗАМЕР ПОМЕЩЕНИЯ';this.apply.textContent='Сохранить расположение';
+    if(kind)this.equipment.add(kind);else this.equipment.render(this.draft.features.find(f=>Object.hasOwn(EQUIPMENT,f.kind))?.id);
+    this.equipment.list.querySelector('details[open] select')?.focus();this.dialog.scrollTop=0;
   }
   openShafts(add=false){
     this.open();

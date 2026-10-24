@@ -25,3 +25,7 @@ body[data-room-ready=true][data-room-has-features=true] #studio-empty-scene{disp
 #room-shafts{margin-top:30px;padding-top:24px;border-top:1px solid #dce2d6}#room-shafts>p{font-size:12px}#room-shaft-add{width:100%;border-style:dashed!important}.room-shaft-card .room-socket-remove{margin-top:0}
 #room-setup[data-section="shafts"] #room-dimensions-step>h3,#room-setup[data-section="shafts"] #room-dimensions-step>p,#room-setup[data-section="shafts"] .room-dimension-grid,#room-setup[data-section="shafts"] #room-sockets,#room-setup[data-section="sockets"] #room-shafts{display:none}
 #room-setup[data-section="shafts"] #room-shafts{border:0;margin:0;padding:0}
+
+#room-equipment{margin-top:28px;padding-top:24px;border-top:1px solid #dce2d6}#room-equipment>p{font-size:12px}.room-equipment-choices{display:flex;flex-wrap:wrap;gap:8px}.room-equipment-choices button{flex:1 1 135px}.room-equipment-card>label{margin-top:14px!important}
+#room-setup[data-section="equipment"] #room-dimensions-step>h3,#room-setup[data-section="equipment"] #room-dimensions-step>p,#room-setup[data-section="equipment"] .room-dimension-grid,#room-setup[data-section="equipment"] #room-sockets,#room-setup[data-section="equipment"] #room-shafts,#room-setup[data-section="sockets"] #room-equipment,#room-setup[data-section="shafts"] #room-equipment{display:none}
+#room-setup[data-section="equipment"] #room-equipment{border:0;margin:0;padding:0}

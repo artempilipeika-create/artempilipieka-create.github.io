@@ -5,7 +5,7 @@ from .auth_api import StrictModel
 
 class RoomFeature(StrictModel):
     id: str=Field(min_length=1,max_length=80)
-    kind: Literal['window','door','socket','switch','water','sewer','gas','ventilation','meter','radiator','column','shaft']
+    kind: Literal['window','door','socket','switch','water','sewer','gas','ventilation','meter','radiator','column','shaft','gas_cooker','gas_boiler','water_heater']
     wall: Literal['a','b','c','d']
     label: str=Field(default='',max_length=100)
     offset: int=Field(ge=0,le=12000)
@@ -61,6 +61,8 @@ class Room(StrictModel):
                 raise ValueError('Room feature outside measured envelope')
             if f.kind=='shaft' and (f.elevation!=0 or f.projection<1):raise ValueError('Shaft must start at floor and have positive depth')
             if f.kind=='door' and f.elevation!=0:raise ValueError('Door must start at floor')
+            if f.kind=='gas_cooker' and f.elevation!=0:raise ValueError('Cooker must stand on floor')
+            if f.kind in ('gas_cooker','gas_boiler','water_heater') and f.projection<1:raise ValueError('Equipment must have positive depth')
             if f.kind!='socket' and (f.mount_id or f.socket_count!=1 or f.mount_face!='front'):raise ValueError('Mount and count apply only to sockets')
             host=None
             if f.mount_id:

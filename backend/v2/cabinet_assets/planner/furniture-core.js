@@ -873,11 +873,11 @@
   const overlaps=(a,b,tolerance=.5)=>a.minX<b.maxX-tolerance&&a.maxX>b.minX+tolerance&&
     a.minZ<b.maxZ-tolerance&&a.maxZ>b.minZ+tolerance&&a.minY<b.maxY-tolerance&&a.maxY>b.minY+tolerance;
   function roomObstacles(room){
-    return (room.features||[]).filter(f=>['shaft','column'].includes(f.kind)&&f.projection>0).map(f=>{
+    return (room.features||[]).filter(f=>['shaft','column','radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)&&f.projection>0).map(f=>{
       const horizontal=['a','c'].includes(f.wall),span=horizontal?room.width:room.depth,along=-span/2+f.offset;
       const minX=f.wall==='b'?room.width/2-f.projection:f.wall==='d'?-room.width/2:along;
       const minZ=f.wall==='a'?-room.depth/2:f.wall==='c'?room.depth/2-f.projection:along;
-      return {id:f.id,name:f.label||(f.kind==='shaft'?'Вентшахта':'Выступ стены'),minX,maxX:minX+(horizontal?f.width:f.projection),minZ,maxZ:minZ+(horizontal?f.projection:f.width),minY:f.elevation,maxY:f.elevation+f.height};
+      return {id:f.id,kind:f.kind,name:f.label||({shaft:'Вентшахта',column:'Выступ стены',radiator:'Радиатор',gas_cooker:'Газовая плита',gas_boiler:'Газовый котёл',water_heater:'Бойлер'}[f.kind]),minX,maxX:minX+(horizontal?f.width:f.projection),minZ,maxZ:minZ+(horizontal?f.projection:f.width),minY:f.elevation,maxY:f.elevation+f.height};
     });
   }
   function placementError(it,items,room){
@@ -892,12 +892,12 @@
     }
     if(b.minY<0||b.maxY>room.height+.5)return 'Модуль выходит за высоту помещения';
     const obstacles=roomObstacles(room),blocked=obstacles.find(o=>overlaps(b,o));
-    if(blocked)return 'Пересечение с выступом стены: '+blocked.name;
+    if(blocked)return (['shaft','column'].includes(blocked.kind)?'Пересечение с выступом стены: ':'Пересечение с оборудованием: ')+blocked.name;
     if(k?.countertopEnabled&&obstacles.length){
       const points=[];
       for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2-k.rearServiceGapMm,-it.depth/2-k.rearServiceGapMm+k.countertopDepthMm]){const p=rotateXZ(x,z,it.rotation||0);points.push({x:p.x+it.x,z:p.z+it.z});}
       const top={minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z)),minY:b.maxY,maxY:b.maxY+k.countertopThicknessMm};
-      const obstruction=obstacles.find(o=>overlaps(top,o));if(obstruction)return 'Столешница пересекает выступ стены: '+obstruction.name;
+      const obstruction=obstacles.find(o=>overlaps(top,o));if(obstruction)return (['shaft','column'].includes(obstruction.kind)?'Столешница пересекает выступ стены: ':'Столешница пересекает оборудование: ')+obstruction.name;
     }
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';

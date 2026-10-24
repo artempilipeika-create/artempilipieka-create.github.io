@@ -13,7 +13,7 @@ export function snapItem(raw,items,room,options={},previous={}){
   if(options.enabled===false)return{item:rounded(it),anchors,error:placementError(it,items,room),guides};
   const walls=[{r:0,axis:'z',edge:-room.depth/2,sign:1},{r:90,axis:'x',edge:room.width/2,sign:-1},
     {r:180,axis:'z',edge:room.depth/2,sign:-1},{r:270,axis:'x',edge:-room.width/2,sign:1}];
-  for(const o of roomObstacles(room)){
+  for(const o of roomObstacles(room).filter(o=>['shaft','column'].includes(o.kind))){
     if(it.elevation_mm>=o.maxY-.5||it.elevation_mm+it.height<=o.minY+.5)continue;
     for(const face of [{r:0,axis:'z',edge:o.maxZ,sign:1,min:o.minX,max:o.maxX},{r:180,axis:'z',edge:o.minZ,sign:-1,min:o.minX,max:o.maxX},{r:90,axis:'x',edge:o.minX,sign:-1,min:o.minZ,max:o.maxZ},{r:270,axis:'x',edge:o.maxX,sign:1,min:o.minZ,max:o.maxZ}]){
       const along=it[face.axis==='x'?'z':'x'];if(along+it.width/2>face.min&&along-it.width/2<face.max)walls.push({...face,id:o.id+':'+face.r,name:o.name});

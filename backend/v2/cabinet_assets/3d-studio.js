@@ -164,6 +164,22 @@
         group.append(b,edit);
       }
       get('module-catalogue').append(group);
+      const equipment=make('div','mf3d-module-group studio-communications');equipment.dataset.category='communications';equipment.append(make('h3','','Окна и техника'));
+      for(const [kind,label,description,width]of [
+        ['gas_cooker','Газовая плита','Отдельностоящая плита с четырьмя конфорками.',600],
+        ['window','Окно','Проём в стене, две створки и подоконник.',1400],
+        ['radiator','Радиатор','Панельная батарея отопления.',1000],
+        ['gas_boiler','Газовый котёл','Настенный котёл с панелью управления.',420],
+        ['water_heater','Бойлер','Вертикальный накопительный водонагреватель.',450]]){
+        const b=make('button','mf3d-module');b.type='button';b.dataset.category='communications';b.dataset.tags='communications';b.dataset.roomFeature=kind;b.dataset.width=String(width);
+        b.dataset.search=(label+' '+description+' помещение аксессуар оборудование tripo').toLowerCase();b.setAttribute('aria-label','Добавить: '+label);
+        const visual=make('span','studio-card-visual'),picture=make('img','studio-preview studio-equipment-preview');picture.src='/account/planner/appliance-assets/'+kind+'-tripo-preview.webp';picture.alt=label;picture.width=600;picture.height=600;picture.loading='lazy';picture.draggable=false;
+        visual.append(picture,make('span','studio-card-category','Помещение'),make('span','studio-card-add','+'));
+        const copy=make('span','mf3d-module-copy');copy.append(make('strong','',label),make('span','',description));
+        const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions','Размеры и положение по замеру'),make('span','studio-source','TRIPO'));
+        b.append(visual,copy,meta);b.onclick=()=>document.dispatchEvent(new CustomEvent('mf:room-equipment-add',{detail:{kind}}));equipment.append(b);
+      }
+      const editEquipment=make('button','secondary studio-sockets-edit','Расположение окон и техники');editEquipment.type='button';editEquipment.onclick=()=>document.dispatchEvent(new CustomEvent('mf:room-equipment-edit'));equipment.append(editEquipment);get('module-catalogue').append(equipment);
     }
     get('module-catalogue').querySelectorAll('.mf3d-module').forEach((b,i)=>b.dataset.studioOrder=String(i));
     applyCatalogueFilter();

@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {trimApplianceBody,buildApplianceFront} from './appliance-finish.mjs';
 
-const KINDS=new Set(['oven','microwave','sink','faucet','hood']);
+const KINDS=new Set(['oven','microwave','sink','faucet','hood','gas_cooker','radiator','gas_boiler','water_heater','window']);
 export const applianceAssetURL=kind=>{
   if(!KINDS.has(kind))throw Error('Unknown appliance');
   return new URL('./appliance-assets/'+kind+'-tripo.json',import.meta.url);

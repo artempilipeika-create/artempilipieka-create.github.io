@@ -8,6 +8,7 @@ import numpy as np
 import trimesh,pymeshlab
 from PIL import Image
 TASKS={'oven':'493c506e-da6b-4ff3-bca2-846002d13cb8','microwave':'d8ea151a-d744-4e31-8ea1-39a4d550d3c6','sink':'b80f60e3-039a-4885-b63e-4cd172188c8a','faucet':'4e6061dd-1dbe-440e-be08-8e94f15ca349','hood':'704b7fea-c514-401d-968c-e19ccb3d49ca'}
+TASKS.update({'gas_cooker':'dc893516-a4e3-49ae-94d4-ffa34766a657','radiator':'f2a5a16a-1b01-4903-bd0f-219629975289','gas_boiler':'0532e262-3d47-46ce-a57f-6d92c1729c1b','water_heater':'95753287-6a88-454b-ab8d-eafc7e8e66ee','window':'d6a394c2-f588-409c-9bde-1a0381ca0109'})
 kind=sys.argv[1];assert kind in TASKS
 root=pathlib.Path(__file__).resolve().parents[1]
 out=root/'backend/v2/cabinet_assets/planner/appliance-assets';out.mkdir(exist_ok=True)

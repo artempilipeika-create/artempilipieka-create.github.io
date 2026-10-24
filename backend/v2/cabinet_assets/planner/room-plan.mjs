@@ -1,7 +1,7 @@
 // Measured room data. Independent of cabinet manufacturing and display presets.
 export const WALLS=Object.freeze({a:'A · задняя',b:'B · правая',c:'C · передняя',d:'D · левая'});
 export const ORIGINS=Object.freeze({a:'угла A–D',b:'угла A–B',c:'угла C–D',d:'угла A–D'});
-export const FEATURES=Object.freeze({window:['Окно','#68a6b8'],door:['Дверь','#ac8253'],socket:['Розетка','#d7a83c'],switch:['Выключатель','#c49b42'],water:['Вода','#4188ba'],sewer:['Канализация','#737c9a'],gas:['Газ','#bf8855'],ventilation:['Вентиляция','#7d9987'],meter:['Счётчик','#a87997'],radiator:['Радиатор','#c67d65'],column:['Выступ / колонна','#91948d'],shaft:['Вентшахта','#899284']});
+export const FEATURES=Object.freeze({window:['Окно','#68a6b8'],door:['Дверь','#ac8253'],socket:['Розетка','#d7a83c'],switch:['Выключатель','#c49b42'],water:['Вода','#4188ba'],sewer:['Канализация','#737c9a'],gas:['Газ','#bf8855'],ventilation:['Вентиляция','#7d9987'],meter:['Счётчик','#a87997'],radiator:['Радиатор','#c67d65'],gas_cooker:['Газовая плита','#788b8c'],gas_boiler:['Газовый котёл','#b89473'],water_heater:['Бойлер','#8cacc0'],column:['Выступ / колонна','#91948d'],shaft:['Вентшахта','#899284']});
 export const wallLength=(room,wall)=>['a','c'].includes(wall)?room.width:room.depth;
 export const roomReady=room=>room.setup_complete!==false; // Legacy projects stay accessible.
 export const socketCount=f=>f.socket_count??1;
@@ -33,6 +33,8 @@ export function featureError(f,room){
   if(!f.mount_id&&f.projection>(['a','c'].includes(f.wall)?room.depth:room.width))return 'Выступ больше глубины помещения.';
   if(f.kind==='shaft'&&(f.elevation!==0||f.projection<1))return 'Вентшахта начинается от пола и должна иметь глубину выступа не меньше 1 мм.';
   if(f.kind==='door'&&f.elevation!==0)return 'Дверной проём должен начинаться от пола (0 мм).';
+  if(f.kind==='gas_cooker'&&f.elevation!==0)return 'Газовая плита должна стоять на полу (0 мм).';
+  if(['gas_cooker','gas_boiler','water_heater'].includes(f.kind)&&f.projection<1)return 'Укажите глубину оборудования не меньше 1 мм.';
   if(!Number.isInteger(socketCount(f))||socketCount(f)<1||socketCount(f)>4)return 'Выберите от 1 до 4 розеток.';
   if(!['front','start','end'].includes(f.mount_face||'front'))return 'Выберите грань вентшахты.';
   if(f.kind!=='socket'&&(f.mount_id||socketCount(f)!==1||(f.mount_face||'front')!=='front'))return 'Крепление и количество доступны только для розеток.';

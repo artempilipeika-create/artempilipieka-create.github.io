@@ -3,6 +3,7 @@ import {FEATURES,featureBox,featureWall,socketCount,socketSurface} from './room-
 import {SocketAssets,socketRotation,socketLayout} from './socket-asset.mjs';
 import {roomSettings} from './room-state.mjs';
 import {allSegments,surfaceOffset,normals} from './wall-finishes.mjs';
+import {equipmentFallback,attachRoomEquipment} from './room-equipment-mesh.mjs';
 const S=.001;
 export function measuredFeatures(scene){
   const r=scene.adapter.room,entries=[];
@@ -17,12 +18,16 @@ export function measuredFeatures(scene){
     const wall=featureWall(f,r),horizontal=['a','c'].includes(wall),axis=horizontal?'z':'x',sign=['a','d'].includes(wall)?-1:1;
     const b=featureBox(f.kind==='window'?{...f,projection:0}:f,r,['shaft','column'].includes(f.kind)?0:8),extras=[];group.position.set(b.x*S,b.y*S,b.z*S);group.rotation.y=horizontal?0:Math.PI/2;
     if(f.kind==='window'){
-      box(group,f.width,f.height,6,0,0,0,'#b9d4dd');const t=Math.min(45,f.width/6,f.height/6);
-      for(const x of[-(f.width-t)/2,(f.width-t)/2])box(group,t,f.height,26,x,0,0,'#f5f4ec');
-      for(const y of[-(f.height-t)/2,(f.height-t)/2])box(group,f.width,t,26,0,y,0,'#f5f4ec');
-      box(group,t,f.height,26,0,0,0,'#f5f4ec');
+      const fallback=new THREE.Group();group.add(fallback);
+      box(fallback,f.width,f.height,6,0,0,0,'#b9d4dd');const t=Math.min(45,f.width/6,f.height/6);
+      for(const x of[-(f.width-t)/2,(f.width-t)/2])box(fallback,t,f.height,70,x,0,0,'#f5f4ec');
+      for(const y of[-(f.height-t)/2,(f.height-t)/2])box(fallback,f.width,t,70,0,y,0,'#f5f4ec');
+      box(fallback,t,f.height,70,0,0,0,'#f5f4ec');
+      attachRoomEquipment(scene,group,f,fallback);
       // Sill projection is measured from the wall, not from the glass centre.
       if(f.projection){const sill=featureBox({...f,height:20,projection:f.projection},r);extras.push(box(scene.roomRoot,sill.w,20,sill.d,sill.x,f.elevation,sill.z,'#e6e4d8'));}
+    }else if(['radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)){
+      const fallback=equipmentFallback(f.kind,scene.factory.geometry);fallback.scale.set(f.width*S,f.height*S,Math.max(1,f.projection)*S);group.add(fallback);attachRoomEquipment(scene,group,f,fallback);
     }else if(f.kind==='shaft'||f.kind==='column'){
       const solid=box(group,f.width,f.height,f.projection,0,0,0,roomSettings(scene.adapter.state?.displaySettings).wallColor);solid.castShadow=true;solid.receiveShadow=true;solid.material.roughness=.92;
       if(f.elevation===0){const depth=f.projection,trimHeight=Math.min(65,f.height),y=-f.height/2+trimHeight/2;
