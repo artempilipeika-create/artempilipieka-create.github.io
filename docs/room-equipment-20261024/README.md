@@ -59,3 +59,31 @@ not manufacturer installation specifications.
 
 Deployment scope: existing isolated `martin-forest-v2-staging` service only. No main
 branch, production integrations, database contents, variables or volume changes.
+
+## Live verification
+
+Published application commit `1adb6240abea2089781a8672849bf79e927ddc4e` to the
+existing isolated service. Deployment `68d6ec24-653b-4a96-99b0-66f567b4e1fa`
+reached SUCCESS. Source-only Railway changes; no variables/volumes were changed.
+
+37 served assets matched local release bytes, including the four meshes/textures
+and unchanged native plinth/skinali/importer sources. The follow-up verified the
+new card/CSS bytes and `image/svg+xml` for the window thumbnail.
+
+Connected Chrome UI QA in `QA_Equipment_Drag_20261024_new`:
+
+- Added all five objects; four supplied Tripo meshes rendered, analytic window and
+  sill rendered with the wall opening.
+- Edited exact offsets, used the wall-gap control and “К стене”.
+- Dragged cooker A → B: card changed to B with gap 0. Undo restored A; redo restored B.
+- Dragged radiator from catalogue onto D: newly placed radiator selected with wall D.
+  Undo removed only that extra test object.
+- Dragged window A → D; undo restored A and its opening.
+- Saved and reloaded the separate project; all five objects and edited positions
+  persisted. Verified the corrected window thumbnail and clean equipment card.
+- Final browser console: no errors or warnings. Final screenshot: `equipment-live.jpg`.
+
+Browser extension `fill()` does not dispatch a native numeric change on blur in this
+session; exact field checks used a native ArrowUp/ArrowDown change after entering
+values, then verified rendered movement and save/reload. Actual mouse drags were
+performed through browser pointer input, not injected application-state changes.
