@@ -2,7 +2,9 @@ import {panelNames,shapeNames,sources,finishError,wallLength,panelSegments,resol
 import {WALLS,ORIGINS} from './room-plan.mjs';
 import {kitchenSettings,elevation} from './furniture-core.mjs';
 const el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
-const drawing=shape=>`<svg viewBox="0 0 140 64" aria-hidden="true"><path d="M14 12h112v8H14z${['left','u'].includes(shape)?'M14 20h8v34h-8z':''}${['right','u'].includes(shape)?'M118 20h8v34h-8z':''}" fill="currentColor"/><path d="M28 36h84" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity=".3"/></svg>`;
+const picture=(file)=>{const img=el('img');img.className='surface-card-photo';img.src=globalThis.MF_CHOICE_CARDS.image(file);img.alt='';img.width=640;img.height=480;img.loading='lazy';img.draggable=false;return img;};
+const finishImage={skinali:'panel',ldsp:'ldsp',tile:'tile'};
+const finishHint={skinali:'Панель СКИФ · 6 мм',ldsp:'16 / 18 мм',tile:'Плитка и швы'};
 export class WallFinishUI{
  constructor(app){
   this.app=app;
@@ -11,8 +13,8 @@ export class WallFinishUI{
   const choices=el('div');choices.className='wall-finish-types';choices.setAttribute('role','group');choices.setAttribute('aria-label','Покрытие фартука');this.typeButtons=[];
   for(const [kind,label]of Object.entries(panelNames)){
    const b=this.button('',()=>this.addPanel(kind));b.dataset.finish=kind;b.setAttribute('aria-pressed','false');
-   const photo=el('img');photo.className='surface-card-photo';photo.src='/account/planner/module-card-images/backsplash-'+({skinali:'glass',ldsp:'ldsp',tile:'tile'}[kind])+'.webp';photo.alt='';photo.width=370;photo.height=270;photo.loading='lazy';photo.draggable=false;app.listen(photo,'error',()=>photo.remove());
-   b.append(photo,el('strong',kind==='ldsp'?'Фартук ЛДСП':label),el('small',kind==='skinali'?'Стекло 6 мм':kind==='ldsp'?'16 / 18 мм':'Плитка и швы'));choices.append(b);this.typeButtons.push(b);
+   const photo=picture('backsplash-'+finishImage[kind]);app.listen(photo,'error',()=>photo.remove());
+   b.append(photo,el('strong',kind==='ldsp'?'Фартук ЛДСП':label),el('small',finishHint[kind]));choices.append(b);this.typeButtons.push(b);
   }card.append(choices);
   this.list=el('div');card.append(this.list);
   card.append(el('h3','Настенная подсветка'),el('p','Накладной профиль на стене. Высота задаётся от пола до центра профиля.'));
@@ -75,13 +77,12 @@ export class WallFinishUI{
     const title=(light?'Подсветка':panelNames[p.kind])+' '+(i+1);section.append(el('summary',p.automatic?title+' · по столешнице':title+' · '+p.width+' мм · '+p.wall.toUpperCase()));parent.append(section);
     const error=light?finishError(p,s.room,true):resolvedFinishError(resolved,s.room);if(error){const warning=el('p',error+' Исправьте параметры — элемент скрыт.');warning.className='wall-finish-error';section.append(warning);}
     if(!light){
-     const label=el('label','Исполнение фартука'),select=el('select');select.setAttribute('aria-label','Исполнение фартука');for(const [value,text]of Object.entries(panelNames)){const o=el('option',text);o.value=value;select.append(o);}select.value=p.kind;label.append(select);section.append(label);
-     this.app.listen(select,'change',()=>this.patch(list,p.id,{kind:select.value,thickness:select.value==='skinali'?6:select.value==='ldsp'?18:10,material_id:null}));
+     if(!p.automatic){const types=el('div');types.className='wall-finish-types wall-finish-edit-types';types.setAttribute('role','group');types.setAttribute('aria-label','Исполнение фартука');for(const [kind,label]of Object.entries(panelNames)){const b=this.button('',()=>this.patch(list,p.id,{kind,thickness:kind==='skinali'?6:kind==='ldsp'?18:10,material_id:null}));b.dataset.finishChoice=kind;b.setAttribute('aria-pressed',String(kind===p.kind));b.append(picture('backsplash-'+finishImage[kind]),el('strong',label),el('small',finishHint[kind]));types.append(b);}section.append(types);}
      const mode=el('label','По столешнице'),auto=el('input');auto.type='checkbox';auto.checked=!!p.automatic;auto.setAttribute('aria-label','Фартук по столешнице');mode.append(auto);section.append(mode);this.app.listen(auto,'change',()=>this.patch(list,p.id,{automatic:auto.checked,...(!auto.checked?this.placement():{})}));
      if(p.automatic){section.append(el('p','Длина и низ панели вычисляются по столешнице. Новые шкафы включаются автоматически.'));
       const it=this.app.adapter.selected;if(it&&kitchenSettings(it)){const label=el('label','Фартук у выбранного модуля'),input=el('input');input.type='checkbox';input.checked=!(p.excluded_members||[]).includes(it.item_id);input.setAttribute('aria-label','Фартук у выбранного модуля');label.append(input);section.append(label);this.app.listen(input,'change',()=>{const ids=new Set(p.excluded_members||[]);input.checked?ids.delete(it.item_id):ids.add(it.item_id);this.patch(list,p.id,{excluded_members:[...ids]});});}
      }else{
-     const shapes=el('div');shapes.className='wall-finish-shapes';for(const [shape,text]of Object.entries(shapeNames)){const b=this.button('',()=>this.patch(list,p.id,{shape}));b.innerHTML=drawing(shape);b.append(el('span',text));b.setAttribute('aria-label','Форма фартука: '+text);b.setAttribute('aria-pressed',String(shape===p.shape));shapes.append(b);}section.append(shapes);}
+     const shapes=el('div');shapes.className='wall-finish-shapes';for(const [shape,text]of Object.entries(shapeNames)){const b=this.button('',()=>this.patch(list,p.id,{shape}));b.append(picture('backsplash-'+shape),el('strong',text));b.dataset.finishShape=shape;b.setAttribute('aria-label','Форма фартука: '+text);b.setAttribute('aria-pressed',String(shape===p.shape));shapes.append(b);}section.append(shapes);}
     }
     const grid=el('div');grid.className='wall-finish-grid';section.append(grid);
     if(!p.automatic){this.field(grid,p,list,'wall','Стена',{options:WALLS});

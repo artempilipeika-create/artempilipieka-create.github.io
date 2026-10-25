@@ -809,6 +809,7 @@ async function syncControls(){
   if(cornerControls){
     cornerControls.hidden=!cornerInfo;
     for(const b of cornerControls.querySelectorAll('[data-corner-option]'))b.setAttribute('aria-pressed',String(Boolean(cornerInfo&&String(cornerInfo[b.dataset.cornerOption])===b.dataset.cornerValue)));
+    globalThis.MF_CHOICE_CARDS?.corner(cornerControls,cornerInfo);
     $('corner-options-note').textContent=cornerInfo?`${cornerInfo.side==='left'?'Левый':'Правый'} угол · ${cornerInfo.purpose==='sink'?'под мойку':'с полкой'} · ${cornerInfo.door_count===1?'одна дверца':'две дверцы'}`:'';
   }
   const tallInfo=globalThis.MF_FURNITURE_CORE.tallVariantInfo(it),tallControls=$('tall-options-controls');

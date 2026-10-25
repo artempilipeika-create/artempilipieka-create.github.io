@@ -1,0 +1,530 @@
+{
+  "geometry": "Canonical MF production parts and original FR3D countertop contours. Tripo appliance meshes reused.",
+  "records": [
+    {
+      "file": "base-single",
+      "kind": "cabinet",
+      "source_id": "bazis.0211e4f77fc4",
+      "source_sha256": "7d029606fafc89c7a7f060106a3f2d30a8c4224a304a904bbfeffe3675645d64",
+      "size_mm": [
+        600,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": null,
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.8,
+        0.38,
+        1.5
+      ],
+      "choice": false
+    },
+    {
+      "file": "base-double",
+      "kind": "cabinet",
+      "source_id": "bazis.3079d0656398",
+      "source_sha256": "a659d5e7a0da816ef74206ec86c76e09fa3a3c728a7247b80be9bac507b689d2",
+      "size_mm": [
+        600,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": null,
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.8,
+        0.38,
+        1.5
+      ],
+      "choice": false
+    },
+    {
+      "file": "base-drawers",
+      "kind": "cabinet",
+      "source_id": "bazis.39f282e08f0c",
+      "source_sha256": "f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2",
+      "size_mm": [
+        600,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": null,
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.8,
+        0.38,
+        1.5
+      ],
+      "choice": false
+    },
+    {
+      "file": "base-oven",
+      "kind": "cabinet",
+      "source_id": "bazis.9e77f4333545",
+      "source_sha256": "7de5d86b28ad697749e0e47f5f313da2df667817910500dfe4fd569641680206",
+      "size_mm": [
+        600,
+        820,
+        500
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": null,
+      "drawer_front_height_mm": 122,
+      "camera": [
+        0.8,
+        0.38,
+        1.5
+      ],
+      "choice": false
+    },
+    {
+      "file": "base-corner",
+      "kind": "cabinet",
+      "source_id": "bazis.a310afbf587f",
+      "source_sha256": "a310afbf587f4de0fbd02874b6c8254021ee9cabca422d87b2b82003511f28ad",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.85,
+        0.55,
+        1.4
+      ],
+      "choice": false
+    },
+    {
+      "file": "cargo",
+      "kind": "cabinet",
+      "source_id": "bazis.0ac4e1b6b2d3",
+      "source_sha256": "0ac4e1b6b2d319e5227a357923458106e9511167949b02d5412e6e42484dc0d7",
+      "size_mm": [
+        150,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": null,
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.8,
+        0.38,
+        1.5
+      ],
+      "choice": false
+    },
+    {
+      "file": "pullout-dryer",
+      "kind": "cabinet",
+      "source_id": "bazis.85c150c30ea5",
+      "source_sha256": "85c150c30ea523a3eab1d3dc1505f977557b07c9133717a8f9733e43a630573c",
+      "size_mm": [
+        600,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": null,
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.8,
+        0.38,
+        1.5
+      ],
+      "choice": false
+    },
+    {
+      "file": "dishwasher",
+      "kind": "cabinet",
+      "source_id": "bazis.300138dc82b5",
+      "source_sha256": "300138dc82b565d2cd24ed6c0e07f98b1b0212f914dbe35819fb98f89af78ab1",
+      "size_mm": [
+        600,
+        820,
+        600
+      ],
+      "side_bottom_mm": [],
+      "filler": null,
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.8,
+        0.38,
+        1.5
+      ],
+      "choice": false
+    },
+    {
+      "file": "corner-left-sink-1",
+      "kind": "cabinet",
+      "source_id": "bazis.a310afbf587f",
+      "source_sha256": "a310afbf587f4de0fbd02874b6c8254021ee9cabca422d87b2b82003511f28ad",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "corner-right-sink-1",
+      "kind": "cabinet",
+      "source_id": "bazis.7978c3a98bf8",
+      "source_sha256": "7978c3a98bf8e0c40cdf69f9c1b30d93ce600c44db7dccac0280ac31c2306638",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        -0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "corner-left-shelf-1",
+      "kind": "cabinet",
+      "source_id": "bazis.4f35b7ae7fa7",
+      "source_sha256": "4f35b7ae7fa751f63ddd64bcb8e2656f79db697485cfc8a2ef57fc4e07ce7e0d",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "corner-right-shelf-1",
+      "kind": "cabinet",
+      "source_id": "bazis.0843131e63bb",
+      "source_sha256": "0843131e63bb2f056bbf7270e9492afdbb34b72cbab7629ac323fbe39bf15e2e",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        -0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "corner-left-sink-2",
+      "kind": "cabinet",
+      "source_id": "bazis.33f5a50f71d3",
+      "source_sha256": "33f5a50f71d39713000977131f07ee44fa09f448c7e76334d0000c1d43a03bc9",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "corner-right-sink-2",
+      "kind": "cabinet",
+      "source_id": "bazis.b0f0037a933b",
+      "source_sha256": "b0f0037a933b8ad13dd1dff545729b20b5b70ee03fb350ec6de6ee6d6ef74aaf",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        -0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "corner-left-shelf-2",
+      "kind": "cabinet",
+      "source_id": "bazis.73465be5d565",
+      "source_sha256": "73465be5d5658b662a20ca1c4f5dc347a5482d3975ef75765e25471c73368df8",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "corner-right-shelf-2",
+      "kind": "cabinet",
+      "source_id": "bazis.54cffd5bd970",
+      "source_sha256": "54cffd5bd9708f3063537bcfbb5ed40be192c14a857c142a5aa6972d39963b5c",
+      "size_mm": [
+        1000,
+        820,
+        510
+      ],
+      "side_bottom_mm": [
+        118,
+        118
+      ],
+      "filler": {
+        "depth_mm": 50,
+        "angle_deg": 90
+      },
+      "drawer_front_height_mm": null,
+      "camera": [
+        -0.85,
+        0.55,
+        1.4
+      ],
+      "choice": true
+    },
+    {
+      "file": "countertop-standard",
+      "kind": "joint",
+      "source_file": "Столешница_Обычная_Лево_38мм.(1).fr3d",
+      "source_sha256": "c9d3f86f0dec92ead60a9441b69fb7cc0bc177b35a2617b8d1626589a0e42d5b",
+      "camera": [
+        0.35,
+        1.6,
+        1
+      ],
+      "target": [
+        0.55,
+        0.02,
+        0.59
+      ],
+      "half": 0.23,
+      "floor": -0.002
+    },
+    {
+      "file": "countertop-euro",
+      "kind": "joint",
+      "source_file": "Столешница _Еврозапил_Лево.38мм.fr3d",
+      "source_sha256": "6279be30a2574a1b0429c042ab408e8609435f841fbd4047a84650b3bef1c169",
+      "camera": [
+        0.35,
+        1.6,
+        1
+      ],
+      "target": [
+        0.55,
+        0.02,
+        0.59
+      ],
+      "half": 0.23,
+      "floor": -0.002
+    },
+    {
+      "file": "backsplash-panel",
+      "kind": "backsplash",
+      "thickness_mm": 6,
+      "camera": [
+        0.8,
+        0.36,
+        1.7
+      ],
+      "floor": -0.004
+    },
+    {
+      "file": "backsplash-ldsp",
+      "kind": "backsplash",
+      "thickness_mm": 18,
+      "camera": [
+        0.8,
+        0.36,
+        1.7
+      ],
+      "floor": -0.004
+    },
+    {
+      "file": "backsplash-tile",
+      "kind": "backsplash",
+      "thickness_mm": 10,
+      "camera": [
+        0.8,
+        0.36,
+        1.7
+      ],
+      "floor": -0.004
+    },
+    {
+      "file": "backsplash-straight",
+      "kind": "backsplash-shape",
+      "shape": "straight",
+      "thickness_mm": 6,
+      "camera": [
+        0.8,
+        0.5,
+        1.7
+      ],
+      "floor": 0
+    },
+    {
+      "file": "backsplash-left",
+      "kind": "backsplash-shape",
+      "shape": "left",
+      "thickness_mm": 6,
+      "camera": [
+        0.8,
+        0.5,
+        1.7
+      ],
+      "floor": 0
+    },
+    {
+      "file": "backsplash-right",
+      "kind": "backsplash-shape",
+      "shape": "right",
+      "thickness_mm": 6,
+      "camera": [
+        -0.8,
+        0.5,
+        1.7
+      ],
+      "floor": 0
+    },
+    {
+      "file": "backsplash-u",
+      "kind": "backsplash-shape",
+      "shape": "u",
+      "thickness_mm": 6,
+      "camera": [
+        0.8,
+        0.5,
+        1.7
+      ],
+      "floor": 0
+    },
+    {
+      "file": "plinth",
+      "kind": "plinth",
+      "side_bottom_mm": 118,
+      "camera": [
+        0.8,
+        0.2,
+        1.5
+      ],
+      "target": [
+        0,
+        0.17,
+        0.15
+      ],
+      "half": 0.43
+    }
+  ]
+}

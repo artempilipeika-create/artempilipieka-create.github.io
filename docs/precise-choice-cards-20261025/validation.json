@@ -1,0 +1,55 @@
+{
+  "catalogue": {
+    "ok": true,
+    "catalogue_cards": 14,
+    "surface_images": 6,
+    "native_insertion": true,
+    "joint_selection": true,
+    "three_finishes": true,
+    "undo_redo": true,
+    "corner_variants": 8,
+    "backsplash_shapes": 4,
+    "mobile_width": 390,
+    "errors": []
+  },
+  "countertops": {
+    "ok": true,
+    "url": "http://127.0.0.1:8080",
+    "renderer": "webgl",
+    "checks": [
+      "automatic straight and left turn",
+      "ordinary/euro selection",
+      "new cabinets inherit choice",
+      "per-module off/on",
+      "undo/redo",
+      "saved payload and restore",
+      "native BAZIS JSON",
+      "desktop/mobile layout"
+    ],
+    "errors": [],
+    "blocked_requests": []
+  },
+  "open_tall": {
+    "ok": true,
+    "one_card": true,
+    "seven_configurations": true,
+    "depth300": true,
+    "undo": true,
+    "save_reopen": true,
+    "native_export": true,
+    "front_alignment": true,
+    "top_alignment": true,
+    "errors": []
+  },
+  "unit_tests": {
+    "passed": 63,
+    "failed": 0,
+    "suites": [
+      "corner-family",
+      "sink-oven",
+      "countertop-visuals",
+      "wall-finishes",
+      "accessory-mesh"
+    ]
+  }
+}

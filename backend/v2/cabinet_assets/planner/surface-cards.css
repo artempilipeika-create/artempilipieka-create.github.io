@@ -1,4 +1,4 @@
-/* Shared finish cards: photographs explain appearance; native diagrams explain joints. */
+/* Shared finish cards: native geometry explains construction and joints. */
 #planner-workspace :is(#countertop-card,#wall-finish-card,#plinth-card){padding:16px!important;border:1px solid #deded7;border-radius:16px;background:#fcfbf8;box-shadow:0 4px 16px #23372b06}
 #planner-workspace :is(#countertop-card,#wall-finish-card,#plinth-card)>h3{font-size:16px;letter-spacing:-.2px;color:#203b30}
 #planner-workspace :is(#countertop-card,#wall-finish-card,#plinth-card)>p{font-size:11px;line-height:1.6;color:#6a766c}
@@ -19,3 +19,16 @@
 #planner-workspace .surface-hero{display:block;width:100%;height:135px;object-fit:cover;border-radius:11px;margin:13px 0;background:#eeece6}
 #planner-workspace .wall-finish-shapes button[aria-pressed=true]{background:#f1f7ff!important;border-color:#1677ff!important;color:#1263cf}
 #planner-workspace :is(#countertop-card,#wall-finish-card)>details{border-top:1px solid #e5e7df;padding-top:10px;margin-top:14px;font-size:10px;color:#718071}
+
+/* Large picture choices share the blue selected state across desktop and mobile. */
+#planner-workspace .surface-card-diagram{width:112px;opacity:1}
+#planner-workspace .surface-card-diagram svg{height:76px}
+#planner-workspace #corner-options-controls .mf3d-door-options,#planner-workspace .wall-finish-shapes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#planner-workspace :is([data-corner-option],.wall-finish-shapes>button){position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;padding:0 0 10px!important;overflow:hidden;border:1px solid #deded7;border-radius:12px;background:#fff;white-space:normal;color:#263f33}
+#planner-workspace :is([data-corner-option],.wall-finish-shapes>button)>img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;pointer-events:none;border-radius:0;background:#f1f0eb;margin:0 0 4px}
+#planner-workspace :is([data-corner-option],.wall-finish-shapes>button)>strong{font-size:11px;line-height:1.4;padding:0 5px}
+#planner-workspace [data-corner-option]>small{font-size:9px;line-height:1.4;color:#758074}
+#planner-workspace :is([data-corner-option],.wall-finish-shapes>button):hover{border-color:#91bafa}
+#planner-workspace :is([data-corner-option],.wall-finish-shapes>button)[aria-pressed=true]{border-color:#1677ff!important;background:#f1f7ff!important;box-shadow:inset 0 0 0 1px #1677ff;color:#1263cf}
+#planner-workspace :is([data-corner-option],.wall-finish-shapes>button)[aria-pressed=true]:after{content:'✓';position:absolute;right:7px;top:7px;width:19px;height:19px;line-height:19px;border-radius:50%;background:#1677ff;color:white;box-shadow:0 0 0 2px #fff;font-size:11px}
+#planner-workspace :is([data-corner-option],.wall-finish-shapes>button):focus-visible{outline:3px solid #1677ff;outline-offset:2px}

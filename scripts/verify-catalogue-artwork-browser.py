@@ -39,12 +39,12 @@ with sync_playwright() as pw:
  page.evaluate("""async()=>{const p=MF_PLANNER;await p.bridge.loadSnapshot({name:'Каталог Martin Forest',scene:{schema_version:2,room:{width:5000,depth:4000,height:3000,setup_complete:true,features:[]},items:[],plinths:[],selected_item_id:null,view_mode:'3d'},selectedId:null},null);p.roomSetup.projectChanged();p.history.reset();}""")
  page.locator('#studio-toggle-library').click()
  cards=page.locator('#module-catalogue .mf3d-module[data-bazis]')
- assert cards.count()==14 and page.locator('#module-catalogue [data-card-artwork=tripo]').count()==14
+ assert cards.count()==14 and page.locator('#module-catalogue [data-card-artwork]').count()==14
  for card in cards.all():
   card.scroll_into_view_if_needed()
   picture=card.locator('img.studio-preview-tripo');expect(picture).to_be_visible()
   page.wait_for_function('(url)=>[...document.images].some(i=>i.src===url&&i.complete&&i.naturalWidth>0)',arg=base+picture.get_attribute('src'))
-  card.screenshot(path=str(out/(picture.get_attribute('src').split('/')[-1]+'.png')))
+  card.screenshot(path=str(out/(picture.get_attribute('src').split('/')[-1].split('?')[0]+'.png')))
   assert card.evaluate('(e)=>e.scrollWidth<=e.clientWidth+1')
  # Selecting the actual card still inserts the BAZIS module, with no poster geometry.
  page.locator('[data-bazis="bazis.0211e4f77fc4"]').click()
@@ -80,6 +80,43 @@ with sync_playwright() as pw:
   box=page.locator(selector);box.scroll_into_view_if_needed();box.screenshot(path=str(out/(selector[1:]+'-mobile.png')))
   assert box.evaluate('(e)=>e.scrollWidth<=e.clientWidth+1')
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+
+ # Manual backsplash shapes are real picture buttons, all four remain editable.
+ page.set_viewport_size({'width':1900,'height':1100})
+ if page.locator('#wall-finish-card details[data-id]').get_attribute('open') is None:page.locator('#wall-finish-card details[data-id] summary').click()
+ page.get_by_label('Фартук по столешнице',exact=True).uncheck()
+ for shape in ['straight','left','right','u']:
+  button=page.locator('[data-finish-shape='+shape+']');button.click()
+  expect(button).to_have_attribute('aria-pressed','true')
+  assert page.evaluate('MF_PLANNER.adapter.state.wallPanels[0].shape')==shape
+ for pic in page.locator('.wall-finish-shapes img').all():
+  pic.scroll_into_view_if_needed()
+  page.wait_for_function('(u)=>[...document.images].some(i=>i.src===u&&i.complete&&i.naturalWidth===640)',arg=base+pic.get_attribute('src'))
+ page.locator('.wall-finish-shapes').screenshot(path=str(out/'backsplash-shapes.png'))
+ page.locator('[data-finish-choice=ldsp]').click()
+ assert page.evaluate('MF_PLANNER.adapter.state.wallPanels[0].thickness')==18
+ # Every corner configuration is selected by an image and retains its native donor.
+ page.evaluate("""async()=>{const p=MF_PLANNER,it={...p.adapter.createDraft({bazis:'bazis.a310afbf587f'}),item_id:'corner-proof',x:0,z:0};await p.bridge.loadSnapshot({name:'Угловой шкаф',scene:{schema_version:2,room:{width:5000,depth:4000,height:3000,setup_complete:true,features:[]},items:[it],plinths:[],selected_item_id:it.item_id,view_mode:'3d'},selectedId:it.item_id},null);p.roomSetup.projectChanged();p.history.reset();p.workspace.closePanels();}""")
+ page.locator('#studio-toggle-inspector').click()
+ for side in ['left','right']:
+  for purpose in ['sink','shelf']:
+   for doors in [1,2]:
+    for key,value in [('side',side),('purpose',purpose),('door_count',doors)]:
+     b=page.locator(f'[data-corner-option={key}][data-corner-value="{value}"]');b.locator('img').click()
+     expect(b).to_have_attribute('aria-pressed','true')
+     expect(b).to_have_css('border-top-color','rgb(22, 119, 255)')
+    info=page.evaluate("""()=>{const p=MF_PLANNER,it=p.adapter.selected,v=MF_FURNITURE_CORE.cornerVariantInfo(it),parts=MF_FURNITURE_CORE.productionParts(it,p.adapter.template(it));return {side:v.side,purpose:v.purpose,doors:v.door_count,hash:it.bazis_sha256,expected:v.source_sha256,width:it.width,filler:parts.find(x=>x.key==='filler-front').size,sides:parts.filter(x=>/^side-/.test(x.key)).map(x=>x.position.y-x.size.y/2)}}""")
+    assert (info['side'],info['purpose'],info['doors'])==(side,purpose,doors),info
+    assert info['hash']==info['expected'] and info['width']==1000 and info['filler']['z']==50 and min(info['sides'])>=100,info
+    for img in page.locator('[data-corner-option] img').all():
+     img.scroll_into_view_if_needed()
+     page.wait_for_function('(u)=>[...document.images].some(i=>i.src===u&&i.complete&&i.naturalWidth===640)',arg=base+img.get_attribute('src'))
+ page.locator('#corner-options-controls').screenshot(path=str(out/'corner-picture-options.png'))
+ page.locator('#planner-undo').click()
+ assert page.evaluate('MF_FURNITURE_CORE.cornerVariantInfo(MF_PLANNER.adapter.selected).door_count')==1
+ page.set_viewport_size({'width':390,'height':844})
+ assert page.locator('#corner-options-controls').evaluate('(e)=>e.scrollWidth<=e.clientWidth+1')
+ page.locator('#corner-options-controls').screenshot(path=str(out/'corner-picture-options-mobile.png'))
  assert not errors and not blocked,dict(errors=errors,blocked=blocked)
- print(json.dumps({'ok':True,'catalogue_cards':14,'surface_images':6,'native_insertion':True,'joint_selection':True,'three_finishes':True,'undo_redo':True,'mobile_width':390,'errors':errors}))
+ print(json.dumps({'ok':True,'catalogue_cards':14,'surface_images':6,'native_insertion':True,'joint_selection':True,'three_finishes':True,'undo_redo':True,'corner_variants':8,'backsplash_shapes':4,'mobile_width':390,'errors':errors}))
  browser.close()

@@ -19,12 +19,12 @@ function waitReady(){return new Promise((resolve,reject)=>{
 import {RoomPricingUI} from './room-pricing-ui.mjs';
 import {RoomSetup} from './room-setup.mjs';
 import {EquipmentControls} from './equipment-controls.mjs';
-import {CountertopUI} from './countertop-ui.mjs?v=20261025-all-cards';
+import {CountertopUI} from './countertop-ui.mjs?v=20261025-precise-cards';
 import {WorktopFixtureUI} from './worktop-fixture-ui.mjs';
 import {MaterialAppearanceUI} from './material-appearance-ui.mjs';
-import {WallFinishUI} from './wall-finish-ui.mjs?v=20261025-all-cards';
+import {WallFinishUI} from './wall-finish-ui.mjs?v=20261025-precise-cards';
 import {PresentationUI} from './presentation-ui.mjs';
-import {AccessoryUI} from './accessory-ui.mjs?v=20261025-all-cards';
+import {AccessoryUI} from './accessory-ui.mjs?v=20261025-precise-cards';
 import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
 import {ProjectSafety} from './project-safety.mjs';

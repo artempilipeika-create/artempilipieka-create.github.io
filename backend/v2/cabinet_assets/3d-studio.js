@@ -104,8 +104,8 @@
     const artwork=globalThis.MF_CATALOGUE_ARTWORK?.[opt.bazis],photoFamily=artwork?.file;
     if(artwork){
       b.dataset.search+=' '+titleText([artwork.title,artwork.description,...artwork.badges].join(' '));
-      const poster=make('img','studio-preview studio-preview-tripo');poster.src='/account/planner/module-card-images/'+photoFamily+'.webp';poster.alt='';poster.width=370;poster.height=270;poster.loading='lazy';poster.decoding='async';poster.draggable=false;
-      poster.addEventListener('error',()=>poster.replaceWith(c),{once:true});visual.append(poster);b.dataset.cardArtwork='tripo';
+      const poster=make('img','studio-preview studio-preview-tripo');poster.src=globalThis.MF_CHOICE_CARDS?.image(photoFamily)||'/account/planner/module-card-images/'+photoFamily+'.webp';poster.alt='';poster.width=640;poster.height=480;poster.loading='lazy';poster.decoding='async';poster.draggable=false;
+      poster.addEventListener('error',()=>poster.replaceWith(c),{once:true});visual.append(poster);b.dataset.cardArtwork=artwork.source;
       copy.querySelector('strong').textContent=artwork.title;copy.querySelector('span').textContent=artwork.description;
       const badges=make('span','studio-card-options');for(const label of artwork.badges)badges.append(make('span','',label));copy.append(badges);
     }else visual.append(c);

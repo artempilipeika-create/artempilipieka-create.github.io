@@ -32,7 +32,7 @@ def router():
         'pullout-dryer-variants.js','pullout-dryer-variants.json','pullout-dryer-model.js','pullout-dryer-ui.js',
         'worktop-fixtures.mjs','worktop-fixture-mesh.mjs','worktop-fixture-ui.mjs','worktop-fixtures.css',
         'material-appearance-ui.mjs','material-appearance.css',
-        'showroom.css','catalogue-artwork.js','surface-cards.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs',
+        'showroom.css','choice-card-ui.js','catalogue-artwork.js','surface-cards.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
         'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',
@@ -49,6 +49,7 @@ def router():
     }
     planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave','sink','faucet','hood','gas_cooker','radiator','gas_boiler','water_heater','window') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp'))
     planner_files.update('module-card-images/'+name+'.webp' for name in ('open-tall-none','cargo','pullout-dryer','aq-profile','lira-profile','base-single','base-double','base-drawers','base-oven','base-corner','wall-single','wall-double','dishwasher','tall-storage','tall-appliance','tall-vitrine','countertop-standard','countertop-euro','backsplash-glass','backsplash-ldsp','backsplash-tile','plinth'))
+    planner_files.update('module-card-images/'+name+'.webp' for name in ['backsplash-panel','backsplash-straight','backsplash-left','backsplash-right','backsplash-u']+[f'corner-{side}-{purpose}-{doors}' for side in ('left','right') for purpose in ('sink','shelf') for doors in (1,2)])
     from .material_visuals import manifest,user_textures,user_texture_bytes
     material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}
     planner_files.update(material_assets)

@@ -34,17 +34,17 @@
 #planner-workspace .studio-source{font-size:8px;letter-spacing:.05em;background:#eff3e9;border-radius:4px;padding:2px 4px;color:#4d684a}
 #planner-workspace .studio-gola-badges{padding:0 11px 7px}
 #planner-workspace .mf3d-module.studio-added{border-color:#1677ff;box-shadow:0 0 0 1px #1677ff}
-#planner-workspace .mf3d-module[data-card-artwork=tripo]{border-radius:16px;border-color:#deded7;box-shadow:0 4px 16px #23372b08}
-#planner-workspace .mf3d-module[data-card-artwork=tripo] .studio-preview{aspect-ratio:4/3;object-fit:cover;background:#e9e6df;border:0}
-#planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy{padding:15px 14px 10px;gap:6px}
-#planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy strong{font-size:15px;line-height:1.3;font-weight:650;letter-spacing:-.3px}
-#planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy>span{font-size:11px;line-height:1.5}
-#planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy>span:not(.studio-card-options){font-weight:400;min-height:3em}
+#planner-workspace .mf3d-module[data-card-artwork]{border-radius:16px;border-color:#deded7;box-shadow:0 4px 16px #23372b08}
+#planner-workspace .mf3d-module[data-card-artwork] .studio-preview{aspect-ratio:4/3;object-fit:cover;background:#e9e6df;border:0}
+#planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy{padding:15px 14px 10px;gap:6px}
+#planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy strong{font-size:15px;line-height:1.3;font-weight:650;letter-spacing:-.3px}
+#planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy>span{font-size:11px;line-height:1.5}
+#planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy>span:not(.studio-card-options){font-weight:400;min-height:3em}
 #planner-workspace .studio-card-options{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 #planner-workspace .studio-card-options>span{display:inline-block!important;padding:3px 7px;border:1px solid #e4e7df;border-radius:6px;background:#f7f8f4;color:#526454;font-size:10px!important;line-height:1.4}
-#planner-workspace .mf3d-module[data-card-artwork=tripo] .studio-card-meta{padding:0 14px 14px;font-size:10px}
-#planner-workspace .mf3d-module[data-card-artwork=tripo]:is(.studio-added,:hover,:focus-visible){border-color:#1677ff;box-shadow:0 8px 24px #1677ff18;outline-color:#1677ff}
-#planner-workspace .mf3d-module[data-card-artwork=tripo]:is(:hover,:focus-visible) .studio-card-add{background:#1677ff;color:#fff}
+#planner-workspace .mf3d-module[data-card-artwork] .studio-card-meta{padding:0 14px 14px;font-size:10px}
+#planner-workspace .mf3d-module[data-card-artwork]:is(.studio-added,:hover,:focus-visible){border-color:#1677ff;box-shadow:0 8px 24px #1677ff18;outline-color:#1677ff}
+#planner-workspace .mf3d-module[data-card-artwork]:is(:hover,:focus-visible) .studio-card-add{background:#1677ff;color:#fff}
 #planner-workspace .mf3d-stagebar{border-radius:12px;background:#fcfbf8f5;box-shadow:0 4px 18px #20382c10}
 #planner-workspace .studio-camera{border-radius:12px;box-shadow:0 4px 18px #20382c0d}
 @media(min-width:1101px){#planner-workspace .mf3d-left{width:390px}#planner-workspace .studio-pane{padding:14px 16px}#planner-workspace .studio-panel-title{padding:18px 16px 14px}}

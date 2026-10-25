@@ -34,8 +34,8 @@ with sync_playwright() as pw:
  page.route('**/*',gate);page.goto(base+'/constructor');expect(page.locator('body')).to_have_attribute('data-planner-ready','true',timeout=40000)
 
  assert page.locator('#module-catalogue button').filter(has_text='Открытый пенал').count()==1
- # All new catalogue families must serve their reviewed Tripo photographs.
- cards=page.locator('#module-catalogue [data-card-artwork=tripo]')
+ # All new catalogue families must serve their reviewed family pictures.
+ cards=page.locator('#module-catalogue [data-card-artwork]')
  assert cards.count()==14
  for image in cards.locator('img').all():
   response=page.request.get(base+image.get_attribute('src'))
