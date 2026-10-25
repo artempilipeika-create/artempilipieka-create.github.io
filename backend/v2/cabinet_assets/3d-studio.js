@@ -99,9 +99,20 @@
     const meta=make('span','studio-card-meta');meta.append(make('span','studio-card-dimensions',it.width+' × '+it.height+' × '+it.depth+' мм'));
     if(opt.bazis)meta.append(make('span','studio-source','БАЗИС'));
     const visual=make('span','studio-card-visual');
-    // The reviewed Tripo export is a poster for this exact default module only.
+    // Reviewed Tripo imagery represents the module family in the catalogue.
     // Runtime geometry, dimensions and insertion still use the native BAZIS item.
-    if(opt.bazis==='bazis.3079d0656398'&&it.width===600&&it.height===820&&it.depth===510){
+    const photoFamily=globalThis.MF_OPEN_TALL?.choice(opt.bazis)?'open-tall-none':globalThis.MF_CARGO?.choice(opt.bazis)?'cargo':globalThis.MF_PULLOUT_DRYERS?.choice(opt.bazis)?'pullout-dryer':null;
+    if(photoFamily){
+      const poster=make('img','studio-preview studio-preview-tripo');poster.src='/account/planner/module-card-images/'+photoFamily+'.webp';poster.alt='';poster.width=492;poster.height=359;poster.loading='lazy';poster.decoding='async';poster.draggable=false;
+      poster.addEventListener('error',()=>poster.replaceWith(c),{once:true});visual.append(poster);b.dataset.cardArtwork='tripo';
+      const summary={
+        'open-tall-none':['Открытый пенал','Без подсветки, AQ или LIRA','7 исполнений'],
+        cargo:['Карго','Выдвижное хранение · FOCUS, NORWING, ICON','6 исполнений'],
+        'pullout-dryer':['Выдвижная сушка','NORWING и FLAT LINE · с нижним ящиком','12 исполнений']
+      }[photoFamily];
+      copy.querySelector('strong').textContent=summary[0];copy.querySelector('span').textContent=summary[1];
+      const badges=make('span','studio-card-options');badges.append(make('span','',summary[2]),make('span','',photoFamily==='open-tall-none'?'ЛДСП 18 мм':'Обычное / Gola'));copy.append(badges);
+    }else if(opt.bazis==='bazis.3079d0656398'&&it.width===600&&it.height===820&&it.depth===510){
       const poster=make('img','studio-preview studio-preview-imported');poster.src='/ui/showroom/nmd2-front.webp';poster.alt='';poster.width=1200;poster.height=1080;poster.loading='lazy';
       poster.addEventListener('error',()=>poster.replaceWith(c),{once:true});visual.append(poster);
     }else visual.append(c);

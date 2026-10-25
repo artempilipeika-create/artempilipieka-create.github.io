@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-25",
+  "provider": "Tripo Studio / Image",
+  "model": "Nano Banana",
+  "usage": "Catalogue family illustrations and lighting system close-ups; not manufacturing geometry or a dimensionally exact product photograph.",
+  "source_method": "Reviewed browser display captures, cropped to image bounds and encoded as WebP. Original full-resolution PNGs remain in Tripo history.",
+  "cost_credits": 0,
+  "free_generations_used": 9,
+  "credit_balance_before": 2520,
+  "credit_balance_after": 2520,
+  "assets": [
+    {
+      "file": "open-tall-none.webp",
+      "tripo_image_id": "22a5817d-c4f3-4fac-868c-54c306e4126b",
+      "dimensions": [
+        491,
+        359
+      ],
+      "sha256": "973bcf816023ebd58201077bd9419caff3ce6c3ec4c4eb846c69ada51ca5c7a5"
+    },
+    {
+      "file": "cargo.webp",
+      "tripo_image_id": "2c27a1e9-11c9-4a56-84a2-e3580b82b54f",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "653ca8c947a081b4ca05922db779624a5bc4a1aebf18ab521de3781501b499c3"
+    },
+    {
+      "file": "pullout-dryer.webp",
+      "tripo_image_id": "3e45d436-5e6c-4b9f-b080-5d52d66a5fc7",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "cae343d6aee160b68b3cb90a7e69c6dbd8ffa3ce084215a5edf17d229129a65c"
+    },
+    {
+      "file": "aq-profile.webp",
+      "tripo_image_id": "707c6e73-9e13-4b17-9779-1178ac43cf69",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "5aafe10a0ea1daafb935b0bc68a032125dd463bd3c49f7ab1d0dc2fe9717ccf2"
+    },
+    {
+      "file": "lira-profile.webp",
+      "tripo_image_id": "339516a2-52ba-4a88-abd8-d28a52be9721",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "272c2d971061b421e004e6a0d15422d7e14896af64c250796f55da25162f7e4d"
+    }
+  ],
+  "rejected": [
+    "f5344a18-71dd-4e22-a8ee-7b6ac359bebc: LED on exterior cabinet wall",
+    "c7fab7c6-b4de-4383-9b9c-11b45a41c3b4: extra cargo basket",
+    "d1e1e796-dd3d-4464-b25f-d3184695357e: lower doors instead of drawer",
+    "dryer edit: lower doors unchanged, not published"
+  ]
+}

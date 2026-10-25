@@ -34,6 +34,13 @@ with sync_playwright() as pw:
  page.route('**/*',gate);page.goto(base+'/constructor');expect(page.locator('body')).to_have_attribute('data-planner-ready','true',timeout=40000)
 
  assert page.locator('#module-catalogue button').filter(has_text='Открытый пенал').count()==1
+ # All new catalogue families must serve their reviewed Tripo photographs.
+ cards=page.locator('#module-catalogue [data-card-artwork=tripo]')
+ assert cards.count()==3
+ for image in cards.locator('img').all():
+  response=page.request.get(base+image.get_attribute('src'))
+  assert response.status==200 and response.headers['content-type'].startswith('image/webp')
+
  page.evaluate("""async()=>{const p=MF_PLANNER;
  const it={...p.adapter.createDraft({bazis:MF_OPEN_TALL.family.default_id}),item_id:'open',x:0,z:0};
  if(it.front_variant_id!==null||it.handles!=='handleless')throw new Error('Facadeless defaults');
@@ -42,6 +49,12 @@ with sync_playwright() as pw:
  p.roomSetup.projectChanged();p.history.reset();p.scene.fit('kitchen');}""")
  if not page.locator('#open-tall-controls').is_visible():page.locator('#studio-toggle-inspector').click()
  expect(page.locator('#open-tall-controls')).to_be_visible()
+ for image in page.locator('#open-tall-controls .ot-option-image img').all():
+  image.scroll_into_view_if_needed()
+  expect(image).to_be_visible()
+  page.wait_for_function('(src)=>[...document.images].some(i=>i.src===src&&i.complete&&i.naturalWidth>0)',arg=image.get_attribute('src') if image.get_attribute('src').startswith('http') else base+image.get_attribute('src'))
+ assert page.locator('#open-tall-controls .ot-option-image img').count()==3
+
  assert page.locator('[data-open-tall-option=light_system][data-open-tall-value=none]').get_attribute('aria-pressed')=='true'
  assert not page.locator('#open-tall-lighting-choices').is_visible()
  for system in ['aq-4x8','lira-17.5x6.5']:

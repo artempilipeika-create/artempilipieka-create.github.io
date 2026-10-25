@@ -22,7 +22,15 @@
   for(const b of box.querySelectorAll('[data-open-tall-option]')){
    const key=b.dataset.openTallOption,value=b.dataset.openTallValue;
    b.setAttribute('aria-pressed',String(v[key]===value));
-   b.querySelector('.ot-option-image').innerHTML=drawing(it,key==='light_system'?value:v.light_system,key==='lighting'?value:v.lighting==='none'?'left':v.lighting);
+   const icon=b.querySelector('.ot-option-image');
+   if(key==='light_system'){
+    const file={none:'open-tall-none','aq-4x8':'aq-profile','lira-17.5x6.5':'lira-profile'}[value];
+    if(icon.dataset.photo!==file){
+     icon.dataset.photo=file;icon.replaceChildren();
+     const img=document.createElement('img');img.src='/account/planner/module-card-images/'+file+'.webp';img.alt='';img.loading='lazy';img.decoding='async';img.draggable=false;
+     img.addEventListener('error',()=>{icon.innerHTML=drawing(it,value,v.lighting==='none'?'left':v.lighting);delete icon.dataset.photo;},{once:true});icon.append(img);
+    }
+   }else icon.innerHTML=drawing(it,v.light_system,value);
   }
   const n=O.shelves(it).length;
   document.getElementById('open-tall-shelf-count').textContent=String(n);

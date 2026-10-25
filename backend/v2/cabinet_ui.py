@@ -48,6 +48,7 @@ def router():
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
     planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave','sink','faucet','hood','gas_cooker','radiator','gas_boiler','water_heater','window') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp'))
+    planner_files.update('module-card-images/'+name+'.webp' for name in ('open-tall-none','cargo','pullout-dryer','aq-profile','lira-profile'))
     from .material_visuals import manifest,user_textures,user_texture_bytes
     material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}
     planner_files.update(material_assets)
