@@ -1,0 +1,89 @@
+{
+  "provider": "Tripo Studio",
+  "model": "Nano Banana",
+  "starting_free_usage": 26,
+  "ending_free_usage": 40,
+  "starting_credit_balance": 2520,
+  "ending_credit_balance": 2520,
+  "charged_credits": 0,
+  "assets": [
+    {
+      "file": "base-oven",
+      "id": "b0caa8ab-44a9-4f68-95ca-4c587a2c2004",
+      "credits": 0
+    },
+    {
+      "file": "base-single",
+      "id": "fba73b2a-8364-4953-9d0b-6db0669ea662",
+      "credits": 0
+    },
+    {
+      "file": "base-double",
+      "id": "17e80de5-d845-49dd-b2eb-0d175ce2ba6e",
+      "credits": 0
+    },
+    {
+      "file": "base-drawers",
+      "id": "2645238a-4fe0-4a6b-84d5-46d10373f7db",
+      "credits": 0
+    },
+    {
+      "file": "base-corner",
+      "id": "bc9fdf60-dd9c-490e-9768-0b53e85e3569",
+      "credits": 0
+    },
+    {
+      "file": "cargo",
+      "id": "e0c246ea-6a45-44dd-9a70-78bd2ae2067e",
+      "credits": 0
+    },
+    {
+      "file": "pullout-dryer",
+      "id": "25efb9a6-9400-4e64-9e40-ef0dfdef70c8",
+      "credits": 0
+    },
+    {
+      "file": "dishwasher",
+      "id": "7ff1a0a2-d3fa-496f-a4ec-4264f3912440",
+      "credits": 0
+    },
+    {
+      "file": "wall-single",
+      "id": "299df38a-3b48-4a66-8b36-0d43b9455a52",
+      "credits": 0
+    },
+    {
+      "file": "wall-double",
+      "id": "578a3f9b-ab84-47f2-be7e-03449a231c17",
+      "credits": 0
+    },
+    {
+      "file": "open-tall-none",
+      "id": "d26fa728-46fa-4292-9564-e76ea268a033",
+      "credits": 0
+    },
+    {
+      "file": "tall-vitrine",
+      "id": "aa58ffe0-e0fb-434c-a449-eb80c3acca70",
+      "credits": 0
+    },
+    {
+      "file": "tall-storage",
+      "id": "921179d8-0b7d-42e7-8556-e59d3bcb055f",
+      "credits": 0
+    },
+    {
+      "file": "tall-appliance",
+      "id": "3690f4cd-ef03-4d74-b502-88eb6ef60d70",
+      "credits": 0
+    }
+  ],
+  "export": {
+    "method": "Visually reviewed preview screenshot, cropped to image bounds; WebP quality 95",
+    "size": [
+      890,
+      635
+    ]
+  },
+  "reference": "Existing geometry-reviewed catalogue images"
+}

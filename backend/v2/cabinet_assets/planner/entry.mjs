@@ -19,12 +19,13 @@ function waitReady(){return new Promise((resolve,reject)=>{
 import {RoomPricingUI} from './room-pricing-ui.mjs';
 import {RoomSetup} from './room-setup.mjs';
 import {EquipmentControls} from './equipment-controls.mjs';
-import {CountertopUI} from './countertop-ui.mjs?v=20261025-precise-cards';
+import {CountertopUI} from './countertop-ui.mjs?v=20261025-lively-cards';
 import {WorktopFixtureUI} from './worktop-fixture-ui.mjs';
 import {MaterialAppearanceUI} from './material-appearance-ui.mjs';
-import {WallFinishUI} from './wall-finish-ui.mjs?v=20261025-precise-cards';
+import {WallFinishUI} from './wall-finish-ui.mjs?v=20261025-lively-cards';
 import {PresentationUI} from './presentation-ui.mjs';
-import {AccessoryUI} from './accessory-ui.mjs?v=20261025-precise-cards';
+import {FinishCatalogue} from './finish-catalogue.mjs';
+import {AccessoryUI} from './accessory-ui.mjs?v=20261025-lively-cards';
 import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
 import {ProjectSafety} from './project-safety.mjs';
@@ -37,7 +38,7 @@ class PlannerApplication {
     this.bridge=window.MF_PLANNER_BRIDGE;this.adapter=new StateAdapter(this.bridge);this.history=new History(this.adapter);
     this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.bindBrief();this.roomPricing=new RoomPricingUI(this);
     this.countertops=new CountertopUI(this);this.worktopFixtures=new WorktopFixtureUI(this);this.accessories=new AccessoryUI(this);
-    this.wallFinishes=new WallFinishUI(this);this.mobility=new MobilityUI(this);this.materialAppearance=new MaterialAppearanceUI(this);
+    this.wallFinishes=new WallFinishUI(this);this.finishCatalogue=new FinishCatalogue(this);this.mobility=new MobilityUI(this);this.materialAppearance=new MaterialAppearanceUI(this);
     this.equipment=new EquipmentControls(this);
     await this.startRenderer();
     this.presentation=new PresentationUI(this);

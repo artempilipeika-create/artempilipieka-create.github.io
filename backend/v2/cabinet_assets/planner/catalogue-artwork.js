@@ -1,6 +1,6 @@
 (function(root){
  'use strict';
- // Lower cabinets use exact production geometry; other family posters are Tripo illustrations.
+ // Reviewed Tripo pictures use the geometry-reviewed catalogue views as references.
  const rows=[
   ['bazis.0ac4e1b6b2d3','cargo','Карго','Выдвижное хранение · FOCUS, NORWING, ICON','6 исполнений','Обычное / Gola'],
   ['bazis.300138dc82b5','dishwasher','Посудомойка','Фасад для встроенной посудомойки','450–600 мм','Обычное / Gola'],
@@ -17,6 +17,5 @@
   ['bazis.107f19943761','tall-storage','Пенал с полками','Закрытое хранение на всю высоту','База 820 / 900','1 / 2 двери'],
   ['bazis.d9c0c30544f4','tall-appliance','Пенал под технику','Духовка или духовка + СВЧ','База 820 / 900','Дверь / ящик']
  ];
- const native=new Set(['cargo','dishwasher','pullout-dryer','base-single','base-double','base-drawers','base-oven','base-corner']);
- root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:native.has(file)?'native':'tripo'})])));
+ root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:'tripo'})])));
 })(globalThis);

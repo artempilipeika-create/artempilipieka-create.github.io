@@ -50,6 +50,8 @@ with sync_playwright() as pw:
  page.locator('[data-bazis="bazis.0211e4f77fc4"]').click()
  assert page.evaluate('MF_PLANNER.adapter.selected.bazis_id')=='bazis.0211e4f77fc4'
  assert page.evaluate('MF_PLANNER.adapter.selected.width')==600
+ page.locator('[data-module-filter=finishes]').click()
+ page.locator('[data-finish-tab=countertop]').click()
  page.locator('#countertop-card').scroll_into_view_if_needed()
  for value in ['euro','standard','euro']:
   b=page.locator('#countertop-card [data-joint='+value+']');b.click()
@@ -57,6 +59,7 @@ with sync_playwright() as pw:
   expect(b).to_have_css('border-top-color','rgb(22, 119, 255)')
   assert page.evaluate('MF_PLANNER.adapter.selected.countertopJoint')==value
  page.locator('#countertop-card').screenshot(path=str(out/'countertops.png'))
+ page.locator('[data-finish-tab=wall]').click()
  for kind,thickness in [('skinali',6),('ldsp',18),('tile',10)]:
   b=page.locator('#wall-finish-card [data-finish='+kind+']');b.click()
   expect(b).to_have_attribute('aria-pressed','true')
@@ -70,13 +73,16 @@ with sync_playwright() as pw:
  assert page.locator('.wall-finish-types .surface-card-photo').count()==3
  assert page.locator('#plinth-card .surface-hero').count()==1
  for selector in ['.countertop-choices .surface-card-photo','.wall-finish-types .surface-card-photo','#plinth-card .surface-hero']:
+  page.locator('[data-finish-tab='+('countertop' if selector.startswith('.countertop') else 'wall' if selector.startswith('.wall') else 'plinth')+']').click()
   for picture in page.locator(selector).all():
    picture.scroll_into_view_if_needed()
    page.wait_for_function('(url)=>[...document.images].some(i=>i.src===url&&i.complete&&i.naturalWidth>0)',arg=base+picture.get_attribute('src'))
+ page.locator('[data-finish-tab=wall]').click()
  page.locator('.wall-finish-types').screenshot(path=str(out/'backsplash-types.png'))
  page.evaluate("MF_PLANNER.workspace.closePanels()")
  page.set_viewport_size({'width':390,'height':844});page.locator('#planner-mobile-catalog').click()
  for selector in ['.countertop-choices','.wall-finish-types']:
+  page.locator('[data-finish-tab='+('countertop' if selector.startswith('.countertop') else 'wall')+']').click()
   box=page.locator(selector);box.scroll_into_view_if_needed();box.screenshot(path=str(out/(selector[1:]+'-mobile.png')))
   assert box.evaluate('(e)=>e.scrollWidth<=e.clientWidth+1')
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')

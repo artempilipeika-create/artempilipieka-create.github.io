@@ -23,7 +23,7 @@ export class WallFinishUI{
   const originals=el('details');originals.append(el('summary','Детали и исходники БАЗИС'),note);
   for(const s of sources){const a=el('a',shapeNames[s.shape]+' · FR3D');a.href='/account/planner/wall-panel-sources/'+encodeURIComponent(s.source_file);a.download=s.source_file;originals.append(a);}card.append(originals);
   document.getElementById('module-catalogue').before(card);
-  document.getElementById('countertop-module-control').append(this.button('Фартук и настенная подсветка',()=>{app.workspace?.panel('left',true,{manual:true,focus:true});card.scrollIntoView({block:'start',behavior:'smooth'});}));
+  document.getElementById('countertop-module-control').append(this.button('Фартук и настенная подсветка',()=>{app.finishCatalogue.open('wall');}));
  }
  button(text,fn){const b=el('button',text);b.type='button';b.className='secondary';this.app.listen(b,'click',fn);return b;}
  change(label,fn){try{this.app.interaction.change(label,()=>{fn();this.app.bridge.refresh();});}catch(e){this.app.adapter.status(e.message);this.key=null;this.sync();}}

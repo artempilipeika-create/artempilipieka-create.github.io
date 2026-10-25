@@ -54,6 +54,7 @@ with sync_playwright() as pw:
  page.locator('#studio-toggle-library').click()
  page.locator('#studio-toggle-inspector').click()
  page.locator('#tab-catalog').click()
+ page.locator('[data-module-filter=finishes]').click()
  assert page.locator('#countertop-card').is_visible()
  assert page.locator('#countertop-enabled').is_checked()
  # Add the actual corner return and adjoining modules using the production placement helper.

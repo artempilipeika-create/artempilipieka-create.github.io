@@ -21,3 +21,8 @@
   #appliance-tall-choice #appliance-tall-preview svg{height:160px;width:48px}
   #appliance-tall-size{max-width:165px;line-height:1.6}
 }
+
+#planner-workspace #appliance-tall-choice .ap-layouts button{display:flex;flex-direction:column;gap:8px;padding:12px 8px!important;text-align:center;font-size:11px!important}
+#planner-workspace #appliance-tall-choice .ap-option-image svg{width:64px;height:180px}
+#planner-workspace #appliance-tall-choice .ap-layouts button[aria-pressed=true]{background:#f1f7ff!important;border-color:#1677ff!important;box-shadow:inset 0 0 0 1px #1677ff;color:#1263cf}
+#planner-workspace #appliance-tall-choice #appliance-tall-preview svg{height:280px;width:95px}

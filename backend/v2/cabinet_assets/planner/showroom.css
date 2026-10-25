@@ -50,3 +50,26 @@
 @media(min-width:1101px){#planner-workspace .mf3d-left{width:390px}#planner-workspace .studio-pane{padding:14px 16px}#planner-workspace .studio-panel-title{padding:18px 16px 14px}}
 @media(max-width:760px){#planner-workspace .mf3d-top{height:80px;min-height:80px}#planner-workspace .mf3d-brand{font-size:17px}#planner-workspace .mf3d-left,#planner-workspace .mf3d-right{border-radius:18px 18px 12px 12px}#planner-workspace .studio-panel-title h1{font-size:18px}#planner-workspace .studio-card-category{font-size:8px}#planner-workspace .studio-card-add{width:28px;height:28px}}
 @media(prefers-reduced-motion:reduce){#planner-workspace .mf3d-module{transition:none}#planner-workspace .mf3d-module:hover,#planner-workspace .mf3d-module:focus-visible{transform:none}}
+
+/* Large product images, compact captions. One clear choice per row. */
+#planner-workspace .mf3d-module-group{grid-template-columns:minmax(0,1fr);gap:16px}
+#planner-workspace .mf3d-module[data-card-artwork] .studio-preview{aspect-ratio:4/3;object-fit:contain}
+#planner-workspace .mf3d-module[data-card-artwork][data-category=tall] .studio-preview{aspect-ratio:1/1;object-fit:cover}
+#planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy{padding:13px 16px 8px;gap:5px}
+#planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy strong{font-size:17px}
+#planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy>span:not(.studio-card-options){min-height:0;font-size:12px;line-height:1.45}
+#planner-workspace .mf3d-module[data-card-artwork] .studio-card-meta{padding:0 16px 13px;font-size:11px}
+#planner-workspace .studio-card-add{width:36px;height:36px;font-size:25px;right:12px;bottom:12px}
+#planner-workspace .studio-card-category{font-size:10px;top:12px;left:12px;padding:4px 8px}
+#planner-workspace .studio-card-options{margin-top:2px;gap:6px}
+#planner-workspace .studio-card-options>span{font-size:10px!important;padding:3px 7px}
+#planner-workspace .mf3d-catalog-tools input:disabled{display:none}
+#kitchen-finishes-menu{scroll-margin-top:10px}
+#kitchen-finishes-menu>h2{margin:12px 0 6px;font-size:20px;color:#203b30}
+#kitchen-finishes-menu>.studio-hint{font-size:12px;line-height:1.5;margin:0 0 14px}
+.finish-menu-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;background:#eceee7;padding:4px;border-radius:12px}
+.finish-menu-tabs button{border:0!important;background:transparent!important;color:#425549!important;min-width:0;padding:10px 3px!important;border-radius:8px;font-size:12px!important;font-weight:600;white-space:normal}
+.finish-menu-tabs button[aria-selected=true]{background:#fff!important;color:#1263cf!important;box-shadow:0 2px 6px #183e3315}
+.finish-menu-tabs button:focus-visible{outline:2px solid #1677ff;outline-offset:1px}
+#planner-workspace #kitchen-finishes-menu>[role=tabpanel]{margin-top:14px}
+#planner-workspace [hidden]{display:none!important}

@@ -10,7 +10,7 @@ export class CountertopUI{
     this.buttons=[];
     for(const [value,label]of [['standard','Обычная'],['euro','Еврозапил']]){
       const b=el('button');b.type='button';b.className='secondary';b.dataset.joint=value;
-      const photo=el('img');photo.className='surface-card-photo';photo.src='/account/planner/module-card-images/countertop-'+value+'.webp?v=20261025-precise-cards';photo.alt='';photo.width=640;photo.height=480;photo.loading='lazy';photo.draggable=false;app.listen(photo,'error',()=>photo.remove());
+      const photo=el('img');photo.className='surface-card-photo';photo.src='/account/planner/module-card-images/countertop-'+value+'.webp?v=20261025-lively-cards';photo.alt='';photo.width=640;photo.height=480;photo.loading='lazy';photo.draggable=false;app.listen(photo,'error',()=>photo.remove());
       const diagram=el('span');diagram.className='surface-card-diagram';diagram.innerHTML=globalThis.MF_CHOICE_CARDS?.jointDetail(value)||C.drawing('left',value);diagram.setAttribute('aria-hidden','true');
       b.append(photo,el('strong',label),el('small',value==='euro'?'Фрезерованный переход':'Прямой стык'),diagram);choices.append(b);this.buttons.push(b);
       app.listen(b,'click',()=>app.interaction.change('Соединение столешницы',()=>{

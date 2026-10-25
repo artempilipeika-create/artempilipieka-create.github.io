@@ -1,6 +1,6 @@
 (function(root){
  'use strict';
- const version='20261025-precise-cards';
+ const version='20261025-lively-cards';
  function image(file){return '/account/planner/module-card-images/'+file+'.webp?v='+version;}
  function corner(controls,variant){
   if(!variant)return;
