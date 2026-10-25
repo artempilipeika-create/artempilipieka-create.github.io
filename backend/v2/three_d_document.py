@@ -14,6 +14,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
+from .three_d_cargo import cargo_variant, cargo_hardware, cargo_contents, cargo_adjustment
 from .three_d_pullout_dryers import dryer_variant, dryer_hardware, dryer_contents, refresh_dryer_source
 from .three_d_tall import tall_variant,tall_shelf_count,tall_hardware,tall_drawer_note
 from .three_d_accessories import dishwasher, dishwasher_hardware, dishwasher_contents, plinth_summary
@@ -92,6 +93,7 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     it=refresh_dryer_source(it)
+    if cargo_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in cargo_hardware(it)],cargo_adjustment(it)
     if dryer_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dryer_hardware(it)],' '.join(dryer_variant(it)['warnings']) or None
     if dishwasher(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dishwasher_hardware(it)],None
     if gola_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in gola_hardware(it)],gola_note(it)
@@ -153,9 +155,10 @@ def hardware_for(it):
 
 def module_contents(it):
     it=refresh_dryer_source(it)
-    v=gola_variant(it) or dryer_variant(it);dish=dishwasher(it)
+    v=gola_variant(it) or dryer_variant(it) or cargo_variant(it);dish=dishwasher(it)
     gola_front=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
     alignment=' От лицевой поверхности закрытого фасада до переднего края столешницы 0,5 мм.' if gola_front else ''
+    if cargo_variant(it):return cargo_contents(it)+alignment
     if dryer_variant(it):return dryer_contents(it)+alignment
     if dish:return dishwasher_contents(it)+alignment
     if gola_variant(it):return gola_contents(it)+alignment
@@ -208,6 +211,9 @@ def module_materials(it,body,front,materials=None):
         profiles=dishwasher(it)['profiles']
         profile=profiles[0].get('documentation_profile',profiles[0]) if profiles else None
         return [('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004')]+([('Профиль',profile['material_name'])] if profile else [])
+    cargo=cargo_variant(it)
+    if cargo:
+        return [('Корпус 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004'),('Задняя стенка 3 мм',(materials or {}).get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый'))]+([('Профиль',cargo['profiles'][0]['material_name'])] if cargo['profiles'] else [])
     gola=gola_variant(it)
     if gola and not drawer_variant(it):
         materials=materials or {}

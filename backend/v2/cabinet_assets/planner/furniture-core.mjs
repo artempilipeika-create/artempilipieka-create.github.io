@@ -13,6 +13,8 @@ import './accessory-variants.js?v=20261021-accessories';
 import './accessories.js?v=20261021-accessories';
 import './pullout-dryer-variants.js';
 import './pullout-dryer-model.js';
+import './cargo-variants.js';
+import './cargo-model.js';
 import './furniture-core.js?v=20261024-default-materials';
 export const {VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY}=globalThis.MF_FURNITURE_CORE;
 export const {APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote}=globalThis.MF_FURNITURE_CORE;

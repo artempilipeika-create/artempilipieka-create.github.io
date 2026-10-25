@@ -254,7 +254,7 @@
   const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.all||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
   const GOLA_PRODUCTION=freeze(Object.fromEntries((root.MF_GOLA?.variants||[]).map(v=>[v.id,root.MF_GOLA.model(v)])));
   const ACCESSORY_PRODUCTION=freeze(Object.fromEntries((root.MF_ACCESSORIES?.dishwashers||[]).map(v=>[v.id,root.MF_ACCESSORIES.model(v)])));
-  const PRODUCTION_MODELS=Object.freeze({...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  const PRODUCTION_MODELS=Object.freeze({...Object.fromEntries((root.MF_CARGO?.variants||[]).map(v=>[v.id,root.MF_CARGO.model(v)])),...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
   function tallVariantInfo(it){return allTallVariants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function tallVariant(it,patch,catalogue){
     const current=tallVariantInfo(it);
@@ -361,6 +361,7 @@
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
     if(p?.dishwasher)return root.MF_ACCESSORIES.dimensionError(it);
+    if(p?.cargo)return root.MF_CARGO.dimensionError(it);
     if(p?.pullout_dryer)return root.MF_PULLOUT_DRYERS.dimensionError(it);
     if(p?.gola)return root.MF_GOLA.dimensionError(it);
     if(p?.upper)return root.MF_UPPERS.dimensionError(it);
@@ -393,7 +394,7 @@
   }
 
   function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
-    if(p?.gola)return [];
+    if(p?.gola||p?.cargo)return [];
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.shelves(it,p);
     if(!p||p.tall||p.vitrine||p.metal_drawers)return [];
     if(p.corner?.purpose==='sink')return [];
@@ -422,6 +423,7 @@
   }
   function productionHardware(it,p=PRODUCTION_MODELS[it?.bazis_id]){
     if(p?.dishwasher)return root.MF_ACCESSORIES.hardware(it);
+    if(p?.cargo)return root.MF_CARGO.hardware(it,p);
     if(p?.pullout_dryer)return root.MF_PULLOUT_DRYERS.hardware(it,p);
     if(p?.gola)return root.MF_GOLA.hardware(it,p);
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.hardware(it,p);
@@ -513,7 +515,7 @@
   }
   function golaCountertop(it){
     const p=PRODUCTION_MODELS[it?.bazis_id];
-    return Boolean(isKitchenModule(it)&&(p?.gola?.execution==='gola'||p?.dishwasher?.variant==='gola'));
+    return Boolean(isKitchenModule(it)&&(p?.gola?.execution==='gola'||p?.cargo?.execution==='gola'||p?.dishwasher?.variant==='gola'));
   }
   function alignKitchenChange(source,next){
     if(!golaCountertop(source)&&!golaCountertop(next))return next;
@@ -594,6 +596,7 @@
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(production?.cargo)return root.MF_CARGO.facades(it,production);
     if(production?.dishwasher)return root.MF_ACCESSORIES.facades(it,production);
     if(production?.gola)return root.MF_GOLA.facades(it,production);
     if(production?.metal_drawers)return root.MF_DRAWERS.facades(it,production);
@@ -684,6 +687,7 @@
   }
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(!p?.carcass)return null;
+    if(p.cargo)return root.MF_CARGO.parts(it,p,materialLookup);
     if(p.dishwasher)return root.MF_ACCESSORIES.parts(it,p,materialLookup);
     if(p.gola)return root.MF_GOLA.parts(it,p,materialLookup);
     if(p.metal_drawers)return root.MF_DRAWERS.parts(it,p,materialLookup);

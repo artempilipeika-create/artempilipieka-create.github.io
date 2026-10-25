@@ -133,6 +133,15 @@ class PlannerApplication {
         this.adapter.replace(next);this.adapter.status('Исполнение верхнего шкафа изменено');
       });this.bridge.refresh();
     });
+    this.listen(get('cargo-controls'),'change',e=>{
+      const field=e.target.dataset.cargoOption,it=this.adapter.selected,C=globalThis.MF_CARGO;
+      if(!field||!C.info(it))return;
+      if(field==='width'){this.interaction.modify({width:Number(e.target.value)},'Ширина карго');this.bridge.refresh();return;}
+      this.interaction.change('Исполнение карго',()=>{
+        const next=globalThis.MF_FURNITURE_CORE.alignKitchenChange(it,C.select(it,{[field]:field==='width'?Number(e.target.value):e.target.value},this.bridge.catalogue.bazisModules));
+        const error=this.adapter.validate(next);if(error)throw new Error(error);this.adapter.replace(next);
+      });this.bridge.refresh();
+    });
     this.listen(get('pullout-dryer-controls'),'change',e=>{
       const field=e.target.dataset.dryerOption,it=this.adapter.selected,D=globalThis.MF_PULLOUT_DRYERS;
       if(!field||!D.info(it))return;

@@ -33,6 +33,9 @@
 <script defer src="/account/planner/pullout-dryer-variants.js"></script>
 <script defer src="/account/planner/pullout-dryer-model.js"></script>
 <script defer src="/account/planner/pullout-dryer-ui.js"></script>
+<script defer src="/account/planner/cargo-variants.js"></script>
+<script defer src="/account/planner/cargo-model.js"></script>
+<script defer src="/account/planner/cargo-ui.js"></script>
 <script defer src="/account/planner/furniture-core.js?v=20261024-default-materials"></script>
 <link rel="stylesheet" href="/account/planner/accessories.css?v=20261021-accessories">
 <script defer src="/account/planner/appliance-tall-ui.js"></script>
@@ -136,6 +139,13 @@
      <button type="button" class="secondary" data-base-option="side" data-base-value="right" aria-pressed="false"><span class="gola-option-image"></span><strong>Петли справа</strong><small>Открывание P</small></button>
     </div>
     <p id="base-source-note" class="studio-hint" aria-live="polite"></p>
+   </div>
+   <div id="cargo-controls" class="mf3d-control-card" hidden>
+    <h3>Карго</h3>
+    <label>Фурнитура<select data-cargo-option="brand"><option value="focus">FOCUS · графит</option><option value="norwing">NORWING · хром</option><option value="icon">ICON · графит</option></select></label>
+    <label>Ширина шкафа<select data-cargo-option="width"></select></label>
+    <label>Исполнение<select data-cargo-option="execution"><option value="standard">Накладная ручка</option><option value="gola">Gola L без подсветки</option></select></label>
+    <p id="cargo-note" class="studio-hint" aria-live="polite"></p>
    </div>
    <div id="pullout-dryer-controls" class="mf3d-control-card" hidden>
     <h3>Шкаф с выдвижной сушкой</h3>

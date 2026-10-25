@@ -295,7 +295,7 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!production?.dishwasher&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.dishwasher&&!production?.cargo&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
@@ -327,13 +327,32 @@ export class MeshFactory{
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
     }
-    if(production?.gola||production?.dishwasher)for(const profile of production.dishwasher?globalThis.MF_ACCESSORIES.profiles(it):globalThis.MF_GOLA.profiles(it)){
+    if(production?.cargo||production?.gola||production?.dishwasher)for(const profile of production.cargo?globalThis.MF_CARGO.profiles(it):production.dishwasher?globalThis.MF_ACCESSORIES.profiles(it):globalThis.MF_GOLA.profiles(it)){
       const mesh=this.contourPanel(group,{...profile,role:'lightProfile',position:{x:profile.x+profile.length/2},size:{x:profile.length},material:{}},ghost);
       mesh.userData.visualOnly=true;mesh.userData.golaProfile=profile.name;
     }
     if(production?.metal_drawers)for(const part of globalThis.MF_DRAWERS.metalParts(it,production)){
       const d=part.size,c=part.position,m=this.box(group,'drawerMetal',d.x,d.y,d.z,c.x,c.y,c.z,null,ghost);
       m.userData.visualOnly=true;m.userData.drawerMetal=true;m.userData.drawerIndex=part.drawer_index;
+    }
+    if(production?.cargo){
+      const b=globalThis.MF_CARGO.basket(it),pieces=[];
+      const add=(x,y,z,w,h,d)=>pieces.push({x,y,z,w,h,d});
+      // Two inspection baskets, contained in the selected donor's measured envelope.
+      for(const level of [0,b.height-100]){
+        add(b.x,b.y+level+3,b.z,b.width-12,3,b.depth-16);
+        for(const sign of [-1,1]){
+          add(b.x+sign*(b.width/2-4),b.y+level+50,b.z,3,3,b.depth-8);
+          add(b.x,b.y+level+50,b.z+sign*(b.depth/2-4),b.width-8,3,3);
+          for(const end of [-1,1])add(b.x+sign*(b.width/2-4),b.y+level+26,b.z+end*(b.depth/2-4),3,50,3);
+        }
+      }
+      for(const end of [-1,1])add(b.x,b.y+b.height/2,b.z+end*(b.depth/2-4),5,b.height,5);
+      for(const p of pieces){
+        const mesh=this.box(group,'drawerMetal',p.w,p.h,p.d,p.x,p.y,p.z,null,ghost);
+        mesh.material=mesh.material.clone();mesh.material.color.set(production.cargo.brand==='norwing'?'#b7bdc2':'#555b5d');
+        Object.assign(mesh.userData,{visualOnly:true,cargoBasket:true,drawerIndex:1});
+      }
     }
     if(production?.pullout_dryer){
       const b=globalThis.MF_PULLOUT_DRYERS.basket(it),pieces=[];

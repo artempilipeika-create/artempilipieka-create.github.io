@@ -24,6 +24,7 @@ from .three_d_accessories import dishwasher, dishwasher_error, BY_ID as DISHWASH
 from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
 from .three_d_base import refresh_base_source
+from .three_d_cargo import cargo_variant, cargo_error, BY_ID as CARGO_BY_ID
 from .three_d_pullout_dryers import dryer_variant, dryer_error, refresh_dryer_source, BY_ID as PULLOUT_DRYER_BY_ID
 
 class ShelfState(StrictModel):
@@ -128,7 +129,7 @@ class FurnitureItem(StrictModel):
         refreshed=refresh_dryer_source(refresh_base_source(refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file})))
         self.bazis_sha256=refreshed.get('bazis_sha256')
         self.bazis_file=refreshed.get('bazis_file')
-        v=gola_variant(refreshed) or dryer_variant(refreshed)
+        v=gola_variant(refreshed) or dryer_variant(refreshed) or cargo_variant(refreshed)
         dish=dishwasher(refreshed)
         is_gola=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
         expected_gap=(self.countertopDepthMm or 600)-self.depth-18.5 if is_gola else 50
@@ -191,6 +192,12 @@ class FurnitureItem(StrictModel):
             if error:raise ValueError(error)
             v=dishwasher(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0;self.handles='handleless' if v['variant']=='gola' else self.handles
+        if self.bazis_id in CARGO_BY_ID:
+            error=cargo_error(self.model_dump())
+            if error:raise ValueError(error)
+            v=cargo_variant(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            self.layout='drawers';self.drawers=1;self.shelves=[]
+            self.handles='handleless' if v['execution']=='gola' else 'handles'
         if self.bazis_id in PULLOUT_DRYER_BY_ID:
             error=dryer_error(self.model_dump())
             if error:raise ValueError(error)
