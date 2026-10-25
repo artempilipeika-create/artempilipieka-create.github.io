@@ -1,0 +1,3 @@
+before/
+input/*.glb
+!input/open-tall-none-none.glb
