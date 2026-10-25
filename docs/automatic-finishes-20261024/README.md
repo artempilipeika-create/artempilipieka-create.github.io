@@ -12,6 +12,16 @@ Validation: 54 targeted Node tests and 37 Python tests passed. Covers add/resize
 
 No database migration, new hosting, production order, external notification or Tripo generation is involved. Browser evidence and deployment details follow after live verification.
 
+## Tall cabinets and vitrines — 25 October 2026
+
+Automatic plinths now include shelf tall cabinets, appliance tall cabinets and Z1 vitrines. The derived plinth strips are grouped by their actual front plane, support height, elevation and material, independently of cabinet height and carcass depth. Tall strips use the existing lower-row setback: the outer plinth face is 69 mm behind the nominal closed facade, including the Z1 frame extension. Existing corner butt joints are retained. Real gaps, height changes, material boundaries and explicit module exclusions remain separate; countertop geometry remains limited to lower cabinets.
+
+In the existing **Цоколь по расстановке** mode, all eligible tall cabinets join automatically, including in saved projects. A selected tall cabinet can enable this mode through **Общий цоколь пеналов и кухни**. Existing manual row settings remain unchanged until that mode is enabled. Tall material assignment now accepts the **Цоколь** material field and the whole-kitchen material scope. Automatic geometry suppresses the former individual front/side plinth meshes, including explicitly excluded sections and catalogue previews. Shared strips remain visible in both lower and tall layer views. Changes to a tall material or source rebuild the shared geometry.
+
+Scene meshes, quantity/area calculations and native export use the same derived plan: one 2400 × 97 × 18 mm board under an aligned 600 mm lower cabinet plus three 600 mm tall cabinets, with no duplicate per-cabinet plinths. Undo/Redo, save/reopen, moving an end cabinet, module exclusions and tall material changes were verified through the local browser with mocked API endpoints. Original source geometry and SHA values are unchanged; native БАЗИС was not executed.
+
+Validation: 100 targeted Node tests passed (including all tall variants, four rotations, Gola, corners, material boundaries, actual mesh construction and pricing) and 31 Python tests passed. Excluded checks require accessory/countertop/wall-panel FR3D binaries absent from this local checkout. An existing unrelated pricing test expects three plinth boards where the previous front-only implementation returns one; the same failure was reproduced with the unchanged HEAD accessories code. The new mixed tall/lower pricing test confirms one physical board and its exact area.
+
 ## Live verification
 
 Runtime commit: `66da0f8835412b66e471dbf85d8a211d68ec8060`.

@@ -20,7 +20,7 @@ def dishwasher_contents(it):
 def plinth_summary(scene,entry):
  """Same straight-row grouping as the browser; returns source panel blank sizes."""
  if entry.get('automatic'):
-  return 'По расстановке кухни. Длина, углы и высота пересчитываются по текущим нижним шкафам; отключённые участки пропускаются. Каждая планка — прямой исходный FR3D, толщина 18 мм, высота опор минус 3 мм. Точные детали и положения — в экспорте БАЗИС.'
+  return 'По расстановке кухни. Общий цоколь нижних шкафов, пеналов и витрин по линии закрытых фасадов; одинаковые высота и материал объединяются, отключённые участки пропускаются. Каждая планка — прямой исходный FR3D, толщина 18 мм, высота опор минус 3 мм. Точные детали и положения — в экспорте БАЗИС.'
  import math
  def local(it):
   angle=math.radians(-it.get('rotation',0));c=round(math.cos(angle));s=round(math.sin(angle))

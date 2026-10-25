@@ -36,6 +36,43 @@
  const hardware=it=>({native_fixed_items:true,items:(info(it)?.profiles||[]).map(p=>p.documentation_profile||p).map(p=>({key:p.article,name:p.material_name,article:p.article,quantity:it.width/1000,unit:'m',cut_length_mm:it.width}))});
  function select(it,variant){const v=dishwashers.find(v=>v.variant===variant);if(!v)throw new Error('Не найдено исполнение посудомойки');return {...it,bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:true,handles:variant==='gola'?'handleless':'handles'};}
  const runFor=(state,id)=>C().kitchenRuns(state.items,state.room).find(r=>r.members.includes(id));
+ const supportsPlinth=it=>Boolean(it&&(C().isKitchenModule(it)||C().isTallModule(it)&&it.base!=='wall'&&C().heights(it).base_height>3));
+ // Worktops follow the rear edge and cabinet tops. Plinths instead follow the
+ // closed facade and support height, including tall cabinets of different depth.
+ function plinthRuns(items,room,lookup=()=>null){
+  const strips=[];
+  for(const run of C().kitchenRuns(items,room,lookup))for(const p of run.parts.filter(p=>p.role==='plinth')){
+   const origin=C().rotateXZ(run.position.x,run.position.z,-run.rotation);
+   strips.push({rotation:run.rotation,lo:origin.x+p.position.x-p.size.x/2,hi:origin.x+p.position.x+p.size.x/2,
+    z:origin.z+p.position.z,y:p.position.y,height:p.size.y,material:p.material,members:p.module_ids});
+  }
+  for(const it of items.filter(it=>C().isTallModule(it)&&supportsPlinth(it))){
+   const rotation=it.rotation||0,local=C().rotateXZ(it.x,it.z,-rotation),height=C().heights(it).base_height,id=it.plinthMaterialId||null,m=id?lookup(id):null;
+   strips.push({rotation,lo:local.x-it.width/2,hi:local.x+it.width/2,z:C().cabinetFrontDatum(it)-78,
+    y:C().elevation(it,room)+height/2,height,material:{variant_id:id,name:m?.name||null,article:m?.article||null},members:[it.item_id]});
+  }
+  const groups=new Map(),out=[];
+  for(const s of strips){
+   const key=[s.rotation,round(s.z),round(s.y),s.height,s.material.variant_id||''].join('|');
+   if(!groups.has(key))groups.set(key,[]);groups.get(key).push(s);
+  }
+  for(const group of groups.values()){
+   const merged=[];
+   for(const s of group.sort((a,b)=>a.lo-b.lo)){
+    const last=merged.at(-1);
+    if(last&&Math.abs(last.hi-s.lo)<.01){last.hi=s.hi;last.members.push(...s.members);}
+    else merged.push({...s,members:[...s.members]});
+   }
+   for(const s of merged){
+    const members=[...new Set(s.members)],run_id='plinth-run:'+members.join(':'),origin=C().rotateXZ((s.lo+s.hi)/2,s.z,s.rotation),length=round(s.hi-s.lo);
+    out.push({run_id,members,rotation:s.rotation,position:{x:origin.x,y:0,z:origin.z},parts:[{
+     part_id:run_id+':front',name:'Цоколь',role:'plinth',type:'panel',module_ids:members,material:s.material,
+     size:{x:length,y:s.height,z:18},position:{x:0,y:s.y,z:0},length,width:s.height,thickness:18,
+     orientation:{length_axis:'x',width_axis:'y',thickness_axis:'z'}}]});
+   }
+  }
+  return out;
+ }
  function manualPlans(state,lookup=()=>null){
   const runs=C().kitchenRuns(state.items,state.room),used=new Set();
   return (state.plinths||[]).filter(e=>!e.automatic).map(e=>{
@@ -71,7 +108,7 @@
   if(!entry)return manual;
   const excluded=new Set([...(entry.excluded_members||[]),...manual.flatMap(p=>p.members)]);
   const items=state.items.filter(it=>!excluded.has(it.item_id)).map(it=>entry.material_id?{...it,plinthMaterialId:entry.material_id}:it);
-  const runs=C().kitchenRuns(items,state.room,lookup),source=variants.find(v=>v.kind==='plinth'&&v.variant==='straight'),out=[];
+  const runs=plinthRuns(items,state.room,lookup),source=variants.find(v=>v.kind==='plinth'&&v.variant==='straight'),out=[];
   for(const run of runs)for(const p of run.parts.filter(p=>p.role==='plinth'&&p.length>0)){
    const rotation=run.rotation;
    const center=C().rotateXZ(p.position.x,p.position.z,run.rotation),id=entry.id+':'+p.part_id;
@@ -83,7 +120,7 @@
    const nativeCenter=C().rotateXZ(part.position.x,part.position.z,rotation);
    out.push({id,setting_id:entry.id,automatic:true,run_id:'plinth:'+id,members:p.module_ids,shape:'straight',source,target,rotation,
     position:{x:round(run.position.x+center.x-nativeCenter.x),y:round(p.position.y-p.size.y/2),z:round(run.position.z+center.z-nativeCenter.z)},
-    parts:ps,width:length,height:p.size.y,depth:600,inset:51,material_id:materialId});
+    parts:ps,width:length,height:p.size.y,depth:600,inset:51,facade_inset:69,material_id:materialId});
   }
   return [...manual,...out];
  }
@@ -92,9 +129,9 @@
   const body=p.parts[0]?.material;
   return {name:(p.automatic?'Цоколь по расстановке · ':'Цоколь ряда · ')+names[p.shape],source_file:p.source.source_file,source_sha256:p.source.source_sha256,
    source_default:{width:600,height:100,depth:600},target:p.target,position:p.position,rotation:p.rotation,elastic_resize:true,
-   material_assignments:{body},construction:{key:'row.plinth',parts:p.parts},production_note:'Цоколь на весь ряд. '+names[p.shape]+'. Детали по исходному FR3D; отступ от передней плоскости модуля '+p.inset+' мм.'};
+   material_assignments:{body},construction:{key:'row.plinth',parts:p.parts},production_note:'Цоколь на весь ряд. '+names[p.shape]+'. Детали по исходному FR3D; '+(p.automatic?'отступ от наружной плоскости закрытого фасада '+p.facade_inset:'отступ от передней плоскости модуля '+p.inset)+' мм.'};
  });}
  const names={straight:'Прямой',left:'Возврат слева',right:'Возврат справа',u:'П-образный'};
  function drawing(shape){const left=shape==='left'||shape==='u',right=shape==='right'||shape==='u';return '<svg viewBox="0 0 160 80" aria-hidden="true"><path d="M20 60H140'+(right?'V15':'')+(left?'M20 60V15':'')+'" fill="none" stroke="currentColor" stroke-width="9" stroke-linejoin="round"/><path d="M20 72H140" stroke="currentColor" opacity=".25"/><text x="80" y="35" text-anchor="middle" font-size="10" fill="currentColor">вид сверху</text></svg>';}
- root.MF_ACCESSORIES=Object.freeze({variants,dishwashers,info,model,dimensionError,parts,facades,profiles,hardware,select,panels,elastic,runFor,plans,nativeItems,names,drawing});
+ root.MF_ACCESSORIES=Object.freeze({variants,dishwashers,info,model,dimensionError,parts,facades,profiles,hardware,select,panels,elastic,runFor,supportsPlinth,plinthRuns,plans,nativeItems,names,drawing});
 })(globalThis);

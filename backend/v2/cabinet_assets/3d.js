@@ -999,7 +999,8 @@ async function searchMaterial(input,results,kind){
       if(kind==='drawer')targets=targets.filter(x=>templateFor(x)?.production?.metal_drawers);
       if(kind==='drawerback')targets=targets.filter(x=>globalThis.MF_DRAWERS.familyInfo(x));
       if(kind==='front')targets=targets.filter(x=>!templateFor(x)?.production?.vitrine);
-      if(kind==='plinth'||kind==='countertop')targets=targets.filter(x=>core.kitchenSettings(x));
+      if(kind==='plinth')targets=targets.filter(x=>globalThis.MF_ACCESSORIES.supportsPlinth(x));
+      if(kind==='countertop')targets=targets.filter(x=>core.kitchenSettings(x));
       if(!targets.length){status('В выбранной группе нет модулей для этого материала.');return;}
       const field={body:'body_variant_id',front:'front_variant_id',plinth:'plinthMaterialId',countertop:'countertopMaterialId'}[kind];
       for(const target of targets){

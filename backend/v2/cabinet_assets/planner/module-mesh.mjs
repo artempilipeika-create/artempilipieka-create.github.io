@@ -446,10 +446,15 @@ export class MeshFactory{
     }
     for(const plan of globalThis.MF_ACCESSORIES?.plans(decorationState,id=>this.adapter.material(id))||[]){
       if(plan.error)continue;
-      const g=new THREE.Group();g.userData={tier:'base',members:plan.members,productionRun:plan};
+      const tiers=[...new Set(items.filter(it=>plan.members.includes(it.item_id)).map(tier))];
+      const g=new THREE.Group();g.userData={tier:tiers[0]||'base',tiers,members:plan.members,productionRun:plan};
       for(const p of plan.parts){const d=p.size,c=p.position,m=this.box(g,'plinth',d.x,d.y,d.z,c.x,c.y,c.z,p.material.variant_id);m.userData.part=p;m.userData.productionPart='plinth';}
       g.position.set(plan.position.x*S,plan.position.y*S,plan.position.z*S);g.rotation.y=-plan.rotation*Math.PI/180;root.add(g);
+      root.userData.mergedPlinthIds.push(...plan.members);
     }
+    // The automatic plan owns exclusions too: a disabled tall section must not
+    // reveal the old per-cabinet front and side plinth meshes underneath it.
+    if(decorationState.plinths?.some(p=>p.automatic))root.userData.mergedPlinthIds.push(...items.filter(it=>globalThis.MF_ACCESSORIES.supportsPlinth(it)).map(it=>it.item_id));
     for(const it of items){
       if(isKitchenModule(it)||tier(it)!=='base'||it.depth>750)continue;
       const r=it.rotation||0,axis=r===90||r===270?'z':'x',cross=axis==='x'?'z':'x',normal=rotateXZ(0,1,r)[cross];
@@ -561,7 +566,9 @@ export class CataloguePreviews{
     // never enter a thumbnail or affect its bounds/camera. Use the same native
     // automatic plinth planner, scoped exclusively to this draft cabinet.
     const previewState={room:adapter.room,items:[it],plinths:[{id:'catalogue-plinth',automatic:true,members:[],shape:'straight',excluded_members:[]}]};
-    const model=factory.build(it),dress=factory.dress([it],previewState);scene.add(model,dress);
+    const model=factory.build(it),dress=factory.dress([it],previewState);
+    if(dress.userData.mergedPlinthIds.includes(it.item_id))model.traverse(m=>{if(m.userData.role==='plinth')m.visible=false;});
+    scene.add(model,dress);
     const b=new THREE.Box3().setFromObject(model).expandByObject(dress),center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3());
     const span=Math.max(size.x,size.y,size.z,.1);
     this.floor.position.set(center.x,b.min.y-.003,center.z);this.floor.scale.set(span*8,span*8,1);

@@ -5,14 +5,15 @@ export class AccessoryUI{
  constructor(app){
   this.app=app;
   const card=el('section');card.id='plinth-card';card.className='mf3d-control-card accessory-card';
-  card.append(el('h3','Цоколь'),el('p','Прямой цоколь по передней линии нижних шкафов, без боковых возвратов на концах ряда. Длина, углы кухни, разрывы и высота опор учитываются автоматически.'));
+  card.append(el('h3','Цоколь'),el('p','Единый цоколь по линии фасадов нижних шкафов, пеналов и витрин. Общие участки объединяются при одинаковой высоте опор и материале; разрывы и углы учитываются автоматически.'));
   this.auto=el('div');this.auto.className='automatic-finish';card.append(this.auto);
   const preview=el('div');preview.className='accessory-preview';preview.innerHTML=A.drawing('straight');card.append(preview);
   this.add=button('Добавить цоколь на выбранный ряд');card.append(this.add);
   this.note=el('p');this.note.className='studio-hint';this.note.setAttribute('aria-live','polite');card.append(this.note);
   this.list=el('div');card.append(this.list);document.getElementById('module-catalogue').before(card);
   app.listen(this.add,'click',()=>{
-   const s=app.adapter.state,run=A.runFor(s,app.adapter.selected?.item_id);if(!run)return;
+   const s=app.adapter.state,run=A.runFor(s,app.adapter.selected?.item_id);
+   if(!run){if(A.supportsPlinth(app.adapter.selected))this.change('Общий цоколь пеналов и кухни',()=>this.automatic());return;}
    this.change('Добавить цоколь',()=>{
     s.plinths=s.plinths||[];
     if(s.plinths.some(p=>p.members.some(id=>run.members.includes(id))))throw new Error('Для этого ряда цоколь уже добавлен. Настройки — в карточке ниже.');
@@ -53,7 +54,9 @@ export class AccessoryUI{
   const a=this.app.adapter,s=a.state,run=A.runFor(s,a.selected?.item_id),dish=A.info(a.selected);
   this.dish.hidden=!dish;for(const b of this.dishButtons)b.setAttribute('aria-pressed',String(b.dataset.variant===dish?.variant));
   if(dish){const p=A.parts(a.selected,{dishwasher:dish})[0];this.frontNote.textContent=`Фасад ${p.length} × ${p.width} × ${p.thickness} мм. Материал выбирается в разделе «Фасады».`;}
-  this.add.disabled=!run;this.note.textContent=run?`Выбран ряд: ${run.members.length} мод. · ${run.countertopActualLengthMm} мм`:'Выберите нижний шкаф или посудомойку на плане.';
+  const eligible=A.supportsPlinth(a.selected);
+  this.add.disabled=!eligible;this.add.textContent=run?'Добавить цоколь на выбранный ряд':'Общий цоколь пеналов и кухни';
+  this.note.textContent=run?`Выбран ряд: ${run.members.length} мод. · ${run.countertopActualLengthMm} мм`:eligible?'Пенал включается в общий цоколь по линии фасадов.':'Выберите нижний шкаф, пенал, витрину или посудомойку.';
   const plans=A.plans(s,id=>a.material(id)),key=JSON.stringify([plans,s.plinths,a.selected?.item_id]);
   if(key===this.key)return;this.key=key;this.list.replaceChildren();this.auto.replaceChildren();
   const setting=(s.plinths||[]).find(p=>p.automatic);this.add.hidden=!!setting;
@@ -63,8 +66,8 @@ export class AccessoryUI{
   }));
   if(!setting&&s.plinths?.length)this.auto.append(el('p','Включение переведёт ручные цоколи на автоматический расчёт. Материалы сохранятся.'));
   if(setting){
-   const autoPlans=plans.filter(p=>p.automatic),note=el('p',autoPlans.length?'Участки: '+autoPlans.map(p=>p.error||p.width+' × '+(p.height-3)+' × 18').join(' / ')+' мм.':'Добавьте нижние шкафы — цоколь появится автоматически.');note.className='studio-hint';this.auto.append(note);
-   if(a.selected&&run){const label=el('label','Цоколь у выбранного модуля'),input=el('input');input.type='checkbox';input.checked=!(setting.excluded_members||[]).includes(a.selected.item_id);input.setAttribute('aria-label','Цоколь у выбранного модуля');label.append(input);this.auto.append(label);
+   const autoPlans=plans.filter(p=>p.automatic),note=el('p',autoPlans.length?'Участки: '+autoPlans.map(p=>p.error||p.width+' × '+(p.height-3)+' × 18').join(' / ')+' мм.':'Добавьте нижние шкафы или пеналы — цоколь появится автоматически.');note.className='studio-hint';this.auto.append(note);
+   if(eligible){const label=el('label','Цоколь у выбранного модуля'),input=el('input');input.type='checkbox';input.checked=!(setting.excluded_members||[]).includes(a.selected.item_id);input.setAttribute('aria-label','Цоколь у выбранного модуля');label.append(input);this.auto.append(label);
     this.app.listen(input,'change',()=>this.change('Участок цоколя',()=>{const ids=new Set(setting.excluded_members||[]);input.checked?ids.delete(a.selected.item_id):ids.add(a.selected.item_id);setting.excluded_members=[...ids];}));
    }
    this.auto.append(el('p',setting.material_id?'Общий материал: '+(a.material(setting.material_id)?.name||'назначен'):'Материал — из настройки «Цоколь» каждого шкафа.'));
