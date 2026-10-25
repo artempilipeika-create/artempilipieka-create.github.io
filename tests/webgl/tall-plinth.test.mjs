@@ -25,7 +25,7 @@ for(const rotation of [0,90,180,270])for(const gola of [false,true])test(`One ph
  const native=A.nativeItems(s);assert.equal(native.length,1);assert.equal(native[0].target.width,2400);assert.equal(native[0].construction.parts.length,1);assert.match(native[0].production_note,/закрытого фасада 69 мм/);assert.equal(JSON.stringify(s),before);
 });
 test('All shelf, appliance and Z1 sources participate without depending on cabinet height or body depth',()=>{
- for(const v of [...C.TALL_VARIANTS,...C.APPLIANCE_TALL_VARIANTS,...C.VITRINE_VARIANTS]){
+ for(const v of [...C.TALL_VARIANTS,...C.APPLIANCE_TALL_VARIANTS,...C.VITRINE_VARIANTS,...globalThis.MF_OPEN_TALL.variants]){
   const s=scene(),lower=s.items[0],tall=C.alignTallFront(item(v.id,{height:2600,x:600}),lower,room);s.items=[lower,tall];
   assert.equal(A.plans(s).length,1,v.id);assert.equal(A.plans(s)[0].width,1200,v.id);
  }

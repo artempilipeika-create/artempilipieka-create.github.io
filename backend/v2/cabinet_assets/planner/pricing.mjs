@@ -63,6 +63,13 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
       ...(item.handles!=='handleless'?[row('handles','Ручки',null,'pcs','Article and quantity rule not supplied')]:[])],
     operations:['Распил','Кромкооблицовка','Присадка','Сборка'].map((label,i)=>row('operation:'+i,label,null,'operation','Billing quantity rule not supplied')),
     extras:[]};
+  if(template?.production?.open_tall){
+    const m=globalThis.MF_OPEN_TALL.metrics(item);
+    if(m.lighting_sides.length){
+      sections.operations.push(row('operation:led-groove-'+m.groove_width_mm+'x'+m.groove_depth_mm,'Фрезеровка паза · '+m.groove_width_mm+' × '+m.groove_depth_mm+' мм',m.groove_total_m,'m','FR3D groove trajectory'));
+      sections.extras.push(row('lighting:power-control','Питание 12 В, управление, провод и соединения · подбор для группы',null,'set','Схема подключения не задана',{note:'Нагрузка ленты: '+m.led_power_w+' Вт. '+m.lighting_note}));
+    }
+  }
   if(template?.production?.vitrine){
     const m=globalThis.MF_VITRINE.metrics(item);
     sections.operations.push(row('operation:led-groove-'+m.groove_width_mm+'x'+m.groove_depth_mm,'Фрезеровка паза · ширина '+m.groove_width_mm+' мм / глубина '+m.groove_depth_mm+' мм',m.groove_total_m,'m','FR3D groove trajectory'));

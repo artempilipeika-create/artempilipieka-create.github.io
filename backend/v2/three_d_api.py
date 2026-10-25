@@ -25,6 +25,7 @@ from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
 from .three_d_base import refresh_base_source
 from .three_d_cargo import cargo_variant, cargo_error, BY_ID as CARGO_BY_ID
+from .three_d_open_tall import open_tall_variant, open_tall_error, BY_ID as OPEN_TALL_BY_ID
 from .three_d_pullout_dryers import dryer_variant, dryer_error, refresh_dryer_source, BY_ID as PULLOUT_DRYER_BY_ID
 
 class ShelfState(StrictModel):
@@ -192,6 +193,11 @@ class FurnitureItem(StrictModel):
             if error:raise ValueError(error)
             v=dishwasher(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0;self.handles='handleless' if v['variant']=='gola' else self.handles
+        if self.bazis_id in OPEN_TALL_BY_ID:
+            error=open_tall_error(self.model_dump())
+            if error:raise ValueError(error)
+            v=open_tall_variant(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            self.layout='niche';self.drawers=0;self.shelves=[];self.handles='handleless';self.front_variant_id=None;self.doors_open=False
         if self.bazis_id in CARGO_BY_ID:
             error=cargo_error(self.model_dump())
             if error:raise ValueError(error)
@@ -238,7 +244,7 @@ class FurnitureItem(StrictModel):
             self.handles='handleless'
             self.front_variant_id=None
         tall=tall_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
-        if self.upper_shelf_count is not None and not tall:
+        if self.upper_shelf_count is not None and not tall and not open_tall_variant(self.model_dump()):
             raise ValueError('Количество верхних полок доступно только для проверенного пенала')
         if tall:
             if self.module_type!='tall_cabinet' or base!=100 or self.base=='wall':

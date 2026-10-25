@@ -47,7 +47,7 @@ export function replacement(source,draft,oldTemplate,newTemplate,keepDimensions=
   if(source.module_type==='wall_cabinet'&&(Number.isFinite(source.elevation_mm)||room))next.elevation_mm=elevation(source,room);
   for(const key of ['body_variant_id','front_variant_id','back_variant_id','plinthMaterialId','countertopMaterialId','production_note','doors_open'])
     if(Object.hasOwn(source,key))next[key]=clone(source[key]);
-  if(newTemplate?.production?.vitrine)next.front_variant_id=null;
+  if(newTemplate?.production?.vitrine||newTemplate?.production?.open_tall)next.front_variant_id=null;
   if(kitchenGroup(source)==='lower')for(const key of ['legHeightMm','base_height','rearServiceGapMm','countertopDepthMm','countertopStockLengthMm','countertopThicknessMm','countertopEnabled','countertopJoint','worktop_thickness'])
     if(Object.hasOwn(source,key))next[key]=source[key];
   next=normalizeKitchen(next);

@@ -100,8 +100,14 @@ def ledger(scene):
             # Unknown articles never inherit a similar-looking part's article.
             key = (row['name'],row['article'],row['unit'])
             if key not in result: result[key] = {**row,'qty':0,'modules':[]}
-            result[key]['qty'] += row['qty']
-            if row['qty'] != 0: result[key]['modules'].append(f'М{i}: {row["qty"]:g}')
+            # A mounting quantity not yet specified is unknown, never zero or one.
+            if row['qty'] is None:
+                result[key]['qty'] = None
+                result[key]['modules'].append(f'М{i}: уточнить')
+                warnings.append(f'М{i}: {row["name"]} — количество уточнить по монтажу')
+            else:
+                if result[key]['qty'] is not None: result[key]['qty'] += row['qty']
+                if row['qty'] != 0: result[key]['modules'].append(f'М{i}: {row["qty"]:g}')
     by_article = {}
     for row in result.values():
         if row['article']: by_article.setdefault(row['article'],set()).add(row['name'])

@@ -14,6 +14,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Paragraph
 from .document_renderer import FONTS
 from .sales_hardware import ledger
+from .three_d_open_tall import open_tall_variant
 
 PAGE = landscape(A3); W,H = PAGE
 INK=HexColor('#19382e'); MUTED=HexColor('#6c756e'); PAPER=HexColor('#f6f3ed'); LINE=HexColor('#d9dfd7'); ACCENT=HexColor('#a88959')
@@ -132,7 +133,7 @@ def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,v
     pic(detail or hero,M,185,CW*.64,440)
     x=M+CW*.69; w=CW*.31; y=H-192
     for title,field in [('КОРПУС','body_variant_id'),('ФАСАДЫ','front_variant_id'),('ЦОКОЛЬ','plinthMaterialId'),('СТОЛЕШНИЦА','countertopMaterialId')]:
-        values=list(dict.fromkeys(material_name(materials,it.get(field)) for it in items if (field not in ('plinthMaterialId','countertopMaterialId') or it.get('module_type')!='wall_cabinet')))
+        values=list(dict.fromkeys(material_name(materials,it.get(field)) for it in items if (field not in ('plinthMaterialId','countertopMaterialId') or it.get('module_type')!='wall_cabinet') and not (field=='front_variant_id' and open_tall_variant(it))))
         if not values:continue
         text(title,x,y,10,ACCENT,True);y-=17
         y-=para('\n'.join(values),x,y,w,12);y-=25
@@ -143,7 +144,7 @@ def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,v
     page(3,'Состав проекта','Размеры указаны в миллиметрах: ширина × высота × глубина. Количество каждого шкафа - 1 шт.')
     rows=[]; thumbs=[]
     for i,it in enumerate(items,1):
-        rows.append([f'М{i}','',it.get('name') or it.get('module_type'),f"{it['width']} × {it['height']} × {it['depth']}",material_name(materials,it.get('front_variant_id'))])
+        rows.append([f'М{i}','',it.get('name') or it.get('module_type'),f"{it['width']} × {it['height']} × {it['depth']}",'Без фасада' if open_tall_variant(it) else material_name(materials,it.get('front_variant_id'))])
         thumbs.append(module_images.get(str(it.get('item_id'))))
     table(['№','Вид','Шкафчик','Ш × В × Г','Материал фасада'],rows,[45,100,320,190,CW-655],H-172,thumbs=thumbs)
     c.showPage()
@@ -152,7 +153,7 @@ def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,v
     split=(len(hardware)+1)//2
     for number,part in [(4,hardware[:split]),(5,hardware[split:])]:
         page(number,'Фурнитура / '+('01' if number==4 else '02'),'Количество по шкафчикам суммируется в итог. Комплект шариковых направляющих = пара; петли - штуками.')
-        rows=[[r['name'],r['article'] or 'Уточнить',f"{r['qty']:g}",UNITS.get(r['unit'],r['unit']),'; '.join(r['modules']) or '0'] for r in part]
+        rows=[[r['name'],r['article'] or 'Уточнить','Уточнить' if r['qty'] is None else f"{r['qty']:g}",UNITS.get(r['unit'],r['unit']),'; '.join(r['modules']) or '0'] for r in part]
         note_text='; '.join(notes)
         note_height=0
         if number==5 and note_text:
@@ -161,6 +162,6 @@ def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,v
         table(['Наименование','Артикул','Итого','Ед.','По шкафчикам'],rows,[CW*.43,CW*.14,62,60,CW*.43-122],H-172,bottom=95+note_height)
         if number==5:
             if note_text:para('Проверить перед закупкой: '+note_text,M,85+note_height,CW,10,MUTED)
-            para('Позиции «Уточнить» требуют подбора артикула. Цены, техника, декоративные аксессуары и монтажные расходники в расчёт не включены.',M,73,CW,9,MUTED)
+            para('Позиции «Уточнить» требуют подбора артикула или уточнения количества. Цены, техника, декоративные аксессуары и монтажные расходники в расчёт не включены.',M,73,CW,9,MUTED)
         c.showPage()
     c.save();return out.getvalue()

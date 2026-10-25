@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spac
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_cargo import cargo_variant, cargo_hardware, cargo_contents, cargo_adjustment
+from .three_d_open_tall import open_tall_variant, open_tall_hardware, open_tall_contents, open_tall_adjustment, open_tall_metrics
 from .three_d_pullout_dryers import dryer_variant, dryer_hardware, dryer_contents, refresh_dryer_source
 from .three_d_tall import tall_variant,tall_shelf_count,tall_hardware,tall_drawer_note
 from .three_d_accessories import dishwasher, dishwasher_hardware, dishwasher_contents, plinth_summary
@@ -93,6 +94,7 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     it=refresh_dryer_source(it)
+    if open_tall_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in open_tall_hardware(it)],' '.join(filter(None,[open_tall_adjustment(it),open_tall_metrics(it)['lighting_note']])) or None
     if cargo_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in cargo_hardware(it)],cargo_adjustment(it)
     if dryer_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dryer_hardware(it)],' '.join(dryer_variant(it)['warnings']) or None
     if dishwasher(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in dishwasher_hardware(it)],None
@@ -158,6 +160,7 @@ def module_contents(it):
     v=gola_variant(it) or dryer_variant(it) or cargo_variant(it);dish=dishwasher(it)
     gola_front=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
     alignment=' От лицевой поверхности закрытого фасада до переднего края столешницы 0,5 мм.' if gola_front else ''
+    if open_tall_variant(it):return open_tall_contents(it)+alignment
     if cargo_variant(it):return cargo_contents(it)+alignment
     if dryer_variant(it):return dryer_contents(it)+alignment
     if dish:return dishwasher_contents(it)+alignment
@@ -211,6 +214,7 @@ def module_materials(it,body,front,materials=None):
         profiles=dishwasher(it)['profiles']
         profile=profiles[0].get('documentation_profile',profiles[0]) if profiles else None
         return [('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004')]+([('Профиль',profile['material_name'])] if profile else [])
+    if open_tall_variant(it):return [('Корпус и полки 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),('Задняя стенка ЛДСП 18 мм',(materials or {}).get(str(it.get('back_variant_id')),body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'))]
     cargo=cargo_variant(it)
     if cargo:
         return [('Корпус 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004'),('Задняя стенка 3 мм',(materials or {}).get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый'))]+([('Профиль',cargo['profiles'][0]['material_name'])] if cargo['profiles'] else [])
@@ -272,7 +276,7 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
     summary=[]
     for i,it in enumerate(items,1):
         body=materials.get(str(it.get('body_variant_id')),'Не выбран')
-        front='Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
+        front='Без фасада' if open_tall_variant(it) else 'Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
         position=f"X {it.get('x',0)} · Z {it.get('z',0)} · {it.get('rotation',0)}°"
         if it.get('module_type')=='wall_cabinet':
             bottom=it.get('elevation_mm')
@@ -296,7 +300,7 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
         if i>1: story.append(PageBreak())
         story.append(p('Комплектация по модулям','title'))
         title=f"{i}. {it.get('name') or MODULES.get(it.get('module_type'),'Модуль')} · {it.get('width')} x {it.get('height')} x {it.get('depth')} мм"
-        body=materials.get(str(it.get('body_variant_id')),'Не выбран');front='Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
+        body=materials.get(str(it.get('body_variant_id')),'Не выбран');front='Без фасада' if open_tall_variant(it) else 'Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
         hardware,note=hardware_for(it)
         rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Кол-во','Ед.','Цена BYN','Сумма BYN','Компл.']]]
         for n,r in enumerate(hardware,1):

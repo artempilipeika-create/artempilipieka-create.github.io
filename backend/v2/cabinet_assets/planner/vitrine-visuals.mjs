@@ -24,8 +24,8 @@ export function glassFinish(material){
 
 export function vitrineLightSpec(it,part){
   if(!part||!['body','back','shelf'].includes(part.role))return null;
-  const v=globalThis.MF_VITRINE?.info(it);
-  if(!v)return null;
+  const v=globalThis.MF_VITRINE?.info(it)||globalThis.MF_OPEN_TALL?.info(it);
+  if(!v||v.lighting==='none')return null;
   return {
     center:[part.position.x,part.position.y,part.position.z].map(n=>n/1000),
     // The luminous strip shares the actual groove axis at Z = 9 mm.

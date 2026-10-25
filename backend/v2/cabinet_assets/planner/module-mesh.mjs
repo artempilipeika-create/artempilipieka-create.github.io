@@ -371,6 +371,15 @@ export class MeshFactory{
         Object.assign(mesh.userData,{visualOnly:true,pulloutDryer:true,drawerIndex:2});
       }
     }
+    if(production?.open_tall){
+      const light=globalThis.MF_OPEN_TALL.metrics(it),profile=light.light_profile_stock_count>0;
+      for(const side of light.lighting_sides)for(const segment of light.segments){
+        const sign=side==='left'?-1:1,y=(segment.start_mm+segment.end_mm)/2;
+        if(profile){const trim=this.box(group,'lightProfile',.6,segment.length_mm,24.4,sign*(W/2-18-.3),y,9,null,ghost,.15);Object.assign(trim.userData,{visualOnly:true,lightingSide:side,openTallLighting:true});}
+        const led=this.box(group,'led',profile?.3:.6,segment.led_cut_mm,profile?12:4,sign*(W/2-18-(profile?.75:.3)),y,9,null,ghost,0);
+        Object.assign(led.userData,{visualOnly:true,lightingSide:side,openTallLighting:true});
+      }
+    }
     if(production?.vitrine){
       const side=production.vitrine.opening,pivot=new THREE.Group(),hingeX=(side==='left'?-1:1)*(W/2-2),hingeZ=D/2+2;
       pivot.userData={itemId:it.item_id,role:'door-pivot',visualOnly:true,hingeSide:side};pivot.position.set(hingeX*S,0,hingeZ*S);

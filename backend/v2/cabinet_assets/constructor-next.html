@@ -33,6 +33,9 @@
 <script defer src="/account/planner/pullout-dryer-variants.js"></script>
 <script defer src="/account/planner/pullout-dryer-model.js"></script>
 <script defer src="/account/planner/pullout-dryer-ui.js"></script>
+<script defer src="/account/planner/open-tall-variants.js"></script>
+<script defer src="/account/planner/open-tall-model.js"></script>
+<script defer src="/account/planner/open-tall-ui.js"></script>
 <script defer src="/account/planner/cargo-variants.js"></script>
 <script defer src="/account/planner/cargo-model.js"></script>
 <script defer src="/account/planner/cargo-ui.js"></script>
@@ -139,6 +142,14 @@
      <button type="button" class="secondary" data-base-option="side" data-base-value="right" aria-pressed="false"><span class="gola-option-image"></span><strong>Петли справа</strong><small>Открывание P</small></button>
     </div>
     <p id="base-source-note" class="studio-hint" aria-live="polite"></p>
+   </div>
+   <div id="open-tall-controls" class="mf3d-control-card" hidden>
+    <h3>Открытый пенал</h3>
+    <label>Подсветка<select data-open-tall-option="light_system"><option value="none">Без подсветки</option><option value="aq-4x8">AQ LED-LINE · паз 4 × 8 мм</option><option value="lira-17.5x6.5">LIRA-1707 с экраном · паз 17,5 × 6,5 мм</option></select></label>
+    <label>Сторона подсветки<select data-open-tall-option="lighting"><option value="left">Слева</option><option value="right">Справа</option><option value="both">С двух сторон</option></select></label>
+    <label>Полки ЛДСП 18 мм</label>
+    <div class="vt-shelves"><button id="open-tall-shelf-minus" class="secondary" type="button" aria-label="Убрать полку">−</button><output id="open-tall-shelf-count" aria-live="polite">1</output><button id="open-tall-shelf-plus" class="secondary" type="button" aria-label="Добавить полку">+</button><button id="open-tall-shelf-reset" class="secondary" type="button">Как в исходнике</button></div>
+    <p id="open-tall-note" class="studio-hint" aria-live="polite"></p>
    </div>
    <div id="cargo-controls" class="mf3d-control-card" hidden>
     <h3>Карго</h3>

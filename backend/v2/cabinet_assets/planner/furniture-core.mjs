@@ -13,6 +13,8 @@ import './accessory-variants.js?v=20261021-accessories';
 import './accessories.js?v=20261021-accessories';
 import './pullout-dryer-variants.js';
 import './pullout-dryer-model.js';
+import './open-tall-variants.js';
+import './open-tall-model.js';
 import './cargo-variants.js';
 import './cargo-model.js';
 import './furniture-core.js?v=20261024-default-materials';

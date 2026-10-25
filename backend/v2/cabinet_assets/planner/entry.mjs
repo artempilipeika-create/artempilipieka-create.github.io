@@ -133,7 +133,22 @@ class PlannerApplication {
         this.adapter.replace(next);this.adapter.status('Исполнение верхнего шкафа изменено');
       });this.bridge.refresh();
     });
-    this.listen(get('cargo-controls'),'change',e=>{
+    this.listen(get('open-tall-controls'),'change',e=>{
+      const key=e.target.dataset.openTallOption,it=this.adapter.selected,O=globalThis.MF_OPEN_TALL;if(!key||!O.info(it))return;
+      this.interaction.change('Исполнение открытого пенала',()=>{
+        const next=O.select(it,{[key]:e.target.value},this.bridge.catalogue.bazisModules);
+        const error=this.adapter.validate(next);if(error)throw new Error(error);this.adapter.replace(next);
+      });this.bridge.refresh();
+    });
+    for(const [id,delta]of [['open-tall-shelf-minus',-1],['open-tall-shelf-plus',1]])this.listen(get(id),'click',()=>{
+      const it=this.adapter.selected,O=globalThis.MF_OPEN_TALL;if(!O.info(it))return;
+      this.interaction.modify({upper_shelf_count:Math.max(1,Math.min(8,O.shelves(it).length+delta))},'Полки открытого пенала');this.bridge.refresh();
+    });
+    this.listen(get('open-tall-shelf-reset'),'click',()=>{
+      if(!globalThis.MF_OPEN_TALL.info(this.adapter.selected))return;
+      this.interaction.modify({upper_shelf_count:null},'Исходная полка открытого пенала');this.bridge.refresh();
+    });
+    this.listen(get('cargo-controls'),'change' ,e=>{
       const field=e.target.dataset.cargoOption,it=this.adapter.selected,C=globalThis.MF_CARGO;
       if(!field||!C.info(it))return;
       if(field==='width'){this.interaction.modify({width:Number(e.target.value)},'Ширина карго');this.bridge.refresh();return;}

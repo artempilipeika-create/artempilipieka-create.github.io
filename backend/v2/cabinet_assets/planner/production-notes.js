@@ -27,6 +27,7 @@
     const gola=root.MF_GOLA?.info(item);if(gola?.kind==='doors')lines.push(root.MF_GOLA.brief(item));
     const upper=root.MF_UPPERS?.brief(item);if(upper)lines.push(upper);
     const upperAdjustment=root.MF_UPPERS?.adjustment(item);if(upperAdjustment)lines.push('Отметки центров полок от низа корпуса, мм: '+(upperAdjustment.centers_from_bottom_mm.join(', ')||'нет'));
+    const openTall=root.MF_OPEN_TALL?.brief(item);if(openTall)lines.push(openTall);
     const cargo=root.MF_CARGO?.brief(item);if(cargo)lines.push(cargo);
     const dryer=root.MF_PULLOUT_DRYERS?.brief(item);if(dryer)lines.push(dryer);
     const drawers=root.MF_DRAWERS?.brief(item);if(drawers)lines.push(drawers);
