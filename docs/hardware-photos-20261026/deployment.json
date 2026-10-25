@@ -1,0 +1,76 @@
+{
+  "hosted_commit": "5b57000a619e974a39cdb87862e7f06852b9b646",
+  "hosted_tree": "23b48d6aeec3755ec6445256703eacdcd2725c44",
+  "local_commit": "c2dd1cf4e3ac915f0b0709e1411930fd7d60cec3",
+  "deployment": {
+    "id": "3f615abb-092b-476c-8663-5738d6b90cf9",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-25T23:20:22.445Z",
+    "updatedAt": "2026-10-25T23:24:16.313Z",
+    "serviceId": "9aacf7bf-edd5-4f08-9423-3fbabea59268",
+    "environmentId": "ee625678-c15e-452d-9761-cda99274839f",
+    "url": null,
+    "snapshotId": "c589e35f-566d-42fe-9b62-d93ad35d7655",
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "sfo"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Show supplier photos for hardware choices and an open dishwasher",
+      "commitHash": "5b57000a619e974a39cdb87862e7f06852b9b646",
+      "branch": "mf-room-equipment-20261024"
+    }
+  },
+  "ui": {
+    "cargo_photo_skus": [
+      "114066",
+      "36028",
+      "112519"
+    ],
+    "photo_natural_width": 1600,
+    "dishwasher_natural_width": 1600,
+    "project_modified": false,
+    "javascript_errors": []
+  },
+  "site": "https://martin-forest-v2-staging-production.up.railway.app/constructor.html",
+  "live_verification": {
+    "healthy": true,
+    "verified_count": 31,
+    "verified": [
+      "/constructor.html",
+      "/account/planner/catalogue-artwork.js",
+      "/account/planner/choice-card-ui.js",
+      "/account/planner/execution-cards.css",
+      "/account/planner/execution-ui.mjs",
+      "/account/planner/hardware-photos.mjs",
+      "/account/planner/hardware-photos/105174.webp",
+      "/account/planner/hardware-photos/105175.webp",
+      "/account/planner/hardware-photos/112512.webp",
+      "/account/planner/hardware-photos/112513.webp",
+      "/account/planner/hardware-photos/112519.webp",
+      "/account/planner/hardware-photos/112521.webp",
+      "/account/planner/hardware-photos/112522.webp",
+      "/account/planner/hardware-photos/113272.webp",
+      "/account/planner/hardware-photos/113285.webp",
+      "/account/planner/hardware-photos/114064.webp",
+      "/account/planner/hardware-photos/114066.webp",
+      "/account/planner/hardware-photos/114797.webp",
+      "/account/planner/hardware-photos/115622.webp",
+      "/account/planner/hardware-photos/117352.webp",
+      "/account/planner/hardware-photos/12-0068.webp",
+      "/account/planner/hardware-photos/15-0341.webp",
+      "/account/planner/hardware-photos/36028.webp",
+      "/account/planner/hardware-photos/36029.webp",
+      "/account/planner/hardware-photos/72261.webp",
+      "/account/planner/hardware-photos/89609.webp",
+      "/account/planner/hardware-photos/90619.webp",
+      "/account/planner/hardware-photos/90620.webp",
+      "/account/planner/hardware-photos/95550.webp",
+      "/account/planner/hardware-photos/95551.webp",
+      "/account/planner/module-card-images/dishwasher.webp"
+    ]
+  }
+}
+
