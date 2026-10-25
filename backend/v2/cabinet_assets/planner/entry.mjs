@@ -133,10 +133,11 @@ class PlannerApplication {
         this.adapter.replace(next);this.adapter.status('Исполнение верхнего шкафа изменено');
       });this.bridge.refresh();
     });
-    this.listen(get('open-tall-controls'),'change',e=>{
-      const key=e.target.dataset.openTallOption,it=this.adapter.selected,O=globalThis.MF_OPEN_TALL;if(!key||!O.info(it))return;
+    this.listen(get('open-tall-controls'),'click',e=>{
+      const b=e.target.closest('[data-open-tall-option]'),it=this.adapter.selected,O=globalThis.MF_OPEN_TALL;if(!b||!O.info(it)||b.getAttribute('aria-pressed')==='true')return;
+      const key=b.dataset.openTallOption;
       this.interaction.change('Исполнение открытого пенала',()=>{
-        const next=O.select(it,{[key]:e.target.value},this.bridge.catalogue.bazisModules);
+        const next=O.select(it,{[key]:b.dataset.openTallValue},this.bridge.catalogue.bazisModules);
         const error=this.adapter.validate(next);if(error)throw new Error(error);this.adapter.replace(next);
       });this.bridge.refresh();
     });

@@ -42,12 +42,12 @@ with sync_playwright() as pw:
  p.roomSetup.projectChanged();p.history.reset();p.scene.fit('kitchen');}""")
  if not page.locator('#open-tall-controls').is_visible():page.locator('#studio-toggle-inspector').click()
  expect(page.locator('#open-tall-controls')).to_be_visible()
- assert page.locator('[data-open-tall-option=light_system]').input_value()=='none'
- assert page.locator('[data-open-tall-option=lighting]').is_disabled()
+ assert page.locator('[data-open-tall-option=light_system][data-open-tall-value=none]').get_attribute('aria-pressed')=='true'
+ assert not page.locator('#open-tall-lighting-choices').is_visible()
  for system in ['aq-4x8','lira-17.5x6.5']:
-  page.locator('[data-open-tall-option=light_system]').select_option(system)
+  page.locator(f'[data-open-tall-option=light_system][data-open-tall-value="{system}"]').click()
   for side in ['left','right','both']:
-   page.locator('[data-open-tall-option=lighting]').select_option(side)
+   page.locator(f'[data-open-tall-option=lighting][data-open-tall-value="{side}"]').click()
    data=page.evaluate("""()=>{const p=MF_PLANNER,it=p.adapter.selected,v=MF_OPEN_TALL.info(it),m=MF_OPEN_TALL.metrics(it);return {system:v.light_system,side:v.lighting,error:p.adapter.validate(it),parts:MF_FURNITURE_CORE.productionParts(it,p.adapter.template(it)).length,facades:MF_FURNITURE_CORE.facadeCells(it,p.adapter.template(it)).length,caps:m.light_profile_end_caps}}""")
    assert data['system']==system and data['side']==side and not data['error'] and data['parts']==6 and data['facades']==0,data
    if system=='lira-17.5x6.5':assert data['caps']==(8 if side=='both' else 4)
@@ -64,10 +64,10 @@ with sync_playwright() as pw:
  assert page.evaluate('MF_PLANNER.adapter.selected.depth')==300
  page.locator('#height').fill('2400');page.locator('#height').press('Tab')
  assert page.evaluate('MF_PLANNER.adapter.selected.height')==2400
- page.locator('[data-open-tall-option=light_system]').select_option('none')
+ page.locator('[data-open-tall-option=light_system][data-open-tall-value="none"]').click()
  assert page.evaluate('MF_OPEN_TALL.metrics(MF_PLANNER.adapter.selected).led_order_length_m')==0
- page.locator('[data-open-tall-option=light_system]').select_option('lira-17.5x6.5')
- page.locator('[data-open-tall-option=lighting]').select_option('both')
+ page.locator('[data-open-tall-option=light_system][data-open-tall-value="lira-17.5x6.5"]').click()
+ page.locator('[data-open-tall-option=lighting][data-open-tall-value="both"]').click()
  page.locator('#save-project').click()
  for _ in range(100):
   if page.evaluate('!MF_PROJECT_SAFETY.engine.dirty && !MF_PROJECT_SAFETY.engine.busy'):break
@@ -75,8 +75,8 @@ with sync_playwright() as pw:
  else:raise AssertionError('Save did not settle')
  assert saved_responses;stored=saved_responses[-1].json()
  page.evaluate("""async stored=>{await MF_PLANNER.bridge.loadSnapshot({...stored,selectedId:'open'},stored);MF_PLANNER.bridge.refresh()}""",stored)
- assert page.locator('[data-open-tall-option=light_system]').input_value()=='lira-17.5x6.5'
- assert page.locator('[data-open-tall-option=lighting]').input_value()=='both'
+ assert page.locator('[data-open-tall-option=light_system][data-open-tall-value="lira-17.5x6.5"]').get_attribute('aria-pressed')=='true'
+ assert page.locator('[data-open-tall-option=lighting][data-open-tall-value="both"]').get_attribute('aria-pressed')=='true'
  assert page.locator('#open-tall-shelf-count').inner_text()=='2'
  with page.expect_download() as download:page.evaluate("document.getElementById('export-bazis').click()")
  native=json.loads(Path(download.value.path()).read_text());opened=next(i for i in native['items'] if i.get('construction',{}).get('open_tall'))

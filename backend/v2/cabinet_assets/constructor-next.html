@@ -145,8 +145,20 @@
    </div>
    <div id="open-tall-controls" class="mf3d-control-card" hidden>
     <h3>Открытый пенал</h3>
-    <label>Подсветка<select data-open-tall-option="light_system"><option value="none">Без подсветки</option><option value="aq-4x8">AQ LED-LINE · паз 4 × 8 мм</option><option value="lira-17.5x6.5">LIRA-1707 с экраном · паз 17,5 × 6,5 мм</option></select></label>
-    <label>Сторона подсветки<select data-open-tall-option="lighting"><option value="left">Слева</option><option value="right">Справа</option><option value="both">С двух сторон</option></select></label>
+    <p id="open-tall-system-label" class="ot-option-label">Подсветка</p>
+    <div class="ot-options" role="group" aria-labelledby="open-tall-system-label">
+     <button type="button" class="secondary" data-open-tall-option="light_system" data-open-tall-value="none" aria-pressed="false"><span class="ot-option-image" aria-hidden="true"></span><strong>Без подсветки</strong><small>Открытые полки</small></button>
+     <button type="button" class="secondary" data-open-tall-option="light_system" data-open-tall-value="aq-4x8" aria-pressed="false"><span class="ot-option-image" aria-hidden="true"></span><strong>AQ LED-LINE</strong><small>Паз 4 × 8 мм</small></button>
+     <button type="button" class="secondary" data-open-tall-option="light_system" data-open-tall-value="lira-17.5x6.5" aria-pressed="false"><span class="ot-option-image" aria-hidden="true"></span><strong>LIRA-1707</strong><small>С экраном<br>17,5 × 6,5 мм</small></button>
+    </div>
+    <div id="open-tall-lighting-choices" hidden>
+     <p id="open-tall-side-label" class="ot-option-label">Сторона подсветки</p>
+     <div class="ot-options" role="group" aria-labelledby="open-tall-side-label">
+      <button type="button" class="secondary" data-open-tall-option="lighting" data-open-tall-value="left" aria-pressed="false"><span class="ot-option-image" aria-hidden="true"></span><strong>Слева</strong></button>
+      <button type="button" class="secondary" data-open-tall-option="lighting" data-open-tall-value="right" aria-pressed="false"><span class="ot-option-image" aria-hidden="true"></span><strong>Справа</strong></button>
+      <button type="button" class="secondary" data-open-tall-option="lighting" data-open-tall-value="both" aria-pressed="false"><span class="ot-option-image" aria-hidden="true"></span><strong>С двух сторон</strong></button>
+     </div>
+    </div>
     <label>Полки ЛДСП 18 мм</label>
     <div class="vt-shelves"><button id="open-tall-shelf-minus" class="secondary" type="button" aria-label="Убрать полку">−</button><output id="open-tall-shelf-count" aria-live="polite">1</output><button id="open-tall-shelf-plus" class="secondary" type="button" aria-label="Добавить полку">+</button><button id="open-tall-shelf-reset" class="secondary" type="button">Как в исходнике</button></div>
     <p id="open-tall-note" class="studio-hint" aria-live="polite"></p>
