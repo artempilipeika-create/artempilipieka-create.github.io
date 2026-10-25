@@ -1,0 +1,11 @@
+{
+  "supplier": "Bosch",
+  "use": "Illustrative integrated dishwasher, not a supplied appliance model",
+  "page": "https://www.bosch-home.com/gh/en/mkt-category-page/dishwashers/builtindishwashers",
+  "image": "https://media3.bsh-group.com/Images/5120x/26045309_Dishwashers_Bosch_QualityForLife_1600x1200.webp",
+  "pixels": [
+    1600,
+    1200
+  ],
+  "sha256": "e6536f27573cb3ceee47b41418a1777bced90228abbea07cf757dcbaad48eab4"
+}

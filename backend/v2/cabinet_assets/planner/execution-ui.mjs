@@ -2,6 +2,7 @@ import {ExecutionPreviews} from './execution-previews.mjs';
 import {buttonFamilies,optionDescriptor,previewVariant} from './execution-options.mjs';
 import {PRODUCTION_MODELS} from './furniture-core.mjs';
 import {executionArtwork} from './execution-artwork.mjs';
+import {hardwareArtwork} from './hardware-photos.mjs';
 const get=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text)node.textContent=text;return node;};
 const makeButton=(text)=>{const b=el('button','secondary',text);b.type='button';return b;};
@@ -39,17 +40,18 @@ export class ExecutionUI{
   const visual=button.querySelector(':scope > .execution-visual');button.querySelector('.execution-title').textContent=descriptor.title;button.querySelector('.execution-hint').textContent=descriptor.hint;
   button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);
   visual.classList.toggle('execution-tall',Boolean(descriptor.tall&&!descriptor.focus));
-  if(descriptor.art||descriptor.photo){let img=visual.querySelector('img');if(!img){img=el('img','execution-photo');img.alt='';img.loading='lazy';img.decoding='async';visual.append(img);}const src=descriptor.art||globalThis.MF_CHOICE_CARDS.image(descriptor.photo);if(img.getAttribute('src')!==src)img.src=src;img.classList.toggle('execution-tripo-photo',Boolean(descriptor.art));visual.querySelector('canvas').hidden=true;}
+  if(descriptor.art||descriptor.photo){let img=visual.querySelector('img');if(!img){img=el('img','execution-photo');img.alt='';img.loading='lazy';img.decoding='async';visual.append(img);}const src=descriptor.art||globalThis.MF_CHOICE_CARDS.image(descriptor.photo);if(img.getAttribute('src')!==src)img.src=src;img.classList.toggle('execution-tripo-photo',Boolean(descriptor.art&&!descriptor.hardware));img.classList.toggle('execution-hardware-photo',Boolean(descriptor.hardware));visual.querySelector('canvas').hidden=true;}
   else{visual.querySelector('img')?.remove();visual.querySelector('canvas').hidden=false;}
+  button.classList.toggle('execution-hardware-choice',Boolean(descriptor.hardware));
   let action=visual.querySelector('.execution-action');if(descriptor.action){if(!action){action=el('span','execution-action');visual.append(action);}action.textContent=descriptor.action;}else action?.remove();
   button.parentElement.classList.add('execution-grid');return visual;
  }
  update(button,it,family,key,value,sourceDisabled=false){
   const descriptor=optionDescriptor(family,key,value);let target,error='';
   try{target=previewVariant(it,family,key,value,this.app.bridge.catalogue.bazisModules);}catch(e){error=e.message;}
-  if(target){const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}
+  if(target){const hardware=hardwareArtwork(target,family,key,value);if(hardware&&!this.failedArtwork.has(hardware.src)){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
   const visual=this.decorate(button,descriptor);
-  if(target&&family==='cargo'&&key==='brand'){const kit=globalThis.MF_CARGO.kit(target);descriptor.hint=(value==='norwing'?'Хром':'Графит')+' · '+(kit?.mounting==='side_left'?'крепление слева':'крепление снизу')+(kit?.article?' · '+kit.article:'');button.querySelector('.execution-hint').textContent=descriptor.hint;button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);}
+  if(target&&family==='cargo'&&key==='brand'&&!descriptor.hardware){const kit=globalThis.MF_CARGO.kit(target);descriptor.hint=(value==='norwing'?'Хром':'Графит')+' · '+(kit?.mounting==='side_left'?'крепление слева':'крепление снизу')+(kit?.article?' · '+kit.article:'');button.querySelector('.execution-hint').textContent=descriptor.hint;button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);}
   if(sourceDisabled&&!error)error=button.title||'Недоступно для выбранного исполнения';
   button.disabled=Boolean(error);button.title=error;button.querySelector('.execution-reason').textContent=error;button.querySelector('.execution-reason').hidden=!error;
   const canvas=visual.querySelector('canvas');visual.classList.toggle('execution-unavailable',Boolean(error));

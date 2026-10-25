@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "cargo_photos": 11,
+  "dryer_photos": 7,
+  "drawer_system_photos": 3,
+  "lighting_photos": 2,
+  "upper_dryer_photo": true,
+  "dishwasher_visible": true,
+  "article_binding": true,
+  "read_only_preview": true,
+  "undo": true,
+  "mobile_width": 390,
+  "javascript_errors": [],
+  "unexpected_requests": []
+}

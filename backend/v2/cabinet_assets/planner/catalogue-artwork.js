@@ -3,7 +3,7 @@
  // Reviewed Tripo pictures use the geometry-reviewed catalogue views as references.
  const rows=[
   ['bazis.0ac4e1b6b2d3','cargo','Карго','Выдвижное хранение · FOCUS, NORWING, ICON','6 исполнений','Обычное / Gola'],
-  ['bazis.300138dc82b5','dishwasher','Посудомойка','Фасад для встроенной посудомойки','450–600 мм','Обычное / Gola'],
+  ['bazis.300138dc82b5','dishwasher','Посудомойка','Встраиваемая техника · модуль с фасадом','450–600 мм','Обычное / Gola','Пример техники'],
   ['bazis.85c150c30ea5','pullout-dryer','Выдвижная сушка','NORWING и FLAT LINE · с нижним ящиком','12 исполнений','Обычное / Gola'],
   ['bazis.0211e4f77fc4','base-single','Нижний · 1 дверь','Полки или мойка · левое и правое открывание','Полки / мойка','Ручки / Gola'],
   ['bazis.3079d0656398','base-double','Нижний · 2 двери','Вместительное хранение или тумба под мойку','Полки / мойка','Ручки / Gola'],
@@ -17,5 +17,5 @@
   ['bazis.107f19943761','tall-storage','Пенал с полками','Закрытое хранение на всю высоту','База 820 / 900','1 / 2 двери'],
   ['bazis.d9c0c30544f4','tall-appliance','Пенал под технику','Духовка или духовка + СВЧ','База 820 / 900','Дверь / ящик']
  ];
- root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:'tripo'})])));
+ root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:file==='dishwasher'?'supplier-photo':'tripo'})])));
 })(globalThis);

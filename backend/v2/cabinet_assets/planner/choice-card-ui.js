@@ -1,6 +1,6 @@
 (function(root){
  'use strict';
- const version='20261026-catalogue-quality';
+ const version='20261026-supplier-photos';
  function image(file){return '/account/planner/module-card-images/'+file+'.webp?v='+version;}
  function corner(controls,variant){
   if(!variant)return;
