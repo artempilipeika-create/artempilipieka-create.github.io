@@ -1,0 +1,44 @@
+{
+  "site": "https://martin-forest-v2-staging-production.up.railway.app/constructor.html",
+  "local_implementation_commit": "d0b1672",
+  "hosted_implementation_commit": "b20bda6b76d495efcc4bbbc08f7db100b19f7d5b",
+  "hosted_tree": "d66541a0860b90c24d0384e86a36a97bd331dc66",
+  "deployment_id": "b2936d6c-ba50-4096-b05f-5df16061ac1c",
+  "deployment_status": "SUCCESS",
+  "deployment_completed_at": "2026-10-25T22:58:00.530Z",
+  "live_verification": {
+    "healthy": true,
+    "verified_count": 16,
+    "verified": [
+      "/constructor.html",
+      "/account/planner/choice-card-ui.js",
+      "/account/planner/module-card-images/base-corner.webp",
+      "/account/planner/module-card-images/base-double.webp",
+      "/account/planner/module-card-images/base-drawers.webp",
+      "/account/planner/module-card-images/base-oven.webp",
+      "/account/planner/module-card-images/base-single.webp",
+      "/account/planner/module-card-images/cargo.webp",
+      "/account/planner/module-card-images/dishwasher.webp",
+      "/account/planner/module-card-images/open-tall-none.webp",
+      "/account/planner/module-card-images/pullout-dryer.webp",
+      "/account/planner/module-card-images/tall-appliance.webp",
+      "/account/planner/module-card-images/tall-storage.webp",
+      "/account/planner/module-card-images/tall-vitrine.webp",
+      "/account/planner/module-card-images/wall-double.webp",
+      "/account/planner/module-card-images/wall-single.webp"
+    ]
+  },
+  "browser_verification": {
+    "all_14_module_images_loaded": true,
+    "image_pixels": [
+      1536,
+      1152
+    ],
+    "cache_version": "20261026-catalogue-quality",
+    "saved_user_project_retained": true,
+    "project_items": 13,
+    "project_mutations": false
+  },
+  "screenshot": "live-site.webp",
+  "credits_charged": 0
+}
