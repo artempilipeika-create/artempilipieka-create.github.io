@@ -1,0 +1,272 @@
+[
+  {
+    "index": 1,
+    "name": "01-sheet",
+    "file": "base-single.webp",
+    "source_sha256": "dbf1afbe08a31efcff0c3abc6fa5067486b3efc958f1fe717b00416da9c41791",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One lower cabinet with one full overlay door and one BLACK vertical bar handle at the upper RIGHT, a countertop, a recessed front plinth and the visible slim rear support foot. Do not extend side panels down to the floor.",
+    "status": "accepted",
+    "id": "15231bdc-0ae1-4165-852f-82a92306e792",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "attempts": [
+      {
+        "id": "aef4008b-668c-4804-baed-a5cceb0ab725",
+        "model": "GPT Image 2.5",
+        "credits": 0,
+        "reason": "Countertop rear corner clipped at top of frame; rejected."
+      }
+    ],
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "51fd87b11d5a4c86df9a0b5d4e8bec66d1a1f974ff830566301a9ac0cbe806b6",
+    "delivered_sha256": "caaaff9d5b49451347efcc3f3afb02ff56e6ca379fe1adb340c481e3b86ce70a",
+    "bytes": 101030
+  },
+  {
+    "index": 2,
+    "name": "02-sheet",
+    "file": "base-double.webp",
+    "source_sha256": "ce12b0cb4b6bff2306aaa005afb125509f8569fc3aabd7e5f60882535b0136c2",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One lower cabinet with TWO full overlay doors. Two BLACK vertical bar handles next to each other at the central joint, near the upper edges. Countertop, recessed plinth; side panels stop above the base.",
+    "status": "accepted",
+    "id": "2713bc10-3066-4dac-94c5-254b80045da1",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "848065bbd05a1d3a2b8c383c03b48c71bbcf10a907dfb3d97920b392a24439b5",
+    "delivered_sha256": "48fc06e8460aa424044083fc694961d302d485a6393c8eb9722a101b8d39b966",
+    "bytes": 45638
+  },
+  {
+    "index": 3,
+    "name": "03-sheet",
+    "file": "base-drawers.webp",
+    "source_sha256": "19df9a9e1b9ec299e385396f83d2d012da88d4637d606cb3e2914ba3e95f3db6",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One lower cabinet with exactly TWO drawer fronts, one horizontal BLACK bar handle on each front. Preserve the exact drawer height split. Countertop and recessed plinth.",
+    "status": "accepted",
+    "id": "bbfad90a-54d8-4308-adb4-28f6e707be64",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "7c5c6f5e8b6658812684e9ce436ead3f75f4f6b33946a7da5df93508598cbd5f",
+    "delivered_sha256": "6c2b577890bcdb949ba3dce5c9a016b34d5063dbbf7dc78f0755ff7a6b7258b5",
+    "bytes": 60422
+  },
+  {
+    "index": 4,
+    "name": "04-sheet",
+    "file": "base-oven.webp",
+    "source_sha256": "b2232ef9049f35f3cfe609bfa21ef19f0d237a8ad953e20546f21cff0531a5bd",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One lower oven cabinet. The oven niche is 595 mm high; ONLY ONE VERY SHALLOW drawer below the oven. Preserve that small drawer exactly. Black glass oven, sharp realistic controls and metal handle. Countertop above; recessed dark plinth below. The cabinet side panels stop above the base; visible slim support foot remains.",
+    "status": "accepted",
+    "id": "2dc0708b-d3ad-4cad-b19f-c1c7094fec26",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "545b2300937c55d811895401ad747799776221e9470a6749a98cb288e2b76e6a",
+    "delivered_sha256": "8a609919ffab1c692d1fb01668468b98ab48d9dd819a92090469e77a49a95f3d",
+    "bytes": 66326
+  },
+  {
+    "index": 5,
+    "name": "05-sheet",
+    "file": "base-corner.webp",
+    "source_sha256": "abb29a7cdfd2005119b3788d612d3b3c873b9dc1e03534a79e8000beb6f389f9",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One WIDE RECTANGULAR cabinet with a FLAT FRONT, NOT a diagonal-front cabinet. Preserve TWO narrow tall perpendicular filler strips in their exact reference positions: at the outer left and at the blind-panel/door junction. These projecting strips form right angles and must remain clearly visible. Preserve the flat blind front panel on the left and one flat hinged door on the right; small black vertical handle near upper right. Do not chamfer, cut diagonally, or create L-shaped body. Countertop is rectangular; side panels stop above the base.",
+    "status": "accepted",
+    "id": "70d728c0-b90b-4a58-aecd-113f363a0c51",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "da778bf0dd4bd739df51d77aa74cd6701f41716eefb46368f3b6cb490aa617a9",
+    "delivered_sha256": "bd98f5996657576bf32d8e4f52129046cb93f414c44284ebe8300beefda1e775",
+    "bytes": 56916
+  },
+  {
+    "index": 6,
+    "name": "06-sheet",
+    "file": "cargo.webp",
+    "source_sha256": "0c44de32db799c36bb83e067c00b4c187cd361ef2f343c3eefe59c7684b62f0d",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One narrow lower cabinet shown with the pullout in its reference OPEN pose. Preserve its two-level metal basket, narrow front panel, horizontal black handle, exact basket mounting and exposed thin metal rails. Bright chrome/graphite stays the same as the reference. Do not add additional shelves, baskets, bottles or objects. Countertop and recessed base, side panels stop above the floor. CRITICAL: exactly TWO basket levels, one near the bottom and one near the top of the basket carrier. The middle space is EMPTY. Solid thin graphite metal tray floors with slender graphite guard rails; NO third or middle basket, NO woven chrome wire baskets. Keep the front panel pullout and both supports in the source position. Do not invent a support or hinge on the drawer front.",
+    "status": "accepted",
+    "id": "7ebf11b4-b874-42f2-ba4c-d94050337de8",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "attempts": [
+      {
+        "id": "808068f8-d95c-4aed-8b1d-7bb6e687963e",
+        "model": "GPT Image 2.5",
+        "credits": 0,
+        "reason": "Previous catalogue reference had an incorrect third basket; rejected and replaced with canonical model view."
+      }
+    ],
+    "reference": "reference/cargo.webp",
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "f05c158b4e2628c17a5ae8a6cd291be36798576b074010035dc33e8c581c795a",
+    "delivered_sha256": "95bd7ae994f37dd1cf488902168b30abbec3b25760b80ad1403af3986e990d4f",
+    "bytes": 60786
+  },
+  {
+    "index": 7,
+    "name": "07-sheet",
+    "file": "pullout-dryer.webp",
+    "source_sha256": "8c4bb12e5e4b66fdd84c2ab6afd1ec71e6d02106e19a5c03d5c96470ecc7f093",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One lower cabinet with an extended upper dish-drying drawer and the lower drawer exactly in the supplied pose. Preserve TWO fronts, existing metal dish rack, original internal wire pattern and drawer runners. Existing rack may be made crisp and realistic but no extra kitchenware or baskets. Keep cabinet/door heights and proportions. CRITICAL: exactly TWO independent drawers. Upper drawer has ONE dish-drying rack/tray at its lower edge, with a single slender guard rail above; no additional middle wire basket. Lower drawer is a simple laminated wood box, not a wire basket. Exactly two handles and two front panels as supplied.",
+    "status": "accepted",
+    "reference": "reference/pullout-dryer.webp",
+    "id": "86a9d6d4-b494-417f-8c46-0d1d3731f81c",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "c855c50c036330a7005e0d15b7b1c72df709c2ec4324a3b10d5c8f9311d3261c",
+    "delivered_sha256": "0388b0c124fba6d62ee541a217c22847876d3c5f8f4ac0b6f9ac7e4435165144",
+    "bytes": 66328
+  },
+  {
+    "index": 8,
+    "name": "08-sheet",
+    "file": "dishwasher.webp",
+    "source_sha256": "fde70cfde0e7dd44b8b6dd1e6d1b6628c2b8a59001d5e592e389e534f66b2a56",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One cabinet front for a fully integrated dishwasher. Single full-height front panel with its existing small black vertical handle at upper right, countertop and recessed plinth. Do not invent a visible appliance control panel.",
+    "status": "accepted",
+    "id": "fde4c522-e46e-4a8a-be8a-7be5ac9285c2",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "f31dbb7b333a0605a8fe25944704de55f9ab45fb65097610452c55d532712a7b",
+    "delivered_sha256": "b617590f91cb922edde15828f6d7eec88814e68d2a17230be30efedf80f43354",
+    "bytes": 46766
+  },
+  {
+    "index": 9,
+    "name": "09-sheet",
+    "file": "wall-single.webp",
+    "source_sha256": "5c29820ab7699be843f9bbadb8a0b99e68bf7d5f2a81235dcec2494306ae8321",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One wall-mounted cabinet with one full overlay door and ONE BLACK vertical bar handle at the LOWER RIGHT, as shown. No countertop, feet, plinth or light. Same front gap and body thickness.",
+    "status": "accepted",
+    "id": "9cd71915-4cfe-4fca-a96c-35263ef1e008",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "a0ea368c64a29701ee1d06cb49d7159a961c5aeb25d7cc57991f5b82ff99774a",
+    "delivered_sha256": "45b53c696d946eac76d6c1b14ede5f1c4c0f32211bb404d5cc45c95fc65af264",
+    "bytes": 75188
+  },
+  {
+    "index": 10,
+    "name": "10-sheet",
+    "file": "wall-double.webp",
+    "source_sha256": "12afa53281ed9dce46e3d80740ddcebe27603543ef45cd812bd9b4eeabd48fcf",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One wall-mounted cabinet with exactly TWO full overlay doors and TWO BLACK vertical handles at the LOWER central seam, as shown. No countertop, feet, plinth or light.",
+    "status": "accepted",
+    "id": "e5015772-5bd6-4107-8df3-e8850c6b5a0e",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "fe551825848fc79eaca5cdc01748884ab777c90fd6db62e674cffc52045fbaee",
+    "delivered_sha256": "4daa5e39ba3c86c355c7230fc6194c8e4f93bca649bb7c9577bfcb173ce8beb6",
+    "bytes": 59086
+  },
+  {
+    "index": 11,
+    "name": "11-sheet",
+    "file": "open-tall-none.webp",
+    "source_sha256": "54c0daa1ad368e1560dcfa1249298e3be8962d70434ac3f1abcf959870548c2b",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One tall open cabinet, with exactly ONE central horizontal shelf dividing it into TWO open compartments, as shown. No door, no handles, no LED or lighting. Preserve dark recessed plinth and full upright sides ending at the plinth.",
+    "status": "accepted",
+    "id": "2eec3e0d-035b-4a9c-88dd-8d9e4563d1cd",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "98e8c4fa71030ad9fb6d493045091eb67415cab2d9d96bcd683328b06ff24c50",
+    "delivered_sha256": "6d9eaa5c0181d99b144736bee68789bacfb0c5fc46308c9d8167a11905802ac2",
+    "bytes": 48216
+  },
+  {
+    "index": 12,
+    "name": "12-sheet",
+    "file": "tall-vitrine.webp",
+    "source_sha256": "b7a112a363d92afcf9ad8efd1d3864aaa9be17e7689916b45ccc50ecc691d461",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One tall glass display cabinet with a thin BLACK aluminium frame around one transparent glass door, clear GLASS shelf, visible small hinges in their original locations and exactly the original vertical LED light placement. No opaque shelf, no decor or extra glass shelves. Preserve full cabinet height and recessed dark base.",
+    "status": "accepted",
+    "id": "49b8ead8-7411-4a89-8e69-bb8c33402a35",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "55852601e35312a83f7934e36ebb7c1c0856d008fa2e364c6698bcdabaec3d78",
+    "delivered_sha256": "90d537b68f091f418e347280ed17b89c9a64c2f2684b1c92fb3ddd038e9f129b",
+    "bytes": 58752
+  },
+  {
+    "index": 13,
+    "name": "13-sheet",
+    "file": "tall-storage.webp",
+    "source_sha256": "05eacf8947fe768584a90ac06ba0dd537e9c393b98eb34c0387b7d4d78d1996f",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One tall storage cabinet with its TWO vertically stacked closed doors and the two BLACK vertical handles beside the horizontal door junction, as shown. Preserve panel division, recessed base and original proportions. No open doors, no LED.",
+    "status": "accepted",
+    "id": "5d39756a-ea61-4a5c-b460-340e63357d16",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "14568df88c69e584644583a57ab7337a2b46a5ffcacc96c8a190b2c9bf934cba",
+    "delivered_sha256": "9b89cfdb664fd0e15059cda080f07fd8eba0e71543060d2c8db3f07c807903e8",
+    "bytes": 45468
+  },
+  {
+    "index": 14,
+    "name": "14-sheet",
+    "file": "tall-appliance.webp",
+    "source_sha256": "6e7555f82586354a3572f268ee3fa1b2aeaaabc9e92a42ac1d38e74ae6109e3b",
+    "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of the single furniture module in the supplied reference. The reference fixes the construction and view. Re-render it with distinctly better realism: fine pearl warm-grey matte laminate microtexture, clean matching edge bands, subtly softened edge highlights, convincing panel thickness, accurate dark joints, realistic metal reflections and transparent glass where supplied. Soft broad studio light from upper left, gentle fill, natural soft contact shadows. Background: seamless very light warm neutral, no visible windows, wall seams, patterns or cast window shadows. Preserve every panel, opening, door count, shelf count, hardware location, filler strip, leg, camera side and full module proportions. Do not reproduce the low-detail flat shading or the blurry screenshot look. The COMPLETE module, including top and base, must stay within the frame. Center it and let it occupy about 78–82 percent of image height. REQUIRED framing: at least 9 percent of canvas height is blank background above the TOPMOST rear corner, and at least 9 percent below the BOTTOMMOST foot or plinth. Every countertop corner must be visible. No part of the furniture may touch or cross any image edge. Zoom out enough to meet these margins. SINGLE product only, no collage, no second view, no annotations, no text, no watermark, no decorative props. One tall appliance cabinet with exactly ONE realistic BLACK GLASS OVEN between the upper and lower cupboard doors. Preserve both doors, the oven position, the two black vertical cabinet handles, recessed plinth and original sizes. Render the oven with refined black glass, realistic metal control knobs and dark metal trim. No microwave, no extra drawers, no LED.",
+    "status": "accepted",
+    "id": "e807a0ee-5173-421c-844b-6a7d25e5d7ce",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "pixels": [
+      1536,
+      1152
+    ],
+    "source_output_sha256": "01d6d3a122aa26ef766e31cb3b546cb76c419d1412bdce8e383376abf01a40a7",
+    "delivered_sha256": "78e9894fe621b3de7101b36c75686b8c2087154989792a47ed2c2c0b974f5fad",
+    "bytes": 66960
+  }
+]

@@ -1,0 +1,40 @@
+{
+  "ok": true,
+  "scope": "14 main catalogue module illustrations",
+  "engine": "Tripo Studio / GPT Image 2.5",
+  "accepted": 14,
+  "attempts": 16,
+  "rejected_attempts": 2,
+  "pixels": [
+    1536,
+    1152
+  ],
+  "credits_charged": 0,
+  "credit_balance_before": 2520,
+  "credit_balance_after": 2520,
+  "included_usage_before": 63,
+  "included_usage_after": 79,
+  "browser": {
+    "large_cards": 14,
+    "full_resolution_images": 14,
+    "categories": {
+      "base": 8,
+      "wall": 2,
+      "tall": 4
+    },
+    "native_insertion": true,
+    "undo_redo": true,
+    "mobile_width": 390,
+    "horizontal_overflow": false,
+    "javascript_errors": [],
+    "unexpected_network_requests": []
+  },
+  "syntax_check": true,
+  "git_diff_check": true,
+  "runtime_changes": [
+    "14 WebP pictures",
+    "image cache version",
+    "script cache version"
+  ],
+  "manufacturing_or_scene_code_changed": false
+}
