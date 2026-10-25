@@ -77,8 +77,8 @@ class FurnitureItem(StrictModel):
     bazis_sha256: str|None=Field(default=None,min_length=64,max_length=64)
     bazis_resize: bool=False
     name: str=Field(min_length=1,max_length=160)
-    x: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.5)
-    z: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.5)
+    x: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.25)
+    z: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.25)
     elevation_mm: int|None=Field(default=None,ge=0,le=5000,strict=True)
     rotation: Literal[0,90,180,270]=0
     width: int=Field(ge=150,le=3000)
@@ -95,7 +95,7 @@ class FurnitureItem(StrictModel):
     countertopMaterialId: UUID|None=None
     countertopEnabled: bool=True
     countertopJoint: Literal['standard','euro']='standard'
-    depth: int=Field(ge=200,le=1200)
+    depth: int|float=Field(ge=200,le=1200,multiple_of=0.5,allow_inf_nan=False)
     layout: Literal['drawers','doors','combo','niche']='doors'
     drawers: int=Field(default=2,ge=0,le=8)
     base: Literal['plinth','legs','wall']='plinth'
@@ -123,6 +123,8 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Worktop fixture exceeds cabinet width')
             if f.front_offset+f.depth>(self.countertopDepthMm or 600)-20:
                 raise ValueError('Worktop fixture requires 20 mm front and rear margins')
+        if self.module_type!='tall_cabinet' and (self.depth%1 or self.x%0.5 or self.z%0.5):
+            raise ValueError('Дробная глубина с шагом 0,5 мм и координаты 0,25 мм доступны только пеналам')
         refreshed=refresh_dryer_source(refresh_base_source(refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file})))
         self.bazis_sha256=refreshed.get('bazis_sha256')
         self.bazis_file=refreshed.get('bazis_file')

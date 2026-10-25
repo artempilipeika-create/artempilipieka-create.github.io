@@ -143,9 +143,21 @@ class PlannerApplication {
     });
     this.listen(get('tall-align-top'),'click',()=>{
       const it=this.adapter.selected,target=this.adapter.items.find(x=>x.item_id===get('tall-align-target').value);
-      if(!tallVariantInfo(it)||!target)return;
-      this.interaction.modify({height:elevation(target,this.adapter.room)+target.height-elevation(it,this.adapter.room)},'Вровень с верхними');this.bridge.refresh();
+      if(!globalThis.MF_FURNITURE_CORE.isTallModule(it)||!target)return;
+      this.interaction.change('Вровень с верхними',()=>{
+        const next=globalThis.MF_FURNITURE_CORE.alignTallTop(it,target,this.adapter.room),error=this.adapter.validate(next);
+        if(error)throw new Error(error);this.adapter.replace(next);
+      });this.bridge.refresh();
     });
+    this.listen(get('tall-align-front'),'click',()=>{
+      const it=this.adapter.selected,target=this.adapter.items.find(x=>x.item_id===get('tall-front-target').value);
+      if(!globalThis.MF_FURNITURE_CORE.isTallModule(it)||!target)return;
+      this.interaction.change('Пенал от стены до линии фасадов',()=>{
+        const next=globalThis.MF_FURNITURE_CORE.alignTallFront(it,target,this.adapter.room),error=this.adapter.validate(next);
+        if(error)throw new Error(error);this.adapter.replace(next);
+      });this.bridge.refresh();
+    });
+    for(const id of ['tall-align-target','tall-front-target'])this.listen(get(id),'change',()=>this.bridge.refresh());
     this.listen(get('drawer-options-controls'),'click',e=>{
       const b=e.target.closest('[data-drawer-option]'),it=this.adapter.selected,D=globalThis.MF_DRAWERS;
       if(!b||b.disabled||!D.familyInfo(it)||b.getAttribute('aria-pressed')==='true')return;

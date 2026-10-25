@@ -1,4 +1,4 @@
-import {clone,rotateXZ,elevation,heights,kitchenGroup,kitchenSettings,golaCountertop,scopeMatches,PRODUCTION_MODELS,dimensionPatch,rightAnchoredWidth,productionParts,normalizeKitchen} from './furniture-core.mjs';
+import {clone,rotateXZ,elevation,heights,kitchenGroup,kitchenSettings,golaCountertop,isTallModule,tallRearExtension,scopeMatches,PRODUCTION_MODELS,dimensionPatch,rightAnchoredWidth,productionParts,normalizeKitchen} from './furniture-core.mjs';
 
 export function movementTargets(selected,items,scope='module'){
   if(!selected)return [];
@@ -55,8 +55,8 @@ export function replacement(source,draft,oldTemplate,newTemplate,keepDimensions=
   const gola=golaCountertop(source)||golaCountertop(next);
   if(gola){next.x=source.x;next.z=source.z;}
   next=rightAnchoredWidth(source,next);
-  const n=rotateXZ(0,(next.depth-source.depth)/2+(gola?(kitchenSettings(next)?.rearServiceGapMm??0)-(kitchenSettings(source)?.rearServiceGapMm??0):0),source.rotation||0);next.x+=n.x;next.z+=n.z;
-  next.x=Math.round(next.x*2)/2;next.z=Math.round(next.z*2)/2;
+  const n=rotateXZ(0,(next.depth-source.depth)/2+(gola?(kitchenSettings(next)?.rearServiceGapMm??0)-(kitchenSettings(source)?.rearServiceGapMm??0):tallRearExtension(next)-tallRearExtension(source)),source.rotation||0);next.x+=n.x;next.z+=n.z;
+  const scale=isTallModule(next)?4:2;next.x=Math.round(next.x*scale)/scale;next.z=Math.round(next.z*scale)/scale;
   const baseName=oldTemplate?.itemName||oldTemplate?.catalogue_label||oldTemplate?.label||'';
   const suffix=baseName&&String(source.name).startsWith(baseName)?String(source.name).slice(baseName.length):null;
   if(suffix===null||suffix!==''&&!/^ \d+$/.test(suffix))next.name=source.name;

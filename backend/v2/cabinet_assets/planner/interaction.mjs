@@ -1,4 +1,4 @@
-import {clone,MM_TO_WORLD,elevation,placementError,rightAnchoredWidth,dimensionPatch,kitchenSettings,rotateXZ} from './furniture-core.mjs';
+import {clone,MM_TO_WORLD,elevation,placementError,rightAnchoredWidth,dimensionPatch,kitchenSettings,isTallModule,tallRearExtension,tallWallPlacement,rotateXZ} from './furniture-core.mjs';
 import {snapItem,findSpace} from './placement.mjs';
 import {roomReady} from './room-plan.mjs';
 import {isEquipment} from './equipment-placement.mjs';
@@ -88,7 +88,7 @@ export class Interaction {
     // First release keeps the existing v2 elevation rule. No unsavable Y field.
     const raw={...g.item,x:g.item.x+(point.x-g.start.x)/MM_TO_WORLD,z:g.item.z+(point.z-g.start.z)/MM_TO_WORLD};
     const grouped=g.items.length>1,ids=new Set(g.items.map(it=>it.item_id));
-    const opts={...this.options(),threshold:this.scene.pixelThreshold(raw),allowElevation:false,...(grouped?{autoRotate:false}:{})};
+    const opts={...this.options(),threshold:this.scene.pixelThreshold(raw),allowElevation:false,...(grouped?{autoRotate:false,fitTallFront:false}:{})};
     const candidate=snapItem(raw,grouped?this.adapter.items.filter(it=>!ids.has(it.item_id)):this.adapter.items,this.adapter.room,opts,g.anchors);g.anchors=candidate.anchors;
     candidate.items=grouped?translateItems(g.items,candidate.item.x-g.item.x,candidate.item.z-g.item.z):[candidate.item];
     try{validateChanges(this.adapter,candidate.items);}catch(error){candidate.error=candidate.error||error.message;}
@@ -150,12 +150,18 @@ export class Interaction {
         const delta=(it.depth-source.depth)/2+nextKitchen.rearServiceGapMm-kitchen.rearServiceGapMm,n=rotateXZ(0,1,source.rotation||0);
         it.x+=n.x*delta;it.z+=n.z*delta;
       }else if(!kitchen&&Number.isFinite(patch.depth)&&patch.depth!==source.depth){
-        const r=this.adapter.room,delta=(patch.depth-source.depth)/2,clearance=this.options().wallOffset||0;
-        if(source.rotation===0&&Math.abs(source.z-source.depth/2+r.depth/2-clearance)<1)it.z+=delta;
-        if(source.rotation===180&&Math.abs(r.depth/2-source.z-source.depth/2-clearance)<1)it.z-=delta;
-        if(source.rotation===90&&Math.abs(r.width/2-source.x-source.depth/2-clearance)<1)it.x-=delta;
-        if(source.rotation===270&&Math.abs(source.x-source.depth/2+r.width/2-clearance)<1)it.x+=delta;
-        it.x=Math.round(it.x*2)/2;it.z=Math.round(it.z*2)/2;
+        if(isTallModule(source)){
+          const rear=rotateXZ(source.x,source.z,-source.rotation).z-source.depth/2-tallRearExtension(source);
+          const wall=-(source.rotation%180?this.adapter.room.width:this.adapter.room.depth)/2;
+          if(Math.abs(rear-wall)<.6)it=tallWallPlacement(it,this.adapter.room);
+        }else{
+          const r=this.adapter.room,delta=(patch.depth-source.depth)/2,clearance=this.options().wallOffset||0;
+          if(source.rotation===0&&Math.abs(source.z-source.depth/2+r.depth/2-clearance)<1)it.z+=delta;
+          if(source.rotation===180&&Math.abs(r.depth/2-source.z-source.depth/2-clearance)<1)it.z-=delta;
+          if(source.rotation===90&&Math.abs(r.width/2-source.x-source.depth/2-clearance)<1)it.x-=delta;
+          if(source.rotation===270&&Math.abs(source.x-source.depth/2+r.width/2-clearance)<1)it.x+=delta;
+          it.x=Math.round(it.x*2)/2;it.z=Math.round(it.z*2)/2;
+        }
       }
       applyChanges(this.adapter,widthChange(source,it,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
     });

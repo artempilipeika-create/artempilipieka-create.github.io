@@ -188,6 +188,15 @@
     </details>
     <p class="studio-hint">При смене конструкции назначения материалов сохраняются для деталей той же толщины. Материал деталей другой толщины выберите заново.</p>
    </div>
+   <div id="tall-alignment-controls" class="mf3d-control-card" hidden>
+    <div class="mf3d-control-title"><strong>Выравнивание пенала</strong></div>
+    <label>Верхний шкаф для выравнивания<select id="tall-align-target"></select></label>
+    <button type="button" id="tall-align-top" class="secondary">Вровень с верхними</button>
+    <p id="tall-align-note" class="studio-hint">Высота пенала изменится по верху выбранного навесного шкафа.</p>
+    <label>Нижний шкаф для линии фасадов<select id="tall-front-target"></select></label>
+    <button type="button" id="tall-align-front" class="secondary">От стены до линии фасадов</button>
+    <p id="tall-front-note" class="studio-hint">Глубина пересчитывается без зазора у стены, с учётом фасада и задника.</p>
+   </div>
    <div id="vitrine-options-controls" class="mf3d-control-card" hidden>
     <div class="vt-title"><strong>Пенал-витрина</strong><span class="vt-badge">Z1 · чёрный</span></div>
     <strong>Где расположить подсветку?</strong>
@@ -213,9 +222,6 @@
    </div>
    <div id="tall-options-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong id="tall-options-title">Пенал с полками</strong></div>
-    <label>Верхний шкаф для выравнивания<select id="tall-align-target"></select></label>
-    <button type="button" id="tall-align-top" class="secondary">Вровень с верхними</button>
-    <p id="tall-align-note" class="studio-hint">Высота пенала изменится по верху выбранного навесного шкафа.</p>
     <div id="appliance-tall-choice" hidden>
      <div class="ap-selected"><div id="appliance-tall-preview"></div><div id="appliance-tall-size" aria-live="polite"></div></div>
      <strong>Что будет в пенале?</strong>

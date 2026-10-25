@@ -1,9 +1,9 @@
-import {bounds,elevation,heights,rotateXZ,tier,kitchenSettings} from './furniture-core.mjs';
+import {bounds,elevation,heights,rotateXZ,tier,isTallModule,kitchenSettings} from './furniture-core.mjs';
 
 export const formatMm=value=>Number.isInteger(value)?String(value):String(Math.round(value*10)/10).replace('.',',');
 export function dimensionValue(it,axis){return axis==='height'?heights(it).overall_height_with_worktop:it[axis];}
 export function dimensionEdit(it,axis,value){
-  if(!['width','height','depth'].includes(axis)||!Number.isInteger(value)||value<=0)throw new Error('Введите положительный размер в целых миллиметрах');
+  if(!['width','height','depth'].includes(axis)||!Number.isInteger(value*(axis==='depth'&&isTallModule(it)?2:1))||value<=0)throw new Error(axis==='depth'&&isTallModule(it)?'Введите глубину с шагом 0,5 мм':'Введите положительный размер в целых миллиметрах');
   return {[axis]:value-(axis==='height'?heights(it).worktop_thickness:0)};
 }
 const local=(it,x,y,z)=>{const p=rotateXZ(x,z,it.rotation||0);return {x:it.x+p.x,y,z:it.z+p.z};};

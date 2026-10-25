@@ -1,5 +1,5 @@
 import {fixtureError} from './worktop-fixtures.mjs';
-import {clone,elevation,tier,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
+import {clone,elevation,tier,isTallModule,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -46,7 +46,8 @@ export class StateAdapter{
   replace(it){const idx=this.items.findIndex(x=>x.item_id===it.item_id);if(idx<0)return;this.items[idx]=this.persistent(it);this.notify();}
   remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
   validate(it,items=this.items){
-    if(!['width','height','depth'].every(k=>Number.isInteger(it[k]))||!['x','z'].every(k=>Number.isInteger(it[k]*2)))return 'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
+    const tall=isTallModule(it);
+    if(!['width','height'].every(k=>Number.isInteger(it[k]))||!Number.isInteger(it.depth*(tall?2:1))||!['x','z'].every(k=>Number.isInteger(it[k]*(tall?4:2))))return tall?'Ширина и высота — целые мм; глубина — с шагом 0,5 мм, координаты — 0,25 мм':'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
     if(it.elevation_mm!=null&&(!Number.isInteger(it.elevation_mm)||it.elevation_mm<0))return 'Высота навески — целое неотрицательное число миллиметров';
     const worktopError=fixtureError(it);if(worktopError)return worktopError;
     const ruleError=dimensionError(it,this.template(it));if(ruleError)return ruleError;

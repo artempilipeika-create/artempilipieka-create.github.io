@@ -744,6 +744,7 @@ function applyLimits(it,t){
     $(id).min=String(lim[0]);
     $(id).max=String(lim[1]);
     $(id).disabled=lim[0]===lim[1];
+    if(id==='depth')$(id).step=globalThis.MF_FURNITURE_CORE.isTallModule(it)?'0.5':'1';
     if(id==='width'){$(id).step=String((t?.production?.pullout_dryer?100:t?.production?.dryer?.width_step_mm)||1);$(id).disabled=lim[0]===lim[1];}
   }
 }
@@ -806,18 +807,31 @@ async function syncControls(){
   if(tallControls){
     tallControls.hidden=!tallInfo;
     globalThis.MF_APPLIANCE_TALL_UI?.sync(it,tallInfo);
-    const align=$('tall-align-target');
-    if(align&&tallInfo){
-      const previous=align.value,core=globalThis.MF_FURNITURE_CORE;
-      const walls=state.items.filter(x=>core.tier(x)==='wall').sort((a,b)=>Number(b.rotation===it.rotation)-Number(a.rotation===it.rotation)||Math.hypot(a.x-it.x,a.z-it.z)-Math.hypot(b.x-it.x,b.z-it.z));
-      align.replaceChildren(...walls.map(x=>{const o=document.createElement('option');o.value=x.item_id;o.textContent=x.name+' · верх '+(core.elevation(x,state.room)+x.height)+' мм';return o;}));
-      if(walls.some(x=>x.item_id===previous))align.value=previous;
-      $('tall-align-top').disabled=!walls.length;
-      $('tall-align-note').textContent=walls.length?'Подогнать высоту по верху выбранного шкафа. Ниши под технику сохранят размеры.':'Добавьте навесной шкаф, чтобы выровнять пенал по его верху.';
-    }
     for(const b of tallControls.querySelectorAll('[data-tall-option]'))b.setAttribute('aria-pressed',String(Boolean(tallInfo&&String(tallInfo[b.dataset.tallOption])===b.dataset.tallValue)));
     $('tall-options-note').textContent=tallInfo?`База ${tallInfo.row_height} = корпус нижнего ряда ${tallInfo.row_height-100} + цоколь 100 мм. `+
       (tallInfo.family==='appliance'?'Петли '+(tallInfo.opening==='left'?'слева.':'справа.')+' Ниши и нижняя секция сохраняют размеры при изменении высоты.':tallInfo.opening==='double'?'Д2: две створки в каждой секции, всего четыре фасада.':'Две секции, по одной двери; петли '+(tallInfo.opening==='left'?'слева.':'справа.')):'';
+  }
+  const core=globalThis.MF_FURNITURE_CORE,alignment=$('tall-alignment-controls');
+  if(alignment){
+    alignment.hidden=!core.isTallModule(it);
+    if(!alignment.hidden){
+      const nearest=(a,b)=>Number(b.rotation===it.rotation)-Number(a.rotation===it.rotation)||Math.hypot(a.x-it.x,a.z-it.z)-Math.hypot(b.x-it.x,b.z-it.z);
+      for(const [selectId,buttonId,noteId,kind]of [['tall-align-target','tall-align-top','tall-align-note','upper'],['tall-front-target','tall-align-front','tall-front-note','lower']]){
+        const select=$(selectId),previous=select.value,targets=state.items.filter(x=>kind==='upper'?core.tier(x)==='wall':core.kitchenGroup(x)==='lower'&&x.rotation===it.rotation).sort(nearest);
+        select.replaceChildren(...targets.map(x=>{const o=document.createElement('option');o.value=x.item_id;o.textContent=x.name+(kind==='upper'?' · верх '+(core.elevation(x,state.room)+x.height)+' мм':'');return o;}));
+        if(targets.some(x=>x.item_id===previous))select.value=previous;
+        const target=targets.find(x=>x.item_id===select.value);let note='',error='';
+        if(target){
+          try{
+            const next=kind==='upper'?core.alignTallTop(it,target,state.room):core.alignTallFront(it,target,state.room);
+            error=core.dimensionError(next,t)||core.placementError(next,state.items,state.room);
+            note=kind==='upper'?'Высота пенала: '+next.height+' мм. Верх совпадёт с выбранным шкафом.':
+              'Глубина корпуса: '+mmText(next.depth)+' мм. Зазор у стены: 0 мм. Фасад'+(t?.production?.vitrine?' рамки Z1':'')+' — в линии с выбранным нижним шкафом.';
+          }catch(e){error=e.message;}
+        }else note=kind==='upper'?'Добавьте верхний шкаф для выравнивания.':'Добавьте нижний шкаф, обращённый в ту же сторону.';
+        $(buttonId).disabled=!target||Boolean(error);$(noteId).textContent=error||note;
+      }
+    }
   }
   const shelfControls=$('tall-shelf-controls');
   if(shelfControls){
@@ -860,6 +874,7 @@ async function syncControls(){
     :(t?t.label+' · '+t.description+' · накладные фасады, зазор 1,5 мм по каждой стороне.'
        :'Свободная компоновка. Накладные фасады считаются с зазором 1,5 мм по каждой стороне.');
   applyLimits(it,t);
+  for(const id of ['pos-x','pos-z'])$(id).step=core.isTallModule(it)?'0.25':'0.5';
   for(const [id,key] of[['width','width'],['height','height'],['depth','depth'],['pos-x','x'],['pos-z','z'],['rotation','rotation'],['layout','layout'],['drawers','drawers'],['base','base'],['handles','handles']])$(id).value=String(it[key]);
   const h=globalThis.MF_FURNITURE_CORE.heights(it);
   for(const key of ['body_height','base_height','worktop_thickness']){

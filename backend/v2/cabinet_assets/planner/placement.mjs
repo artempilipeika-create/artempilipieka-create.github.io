@@ -1,5 +1,18 @@
-import {bounds,elevation,tier,rotateXZ,placementError,kitchenSettings,cornerSpec,cornerReturnPlacement,roomObstacles} from './furniture-core.mjs';
-const rounded=it=>({...it,x:Math.round(it.x*2)/2,z:Math.round(it.z*2)/2,elevation_mm:Math.round(it.elevation_mm)});
+import {bounds,elevation,tier,rotateXZ,placementError,dimensionError,kitchenSettings,kitchenGroup,isTallModule,tallRearExtension,cabinetFrontExtension,alignTallFront,cornerSpec,cornerReturnPlacement,roomObstacles} from './furniture-core.mjs';
+const rounded=it=>{const scale=isTallModule(it)?4:2;return {...it,x:Math.round(it.x*scale)/scale,z:Math.round(it.z*scale)/scale,elevation_mm:Math.round(it.elevation_mm)};};
+const wallOffsetFor=(it,options)=>kitchenSettings(it)?.rearServiceGapMm??(isTallModule(it)?tallRearExtension(it):(Number(options.wallOffset)||0));
+function fitTallBesideLower(it,items,room){
+  if(!isTallModule(it))return it;
+  const local=rotateXZ(it.x,it.z,-(it.rotation||0)),span=(it.rotation||0)%180?room.width:room.depth;
+  const lower=items.find(other=>{
+    if(other.item_id===it.item_id||kitchenGroup(other)!=='lower'||other.rotation!==it.rotation)return false;
+    const k=kitchenSettings(other);if(!k)return false;
+    const p=rotateXZ(other.x,other.z,-(it.rotation||0));
+    return Math.abs(Math.abs(p.x-local.x)-(other.width+it.width)/2)<.6&&
+      Math.abs(p.z-other.depth/2-k.rearServiceGapMm+span/2)<.6&&Math.abs(local.z-p.z)<Math.max(it.depth,other.depth);
+  });
+  return lower?alignTallFront(it,lower,room):it;
+}
 const verticalPeers=(a,b,room)=>{
   const aw=tier(a)==='wall',bw=tier(b)==='wall';if(aw!==bw)return false;
   const ay=elevation(a,room),by=elevation(b,room);
@@ -19,7 +32,7 @@ export function snapItem(raw,items,room,options={},previous={}){
       const along=it[face.axis==='x'?'z':'x'];if(along+it.width/2>face.min&&along-it.width/2<face.max)walls.push({...face,id:o.id+':'+face.r,name:o.name});
     }
   }
-  const kitchen=kitchenSettings(it),wallOffset=kitchen?kitchen.rearServiceGapMm:(Number(options.wallOffset)||0);
+  const kitchen=kitchenSettings(it),wallOffset=wallOffsetFor(it,options);
   const candidates=[];
   for(const wall of walls){
     const position=wall.edge+wall.sign*(it.depth/2+wallOffset);
@@ -58,13 +71,14 @@ export function snapItem(raw,items,room,options={},previous={}){
     const front=rotateXZ(0,1,it.rotation),direction=front[cross];
     const line=options.alignment==='back'?'back':'front';
     const otherKitchen=kitchenSettings(other);
-    const aligned=kitchen&&otherKitchen?other[cross]+direction*((it.depth-other.depth)/2+kitchen.rearServiceGapMm-otherKitchen.rearServiceGapMm):other[cross]+direction*(other.depth-it.depth)/2*(line==='front'?1:-1);
+    const aligned=kitchen&&otherKitchen?other[cross]+direction*((it.depth-other.depth)/2+kitchen.rearServiceGapMm-otherKitchen.rearServiceGapMm):other[cross]+direction*((other.depth-it.depth)/2*(line==='front'?1:-1)+(line==='front'?cabinetFrontExtension(other)-cabinetFrontExtension(it):0));
     // A wall anchor has priority over changing the wall clearance.
     if(anchors[cross]===undefined&&Math.abs(it[cross]-aligned)<threshold*2){
       it[cross]=aligned;anchors[cross]=aligned;
       guides.push({axis:cross,value:aligned+direction*it.depth/2*(line==='front'?1:-1),text:kitchen&&otherKitchen?'Задний край столешницы':line==='front'?'Линия фасадов':'Линия задних стенок'});
     }
   }
+  if(options.fitTallFront!==false){const fitted=fitTallBesideLower(it,items,room);if(fitted!==it){it=fitted;anchors[cross]=it[cross];guides.push({axis:cross,value:it[cross]+rotateXZ(0,1,it.rotation)[cross]*(it.depth/2+cabinetFrontExtension(it)),text:'Пенал: фасады в линию · у стены 0 мм'});}}
   if(tier(it)==='wall'&&options.allowElevation!==false){
     const ys=[...new Set([options.upperRow??1500,...peers.map(x=>elevation(x,room))])];
     ys.sort((a,b)=>Math.abs(a-it.elevation_mm)-Math.abs(b-it.elevation_mm));
@@ -80,12 +94,12 @@ export function snapItem(raw,items,room,options={},previous={}){
     }
   }
   it=rounded(it);
-  return{item:it,anchors,error:placementError(it,items,room),guides};
+  return{item:it,anchors,error:dimensionError(it)||placementError(it,items,room),guides};
 }
 /** Click/duplicate placement never silently moves an existing cabinet. */
 export function findSpace(draft,items,room,selected,options={}){
   const initial={...draft,elevation_mm:elevation(draft,room)};
-  const starts=[],clearance=kitchenSettings(initial)?.rearServiceGapMm??(options.wallOffset||0);
+  const starts=[],clearance=wallOffsetFor(initial,options);
   if(selected){const turned=cornerReturnPlacement(selected,initial);if(turned)starts.push(turned);}
   // Click placement follows a deterministic local left-to-right row. The first
   // cabinet starts at the left room boundary; later cabinets extend that row to
@@ -98,7 +112,7 @@ export function findSpace(draft,items,room,selected,options={}){
     const rowPeers=items.filter(peer=>{
       if(peer.rotation!==r||!verticalPeers(initial,peer,room))return false;
       const peerV=peer.x*front.x+peer.z*front.z;
-      const peerClearance=kitchenSettings(peer)?.rearServiceGapMm??(options.wallOffset||0);
+      const peerClearance=wallOffsetFor(peer,options);
       const expected=-frontSpan/2+peer.depth/2+peerClearance;
       return Math.abs(peerV-expected)<2;
     });
@@ -116,11 +130,11 @@ export function findSpace(draft,items,room,selected,options={}){
     for(const sign of[1,-1]){
       const p={...initial,rotation:r,x:peer.x,z:peer.z};
       p[axis]+=sign*(peer.width+p.width)/2;
-      const f=rotateXZ(0,1,r),pk=kitchenSettings(p),ok=kitchenSettings(peer);p[cross]+=f[cross]*(pk&&ok?(p.depth-peer.depth)/2+pk.rearServiceGapMm-ok.rearServiceGapMm:(peer.depth-p.depth)/2);
+      const f=rotateXZ(0,1,r),pk=kitchenSettings(p),ok=kitchenSettings(peer);p[cross]+=f[cross]*(pk&&ok?(p.depth-peer.depth)/2+pk.rearServiceGapMm-ok.rearServiceGapMm:(peer.depth-p.depth)/2+cabinetFrontExtension(peer)-cabinetFrontExtension(p));
       starts.push(p);
     }
   }
-  for(const p of starts)if(!placementError(p,items,room))return rounded(p);
+  for(const p of starts){const fitted=fitTallBesideLower(p,items,room);if(!dimensionError(fitted)&&!placementError(fitted,items,room))return rounded(fitted);}
   // A bounded grid search is used only for click placement, never in pointermove.
   for(const r of[0,90,180,270]){
     const sample={...initial,rotation:r};const b=bounds(sample,room);const ww=b.maxX-b.minX,dd=b.maxZ-b.minZ;

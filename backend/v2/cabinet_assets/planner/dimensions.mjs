@@ -47,6 +47,7 @@ export class SceneDimensions{
     const h=heights(it);
     this.hint.textContent=d.axis==='height'?(h.base_height||h.worktop_thickness?`Корпус ${h.body_height} + основание ${h.base_height} + столешница ${h.worktop_thickness} мм. Изменится высота корпуса; основание и толщина столешницы сохранятся.`:'Высота корпуса в миллиметрах.'):
       d.axis==='width'?'Левая сторона шкафа остаётся на месте, ширина изменяется вправо.':'Глубина корпуса без выступа фасада и свеса столешницы.';
+    this.input.step=d.axis==='depth'&&it.module_type==='tall_cabinet'?'0.5':'1';
     this.error.hidden=true;this.dialog.showModal();this.input.focus();this.input.select();
   }
   apply(){
