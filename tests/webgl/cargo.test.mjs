@@ -53,3 +53,23 @@ test('exactly one cargo card; native baseline and importer width guards',()=>{
  const start=importer.indexOf('const CARGO_WIDTHS'),end=importer.indexOf('const PULLOUT_DRYER_WIDTHS',start),widths=vm.runInNewContext(importer.slice(start,end)+';CARGO_WIDTHS');
  for(const v of G.variants)assert.deepEqual([...widths[v.source_sha256]],v.allowed_widths);
 });
+test('minimum body height clears both the kit and the Gola profile by at least 1 mm',()=>{
+ for(const v of G.variants)for(const width of v.allowed_widths)for(const base of [80,100,150]){
+  const it={...item(v),width,base_height:base,legHeightMm:base,height:base+v.min_body_height};assert.equal(C.dimensionError(it),'');
+  assert.ok(C.dimensionError({...it,height:it.height-1}));
+  const b=G.basket(it),profiles=G.profiles(it),ceiling=profiles.length?Math.min(...profiles[0].contour_yz.map(p=>p[0])):it.height-18;
+  assert.ok(ceiling-(b.y+b.height)>=1-1e-4,[v.label,width,ceiling,b.y+b.height].join(' '));
+ }
+});
+
+test('native import rejects incompatible cargo dimensions before loading FR3D',()=>{
+ const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');
+ const context=vm.createContext({collectSourceFiles:()=>({files:[]}),canonicalBaseDonor:i=>i,canonicalUpperDonor:i=>i,resolveSourceFile:()=>'/verified.fr3d'});
+ vm.runInContext(source.slice(source.indexOf('const CARGO_MIN_BODY'),source.indexOf('// Native API only. Node tests do not establish compatibility')),context);
+ const prepare=vm.runInContext('prepareProject',context);
+ for(const v of G.variants){
+  const it={source_sha256:v.source_sha256,source_file:v.source_file,target:{width:200,height:100+v.min_body_height,depth:510}};
+  assert.equal(prepare({items:[it]},'/sources').entries.length,1);
+  for(const target of [{...it.target,width:250},{...it.target,height:it.target.height-1},{...it.target,depth:500}])assert.throws(()=>prepare({items:[{...it,target}]},'/sources'),/Карго/);
+ }
+});

@@ -1262,7 +1262,8 @@
       400
     ],
     "warnings": [],
-    "label": "Карго · FOCUS · Gola L"
+    "label": "Карго · FOCUS · Gola L",
+    "min_body_height": 600
   },
   {
     "id": "bazis.0ac4e1b6b2d3",
@@ -1835,7 +1836,8 @@
       400
     ],
     "warnings": [],
-    "label": "Карго · FOCUS"
+    "label": "Карго · FOCUS",
+    "min_body_height": 600
   },
   {
     "id": "bazis.bcf9fc814733",
@@ -2408,7 +2410,8 @@
       400
     ],
     "warnings": [],
-    "label": "Карго · ICON"
+    "label": "Карго · ICON",
+    "min_body_height": 600
   },
   {
     "id": "bazis.0b99b75442f0",
@@ -3673,7 +3676,8 @@
       400
     ],
     "warnings": [],
-    "label": "Карго · ICON · Gola L"
+    "label": "Карго · ICON · Gola L",
+    "min_body_height": 624
   },
   {
     "id": "bazis.67176019419d",
@@ -4940,7 +4944,8 @@
     "warnings": [
       "NORWING 150: корзина и направляющая пересекают правую боковину исходной модели. Требуется исправленный FR3D; выберите 200, 300 или 400 мм."
     ],
-    "label": "Карго · NORWING · Gola L"
+    "label": "Карго · NORWING · Gola L",
+    "min_body_height": 600
   },
   {
     "id": "bazis.c492617a97b7",
@@ -5515,6 +5520,7 @@
     "warnings": [
       "NORWING 150: корзина и направляющая пересекают правую боковину исходной модели. Требуется исправленный FR3D; выберите 200, 300 или 400 мм."
     ],
-    "label": "Карго · NORWING"
+    "label": "Карго · NORWING",
+    "min_body_height": 600
   }
 ]

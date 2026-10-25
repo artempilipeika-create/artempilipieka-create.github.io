@@ -864,6 +864,7 @@ function resizeAndPlace(obj, item, log) {
   return { frame: after, placementFrame, materialChecks };
 }
 
+const CARGO_MIN_BODY = {"0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8add1b279":600,"0ac4e1b6b2d319e5227a357923458106e9511167949b02d5412e6e42484dc0d7":600,"bcf9fc814733706260bcde8808c943bfe304a0004cd2548b1545da4bd2ec5ef9":600,"0b99b75442f0e176a7664a2e657218918267466f65c3d7dc901f18ab848a6840":624,"67176019419dd7af92b6668f3029a2ce533696a296075fa545a362c2d57fc4f8":600,"c492617a97b75230df38bc2821fc37cba462a808aaf465c8684f9eb8798c4814":600};
 const CARGO_WIDTHS = {"0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8add1b279":[150,200,300,400],"0ac4e1b6b2d319e5227a357923458106e9511167949b02d5412e6e42484dc0d7":[150,200,300,400],"bcf9fc814733706260bcde8808c943bfe304a0004cd2548b1545da4bd2ec5ef9":[150,200,300,400],"0b99b75442f0e176a7664a2e657218918267466f65c3d7dc901f18ab848a6840":[150,200,300,400],"67176019419dd7af92b6668f3029a2ce533696a296075fa545a362c2d57fc4f8":[200,300,400],"c492617a97b75230df38bc2821fc37cba462a808aaf465c8684f9eb8798c4814":[200,300,400]};
 const PULLOUT_DRYER_WIDTHS = {"afefecee12fdf21084dd0cf7f014d83d6e351381825909171da3988aa295f7d6":[600,700,800,900],"b09ee8913055cca2aeb868311dc0e142313413e7c58450badb3249eba334ba46":[600,700,800],"efae0c7055e6ba437774a7736d50468466d2be411adb5e9574e1798bd5396810":[600,700,800,900],"85c150c30ea523a3eab1d3dc1505f977557b07c9133717a8f9733e43a630573c":[600,700,800],"736c6f9b31fd24519236a4a9b6d5d3bd52985a4133363e6994d99d1efab81185":[600,700,800,900],"6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b":[600,700,800],"8c1edeae68509bcee986c19f00fa7c5566222e9c9160f0f79b8b83c9ee432f2d":[600,700,800,900],"08a67c2cc8b6825cef47ac28eb652f6f93fe241535c6e6ac6743e056f38d693f":[600,700,800],"8a5a8cbca81fbf5d55ea9dbd3c77542f3ca7b90e15e428fc10e68e997f7fc2c1":[600,700,800,900],"627e0250a8e58f5e303fb11c56b4a8b881f53e5b74b5448a11a5dfdc4ce59ba8":[600,700,800,900],"8ae53ff1c32875d047c9c7dc6ad08dd5b4f68730294e2d91576c3ad8593e9f31":[600,700,800],"8001bcb4cbee6ebdea8654ab04c68b5d481115b56eba5b46b2fbdfd5f051b3cf":[600,700,800]};
 const DRYER_SOURCE_REVISION = {"id": "bazis.2e5a55692728", "previous": "2e5a55692728b4b74e1e479f507c0bffedd8550224c2412bf637c104c3997396", "current": "6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b", "file": "НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING(1).fr3d"};
@@ -879,6 +880,11 @@ function prepareProject(payload, root) {
     const item = canonicalDryerDonor(canonicalBaseDonor(canonicalUpperDonor(original)));
     const cargoWidths=CARGO_WIDTHS[String(item.source_sha256||'').toLowerCase()];
     if(cargoWidths&&!cargoWidths.includes(Number(item.target?.width))){errors.push('Карго: ширина только '+cargoWidths.join(', ')+' мм');continue;}
+    const cargoMin=CARGO_MIN_BODY[String(item.source_sha256||'').toLowerCase()];
+    if(cargoMin){
+      const body=Number(item.target?.height)-Number(item.construction?.kitchen?.legHeightMm||100),depth=Number(item.target?.depth);
+      if(!Number.isFinite(body)||body<cargoMin||body>1000||!Number.isFinite(depth)||depth<510||depth>700){errors.push('Карго: корпус '+cargoMin+'–1000, глубина 510–700 мм');continue;}
+    }
     const widths=PULLOUT_DRYER_WIDTHS[String(item.source_sha256||'').toLowerCase()];
     if(widths&&!widths.includes(Number(item.target?.width))){errors.push('Сушка: ширина только '+widths.join(', ')+' мм');continue;}
     const source = resolveSourceFile(root, item, scan);

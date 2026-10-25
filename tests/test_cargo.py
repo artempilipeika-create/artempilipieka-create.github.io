@@ -55,3 +55,9 @@ def test_expected_kits_and_source_width_mismatch_are_explicit():
         if v['brand']=='norwing':
             assert 150 not in v['allowed_widths'] and v['kits'][0]['bounds']['hi'][0]>114
             with pytest.raises(ValidationError,match='пересекают'):FurnitureItem(**item(v,width=150))
+def test_minimum_height_clears_kit_and_profile():
+    for v in VARIANTS:
+        assert v['min_body_height']==(624 if v['brand']=='icon' and v['execution']=='gola' else 600)
+        for base in (80,100,150):
+            FurnitureItem(**item(v,height=base+v['min_body_height'],base_height=base))
+            with pytest.raises(ValidationError):FurnitureItem(**item(v,height=base+v['min_body_height']-1,base_height=base))

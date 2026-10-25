@@ -17,7 +17,7 @@ def cargo_error(it):
     if k and k.get('error'):return k['error']
     if it['width'] not in v['allowed_widths']:return 'Карго '+v['brand'].upper()+': ширина только '+', '.join(map(str,v['allowed_widths']))+' мм'
     if it.get('module_type')!='base_cabinet' or it.get('base')=='wall' or cargo_base(it) not in (80,100,150):return 'Карго: нижний модуль на ножках 80, 100 или 150 мм'
-    if not 600<=it['height']-cargo_base(it)<=1000 or not 510<=it['depth']<=700:return 'Карго: высота корпуса 600–1000, глубина 510–700 мм'
+    if not v['min_body_height']<=it['height']-cargo_base(it)<=1000 or not 510<=it['depth']<=700:return f"Карго {v['brand'].upper()}: высота корпуса {v['min_body_height']}–1000, глубина 510–700 мм"
     return ''
 def cargo_adjustment(it):
     notes=[]

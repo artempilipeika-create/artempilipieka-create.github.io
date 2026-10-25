@@ -10,11 +10,11 @@
   const k=kit(it,v);if(k?.error)return k.error;
   if(!v.allowed_widths.includes(it.width))return 'Карго '+v.brand.toUpperCase()+': ширина только '+v.allowed_widths.join(', ')+' мм';
   if(it.module_type!=='base_cabinet'||it.base==='wall'||![80,100,150].includes(base(it)))return 'Карго: нижний модуль на ножках 80, 100 или 150 мм';
-  if(it.height-base(it)<600||it.height-base(it)>1000||it.depth<510||it.depth>700)return 'Карго: высота корпуса 600–1000, глубина 510–700 мм';
+  if(it.height-base(it)<v.min_body_height||it.height-base(it)>1000||it.depth<510||it.depth>700)return 'Карго '+v.brand.toUpperCase()+': высота корпуса '+v.min_body_height+'–1000, глубина 510–700 мм';
   return '';
  }
  function model(v){return {cargo:v,label:v.label,key:'base.cargo.'+v.id,source_file:v.source_file,source_sha256:v.source_sha256,tier:'base',native_defaults:{width:150,height:820,depth:510},body_height:720,base_height:100,scene_depth:510,worktop_thickness:38,resize:true,
-  carcass:{type:'cargo',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},back:{type:'overlay_nails',thickness:3,material_name:'ЛХДФ 3ММ Белый'},facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},shelves:[],doors:[],front:{kind:'drawers',count:1},hardware:{items:v.hardware_items,native_fixed_items:true,hinges_in_items:true},limits:{w:[v.allowed_widths[0],400],h:[700,1100],d:[510,700]}};}
+  carcass:{type:'cargo',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},back:{type:'overlay_nails',thickness:3,material_name:'ЛХДФ 3ММ Белый'},facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},shelves:[],doors:[],front:{kind:'drawers',count:1},hardware:{items:v.hardware_items,native_fixed_items:true,hinges_in_items:true},limits:{w:[v.allowed_widths[0],400],h:[100+v.min_body_height,1100],d:[510,700]}};}
  const round=n=>Math.round(n*10000)/10000;
  function point(it,s,a,x){
   if(a===0)return x+(x>80?it.width-150:0)-it.width/2;

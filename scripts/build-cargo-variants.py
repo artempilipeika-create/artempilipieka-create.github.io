@@ -67,6 +67,9 @@ def extract(source):
  assert sorted(k['width'] for k in v['kits'])==v['source_widths']
  assert len(v['panels'])==len({p['key'] for p in v['panels']})==7
  v['kits'].sort(key=lambda k:k['width'])
+ # Keep 1 mm clearance above the measured kit envelope, including the Gola grip profile.
+ obstruction=max((p['bounds']['size'][1] for p in v['profiles']),default=18)
+ v['min_body_height']=max(600,math.ceil(max(k['mount_origin'][1]+k['bounds']['hi'][1]-100 for k in v['kits'] if not k.get('error'))+obstruction+1))
  if brand=='norwing':v['warnings'].append(v['kits'][0]['error'])
  return v
 

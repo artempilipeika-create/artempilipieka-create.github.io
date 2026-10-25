@@ -48,6 +48,7 @@ with sync_playwright() as pw:
   page.locator('[data-cargo-option=brand]').select_option(brand)
   for execution in ['standard','gola']:
    page.locator('[data-cargo-option=execution]').select_option(execution)
+   assert page.locator('#height').get_attribute('min')==('724' if brand=='icon' and execution=='gola' else '700')
    widths=[200,300,400] if brand=='norwing' else [150,200,300,400]
    for width in widths:
     page.locator('[data-cargo-option=width]').select_option(str(width))
@@ -68,7 +69,11 @@ with sync_playwright() as pw:
  page.locator('#height').fill('900');page.locator('#height').press('Tab')
  page.locator('#depth').fill('600');page.locator('#depth').press('Tab')
  assert page.evaluate('MF_PLANNER.adapter.selected.depth')==600
- page.locator('#save-project').click();page.wait_for_function('!MF_PROJECT_SAFETY.engine.dirty && !MF_PROJECT_SAFETY.engine.busy')
+ page.locator('#save-project').click()
+ for _ in range(100):
+  if page.evaluate('!MF_PROJECT_SAFETY.engine.dirty && !MF_PROJECT_SAFETY.engine.busy'):break
+  page.wait_for_timeout(100)
+ else:raise AssertionError('Save did not settle')
  assert saved_responses;stored=saved_responses[-1].json()
  page.evaluate("""async stored=>{await MF_PLANNER.bridge.loadSnapshot({...stored,selectedId:'cargo'},stored);MF_PLANNER.bridge.refresh()}""",stored)
  assert page.locator('[data-cargo-option=brand]').input_value()=='icon'
