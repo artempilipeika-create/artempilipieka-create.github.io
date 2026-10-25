@@ -1,0 +1,116 @@
+{
+  "ok": true,
+  "families": [
+    {
+      "family": "base",
+      "cards": 6,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "base-double",
+      "cards": 4,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "drawer",
+      "cards": 10,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "oven",
+      "cards": 2,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "corner",
+      "cards": 8,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "cargo",
+      "cards": 5,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "dryer",
+      "cards": 7,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "dishwasher",
+      "cards": 2,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "upper",
+      "cards": 7,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "upper-double",
+      "cards": 5,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "open-tall-none",
+      "cards": 3,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "tall-vitrine",
+      "cards": 7,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "tall-storage",
+      "cards": 5,
+      "read_only_preview": true,
+      "undo": true
+    },
+    {
+      "family": "tall-appliance",
+      "cards": 8,
+      "read_only_preview": true,
+      "undo": true
+    }
+  ],
+  "dryer_widths": true,
+  "mobile": 390,
+  "errors": [],
+  "details": {
+    "ok": true,
+    "detail_images": true,
+    "resize_preview": true,
+    "save_restore": true,
+    "mobile": 390,
+    "errors": []
+  },
+  "catalogue_regression": {
+    "ok": true,
+    "large_cards": 14,
+    "finishes_menu": 3,
+    "navigation_preserves_state": true,
+    "joint_and_panel_and_plinth": true,
+    "undo": true,
+    "mobile_width": 390,
+    "errors": []
+  },
+  "scope": "Synthetic local API only; no orders or external messages.",
+  "freeform_handles": true,
+  "variant_tests": {
+    "passed": 9,
+    "failed": 0
+  }
+}
