@@ -1,0 +1,620 @@
+{
+  "status": "prepared_not_submitted",
+  "created": "2026-10-25",
+  "mode": "existing_mesh_texture_4k",
+  "prompt": "Texture the supplied furniture mesh only. Preserve its geometry, panel boundaries, openings and all gaps exactly. Cabinet panels: uniform warm light greige matte furniture laminate with a subtle fine microtexture and matching edge banding. Existing metal fittings: retain the supplied graphite or satin steel colors. Existing LED strips only: warm white, never add lighting. Gola profiles have NO lighting. Neutral albedo without baked shadows, reflections, highlights or ambient occlusion. No new shelves, handles, holes, ornaments, text, logos or objects. Keep construction and the inspection pose unchanged.",
+  "entries": [
+    {
+      "file": "open-tall-aq-4x8-right.glb",
+      "family": "open-tall",
+      "source_id": "bazis.7804e46e0985",
+      "source_sha256": "7804e46e0985b41debc8e6d6529cdabfefd9a7bc7f12a8d7f10ab1e3c9a382a9",
+      "label": "Открытый пенал",
+      "light_system": "aq-4x8",
+      "lighting": "right",
+      "dimensions_mm": [
+        600,
+        2000,
+        600
+      ],
+      "inspection_pose": false,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        2000.0000010430813,
+        600.0000238418579
+      ],
+      "triangles": 1100,
+      "meshes": 13,
+      "bytes": 88732,
+      "sha256": "5f440adf0054e3fa63abc90d8f066aa8a6489bcbf6c4737a24adb80248c5b390"
+    },
+    {
+      "file": "open-tall-lira-17.5x6.5-both.glb",
+      "family": "open-tall",
+      "source_id": "bazis.6605c90fe9e4",
+      "source_sha256": "6605c90fe9e48d73c05466bb9650c90912ff12bbc53b333ba90efc940001fc9f",
+      "label": "Открытый пенал",
+      "light_system": "lira-17.5x6.5",
+      "lighting": "both",
+      "dimensions_mm": [
+        600,
+        2000,
+        600
+      ],
+      "inspection_pose": false,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        2000.0000010430813,
+        600.0000238418579
+      ],
+      "triangles": 1556,
+      "meshes": 19,
+      "bytes": 119780,
+      "sha256": "fa6376c1c40f57b27f28fb67d989a0f37c4d165bbe99bdf8e16b1879ba565a95"
+    },
+    {
+      "file": "open-tall-none-none.glb",
+      "family": "open-tall",
+      "source_id": "bazis.1d3c4c663a42",
+      "source_sha256": "1d3c4c663a42d3c0d90087f9e899a3e2f30957ff9c134f224442949ec60db912",
+      "label": "Открытый пенал",
+      "light_system": "none",
+      "lighting": "none",
+      "dimensions_mm": [
+        600,
+        2000,
+        600
+      ],
+      "inspection_pose": false,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        2000.0000010430813,
+        600.0000238418579
+      ],
+      "triangles": 1076,
+      "meshes": 11,
+      "bytes": 82956,
+      "sha256": "d97cd56323082dafba5d2c00641bdf3b812acbfc403540a8778c5a1ad2c4be04"
+    },
+    {
+      "file": "open-tall-aq-4x8-left.glb",
+      "family": "open-tall",
+      "source_id": "bazis.dd2d6b26906f",
+      "source_sha256": "dd2d6b26906f467f305002d768a976931bc619d7c99caf9a2863fb0b16facabc",
+      "label": "Открытый пенал",
+      "light_system": "aq-4x8",
+      "lighting": "left",
+      "dimensions_mm": [
+        600,
+        2000,
+        600
+      ],
+      "inspection_pose": false,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        2000.0000010430813,
+        600.0000238418579
+      ],
+      "triangles": 1100,
+      "meshes": 13,
+      "bytes": 88736,
+      "sha256": "8dedd4af0c6b9c1e0a1955d0f0857a411cd19a7370eeedb24d6865dee146bd63"
+    },
+    {
+      "file": "open-tall-aq-4x8-both.glb",
+      "family": "open-tall",
+      "source_id": "bazis.0737b0adf052",
+      "source_sha256": "0737b0adf0525405d33b7a47854fa31aa14e958fad261e2f91f146c1d295c346",
+      "label": "Открытый пенал",
+      "light_system": "aq-4x8",
+      "lighting": "both",
+      "dimensions_mm": [
+        600,
+        2000,
+        600
+      ],
+      "inspection_pose": false,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        2000.0000010430813,
+        600.0000238418579
+      ],
+      "triangles": 1124,
+      "meshes": 15,
+      "bytes": 94352,
+      "sha256": "40ec6285d3ebc417bc13e35bd8950db15a33bf495cd1619dcf3fde8a3d5679a5"
+    },
+    {
+      "file": "open-tall-lira-17.5x6.5-left.glb",
+      "family": "open-tall",
+      "source_id": "bazis.6667341f4084",
+      "source_sha256": "6667341f40848950a69cb505adaa144d689dae96cb638bb213c7b38d64939ce4",
+      "label": "Открытый пенал",
+      "light_system": "lira-17.5x6.5",
+      "lighting": "left",
+      "dimensions_mm": [
+        600,
+        2000,
+        600
+      ],
+      "inspection_pose": false,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        2000.0000010430813,
+        600.0000238418579
+      ],
+      "triangles": 1316,
+      "meshes": 15,
+      "bytes": 101544,
+      "sha256": "9e896ab05d420a139c1b940e2d7ae0b2b20067cf894e6adf913c014863dabaf4"
+    },
+    {
+      "file": "open-tall-lira-17.5x6.5-right.glb",
+      "family": "open-tall",
+      "source_id": "bazis.cba171b0c9ec",
+      "source_sha256": "cba171b0c9ece1af1aaa30315b9c1dcd2c04b9d94138204fd0966f958ca326ab",
+      "label": "Открытый пенал",
+      "light_system": "lira-17.5x6.5",
+      "lighting": "right",
+      "dimensions_mm": [
+        600,
+        2000,
+        600
+      ],
+      "inspection_pose": false,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        2000.0000010430813,
+        600.0000238418579
+      ],
+      "triangles": 1316,
+      "meshes": 15,
+      "bytes": 101536,
+      "sha256": "af1678a3085d7d291e140d168de1003a8ba86e0f53389a0c7ebf37af0cae9b33"
+    },
+    {
+      "file": "cargo-focus-gola.glb",
+      "family": "cargo",
+      "source_id": "bazis.0ec91af8c3c5",
+      "source_sha256": "0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8add1b279",
+      "label": "Карго · FOCUS · Gola L",
+      "brand": "focus",
+      "execution": "gola",
+      "dimensions_mm": [
+        200,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        200.00000447034836,
+        858.2999720573425,
+        919.4999996125699
+      ],
+      "triangles": 5004,
+      "meshes": 34,
+      "bytes": 410000,
+      "sha256": "a4c01a1435de795bbbc9001037e2cf7c5a7e3123deb7ee47c924a6fe14bbaf84"
+    },
+    {
+      "file": "cargo-focus-standard.glb",
+      "family": "cargo",
+      "source_id": "bazis.0ac4e1b6b2d3",
+      "source_sha256": "0ac4e1b6b2d319e5227a357923458106e9511167949b02d5412e6e42484dc0d7",
+      "label": "Карго · FOCUS",
+      "brand": "focus",
+      "execution": "standard",
+      "dimensions_mm": [
+        200,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        200.00000298023224,
+        858.2999720573425,
+        923.4999995231627
+      ],
+      "triangles": 4672,
+      "meshes": 34,
+      "bytes": 373864,
+      "sha256": "ccf40418b773d96cf6b0ae43665f7571fa063d93173f08878480c52be92b87ec"
+    },
+    {
+      "file": "cargo-icon-standard.glb",
+      "family": "cargo",
+      "source_id": "bazis.bcf9fc814733",
+      "source_sha256": "bcf9fc814733706260bcde8808c943bfe304a0004cd2548b1545da4bd2ec5ef9",
+      "label": "Карго · ICON",
+      "brand": "icon",
+      "execution": "standard",
+      "dimensions_mm": [
+        200,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        200.00000298023224,
+        858.2999720573425,
+        923.4999995231627
+      ],
+      "triangles": 4672,
+      "meshes": 34,
+      "bytes": 373876,
+      "sha256": "ecea313966b24de61fbb2af76071ce2b5bfe6f59245e5d2b851a75c432207bc8"
+    },
+    {
+      "file": "cargo-icon-gola.glb",
+      "family": "cargo",
+      "source_id": "bazis.0b99b75442f0",
+      "source_sha256": "0b99b75442f0e176a7664a2e657218918267466f65c3d7dc901f18ab848a6840",
+      "label": "Карго · ICON · Gola L",
+      "brand": "icon",
+      "execution": "gola",
+      "dimensions_mm": [
+        200,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        200.00000447034836,
+        858.2999720573425,
+        919.4999996125699
+      ],
+      "triangles": 5004,
+      "meshes": 34,
+      "bytes": 410016,
+      "sha256": "ed56c6f436a7f94bd6574253fb3eac9ce5809e83f4a93f5fc8fc7c489e038ff8"
+    },
+    {
+      "file": "cargo-norwing-gola.glb",
+      "family": "cargo",
+      "source_id": "bazis.67176019419d",
+      "source_sha256": "67176019419dd7af92b6668f3029a2ce533696a296075fa545a362c2d57fc4f8",
+      "label": "Карго · NORWING · Gola L",
+      "brand": "norwing",
+      "execution": "gola",
+      "dimensions_mm": [
+        200,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        200.00000447034836,
+        858.2999720573425,
+        919.4999996125699
+      ],
+      "triangles": 5004,
+      "meshes": 34,
+      "bytes": 410020,
+      "sha256": "1e5bf2f4bed518f3c8aae93407de650c45026ee6c21b2cc474cb7f5d0af2d4a5"
+    },
+    {
+      "file": "cargo-norwing-standard.glb",
+      "family": "cargo",
+      "source_id": "bazis.c492617a97b7",
+      "source_sha256": "c492617a97b75230df38bc2821fc37cba462a808aaf465c8684f9eb8798c4814",
+      "label": "Карго · NORWING",
+      "brand": "norwing",
+      "execution": "standard",
+      "dimensions_mm": [
+        200,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        200.00000298023224,
+        858.2999720573425,
+        923.4999995231627
+      ],
+      "triangles": 4672,
+      "meshes": 34,
+      "bytes": 373880,
+      "sha256": "af2500cf457c45ca461ca685859d97eecce8e808304305190b8449543da09e0b"
+    },
+    {
+      "file": "pullout-dryer-flat_line-ball-gola.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.afefecee12fd",
+      "source_sha256": "afefecee12fdf21084dd0cf7f014d83d6e351381825909171da3988aa295f7d6",
+      "label": "Шкаф с выдвижной сушкой · FLAT LINE · Обычные шариковые · Gola II",
+      "brand": "flat_line",
+      "system": "ball",
+      "execution": "gola",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000357627869,
+        858.2999720573425,
+        879.5081996125698
+      ],
+      "triangles": 7304,
+      "meshes": 49,
+      "bytes": 584604,
+      "sha256": "b1a049259f5c207f73bac4fa5762696b31cf7e728038666765958938d572a9e8"
+    },
+    {
+      "file": "pullout-dryer-norwing-ball-gola.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.b09ee8913055",
+      "source_sha256": "b09ee8913055cca2aeb868311dc0e142313413e7c58450badb3249eba334ba46",
+      "label": "Шкаф с выдвижной сушкой · NORWING · Обычные шариковые · Gola II",
+      "brand": "norwing",
+      "system": "ball",
+      "execution": "gola",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000357627869,
+        858.2999720573425,
+        879.5081996125698
+      ],
+      "triangles": 7304,
+      "meshes": 49,
+      "bytes": 584576,
+      "sha256": "26fc1e7f2135610727c993f8e91717aa576adda8d3e9958b395d5eeb7a3e8d45"
+    },
+    {
+      "file": "pullout-dryer-flat_line-ball-standard.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.efae0c7055e6",
+      "source_sha256": "efae0c7055e6ba437774a7736d50468466d2be411adb5e9574e1798bd5396810",
+      "label": "Шкаф с выдвижной сушкой · FLAT LINE · Обычные шариковые",
+      "brand": "flat_line",
+      "system": "ball",
+      "execution": "standard",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        858.2999720573425,
+        883.499999523163
+      ],
+      "triangles": 6508,
+      "meshes": 49,
+      "bytes": 498112,
+      "sha256": "5afbf0f36d7a45a3c8a04e89f433b1443665b6ddf23474c8761fa2d756008775"
+    },
+    {
+      "file": "pullout-dryer-norwing-ball-standard.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.85c150c30ea5",
+      "source_sha256": "85c150c30ea523a3eab1d3dc1505f977557b07c9133717a8f9733e43a630573c",
+      "label": "Шкаф с выдвижной сушкой · NORWING · Обычные шариковые",
+      "brand": "norwing",
+      "system": "ball",
+      "execution": "standard",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        858.2999720573425,
+        883.499999523163
+      ],
+      "triangles": 6508,
+      "meshes": 49,
+      "bytes": 498084,
+      "sha256": "9228d8a8685aa8f75a5b918021e6592ead394785c314266e8e9253b4a1b147a1"
+    },
+    {
+      "file": "pullout-dryer-flat_line-aq-standard.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.736c6f9b31fd",
+      "source_sha256": "736c6f9b31fd24519236a4a9b6d5d3bd52985a4133363e6994d99d1efab81185",
+      "label": "Шкаф с выдвижной сушкой · FLAT LINE · AQ LineBox",
+      "brand": "flat_line",
+      "system": "aq",
+      "execution": "standard",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        858.2999720573425,
+        883.499999523163
+      ],
+      "triangles": 6400,
+      "meshes": 48,
+      "bytes": 491824,
+      "sha256": "5a97a30d92cb9be7ee3a42cef090f6b33b4c44d963ec8213533d80421ed0a874"
+    },
+    {
+      "file": "pullout-dryer-norwing-aq-standard.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.2e5a55692728",
+      "source_sha256": "6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b",
+      "label": "Шкаф с выдвижной сушкой · NORWING · AQ LineBox",
+      "brand": "norwing",
+      "system": "aq",
+      "execution": "standard",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        858.2999720573425,
+        883.499999523163
+      ],
+      "triangles": 6400,
+      "meshes": 48,
+      "bytes": 491800,
+      "sha256": "2dda9dfeb4f2b5db76fdb59b12e9a53b12272549e1707f3d623fa03470cb2801"
+    },
+    {
+      "file": "pullout-dryer-flat_line-aq-gola.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.8c1edeae6850",
+      "source_sha256": "8c1edeae68509bcee986c19f00fa7c5566222e9c9160f0f79b8b83c9ee432f2d",
+      "label": "Шкаф с выдвижной сушкой · FLAT LINE · AQ LineBox · Gola II",
+      "brand": "flat_line",
+      "system": "aq",
+      "execution": "gola",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000357627869,
+        858.2999720573425,
+        879.5081996125698
+      ],
+      "triangles": 7196,
+      "meshes": 48,
+      "bytes": 578304,
+      "sha256": "231dd88c37232077de1382ad451798bb5b29868b17a094434efc5ab12497c4a7"
+    },
+    {
+      "file": "pullout-dryer-norwing-aq-gola.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.08a67c2cc8b6",
+      "source_sha256": "08a67c2cc8b6825cef47ac28eb652f6f93fe241535c6e6ac6743e056f38d693f",
+      "label": "Шкаф с выдвижной сушкой · NORWING · AQ LineBox · Gola II",
+      "brand": "norwing",
+      "system": "aq",
+      "execution": "gola",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000357627869,
+        858.2999720573425,
+        879.5081996125698
+      ],
+      "triangles": 7196,
+      "meshes": 48,
+      "bytes": 578296,
+      "sha256": "5ddbfc598f10848d72aa3a1332064a8ffd0fc1c8e3b283dd61661aeece441dc5"
+    },
+    {
+      "file": "pullout-dryer-flat_line-slimbox-standard.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.8a5a8cbca81f",
+      "source_sha256": "8a5a8cbca81fbf5d55ea9dbd3c77542f3ca7b90e15e428fc10e68e997f7fc2c1",
+      "label": "Шкаф с выдвижной сушкой · FLAT LINE · Slimbox Evolution",
+      "brand": "flat_line",
+      "system": "slimbox",
+      "execution": "standard",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        858.2999720573425,
+        883.499999523163
+      ],
+      "triangles": 6400,
+      "meshes": 48,
+      "bytes": 491840,
+      "sha256": "ddca9e75cb6a25ff2ea39ae0db9bedef125edbc3935b01f1de53a562c8b682d5"
+    },
+    {
+      "file": "pullout-dryer-flat_line-slimbox-gola.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.627e0250a8e5",
+      "source_sha256": "627e0250a8e58f5e303fb11c56b4a8b881f53e5b74b5448a11a5dfdc4ce59ba8",
+      "label": "Шкаф с выдвижной сушкой · FLAT LINE · Slimbox Evolution · Gola II",
+      "brand": "flat_line",
+      "system": "slimbox",
+      "execution": "gola",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000357627869,
+        858.2999720573425,
+        879.4999996125698
+      ],
+      "triangles": 7196,
+      "meshes": 48,
+      "bytes": 578308,
+      "sha256": "b6256e5bab8e0a36e278d7b7ae25b21485ba39cb23cded76b6e2b79e1df4c1a8"
+    },
+    {
+      "file": "pullout-dryer-norwing-slimbox-standard.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.8ae53ff1c328",
+      "source_sha256": "8ae53ff1c32875d047c9c7dc6ad08dd5b4f68730294e2d91576c3ad8593e9f31",
+      "label": "Шкаф с выдвижной сушкой · NORWING · Slimbox Evolution",
+      "brand": "norwing",
+      "system": "slimbox",
+      "execution": "standard",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000238418579,
+        858.2999720573425,
+        883.499999523163
+      ],
+      "triangles": 6400,
+      "meshes": 48,
+      "bytes": 491512,
+      "sha256": "3217888547d977a78b8c44db60a6dc09811ae5b368749673ded7840bd69e3c24"
+    },
+    {
+      "file": "pullout-dryer-norwing-slimbox-gola.glb",
+      "family": "pullout-dryer",
+      "source_id": "bazis.8001bcb4cbee",
+      "source_sha256": "8001bcb4cbee6ebdea8654ab04c68b5d481115b56eba5b46b2fbdfd5f051b3cf",
+      "label": "Шкаф с выдвижной сушкой · NORWING · Slimbox Evolution · Gola II",
+      "brand": "norwing",
+      "system": "slimbox",
+      "execution": "gola",
+      "dimensions_mm": [
+        600,
+        820,
+        510
+      ],
+      "inspection_pose": true,
+      "mesh_bounds_mm": [
+        600.0000357627869,
+        858.2999720573425,
+        879.4999996125698
+      ],
+      "triangles": 7196,
+      "meshes": 48,
+      "bytes": 578288,
+      "sha256": "513340f412fb10feac02914e5295d22a360780c029338e1e20a1fb031c261204"
+    }
+  ]
+}
