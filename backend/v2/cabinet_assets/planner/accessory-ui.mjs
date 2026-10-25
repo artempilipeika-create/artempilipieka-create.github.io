@@ -5,8 +5,9 @@ export class AccessoryUI{
  constructor(app){
   this.app=app;
   const card=el('section');card.id='plinth-card';card.className='mf3d-control-card accessory-card';
-  card.append(el('h3','Цоколь'),el('p','Единый цоколь по линии фасадов нижних шкафов, пеналов и витрин. Общие участки объединяются при одинаковой высоте опор и материале; разрывы и углы учитываются автоматически.'));
+  card.append(el('h3','Цоколь'),el('p','Единый цоколь для нижних шкафов, пеналов и витрин. Участки объединяются по высоте, материалу и линии фасадов.'));
   this.auto=el('div');this.auto.className='automatic-finish';card.append(this.auto);
+  const hero=el('img');hero.className='surface-hero';hero.src='/account/planner/module-card-images/plinth.webp';hero.alt='';hero.width=370;hero.height=270;hero.loading='lazy';hero.draggable=false;app.listen(hero,'error',()=>hero.remove());card.append(hero);
   const preview=el('div');preview.className='accessory-preview';preview.innerHTML=A.drawing('straight');card.append(preview);
   this.add=button('Добавить цоколь на выбранный ряд');card.append(this.add);
   this.note=el('p');this.note.className='studio-hint';this.note.setAttribute('aria-live','polite');card.append(this.note);

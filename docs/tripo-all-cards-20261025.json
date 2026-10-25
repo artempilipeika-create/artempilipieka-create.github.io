@@ -1,0 +1,242 @@
+{
+  "date": "2026-10-25",
+  "provider": "Tripo Studio / Image",
+  "model": "Nano Banana",
+  "usage": "Catalogue family illustrations, countertop joints, backsplash finishes and continuous plinth; not manufacturing geometry or dimensionally exact product photographs.",
+  "source_method": "Reviewed browser display captures cropped to image bounds and encoded as WebP. Original 1184 × 864 PNGs remain in Tripo history.",
+  "native_geometry": "BAZIS definitions, dimensions, insertion, calculations and export are unchanged. Native countertop joint diagrams are retained.",
+  "cost_credits": 0,
+  "free_generations_used": 17,
+  "free_usage_before": 9,
+  "free_usage_after": 26,
+  "credit_balance_before": 2520,
+  "credit_balance_after": 2520,
+  "assets": [
+    {
+      "file": "base-single.webp",
+      "tripo_image_id": "82a604a9-ed6c-4b01-9755-76c701cb11f0",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "af84e1e128e728c0158d435bec9a4d741fcc564de0f77f2fbd75981d34cc64a0"
+    },
+    {
+      "file": "base-double.webp",
+      "prompt": "Premium photorealistic furniture catalogue photo. One freestanding kitchen BASE CABINET, 600 mm wide, 820 mm tall, 510 mm deep. Exactly TWO equal closed flat slab doors side by side, warm light greige matte laminate and matching cabinet sides. Two slim black vertical handles positioned together near the centre seam and near the TOP of the doors. Thin light stone countertop and dark recessed continuous plinth hiding all feet. No drawers. Precise thin straight furniture edges and realistic matte texture. Entire cabinet centred, front three-quarter view showing front and right side, camera slightly above. Seamless warm off-white studio background #f4f3ef, soft upper-left key light, gentle contact shadow, wide margins. No room, decor, light strips, text, logo, border or watermark.",
+      "tripo_image_id": "91ef0749-d742-481c-8a2c-86338b3a9b54",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "e5bb9cc807c307492845d64126af450d4286b0970558dd94a4165a3b88cf98cd"
+    },
+    {
+      "file": "base-drawers.webp",
+      "prompt": "Premium photorealistic furniture catalogue photo. One freestanding kitchen drawer BASE CABINET, warm light greige matte laminate, 600 mm wide, 820 mm tall, 510 mm deep. Exactly TWO equal-height broad drawers stacked vertically, both completely CLOSED, each with one single horizontal slim black handle centred near its top. One horizontal gap dividing the front into two equal halves, no vertical seam. Matching cabinet side, thin light neutral stone countertop, dark recessed continuous plinth hiding all feet. Clean precise straight edges. Whole object centred, front three-quarter view slightly from above. Warm off-white seamless studio background #f4f3ef, soft upper-left lighting, gentle contact shadow, generous margins. No extra drawers, no doors, no decor, no LED, no text, logos or watermark.",
+      "tripo_image_id": "e49bcf5b-53a3-4c99-abbb-b81c791a1a44",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "8d132cfb6b8c7876f09b442070dacf2c5fb575f1a1351499f0b6d98a2d43c60f"
+    },
+    {
+      "file": "base-oven.webp",
+      "prompt": "Premium photorealistic furniture catalogue photograph. Single kitchen BASE CABINET for a built-in oven, 600 mm wide, 820 mm high including plinth, warm light greige matte cabinet sides. A realistic BLACK GLASS ELECTRIC OVEN occupies the large square 595 mm high niche directly under the thin light stone countertop. The oven has a dark glass door, subtle metal horizontal handle and small two-knob control strip. Below the oven is exactly ONE shallow greige drawer with one slim black horizontal handle. Dark recessed continuous plinth hides all feet. No hob, no microwave, no other doors. Entire cabinet centred in a front three-quarter view slightly from above, precise straight furniture geometry. Seamless warm off-white studio background #f4f3ef, soft upper-left key light, gentle contact shadow, generous margins. No room, decor, dishes, LED, text, logos, border or watermark.",
+      "tripo_image_id": "392ca973-ec6b-403c-9164-24d08589469e",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "9598ee9b9223741e96cde113cb7bda27754faf8776a1099f419573e599f19813"
+    },
+    {
+      "file": "base-corner.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. Single BLIND CORNER kitchen base cabinet, a straight rectangular cabinet 1000 mm wide, 820 mm tall and 510 mm deep. Its front has a plain fixed filler panel on the LEFT third and ONE closed slab door on the RIGHT two thirds, with a slim black vertical handle near the TOP LEFT of that door. No diagonal front, no L-shaped cabinet, no two-wing door. Warm light greige matte laminate, thin light stone countertop and recessed continuous dark plinth. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "51adcfa6-b023-47b2-bba7-c36ec1805485",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "081c8b1ff6acf8c3fa892705853860769b38947a94ef12e05317cb2542f640a4"
+    },
+    {
+      "file": "wall-single.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. One WALL-MOUNTED kitchen cabinet, width 600 mm, height 720 mm, shallow depth 317 mm. Exactly ONE closed plain greige slab door with ONE slim BLACK VERTICAL handle near the BOTTOM RIGHT corner, 50 mm above bottom edge. The upper portion of the door is completely clear. Matching warm greige matte sides. No legs, no plinth, no countertop, no drawers. The cabinet floats against a plain light studio wall with subtle shadow, complete object visible. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "33afd835-c34a-47ed-a088-dc6b199bfb0c",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "7413670821fb4f75b0691f3cf703c93a54048a66f1f399049ae7bea8e95914fc"
+    },
+    {
+      "file": "wall-double.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. One WALL-MOUNTED kitchen cabinet, width 600 mm, height 720 mm, shallow depth 317 mm. Exactly TWO equal closed plain warm greige slab doors, one thin vertical seam in the centre. Exactly TWO slim BLACK VERTICAL handles together beside the centre seam near the BOTTOM of the doors. The top half of both doors is completely clear. Matching warm greige matte sides. No legs, no plinth, no countertop, no drawers. Floating against plain light studio wall with subtle shadow, complete object visible. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "e3a8e378-47d3-4d34-90e2-659116d82234",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "1946bfdfe8ff0e4d221d177946140676648c525b5445f0c6eda7a3e0726f14b3"
+    },
+    {
+      "file": "dishwasher.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. One fully integrated built-in DISHWASHER, 600 mm wide, shown as a standalone appliance with NO extra furniture cabinet around it. Its front door is hinged at the bottom and OPEN down at about 60 degrees. Outer face of door clad in a warm light greige flat furniture panel, inner face realistic stainless steel. Show two empty graphite dish racks inside the steel appliance. One slim black horizontal handle on the furniture front. No adjacent cupboards, no sink, no countertop, no decorative objects. Entire appliance and opened door completely visible with wide margins. Realistic straight geometry. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "a154b6af-11bc-4dbb-9eb6-55f0cf6b90d7",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "20d2308494aaf863246996585bc07bea2f80996258511d97b88092a119aa8cd4"
+    },
+    {
+      "file": "tall-storage.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. One tall kitchen pantry cabinet, width 600 mm, height 2000 mm, depth 600 mm. Warm light greige matte laminate. Exactly TWO solid full-width closed doors stacked vertically: lower door from plinth to 820 mm level, taller upper door above it. One horizontal seam at 820 mm, NO vertical seam. Each door has one slim black vertical handle on its right edge. Handles sit near the horizontal join between the two doors for comfortable access, NOT at the top of the cabinet. Dark recessed 100 mm continuous plinth, no visible feet. No drawers, no countertop, no oven. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "416e8dbd-8ff3-4a68-bb17-fbc4bdb1565b",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "c9665673609e87786a6c688f5393a1d966b0b21d29dc3c8f742195246a8c711d"
+    },
+    {
+      "file": "tall-appliance.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. One tall kitchen appliance tower cabinet, 600 mm wide, 2000 mm tall, 600 mm deep. Warm light greige matte laminate. From bottom to top: dark 100 mm recessed plinth, ONE solid lower greige door about 720 mm high, ONE realistic BLACK GLASS built-in ELECTRIC OVEN about 595 mm high at waist level, then ONE greige upper door. Only one oven. Oven has subtle black control knobs and a horizontal handle. Cabinet doors each have one slim black vertical handle near the oven zone for reachability. No microwave, no extra compartments, no top counter. Complete tower visible. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "6c2ceb8e-f303-49c2-a2a5-d5c9b0ad803e",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "4b83e70bf3f46f582c0e0796b5d672f303d8c0f973a77cd52ef7f87047b4be91"
+    },
+    {
+      "file": "tall-vitrine.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. One tall furniture GLASS DISPLAY cabinet, 600 mm wide and 2000 mm tall, 600 mm deep. Warm light greige matte wood sides, solid greige back, dark recessed 100 mm plinth. Exactly ONE full-height clear glass door with a very SLIM BLACK ALUMINIUM rectangular frame, no large metal handle. Exactly ONE transparent GLASS shelf at the middle, making two large empty compartments. No wooden shelf, no objects inside. One very thin subtle warm light line recessed vertically on the INSIDE LEFT wall, not on the outside cabinet side. Gentle reflections on glass, no opaque glazing, no extra doors. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "220a471c-6ac5-4e44-91be-bc346da53a6d",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "3d77aaa97974015ebd24ce92445981d90f691b2d311b5c69172364d5dae1da7c"
+    },
+    {
+      "file": "countertop-standard.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. Close-up product photograph of a light warm grey stone-effect LAMINATE kitchen WORKTOP corner, 38 mm thick with a straight squared front edge. Two worktop slabs meet at a right angle with a clearly visible STRAIGHT perpendicular butt seam, not a diagonal seam. Show a short section of both arms of the L-shaped worktop, the front thickness and clean top surface, on understated greige cabinet supports. The joint is the subject in the centre. No metal joint strip. No sink, hob, objects, tiles or decoration. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background #f4f3ef, gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "crop_note": "Top 12 display pixels cropped to exclude generated colour-code text.",
+      "tripo_image_id": "4d5c7e67-6ab5-4b1f-b4fc-6aa69771ad77",
+      "dimensions": [
+        370,
+        258
+      ],
+      "sha256": "55f390d8dbc4a2988a21c5ae11d3b86930c1c161e82ffdc723e8f79c865e5962"
+    },
+    {
+      "file": "countertop-euro.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. Close-up product photograph of a light warm grey stone-effect LAMINATE kitchen WORKTOP with a professionally fitted EURO MITRE corner joint. Two 38 mm thick worktop slabs make an L shaped right-angle corner. A very fine tight seam crosses the worktop depth and turns in a short soft curve at the inside front corner, as a kitchen worktop mason's mitre joint. No metal joining strip, no diagonal 45 degree seam across whole corner. Show clean top surface and matching straight front edge on understated greige cabinet supports. No sink, hob, decor or objects. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background  gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "a3cebc34-0235-4d92-8ca1-7c3543ca93c7",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "1d4e28d86eed5c64e7a564cf5dd8dd79f9ddc0d3e8a13ec4615b13cbdc309125"
+    },
+    {
+      "file": "backsplash-glass.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. Premium interior material detail photo of a glossy light warm grey GLASS KITCHEN BACKSPLASH, a single uninterrupted glass panel 6 mm thick standing vertically above a light stone worktop. Soft reflected window light reveals the smooth reflective glass surface, a very subtle polished glass edge is visible at the right. Lower area shows a small strip of light neutral worktop and the top of warm greige base cabinets. No seams, grout, tiles, sockets, shelves, sink, faucet, cabinets above, decor or objects. Backsplash surface is the clear main subject filling the centre. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background  gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "5d6d7708-eaa7-47ca-afe6-cd42a14bc4e2",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "dc81d05718670ff47d9a5c94ff7b7fcbb655367146fd058c63a3735d523377c6"
+    },
+    {
+      "file": "backsplash-ldsp.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. Premium interior material detail photo of a warm NATURAL OAK WOODGRAIN laminated chipboard KITCHEN BACKSPLASH, one single flat 18 mm thick panel above a light stone worktop. Fine realistic oak grain, warm beige wood, matte surface and precise matching edge banding visible at the right. Lower area shows a small strip of light neutral countertop and top of warm greige base cabinets. Wood panel is the clear main subject filling centre. No tiles, seams, grout, reflections like glass, sockets, shelves, sink, faucet, cabinets above, decor or objects. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background  gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "2b9e17dd-82af-4798-8d17-756bcc03bd33",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "8fc4c11d5d92b711f28256b00abd1c3d343c231bec4a9cc96e4a532fcb6842eb"
+    },
+    {
+      "file": "backsplash-tile.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. Premium interior material detail photo of a kitchen backsplash made of LIGHT WARM GREY rectangular ceramic TILES, precisely aligned in a regular straight stacked grid. Subtle realistic ceramic texture, fine 2 mm light-grey grout lines clearly visible both horizontally and vertically. Backsplash above light stone worktop; lower area shows a small strip of countertop and top of warm greige cabinets. Tile surface is the main subject filling centre. No ornate pattern, herringbone, sockets, shelves, sink, faucet, cabinets above, decor or objects. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background  gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "b09e3cb4-0372-4d08-93c8-081f032684bc",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "129af2b5da13363c00b3a31f77da4ad4e3c9ff690955958c2c148ba2d4adc31d"
+    },
+    {
+      "file": "plinth.webp",
+      "prompt": "Create one premium photorealistic furniture catalogue photograph. Premium furniture detail photo, low camera close-up of the BOTTOM of a row of three warm light greige kitchen base cabinets. A single continuous dark graphite recessed KITCHEN PLINTH, 100 mm high, runs unbroken below all the cabinets, set back 40 mm from the flat greige door fronts. All cabinet legs are fully concealed. Focus on clean horizontal line of plinth, precise panel edges and gentle shadow where cabinets meet plinth. Pale neutral floor, cropped top half of cabinets, no countertop visible. No separate feet, gaps in plinth, handles, decor or objects. Front three-quarter view slightly from above unless a close-up is specified. Soft upper-left studio key light, warm off-white neutral background  gentle realistic shadows, straight precise edges, tasteful subtle material texture. Keep subject centred with generous margins. No text, labels, logo, border or watermark.",
+      "tripo_image_id": "1eaf4505-bbe7-44e2-8b0a-6e86e15dabda",
+      "dimensions": [
+        370,
+        270
+      ],
+      "sha256": "d864e0ff3e163e6af3c831e3efe67e87b941fdd558e3bdb744aa67f706243c80"
+    }
+  ],
+  "validation": {
+    "unit_tests": {
+      "passed": 39,
+      "failed": 0,
+      "suites": [
+        "countertops",
+        "wall-finishes",
+        "accessories"
+      ]
+    },
+    "catalogue_browser": {
+      "ok": true,
+      "catalogue_cards": 14,
+      "surface_images": 6,
+      "native_insertion": true,
+      "joint_selection": true,
+      "three_finishes": true,
+      "undo_redo": true,
+      "mobile_width": 390,
+      "errors": []
+    },
+    "countertop_browser": {
+      "ok": true,
+      "url": "http://127.0.0.1:8080",
+      "renderer": "webgl",
+      "checks": [
+        "automatic straight and left turn",
+        "ordinary/euro selection",
+        "new cabinets inherit choice",
+        "per-module off/on",
+        "undo/redo",
+        "saved payload and restore",
+        "native BAZIS JSON",
+        "desktop/mobile layout"
+      ],
+      "errors": [],
+      "blocked_requests": []
+    },
+    "open_tall_browser": {
+      "passed": true,
+      "checks": [
+        "seven configurations",
+        "depth 300",
+        "undo",
+        "save/reopen",
+        "native export",
+        "front alignment",
+        "top alignment"
+      ]
+    },
+    "proofs": [
+      "tripo-all-card-review-20261025/catalogue-overview.webp",
+      "tripo-all-card-review-20261025/cabinet-cards-review.webp",
+      "tripo-all-card-review-20261025/surface-cards-review.webp"
+    ]
+  }
+}

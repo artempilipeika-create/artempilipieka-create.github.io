@@ -7,14 +7,18 @@ export class WallFinishUI{
  constructor(app){
   this.app=app;
   const card=el('section');this.card=card;card.id='wall-finish-card';card.className='mf3d-control-card wall-finish-card';
-  card.append(el('h3','Стеновые панели'),el('p','Скиналь, фартук из ЛДСП или плитка. Выбор покрытия создаёт единый фартук по столешнице вместо ручных участков. Длина и углы следуют за кухней.'));
-  const choices=el('div');choices.className='wall-finish-types';
-  for(const [kind,label]of Object.entries(panelNames)){const b=this.button(label,()=>this.addPanel(kind));b.dataset.finish=kind;choices.append(b);}card.append(choices);
+  card.append(el('h3','Стеновые панели'),el('p','Выберите покрытие. Единый фартук следует за столешницей: длина и углы меняются вместе с кухней.'));
+  const choices=el('div');choices.className='wall-finish-types';choices.setAttribute('role','group');choices.setAttribute('aria-label','Покрытие фартука');this.typeButtons=[];
+  for(const [kind,label]of Object.entries(panelNames)){
+   const b=this.button('',()=>this.addPanel(kind));b.dataset.finish=kind;b.setAttribute('aria-pressed','false');
+   const photo=el('img');photo.className='surface-card-photo';photo.src='/account/planner/module-card-images/backsplash-'+({skinali:'glass',ldsp:'ldsp',tile:'tile'}[kind])+'.webp';photo.alt='';photo.width=370;photo.height=270;photo.loading='lazy';photo.draggable=false;app.listen(photo,'error',()=>photo.remove());
+   b.append(photo,el('strong',kind==='ldsp'?'Фартук ЛДСП':label),el('small',kind==='skinali'?'Стекло 6 мм':kind==='ldsp'?'16 / 18 мм':'Плитка и швы'));choices.append(b);this.typeButtons.push(b);
+  }card.append(choices);
   this.list=el('div');card.append(this.list);
   card.append(el('h3','Настенная подсветка'),el('p','Накладной профиль на стене. Высота задаётся от пола до центра профиля.'));
   card.append(this.button('Добавить настенную подсветку',()=>this.addLight()));this.lights=el('div');card.append(this.lights);
-  const note=el('p','Скиналь 6 мм выгружается в БАЗИС отдельными участками. ЛДСП, плитка и подсветка сохраняются в описании. Вырезы, раскрой, крепление и электрика уточняются отдельно.');note.className='studio-hint';card.append(note);
-  const originals=el('details');originals.append(el('summary','Исходные скинали БАЗИС · 6 мм'));
+  const note=el('p','Скиналь 6 мм выгружается в БАЗИС отдельными участками. ЛДСП, плитка и подсветка сохраняются в описании. Вырезы, раскрой, крепление и электрика уточняются отдельно.');note.className='studio-hint';
+  const originals=el('details');originals.append(el('summary','Детали и исходники БАЗИС'),note);
   for(const s of sources){const a=el('a',shapeNames[s.shape]+' · FR3D');a.href='/account/planner/wall-panel-sources/'+encodeURIComponent(s.source_file);a.download=s.source_file;originals.append(a);}card.append(originals);
   document.getElementById('module-catalogue').before(card);
   document.getElementById('countertop-module-control').append(this.button('Фартук и настенная подсветка',()=>{app.workspace?.panel('left',true,{manual:true,focus:true});card.scrollIntoView({block:'start',behavior:'smooth'});}));
@@ -61,6 +65,7 @@ export class WallFinishUI{
  }
  sync(){
   const s=this.app.adapter.state,key=JSON.stringify([s.wallPanels,s.wallLights,s.room,s.items,this.app.adapter.selected?.item_id,(s.wallPanels||[]).map(p=>this.app.adapter.material(p.material_id)?.name)]);if(key===this.key)return;this.key=key;
+  const selectedKind=s.wallPanels?.find(p=>p.automatic)?.kind;for(const b of this.typeButtons)b.setAttribute('aria-pressed',String(b.dataset.finish===selectedKind));
   const opened=new Set([...this.card.querySelectorAll('details[data-id][open]')].map(d=>d.dataset.id));if(this.openId)opened.add(this.openId);this.openId=null;
   for(const [list,parent]of [['wallPanels',this.list],['wallLights',this.lights]]){
    parent.replaceChildren();const light=list==='wallLights';

@@ -39,6 +39,7 @@
 #planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy{padding:15px 14px 10px;gap:6px}
 #planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy strong{font-size:15px;line-height:1.3;font-weight:650;letter-spacing:-.3px}
 #planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy>span{font-size:11px;line-height:1.5}
+#planner-workspace .mf3d-module[data-card-artwork=tripo] .mf3d-module-copy>span:not(.studio-card-options){font-weight:400;min-height:3em}
 #planner-workspace .studio-card-options{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 #planner-workspace .studio-card-options>span{display:inline-block!important;padding:3px 7px;border:1px solid #e4e7df;border-radius:6px;background:#f7f8f4;color:#526454;font-size:10px!important;line-height:1.4}
 #planner-workspace .mf3d-module[data-card-artwork=tripo] .studio-card-meta{padding:0 14px 14px;font-size:10px}

@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright,expect
 BASE=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8080'
 ROOT=Path(__file__).resolve().parents[1]
 OUT=Path(os.environ.get('MF_TEST_OUTPUT','/tmp/countertop-qa'));OUT.mkdir(parents=True,exist_ok=True)
-errors=[];console=[];blocked=[]
+errors=[];console=[];blocked=[];failed_resources=[]
 if BASE.startswith('http://127.0.0.1'):
  import threading,time,urllib.request
  sys.path.insert(0,str(ROOT))
@@ -25,14 +25,20 @@ with sync_playwright() as pw:
   req=route.request
   if '/api/v2/' in req.url:
    path=req.url.split('/api/v2/',1)[1].split('?',1)[0]
+   if path=='3d-projects' and req.method=='POST':
+    route.fulfill(status=200,content_type='application/json',body=json.dumps({**json.loads(req.post_data),'project_id':'countertop-qa','version':1}));return
+   if path=='3d-projects/countertop-qa' and req.method=='PATCH':
+    route.fulfill(status=200,content_type='application/json',body=json.dumps({**json.loads(req.post_data),'project_id':'countertop-qa','version':2}));return
    if req.method!='GET':blocked.append(req.method+' '+path);route.abort();return
    data={'user_id':'countertop-qa'} if path=='auth/me' else {'items':[]} if path in ('3d-projects','catalogue/materials') else {'active_release':None} if path=='catalogue/releases' else {}
+   if path.startswith('catalogue/materials/'):data={'variant_id':path.split('/')[-1],'name':'Проверочный материал','thickness':18}
    route.fulfill(status=200,content_type='application/json',body=json.dumps(data));return
   if req.method=='GET' and req.url.startswith(BASE+'/'):route.continue_();return
   if req.url.startswith('blob:'):route.continue_();return
   blocked.append(req.method+' '+req.url);route.abort()
  context.route('**/*',gate)
  page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.on('console',lambda e:console.append(e.text) if e.type=='error' else None)
+ page.on('response',lambda r:failed_resources.append(r.url) if r.status>=400 else None)
  page.goto(BASE+'/constructor',wait_until='domcontentloaded')
  expect(page.locator('body')).to_have_attribute('data-planner-ready','true',timeout=30000)
  expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl')
@@ -88,6 +94,6 @@ with sync_playwright() as pw:
  expect(page.locator('#countertop-card')).to_be_visible()
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
  page.screenshot(path=str(OUT/'countertop-mobile.png'))
- assert not errors and not console and not blocked,dict(errors=errors,console=console,blocked=blocked)
+ assert not errors and not console and not blocked,dict(errors=errors,console=console,blocked=blocked,failed_resources=failed_resources)
  print(json.dumps({'ok':True,'url':BASE,'renderer':'webgl','checks':['automatic straight and left turn','ordinary/euro selection','new cabinets inherit choice','per-module off/on','undo/redo','saved payload and restore','native BAZIS JSON','desktop/mobile layout'],'errors':errors,'blocked_requests':blocked}))
  browser.close()

@@ -10,7 +10,9 @@ export class CountertopUI{
     this.buttons=[];
     for(const [value,label]of [['standard','Обычная'],['euro','Еврозапил']]){
       const b=el('button');b.type='button';b.className='secondary';b.dataset.joint=value;
-      b.innerHTML=C.drawing('left',value);b.append(el('span',label));choices.append(b);this.buttons.push(b);
+      const photo=el('img');photo.className='surface-card-photo';photo.src='/account/planner/module-card-images/countertop-'+value+'.webp';photo.alt='';photo.width=370;photo.height=270;photo.loading='lazy';photo.draggable=false;app.listen(photo,'error',()=>photo.remove());
+      const diagram=el('span');diagram.className='surface-card-diagram';diagram.innerHTML=C.drawing('left',value);diagram.setAttribute('aria-hidden','true');
+      b.append(photo,el('strong',label),el('small',value==='euro'?'Фрезерованный стык':'Прямое соединение'),diagram);choices.append(b);this.buttons.push(b);
       app.listen(b,'click',()=>app.interaction.change('Соединение столешницы',()=>{
         app.adapter.state.countertopSettings={joint:value};
         for(const item of app.adapter.items)if(kitchenSettings(item))item.countertopJoint=value;

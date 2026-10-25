@@ -101,26 +101,19 @@
     const visual=make('span','studio-card-visual');
     // Reviewed Tripo imagery represents the module family in the catalogue.
     // Runtime geometry, dimensions and insertion still use the native BAZIS item.
-    const photoFamily=globalThis.MF_OPEN_TALL?.choice(opt.bazis)?'open-tall-none':globalThis.MF_CARGO?.choice(opt.bazis)?'cargo':globalThis.MF_PULLOUT_DRYERS?.choice(opt.bazis)?'pullout-dryer':null;
-    if(photoFamily){
-      const poster=make('img','studio-preview studio-preview-tripo');poster.src='/account/planner/module-card-images/'+photoFamily+'.webp';poster.alt='';poster.width=492;poster.height=359;poster.loading='lazy';poster.decoding='async';poster.draggable=false;
+    const artwork=globalThis.MF_CATALOGUE_ARTWORK?.[opt.bazis],photoFamily=artwork?.file;
+    if(artwork){
+      b.dataset.search+=' '+titleText([artwork.title,artwork.description,...artwork.badges].join(' '));
+      const poster=make('img','studio-preview studio-preview-tripo');poster.src='/account/planner/module-card-images/'+photoFamily+'.webp';poster.alt='';poster.width=370;poster.height=270;poster.loading='lazy';poster.decoding='async';poster.draggable=false;
       poster.addEventListener('error',()=>poster.replaceWith(c),{once:true});visual.append(poster);b.dataset.cardArtwork='tripo';
-      const summary={
-        'open-tall-none':['Открытый пенал','Без подсветки, AQ или LIRA','7 исполнений'],
-        cargo:['Карго','Выдвижное хранение · FOCUS, NORWING, ICON','6 исполнений'],
-        'pullout-dryer':['Выдвижная сушка','NORWING и FLAT LINE · с нижним ящиком','12 исполнений']
-      }[photoFamily];
-      copy.querySelector('strong').textContent=summary[0];copy.querySelector('span').textContent=summary[1];
-      const badges=make('span','studio-card-options');badges.append(make('span','',summary[2]),make('span','',photoFamily==='open-tall-none'?'ЛДСП 18 мм':'Обычное / Gola'));copy.append(badges);
-    }else if(opt.bazis==='bazis.3079d0656398'&&it.width===600&&it.height===820&&it.depth===510){
-      const poster=make('img','studio-preview studio-preview-imported');poster.src='/ui/showroom/nmd2-front.webp';poster.alt='';poster.width=1200;poster.height=1080;poster.loading='lazy';
-      poster.addEventListener('error',()=>poster.replaceWith(c),{once:true});visual.append(poster);
+      copy.querySelector('strong').textContent=artwork.title;copy.querySelector('span').textContent=artwork.description;
+      const badges=make('span','studio-card-options');for(const label of artwork.badges)badges.append(make('span','',label));copy.append(badges);
     }else visual.append(c);
     const category=make('span','studio-card-category',categoryNames[itemGroup(it)]||'Модуль');
     const add=make('span','studio-card-add','+');add.setAttribute('aria-hidden','true');
     visual.append(category,add);b.append(visual,copy);
     const baseChoice=globalThis.MF_GOLA?.baseChoice(opt.bazis),drawerChoice=globalThis.MF_DRAWERS?.choice(opt.bazis);
-    if(baseChoice||drawerChoice){
+    if(!artwork&&(baseChoice||drawerChoice)){
       const badges=make('span','studio-gola-badges'),choices=baseChoice?globalThis.MF_GOLA.baseChoices().filter(v=>v.door_count===baseChoice.door_count):globalThis.MF_DRAWERS.choices();
       badges.append(make('span','',baseChoice?'Gola L':'Gola II'),make('span','',choices.length+' вариантов'));
       b.append(badges);

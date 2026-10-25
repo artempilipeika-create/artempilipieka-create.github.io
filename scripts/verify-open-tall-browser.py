@@ -36,7 +36,7 @@ with sync_playwright() as pw:
  assert page.locator('#module-catalogue button').filter(has_text='Открытый пенал').count()==1
  # All new catalogue families must serve their reviewed Tripo photographs.
  cards=page.locator('#module-catalogue [data-card-artwork=tripo]')
- assert cards.count()==3
+ assert cards.count()==14
  for image in cards.locator('img').all():
   response=page.request.get(base+image.get_attribute('src'))
   assert response.status==200 and response.headers['content-type'].startswith('image/webp')
