@@ -147,3 +147,9 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 #module-replacement label{display:block;margin:10px 0}
 #module-replacement .mf3d-mobility-check,.mf3d-mobility-check{display:flex;align-items:flex-start;gap:8px;margin:10px 0;line-height:1.5}
 #module-replacement .mf3d-mobility-check input,.mf3d-mobility-check input{flex:0 0 18px;width:18px;height:18px;min-height:0;margin:2px 0 0;padding:0;accent-color:#365c43}
+
+/* Blue is reserved for the active module and its editing feedback. */
+#planner-workspace #scene-items .mf3d-project.active{border-color:#1677ff;background:#edf5ff;box-shadow:inset 3px 0 #1677ff}
+#planner-workspace #scene-items .mf3d-project.active strong{color:#145cc4}
+.mf-webgl #planner-dimension{border-color:#8cbcff;background:#edf5fff2;color:#145cc4}
+.mf-webgl #planner-feedback:not([data-error=true]){border-color:#8cbcff;background:#edf5fff2;color:#145cc4}

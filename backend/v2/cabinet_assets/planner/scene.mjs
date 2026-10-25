@@ -14,6 +14,7 @@ import {StudioRender} from './studio-render.mjs';
 import {allSegments} from './wall-finishes.mjs';
 import {WallFinishMesh} from './wall-finish-mesh.mjs';
 import {qualityProfile,RenderBudget} from './presentation.mjs';
+const SELECTION_BLUE='#1677ff',HOVER_BLUE='#80b8ff';
 export class PlannerScene{
   constructor(canvas,adapter,onLost){
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
@@ -42,8 +43,8 @@ export class PlannerScene{
     this.controls.addEventListener('change',()=>this.invalidate());
     this.factory=new MeshFactory(adapter,()=>{this.invalidate();this.onVisualChanged?.();});this.root=new THREE.Group();this.scene.add(this.root);
     this.guides=new THREE.Group();this.scene.add(this.guides);
-    this.selectedBox=new THREE.Box3Helper(new THREE.Box3(),0x346d4a);this.selectedBox.material.depthTest=true;this.selectedBox.material.transparent=true;this.selectedBox.material.opacity=.78;this.selectedBox.renderOrder=20;this.selectedBox.visible=false;this.scene.add(this.selectedBox);
-    this.hoverBox=new THREE.Box3Helper(new THREE.Box3(),0x9cb49b);this.hoverBox.material.depthTest=true;this.hoverBox.material.transparent=true;this.hoverBox.material.opacity=.65;this.hoverBox.visible=false;this.scene.add(this.hoverBox);
+    this.selectedBox=this.selectionBox();this.scene.add(this.selectedBox);
+    this.hoverBox=this.selectionBox(true);this.scene.add(this.hoverBox);
     this.raycaster=new THREE.Raycaster();this.ndc=new THREE.Vector2();
     this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(canvas.parentElement);
     this.lost=e=>{e.preventDefault();if(!this.dead)this.onLost();};canvas.addEventListener('webglcontextlost',this.lost);
@@ -88,6 +89,19 @@ export class PlannerScene{
   disposeTree(group){
     if(!group)return;group.traverse(o=>{if(o.geometry&&!o.userData.sharedSocketAsset&&!o.userData.sharedApplianceAsset&&!this.factory.ownsGeometry(o.geometry))o.geometry.dispose();if(o.userData.ownMap)o.material?.map?.dispose();if(o.userData.ownMaterial)o.material?.dispose();});group.removeFromParent();
   }
+  selectionBox(hover=false){
+    const color=hover?HOVER_BLUE:SELECTION_BLUE,box=new THREE.Box3Helper(new THREE.Box3(),color);
+    Object.assign(box.material,{depthTest:false,depthWrite:false,transparent:true,opacity:hover?.7:1,toneMapped:false});
+    box.userData.ownMaterial=true;box.renderOrder=20;box.visible=false;
+    if(!hover){
+      // The helper scales a [-1,1] cube to the measured bounds. This separate
+      // overlay never changes furniture materials, picking or export geometry.
+      const tint=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.12,depthTest:false,depthWrite:false,toneMapped:false}));
+      tint.userData.ownMaterial=true;tint.renderOrder=19;box.add(tint);
+    }
+    return box;
+  }
+  selectionColor(box,color){box.material.color.set(color);for(const child of box.children)child.material.color.set(color);}
   roomMesh(){
     this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.surfaceTexture=null;this.floorTexture=null;this.clientFloor=null;this.floorJoints=null;this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room,settings=roomSettings(this.adapter.state?.displaySettings);
     // Flush overlay backs share the wall plane. Bias only the visual room surface, never cabinet geometry.
@@ -153,7 +167,7 @@ export class PlannerScene{
     this.selectionScope='module';this.displayMode='normal';this.displayItemId=null;
     this.selectedBox.visible=false;this.selectedBox.box.makeEmpty();
     this.hoverBox.visible=false;this.hoverBox.box.makeEmpty();
-    for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();box.removeFromParent();}
+    for(const box of this.kitchenBoxes.values())this.disposeTree(box);
     this.kitchenBoxes.clear();this.placeLabel();
   }
   resetProject(){
@@ -244,16 +258,15 @@ export class PlannerScene{
     const items=this.adapter.items,it=this.adapter.selected,entry=it?this.liveEntry(it.item_id,items):null;
     let grouped=this.selectionScope!=='module';const show=!this.preview;
     if(grouped&&!items.some(item=>scopeMatches(item,this.selectionScope))){this.selectionScope='module';grouped=false;}
-    this.selectedBox.material.opacity=this.client?.32:.78;
-    for(const [id,box]of this.kitchenBoxes)if(!this.liveEntry(id,items)){box.geometry.dispose();box.material.dispose();box.removeFromParent();this.kitchenBoxes.delete(id);}
+    for(const [id,box]of this.kitchenBoxes)if(!this.liveEntry(id,items)){this.disposeTree(box);this.kitchenBoxes.delete(id);}
     for(const [id,e]of this.entries){
       const item=items.find(it=>it.item_id===id);if(!item||!this.liveEntry(id,items))continue;
       let box=this.kitchenBoxes.get(id);
-      if(grouped&&!box){box=new THREE.Box3Helper(new THREE.Box3(),0x588575);box.material.transparent=true;box.material.opacity=.58;box.renderOrder=20;this.scene.add(box);this.kitchenBoxes.set(id,box);}
-      if(box){box.material.opacity=this.client?.22:.58;box.material.color.set(this.client?'#79796b':'#588575');box.visible=Boolean(!this.client&&grouped&&show&&e.group.visible&&scopeMatches(item,this.selectionScope));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
+      if(grouped&&!box){box=this.selectionBox();this.scene.add(box);this.kitchenBoxes.set(id,box);}
+      if(box){this.selectionColor(box,SELECTION_BLUE);box.visible=Boolean(!this.client&&grouped&&show&&e.group.visible&&scopeMatches(item,this.selectionScope));if(box.visible)box.box.setFromObject(e.group).expandByScalar(.003);}
     }
     this.selectedBox.visible=Boolean(!this.client&&!grouped&&entry?.group.visible&&show);
-    if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectedBox.material.color.set(error?'#bf6c43':this.client?'#79796b':'#346d4a');}
+    if(this.selectedBox.visible){this.selectedBox.box.setFromObject(entry.group).expandByScalar(.003);this.selectionColor(this.selectedBox,error?'#bf6c43':SELECTION_BLUE);}
     else this.selectedBox.box.makeEmpty();
     this.placeLabel();if(this.equipmentSelected&&!this.adapter.selected&&!this.equipmentPreview){const f=this.adapter.room.features?.find(f=>f.id===this.equipmentSelected.id);if(f)this.highlightEquipment(f);else this.equipmentSelected=null;}
   }
@@ -387,7 +400,7 @@ export class PlannerScene{
   highlightEquipment(f,error=''){
     const previous=this.equipmentSelected;this.equipmentSelected=f;if(!f){if(previous&&!this.adapter.selected){this.selectedBox.visible=false;this.invalidate();}return;}
     const b=featureBox(f,this.adapter.room);this.selectedBox.box.min.set((b.x-b.w/2)*S,(b.y-b.h/2)*S,(b.z-b.d/2)*S);this.selectedBox.box.max.set((b.x+b.w/2)*S,(b.y+b.h/2)*S,(b.z+b.d/2)*S);
-    this.selectedBox.material.color.set(error?'#b65336':'#346d4a');this.selectedBox.visible=!this.client;this.invalidate();
+    this.selectionColor(this.selectedBox,error?'#b65336':SELECTION_BLUE);this.selectedBox.visible=!this.client;this.invalidate();
   }
   previewEquipment(f,error=''){
     if(this.equipmentPreview?.id!==f.id){
@@ -421,11 +434,11 @@ export class PlannerScene{
     }
     this.factory.position(this.preview,it);const existing=this.entries.get(it.item_id);if(existing&&existing.group.visible){existing.group.visible=false;this.renderer.shadowMap.needsUpdate=true;}
     this.selectedBox.visible=false;this.hoverBox.visible=false;for(const box of this.kitchenBoxes.values())box.visible=false;
-    this.preview.traverse(m=>{if(m.isMesh)m.material.color.set(error?'#d1976d':'#b9cfb4');});
+    this.preview.traverse(m=>{if(m.isMesh)m.material.color.set(error?'#d1976d':'#82b6ff');});
     this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);
     const r=this.adapter.room,span=Math.max(it.width,it.depth)+450;
     for(const g of guides){let a,b;if(g.axis==='x'){a=new THREE.Vector3(g.value*S,.004,Math.max(-r.depth/2,it.z-span)*S);b=new THREE.Vector3(g.value*S,.004,Math.min(r.depth/2,it.z+span)*S);}else if(g.axis==='z'){a=new THREE.Vector3(Math.max(-r.width/2,it.x-span)*S,.004,g.value*S);b=new THREE.Vector3(Math.min(r.width/2,it.x+span)*S,.004,g.value*S);}else{a=new THREE.Vector3(-r.width*S/2,g.value*S,it.z*S);b=new THREE.Vector3(r.width*S/2,g.value*S,it.z*S);}
-      const geometry=new THREE.BufferGeometry().setFromPoints([a,b]);const line=new THREE.Line(geometry,new THREE.LineDashedMaterial({color:error?0xbd794a:0x50875a,depthTest:false,transparent:true,opacity:.78,dashSize:.045,gapSize:.025}));line.computeLineDistances();line.userData.ownMaterial=true;line.renderOrder=30;this.guides.add(line);
+      const geometry=new THREE.BufferGeometry().setFromPoints([a,b]);const line=new THREE.Line(geometry,new THREE.LineDashedMaterial({color:error?0xbd794a:SELECTION_BLUE,depthTest:false,transparent:true,opacity:.9,dashSize:.045,gapSize:.025}));line.computeLineDistances();line.userData.ownMaterial=true;line.renderOrder=30;this.guides.add(line);
     }
     this.invalidate();
   }
@@ -438,12 +451,12 @@ export class PlannerScene{
     for(const it of items.slice(1)){
       let entry=this.groupPreviews.get(it.item_id),signature=this.factory.signature(it);
       if(!entry||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it,true),signature};this.groupPreviews.set(it.item_id,entry);this.scene.add(entry.group);}
-      this.factory.position(entry.group,it);entry.group.traverse(m=>{if(m.isMesh)m.material.color.set(error?'#d1976d':'#b9cfb4');});
+      this.factory.position(entry.group,it);entry.group.traverse(m=>{if(m.isMesh)m.material.color.set(error?'#d1976d':'#82b6ff');});
       const original=this.entries.get(it.item_id);if(original)original.group.visible=false;
     }
     if(this.dressing)this.dressing.visible=false;this.renderer.shadowMap.needsUpdate=true;this.invalidate();
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.selectedBox.geometry.dispose();this.selectedBox.material.dispose();this.hoverBox.geometry.dispose();this.hoverBox.material.dispose();for(const box of this.kitchenBoxes.values()){box.geometry.dispose();box.material.dispose();}this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }
