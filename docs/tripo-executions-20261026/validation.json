@@ -1,0 +1,418 @@
+{
+  "date": "2026-10-26",
+  "option_variants": 78,
+  "distinct_photos": 74,
+  "photo_dimensions": [
+    512,
+    512
+  ],
+  "total_photo_bytes": 1205794,
+  "unit_tests": {
+    "passed": 9,
+    "failed": 0
+  },
+  "browser_cards": {
+    "ok": true,
+    "families": 14,
+    "undo": true,
+    "read_only_preview": true,
+    "dryer_widths": true,
+    "mobile_width": 390,
+    "errors": []
+  },
+  "browser_details": {
+    "ok": true,
+    "detail_images": true,
+    "resize_preview": true,
+    "save_restore": true,
+    "mobile_width": 390,
+    "errors": []
+  },
+  "missing_photo_fallback": {
+    "ok": true,
+    "selection": true,
+    "undo": true
+  },
+  "option_to_photo_mapping": {
+    "ok": true,
+    "checked": 78
+  },
+  "publication": {
+    "scope": "existing isolated staging",
+    "local_base": "e5c0d73",
+    "hosted_base": "12c765d22d24c74ba654e0a9dc6b0101a66f1cd5",
+    "hosted_base_tree": "044d539ceaa12f4c76767e84907616396afc0c17"
+  },
+  "photos": [
+    {
+      "file": "base-base-execution-gola.webp",
+      "sha256": "8f60fdaf839840c8d764e161fcbc355ac3d69a8566d234d7ecd87443b9cbd829",
+      "bytes": 14236
+    },
+    {
+      "file": "base-base-execution-standard.webp",
+      "sha256": "99cf994eb4e37d94beea3d6fe2f53c1689c3fc9b75fe24403dca99abb33154fc",
+      "bytes": 12492
+    },
+    {
+      "file": "base-base-purpose-shelf.webp",
+      "sha256": "5dae9a8e3ae9e4d4e3a4a0b06cab7e87552b29f785ba3f36e80435e9d8aca43b",
+      "bytes": 13158
+    },
+    {
+      "file": "base-base-purpose-sink.webp",
+      "sha256": "f3454a13f7713d897bc6c6822406073d5d8cb38ec8a4e2eeaa280868a7c1b8fc",
+      "bytes": 11326
+    },
+    {
+      "file": "base-base-side-left.webp",
+      "sha256": "21e15b7a813aa7c47670e351fb0e06c03285a2deaecebe5bacd41850e2cfc95a",
+      "bytes": 16376
+    },
+    {
+      "file": "base-base-side-right.webp",
+      "sha256": "82a9cbfee38f053fc069cce1573cc1dd4a1c3db9822895411a0861863f7ef2ba",
+      "bytes": 15982
+    },
+    {
+      "file": "base-double-base-execution-gola.webp",
+      "sha256": "4f8fb225007001399d0904ac3f45032e5252e133f888471ccfbb37e5bcec41c6",
+      "bytes": 11214
+    },
+    {
+      "file": "base-double-base-execution-standard.webp",
+      "sha256": "a124e4002e1169b8e94d784b6a0a1a60fdfc7c83ca2c05ff94d0e3eb24f9a931",
+      "bytes": 11490
+    },
+    {
+      "file": "base-double-base-purpose-shelf.webp",
+      "sha256": "5225256221ca6ae29619b64dbb01215677544d2a6e24ff54291653af297f8887",
+      "bytes": 15330
+    },
+    {
+      "file": "cargo-cargo-brand-focus.webp",
+      "sha256": "0446ab6343126aa01ab11dae424a2b5762f7d28503082076dc5805e04cf8eb54",
+      "bytes": 21532
+    },
+    {
+      "file": "cargo-cargo-brand-icon.webp",
+      "sha256": "2e7693f7412284a45b5224019b6a11f203bf1b54aa60ca1f76d75d9ff973196c",
+      "bytes": 21524
+    },
+    {
+      "file": "cargo-cargo-brand-norwing.webp",
+      "sha256": "517b433c7a3506abb535cf700cf1ea091dc08fa663c92f1e0297f36a4ab54d91",
+      "bytes": 22834
+    },
+    {
+      "file": "cargo-cargo-execution-gola.webp",
+      "sha256": "bab1884662aee67fde190e1a997a7b5b78e2627b204881fab98886f1f4daef48",
+      "bytes": 20908
+    },
+    {
+      "file": "cargo-cargo-execution-standard.webp",
+      "sha256": "fb96d9f41ffa7f78875863ea29825d44fbb09b466ffeb7af41ec467ec4ed93eb",
+      "bytes": 21946
+    },
+    {
+      "file": "corner-corner-door_count-1.webp",
+      "sha256": "d8659434bdeb746fcd348d5aaf2c8e3c40d4a870a4730b4b7abc420db3015491",
+      "bytes": 8128
+    },
+    {
+      "file": "corner-corner-door_count-2.webp",
+      "sha256": "f704b6793b4661b3170a96e9780aeb9884a6d648be1bcb3ab4c279049491ce45",
+      "bytes": 8142
+    },
+    {
+      "file": "corner-corner-purpose-shelf.webp",
+      "sha256": "bab97f52703f27c7d3b1549ddc9e430eaf7fc2e2830a9c75b1db85c479733a65",
+      "bytes": 12070
+    },
+    {
+      "file": "corner-corner-purpose-sink.webp",
+      "sha256": "9864f88b382baf928b1e30c3940e8fd11a7f36e16f74d45501311ab3cc918eed",
+      "bytes": 11726
+    },
+    {
+      "file": "corner-corner-side-left.webp",
+      "sha256": "8eb85d7b77d7c935519322e8d8ffcbceef3c45061f1e7a3e56aed1051b17643d",
+      "bytes": 11926
+    },
+    {
+      "file": "corner-corner-side-right.webp",
+      "sha256": "abd6fb16b98be90695174dccf9ac305b7e427eda090188fa7822372ec93ad9d3",
+      "bytes": 11852
+    },
+    {
+      "file": "corner-generic-handles-handleless.webp",
+      "sha256": "03fda654e1022c8ab222104b7bfad61080baf8d5b58d365fe6e68645e1e93795",
+      "bytes": 19558
+    },
+    {
+      "file": "corner-generic-handles-handles.webp",
+      "sha256": "634627301425143ac219a79886af62f7eba0c2940fe08f550d21aa114e9c52c2",
+      "bytes": 22770
+    },
+    {
+      "file": "dishwasher-dishwasher-execution-gola.webp",
+      "sha256": "de92659554c974f8e7161756eaa82a3d1a10404ba4b325ad2d173849555ac604",
+      "bytes": 12636
+    },
+    {
+      "file": "dishwasher-dishwasher-execution-standard.webp",
+      "sha256": "94d3103f9afcbb1ca86341a5b5904dcf361b00b12a3f295dce49b4b6e01cd0b0",
+      "bytes": 13210
+    },
+    {
+      "file": "drawer-drawer-execution-gola.webp",
+      "sha256": "275477a6b61c310581d60e1ae3ada93d9adcc1176a9d2f0b1ab273e2e90a7225",
+      "bytes": 12110
+    },
+    {
+      "file": "drawer-drawer-execution-standard.webp",
+      "sha256": "6d7fbab73d3ca5b70c025a847163f4a8f1999a81137de1ce7afe203afd75ba5e",
+      "bytes": 9366
+    },
+    {
+      "file": "drawer-drawer-layout-inner.webp",
+      "sha256": "309d1b6612d0413fedfc273586d7995a2ac57afa589d310fe03f2fa36e7fa749",
+      "bytes": 10030
+    },
+    {
+      "file": "drawer-drawer-layout-three.webp",
+      "sha256": "5b6855759ccff22843d61f6e4d43df45e8572ff74adefff85f2cfca269081ae7",
+      "bytes": 8842
+    },
+    {
+      "file": "drawer-drawer-layout-two.webp",
+      "sha256": "0e636fe2c878b32b80125474f4af94b372c818c16378805df9f724131faa935a",
+      "bytes": 9882
+    },
+    {
+      "file": "drawer-drawer-opening-push.webp",
+      "sha256": "d0ecbc6c3b8976340dd10cc126eeff009651bae8c9c6e364a126bd4ced7c3f4e",
+      "bytes": 10914
+    },
+    {
+      "file": "drawer-drawer-opening-soft.webp",
+      "sha256": "218e2376f24e95f7b473e27b9273f5fe8e62771855ba5ba2235fd0942b334f1f",
+      "bytes": 11946
+    },
+    {
+      "file": "drawer-drawer-system-aq.webp",
+      "sha256": "941eff153db6d4f0a342dbfc13ddd7c4560389ec72584f3b94d21eedcd7d26f5",
+      "bytes": 17514
+    },
+    {
+      "file": "drawer-drawer-system-ball.webp",
+      "sha256": "711a946fd618a63e6b96bbba254517be01955f49fdcafc65fa71aee7651f6e4a",
+      "bytes": 15802
+    },
+    {
+      "file": "drawer-drawer-system-slimbox.webp",
+      "sha256": "5c5f267ce419607cac2764c5330f121558fe42eaddd2c239d932d9f2976c2e55",
+      "bytes": 13134
+    },
+    {
+      "file": "dryer-dryer-dryer_brand-flat_line.webp",
+      "sha256": "34ad52361f73b82548b18db122447a9882ee847bdd175eda48173f1853eedbf7",
+      "bytes": 44070
+    },
+    {
+      "file": "dryer-dryer-dryer_brand-norwing.webp",
+      "sha256": "04c22fe027261eb0afb5c66809d31260307ce7dc34e1fa18b11e36f949b1e9cf",
+      "bytes": 39290
+    },
+    {
+      "file": "dryer-dryer-execution-gola.webp",
+      "sha256": "2bc1dff2298cbbab3ca16751503036d37c11b59ace0399ce53cfa262dfc62f93",
+      "bytes": 14006
+    },
+    {
+      "file": "dryer-dryer-execution-standard.webp",
+      "sha256": "c1b595b06e3f18e5909c0f60a5a7bd83864f680634cd5a0c23d63910a9cff9fc",
+      "bytes": 11028
+    },
+    {
+      "file": "dryer-dryer-system-ball.webp",
+      "sha256": "4d14e02ce81879c5dbc547c5bd35f472d1126049c1189ad1dff6a1507e8f3d29",
+      "bytes": 22356
+    },
+    {
+      "file": "open-tall-none-open-tall-light_system-none.webp",
+      "sha256": "289883e05dbbf932e0419c39b9991dd8c862b141e9db206d517a8ba1ca5c4137",
+      "bytes": 17914
+    },
+    {
+      "file": "open-tall-none-open-tall-lighting-both.webp",
+      "sha256": "ddd60cb1c141d074b25a3c5cdc58e7d72e9ba7e9e0292f119d1c7dc49e11a78b",
+      "bytes": 17158
+    },
+    {
+      "file": "open-tall-none-open-tall-lighting-left.webp",
+      "sha256": "41922ae9c5bf9ea42a71e77467fb0d7ddc96018acf4f110a85bbc85289b51ada",
+      "bytes": 17266
+    },
+    {
+      "file": "open-tall-none-open-tall-lighting-right.webp",
+      "sha256": "0ac2cae25a1e6aa010d506a4266ea3a53802fcd9658c73acd73171f3e51068d6",
+      "bytes": 17392
+    },
+    {
+      "file": "oven-generic-handles-handleless.webp",
+      "sha256": "f1588bde13d67e71e75aa6a19ab45fb5c60be98805b5be217a88e52a8e77ede0",
+      "bytes": 28162
+    },
+    {
+      "file": "oven-generic-handles-handles.webp",
+      "sha256": "6e0430551d05adc1e871d09f57a334365d0a70c704561a17670673160bf92b12",
+      "bytes": 14538
+    },
+    {
+      "file": "tall-appliance-generic-handles-handleless.webp",
+      "sha256": "af33a5a8c403814733d0dd83ff9093e08e4ee4ef1d06e48c1f99ecb1518c1bcd",
+      "bytes": 22526
+    },
+    {
+      "file": "tall-appliance-generic-handles-handles.webp",
+      "sha256": "5ea101f9c2693426bbdd426c1e76d77803ef19ddcf62d590979d6d0f75eec8d6",
+      "bytes": 14916
+    },
+    {
+      "file": "tall-appliance-tall-layout-door_oven.webp",
+      "sha256": "33e73a70d83da9c8b6994e4dda7032fbbe65a5a364f4ef969ccf85e352ed190e",
+      "bytes": 12588
+    },
+    {
+      "file": "tall-appliance-tall-layout-door_oven_micro.webp",
+      "sha256": "5a98249aaa937fc87ff4eb0aaae46fdf545a3ac5351be0558db59def72677288",
+      "bytes": 13106
+    },
+    {
+      "file": "tall-appliance-tall-layout-drawer_oven.webp",
+      "sha256": "ee4badef90543b0d02ca64f3e40b9774e9b1a7beba532b0fc9540110a203597b",
+      "bytes": 15680
+    },
+    {
+      "file": "tall-appliance-tall-layout-drawer_oven_micro.webp",
+      "sha256": "366232448ff5aa16ab6513139159e4f4d9c177d91d932397b86cb1e979d328f5",
+      "bytes": 16318
+    },
+    {
+      "file": "tall-appliance-tall-opening-left.webp",
+      "sha256": "6ff147d07124f71c6f95d03064ec97b33ecc35b442266e1e7bc40d994d6ee00a",
+      "bytes": 18772
+    },
+    {
+      "file": "tall-appliance-tall-opening-right.webp",
+      "sha256": "70f9c54b9ae3afb9cd14ab9bf1763e7b9f16b7dd8db0555b7052dabe2cfb3ce5",
+      "bytes": 18196
+    },
+    {
+      "file": "tall-storage-generic-handles-handleless.webp",
+      "sha256": "80a310e251f6a3443d4e150e1b02c5790e37927cb70fbea599044bf01d47e423",
+      "bytes": 18158
+    },
+    {
+      "file": "tall-storage-generic-handles-handles.webp",
+      "sha256": "e6bd8cac3dc724028152a4c3b56f5d81641d1470961682fe8475c7c8069f2962",
+      "bytes": 17668
+    },
+    {
+      "file": "tall-storage-tall-opening-double.webp",
+      "sha256": "b409f55df220119e974482dc1a4cfeccac727539a2e0e09a4ab4f887c2f5df28",
+      "bytes": 21144
+    },
+    {
+      "file": "tall-storage-tall-opening-left.webp",
+      "sha256": "bedf574e8290e903d56b9f91c84d94c0ffd9e3e8ef8a281531db42cbe9e1688e",
+      "bytes": 19514
+    },
+    {
+      "file": "tall-storage-tall-opening-right.webp",
+      "sha256": "df3709a07495abae115ec1e2818a7471873c36ae48c6619e8eeb7dd3ad685b5a",
+      "bytes": 20540
+    },
+    {
+      "file": "tall-vitrine-vitrine-lighting-both.webp",
+      "sha256": "4730bb4446c863ecfa00a6cec20fa4d76fe07ceff25de3d75546f8890053b504",
+      "bytes": 14292
+    },
+    {
+      "file": "tall-vitrine-vitrine-lighting-left.webp",
+      "sha256": "0135502561c13c8cd6509e1c1518a8b864f11c1198999c44cf0494cabaa34f21",
+      "bytes": 13162
+    },
+    {
+      "file": "tall-vitrine-vitrine-lighting-right.webp",
+      "sha256": "7982c7d7d788f1ef2f0fb717dd4f13bf2f7b0852a5f938e39d4851f3dad9f95b",
+      "bytes": 13594
+    },
+    {
+      "file": "tall-vitrine-vitrine-opening-left.webp",
+      "sha256": "32ed5c315a371719827c256bcca2485ec01cfa8a3c3d494effbd3e574bcb2886",
+      "bytes": 15884
+    },
+    {
+      "file": "tall-vitrine-vitrine-opening-right.webp",
+      "sha256": "5bb47f2a53607ff02783b4fd4d66d433167597f2d606363f87b6d98da3b0ffed",
+      "bytes": 20242
+    },
+    {
+      "file": "upper-double-upper-execution-handleless.webp",
+      "sha256": "7fb4a75b2fd8ccfc9194cc63ec95a196a57b1c6600fbf2c295121d85ea11f2d2",
+      "bytes": 11942
+    },
+    {
+      "file": "upper-double-upper-execution-handles.webp",
+      "sha256": "1689889416628da4863f2f6b8e42be7276766e2c65d9db8bc0eca2d5d3030718",
+      "bytes": 11900
+    },
+    {
+      "file": "upper-double-upper-execution-push.webp",
+      "sha256": "42c1f16bae307b9e9a7a9149552633d661b38bc549fa173a042ddde9db0cea7e",
+      "bytes": 11090
+    },
+    {
+      "file": "upper-double-upper-filling-shelves.webp",
+      "sha256": "15a1c563dcc01833321f4806d4623ffcf2253f43200d8ea726153fe3ea790a2c",
+      "bytes": 12264
+    },
+    {
+      "file": "upper-upper-execution-handleless.webp",
+      "sha256": "11fbf0897ddb898d24018b44e0df2dacd6b8653cbd3d7814c1284c693ca8685e",
+      "bytes": 19826
+    },
+    {
+      "file": "upper-upper-execution-handles.webp",
+      "sha256": "ca388f78d630534f360f7aed8629c582ec90d62a55088d3ae3baa5c53f41bb68",
+      "bytes": 12204
+    },
+    {
+      "file": "upper-upper-execution-push.webp",
+      "sha256": "2979014e2a5ba71f96cb689f48b88f123b4d354d52fed1debb9b453e03897cb4",
+      "bytes": 19492
+    },
+    {
+      "file": "upper-upper-filling-dryer.webp",
+      "sha256": "28825bdb53d148a508d1f0703a0c38a8946e915f0e3af94f215d29b4fac07754",
+      "bytes": 25668
+    },
+    {
+      "file": "upper-upper-filling-shelves.webp",
+      "sha256": "6a09ffef79a5da18afce82e1f53564250c2e15fb25707f3ebc2132b96128c26b",
+      "bytes": 13872
+    },
+    {
+      "file": "upper-upper-side-left.webp",
+      "sha256": "80756b202f9f129daff4883f7e676790155c904cd435c2dcbfa3043eda17ae82",
+      "bytes": 17564
+    },
+    {
+      "file": "upper-upper-side-right.webp",
+      "sha256": "11fb27647e6bf6292b7ce600a6582f9c7c7f3226209d2fb43f333a745ec3a10c",
+      "bytes": 18586
+    }
+  ]
+}

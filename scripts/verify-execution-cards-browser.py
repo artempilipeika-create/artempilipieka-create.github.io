@@ -61,6 +61,9 @@ with sync_playwright() as pw:
     continue
    canvas=b.locator('canvas');b.scroll_into_view_if_needed()
    if canvas.is_visible():expect(canvas).to_have_attribute('data-preview-ready','true',timeout=30000)
+   else:
+    photo=b.locator('.execution-photo');expect(photo).to_be_visible()
+    page.wait_for_function('(src)=>[...document.images].some(i=>i.src===src&&i.complete&&i.naturalWidth>=250)',arg=photo.get_attribute('src') if photo.get_attribute('src').startswith('http') else base+photo.get_attribute('src'))
   page.locator('#module-execution-preview').scroll_into_view_if_needed()
   page.locator('.mf3d-right').screenshot(path=str(out/(family+'-panel.png')))
   # One isolated, real UI transition in every catalogue family, and exact undo.
@@ -85,9 +88,11 @@ with sync_playwright() as pw:
  load_module('bazis.a310afbf587f')
  choices=page.locator('#corner-options-controls [data-corner-option=purpose]')
  for b in choices.all():
-  b.scroll_into_view_if_needed();expect(b.locator('canvas')).to_have_attribute('data-preview-ready','true',timeout=30000)
+  b.scroll_into_view_if_needed()
+  if b.locator('canvas').is_visible():expect(b.locator('canvas')).to_have_attribute('data-preview-ready','true',timeout=30000)
+  else:expect(b.locator('.execution-photo')).to_be_visible()
  choices.first.locator('..').screenshot(path=str(out/'corner-purpose.png'))
- pixels=choices.locator('canvas').evaluate_all('(cs)=>cs.map(c=>c.toDataURL())');assert len(set(pixels))==2
+ pictures=choices.evaluate_all('(bs)=>bs.map(b=>b.querySelector(".execution-photo")?.src||b.querySelector("canvas").toDataURL())');assert len(set(pictures))==2
  page.set_viewport_size({'width':390,'height':844});page.evaluate("MF_PLANNER.workspace.panel('right',true)")
  page.locator('#corner-options-controls').scroll_into_view_if_needed()
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')

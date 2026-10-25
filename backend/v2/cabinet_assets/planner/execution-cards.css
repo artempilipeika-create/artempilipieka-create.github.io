@@ -19,6 +19,9 @@
 .execution-visual.execution-tall{aspect-ratio:.86}
 #planner-workspace .execution-family .execution-visual canvas,#planner-workspace .execution-family .execution-photo{display:block;width:100%!important;height:100%!important;object-fit:cover;max-width:none!important;max-height:none!important}
 #planner-workspace .execution-family .execution-visual.execution-tall canvas{object-fit:cover}
+#planner-workspace .execution-family .execution-photo.execution-tripo-photo{object-fit:contain;background:#eeebe5}
+.execution-visual:has(.execution-tripo-photo){aspect-ratio:1}
+.execution-visual.execution-tall:has(.execution-tripo-photo){aspect-ratio:.86}
 #planner-workspace .execution-family .execution-title{display:block;padding:10px 9px 0!important;margin:0!important;font-size:12px!important;font-weight:700!important;line-height:1.35!important;white-space:normal}
 #planner-workspace .execution-family .execution-hint{display:block;margin:0!important;padding:4px 9px 11px!important;font-size:10px!important;font-weight:400!important;line-height:1.45!important;color:#607164!important;white-space:normal}
 #planner-workspace .execution-family .execution-reason{display:block;padding:0 9px 10px;font-size:10px;color:#7e5c39;line-height:1.4}

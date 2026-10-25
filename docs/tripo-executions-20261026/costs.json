@@ -1,0 +1,194 @@
+{
+  "surface": "Tripo Studio included image generations",
+  "starting_balance": 2520,
+  "starting_free_used": 40,
+  "tasks": [
+    {
+      "type": "image-to-image",
+      "sheet": 1,
+      "task_id": "37010728-47a1-4cd1-8455-3897b206af36",
+      "model": "Nano Banana",
+      "credits": 0,
+      "result": "rejected pilot"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 1,
+      "task_id": "fb8efef5-2a75-4c04-8504-6f492339f828",
+      "model": "Nano Banana Pro",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 2,
+      "task_id": "70ab9331-bc41-4a5f-8255-0169f32be828",
+      "model": "Nano Banana Pro",
+      "credits": 0,
+      "result": "Unwanted blue corner marks; rejected."
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 2,
+      "task_id": "4ef9757f-47e7-445b-96f1-fc059d2c1ba2",
+      "model": "Nano Banana Pro",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 3,
+      "task_id": "36d6e0e3-3729-4739-bfa8-fa96047f136c",
+      "model": "Nano Banana Pro",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 4,
+      "task_id": "aa4a0484-4513-4524-a776-ac405985a0e1",
+      "model": "Nano Banana Pro",
+      "credits": 0,
+      "result": "Rejected: side ball slides invented on AQ metal drawer."
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 4,
+      "task_id": "2d89ced5-c79f-4ef1-9bf1-829e55cd3a47",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 5,
+      "task_id": "9dd561d9-4810-4c22-9e9a-67992b1856a9",
+      "model": "Nano Banana Pro",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 6,
+      "task_id": "920b61d9-6fd6-462f-8c15-55e953591698",
+      "model": "Nano Banana Pro",
+      "credits": 0,
+      "result": "Rejected: rectangular blind-front cabinet redesigned with diagonal front and missing fillers."
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 6,
+      "task_id": "cfe41ce1-5318-4e83-a477-20d8cdd2b319",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 7,
+      "task_id": "ad2f33d1-8870-40c2-96be-f9899d57604b",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 8,
+      "task_id": "9518deb2-0b08-48f3-ae93-1afe47cffa30",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 9,
+      "task_id": "640734e2-b919-4719-8bf1-65768d995c98",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 10,
+      "task_id": "fa8ed3ee-d5a4-44d8-8008-6b27ca6ae0c6",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 11,
+      "task_id": "e2792102-f31f-4671-954f-511f359b0c77",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 12,
+      "task_id": "4e968868-bdb7-466c-ae19-d7725c34c383",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 13,
+      "task_id": "81733379-1ba5-4930-905a-56f3116ec9ea",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 14,
+      "task_id": "273c4800-965f-4923-ac86-04698ee47068",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 15,
+      "task_id": "1b28d6f7-87c6-4a19-90d4-4c9afc73f9e2",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 16,
+      "task_id": "aaddd915-5dcf-4a70-aa89-869582dc209a",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 17,
+      "task_id": "6d467092-1eaa-4ffc-89f8-3ad60ef0d9a9",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 18,
+      "task_id": "c53f3073-f129-4166-a88d-07baadc43957",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    },
+    {
+      "type": "image-to-image",
+      "sheet": 19,
+      "task_id": "442b1bf9-144e-48d7-bb74-9b3b6280f3d8",
+      "model": "GPT Image 2.5",
+      "credits": 0,
+      "result": "accepted"
+    }
+  ],
+  "billed_credits_total": 0,
+  "ending_balance": 2520,
+  "ending_free_used": 63
+}

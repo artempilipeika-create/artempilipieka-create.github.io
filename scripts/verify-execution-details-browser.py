@@ -48,6 +48,8 @@ with sync_playwright() as pw:
  def ready_cards(root):
   for c in page.locator(root+' .execution-choice:visible:enabled canvas').all():
    if c.is_visible():c.scroll_into_view_if_needed();expect(c).to_have_attribute('data-preview-ready','true',timeout=30000)
+  for img in page.locator(root+' .execution-photo:visible').all():
+   img.scroll_into_view_if_needed();page.wait_for_function('(src)=>[...document.images].some(i=>i.src===src&&i.complete&&i.naturalWidth>=250)',arg=img.get_attribute('src') if img.get_attribute('src').startswith('http') else base+img.get_attribute('src'))
  def shot(root,name):
   ready_cards(root)
   for index,group in enumerate(page.locator(root+' .execution-grid:visible').all()):

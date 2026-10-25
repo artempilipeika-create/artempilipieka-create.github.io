@@ -1,0 +1,1012 @@
+[
+  {
+    "index": 1,
+    "name": "01-sheet",
+    "cells": [
+      {
+        "file": "base-base-purpose-shelf.png",
+        "category": "base",
+        "family": "base",
+        "key": "purpose",
+        "value": "shelf",
+        "title": "С полками",
+        "hint": "Открытый корпус · полки внутри"
+      },
+      {
+        "file": "base-base-purpose-sink.png",
+        "category": "base",
+        "family": "base",
+        "key": "purpose",
+        "value": "sink",
+        "title": "Под мойку",
+        "hint": "Без полки и задней стенки"
+      },
+      {
+        "file": "base-base-execution-standard.png",
+        "category": "base",
+        "family": "base",
+        "key": "execution",
+        "value": "standard",
+        "title": "Накладные ручки",
+        "hint": "Ручка на фасаде"
+      },
+      {
+        "file": "base-base-execution-gola.png",
+        "category": "base",
+        "family": "base",
+        "key": "execution",
+        "value": "gola",
+        "title": "Gola L",
+        "hint": "Подхват за профиль · без подсветки"
+      }
+    ],
+    "pilot": {
+      "id": "37010728-47a1-4cd1-8455-3897b206af36",
+      "model": "Nano Banana",
+      "credits": 0,
+      "review": "Structure preserved but flat shading; not used on site."
+    },
+    "id": "fb8efef5-2a75-4c04-8504-6f492339f828",
+    "model": "Nano Banana Pro",
+    "credits": 0,
+    "status": "accepted",
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and hard jagged shadows with luxurious realistic studio photography: warm pearl-grey matte laminate with fine microtexture, beautifully rounded 0.5 mm edge highlights and convincing thickness, deep soft ambient occlusion at joints, black anodized aluminum with subtle highlights, diffused large-window daylight and soft contact shadows. Rich but tasteful tonal separation, neutral warm-white background. The improvement in rendering and realism must be obvious. Keep the sheet as exactly FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all real construction: TOP LEFT open base cabinet with one shelf and back; TOP RIGHT sink cabinet with no shelf or back, original cross rails; BOTTOM LEFT close view of door and single dark vertical handle; BOTTOM RIGHT close view of recessed black Gola L profile above door, no LED. Preserve panel counts, silhouette, openings, door gaps, proportions and each view's framing. Do not add countertop, shelves, extra doors, furniture, decor, writing or watermark. No carton/flat illustration. These should look like four high-end product photographs shot in the same professional studio. Each subject stays in its own quadrant.",
+    "output_sha256": "7c4668818f0a553ab705217e3e10970e96a75231ebb7897013418fc535086335",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 2,
+    "name": "02-sheet",
+    "cells": [
+      {
+        "file": "base-base-side-left.png",
+        "category": "base",
+        "family": "base",
+        "key": "side",
+        "value": "left",
+        "title": "Петли слева",
+        "hint": "Дверь открывается влево"
+      },
+      {
+        "file": "base-base-side-right.png",
+        "category": "base",
+        "family": "base",
+        "key": "side",
+        "value": "right",
+        "title": "Петли справа",
+        "hint": "Дверь открывается вправо"
+      },
+      {
+        "file": "base-double-base-purpose-shelf.png",
+        "category": "base-double",
+        "family": "base",
+        "key": "purpose",
+        "value": "shelf",
+        "title": "С полками",
+        "hint": "Открытый корпус · полки внутри"
+      },
+      {
+        "file": "base-double-base-execution-standard.png",
+        "category": "base-double",
+        "family": "base",
+        "key": "execution",
+        "value": "standard",
+        "title": "Накладные ручки",
+        "hint": "Ручка на фасаде"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: base; side=left; Петли слева; Дверь открывается влево. TOP RIGHT: base; side=right; Петли справа; Дверь открывается вправо. BOTTOM LEFT: base-double; purpose=shelf; С полками; Открытый корпус · полки внутри. BOTTOM RIGHT: base-double; execution=standard; Накладные ручки; Ручка на фасаде. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct.",
+    "id": "4ef9757f-47e7-445b-96f1-fc059d2c1ba2",
+    "model": "Nano Banana Pro",
+    "credits": 0,
+    "status": "accepted",
+    "attempts": [
+      {
+        "id": "70ab9331-bc41-4a5f-8255-0169f32be828",
+        "credits": 0,
+        "review": "Unwanted blue corner marks; rejected."
+      }
+    ],
+    "output_sha256": "fc6d04b7a5e0adc98bd3e033c78af144eabc4d70dc3a5efd026587155bea6ff4",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 3,
+    "name": "03-sheet",
+    "cells": [
+      {
+        "file": "base-double-base-execution-gola.png",
+        "category": "base-double",
+        "family": "base",
+        "key": "execution",
+        "value": "gola",
+        "title": "Gola L",
+        "hint": "Подхват за профиль · без подсветки"
+      },
+      {
+        "file": "drawer-drawer-execution-standard.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "execution",
+        "value": "standard",
+        "title": "Накладные ручки",
+        "hint": "Ручка на фасаде"
+      },
+      {
+        "file": "drawer-drawer-execution-gola.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "execution",
+        "value": "gola",
+        "title": "Gola II",
+        "hint": "Подхват за профиль · без подсветки"
+      },
+      {
+        "file": "drawer-drawer-layout-two.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "layout",
+        "value": "two",
+        "title": "2 ящика",
+        "hint": "Два наружных фасада"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: base-double; execution=gola; Gola L; Подхват за профиль · без подсветки. TOP RIGHT: drawer; execution=standard; Накладные ручки; Ручка на фасаде. BOTTOM LEFT: drawer; execution=gola; Gola II; Подхват за профиль · без подсветки. BOTTOM RIGHT: drawer; layout=two; 2 ящика; Два наружных фасада. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "36d6e0e3-3729-4739-bfa8-fa96047f136c",
+    "model": "Nano Banana Pro",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "2f1682209b8ed383a172ed91a0fd05c1867f364d4e88e63c585d3d7fce484e46",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 4,
+    "name": "04-sheet",
+    "cells": [
+      {
+        "file": "drawer-drawer-layout-three.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "layout",
+        "value": "three",
+        "title": "3 ящика",
+        "hint": "Два малых и один большой"
+      },
+      {
+        "file": "drawer-drawer-layout-inner.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "layout",
+        "value": "inner",
+        "title": "2 + внутренний",
+        "hint": "Дополнительный ящик за фасадом"
+      },
+      {
+        "file": "drawer-drawer-system-ball.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "system",
+        "value": "ball",
+        "title": "Шариковые",
+        "hint": "Ящик ЛДСП · схема направляющих"
+      },
+      {
+        "file": "drawer-drawer-system-aq.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "system",
+        "value": "aq",
+        "title": "AQ LineBox",
+        "hint": "Металлические боковины · схема"
+      }
+    ],
+    "prompt": "Transform the exact four source views into realistic premium furniture product photographs while keeping their geometry literally unchanged. Four equal 2x2 quadrants, same composition and crops, light pearl grey matte laminate, gentle edge highlights, neutral warm-white seamless studio backdrop, soft diffused lighting and soft contact shadows. TOP LEFT: cabinet with exactly THREE closed drawer fronts: two shallow top fronts and one larger bottom front. TOP RIGHT: cabinet with two main drawer positions and the SMALL INTERNAL drawer at the upper position; upper covering front is removed to show the internal box. Preserve all three boxes and their exact heights. It is a DRAWER cabinet, never add door hinges anywhere. BOTTOM LEFT: a plain laminate drawer BOX, with a visible silver telescopic BALL-BEARING runner on the OUTSIDE of its right side, as in source. BOTTOM RIGHT: AQ metal drawer box, GRAPHITE metal sidewalls with the original thin raised rectangular rails, light-grey flat bottom and original inner back wall. Runners of this metal drawer are concealed BELOW its bottom, so NO silver telescopic runner on the OUTSIDE sidewall. Preserve the reference metal rail shape and opening. Do not add or remove panels, shelves, drawer fronts, hardware, countertop or objects. No extra visible mechanisms. No letters, logos, colored marks, windows or room details. Preserve the exact image layout and every structural edge; upgrade only photographic finish and light.",
+    "id": "2d89ced5-c79f-4ef1-9bf1-829e55cd3a47",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "review_note": "Review AQ runner detail before publishing; no exposed side telescopic runner on metal drawer.",
+    "attempts": [
+      {
+        "id": "aa4a0484-4513-4524-a776-ac405985a0e1",
+        "model": "Nano Banana Pro",
+        "credits": 0,
+        "review": "Rejected: side ball slides invented on AQ metal drawer."
+      }
+    ],
+    "output_sha256": "8b760a66ce879da9deac0ab67e76342432c5700615a94d8d2dffeed7ed5f7320",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 5,
+    "name": "05-sheet",
+    "cells": [
+      {
+        "file": "drawer-drawer-system-slimbox.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "system",
+        "value": "slimbox",
+        "title": "Slimbox Evolution",
+        "hint": "Тонкие боковины · схема"
+      },
+      {
+        "file": "drawer-drawer-opening-soft.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "opening",
+        "value": "soft",
+        "title": "С доводчиком",
+        "hint": "Потянуть · плавное закрывание"
+      },
+      {
+        "file": "drawer-drawer-opening-push.png",
+        "category": "drawer",
+        "family": "drawer",
+        "key": "opening",
+        "value": "push",
+        "title": "Нажатие",
+        "hint": "Push to open · без ручки"
+      },
+      {
+        "file": "oven-generic-handles-handles.png",
+        "category": "oven",
+        "family": "generic",
+        "key": "handles",
+        "value": "handles",
+        "title": "С ручками",
+        "hint": "Накладная ручка на фасаде"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: drawer; system=slimbox; Slimbox Evolution; Тонкие боковины · схема. TOP RIGHT: drawer; opening=soft; С доводчиком; Потянуть · плавное закрывание. BOTTOM LEFT: drawer; opening=push; Нажатие; Push to open · без ручки. BOTTOM RIGHT: oven; handles=handles; С ручками; Накладная ручка на фасаде. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details. TOP LEFT: keep the metal drawer sidewalls and concealed under-mounted runner construction. No exposed telescopic ball-bearing slide on the outer side. Do not invent visible hardware.",
+    "id": "9dd561d9-4810-4c22-9e9a-67992b1856a9",
+    "model": "Nano Banana Pro",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "2496c623e25180bd832c3f8182d62e0ad32ee98c91b5c28bf86807d28eccc758",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 6,
+    "name": "06-sheet",
+    "cells": [
+      {
+        "file": "oven-generic-handles-handleless.png",
+        "category": "oven",
+        "family": "generic",
+        "key": "handles",
+        "value": "handleless",
+        "title": "Без ручек",
+        "hint": "Фасад без накладной ручки",
+        "skip": true
+      },
+      {
+        "file": "corner-corner-side-left.png",
+        "category": "corner",
+        "family": "corner",
+        "key": "side",
+        "value": "left",
+        "title": "Левый угол",
+        "hint": "Бленда слева · выделена синим"
+      },
+      {
+        "file": "corner-corner-side-right.png",
+        "category": "corner",
+        "family": "corner",
+        "key": "side",
+        "value": "right",
+        "title": "Правый угол",
+        "hint": "Бленда справа · выделена синим"
+      },
+      {
+        "file": "corner-corner-purpose-sink.png",
+        "category": "corner",
+        "family": "corner",
+        "key": "purpose",
+        "value": "sink",
+        "title": "Под мойку",
+        "hint": "Без полки · царги видны"
+      }
+    ],
+    "prompt": "Re-render this EXACT supplied four-panel technical image as realistic studio furniture photography. Treat the reference as the construction blueprint. Keep precisely the same silhouettes, perspective, panel counts and every edge; change ONLY surface realism, lighting and shadows. Pearl light-grey matte laminate, subtle edge highlights, black metal, bright neutral seamless background and very soft diffused studio light. No writing, no decoration, no windows. Keep four equal 2x2 quadrants. TOP LEFT: the original close crop of one black oven face; improve black glass, preserve the crop and framing, do not invent neighboring cabinets. TOP RIGHT: a WIDE RECTANGULAR cabinet box with completely STRAIGHT FLAT FRONT. The left approximately two thirds are one flat FIXED PANEL, the right third is one rectangular hinged door. Preserve TWO skinny BLUE vertical battens sticking forward on the face of the fixed panel, precisely where they occur in the source. BOTTOM LEFT: the mirror orientation, the same wide rectangular box, flat fixed panel on right, single door on left, TWO skinny blue battens on fixed panel. Both have OPEN TOPS with narrow cross rails, a black recessed plinth and short legs. BOTTOM RIGHT: same wide rectangular cabinet and fixed front panel with its narrow battens unchanged, but door removed to reveal the empty interior on the right. The battens in bottom right are the cabinet color, not blue. Absolutely NO diagonal front, NO pentagonal box, NO diagonal door, NO worktop, NO reshaping into a corner-shaped unit. Every front stays parallel to its back wall. The two blue strips must remain narrow separate strips, not one broad panel. Follow the reference geometry literally.",
+    "id": "cfe41ce1-5318-4e83-a477-20d8cdd2b319",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "attempts": [
+      {
+        "id": "920b61d9-6fd6-462f-8c15-55e953591698",
+        "model": "Nano Banana Pro",
+        "credits": 0,
+        "review": "Rejected: rectangular blind-front cabinet redesigned with diagonal front and missing fillers."
+      }
+    ],
+    "output_sha256": "3c911da83b686a2016c3a08b3e6219d0fd8c353aab6774889374b41e45506ce1",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 7,
+    "name": "07-sheet",
+    "cells": [
+      {
+        "file": "corner-corner-purpose-shelf.png",
+        "category": "corner",
+        "family": "corner",
+        "key": "purpose",
+        "value": "shelf",
+        "title": "С полками",
+        "hint": "Открытый корпус · полки внутри"
+      },
+      {
+        "file": "corner-corner-door_count-1.png",
+        "category": "corner",
+        "family": "corner",
+        "key": "door_count",
+        "value": "1",
+        "title": "Одна дверь",
+        "hint": "Один открывающийся фасад"
+      },
+      {
+        "file": "corner-corner-door_count-2.png",
+        "category": "corner",
+        "family": "corner",
+        "key": "door_count",
+        "value": "2",
+        "title": "Две двери",
+        "hint": "Два открывающихся фасада"
+      },
+      {
+        "file": "corner-generic-handles-handles.png",
+        "category": "corner",
+        "family": "generic",
+        "key": "handles",
+        "value": "handles",
+        "title": "С ручками",
+        "hint": "Накладная ручка на фасаде"
+      }
+    ],
+    "prompt": "Make the exact four reference views look like premium realistic furniture photographs. Preserve every visible edge, silhouette, part and crop literally. Do NOT reinterpret the design. Photoreal pearl-grey matte laminate, soft subtle surface texture, black straight metal handles, soft studio light, gentle shadows, plain warm-white seamless background. Keep the same four equal quadrants. These are WIDE STRAIGHT RECTANGULAR furniture boxes, not pentagonal units: all fronts are parallel to the back wall, no diagonal door. TOP LEFT: fixed flat panel on the left with its two skinny battens sticking forward, open right compartment with ONE shelf, exactly as supplied. TOP RIGHT: the same fixed left panel with battens and ONE solid door on right. BOTTOM LEFT: same fixed left panel with battens and TWO doors on right. BOTTOM RIGHT: close-up of the original cabinet handle and edge, preserve exact crop. Preserve the narrow protruding battens instead of erasing them or converting them into a diagonal corner. Keep original open top with narrow rails, do not add worktop. No blue, no labels, no text, no windows, no props. Only improve the realistic finish and light; every construction detail must stay as in reference.",
+    "id": "ad2f33d1-8870-40c2-96be-f9899d57604b",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "1d8c9bdc5afa9d6a39a73108c1367c8e50ef7311f868bac885cd1d54301e5dab",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 8,
+    "name": "08-sheet",
+    "cells": [
+      {
+        "file": "corner-generic-handles-handleless.png",
+        "category": "corner",
+        "family": "generic",
+        "key": "handles",
+        "value": "handleless",
+        "title": "Без ручек",
+        "hint": "Фасад без накладной ручки"
+      },
+      {
+        "file": "cargo-cargo-brand-focus.png",
+        "category": "cargo",
+        "family": "cargo",
+        "key": "brand",
+        "value": "focus",
+        "title": "FOCUS",
+        "hint": "Графит · схема корзин"
+      },
+      {
+        "file": "cargo-cargo-brand-norwing.png",
+        "category": "cargo",
+        "family": "cargo",
+        "key": "brand",
+        "value": "norwing",
+        "title": "NORWING",
+        "hint": "Хром · схема корзин"
+      },
+      {
+        "file": "cargo-cargo-brand-icon.png",
+        "category": "cargo",
+        "family": "cargo",
+        "key": "brand",
+        "value": "icon",
+        "title": "ICON",
+        "hint": "Графит · схема корзин"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: corner; handles=handleless; Без ручек; Фасад без накладной ручки. TOP RIGHT: cargo; brand=focus; FOCUS; Графит · схема корзин. BOTTOM LEFT: cargo; brand=norwing; NORWING; Хром · схема корзин. BOTTOM RIGHT: cargo; brand=icon; ICON; Графит · схема корзин. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "9518deb2-0b08-48f3-ae93-1afe47cffa30",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "e53052b8b166c06891a824094e2014592e9979e9f4f107cbbc1accdbd2d8bbef",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 9,
+    "name": "09-sheet",
+    "cells": [
+      {
+        "file": "cargo-cargo-execution-standard.png",
+        "category": "cargo",
+        "family": "cargo",
+        "key": "execution",
+        "value": "standard",
+        "title": "Накладные ручки",
+        "hint": "Ручка на фасаде"
+      },
+      {
+        "file": "cargo-cargo-execution-gola.png",
+        "category": "cargo",
+        "family": "cargo",
+        "key": "execution",
+        "value": "gola",
+        "title": "Gola L",
+        "hint": "Подхват за профиль · без подсветки"
+      },
+      {
+        "file": "dryer-dryer-dryer_brand-norwing.png",
+        "category": "dryer",
+        "family": "dryer",
+        "key": "dryer_brand",
+        "value": "norwing",
+        "title": "NORWING",
+        "hint": "Графит · 600 / 700 / 800 мм"
+      },
+      {
+        "file": "dryer-dryer-dryer_brand-flat_line.png",
+        "category": "dryer",
+        "family": "dryer",
+        "key": "dryer_brand",
+        "value": "flat_line",
+        "title": "FLAT LINE",
+        "hint": "Хром · 600 / 700 / 800 / 900 мм"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: cargo; execution=standard; Накладные ручки; Ручка на фасаде. TOP RIGHT: cargo; execution=gola; Gola L; Подхват за профиль · без подсветки. BOTTOM LEFT: dryer; dryer_brand=norwing; NORWING; Графит · 600 / 700 / 800 мм. BOTTOM RIGHT: dryer; dryer_brand=flat_line; FLAT LINE; Хром · 600 / 700 / 800 / 900 мм. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "640734e2-b919-4719-8bf1-65768d995c98",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "191cc4f3ae7d76dadc9d72a339e4bb55a86483a77d3c1bbc0ef2242f1210ff88",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 10,
+    "name": "10-sheet",
+    "cells": [
+      {
+        "file": "dryer-dryer-system-ball.png",
+        "category": "dryer",
+        "family": "dryer",
+        "key": "system",
+        "value": "ball",
+        "title": "Шариковые",
+        "hint": "Ящик ЛДСП · схема направляющих"
+      },
+      {
+        "file": "dryer-dryer-execution-standard.png",
+        "category": "dryer",
+        "family": "dryer",
+        "key": "execution",
+        "value": "standard",
+        "title": "Накладные ручки",
+        "hint": "Ручка на фасаде"
+      },
+      {
+        "file": "dryer-dryer-execution-gola.png",
+        "category": "dryer",
+        "family": "dryer",
+        "key": "execution",
+        "value": "gola",
+        "title": "Gola II",
+        "hint": "Подхват за профиль · без подсветки"
+      },
+      {
+        "file": "dishwasher-dishwasher-execution-standard.png",
+        "category": "dishwasher",
+        "family": "dishwasher",
+        "key": "execution",
+        "value": "standard",
+        "title": "Накладные ручки",
+        "hint": "Ручка на фасаде"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: dryer; system=ball; Шариковые; Ящик ЛДСП · схема направляющих. TOP RIGHT: dryer; execution=standard; Накладные ручки; Ручка на фасаде. BOTTOM LEFT: dryer; execution=gola; Gola II; Подхват за профиль · без подсветки. BOTTOM RIGHT: dishwasher; execution=standard; Накладные ручки; Ручка на фасаде. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "fa8ed3ee-d5a4-44d8-8008-6b27ca6ae0c6",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "96ae3b6bce3c2be55be3218e48fa9394dc084b11c2a3a21750a563a67cf70fa9",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 11,
+    "name": "11-sheet",
+    "cells": [
+      {
+        "file": "dishwasher-dishwasher-execution-gola.png",
+        "category": "dishwasher",
+        "family": "dishwasher",
+        "key": "execution",
+        "value": "gola",
+        "title": "Gola L",
+        "hint": "Подхват за профиль · без подсветки"
+      },
+      {
+        "file": "upper-upper-filling-shelves.png",
+        "category": "upper",
+        "family": "upper",
+        "key": "filling",
+        "value": "shelves",
+        "title": "Полки",
+        "hint": "Хранение внутри шкафа"
+      },
+      {
+        "file": "upper-upper-filling-dryer.png",
+        "category": "upper",
+        "family": "upper",
+        "key": "filling",
+        "value": "dryer",
+        "title": "Сушка MOUNT",
+        "hint": "Посуда и поддон · схема"
+      },
+      {
+        "file": "upper-upper-execution-handles.png",
+        "category": "upper",
+        "family": "upper",
+        "key": "execution",
+        "value": "handles",
+        "title": "Накладные ручки",
+        "hint": "Ручка снизу фасада"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: dishwasher; execution=gola; Gola L; Подхват за профиль · без подсветки. TOP RIGHT: upper; filling=shelves; Полки; Хранение внутри шкафа. BOTTOM LEFT: upper; filling=dryer; Сушка MOUNT; Посуда и поддон · схема. BOTTOM RIGHT: upper; execution=handles; Накладные ручки; Ручка снизу фасада. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "e2792102-f31f-4671-954f-511f359b0c77",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "3f89db1857c6fc191372d3a5a318c56f0d441eaa81e07aeeec7cc14b10f89e48",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 12,
+    "name": "12-sheet",
+    "cells": [
+      {
+        "file": "upper-upper-execution-handleless.png",
+        "category": "upper",
+        "family": "upper",
+        "key": "execution",
+        "value": "handleless",
+        "title": "Без ручек",
+        "hint": "Подхват снизу"
+      },
+      {
+        "file": "upper-upper-execution-push.png",
+        "category": "upper",
+        "family": "upper",
+        "key": "execution",
+        "value": "push",
+        "title": "Нажатие",
+        "hint": "Tip-on · нажать на фасад"
+      },
+      {
+        "file": "upper-upper-side-left.png",
+        "category": "upper",
+        "family": "upper",
+        "key": "side",
+        "value": "left",
+        "title": "Петли слева",
+        "hint": "Дверь открывается влево"
+      },
+      {
+        "file": "upper-upper-side-right.png",
+        "category": "upper",
+        "family": "upper",
+        "key": "side",
+        "value": "right",
+        "title": "Петли справа",
+        "hint": "Дверь открывается вправо"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: upper; execution=handleless; Без ручек; Подхват снизу. TOP RIGHT: upper; execution=push; Нажатие; Tip-on · нажать на фасад. BOTTOM LEFT: upper; side=left; Петли слева; Дверь открывается влево. BOTTOM RIGHT: upper; side=right; Петли справа; Дверь открывается вправо. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "4e968868-bdb7-466c-ae19-d7725c34c383",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "e06449cdae16fe68fc17993cac41cd3128a817604f4916dfd5e996b9affe4c51",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 13,
+    "name": "13-sheet",
+    "cells": [
+      {
+        "file": "upper-double-upper-filling-shelves.png",
+        "category": "upper-double",
+        "family": "upper",
+        "key": "filling",
+        "value": "shelves",
+        "title": "Полки",
+        "hint": "Хранение внутри шкафа"
+      },
+      {
+        "file": "upper-double-upper-execution-handles.png",
+        "category": "upper-double",
+        "family": "upper",
+        "key": "execution",
+        "value": "handles",
+        "title": "Накладные ручки",
+        "hint": "Ручка снизу фасада"
+      },
+      {
+        "file": "upper-double-upper-execution-handleless.png",
+        "category": "upper-double",
+        "family": "upper",
+        "key": "execution",
+        "value": "handleless",
+        "title": "Без ручек",
+        "hint": "Подхват снизу"
+      },
+      {
+        "file": "upper-double-upper-execution-push.png",
+        "category": "upper-double",
+        "family": "upper",
+        "key": "execution",
+        "value": "push",
+        "title": "Нажатие",
+        "hint": "Tip-on · нажать на фасад"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: upper-double; filling=shelves; Полки; Хранение внутри шкафа. TOP RIGHT: upper-double; execution=handles; Накладные ручки; Ручка снизу фасада. BOTTOM LEFT: upper-double; execution=handleless; Без ручек; Подхват снизу. BOTTOM RIGHT: upper-double; execution=push; Нажатие; Tip-on · нажать на фасад. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "81733379-1ba5-4930-905a-56f3116ec9ea",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "4be744db3461c7e4326de7a6a6255ce4bf4ec06a031913ab2d52f2f9cd862eff",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 14,
+    "name": "14-sheet",
+    "cells": [
+      {
+        "file": "open-tall-none-open-tall-light_system-none.png",
+        "category": "open-tall-none",
+        "family": "open-tall",
+        "key": "light_system",
+        "value": "none",
+        "title": "Без подсветки",
+        "hint": "Открытые полки"
+      },
+      {
+        "file": "open-tall-none-open-tall-lighting-left.png",
+        "category": "open-tall-none",
+        "family": "open-tall",
+        "key": "lighting",
+        "value": "left",
+        "title": "Слева",
+        "hint": "Свет на левой стойке"
+      },
+      {
+        "file": "open-tall-none-open-tall-lighting-right.png",
+        "category": "open-tall-none",
+        "family": "open-tall",
+        "key": "lighting",
+        "value": "right",
+        "title": "Справа",
+        "hint": "Свет на правой стойке"
+      },
+      {
+        "file": "open-tall-none-open-tall-lighting-both.png",
+        "category": "open-tall-none",
+        "family": "open-tall",
+        "key": "lighting",
+        "value": "both",
+        "title": "С двух сторон",
+        "hint": "Свет на обеих стойках"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: open-tall-none; light_system=none; Без подсветки; Открытые полки. TOP RIGHT: open-tall-none; lighting=left; Слева; Свет на левой стойке. BOTTOM LEFT: open-tall-none; lighting=right; Справа; Свет на правой стойке. BOTTOM RIGHT: open-tall-none; lighting=both; С двух сторон; Свет на обеих стойках. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "273c4800-965f-4923-ac86-04698ee47068",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "e12bf8905e6d71ad79e1b9cbe0a804c0699754a8339a2ac172894692016ad1e3",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 15,
+    "name": "15-sheet",
+    "cells": [
+      {
+        "file": "tall-vitrine-vitrine-lighting-left.png",
+        "category": "tall-vitrine",
+        "family": "vitrine",
+        "key": "lighting",
+        "value": "left",
+        "title": "Слева",
+        "hint": "Свет на левой стойке"
+      },
+      {
+        "file": "tall-vitrine-vitrine-lighting-right.png",
+        "category": "tall-vitrine",
+        "family": "vitrine",
+        "key": "lighting",
+        "value": "right",
+        "title": "Справа",
+        "hint": "Свет на правой стойке"
+      },
+      {
+        "file": "tall-vitrine-vitrine-lighting-both.png",
+        "category": "tall-vitrine",
+        "family": "vitrine",
+        "key": "lighting",
+        "value": "both",
+        "title": "С двух сторон",
+        "hint": "Свет на обеих стойках"
+      },
+      {
+        "file": "tall-vitrine-vitrine-opening-left.png",
+        "category": "tall-vitrine",
+        "family": "vitrine",
+        "key": "opening",
+        "value": "left",
+        "title": "Петли слева",
+        "hint": "Дверь открывается влево"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: tall-vitrine; lighting=left; Слева; Свет на левой стойке. TOP RIGHT: tall-vitrine; lighting=right; Справа; Свет на правой стойке. BOTTOM LEFT: tall-vitrine; lighting=both; С двух сторон; Свет на обеих стойках. BOTTOM RIGHT: tall-vitrine; opening=left; Петли слева; Дверь открывается влево. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "1b28d6f7-87c6-4a19-90d4-4c9afc73f9e2",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "9a07678b57958fb7ecff9785416ea467862be5fe9a0f1e85c14fe1cc7b577f5c",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 16,
+    "name": "16-sheet",
+    "cells": [
+      {
+        "file": "tall-vitrine-vitrine-opening-right.png",
+        "category": "tall-vitrine",
+        "family": "vitrine",
+        "key": "opening",
+        "value": "right",
+        "title": "Петли справа",
+        "hint": "Дверь открывается вправо"
+      },
+      {
+        "file": "tall-storage-tall-opening-left.png",
+        "category": "tall-storage",
+        "family": "tall",
+        "key": "opening",
+        "value": "left",
+        "title": "Петли слева",
+        "hint": "Дверь открывается влево"
+      },
+      {
+        "file": "tall-storage-tall-opening-right.png",
+        "category": "tall-storage",
+        "family": "tall",
+        "key": "opening",
+        "value": "right",
+        "title": "Петли справа",
+        "hint": "Дверь открывается вправо"
+      },
+      {
+        "file": "tall-storage-tall-opening-double.png",
+        "category": "tall-storage",
+        "family": "tall",
+        "key": "opening",
+        "value": "double",
+        "title": "Две створки",
+        "hint": "По две двери в каждой секции"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: tall-vitrine; opening=right; Петли справа; Дверь открывается вправо. TOP RIGHT: tall-storage; opening=left; Петли слева; Дверь открывается влево. BOTTOM LEFT: tall-storage; opening=right; Петли справа; Дверь открывается вправо. BOTTOM RIGHT: tall-storage; opening=double; Две створки; По две двери в каждой секции. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "aaddd915-5dcf-4a70-aa89-869582dc209a",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "ef625a3e6241e68fdfed273669c4e5fdb26ca976991460516fe9714f7c602130",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 17,
+    "name": "17-sheet",
+    "cells": [
+      {
+        "file": "tall-storage-generic-handles-handles.png",
+        "category": "tall-storage",
+        "family": "generic",
+        "key": "handles",
+        "value": "handles",
+        "title": "С ручками",
+        "hint": "Накладная ручка на фасаде"
+      },
+      {
+        "file": "tall-storage-generic-handles-handleless.png",
+        "category": "tall-storage",
+        "family": "generic",
+        "key": "handles",
+        "value": "handleless",
+        "title": "Без ручек",
+        "hint": "Фасад без накладной ручки"
+      },
+      {
+        "file": "tall-appliance-tall-layout-door_oven.png",
+        "category": "tall-appliance",
+        "family": "tall",
+        "key": "layout",
+        "value": "door_oven",
+        "title": "Дверь + духовка",
+        "hint": "Нижняя секция с дверью"
+      },
+      {
+        "file": "tall-appliance-tall-layout-door_oven_micro.png",
+        "category": "tall-appliance",
+        "family": "tall",
+        "key": "layout",
+        "value": "door_oven_micro",
+        "title": "Духовка + СВЧ",
+        "hint": "Нижняя секция с дверью"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: tall-storage; handles=handles; С ручками; Накладная ручка на фасаде. TOP RIGHT: tall-storage; handles=handleless; Без ручек; Фасад без накладной ручки. BOTTOM LEFT: tall-appliance; layout=door_oven; Дверь + духовка; Нижняя секция с дверью. BOTTOM RIGHT: tall-appliance; layout=door_oven_micro; Духовка + СВЧ; Нижняя секция с дверью. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "6d467092-1eaa-4ffc-89f8-3ad60ef0d9a9",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "8b2665bef12dc5aba9a3aa1ec55e28270b87ef4e0504553d25f615240fca41ae",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 18,
+    "name": "18-sheet",
+    "cells": [
+      {
+        "file": "tall-appliance-tall-layout-drawer_oven.png",
+        "category": "tall-appliance",
+        "family": "tall",
+        "key": "layout",
+        "value": "drawer_oven",
+        "title": "Ящик + духовка",
+        "hint": "Выдвижная нижняя секция"
+      },
+      {
+        "file": "tall-appliance-tall-layout-drawer_oven_micro.png",
+        "category": "tall-appliance",
+        "family": "tall",
+        "key": "layout",
+        "value": "drawer_oven_micro",
+        "title": "Ящик + духовка + СВЧ",
+        "hint": "Два прибора и нижний ящик"
+      },
+      {
+        "file": "tall-appliance-tall-opening-left.png",
+        "category": "tall-appliance",
+        "family": "tall",
+        "key": "opening",
+        "value": "left",
+        "title": "Петли слева",
+        "hint": "Дверь открывается влево"
+      },
+      {
+        "file": "tall-appliance-tall-opening-right.png",
+        "category": "tall-appliance",
+        "family": "tall",
+        "key": "opening",
+        "value": "right",
+        "title": "Петли справа",
+        "hint": "Дверь открывается вправо"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: tall-appliance; layout=drawer_oven; Ящик + духовка; Выдвижная нижняя секция. TOP RIGHT: tall-appliance; layout=drawer_oven_micro; Ящик + духовка + СВЧ; Два прибора и нижний ящик. BOTTOM LEFT: tall-appliance; opening=left; Петли слева; Дверь открывается влево. BOTTOM RIGHT: tall-appliance; opening=right; Петли справа; Дверь открывается вправо. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "c53f3073-f129-4166-a88d-07baadc43957",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "f5e63735930bb97424fa2b5ee247b91593b8c4333b8b7096ebf837d1c77cf27c",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "index": 19,
+    "name": "19-sheet",
+    "cells": [
+      {
+        "file": "tall-appliance-generic-handles-handles.png",
+        "category": "tall-appliance",
+        "family": "generic",
+        "key": "handles",
+        "value": "handles",
+        "title": "С ручками",
+        "hint": "Накладная ручка на фасаде"
+      },
+      {
+        "file": "tall-appliance-generic-handles-handleless.png",
+        "category": "tall-appliance",
+        "family": "generic",
+        "key": "handles",
+        "value": "handleless",
+        "title": "Без ручек",
+        "hint": "Фасад без накладной ручки"
+      },
+      {
+        "file": "oven-generic-handles-handleless.png",
+        "category": "oven",
+        "family": "generic",
+        "key": "handles",
+        "value": "handleless",
+        "title": "Без ручек",
+        "hint": "Фасад без накладной ручки"
+      }
+    ],
+    "prompt": "Create a premium PHOTOREALISTIC furniture catalog comparison sheet from this technical reference. This is a complete visual re-render, NOT a sharpen or copy of the reference shading. Replace the flat beige CGI look and harsh shadows with realistic studio photography: pearl warm-grey matte laminate with fine microtexture, crisp matching edge bands with subtle edge highlights, soft ambient occlusion at joints, realistic black metal and bright chrome reflections where present, transparent glass where present. Soft large-window daylight from upper left, warm neutral background, natural contact shadows. The improvement in realism must be obvious. Keep the supplied sheet as FOUR separate images in equal 2x2 quadrants, no borders or text. Keep all silhouettes, panel counts, exact openings, camera direction, close-up crops and compartment proportions. Do not merge, rearrange or duplicate views. TOP LEFT: tall-appliance; handles=handles; С ручками; Накладная ручка на фасаде. TOP RIGHT: tall-appliance; handles=handleless; Без ручек; Фасад без накладной ручки. BOTTOM LEFT: close-up of the shallow small drawer directly below a black built-in oven, without an applied handle; preserve its narrow height and the black recessed plinth below. Leave ONLY the lower right quadrant empty. Preserve left versus right openings, every hinge location, exact number of shelves and drawers, original light-strip locations. Do not introduce light where none exists. No new countertop, objects, decoration, dishes, text, numbers, labels or watermark. Realistic professional furniture photographs, never a cartoon or flat sketch. Each item stays entirely within its original quadrant. No blue highlights or colored corner marks. Do not add any new colored markings. Use a LIGHT warm-white studio background and light pearl-grey cabinetry, not brown. Keep the original metal colors: black straight handles stay black and straight; graphite and chrome must remain distinct. Keep a plain seamless studio background; no visible windows, walls, window frames or room details.",
+    "id": "442b1bf9-144e-48d7-bb74-9b3b6280f3d8",
+    "model": "GPT Image 2.5",
+    "credits": 0,
+    "status": "accepted",
+    "output_sha256": "b3ddf93d97c64c15a159d5b6cebb038ad38c291be51b57d2f35c72bc0405b5c3",
+    "output_pixels": [
+      1024,
+      1024
+    ]
+  }
+]

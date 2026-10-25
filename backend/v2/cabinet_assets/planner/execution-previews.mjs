@@ -69,7 +69,11 @@ export class ExecutionPreviews{
    const selected=[];model.traverseVisible(m=>{if(m.isMesh&&(m.userData.frontAccessory&&m.userData.role==='handle'||m.userData.golaProfile))selected.push(m);});
    const b=new THREE.Box3();for(const m of selected)b.union(this.bounds(m));
    if(!b.isEmpty()){const center=b.getCenter(new THREE.Vector3());center.y=this.bounds(selected[0]).getCenter(new THREE.Vector3()).y;const span=Math.min(it.width/1000,.52);box=new THREE.Box3(new THREE.Vector3(center.x-span/2,center.y-.14,it.depth/2000-.1),new THREE.Vector3(center.x+span/2,center.y+.14,it.depth/2000+.11));}
-   else{const bottom=p?.tier==='wall',y=bottom?.045:it.height/1000-.1;box=new THREE.Box3(new THREE.Vector3(-it.width/2200,y-.12,it.depth/2000-.08),new THREE.Vector3(it.width/2200,y+.12,it.depth/2000+.1));}
+   else{
+    const bottom=p?.tier==='wall',baseHeight=heights(it).base_height;
+    // A handleless NShD choice must show its small drawer below the oven.
+    const y=p?.front?.kind==='niche'?(baseHeight+Math.max(80,it.height-baseHeight-595)/2)/1000:bottom?.045:it.height/1000-.1;
+    box=new THREE.Box3(new THREE.Vector3(-it.width/2200,y-.12,it.depth/2000-.08),new THREE.Vector3(it.width/2200,y+.12,it.depth/2000+.1));}
    direction.set(.38,.25,1.7);
   }
   if(['drawer','basket','dryer'].includes(opt.focus)){
