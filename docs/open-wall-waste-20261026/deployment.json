@@ -1,0 +1,22 @@
+{
+  "site": "https://martin-forest-v2-staging-production.up.railway.app/constructor.html",
+  "hosted_commit": "8b518131b3b8d84a1d1bca1d48b169a4bd215145",
+  "hosted_tree": "8a2637f9ed3686a014e483fe0350d26461eee771",
+  "deployment_id": "3ddb0513-e96c-4b1b-a37c-63367a16ed09",
+  "status": "SUCCESS",
+  "completed_at": "2026-10-26T11:42:32.241Z",
+  "python_tests": 28,
+  "node_tests": 36,
+  "static_images_verified": 9,
+  "ui": {
+    "catalogue_cards": [
+      "Верхний открытый · 600 × 720 × 317",
+      "Мусорные контейнеры · 350 × 820 × 510"
+    ],
+    "loaded_image_dimensions": [
+      1536,
+      1152
+    ],
+    "project_modified": false
+  }
+}

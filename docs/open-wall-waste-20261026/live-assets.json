@@ -1,0 +1,39 @@
+{
+  "health": {
+    "ok": true,
+    "environment": "staging",
+    "stage": "6",
+    "agent_transport": "disabled",
+    "staging_agent_api": "enabled",
+    "native_execution": "calibration_required"
+  },
+  "verified_assets": [
+    "/account/3d.js",
+    "/account/planner/bazis-drawers-import.js",
+    "/account/planner/cargo-model.js",
+    "/account/planner/cargo-ui.js",
+    "/account/planner/cargo-variants.js",
+    "/account/planner/cargo-variants.json",
+    "/account/planner/catalogue-artwork.js",
+    "/account/planner/execution-artwork.mjs",
+    "/account/planner/execution-options.mjs",
+    "/account/planner/execution-ui.mjs",
+    "/account/planner/mobility-ui.mjs",
+    "/account/planner/module-card-images/open-wall-13a68b19bc93.webp",
+    "/account/planner/module-card-images/open-wall-1b01967daa24.webp",
+    "/account/planner/module-card-images/open-wall-278a6a830b87.webp",
+    "/account/planner/module-card-images/open-wall-52b413624202.webp",
+    "/account/planner/module-card-images/open-wall-70c93db0d0b6.webp",
+    "/account/planner/module-card-images/open-wall-934509b39a14.webp",
+    "/account/planner/module-card-images/open-wall-d8f4b928da18.webp",
+    "/account/planner/module-card-images/waste-gola.webp",
+    "/account/planner/module-card-images/waste-standard.webp",
+    "/account/planner/module-mesh.mjs",
+    "/account/planner/open-tall-model.js",
+    "/account/planner/open-tall-ui.js",
+    "/account/planner/open-tall-variants.js",
+    "/account/planner/open-tall-variants.json",
+    "/account/planner/vitrine-visuals.mjs"
+  ],
+  "verified_count": 26
+}
