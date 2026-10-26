@@ -7,7 +7,7 @@
   "paid_images_remaining": 79,
   "estimated_paid_credits": 1580,
   "requested_credit_cap": 1800,
-  "credit_balance_observed": 0,
+  "credit_balance_observed": 1640,
   "model": "GPT Image 2.5 in Tripo Studio, one image per job, 4K disabled",
   "approval": "User confirmed full batch and limit 1800 credits, including corrections: даю согласие",
   "checks": [
@@ -1083,7 +1083,9 @@
           "status": "rejected",
           "review": "Handle incorrectly visible on interior face alongside hinges, also at middle height."
         }
-      ]
+      ],
+      "retry_prompt": "CORRECT THE REFERENCE: DELETE THE VISIBLE DOOR HANDLE COMPLETELY. NO VISIBLE HANDLE, NO PULL, NO KNOB anywhere in this image. Render one oak base cabinet with one door open 100 degrees toward the LEFT, showing its INSIDE face as a perfectly plain wooden panel, with only two realistic silver hinges at its hinge edge. There is NO metal bar on the door face. The handle is on the reverse unseen face and must NOT be visible. One horizontal shelf inside cabinet, two compartments. Keep reference geometry and camera position.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent. Light natural oak fine pores, warm pale plaster backdrop, light stone floor, soft daylight and realistic contact shadows. Photorealistic premium MARTIN FOREST product render, entire cabinet uncropped, 7 percent margins. No labels, text, decoration or illumination.",
+      "retry_reference": "backend/v2/cabinet_assets/planner/execution-card-images/base-base-side-left.webp"
     },
     {
       "key": "option:base:base:side:right",
@@ -1415,7 +1417,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Gola II. Подхват за профиль · без подсветки. Preserve this specific option from the reference. Keep the exact number and height of drawer fronts. If slides are visible on a three-drawer cabinet, show a correct slide arrangement for all THREE drawers; never hardware on just one drawer. Hidden slides stay hidden.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent.",
-      "status": "rejected",
+      "status": "reuse_matching_main_image",
       "estimated_credits": 20,
       "options": {
         "title": "Gola II",
@@ -1437,7 +1439,8 @@
       ],
       "generated": "generated/option--drawer--drawer--execution--gola.webp",
       "webp_sha256": "cfeb5cd1aa11a97d1ce80e611ce148bee5e0b212a12b86111eb4e31c4d49c4ce",
-      "review": "Cropped reference propagated as one full-height front; native model has two drawers. Rerender whole two-drawer module."
+      "review": "Rejected single-front image replaced by reviewed closed Gola exterior. Both native models measure 600×820×510 mm with two 329 mm fronts and same Gola recesses; internal hardware is not visible. Native source IDs remain unchanged.",
+      "reuse_job": "option:dryer:dryer:execution:gola"
     },
     {
       "key": "option:drawer:drawer:layout:two",
@@ -2574,7 +2577,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Reference only shows the upper drawer. Reconstruct WHOLE 600 mm wide two-drawer drying cabinet: exactly TWO equal-height oak drawer fronts, two black horizontal Gola recesses, one above top drawer and one between drawers. No applied handles. Whole 820 mm tall base, 100 mm dark recessed plinth. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Gola II. Подхват за профиль · без подсветки. Preserve this specific option from the reference.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Gola II",
@@ -2586,7 +2589,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "2e360f75-7821-4a8c-af7e-a4dea9bf09fa",
+      "actual_credits": 20,
+      "png_sha256": "d5638168dc2679cfc2e0e7463b0c39f10718f45436bedf53fb98b5e8d049555c",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--dryer--dryer--execution--gola.webp",
+      "webp_sha256": "5781234ecf6e6b562aea500a829901f2f3c7dcd1240f9efefea5c30b38d3d5fd",
+      "review": "Two 329 mm Gola fronts and two black grip recesses, complete 600×820×510 mm base."
     },
     {
       "key": "option:dishwasher:dishwasher:execution:standard",
@@ -2626,7 +2639,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Reference is cropped; show WHOLE integrated dishwasher module, 600 mm wide and 820 mm high, one closed oak facade over a dark recessed 100 mm plinth. A single black vertical handle near upper RIGHT corner. Preserve this execution. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Накладные ручки. Ручка на фасаде. Preserve this specific option from the reference.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Накладные ручки",
@@ -2638,7 +2651,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "0935604a-f4f6-4dc2-8398-d06fe2da4f24",
+      "actual_credits": 20,
+      "png_sha256": "c850dcb5946962d1858bb569a29156d159ca28e7d41a60b3d9a888bf76049d44",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--dishwasher--dishwasher--execution--standard.webp",
+      "webp_sha256": "ddcda623fdc72420c171d0085cc0cf6310523cb5577785077489543436ad367b",
+      "review": "Closed integrated appliance facade, single upper-right handle and full plinth."
     },
     {
       "key": "option:dishwasher:dishwasher:execution:gola",
@@ -2678,7 +2701,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Reference is cropped; show WHOLE integrated dishwasher module, 600 mm wide and 820 mm high, one closed oak facade over a dark recessed 100 mm plinth. One black Gola horizontal recess above door. NO applied handle. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Gola L. Подхват за профиль · без подсветки. Preserve this specific option from the reference.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Gola L",
@@ -2690,7 +2713,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "a5f14859-6e83-4ecc-8ae7-1b4fa0cce438",
+      "actual_credits": 20,
+      "png_sha256": "92f5926d59f8cdd0ea2aa1b6573c0caf2931bc64aae9ad0f65f649ebf1549897",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--dishwasher--dishwasher--execution--gola.webp",
+      "webp_sha256": "2f0f53fb4cd337f8e09d1846aa40e2624a962d8d3ae1652ee34ed2f13c579770",
+      "review": "Single integrated dishwasher facade with upper Gola recess and dark plinth; no applied handle."
     },
     {
       "key": "option:upper:upper:filling:shelves",
@@ -2729,7 +2762,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Полки. Хранение внутри шкафа. Preserve this specific option from the reference. ",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Полки",
@@ -2741,7 +2774,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "582ec735-d91f-4984-b5d1-0ea059e6e7a2",
+      "actual_credits": 20,
+      "png_sha256": "ee468918de4e379b314f5ed97ab5283b554c906667db625970d814486c65f3db",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper--upper--filling--shelves.webp",
+      "webp_sha256": "bcc584614d3f8a8dd00ce745b398a0da5bcd3a8fe38dbb380e96795ba033f7ff",
+      "review": "Wall-mounted 600×720 mm open carcass with one central shelf, no legs or lighting."
     },
     {
       "key": "option:upper:upper:execution:handles",
@@ -2840,7 +2883,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Без ручек. Подхват снизу. Preserve this specific option from the reference.  Handleless finger-pull execution: facade extends slightly below cabinet bottom for grasping; no attached handle.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Без ручек",
@@ -2852,7 +2895,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "02d41e36-3661-46ea-b525-b48b6eeb071b",
+      "actual_credits": 20,
+      "png_sha256": "8fc562afc4526d67cce601027f8fbd4f50f0faf5c4ff058c0030d8fa8348844a",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper--upper--execution--handleless.webp",
+      "webp_sha256": "5da19c36ea16a8c8cb04cfe078fa6074a9b60bb8ac0a4aa25b67d65a731b406d",
+      "review": "Full single wall cabinet with no handle and lower finger-pull recess."
     },
     {
       "key": "option:upper:upper:execution:push",
@@ -2897,7 +2950,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Нажатие. Tip-on · нажать на фасад. Preserve this specific option from the reference.  PUSH execution: facade flush with cabinet bottom, no extended finger grip and no attached handle.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Нажатие",
@@ -2909,7 +2962,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "e18eda2a-26c4-44cf-8962-df35cab72aa4",
+      "actual_credits": 20,
+      "png_sha256": "b61a311aafdc15b858c134ee53d9e4a4c2e18f59a09c6272322c056e9a1b717a",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper--upper--execution--push.webp",
+      "webp_sha256": "f01ed76477a8b06fbb4ff3fd6b65a356328c23a2916db323b3fd56f740e27eec",
+      "review": "Single push wall cabinet, handleless flush front and correct vertical proportions."
     },
     {
       "key": "option:upper:upper:side:left",
@@ -2948,7 +3011,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Петли слева. Дверь открывается влево. Preserve this specific option from the reference. Hinges on LEFT, handle on RIGHT free edge.  IMPORTANT HINGED DOOR DETAIL: hinges are on the interior face; the bar handle is mounted ONLY on the EXTERIOR face, never on the inside door surface. When the open door exposes its inner face in this view, the handle is hidden on its reverse side. Do not draw a black handle on the same visible door surface as the hinges. Lower cabinet handle position on exterior is 50 mm below top and 50 mm from free side edge; wall cabinet handle is 50 mm above bottom. Keep original door opening side and angle. NO VISIBLE HANDLE on the interior of the open door: remove any visible pull or knob; only two silver hinges and plain inner oak surface should be visible.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли слева",
@@ -2960,7 +3023,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "19590547-54bf-4a08-8097-538c3cbae87a",
+      "actual_credits": 20,
+      "png_sha256": "99829c0d7cd0b064ffc7251ed26cbd1097fd964b6dbef0b0e9bf36bbdfd8644a",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper--upper--side--left.webp",
+      "webp_sha256": "801225906035a85d539fdff28312e64fe490d140d2994799c75f88ddd1cfc55e",
+      "review": "Left-opening wall door with two hinges and plain interior face; no interior handle."
     },
     {
       "key": "option:upper:upper:side:right",
@@ -2999,7 +3072,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Петли справа. Дверь открывается вправо. Preserve this specific option from the reference. Hinges on RIGHT, handle on LEFT free edge.  IMPORTANT HINGED DOOR DETAIL: hinges are on the interior face; the bar handle is mounted ONLY on the EXTERIOR face, never on the inside door surface. When the open door exposes its inner face in this view, the handle is hidden on its reverse side. Do not draw a black handle on the same visible door surface as the hinges. Lower cabinet handle position on exterior is 50 mm below top and 50 mm from free side edge; wall cabinet handle is 50 mm above bottom. Keep original door opening side and angle. NO VISIBLE HANDLE on the interior of the open door: remove any visible pull or knob; only two silver hinges and plain inner oak surface should be visible.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли справа",
@@ -3011,7 +3084,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "73a14852-adc3-407a-9f04-b1aef8b3f415",
+      "actual_credits": 20,
+      "png_sha256": "c6e104c7d9c29ebeae171156b53d958d2701603fcdc2ec1cbdac97bf695050b8",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper--upper--side--right.webp",
+      "webp_sha256": "e9d4a1540a870e84225b5ed1abb30756590c4744416e3a34d52601dd99367937",
+      "review": "Right hinges and outward opening; handle visible only around exterior free edge, not on inner door face."
     },
     {
       "key": "option:upper-double:upper:filling:shelves",
@@ -3056,7 +3139,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Полки. Хранение внутри шкафа. Preserve this specific option from the reference. ",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Полки",
@@ -3068,7 +3151,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "85fe724d-cdbc-489f-a305-af7396e21fc2",
+      "actual_credits": 20,
+      "png_sha256": "869b02e9f4ba3019739980386e436708a5864d5b838daff8e475610743beb353",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper-double--upper--filling--shelves.webp",
+      "webp_sha256": "ee307dab3806d0172cf00ed67707d82e42f76c3da51b26de8f085c8c18a9430a",
+      "review": "Open double-door wall carcass with central shelf and correct wall mounting."
     },
     {
       "key": "option:upper-double:upper:execution:handles",
@@ -3173,7 +3266,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Без ручек. Подхват снизу. Preserve this specific option from the reference.  Handleless finger-pull execution: facade extends slightly below cabinet bottom for grasping; no attached handle.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Без ручек",
@@ -3185,7 +3278,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "6a3eb468-1833-4daa-852c-9882c2d93b80",
+      "actual_credits": 20,
+      "png_sha256": "be893b0de324a692851e684181a29a1b7b9b9d36d5887cafb980e0bc3bfc77de",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper-double--upper--execution--handleless.webp",
+      "webp_sha256": "5dc2d94525fc8d41d97429a89561d982981f2f2fbf84134c4ad7280c9afba990",
+      "review": "Two wall doors, no handles, lower finger-pull detail, matching oak."
     },
     {
       "key": "option:upper-double:upper:execution:push",
@@ -3230,7 +3333,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Show the WHOLE wall-mounted cabinet exactly 600 mm wide, 720 mm tall, 317 mm deep. Its front is taller than wide; avoid the cropped wide horizontal silhouette in some reference images. NO floor, legs or plinth, cabinet mounted on warm plaster wall. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Нажатие. Tip-on · нажать на фасад. Preserve this specific option from the reference.  PUSH execution: facade flush with cabinet bottom, no extended finger grip and no attached handle.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Нажатие",
@@ -3242,7 +3345,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "9ba84358-64d3-4890-ab0c-a5ef1032ec60",
+      "actual_credits": 20,
+      "png_sha256": "5f87210f58492f6656b3723b3a7c50204783f8c6758ecb9d687241bf1d50f95d",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--upper-double--upper--execution--push.webp",
+      "webp_sha256": "435ef4ebb20f2983a4642be0087a42c2a9b0831a74389e74cf35e692ad438f83",
+      "review": "Two plain push doors flush at bottom, no handles or finger-pull projection."
     },
     {
       "key": "option:open-tall-none:open-tall:lighting:left",
@@ -3286,8 +3399,8 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Слева. Свет на левой стойке. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly left side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
-      "status": "awaiting_batch_credit_approval",
+      "prompt": "Whole open tall cabinet, 600 mm wide x 2000 mm high x 600 mm deep, 100 mm recessed plinth, exactly ONE central wood shelf making TWO niches. Light strips are machined INTO the INNER SIDE WALL at HALF of cabinet DEPTH, about 300 mm behind front edge, never at front edge or rear corner. Camera from front-right to reveal the inner LEFT side wall. Light must be interrupted by the central solid wood shelf. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Слева. Свет на левой стойке. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly left side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Слева",
@@ -3299,7 +3412,17 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "f0b6e508-d8ec-4788-a58b-9efc620c375e",
+      "actual_credits": 20,
+      "png_sha256": "f82457fddbdaf55747765128309ea93c62fa9b8acebad6b6782c8d17fd5ca8d6",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--open-tall-none--open-tall--lighting--left.webp",
+      "webp_sha256": "153ba428996b88d813c84d340d093185d05e8d50dee3789ccc553220b5a3275e",
+      "review": "Single left interior side-wall light, interrupted by one central shelf, no opposite or horizontal lights."
     },
     {
       "key": "option:open-tall-none:open-tall:lighting:right",
@@ -3343,8 +3466,8 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Справа. Свет на правой стойке. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly right side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
-      "status": "awaiting_batch_credit_approval",
+      "prompt": "Whole open tall cabinet, 600 mm wide x 2000 mm high x 600 mm deep, 100 mm recessed plinth, exactly ONE central wood shelf making TWO niches. Light strips are machined INTO the INNER SIDE WALL at HALF of cabinet DEPTH, about 300 mm behind front edge, never at front edge or rear corner. Camera from front-left to reveal the inner RIGHT side wall. Light must be interrupted by the central solid wood shelf. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Справа. Свет на правой стойке. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly right side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
+      "status": "rejected",
       "estimated_credits": 20,
       "options": {
         "title": "Справа",
@@ -3356,7 +3479,19 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "6f423379-8aa0-4b47-89a2-49f12e6098a6",
+      "actual_credits": 20,
+      "png_sha256": "c2edce79b4215111a3db277c7a70c6c9e9a318e616756da0a5749f33d206f7ee",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--open-tall-none--open-tall--lighting--right.webp",
+      "webp_sha256": "1f642be85db9f9e34ac485a393e10c5ea2fa6354c5bc2c281681753a2e0d2ba7",
+      "review": "Right light reads at front edge because camera hides inner right side wall. Rerender from front-left with visible inner right wall.",
+      "retry_prompt": "MIRROR the attached cabinet horizontally: the camera MUST be from FRONT-LEFT, exposing the outside LEFT side panel and the INSIDE RIGHT side wall. Move the LED to the RIGHT interior wall, at HALF DEPTH (300 mm behind front), so oak is visible BOTH in front of and behind the luminous groove. NO LED at the front edge. The RIGHT FRONT UPRIGHT must be unlit plain oak. Whole open tall cabinet 600 mm wide, 2000 mm tall, 600 mm deep, 100 mm recessed dark plinth. Exactly ONE central wood shelf creating two niches, light interrupted by this shelf. Exactly one thin AQ 4 mm luminous groove on RIGHT inner wall in each niche, NO left light, NO back-wall light, NO horizontal light, NO black aluminium channel. Natural light oak fine pores, warm pale plaster background and stone floor, soft daylight, crisp realistic render. Entire cabinet with clear margins; no text or props.",
+      "retry_reference": "backend/v2/cabinet_assets/planner/execution-card-images/open-tall-none-open-tall-lighting-left.webp"
     },
     {
       "key": "option:open-tall-none:open-tall:lighting:both",
@@ -3400,8 +3535,8 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: С двух сторон. Свет на обеих стойках. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly both side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
-      "status": "awaiting_batch_credit_approval",
+      "prompt": "Whole open tall cabinet, 600 mm wide x 2000 mm high x 600 mm deep, 100 mm recessed plinth, exactly ONE central wood shelf making TWO niches. Light strips are machined INTO the INNER SIDE WALL at HALF of cabinet DEPTH, about 300 mm behind front edge, never at front edge or rear corner. Camera nearly frontal, slightly raised, revealing both INNER side walls. Light must be interrupted by the central solid wood shelf. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: С двух сторон. Свет на обеих стойках. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly both side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
+      "status": "rejected",
       "estimated_credits": 20,
       "options": {
         "title": "С двух сторон",
@@ -3413,7 +3548,19 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "73484d37-95bd-48d4-8441-decc2867223b",
+      "actual_credits": 20,
+      "png_sha256": "651f3ee7da265089b3f8c5176907c980dc53af07f6890fbbc8cf3ea95cb31ecf",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--open-tall-none--open-tall--lighting--both.webp",
+      "webp_sha256": "542f22022be0fac3780d57b648a3e95a3e4044e24a67dbfad37592781863eda9",
+      "review": "Right light too close to front edge; rerender symmetric front view with both inner side wall grooves visible.",
+      "retry_prompt": "IGNORE reference camera angle. A perfectly SYMMETRICAL STRAIGHT-ON FRONT view into an open tall cabinet, with BOTH inner side walls visible and NO exterior side panel visible. Single cabinet 600 mm wide x 2000 mm tall x 600 mm deep, one central 18 mm oak shelf, TWO niches, dark recessed 100 mm plinth. Install TWO vertical AQ LED grooves, one in each INTERIOR SIDE WALL, exactly HALF WAY from front to back. On EACH side wall the light must have a broad area of plain oak IN FRONT and BEHIND it. Front uprights are plain unlit oak. The grooves are NOT at the front edge and NOT at back corners. Narrow 4 mm neutral-white light lines, interrupted at the wood shelf, NO black channel, no horizontal light. Natural light oak veneer fine pores, warm plaster wall and pale stone floor, soft daylight, photorealistic product render. Full cabinet with margins. No doors, no handles, no glass, no text.",
+      "retry_reference": "backend/v2/cabinet_assets/planner/execution-card-images/open-tall-none-open-tall-lighting-both.webp"
     },
     {
       "key": "option:tall-vitrine:vitrine:lighting:left",
@@ -3508,7 +3655,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Correct the attached reference to this authoritative cabinet construction, then render a premium photorealistic natural oak MARTIN FOREST cabinet. 600 mm wide, 2000 mm high, 600 mm deep, 18 mm panels, recessed dark 100 mm plinth. ONE thin black Z1 aluminium frame with transparent glass door. PUSH-TO-OPEN, NO HANDLE: delete any silver rod or pull. Exactly ONE transparent 4 mm glass shelf centered 1043 mm above floor: remove extra shelves from reference. FOUR realistic hinges on the LEFT edge only. Door closed with clearly transparent glass. Thin 4 mm neutral-white AQ LED luminous grooves recessed flush in the RIGHT INTERIOR SIDE WALL at mid depth. Exactly one light line, no lighting on opposite wall. Never put lighting on back wall, front glass, or horizontal shelf edge. Realistic light bounce, fine natural oak pores and vertical grain, warm plaster backdrop and pale stone floor, soft daylight, crisp shadows and glass reflections. Entire cabinet uncropped with 7 percent margins. View from front-left so illuminated inner side wall is visible. No labels, decor or collage.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Справа",
@@ -3520,7 +3667,17 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "7c894923-396a-4028-b935-108632030390",
+      "actual_credits": 20,
+      "png_sha256": "6724f5c7dc5ab5f7104113edd04cd7f24bd8a5fdf21072cd4fafed9cf3201343",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-vitrine--vitrine--lighting--right.webp",
+      "webp_sha256": "ea85054ec41aff63314270151675ce5981e4b44cadcb2f94a3097c816f1db99c",
+      "review": "Right inner-wall LED visible through glass, four left hinges, exactly one glass shelf, black Z1 frame and no handle."
     },
     {
       "key": "option:tall-vitrine:vitrine:lighting:both",
@@ -3560,7 +3717,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Correct the attached reference to this authoritative cabinet construction, then render a premium photorealistic natural oak MARTIN FOREST cabinet. 600 mm wide, 2000 mm high, 600 mm deep, 18 mm panels, recessed dark 100 mm plinth. ONE thin black Z1 aluminium frame with transparent glass door. PUSH-TO-OPEN, NO HANDLE: delete any silver rod or pull. Exactly ONE transparent 4 mm glass shelf centered 1043 mm above floor: remove extra shelves from reference. FOUR realistic hinges on the LEFT edge only. Door closed with clearly transparent glass. Thin 4 mm neutral-white AQ LED luminous grooves recessed flush in the LEFT AND RIGHT INTERIOR SIDE WALL at mid depth. Exactly two side light lines. Never put lighting on back wall, front glass, or horizontal shelf edge. Realistic light bounce, fine natural oak pores and vertical grain, warm plaster backdrop and pale stone floor, soft daylight, crisp shadows and glass reflections. Entire cabinet uncropped with 7 percent margins. View from front-right so illuminated inner side wall is visible. No labels, decor or collage.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "С двух сторон",
@@ -3572,7 +3729,17 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "1300d6ec-3990-472e-8147-f32d210510f6",
+      "actual_credits": 20,
+      "png_sha256": "0cf767d1ff4e954f9814f676e897ba254f8268a079eeccc6781a71e736fea073",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-vitrine--vitrine--lighting--both.webp",
+      "webp_sha256": "2efa81545f090bb63b9bd4b5b3b85c39d697ca075355815e44919a6cff3dceaf",
+      "review": "Two side lights, single central glass shelf, four left hinges and handleless black Z1 glass front."
     },
     {
       "key": "option:tall-vitrine:vitrine:opening:left",
@@ -3612,7 +3779,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Correct the attached reference to this authoritative cabinet construction, then render a premium photorealistic natural oak MARTIN FOREST cabinet. 600 mm wide, 2000 mm high, 600 mm deep, 18 mm panels, recessed dark 100 mm plinth. ONE thin black Z1 aluminium frame with transparent glass door. PUSH-TO-OPEN, NO HANDLE: delete any silver rod or pull. Exactly ONE transparent 4 mm glass shelf centered 1043 mm above floor: remove extra shelves from reference. FOUR realistic hinges on the LEFT edge only. Show door open 75 degrees on its LEFT hinges, clearly revealing cabinet interior. Thin 4 mm neutral-white AQ LED luminous grooves recessed flush in the LEFT INTERIOR SIDE WALL at mid depth. Exactly one light line, no lighting on opposite wall. Never put lighting on back wall, front glass, or horizontal shelf edge. Realistic light bounce, fine natural oak pores and vertical grain, warm plaster backdrop and pale stone floor, soft daylight, crisp shadows and glass reflections. Entire cabinet uncropped with 7 percent margins. View from front-right so illuminated inner side wall is visible. No labels, decor or collage.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли слева",
@@ -3624,7 +3791,17 @@
         "highlight": null,
         "front": false,
         "tall": true
-      }
+      },
+      "task_id": "e7716c13-ad2b-41f4-b651-6d2a8a750da7",
+      "actual_credits": 20,
+      "png_sha256": "3bacc2ba8c61a670e831579b402953d56fca58bf8b0c19c6072c58bd2bb1c5b1",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-vitrine--vitrine--opening--left.webp",
+      "webp_sha256": "b3760b68c0b2fcc3d4546d9d415238c449b79c7f10527230aee91d5e47c9ddc7",
+      "review": "Left-opening glass door, four left hinges, one glass shelf, left LED recessed into visible inner side wall."
     },
     {
       "key": "option:tall-vitrine:vitrine:opening:right",
@@ -3664,7 +3841,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Correct the attached reference to this authoritative cabinet construction, then render a premium photorealistic natural oak MARTIN FOREST cabinet. 600 mm wide, 2000 mm high, 600 mm deep, 18 mm panels, recessed dark 100 mm plinth. ONE thin black Z1 aluminium frame with transparent glass door. PUSH-TO-OPEN, NO HANDLE: delete any silver rod or pull. Exactly ONE transparent 4 mm glass shelf centered 1043 mm above floor: remove extra shelves from reference. FOUR realistic hinges on the RIGHT edge only. Show door open 75 degrees on its RIGHT hinges, clearly revealing cabinet interior. Thin 4 mm neutral-white AQ LED luminous grooves recessed flush in the LEFT INTERIOR SIDE WALL at mid depth. Exactly one light line, no lighting on opposite wall. Never put lighting on back wall, front glass, or horizontal shelf edge. Realistic light bounce, fine natural oak pores and vertical grain, warm plaster backdrop and pale stone floor, soft daylight, crisp shadows and glass reflections. Entire cabinet uncropped with 7 percent margins. View from front-right so illuminated inner side wall is visible. No labels, decor or collage.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "rejected",
       "estimated_credits": 20,
       "options": {
         "title": "Петли справа",
@@ -3676,7 +3853,19 @@
         "highlight": null,
         "front": false,
         "tall": true
-      }
+      },
+      "task_id": "b8094b00-9c6f-4b1a-9414-3888adec0188",
+      "actual_credits": 20,
+      "png_sha256": "2c05ff2d3f90171e1ce3f711b7fa5f5dee5e04b047a7b82269280cbbca5afe35",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-vitrine--vitrine--opening--right.webp",
+      "webp_sha256": "42b2c5436c5f4a453de8c22a96670dfa182bafb9ce9c99278671cb9f85b65470",
+      "review": "Correct right opening and four hinges, but left LED appears on front upright instead of inside side wall. Correct using reviewed left-opening vitrine as reference.",
+      "retry_prompt": "Edit the supplied successful photorealistic vitrine. Keep the cabinet, CAMERA FROM FRONT-RIGHT, oak grain, ONE glass shelf, recessed plinth and LEFT INNER WALL LIGHT exactly as shown. The left LED must remain recessed at mid-depth on the INSIDE wall, with visible wood in front and behind it. ONLY change the door opening: move the FOUR hinges from left to RIGHT side and swing the glass door OPEN TO THE RIGHT, about 90 degrees. Keep the glass door thin black Z1 frame, clear glass, NO HANDLE. No hinges left. Do not mirror the whole image and do not move the light to front upright. Camera must still show left inner wall and its recessed light. Whole cabinet uncropped, same soft daylight and warm plaster background.",
+      "retry_reference": "docs/tripo-full-catalogue-20261027/generated/option--tall-vitrine--vitrine--opening--left.webp"
     },
     {
       "key": "option:tall-storage:tall:opening:left",
@@ -3716,7 +3905,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "AUTHORITATIVE CONSTRUCTION OVERRIDES ERRORS IN REFERENCE: whole tall pantry cabinet, 600 mm wide x 2000 mm tall x 600 mm deep, 100 mm recessed dark plinth. Horizontal division at 820 mm above floor. Exactly TWO vertically stacked doors, lower about 717 mm high and upper about 1177 mm high. Both open on LEFT hinges: two hinges on lower door and three on upper. Do NOT merge these into one tall continuous door. Inside, three horizontal shelves/divisions at 460, 820, 1401 mm from floor create four compartments. NO VISIBLE handles on inside of doors. The visible inside faces are plain oak with hinges only. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware.  Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Петли слева. Дверь открывается влево. Preserve this specific option from the reference. Hinges on LEFT, handle on RIGHT free edge.  IMPORTANT HINGED DOOR DETAIL: hinges are on the interior face; the bar handle is mounted ONLY on the EXTERIOR face, never on the inside door surface. When the open door exposes its inner face in this view, the handle is hidden on its reverse side. Do not draw a black handle on the same visible door surface as the hinges. Lower cabinet handle position on exterior is 50 mm below top and 50 mm from free side edge; wall cabinet handle is 50 mm above bottom. Keep original door opening side and angle.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли слева",
@@ -3728,7 +3917,17 @@
         "highlight": null,
         "front": false,
         "tall": true
-      }
+      },
+      "task_id": "20c8e1f3-2719-4ab5-b95a-f78a8c6f2e4b",
+      "actual_credits": 20,
+      "png_sha256": "8e70e710cf954aed6e97c3c04f67198e7d05231cfefb75f01afe8deacac69b37",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-storage--tall--opening--left.webp",
+      "webp_sha256": "22f18a216b550bb40b2e8552fa570d7af95ec49a8b8b2555c683d018e1dd9239",
+      "review": "Two stacked left-opening doors, three upper plus two lower hinges, three shelves creating four compartments; no interior handles."
     },
     {
       "key": "option:tall-storage:tall:opening:right",
@@ -4451,7 +4650,7 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Tall open cabinet, one central shelf and two niches, matching the reference. Replace the AQ strip with black aluminium LIRA 17.5 mm recessed channels and slim neutral-white diffusers on left interior side wall(s), at mid-depth. Black borders clearly visible. Installation interrupted by solid shelf, no LEDs on back panel or horizontal edges.",
+      "prompt": "The LED channel MUST be in the middle of the visible inner LEFT wall, with equally broad wood areas in front and behind it. Front vertical upright stays plain unlit oak. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Tall open cabinet, one central shelf and two niches, matching the reference. Replace the AQ strip with black aluminium LIRA 17.5 mm recessed channels and slim neutral-white diffusers on left interior side wall(s), at mid-depth. Black borders clearly visible. Installation interrupted by solid shelf, no LEDs on back panel or horizontal edges.",
       "status": "awaiting_batch_credit_approval",
       "estimated_credits": 20,
       "requires_dynamic_light_system_resolver": true
@@ -4459,8 +4658,8 @@
     {
       "key": "option:open-tall:lira:right",
       "title": "Открытый пенал — LIRA — right",
-      "reference": "backend/v2/cabinet_assets/planner/execution-card-images/open-tall-none-open-tall-lighting-right.webp",
-      "reference_sha256": "0ac2cae25a1e6aa010d506a4266ea3a53802fcd9658c73acd73171f3e51068d6",
+      "reference": "backend/v2/cabinet_assets/planner/execution-card-images/open-tall-none-open-tall-lighting-left.webp",
+      "reference_sha256": "41922ae9c5bf9ea42a71e77467fb0d7ddc96018acf4f110a85bbc85289b51ada",
       "bazis_id": "bazis.cba171b0c9ec",
       "native_source": {
         "keys": [
@@ -4498,7 +4697,7 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Tall open cabinet, one central shelf and two niches, matching the reference. Replace the AQ strip with black aluminium LIRA 17.5 mm recessed channels and slim neutral-white diffusers on right interior side wall(s), at mid-depth. Black borders clearly visible. Installation interrupted by solid shelf, no LEDs on back panel or horizontal edges.",
+      "prompt": "MIRROR the attached cabinet horizontally: the camera MUST be from FRONT-LEFT, exposing the outside LEFT side panel and the INSIDE RIGHT side wall. Move the LED to the RIGHT interior wall, at HALF DEPTH (300 mm behind front), so oak is visible BOTH in front of and behind the luminous groove. NO LED at the front edge. The RIGHT FRONT UPRIGHT must be unlit plain oak. Whole open tall cabinet 600 mm wide, 2000 mm tall, 600 mm deep, 100 mm recessed dark plinth. Exactly ONE central wood shelf creating two niches, light interrupted by this shelf. Exactly one thin LIRA 17.5 mm recessed black aluminium channel with slim white diffuser on RIGHT inner wall in each niche, NO left light, NO back-wall light, NO horizontal light, Black profile borders visible around diffuser. Natural light oak fine pores, warm pale plaster background and stone floor, soft daylight, crisp realistic render. Entire cabinet with clear margins; no text or props.",
       "status": "awaiting_batch_credit_approval",
       "estimated_credits": 20,
       "requires_dynamic_light_system_resolver": true
@@ -4545,7 +4744,7 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Tall open cabinet, one central shelf and two niches, matching the reference. Replace the AQ strip with black aluminium LIRA 17.5 mm recessed channels and slim neutral-white diffusers on both interior side wall(s), at mid-depth. Black borders clearly visible. Installation interrupted by solid shelf, no LEDs on back panel or horizontal edges.",
+      "prompt": "IGNORE reference camera angle. A perfectly SYMMETRICAL STRAIGHT-ON FRONT view into an open tall cabinet, with BOTH inner side walls visible and NO exterior side panel visible. Single cabinet 600 mm wide x 2000 mm tall x 600 mm deep, one central 18 mm oak shelf, TWO niches, dark recessed 100 mm plinth. Install TWO vertical recessed LIRA 17.5 mm black aluminium LED profiles, one in each INTERIOR SIDE WALL, exactly HALF WAY from front to back. On EACH side wall the light must have a broad area of plain oak IN FRONT and BEHIND it. Front uprights are plain unlit oak. The grooves are NOT at the front edge and NOT at back corners. Slim neutral-white diffusers with black borders visible, interrupted at the wood shelf, no horizontal light. Natural light oak veneer fine pores, warm plaster wall and pale stone floor, soft daylight, photorealistic product render. Full cabinet with margins. No doors, no handles, no glass, no text.",
       "status": "awaiting_batch_credit_approval",
       "estimated_credits": 20,
       "requires_dynamic_light_system_resolver": true
@@ -5016,7 +5215,19 @@
     }
   ],
   "approved_credit_cap": 1800,
-  "actual_paid_credits": 740,
+  "actual_paid_credits": 1140,
   "optimisation": "13 matching option illustrations reuse the same reviewed native module render; no duplicate paid jobs.",
-  "estimated_paid_credits_after_reuse": 1320
+  "estimated_paid_credits_after_reuse": 1320,
+  "extra_tasks": [
+    {
+      "task_id": "d1e7f272-64bc-4153-8670-2ad584e8e459",
+      "key": "extra:duplicate-upper-push",
+      "operation": "image-to-image",
+      "model": "GPT Image 2.5 (Tripo Studio)",
+      "actual_credits": 20,
+      "status": "unused_duplicate",
+      "review": "Accidental repeat after browser reference tab closed on user interruption; preparation guard added. Original accepted push render retained.",
+      "png_sha256": "1cf94d8877d5838a6669b298454a65da8929a69d7599b2a88462d7455eaff9c5"
+    }
+  ]
 }
