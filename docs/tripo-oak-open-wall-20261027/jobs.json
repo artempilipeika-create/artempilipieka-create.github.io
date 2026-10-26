@@ -1,0 +1,111 @@
+{
+  "provider": "Tripo Studio",
+  "model": "GPT Image 2.5",
+  "illustrative": true,
+  "approved_style": "Natural oak, front view, plaster backdrop, soft daylight",
+  "balance_before": 2520,
+  "balance_after": 2520,
+  "free_counter_before": 94,
+  "free_counter_after": 97,
+  "charged_credits": 0,
+  "new_jobs": [
+    {
+      "task_id": "8ed77af1-60fe-41d4-86de-655a5f45ddef",
+      "prompt": "MF_RENDER_OAK_LIRA_BOTH. Preserve this exact photorealistic oak cabinet, centered front camera, one central shelf and two niches, woodgrain, proportions, plaster backdrop and soft daylight. Add vertical warm-white LED installations recessed at the MIDDLE of the cabinet depth into BOTH interior SIDE WALLS, left and right. Each installation is a visible BLACK ALUMINIUM LIRA channel 17.5 mm wide with a narrow warm-white diffuser centered inside: distinct black borders must be clearly visible on both sides of every glowing strip. Four vertical segments total, upper-left, lower-left, upper-right, lower-right, interrupted by the solid central wooden shelf. Cabinet actual dimensions 600 width x 720 height x 317 depth mm, 18 mm panels. No horizontal light, no groove in back panel, no other design changes. Subtle realistic warm bounce light, premium detailed architectural product render, no labels, no collage."
+    },
+    {
+      "task_id": "4dc822a6-16e8-445b-b90b-876e8a613f2d",
+      "prompt": "MF_RENDER_OAK_LIRA_LEFT. Minimal precise variant edit of this exact photorealistic oak open wall cabinet. Preserve camera, proportions, one central shelf, grain, plaster backdrop and soft daylight. Keep ONLY the existing LEFT interior sidewall BLACK aluminium LIRA 17.5 mm channel with its warm luminous diffuser, above and below the shelf. Completely REMOVE the RIGHT installation: black channel, groove, diffuser and emitted warm glow. Fill the right wall with continuous matching oak wood, no right-side installation remains. Preserve visible black borders around left diffuser. No horizontal lighting, no light on back panel, no other geometry or composition changes. Premium architectural render. No text or collage."
+    },
+    {
+      "task_id": "07ee1db9-7124-41ca-a291-7f624b7f83fb",
+      "prompt": "MF_RENDER_OAK_LIRA_RIGHT. Precise minimal variant edit. Preserve this exact photorealistic oak open cabinet, centered front view, one central shelf, two niches, proportions, woodgrain, daylight and plaster backdrop. Move the existing LEFT LIRA lighting installation to the RIGHT interior side wall at the same middle depth, upper and lower compartment. Right installation must have BLACK aluminium 17.5 mm channels with distinct black borders around a slim warm-white diffuser, interrupted by the solid shelf. Completely remove ALL left black channels, grooves, diffusers and emitted glow; fill left wall with continuous matching oak. No horizontal lighting and no back-panel lighting. Identical framing and materials, soft realistic light bounce. No text or collage."
+    }
+  ],
+  "images": [
+    {
+      "task_id": "8db0a595-86fa-43a1-86f8-26d22d092a26",
+      "source_file": "ВМ-600.Фр_4мм_Две стороны_Центр.18мм.Отк.fr3d",
+      "source_sha256": "1b01967daa24941949b6fb27f1e3a2d4b4bf8a9ec19a89353fd50245c75eac8c",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-1b01967daa24.webp",
+      "output_sha256": "19a7157d12e7d4bdd5beb8a4aadf59e0b4f01f25bcb5fb30e670279946d93832",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "review": "accepted; one shelf, correct side and lighting profile"
+    },
+    {
+      "task_id": "747f67f8-1f80-420a-bf4c-480e13a36a35",
+      "source_file": "ВМ-600. Фр_4мм_L_Центр.Пл_18мм.Отк.fr3d",
+      "source_sha256": "13a68b19bc93a3a48d0c56ee85ae003bf6ede576d3a57716cf4fad63d40fe0cc",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-13a68b19bc93.webp",
+      "output_sha256": "314ca7c1f559ccd4821a39d16276c4872c1ddc8d972f05edf62ef4ea6390c8bc",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "review": "accepted; one shelf, correct side and lighting profile"
+    },
+    {
+      "task_id": "e9343379-de48-4a30-94f1-c1aa02806757",
+      "source_file": "ВМ-600. Фр_4мм_P_Центр.Пл_18мм.Отк.fr3d",
+      "source_sha256": "52b413624202a5b22170935a8671e762a010e5fbcbbeb279f4bda61eb1ea9802",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-52b413624202.webp",
+      "output_sha256": "7764867db1d890563b81e9be36d427517901b3655130c83f19314689a6bfbb3a",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "review": "accepted; one shelf, correct side and lighting profile"
+    },
+    {
+      "task_id": "e1a56029-96f4-4e61-82ad-a158607bf446",
+      "source_file": "ВМ-600.Открытый Без подсветки..fr3d",
+      "source_sha256": "934509b39a14994894ede908427423484e6d68092fdd2c22dff7bcb319d15adc",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-934509b39a14.webp",
+      "output_sha256": "24d650f1987365cc9970d4a211c1a7e6bb678575a9c93c14f3259242113341c1",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "review": "accepted; one shelf, correct side and lighting profile"
+    },
+    {
+      "task_id": "8ed77af1-60fe-41d4-86de-655a5f45ddef",
+      "source_file": "ВМ-600. Фр_17.5мм_Две стороны_Центр.Пл_18мм.Отк.fr3d",
+      "source_sha256": "278a6a830b877c1d9984d1e901ab90a3c73620c35520d1bf7d55930b9f0c1933",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-278a6a830b87.webp",
+      "output_sha256": "6dde91108978516a8d68a2386139157ace0691edf980776850d1381aebbdcf8c",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "review": "accepted; one shelf, correct side and lighting profile"
+    },
+    {
+      "task_id": "4dc822a6-16e8-445b-b90b-876e8a613f2d",
+      "source_file": "ВМ-600.Фр_17.5мм_L_Центр.Пл_18мм.Отк..fr3d",
+      "source_sha256": "d8f4b928da18ca9e703185d608ebfb580e0c8ebe6f90703fa0f4d582666d9e64",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-d8f4b928da18.webp",
+      "output_sha256": "98f766310d7372ca75b154fa043baf8b416fc7f09fd0e48a5ea13e5654c4cf48",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "review": "accepted; one shelf, correct side and lighting profile"
+    },
+    {
+      "task_id": "07ee1db9-7124-41ca-a291-7f624b7f83fb",
+      "source_file": "ВМ-600.Фр_17.5мм_P_Центр.Пл_18мм.Отк.fr3d",
+      "source_sha256": "70c93db0d0b6a80259b2abbd0f428a506d4d18954706328e752c9cb4c07345a5",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-70c93db0d0b6.webp",
+      "output_sha256": "d6850f806ca5b8915fa46a09374897a5d5e0b64141ff70d4d37dc872db320bf0",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "review": "accepted; one shelf, correct side and lighting profile"
+    }
+  ]
+}
