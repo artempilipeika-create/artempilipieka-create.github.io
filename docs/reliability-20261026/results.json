@@ -1,0 +1,385 @@
+{
+  "tested_commit": "d195c4690ede032631b26d089a01e30d78806d09",
+  "ci_run": "https://github.com/artempilipeika-create/artempilipieka-create.github.io/actions/runs/40329317043",
+  "node_passed": 670,
+  "python_passed": 415,
+  "skipped": 0,
+  "catalogue_donors": 137,
+  "accepted_resize_cases": 3237,
+  "editor_rejected_cases": 429,
+  "reproduced_mismatches_before_fix": [
+    {
+      "id": "bazis.3079d0656398",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.3079d0656398",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.5731630ddd87",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.5731630ddd87",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.39f282e08f0c",
+      "mode": "new",
+      "axis": "depth",
+      "value": 1000,
+      "errors": [
+        [
+          [],
+          "Value error, Worktop is supported only for compatible lower modules"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.39f282e08f0c",
+      "mode": "opened",
+      "axis": "depth",
+      "value": 1000,
+      "errors": [
+        [
+          [],
+          "Value error, Worktop is supported only for compatible lower modules"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.5f5697e39e27",
+      "mode": "new",
+      "axis": "depth",
+      "value": 1000,
+      "errors": [
+        [
+          [],
+          "Value error, Worktop is supported only for compatible lower modules"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.5f5697e39e27",
+      "mode": "opened",
+      "axis": "depth",
+      "value": 1000,
+      "errors": [
+        [
+          [],
+          "Value error, Worktop is supported only for compatible lower modules"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.877ba2f68d92",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.877ba2f68d92",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.1ac4fadd97b7",
+      "mode": "opened",
+      "axis": "width",
+      "value": 900,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.1ac4fadd97b7",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.e68c9bd4dee3",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.e68c9bd4dee3",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.b76fb9fab8ca",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.b76fb9fab8ca",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.43967878ef37",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.43967878ef37",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.587ab72c0138",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.587ab72c0138",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.4c416abd988a",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.4c416abd988a",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.6c187245284a",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.6c187245284a",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.76e5a7bf2a65",
+      "mode": "opened",
+      "axis": "width",
+      "value": 900,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.76e5a7bf2a65",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.c98de01845cf",
+      "mode": "opened",
+      "axis": "width",
+      "value": 900,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.c98de01845cf",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.85f493fc1d17",
+      "mode": "opened",
+      "axis": "width",
+      "value": 1200,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    },
+    {
+      "id": "bazis.85f493fc1d17",
+      "mode": "opened",
+      "axis": "width",
+      "value": 800,
+      "errors": [
+        [
+          [],
+          "Value error, Ширина модуля с одной дверью не должна превышать 600 мм"
+        ]
+      ]
+    }
+  ],
+  "deployment": {
+    "id": "b47ac4ee-e937-4f46-a145-48831d8bab9a",
+    "status": "SUCCESS",
+    "commit": "d195c4690ede032631b26d089a01e30d78806d09"
+  },
+  "browser": {
+    "project": "QA_Надёжность_20261026",
+    "reproduced_before": true,
+    "saved_after": true,
+    "reopened_width_mm": 800,
+    "native_export_prepared": true,
+    "fresh_error_warning_logs": []
+  }
+}
