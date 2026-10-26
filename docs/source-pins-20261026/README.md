@@ -33,3 +33,10 @@ has the same hash before and after it (`source-proof.json`). The complete Node
 suite is compared against an isolated worktree of the starting commit; see
 `test-comparison.json` for existing failures and the no-new-failure comparison.
 Native Windows BAZIS execution remains untested in this environment.
+
+Live verification: deployment `a5803548-294e-4529-b259-db0d92d8f966` reached
+SUCCESS at 2026-10-26 12:21:22 UTC, runtime commit
+`68974d715b6d26724d5f25889b99351358be66b7`. All 12 changed served assets match
+the tested local bytes; `/health` reports staging/ok. Full suite: 651 passed,
+15 existing failures, no new failures versus the isolated baseline. See
+`live-verification.json` and `test-comparison.json`.

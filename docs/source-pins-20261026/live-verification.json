@@ -1,0 +1,99 @@
+{
+  "runtime_commit": "68974d715b6d26724d5f25889b99351358be66b7",
+  "deployment": "a5803548-294e-4529-b259-db0d92d8f966",
+  "status": "SUCCESS",
+  "health": {
+    "ok": true,
+    "environment": "staging",
+    "stage": "6",
+    "agent_transport": "disabled",
+    "staging_agent_api": "enabled",
+    "native_execution": "calibration_required"
+  },
+  "assets": [
+    {
+      "path": "backend/v2/cabinet_assets/3d.js",
+      "url": "/account/3d.js",
+      "sha256": "e1538fc0011a1eb74896792cf9390feeb0791723d26a8e6ee45f0f3fbfb72f32",
+      "bytes": 119992,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/constructor-next.html",
+      "url": "/constructor",
+      "sha256": "f794f04783e09ed8a947e59ab3380f1e46d2c28f4fcadf12cebb609604e8ff84",
+      "bytes": 57327,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/constructor.html",
+      "url": "/constructor-legacy",
+      "sha256": "7e9297eb9ce1e2b7bc3fafe869eb12e5a7b86d83932ede723a2f114fea330272",
+      "bytes": 24369,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/bazis-drawers-import.js",
+      "url": "/account/planner/bazis-drawers-import.js",
+      "sha256": "c8c5c027bfb7ba43e35c8ccc83966c55d73564f7726380d0ac1478e2c1f8974d",
+      "bytes": 626253,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/drawer-model.js",
+      "url": "/account/planner/drawer-model.js",
+      "sha256": "26752b359b9c4029cb21606e4de5f5bf581253e11e785b3e939551709c1bc315",
+      "bytes": 14105,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/furniture-core.js",
+      "url": "/account/planner/furniture-core.js",
+      "sha256": "6f3306d0e1f2e2598a62042ecf9368ec220a5b4cf08a051e132e4eeb0667308a",
+      "bytes": 80401,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/furniture-core.mjs",
+      "url": "/account/planner/furniture-core.mjs",
+      "sha256": "21f631d74a09d2eac11ae5890912b2ade231a97ffa5438b2ceab80d73e738642",
+      "bytes": 2221,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/pullout-dryer-model.js",
+      "url": "/account/planner/pullout-dryer-model.js",
+      "sha256": "fa11729af98e0539784ad92881dd9ebed891090fa3f0f61c3f9bca808aa66916",
+      "bytes": 3638,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/pullout-dryer-variants.js",
+      "url": "/account/planner/pullout-dryer-variants.js",
+      "sha256": "b74b5f91ca4098b8394e93a9c3aaa8c6a9b29fb5e3e0a034e59f0ca8e719112e",
+      "bytes": 306858,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/pullout-dryer-variants.json",
+      "url": "/account/planner/pullout-dryer-variants.json",
+      "sha256": "a9d97c46700d1f7fe1ae44e613ce90fca2b963b7e45f44f7075f3a9ce9d382eb",
+      "bytes": 773297,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/upper-model.js",
+      "url": "/account/planner/upper-model.js",
+      "sha256": "dd1a6c8bef6267f0f9745e76b52efe0e29900513765ba74cda3c1e41c430a865",
+      "bytes": 6900,
+      "status": 200
+    },
+    {
+      "path": "backend/v2/cabinet_assets/planner/vitrine-model.js",
+      "url": "/account/planner/vitrine-model.js",
+      "sha256": "13bc95e2067c0d9af6b45def8f8f0e390820aa703e914e9c5c533c8ca1251249",
+      "bytes": 15003,
+      "status": 200
+    }
+  ]
+}
