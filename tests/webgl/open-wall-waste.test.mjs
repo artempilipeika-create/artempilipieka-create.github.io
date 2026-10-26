@@ -24,7 +24,7 @@ test('wall geometry matches source at native size and has no feet; waste bins st
 });
 
 test('native import validates all nine sources and both source copies agree',()=>{
- const src=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');assert.equal(src,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_4_MATERIAL_NAMES.js',import.meta.url),'utf8'));
+ const src=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');assert.equal(src,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_6_UNIVERSAL_SEARCH.js',import.meta.url),'utf8'));
  const c=vm.createContext({collectSourceFiles:()=>({files:[]}),canonicalBaseDonor:i=>i,canonicalUpperDonor:i=>i,resolveSourceFile:()=>'/exact.fr3d'});vm.runInContext(src.slice(src.indexOf('const CARGO_MIN_BODY'),src.indexOf('// Native API only. Node tests do not establish compatibility')),c);const prepare=vm.runInContext('prepareProject',c);
  for(const v of [...wall,...waste]){const i=item(v),it={source_sha256:v.source_sha256,source_file:v.source_file,target:{width:i.width,height:i.height,depth:i.depth}};assert.equal(prepare({items:[it]},'/sources').entries.length,1);assert.throws(()=>prepare({items:[{...it,target:{...it.target,width:601}}]},'/sources'));if(v.waste)assert.throws(()=>prepare({items:[{...it,target:{width:450,height:820,depth:510}}]},'/sources'),/525/);}
 });

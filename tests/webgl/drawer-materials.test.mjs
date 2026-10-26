@@ -68,7 +68,7 @@ test('Ordinary ball-bearing drawer walls continue using the carcass 18 mm materi
 });
 
 test('Native importer never substitutes carcass material for an unassigned metal drawer and preserves panel thickness',async()=>{
- const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_4_MATERIAL_NAMES.js',import.meta.url),'utf8');
+ const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_6_UNIVERSAL_SEARCH.js',import.meta.url),'utf8');
  const c=vm.createContext({require:()=>({}),console,process,objectTypeChecker:{ObjectIsPanel:p=>Boolean(p.isPanel)},materialData:{CreateMaterialData:(name,thickness)=>({name,thickness}),SetupObjectMaterial:(panel,material,changeThickness)=>{assert.equal(changeThickness,false);panel.assigned=material;}},historyOperations:{RegisterObjectChanging(){}}});
  vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),c);
  for(const selected of [false,true]){

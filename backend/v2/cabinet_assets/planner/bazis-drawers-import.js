@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.5 SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-26)
+ Martin Forest -> BAZIS native importer v9.9.6 UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-26)
+ v9.9.6: choose and remember one library root; search all subfolders, including junctions.
  v9.9.5: preserve saved source identities; report actual mismatching hashes; never replace library FR3D.
  v9.9.4: preserve complete catalogue material names, including 605 PO / 890 PO suffixes.
  v9.9.3: bind the reviewed НМД2-600.(2).fr3d; upgrade only its known prior production SHA.
@@ -43,7 +44,10 @@ const path = require('path');
 let crypto = null;
 try { crypto = require('crypto'); } catch (_) {}
 
-const LIBRARY_ROOT = String.raw`D:\BAZIS MEBEL 25\#_Фрагменты\#_Библиотека кухонь\#_ Каталог для МПЛ\Модули Для Мартин форест`;
+// Optional manual override; normally choose the common folder in the BAZIS dialog.
+const LIBRARY_ROOT = '';
+// Previous location is only the first dialog suggestion, never a forced search root.
+const DEFAULT_LIBRARY_ROOT = String.raw`D:\BAZIS MEBEL 25\#_Фрагменты\#_Библиотека кухонь\#_ Каталог для МПЛ\Модули Для Мартин форест`;
 // Optional explicit export folder for a browser configured outside Windows Downloads.
 // Leave empty to use standard Downloads / Загрузки and OneDrive download folders.
 const EXPORT_FOLDER = '';
@@ -133,14 +137,58 @@ function loadProjectFile() {
   return { filename, payload, automatic };
 }
 
-function libraryRoot() {
-  if (!fs.existsSync(LIBRARY_ROOT)) fail('Не найдена библиотека Martin Forest:\n' + LIBRARY_ROOT);
-  return LIBRARY_ROOT;
+function librarySettingsFile() {
+  const env = typeof process === 'object' && process.env ? process.env : {};
+  const base = env.LOCALAPPDATA || env.APPDATA || (env.USERPROFILE ? path.join(env.USERPROFILE, 'AppData', 'Local') : '');
+  return base ? path.join(base, 'MartinForest', 'bazis-import-settings.json') : '';
+}
+function savedLibraryRoot() {
+  const filename = librarySettingsFile();
+  if (!filename) return '';
+  try {
+    const settings = JSON.parse(fs.readFileSync(filename, 'utf8').replace(/^\uFEFF/, ''));
+    return typeof settings.libraryRoot === 'string' ? settings.libraryRoot : '';
+  } catch (_) { return ''; }
+}
+function rememberLibraryRoot(root) {
+  const filename = librarySettingsFile();
+  if (!filename) { console.log('ПАПКА НЕ ЗАПОМНЕНА: недоступна папка настроек пользователя.'); return; }
+  const temp = filename + '.' + Date.now() + '-' + Math.random().toString(16).slice(2) + '.tmp';
+  try {
+    fs.mkdirSync(path.dirname(filename), { recursive: true });
+    fs.writeFileSync(temp, JSON.stringify({ version: 1, libraryRoot: root }, null, 2), { encoding: 'utf8', flag: 'wx' });
+    fs.renameSync(temp, filename);
+  } catch (error) {
+    try { fs.unlinkSync(temp); } catch (_) {}
+    console.log('ПАПКА НЕ ЗАПОМНЕНА: ' + error.message + '. Этот импорт продолжится с выбранной папкой.');
+  }
+}
+function readableLibraryDirectory(root) {
+  if (!root) return false;
+  try { return fs.statSync(root).isDirectory() && Boolean(fs.readdirSync(root)); }
+  catch (_) { return false; }
+}
+function libraryRoot(forceSelection, reason) {
+  const saved = savedLibraryRoot();
+  const preferred = LIBRARY_ROOT || saved;
+  if (!forceSelection && readableLibraryDirectory(preferred)) return path.resolve(preferred);
+  if (typeof UI === 'undefined' || !UI.dialogs || typeof UI.dialogs.RunDirectorySelectDialog !== 'function') {
+    throw new Error('Недоступно окно выбора папки. Укажите общую папку модулей в LIBRARY_ROOT в начале скрипта.');
+  }
+  const suggested = preferred || DEFAULT_LIBRARY_ROOT;
+  const selected = UI.dialogs.RunDirectorySelectDialog(
+    reason || 'Martin Forest — выберите ОБЩУЮ папку модулей; поиск во всех подпапках', suggested);
+  if (!selected) return '';
+  const root = path.resolve(String(selected));
+  if (!readableLibraryDirectory(root)) throw new Error('Папка недоступна для чтения:\n' + root);
+  rememberLibraryRoot(root);
+  return root;
 }
 
 function normalizeSourceName(filename) {
-  const ext = path.extname(filename || '').toLowerCase();
-  let stem = path.basename(filename || '', ext);
+  const name = path.basename(String(filename || '').replace(/\\/g, '/'));
+  const ext = path.extname(name).toLowerCase();
+  let stem = name.slice(0, name.length - ext.length);
   // Windows/browser duplicate downloads commonly become "name (1).fr3d"
   // or "name.(1).fr3d". Treat those as the same donor identity.
   stem = stem.replace(/[\s.]*\(\d+\)$/u, '');
@@ -149,36 +197,31 @@ function normalizeSourceName(filename) {
 }
 
 function collectSourceFiles(root) {
-  const files = [];
-  const stack = [root];
-  const seen = new Set();
-  const maxDirectories = 10000;
-  let truncated = false;
-
+  const files = [], unreadable = [], stack = [root], seen = new Set(), seenFiles = new Set();
+  const key = value => process.platform === 'win32' ? String(value).toLowerCase() : String(value);
   while (stack.length) {
-    if (seen.size >= maxDirectories) { truncated = true; break; }
     const dir = stack.pop();
-    let real = dir;
-    try { real = fs.realpathSync(dir); } catch (_) {}
-    const key = String(real).toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    let entries = [];
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { continue; }
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        stack.push(full);
-        continue;
-      }
-      if (!entry.isFile()) continue;
-      if (path.extname(entry.name).toLowerCase() !== '.fr3d') continue;
-      files.push(full);
+    let real;
+    try { real = fs.realpathSync(dir); }
+    catch (error) { unreadable.push({ path: dir, code: error.code || error.message }); continue; }
+    if (seen.has(key(real))) continue;
+    seen.add(key(real));
+    let names;
+    try { names = fs.readdirSync(dir).sort(); }
+    catch (error) { unreadable.push({ path: dir, code: error.code || error.message }); continue; }
+    for (const name of names) {
+      const full = path.join(dir, name);
+      try {
+        // stat follows Windows junctions and links; realpath/seen prevents cycles.
+        const stat = fs.statSync(full);
+        if (stat.isDirectory()) { stack.push(full); continue; }
+        if (!stat.isFile() || path.extname(name).toLowerCase() !== '.fr3d') continue;
+        const fileKey = key(fs.realpathSync(full));
+        if (!seenFiles.has(fileKey)) { seenFiles.add(fileKey); files.push(full); }
+      } catch (error) { unreadable.push({ path: full, code: error.code || error.message }); }
     }
   }
-
-  return { files, directories: seen.size, truncated };
+  return { files, directories: seen.size, truncated: false, unreadable };
 }
 
 function sha256File(filename) {
@@ -221,27 +264,35 @@ function canonicalBaseDonor(item) {
 }
 function resolveSourceFile(root, item, scan) {
   if (!item || !item.source_file) return '';
-  const files = scan && Array.isArray(scan.files) ? scan.files : collectSourceFiles(root).files;
-  const exact = path.join(root, item.source_file);
-  const wantedName = normalizeSourceName(item.source_file);
-  const candidates = [];
-  const add = file => { if (!candidates.includes(file)) candidates.push(file); };
-  if (fs.existsSync(exact)) add(exact);
-  for (const file of files) {
-    if (normalizeSourceName(path.basename(file)) === wantedName) add(file);
-  }
+  scan = scan && Array.isArray(scan.files) ? scan : collectSourceFiles(root);
+  const files = scan.files, wantedName = normalizeSourceName(item.source_file);
+  const candidates = files.filter(file => normalizeSourceName(file) === wantedName);
+  const cache = scan.hashes || (scan.hashes = new Map());
+  const hash = file => {
+    if (!cache.has(file)) {
+      const value = sha256File(file);
+      cache.set(file, value);
+      if (!value) (scan.hashErrors || (scan.hashErrors = [])).push(file);
+    }
+    return cache.get(file);
+  };
   const wantedSha = String(item.source_sha256 || '').trim().toLowerCase();
   if (wantedSha) {
     if (!/^[a-f0-9]{64}$/.test(wantedSha)) throw new Error('Некорректный SHA-256: ' + item.source_file);
     if (!crypto) throw new Error('Недоступна проверка SHA-256. Импорт остановлен.');
-    // A same-named older FR3D is NOT the same production module.
-    for (const file of files) add(file);
-    const cache = scan ? (scan.hashes || (scan.hashes = new Map())) : new Map();
-    for (const file of candidates) {
-      if (!cache.has(file)) cache.set(file, sha256File(file));
-      if (cache.get(file) === wantedSha) return file;
-    }
+    // Prioritize names, then find the exact bytes even after a rename or move.
+    const named = new Set(candidates);
+    for (const file of candidates) if (hash(file) === wantedSha) return file;
+    for (const file of files) if (!named.has(file) && hash(file) === wantedSha) return file;
     return '';
+  }
+  // Legacy exports without a hash must not select a random different donor.
+  if (candidates.length > 1) {
+    const hashes = candidates.map(hash);
+    if (hashes.some(value => !value) || new Set(hashes).size > 1) {
+      throw new Error('Найдено несколько разных FR3D с именем ' + item.source_file +
+        ', а в экспорте нет SHA-256. Повторно экспортируйте проект с сайта.\n' + candidates.join('\n'));
+    }
   }
   return candidates[0] || '';
 }
@@ -886,6 +937,7 @@ function canonicalDryerDonor(item) {
 function prepareProject(payload, root) {
   const scan = collectSourceFiles(root);
   const entries = [], errors = [];
+  let missingSources = 0;
   for (const original of payload.items) {
     const item = original;
     if(OPEN_WALL_SOURCES.has(String(item.source_sha256||'').toLowerCase())){
@@ -907,17 +959,40 @@ function prepareProject(payload, root) {
     const widths=PULLOUT_DRYER_WIDTHS[String(item.source_sha256||'').toLowerCase()] || (item.source_sha256===DRYER_SOURCE_REVISION.previous?PULLOUT_DRYER_WIDTHS[DRYER_SOURCE_REVISION.current]:null);
     if(widths&&!widths.includes(Number(item.target?.width))){errors.push('Сушка: ширина только '+widths.join(', ')+' мм');continue;}
     const source = resolveSourceFile(root, item, scan);
-    if (!source) errors.push(sourceMismatchMessage(root,item,scan));
+    if (!source) { missingSources++; errors.push(sourceMismatchMessage(root,item,scan)); }
     else entries.push({ item, source, previous_source_sha256: '' });
   }
-  if (errors.length) throw new Error('Проверьте исходные FR3D в библиотеке:\n' + errors.join('\n') +
-    '\nПапка поиска: ' + root + '\nНайдено FR3D: ' + scan.files.length +
-    (scan.truncated ? '\nДостигнут предел обхода папок.' : ''));
+  if (errors.length) {
+    const unreadable = (scan.unreadable || []).map(entry => entry.path + ' (' + entry.code + ')');
+    const hashErrors = scan.hashErrors || [];
+    const error = new Error('Проверьте исходные FR3D в библиотеке:\n' + errors.join('\n') +
+      '\nПапка поиска: ' + root + '\nПросмотрено папок: ' + scan.directories + '\nНайдено FR3D: ' + scan.files.length +
+      (unreadable.length ? '\nНе удалось прочитать пути (' + unreadable.length + '):\n' + unreadable.slice(0,10).join('\n') : '') +
+      (hashErrors.length ? '\nНе удалось проверить содержимое FR3D:\n' + hashErrors.slice(0,10).join('\n') : '') +
+      (scan.truncated ? '\nДостигнут предел обхода папок.' : ''));
+    if (missingSources && missingSources === errors.length) error.code = 'MF_LIBRARY_SOURCES_MISSING';
+    throw error;
+  }
   return { entries, scan };
 }
 
+function prepareProjectWithLibrary(payload) {
+  let root = libraryRoot();
+  if (!root) return null;
+  try { return { root, prepared: prepareProject(payload, root) }; }
+  catch (error) {
+    if (error.code !== 'MF_LIBRARY_SOURCES_MISSING') throw error;
+    console.log(error.message);
+    const previous = root;
+    root = libraryRoot(true, 'Martin Forest — не все модули найдены. Выберите ОБЩУЮ папку со всеми подпапками');
+    if (!root) return null;
+    if (root === previous) throw error;
+    return { root, prepared: prepareProject(payload, root) };
+  }
+}
+
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.5 SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.6 UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1029,7 +1104,9 @@ function assertEmptyTestModel() {
 function importProject(prepared, root, payload) {
   const brief = projectBrief(payload);
   const log = ['ИМПОРТЁР: Martin Forest ' + IMPORT_VERSION, 'СКРИПТ: ' + IMPORT_SCRIPT_PATH,
-    'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКА ПОИСКА: ' + root];
+    'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКА ПОИСКА: ' + root,
+    'ПРОСМОТРЕНО ПАПОК: ' + (prepared.scan?.directories ?? 'нет данных') + '; FR3D: ' + (prepared.scan?.files?.length ?? 'нет данных')];
+  for (const entry of prepared.scan?.unreadable || []) log.push('ВНИМАНИЕ: недоступен путь ' + entry.path + ' (' + entry.code + ')');
   const noteChecks = [], liveChecks = [], importedObjects = [], liveMaterials = [];
   let loaded = 0, failed = 0;
   const notesRequested = payload.items.filter(i => hasNote(i.production_note)).length + (brief ? 1 : 0);
@@ -1235,8 +1312,9 @@ function showNotesWindow(summaryLines, noteLines) {
     const brief = projectBrief(project.payload);
     notesFilename = saveHandoffText(project.filename, brief, runId);
     assertEmptyTestModel();
-    const root = libraryRoot();
-    const prepared = prepareProject(project.payload, root);
+    const selectedLibrary = prepareProjectWithLibrary(project.payload);
+    if (!selectedLibrary) return;
+    const { root, prepared } = selectedLibrary;
     // The empty model is already open. Do not call NewModel, which discards unsaved work.
     const result = importProject(prepared, root, project.payload);
     result.selectedExport = project.filename;
