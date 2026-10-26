@@ -47,9 +47,9 @@ export class ExecutionUI{
   button.parentElement.classList.add('execution-grid');return visual;
  }
  update(button,it,family,key,value,sourceDisabled=false){
-  const descriptor=optionDescriptor(family,key,value);let target,error='';
+  const descriptor=optionDescriptor(family,key,value);if(PRODUCTION_MODELS[it.bazis_id]?.open_tall?.wall)descriptor.tall=false;let target,error='';
   try{target=previewVariant(it,family,key,value,this.app.bridge.catalogue.bazisModules);}catch(e){error=e.message;}
-  if(target){const hardware=hardwareArtwork(target,family,key,value);if(hardware&&!this.failedArtwork.has(hardware.src)){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
+  if(target){const hardware=PRODUCTION_MODELS[target.bazis_id]?.cargo?.waste?null:hardwareArtwork(target,family,key,value);if(hardware&&!this.failedArtwork.has(hardware.src)){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
   const visual=this.decorate(button,descriptor);
   if(target&&family==='cargo'&&key==='brand'&&!descriptor.hardware){const kit=globalThis.MF_CARGO.kit(target);descriptor.hint=(value==='norwing'?'Хром':'Графит')+' · '+(kit?.mounting==='side_left'?'крепление слева':'крепление снизу')+(kit?.article?' · '+kit.article:'');button.querySelector('.execution-hint').textContent=descriptor.hint;button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);}
   if(sourceDisabled&&!error)error=button.title||'Недоступно для выбранного исполнения';

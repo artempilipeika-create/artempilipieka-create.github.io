@@ -17,14 +17,14 @@
   return `<svg viewBox="0 0 120 210" xmlns="http://www.w3.org/2000/svg" focusable="false">${svg}</svg>`;
  }
  root.MF_OPEN_TALL_UI={sync(it){
-  const O=root.MF_OPEN_TALL,box=document.getElementById('open-tall-controls'),v=O.info(it);if(!box)return;box.hidden=!v;if(!v)return;
+  const O=root.MF_OPEN_TALL,box=document.getElementById('open-tall-controls'),v=O.info(it);if(!box)return;box.hidden=!v;if(!v)return;box.querySelector('h3').textContent=v.wall?'Верхний открытый':'Открытый пенал';
   box.querySelector('#open-tall-lighting-choices').hidden=v.light_system==='none';
   for(const b of box.querySelectorAll('[data-open-tall-option]')){
    const key=b.dataset.openTallOption,value=b.dataset.openTallValue;
    b.setAttribute('aria-pressed',String(v[key]===value));
    const icon=b.querySelector('.ot-option-image');
    if(key==='light_system'){
-    const file={none:'open-tall-none','aq-4x8':'aq-profile','lira-17.5x6.5':'lira-profile'}[value];
+    const file={none:v.wall?'open-wall-934509b39a14':'open-tall-none','aq-4x8':'aq-profile','lira-17.5x6.5':'lira-profile'}[value];
     if(icon.dataset.photo!==file){
      icon.dataset.photo=file;icon.replaceChildren();
      const img=document.createElement('img');img.src='/account/planner/module-card-images/'+file+'.webp';img.alt='';img.loading='lazy';img.decoding='async';img.draggable=false;
@@ -40,6 +40,6 @@
   const m=O.metrics(it);
   document.getElementById('open-tall-note').textContent='Корпус, задняя стенка и полки — ЛДСП 18 мм. Полки '+(it.width-36)+' × '+(it.depth-18-v.shelf_front_setback_mm)+' × 18 мм. '+
    (v.light_system==='none'?'Без подсветки. ':'Подсветка разделена по отделениям; лента '+m.led_order_length_m+' м. ')+
-   (it.upper_shelf_count==null?'Исходная полка: центр 1050 мм от пола.':'Полки распределены равномерно. В БАЗИС количество, положение и присадку полок нужно изменить по экспортному заданию.');
+   (v.wall?'Центры полок от низа корпуса: '+O.shelves(it).join('; ')+' мм. '+O.adjustment(it).note:it.upper_shelf_count==null?'Исходная полка: центр 1050 мм от пола.':'Полки распределены равномерно. В БАЗИС количество, положение и присадку полок нужно изменить по экспортному заданию.');
  }};
 })(globalThis);

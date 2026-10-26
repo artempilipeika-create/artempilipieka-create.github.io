@@ -15,6 +15,9 @@ export function executionCategory(it,family){
  return null;
 }
 export function executionArtwork(it,family,key,value){
+ const p=PRODUCTION_MODELS[it?.bazis_id];
+ if(p?.open_tall?.wall&&family==='open-tall'){const v=globalThis.MF_OPEN_TALL.select(it,{[key]:value},globalThis.MF_OPEN_TALL.variants);return '/account/planner/module-card-images/'+v.bazis_id.replace('bazis.','open-wall-')+'.webp';}
+ if(p?.cargo?.waste&&family==='cargo'){const v=globalThis.MF_CARGO.select(it,{[key]:value},globalThis.MF_CARGO.variants);return '/account/planner/module-card-images/'+(globalThis.MF_CARGO.info(v).execution==='gola'?'waste-gola':'waste-standard')+'.webp';}
  const category=executionCategory(it,family),file=EXECUTION_IMAGES[[category,family,key,value].join(':')];
  return file?'/account/planner/execution-card-images/'+file+'?v=20261026-tripo':null;
 }

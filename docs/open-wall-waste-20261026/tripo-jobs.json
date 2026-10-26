@@ -1,0 +1,117 @@
+{
+  "provider": "Tripo Studio",
+  "workflow": "reference image to catalogue photograph",
+  "model": "GPT Image 2.5",
+  "aspect": "4:3",
+  "image_size": [
+    1536,
+    1152
+  ],
+  "balance_before": 2520,
+  "balance_after": 2520,
+  "free_counter_before": 79,
+  "free_counter_after": 88,
+  "charged_credits": 0,
+  "illustrative": true,
+  "jobs": [
+    {
+      "file": "open-wall-278a6a830b87",
+      "task_id": "60459b0c-8013-416e-b614-d59c612efe12",
+      "model": "GPT Image 2.5",
+      "free_counter": 80,
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH of one wall-mounted open cabinet. 600 mm wide, 720 mm high, 317 mm deep, matte warm pearl-grey laminate, 18 mm panels and back, exactly ONE central shelf dividing into TWO compartments. No doors, no plinth, no feet, no handle. Vertical warm LED strips in black aluminium LIRA channels on BOTH interior side panels at the MIDDLE of cabinet depth; each strip is interrupted by the wooden central shelf. Black channel width 17.5 mm, slim white diffuser, soft natural light on shelves and back. Slightly elevated three-quarter frontal view, entire cabinet with 9 percent clear margins. Seamless pale warm-neutral studio background, sharp fine material texture, matching edge bands, soft broad studio lighting, realistic shadows. No decoration, no labels, no text, no collage.",
+      "source_sha256": "278a6a830b877c1d9984d1e901ab90a3c73620c35520d1bf7d55930b9f0c1933",
+      "source_file": "ВМ-600. Фр_17.5мм_Две стороны_Центр.Пл_18мм.Отк.fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-278a6a830b87.webp",
+      "output_sha256": "efb70cc526badb788eb0b37551a9b45a14d7da4c1ac729deaf5fbbfc2e03e121"
+    },
+    {
+      "file": "open-wall-13a68b19bc93",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this cabinet reference. Wall-mounted open cabinet, 600 mm wide, 720 mm high, 317 mm deep, matte warm pearl-grey laminate, 18 mm panels and back, exactly ONE central shelf dividing TWO compartments. No doors, plinth, feet or handles. Very narrow 4 mm luminous warm-white LED line recessed directly into the LEFT interior side panel ONLY, at the MIDDLE of cabinet depth, interrupted by the wooden shelf. NO black aluminium channel; no light on right side. Slightly elevated three-quarter frontal view, entire cabinet with 9 percent margins. Seamless pale warm-neutral studio background, fine laminate texture, matching edge bands, realistic soft lighting and shadows. No decoration, text or collage.",
+      "task_id": "f2f1b57d-4128-414d-bceb-cc98edc0b487",
+      "model": "GPT Image 2.5",
+      "free_counter": 81,
+      "source_sha256": "13a68b19bc93a3a48d0c56ee85ae003bf6ede576d3a57716cf4fad63d40fe0cc",
+      "source_file": "ВМ-600. Фр_4мм_L_Центр.Пл_18мм.Отк.fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-13a68b19bc93.webp",
+      "output_sha256": "a2160fc23d1e64703a380de25a4e53b21d8262ce7ce444cb29e9abd1198e6a73"
+    },
+    {
+      "file": "open-wall-52b413624202",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this cabinet reference. Wall-mounted open cabinet, 600 mm wide, 720 mm high, 317 mm deep, matte warm pearl-grey laminate, 18 mm panels and back, exactly ONE central shelf dividing TWO compartments. No doors, plinth, feet or handles. Very narrow 4 mm luminous warm-white LED line recessed directly into the RIGHT interior side panel ONLY, at the MIDDLE of cabinet depth, interrupted by the wooden shelf. NO black aluminium channel; no light on left side. Slightly elevated three-quarter frontal view from the LEFT so the inner right panel is visible, entire cabinet with 9 percent margins. Seamless pale warm-neutral studio background, fine laminate texture, matching edge bands, realistic soft lighting and shadows. No decoration, text or collage.",
+      "task_id": "426e2f9c-f0f7-4ef3-9ce6-861c4046fbd3",
+      "model": "GPT Image 2.5",
+      "free_counter": 82,
+      "source_sha256": "52b413624202a5b22170935a8671e762a010e5fbcbbeb279f4bda61eb1ea9802",
+      "source_file": "ВМ-600. Фр_4мм_P_Центр.Пл_18мм.Отк.fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-52b413624202.webp",
+      "output_sha256": "0eb8806cea26cc50fcece11789fb46940bb5f06a0cb08b9a5021891c00353e81"
+    },
+    {
+      "file": "open-wall-934509b39a14",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this cabinet reference. Wall-mounted open cabinet, 600 mm wide, 720 mm high, 317 mm deep, matte warm pearl-grey laminate, 18 mm panels and back, exactly ONE central shelf dividing TWO compartments. Absolutely NO lighting, LED strips or grooves. No doors, plinth, feet or handles. Slightly elevated three-quarter frontal view, entire cabinet with 9 percent margins. Seamless pale warm-neutral studio background, fine laminate texture, matching edge bands, realistic soft lighting and shadows. No decoration, text or collage.",
+      "task_id": "591af524-fca3-4f0e-a2d3-f31ff8d4d66e",
+      "model": "GPT Image 2.5",
+      "free_counter": 83,
+      "source_sha256": "934509b39a14994894ede908427423484e6d68092fdd2c22dff7bcb319d15adc",
+      "source_file": "ВМ-600.Открытый Без подсветки..fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-934509b39a14.webp",
+      "output_sha256": "85e2a4e5d3aa15b476d78e6204b37dacfcd1090e9efe6726bfdf47d7fe90783d"
+    },
+    {
+      "file": "open-wall-d8f4b928da18",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this cabinet reference. Wall-mounted open cabinet, 600 mm wide, 720 mm high, 317 mm deep, matte warm pearl-grey laminate, 18 mm panels and back, exactly ONE central shelf dividing TWO compartments. No doors, plinth, feet or handles. Vertical warm-white LED strips in black aluminium LIRA channels on the LEFT interior side panel ONLY, at the MIDDLE of cabinet depth, interrupted by the wooden central shelf. Black channel width 17.5 mm with slim white diffuser. No light or channel on right side. Slightly elevated three-quarter frontal view, entire cabinet with 9 percent margins. Seamless pale warm-neutral studio background, fine laminate texture, matching edge bands, realistic soft lighting and shadows. No decoration, text or collage.",
+      "task_id": "a7df5c79-1620-4024-9231-fee8c9f0221f",
+      "model": "GPT Image 2.5",
+      "free_counter": 84,
+      "source_sha256": "d8f4b928da18ca9e703185d608ebfb580e0c8ebe6f90703fa0f4d582666d9e64",
+      "source_file": "ВМ-600.Фр_17.5мм_L_Центр.Пл_18мм.Отк..fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-d8f4b928da18.webp",
+      "output_sha256": "4acf9522977c4d4e6dc98866d4469ac3bdc425935de1960e44fae9ed86ee6cdc"
+    },
+    {
+      "file": "open-wall-70c93db0d0b6",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this cabinet reference. Wall-mounted open cabinet, 600 mm wide, 720 mm high, 317 mm deep, matte warm pearl-grey laminate, 18 mm panels and back, exactly ONE central shelf dividing TWO compartments. No doors, plinth, feet or handles. Vertical warm-white LED strips in black aluminium LIRA channels on the RIGHT interior side panel ONLY, at the MIDDLE of cabinet depth, interrupted by the wooden central shelf. Black channel width 17.5 mm with slim white diffuser. No light or channel on left side. Slightly elevated three-quarter frontal view from the LEFT so the inner right panel is visible, entire cabinet with 9 percent margins. Seamless pale warm-neutral studio background, fine laminate texture, matching edge bands, realistic soft lighting and shadows. No decoration, text or collage.",
+      "task_id": "0c15e8be-4647-4840-9ae2-f4b6bcafdcd1",
+      "model": "GPT Image 2.5",
+      "free_counter": 85,
+      "source_sha256": "70c93db0d0b6a80259b2abbd0f428a506d4d18954706328e752c9cb4c07345a5",
+      "source_file": "ВМ-600.Фр_17.5мм_P_Центр.Пл_18мм.Отк.fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-70c93db0d0b6.webp",
+      "output_sha256": "ec6e4de6390816160baffa49b162951ea7711392371d367cabf3947c1cfd23b8"
+    },
+    {
+      "file": "open-wall-1b01967daa24",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this cabinet reference. Wall-mounted open cabinet, 600 mm wide, 720 mm high, 317 mm deep, matte warm pearl-grey laminate, 18 mm panels and back, exactly ONE central shelf dividing TWO compartments. No doors, plinth, feet or handles. Very narrow 4 mm luminous warm-white LED line recessed directly into the BOTH interior side panels, at the MIDDLE of cabinet depth, interrupted by the wooden shelf. NO black aluminium channel; light on both sides. Slightly elevated three-quarter frontal view, entire cabinet with 9 percent margins. Seamless pale warm-neutral studio background, fine laminate texture, matching edge bands, realistic soft lighting and shadows. No decoration, text or collage.",
+      "task_id": "8626c024-a2a1-46fe-8932-55c1eba560d8",
+      "model": "GPT Image 2.5",
+      "free_counter": 86,
+      "source_sha256": "1b01967daa24941949b6fb27f1e3a2d4b4bf8a9ec19a89353fd50245c75eac8c",
+      "source_file": "ВМ-600.Фр_4мм_Две стороны_Центр.18мм.Отк.fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/open-wall-1b01967daa24.webp",
+      "output_sha256": "911cbb206ac5348aa2af741117d21cd4e44e8c939ef31f492f3a62e151dcbce1"
+    },
+    {
+      "file": "waste-standard",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this narrow pull-out kitchen waste cabinet reference. Cabinet carcass 350 mm wide, 720 mm tall on 100 mm black feet, depth 510 mm. Warm pearl-grey matte laminate 18 mm, pale stone worktop 38 mm. Exactly ONE tall flat slab front, 347 by 717 mm, pulled straight forward on drawer runners by 450 mm. One small horizontal black bar handle near the top. Behind this pulled-out front: exactly TWO removable open-top GRAPHITE PLASTIC waste bins, a 10 L bin and an 18 L bin, arranged one behind the other along the cabinet DEPTH, sitting in a single low metal pull-out frame. Show their hollow open tops and thin rims clearly from an elevated three-quarter side view. Empty upper space in the carcass. No wire baskets, no shelves, no hinged door, no additional drawers. Dark recessed front plinth under carcass. Seamless pale warm-neutral studio background, whole product with clear margins, soft premium lighting, crisp material detail and realistic shadows. No text, decoration or collage.",
+      "task_id": "536ec07a-0972-4a4c-ae49-241b9b41ad9a",
+      "model": "GPT Image 2.5",
+      "free_counter": 87,
+      "source_sha256": "8a45c0613aad0ac837d2492362ff94065f863c7517a9c2f798b0fd5015ce9f24",
+      "source_file": "НМД1-600. Мусорные контейнеры.fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/waste-standard.webp",
+      "output_sha256": "34e2f496eeb50f71a4630549ac45bd2b753309c8f1f81c4fa6625dbb6b2c3a66"
+    },
+    {
+      "file": "waste-gola",
+      "prompt": "Create a premium photorealistic studio PRODUCT PHOTOGRAPH matching this narrow pull-out kitchen waste cabinet reference. Cabinet carcass 350 mm wide, 720 mm tall on 100 mm black feet, depth 510 mm. Warm pearl-grey matte laminate 18 mm, pale stone worktop 38 mm. Exactly ONE tall flat slab front, 347 by 688.5 mm, pulled straight forward on drawer runners by 450 mm. NO external handles. Black recessed horizontal GOLA L finger channel fixed to the carcass directly under the worktop, with the shortened facade below this channel. Behind this pulled-out front: exactly TWO removable open-top GRAPHITE PLASTIC waste bins, a 10 L bin and an 18 L bin, arranged one behind the other along the cabinet DEPTH, sitting in a single low metal pull-out frame. Show their hollow open tops and thin rims clearly from an elevated three-quarter side view. Empty upper space in the carcass. No wire baskets, no shelves, no hinged door, no additional drawers. Dark recessed front plinth under carcass. Seamless pale warm-neutral studio background, whole product with clear margins, soft premium lighting, crisp material detail and realistic shadows. No text, decoration or collage.",
+      "task_id": "39eeccab-0f4f-441b-bd7f-8541f124ffcd",
+      "model": "GPT Image 2.5",
+      "free_counter": 88,
+      "source_sha256": "96083d50d2c0dc0577d9541ff77a3b1f4c770bcdb9dbc36f0f57f9b0b07268ba",
+      "source_file": "НМД1-600. Мусорные контейнеры.Gola L.fr3d",
+      "output_path": "backend/v2/cabinet_assets/planner/module-card-images/waste-gola.webp",
+      "output_sha256": "d9c5d4846cfd30cf334d8b540deae6c04e7392b25f7ff510734b68dc544d5490"
+    }
+  ]
+}

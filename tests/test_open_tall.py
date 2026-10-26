@@ -8,6 +8,7 @@ from backend.v2.three_d_api import FurnitureItem
 from backend.v2.three_d_open_tall import VARIANTS,open_tall_error,open_tall_metrics,open_tall_hardware
 from backend.v2.three_d_document import hardware_for,module_contents,module_materials,render
 from backend.v2.sales_hardware import module_hardware,purchasing_rows,ledger
+VARIANTS=[v for v in VARIANTS if not v.get('wall')]
 ROOT=Path(__file__).resolve().parents[1]
 def item(v,**patch):
     return {**dict(item_id='open',name='Открытый пенал',bazis_id=v['id'],bazis_file=v['source_file'],bazis_sha256=v['source_sha256'],module_type='tall_cabinet',width=600,height=2000,depth=600,base_height=100,base='plinth',x=0,z=0,rotation=0),**patch}

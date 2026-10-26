@@ -2,6 +2,8 @@
  'use strict';
  // Reviewed Tripo pictures use the geometry-reviewed catalogue views as references.
  const rows=[
+  ['bazis.934509b39a14','open-wall-934509b39a14','Верхний открытый','Открытые полки · без подсветки, AQ или LIRA','7 исполнений','ЛДСП 18 мм'],
+  ['bazis.8a45c0613aad','waste-standard','Мусорные контейнеры','Сортировка отходов · GEO X','350 / 400 / 450 мм','Ручка / Gola L'],
   ['bazis.0ac4e1b6b2d3','cargo','Карго','Выдвижное хранение · FOCUS, NORWING, ICON','6 исполнений','Обычное / Gola'],
   ['bazis.300138dc82b5','dishwasher','Посудомойка','Встраиваемая техника · модуль с фасадом','450–600 мм','Обычное / Gola','Пример техники'],
   ['bazis.85c150c30ea5','pullout-dryer','Выдвижная сушка','NORWING и FLAT LINE · с нижним ящиком','12 исполнений','Обычное / Gola'],

@@ -119,6 +119,7 @@ export class MeshFactory{
       const inspection=mode==='inspection'&&shell;
       const id=part?(part.visual_variant_id??part.material.variant_id):role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
       let material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
+      if(m.userData.wasteColor){const key='waste:'+m.userData.wasteColor+':'+Boolean(group.userData.ghost);if(!this.materials.has(key)){const plastic=material.clone();plastic.color.set(m.userData.wasteColor);plastic.roughness=.65;plastic.metalness=.1;this.materials.set(key,plastic);}material=this.materials.get(key);}
       const light=!group.userData.ghost&&!inspection&&vitrineLightSpec(it,part);
       if(light){
         const key='vitrine-lit:'+material.uuid+':'+JSON.stringify(light);
@@ -335,7 +336,7 @@ export class MeshFactory{
       const d=part.size,c=part.position,m=this.box(group,'drawerMetal',d.x,d.y,d.z,c.x,c.y,c.z,null,ghost);
       m.userData.visualOnly=true;m.userData.drawerMetal=true;m.userData.drawerIndex=part.drawer_index;
     }
-    if(production?.cargo){
+    if(production?.cargo&&!production.cargo.waste){
       const b=globalThis.MF_CARGO.basket(it),pieces=[];
       const add=(x,y,z,w,h,d)=>pieces.push({x,y,z,w,h,d});
       // Two inspection baskets, contained in the selected donor's measured envelope.
@@ -352,6 +353,16 @@ export class MeshFactory{
         const mesh=this.box(group,'drawerMetal',p.w,p.h,p.d,p.x,p.y,p.z,null,ghost);
         mesh.material=mesh.material.clone();mesh.material.color.set(production.cargo.brand==='norwing'?'#b7bdc2':'#555b5d');
         Object.assign(mesh.userData,{visualOnly:true,cargoBasket:true,drawerIndex:1});
+      }
+    }
+    if(production?.cargo?.waste){
+      const b=globalThis.MF_CARGO.basket(it),k=globalThis.MF_CARGO.kit(it),h=b.height-35,w=b.width-34,depth=b.depth-35;
+      const add=(ww,hh,dd,x,y,z,color='#4a4d50')=>{const m=this.box(group,'drawerMetal',ww,hh,dd,x,y,z,null,ghost,2);Object.assign(m.userData,{visualOnly:true,cargoBasket:true,wasteBin:true,wasteColor:color,drawerIndex:1});return m;};
+      add(b.width-4,24,b.depth,b.x,b.y+12,b.z);
+      for(const side of [-1,1])add(12,32,b.depth,b.x+side*(b.width/2-6),b.y+24,b.z,'#767b80');
+      const split=k.width===350?.38:.5;
+      for(const [start,portion]of [[0,split],[split,1-split]]){const d=depth*portion-8,z=b.z-depth/2+depth*(start+portion/2),cy=b.y+32+h/2;
+        add(w,4,d,b.x,b.y+34,z);for(const sign of [-1,1]){add(4,h,d,b.x+sign*(w/2-2),cy,z);add(w,h,4,b.x,cy,z+sign*(d/2-2));add(w+8,7,8,b.x,b.y+32+h,z+sign*d/2);add(8,7,d,b.x+sign*w/2,b.y+32+h,z);}
       }
     }
     if(production?.pullout_dryer){

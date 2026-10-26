@@ -25,6 +25,9 @@ export class MobilityUI{
     this.select.replaceChildren(new Option('Выберите модуль',''));
     for(const t of this.app.bridge.catalogue.bazisModules){
       const p=t.production;if(!p||kitchenGroup({module_type:t.module_type,bazis_id:t.id})!==group)continue;
+      const open=globalThis.MF_OPEN_TALL.choice(t.id),cargo=globalThis.MF_CARGO.choice(t.id);
+      if(open&&t.id!==(open.wall?globalThis.MF_OPEN_TALL.wallFamily:globalThis.MF_OPEN_TALL.family).default_id)continue;
+      if(cargo&&t.id!==(cargo.waste?globalThis.MF_CARGO.wasteFamily:globalThis.MF_CARGO.family).default_id)continue;
       const dryer=globalThis.MF_PULLOUT_DRYERS.choice(t.id);
       if(dryer&&(t.id!==globalThis.MF_PULLOUT_DRYERS.family.default_id||globalThis.MF_PULLOUT_DRYERS.info(selected)))continue;
       const lower=globalThis.MF_GOLA.baseChoice(t.id);

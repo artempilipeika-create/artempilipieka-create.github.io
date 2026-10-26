@@ -1,0 +1,4196 @@
+[
+  {
+    "id": "bazis.278a6a830b87",
+    "source_file": "ВМ-600. Фр_17.5мм_Две стороны_Центр.Пл_18мм.Отк.fr3d",
+    "source_sha256": "278a6a830b877c1d9984d1e901ab90a3c73620c35520d1bf7d55930b9f0c1933",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        2000.0,
+        600.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 455.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1770.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 445.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 160.00000000000003,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          9.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_две Стороны_Центр./Дно",
+        "source_id": 2990,
+        "role": "body",
+        "key": "bottom",
+        "source_cuts": []
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          1982.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_две Стороны_Центр./Крыша",
+        "source_id": 2991,
+        "role": "body",
+        "key": "top",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка P",
+        "lo": [
+          582.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_две Стороны_Центр./Боковая Стойка P",
+        "source_id": 3092,
+        "role": "body",
+        "key": "side-P",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "Паз 17.5-6.5",
+            "front": false,
+            "parameters": {},
+            "trajectory_local": [
+              [
+                309.0,
+                13.0
+              ],
+              [
+                309.0,
+                2000.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                582.0,
+                13.0,
+                309.0
+              ],
+              [
+                582.0,
+                2000.0,
+                309.0
+              ]
+            ],
+            "length": 1987.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    11.5
+                  ],
+                  [
+                    8.75,
+                    11.5
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    11.5
+                  ],
+                  [
+                    8.75,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    18.0
+                  ],
+                  [
+                    -8.75,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    18.0
+                  ],
+                  [
+                    -8.75,
+                    11.5
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              17.5,
+              6.5
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Боковая Стойка L",
+        "lo": [
+          -0.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_две Стороны_Центр./Боковая Стойка L",
+        "source_id": 3093,
+        "role": "body",
+        "key": "side-L",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "Паз 17.5-6.5",
+            "front": true,
+            "parameters": {},
+            "trajectory_local": [
+              [
+                309.0,
+                15.0
+              ],
+              [
+                309.0,
+                2002.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                18.0,
+                13.0,
+                309.0
+              ],
+              [
+                18.0,
+                2000.0,
+                309.0
+              ]
+            ],
+            "length": 1987.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    6.5
+                  ],
+                  [
+                    8.75,
+                    6.5
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    6.5
+                  ],
+                  [
+                    8.75,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    0.0
+                  ],
+                  [
+                    -8.75,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    0.0
+                  ],
+                  [
+                    -8.75,
+                    6.5
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              17.5,
+              6.5
+            ]
+          }
+        ]
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          18.0,
+          18.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          1964.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          -291.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_две Стороны_Центр./З.С",
+        "source_id": 3130,
+        "role": "back",
+        "key": "back",
+        "source_cuts": []
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          18.0,
+          991.0,
+          18.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          582.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          9.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/Параметрическая полка конфер/Полка/Полка",
+        "source_id": 3198,
+        "role": "shelf",
+        "key": "shelf-1",
+        "source_cuts": []
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 22,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "wall": true,
+    "label": "Верхний открытый",
+    "light_system": "lira-17.5x6.5",
+    "lighting": "both",
+    "catalogue_primary": true,
+    "bottom_full_width": false,
+    "shelf_front_setback_mm": 0.0,
+    "confirmat_key": "gola-hw-1",
+    "warnings": [
+      "В исходнике нет навесов и крепежа к стене; подобрать по нагрузке и основанию."
+    ]
+  },
+  {
+    "id": "bazis.13a68b19bc93",
+    "source_file": "ВМ-600. Фр_4мм_L_Центр.Пл_18мм.Отк.fr3d",
+    "source_sha256": "13a68b19bc93a3a48d0c56ee85ae003bf6ede576d3a57716cf4fad63d40fe0cc",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        2000.0,
+        600.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 455.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1770.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 445.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 160.00000000000003,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          9.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина./Дно",
+        "source_id": 2990,
+        "role": "body",
+        "key": "bottom",
+        "source_cuts": []
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          1982.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина./Крыша",
+        "source_id": 2991,
+        "role": "body",
+        "key": "top",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка P",
+        "lo": [
+          582.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина./Боковая Стойка P",
+        "source_id": 3092,
+        "role": "body",
+        "key": "side-P",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка L",
+        "lo": [
+          -0.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина./Боковая Стойка L",
+        "source_id": 3093,
+        "role": "body",
+        "key": "side-L",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "289x8x4",
+            "front": true,
+            "parameters": {},
+            "trajectory_local": [
+              [
+                309.0,
+                15.0
+              ],
+              [
+                309.0,
+                2002.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                18.0,
+                13.0,
+                309.0
+              ],
+              [
+                18.0,
+                2000.0,
+                309.0
+              ]
+            ],
+            "length": 1987.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    8.0
+                  ],
+                  [
+                    2.0,
+                    8.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    8.0
+                  ],
+                  [
+                    2.0,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    0.0
+                  ],
+                  [
+                    -2.0,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    0.0
+                  ],
+                  [
+                    -2.0,
+                    8.0
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              4.0,
+              8.0
+            ]
+          }
+        ]
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          18.0,
+          18.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          1964.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          -291.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина./З.С",
+        "source_id": 3130,
+        "role": "back",
+        "key": "back",
+        "source_cuts": []
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          18.0,
+          991.0,
+          18.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          581.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          8.5
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/Параметрическая полка конфер/Полка/Полка",
+        "source_id": 3201,
+        "role": "shelf",
+        "key": "shelf-1",
+        "source_cuts": []
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 22,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "wall": true,
+    "label": "Верхний открытый",
+    "light_system": "aq-4x8",
+    "lighting": "left",
+    "catalogue_primary": true,
+    "bottom_full_width": false,
+    "shelf_front_setback_mm": 1.0,
+    "confirmat_key": "gola-hw-1",
+    "warnings": [
+      "В исходнике нет навесов и крепежа к стене; подобрать по нагрузке и основанию."
+    ]
+  },
+  {
+    "id": "bazis.52b413624202",
+    "source_file": "ВМ-600. Фр_4мм_P_Центр.Пл_18мм.Отк.fr3d",
+    "source_sha256": "52b413624202a5b22170935a8671e762a010e5fbcbbeb279f4bda61eb1ea9802",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        2000.0,
+        600.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 455.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1770.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 445.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 160.00000000000003,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          9.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_P_Центр./Дно",
+        "source_id": 2111,
+        "role": "body",
+        "key": "bottom",
+        "source_cuts": []
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          1982.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_P_Центр./Крыша",
+        "source_id": 2112,
+        "role": "body",
+        "key": "top",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка P",
+        "lo": [
+          582.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_P_Центр./Боковая Стойка P",
+        "source_id": 2213,
+        "role": "body",
+        "key": "side-P",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "паз 4мм центр",
+            "front": false,
+            "parameters": {},
+            "trajectory_local": [
+              [
+                309.0,
+                2000.0
+              ],
+              [
+                309.0,
+                13.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                582.0,
+                2000.0,
+                309.0
+              ],
+              [
+                582.0,
+                13.0,
+                309.0
+              ]
+            ],
+            "length": 1987.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    10.0
+                  ],
+                  [
+                    2.0,
+                    10.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    10.0
+                  ],
+                  [
+                    2.0,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    18.0
+                  ],
+                  [
+                    -2.0,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    18.0
+                  ],
+                  [
+                    -2.0,
+                    10.0
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              4.0,
+              8.0
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Боковая Стойка L",
+        "lo": [
+          -0.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_P_Центр./Боковая Стойка L",
+        "source_id": 2214,
+        "role": "body",
+        "key": "side-L",
+        "source_cuts": []
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          18.0,
+          18.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          1964.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          -291.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_P_Центр./З.С",
+        "source_id": 2251,
+        "role": "back",
+        "key": "back",
+        "source_cuts": []
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          18.0,
+          991.0,
+          18.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          581.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          8.5
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/Параметрическая полка конфер/Полка/Полка",
+        "source_id": 2452,
+        "role": "shelf",
+        "key": "shelf-1",
+        "source_cuts": []
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 22,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "wall": true,
+    "label": "Верхний открытый",
+    "light_system": "aq-4x8",
+    "lighting": "right",
+    "catalogue_primary": true,
+    "bottom_full_width": false,
+    "shelf_front_setback_mm": 1.0,
+    "confirmat_key": "gola-hw-1",
+    "warnings": [
+      "В исходнике нет навесов и крепежа к стене; подобрать по нагрузке и основанию."
+    ]
+  },
+  {
+    "id": "bazis.934509b39a14",
+    "source_file": "ВМ-600.Открытый Без подсветки..fr3d",
+    "source_sha256": "934509b39a14994894ede908427423484e6d68092fdd2c22dff7bcb319d15adc",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        2000.0,
+        600.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 1,
+        "Pos": 1780.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 440.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 0,
+        "Pos": 460.0,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          9.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К./Дно",
+        "source_id": 393,
+        "role": "body",
+        "key": "bottom",
+        "source_cuts": []
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          1982.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К./Крыша",
+        "source_id": 394,
+        "role": "body",
+        "key": "top",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка P",
+        "lo": [
+          582.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К./Боковая Стойка P",
+        "source_id": 509,
+        "role": "body",
+        "key": "side-P",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка L",
+        "lo": [
+          -0.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К./Боковая Стойка L",
+        "source_id": 514,
+        "role": "body",
+        "key": "side-L",
+        "source_cuts": []
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          18.0,
+          18.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          1964.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          -291.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К./З.С",
+        "source_id": 495,
+        "role": "back",
+        "key": "back",
+        "source_cuts": []
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          18.0,
+          991.0,
+          18.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          581.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          8.5
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/Параметрическая полка конфер/Полка/Полка",
+        "source_id": 853,
+        "role": "shelf",
+        "key": "shelf-1",
+        "source_cuts": []
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 22,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "wall": true,
+    "label": "Верхний открытый",
+    "light_system": "none",
+    "lighting": "none",
+    "catalogue_primary": true,
+    "bottom_full_width": false,
+    "shelf_front_setback_mm": 1.0,
+    "confirmat_key": "gola-hw-1",
+    "warnings": [
+      "В исходнике нет навесов и крепежа к стене; подобрать по нагрузке и основанию."
+    ]
+  },
+  {
+    "id": "bazis.d8f4b928da18",
+    "source_file": "ВМ-600.Фр_17.5мм_L_Центр.Пл_18мм.Отк..fr3d",
+    "source_sha256": "d8f4b928da18ca9e703185d608ebfb580e0c8ebe6f90703fa0f4d582666d9e64",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        2000.0,
+        600.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 455.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1770.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 445.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 160.00000000000003,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          9.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_L_Центр./Дно",
+        "source_id": 3346,
+        "role": "body",
+        "key": "bottom",
+        "source_cuts": []
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          1982.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_L_Центр./Крыша",
+        "source_id": 3347,
+        "role": "body",
+        "key": "top",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка P",
+        "lo": [
+          582.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_L_Центр./Боковая Стойка P",
+        "source_id": 3448,
+        "role": "body",
+        "key": "side-P",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка L",
+        "lo": [
+          -0.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_L_Центр./Боковая Стойка L",
+        "source_id": 3449,
+        "role": "body",
+        "key": "side-L",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "Паз 17.5-6.5",
+            "front": true,
+            "parameters": {},
+            "trajectory_local": [
+              [
+                309.0,
+                15.0
+              ],
+              [
+                309.0,
+                2002.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                18.0,
+                13.0,
+                309.0
+              ],
+              [
+                18.0,
+                2000.0,
+                309.0
+              ]
+            ],
+            "length": 1987.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    6.5
+                  ],
+                  [
+                    8.75,
+                    6.5
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    6.5
+                  ],
+                  [
+                    8.75,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    0.0
+                  ],
+                  [
+                    -8.75,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    0.0
+                  ],
+                  [
+                    -8.75,
+                    6.5
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              17.5,
+              6.5
+            ]
+          }
+        ]
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          18.0,
+          18.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          1964.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          -291.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_L_Центр./З.С",
+        "source_id": 3486,
+        "role": "back",
+        "key": "back",
+        "source_cuts": []
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          18.0,
+          991.0,
+          18.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          581.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          8.5
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/Параметрическая полка конфер/Полка/Полка",
+        "source_id": 3554,
+        "role": "shelf",
+        "key": "shelf-1",
+        "source_cuts": []
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 22,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "wall": true,
+    "label": "Верхний открытый",
+    "light_system": "lira-17.5x6.5",
+    "lighting": "left",
+    "catalogue_primary": true,
+    "bottom_full_width": false,
+    "shelf_front_setback_mm": 1.0,
+    "confirmat_key": "gola-hw-1",
+    "warnings": [
+      "В исходнике нет навесов и крепежа к стене; подобрать по нагрузке и основанию."
+    ]
+  },
+  {
+    "id": "bazis.70c93db0d0b6",
+    "source_file": "ВМ-600.Фр_17.5мм_P_Центр.Пл_18мм.Отк.fr3d",
+    "source_sha256": "70c93db0d0b6a80259b2abbd0f428a506d4d18954706328e752c9cb4c07345a5",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        2000.0,
+        600.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 455.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1770.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 445.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 160.00000000000003,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          9.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_P_Центр./Дно",
+        "source_id": 2587,
+        "role": "body",
+        "key": "bottom",
+        "source_cuts": []
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          1982.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_P_Центр./Крыша",
+        "source_id": 2588,
+        "role": "body",
+        "key": "top",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка P",
+        "lo": [
+          582.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_P_Центр./Боковая Стойка P",
+        "source_id": 2689,
+        "role": "body",
+        "key": "side-P",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "Паз 17.5-6.5",
+            "front": false,
+            "parameters": {},
+            "trajectory_local": [
+              [
+                309.0,
+                13.0
+              ],
+              [
+                309.0,
+                2000.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                582.0,
+                13.0,
+                309.0
+              ],
+              [
+                582.0,
+                2000.0,
+                309.0
+              ]
+            ],
+            "length": 1987.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    11.5
+                  ],
+                  [
+                    8.75,
+                    11.5
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    11.5
+                  ],
+                  [
+                    8.75,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    8.75,
+                    18.0
+                  ],
+                  [
+                    -8.75,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -8.75,
+                    18.0
+                  ],
+                  [
+                    -8.75,
+                    11.5
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              17.5,
+              6.5
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Боковая Стойка L",
+        "lo": [
+          -0.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_P_Центр./Боковая Стойка L",
+        "source_id": 2690,
+        "role": "body",
+        "key": "side-L",
+        "source_cuts": []
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          18.0,
+          18.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          1964.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          -291.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 17.5мм_P_Центр./З.С",
+        "source_id": 2727,
+        "role": "back",
+        "key": "back",
+        "source_cuts": []
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          18.0,
+          991.0,
+          18.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          582.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          9.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/Параметрическая полка конфер/Полка/Полка",
+        "source_id": 2796,
+        "role": "shelf",
+        "key": "shelf-1",
+        "source_cuts": []
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 18,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "wall": true,
+    "label": "Верхний открытый",
+    "light_system": "lira-17.5x6.5",
+    "lighting": "right",
+    "catalogue_primary": true,
+    "bottom_full_width": false,
+    "shelf_front_setback_mm": 0.0,
+    "confirmat_key": "gola-hw-1",
+    "warnings": [
+      "В исходнике нет навесов и крепежа к стене; подобрать по нагрузке и основанию."
+    ]
+  },
+  {
+    "id": "bazis.1b01967daa24",
+    "source_file": "ВМ-600.Фр_4мм_Две стороны_Центр.18мм.Отк.fr3d",
+    "source_sha256": "1b01967daa24941949b6fb27f1e3a2d4b4bf8a9ec19a89353fd50245c75eac8c",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        600.0,
+        2000.0,
+        600.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 435.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 1720.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 420.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 185.00000000000003,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          18.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          9.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_две Стороны_Центр./Дно",
+        "source_id": 1714,
+        "role": "body",
+        "key": "bottom",
+        "source_cuts": []
+      },
+      {
+        "name": "Крыша",
+        "lo": [
+          18.0,
+          1982.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          600.0
+        ],
+        "center": [
+          0.0,
+          1991.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_две Стороны_Центр./Крыша",
+        "source_id": 1715,
+        "role": "body",
+        "key": "top",
+        "source_cuts": []
+      },
+      {
+        "name": "Боковая Стойка P",
+        "lo": [
+          582.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_две Стороны_Центр./Боковая Стойка P",
+        "source_id": 1816,
+        "role": "body",
+        "key": "side-P",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "паз 4мм центр",
+            "front": false,
+            "parameters": {
+              "typ": 2,
+              "name": "Паз в плсати",
+              "sign": "паз 4мм центр",
+              "depth": 8.0,
+              "width": 4.0,
+              "offset": -2.0,
+              "offset2": 0.0,
+              "angle": 0.0,
+              "radius": 0.0
+            },
+            "trajectory_local": [
+              [
+                309.0,
+                2000.0
+              ],
+              [
+                309.0,
+                0.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                582.0,
+                2000.0,
+                309.0
+              ],
+              [
+                582.0,
+                0.0,
+                309.0
+              ]
+            ],
+            "length": 2000.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    10.0
+                  ],
+                  [
+                    2.0,
+                    10.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    10.0
+                  ],
+                  [
+                    2.0,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    18.0
+                  ],
+                  [
+                    -2.0,
+                    18.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    18.0
+                  ],
+                  [
+                    -2.0,
+                    10.0
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              4.0,
+              8.0
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Боковая Стойка L",
+        "lo": [
+          -0.0,
+          0.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          2000.0,
+          600.0
+        ],
+        "center": [
+          -291.0,
+          1000.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_две Стороны_Центр./Боковая Стойка L",
+        "source_id": 1817,
+        "role": "body",
+        "key": "side-L",
+        "source_cuts": [
+          {
+            "name": "Паз в плсати",
+            "sign": "паз 4мм центр",
+            "front": true,
+            "parameters": {},
+            "trajectory_local": [
+              [
+                309.0,
+                2002.0
+              ],
+              [
+                309.0,
+                15.0
+              ]
+            ],
+            "trajectory_world_surface": [
+              [
+                18.0,
+                2000.0,
+                309.0
+              ],
+              [
+                18.0,
+                13.0,
+                309.0
+              ]
+            ],
+            "length": 1987.0,
+            "contour": [
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    8.0
+                  ],
+                  [
+                    2.0,
+                    8.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    8.0
+                  ],
+                  [
+                    2.0,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    2.0,
+                    0.0
+                  ],
+                  [
+                    -2.0,
+                    0.0
+                  ]
+                ]
+              },
+              {
+                "type": "line",
+                "points": [
+                  [
+                    -2.0,
+                    0.0
+                  ],
+                  [
+                    -2.0,
+                    8.0
+                  ]
+                ]
+              }
+            ],
+            "measured_section_mm": [
+              4.0,
+              8.0
+            ]
+          }
+        ]
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          18.0,
+          18.0,
+          0.0
+        ],
+        "size": [
+          564.0,
+          1964.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          -291.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/ПН.К. Витрина. Фрезеровка 4мм_две Стороны_Центр./З.С",
+        "source_id": 1854,
+        "role": "back",
+        "key": "back",
+        "source_cuts": []
+      },
+      {
+        "name": "Полка",
+        "lo": [
+          18.0,
+          991.0,
+          18.0
+        ],
+        "size": [
+          564.0,
+          18.0,
+          581.0
+        ],
+        "center": [
+          0.0,
+          1000.0,
+          8.5
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/Параметрическая полка конфер/Полка/Полка",
+        "source_id": 1922,
+        "role": "shelf",
+        "key": "shelf-1",
+        "source_cuts": []
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 22,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Эксцентриковая стяжка 18мм",
+        "article": null,
+        "quantity": 4,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Шкант деревянный  8*35 (1 уп= 50шт.)",
+        "article": "39319",
+        "quantity": 4,
+        "unit": "pcs"
+      }
+    ],
+    "wall": true,
+    "label": "Верхний открытый",
+    "light_system": "aq-4x8",
+    "lighting": "both",
+    "catalogue_primary": true,
+    "bottom_full_width": false,
+    "shelf_front_setback_mm": 1.0,
+    "confirmat_key": "gola-hw-1",
+    "warnings": [
+      "В исходнике нет навесов и крепежа к стене; подобрать по нагрузке и основанию."
+    ]
+  },
+  {
+    "id": "bazis.96083d50d2c0",
+    "source_file": "НМД1-600. Мусорные контейнеры.Gola L.fr3d",
+    "source_sha256": "96083d50d2c0dc0577d9541ff77a3b1f4c770bcdb9dbc36f0f57f9b0b07268ba",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        350.0,
+        820.0,
+        510.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 200.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 775.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 360.0,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          -0.0,
+          100.0,
+          0.0
+        ],
+        "size": [
+          350.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди GOLA I.Карго/Дно",
+        "source_id": 1541,
+        "role": "body",
+        "key": "bottom"
+      },
+      {
+        "name": "Боковая - L",
+        "lo": [
+          0.0,
+          118.0,
+          0.0
+        ],
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -166.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди GOLA I.Карго/Боковая - L",
+        "source_id": 1542,
+        "contour_yz": [
+          [
+            118.0,
+            0.0
+          ],
+          [
+            118.0,
+            510.0
+          ],
+          [
+            763.0,
+            510.0
+          ],
+          [
+            763.0,
+            488.0
+          ],
+          [
+            763.0171,
+            487.5871
+          ],
+          [
+            763.0682,
+            487.177
+          ],
+          [
+            763.153,
+            486.7726
+          ],
+          [
+            763.2709,
+            486.3765
+          ],
+          [
+            763.4211,
+            485.9915
+          ],
+          [
+            763.6026,
+            485.6203
+          ],
+          [
+            763.8142,
+            485.2653
+          ],
+          [
+            764.0543,
+            484.9289
+          ],
+          [
+            764.3214,
+            484.6136
+          ],
+          [
+            764.6136,
+            484.3214
+          ],
+          [
+            764.9289,
+            484.0543
+          ],
+          [
+            765.2653,
+            483.8142
+          ],
+          [
+            765.6203,
+            483.6026
+          ],
+          [
+            765.9915,
+            483.4211
+          ],
+          [
+            766.3765,
+            483.2709
+          ],
+          [
+            766.7726,
+            483.153
+          ],
+          [
+            767.177,
+            483.0682
+          ],
+          [
+            767.5871,
+            483.0171
+          ],
+          [
+            768.0,
+            483.0
+          ],
+          [
+            820.0,
+            483.0
+          ],
+          [
+            820.0,
+            0.0
+          ]
+        ],
+        "role": "body",
+        "key": "side-L"
+      },
+      {
+        "name": "Боковая - L",
+        "lo": [
+          332.0,
+          118.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          166.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди GOLA I.Карго/Боковая - L",
+        "source_id": 1543,
+        "contour_yz": [
+          [
+            118.0,
+            0.0
+          ],
+          [
+            118.0,
+            510.0
+          ],
+          [
+            763.0,
+            510.0
+          ],
+          [
+            763.0,
+            488.0
+          ],
+          [
+            763.0171,
+            487.5871
+          ],
+          [
+            763.0682,
+            487.177
+          ],
+          [
+            763.153,
+            486.7726
+          ],
+          [
+            763.2709,
+            486.3765
+          ],
+          [
+            763.4211,
+            485.9915
+          ],
+          [
+            763.6026,
+            485.6203
+          ],
+          [
+            763.8142,
+            485.2653
+          ],
+          [
+            764.0543,
+            484.9289
+          ],
+          [
+            764.3214,
+            484.6136
+          ],
+          [
+            764.6136,
+            484.3214
+          ],
+          [
+            764.9289,
+            484.0543
+          ],
+          [
+            765.2653,
+            483.8142
+          ],
+          [
+            765.6203,
+            483.6026
+          ],
+          [
+            765.9915,
+            483.4211
+          ],
+          [
+            766.3765,
+            483.2709
+          ],
+          [
+            766.7726,
+            483.153
+          ],
+          [
+            767.177,
+            483.0682
+          ],
+          [
+            767.5871,
+            483.0171
+          ],
+          [
+            768.0,
+            483.0
+          ],
+          [
+            820.0,
+            483.0
+          ],
+          [
+            820.0,
+            0.0
+          ]
+        ],
+        "role": "body",
+        "key": "side-P"
+      },
+      {
+        "name": "Царга задняя",
+        "lo": [
+          18.0,
+          802.0,
+          -0.0
+        ],
+        "size": [
+          314.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди GOLA I.Карго/Царга задняя",
+        "source_id": 1544,
+        "role": "body",
+        "key": "rail-rear"
+      },
+      {
+        "name": "Царга Передняя",
+        "lo": [
+          18.0,
+          802.0,
+          402.9561
+        ],
+        "size": [
+          314.0,
+          18.0,
+          80.0439
+        ],
+        "center": [
+          0.0,
+          811.0,
+          187.97805
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди GOLA I.Карго/Царга Передняя",
+        "source_id": 1545,
+        "role": "body",
+        "key": "rail-front"
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          2.0,
+          102.0,
+          -3.0
+        ],
+        "size": [
+          346.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 3.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди GOLA I.Карго/З.С",
+        "source_id": 1546,
+        "role": "back",
+        "key": "back"
+      },
+      {
+        "name": "Фасад",
+        "lo": [
+          1.5,
+          101.5,
+          510.0
+        ],
+        "size": [
+          347.0,
+          688.5,
+          18.0
+        ],
+        "center": [
+          0.0,
+          445.75,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/Фасад. Зазор 1.5мм (Д1)/Фасад",
+        "source_id": 585,
+        "role": "front",
+        "key": "front-1"
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-4",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-5",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-6",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-7",
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-8",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 41,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-10",
+        "name": "Шурупы 3.5х16 д5",
+        "article": null,
+        "quantity": 8,
+        "unit": "pcs"
+      },
+      {
+        "key": "profile-mount",
+        "name": "Крепление металлич. для профиля Gola (1 уголок 2 винта)",
+        "article": "118236",
+        "quantity": 2.0,
+        "unit": "pcs"
+      }
+    ],
+    "waste": true,
+    "brand": "geo",
+    "label": "Мусорные контейнеры",
+    "execution": "gola",
+    "profiles": [
+      {
+        "name": "GOLA L",
+        "article": "60965",
+        "material_name": "Профиль алюминиевый GOLA L-образный, 5.5м, черный.Тип 3 , AKS",
+        "bounds": {
+          "lo": [
+            0.0,
+            763.2355,
+            483.0439
+          ],
+          "hi": [
+            350.0,
+            820.0,
+            510.0
+          ],
+          "size": [
+            350.0,
+            56.7645,
+            26.9561
+          ]
+        },
+        "contour_yz": [
+          [
+            819.0,
+            490.6439
+          ],
+          [
+            819.0826,
+            490.6405
+          ],
+          [
+            819.1646,
+            490.6303
+          ],
+          [
+            819.2455,
+            490.6133
+          ],
+          [
+            819.3247,
+            490.5897
+          ],
+          [
+            819.4017,
+            490.5597
+          ],
+          [
+            819.4759,
+            490.5234
+          ],
+          [
+            819.5469,
+            490.4811
+          ],
+          [
+            819.6142,
+            490.433
+          ],
+          [
+            819.6773,
+            490.3796
+          ],
+          [
+            819.7357,
+            490.3212
+          ],
+          [
+            819.7891,
+            490.2581
+          ],
+          [
+            819.8372,
+            490.1909
+          ],
+          [
+            819.8795,
+            490.1199
+          ],
+          [
+            819.9158,
+            490.0456
+          ],
+          [
+            819.9458,
+            489.9686
+          ],
+          [
+            819.9694,
+            489.8894
+          ],
+          [
+            819.9864,
+            489.8085
+          ],
+          [
+            819.9966,
+            489.7265
+          ],
+          [
+            820.0,
+            489.6439
+          ],
+          [
+            820.0,
+            483.0439
+          ],
+          [
+            817.0161,
+            483.0439
+          ],
+          [
+            816.4307,
+            483.2782
+          ],
+          [
+            816.4424,
+            484.1011
+          ],
+          [
+            817.0161,
+            484.2878
+          ],
+          [
+            818.7561,
+            484.2878
+          ],
+          [
+            818.7561,
+            489.3247
+          ],
+          [
+            790.6,
+            489.3247
+          ],
+          [
+            790.6,
+            484.0439
+          ],
+          [
+            785.6,
+            484.0439
+          ],
+          [
+            785.6,
+            485.179
+          ],
+          [
+            789.3561,
+            485.179
+          ],
+          [
+            789.3561,
+            489.4
+          ],
+          [
+            775.6439,
+            489.4
+          ],
+          [
+            775.6439,
+            485.179
+          ],
+          [
+            779.4,
+            485.179
+          ],
+          [
+            779.4,
+            484.0439
+          ],
+          [
+            774.4,
+            484.0439
+          ],
+          [
+            774.4,
+            489.4
+          ],
+          [
+            773.3916,
+            489.4
+          ],
+          [
+            772.8548,
+            489.4222
+          ],
+          [
+            772.3217,
+            489.4887
+          ],
+          [
+            771.7959,
+            489.5989
+          ],
+          [
+            771.2811,
+            489.7522
+          ],
+          [
+            770.7806,
+            489.9475
+          ],
+          [
+            770.2979,
+            490.1834
+          ],
+          [
+            769.8364,
+            490.4584
+          ],
+          [
+            769.3992,
+            490.7706
+          ],
+          [
+            768.9893,
+            491.1178
+          ],
+          [
+            768.6094,
+            491.4977
+          ],
+          [
+            768.2622,
+            491.9076
+          ],
+          [
+            767.95,
+            492.3448
+          ],
+          [
+            767.675,
+            492.8063
+          ],
+          [
+            767.4391,
+            493.289
+          ],
+          [
+            767.2438,
+            493.7895
+          ],
+          [
+            767.0905,
+            494.3043
+          ],
+          [
+            766.9803,
+            494.8301
+          ],
+          [
+            766.9138,
+            495.3632
+          ],
+          [
+            766.8916,
+            495.9
+          ],
+          [
+            766.8916,
+            508.7561
+          ],
+          [
+            764.2394,
+            508.7561
+          ],
+          [
+            764.2394,
+            504.4996
+          ],
+          [
+            763.2355,
+            504.4996
+          ],
+          [
+            763.2355,
+            509.0
+          ],
+          [
+            763.2389,
+            509.0826
+          ],
+          [
+            763.2491,
+            509.1646
+          ],
+          [
+            763.2661,
+            509.2455
+          ],
+          [
+            763.2897,
+            509.3247
+          ],
+          [
+            763.3197,
+            509.4017
+          ],
+          [
+            763.356,
+            509.4759
+          ],
+          [
+            763.3983,
+            509.5469
+          ],
+          [
+            763.4464,
+            509.6142
+          ],
+          [
+            763.4998,
+            509.6773
+          ],
+          [
+            763.5582,
+            509.7357
+          ],
+          [
+            763.6213,
+            509.7891
+          ],
+          [
+            763.6886,
+            509.8372
+          ],
+          [
+            763.7596,
+            509.8795
+          ],
+          [
+            763.8338,
+            509.9158
+          ],
+          [
+            763.9108,
+            509.9458
+          ],
+          [
+            763.99,
+            509.9694
+          ],
+          [
+            764.0709,
+            509.9864
+          ],
+          [
+            764.1529,
+            509.9966
+          ],
+          [
+            764.2355,
+            510.0
+          ],
+          [
+            767.1355,
+            510.0
+          ],
+          [
+            767.2181,
+            509.9966
+          ],
+          [
+            767.3001,
+            509.9864
+          ],
+          [
+            767.381,
+            509.9694
+          ],
+          [
+            767.4602,
+            509.9458
+          ],
+          [
+            767.5372,
+            509.9158
+          ],
+          [
+            767.6115,
+            509.8795
+          ],
+          [
+            767.6825,
+            509.8372
+          ],
+          [
+            767.7497,
+            509.7891
+          ],
+          [
+            767.8128,
+            509.7357
+          ],
+          [
+            767.8712,
+            509.6773
+          ],
+          [
+            767.9246,
+            509.6142
+          ],
+          [
+            767.9727,
+            509.5469
+          ],
+          [
+            768.015,
+            509.4759
+          ],
+          [
+            768.0513,
+            509.4017
+          ],
+          [
+            768.0813,
+            509.3247
+          ],
+          [
+            768.1049,
+            509.2455
+          ],
+          [
+            768.1219,
+            509.1646
+          ],
+          [
+            768.1321,
+            509.0826
+          ],
+          [
+            768.1355,
+            509.0
+          ],
+          [
+            768.1355,
+            495.9
+          ],
+          [
+            768.1535,
+            495.466
+          ],
+          [
+            768.2072,
+            495.0349
+          ],
+          [
+            768.2963,
+            494.6097
+          ],
+          [
+            768.4203,
+            494.1933
+          ],
+          [
+            768.5782,
+            493.7887
+          ],
+          [
+            768.769,
+            493.3984
+          ],
+          [
+            768.9914,
+            493.0252
+          ],
+          [
+            769.2438,
+            492.6716
+          ],
+          [
+            769.5246,
+            492.3401
+          ],
+          [
+            769.8317,
+            492.033
+          ],
+          [
+            770.1632,
+            491.7522
+          ],
+          [
+            770.5168,
+            491.4998
+          ],
+          [
+            770.89,
+            491.2774
+          ],
+          [
+            771.2803,
+            491.0866
+          ],
+          [
+            771.6849,
+            490.9287
+          ],
+          [
+            772.1013,
+            490.8047
+          ],
+          [
+            772.5265,
+            490.7156
+          ],
+          [
+            772.9576,
+            490.6619
+          ],
+          [
+            773.3916,
+            490.6439
+          ]
+        ]
+      }
+    ],
+    "kits": [
+      {
+        "width": 350,
+        "name": "Выдвижные мусорные контейнеры 350 GEO X h440 (1*10LT, 1*18LT), графит AKS",
+        "article": "122847",
+        "quantity": 1,
+        "unit": "set",
+        "mounting": "bottom",
+        "rules": [
+          {
+            "Count": 0,
+            "Length": 313.0
+          },
+          {
+            "Count": 1,
+            "Length": 318.0
+          },
+          {
+            "Count": 0,
+            "Length": 1000.0
+          }
+        ],
+        "bounds": {
+          "lo": [
+            -1.0,
+            10.0,
+            -476.0003
+          ],
+          "hi": [
+            315.0,
+            422.0,
+            1.0
+          ],
+          "size": [
+            316.0,
+            412.0,
+            477.0003
+          ]
+        },
+        "mount_origin": [
+          18.0,
+          118.0,
+          510.0
+        ],
+        "cache_frame": {
+          "origin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "size": [
+            314.0,
+            440.0,
+            10.0
+          ]
+        },
+        "min_depth": 510
+      },
+      {
+        "width": 400,
+        "name": "Выдвижные мусорные контейнеры 400 GEO X h440 (2*18LT), графит AKS",
+        "article": "122848",
+        "quantity": 1,
+        "unit": "set",
+        "mounting": "bottom",
+        "rules": [
+          {
+            "Count": 0,
+            "Length": 363.0
+          },
+          {
+            "Count": 1,
+            "Length": 368.0
+          },
+          {
+            "Count": 0,
+            "Length": 1000.0
+          }
+        ],
+        "bounds": {
+          "lo": [
+            -1.0,
+            9.0,
+            -476.0
+          ],
+          "hi": [
+            365.0,
+            421.0,
+            2.0
+          ],
+          "size": [
+            366.0,
+            412.0,
+            478.0
+          ]
+        },
+        "mount_origin": [
+          18.0,
+          118.0,
+          510.0
+        ],
+        "cache_frame": {
+          "origin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "size": [
+            364.0,
+            440.0,
+            10.0
+          ]
+        },
+        "min_depth": 510
+      },
+      {
+        "width": 450,
+        "name": "Выдвижные мусорные контейнеры 450 GEO X h600 (2*30LT), графит AKS",
+        "article": "122849",
+        "quantity": 1,
+        "unit": "set",
+        "mounting": "bottom",
+        "rules": [
+          {
+            "Count": 0,
+            "Length": 413.0
+          },
+          {
+            "Count": 1,
+            "Length": 418.0
+          },
+          {
+            "Count": 0,
+            "Length": 1000.0
+          }
+        ],
+        "bounds": {
+          "lo": [
+            -0.9984,
+            10.0,
+            -520.0
+          ],
+          "hi": [
+            415.0,
+            480.0,
+            1.0
+          ],
+          "size": [
+            415.9984,
+            470.0,
+            521.0
+          ]
+        },
+        "mount_origin": [
+          18.0,
+          118.0,
+          510.0
+        ],
+        "cache_frame": {
+          "origin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "size": [
+            414.0,
+            500.0,
+            10.0
+          ]
+        },
+        "min_depth": 525
+      }
+    ],
+    "source_widths": [
+      350,
+      400,
+      450
+    ],
+    "allowed_widths": [
+      350,
+      400,
+      450
+    ],
+    "min_body_height": 720,
+    "warnings": [
+      "Комплект 450 мм: в исходнике обозначен h600, рамка кеша 500 мм; перед изготовлением проверить высоту и посадку в БАЗИС. Глубина модели комплекта 521 мм, поэтому глубина корпуса не менее 525 мм."
+    ]
+  },
+  {
+    "id": "bazis.8a45c0613aad",
+    "source_file": "НМД1-600. Мусорные контейнеры.fr3d",
+    "source_sha256": "8a45c0613aad0ac837d2492362ff94065f863c7517a9c2f798b0fd5015ce9f24",
+    "native_frame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        350.0,
+        820.0,
+        510.0
+      ]
+    },
+    "model_elastic": [
+      {
+        "Axis": 0,
+        "Pos": 200.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 1,
+        "Pos": 775.0,
+        "Weight": 1.0
+      },
+      {
+        "Axis": 2,
+        "Pos": 360.0,
+        "Weight": 1.0
+      }
+    ],
+    "panels": [
+      {
+        "name": "Дно",
+        "lo": [
+          -0.0,
+          100.0,
+          0.0
+        ],
+        "size": [
+          350.0,
+          18.0,
+          510.0
+        ],
+        "center": [
+          0.0,
+          109.0,
+          0.0
+        ],
+        "axes": [
+          0,
+          2,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди/Дно",
+        "source_id": 301,
+        "role": "body",
+        "key": "bottom"
+      },
+      {
+        "name": "Боковая - L",
+        "lo": [
+          0.0,
+          118.0,
+          0.0
+        ],
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          -166.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди/Боковая - L",
+        "source_id": 302,
+        "contour_yz": [
+          [
+            118.0,
+            0.0
+          ],
+          [
+            118.0,
+            510.0
+          ],
+          [
+            820.0,
+            510.0
+          ],
+          [
+            820.0,
+            0.0
+          ]
+        ],
+        "role": "body",
+        "key": "side-L"
+      },
+      {
+        "name": "Боковая - L",
+        "lo": [
+          332.0,
+          118.0,
+          -0.0
+        ],
+        "size": [
+          18.0,
+          702.0,
+          510.0
+        ],
+        "center": [
+          166.0,
+          469.0,
+          0.0
+        ],
+        "axes": [
+          2,
+          1,
+          0
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди/Боковая - L",
+        "source_id": 303,
+        "contour_yz": [
+          [
+            118.0,
+            0.0
+          ],
+          [
+            118.0,
+            510.0
+          ],
+          [
+            820.0,
+            510.0
+          ],
+          [
+            820.0,
+            0.0
+          ]
+        ],
+        "role": "body",
+        "key": "side-P"
+      },
+      {
+        "name": "Царга задняя",
+        "lo": [
+          18.0,
+          802.0,
+          0.0
+        ],
+        "size": [
+          314.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          -215.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди/Царга задняя",
+        "source_id": 304,
+        "role": "body",
+        "key": "rail-rear"
+      },
+      {
+        "name": "Царга Передняя",
+        "lo": [
+          18.0,
+          802.0,
+          430.0
+        ],
+        "size": [
+          314.0,
+          18.0,
+          80.0
+        ],
+        "center": [
+          0.0,
+          811.0,
+          215.0
+        ],
+        "axes": [
+          2,
+          0,
+          1
+        ],
+        "thickness": 18.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди/Царга Передняя",
+        "source_id": 305,
+        "role": "body",
+        "key": "rail-front"
+      },
+      {
+        "name": "З.С",
+        "lo": [
+          2.0,
+          102.0,
+          -3.0
+        ],
+        "size": [
+          346.0,
+          716.0,
+          3.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          -256.5
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 3.0,
+        "source_path": "/НМ.К + З.С 3мм гвозди/З.С",
+        "source_id": 306,
+        "role": "back",
+        "key": "back"
+      },
+      {
+        "name": "Фасад",
+        "lo": [
+          1.5,
+          101.5,
+          510.0
+        ],
+        "size": [
+          347.0,
+          717.0,
+          18.0
+        ],
+        "center": [
+          0.0,
+          460.0,
+          264.0
+        ],
+        "axes": [
+          0,
+          1,
+          2
+        ],
+        "thickness": 18.0,
+        "source_path": "/Фасад. Зазор 1.5мм (Д1)/Фасад",
+        "source_id": 585,
+        "role": "front",
+        "key": "front-1"
+      }
+    ],
+    "hardware_items": [
+      {
+        "key": "gola-hw-1",
+        "name": "Конфермат 7х50 мм,Zn",
+        "article": null,
+        "quantity": 8,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-2",
+        "name": "Основание для кухонной опоры крепление Н5 под саморезы",
+        "article": "840 00 P2 H5 00",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-3",
+        "name": "Опора регулируемая Н100 мм без основания регулировка -5 +20 мм - черная",
+        "article": "415 10 P2 0Z 02",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-4",
+        "name": "1031 Ножка пластиковая без базы, высота 100 мм",
+        "article": "05.0360",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-5",
+        "name": "1031 База для пластиковой ножки с упором под саморез",
+        "article": "05.0360",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-6",
+        "name": "Площадка клипсы усиленной (06.152)",
+        "article": "06.080",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-7",
+        "name": "Клипса усиленная",
+        "article": "06.152",
+        "quantity": 2,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-8",
+        "name": "Гвозди 1,4*25 (уп/5кг), (1кг=3064шт)  РМЗ",
+        "article": "16181",
+        "quantity": 41,
+        "unit": "pcs"
+      },
+      {
+        "key": "gola-hw-10",
+        "name": "Шурупы 3.5х16 д5",
+        "article": null,
+        "quantity": 8,
+        "unit": "pcs"
+      }
+    ],
+    "waste": true,
+    "brand": "geo",
+    "label": "Мусорные контейнеры",
+    "execution": "standard",
+    "profiles": [],
+    "kits": [
+      {
+        "width": 350,
+        "name": "Выдвижные мусорные контейнеры 350 GEO X h440 (1*10LT, 1*18LT), графит AKS",
+        "article": "122847",
+        "quantity": 1,
+        "unit": "set",
+        "mounting": "bottom",
+        "rules": [
+          {
+            "Count": 0,
+            "Length": 313.0
+          },
+          {
+            "Count": 1,
+            "Length": 318.0
+          },
+          {
+            "Count": 0,
+            "Length": 1000.0
+          }
+        ],
+        "bounds": {
+          "lo": [
+            -1.0,
+            10.0,
+            -476.0003
+          ],
+          "hi": [
+            315.0,
+            422.0,
+            1.0
+          ],
+          "size": [
+            316.0,
+            412.0,
+            477.0003
+          ]
+        },
+        "mount_origin": [
+          18.0,
+          118.0,
+          510.0
+        ],
+        "cache_frame": {
+          "origin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "size": [
+            314.0,
+            440.0,
+            10.0
+          ]
+        },
+        "min_depth": 510
+      },
+      {
+        "width": 400,
+        "name": "Выдвижные мусорные контейнеры 400 GEO X h440 (2*18LT), графит AKS",
+        "article": "122848",
+        "quantity": 1,
+        "unit": "set",
+        "mounting": "bottom",
+        "rules": [
+          {
+            "Count": 0,
+            "Length": 363.0
+          },
+          {
+            "Count": 1,
+            "Length": 368.0
+          },
+          {
+            "Count": 0,
+            "Length": 1000.0
+          }
+        ],
+        "bounds": {
+          "lo": [
+            -1.0,
+            9.0,
+            -476.0
+          ],
+          "hi": [
+            365.0,
+            421.0,
+            2.0
+          ],
+          "size": [
+            366.0,
+            412.0,
+            478.0
+          ]
+        },
+        "mount_origin": [
+          18.0,
+          118.0,
+          510.0
+        ],
+        "cache_frame": {
+          "origin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "size": [
+            364.0,
+            440.0,
+            10.0
+          ]
+        },
+        "min_depth": 510
+      },
+      {
+        "width": 450,
+        "name": "Выдвижные мусорные контейнеры 450 GEO X h600 (2*30LT), графит AKS",
+        "article": "122849",
+        "quantity": 1,
+        "unit": "set",
+        "mounting": "bottom",
+        "rules": [
+          {
+            "Count": 0,
+            "Length": 413.0
+          },
+          {
+            "Count": 1,
+            "Length": 418.0
+          },
+          {
+            "Count": 0,
+            "Length": 1000.0
+          }
+        ],
+        "bounds": {
+          "lo": [
+            -0.9984,
+            10.0,
+            -520.0
+          ],
+          "hi": [
+            415.0,
+            480.0,
+            1.0
+          ],
+          "size": [
+            415.9984,
+            470.0,
+            521.0
+          ]
+        },
+        "mount_origin": [
+          18.0,
+          118.0,
+          510.0
+        ],
+        "cache_frame": {
+          "origin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "size": [
+            414.0,
+            500.0,
+            10.0
+          ]
+        },
+        "min_depth": 525
+      }
+    ],
+    "source_widths": [
+      350,
+      400,
+      450
+    ],
+    "allowed_widths": [
+      350,
+      400,
+      450
+    ],
+    "min_body_height": 720,
+    "warnings": [
+      "Комплект 450 мм: в исходнике обозначен h600, рамка кеша 500 мм; перед изготовлением проверить высоту и посадку в БАЗИС. Глубина модели комплекта 521 мм, поэтому глубина корпуса не менее 525 мм."
+    ]
+  }
+]

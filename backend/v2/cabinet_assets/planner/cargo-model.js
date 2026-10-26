@@ -2,22 +2,22 @@
 (function(root){
  'use strict';
  const variants=root.MF_CARGO_VARIANTS||[],byId=new Map(variants.map(v=>[v.id,v]));
- const family={label:'Карго',default_id:variants.find(v=>v.brand==='focus'&&v.execution==='standard')?.id};
+ const family={label:'Карго',default_id:variants.find(v=>v.brand==='focus'&&v.execution==='standard')?.id},wasteFamily={label:'Мусорные контейнеры',default_id:variants.find(v=>v.waste&&v.execution==='standard')?.id};
  const choice=id=>byId.get(id)||null,info=it=>{const v=choice(it?.bazis_id);return v&&v.source_sha256===it.bazis_sha256?v:null;};
  const kit=(it,v=info(it))=>v?.kits.find(k=>k.width===it.width)||null,base=it=>it.legHeightMm??it.base_height??100;
  function dimensionError(it){
   const v=info(it);if(!v)return 'Карго не совпадает с проверенным исходником';
-  const k=kit(it,v);if(k?.error)return k.error;
+  const k=kit(it,v);if(k?.error)return k.error;if(k?.min_depth&&it.depth<k.min_depth)return 'Комплект '+k.article+': глубина корпуса от '+k.min_depth+' мм';
   if(!v.allowed_widths.includes(it.width))return 'Карго '+v.brand.toUpperCase()+': ширина только '+v.allowed_widths.join(', ')+' мм';
   if(it.module_type!=='base_cabinet'||it.base==='wall'||![80,100,150].includes(base(it)))return 'Карго: нижний модуль на ножках 80, 100 или 150 мм';
   if(it.height-base(it)<v.min_body_height||it.height-base(it)>1000||it.depth<510||it.depth>700)return 'Карго '+v.brand.toUpperCase()+': высота корпуса '+v.min_body_height+'–1000, глубина 510–700 мм';
   return '';
  }
- function model(v){return {cargo:v,label:v.label,key:'base.cargo.'+v.id,source_file:v.source_file,source_sha256:v.source_sha256,tier:'base',native_defaults:{width:150,height:820,depth:510},body_height:720,base_height:100,scene_depth:510,worktop_thickness:38,resize:true,
-  carcass:{type:'cargo',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},back:{type:'overlay_nails',thickness:3,material_name:'ЛХДФ 3ММ Белый'},facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},shelves:[],doors:[],front:{kind:'drawers',count:1},hardware:{items:v.hardware_items,native_fixed_items:true,hinges_in_items:true},limits:{w:[v.allowed_widths[0],400],h:[100+v.min_body_height,1100],d:[510,700]}};}
+ function model(v){return {cargo:v,label:v.label,key:'base.cargo.'+v.id,source_file:v.source_file,source_sha256:v.source_sha256,tier:'base',native_defaults:{width:v.waste?350:150,height:820,depth:510},body_height:720,base_height:100,scene_depth:510,worktop_thickness:38,resize:true,
+  carcass:{type:'cargo',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},back:{type:'overlay_nails',thickness:3,material_name:'ЛХДФ 3ММ Белый'},facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},shelves:[],doors:[],front:{kind:'drawers',count:1},hardware:{items:v.hardware_items,native_fixed_items:true,hinges_in_items:true},limits:{w:[v.allowed_widths[0],v.allowed_widths.at(-1)],h:[100+v.min_body_height,1100],d:[510,700]}};}
  const round=n=>Math.round(n*10000)/10000;
  function point(it,s,a,x){
-  if(a===0)return x+(x>80?it.width-150:0)-it.width/2;
+  if(a===0){const native=info(it).native_frame.size[0];return x+(x>native/2?it.width-native:0)-it.width/2;}
   if(a===1)return x+(x>775?it.height-base(it)-720:0)+base(it)-100;
   // Rear rail keeps its 80 mm depth. The front rail and facade follow the front.
   return x+(s.key==='rail-rear'||s.role==='back'?0:x>0?it.depth-510:0)-it.depth/2;
@@ -50,11 +50,12 @@
  function adjustment(it){if(!info(it))return null;const notes=[];
   if(base(it)!==100)notes.push('В БАЗИС заменить опоры 100 мм на '+base(it)+' мм.');
   if(it.depth!==510)notes.push('В БАЗИС проверить изменение глубины: задняя царга сохраняет 80 мм, передняя царга и комплект карго перемещаются к фасаду без растяжения.');
+  if(info(it).waste&&it.width===450)notes.push(...info(it).warnings);
   return notes.length?{kind:'cargo',requires_manual_native_adjustment:true,note:notes.join(' ')}:null;
  }
- function brief(it){const v=info(it),k=kit(it);if(!v)return '';return v.brand.toUpperCase()+' · '+it.width+' мм · '+(v.execution==='gola'?'Gola L без подсветки':'накладная ручка')+'. Комплект '+(k?.article||'не выбран')+' · '+(k?.mounting==='side_left'?'боковое крепление слева':'нижнее крепление')+'. Один выдвижной фасад. '+(adjustment(it)?.note||'');}
+ function brief(it){const v=info(it),k=kit(it);if(!v)return '';return (v.waste?'GEO X · мусорные контейнеры':v.brand.toUpperCase())+' · '+it.width+' мм · '+(v.execution==='gola'?'Gola L без подсветки':'накладная ручка')+'. Комплект '+(k?.article||'не выбран')+' · '+(k?.mounting==='side_left'?'боковое крепление слева':'нижнее крепление')+'. Один выдвижной фасад. '+(adjustment(it)?.note||'');}
  // Inspection geometry uses measured cache envelopes; metal kit never enters the wood cut list.
  function basket(it){const v=info(it),k=kit(it);if(!k)return null;const b=k.bounds,o=k.mount_origin;
   return {width:b.size[0],height:b.size[1],depth:b.size[2],x:o[0]+b.lo[0]+b.size[0]/2-it.width/2,y:o[1]+b.lo[1]+base(it)-100,z:it.depth/2+b.lo[2]+b.size[2]/2};}
- root.MF_CARGO=Object.freeze({variants,choice,info,kit,family,model,parts,facades,profiles,hardware,dimensionError,select,adjustment,brief,basket});
+ root.MF_CARGO=Object.freeze({wasteFamily,variants,choice,info,kit,family,model,parts,facades,profiles,hardware,dimensionError,select,adjustment,brief,basket});
 })(globalThis);

@@ -30,7 +30,7 @@ export function vitrineLightSpec(it,part){
     center:[part.position.x,part.position.y,part.position.z].map(n=>n/1000),
     // The luminous strip shares the actual groove axis at Z = 9 mm.
     enclosure:[(it.width/2-18)/1000,(it.depth/2-18)/1000],
-    ends:[.118,(it.height-18)/1000],
+    ends:[v.wall ? .018 : .118,(it.height-18)/1000],
     sides:[v.lighting!=='right'?1:0,v.lighting!=='left'?1:0]
   };
 }

@@ -6,7 +6,7 @@ import * as C from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
 import {modulePriceBreakdown} from '../../backend/v2/cabinet_assets/planner/pricing.mjs';
 import '../../backend/v2/cabinet_assets/planner/production-notes.js';
-const O=globalThis.MF_OPEN_TALL;
+const O={...globalThis.MF_OPEN_TALL,variants:globalThis.MF_OPEN_TALL.variants.filter(v=>!v.wall)};
 const item=v=>({item_id:'open',name:'Открытый пенал',bazis_id:v.id,bazis_sha256:v.source_sha256,module_type:'tall_cabinet',width:600,height:2000,depth:600,base_height:100,body_height:1900,base:'plinth',layout:'niche',drawers:0,handles:'handleless',x:0,z:0,rotation:0});
 const template=it=>({production:C.PRODUCTION_MODELS[it.bazis_id],front:{kind:'none',count:0}});
 for(const v of O.variants)test(v.source_file+' native geometry and bounds',()=>{
@@ -47,7 +47,7 @@ test('one card, seven visible choices, exact duplicate identities, material pres
  const c=vm.createContext({...Object.fromEntries(Object.entries(globalThis).filter(([k])=>k.startsWith('MF_'))),structuredClone,document:{body:{dataset:{}},getElementById:node,createElement:node}});
  vm.runInContext(source.slice(0,source.indexOf('let user=null')),c);c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';
  vm.runInContext(source.slice(source.indexOf('function renderModuleCatalogue()'),source.indexOf('async function loadProjects()')),c);vm.runInContext('renderModuleCatalogue()',c);
- assert.equal(cards.filter(c=>O.choice(c.bazis)).length,1);
+ assert.equal(cards.filter(c=>O.variants.some(v=>v.id===c.bazis)).length,1);
  assert.equal(cards.filter(c=>globalThis.MF_VITRINE.variants.some(v=>v.id===c.bazis)).length,1);
 });
 test('open tall front meets lower facade while its back touches wall',()=>{

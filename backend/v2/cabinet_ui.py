@@ -151,6 +151,7 @@ def router():
         'upper-upper-side-right.webp',
     ))
     planner_files.update('module-card-images/'+name+'.webp' for name in ('open-tall-none','cargo','pullout-dryer','aq-profile','lira-profile','base-single','base-double','base-drawers','base-oven','base-corner','wall-single','wall-double','dishwasher','tall-storage','tall-appliance','tall-vitrine','countertop-standard','countertop-euro','backsplash-glass','backsplash-ldsp','backsplash-tile','plinth'))
+    planner_files.update('module-card-images/'+name+'.webp' for name in ('open-wall-278a6a830b87','open-wall-13a68b19bc93','open-wall-52b413624202','open-wall-934509b39a14','open-wall-d8f4b928da18','open-wall-70c93db0d0b6','open-wall-1b01967daa24','waste-standard','waste-gola'))
     planner_files.update('module-card-images/'+name+'.webp' for name in ['backsplash-panel','backsplash-straight','backsplash-left','backsplash-right','backsplash-u']+[f'corner-{side}-{purpose}-{doors}' for side in ('left','right') for purpose in ('sink','shelf') for doors in (1,2)])
     from .material_visuals import manifest,user_textures,user_texture_bytes
     material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import * as C from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
-const G=globalThis.MF_CARGO;
+const G={...globalThis.MF_CARGO,variants:globalThis.MF_CARGO.variants.filter(v=>!v.waste)};
 const item=v=>C.normalizeKitchen({item_id:'cargo',name:'Карго',bazis_id:v.id,bazis_sha256:v.source_sha256,module_type:'base_cabinet',width:200,height:820,depth:510,base_height:100,base:'legs',layout:'drawers',drawers:1,x:0,z:0,rotation:0,handles:v.execution==='gola'?'handleless':'handles'});
 const template=it=>({production:C.PRODUCTION_MODELS[it.bazis_id]});
 for(const v of G.variants)test(v.label+' geometry, kits, profiles and source identity',()=>{

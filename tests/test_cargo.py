@@ -8,6 +8,7 @@ from backend.v2.three_d_api import FurnitureItem
 from backend.v2.three_d_cargo import VARIANTS,cargo_error,cargo_kit
 from backend.v2.three_d_document import hardware_for,module_contents,module_materials,render
 from backend.v2.sales_hardware import module_hardware,purchasing_rows
+VARIANTS=[v for v in VARIANTS if not v.get('waste')]
 ROOT=Path(__file__).resolve().parents[1]
 def item(v,**patch):
     return {**dict(item_id='cargo',name='Карго',bazis_id=v['id'],bazis_file=v['source_file'],bazis_sha256=v['source_sha256'],module_type='base_cabinet',width=200,height=820,depth=510,base_height=100,base='legs',handles='handleless' if v['execution']=='gola' else 'handles',x=0,z=0,rotation=0),**patch}

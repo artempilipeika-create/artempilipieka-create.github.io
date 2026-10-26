@@ -98,8 +98,8 @@ for(const v of [...globalThis.MF_FURNITURE_CORE.TALL_VARIANTS,...globalThis.MF_F
   id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Пеналы БАЗИС',module_type:'tall_cabinet',
   defaults:{w:600,h:v.native_height||2000,d:600,layout:v.drawer?'combo':'doors',drawers:v.drawer?1:0,base:'plinth'},resize:true
 });
-for(const v of (globalThis.MF_OPEN_TALL?.variants||[]))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Пеналы БАЗИС',module_type:'tall_cabinet',defaults:{w:600,h:2000,d:600,layout:'niche',drawers:0,base:'plinth'},front:{kind:'none',count:0},resize:true});
-for(const v of (globalThis.MF_CARGO?.variants||[]))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Карго БАЗИС',module_type:'base_cabinet',defaults:{w:200,h:820,d:510,layout:'drawers',drawers:1,base:'plinth'},front:{kind:'drawers',count:1},resize:true});
+for(const v of (globalThis.MF_OPEN_TALL?.variants||[]))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:v.wall?'Верхние шкафы БАЗИС':'Пеналы БАЗИС',module_type:v.wall?'wall_cabinet':'tall_cabinet',defaults:{w:600,h:v.wall?720:2000,d:v.wall?317:600,layout:'niche',drawers:0,base:v.wall?'wall':'plinth'},front:{kind:'none',count:0},resize:true});
+for(const v of (globalThis.MF_CARGO?.variants||[]))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Карго БАЗИС',module_type:'base_cabinet',defaults:{w:v.waste?350:200,h:820,d:510,layout:'drawers',drawers:1,base:'plinth'},front:{kind:'drawers',count:1},resize:true});
 for(const v of (globalThis.MF_PULLOUT_DRYERS?.variants||[]))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Сушки БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'drawers',drawers:2,base:'plinth'},front:{kind:'drawers',count:2},resize:true});
 for(const v of globalThis.MF_GOLA.variants)bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:v.kind==='drawers'?'Ящики БАЗИС':'Нижние БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:v.kind,drawers:v.drawer_count,base:'plinth'},front:{kind:v.kind,count:v.kind==='drawers'?v.front_heights.length:v.door_count},resize:true});
 for(const v of globalThis.MF_DRAWERS.variants)bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Ящики БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'drawers',drawers:v.drawer_count,base:'plinth'},resize:true});
@@ -111,7 +111,7 @@ for(const m of bazisModules){
   const p=pilotProductionById[m.id];if(!p)continue;
   m.source_sha256=p.source_sha256;m.source_file=p.source_file||m.source_file;m.production=p;m.label=p.label;
   m.resize=p.resize??m.resize;
-  m.defaults={...m.defaults,w:p.cargo?200:p.native_defaults.width,h:p.body_height+p.base_height,d:p.scene_depth,...(p.constraints?.niche_height_mm?{layout:'niche',drawers:1}:{})};
+  m.defaults={...m.defaults,w:p.cargo?(p.cargo.waste?350:200):p.native_defaults.width,h:p.body_height+p.base_height,d:p.scene_depth,...(p.constraints?.niche_height_mm?{layout:'niche',drawers:1}:{})};
   if(p.front)m.front=p.front;
   m.limits=p.tier==='wall'
     ?{...m.limits,w:m.limits?.w||[300,1200],h:[300,1400],d:[250,500]}
@@ -132,8 +132,8 @@ for(const m of bazisModules){
   if(family)m.catalogue_label=family.label;
   const base=globalThis.MF_GOLA.baseChoice(m.id);if(base)m.catalogue_label=globalThis.MF_GOLA.family(base).label;
   if(globalThis.MF_UPPERS.choice(m.id))m.catalogue_label=globalThis.MF_UPPERS.family(globalThis.MF_UPPERS.choice(m.id)).label;
-  if(globalThis.MF_OPEN_TALL?.choice(m.id))m.catalogue_label=globalThis.MF_OPEN_TALL.family.label;
-  if(globalThis.MF_CARGO?.choice(m.id))m.catalogue_label=globalThis.MF_CARGO.family.label;
+  if(globalThis.MF_OPEN_TALL?.choice(m.id))m.catalogue_label=(globalThis.MF_OPEN_TALL.choice(m.id).wall?globalThis.MF_OPEN_TALL.wallFamily:globalThis.MF_OPEN_TALL.family).label;
+  if(globalThis.MF_CARGO?.choice(m.id))m.catalogue_label=(globalThis.MF_CARGO.choice(m.id).waste?globalThis.MF_CARGO.wasteFamily:globalThis.MF_CARGO.family).label;
   if(globalThis.MF_PULLOUT_DRYERS?.choice(m.id))m.catalogue_label=globalThis.MF_PULLOUT_DRYERS.family.label;
   if(globalThis.MF_DRAWERS.choice(m.id))m.catalogue_label=globalThis.MF_DRAWERS.family.label;
   if(m.production?.vitrine)m.catalogue_label=globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.label;
@@ -364,9 +364,9 @@ function renderModuleCatalogue(){
     const upperChoice=globalThis.MF_UPPERS.choice(id);
     if(upperChoice&&id!==globalThis.MF_UPPERS.family(upperChoice).default_id)continue;
     const openTallChoice=globalThis.MF_OPEN_TALL?.choice(id);
-    if(openTallChoice&&id!==globalThis.MF_OPEN_TALL.family.default_id)continue;
+    if(openTallChoice&&id!==(openTallChoice.wall?globalThis.MF_OPEN_TALL.wallFamily:globalThis.MF_OPEN_TALL.family).default_id)continue;
     const cargoChoice=globalThis.MF_CARGO?.choice(id);
-    if(cargoChoice&&id!==globalThis.MF_CARGO.family.default_id)continue;
+    if(cargoChoice&&id!==(cargoChoice.waste?globalThis.MF_CARGO.wasteFamily:globalThis.MF_CARGO.family).default_id)continue;
     const dryerChoice=globalThis.MF_PULLOUT_DRYERS?.choice(id);
     if(dryerChoice&&id!==globalThis.MF_PULLOUT_DRYERS.family.default_id)continue;
     const drawerChoice=globalThis.MF_DRAWERS.choice(id);
@@ -379,7 +379,7 @@ function renderModuleCatalogue(){
     if(m.production.tall&&id!==tallFamily.default_id)continue;
     if(m.production.vitrine&&id!==globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=openTallChoice?'Полки ЛДСП 18 мм · без подсветки / AQ / LIRA · слева / справа / с двух сторон':cargoChoice?'FOCUS / NORWING / ICON · 150 / 200 / 300 / 400 мм · обычное / Gola L':dryerChoice?'Выдвижная сушка NORWING / FLAT LINE · 600 / 700 / 800 / 900 · нижний ящик · обычное / Gola II':p.dishwasher?'Фасад для ПМ · обычное / Gola L · ширина 450–600 мм':drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
+    const description=openTallChoice?'Полки ЛДСП 18 мм · без подсветки / AQ / LIRA · слева / справа / с двух сторон':cargoChoice?(cargoChoice.waste?'GEO X · 350 / 400 / 450 мм · обычный фасад / Gola L':'FOCUS / NORWING / ICON · 150 / 200 / 300 / 400 мм · обычное / Gola L'):dryerChoice?'Выдвижная сушка NORWING / FLAT LINE · 600 / 700 / 800 / 900 · нижний ящик · обычное / Gola II':p.dishwasher?'Фасад для ПМ · обычное / Gola L · ширина 450–600 мм':drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -396,8 +396,8 @@ function renderModuleCatalogue(){
       ?'Левое / правое · 3 вертикальные царги'
       :p.dryer?'Левое / правое · сушка AKS по ширине'
       :isWall?'Левое / правое · полки по высоте':'Левое / правое · полка · задник'):description;
-    const search=openTallChoice?'открытый пенал полки ЛДСП 18 подсветка AQ LIRA 4 17.5':cargoChoice?'карго корзина FOCUS NORWING NORWIG ICON Gola гола 150 200 300 400':dryerChoice?'выдвижная сушка NORWING FLAT LINE 600 700 800 900 AQ Slimbox Gola':baseChoice?'нижний шкаф полки мойка Gola гола ручки '+globalThis.MF_GOLA.baseChoices().filter(v=>v.door_count===baseChoice.door_count).map(v=>v.source_file||'').join(' '):upperChoice?globalThis.MF_UPPERS.variants.filter(v=>v.door_count===upperChoice.door_count).map(v=>v.label+' '+v.source_file).join(' '):drawerChoice?'ящики Gola гола обычные шариковые направляющие AQ LineBox Westline AKS Slimbox Evolution Push to open внутренний доводчик':p.vitrine?'витрина стекло подсветка Z1 LIRA 17.5 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
-    addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:cargoChoice?globalThis.MF_CARGO.family.label:dryerChoice?globalThis.MF_PULLOUT_DRYERS.family.label:baseChoice?globalThis.MF_GOLA.family(baseChoice).label:upperChoice?globalThis.MF_UPPERS.family(upperChoice).label:drawerChoice?globalThis.MF_DRAWERS.family.label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
+    const search=openTallChoice?(openTallChoice.wall?'верхний открытый ВМ ':'')+'открытый пенал полки ЛДСП 18 подсветка AQ LIRA 4 17.5':cargoChoice?(cargoChoice.waste?'мусорные контейнеры GEO X 350 400 450 ':'')+'карго корзина FOCUS NORWING NORWIG ICON Gola гола 150 200 300 400':dryerChoice?'выдвижная сушка NORWING FLAT LINE 600 700 800 900 AQ Slimbox Gola':baseChoice?'нижний шкаф полки мойка Gola гола ручки '+globalThis.MF_GOLA.baseChoices().filter(v=>v.door_count===baseChoice.door_count).map(v=>v.source_file||'').join(' '):upperChoice?globalThis.MF_UPPERS.variants.filter(v=>v.door_count===upperChoice.door_count).map(v=>v.label+' '+v.source_file).join(' '):drawerChoice?'ящики Gola гола обычные шариковые направляющие AQ LineBox Westline AKS Slimbox Evolution Push to open внутренний доводчик':p.vitrine?'витрина стекло подсветка Z1 LIRA 17.5 фрезеровка уплотнитель':p.tall?(p.tall.family==='appliance'?globalThis.MF_FURNITURE_CORE.APPLIANCE_TALL_VARIANTS:globalThis.MF_FURNITURE_CORE.TALL_VARIANTS).map(v=>v.label+' '+v.source_file).join(' '):p.corner?globalThis.MF_FURNITURE_CORE.CORNER_VARIANTS.map(v=>v.label+' '+v.source_file).join(' '):family?[family.left,family.right].map(k=>bazisById.get(k).label+' '+bazisById.get(k).source_file).join(' '):'';
+    addCatalogueButton(groups.get(categoryKey(m)),{bazis:id,category:categoryKey(m),label:cargoChoice?(cargoChoice.waste?globalThis.MF_CARGO.wasteFamily:globalThis.MF_CARGO.family).label:dryerChoice?globalThis.MF_PULLOUT_DRYERS.family.label:baseChoice?globalThis.MF_GOLA.family(baseChoice).label:upperChoice?globalThis.MF_UPPERS.family(upperChoice).label:drawerChoice?globalThis.MF_DRAWERS.family.label:p.tall?tallFamily.label:p.corner?cornerFamily.label:family?.label||m.label,description:familyDescription,search});
   }
   applyCatalogueFilter();
 }

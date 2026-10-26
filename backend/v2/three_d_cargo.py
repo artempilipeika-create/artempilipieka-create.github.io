@@ -15,6 +15,7 @@ def cargo_error(it):
     if not v:return 'Карго не совпадает с проверенным исходником'
     k=cargo_kit(it)
     if k and k.get('error'):return k['error']
+    if k and k.get('min_depth') and it['depth']<k['min_depth']:return f"Комплект {k['article']}: глубина корпуса от {k['min_depth']} мм"
     if it['width'] not in v['allowed_widths']:return 'Карго '+v['brand'].upper()+': ширина только '+', '.join(map(str,v['allowed_widths']))+' мм'
     if it.get('module_type')!='base_cabinet' or it.get('base')=='wall' or cargo_base(it) not in (80,100,150):return 'Карго: нижний модуль на ножках 80, 100 или 150 мм'
     if not v['min_body_height']<=it['height']-cargo_base(it)<=1000 or not 510<=it['depth']<=700:return f"Карго {v['brand'].upper()}: высота корпуса {v['min_body_height']}–1000, глубина 510–700 мм"
@@ -23,6 +24,8 @@ def cargo_adjustment(it):
     notes=[]
     if cargo_base(it)!=100:notes.append(f"В БАЗИС заменить опоры 100 мм на {cargo_base(it)} мм.")
     if it['depth']!=510:notes.append('В БАЗИС проверить изменение глубины: задняя царга сохраняет 80 мм, передняя царга и комплект карго перемещаются к фасаду без растяжения.')
+    v=cargo_variant(it)
+    if v and v.get('waste') and it['width']==450:notes.extend(v['warnings'])
     return ' '.join(notes) or None
 def cargo_hardware(it):
     error=cargo_error(it)
@@ -39,4 +42,4 @@ def cargo_hardware(it):
     return rows
 def cargo_contents(it):
     v=cargo_variant(it);k=cargo_kit(it)
-    return f"{v['brand'].upper()} · {it['width']} мм; комплект {k['article']}; "+('боковое крепление слева' if k['mounting']=='side_left' else 'нижнее крепление')+'; один выдвижной фасад; '+('Gola L без подсветки' if v['execution']=='gola' else 'накладная ручка')
+    return f"{'GEO X · мусорные контейнеры' if v.get('waste') else v['brand'].upper()} · {it['width']} мм; комплект {k['article']}; "+('боковое крепление слева' if k['mounting']=='side_left' else 'нижнее крепление')+'; один выдвижной фасад; '+('Gola L без подсветки' if v['execution']=='gola' else 'накладная ручка')
