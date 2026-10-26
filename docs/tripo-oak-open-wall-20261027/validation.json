@@ -1,0 +1,31 @@
+{
+  "deployed_commit": "548547ad4a507d6276ab3f1fb87387e28d446e07",
+  "deployment_id": "0eb827a9-9474-4ba1-98a9-bf517bd71e95",
+  "deployment_status": "SUCCESS",
+  "ci_run": 40403314762,
+  "node_tests": 683,
+  "python_tests": 415,
+  "ci_skipped": 0,
+  "asset_http_200": 7,
+  "asset_hash_matches": 7,
+  "browser_variants": [
+    "none",
+    "aq-left",
+    "aq-right",
+    "aq-both",
+    "lira-left",
+    "lira-right",
+    "lira-both"
+  ],
+  "synthetic_project": "QA_Tripo_Oak_20261027",
+  "save_reopen_edit": "passed",
+  "dimensions_edit": [
+    600,
+    500,
+    600
+  ],
+  "selected_material_preserved": "605 PO · ЛДСП BYSPAN 18мм Белый 605 PO",
+  "selected_source": "ВМ-600. Фр_17.5мм_Две стороны_Центр.Пл_18мм.Отк.fr3d",
+  "console_errors": 0,
+  "console_warnings": 0
+}

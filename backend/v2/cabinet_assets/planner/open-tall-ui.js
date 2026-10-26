@@ -27,7 +27,7 @@
     const file={none:v.wall?'open-wall-934509b39a14':'open-tall-none','aq-4x8':'aq-profile','lira-17.5x6.5':'lira-profile'}[value];
     if(icon.dataset.photo!==file){
      icon.dataset.photo=file;icon.replaceChildren();
-     const img=document.createElement('img');img.src='/account/planner/module-card-images/'+file+'.webp';img.alt='';img.loading='lazy';img.decoding='async';img.draggable=false;
+     const img=document.createElement('img');img.src=root.MF_CHOICE_CARDS.image(file);img.alt='';img.loading='lazy';img.decoding='async';img.draggable=false;
      img.addEventListener('error',()=>{icon.innerHTML=drawing(it,value,v.lighting==='none'?'left':v.lighting);delete icon.dataset.photo;},{once:true});icon.append(img);
     }
    }else icon.innerHTML=drawing(it,v.light_system,value);
