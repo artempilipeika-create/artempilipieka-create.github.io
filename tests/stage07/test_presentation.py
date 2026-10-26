@@ -1,11 +1,11 @@
 """Stage 7 presentation routes must not widen any private/business surface."""
 from pathlib import Path
 from html.parser import HTMLParser
+from uuid import uuid4
 import pytest
-from tests.stage03.test_api import settings,api,admin_user,post,publish,PASSWORD
-from tests.stage05.test_api import client_order
+from tests.stage03.test_api import settings,api,admin_user,post,publish,PASSWORD,login
 from backend.v2.presentation_ui import PAGES,ASSETS,ROOT
-from backend.v2.db import connect
+from backend.v2.db import connect,transaction
 
 @pytest.mark.parametrize('path',list(PAGES))
 def test_public_pages_are_explicit_noindex_csp(api,path):
@@ -29,7 +29,15 @@ def test_no_wholesale_static_legacy_or_private_mount(api,path):
         assert api.request(method,path,headers={'Range':'bytes=0-20'}).status_code in (404,405)
 
 def test_client_cannot_use_staff_or_production_data_through_ui_aliases(api,settings,admin_user):
-    order,_,_,_=client_order(api,settings,admin_user,mode='manager_assisted')
+    # Registration no longer signs in: explicitly switch away from the admin
+    # fixture so these assertions exercise a verified client's own session.
+    email=uuid4().hex+'@example.invalid'
+    user=post(api,'/auth/register',{'email':email,'password':PASSWORD},status=201)
+    with transaction(settings) as c:
+        c.execute('UPDATE mf_users SET email_verified_at=now() WHERE user_id=%s',(user['user_id'],))
+    login(api,email)
+    assert api.get('/api/v2/auth/me').json()['roles']==['client']
+    order=post(api,'/orders',{'business_name':'Synthetic UI isolation','preparation_mode':'manager_assisted'},status=201)
     assert api.get('/api/v2/admin/staff').status_code==403
     assert api.get('/api/v2/admin/audit').status_code==403
     assert api.get('/api/v2/orders/'+order['order_id']+'/oblx').status_code==403
