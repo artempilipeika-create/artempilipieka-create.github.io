@@ -36,7 +36,7 @@ def test_every_catalogue_module_creates_and_all_accepted_resizes_save(catalogue_
     assert not errors, errors
 
 def test_native_source_identity_takes_precedence_over_old_generic_template(catalogue_contract):
-    item = next(x for x in catalogue_contract['defaults'] if x['bazis_id']=='bazis.3079d0656398')
+    item = dict(next(x for x in catalogue_contract['defaults'] if x['bazis_id']=='bazis.3079d0656398'))
     item.update(width=800, template_id='base.one_door')
     assert FurnitureItem(**item).width == 800
     item.update(bazis_id=None, bazis_file=None, bazis_sha256=None)

@@ -57,3 +57,30 @@ def test_foreign_checkpoint_and_archived_project_cannot_be_restored(api,admin_us
     assert api.delete(url).status_code==204
     assert api.get(url+'/versions').status_code==404
     assert api.post(url+'/versions/'+v['version_id']+'/restore',json={'version':1,'request_id':str(uuid4())}).status_code==404
+
+
+from tests.test_catalogue_contract import catalogue_contract
+
+def test_all_catalogue_sources_survive_database_save_reopen_and_resize(api, admin_user, catalogue_contract):
+    accepted = catalogue_contract['accepted']
+    for item in catalogue_contract['defaults']:
+        body = {'name':'QA catalogue '+item['bazis_id'], 'request_id':str(uuid4()),
+                'scene':{'schema_version':2,'room':{'width':12000,'depth':12000,'height':5000},'items':[item]}}
+        created = api.post('/api/v2/3d-projects', json=body)
+        assert created.status_code == 201, (item['bazis_id'], created.text)
+        project = created.json()
+        url = '/api/v2/3d-projects/'+project['project_id']
+        opened = api.get(url)
+        assert opened.status_code == 200, opened.text
+        persisted = opened.json()['scene']['items'][0]
+        for key in ('bazis_id','bazis_file','bazis_sha256','body_variant_id','front_variant_id'):
+            assert persisted.get(key) == item.get(key), (item['bazis_id'], key)
+        # Exercise an old saved generic template with the largest accepted width.
+        candidates = [r for r in accepted if r['id']==item['bazis_id'] and r['mode']=='legacy' and r['axis']=='width']
+        changed = max(candidates, key=lambda r:r['value'])['item']
+        updated = api.patch(url, json={**body,'request_id':str(uuid4()),'version':project['version'],
+                                      'scene':{**body['scene'],'items':[changed]}})
+        assert updated.status_code == 200, (item['bazis_id'], updated.text)
+        saved = api.get(url).json()['scene']['items'][0]
+        for key in ('bazis_id','bazis_file','bazis_sha256','width'):
+            assert saved.get(key) == changed.get(key), (item['bazis_id'], key)

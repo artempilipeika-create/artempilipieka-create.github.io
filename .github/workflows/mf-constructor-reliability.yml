@@ -27,6 +27,7 @@ jobs:
           --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
+      MF_EMAIL_PROVIDER: fake
       MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +38,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install test dependencies
-        run: pip install -r backend/v2/requirements.txt pytest==9.1.1 pypdf==6.9.1
+        run: pip install -r backend/v2/requirements.txt pytest==9.1.1 pypdf==6.9.1 numpy==2.5.4
       - name: Geometry, materials, source pins, export and autosave
         run: node --test tests/webgl/*.test.mjs
       - name: Catalogue contract and isolated database saves
