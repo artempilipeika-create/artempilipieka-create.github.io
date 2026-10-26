@@ -1,0 +1,23 @@
+[
+  {
+    "key": "main:wall-single",
+    "file": "wall-single",
+    "prompt": "MF_REALISTIC_ALL_WALL_SINGLE. Re-render this exact one-door wall cabinet as a premium architectural product photograph, matching the approved MARTIN FOREST natural oak series. Change all wooden cabinet surfaces and the single closed door to finely detailed light natural oak veneer with realistic pores and long vertical grain. Preserve the exact cabinet geometry, single slab door, 18 mm panel thickness, 1.5 mm perimeter gaps, camera angle and proportions from the reference. Keep ONE small BLACK vertical handle at the LOWER RIGHT free edge of the door; hinges are on the left, the handle is opposite hinges. The complete cabinet is wall-mounted with no countertop, no feet, no plinth, no lighting. Pale textured warm plaster wall, soft natural side daylight, very subtle window-light gradient, believable contact shadows, sharp edge-band detail and non-plastic material response. Close but uncropped composition, entire cabinet with 7 percent margins. One large photorealistic image, not an illustration or collage, no labels, props or text.",
+    "task_id": "8a72b7d3-f1bc-47ac-8637-ae12931c54b0",
+    "credits": 0
+  },
+  {
+    "key": "option:drawer:drawer:layout:three",
+    "file": "drawer-three",
+    "prompt": "MF_REALISTIC_ALL_THREE_DRAWERS. Re-render the exact cabinet in the attached reference as a premium photorealistic natural oak furniture product. Preserve its geometry precisely: 600 mm width, 720 mm carcass, 100 mm recessed plinth, 18 mm panels. Exactly THREE CLOSED drawer fronts: top 177.5 mm, middle 177.5 mm, bottom 357 mm; narrow 1.5 mm perimeter gaps. Exactly one small horizontal matte BLACK bar handle centered near the top of EACH of the three fronts. No fourth drawer. Keep the upper open carcass rails visible as in the reference, no countertop. No lighting. Do not extend side panels down to the floor. Light natural oak with detailed fine pores, vertical coherent woodgrain across the three facades, matching edges. Pale warm textured plaster wall and light stone floor, soft natural directional daylight, believable soft contact shadows, crisp fine edge highlights, realistic physical material response. Slight three-quarter front view matching reference, complete cabinet framed close with 7 percent clear margins. One large cabinet photograph, no collage, captions, text, diagram or decor. Since the drawers are closed do not invent visible slides outside them.",
+    "task_id": "5cc1e8d2-ea00-4b99-989d-763a376acdf1",
+    "credits": 0
+  },
+  {
+    "key": "main:tall-appliance",
+    "file": "tall-appliance",
+    "prompt": "MF_REALISTIC_ALL_TALL_APPLIANCE. Re-render the exact tall cabinet in the attached reference as a premium photorealistic natural oak furniture product, matching the approved MARTIN FOREST oak shelf series. Preserve its precise proportions, 18 mm panel thickness, exactly ONE upper closed cupboard door, ONE realistic black-glass oven in the middle, and ONE lower closed cupboard door. No microwave and no additional drawers. Keep both small BLACK vertical cabinet handles on the RIGHT free edge: upper door handle close to the lower edge, lower door handle close to its upper edge, as in reference. Left hinges. Light natural oak veneer with fine detailed pores, coherent vertical grain across facades and matching edge bands. Dark recessed plinth and side panels stopping above it. Black oven with refined glass, realistic subtle reflections, accurate control knobs and horizontal metal handle. Pale warm textured plaster wall and light stone floor, soft natural side daylight, realistic gentle contact shadows and crisp physical edges. Entire tall cabinet visible from top to base with seven percent clear margins; slight three-quarter front view matching the reference. One large photorealistic product image only, no collage, text, labels, plants or decor. No lighting strips.",
+    "task_id": "85df0e99-632b-45c2-b9e0-f9db780764e1",
+    "credits": 0
+  }
+]
