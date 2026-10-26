@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.4 MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-24)
+ Martin Forest -> BAZIS native importer v9.9.5 SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-26)
+ v9.9.5: preserve saved source identities; report actual mismatching hashes; never replace library FR3D.
  v9.9.4: preserve complete catalogue material names, including 605 PO / 890 PO suffixes.
  v9.9.3: bind the reviewed НМД2-600.(2).fr3d; upgrade only its known prior production SHA.
  Exact source hash validation remains mandatory.
@@ -206,10 +207,8 @@ const VERIFIED_UPPER_DRYER_REVISIONS = Object.freeze({
   })
 });
 function canonicalUpperDonor(item) {
-  const record = VERIFIED_UPPER_DRYER_REVISIONS[String(item && item.bazis_id || '')];
-  if (!record || String(item.source_sha256 || '').toLowerCase() !== record.previous ||
-      normalizeSourceName(item.source_file) !== normalizeSourceName(record.file)) return item;
-  return { ...item, source_file: record.file, source_sha256: record.current };
+  // The export pins exact bytes. Never replace a donor during import.
+  return item;
 }
 // Same reviewed revision as furniture-core.js / three_d_base.py. Standalone BAZIS script.
 const VERIFIED_BASE_REVISION = Object.freeze({
@@ -217,10 +216,8 @@ const VERIFIED_BASE_REVISION = Object.freeze({
   current: 'a659d5e7a0da816ef74206ec86c76e09fa3a3c728a7247b80be9bac507b689d2', file: 'НМД2-600.(2).fr3d'
 });
 function canonicalBaseDonor(item) {
-  const r = VERIFIED_BASE_REVISION;
-  return item && item.bazis_id === r.id && [r.previous, r.current].includes(String(item.source_sha256 || '').toLowerCase())
-    && (item.source_sha256 !== r.current || item.source_file !== r.file)
-    ? { ...item, source_file: r.file, source_sha256: r.current } : item;
+  // The export pins exact bytes. Never replace a donor during import.
+  return item;
 }
 function resolveSourceFile(root, item, scan) {
   if (!item || !item.source_file) return '';
@@ -247,6 +244,17 @@ function resolveSourceFile(root, item, scan) {
     return '';
   }
   return candidates[0] || '';
+}
+
+function sourceMismatchMessage(root,item,scan){
+  const sameName=scan.files.filter(file=>normalizeSourceName(path.basename(file))===normalizeSourceName(item.source_file));
+  let message=item.source_file+' — точный FR3D по SHA-256 не найден'+
+    '\nОжидаемый SHA-256: '+(item.source_sha256||'не указан');
+  if(sameName.length){
+    message+='\nОдноимённые файлы имеют другое содержимое:';
+    for(const file of sameName.slice(0,5))message+='\n'+file+'\nФактический SHA-256: '+(scan.hashes?.get(file)||sha256File(file));
+  }else message+='\nФайл с таким именем отсутствует в выбранной папке и её подпапках.';
+  return message+'\nПривязка модуля сохранена. Автозамена отключена. Добавьте нужную версию FR3D в отдельную подпапку или явно выберите другой модуль на сайте. Существующие FR3D не заменяйте.';
 }
 
 function asList(obj) {
@@ -872,15 +880,14 @@ const CARGO_WIDTHS = {"0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8a
 const PULLOUT_DRYER_WIDTHS = {"afefecee12fdf21084dd0cf7f014d83d6e351381825909171da3988aa295f7d6":[600,700,800,900],"b09ee8913055cca2aeb868311dc0e142313413e7c58450badb3249eba334ba46":[600,700,800],"efae0c7055e6ba437774a7736d50468466d2be411adb5e9574e1798bd5396810":[600,700,800,900],"85c150c30ea523a3eab1d3dc1505f977557b07c9133717a8f9733e43a630573c":[600,700,800],"736c6f9b31fd24519236a4a9b6d5d3bd52985a4133363e6994d99d1efab81185":[600,700,800,900],"6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b":[600,700,800],"8c1edeae68509bcee986c19f00fa7c5566222e9c9160f0f79b8b83c9ee432f2d":[600,700,800,900],"08a67c2cc8b6825cef47ac28eb652f6f93fe241535c6e6ac6743e056f38d693f":[600,700,800],"8a5a8cbca81fbf5d55ea9dbd3c77542f3ca7b90e15e428fc10e68e997f7fc2c1":[600,700,800,900],"627e0250a8e58f5e303fb11c56b4a8b881f53e5b74b5448a11a5dfdc4ce59ba8":[600,700,800,900],"8ae53ff1c32875d047c9c7dc6ad08dd5b4f68730294e2d91576c3ad8593e9f31":[600,700,800],"8001bcb4cbee6ebdea8654ab04c68b5d481115b56eba5b46b2fbdfd5f051b3cf":[600,700,800]};
 const DRYER_SOURCE_REVISION = {"id": "bazis.2e5a55692728", "previous": "2e5a55692728b4b74e1e479f507c0bffedd8550224c2412bf637c104c3997396", "current": "6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b", "file": "НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING(1).fr3d"};
 function canonicalDryerDonor(item) {
-  const r=DRYER_SOURCE_REVISION;
-  return item && item.bazis_id===r.id && item.source_sha256===r.previous
-    ? {...item,source_file:r.file,source_sha256:r.current} : item;
+  // The export pins exact bytes. Never replace a donor during import.
+  return item;
 }
 function prepareProject(payload, root) {
   const scan = collectSourceFiles(root);
   const entries = [], errors = [];
   for (const original of payload.items) {
-    const item = canonicalDryerDonor(canonicalBaseDonor(canonicalUpperDonor(original)));
+    const item = original;
     if(OPEN_WALL_SOURCES.has(String(item.source_sha256||'').toLowerCase())){
       const t=item.target||{},w=Number(t.width),h=Number(t.height),d=Number(t.depth);
       if(![w,h,d].every(Number.isFinite)||w<300||w>600||h<300||h>2400||d<250||d>600){errors.push('Верхний открытый: 300–600 × 300–2400 × 250–600 мм');continue;}
@@ -897,15 +904,11 @@ function prepareProject(payload, root) {
       const body=Number(item.target?.height)-Number(item.construction?.kitchen?.legHeightMm||100),depth=Number(item.target?.depth);
       if(!Number.isFinite(body)||body<cargoMin||body>1000||!Number.isFinite(depth)||depth<510||depth>700){errors.push('Карго: корпус '+cargoMin+'–1000, глубина 510–700 мм');continue;}
     }
-    const widths=PULLOUT_DRYER_WIDTHS[String(item.source_sha256||'').toLowerCase()];
+    const widths=PULLOUT_DRYER_WIDTHS[String(item.source_sha256||'').toLowerCase()] || (item.source_sha256===DRYER_SOURCE_REVISION.previous?PULLOUT_DRYER_WIDTHS[DRYER_SOURCE_REVISION.current]:null);
     if(widths&&!widths.includes(Number(item.target?.width))){errors.push('Сушка: ширина только '+widths.join(', ')+' мм');continue;}
     const source = resolveSourceFile(root, item, scan);
-    if (!source) errors.push(item.source_file + ' — точный FR3D по SHA-256 не найден' +
-      '\nОжидаемый SHA-256: ' + (item.source_sha256 || 'не указан') +
-      (item !== original ? '\nОбнаружен старый SHA экспорта или имя: нужен проверенный исходник ' + item.source_file + '.' : '') +
-      (item.source_sha256 === '877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3'
-        ? '\nДля обновлённого ВМД2: на сайте выберите шкаф, повторно нажмите «Накладные ручки» и скачайте новый экспорт.' : ''));
-    else entries.push({ item, source, previous_source_sha256: item !== original ? original.source_sha256 : '' });
+    if (!source) errors.push(sourceMismatchMessage(root,item,scan));
+    else entries.push({ item, source, previous_source_sha256: '' });
   }
   if (errors.length) throw new Error('Проверьте исходные FR3D в библиотеке:\n' + errors.join('\n') +
     '\nПапка поиска: ' + root + '\nНайдено FR3D: ' + scan.files.length +
@@ -914,7 +917,7 @@ function prepareProject(payload, root) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.4 MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.5 SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1035,8 +1038,6 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
-      if (entry.previous_source_sha256) log.push('ОБНОВЛЕНА ПРИВЯЗКА FR3D: ' + entry.previous_source_sha256 +
-        ' -> ' + item.source_sha256 + '; файл проверен по SHA-256');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');

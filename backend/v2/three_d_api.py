@@ -19,14 +19,13 @@ from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
-from .three_d_upper import upper_variant, upper_error, refresh_upper_source, BY_ID as UPPER_BY_ID
+from .three_d_upper import upper_variant, upper_error, BY_ID as UPPER_BY_ID
 from .three_d_accessories import dishwasher, dishwasher_error, BY_ID as DISHWASHER_BY_ID
 from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
-from .three_d_base import refresh_base_source
 from .three_d_cargo import cargo_variant, cargo_error, BY_ID as CARGO_BY_ID
 from .three_d_open_tall import open_tall_variant, open_tall_error, BY_ID as OPEN_TALL_BY_ID
-from .three_d_pullout_dryers import dryer_variant, dryer_error, refresh_dryer_source, BY_ID as PULLOUT_DRYER_BY_ID
+from .three_d_pullout_dryers import dryer_variant, dryer_error, BY_ID as PULLOUT_DRYER_BY_ID
 
 class ShelfState(StrictModel):
     id: str=Field(min_length=1,max_length=80)
@@ -127,11 +126,9 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Worktop fixture requires 20 mm front and rear margins')
         if self.module_type!='tall_cabinet' and (self.depth%1 or self.x%0.5 or self.z%0.5):
             raise ValueError('Дробная глубина с шагом 0,5 мм и координаты 0,25 мм доступны только пеналам')
-        refreshed=refresh_dryer_source(refresh_base_source(refresh_upper_source({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file})))
-        self.bazis_sha256=refreshed.get('bazis_sha256')
-        self.bazis_file=refreshed.get('bazis_file')
-        v=gola_variant(refreshed) or dryer_variant(refreshed) or cargo_variant(refreshed)
-        dish=dishwasher(refreshed)
+        source={'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256,'bazis_file':self.bazis_file}
+        v=gola_variant(source) or dryer_variant(source) or cargo_variant(source)
+        dish=dishwasher(source)
         is_gola=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
         expected_gap=(self.countertopDepthMm or 600)-self.depth-18.5 if is_gola else 50
         if self.rearServiceGapMm is not None and self.rearServiceGapMm!=expected_gap:
@@ -185,34 +182,34 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Верхний шкаф — навесной, без основания')
             error=upper_error(dict(width=self.width,height=self.height,depth=self.depth),upper)
             if error:raise ValueError(error)
-            self.bazis_file=upper['source_file'];self.bazis_resize=True
+            self.bazis_file=self.bazis_file or upper['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0
             if upper['execution']!='handles':self.handles='handleless'
         if self.bazis_id in DISHWASHER_BY_ID:
             error=dishwasher_error(self.model_dump())
             if error:raise ValueError(error)
-            v=dishwasher(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            v=dishwasher(self.model_dump());self.bazis_file=self.bazis_file or v['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0;self.handles='handleless' if v['variant']=='gola' else self.handles
         if self.bazis_id in OPEN_TALL_BY_ID:
             error=open_tall_error(self.model_dump())
             if error:raise ValueError(error)
-            v=open_tall_variant(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            v=open_tall_variant(self.model_dump());self.bazis_file=self.bazis_file or v['source_file'];self.bazis_resize=True
             self.layout='niche';self.drawers=0;self.shelves=[];self.handles='handleless';self.front_variant_id=None;self.doors_open=False
         if self.bazis_id in CARGO_BY_ID:
             error=cargo_error(self.model_dump())
             if error:raise ValueError(error)
-            v=cargo_variant(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            v=cargo_variant(self.model_dump());self.bazis_file=self.bazis_file or v['source_file'];self.bazis_resize=True
             self.layout='drawers';self.drawers=1;self.shelves=[]
             self.handles='handleless' if v['execution']=='gola' else 'handles'
         if self.bazis_id in PULLOUT_DRYER_BY_ID:
             error=dryer_error(self.model_dump())
             if error:raise ValueError(error)
-            v=dryer_variant(self.model_dump());self.bazis_file=v['source_file'];self.bazis_resize=True
+            v=dryer_variant(self.model_dump());self.bazis_file=self.bazis_file or v['source_file'];self.bazis_resize=True
             self.layout='drawers';self.drawers=2;self.handles='handleless' if v['execution']=='gola' else 'handles'
         if self.bazis_id in GOLA_BY_ID:
             data=self.model_dump();error=gola_error(data)
             if error:raise ValueError(error)
-            gola=gola_variant(data);self.bazis_file=gola['source_file'];self.bazis_resize=True;self.handles='handleless'
+            gola=gola_variant(data);self.bazis_file=self.bazis_file or gola['source_file'];self.bazis_resize=True;self.handles='handleless'
             self.layout=gola['kind'];self.drawers=gola['drawer_count']
         drawer=drawer_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
         if self.bazis_id in DRAWER_BY_ID:
@@ -223,7 +220,7 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Размеры шкафа: корпус 600–1000 мм, глубина 300–700 мм, ширина 400–1200 мм.')
             _,error=drawer_configuration(dict(bazis_id=self.bazis_id,bazis_sha256=self.bazis_sha256,height=self.height,base_height=base,depth=self.depth))
             if error:raise ValueError(error)
-            self.bazis_file=drawer['source_file'];self.bazis_resize=True
+            self.bazis_file=self.bazis_file or drawer['source_file'];self.bazis_resize=True
             self.layout='drawers';self.drawers=drawer['drawer_count']
             if drawer['opening']=='push':self.handles='handleless'
         vitrine=vitrine_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
@@ -239,8 +236,7 @@ class FurnitureItem(StrictModel):
             if not vitrine['global_elastic_defined'] and (self.width,self.height,self.depth)!=(600,2000,600):
                 raise ValueError('Две стороны + L: исходная витрина имеет фиксированный размер 600 × 2000 × 600 мм')
             self.bazis_resize=vitrine['global_elastic_defined']
-            self.bazis_file=vitrine['source_file']
-            self.bazis_sha256=vitrine['source_sha256']
+            self.bazis_file=self.bazis_file or vitrine['source_file']
             self.handles='handleless'
             self.front_variant_id=None
         tall=tall_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
@@ -482,11 +478,6 @@ def _module_previews(scene,values):
 
 def projection(row):
     result={k:row[k] for k in ('project_id','name','module_type','scene','version','created_at','updated_at')}
-    scene=result.get('scene')
-    if isinstance(scene,dict) and isinstance(scene.get('items'),list):
-        refreshed=[refresh_dryer_source(refresh_base_source(refresh_upper_source(it))) for it in scene['items']]
-        if any(updated is not original for updated,original in zip(refreshed,scene['items'])):
-            result['scene']={**scene,'items':refreshed}
     return result
 
 def router(settings):

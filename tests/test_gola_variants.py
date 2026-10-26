@@ -14,8 +14,9 @@ def item(v):
  return dict(item_id=v['id'],name=v['label'],module_type='base_cabinet',bazis_id=v['id'],bazis_file=v['source_file'],bazis_sha256=v['source_sha256'],width=600,height=820,depth=510,body_height=720,base_height=100,base='legs',x=0,z=0,rotation=0)
 @pytest.mark.parametrize('v',VARIANTS,ids=lambda v:v['source_file'])
 def test_save_and_pdf_source_fronts(v):
- saved=FurnitureItem(**dict(item(v),bazis_file='stale.fr3d')).model_dump()
- assert saved['bazis_file']==v['source_file'] and saved['bazis_resize']
+ saved=FurnitureItem(**dict(item(v),bazis_file='Мой переименованный модуль.fr3d')).model_dump()
+ assert saved['bazis_file']=='Мой переименованный модуль.fr3d' and saved['bazis_resize']
+ assert saved['bazis_sha256']==v['source_sha256']
  assert saved['handles']=='handleless' and saved['drawers']==v['drawer_count'] and saved['layout']==v['kind']
  text=module_contents(saved)
  if v['layout']=='three':assert '329 + 163 + 163' in text

@@ -83,7 +83,7 @@ def test_shallow_tall_depth_persists_in_api_and_document(v):
     for depth in (299,701):
         with pytest.raises(ValidationError):FurnitureItem(**{**it,'depth':depth})
 
-def test_corrected_norwing_source_refreshes_saved_projects_without_loosening_sha_guard():
+def test_norwing_revisions_remain_pinned_and_keep_historical_warning():
     from backend.v2.three_d_pullout_dryers import refresh_dryer_source
     from backend.v2.three_d_api import projection
     from backend.v2.sales_hardware import module_hardware,purchasing_rows
@@ -92,14 +92,14 @@ def test_corrected_norwing_source_refreshes_saved_projects_without_loosening_sha
     legacy={**item(v),'bazis_sha256':previous['source_sha256'],'bazis_file':previous['source_file'],
             'production_note':'Сохранить заметку','part_materials':{'drawer-1-bottom':'11111111-1111-4111-8111-111111111111'}}
     updated=refresh_dryer_source(legacy)
-    assert updated['bazis_sha256']==v['source_sha256']
-    assert updated['bazis_file'].endswith('NORWING(1).fr3d')
+    assert updated==legacy
+    assert updated['bazis_file']==previous['source_file']
     assert legacy['bazis_sha256']==previous['source_sha256']
     for key in ['item_id','name','width','height','depth','production_note','part_materials']:
         assert updated[key]==legacy[key]
-    assert FurnitureItem(**legacy).bazis_sha256==v['source_sha256']
+    assert FurnitureItem(**legacy).bazis_sha256==previous['source_sha256']
     row=dict(project_id='saved',name='Кухня',module_type='kitchen',scene={'items':[legacy]},version=7,created_at=None,updated_at=None)
-    assert projection(row)['scene']['items'][0]['bazis_sha256']==v['source_sha256']
+    assert projection(row)['scene']['items'][0]==legacy
     assert row['scene']['items'][0]['bazis_sha256']==previous['source_sha256']
     unknown={**legacy,'bazis_sha256':'0'*64}
     assert refresh_dryer_source(unknown) is unknown
@@ -109,3 +109,5 @@ def test_corrected_norwing_source_refreshes_saved_projects_without_loosening_sha
     assert not v['warnings'] and v['dryer_bounds']==dict(lo=[18,478.5,60],size=[562,220,450])
     assert hardware_for(legacy)==hardware_for(updated)
     assert module_contents(legacy)==module_contents(updated)
+
+    assert "вынесена" in hardware_for(legacy)[1]

@@ -8,7 +8,7 @@ poly,panel,purchase,slot_data=g.poly,g.panel,g.purchase,g.slot_data
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/"backend/v2/cabinet_assets/planner"
 
 # Reviewed replacement: retain the catalogue identity of existing projects.
-REVISION = {'id': 'bazis.2e5a55692728', 'source_file': 'НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING(1).fr3d', 'source_sha256': '6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b', 'previous_sources': [{'source_file': 'НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING.fr3d', 'source_sha256': '2e5a55692728b4b74e1e479f507c0bffedd8550224c2412bf637c104c3997396'}]}
+REVISION = {'id': 'bazis.2e5a55692728', 'source_file': 'НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING(1).fr3d', 'source_sha256': '6c26baab4b7a7bbc1c9b2eecb49112ffd97147ea176f3eb696318bc22b32cf0b', 'previous_sources': [{'source_file': 'НМРШ2-600.З.С 3мм Гвозди. Ящик AQ LineBox.NORWING.fr3d', 'source_sha256': '2e5a55692728b4b74e1e479f507c0bffedd8550224c2412bf637c104c3997396', 'dryer_bounds': {'lo': [18.0, 478.5, -450.0], 'size': [562.0, 220.0, 450.0]}, 'warnings': ['В исходнике AQ LineBox + NORWING без Gola корзина вынесена за заднюю стенку. В предпросмотре она установлена внутри корпуса; перед изготовлением исправить её положение в БАЗИС.']}]}
 
 def add_dryer(v,dryer,t):
  v['dryer_brand']='norwing' if 'norwing' in v['source_file'].lower() else 'flat_line'

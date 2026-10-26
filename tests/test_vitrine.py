@@ -37,15 +37,16 @@ def test_validation_prevents_invalid_donors_and_sizes():
         saved=FurnitureItem(**dict(item(v),width=550,height=2200,body_height=2100,depth=550))
         assert saved.bazis_resize
 
-def test_corrected_sources_upgrade_saved_projects_and_unlock_all_resize():
+def test_corrected_catalogue_sources_do_not_upgrade_saved_projects():
     assert all(v['global_elastic_defined'] for v in VARIANTS)
     for v in VARIANTS:
         for old in v.get('previous_sources', []):
             raw=dict(item(v),bazis_file=old['source_file'],bazis_sha256=old['source_sha256'],
-                     height=2200,body_height=2100,width=550,depth=550,glass_shelf_count=3,production_note='Сохранить полки')
+                     height=2000,body_height=1900,width=600,depth=600,glass_shelf_count=3,production_note='Сохранить полки')
             saved=FurnitureItem(**raw).model_dump()
-            assert saved['bazis_sha256']==v['source_sha256']
-            assert saved['bazis_file']==v['source_file'] and saved['bazis_resize']
+            assert saved['bazis_sha256']==old['source_sha256']
+            assert saved['bazis_file']==old['source_file']
+            assert saved['bazis_resize']==(old['source_sha256']==v['source_sha256'])
             for key in ['item_id','name','width','height','depth','x','z','rotation','glass_shelf_count','production_note']:
                 assert saved[key]==raw[key]
             assert vitrine_metrics(raw)==vitrine_metrics(saved)

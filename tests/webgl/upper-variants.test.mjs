@@ -88,7 +88,7 @@ test('Actual JSON export and importer profiles keep all eighteen exact identitie
  const c=vm.createContext({state:{items,room:{width:4200,depth:3200,height:2700}},templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,
  MF_FURNITURE_CORE:core,MF_UPPERS:U,MF_GOLA:globalThis.MF_GOLA,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,$:()=>({value:'Upper QA'}),status(){},setTimeout(){},alert:m=>assert.fail(m),confirm:()=>true,
  URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL(){}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
- vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),c);
+ vm.runInContext(source.slice(source.indexOf('function refreshUpperSource('),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);c.exportBazisProject();
  const payload=JSON.parse(await blob.text());assert.equal(payload.items.length,18);
  const script=readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8'),ic=vm.createContext({require:()=>({}),console,process});
@@ -98,8 +98,8 @@ test('Actual JSON export and importer profiles keep all eighteen exact identitie
 });
 
 
-test('Previously saved dryer donors refresh only the two approved source hashes',()=>{
- const start=source.indexOf('const UPPER_SOURCE_REFRESH='),end=source.indexOf('function scenePayload(){');
+test('Previously saved dryer donors keep both historical source hashes',()=>{
+ const start=source.indexOf('function refreshUpperSource('),end=source.indexOf('function scenePayload(){');
  assert.ok(start>=0&&end>start);
  const ctx=vm.createContext({MF_UPPERS:U,MF_GOLA:globalThis.MF_GOLA,MF_FURNITURE_CORE:core});
  const inferStart=source.indexOf('function inferTemplate('),inferEnd=source.indexOf('function legacyItem(');
@@ -113,7 +113,7 @@ test('Previously saved dryer donors refresh only the two approved source hashes'
   const donor=U.choice(id),previous={...item(donor),bazis_sha256:oldSha,production_note:'Не менять заметку',x:125,z:350};
   const room={width:4200,depth:3200,height:2700};
   const revived=ctx.normalizeScene({room,items:[previous]}).items[0];
-  assert.equal(revived.bazis_sha256,donor.source_sha256);
+  assert.equal(revived.bazis_sha256,oldSha);
   assert.equal(revived.bazis_file,donor.source_file);
   for(const field of ['name','width','height','depth','x','z','rotation','body_variant_id','front_variant_id','production_note'])assert.equal(revived[field],previous[field]);
   assert.equal(previous.bazis_sha256,oldSha);

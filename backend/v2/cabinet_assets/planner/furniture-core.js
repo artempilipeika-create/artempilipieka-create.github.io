@@ -11,9 +11,8 @@
     current:'a659d5e7a0da816ef74206ec86c76e09fa3a3c728a7247b80be9bac507b689d2',file:'НМД2-600.(2).fr3d'
   });
   function refreshBaseSource(it){
-    const r=BASE_SOURCE_REVISION;
-    return it?.bazis_id===r.id&&[r.previous,r.current].includes(it.bazis_sha256)
-      ? {...it,bazis_sha256:r.current,bazis_file:r.file} : it;
+    // Saved source identity is a pin, never a catalogue upgrade request.
+    return it;
   }
   // Exact 18 mm BYSPAN catalogue variants verified 2026-10-24.
   // Defaults are applied only when creating a module, never when loading a project.
@@ -255,6 +254,16 @@
   const GOLA_PRODUCTION=freeze(Object.fromEntries((root.MF_GOLA?.variants||[]).map(v=>[v.id,root.MF_GOLA.model(v)])));
   const ACCESSORY_PRODUCTION=freeze(Object.fromEntries((root.MF_ACCESSORIES?.dishwashers||[]).map(v=>[v.id,root.MF_ACCESSORIES.model(v)])));
   const PRODUCTION_MODELS=Object.freeze({...Object.fromEntries((root.MF_OPEN_TALL?.variants||[]).map(v=>[v.id,root.MF_OPEN_TALL.model(v)])),...Object.fromEntries((root.MF_CARGO?.variants||[]).map(v=>[v.id,root.MF_CARGO.model(v)])),...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  // Resolve known historical versions without changing the stored module.
+  function sourceProduction(it){
+    const p=PRODUCTION_MODELS[it?.bazis_id];
+    if(!p||!it.bazis_sha256||p.source_sha256===it.bazis_sha256)return p;
+    if(p.vitrine){const v=VITRINE.info(it);return v?VITRINE.model(v):null;}
+    if(p.pullout_dryer){const v=root.MF_PULLOUT_DRYERS.info(it);return v?root.MF_PULLOUT_DRYERS.model(v):null;}
+    if(p.upper){const v=root.MF_UPPERS.info(it);return v?{...p,source_sha256:v.source_sha256,source_file:it.bazis_file||v.source_file,upper:v}:null;}
+    return null;
+  }
+
   function tallVariantInfo(it){return allTallVariants.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function tallVariant(it,patch,catalogue){
     const current=tallVariantInfo(it);
@@ -272,7 +281,7 @@
     }
     return result;
   }
-  function tallUpperShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+  function tallUpperShelves(it,p=sourceProduction(it)){
     if(!p?.tall)return [];
     // Null preserves the original donor and previously saved projects.
     if(it.upper_shelf_count==null&&!(p.tall.family==='appliance'&&it.height!==p.native_defaults.height))return [...p.tall.upper_shelves];
@@ -280,7 +289,7 @@
     const gap=(top-bottom-count*t)/(count+1);
     return Array.from({length:count},(_,i)=>bottom+gap+t/2+i*(gap+t));
   }
-  function tallShelfAdjustment(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+  function tallShelfAdjustment(it,p=sourceProduction(it)){
     if(!p?.tall)return null;
     const positions=tallUpperShelves(it,p),source=p.tall.upper_shelves;
     const shelvesChanged=positions.length!==source.length||positions.some((y,i)=>Math.abs(y-source[i])>=.001);
@@ -291,12 +300,12 @@
       ...(drawerChanged?{drawer_length_mm:kit.length_mm,drawer_bottom_depth_mm:kit.length_mm-4,slide_article:kit.article}:{}),
       note:[shelvesChanged?'В родном FR3D вручную измените количество и положение верхних полок по этим отметкам. Нижняя полка и перегородка остаются на месте.':'',drawerChanged?tallDrawerNote(it,p):''].filter(Boolean).join(' ')};
   }
-  function tallDrawerKit(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+  function tallDrawerKit(it,p=sourceProduction(it)){
     if(p?.tall?.family!=='appliance'||!p.tall.drawer)return null;
     const data=root.MF_APPLIANCE_TALL_DRAWER_KITS,available=it.depth-data.rear_service_mm-data.rear_clearance_mm;
     return [...data.kits].reverse().find(k=>k.length_mm<=available)||null;
   }
-  function tallDrawerNote(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+  function tallDrawerNote(it,p=sourceProduction(it)){
     const k=tallDrawerKit(it,p);if(!k||k.length_mm===500)return '';
     return `Шуфляда: боковины ${k.length_mm} мм, дно ${k.length_mm-4} мм по глубине; направляющие L-${k.length_mm}, арт. ${k.article}, 1 комплект. В БАЗИС проверить и при необходимости вручную заменить направляющие, укоротить боковины и дно, переместить заднюю стенку ящика по деталировке экспорта.`;
   }
@@ -332,7 +341,7 @@
     return {...it,bazis_id:target.id,bazis_file:target.source_file,bazis_sha256:target.source_sha256,
       bazis_resize:Boolean(target.resize),name:automatic?p.label+suffix:it.name};
   }
-  function cornerSpec(it){const p=PRODUCTION_MODELS[it?.bazis_id];return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;}
+  function cornerSpec(it){const p=sourceProduction(it);return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;}
   function cornerVariantInfo(it){return CORNER_VARIANTS.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function cornerVariant(it,patch,catalogue){
     const current=cornerVariantInfo(it);
@@ -394,7 +403,7 @@
     return '';
   }
 
-  function productionShelves(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+  function productionShelves(it,p=sourceProduction(it)){
     if(p?.gola||p?.cargo||p?.open_tall)return [];
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.shelves(it,p);
     if(!p||p.tall||p.vitrine||p.metal_drawers)return [];
@@ -422,7 +431,7 @@
     if(d>=300)return 250;
     return null;
   }
-  function productionHardware(it,p=PRODUCTION_MODELS[it?.bazis_id]){
+  function productionHardware(it,p=sourceProduction(it)){
     if(p?.dishwasher)return root.MF_ACCESSORIES.hardware(it);
     if(p?.open_tall)return root.MF_OPEN_TALL.hardware(it,p);
     if(p?.cargo)return root.MF_CARGO.hardware(it,p);
@@ -459,9 +468,9 @@
   const KITCHEN_DEFAULTS=Object.freeze({legHeightMm:100,rearServiceGapMm:50,plinthMaterialId:null,
     countertopDepthMm:600,countertopStockLengthMm:4100,countertopThicknessMm:38,countertopMaterialId:null,
     countertopEnabled:true,countertopJoint:'standard'});
-  function isKitchenModule(it){const p=PRODUCTION_MODELS[it.bazis_id];return Boolean(p?.tier==='base'&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
+  function isKitchenModule(it){const p=sourceProduction(it);return Boolean(p?.tier==='base'&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256));}
   function kitchenGroup(it){
-    const p=PRODUCTION_MODELS[it?.bazis_id];
+    const p=sourceProduction(it);
     if(p?.tier==='base')return 'lower';
     if(p?.tier==='wall')return 'upper';
     if(it?.module_type==='base_cabinet')return 'lower';
@@ -478,14 +487,14 @@
   }
   function isTallModule(it){return kitchenGroup(it)==='tall';}
   function cabinetFrontExtension(it){
-    const p=PRODUCTION_MODELS[it?.bazis_id];
+    const p=sourceProduction(it);
     if(p?.open_tall)return 0;
     if(p?.vitrine)return 22.5; // Outer face of Z1, including its 2 mm clearance.
     if(p?.facade)return (p.facade.clearance_mm??0)+(p.facade.thickness||18);
     return 20;
   }
   function tallRearExtension(it){
-    const p=PRODUCTION_MODELS[it?.bazis_id];
+    const p=sourceProduction(it);
     return isTallModule(it)&&p?.tall&&p.tall.family!=='appliance'?(p.back?.thickness||0):0;
   }
   function cabinetFrontDatum(it){return rotateXZ(it.x,it.z,-(it.rotation||0)).z+it.depth/2+cabinetFrontExtension(it);}
@@ -517,7 +526,7 @@
     return k;
   }
   function golaCountertop(it){
-    const p=PRODUCTION_MODELS[it?.bazis_id];
+    const p=sourceProduction(it);
     return Boolean(isKitchenModule(it)&&(p?.gola?.execution==='gola'||p?.cargo?.execution==='gola'||p?.dishwasher?.variant==='gola'));
   }
   function alignKitchenChange(source,next){
@@ -984,5 +993,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

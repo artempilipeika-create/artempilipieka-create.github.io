@@ -8,6 +8,9 @@ BY_ID={v['id']:v for v in VARIANTS+GOLA_METAL+DRYER_METAL}
 
 def drawer_variant(it):
     v=BY_ID.get(it.get('bazis_id'))
+    if v:
+        old=next((p for p in v.get('previous_sources',[]) if p['source_sha256']==it.get('bazis_sha256')),None)
+        if old:return {**v,**old}
     return v if v and v['source_sha256']==it.get('bazis_sha256') else None
 
 def elastic(v,axis,value,delta):

@@ -1,0 +1,41 @@
+{
+  "baseline_failures": [
+    "Actual accessory controls add, resize, switch, undo, redo and remove a row plinth",
+    "All real Tripo buffers retain finite normalized geometry, UVs, unit normals and the web budget",
+    "All shelf, appliance and Z1 sources participate without depending on cabinet height or body depth",
+    "All six donors retain exact SHA and native dimensions",
+    "Every shelf, appliance and Z1 tall aligns its top, rear and facade in all four directions",
+    "Presentation keeps geometry/camera intact and caps the offscreen allocation",
+    "Production registry retains previous families and adds thirteen audited upper donors",
+    "Seven immutable donors include the corrected left file, native contours and elastic axes",
+    "Shared kitchen extras occur once and retain actual run length",
+    "Unchanged 9.9.4 importer resolves the exact original skinali and retains its native 6 mm material",
+    "all four supplied assets are finite normalized meshes within the polygon budget",
+    "default PН-600 provides two explicit unresolved standard mounting niches",
+    "specific appliance model and link are included in production and BAZIS notes",
+    "tests/webgl/showroom.test.mjs",
+    "tests/webgl/socket-asset.test.mjs",
+    "uploaded fixtures share real resources, mount faucet by its foot and release safely",
+    "visual-only faceplate changes do not change production niche heights"
+  ],
+  "current_failures": [
+    "Actual accessory controls add, resize, switch, undo, redo and remove a row plinth",
+    "All real Tripo buffers retain finite normalized geometry, UVs, unit normals and the web budget",
+    "All shelf, appliance and Z1 sources participate without depending on cabinet height or body depth",
+    "Every shelf, appliance and Z1 tall aligns its top, rear and facade in all four directions",
+    "Presentation keeps geometry/camera intact and caps the offscreen allocation",
+    "Production registry retains previous families and adds thirteen audited upper donors",
+    "Shared kitchen extras occur once and retain actual run length",
+    "Unchanged 9.9.4 importer resolves the exact original skinali and retains its native 6 mm material",
+    "all four supplied assets are finite normalized meshes within the polygon budget",
+    "default PН-600 provides two explicit unresolved standard mounting niches",
+    "specific appliance model and link are included in production and BAZIS notes",
+    "tests/webgl/showroom.test.mjs",
+    "tests/webgl/socket-asset.test.mjs",
+    "uploaded fixtures share real resources, mount faucet by its foot and release safely",
+    "visual-only faceplate changes do not change production niche heights"
+  ],
+  "new_failures": [],
+  "focused_node_passed": 114,
+  "focused_python_passed": 92
+}

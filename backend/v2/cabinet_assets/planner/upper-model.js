@@ -6,7 +6,15 @@
  const families=[{door_count:1,label:'ВМД1 · верхний шкаф с одной дверью',default_id:'bazis.858266606bc5'},
   {door_count:2,label:'ВМД2 · верхний шкаф с двумя дверями',default_id:'bazis.6c187245284a'}];
  const choice=id=>byId.get(id)||null;
- const info=it=>{const v=choice(it?.bazis_id);return v&&(!it.bazis_sha256||it.bazis_sha256===v.source_sha256)?v:null;};
+ const historicalSources={
+  'bazis.60f79b573cd1':'60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005',
+  'bazis.1ac4fadd97b7':'1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b'
+ };
+ const info=it=>{
+  const v=choice(it?.bazis_id);if(!v)return null;
+  if(historicalSources[v.id]===it.bazis_sha256)return {...v,source_sha256:it.bazis_sha256,source_file:it.bazis_file||v.source_file};
+  return !it.bazis_sha256||it.bazis_sha256===v.source_sha256?v:null;
+ };
  const family=v=>families.find(f=>f.door_count===v?.door_count)||null;
  const available=(v,patch)=>{const target={...v,...patch};return variants.find(x=>['door_count','side','filling','execution'].every(k=>x[k]===target[k]))||null;};
  const limits=v=>({w:[v.filling==='dryer'?400:300,v.door_count===1?600:v.filling==='dryer'?900:1200],h:[v.filling==='dryer'?600:300,1400],d:[250,500]});

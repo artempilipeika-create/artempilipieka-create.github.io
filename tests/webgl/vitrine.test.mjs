@@ -51,14 +51,14 @@ test('All twelve donors resize; quantities, LED cutting and shelves stay consist
   }
   assert.match(dimensionError({...item(V.variants[0]),bazis_sha256:'0'.repeat(64)}),/не совпадает/);
 });
-test('Corrected donors resize; known saved source versions upgrade without losing design state',()=>{
+test('Corrected donors resize; saved source versions retain their identity and size limits',()=>{
   assert.ok(V.variants.every(v=>v.global_elastic_defined));
   for(const v of V.variants)for(const source of v.previous_sources||[]){
     const old={...item(v),bazis_file:source.source_file,bazis_sha256:source.source_sha256,bazis_resize:false,glass_shelf_count:3,production_note:'Сохранить полки'};
     const snapshot=structuredClone(old),updated=normalizeKitchen(old);
     assert.deepEqual(old,snapshot);
-    assert.deepEqual(updated,{...old,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:v.global_elastic_defined});
-    assert.equal(dimensionError({...updated,width:550,height:2200,body_height:2100,depth:550}),'');
+    assert.deepEqual(updated,old);
+    assert.equal(Boolean(dimensionError({...updated,width:550,height:2200,body_height:2100,depth:550})),source.source_sha256!==v.source_sha256);
     assert.equal(productionHardware(old).items.find(h=>h.key==='glass-shelf-support').quantity,12);
     const bad={...old,bazis_sha256:'0'.repeat(64)};assert.equal(V.info(bad),null);assert.deepEqual(normalizeKitchen(bad),bad);
   }

@@ -8,7 +8,5 @@ BASE_SOURCE_REVISION = {
 
 
 def refresh_base_source(item: dict) -> dict:
-    r = BASE_SOURCE_REVISION
-    if item.get('bazis_id') == r['id'] and item.get('bazis_sha256') in (r['previous'], r['current']):
-        return {**item, 'bazis_sha256': r['current'], 'bazis_file': r['file']}
+    # Compatibility entry point. A saved source is immutable until explicit selection.
     return item

@@ -5,7 +5,11 @@
   const variants=(root.MF_DRAWER_VARIANTS||[]).map(v=>({...v,execution:'standard'})),family={label:'Нижний шкаф с ящиками',default_id:ballIds[0]};
   const layouts={two:'2 ящика',three:'3 ящика',inner:'2 + внутренний'},openings={soft:'С доводчиком',push:'Push to open'};
   const metalChoices=()=>[...variants,...(root.MF_GOLA?.variants||[]).filter(v=>v.kind==='drawers'&&v.system!=='ball')];
-  const info=it=>[...metalChoices(),...(root.MF_PULLOUT_DRYERS?.variants||[]).filter(v=>v.system!=='ball')].find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
+  const info=it=>{
+    const dryer=root.MF_PULLOUT_DRYERS?.info(it);
+    if(dryer&&dryer.system!=='ball')return dryer;
+    return metalChoices().find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;
+  };
   function choice(id){
     const metal=variants.find(v=>v.id===id)||(root.MF_GOLA?.choice(id)?.kind==='drawers'?root.MF_GOLA.choice(id):null);if(metal)return metal;
     const p=ballIds.includes(id)&&root.MF_FURNITURE_CORE?.PILOT_PRODUCTION[id];

@@ -16,8 +16,11 @@ URLS = {
 
 def vitrine_variant(it):
     v = BY_ID.get(it.get('bazis_id'))
-    known = v and [v['source_sha256'], *[s['source_sha256'] for s in v.get('previous_sources', [])]]
-    return v if known and it.get('bazis_sha256') in known else None
+    if not v:return None
+    if v['source_sha256']==it.get('bazis_sha256'):return v
+    old=next((s for s in v.get('previous_sources',[]) if s['source_sha256']==it.get('bazis_sha256')),None)
+    # Both differing historical Z1 revisions lacked global elasticity.
+    return {**v,**old,'global_elastic_defined':False} if old else None
 
 
 def glass_shelves(it):

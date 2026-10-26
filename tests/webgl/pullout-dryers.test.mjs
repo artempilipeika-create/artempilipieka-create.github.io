@@ -42,21 +42,21 @@ test('Appliance depth stretches carcass while retaining drawer length and mounti
   }
  }
 });
-test('Corrected NORWING donor upgrades old saves and native exports by exact identity',async()=>{
+test('NORWING keeps old saves and exports pinned and retains their original warning',async()=>{
  const {readFileSync}=await import('node:fs'),vm=await import('node:vm');
  const v=D.variants.find(v=>v.previous_sources),old=v.previous_sources[0];
  const legacy={...item(v),bazis_sha256:old.source_sha256,bazis_file:old.source_file,production_note:'Сохранить',part_materials:{'drawer-1-bottom':'board16'}};
  const updated=C.normalizeKitchen(legacy);
- assert.equal(updated.bazis_sha256,v.source_sha256);assert.equal(updated.bazis_file,v.source_file);
+ assert.equal(updated.bazis_sha256,old.source_sha256);assert.equal(updated.bazis_file,old.source_file);
  assert.equal(legacy.bazis_sha256,old.source_sha256);assert.equal(updated.production_note,'Сохранить');assert.deepEqual(updated.part_materials,legacy.part_materials);
  assert.equal(C.dimensionError(updated,template(updated)),'');assert.deepEqual(v.warnings,[]);
- assert.doesNotMatch(D.brief(updated),/вынесена|исправить её положение/);
+ assert.match(D.brief(updated),/вынесена|исправить её положение/);
  const b=D.basket(updated);assert.equal(b.z-b.depth/2,-195);assert.equal(b.z+b.depth/2,255);
  const unknown={...legacy,bazis_sha256:'0'.repeat(64)};assert.equal(D.normalizeSource(unknown),unknown);
  const script=readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');
  const start=script.indexOf('const DRYER_SOURCE_REVISION ='),end=script.indexOf('function prepareProject',start);
  const canonical=vm.runInNewContext(script.slice(start,end)+';canonicalDryerDonor');
  const exported={bazis_id:v.id,source_sha256:old.source_sha256,source_file:old.source_file,target:{width:700,height:820,depth:510}};
- const fresh=canonical(exported);assert.equal(fresh.source_sha256,v.source_sha256);assert.equal(fresh.source_file,v.source_file);assert.deepEqual(fresh.target,exported.target);
+ const fresh=canonical(exported);assert.equal(fresh.source_sha256,old.source_sha256);assert.equal(fresh.source_file,old.source_file);assert.deepEqual(fresh.target,exported.target);
  assert.equal(canonical({...exported,source_sha256:'0'.repeat(64)}).source_sha256,'0'.repeat(64));
 });

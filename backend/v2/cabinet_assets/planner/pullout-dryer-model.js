@@ -3,10 +3,14 @@
  'use strict';
  const variants=root.MF_PULLOUT_DRYER_VARIANTS||[],byId=new Map(variants.map(v=>[v.id,v]));
  const family={label:'Шкаф с выдвижной сушкой',default_id:variants.find(v=>v.dryer_brand==='norwing'&&v.system==='ball'&&v.execution==='standard')?.id};
- const choice=id=>byId.get(id)||null,info=it=>{const v=choice(it?.bazis_id);return v&&v.source_sha256===it.bazis_sha256?v:null;};
+ const choice=id=>byId.get(id)||null,info=it=>{
+  const v=choice(it?.bazis_id);if(!v)return null;
+  if(v.source_sha256===it.bazis_sha256)return v;
+  const old=v.previous_sources?.find(p=>p.source_sha256===it.bazis_sha256);
+  return old?{...v,...old}:null;
+ };
  function normalizeSource(it){
-  const v=choice(it?.bazis_id);
-  return v?.previous_sources?.some(p=>p.source_sha256===it.bazis_sha256)?{...it,bazis_file:v.source_file,bazis_sha256:v.source_sha256}:it;
+  return it;
  }
  const brand=v=>v.dryer_brand==='norwing'?'NORWING':'FLAT LINE';
  const kit=(it,v=info(it))=>v?.dryer_kits.find(k=>k.width===it.width)||null;

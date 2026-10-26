@@ -10,10 +10,14 @@
   const urls={led:'https://wline.by/svetodiodnaya_lenta_gibkaya_aq-220923-p/220925',
     profile:'https://petroplav.by/shop/profil-fasadnyj-z1-6mm/',seal:'https://petroplav.by/shop/uplotnitel-z1/',corner:'https://petroplav.by/shop/ugolki-z1/'};
   const round=n=>Math.round(n*1e6)/1e6;
-  const info=it=>variants.find(v=>v.id===it?.bazis_id&&(v.source_sha256===it.bazis_sha256||v.previous_sources?.some(s=>s.source_sha256===it.bazis_sha256)))||null;
+  const info=it=>{
+    const v=variants.find(v=>v.id===it?.bazis_id);if(!v)return null;
+    if(v.source_sha256===it.bazis_sha256)return v;
+    const old=v.previous_sources?.find(s=>s.source_sha256===it.bazis_sha256);
+    return old?{...v,...old,global_elastic_defined:false}:null;
+  };
   function normalizeSource(it){
-    const v=info(it);if(!v)return it;
-    return {...it,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:v.global_elastic_defined};
+    return it;
   }
   const model=v=>({tier:'tall',label:family.label,key:family.key+'.'+(v.light_system==='aq-4x8'?'':v.light_system+'.')+v.lighting+'.'+v.opening,
     source_file:v.source_file,source_sha256:v.source_sha256,

@@ -170,7 +170,11 @@ function selected(){return state?.items.find(x=>x.item_id===selectedId)||null}
 function templateFor(it){
   if(it?.bazis_id){
     const source=bazisById.get(it.bazis_id);
-    if(source?.production&&it.bazis_sha256!==source.source_sha256)return legacyBazisById.get(it.bazis_id)||null;
+    if(source?.production&&it.bazis_sha256!==source.source_sha256){
+      const production=globalThis.MF_FURNITURE_CORE.sourceProduction(it);
+      if(production)return {...source,source_file:it.bazis_file||production.source_file,source_sha256:it.bazis_sha256,production,resize:production.resize,limits:production.limits||source.limits};
+      return legacyBazisById.get(it.bazis_id)||null;
+    }
     return source||null;
   }
   return it?.template_id?kitchenTemplates[it.template_id]||null:null;
@@ -195,20 +199,8 @@ function legacyItem(s){
   it.template_id=it.template_id||inferTemplate(it);
   return it;
 }
-// Allow only the two reviewed dryer donor revisions in already-saved projects.
-// No geometry, placement, materials or notes are rewritten.
-const UPPER_SOURCE_REFRESH=Object.freeze({
-  'bazis.60f79b573cd1':['60f79b573cd1ae910e0f5ec2796798e4250e3c2e0a2df0f52372d528dace9005','64168cb3b82bd05c533c02bf4d95827feb75ec63ee99163a0fef60b5d97b9d6d'],
-  'bazis.1ac4fadd97b7':['1ac4fadd97b74ebaf1d52e9d37c5d3e8652857c9422032e64dd3d0671911a63b','91798c16d11b2f26e2126c9e6064b4deb737eb1d34394db6b815510a12fedba0']
-});
-function refreshUpperSource(x){
-  x=globalThis.MF_FURNITURE_CORE?.refreshBaseSource?.(x)||x;
-  const revision=UPPER_SOURCE_REFRESH[x.bazis_id];
-  const donor=revision&&globalThis.MF_UPPERS?.choice(x.bazis_id);
-  return revision&&x.bazis_sha256===revision[0]&&donor?.source_sha256===revision[1]
-    ? {...x,bazis_sha256:donor.source_sha256,bazis_file:donor.source_file}
-    : x;
-}
+// Existing scenes retain their exact source version, including renamed files.
+function refreshUpperSource(x){return x;}
 function normalizeItem(x,room){
   const it={...refreshUpperSource(x)};
   if(!it.template_id)it.template_id=inferTemplate(it);
@@ -1348,8 +1340,7 @@ async function exportBazisProjectReady(){
   finally{button.disabled=false;}
 }
 function exportBazisProject(){
-  // Even an already-open scene must not export superseded reviewed donor hashes.
-  state.items=state.items.map(refreshUpperSource);
+  // Export is read-only: do not migrate source pins in the active scene.
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError){status(briefError);return;}
   const plinthError=globalThis.MF_ACCESSORIES?.plans(state).find(p=>p.error)?.error;if(plinthError){status(plinthError);return;}
