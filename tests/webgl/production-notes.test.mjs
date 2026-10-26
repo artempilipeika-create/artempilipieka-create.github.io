@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const parse=path=>readFileSync(new URL(path,import.meta.url),'utf8');
-globalThis.MF_FURNITURE_CORE={tallVariantInfo:item=>item?.appliancePenal?{family:'appliance',microwave:Boolean(item.microwave)}:null};
+import * as C from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
 await import('../../backend/v2/cabinet_assets/planner/production-notes.js');
 const brief=globalThis.MF_PRODUCTION_NOTES;
-const oven={item_id:'t1',name:'ПН-600',appliancePenal:true,microwave:true};
+const v=C.APPLIANCE_TALL_VARIANTS.find(v=>v.microwave),p=C.PRODUCTION_MODELS[v.id];
+const oven={item_id:'t1',name:'ПН-600',bazis_id:v.id,bazis_sha256:p.source_sha256,module_type:'tall_cabinet',width:600,height:v.native_height,depth:600,body_height:v.native_height-100,base_height:100,base:'plinth',worktop_thickness:0,x:0,z:0,rotation:0};
 test('default PН-600 provides two explicit unresolved standard mounting niches',()=>{
   assert.equal(brief.validate({items:[oven]}),'');
   const note=brief.projectText({items:[oven]});
@@ -45,9 +47,13 @@ test('native BAZIS script writes per-object notes without replacing old notes',(
   assert.match(code,/writeProductionNote\(obj, item, projectNote, log\)/);
 });
 test('visual-only faceplate changes do not change production niche heights',()=>{
-  const mesh=parse('../../backend/v2/cabinet_assets/planner/module-mesh.mjs');
-  assert.match(mesh,/const extension=a\.microwave\?9\.5:0/);
-  assert.match(mesh,/visualOnly=true/);
+  const template=()=>({production:p}),before=structuredClone(oven),parts=C.productionParts(oven,template());
+  const factory=new MeshFactory({room:{width:4200,depth:3200,height:3000},material:()=>null,template},()=>{});
+  const mesh=factory.build(oven);
+  for(const mode of ['inspection','facadesHidden','normal'])factory.updateAppearance(mesh,oven,mode);
+  assert.deepEqual(oven,before);assert.deepEqual(C.productionParts(oven,template()),parts);
+  assert.match(brief.moduleText(oven),/564 × 595/);assert.match(brief.moduleText(oven),/564 × 380/);
+  factory.release(mesh);factory.dispose();
   const code=parse('../../backend/v2/cabinet_assets/3d.js');
   assert.match(code,/project_note:state\.production_note/);
   assert.match(code,/production_note:globalThis\.MF_PRODUCTION_NOTES\?\.moduleText\(it\)/);

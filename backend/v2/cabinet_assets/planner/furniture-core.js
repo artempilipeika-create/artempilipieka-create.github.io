@@ -366,6 +366,8 @@
     return target;
   }
   function dimensionError(it,template){
+    if(it.worktop_thickness&&(it.module_type!=='base_cabinet'||it.depth>750))
+      return 'Столешница доступна только нижнему модулю глубиной до 750 мм';
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';

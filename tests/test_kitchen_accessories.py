@@ -14,7 +14,7 @@ def item(v):
 @pytest.mark.parametrize('v',BY_ID.values())
 def test_dishwasher_save_and_identity(v):
  saved=FurnitureItem(**dict(item(v),bazis_file='old.fr3d')).model_dump()
- assert saved['bazis_file']==v['source_file'] and saved['bazis_resize'] and saved['drawers']==0
+ assert saved['bazis_file']=='old.fr3d' and saved['bazis_sha256']==v['source_sha256'] and saved['bazis_resize'] and saved['drawers']==0
  assert ('688.5' if v['variant']=='gola' else '717') in dishwasher_contents(saved)
  for patch in [dict(bazis_sha256='0'*64),dict(width=700),dict(base_height=80,body_height=740),dict(module_type='wall_cabinet')]:
   with pytest.raises(ValidationError):FurnitureItem(**dict(item(v),**patch))

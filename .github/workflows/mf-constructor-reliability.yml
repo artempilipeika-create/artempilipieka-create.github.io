@@ -1,0 +1,50 @@
+name: Constructor reliability
+on:
+  push:
+    branches: [mf-room-equipment-20261024, 'mf-reliability-*']
+    paths: ['backend/v2/**', 'tests/**', 'tools/bazis_import/**', '.github/workflows/mf-constructor-reliability.yml']
+  pull_request:
+    branches: [mf-room-equipment-20261024]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: constructor-reliability-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  catalogue-save-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mf_staging_ci
+          POSTGRES_DB: mf_staging_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mf_staging_ci -d mf_staging_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies
+        run: pip install -r backend/v2/requirements.txt pytest==9.1.1 pypdf==6.9.1
+      - name: Geometry, materials, source pins, export and autosave
+        run: node --test tests/webgl/*.test.mjs
+      - name: Catalogue contract and isolated database saves
+        run: python -m pytest -q tests/test_*.py tests/stage07/test_furniture_heights.py tests/stage07/test_presentation.py --junitxml=qa-output/reliability.xml
+      - name: Preserve test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: constructor-reliability
+          path: qa-output/reliability.xml

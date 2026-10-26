@@ -18,7 +18,7 @@ test('Presentation keeps geometry/camera intact and caps the offscreen allocatio
   c.setViewOffset(1920,1080,172,-16,1920,1080);
   const before=c.projectionMatrix.toArray();p.render(s,c);
   assert.equal(r.draws.length,2);assert.equal(r.draws[0].scene,s);assert.equal(r.draws[0].camera,c);
-  assert.equal(p.target.width,2100);assert.ok(p.target.height<=1182);assert.equal(r.target,null);
+  assert.equal(p.target.width,2560);assert.ok(p.target.height<=1440);assert.equal(r.target,null);
   assert.deepEqual(c.projectionMatrix.toArray(),before);assert.equal(s.children.length,0);
   assert.deepEqual(p.material.uniforms.inverseProjection.value.toArray(),c.projectionMatrixInverse.toArray());p.dispose();
 });

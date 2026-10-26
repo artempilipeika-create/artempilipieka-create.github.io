@@ -9,6 +9,7 @@ import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.m
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {fingerprint} from '../../backend/v2/cabinet_assets/planner/project-autosave.mjs';
 import {AccessoryUI} from '../../backend/v2/cabinet_assets/planner/accessory-ui.mjs';
+import '../../backend/v2/cabinet_assets/planner/choice-card-ui.js';
 const A=globalThis.MF_ACCESSORIES;
 const room={width:6000,depth:4000,height:2700};
 const item=(v=A.dishwashers[0],patch={})=>C.normalizeKitchen({item_id:'pm',name:'Посудомойка',module_type:'base_cabinet',bazis_id:v.id,bazis_file:v.source_file,bazis_sha256:v.source_sha256,bazis_resize:true,width:600,height:820,depth:510,base_height:100,body_height:720,base:'legs',layout:'doors',drawers:0,handles:'handleless',x:0,z:0,rotation:0,...patch});

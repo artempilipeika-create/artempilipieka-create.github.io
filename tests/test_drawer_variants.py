@@ -30,7 +30,8 @@ def item(v):
 @pytest.mark.parametrize('v',VARIANTS,ids=lambda v:v['id'])
 def test_source_schema_and_nominal_fronts(v):
  saved=FurnitureItem(**dict(item(v),bazis_file='stale-name.fr3d')).model_dump()
- assert saved['bazis_file']==v['source_file'] and saved['bazis_resize']
+ assert saved['bazis_file']=='stale-name.fr3d' and saved['bazis_resize']
+ assert saved['bazis_sha256']==v['source_sha256']
  assert saved['drawers']==v['drawer_count'] and saved['layout']=='drawers'
  if v['opening']=='push':assert saved['handles']=='handleless'
  if v['layout']=='three':assert '177,5' in module_contents(saved)

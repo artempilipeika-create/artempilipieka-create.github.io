@@ -17,8 +17,9 @@ const item=(id,changes={})=>{
 const parts=it=>productionParts(it,{production:PRODUCTION_MODELS[it.bazis_id]});
 const byName=(ps,name)=>ps.filter(p=>p.name===name).map(p=>[p.length,p.width,p.thickness]);
 
-test('Production registry retains previous families and adds thirteen audited upper donors',()=>{
-  assert.equal(Object.keys(PRODUCTION_MODELS).length,79);
+test('Production registry retains previous families and every current upper donor',()=>{
+  for(const [id,p] of Object.entries({...PILOT_PRODUCTION,...WALL_PRODUCTION}))assert.ok(PRODUCTION_MODELS[id],id);
+  for(const v of globalThis.MF_UPPERS.variants)assert.equal(PRODUCTION_MODELS[v.id].source_sha256,v.source_sha256,v.id);
   assert.deepEqual(Object.keys(WALL_PRODUCTION),[...regularIds,...dryerIds]);
 });
 

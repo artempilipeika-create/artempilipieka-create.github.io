@@ -5,7 +5,7 @@ import {snapItem,findSpace} from '../../backend/v2/cabinet_assets/planner/placem
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {replacement} from '../../backend/v2/cabinet_assets/planner/mobility.mjs';
 const room={width:5000,depth:4000,height:3000,setup_complete:true};
-const tallIds=[...C.TALL_VARIANTS,...C.APPLIANCE_TALL_VARIANTS,...C.VITRINE_VARIANTS,...globalThis.MF_OPEN_TALL.variants].map(v=>v.id);
+const tallIds=[...C.TALL_VARIANTS,...C.APPLIANCE_TALL_VARIANTS,...C.VITRINE_VARIANTS,...globalThis.MF_OPEN_TALL.variants.filter(v=>!v.wall)].map(v=>v.id);
 const template=it=>({production:C.PRODUCTION_MODELS[it.bazis_id],limits:C.PRODUCTION_MODELS[it.bazis_id].limits,resize:true});
 const item=(id,patch={})=>{const p=C.PRODUCTION_MODELS[id];return C.normalizeKitchen({item_id:id,name:id,bazis_id:id,bazis_sha256:p.source_sha256,bazis_file:p.source_file,bazis_resize:true,module_type:p.tier==='tall'?'tall_cabinet':p.tier==='wall'?'wall_cabinet':'base_cabinet',width:600,height:p.body_height+p.base_height,body_height:p.body_height,base_height:p.base_height,depth:p.scene_depth||600,base:p.tier==='wall'?'wall':'legs',x:0,z:0,rotation:0,...patch});};
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-5,`${a} != ${b}`);

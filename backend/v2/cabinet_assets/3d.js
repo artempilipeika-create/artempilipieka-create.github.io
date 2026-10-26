@@ -203,7 +203,7 @@ function legacyItem(s){
 function refreshUpperSource(x){return x;}
 function normalizeItem(x,room){
   const it={...refreshUpperSource(x)};
-  if(!it.template_id)it.template_id=inferTemplate(it);
+  if(!it.bazis_id&&!it.template_id)it.template_id=inferTemplate(it);
   return globalThis.MF_FURNITURE_CORE.normalizeKitchen(it,room);
 }
 function normalizeScene(s={}){
