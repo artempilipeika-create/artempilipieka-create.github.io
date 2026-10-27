@@ -37,7 +37,7 @@ def router():
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
         'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',
         'gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js','gola.css','drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
-        'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css',
+        'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css','module-view.mjs',
         'project-autosave.mjs','project-safety.mjs','project-checks.mjs','project-safety.css',
         'automatic-finishes.mjs','wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json',
         'presentation.mjs','presentation-capture.mjs','presentation-ui.mjs','presentation.css',

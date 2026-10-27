@@ -3,6 +3,7 @@ import {buttonFamilies,optionDescriptor,previewVariant} from './execution-option
 import {PRODUCTION_MODELS} from './furniture-core.mjs';
 import {executionArtwork} from './execution-artwork.mjs';
 import {hardwareArtwork} from './hardware-photos.mjs';
+import {MODULE_VIEWS,moduleView,changeModuleView} from './module-view.mjs';
 const get=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text)node.textContent=text;return node;};
 const makeButton=(text)=>{const b=el('button','secondary',text);b.type='button';return b;};
@@ -10,13 +11,14 @@ const families={base:'base-options-controls',upper:'upper-options-controls',draw
 
 export class ExecutionUI{
  constructor(app){
-  this.app=app;this.proxies=[];this.view='closed';this.failedArtwork=new Set();
+  this.app=app;this.proxies=[];this.failedArtwork=new Set();
   this.root=el('section','mf3d-control-card execution-hero');this.root.id='module-execution-preview';this.root.hidden=true;
   this.root.append(el('h3','','Выбранное исполнение'));
   this.visual=el('div','execution-hero-visual');this.canvas=el('canvas','execution-canvas');this.canvas.setAttribute('role','img');this.visual.append(this.canvas);this.root.append(this.visual);
   this.caption=el('p','execution-caption');this.caption.setAttribute('aria-live','polite');this.root.append(this.caption);
-  const views=el('div','execution-views');views.setAttribute('role','group');views.setAttribute('aria-label','Вид выбранного исполнения');this.viewButtons=[];
-  for(const [key,title]of [['closed','С фасадами'],['inside','Наполнение']]){const b=makeButton(title);b.dataset.executionView=key;this.viewButtons.push(b);views.append(b);app.listen(b,'click',()=>{this.view=key;this.sync();});}this.root.append(views);
+  const views=el('div','execution-views');views.setAttribute('role','group');views.setAttribute('aria-label','Вид модуля на сцене и в предпросмотре');this.viewButtons=[];
+  for(const [key,title]of MODULE_VIEWS){const b=makeButton(title);b.dataset.executionView=key;this.viewButtons.push(b);views.append(b);app.listen(b,'click',()=>changeModuleView(app,key));}this.root.append(views);
+  document.body.classList.add('module-view-unified');
   this.note=el('p','studio-hint execution-preview-note','Вид конструкции в выбранных размерах. Материалы — на основной сцене.');this.root.append(this.note);
   get('base-options-controls').before(this.root);
   for(const [family,id]of Object.entries(families)){const root=get(id);if(root)root.classList.add('execution-family');}
@@ -76,12 +78,11 @@ export class ExecutionUI{
   if(this.closed)return;const it=this.app.adapter.selected,p=PRODUCTION_MODELS[it?.bazis_id];this.root.hidden=!it||!p;
   const handles=get('handles');handles.classList.toggle('execution-source-select',Boolean(p));if(p){handles.tabIndex=-1;handles.setAttribute('aria-hidden','true');}else{handles.removeAttribute('tabindex');handles.removeAttribute('aria-hidden');}
   if(!it||!p){this.generic.hidden=true;return;}
-  if(this.selectedId!==it.item_id){this.selectedId=it.item_id;this.view='closed';}
-  const noFront=Boolean(p.open_tall);this.viewButtons[0].textContent=noFront?'Общий вид':'С фасадами';
-  this.viewButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.executionView===this.view)));
-  this.caption.textContent=`${it.width} × ${it.height} × ${it.depth} мм · ${this.view==='inside'?'наполнение':noFront?'открытые полки':'внешний вид'}`;
+  const state=moduleView(it,this.app.scene?.displayMode);
+  this.viewButtons.forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.executionView===state.view));b.disabled=Boolean(this.app.scene?.isFallback||b.dataset.executionView==='open'&&!state.canOpen);b.title=b.dataset.executionView==='open'&&!state.canOpen?'У этого модуля нет распашных дверей':'';});
+  this.caption.textContent=`${it.width} × ${it.height} × ${it.depth} мм · ${state.view==='inside'?'внутри':state.view==='open'?'открытые двери':'снаружи'}`;
   this.canvas.setAttribute('aria-label',it.name+' · '+this.caption.textContent);
-  const options={view:this.view,tall:p.tier==='tall'},renderer=this.ensureRenderer();this.visual.hidden=!renderer;this.note.textContent=renderer?'Вид конструкции в выбранных размерах. Материалы — на основной сцене.':'3D-предпросмотр недоступен. Выбор параметров работает ниже.';renderer?.request(this.canvas,it,options);
+  const options={...state.preview,tall:p.tier==='tall'},renderer=this.ensureRenderer();this.visual.hidden=!renderer;this.note.textContent=renderer?'Общий вид для сцены и предпросмотра. В режиме «Внутри» стенки и фасады полупрозрачны. Материалы — на основной сцене.':'3D-предпросмотр недоступен. Выбор параметров работает ниже.';renderer?.request(this.canvas,it,options);
   this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(p.tall?.execution==='gola'||globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
   this.syncProxies(it);
   for(const family of buttonFamilies){
@@ -96,5 +97,5 @@ export class ExecutionUI{
   const dish=get('dishwasher-options');if(dish&&!dish.hidden)for(const b of dish.querySelectorAll('[data-variant]'))this.update(b,it,'dishwasher','execution',b.dataset.variant);
   document.body.classList.add('execution-cards-ready');
  }
- dispose(){this.closed=true;this.renderer?.dispose();this.root.remove();this.generic.remove();for(const p of this.proxies){p.group.remove();p.select.classList.remove('execution-source-select');p.select.removeAttribute('aria-hidden');p.select.removeAttribute('tabindex');}document.body.classList.remove('execution-cards-ready');}
+ dispose(){this.closed=true;this.renderer?.dispose();this.root.remove();this.generic.remove();for(const p of this.proxies){p.group.remove();p.select.classList.remove('execution-source-select');p.select.removeAttribute('aria-hidden');p.select.removeAttribute('tabindex');}document.body.classList.remove('execution-cards-ready','module-view-unified');}
 }

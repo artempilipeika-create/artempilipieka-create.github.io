@@ -25,6 +25,7 @@ import {MaterialAppearanceUI} from './material-appearance-ui.mjs';
 import {WallFinishUI} from './wall-finish-ui.mjs?v=20261025-lively-cards';
 import {PresentationUI} from './presentation-ui.mjs';
 import {ExecutionUI} from './execution-ui.mjs';
+import {changeModuleView} from './module-view.mjs';
 import {FinishCatalogue} from './finish-catalogue.mjs';
 import {AccessoryUI} from './accessory-ui.mjs?v=20261025-lively-cards';
 import {MobilityUI} from './mobility-ui.mjs';
@@ -226,10 +227,7 @@ class PlannerApplication {
       this.workspace.panel('right',true);
       get('tall-options-controls').scrollIntoView({block:'start'});
     });
-    const showTallShelves=()=>{
-      this.scene?.setDisplayMode?.('inspection');
-      get('module-display').value='inspection';
-    };
+    const showTallShelves=()=>changeModuleView(this,'inside');
     for(const [id,delta]of [['tall-shelf-minus',-1],['tall-shelf-plus',1]])this.listen(get(id),'click',()=>{
       const it=this.adapter.selected;if(!tallVariantInfo(it))return;
       const count=tallUpperShelves(it).length+delta;if(count<0||count>8)return;
@@ -320,7 +318,7 @@ class PlannerApplication {
       });this.bridge.refresh();
     });
     const shelfEnabled=get('shelf-enabled'),shelfPosition=get('shelf-position'),toggleDoors=get('toggle-doors');
-    this.listen(get('module-display'),'change',()=>this.scene?.setDisplayMode?.(get('module-display').value));
+    this.listen(get('module-display'),'change',()=>{this.scene?.setDisplayMode?.(get('module-display').value);this.executions?.sync();});
     this.listen(shelfEnabled,'change',()=>{
       const it=this.adapter.selected;if(!it?.shelves?.length)return;
       const shelves=structuredClone(it.shelves);shelves[0].enabled=shelfEnabled.checked;
@@ -333,7 +331,7 @@ class PlannerApplication {
     });
     this.listen(toggleDoors,'click',()=>{
       const it=this.adapter.selected;if(!it)return;
-      this.interaction.modify({doors_open:!it.doors_open},it.doors_open?'Закрытие фасадов':'Открывание фасадов');this.bridge.refresh();
+      changeModuleView(this,it.doors_open?'outside':'open');
     });
     for(const [id,key,min,max]of [['room-width','width',1500,12000],['room-depth','depth',1500,12000],['room-height','height',2000,5000]]){
       const input=get(id);input.oninput=null;

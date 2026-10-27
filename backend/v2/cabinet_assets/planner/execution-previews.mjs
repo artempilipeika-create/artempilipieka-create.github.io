@@ -2,6 +2,12 @@ import * as THREE from './vendor/three.module.js';
 import {MeshFactory} from './module-mesh.mjs';
 import {PRODUCTION_MODELS,heights} from './furniture-core.mjs';
 
+export function executionPreviewItem(item,options={}){
+ const it=structuredClone(item);Object.assign(it,{x:0,z:0,rotation:0,elevation_mm:0,doors_open:options.sceneDisplayMode?Boolean(item.doors_open):options.view==='hinge',body_variant_id:null,front_variant_id:null,back_variant_id:null,drawer_variant_id:null,countertopMaterialId:null,plinthMaterialId:null,part_materials:{}});
+ for(const shelf of it.shelves||[])shelf.material_variant_id=null;
+ return it;
+}
+
 // Isolated drafts, one existing WebGL context, and a bounded cache. No project writes.
 export class ExecutionPreviews{
  constructor(owner){
@@ -17,8 +23,7 @@ export class ExecutionPreviews{
   this.observer=new IntersectionObserver(entries=>{for(const e of entries){if(e.isIntersecting)this.visible.add(e.target);else this.visible.delete(e.target);}this.schedule();},{root:document.querySelector('.mf3d-right'),rootMargin:'80px'});
  }
  request(canvas,item,options={}){
-  const it=structuredClone(item);Object.assign(it,{x:0,z:0,rotation:0,elevation_mm:0,doors_open:options.view==='hinge',body_variant_id:null,front_variant_id:null,back_variant_id:null,drawer_variant_id:null,countertopMaterialId:null,plinthMaterialId:null,part_materials:{}});
-  for(const shelf of it.shelves||[])shelf.material_variant_id=null;
+  const it=executionPreviewItem(item,options);
   const key=JSON.stringify([this.factory.signature(it),options]);
   if(this.jobs.get(canvas)?.key===key&&canvas.dataset.previewReady)return;
   const first=!this.jobs.has(canvas);this.jobs.set(canvas,{key,it,options});if(first)this.observer.observe(canvas);delete canvas.dataset.previewReady;canvas.setAttribute('aria-busy','true');this.schedule();
@@ -54,6 +59,8 @@ export class ExecutionPreviews{
    if(m.userData.cargoBasket||m.userData.pulloutDryer){const mat=m.material.clone(),chrome=p.cargo?.brand==='norwing'||p.pullout_dryer?.dryer_brand==='flat_line';mat.color.set(chrome?'#aab7c5':'#414a51');mat.metalness=.45;mat.roughness=.42;m.material=mat;owned.add(mat);}
    if(opt.highlight==='filler'&&/^filler/.test(part?.key||'')){const mat=m.material.clone();mat.color.set('#62a7f6');m.material=mat;owned.add(mat);}
   });
+  // The hero uses the scene's appearance rules; option illustrations retain their own recipes.
+  if(opt.sceneDisplayMode)f.updateAppearance(model,it,opt.sceneDisplayMode);
   // Schematic hardware illustration within the real upper cabinet; never BOM geometry.
   if(inside&&p?.dryer){
    const w=it.width-60,d=Math.min(it.depth-45,260),levels=[70,Math.min(it.height*.48,320)];

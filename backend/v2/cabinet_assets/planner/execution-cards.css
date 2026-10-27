@@ -3,7 +3,8 @@
 .execution-hero-visual{border-radius:12px;overflow:hidden;background:#f2efe8}
 .execution-hero-visual canvas{display:block;width:100%;height:270px;object-fit:contain}
 #planner-workspace .execution-caption{font-size:12px;margin:10px 0;color:#3a5146;line-height:1.5}
-.execution-views{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.execution-views{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.module-view-unified #toggle-doors,.module-view-unified .mf3d-display-control{display:none!important}
 #planner-workspace .execution-views button{padding:9px 5px;font-size:12px;white-space:normal;background:#f6f7f3;color:#425549;border:1px solid #dce1d7;border-radius:9px}
 #planner-workspace .execution-views button[aria-pressed=true]{color:#1263cf;border-color:#1677ff;background:#f0f6ff}
 .execution-preview-note{margin-bottom:0!important;font-size:10px!important;line-height:1.5!important}
