@@ -20,20 +20,23 @@ CREDITS.txt и credit-report.json содержат каждый task_id, опе�
 
 ## Проверка и публикация
 
+```json
 {
   "node": {
     "passed": 684,
     "failed": 0
   },
   "python_local": {
-    "passed": 378,
+    "passed": 379,
     "skipped": 37,
     "failed": 0,
     "skip_reason": "PostgreSQL-only checks run in Constructor reliability CI"
   },
   "CI": "pending exact commit",
-  "staging": "pending"
+  "staging": "pending",
+  "asset_routes": "Six distinct AQ and LIRA WebP images served with correct MIME; unrelated paths remain unavailable"
 }
+```
 
 Тестовый сайт: https://martin-forest-v2-staging-production.up.railway.app/constructor.html
 

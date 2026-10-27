@@ -6,9 +6,9 @@ MARTIN FOREST — Tripo: отчёт по генерациям
 Расход сверяется по цене в интерфейсе и изменению баланса Tripo.
 Ошибочные варианты и повторная генерация тоже включены в расход.
 
-01. image-to-image | 8a72b7d3-f1bc-47ac-8637-ae12931c54b0 | 0 кредитов | main:wall-single | preview_accepted_not_integrated
-02. image-to-image | 5cc1e8d2-ea00-4b99-989d-763a376acdf1 | 0 кредитов | option:drawer:drawer:layout:three | preview_accepted_not_integrated
-03. image-to-image | 85df0e99-632b-45c2-b9e0-f9db780764e1 | 0 кредитов | main:tall-appliance | preview_accepted_not_integrated
+01. image-to-image | 8a72b7d3-f1bc-47ac-8637-ae12931c54b0 | 0 кредитов | main:wall-single | accepted
+02. image-to-image | 5cc1e8d2-ea00-4b99-989d-763a376acdf1 | 0 кредитов | option:drawer:drawer:layout:three | accepted
+03. image-to-image | 85df0e99-632b-45c2-b9e0-f9db780764e1 | 0 кредитов | main:tall-appliance | accepted
 04. image-to-image | 46f1ae80-a874-4c50-8d2a-68b30f75ccec | 20 кредитов | main:waste-standard | accepted
 05. image-to-image | c5632790-da85-4e39-997b-0c3fdbc6a640 | 20 кредитов | main:cargo | accepted
 06. image-to-image | 1af4da10-bc6b-4bdc-9e0a-f1be89eeea26 | 20 кредитов | main:dishwasher | accepted

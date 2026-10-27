@@ -5568,13 +5568,14 @@
       "failed": 0
     },
     "python_local": {
-      "passed": 378,
+      "passed": 379,
       "skipped": 37,
       "failed": 0,
       "skip_reason": "PostgreSQL-only checks run in Constructor reliability CI"
     },
     "CI": "pending exact commit",
-    "staging": "pending"
+    "staging": "pending",
+    "asset_routes": "Six distinct AQ and LIRA WebP images served with correct MIME; unrelated paths remain unavailable"
   },
   "integrated_cards": 84,
   "integrated_image_files": 83

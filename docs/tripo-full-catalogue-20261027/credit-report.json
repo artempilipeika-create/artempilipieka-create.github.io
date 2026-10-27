@@ -10,8 +10,8 @@
       "task_id": "8a72b7d3-f1bc-47ac-8637-ae12931c54b0",
       "actual_credits": 0,
       "png_sha256": "633395a47630765454fa32423ec7a59c640bc0863268f53631c82ba0244120c5",
-      "status": "preview_accepted_not_integrated",
-      "review": null,
+      "status": "accepted",
+      "review": "Approved original free preview; integrated into full catalogue.",
       "original": "wall-single.png",
       "downloaded_at": "2026-10-26T21:44:38.483153+00:00"
     },
@@ -21,8 +21,8 @@
       "task_id": "5cc1e8d2-ea00-4b99-989d-763a376acdf1",
       "actual_credits": 0,
       "png_sha256": "4c5cc65ef66872a1176a559daf1f03564925c051a1ee85548b6f05a7b4b5ad9a",
-      "status": "preview_accepted_not_integrated",
-      "review": null,
+      "status": "accepted",
+      "review": "Approved original free preview; integrated into full catalogue.",
       "original": "drawer-three.png",
       "downloaded_at": "2026-10-26T21:50:15.838358+00:00"
     },
@@ -32,8 +32,8 @@
       "task_id": "85df0e99-632b-45c2-b9e0-f9db780764e1",
       "actual_credits": 0,
       "png_sha256": "1b6685d86e4bbaa45d77109d625fb5b1d0fa60e75d80def8671d5d823918a44c",
-      "status": "preview_accepted_not_integrated",
-      "review": null,
+      "status": "accepted",
+      "review": "Approved original free preview; integrated into full catalogue.",
       "original": "tall-appliance.png",
       "downloaded_at": "2026-10-26T21:52:04.264787+00:00"
     },
