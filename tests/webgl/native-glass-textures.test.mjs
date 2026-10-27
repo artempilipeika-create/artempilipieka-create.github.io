@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {VITRINE_VARIANTS} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {materialVisual} from '../../backend/v2/cabinet_assets/planner/material-visuals.mjs';
 const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');
-const bindings=JSON.parse(source.match(/const NATIVE_TEXTURE_BINDINGS = (.*);\n/)[1]);
+const bindings=JSON.parse(source.match(/const NATIVE_TEXTURE_BINDINGS = (.*);\r?\n/)[1]);
 const uid=Object.keys(bindings).find(k=>bindings[k].article==='LNEDS18D.302.W04');
 const descriptor={...bindings[uid],variant_id:uid};
 function context(options={}){

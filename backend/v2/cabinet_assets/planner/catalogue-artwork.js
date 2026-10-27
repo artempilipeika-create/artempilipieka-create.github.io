@@ -2,6 +2,7 @@
  'use strict';
  // Reviewed Tripo pictures use the geometry-reviewed catalogue views as references.
  const rows=[
+  ["bazis.dadbe9a423b7","tall-gola","ПН-600 Gola","Полки, духовка или духовка + СВЧ","22 исполнения","База 820 / 900"],
   ['bazis.934509b39a14','open-wall-934509b39a14','Верхний открытый','Открытые полки · без подсветки, AQ или LIRA','7 исполнений','ЛДСП 18 мм'],
   ['bazis.8a45c0613aad','waste-standard','Мусорные контейнеры','Сортировка отходов · GEO X','350 / 400 / 450 мм','Ручка / Gola L'],
   ['bazis.0ac4e1b6b2d3','cargo','Карго','Выдвижное хранение · FOCUS, NORWING, ICON','6 исполнений','Обычное / Gola'],

@@ -100,7 +100,7 @@ test('100-module planning smoke stays finite and non-mutating',()=>{
  for(let i=0;i<100;i++)snapItem({...items[0],x:-4200+i},items,r,{allowElevation:false});assert.equal(JSON.stringify(items),before);
 });
 test('WebGL route has no competing legacy canvas controller',()=>{
- const src=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8');
+ const src=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.ok(src.includes("ctx=plannerRequested?null:canvas.getContext('2d')"));assert.ok(src.includes('function draw(){\n  if(plannerRequested)return;'));assert.ok(src.includes('if(!plannerRequested){\ncanvas.onpointerdown'));
  assert.ok(src.includes('return globalThis.MF_FURNITURE_CORE.facadeCells(it,templateFor(it))'));
 });

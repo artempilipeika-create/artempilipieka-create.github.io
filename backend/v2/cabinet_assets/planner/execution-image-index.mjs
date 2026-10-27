@@ -79,3 +79,34 @@ export const EXECUTION_IMAGES=Object.freeze({
  "tall-appliance:generic:handles:handles": "tall-appliance-generic-handles-handles.webp",
  "tall-appliance:generic:handles:handleless": "tall-appliance-generic-handles-handleless.webp"
 });
+
+// PN-600 Gola: exact native variant identity, illustrative Tripo artwork.
+export const TALL_GOLA_IMAGES=Object.freeze({
+  "bazis.8989e4ff7fb7": "gola-820-storage-double-closed.webp",
+  "bazis.6dd8f5fb6d4a": "gola-820-storage-left-closed.webp",
+  "bazis.518a05a36607": "gola-820-storage-right-closed.webp",
+  "bazis.dadbe9a423b7": "gola-820-door_oven-left-closed.webp",
+  "bazis.95e7a5ce644a": "gola-820-door_oven-right-closed.webp",
+  "bazis.16401330c6f3": "gola-820-door_oven_micro-left-closed.webp",
+  "bazis.385d2d9982da": "gola-820-door_oven_micro-right-closed.webp",
+  "bazis.420a726334c8": "gola-820-drawer_oven-left-closed.webp",
+  "bazis.cc671e2638f6": "gola-820-drawer_oven-right-closed.webp",
+  "bazis.5e1075374468": "gola-820-drawer_oven_micro-left-closed.webp",
+  "bazis.f3ce77e6d36a": "gola-820-drawer_oven_micro-right-closed.webp",
+  "bazis.cd3cb599047b": "gola-900-door_oven-left-closed.webp",
+  "bazis.635a41232720": "gola-900-door_oven-right-closed.webp",
+  "bazis.5f3a48e6a7cd": "gola-900-door_oven_micro-left-closed.webp",
+  "bazis.5b6da09508ca": "gola-900-door_oven_micro-right-closed.webp",
+  "bazis.dae71f7f74ca": "gola-900-storage-double-closed.webp",
+  "bazis.4cb4a698af61": "gola-900-storage-left-closed.webp",
+  "bazis.b4067ae2f1d6": "gola-900-storage-right-closed.webp",
+  "bazis.a342f12e9e53": "gola-900-drawer_oven-left-closed.webp",
+  "bazis.133dd94f7a8d": "gola-900-drawer_oven-right-closed.webp",
+  "bazis.fdba1267e8cb": "gola-900-drawer_oven_micro-left-closed.webp",
+  "bazis.f4e24f941d2b": "gola-900-drawer_oven_micro-right-closed.webp"
+});
+export const TALL_GOLA_OPEN_IMAGES=Object.freeze({
+  "bazis.8989e4ff7fb7": "gola-820-storage-double-open.webp",
+  "bazis.6dd8f5fb6d4a": "gola-820-storage-left-open.webp",
+  "bazis.518a05a36607": "gola-820-storage-right-open.webp"
+});

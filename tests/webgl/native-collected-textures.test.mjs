@@ -5,11 +5,11 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {materialVisual} from '../../backend/v2/cabinet_assets/planner/material-visuals.mjs';
 const source=fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_7_ONE_CLICK_NOTES_GLASS_TEXTURES.js',import.meta.url),'utf8');
-const bindings=JSON.parse(source.match(/const NATIVE_TEXTURE_BINDINGS = (.*);\n/)[1]);
+const bindings=JSON.parse(source.match(/const NATIVE_TEXTURE_BINDINGS = (.*);\r?\n/)[1]);
 const registry=JSON.parse(fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/materials/user-textures.json',import.meta.url),'utf8'));
 test('All previous verified native bindings remain unchanged',()=>{
   const old=fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_6_ONE_CLICK_NOTES_GLASS_TEXTURES.js',import.meta.url),'utf8');
-  for(const [id,r] of Object.entries(JSON.parse(old.match(/const NATIVE_TEXTURE_BINDINGS = (.*);\n/)[1]))){
+  for(const [id,r] of Object.entries(JSON.parse(old.match(/const NATIVE_TEXTURE_BINDINGS = (.*);\r?\n/)[1]))){
     if(r.sha256)assert.deepEqual(bindings[id],r);
     else{assert.match(bindings[id].sha256,/^[a-f0-9]{64}$/);assert.equal(bindings[id].relative_path,r.relative_path);}
   }

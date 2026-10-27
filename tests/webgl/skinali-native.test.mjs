@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -23,7 +24,7 @@ test('Unchanged 9.9.4 importer resolves the exact original skinali and retains i
  const before=hash(),item=nativePanelItems({room,wallPanels:[panel()]})[0];
  assert.equal(item.source_sha256,before);
  assert.deepEqual(item.source_default,{width:2000,height:600,depth:6});
- assert.equal(c.prepareProject({items:[item]},new URL('planner/wall-panel-sources/',root).pathname).entries.length,1);
+ assert.equal(c.prepareProject({items:[item]},fileURLToPath(new URL('planner/wall-panel-sources/',root))).entries.length,1);
  const native={Name:'Скиналь',isPanel:true,Thickness:6,MaterialName:'Скинали Скиф Дуб Вотан\r111 CH',Build(){}},log=[];
  assert.equal(c.applyProjectMaterials(native,item,log).length,1);
  assert.equal(native.MaterialName,'Скинали Скиф Дуб Вотан\r111 CH');assert.equal(native.Thickness,6);
