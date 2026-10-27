@@ -33,6 +33,9 @@ def generate(owner,scene,materials,preview):
         modules=[{k:it.get(k) for k in ('name','module_type','x','z','rotation','width','height','depth','elevation_mm','body_variant_id','front_variant_id','plinthMaterialId','countertopMaterialId','countertopEnabled','countertopThicknessMm','countertopDepthMm','layout','drawers')} for it in scene.get('items',[])]
         prompt=('Create a photorealistic architectural photograph from this exact kitchen view. Preserve ALL cabinet geometry, number and divisions of doors/drawers, plinth shape, positions, appliance openings and camera. '
                 'Match the specified material decors; do not invent wood grain on solid colours. Improve only lighting, reflections and surface realism. Preserve room geometry, windows, doors and fixtures; do not add, remove, move, conceal or replace cabinetry or appliances. No text or dimension labels. '
+                'For WOOD decors, orient the grain vertically, from floor to ceiling, on every door, drawer front and visible vertical cabinet side or end panel. '
+                'Keep this same upward grain direction across adjoining fronts, including wide drawer fronts; never alternate horizontal and vertical grain. '
+                'This wood-grain orientation overrides any sideways grain in the reference image. Preserve the chosen wood decor, colour and grain character; do not add wood to solid-colour, stone, metal or glass surfaces. '
                 'Do not invent cabinet LED strips, sinks, hobs or other fixtures. Only show lighting fixtures recorded in the saved project. '
                 'Enabled worktops form continuous solid surfaces over each adjoining cabinet run; cabinet top rails are not sinks, seams or cutouts. Do not add worktops where disabled. '
                 'Saved wall lights: '+json.dumps(scene.get('wallLights', []),ensure_ascii=False)+'. '
