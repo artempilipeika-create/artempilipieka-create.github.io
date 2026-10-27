@@ -1,5 +1,5 @@
 {
-  "status": "integrated_local_checks_passed_pending_CI_and_staging",
+  "status": "complete_artwork_and_CI_passed_staging_change_prepared_not_deployed",
   "base_commit": "2794ad465762e3e08ba378c123708886248090b4",
   "scope": "All 16 cabinet families: seven open-wall images already deployed; remaining 15 families plus option illustrations",
   "total_new_images": 82,
@@ -5557,11 +5557,6 @@
       "png_sha256": "1cf94d8877d5838a6669b298454a65da8929a69d7599b2a88462d7455eaff9c5"
     }
   ],
-  "archive_checkpoint": {
-    "library_file_id": "libfile_af55175f826c819198e6036e57ff91e9",
-    "version": 1,
-    "credits_at_checkpoint": 1160
-  },
   "verification": {
     "node": {
       "passed": 684,
@@ -5573,10 +5568,29 @@
       "failed": 0,
       "skip_reason": "PostgreSQL-only checks run in Constructor reliability CI"
     },
-    "CI": "pending exact commit",
-    "staging": "pending",
-    "asset_routes": "Six distinct AQ and LIRA WebP images served with correct MIME; unrelated paths remain unavailable"
+    "CI": {
+      "workflow": "Constructor reliability",
+      "run_id": 40424414377,
+      "job_id": 121926493698,
+      "commit": "db14adbb59ca5598117bc50fa7ca0168064ccae6",
+      "status": "success",
+      "node_passed": 684,
+      "python_passed": 416
+    },
+    "staging": {
+      "status": "source_change_staged_not_applied_after_interruption",
+      "planned_commit": "db14adbb59ca5598117bc50fa7ca0168064ccae6",
+      "live_commit": "548547ad4a507d6276ab3f1fb87387e28d446e07",
+      "patch_id": "ed134f84-f999-4bfd-960f-847c8e1feb79",
+      "browser_save_reopen_edit": "pending deployment"
+    },
+    "asset_routes": "Six distinct AQ and LIRA WebP images served with correct MIME; unrelated paths remain unavailable",
+    "production_geometry_or_source_files_changed": false
   },
   "integrated_cards": 84,
-  "integrated_image_files": 83
+  "integrated_image_files": 83,
+  "archive": {
+    "library_file_id": "libfile_af55175f826c819198e6036e57ff91e9",
+    "contents": "Complete originals, card assets, task costs and validation; website deployment pending"
+  }
 }

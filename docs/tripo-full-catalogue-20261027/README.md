@@ -20,6 +20,8 @@ CREDITS.txt и credit-report.json содержат каждый task_id, опе�
 
 ## Проверка и публикация
 
+**Картинки подключены в подготовленной версии кода. На тестовом сайте пока предыдущая версия: запуск публикации был прерван. Сохранение, повторное открытие и редактирование проекта в новой версии ещё предстоит проверить после публикации.**
+
 ```json
 {
   "node": {
@@ -32,9 +34,24 @@ CREDITS.txt и credit-report.json содержат каждый task_id, опе�
     "failed": 0,
     "skip_reason": "PostgreSQL-only checks run in Constructor reliability CI"
   },
-  "CI": "pending exact commit",
-  "staging": "pending",
-  "asset_routes": "Six distinct AQ and LIRA WebP images served with correct MIME; unrelated paths remain unavailable"
+  "CI": {
+    "workflow": "Constructor reliability",
+    "run_id": 40424414377,
+    "job_id": 121926493698,
+    "commit": "db14adbb59ca5598117bc50fa7ca0168064ccae6",
+    "status": "success",
+    "node_passed": 684,
+    "python_passed": 416
+  },
+  "staging": {
+    "status": "source_change_staged_not_applied_after_interruption",
+    "planned_commit": "db14adbb59ca5598117bc50fa7ca0168064ccae6",
+    "live_commit": "548547ad4a507d6276ab3f1fb87387e28d446e07",
+    "patch_id": "ed134f84-f999-4bfd-960f-847c8e1feb79",
+    "browser_save_reopen_edit": "pending deployment"
+  },
+  "asset_routes": "Six distinct AQ and LIRA WebP images served with correct MIME; unrelated paths remain unavailable",
+  "production_geometry_or_source_files_changed": false
 }
 ```
 
