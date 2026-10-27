@@ -4,7 +4,7 @@ const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textCont
 export class PresentationUI{
   constructor(app){
     this.app=app;this.sequence=0;
-    this.openButton=this.button('Картинка для клиента',()=>this.open());this.openButton.id='presentation-open';
+    this.openButton=this.button('Альбом кухни',()=>this.app.bridge.openAlbum().catch(error=>this.app.adapter.status(error.message)));this.openButton.id='presentation-open';
     document.getElementById('to-order').before(this.openButton);
     this.dialog=el('dialog',null,'mf-presentation');this.dialog.id='presentation-dialog';this.dialog.setAttribute('aria-labelledby','presentation-title');
     const head=el('header',null,'presentation-head'),heading=el('div');heading.append(el('span','MARTIN FOREST / ПРЕЗЕНТАЦИЯ','presentation-kicker'));

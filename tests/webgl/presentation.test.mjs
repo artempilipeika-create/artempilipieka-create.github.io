@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fileName,exportSize,qualityProfile,RenderBudget} from '../../backend/v2/cabinet_assets/planner/presentation.mjs';
-import {capturePresentation} from '../../backend/v2/cabinet_assets/planner/presentation-capture.mjs';
+import {capturePresentation,captureAlbumViews} from '../../backend/v2/cabinet_assets/planner/presentation-capture.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {fingerprint} from '../../backend/v2/cabinet_assets/planner/project-autosave.mjs';
 test('export size respects GPU limit and has 16:9 aspect',()=>{
@@ -49,5 +49,24 @@ for(const fail of [false,true])test('capture restores renderer/camera/selection 
     assert.equal(s.renderer.getPixelRatio(),1.5);assert.equal(s.width,1000);assert.equal(s.height,700);
     assert.equal(s.studioRender.maxDimension,1440);assert.equal(s.guides.visible,true);assert.equal(s.selectedBox.visible,true);
     assert.equal(s.kitchenBoxes.get('a').visible,true);assert.equal(JSON.stringify(s.adapter.items),before);assert.equal(s.exportSize,null);
+  }finally{globalThis.document=old;}
+});
+
+test('album references use the complete presentation pass at export size even in a small editor',()=>{
+  const s=mockScene(),old=globalThis.document,renders=[],encodings=[];
+  s.width=540;s.height=360;
+  s.renderer.render=()=>assert.fail('A raw renderer call skips wall visibility and studio postprocessing');
+  s.render=()=>{if(s.exportSize)renders.push({width:s.width,height:s.height,client:s.client,view:s.clientView,selected:s.selectedBox.visible});};
+  globalThis.document={createElement:()=>({getContext:()=>({drawImage(){},getImageData(){}}),
+    toDataURL(type){encodings.push([type,this.width,this.height]);return type+':'+this.width+'x'+this.height;}})};
+  try{
+    const result=captureAlbumViews(s);
+    assert.deepEqual(renders,[
+      {width:1536,height:1024,client:true,view:'threeQuarter',selected:false},
+      {width:1536,height:1024,client:true,view:'front',selected:false}
+    ]);
+    assert.deepEqual(encodings,[['image/png',1536,1024],['image/png',1536,1024]]);
+    assert.equal(result.hero,'image/png:1536x1024');assert.equal(result.detail,'image/png:1536x1024');
+    assert.equal(s.width,540);assert.equal(s.height,360);assert.equal(s.client,false);
   }finally{globalThis.document=old;}
 });
