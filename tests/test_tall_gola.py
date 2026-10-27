@@ -86,3 +86,23 @@ def test_private_native_sources_are_not_served():
             response=client.get('/account/planner/tall-gola-sources/'+v['source_file'])
             assert response.status_code==404
         assert client.get('/account/planner/tall-gola-sources/unknown.fr3d').status_code==404
+
+
+def test_all_gola_artwork_routes_serve_the_committed_webp_bytes():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from backend.v2.cabinet_ui import router
+    assets = ['module-card-images/tall-gola.webp']
+    assets += [f'execution-card-images/gola-{v["row_height"]}-{v["layout"]}-{v["opening"]}-closed.webp'
+               for v in GOLA_VARIANTS]
+    assets += [f'execution-card-images/gola-820-storage-{side}-open.webp'
+               for side in ('left', 'right', 'double')]
+    assert len(set(assets)) == 26
+    app = FastAPI(); app.include_router(router())
+    with TestClient(app) as client:
+        for asset in assets:
+            response = client.get('/account/planner/' + asset)
+            assert response.status_code == 200, asset
+            assert response.headers['content-type'] == 'image/webp'
+            assert response.content == (ROOT/'backend/v2/cabinet_assets/planner'/asset).read_bytes()
+        assert client.get('/account/planner/execution-card-images/gola-unknown.webp').status_code == 404

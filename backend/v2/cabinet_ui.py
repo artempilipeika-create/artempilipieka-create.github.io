@@ -166,6 +166,13 @@ def router():
     accessories=json.loads((root/'planner/accessory-variants.json').read_text())
     planner_files.update('accessory-sources/'+v['source_file'] for v in accessories)
     planner_files.add('tall-gola-variants.json')
+    planner_files.add('module-card-images/tall-gola.webp')
+    planner_files.update(
+        f'execution-card-images/gola-{v["row_height"]}-{v["layout"]}-{v["opening"]}-closed.webp'
+        for v in json.loads((root/'planner/tall-gola-variants.json').read_text())
+    )
+    planner_files.update(f'execution-card-images/gola-820-storage-{opening}-open.webp'
+                         for opening in ('left', 'right', 'double'))
     countertops=json.loads((root/'planner/countertop-variants.json').read_text())
     planner_files.update('countertop-sources/'+v['source_file'] for v in countertops)
     planner_files.update('countertop-sources/'+v['joint']+'-'+v['shape']+'.png' for v in countertops)
