@@ -16,8 +16,16 @@ The implementation is saved in GitHub on `mf-reliability-pn600-gola-20261027`, c
 
 Local checks passed: 708 Node tests; 406 Python tests passed with 37 database checks skipped locally. Constructor reliability then passed **708 Node and 443 Python tests**, including the disposable PostgreSQL checks, with no failures or skips. Run: https://github.com/artempilipeika-create/artempilipieka-create.github.io/actions/runs/40494048589 (job `122154873187`). The only Python warning concerns the upstream Starlette/httpx test-client deprecation.
 
-Final Tripo artwork and browser save/reopen/edit checks remain pending. The managed local preview cannot launch the Python QA environment (the preview host reports its interpreter path unavailable); browser verification is not claimed. Tripo Studio is reachable, but authentication has not been confirmed in the agent-controlled browser. No new paid generation or staging deployment has been performed for this card.
+## Published and verified
 
-Next: finish the Tripo illustrations from the prepared 25 construction references, register the separate Gola main card in `catalogue-artwork.js`, connect its layout/opening images in `execution-image-index.mjs`, and verify the actual card and a disposable QA project. Repeat the required checks for any runtime edits before updating the existing pinned Railway staging service. Keep all conventional tall-card donors and source identities unchanged.
+All 25 Tripo illustrations (22 closed variants and three open storage views) and the dedicated catalogue cover are integrated. Option photographs resolve through the exact native donor. The runtime does not substitute artwork for construction geometry or manual material selections. Approved Tripo spend was 520 credits, including the disclosed duplicate.
 
-The existing Railway target is project `6d754ad4-ba7b-45f8-8c5e-356387e7de06`, environment `ee625678-c15e-452d-9761-cda99274839f`, service `9aacf7bf-edd5-4f08-9423-3fbabea59268`. Its source remains pinned to the previously approved full-catalogue release. GitHub push from the shell is unavailable without credentials; the connected GitHub app successfully saved the verified tree and triggered CI.
+Final runtime commit `4116aef384eb571ca3d9e97670dc9081edad207c` includes the explicit public asset allowlist and a route regression test for all 26 WebP files. Local JavaScript checks passed 711 tests. [Constructor reliability](https://github.com/artempilipeika-create/artempilipieka-create.github.io/actions/runs/40539744597) passed both required suites, including disposable PostgreSQL saves, for this exact commit.
+
+The owner applied the staged deployment in Railway. Deployment `c05fac6c-f5b0-4c45-bad3-a5c498cc2424` reached SUCCESS. The existing `martin-forest-v2-staging` service is pinned to the final runtime; no pending environment changes remain. All 26 hosted artwork files returned HTTP 200 and matched the committed bytes. Health returned `ok=true`.
+
+Browser QA selected all 22 native variants (eleven per base) and verified their displayed source filenames. All three open illustrations loaded. Synthetic project `QA_PN600_Gola_20261027` was saved, reopened and edited; the final view uses base 820 storage D2 at 2200 mm. Browser error/warning logs and the deployment runtime error filter were empty. No customer project or production order was modified.
+
+[Published constructor](https://martin-forest-v2-staging-production.up.railway.app/constructor.html). Find **ПН-600 Gola** in the catalogue.
+
+Railway target: project `6d754ad4-ba7b-45f8-8c5e-356387e7de06`, environment `ee625678-c15e-452d-9761-cda99274839f`, service `9aacf7bf-edd5-4f08-9423-3fbabea59268`.
