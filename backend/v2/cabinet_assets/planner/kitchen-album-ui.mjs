@@ -53,7 +53,13 @@ export async function openKitchenAlbum({save,snapshot,capture,request,technical,
     const ctx=canvas.getContext('2d');ctx.fillStyle='#f6f3ed';ctx.fillRect(0,0,1800,1273);
     ctx.fillStyle='#19382e';ctx.font='bold 30px Arial';ctx.fillText('MARTIN FOREST',80,82);
     ctx.font='42px Georgia';const title=frozen.name||'Кухня по вашему проекту';ctx.fillText(title,80,168,1640);
-    ctx.drawImage(q('[data-preview]'),195,212,1410,940);
+    // Export from the source, never upscale the smaller dialog preview.
+    const source=hero||views.hero;
+    const coverImage=await createImageBitmap(new Blob([Uint8Array.from(atob(source.split(',')[1]),c=>c.charCodeAt(0))]));
+    try{
+      const scale=Math.min(1410/coverImage.width,940/coverImage.height),w=coverImage.width*scale,h=coverImage.height*scale;
+      ctx.drawImage(coverImage,195+(1410-w)/2,212+(940-h)/2,w,h);
+    }finally{coverImage.close();}
     ctx.font='22px Arial';ctx.fillText(hero?'Визуализация проекта · Комплект для самостоятельной сборки':'Вид из конструктора · Комплект для самостоятельной сборки',80,1210);
     const cover=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     if(closed)return;if(!cover)throw Error('Не удалось подготовить обложку.');

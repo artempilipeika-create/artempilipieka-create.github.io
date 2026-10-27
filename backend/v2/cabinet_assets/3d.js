@@ -562,9 +562,8 @@ async function openKitchenAlbumFlow(){
     capture:async()=>{
       const scene=globalThis.MF_PLANNER?.scene;
       if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data,detail:data};}
-      const {capturePresentation}=await import('/account/planner/presentation-capture.mjs');
-      return {hero:capturePresentation(scene,{width:1536,height:1024,view:'threeQuarter'}).toDataURL('image/jpeg',.93),
-        detail:capturePresentation(scene,{width:1536,height:1024,view:'front'}).toDataURL('image/jpeg',.93)};
+      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs');
+      return captureAlbumViews(scene);
     },
     request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:205000}),
     technical:()=>openSalesAlbum(),nativeImage:()=>globalThis.MF_PLANNER?.presentation?.open()
@@ -643,6 +642,11 @@ async function openSalesAlbum(){
   try{
     if(!state.items.length)throw Error('Добавьте шкафчики в проект.');
     await saveProject();previews=capturePdfPreviews();
+    const scene=globalThis.MF_PLANNER?.scene;
+    if(scene&&!scene.isFallback){
+      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs');
+      previews.preview_data_url=captureAlbumViews(scene).hero;
+    }
     if(!previews.preview_data_url)throw Error('Не удалось получить вид проекта. Обновите страницу и попробуйте снова.');
     snapshot={id:project.project_id,version:project.version,scene:JSON.stringify(scenePayload()),name:$('project-name').value.trim()};
     await showImage(previews.preview_data_url);
