@@ -16,6 +16,21 @@ test('seven upper and two waste sources preserve identity, materials and their a
  for(const from of waste)for(const to of waste){const it=item(from),next=G.select(it,to,G.variants);assert.equal(next.bazis_sha256,to.source_sha256);assert.equal(next.width,350);assert.match(executionArtwork(it,'cargo','execution',to.execution),new RegExp('waste-'+to.execution+'\\.webp$'));}
 });
 
+test('open tall lighting artwork follows the selected AQ or LIRA profile and side',()=>{
+ for(const system of ['aq-4x8','lira-17.5x6.5']){
+  const v=O.variants.find(v=>!v.wall&&v.light_system===system&&v.lighting==='left');
+  const it={...item(v),module_type:'tall_cabinet',width:600,height:2000,depth:600};
+  const original=structuredClone(it);
+  for(const side of ['left','right','both']){
+   const url=new URL(executionArtwork(it,'open-tall','lighting',side),'https://example.invalid');
+   const filename=system==='lira-17.5x6.5'?'open-tall-lira-'+side+'.webp':'open-tall-none-open-tall-lighting-'+side+'.webp';
+   assert.equal(url.pathname,'/account/planner/execution-card-images/'+filename);
+   assert.ok(url.searchParams.get('v'));
+  }
+  assert.deepEqual(it,original,'choosing an illustration must not mutate the production source');
+ }
+});
+
 test('wall geometry matches source at native size and has no feet; waste bins stay out of cut list',()=>{
  for(const v of wall){const it={...item(v),height:2000,depth:600,upper_shelf_count:1},parts=C.productionParts(it,template(it));for(const p of parts){const s=v.panels.find(s=>s.key===p.key);for(const [a,k]of ['x','y','z'].entries()){assert.equal(p.size[k],s.size[a]);assert.equal(p.position[k],s.center[a]);}}
   const f=new MeshFactory({template,material:()=>null,room:{width:6000,depth:4000,height:3000}},()=>{}),m=f.build(item(v));let feet=0,fronts=0;m.traverse(n=>{if(n.userData.role==='leg')feet++;if(n.userData.role==='front')fronts++;});assert.equal(feet,0);assert.equal(fronts,0);f.dispose();

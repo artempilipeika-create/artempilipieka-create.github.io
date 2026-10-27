@@ -1,6 +1,6 @@
 (function(root){
  'use strict';
- const version='20261027-oak-renders';
+ const version='20261027-full-oak';
  function image(file){return '/account/planner/module-card-images/'+file+'.webp?v='+version;}
  function corner(controls,variant){
   if(!variant)return;

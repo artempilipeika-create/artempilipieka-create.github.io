@@ -1,0 +1,87 @@
+MARTIN FOREST — Tripo: отчёт по генерациям
+Модель: GPT Image 2.5 в Tripo Studio
+Всего списано: 1480 кредитов. Согласованный лимит: 1800.
+Остаток на счёте после завершения: 1040 кредитов.
+Каждая платная генерация: 20 кредитов; три включённых пробных изображения: 0.
+Расход сверяется по цене в интерфейсе и изменению баланса Tripo.
+Ошибочные варианты и повторная генерация тоже включены в расход.
+
+01. image-to-image | 8a72b7d3-f1bc-47ac-8637-ae12931c54b0 | 0 кредитов | main:wall-single | preview_accepted_not_integrated
+02. image-to-image | 5cc1e8d2-ea00-4b99-989d-763a376acdf1 | 0 кредитов | option:drawer:drawer:layout:three | preview_accepted_not_integrated
+03. image-to-image | 85df0e99-632b-45c2-b9e0-f9db780764e1 | 0 кредитов | main:tall-appliance | preview_accepted_not_integrated
+04. image-to-image | 46f1ae80-a874-4c50-8d2a-68b30f75ccec | 20 кредитов | main:waste-standard | accepted
+05. image-to-image | c5632790-da85-4e39-997b-0c3fdbc6a640 | 20 кредитов | main:cargo | accepted
+06. image-to-image | 1af4da10-bc6b-4bdc-9e0a-f1be89eeea26 | 20 кредитов | main:dishwasher | accepted
+07. image-to-image | 1fda4a90-e6cd-4bef-827f-1e105a092878 | 20 кредитов | main:pullout-dryer | accepted
+08. image-to-image | 6188f28e-0870-4b4d-97ce-d12dc6763ee4 | 20 кредитов | main:base-single | accepted
+09. image-to-image | f54fd343-d91e-4dba-b751-6492b7e7c59e | 20 кредитов | main:base-double | accepted
+10. image-to-image | bec66245-decd-4b81-8b4c-97e1f303b152 | 20 кредитов | main:base-drawers | accepted
+11. image-to-image | f7a557bb-b4a6-4c63-95af-509e5628e6bd | 20 кредитов | main:base-oven | accepted
+12. image-to-image | cf8f6e4d-aad2-430c-b9f4-cb6276d250ea | 20 кредитов | main:base-corner | accepted
+13. image-to-image | 4521b149-f02d-4d6b-8299-2c0768d68e43 | 20 кредитов | main:wall-double | accepted
+14. image-to-image | eea430cd-4363-44ca-a9b9-feabff4ced2d | 20 кредитов | main:open-tall-none | accepted
+15. image-to-image | a7e5ab71-23cd-4aaf-bd40-b3034792e4a1 | 20 кредитов | main:tall-vitrine | rejected
+16. image-to-image | 85d81b7c-5ce1-42e5-9fbf-93fef6df45ee | 20 кредитов | main:tall-storage | accepted
+17. image-to-image | efefc28a-12d6-458f-ad5e-5fbf4d2c5275 | 20 кредитов | main:tall-vitrine | accepted
+18. image-to-image | 1da6a0cc-1d29-4941-83d3-69e19ddd575b | 20 кредитов | option:base:base:purpose:shelf | accepted
+19. image-to-image | bea7f41e-a011-4c67-be6a-964c9c6a277c | 20 кредитов | option:base:base:purpose:sink | accepted
+20. image-to-image | 5ddedd9a-6c6c-4c86-b712-2e0ada990f22 | 20 кредитов | option:base:base:execution:gola | rejected
+21. image-to-image | 3560a626-e174-4cf7-a409-d8c8f578341a | 20 кредитов | option:base:base:side:left | rejected
+22. image-to-image | 3c7b8dc8-73d9-47cf-a456-c3dae642e547 | 20 кредитов | option:base:base:side:right | accepted
+23. image-to-image | 948843cc-de0c-4af2-a744-b2815af442fa | 20 кредитов | option:base:base:execution:gola | accepted
+24. image-to-image | ce080d9f-bd3b-4388-b9d0-76364cf117cc | 20 кредитов | option:base:base:side:left | rejected
+25. image-to-image | 409977d5-4188-44e1-8cd2-6c3b2db0e961 | 20 кредитов | option:base-double:base:purpose:shelf | accepted
+26. image-to-image | 3a2ea691-be52-484d-bd3f-1b321c557e0d | 20 кредитов | option:base-double:base:execution:gola | accepted
+27. image-to-image | 7e168177-ed46-4a87-a722-03de3c1d12c4 | 20 кредитов | option:drawer:drawer:execution:standard | reuse_matching_main_image
+28. image-to-image | e22ea382-e53d-4650-9684-0ee97f30b3dc | 20 кредитов | option:drawer:drawer:execution:gola | reuse_matching_main_image
+29. image-to-image | 44661620-85be-41ca-9da8-9c03205a57d4 | 20 кредитов | option:drawer:drawer:layout:two | accepted
+30. image-to-image | 69bcdea9-481e-4f1c-981e-b40755b7728b | 20 кредитов | option:drawer:drawer:layout:inner | accepted
+31. image-to-image | 8c69b054-5f3c-47da-8268-b80481fa05d7 | 20 кредитов | option:drawer:drawer:opening:soft | accepted
+32. image-to-image | 14e05572-e408-4da4-a59e-fc653ffa7928 | 20 кредитов | option:drawer:drawer:opening:push | accepted
+33. image-to-image | fb54e0ed-2164-4ac8-be88-7a25a5026bf2 | 20 кредитов | option:oven:generic:handles:handleless | accepted
+34. image-to-image | 223218fa-1b07-403a-bfd2-0621cdfc55ee | 20 кредитов | option:corner:corner:side:left | accepted
+35. image-to-image | 75d0a84f-56ab-47e6-a213-f07175ab22d6 | 20 кредитов | option:corner:corner:side:right | accepted
+36. image-to-image | b32c92a4-6c7a-47d3-8cde-819c63d0e1e9 | 20 кредитов | option:corner:corner:purpose:sink | accepted
+37. image-to-image | 65cbecd5-8119-4d46-93ef-56ea6bb2d948 | 20 кредитов | option:corner:corner:purpose:shelf | accepted
+38. image-to-image | 19db6642-cfc8-47da-a392-1de1ebe97b37 | 20 кредитов | option:corner:corner:door_count:2 | accepted
+39. image-to-image | d419e20d-5c01-4364-acef-739d37790e96 | 20 кредитов | option:corner:generic:handles:handleless | accepted
+40. image-to-image | d8aa7911-4da5-4eba-b338-a0d3548b6ce3 | 20 кредитов | option:cargo:cargo:execution:gola | accepted
+41. image-to-image | 2e360f75-7821-4a8c-af7e-a4dea9bf09fa | 20 кредитов | option:dryer:dryer:execution:gola | accepted
+42. image-to-image | 0935604a-f4f6-4dc2-8398-d06fe2da4f24 | 20 кредитов | option:dishwasher:dishwasher:execution:standard | accepted
+43. image-to-image | a5f14859-6e83-4ecc-8ae7-1b4fa0cce438 | 20 кредитов | option:dishwasher:dishwasher:execution:gola | accepted
+44. image-to-image | 582ec735-d91f-4984-b5d1-0ea059e6e7a2 | 20 кредитов | option:upper:upper:filling:shelves | accepted
+45. image-to-image | 02d41e36-3661-46ea-b525-b48b6eeb071b | 20 кредитов | option:upper:upper:execution:handleless | accepted
+46. image-to-image | e18eda2a-26c4-44cf-8962-df35cab72aa4 | 20 кредитов | option:upper:upper:execution:push | accepted
+47. image-to-image | d1e7f272-64bc-4153-8670-2ad584e8e459 | 20 кредитов | extra:duplicate-upper-push | unused_duplicate
+48. image-to-image | 19590547-54bf-4a08-8097-538c3cbae87a | 20 кредитов | option:upper:upper:side:left | accepted
+49. image-to-image | 73a14852-adc3-407a-9f04-b1aef8b3f415 | 20 кредитов | option:upper:upper:side:right | accepted
+50. image-to-image | 85fe724d-cdbc-489f-a305-af7396e21fc2 | 20 кредитов | option:upper-double:upper:filling:shelves | accepted
+51. image-to-image | 6a3eb468-1833-4daa-852c-9882c2d93b80 | 20 кредитов | option:upper-double:upper:execution:handleless | accepted
+52. image-to-image | 9ba84358-64d3-4890-ab0c-a5ef1032ec60 | 20 кредитов | option:upper-double:upper:execution:push | accepted
+53. image-to-image | f0b6e508-d8ec-4788-a58b-9efc620c375e | 20 кредитов | option:open-tall-none:open-tall:lighting:left | accepted
+54. image-to-image | 6f423379-8aa0-4b47-89a2-49f12e6098a6 | 20 кредитов | option:open-tall-none:open-tall:lighting:right | rejected
+55. image-to-image | 73484d37-95bd-48d4-8441-decc2867223b | 20 кредитов | option:open-tall-none:open-tall:lighting:both | rejected
+56. image-to-image | 7c894923-396a-4028-b935-108632030390 | 20 кредитов | option:tall-vitrine:vitrine:lighting:right | accepted
+57. image-to-image | 1300d6ec-3990-472e-8147-f32d210510f6 | 20 кредитов | option:tall-vitrine:vitrine:lighting:both | accepted
+58. image-to-image | e7716c13-ad2b-41f4-b651-6d2a8a750da7 | 20 кредитов | option:tall-vitrine:vitrine:opening:left | accepted
+59. image-to-image | b8094b00-9c6f-4b1a-9414-3888adec0188 | 20 кредитов | option:tall-vitrine:vitrine:opening:right | rejected
+60. image-to-image | 20c8e1f3-2719-4ab5-b95a-f78a8c6f2e4b | 20 кредитов | option:tall-storage:tall:opening:left | accepted
+61. image-to-image | b9967097-eb6b-43b2-8114-008587099c5a | 20 кредитов | option:tall-vitrine:vitrine:opening:right | accepted
+62. image-to-image | 4e9c5fa1-f6d6-41ec-a730-fae48ace3352 | 20 кредитов | option:tall-storage:tall:opening:right | accepted
+63. image-to-image | d6e7eb37-3447-406f-9c0c-5ba09aeb379c | 20 кредитов | option:tall-storage:tall:opening:double | accepted
+64. image-to-image | 45c33326-1376-42fd-a1ea-c2692b1b3406 | 20 кредитов | option:tall-storage:generic:handles:handleless | accepted
+65. image-to-image | 7b529734-2036-4ae4-a508-549453853ba9 | 20 кредитов | option:tall-appliance:tall:layout:door_oven_micro | accepted
+66. image-to-image | 993af98c-506f-4d70-8ade-8d4306d0ae8a | 20 кредитов | option:tall-appliance:tall:layout:drawer_oven | accepted
+67. image-to-image | ed9f2eb4-fa2e-40a8-8103-39c1bcb0c085 | 20 кредитов | option:tall-appliance:tall:layout:drawer_oven_micro | accepted
+68. image-to-image | e2b16725-1c51-44f2-a2ef-baddedad01cf | 20 кредитов | option:tall-appliance:tall:opening:left | accepted
+69. image-to-image | 25210665-c7c0-4a2e-8290-3918be5e26f4 | 20 кредитов | option:tall-appliance:tall:opening:right | accepted
+70. image-to-image | e8b7c3d5-7bc4-4d0d-a717-d4dc9bb35305 | 20 кредитов | option:tall-appliance:generic:handles:handleless | accepted
+71. image-to-image | baccd786-8686-4481-8a3a-4bacfd2b128c | 20 кредитов | main:waste-gola | accepted
+72. image-to-image | 15fd4c6b-56db-470f-bb66-e4fe55a04663 | 20 кредитов | option:open-tall:lira:left | accepted
+73. image-to-image | 85cb99a8-f004-45df-8518-5118dc7111be | 20 кредитов | option:open-tall:lira:right | accepted
+74. image-to-image | 1b62a364-2a5d-4f1e-b423-bf0f54774453 | 20 кредитов | option:open-tall:lira:both | accepted
+75. image-to-image | e5cdd38d-03be-45c1-bee8-0b7097989f6a | 20 кредитов | option:base:base:side:left | accepted
+76. image-to-image | 32659320-9c32-40f7-a9b2-7b1d3c6004ac | 20 кредитов | option:open-tall-none:open-tall:lighting:right | accepted
+77. image-to-image | 05f48f1e-2d35-4b38-bb76-907c160cb13e | 20 кредитов | option:open-tall-none:open-tall:lighting:both | accepted
+
+ИТОГО: 1480 кредитов.

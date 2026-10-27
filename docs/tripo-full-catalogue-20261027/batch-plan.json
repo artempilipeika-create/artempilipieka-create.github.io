@@ -1,13 +1,13 @@
 {
-  "status": "Approved; generation in progress",
+  "status": "integrated_local_checks_passed_pending_CI_and_staging",
   "base_commit": "2794ad465762e3e08ba378c123708886248090b4",
   "scope": "All 16 cabinet families: seven open-wall images already deployed; remaining 15 families plus option illustrations",
   "total_new_images": 82,
   "free_previews_completed": 3,
-  "paid_images_remaining": 79,
+  "paid_images_remaining": 0,
   "estimated_paid_credits": 1580,
   "requested_credit_cap": 1800,
-  "credit_balance_observed": 1640,
+  "credit_balance_observed": 1040,
   "model": "GPT Image 2.5 in Tripo Studio, one image per job, 4K disabled",
   "approval": "User confirmed full batch and limit 1800 credits, including corrections: даю согласие",
   "checks": [
@@ -508,7 +508,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "MF_REALISTIC_ALL_WALL_SINGLE. Re-render this exact one-door wall cabinet as a premium architectural product photograph, matching the approved MARTIN FOREST natural oak series. Change all wooden cabinet surfaces and the single closed door to finely detailed light natural oak veneer with realistic pores and long vertical grain. Preserve the exact cabinet geometry, single slab door, 18 mm panel thickness, 1.5 mm perimeter gaps, camera angle and proportions from the reference. Keep ONE small BLACK vertical handle at the LOWER RIGHT free edge of the door; hinges are on the left, the handle is opposite hinges. The complete cabinet is wall-mounted with no countertop, no feet, no plinth, no lighting. Pale textured warm plaster wall, soft natural side daylight, very subtle window-light gradient, believable contact shadows, sharp edge-band detail and non-plastic material response. Close but uncropped composition, entire cabinet with 7 percent margins. One large photorealistic image, not an illustration or collage, no labels, props or text.",
-      "status": "preview_accepted_not_integrated",
+      "status": "accepted",
       "estimated_credits": 20,
       "task_id": "8a72b7d3-f1bc-47ac-8637-ae12931c54b0",
       "actual_credits": 0,
@@ -517,7 +517,8 @@
       "pixels": [
         1024,
         1024
-      ]
+      ],
+      "review": "Approved original free preview; integrated into full catalogue."
     },
     {
       "key": "main:wall-double",
@@ -777,7 +778,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "MF_REALISTIC_ALL_TALL_APPLIANCE. Re-render the exact tall cabinet in the attached reference as a premium photorealistic natural oak furniture product, matching the approved MARTIN FOREST oak shelf series. Preserve its precise proportions, 18 mm panel thickness, exactly ONE upper closed cupboard door, ONE realistic black-glass oven in the middle, and ONE lower closed cupboard door. No microwave and no additional drawers. Keep both small BLACK vertical cabinet handles on the RIGHT free edge: upper door handle close to the lower edge, lower door handle close to its upper edge, as in reference. Left hinges. Light natural oak veneer with fine detailed pores, coherent vertical grain across facades and matching edge bands. Dark recessed plinth and side panels stopping above it. Black oven with refined glass, realistic subtle reflections, accurate control knobs and horizontal metal handle. Pale warm textured plaster wall and light stone floor, soft natural side daylight, realistic gentle contact shadows and crisp physical edges. Entire tall cabinet visible from top to base with seven percent clear margins; slight three-quarter front view matching the reference. One large photorealistic product image only, no collage, text, labels, plants or decor. No lighting strips.",
-      "status": "preview_accepted_not_integrated",
+      "status": "accepted",
       "estimated_credits": 20,
       "task_id": "85df0e99-632b-45c2-b9e0-f9db780764e1",
       "actual_credits": 0,
@@ -786,7 +787,8 @@
       "pixels": [
         1024,
         1024
-      ]
+      ],
+      "review": "Approved original free preview; integrated into full catalogue."
     },
     {
       "key": "option:base:base:purpose:shelf",
@@ -1051,8 +1053,8 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Петли слева. Дверь открывается влево. Preserve this specific option from the reference. Hinges on LEFT, handle on RIGHT free edge.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent.",
-      "status": "rejected",
+      "prompt": "CORRECT THE REFERENCE: DELETE THE VISIBLE DOOR HANDLE COMPLETELY. NO VISIBLE HANDLE, NO PULL, NO KNOB anywhere in this image. Render one oak base cabinet with one door open 100 degrees toward the LEFT, showing its INSIDE face as a perfectly plain wooden panel, with only two realistic silver hinges at its hinge edge. There is NO metal bar on the door face. The handle is on the reverse unseen face and must NOT be visible. One horizontal shelf inside cabinet, two compartments. Keep reference geometry and camera position.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent. Light natural oak fine pores, warm pale plaster backdrop, light stone floor, soft daylight and realistic contact shadows. Photorealistic premium MARTIN FOREST product render, entire cabinet uncropped, 7 percent margins. No labels, text, decoration or illumination.",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли слева",
@@ -1065,16 +1067,16 @@
         "front": false,
         "tall": false
       },
-      "task_id": "ce080d9f-bd3b-4388-b9d0-76364cf117cc",
+      "task_id": "e5cdd38d-03be-45c1-bee8-0b7097989f6a",
       "actual_credits": 20,
-      "png_sha256": "ea136d54a23be9043bfe68c3c6f4f2cbf9121e66c26fd8c2b36412728dd9bf72",
+      "png_sha256": "9e81f7df196a8db4843b2b34dde0501d3723e164d47da9f2c4f938d3dc23f09b",
       "pixels": [
         1024,
         1024
       ],
       "generated": "generated/option--base--base--side--left.webp",
-      "webp_sha256": "5ec90647adb69942220166d1af770ca0f3ed012d291a790e26f7ce7f37cf4329",
-      "review": "Retry still shows silver handle on interior face; must remove visible handle from open interior door.",
+      "webp_sha256": "0bda8569f90de0545f456beb8e060e864d00ee3983ebe06ae68c386a297c8e41",
+      "review": "Accepted correction: door opens left, two hinges on left, interior door face is plain oak with no misplaced handle; one shelf, two top stretchers and recessed plinth match source.",
       "attempts": [
         {
           "task_id": "3560a626-e174-4cf7-a409-d8c8f578341a",
@@ -1082,10 +1084,15 @@
           "png_sha256": "6fc5432b6a9168c3523a24c93912ff528d7f209c708ff06c7133bd9eb73cffe4",
           "status": "rejected",
           "review": "Handle incorrectly visible on interior face alongside hinges, also at middle height."
+        },
+        {
+          "task_id": "ce080d9f-bd3b-4388-b9d0-76364cf117cc",
+          "actual_credits": 20,
+          "png_sha256": "ea136d54a23be9043bfe68c3c6f4f2cbf9121e66c26fd8c2b36412728dd9bf72",
+          "status": "rejected",
+          "review": "Retry still shows silver handle on interior face; must remove visible handle from open interior door."
         }
-      ],
-      "retry_prompt": "CORRECT THE REFERENCE: DELETE THE VISIBLE DOOR HANDLE COMPLETELY. NO VISIBLE HANDLE, NO PULL, NO KNOB anywhere in this image. Render one oak base cabinet with one door open 100 degrees toward the LEFT, showing its INSIDE face as a perfectly plain wooden panel, with only two realistic silver hinges at its hinge edge. There is NO metal bar on the door face. The handle is on the reverse unseen face and must NOT be visible. One horizontal shelf inside cabinet, two compartments. Keep reference geometry and camera position.  CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent. Light natural oak fine pores, warm pale plaster backdrop, light stone floor, soft daylight and realistic contact shadows. Photorealistic premium MARTIN FOREST product render, entire cabinet uncropped, 7 percent margins. No labels, text, decoration or illumination.",
-      "retry_reference": "backend/v2/cabinet_assets/planner/execution-card-images/base-base-side-left.webp"
+      ]
     },
     {
       "key": "option:base:base:side:right",
@@ -1542,7 +1549,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "MF_REALISTIC_ALL_THREE_DRAWERS. Re-render the exact cabinet in the attached reference as a premium photorealistic natural oak furniture product. Preserve its geometry precisely: 600 mm width, 720 mm carcass, 100 mm recessed plinth, 18 mm panels. Exactly THREE CLOSED drawer fronts: top 177.5 mm, middle 177.5 mm, bottom 357 mm; narrow 1.5 mm perimeter gaps. Exactly one small horizontal matte BLACK bar handle centered near the top of EACH of the three fronts. No fourth drawer. Keep the upper open carcass rails visible as in the reference, no countertop. No lighting. Do not extend side panels down to the floor. Light natural oak with detailed fine pores, vertical coherent woodgrain across the three facades, matching edges. Pale warm textured plaster wall and light stone floor, soft natural directional daylight, believable soft contact shadows, crisp fine edge highlights, realistic physical material response. Slight three-quarter front view matching reference, complete cabinet framed close with 7 percent clear margins. One large cabinet photograph, no collage, captions, text, diagram or decor. Since the drawers are closed do not invent visible slides outside them.",
-      "status": "preview_accepted_not_integrated",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "3 ящика",
@@ -1562,7 +1569,8 @@
       "pixels": [
         1024,
         1024
-      ]
+      ],
+      "review": "Approved original free preview; integrated into full catalogue."
     },
     {
       "key": "option:drawer:drawer:layout:inner",
@@ -3427,8 +3435,8 @@
     {
       "key": "option:open-tall-none:open-tall:lighting:right",
       "title": "open-tall-none — Справа",
-      "reference": "backend/v2/cabinet_assets/planner/execution-card-images/open-tall-none-open-tall-lighting-right.webp",
-      "reference_sha256": "0ac2cae25a1e6aa010d506a4266ea3a53802fcd9658c73acd73171f3e51068d6",
+      "reference": "docs/tripo-full-catalogue-20261027/generated/option--tall-vitrine--vitrine--opening--left.webp",
+      "reference_sha256": "b3760b68c0b2fcc3d4546d9d415238c449b79c7f10527230aee91d5e47c9ddc7",
       "bazis_id": "bazis.7804e46e0985",
       "native_source": {
         "keys": [
@@ -3466,8 +3474,8 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Whole open tall cabinet, 600 mm wide x 2000 mm high x 600 mm deep, 100 mm recessed plinth, exactly ONE central wood shelf making TWO niches. Light strips are machined INTO the INNER SIDE WALL at HALF of cabinet DEPTH, about 300 mm behind front edge, never at front edge or rear corner. Camera from front-left to reveal the inner RIGHT side wall. Light must be interrupted by the central solid wood shelf. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Справа. Свет на правой стойке. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly right side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
-      "status": "rejected",
+      "prompt": "Transform the attached cabinet into an OPEN wooden shelving module. DELETE the entire glass door, black perimeter frame, ALL hinges and ALL metal hardware. REPLACE the single glass shelf with ONE 18 mm light-oak wooden shelf at the same central height, creating exactly TWO open niches. Keep the cabinet dimensions 600 wide × 2000 high × 600 deep and 100 mm dark plinth. Then MIRROR the whole cabinet horizontally: camera from FRONT-LEFT, outside LEFT wall visible and INSIDE RIGHT wall visible. The LED groove becomes on the RIGHT inner wall only. KEEP its mid-depth placement from reference: broad plain wood both in FRONT and BEHIND the luminous line. Plain unlit front upright. Narrow 4 mm AQ luminous groove, no black channel, interrupted by the solid wood shelf. No left LED, no horizontal or back-panel LED. Keep warm natural oak, realistic fine texture, soft daylight, plaster background and stone floor, full uncropped cabinet. No glass at all, no doors, no handles, no hinges, no text.",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Справа",
@@ -3480,18 +3488,25 @@
         "front": true,
         "tall": true
       },
-      "task_id": "6f423379-8aa0-4b47-89a2-49f12e6098a6",
+      "task_id": "32659320-9c32-40f7-a9b2-7b1d3c6004ac",
       "actual_credits": 20,
-      "png_sha256": "c2edce79b4215111a3db277c7a70c6c9e9a318e616756da0a5749f33d206f7ee",
+      "png_sha256": "b6ed6053da709119c413a3f7a2ff653a563adacbdf7ec71fa1988f7e6165cd49",
       "pixels": [
         1024,
         1024
       ],
       "generated": "generated/option--open-tall-none--open-tall--lighting--right.webp",
-      "webp_sha256": "1f642be85db9f9e34ac485a393e10c5ea2fa6354c5bc2c281681753a2e0d2ba7",
-      "review": "Right light reads at front edge because camera hides inner right side wall. Rerender from front-left with visible inner right wall.",
-      "retry_prompt": "MIRROR the attached cabinet horizontally: the camera MUST be from FRONT-LEFT, exposing the outside LEFT side panel and the INSIDE RIGHT side wall. Move the LED to the RIGHT interior wall, at HALF DEPTH (300 mm behind front), so oak is visible BOTH in front of and behind the luminous groove. NO LED at the front edge. The RIGHT FRONT UPRIGHT must be unlit plain oak. Whole open tall cabinet 600 mm wide, 2000 mm tall, 600 mm deep, 100 mm recessed dark plinth. Exactly ONE central wood shelf creating two niches, light interrupted by this shelf. Exactly one thin AQ 4 mm luminous groove on RIGHT inner wall in each niche, NO left light, NO back-wall light, NO horizontal light, NO black aluminium channel. Natural light oak fine pores, warm pale plaster background and stone floor, soft daylight, crisp realistic render. Entire cabinet with clear margins; no text or props.",
-      "retry_reference": "backend/v2/cabinet_assets/planner/execution-card-images/open-tall-none-open-tall-lighting-left.webp"
+      "webp_sha256": "acefe4f69f202338cb51c9e2b7a578301a8eed80a9f5b9b1a96f0d9a99e7190c",
+      "review": "Accepted correction: thin AQ strip recessed at mid-depth of RIGHT inner wall, oak visible in front and behind, camera from front-left, no black profile, one 18 mm wood shelf and no door/hinges.",
+      "attempts": [
+        {
+          "task_id": "6f423379-8aa0-4b47-89a2-49f12e6098a6",
+          "actual_credits": 20,
+          "png_sha256": "c2edce79b4215111a3db277c7a70c6c9e9a318e616756da0a5749f33d206f7ee",
+          "status": "rejected",
+          "review": "Right light reads at front edge because camera hides inner right side wall. Rerender from front-left with visible inner right wall."
+        }
+      ]
     },
     {
       "key": "option:open-tall-none:open-tall:lighting:both",
@@ -3535,8 +3550,8 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Whole open tall cabinet, 600 mm wide x 2000 mm high x 600 mm deep, 100 mm recessed plinth, exactly ONE central wood shelf making TWO niches. Light strips are machined INTO the INNER SIDE WALL at HALF of cabinet DEPTH, about 300 mm behind front edge, never at front edge or rear corner. Camera nearly frontal, slightly raised, revealing both INNER side walls. Light must be interrupted by the central solid wood shelf. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: С двух сторон. Свет на обеих стойках. Preserve this specific option from the reference. Vertical lighting is recessed into the selected INTERIOR SIDE WALL at mid-depth, never the back wall or horizontal shelf edge. Keep exactly both side(s) lit. AQ narrow 4 mm luminous strip, no black aluminium channel. ",
-      "status": "rejected",
+      "prompt": "IGNORE reference camera angle. A perfectly SYMMETRICAL STRAIGHT-ON FRONT view into an open tall cabinet, with BOTH inner side walls visible and NO exterior side panel visible. Single cabinet 600 mm wide x 2000 mm tall x 600 mm deep, one central 18 mm oak shelf, TWO niches, dark recessed 100 mm plinth. Install TWO vertical AQ LED grooves, one in each INTERIOR SIDE WALL, exactly HALF WAY from front to back. On EACH side wall the light must have a broad area of plain oak IN FRONT and BEHIND it. Front uprights are plain unlit oak. The grooves are NOT at the front edge and NOT at back corners. Narrow 4 mm neutral-white light lines, interrupted at the wood shelf, NO black channel, no horizontal light. Natural light oak veneer fine pores, warm plaster wall and pale stone floor, soft daylight, photorealistic product render. Full cabinet with margins. No doors, no handles, no glass, no text.",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "С двух сторон",
@@ -3549,18 +3564,25 @@
         "front": true,
         "tall": true
       },
-      "task_id": "73484d37-95bd-48d4-8441-decc2867223b",
+      "task_id": "05f48f1e-2d35-4b38-bb76-907c160cb13e",
       "actual_credits": 20,
-      "png_sha256": "651f3ee7da265089b3f8c5176907c980dc53af07f6890fbbc8cf3ea95cb31ecf",
+      "png_sha256": "d0fc237139ca74d4f284cd9bde93f6b109dce4d3572180a683d1795a1b02d465",
       "pixels": [
         1024,
         1024
       ],
       "generated": "generated/option--open-tall-none--open-tall--lighting--both.webp",
-      "webp_sha256": "542f22022be0fac3780d57b648a3e95a3e4044e24a67dbfad37592781863eda9",
-      "review": "Right light too close to front edge; rerender symmetric front view with both inner side wall grooves visible.",
-      "retry_prompt": "IGNORE reference camera angle. A perfectly SYMMETRICAL STRAIGHT-ON FRONT view into an open tall cabinet, with BOTH inner side walls visible and NO exterior side panel visible. Single cabinet 600 mm wide x 2000 mm tall x 600 mm deep, one central 18 mm oak shelf, TWO niches, dark recessed 100 mm plinth. Install TWO vertical AQ LED grooves, one in each INTERIOR SIDE WALL, exactly HALF WAY from front to back. On EACH side wall the light must have a broad area of plain oak IN FRONT and BEHIND it. Front uprights are plain unlit oak. The grooves are NOT at the front edge and NOT at back corners. Narrow 4 mm neutral-white light lines, interrupted at the wood shelf, NO black channel, no horizontal light. Natural light oak veneer fine pores, warm plaster wall and pale stone floor, soft daylight, photorealistic product render. Full cabinet with margins. No doors, no handles, no glass, no text.",
-      "retry_reference": "backend/v2/cabinet_assets/planner/execution-card-images/open-tall-none-open-tall-lighting-both.webp"
+      "webp_sha256": "a8b06e8a420e65d8f5cfc7674f05c5424105da83efae062a12e831f3c7eb85e9",
+      "review": "Accepted correction: two thin AQ strips recessed in both inner side walls, visible oak ahead of and behind each strip, one central shelf divides the lights; no black LIRA channels, no extra lighting.",
+      "attempts": [
+        {
+          "task_id": "73484d37-95bd-48d4-8441-decc2867223b",
+          "actual_credits": 20,
+          "png_sha256": "651f3ee7da265089b3f8c5176907c980dc53af07f6890fbbc8cf3ea95cb31ecf",
+          "status": "rejected",
+          "review": "Right light too close to front edge; rerender symmetric front view with both inner side wall grooves visible."
+        }
+      ]
     },
     {
       "key": "option:tall-vitrine:vitrine:lighting:left",
@@ -3806,8 +3828,8 @@
     {
       "key": "option:tall-vitrine:vitrine:opening:right",
       "title": "tall-vitrine — Петли справа",
-      "reference": "backend/v2/cabinet_assets/planner/execution-card-images/tall-vitrine-vitrine-opening-right.webp",
-      "reference_sha256": "5bb47f2a53607ff02783b4fd4d66d433167597f2d606363f87b6d98da3b0ffed",
+      "reference": "docs/tripo-full-catalogue-20261027/generated/option--tall-vitrine--vitrine--opening--left.webp",
+      "reference_sha256": "b3760b68c0b2fcc3d4546d9d415238c449b79c7f10527230aee91d5e47c9ddc7",
       "bazis_id": "bazis.4b283b9bdf55",
       "native_source": {
         "keys": [
@@ -3840,8 +3862,8 @@
       "image_count": 1,
       "aspect_ratio": "1:1",
       "upscale_4k": false,
-      "prompt": "Correct the attached reference to this authoritative cabinet construction, then render a premium photorealistic natural oak MARTIN FOREST cabinet. 600 mm wide, 2000 mm high, 600 mm deep, 18 mm panels, recessed dark 100 mm plinth. ONE thin black Z1 aluminium frame with transparent glass door. PUSH-TO-OPEN, NO HANDLE: delete any silver rod or pull. Exactly ONE transparent 4 mm glass shelf centered 1043 mm above floor: remove extra shelves from reference. FOUR realistic hinges on the RIGHT edge only. Show door open 75 degrees on its RIGHT hinges, clearly revealing cabinet interior. Thin 4 mm neutral-white AQ LED luminous grooves recessed flush in the LEFT INTERIOR SIDE WALL at mid depth. Exactly one light line, no lighting on opposite wall. Never put lighting on back wall, front glass, or horizontal shelf edge. Realistic light bounce, fine natural oak pores and vertical grain, warm plaster backdrop and pale stone floor, soft daylight, crisp shadows and glass reflections. Entire cabinet uncropped with 7 percent margins. View from front-right so illuminated inner side wall is visible. No labels, decor or collage.",
-      "status": "rejected",
+      "prompt": "Edit the supplied successful photorealistic vitrine. Keep the cabinet, CAMERA FROM FRONT-RIGHT, oak grain, ONE glass shelf, recessed plinth and LEFT INNER WALL LIGHT exactly as shown. The left LED must remain recessed at mid-depth on the INSIDE wall, with visible wood in front and behind it. ONLY change the door opening: move the FOUR hinges from left to RIGHT side and swing the glass door OPEN TO THE RIGHT, about 90 degrees. Keep the glass door thin black Z1 frame, clear glass, NO HANDLE. No hinges left. Do not mirror the whole image and do not move the light to front upright. Camera must still show left inner wall and its recessed light. Whole cabinet uncropped, same soft daylight and warm plaster background.",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли справа",
@@ -3854,18 +3876,25 @@
         "front": false,
         "tall": true
       },
-      "task_id": "b8094b00-9c6f-4b1a-9414-3888adec0188",
+      "task_id": "b9967097-eb6b-43b2-8114-008587099c5a",
       "actual_credits": 20,
-      "png_sha256": "2c05ff2d3f90171e1ce3f711b7fa5f5dee5e04b047a7b82269280cbbca5afe35",
+      "png_sha256": "8a0a9b449419ead100fa04de56afeeede9d8ddbe99305659c724bcd836a73761",
       "pixels": [
         1024,
         1024
       ],
       "generated": "generated/option--tall-vitrine--vitrine--opening--right.webp",
-      "webp_sha256": "42b2c5436c5f4a453de8c22a96670dfa182bafb9ce9c99278671cb9f85b65470",
-      "review": "Correct right opening and four hinges, but left LED appears on front upright instead of inside side wall. Correct using reviewed left-opening vitrine as reference.",
-      "retry_prompt": "Edit the supplied successful photorealistic vitrine. Keep the cabinet, CAMERA FROM FRONT-RIGHT, oak grain, ONE glass shelf, recessed plinth and LEFT INNER WALL LIGHT exactly as shown. The left LED must remain recessed at mid-depth on the INSIDE wall, with visible wood in front and behind it. ONLY change the door opening: move the FOUR hinges from left to RIGHT side and swing the glass door OPEN TO THE RIGHT, about 90 degrees. Keep the glass door thin black Z1 frame, clear glass, NO HANDLE. No hinges left. Do not mirror the whole image and do not move the light to front upright. Camera must still show left inner wall and its recessed light. Whole cabinet uncropped, same soft daylight and warm plaster background.",
-      "retry_reference": "docs/tripo-full-catalogue-20261027/generated/option--tall-vitrine--vitrine--opening--left.webp"
+      "webp_sha256": "d25b988ba212ad2817914871f7258c3fd4116ae1e0ee15fe65ef64e4fbbd55e5",
+      "review": "Corrected right-opening glass door with four right hinges; left LED remains recessed at mid-depth, one glass shelf, no handle.",
+      "attempts": [
+        {
+          "task_id": "b8094b00-9c6f-4b1a-9414-3888adec0188",
+          "actual_credits": 20,
+          "png_sha256": "2c05ff2d3f90171e1ce3f711b7fa5f5dee5e04b047a7b82269280cbbca5afe35",
+          "status": "rejected",
+          "review": "Correct right opening and four hinges, but left LED appears on front upright instead of inside side wall. Correct using reviewed left-opening vitrine as reference."
+        }
+      ]
     },
     {
       "key": "option:tall-storage:tall:opening:left",
@@ -3967,7 +3996,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "AUTHORITATIVE CONSTRUCTION OVERRIDES ERRORS IN REFERENCE: whole tall pantry cabinet, 600 mm wide x 2000 mm tall x 600 mm deep, 100 mm recessed dark plinth. Horizontal division at 820 mm above floor. Exactly TWO vertically stacked doors, lower about 717 mm high and upper about 1177 mm high. Both open on RIGHT hinges: two hinges on lower door and three on upper. Do NOT merge these into one tall continuous door. Inside, three horizontal shelves/divisions at 460, 820, 1401 mm from floor create four compartments. NO VISIBLE handles on inside of doors. The visible inside faces are plain oak with hinges only. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware.  Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Петли справа. Дверь открывается вправо. Preserve this specific option from the reference. Hinges on RIGHT, handle on LEFT free edge.  IMPORTANT HINGED DOOR DETAIL: hinges are on the interior face; the bar handle is mounted ONLY on the EXTERIOR face, never on the inside door surface. When the open door exposes its inner face in this view, the handle is hidden on its reverse side. Do not draw a black handle on the same visible door surface as the hinges. Lower cabinet handle position on exterior is 50 mm below top and 50 mm from free side edge; wall cabinet handle is 50 mm above bottom. Keep original door opening side and angle.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли справа",
@@ -3979,7 +4008,17 @@
         "highlight": null,
         "front": false,
         "tall": true
-      }
+      },
+      "task_id": "4e9c5fa1-f6d6-41ec-a730-fae48ace3352",
+      "actual_credits": 20,
+      "png_sha256": "85eb8a2f4d958603b74c1f8f7883381ece7fe136f98a8938f4008651bb949db0",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-storage--tall--opening--right.webp",
+      "webp_sha256": "3e3d67ea6daf8efc1a40bb0303bf3abbcba187ab9866909f9f884247193147a7",
+      "review": "Two right-opening stacked doors, three hinges above and two below, four compartments, plain interior faces."
     },
     {
       "key": "option:tall-storage:tall:opening:double",
@@ -4019,7 +4058,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "AUTHORITATIVE CONSTRUCTION OVERRIDES ERRORS IN REFERENCE: whole tall pantry cabinet, 600 mm wide x 2000 mm tall x 600 mm deep, 100 mm recessed dark plinth. Horizontal division at 820 mm above floor. FOUR separate doors arranged in TWO stacked pairs: two short lower doors and two taller upper doors; all four open outward. Two hinges on each lower door, three on each upper door. Inside, three horizontal shelves/divisions at 460, 820, 1401 mm from floor create four compartments. NO VISIBLE handles on inside of doors. The visible inside faces are plain oak with hinges only. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware.  Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Две створки. По две двери в каждой секции. Preserve this specific option from the reference.  IMPORTANT HINGED DOOR DETAIL: hinges are on the interior face; the bar handle is mounted ONLY on the EXTERIOR face, never on the inside door surface. When the open door exposes its inner face in this view, the handle is hidden on its reverse side. Do not draw a black handle on the same visible door surface as the hinges. Lower cabinet handle position on exterior is 50 mm below top and 50 mm from free side edge; wall cabinet handle is 50 mm above bottom. Keep original door opening side and angle.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Две створки",
@@ -4031,7 +4070,17 @@
         "highlight": null,
         "front": false,
         "tall": true
-      }
+      },
+      "task_id": "d6e7eb37-3447-406f-9c0c-5ba09aeb379c",
+      "actual_credits": 20,
+      "png_sha256": "ec096e9f45990324a21146a598c143c2b5de43782b2ffd560be411765a18f91a",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-storage--tall--opening--double.webp",
+      "webp_sha256": "22d4214aee1b2d6138d7308eaf85904d22aa52ca3edd1bb4d023388f48f17de8",
+      "review": "Four doors in two stacked pairs, correct three-upper/two-lower hinges per side, four compartments."
     },
     {
       "key": "option:tall-storage:generic:handles:handles",
@@ -4126,7 +4175,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "AUTHORITATIVE CONSTRUCTION OVERRIDES ERRORS IN REFERENCE: whole tall pantry cabinet, 600 mm wide x 2000 mm tall x 600 mm deep, 100 mm recessed dark plinth. Horizontal division at 820 mm above floor. Exactly TWO vertically stacked doors, lower about 717 mm high and upper about 1177 mm high. Both doors closed, plain oak with NO applied handles. Inside, three horizontal shelves/divisions at 460, 820, 1401 mm from floor create four compartments.  Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware.  Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Без ручек. Фасад без накладной ручки. Preserve this specific option from the reference. ",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Без ручек",
@@ -4138,7 +4187,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "45c33326-1376-42fd-a1ea-c2692b1b3406",
+      "actual_credits": 20,
+      "png_sha256": "e17c5a993a5107417908d05cf3dc56e89a5657744e7934aaca2ac29469d32401",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-storage--generic--handles--handleless.webp",
+      "webp_sha256": "786ee58c7ee8dbe491ae16eb6511282a968b623f12da685b90659c257f739859",
+      "review": "Complete tall pantry with two stacked plain oak doors and recessed plinth; no handles."
     },
     {
       "key": "option:tall-appliance:tall:layout:door_oven",
@@ -4233,7 +4292,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Whole tall appliance cabinet, 600 mm wide x 2200 mm tall x 600 mm deep, recessed dark 100 mm plinth, entire cabinet uncropped. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Духовка + СВЧ. Нижняя секция с дверью. Preserve this specific option from the reference. ",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Духовка + СВЧ",
@@ -4245,7 +4304,17 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "7b529734-2036-4ae4-a508-549453853ba9",
+      "actual_credits": 20,
+      "png_sha256": "e5dc7b17ffa8b16cc77f01014ec372bbfa55823fb5b418df946ec9c39fe4f1bc",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-appliance--tall--layout--door_oven_micro.webp",
+      "webp_sha256": "ebb19d1f503d55bd867def3a989951fd074724074ce8cc3093342b880786d8de",
+      "review": "Accepted: two exterior doors around oven and microwave, correct order and relative heights, exterior right-edge handles, full plinth and oak finish."
     },
     {
       "key": "option:tall-appliance:tall:layout:drawer_oven",
@@ -4285,7 +4354,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Whole tall appliance cabinet, 600 mm wide x 2200 mm tall x 600 mm deep, recessed dark 100 mm plinth, entire cabinet uncropped. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Ящик + духовка. Выдвижная нижняя секция. Preserve this specific option from the reference. ",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Ящик + духовка",
@@ -4297,7 +4366,17 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "993af98c-506f-4d70-8ade-8d4306d0ae8a",
+      "actual_credits": 20,
+      "png_sha256": "b6ffbdee6f7b07c47525f18f116de639e757b71cdc15ee94eca5c4cb5787e8ad",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-appliance--tall--layout--drawer_oven.webp",
+      "webp_sha256": "f1f26acbae0c9eec45acaaf2e9616e4b4f83b9730d718a11c10514e2a044ec30",
+      "review": "Accepted: lower drawer, central oven and single tall upper door; full 2200 cabinet and 100 plinth; realistic oak, exterior handles and correct front divisions."
     },
     {
       "key": "option:tall-appliance:tall:layout:drawer_oven_micro",
@@ -4337,7 +4416,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Whole tall appliance cabinet, 600 mm wide x 2200 mm tall x 600 mm deep, recessed dark 100 mm plinth, entire cabinet uncropped. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Ящик + духовка + СВЧ. Два прибора и нижний ящик. Preserve this specific option from the reference. ",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Ящик + духовка + СВЧ",
@@ -4349,7 +4428,17 @@
         "highlight": null,
         "front": true,
         "tall": true
-      }
+      },
+      "task_id": "ed9f2eb4-fa2e-40a8-8103-39c1bcb0c085",
+      "actual_credits": 20,
+      "png_sha256": "845a5ccb3cd3352a3c37371b9e6aa223d31ba213cc22edd6125b9a72dbd6a18c",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-appliance--tall--layout--drawer_oven_micro.webp",
+      "webp_sha256": "a4484ffd21da62db2a936043bb05702ac774c78b62ced9e69ebe3d39a6f810f4",
+      "review": "Accepted: lower single drawer, oven, microwave and upper door in correct order; exterior handles, complete recessed plinth, oak cabinet."
     },
     {
       "key": "option:tall-appliance:tall:opening:left",
@@ -4389,7 +4478,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Whole tall appliance cabinet, 600 mm wide x 2000 mm tall x 600 mm deep, recessed dark 100 mm plinth, entire cabinet uncropped. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Петли слева. Дверь открывается влево. Preserve this specific option from the reference. Hinges on LEFT, handle on RIGHT free edge.  IMPORTANT HINGED DOOR DETAIL: hinges are on the interior face; the bar handle is mounted ONLY on the EXTERIOR face, never on the inside door surface. When the open door exposes its inner face in this view, the handle is hidden on its reverse side. Do not draw a black handle on the same visible door surface as the hinges. Lower cabinet handle position on exterior is 50 mm below top and 50 mm from free side edge; wall cabinet handle is 50 mm above bottom. Keep original door opening side and angle. Do not show any visible bar or knob on inside door faces; plain oak inside with hinges only.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли слева",
@@ -4401,7 +4490,17 @@
         "highlight": null,
         "front": false,
         "tall": true
-      }
+      },
+      "task_id": "e2b16725-1c51-44f2-a2ef-baddedad01cf",
+      "actual_credits": 20,
+      "png_sha256": "f02c7e98a2ef1d841ec749ba7c84273260114a238f7fb936f93895988402977b",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-appliance--tall--opening--left.webp",
+      "webp_sha256": "0b12bfb3e079401aba61a0515cfb768784da703a21371c9622ca9428f805ddbf",
+      "review": "Accepted: upper and lower doors open left with two left hinges each, one shelf per cavity, central oven, no handles incorrectly drawn on the inner faces."
     },
     {
       "key": "option:tall-appliance:tall:opening:right",
@@ -4441,7 +4540,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Whole tall appliance cabinet, 600 mm wide x 2000 mm tall x 600 mm deep, recessed dark 100 mm plinth, entire cabinet uncropped. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Петли справа. Дверь открывается вправо. Preserve this specific option from the reference. Hinges on RIGHT, handle on LEFT free edge.  IMPORTANT HINGED DOOR DETAIL: hinges are on the interior face; the bar handle is mounted ONLY on the EXTERIOR face, never on the inside door surface. When the open door exposes its inner face in this view, the handle is hidden on its reverse side. Do not draw a black handle on the same visible door surface as the hinges. Lower cabinet handle position on exterior is 50 mm below top and 50 mm from free side edge; wall cabinet handle is 50 mm above bottom. Keep original door opening side and angle. Do not show any visible bar or knob on inside door faces; plain oak inside with hinges only.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Петли справа",
@@ -4453,7 +4552,17 @@
         "highlight": null,
         "front": false,
         "tall": true
-      }
+      },
+      "task_id": "25210665-c7c0-4a2e-8290-3918be5e26f4",
+      "actual_credits": 20,
+      "png_sha256": "2555e966a04ecc4c641c1eb84f97329bb36cf97ebec4f07bb2120014204957a0",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-appliance--tall--opening--right.webp",
+      "webp_sha256": "775e69909eb153f561fe8c2467e5df407a3ed9ecba80ff2b7e1a88fcb48b7dd2",
+      "review": "Accepted: upper and lower doors open right, two hinges each on right inner wall, no interior handles; shelves and oven match left opening counterpart."
     },
     {
       "key": "option:tall-appliance:generic:handles:handles",
@@ -4548,7 +4657,7 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Reference is cropped: reconstruct the full cabinet with lower oak door 717 mm high, black oven 595 mm above it, upper oak door 582 mm high. Plain push cabinet doors, no applied cabinet handles; keep oven's own handle. Whole tall appliance cabinet, 600 mm wide x 2000 mm tall x 600 mm deep, recessed dark 100 mm plinth, entire cabinet uncropped. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Execution: Без ручек. Фасад без накладной ручки. Preserve this specific option from the reference. ",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
       "options": {
         "title": "Без ручек",
@@ -4560,7 +4669,17 @@
         "highlight": null,
         "front": false,
         "tall": false
-      }
+      },
+      "task_id": "e8b7c3d5-7bc4-4d0d-a717-d4dc9bb35305",
+      "actual_credits": 20,
+      "png_sha256": "fea0b7fabeeeba55a47a1230717273fb8a8ffc53e962d5f1ae84a2f803fe6dbb",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--tall-appliance--generic--handles--handleless.webp",
+      "webp_sha256": "9db950910602c731ae71de80a54f2e2f83d6ff222350df186ccb948ace05d099",
+      "review": "Accepted: two closed handleless oak cabinet doors around black oven; oven retains its appliance handle; complete cabinet visible."
     },
     {
       "key": "main:waste-gola",
@@ -4605,8 +4724,18 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Exact waste pullout and GEO X bins from reference. Gola L black handle channel below top; no applied handle and no lighting. CRITICAL BASE CONSTRUCTION: this is a kitchen BASE cabinet, 720 mm carcass on 100 mm adjustable legs, total 820 mm before countertop. Always show the entire base including a recessed dark plinth 100 mm high and a visible rear support leg when the camera sees the side. Side panels MUST stop above the plinth, about 118 mm above floor. Never extend side panels or facade to the floor. If the supplied option reference omits or crops the feet, restore the correct 100 mm base in this photorealistic view; keep the actual option unchanged. Do not add a countertop when absent.",
-      "status": "awaiting_batch_credit_approval",
-      "estimated_credits": 20
+      "status": "accepted",
+      "estimated_credits": 20,
+      "task_id": "baccd786-8686-4481-8a3a-4bacfd2b128c",
+      "actual_credits": 20,
+      "png_sha256": "7ece2bd41a883a1e2e9205988b7ea80ed99c0f744f699e9497ce7eace4b83ee4",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/main--waste-gola.webp",
+      "webp_sha256": "ec7579b8e31afbb0b75a599f866eaf43e455854a7100b90064d277fab4021aba",
+      "review": "Accepted: two black bins in pull-out frame, handleless front with Gola L beneath countertop, telescopic guide and cabinet feet, correct oak exterior."
     },
     {
       "key": "option:open-tall:lira:left",
@@ -4651,9 +4780,19 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "The LED channel MUST be in the middle of the visible inner LEFT wall, with equally broad wood areas in front and behind it. Front vertical upright stays plain unlit oak. Re-render only the cabinet in the attached geometry reference as a premium photorealistic MARTIN FOREST product. Light natural oak wood with fine realistic pores, matching edge bands and coherent vertical grain; preserve metal, glass and appliance materials. Pale warm textured plaster backdrop and light stone floor for base units, soft natural side daylight, subtle contact shadows and crisp realistic edges. Preserve exact geometry, camera side, panel thickness, gaps, shelf count, front divisions, opening side and hardware. Handle must be on the free edge opposite hinges. Entire cabinet uncropped, about 7 percent clear margins. One large product per image; no collage, labels, text, watermark, props or invented lighting. This is illustrative catalogue art, never a change to production geometry or material selections. Tall open cabinet, one central shelf and two niches, matching the reference. Replace the AQ strip with black aluminium LIRA 17.5 mm recessed channels and slim neutral-white diffusers on left interior side wall(s), at mid-depth. Black borders clearly visible. Installation interrupted by solid shelf, no LEDs on back panel or horizontal edges.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
-      "requires_dynamic_light_system_resolver": true
+      "requires_dynamic_light_system_resolver": true,
+      "task_id": "15fd4c6b-56db-470f-bb66-e4fe55a04663",
+      "actual_credits": 20,
+      "png_sha256": "6b61c1a7a1f0f2cf1362ce1f0f623d90657eb36c132dd29ac23ddda89dabde9a",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--open-tall--lira--left.webp",
+      "webp_sha256": "8342054561281ecb8197a5b7c843fdc5f30c4b8768e34307811771bf88284577",
+      "review": "Accepted: recessed black LIRA channel and white diffuser inside LEFT side wall, with visible oak between channel and plain front edge; single shelf interrupts light, no extra lighting."
     },
     {
       "key": "option:open-tall:lira:right",
@@ -4698,9 +4837,19 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "MIRROR the attached cabinet horizontally: the camera MUST be from FRONT-LEFT, exposing the outside LEFT side panel and the INSIDE RIGHT side wall. Move the LED to the RIGHT interior wall, at HALF DEPTH (300 mm behind front), so oak is visible BOTH in front of and behind the luminous groove. NO LED at the front edge. The RIGHT FRONT UPRIGHT must be unlit plain oak. Whole open tall cabinet 600 mm wide, 2000 mm tall, 600 mm deep, 100 mm recessed dark plinth. Exactly ONE central wood shelf creating two niches, light interrupted by this shelf. Exactly one thin LIRA 17.5 mm recessed black aluminium channel with slim white diffuser on RIGHT inner wall in each niche, NO left light, NO back-wall light, NO horizontal light, Black profile borders visible around diffuser. Natural light oak fine pores, warm pale plaster background and stone floor, soft daylight, crisp realistic render. Entire cabinet with clear margins; no text or props.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
-      "requires_dynamic_light_system_resolver": true
+      "requires_dynamic_light_system_resolver": true,
+      "task_id": "85cb99a8-f004-45df-8518-5118dc7111be",
+      "actual_credits": 20,
+      "png_sha256": "e0a465426011fffe75119427335a20ac68f5f722710135fb43f8335b53e2e3c0",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--open-tall--lira--right.webp",
+      "webp_sha256": "6471029b34c1089d5f8ac303607d5c4645befb55710d09556ec821f685a5cd9d",
+      "review": "Accepted: front-left camera exposes RIGHT inner wall; single recessed LIRA light at mid-depth with oak before and behind, black border and shelf interruption, front upright unlit."
     },
     {
       "key": "option:open-tall:lira:both",
@@ -4745,415 +4894,593 @@
       "aspect_ratio": "1:1",
       "upscale_4k": false,
       "prompt": "IGNORE reference camera angle. A perfectly SYMMETRICAL STRAIGHT-ON FRONT view into an open tall cabinet, with BOTH inner side walls visible and NO exterior side panel visible. Single cabinet 600 mm wide x 2000 mm tall x 600 mm deep, one central 18 mm oak shelf, TWO niches, dark recessed 100 mm plinth. Install TWO vertical recessed LIRA 17.5 mm black aluminium LED profiles, one in each INTERIOR SIDE WALL, exactly HALF WAY from front to back. On EACH side wall the light must have a broad area of plain oak IN FRONT and BEHIND it. Front uprights are plain unlit oak. The grooves are NOT at the front edge and NOT at back corners. Slim neutral-white diffusers with black borders visible, interrupted at the wood shelf, no horizontal light. Natural light oak veneer fine pores, warm plaster wall and pale stone floor, soft daylight, photorealistic product render. Full cabinet with margins. No doors, no handles, no glass, no text.",
-      "status": "awaiting_batch_credit_approval",
+      "status": "accepted",
       "estimated_credits": 20,
-      "requires_dynamic_light_system_resolver": true
+      "requires_dynamic_light_system_resolver": true,
+      "task_id": "1b62a364-2a5d-4f1e-b423-bf0f54774453",
+      "actual_credits": 20,
+      "png_sha256": "010ab2c42808d04ec445f33c5f30757ee0e939f2fda38f0f08da598d94728989",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "generated": "generated/option--open-tall--lira--both.webp",
+      "webp_sha256": "8d35324d7a41530e17c9c0e96eaa84550252d0587f4da115a38e70f386307e04",
+      "review": "Accepted: symmetric front view shows TWO black LIRA channels recessed inside both side walls, plain oak front uprights, one central shelf interrupts both lights, no glass or doors."
     }
   ],
   "mappings": [
     {
       "target": "module-card-images/waste-standard.webp",
-      "job": "main:waste-standard"
+      "job": "main:waste-standard",
+      "sha256": "79015bdf60db533a4e63cd388dbc3da85d560f57fa1e22883c11247515703ecb",
+      "integrated_from": "generated/main--waste-standard.webp"
     },
     {
       "target": "module-card-images/cargo.webp",
-      "job": "main:cargo"
+      "job": "main:cargo",
+      "sha256": "90f1813762f1d8406f9a9a5867069ccc4cc1001f50b573594d6d92e85606d93d",
+      "integrated_from": "generated/main--cargo.webp"
     },
     {
       "target": "module-card-images/dishwasher.webp",
-      "job": "main:dishwasher"
+      "job": "main:dishwasher",
+      "sha256": "fd44ed5ea794123508e666ebc962fc156d4cf6e53004d17a5d5097d1e964c759",
+      "integrated_from": "generated/main--dishwasher.webp"
     },
     {
       "target": "module-card-images/pullout-dryer.webp",
-      "job": "main:pullout-dryer"
+      "job": "main:pullout-dryer",
+      "sha256": "4b94f26e660a599728943cc797e137336b8e740e884bb67e5d2bff57ad614908",
+      "integrated_from": "generated/main--pullout-dryer.webp"
     },
     {
       "target": "module-card-images/base-single.webp",
-      "job": "main:base-single"
+      "job": "main:base-single",
+      "sha256": "278af15eed83d04b2b481f9fd6f4d6893396e9a87e0527a3da1017b65607ad94",
+      "integrated_from": "generated/main--base-single.webp"
     },
     {
       "target": "module-card-images/base-double.webp",
-      "job": "main:base-double"
+      "job": "main:base-double",
+      "sha256": "958eca217ee1f4209d159973d35910b40ae38f8b53ecd815463a18eb28ecb286",
+      "integrated_from": "generated/main--base-double.webp"
     },
     {
       "target": "module-card-images/base-drawers.webp",
-      "job": "main:base-drawers"
+      "job": "main:base-drawers",
+      "sha256": "b0e0446b1fa61b62cfb9e25597b9a47fddedc163038186063a05adc81d85813d",
+      "integrated_from": "generated/main--base-drawers.webp"
     },
     {
       "target": "module-card-images/base-oven.webp",
-      "job": "main:base-oven"
+      "job": "main:base-oven",
+      "sha256": "a122ee874cf863273b249ca974554149fef31c7d5c0afe666e76d29b58672399",
+      "integrated_from": "generated/main--base-oven.webp"
     },
     {
       "target": "module-card-images/base-corner.webp",
-      "job": "main:base-corner"
+      "job": "main:base-corner",
+      "sha256": "925ff6c572d78662c40957183e74a0897c9fbe2cf93aeb050a9a486f5f591047",
+      "integrated_from": "generated/main--base-corner.webp"
     },
     {
       "target": "module-card-images/wall-single.webp",
-      "job": "main:wall-single"
+      "job": "main:wall-single",
+      "sha256": "51a2a0c0941f28104a35daa504f3fc0f511e9d1d933c87ffe1e934dbb395b228",
+      "integrated_from": "previews/wall-single.webp"
     },
     {
       "target": "module-card-images/wall-double.webp",
-      "job": "main:wall-double"
+      "job": "main:wall-double",
+      "sha256": "3dd8c9b5f0ee6d17fed7febd13b79b3505793c525eac67efde021df05669b31c",
+      "integrated_from": "generated/main--wall-double.webp"
     },
     {
       "target": "module-card-images/open-tall-none.webp",
-      "job": "main:open-tall-none"
+      "job": "main:open-tall-none",
+      "sha256": "df4e0372f4cf96ac3711ce45f76e4be6dba1db58a1feab09a7bcff2bb82ee327",
+      "integrated_from": "generated/main--open-tall-none.webp"
     },
     {
       "target": "module-card-images/tall-vitrine.webp",
-      "job": "main:tall-vitrine"
+      "job": "main:tall-vitrine",
+      "sha256": "23b9ea7e31c009aafd2c72a0ceefe9f2c196e468cc10209a95c40044fe17cd3a",
+      "integrated_from": "generated/main--tall-vitrine.webp"
     },
     {
       "target": "module-card-images/tall-storage.webp",
-      "job": "main:tall-storage"
+      "job": "main:tall-storage",
+      "sha256": "b55840011a4c7046d5ea8efd1d87c7e2d0805ddf979fecc7b9c6c608f0cb0140",
+      "integrated_from": "generated/main--tall-storage.webp"
     },
     {
       "target": "module-card-images/tall-appliance.webp",
-      "job": "main:tall-appliance"
+      "job": "main:tall-appliance",
+      "sha256": "de13e9ea661586aafe7d4640ab346b27f416270e3e3fe0aa91d6039e68645148",
+      "integrated_from": "previews/tall-appliance.webp"
     },
     {
       "target": "execution-card-images/base-base-purpose-shelf.webp",
       "selector": "base:base:purpose:shelf",
-      "job": "option:base:base:purpose:shelf"
+      "job": "option:base:base:purpose:shelf",
+      "sha256": "fb33da7bc6cc7b1d75ce14908541f35ae4b75a720954ed736a34099d0a89e77f",
+      "integrated_from": "generated/option--base--base--purpose--shelf.webp"
     },
     {
       "target": "execution-card-images/base-base-purpose-sink.webp",
       "selector": "base:base:purpose:sink",
-      "job": "option:base:base:purpose:sink"
+      "job": "option:base:base:purpose:sink",
+      "sha256": "be031e5f9d6cc631328eb3c9da55d937fcbb0f924326459f93daa7dc4870d0c0",
+      "integrated_from": "generated/option--base--base--purpose--sink.webp"
     },
     {
       "target": "execution-card-images/base-base-execution-standard.webp",
       "selector": "base:base:execution:standard",
-      "job": "option:base:base:execution:standard"
+      "job": "option:base:base:execution:standard",
+      "sha256": "278af15eed83d04b2b481f9fd6f4d6893396e9a87e0527a3da1017b65607ad94",
+      "integrated_from": "generated/main--base-single.webp"
     },
     {
       "target": "execution-card-images/base-base-execution-gola.webp",
       "selector": "base:base:execution:gola",
-      "job": "option:base:base:execution:gola"
+      "job": "option:base:base:execution:gola",
+      "sha256": "680579060164dd202fee95c556ff9038f0d10a0f26d55e96682bc3dfdd533154",
+      "integrated_from": "generated/option--base--base--execution--gola.webp"
     },
     {
       "target": "execution-card-images/base-base-side-left.webp",
       "selector": "base:base:side:left",
-      "job": "option:base:base:side:left"
+      "job": "option:base:base:side:left",
+      "sha256": "0bda8569f90de0545f456beb8e060e864d00ee3983ebe06ae68c386a297c8e41",
+      "integrated_from": "generated/option--base--base--side--left.webp"
     },
     {
       "target": "execution-card-images/base-base-side-right.webp",
       "selector": "base:base:side:right",
-      "job": "option:base:base:side:right"
+      "job": "option:base:base:side:right",
+      "sha256": "27d985923bd190e4e0ddde9a36e6cd84ca14838c0ab8c65d93b8a3faed6e08b6",
+      "integrated_from": "generated/option--base--base--side--right.webp"
     },
     {
       "target": "execution-card-images/base-double-base-purpose-shelf.webp",
       "selector": "base-double:base:purpose:shelf",
-      "job": "option:base-double:base:purpose:shelf"
+      "job": "option:base-double:base:purpose:shelf",
+      "sha256": "c1a284b181af4c812e5f57b027bbfd0ffe4a2384c467b00ad911cf6f996b9a58",
+      "integrated_from": "generated/option--base-double--base--purpose--shelf.webp"
     },
     {
       "target": "execution-card-images/base-base-purpose-sink.webp",
       "selector": "base-double:base:purpose:sink",
-      "job": "option:base:base:purpose:sink"
+      "job": "option:base:base:purpose:sink",
+      "sha256": "be031e5f9d6cc631328eb3c9da55d937fcbb0f924326459f93daa7dc4870d0c0",
+      "integrated_from": "generated/option--base--base--purpose--sink.webp"
     },
     {
       "target": "execution-card-images/base-double-base-execution-standard.webp",
       "selector": "base-double:base:execution:standard",
-      "job": "option:base-double:base:execution:standard"
+      "job": "option:base-double:base:execution:standard",
+      "sha256": "958eca217ee1f4209d159973d35910b40ae38f8b53ecd815463a18eb28ecb286",
+      "integrated_from": "generated/main--base-double.webp"
     },
     {
       "target": "execution-card-images/base-double-base-execution-gola.webp",
       "selector": "base-double:base:execution:gola",
-      "job": "option:base-double:base:execution:gola"
+      "job": "option:base-double:base:execution:gola",
+      "sha256": "63147bd8bc10a32ad335198634f87e42dd15c7fa2de4ce420f015396522a8617",
+      "integrated_from": "generated/option--base-double--base--execution--gola.webp"
     },
     {
       "target": "execution-card-images/drawer-drawer-execution-standard.webp",
       "selector": "drawer:drawer:execution:standard",
-      "job": "option:drawer:drawer:execution:standard"
+      "job": "option:drawer:drawer:execution:standard",
+      "sha256": "24bb4e00d336ba013ab03825e08187dafa451c822f7352281709ae06acca105c",
+      "integrated_from": "generated/option--drawer--drawer--layout--two.webp"
     },
     {
       "target": "execution-card-images/drawer-drawer-execution-gola.webp",
       "selector": "drawer:drawer:execution:gola",
-      "job": "option:drawer:drawer:execution:gola"
+      "job": "option:drawer:drawer:execution:gola",
+      "sha256": "5781234ecf6e6b562aea500a829901f2f3c7dcd1240f9efefea5c30b38d3d5fd",
+      "integrated_from": "generated/option--dryer--dryer--execution--gola.webp"
     },
     {
       "target": "execution-card-images/drawer-drawer-layout-two.webp",
       "selector": "drawer:drawer:layout:two",
-      "job": "option:drawer:drawer:layout:two"
+      "job": "option:drawer:drawer:layout:two",
+      "sha256": "24bb4e00d336ba013ab03825e08187dafa451c822f7352281709ae06acca105c",
+      "integrated_from": "generated/option--drawer--drawer--layout--two.webp"
     },
     {
       "target": "execution-card-images/drawer-drawer-layout-three.webp",
       "selector": "drawer:drawer:layout:three",
-      "job": "option:drawer:drawer:layout:three"
+      "job": "option:drawer:drawer:layout:three",
+      "sha256": "4bcea171506909dab90ae1e3aa96af1aa43c7c12c2a70c66f899d756ccffd67d",
+      "integrated_from": "previews/drawer-three.webp"
     },
     {
       "target": "execution-card-images/drawer-drawer-layout-inner.webp",
       "selector": "drawer:drawer:layout:inner",
-      "job": "option:drawer:drawer:layout:inner"
+      "job": "option:drawer:drawer:layout:inner",
+      "sha256": "74c5f430ecf4046681e01f8fefd5ac2ed5a52835bc240200a88eb1f9b5f2ae4a",
+      "integrated_from": "generated/option--drawer--drawer--layout--inner.webp"
     },
     {
       "target": "execution-card-images/drawer-drawer-opening-soft.webp",
       "selector": "drawer:drawer:opening:soft",
-      "job": "option:drawer:drawer:opening:soft"
+      "job": "option:drawer:drawer:opening:soft",
+      "sha256": "da26d5c4f01bb7e70968fbfee13c006c1291ed3e7ca08fd03117713324bbab21",
+      "integrated_from": "generated/option--drawer--drawer--opening--soft.webp"
     },
     {
       "target": "execution-card-images/drawer-drawer-opening-push.webp",
       "selector": "drawer:drawer:opening:push",
-      "job": "option:drawer:drawer:opening:push"
+      "job": "option:drawer:drawer:opening:push",
+      "sha256": "4323981ad59b47debaef1888533646c5c7e95100f28b4fd6bc509c401e25440a",
+      "integrated_from": "generated/option--drawer--drawer--opening--push.webp"
     },
     {
       "target": "execution-card-images/oven-generic-handles-handles.webp",
       "selector": "oven:generic:handles:handles",
-      "job": "option:oven:generic:handles:handles"
+      "job": "option:oven:generic:handles:handles",
+      "sha256": "a122ee874cf863273b249ca974554149fef31c7d5c0afe666e76d29b58672399",
+      "integrated_from": "generated/main--base-oven.webp"
     },
     {
       "target": "execution-card-images/oven-generic-handles-handleless.webp",
       "selector": "oven:generic:handles:handleless",
-      "job": "option:oven:generic:handles:handleless"
+      "job": "option:oven:generic:handles:handleless",
+      "sha256": "6b5d6e3b5f4480ca86e5d7892dd2371a78db43e544927ed35a02f3b2c113b566",
+      "integrated_from": "generated/option--oven--generic--handles--handleless.webp"
     },
     {
       "target": "execution-card-images/corner-corner-side-left.webp",
       "selector": "corner:corner:side:left",
-      "job": "option:corner:corner:side:left"
+      "job": "option:corner:corner:side:left",
+      "sha256": "905fe708b10b3dadcc9b399805e403ba92d02b3fe72aae1439c3fbd0a9189692",
+      "integrated_from": "generated/option--corner--corner--side--left.webp"
     },
     {
       "target": "execution-card-images/corner-corner-side-right.webp",
       "selector": "corner:corner:side:right",
-      "job": "option:corner:corner:side:right"
+      "job": "option:corner:corner:side:right",
+      "sha256": "edcd429e55d98d5bc914b72e18036e7e1ed1d1673990f58af974372bfdd36508",
+      "integrated_from": "generated/option--corner--corner--side--right.webp"
     },
     {
       "target": "execution-card-images/corner-corner-purpose-sink.webp",
       "selector": "corner:corner:purpose:sink",
-      "job": "option:corner:corner:purpose:sink"
+      "job": "option:corner:corner:purpose:sink",
+      "sha256": "d624d58f519b78b8a9fc14b7bc13d0768154c5582183878171185baf22234f14",
+      "integrated_from": "generated/option--corner--corner--purpose--sink.webp"
     },
     {
       "target": "execution-card-images/corner-corner-purpose-shelf.webp",
       "selector": "corner:corner:purpose:shelf",
-      "job": "option:corner:corner:purpose:shelf"
+      "job": "option:corner:corner:purpose:shelf",
+      "sha256": "d2fd1134e93b2715eacb7d58c47f7b331ee864c8d718cadb62d17acde277ca37",
+      "integrated_from": "generated/option--corner--corner--purpose--shelf.webp"
     },
     {
       "target": "execution-card-images/corner-corner-door_count-1.webp",
       "selector": "corner:corner:door_count:1",
-      "job": "option:corner:corner:door_count:1"
+      "job": "option:corner:corner:door_count:1",
+      "sha256": "925ff6c572d78662c40957183e74a0897c9fbe2cf93aeb050a9a486f5f591047",
+      "integrated_from": "generated/main--base-corner.webp"
     },
     {
       "target": "execution-card-images/corner-corner-door_count-2.webp",
       "selector": "corner:corner:door_count:2",
-      "job": "option:corner:corner:door_count:2"
+      "job": "option:corner:corner:door_count:2",
+      "sha256": "6cc079148099ead9bafd359fb2d17946aeb6e3deacfc0ca46c054fa17a27f4c6",
+      "integrated_from": "generated/option--corner--corner--door_count--2.webp"
     },
     {
       "target": "execution-card-images/corner-generic-handles-handles.webp",
       "selector": "corner:generic:handles:handles",
-      "job": "option:corner:generic:handles:handles"
+      "job": "option:corner:generic:handles:handles",
+      "sha256": "925ff6c572d78662c40957183e74a0897c9fbe2cf93aeb050a9a486f5f591047",
+      "integrated_from": "generated/main--base-corner.webp"
     },
     {
       "target": "execution-card-images/corner-generic-handles-handleless.webp",
       "selector": "corner:generic:handles:handleless",
-      "job": "option:corner:generic:handles:handleless"
+      "job": "option:corner:generic:handles:handleless",
+      "sha256": "3e5da541095f80ccc9e7239d8a14dbf53f50e1e6caceccc5008fe5f6f775b47b",
+      "integrated_from": "generated/option--corner--generic--handles--handleless.webp"
     },
     {
       "target": "execution-card-images/cargo-cargo-execution-standard.webp",
       "selector": "cargo:cargo:execution:standard",
-      "job": "option:cargo:cargo:execution:standard"
+      "job": "option:cargo:cargo:execution:standard",
+      "sha256": "90f1813762f1d8406f9a9a5867069ccc4cc1001f50b573594d6d92e85606d93d",
+      "integrated_from": "generated/main--cargo.webp"
     },
     {
       "target": "execution-card-images/cargo-cargo-execution-gola.webp",
       "selector": "cargo:cargo:execution:gola",
-      "job": "option:cargo:cargo:execution:gola"
+      "job": "option:cargo:cargo:execution:gola",
+      "sha256": "f83daccdeec914c6f0f054e82072ff068ac5c4f817515c1e9b7e9ebe7dbec0a4",
+      "integrated_from": "generated/option--cargo--cargo--execution--gola.webp"
     },
     {
       "target": "execution-card-images/dryer-dryer-execution-standard.webp",
       "selector": "dryer:dryer:execution:standard",
-      "job": "option:dryer:dryer:execution:standard"
+      "job": "option:dryer:dryer:execution:standard",
+      "sha256": "4b94f26e660a599728943cc797e137336b8e740e884bb67e5d2bff57ad614908",
+      "integrated_from": "generated/main--pullout-dryer.webp"
     },
     {
       "target": "execution-card-images/dryer-dryer-execution-gola.webp",
       "selector": "dryer:dryer:execution:gola",
-      "job": "option:dryer:dryer:execution:gola"
+      "job": "option:dryer:dryer:execution:gola",
+      "sha256": "5781234ecf6e6b562aea500a829901f2f3c7dcd1240f9efefea5c30b38d3d5fd",
+      "integrated_from": "generated/option--dryer--dryer--execution--gola.webp"
     },
     {
       "target": "execution-card-images/dishwasher-dishwasher-execution-standard.webp",
       "selector": "dishwasher:dishwasher:execution:standard",
-      "job": "option:dishwasher:dishwasher:execution:standard"
+      "job": "option:dishwasher:dishwasher:execution:standard",
+      "sha256": "ddcda623fdc72420c171d0085cc0cf6310523cb5577785077489543436ad367b",
+      "integrated_from": "generated/option--dishwasher--dishwasher--execution--standard.webp"
     },
     {
       "target": "execution-card-images/dishwasher-dishwasher-execution-gola.webp",
       "selector": "dishwasher:dishwasher:execution:gola",
-      "job": "option:dishwasher:dishwasher:execution:gola"
+      "job": "option:dishwasher:dishwasher:execution:gola",
+      "sha256": "2f0f53fb4cd337f8e09d1846aa40e2624a962d8d3ae1652ee34ed2f13c579770",
+      "integrated_from": "generated/option--dishwasher--dishwasher--execution--gola.webp"
     },
     {
       "target": "execution-card-images/upper-upper-filling-shelves.webp",
       "selector": "upper:upper:filling:shelves",
-      "job": "option:upper:upper:filling:shelves"
+      "job": "option:upper:upper:filling:shelves",
+      "sha256": "bcc584614d3f8a8dd00ce745b398a0da5bcd3a8fe38dbb380e96795ba033f7ff",
+      "integrated_from": "generated/option--upper--upper--filling--shelves.webp"
     },
     {
       "target": "execution-card-images/upper-upper-execution-handles.webp",
       "selector": "upper:upper:execution:handles",
-      "job": "option:upper:upper:execution:handles"
+      "job": "option:upper:upper:execution:handles",
+      "sha256": "51a2a0c0941f28104a35daa504f3fc0f511e9d1d933c87ffe1e934dbb395b228",
+      "integrated_from": "previews/wall-single.webp"
     },
     {
       "target": "execution-card-images/upper-upper-execution-handleless.webp",
       "selector": "upper:upper:execution:handleless",
-      "job": "option:upper:upper:execution:handleless"
+      "job": "option:upper:upper:execution:handleless",
+      "sha256": "5da19c36ea16a8c8cb04cfe078fa6074a9b60bb8ac0a4aa25b67d65a731b406d",
+      "integrated_from": "generated/option--upper--upper--execution--handleless.webp"
     },
     {
       "target": "execution-card-images/upper-upper-execution-push.webp",
       "selector": "upper:upper:execution:push",
-      "job": "option:upper:upper:execution:push"
+      "job": "option:upper:upper:execution:push",
+      "sha256": "f01ed76477a8b06fbb4ff3fd6b65a356328c23a2916db323b3fd56f740e27eec",
+      "integrated_from": "generated/option--upper--upper--execution--push.webp"
     },
     {
       "target": "execution-card-images/upper-upper-side-left.webp",
       "selector": "upper:upper:side:left",
-      "job": "option:upper:upper:side:left"
+      "job": "option:upper:upper:side:left",
+      "sha256": "801225906035a85d539fdff28312e64fe490d140d2994799c75f88ddd1cfc55e",
+      "integrated_from": "generated/option--upper--upper--side--left.webp"
     },
     {
       "target": "execution-card-images/upper-upper-side-right.webp",
       "selector": "upper:upper:side:right",
-      "job": "option:upper:upper:side:right"
+      "job": "option:upper:upper:side:right",
+      "sha256": "e9d4a1540a870e84225b5ed1abb30756590c4744416e3a34d52601dd99367937",
+      "integrated_from": "generated/option--upper--upper--side--right.webp"
     },
     {
       "target": "execution-card-images/upper-double-upper-filling-shelves.webp",
       "selector": "upper-double:upper:filling:shelves",
-      "job": "option:upper-double:upper:filling:shelves"
+      "job": "option:upper-double:upper:filling:shelves",
+      "sha256": "ee307dab3806d0172cf00ed67707d82e42f76c3da51b26de8f085c8c18a9430a",
+      "integrated_from": "generated/option--upper-double--upper--filling--shelves.webp"
     },
     {
       "target": "execution-card-images/upper-double-upper-execution-handles.webp",
       "selector": "upper-double:upper:execution:handles",
-      "job": "option:upper-double:upper:execution:handles"
+      "job": "option:upper-double:upper:execution:handles",
+      "sha256": "3dd8c9b5f0ee6d17fed7febd13b79b3505793c525eac67efde021df05669b31c",
+      "integrated_from": "generated/main--wall-double.webp"
     },
     {
       "target": "execution-card-images/upper-double-upper-execution-handleless.webp",
       "selector": "upper-double:upper:execution:handleless",
-      "job": "option:upper-double:upper:execution:handleless"
+      "job": "option:upper-double:upper:execution:handleless",
+      "sha256": "5dc2d94525fc8d41d97429a89561d982981f2f2fbf84134c4ad7280c9afba990",
+      "integrated_from": "generated/option--upper-double--upper--execution--handleless.webp"
     },
     {
       "target": "execution-card-images/upper-double-upper-execution-push.webp",
       "selector": "upper-double:upper:execution:push",
-      "job": "option:upper-double:upper:execution:push"
+      "job": "option:upper-double:upper:execution:push",
+      "sha256": "435ef4ebb20f2983a4642be0087a42c2a9b0831a74389e74cf35e692ad438f83",
+      "integrated_from": "generated/option--upper-double--upper--execution--push.webp"
     },
     {
       "target": "execution-card-images/open-tall-none-open-tall-light_system-none.webp",
       "selector": "open-tall-none:open-tall:light_system:none",
-      "job": "main:open-tall-none"
+      "job": "main:open-tall-none",
+      "sha256": "df4e0372f4cf96ac3711ce45f76e4be6dba1db58a1feab09a7bcff2bb82ee327",
+      "integrated_from": "generated/main--open-tall-none.webp"
     },
     {
       "target": "execution-card-images/open-tall-none-open-tall-lighting-left.webp",
       "selector": "open-tall-none:open-tall:lighting:left",
-      "job": "option:open-tall-none:open-tall:lighting:left"
+      "job": "option:open-tall-none:open-tall:lighting:left",
+      "sha256": "153ba428996b88d813c84d340d093185d05e8d50dee3789ccc553220b5a3275e",
+      "integrated_from": "generated/option--open-tall-none--open-tall--lighting--left.webp"
     },
     {
       "target": "execution-card-images/open-tall-none-open-tall-lighting-right.webp",
       "selector": "open-tall-none:open-tall:lighting:right",
-      "job": "option:open-tall-none:open-tall:lighting:right"
+      "job": "option:open-tall-none:open-tall:lighting:right",
+      "sha256": "acefe4f69f202338cb51c9e2b7a578301a8eed80a9f5b9b1a96f0d9a99e7190c",
+      "integrated_from": "generated/option--open-tall-none--open-tall--lighting--right.webp"
     },
     {
       "target": "execution-card-images/open-tall-none-open-tall-lighting-both.webp",
       "selector": "open-tall-none:open-tall:lighting:both",
-      "job": "option:open-tall-none:open-tall:lighting:both"
+      "job": "option:open-tall-none:open-tall:lighting:both",
+      "sha256": "a8b06e8a420e65d8f5cfc7674f05c5424105da83efae062a12e831f3c7eb85e9",
+      "integrated_from": "generated/option--open-tall-none--open-tall--lighting--both.webp"
     },
     {
       "target": "execution-card-images/tall-vitrine-vitrine-lighting-left.webp",
       "selector": "tall-vitrine:vitrine:lighting:left",
-      "job": "option:tall-vitrine:vitrine:lighting:left"
+      "job": "option:tall-vitrine:vitrine:lighting:left",
+      "sha256": "23b9ea7e31c009aafd2c72a0ceefe9f2c196e468cc10209a95c40044fe17cd3a",
+      "integrated_from": "generated/main--tall-vitrine.webp"
     },
     {
       "target": "execution-card-images/tall-vitrine-vitrine-lighting-right.webp",
       "selector": "tall-vitrine:vitrine:lighting:right",
-      "job": "option:tall-vitrine:vitrine:lighting:right"
+      "job": "option:tall-vitrine:vitrine:lighting:right",
+      "sha256": "ea85054ec41aff63314270151675ce5981e4b44cadcb2f94a3097c816f1db99c",
+      "integrated_from": "generated/option--tall-vitrine--vitrine--lighting--right.webp"
     },
     {
       "target": "execution-card-images/tall-vitrine-vitrine-lighting-both.webp",
       "selector": "tall-vitrine:vitrine:lighting:both",
-      "job": "option:tall-vitrine:vitrine:lighting:both"
+      "job": "option:tall-vitrine:vitrine:lighting:both",
+      "sha256": "2efa81545f090bb63b9bd4b5b3b85c39d697ca075355815e44919a6cff3dceaf",
+      "integrated_from": "generated/option--tall-vitrine--vitrine--lighting--both.webp"
     },
     {
       "target": "execution-card-images/tall-vitrine-vitrine-opening-left.webp",
       "selector": "tall-vitrine:vitrine:opening:left",
-      "job": "option:tall-vitrine:vitrine:opening:left"
+      "job": "option:tall-vitrine:vitrine:opening:left",
+      "sha256": "b3760b68c0b2fcc3d4546d9d415238c449b79c7f10527230aee91d5e47c9ddc7",
+      "integrated_from": "generated/option--tall-vitrine--vitrine--opening--left.webp"
     },
     {
       "target": "execution-card-images/tall-vitrine-vitrine-opening-right.webp",
       "selector": "tall-vitrine:vitrine:opening:right",
-      "job": "option:tall-vitrine:vitrine:opening:right"
+      "job": "option:tall-vitrine:vitrine:opening:right",
+      "sha256": "d25b988ba212ad2817914871f7258c3fd4116ae1e0ee15fe65ef64e4fbbd55e5",
+      "integrated_from": "generated/option--tall-vitrine--vitrine--opening--right.webp"
     },
     {
       "target": "execution-card-images/tall-storage-tall-opening-left.webp",
       "selector": "tall-storage:tall:opening:left",
-      "job": "option:tall-storage:tall:opening:left"
+      "job": "option:tall-storage:tall:opening:left",
+      "sha256": "22f18a216b550bb40b2e8552fa570d7af95ec49a8b8b2555c683d018e1dd9239",
+      "integrated_from": "generated/option--tall-storage--tall--opening--left.webp"
     },
     {
       "target": "execution-card-images/tall-storage-tall-opening-right.webp",
       "selector": "tall-storage:tall:opening:right",
-      "job": "option:tall-storage:tall:opening:right"
+      "job": "option:tall-storage:tall:opening:right",
+      "sha256": "3e3d67ea6daf8efc1a40bb0303bf3abbcba187ab9866909f9f884247193147a7",
+      "integrated_from": "generated/option--tall-storage--tall--opening--right.webp"
     },
     {
       "target": "execution-card-images/tall-storage-tall-opening-double.webp",
       "selector": "tall-storage:tall:opening:double",
-      "job": "option:tall-storage:tall:opening:double"
+      "job": "option:tall-storage:tall:opening:double",
+      "sha256": "22d4214aee1b2d6138d7308eaf85904d22aa52ca3edd1bb4d023388f48f17de8",
+      "integrated_from": "generated/option--tall-storage--tall--opening--double.webp"
     },
     {
       "target": "execution-card-images/tall-storage-generic-handles-handles.webp",
       "selector": "tall-storage:generic:handles:handles",
-      "job": "option:tall-storage:generic:handles:handles"
+      "job": "option:tall-storage:generic:handles:handles",
+      "sha256": "b55840011a4c7046d5ea8efd1d87c7e2d0805ddf979fecc7b9c6c608f0cb0140",
+      "integrated_from": "generated/main--tall-storage.webp"
     },
     {
       "target": "execution-card-images/tall-storage-generic-handles-handleless.webp",
       "selector": "tall-storage:generic:handles:handleless",
-      "job": "option:tall-storage:generic:handles:handleless"
+      "job": "option:tall-storage:generic:handles:handleless",
+      "sha256": "786ee58c7ee8dbe491ae16eb6511282a968b623f12da685b90659c257f739859",
+      "integrated_from": "generated/option--tall-storage--generic--handles--handleless.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-tall-layout-door_oven.webp",
       "selector": "tall-appliance:tall:layout:door_oven",
-      "job": "option:tall-appliance:tall:layout:door_oven"
+      "job": "option:tall-appliance:tall:layout:door_oven",
+      "sha256": "de13e9ea661586aafe7d4640ab346b27f416270e3e3fe0aa91d6039e68645148",
+      "integrated_from": "previews/tall-appliance.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-tall-layout-door_oven_micro.webp",
       "selector": "tall-appliance:tall:layout:door_oven_micro",
-      "job": "option:tall-appliance:tall:layout:door_oven_micro"
+      "job": "option:tall-appliance:tall:layout:door_oven_micro",
+      "sha256": "ebb19d1f503d55bd867def3a989951fd074724074ce8cc3093342b880786d8de",
+      "integrated_from": "generated/option--tall-appliance--tall--layout--door_oven_micro.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-tall-layout-drawer_oven.webp",
       "selector": "tall-appliance:tall:layout:drawer_oven",
-      "job": "option:tall-appliance:tall:layout:drawer_oven"
+      "job": "option:tall-appliance:tall:layout:drawer_oven",
+      "sha256": "f1f26acbae0c9eec45acaaf2e9616e4b4f83b9730d718a11c10514e2a044ec30",
+      "integrated_from": "generated/option--tall-appliance--tall--layout--drawer_oven.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-tall-layout-drawer_oven_micro.webp",
       "selector": "tall-appliance:tall:layout:drawer_oven_micro",
-      "job": "option:tall-appliance:tall:layout:drawer_oven_micro"
+      "job": "option:tall-appliance:tall:layout:drawer_oven_micro",
+      "sha256": "a4484ffd21da62db2a936043bb05702ac774c78b62ced9e69ebe3d39a6f810f4",
+      "integrated_from": "generated/option--tall-appliance--tall--layout--drawer_oven_micro.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-tall-opening-left.webp",
       "selector": "tall-appliance:tall:opening:left",
-      "job": "option:tall-appliance:tall:opening:left"
+      "job": "option:tall-appliance:tall:opening:left",
+      "sha256": "0b12bfb3e079401aba61a0515cfb768784da703a21371c9622ca9428f805ddbf",
+      "integrated_from": "generated/option--tall-appliance--tall--opening--left.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-tall-opening-right.webp",
       "selector": "tall-appliance:tall:opening:right",
-      "job": "option:tall-appliance:tall:opening:right"
+      "job": "option:tall-appliance:tall:opening:right",
+      "sha256": "775e69909eb153f561fe8c2467e5df407a3ed9ecba80ff2b7e1a88fcb48b7dd2",
+      "integrated_from": "generated/option--tall-appliance--tall--opening--right.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-generic-handles-handles.webp",
       "selector": "tall-appliance:generic:handles:handles",
-      "job": "option:tall-appliance:generic:handles:handles"
+      "job": "option:tall-appliance:generic:handles:handles",
+      "sha256": "de13e9ea661586aafe7d4640ab346b27f416270e3e3fe0aa91d6039e68645148",
+      "integrated_from": "previews/tall-appliance.webp"
     },
     {
       "target": "execution-card-images/tall-appliance-generic-handles-handleless.webp",
       "selector": "tall-appliance:generic:handles:handleless",
-      "job": "option:tall-appliance:generic:handles:handleless"
+      "job": "option:tall-appliance:generic:handles:handleless",
+      "sha256": "9db950910602c731ae71de80a54f2e2f83d6ff222350df186ccb948ace05d099",
+      "integrated_from": "generated/option--tall-appliance--generic--handles--handleless.webp"
     },
     {
       "target": "module-card-images/waste-gola.webp",
-      "job": "main:waste-gola"
+      "job": "main:waste-gola",
+      "sha256": "ec7579b8e31afbb0b75a599f866eaf43e455854a7100b90064d277fab4021aba",
+      "integrated_from": "generated/main--waste-gola.webp"
     },
     {
       "target": "execution-card-images/open-tall-lira-left.webp",
       "selector": "open-tall:lira:left",
-      "job": "option:open-tall:lira:left"
+      "job": "option:open-tall:lira:left",
+      "sha256": "8342054561281ecb8197a5b7c843fdc5f30c4b8768e34307811771bf88284577",
+      "integrated_from": "generated/option--open-tall--lira--left.webp"
     },
     {
       "target": "execution-card-images/open-tall-lira-right.webp",
       "selector": "open-tall:lira:right",
-      "job": "option:open-tall:lira:right"
+      "job": "option:open-tall:lira:right",
+      "sha256": "6471029b34c1089d5f8ac303607d5c4645befb55710d09556ec821f685a5cd9d",
+      "integrated_from": "generated/option--open-tall--lira--right.webp"
     },
     {
       "target": "execution-card-images/open-tall-lira-both.webp",
       "selector": "open-tall:lira:both",
-      "job": "option:open-tall:lira:both"
+      "job": "option:open-tall:lira:both",
+      "sha256": "8d35324d7a41530e17c9c0e96eaa84550252d0587f4da115a38e70f386307e04",
+      "integrated_from": "generated/option--open-tall--lira--both.webp"
     }
   ],
   "retained": [
@@ -5215,8 +5542,8 @@
     }
   ],
   "approved_credit_cap": 1800,
-  "actual_paid_credits": 1140,
-  "optimisation": "13 matching option illustrations reuse the same reviewed native module render; no duplicate paid jobs.",
+  "actual_paid_credits": 1480,
+  "optimisation": "15 option jobs reuse matching accepted renders; rejected attempts and one duplicate are included in credit-report.json.",
   "estimated_paid_credits_after_reuse": 1320,
   "extra_tasks": [
     {
@@ -5229,5 +5556,26 @@
       "review": "Accidental repeat after browser reference tab closed on user interruption; preparation guard added. Original accepted push render retained.",
       "png_sha256": "1cf94d8877d5838a6669b298454a65da8929a69d7599b2a88462d7455eaff9c5"
     }
-  ]
+  ],
+  "archive_checkpoint": {
+    "library_file_id": "libfile_af55175f826c819198e6036e57ff91e9",
+    "version": 1,
+    "credits_at_checkpoint": 1160
+  },
+  "verification": {
+    "node": {
+      "passed": 684,
+      "failed": 0
+    },
+    "python_local": {
+      "passed": 378,
+      "skipped": 37,
+      "failed": 0,
+      "skip_reason": "PostgreSQL-only checks run in Constructor reliability CI"
+    },
+    "CI": "pending exact commit",
+    "staging": "pending"
+  },
+  "integrated_cards": 84,
+  "integrated_image_files": 83
 }

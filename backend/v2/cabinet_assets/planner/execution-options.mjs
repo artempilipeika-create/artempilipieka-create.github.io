@@ -19,7 +19,7 @@ const labels={
 export const buttonFamilies=['base','upper','drawer','corner','tall','vitrine','open-tall'];
 export function optionDescriptor(family,key,value){
  let [title,hint]=labels[key]?.[value]||[String(value),''];
- if(family==='corner'&&key==='side')[title,hint]=value==='left'?['Левый угол','Бленда слева · выделена синим']:['Правый угол','Бленда справа · выделена синим'];
+ if(family==='corner'&&key==='side')[title,hint]=value==='left'?['Левый угол','Бленда слева']:['Правый угол','Бленда справа'];
  if(family==='corner'&&key==='purpose'&&value==='sink')hint='Без полки · царги видны';
  if(family==='base'&&key==='purpose'&&value==='sink')hint='Без полки и задней стенки';
  if(key==='execution'&&value==='gola')title=['drawer','dryer'].includes(family)?'Gola II':'Gola L';

@@ -1,124 +1,135 @@
-# Весь каталог MARTIN FOREST — реалистичные изображения Tripo
+# MARTIN FOREST — полный каталог Tripo
 
-Пакет подтверждён пользователем: до 1800 кредитов, включая исправления. Основные изображения всех 16 семейств готовы; отдельные исполнения ещё генерируются. 13 одинаковых изображений модулей повторно используются в подходящих карточках — экономия 260 кредитов. Исправлена витрина по нативной модели: одна стеклянная полка, четыре петли слева, открывание нажатием и боковая подсветка. Весь комплект пока не опубликован.
+Все изображения пакета проверены и подключены: 84 карточки, 83 файлов. Вместе с ранее опубликованными семью вариантами верхнего открытого модуля охвачены все 16 семейств каталога. Карточки под мойку с одним и двумя фасадами используют одинаковый открытый корпус без фасадов.
 
-## Пакет для подтверждения
+Рендеры созданы в Tripo Studio, GPT Image 2.5, image-to-image, 1024 × 1024, по одному изображению, без увеличения 4K. Исходные изображения и конструктивные сведения привязаны к каждому заданию в batch-plan.json. Внешний вид карточек иллюстративный; геометрия сцены, нативные FR3D, bazis_id, bazis_file, bazis_sha256, спецификация и выбранные материалы не заменяются рендерами.
 
-- Вход: текущие изображения каждого модуля/исполнения из каталога; конструкция и исходные FR3D сохраняются.
-- Tripo Studio, GPT Image 2.5, по одному изображению за запуск, 1:1, увеличение 4K отключено.
-- Работа: последовательно выполнить 79 image-to-image генераций; проверить каждую; преобразовать принятые PNG в WebP; подключить к карточкам каталога и исполнений.
-- Оценка: 79 × 20 = **1580 кредитов**. Предлагаемый общий предел **1800 кредитов**, включая до 11 исправлений. Не повторять генерации сверх предела.
-- На момент подготовки баланс **2520 кредитов**. Три образца стоили **0 кредитов каждый**, всего **0**.
-- Новые картинки пока не опубликованы. После готовности всего пакета — обязательные проверки, затем единое обновление изолированного стенда.
+## Проверенные детали
 
-## Основные семейства
+- Открытые модули: свет внутри левой, правой или обеих боковых стенок; отдельные исполнения AQ и LIRA.
+- Ручки расположены снаружи на свободном крае; у открытых фасадов ручка не рисуется на внутренней поверхности.
+- Для трёх шуфляд показаны направляющие всех трёх. Число фасадов и компоновки техники сохранены.
+- Витрина: одна стеклянная полка, тонкая чёрная рамка Z1, четыре петли и открывание без ручки.
+- Фотографии конкретной фурнитуры поставщиков сохранены.
 
-| Модуль | Статус |
+## Расход
+
+Фактически списано **1480 кредитов**, согласованный предел **1800**. Остаток, проверенный в интерфейсе Tripo: **1040**.
+
+CREDITS.txt и credit-report.json содержат каждый task_id, операцию и стоимость в порядке выполнения, включая отклонённые варианты и один ошибочный повтор. Три первоначальных образца бесплатные. Одинаковые исполнения используют один принятый рендер без дополнительной генерации.
+
+## Проверка и публикация
+
+{
+  "node": {
+    "passed": 684,
+    "failed": 0
+  },
+  "python_local": {
+    "passed": 378,
+    "skipped": 37,
+    "failed": 0,
+    "skip_reason": "PostgreSQL-only checks run in Constructor reliability CI"
+  },
+  "CI": "pending exact commit",
+  "staging": "pending"
+}
+
+Тестовый сайт: https://martin-forest-v2-staging-production.up.railway.app/constructor.html
+
+## Состав архива
+
+- originals/ — все оригинальные PNG, включая исправленные и отклонённые варианты.
+- catalogue/ — готовые WebP, используемые карточками.
+- previews/ — обзорные листы.
+- batch-plan.json — промпты, исходники, проверки и соответствие карточкам.
+- CREDITS.txt и credit-report.json — расход по каждому заданию.
+
+## Соответствие карточкам
+
+| Файл | Задание |
 |---|---|
-| Мусорные контейнеры | Подготовлено задание |
-| Карго | Подготовлено задание |
-| Посудомойка | Подготовлено задание |
-| Выдвижная сушка | Подготовлено задание |
-| Нижний · 1 дверь | Подготовлено задание |
-| Нижний · 2 двери | Подготовлено задание |
-| Шкаф с ящиками | Подготовлено задание |
-| НШД-600 | Подготовлено задание |
-| Угловой шкаф | Подготовлено задание |
-| Верхний · 1 дверь | Образец готов |
-| Верхний · 2 двери | Подготовлено задание |
-| Открытый пенал | Подготовлено задание |
-| Пенал-витрина | Подготовлено задание |
-| Пенал с полками | Подготовлено задание |
-| Пенал под технику | Образец готов |
-| Мусорные контейнеры — Gola | Подготовлено задание |
-
-## Конструктивные требования
-
-Ручка находится на свободном крае напротив петель. У верхних шкафов ручка снизу, у нижних — сверху. Три шуфляды сохраняют собственные высоты; при открытом изображении направляющие показаны на всех трёх. Подсветка открытых полок идёт в боковой стенке слева, справа или с обеих сторон; AQ и LIRA различаются. Стекло витрин, количество корзин и состав техники соответствуют исходникам. Фотографии конкретной фурнитуры поставщиков остаются фотографиями.
-
-## Полный список генераций
-
-| № | Изображение | Статус |
-|---|---|
-| 1 | Мусорные контейнеры | Ожидает подтверждения платного пакета |
-| 2 | Карго | Ожидает подтверждения платного пакета |
-| 3 | Посудомойка | Ожидает подтверждения платного пакета |
-| 4 | Выдвижная сушка | Ожидает подтверждения платного пакета |
-| 5 | Нижний · 1 дверь | Ожидает подтверждения платного пакета |
-| 6 | Нижний · 2 двери | Ожидает подтверждения платного пакета |
-| 7 | Шкаф с ящиками | Ожидает подтверждения платного пакета |
-| 8 | НШД-600 | Ожидает подтверждения платного пакета |
-| 9 | Угловой шкаф | Ожидает подтверждения платного пакета |
-| 10 | Верхний · 1 дверь | Готовый образец, 0 кредитов |
-| 11 | Верхний · 2 двери | Ожидает подтверждения платного пакета |
-| 12 | Открытый пенал | Ожидает подтверждения платного пакета |
-| 13 | Пенал-витрина | Ожидает подтверждения платного пакета |
-| 14 | Пенал с полками | Ожидает подтверждения платного пакета |
-| 15 | Пенал под технику | Готовый образец, 0 кредитов |
-| 16 | base — С полками | Ожидает подтверждения платного пакета |
-| 17 | base — Под мойку | Ожидает подтверждения платного пакета |
-| 18 | base — Накладные ручки | Ожидает подтверждения платного пакета |
-| 19 | base — Gola L | Ожидает подтверждения платного пакета |
-| 20 | base — Петли слева | Ожидает подтверждения платного пакета |
-| 21 | base — Петли справа | Ожидает подтверждения платного пакета |
-| 22 | base-double — С полками | Ожидает подтверждения платного пакета |
-| 23 | base-double — Накладные ручки | Ожидает подтверждения платного пакета |
-| 24 | base-double — Gola L | Ожидает подтверждения платного пакета |
-| 25 | drawer — Накладные ручки | Ожидает подтверждения платного пакета |
-| 26 | drawer — Gola II | Ожидает подтверждения платного пакета |
-| 27 | drawer — 2 ящика | Ожидает подтверждения платного пакета |
-| 28 | drawer — 3 ящика | Готовый образец, 0 кредитов |
-| 29 | drawer — 2 + внутренний | Ожидает подтверждения платного пакета |
-| 30 | drawer — С доводчиком | Ожидает подтверждения платного пакета |
-| 31 | drawer — Нажатие | Ожидает подтверждения платного пакета |
-| 32 | oven — С ручками | Ожидает подтверждения платного пакета |
-| 33 | oven — Без ручек | Ожидает подтверждения платного пакета |
-| 34 | corner — Левый угол | Ожидает подтверждения платного пакета |
-| 35 | corner — Правый угол | Ожидает подтверждения платного пакета |
-| 36 | corner — Под мойку | Ожидает подтверждения платного пакета |
-| 37 | corner — С полками | Ожидает подтверждения платного пакета |
-| 38 | corner — Одна дверь | Ожидает подтверждения платного пакета |
-| 39 | corner — Две двери | Ожидает подтверждения платного пакета |
-| 40 | corner — С ручками | Ожидает подтверждения платного пакета |
-| 41 | corner — Без ручек | Ожидает подтверждения платного пакета |
-| 42 | cargo — Накладные ручки | Ожидает подтверждения платного пакета |
-| 43 | cargo — Gola L | Ожидает подтверждения платного пакета |
-| 44 | dryer — Накладные ручки | Ожидает подтверждения платного пакета |
-| 45 | dryer — Gola II | Ожидает подтверждения платного пакета |
-| 46 | dishwasher — Накладные ручки | Ожидает подтверждения платного пакета |
-| 47 | dishwasher — Gola L | Ожидает подтверждения платного пакета |
-| 48 | upper — Полки | Ожидает подтверждения платного пакета |
-| 49 | upper — Накладные ручки | Ожидает подтверждения платного пакета |
-| 50 | upper — Без ручек | Ожидает подтверждения платного пакета |
-| 51 | upper — Нажатие | Ожидает подтверждения платного пакета |
-| 52 | upper — Петли слева | Ожидает подтверждения платного пакета |
-| 53 | upper — Петли справа | Ожидает подтверждения платного пакета |
-| 54 | upper-double — Полки | Ожидает подтверждения платного пакета |
-| 55 | upper-double — Накладные ручки | Ожидает подтверждения платного пакета |
-| 56 | upper-double — Без ручек | Ожидает подтверждения платного пакета |
-| 57 | upper-double — Нажатие | Ожидает подтверждения платного пакета |
-| 58 | open-tall-none — Слева | Ожидает подтверждения платного пакета |
-| 59 | open-tall-none — Справа | Ожидает подтверждения платного пакета |
-| 60 | open-tall-none — С двух сторон | Ожидает подтверждения платного пакета |
-| 61 | tall-vitrine — Слева | Ожидает подтверждения платного пакета |
-| 62 | tall-vitrine — Справа | Ожидает подтверждения платного пакета |
-| 63 | tall-vitrine — С двух сторон | Ожидает подтверждения платного пакета |
-| 64 | tall-vitrine — Петли слева | Ожидает подтверждения платного пакета |
-| 65 | tall-vitrine — Петли справа | Ожидает подтверждения платного пакета |
-| 66 | tall-storage — Петли слева | Ожидает подтверждения платного пакета |
-| 67 | tall-storage — Петли справа | Ожидает подтверждения платного пакета |
-| 68 | tall-storage — Две створки | Ожидает подтверждения платного пакета |
-| 69 | tall-storage — С ручками | Ожидает подтверждения платного пакета |
-| 70 | tall-storage — Без ручек | Ожидает подтверждения платного пакета |
-| 71 | tall-appliance — Дверь + духовка | Ожидает подтверждения платного пакета |
-| 72 | tall-appliance — Духовка + СВЧ | Ожидает подтверждения платного пакета |
-| 73 | tall-appliance — Ящик + духовка | Ожидает подтверждения платного пакета |
-| 74 | tall-appliance — Ящик + духовка + СВЧ | Ожидает подтверждения платного пакета |
-| 75 | tall-appliance — Петли слева | Ожидает подтверждения платного пакета |
-| 76 | tall-appliance — Петли справа | Ожидает подтверждения платного пакета |
-| 77 | tall-appliance — С ручками | Ожидает подтверждения платного пакета |
-| 78 | tall-appliance — Без ручек | Ожидает подтверждения платного пакета |
-| 79 | Мусорные контейнеры — Gola | Ожидает подтверждения платного пакета |
-| 80 | Открытый пенал — LIRA — left | Ожидает подтверждения платного пакета |
-| 81 | Открытый пенал — LIRA — right | Ожидает подтверждения платного пакета |
-| 82 | Открытый пенал — LIRA — both | Ожидает подтверждения платного пакета |
+| `module-card-images/waste-standard.webp` | `main:waste-standard` |
+| `module-card-images/cargo.webp` | `main:cargo` |
+| `module-card-images/dishwasher.webp` | `main:dishwasher` |
+| `module-card-images/pullout-dryer.webp` | `main:pullout-dryer` |
+| `module-card-images/base-single.webp` | `main:base-single` |
+| `module-card-images/base-double.webp` | `main:base-double` |
+| `module-card-images/base-drawers.webp` | `main:base-drawers` |
+| `module-card-images/base-oven.webp` | `main:base-oven` |
+| `module-card-images/base-corner.webp` | `main:base-corner` |
+| `module-card-images/wall-single.webp` | `main:wall-single` |
+| `module-card-images/wall-double.webp` | `main:wall-double` |
+| `module-card-images/open-tall-none.webp` | `main:open-tall-none` |
+| `module-card-images/tall-vitrine.webp` | `main:tall-vitrine` |
+| `module-card-images/tall-storage.webp` | `main:tall-storage` |
+| `module-card-images/tall-appliance.webp` | `main:tall-appliance` |
+| `execution-card-images/base-base-purpose-shelf.webp` | `option:base:base:purpose:shelf` |
+| `execution-card-images/base-base-purpose-sink.webp` | `option:base:base:purpose:sink` |
+| `execution-card-images/base-base-execution-standard.webp` | `option:base:base:execution:standard` |
+| `execution-card-images/base-base-execution-gola.webp` | `option:base:base:execution:gola` |
+| `execution-card-images/base-base-side-left.webp` | `option:base:base:side:left` |
+| `execution-card-images/base-base-side-right.webp` | `option:base:base:side:right` |
+| `execution-card-images/base-double-base-purpose-shelf.webp` | `option:base-double:base:purpose:shelf` |
+| `execution-card-images/base-base-purpose-sink.webp` | `option:base:base:purpose:sink` |
+| `execution-card-images/base-double-base-execution-standard.webp` | `option:base-double:base:execution:standard` |
+| `execution-card-images/base-double-base-execution-gola.webp` | `option:base-double:base:execution:gola` |
+| `execution-card-images/drawer-drawer-execution-standard.webp` | `option:drawer:drawer:execution:standard` |
+| `execution-card-images/drawer-drawer-execution-gola.webp` | `option:drawer:drawer:execution:gola` |
+| `execution-card-images/drawer-drawer-layout-two.webp` | `option:drawer:drawer:layout:two` |
+| `execution-card-images/drawer-drawer-layout-three.webp` | `option:drawer:drawer:layout:three` |
+| `execution-card-images/drawer-drawer-layout-inner.webp` | `option:drawer:drawer:layout:inner` |
+| `execution-card-images/drawer-drawer-opening-soft.webp` | `option:drawer:drawer:opening:soft` |
+| `execution-card-images/drawer-drawer-opening-push.webp` | `option:drawer:drawer:opening:push` |
+| `execution-card-images/oven-generic-handles-handles.webp` | `option:oven:generic:handles:handles` |
+| `execution-card-images/oven-generic-handles-handleless.webp` | `option:oven:generic:handles:handleless` |
+| `execution-card-images/corner-corner-side-left.webp` | `option:corner:corner:side:left` |
+| `execution-card-images/corner-corner-side-right.webp` | `option:corner:corner:side:right` |
+| `execution-card-images/corner-corner-purpose-sink.webp` | `option:corner:corner:purpose:sink` |
+| `execution-card-images/corner-corner-purpose-shelf.webp` | `option:corner:corner:purpose:shelf` |
+| `execution-card-images/corner-corner-door_count-1.webp` | `option:corner:corner:door_count:1` |
+| `execution-card-images/corner-corner-door_count-2.webp` | `option:corner:corner:door_count:2` |
+| `execution-card-images/corner-generic-handles-handles.webp` | `option:corner:generic:handles:handles` |
+| `execution-card-images/corner-generic-handles-handleless.webp` | `option:corner:generic:handles:handleless` |
+| `execution-card-images/cargo-cargo-execution-standard.webp` | `option:cargo:cargo:execution:standard` |
+| `execution-card-images/cargo-cargo-execution-gola.webp` | `option:cargo:cargo:execution:gola` |
+| `execution-card-images/dryer-dryer-execution-standard.webp` | `option:dryer:dryer:execution:standard` |
+| `execution-card-images/dryer-dryer-execution-gola.webp` | `option:dryer:dryer:execution:gola` |
+| `execution-card-images/dishwasher-dishwasher-execution-standard.webp` | `option:dishwasher:dishwasher:execution:standard` |
+| `execution-card-images/dishwasher-dishwasher-execution-gola.webp` | `option:dishwasher:dishwasher:execution:gola` |
+| `execution-card-images/upper-upper-filling-shelves.webp` | `option:upper:upper:filling:shelves` |
+| `execution-card-images/upper-upper-execution-handles.webp` | `option:upper:upper:execution:handles` |
+| `execution-card-images/upper-upper-execution-handleless.webp` | `option:upper:upper:execution:handleless` |
+| `execution-card-images/upper-upper-execution-push.webp` | `option:upper:upper:execution:push` |
+| `execution-card-images/upper-upper-side-left.webp` | `option:upper:upper:side:left` |
+| `execution-card-images/upper-upper-side-right.webp` | `option:upper:upper:side:right` |
+| `execution-card-images/upper-double-upper-filling-shelves.webp` | `option:upper-double:upper:filling:shelves` |
+| `execution-card-images/upper-double-upper-execution-handles.webp` | `option:upper-double:upper:execution:handles` |
+| `execution-card-images/upper-double-upper-execution-handleless.webp` | `option:upper-double:upper:execution:handleless` |
+| `execution-card-images/upper-double-upper-execution-push.webp` | `option:upper-double:upper:execution:push` |
+| `execution-card-images/open-tall-none-open-tall-light_system-none.webp` | `main:open-tall-none` |
+| `execution-card-images/open-tall-none-open-tall-lighting-left.webp` | `option:open-tall-none:open-tall:lighting:left` |
+| `execution-card-images/open-tall-none-open-tall-lighting-right.webp` | `option:open-tall-none:open-tall:lighting:right` |
+| `execution-card-images/open-tall-none-open-tall-lighting-both.webp` | `option:open-tall-none:open-tall:lighting:both` |
+| `execution-card-images/tall-vitrine-vitrine-lighting-left.webp` | `option:tall-vitrine:vitrine:lighting:left` |
+| `execution-card-images/tall-vitrine-vitrine-lighting-right.webp` | `option:tall-vitrine:vitrine:lighting:right` |
+| `execution-card-images/tall-vitrine-vitrine-lighting-both.webp` | `option:tall-vitrine:vitrine:lighting:both` |
+| `execution-card-images/tall-vitrine-vitrine-opening-left.webp` | `option:tall-vitrine:vitrine:opening:left` |
+| `execution-card-images/tall-vitrine-vitrine-opening-right.webp` | `option:tall-vitrine:vitrine:opening:right` |
+| `execution-card-images/tall-storage-tall-opening-left.webp` | `option:tall-storage:tall:opening:left` |
+| `execution-card-images/tall-storage-tall-opening-right.webp` | `option:tall-storage:tall:opening:right` |
+| `execution-card-images/tall-storage-tall-opening-double.webp` | `option:tall-storage:tall:opening:double` |
+| `execution-card-images/tall-storage-generic-handles-handles.webp` | `option:tall-storage:generic:handles:handles` |
+| `execution-card-images/tall-storage-generic-handles-handleless.webp` | `option:tall-storage:generic:handles:handleless` |
+| `execution-card-images/tall-appliance-tall-layout-door_oven.webp` | `option:tall-appliance:tall:layout:door_oven` |
+| `execution-card-images/tall-appliance-tall-layout-door_oven_micro.webp` | `option:tall-appliance:tall:layout:door_oven_micro` |
+| `execution-card-images/tall-appliance-tall-layout-drawer_oven.webp` | `option:tall-appliance:tall:layout:drawer_oven` |
+| `execution-card-images/tall-appliance-tall-layout-drawer_oven_micro.webp` | `option:tall-appliance:tall:layout:drawer_oven_micro` |
+| `execution-card-images/tall-appliance-tall-opening-left.webp` | `option:tall-appliance:tall:opening:left` |
+| `execution-card-images/tall-appliance-tall-opening-right.webp` | `option:tall-appliance:tall:opening:right` |
+| `execution-card-images/tall-appliance-generic-handles-handles.webp` | `option:tall-appliance:generic:handles:handles` |
+| `execution-card-images/tall-appliance-generic-handles-handleless.webp` | `option:tall-appliance:generic:handles:handleless` |
+| `module-card-images/waste-gola.webp` | `main:waste-gola` |
+| `execution-card-images/open-tall-lira-left.webp` | `option:open-tall:lira:left` |
+| `execution-card-images/open-tall-lira-right.webp` | `option:open-tall:lira:right` |
+| `execution-card-images/open-tall-lira-both.webp` | `option:open-tall:lira:both` |

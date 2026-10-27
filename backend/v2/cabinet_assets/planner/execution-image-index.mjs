@@ -1,4 +1,4 @@
-// Tripo Studio Nano Banana Pro; visually reviewed option illustrations.
+// Tripo Studio GPT Image 2.5; reviewed natural oak option illustrations.
 export const EXECUTION_IMAGES=Object.freeze({
  "base:base:purpose:shelf": "base-base-purpose-shelf.webp",
  "base:base:purpose:sink": "base-base-purpose-sink.webp",
