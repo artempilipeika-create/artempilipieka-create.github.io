@@ -8,4 +8,5 @@ data=json.loads((root/'tall-variants.json').read_text())
     'globalThis.MF_VITRINE_VARIANTS = '+json.dumps(json.loads((root/'vitrine-variants.json').read_text()),ensure_ascii=False,separators=(',',':'))+';\n'+
     'globalThis.MF_VITRINE_LIGHTING = '+json.dumps(json.loads((root/'vitrine-lighting.json').read_text()),ensure_ascii=False,separators=(',',':'))+';\n'+
     'globalThis.MF_APPLIANCE_TALL_VARIANTS = '+json.dumps(json.loads((root/'appliance-tall-variants.json').read_text()),ensure_ascii=False,separators=(',',':'))+';\n'+
+    'globalThis.MF_TALL_GOLA_VARIANTS = '+json.dumps(json.loads((root/'tall-gola-variants.json').read_text()),ensure_ascii=False,separators=(',',':'))+';\n'+
     'globalThis.MF_APPLIANCE_TALL_DRAWER_KITS = '+json.dumps(json.loads((root/'appliance-tall-drawer-kits.json').read_text()),ensure_ascii=False,separators=(',',':'))+';\n')

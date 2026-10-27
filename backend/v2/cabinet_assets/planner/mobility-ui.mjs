@@ -1,4 +1,4 @@
-import {kitchenGroup,doorFamilyById,CORNER_FAMILY,TALL_FAMILY,APPLIANCE_TALL_FAMILY,VITRINE_FAMILY} from './furniture-core.mjs';
+import {kitchenGroup,doorFamilyById,CORNER_FAMILY,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallFamily,VITRINE_FAMILY} from './furniture-core.mjs';
 const el=(tag,text,id)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(id)n.id=id;return n;};
 export class MobilityUI{
   constructor(app){
@@ -37,11 +37,11 @@ export class MobilityUI{
       const family=doorFamilyById(t.id);
       if(family&&t.id!==family.left)continue;
       if(p.corner&&t.id!==CORNER_FAMILY.default_id)continue;
-      if(p.tall&&t.id!==(p.tall.family==='appliance'?APPLIANCE_TALL_FAMILY:TALL_FAMILY).default_id)continue;
+      if(p.tall&&t.id!==tallFamily(p.tall).default_id)continue;
       if(p.vitrine&&t.id!==VITRINE_FAMILY.default_id)continue;
       if(globalThis.MF_DRAWERS.choice(t.id)&&(t.id!==globalThis.MF_DRAWERS.family.default_id||globalThis.MF_DRAWERS.familyInfo(selected)))continue;
       if(t.id===selected.bazis_id)continue;
-      const label=dryer?globalThis.MF_PULLOUT_DRYERS.family.label:lower?globalThis.MF_GOLA.family(lower).label:upper?globalThis.MF_UPPERS.family(upper).label:p.tall?(p.tall.family==='appliance'?APPLIANCE_TALL_FAMILY:TALL_FAMILY).label:p.corner?CORNER_FAMILY.label:family?.label||t.catalogue_label||t.label;
+      const label=dryer?globalThis.MF_PULLOUT_DRYERS.family.label:lower?globalThis.MF_GOLA.family(lower).label:upper?globalThis.MF_UPPERS.family(upper).label:p.tall?tallFamily(p.tall).label:p.corner?CORNER_FAMILY.label:family?.label||t.catalogue_label||t.label;
       this.select.append(new Option(label,t.id));
     }
     this.apply.disabled=this.select.options.length<2;

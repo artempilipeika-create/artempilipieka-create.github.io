@@ -296,7 +296,7 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&!production?.dishwasher&&!production?.cargo&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&production?.tall?.execution!=='gola'&&!production?.dishwasher&&!production?.cargo&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
@@ -328,7 +328,7 @@ export class MeshFactory{
         this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
       }
     }
-    if(production?.cargo||production?.gola||production?.dishwasher)for(const profile of production.cargo?globalThis.MF_CARGO.profiles(it):production.dishwasher?globalThis.MF_ACCESSORIES.profiles(it):globalThis.MF_GOLA.profiles(it)){
+    if(production?.tall?.execution==='gola'||production?.cargo||production?.gola||production?.dishwasher)for(const profile of production.tall?.execution==='gola'?globalThis.MF_FURNITURE_CORE.tallGolaProfiles(it):production.cargo?globalThis.MF_CARGO.profiles(it):production.dishwasher?globalThis.MF_ACCESSORIES.profiles(it):globalThis.MF_GOLA.profiles(it)){
       const mesh=this.contourPanel(group,{...profile,role:'lightProfile',position:{x:profile.x+profile.length/2},size:{x:profile.length},material:{}},ghost);
       mesh.userData.visualOnly=true;mesh.userData.golaProfile=profile.name;
     }

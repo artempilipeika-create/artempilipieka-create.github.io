@@ -16,7 +16,7 @@ from .three_d_document import render as render_spec
 from .sales_album import render as render_sales, image_bytes as sales_image
 from . import sales_render
 from .three_d_corner import corner_variant
-from .three_d_tall import tall_variant
+from .three_d_tall import tall_variant, GOLA_VARIANTS as TALL_GOLA_VARIANTS
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
 from .three_d_vitrine import vitrine_variant, BY_ID as VITRINE_BY_ID
 from .three_d_upper import upper_variant, upper_error, BY_ID as UPPER_BY_ID
@@ -240,9 +240,15 @@ class FurnitureItem(StrictModel):
             self.handles='handleless'
             self.front_variant_id=None
         tall=tall_variant({'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256})
+        if self.bazis_id in {v['id'] for v in TALL_GOLA_VARIANTS} and not tall:
+            raise ValueError('Пенал Gola не совпадает с проверенным исходником')
         if self.upper_shelf_count is not None and not tall and not open_tall_variant(self.model_dump()):
             raise ValueError('Количество верхних полок доступно только для проверенного пенала')
         if tall:
+            if tall.get('execution')=='gola':
+                self.handles='handleless'
+                self.bazis_file=self.bazis_file or tall['source_file']
+                self.bazis_resize=True
             if self.module_type!='tall_cabinet' or base!=100 or self.base=='wall':
                 raise ValueError('Пенал устанавливается на цоколь 100 мм')
             if not 300<=self.width<=600*tall['doors_per_section'] or not 1800<=self.height<=2800 or not 300<=self.depth<=700:

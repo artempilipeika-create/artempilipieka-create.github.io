@@ -6,6 +6,7 @@ export function executionCategory(it,family){
  const p=PRODUCTION_MODELS[it?.bazis_id];if(!p)return null;
  if(p.cargo)return 'cargo';if(p.pullout_dryer)return 'dryer';
  if(p.open_tall)return 'open-tall-none';if(p.vitrine)return 'tall-vitrine';
+ if(p.tall?.execution==='gola')return 'tall-gola';
  if(p.tall)return p.tall.family==='appliance'?'tall-appliance':'tall-storage';
  if(p.corner)return 'corner';if(p.dishwasher)return 'dishwasher';
  if(p.upper)return p.upper.door_count===2?'upper-double':'upper';

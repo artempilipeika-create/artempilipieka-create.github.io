@@ -173,6 +173,15 @@ def module_contents(it):
     if tall:
         row=tall['row_height'];n=tall['doors_per_section'];fw=w/n-3
         opening={'left':'L, петли слева','right':'P, петли справа','double':'Д2, две створки в каждой секции'}[tall['opening']]
+        if tall.get('execution')=='gola':
+            fronts=[p for p in tall['panels'] if p['role']=='front']
+            sizes=', '.join(f"{p['size'][1]+(h-tall['native_height'] if p['stretch']=='height' else 0):g} × {p['size'][0]+(w-600)/n:g}" for p in fronts)
+            return (f"Gola L; база {row} мм, цоколь 100 мм; {opening}; "
+                    +('полки' if tall['layout']=='storage' else ('ящик' if tall['drawer'] else 'дверь')+' + духовка'+(' + СВЧ' if tall['microwave'] else ''))
+                    +(f"; ниша духовки 564 × 595 мм на отметке {tall['oven_bottom']:g} мм" if tall['family']=='appliance' else '')
+                    +('; ниша СВЧ 564 × 380 мм' if tall['microwave'] else '')
+                    +f"; фасады {sizes} мм; {tall_shelf_count(it)} съёмн. полк. сверху; профиль AKS 89731, отрезок {w} мм"
+                    +('; '+tall_drawer_note(it) if tall_drawer_note(it) else ''))
         if tall.get('family')=='appliance':
             lower=next(p for p in tall['panels'] if p['key']=='front-lower')
             upper=next(p for p in tall['panels'] if p['key']=='door-upper')

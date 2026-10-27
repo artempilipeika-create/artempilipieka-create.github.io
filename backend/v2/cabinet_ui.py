@@ -165,6 +165,7 @@ def router():
     planner_files.update('wall-panel-sources/'+v['source_file'] for v in panels)
     accessories=json.loads((root/'planner/accessory-variants.json').read_text())
     planner_files.update('accessory-sources/'+v['source_file'] for v in accessories)
+    planner_files.add('tall-gola-variants.json')
     countertops=json.loads((root/'planner/countertop-variants.json').read_text())
     planner_files.update('countertop-sources/'+v['source_file'] for v in countertops)
     planner_files.update('countertop-sources/'+v['joint']+'-'+v['shape']+'.png' for v in countertops)

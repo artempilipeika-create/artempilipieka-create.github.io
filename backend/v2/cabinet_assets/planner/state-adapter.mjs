@@ -1,5 +1,5 @@
 import {fixtureError} from './worktop-fixtures.mjs';
-import {clone,elevation,tier,isTallModule,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
+import {clone,elevation,tier,isTallModule,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,TALL_GOLA_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -16,7 +16,7 @@ export class StateAdapter{
   status(message){this.bridge.status(message);}
   createDraft(opt){
     const all=this.bridge.catalogue;
-    for(const family of [TALL_FAMILY,APPLIANCE_TALL_FAMILY])if(opt.bazis===family.default_id){opt={...opt,bazis:tallDefaultId(this.items,this.selected,family)};break;}
+    for(const family of [TALL_FAMILY,TALL_GOLA_FAMILY,APPLIANCE_TALL_FAMILY])if(opt.bazis===family.default_id){opt={...opt,bazis:tallDefaultId(this.items,this.selected,family)};break;}
     const t=opt.bazis?all.bazisModules.find(x=>x.id===opt.bazis):opt.template?all.templates[opt.template]:null;
     if(opt.bazis&&!t)throw new Error('Исходный модуль БАЗИС не найден');
     const type=t?.module_type||opt.module||'chest',d=t?.defaults||all.moduleDefs[type];
@@ -30,7 +30,7 @@ export class StateAdapter{
     if(opt.bazis)Object.assign(it,{bazis_id:t.id,bazis_file:t.source_file,bazis_sha256:t.source_sha256,bazis_resize:Boolean(t.resize)});
     if(opt.bazis&&t.production){
       const p=t.production;
-      if(p.cargo?.execution==='gola'||p.gola?.execution==='gola'||p.dishwasher?.variant==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
+      if(p.tall?.execution==='gola'||p.cargo?.execution==='gola'||p.gola?.execution==='gola'||p.dishwasher?.variant==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
       Object.assign(it,{height:p.body_height+p.base_height,depth:p.scene_depth??it.depth,
         body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
       it.shelves=clone(productionShelves(it,p));

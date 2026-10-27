@@ -82,7 +82,7 @@ export class ExecutionUI{
   this.caption.textContent=`${it.width} × ${it.height} × ${it.depth} мм · ${this.view==='inside'?'наполнение':noFront?'открытые полки':'внешний вид'}`;
   this.canvas.setAttribute('aria-label',it.name+' · '+this.caption.textContent);
   const options={view:this.view,tall:p.tier==='tall'},renderer=this.ensureRenderer();this.visual.hidden=!renderer;this.note.textContent=renderer?'Вид конструкции в выбранных размерах. Материалы — на основной сцене.':'3D-предпросмотр недоступен. Выбор параметров работает ниже.';renderer?.request(this.canvas,it,options);
-  this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
+  this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(p.tall?.execution==='gola'||globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
   this.syncProxies(it);
   for(const family of buttonFamilies){
    const root=get(families[family]);if(!root||root.hidden)continue;

@@ -4,7 +4,8 @@ from pathlib import Path
 VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/tall-variants.json').read_text())
 APPLIANCE_VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/appliance-tall-variants.json').read_text())
 DRAWER_KITS=json.loads((Path(__file__).parent/'cabinet_assets/planner/appliance-tall-drawer-kits.json').read_text())
-BY_ID={v['id']:v for v in VARIANTS+APPLIANCE_VARIANTS}
+GOLA_VARIANTS=json.loads((Path(__file__).parent/'cabinet_assets/planner/tall-gola-variants.json').read_text())
+BY_ID={v['id']:v for v in VARIANTS+APPLIANCE_VARIANTS+GOLA_VARIANTS}
 
 def tall_variant(it):
     v=BY_ID.get(it.get('bazis_id'))
@@ -39,9 +40,12 @@ def tall_hardware(it):
     kit=tall_drawer_kit(it);rows=[]
     for source in v['hardware_items']:
         row=dict(source)
-        if row['key']=='shelf-support-marcopol':row['quantity']=tall_shelf_count(it)*4
+        if row['key']=='shelf-support-marcopol':row['quantity']=row['quantity']+4*(tall_shelf_count(it)-len(v['upper_shelves'])) if v.get('execution')=='gola' else tall_shelf_count(it)*4
         if kit and kit['length_mm']!=500:
             if row.get('article')=='114797':row.update({key:kit[key] for key in ('name','article','quantity','unit')})
             elif row.get('article')==kit['screw_article']:row['quantity']=kit['screw_quantity']
         rows.append(row)
+    if v.get('execution')=='gola':
+        for profile in v['profiles']:
+            rows.append(dict(key='gola-profile-'+profile['article'],name=profile['material_name'],article=profile['article'],quantity=it['width']/1000,unit='m',cut_length_mm=it['width'],stock_length_mm=5500))
     return rows
