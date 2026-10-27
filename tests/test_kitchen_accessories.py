@@ -19,7 +19,7 @@ def test_dishwasher_save_and_identity(v):
  for patch in [dict(bazis_sha256='0'*64),dict(width=700),dict(base_height=80,body_height=740),dict(module_type='wall_cabinet')]:
   with pytest.raises(ValidationError):FurnitureItem(**dict(item(v),**patch))
 
-def test_saved_plinth_settings_and_pdf():
+def test_saved_plinth_settings_and_pdf(tmp_path):
  a,b=[item(v) for v in BY_ID.values()];a['x']=-300;b['x']=300
  plinth=dict(id='plinth-1',members=[a['item_id'],b['item_id']],shape='u',width=1250,depth=450,height=100,inset=40,material_id='11111111-1111-4111-8111-111111111111')
  saved=Scene(items=[a,b],plinths=[plinth]).model_dump(mode='json')
@@ -29,7 +29,7 @@ def test_saved_plinth_settings_and_pdf():
  text='\n'.join(p.extract_text() for p in PdfReader(BytesIO(data)).pages)
  for expected in ['Цоколи по рядам','1214 × 100 × 18','100 × 450 × 18','Материал цоколя 18 мм','Без мебельного корпуса']:
   assert expected in text
- Path('/tmp/mf-accessories-qa.pdf').write_bytes(data)
+ (tmp_path/'mf-accessories-qa.pdf').write_bytes(data)
  for patch in [dict(shape='bad'),dict(inset=-1),dict(width=0),dict(height=301)]:
   with pytest.raises(ValidationError):Scene(items=[a,b],plinths=[dict(plinth,**patch)])
 

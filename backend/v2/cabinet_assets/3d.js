@@ -552,6 +552,24 @@ function capturePdfPreviews(){
     scene.sync();scene.render();
   }
 }
+async function openKitchenAlbumFlow(){
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs');
+  const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
+    return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
+  return openKitchenAlbum({
+    save:async()=>{if(!state.items.length)throw Error('Добавьте мебель в проект.');await saveProject();},
+    snapshot:cleanSnapshot,
+    capture:async()=>{
+      const scene=globalThis.MF_PLANNER?.scene;
+      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data,detail:data};}
+      const {capturePresentation}=await import('/account/planner/presentation-capture.mjs');
+      return {hero:capturePresentation(scene,{width:1536,height:1024,view:'threeQuarter'}).toDataURL('image/jpeg',.93),
+        detail:capturePresentation(scene,{width:1536,height:1024,view:'front'}).toDataURL('image/jpeg',.93)};
+    },
+    request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:205000}),
+    technical:()=>openSalesAlbum(),nativeImage:()=>globalThis.MF_PLANNER?.presentation?.open()
+  });
+}
 async function openSalesAlbum(){
   if(document.querySelector('#sales-album-dialog'))return;
   const d=document.createElement('dialog');d.id='sales-album-dialog';d.className='mf-sales-dialog';
@@ -567,7 +585,7 @@ async function openSalesAlbum(){
     <div class="mf-sales-actions"><button data-download disabled>Скачать PDF · 5 листов</button></div>`;
   document.body.append(d);d.showModal();
   const q=s=>d.querySelector(s),message=t=>q('[data-message]').textContent=t;
-  let hero=null,detail=null,snapshot=null,previews=null,busy=true,automatic=false;
+  let hero=null,detail=null,snapshot=null,previews=null,busy=true,automatic=false,renderRequestId=crypto.randomUUID();
   const refresh=()=>{
     q('[data-download]').disabled=busy||!snapshot||(!(hero||q('[data-draft]').checked))||((hero||detail)&&!q('[data-reviewed]').checked);
     q('[data-generate]').disabled=busy||!automatic;
@@ -602,9 +620,12 @@ async function openSalesAlbum(){
     }catch(e){message(e.message);}finally{busy=false;refresh();}
   };
   q('[data-generate]').onclick=async()=>{
+    if(busy)return;
     if(!unchanged()){message('Проект изменился. Закройте альбом и откройте заново.');return;}
+    if(!confirm('Создать один платный фоторендер? Стоимость — по тарифу подключённого сервиса. Автоматических повторов нет.'))return;
     busy=true;refresh();message('Создаём фоторендер. Это может занять несколько минут…');
-    try{const r=await api('/3d-projects/'+snapshot.id+'/sales-photo','POST',{version:snapshot.version,preview_data_url:previews.preview_data_url},{},{timeoutMs:205000});
+    try{const r=await api('/3d-projects/'+snapshot.id+'/sales-photo','POST',{version:snapshot.version,preview_data_url:previews.preview_data_url,request_id:renderRequestId,paid_confirmed:true},{},{timeoutMs:205000});
+      if(r.state!=='ready')throw Error(r.message||'Фоторендер ещё создаётся. Повторное нажатие проверит тот же запуск.');
       if(!unchanged())throw Error('Проект изменился. Создайте новый альбом.');
       hero=r.image_data_url;detail=null;q('[data-draft]').checked=false;q('[data-reviewed]').checked=false;await showImage(hero);message('Фоторендер готов. Проверьте геометрию фасадов и материалы.');
     }catch(e){message(e.message);}finally{busy=false;refresh();}
@@ -1591,7 +1612,7 @@ $('delete-project').onclick=()=>deleteProject().catch(e=>status(e.message));
 $('to-order').onclick=()=>toOrder().catch(e=>status(e.message));
 $('share-project').onclick=()=>shareProject().catch(e=>status(e.message));
 $('copy-share').onclick=()=>copyShare();
-$('download-spec').onclick=()=>openSalesAlbum().catch(e=>status(e.message));
+$('download-spec').onclick=()=>openKitchenAlbumFlow().catch(e=>status(e.message));
 $('export-bazis').onclick=exportBazisProjectReady;
 window.addEventListener('keydown',e=>{
   if(plannerRequested)return;

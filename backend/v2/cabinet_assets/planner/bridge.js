@@ -61,6 +61,7 @@
     view:mode=>{viewMode=mode==='top'?'2d':'3d';state.view_mode=viewMode;updateAll();},
     payload:()=>scenePayload(),
     save:()=>saveProject(),
+    openAlbum:()=>openKitchenAlbumFlow(),
     open:id=>openProject(id),
     newProject:()=>newProject(),
     duplicateProject:()=>duplicateProject(),

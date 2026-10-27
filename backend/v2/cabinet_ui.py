@@ -40,7 +40,7 @@ def router():
         'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css','module-view.mjs',
         'project-autosave.mjs','project-safety.mjs','project-checks.mjs','project-safety.css',
         'automatic-finishes.mjs','wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json',
-        'presentation.mjs','presentation-capture.mjs','presentation-ui.mjs','presentation.css',
+        'presentation.mjs','presentation-capture.mjs','presentation-ui.mjs','presentation.css','kitchen-album-ui.mjs',
         'countertop-variants.js','countertop-variants.json','countertops.js','countertop-ui.mjs','countertop.css',
         'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',
         'studio-environment.mjs','studio-render.mjs','state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','vitrine-visuals.mjs','countertop-visuals.mjs','placement.mjs','mobility.mjs','mobility-ui.mjs',

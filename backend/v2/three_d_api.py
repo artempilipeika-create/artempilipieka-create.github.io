@@ -14,7 +14,7 @@ from .events import record_event
 from . import catalogue
 from .three_d_document import render as render_spec
 from .sales_album import render as render_sales, image_bytes as sales_image
-from . import sales_render
+from . import sales_render, sales_render_store, kitchen_album
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant, GOLA_VARIANTS as TALL_GOLA_VARIANTS
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
@@ -456,10 +456,13 @@ class SalesAlbumRender(StrictModel):
     detail_data_url: str|None=Field(default=None,max_length=11_000_000)
     module_preview_data_urls: dict[str,str]=Field(default_factory=dict,max_length=40)
     photo: bool=True
+    layout: Literal['technical','client']='technical'
 
 class SalesPhotoRender(StrictModel):
     version: int=Field(ge=1)
     preview_data_url: str=Field(max_length=11_000_000)
+    request_id: UUID
+    paid_confirmed: Literal[True]
 
 def _preview_png(value,max_bytes=4_000_000):
     if not value:return None
@@ -629,7 +632,7 @@ def router(settings):
     def sales_capabilities(request:Request):
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'orders.draft.write')
-        return {'automatic_render':sales_render.available(),'max_pages':5}
+        return {'automatic_render':sales_render.available(),'max_pages':5,'client_pages':4,'images_per_request':1}
 
     @api.post('/3d-projects/{project_id}/sales-album.pdf')
     def sales_album(project_id:UUID,body:SalesAlbumRender,request:Request):
@@ -641,7 +644,8 @@ def router(settings):
             hero=sales_image(body.hero_data_url);detail=sales_image(body.detail_data_url)
             previews=_module_previews(row['scene'],body.module_preview_data_urls)
             previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
-            data=render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version)
+            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo)
+                  if body.layout=='client' else render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version))
         except ValueError as exc:error(400,str(exc))
         return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Sales_Album.pdf','Cache-Control':'no-store'})
 
@@ -651,12 +655,26 @@ def router(settings):
             user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
             if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
             materials=project_materials(conn,row['scene'])
-        try: image=sales_render.generate(str(user['user_id']),row['scene'],materials,body.preview_data_url)
+        try:
+            sales_render.validate_render_scene(row['scene'],materials)
+            if not sales_image(body.preview_data_url):raise ValueError('Не удалось получить вид кухни.')
+            result=sales_render_store.once(settings.storage_root,user['user_id'],project_id,body.request_id,
+                body.version,body.preview_data_url,
+                lambda:sales_render.generate(str(user['user_id']),row['scene'],materials,body.preview_data_url))
         except ValueError as exc:error(400,str(exc))
         with transaction(settings) as conn:
             current=own(conn,user,project_id)
             if current['version']!=body.version:error(409,'Проект изменился во время рендера. Сформируйте новый вид.')
-        return {'image_data_url':image,'version':body.version}
+        return result
+
+    @api.get('/3d-projects/{project_id}/sales-photo/{request_id}')
+    def sales_photo_status(project_id:UUID,request_id:UUID,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+        result=sales_render_store.read(settings.storage_root,user['user_id'],project_id,request_id)
+        if result is None:error(404,'Запуск не найден.')
+        if result.get('version',row['version'])!=row['version']:error(409,'Проект изменился. Откройте альбом заново.')
+        return result
 
     @api.post('/3d-projects/{project_id}/shares',status_code=201)
     def create_share(project_id:UUID,request:Request):

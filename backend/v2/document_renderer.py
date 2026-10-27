@@ -2,7 +2,7 @@
 from io import BytesIO
 from pathlib import Path
 from html import escape
-import hashlib,json,sys,subprocess,resource
+import hashlib,json,sys,subprocess
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4,landscape
 from reportlab.lib.units import mm
@@ -162,6 +162,8 @@ def bounded_render(data):
     return proc.stdout
 
 if __name__=='__main__':
+    # Process limits belong to the Linux worker, not font metadata imports.
+    import resource
     resource.setrlimit(resource.RLIMIT_AS,(512*1024*1024,512*1024*1024))
     resource.setrlimit(resource.RLIMIT_CPU,(20,20))
     resource.setrlimit(resource.RLIMIT_NOFILE,(32,32))
