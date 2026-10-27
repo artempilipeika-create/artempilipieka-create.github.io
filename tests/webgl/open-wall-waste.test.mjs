@@ -12,8 +12,23 @@ const template=it=>({production:C.PRODUCTION_MODELS[it.bazis_id]});
 
 test('seven upper and two waste sources preserve identity, materials and their artwork',()=>{
  assert.equal(wall.length,7);assert.equal(waste.length,2);
- for(const from of wall)for(const to of wall){const it={...item(from),body_variant_id:'custom',part_materials:{'side-L':'custom'},upper_shelf_count:2},next=O.select(it,to,O.variants);assert.equal(next.bazis_id,to.id);assert.equal(next.body_variant_id,'custom');assert.equal(next.upper_shelf_count,2);assert.deepEqual(next.part_materials,it.part_materials);assert.equal(O.info(next).wall,true);const file=executionArtwork(next,'open-tall','lighting',to.lighting);assert.ok(file.endsWith(to.id.replace('bazis.','open-wall-')+'.webp'));}
+ for(const from of wall)for(const to of wall){const it={...item(from),body_variant_id:'custom',part_materials:{'side-L':'custom'},upper_shelf_count:2},next=O.select(it,to,O.variants);assert.equal(next.bazis_id,to.id);assert.equal(next.body_variant_id,'custom');assert.equal(next.upper_shelf_count,2);assert.deepEqual(next.part_materials,it.part_materials);assert.equal(O.info(next).wall,true);const file=executionArtwork(next,'open-tall','lighting',to.lighting);const url=new URL(file,'https://example.invalid');assert.equal(url.pathname,'/account/planner/module-card-images/'+to.id.replace('bazis.','open-wall-')+'.webp');assert.ok(url.searchParams.get('v'));assert.ok(fs.existsSync(new URL('../../backend/v2/cabinet_assets/planner/module-card-images/'+to.id.replace('bazis.','open-wall-')+'.webp',import.meta.url)));}
  for(const from of waste)for(const to of waste){const it=item(from),next=G.select(it,to,G.variants);assert.equal(next.bazis_sha256,to.source_sha256);assert.equal(next.width,350);assert.match(executionArtwork(it,'cargo','execution',to.execution),new RegExp('waste-'+to.execution+'\\.webp$'));}
+});
+
+test('open tall lighting artwork follows the selected AQ or LIRA profile and side',()=>{
+ for(const system of ['aq-4x8','lira-17.5x6.5']){
+  const v=O.variants.find(v=>!v.wall&&v.light_system===system&&v.lighting==='left');
+  const it={...item(v),module_type:'tall_cabinet',width:600,height:2000,depth:600};
+  const original=structuredClone(it);
+  for(const side of ['left','right','both']){
+   const url=new URL(executionArtwork(it,'open-tall','lighting',side),'https://example.invalid');
+   const filename=system==='lira-17.5x6.5'?'open-tall-lira-'+side+'.webp':'open-tall-none-open-tall-lighting-'+side+'.webp';
+   assert.equal(url.pathname,'/account/planner/execution-card-images/'+filename);
+   assert.ok(url.searchParams.get('v'));
+  }
+  assert.deepEqual(it,original,'choosing an illustration must not mutate the production source');
+ }
 });
 
 test('wall geometry matches source at native size and has no feet; waste bins stay out of cut list',()=>{

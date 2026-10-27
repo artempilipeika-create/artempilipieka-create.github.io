@@ -19,5 +19,5 @@
   ['bazis.107f19943761','tall-storage','Пенал с полками','Закрытое хранение на всю высоту','База 820 / 900','1 / 2 двери'],
   ['bazis.d9c0c30544f4','tall-appliance','Пенал под технику','Духовка или духовка + СВЧ','База 820 / 900','Дверь / ящик']
  ];
- root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:file==='dishwasher'?'supplier-photo':'tripo'})])));
+ root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:'tripo'})])));
 })(globalThis);

@@ -75,6 +75,9 @@ def router():
         '113272.webp',
     ))
     planner_files.update('execution-card-images/'+name for name in (
+        'open-tall-lira-left.webp',
+        'open-tall-lira-right.webp',
+        'open-tall-lira-both.webp',
         'base-base-execution-gola.webp',
         'base-base-execution-standard.webp',
         'base-base-purpose-shelf.webp',
