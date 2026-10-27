@@ -1,5 +1,5 @@
 {
-  "status": "complete_artwork_and_CI_passed_staging_change_prepared_not_deployed",
+  "status": "complete_artwork_published_staging_verified",
   "base_commit": "2794ad465762e3e08ba378c123708886248090b4",
   "scope": "All 16 cabinet families: seven open-wall images already deployed; remaining 15 families plus option illustrations",
   "total_new_images": 82,
@@ -5578,14 +5578,44 @@
       "python_passed": 416
     },
     "staging": {
-      "status": "source_change_staged_not_applied_after_interruption",
-      "planned_commit": "db14adbb59ca5598117bc50fa7ca0168064ccae6",
-      "live_commit": "548547ad4a507d6276ab3f1fb87387e28d446e07",
+      "status": "SUCCESS",
+      "verified_at": "2026-10-27T06:44:36.218617+00:00",
+      "url": "https://martin-forest-v2-staging-production.up.railway.app/constructor.html",
+      "deployment_id": "82158cd3-ddfa-4d27-8437-c10c799f5882",
+      "deployed_commit_from_metadata": "815cc99cf4e3857a1e3efb52f469993a6f0e892b",
+      "configured_source_commit": "db14adbb59ca5598117bc50fa7ca0168064ccae6",
+      "commit_difference": "README and batch-plan documentation only; deployed runtime matches the verified implementation",
+      "deployed_commit_CI": {
+        "run_id": 40435566606,
+        "status": "success"
+      },
       "patch_id": "ed134f84-f999-4bfd-960f-847c8e1feb79",
-      "browser_save_reopen_edit": "pending deployment"
+      "browser_save_reopen_edit": "passed in synthetic project QA_Tripo_All_20261027",
+      "browser_checks": {
+        "project": "QA_Tripo_All_20261027",
+        "saved_and_reopened": true,
+        "open_tall_width_preset_edit_roundtrip": "600 -> 500 mm, saved and reopened at 500 mm",
+        "lighting": "LIRA-1707 both sides retained across reload; switched to AQ both sides with matching FR3D",
+        "lighting_images": "All three AQ and all three LIRA images loaded at distinct URLs",
+        "drawer_layout": "Three drawers selected, saved and reopened; source НМРШ3-600.З.С 3мм Гвозди Шариковые напр с довод.(1).fr3d",
+        "material_selection": "605 PO body and 890 PO plinth retained",
+        "browser_error_logs": [],
+        "limits": "Roundtrip width check used a standard-width preset. Manual fill of 550 did not commit in the automation attempt and is not counted as a passed manual-entry check. Existing missing material texture notices remain."
+      },
+      "runtime_log_review": "No runtime exceptions; stderr-classified entries contain normal Uvicorn INFO startup messages."
     },
     "asset_routes": "Six distinct AQ and LIRA WebP images served with correct MIME; unrelated paths remain unavailable",
-    "production_geometry_or_source_files_changed": false
+    "production_geometry_or_source_files_changed": false,
+    "live_asset_verification": {
+      "total": 83,
+      "passed": 83,
+      "checks": [
+        "HTTP 200",
+        "image/webp MIME",
+        "SHA256 matches source manifest"
+      ],
+      "report": "live-assets-verification.json"
+    }
   },
   "integrated_cards": 84,
   "integrated_image_files": 83,
