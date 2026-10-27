@@ -463,6 +463,7 @@ class SalesPhotoRender(StrictModel):
     preview_data_url: str=Field(max_length=11_000_000)
     request_id: UUID
     paid_confirmed: Literal[True]
+    render_style: Literal['catalog','lived_in']='catalog'
 
 def _preview_png(value,max_bytes=4_000_000):
     if not value:return None
@@ -660,7 +661,8 @@ def router(settings):
             if not sales_image(body.preview_data_url):raise ValueError('Не удалось получить вид кухни.')
             result=sales_render_store.once(settings.storage_root,user['user_id'],project_id,body.request_id,
                 body.version,body.preview_data_url,
-                lambda:sales_render.generate(str(user['user_id']),row['scene'],materials,body.preview_data_url))
+                lambda:sales_render.generate(str(user['user_id']),row['scene'],materials,body.preview_data_url,body.render_style),
+                render_style=body.render_style)
         except ValueError as exc:error(400,str(exc))
         with transaction(settings) as conn:
             current=own(conn,user,project_id)
