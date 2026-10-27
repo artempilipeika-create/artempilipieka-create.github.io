@@ -71,7 +71,8 @@ test('hero preview uses saved doors while option illustrations keep their indepe
  const {app}=fixture(),it={...app.adapter.selected,doors_open:true},before=structuredClone(it);
  const hero=executionPreviewItem(it,moduleView(it).preview);
  assert.equal(hero.doors_open,true);assert.equal(hero.x,0);assert.equal(hero.rotation,0);
- assert.equal(hero.body_variant_id,null);assert.deepEqual(hero.part_materials,{});
+ assert.equal(hero.body_variant_id,it.body_variant_id);assert.deepEqual(hero.part_materials,it.part_materials);
+ const option=executionPreviewItem(it,{view:'closed'});assert.equal(option.body_variant_id,null);assert.deepEqual(option.part_materials,{});
  assert.equal(executionPreviewItem(it,{view:'closed'}).doors_open,false);
  assert.equal(executionPreviewItem({...it,doors_open:false},{view:'hinge'}).doors_open,true);
  assert.equal(hero.bazis_file,it.bazis_file);assert.equal(hero.bazis_sha256,it.bazis_sha256);

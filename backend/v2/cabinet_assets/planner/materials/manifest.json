@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Official full-board images downloaded at the manufacturer-provided 768px rendition. Fixed 1300x2800 mm reference scan; no generated decor or name-based color guesses. Render color is mean sRGB of the downloaded image. Identity remains the catalogue variant ID.",
+  "note": "Verified manufacturer images. Existing EGGER scan metadata is preserved. BYSPAN 605 PO and 890 PO use official solid-colour samples, not tiled surface scans. IDs, finish codes and manufacturing data remain unchanged.",
   "decors": {
     "W1000 ST9": {
       "asset": "egger-w1000-st9.jpg",
@@ -2212,6 +2212,40 @@
       "image_source_url": "https://cdn.egger.com/img/pim/8854489399326/8854489432094/original.jpg?width=768&srcext=png",
       "sha256": "5b5cbe35fff5df7392609a6ebfc804963aaf2888637eda6f5d5a99577caa71a1",
       "original_sha256": "5b5cbe35fff5df7392609a6ebfc804963aaf2888637eda6f5d5a99577caa71a1"
+    },
+    "BYSPAN|605 PO": {
+      "article": "605 PO",
+      "manufacturer": "BYSPAN",
+      "asset": "byspan-605-po.jpg",
+      "preview_url": "/account/planner/materials/byspan-605-po.jpg",
+      "render_color": "#ffffff",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "map_to_surface": false,
+      "roughness": 0.85,
+      "color_confirmed": false,
+      "color_note": "Цвет по официальному цифровому образцу; для подбора материала используйте физический образец.",
+      "source_kind": "official_color_sample",
+      "source_url": "https://span.by/design/dekory/605-belyj/",
+      "image_source_url": "https://span.by/uploads/%D0%94%D0%95%D0%9A%D0%9E%D0%A0%D0%AB/BYSPAN/605%20%D0%91%D0%B5%D0%BB%D1%8B%D0%B9%20605%20-%20White%20605/605-Belyj-605-White-605.jpg",
+      "sha256": "a8986485f3559c265adcdd47850fcddb6eed13cb348bd7c72750ecd183a338e7",
+      "checked_at": "2026-10-27"
+    },
+    "BYSPAN|890 PO": {
+      "article": "890 PO",
+      "manufacturer": "BYSPAN",
+      "asset": "byspan-890-po.jpg",
+      "preview_url": "/account/planner/materials/byspan-890-po.jpg",
+      "render_color": "#e1d7cb",
+      "visual_status": "OFFICIAL_PREVIEW",
+      "map_to_surface": false,
+      "roughness": 0.85,
+      "color_confirmed": false,
+      "color_note": "Цвет по официальному цифровому образцу; для подбора материала используйте физический образец.",
+      "source_kind": "official_color_sample",
+      "source_url": "https://span.by/design/dekory/890-persidskij-zhemchug-hd/",
+      "image_source_url": "https://span.by/uploads/%D0%94%D0%95%D0%9A%D0%9E%D0%A0%D0%AB/BYSPAN/890%20%D0%9F%D0%B5%D1%80%D1%81%D0%B8%D0%B4%D1%81%D0%BA%D0%B8%D0%B9%20%D0%B6%D0%B5%D0%BC%D1%87%D1%83%D0%B3%20HD/890-Persidskij-zhemchug-HD-890-Persian-pearl-890-HD.jpg",
+      "sha256": "55468a2301f0a6f0431385b11a25720835642bdfdfa71b373d4efe7c14c073c3",
+      "checked_at": "2026-10-27"
     }
   }
 }

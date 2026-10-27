@@ -82,7 +82,7 @@ export class ExecutionUI{
   this.viewButtons.forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.executionView===state.view));b.disabled=Boolean(this.app.scene?.isFallback||b.dataset.executionView==='open'&&!state.canOpen);b.title=b.dataset.executionView==='open'&&!state.canOpen?'У этого модуля нет распашных дверей':'';});
   this.caption.textContent=`${it.width} × ${it.height} × ${it.depth} мм · ${state.view==='inside'?'внутри':state.view==='open'?'открытые двери':'снаружи'}`;
   this.canvas.setAttribute('aria-label',it.name+' · '+this.caption.textContent);
-  const options={...state.preview,tall:p.tier==='tall'},renderer=this.ensureRenderer();this.visual.hidden=!renderer;this.note.textContent=renderer?'Общий вид для сцены и предпросмотра. В режиме «Внутри» стенки и фасады полупрозрачны. Материалы — на основной сцене.':'3D-предпросмотр недоступен. Выбор параметров работает ниже.';renderer?.request(this.canvas,it,options);
+  const options={...state.preview,tall:p.tier==='tall'},renderer=this.ensureRenderer();this.visual.hidden=!renderer;this.note.textContent=renderer?'Выбранные материалы показаны на сцене и в предпросмотре. В режиме «Внутри» стенки и фасады полупрозрачны.':'3D-предпросмотр недоступен. Выбор параметров работает ниже.';renderer?.request(this.canvas,it,options);
   this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(p.tall?.execution==='gola'||globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
   this.syncProxies(it);
   for(const family of buttonFamilies){

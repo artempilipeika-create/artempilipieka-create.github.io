@@ -41,10 +41,11 @@ def test_all_official_previews_have_local_hash_and_full_article_provenance():
     for article,record in records.items():
         if not record.get('preview_url'):continue
         assert record['visual_status']=='OFFICIAL_PREVIEW'
-        assert record['source_url'].startswith('https://www.egger.com/')
-        assert article==record['article']
+        manufacturer=record.get('manufacturer','EGGER')
+        assert record['source_url'].startswith('https://span.by/' if manufacturer=='BYSPAN' else 'https://www.egger.com/')
+        assert article==(manufacturer+'|' if manufacturer!='EGGER' else '')+record['article']
         assert hashlib.sha256((ROOT/record['asset']).read_bytes()).hexdigest()==record['sha256']
-        assert visual_metadata({'manufacturer':'EGGER','article':article})['preview_url']==record['preview_url']
+        assert visual_metadata({'manufacturer':manufacturer,'article':record['article']})['preview_url']==record['preview_url']
 
 def test_coverage_preserves_structures_ids_and_unconfirmed_manufacturers():
     def material(article,name='ЛДСП EGGER',**extra):return dict(kind='material',article=article,name=name,material_id=str(uuid4()),variant_id=str(uuid4()),**extra)
