@@ -99,7 +99,7 @@ def draw(c, scene, x, top, width, bottom):
         plan(uppers, 'Верхние шкафы · вид сверху', middle-12, usable_bottom)
     else:
         plan(uppers or lowers, 'Верхние шкафы · вид сверху' if uppers else 'Модули · вид сверху', usable_top, usable_bottom)
-    para('Жирная линия — лицевая сторона. Номера соответствуют списку справа.',
+    para('Жирная линия - лицевая сторона. Номера соответствуют списку справа.',
          x+16, bottom+31, left_width-32, 8, color=MUTED)
 
     widths = [52, table_width-174, 122]
@@ -123,5 +123,5 @@ def draw(c, scene, x, top, width, bottom):
         for p, w in zip(cells, widths):
             _, h = p.wrap(w-12, 1000); p.drawOn(c, px+6, y-(height+h)/2); px += w
         y -= height
-    para('Размеры модулей из сохранённого проекта. Высота — без столешницы. Схема показывает габариты и расположение, без деталировки корпуса.',
+    para('Размеры модулей из сохранённого проекта. Высота - без столешницы. Схема показывает габариты и расположение, без деталировки корпуса.',
          x, bottom-15, width, 9, color=MUTED)
