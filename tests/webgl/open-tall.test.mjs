@@ -55,7 +55,7 @@ test('open tall front meets lower facade while its back touches wall',()=>{
  for(const v of O.variants){const next=C.alignTallFront({...item(v),x:700,z:0},base,room);assert.equal(next.z-next.depth/2,-2000);assert.equal(C.cabinetFrontDatum(next),C.cabinetFrontDatum(base));assert.equal(C.dimensionError(next),'');}
 });
 test('native import validates dimensions with both importer copies identical',()=>{
- const src=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');assert.equal(src,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_6_UNIVERSAL_SEARCH.js',import.meta.url),'utf8'));
+ const src=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');assert.equal(src,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_7_NATIVE_PROFILES.js',import.meta.url),'utf8'));
  const c=vm.createContext({collectSourceFiles:()=>({files:[]}),canonicalBaseDonor:i=>i,canonicalUpperDonor:i=>i,resolveSourceFile:()=>'/exact.fr3d'});
  vm.runInContext(src.slice(src.indexOf('const CARGO_MIN_BODY'),src.indexOf('// Native API only. Node tests do not establish compatibility')),c);const prepare=vm.runInContext('prepareProject',c);
  for(const v of O.variants){const it={source_sha256:v.source_sha256,source_file:v.source_file,target:{width:600,height:2000,depth:300}};assert.equal(prepare({items:[it]},'/sources').entries.length,1);for(const target of [{...it.target,depth:299},{...it.target,width:601},{...it.target,height:2900}])assert.throws(()=>prepare({items:[{...it,target}]},'/sources'),/Открытый пенал/);}

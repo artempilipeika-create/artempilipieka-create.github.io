@@ -26,7 +26,7 @@ function donor(root,name='Модуль.fr3d',bytes='exact donor'){
 }
 
 test('Published and packaged importer are byte-identical',()=>{
- assert.equal(source,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_6_UNIVERSAL_SEARCH.js',import.meta.url),'utf8'));
+ assert.equal(source,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_7_NATIVE_PROFILES.js',import.meta.url),'utf8'));
 });
 test('First run chooses the common folder; later script instances remember it without prompting',()=>{
  const f=fixture();try{

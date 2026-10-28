@@ -95,7 +95,7 @@ test('Actual native export carries eight matching files, nominal fronts and sepa
  for(let i=0;i<8;i++){const out=payload.items[i],v=D.variants[i];assert.equal(out.source_file,v.source_file);assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.target.height,820);assert.equal(out.construction.base_height,150);assert.deepEqual(out.construction.metal_drawers.front_heights_mm,v.front_heights);assert.ok(out.production_note.includes(v.series));}
 });
 test('Native importer protects service-only AQ surface and keeps 16 mm board material',()=>{
- const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_6_UNIVERSAL_SEARCH.js',import.meta.url),'utf8');
+ const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_7_NATIVE_PROFILES.js',import.meta.url),'utf8');
  const c=vm.createContext({require:()=>({}),console,process});vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),c);
  for(const v of D.variants){
   const it={source_sha256:v.source_sha256,construction:{parts:[{role:'body',thickness:18,material:{name:'Decor18'}},{role:'drawer',thickness:16,material:{name:'Decor16'}}]}};

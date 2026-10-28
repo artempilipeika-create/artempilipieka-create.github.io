@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.6 UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-26)
+ Martin Forest -> BAZIS native importer v9.9.7 NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ v9.9.7: repair signed Gola extrusion lengths and upper mounting rail anchors; verify after Commit.
  v9.9.6: choose and remember one library root; search all subfolders, including junctions.
  v9.9.5: preserve saved source identities; report actual mismatching hashes; never replace library FR3D.
  v9.9.4: preserve complete catalogue material names, including 605 PO / 890 PO suffixes.
@@ -886,6 +887,129 @@ function fmtMap(map) {
          ', глубина=' + map.depth.toUpperCase();
 }
 
+// BEGIN GENERATED NATIVE PROFILE REPAIR
+const NATIVE_GOLA_PROFILE_COUNTS = {"010a26e7897944becb274ba023100d068e07b2fa29f0d9de6d137f678280ca56":1,"053826e33ec1e10d791eea8ec56b247a4bca1dfe45541269adfdb21843183734":2,"08a67c2cc8b6825cef47ac28eb652f6f93fe241535c6e6ac6743e056f38d693f":2,"0b99b75442f0e176a7664a2e657218918267466f65c3d7dc901f18ab848a6840":1,"0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8add1b279":1,"133dd94f7a8ded3d6e8215c230b3f160d96215f71cd533830f48f9c00ea9f4e0":1,"16401330c6f3223c3b306b9674c2d4407fae6bb7c3d5e07555a03229d394dd0d":1,"385d2d9982da4e463dd4b41cb0cae613bf52de45b4f90f6b12600484665c9cc7":1,"3a209387ab60dd45d95163e9fe7e8fce8fcb210f0700e811bb08d0ff5ef5d56c":2,"420a726334c830196dd7f4c173321028c570272cd41c21d3b0468a8707dcfe2a":1,"4340fa69215fccf9f91c85292a959b8f040292042432799b7f501ed7bf69e150":2,"43967878ef37d286c4505b34a8f626c9d028ead76325d11a2ddc78d29aa3900e":1,"4cb4a698af61b870d5d2b918b1061c938ac14febbe6feb7430aee18bec11e873":1,"518a05a36607e4a41e8bf5ad801b7508efd542f6833491642fecb5451b1b620e":1,"587ab72c0138d1ee86a3b53dd4b644a7ca4cd23a6b85a8245f4d7d74e8933d34":1,"5b6da09508cab8b28db42bc06882e792bf1e3e2c9fc28a9f913bfe1db4a158e8":1,"5e1075374468e9ae9a7bc40a12288e27ee65fb9d79bbf09bd23fe55852bbae0d":1,"5f3a48e6a7cd394f0727d41f091017e8d8fc9a8394bd241ca37eb1d183c6189a":1,"627e0250a8e58f5e303fb11c56b4a8b881f53e5b74b5448a11a5dfdc4ce59ba8":2,"635a41232720caa3559e9606808b7f02e8e79e26b43b52d37eb22b4fdf648ad4":1,"67176019419dd7af92b6668f3029a2ce533696a296075fa545a362c2d57fc4f8":1,"6bd3b3f56d2eae8cbbcf6d0dd7d3cfa6952b1fd580fa6cb439ec94f4a91b801c":1,"6dd8f5fb6d4a53ba0bf1bac3e2603b8833841f929b8521e6d4e4bf54cf578ef1":1,"71f55f265ba42ab271c32400f84f1dd5b0228d1ddac310a7f63f1a54ba75cfd0":2,"8001bcb4cbee6ebdea8654ab04c68b5d481115b56eba5b46b2fbdfd5f051b3cf":2,"87237b2461fe1a8338f9a767dbaca75010539cc1f95484c9bdebf33d5b183f79":2,"8989e4ff7fb7f625dbe3dbe21a5712b51b80c7101ca9df20e4245cd2725064bc":1,"8c1edeae68509bcee986c19f00fa7c5566222e9c9160f0f79b8b83c9ee432f2d":2,"93e620610628b23a76028d286f7fe06f1d51acb849b0852dff2bfe03cdbdf8ba":1,"94752af0d5ec99a49052bcc3dc067137b0e285c58a482b2b64f812e7a385e08a":1,"95e7a5ce644a8123b46da405f1b5f987cb18819a47e8262759060be7a017a523":1,"96083d50d2c0dc0577d9541ff77a3b1f4c770bcdb9dbc36f0f57f9b0b07268ba":1,"99f651b86d4dc7b965e7682a7e4e7eb57912ff9e604bf93dabe768a7fc8519f3":2,"a342f12e9e533f88a72eed697d502f431c5dd15374143aea0b3ea616973c5816":1,"ad75a27a44d1e40590a515583af3f882f02b9b539a5c4ad5572b63ae594346ed":1,"afefecee12fdf21084dd0cf7f014d83d6e351381825909171da3988aa295f7d6":2,"b09ee8913055cca2aeb868311dc0e142313413e7c58450badb3249eba334ba46":2,"b4067ae2f1d643f3753c671ec12e5393aee9a6ff4df524fd40a89caad8e8961b":1,"cc671e2638f6e56aafe50fc9924aa68ee5aae2dda00c7cd509d165ee8999d4d7":1,"cd3cb599047b549d1c76ecb78fce462d191da06dbd109d994710ae48a1925764":1,"d19041cc3035f8571c6b41d4baee59718acdc8351cf92a4ed77c0dcca085e301":2,"dadbe9a423b7180bec8c4fa8d1535910465e56c53c9477299fec962546a85d5c":1,"dae71f7f74ca28342167090d0f32c02e24a0a8238a88821a9598bf2fe66d57f1":1,"f3ce77e6d36af854f74401b8ce92f414a55ff26fed097f7badb35d7dcb9984a6":1,"f4e24f941d2b3c3d0542e4de2e29ce2b4c8217123360871781495b9ddc6d8c97":1,"fdba1267e8cb92ec71ca5b201f3288a896c4fed1a2381642c68fa387c564d48e":1};
+const NATIVE_CHECKED_MOUNT_SOURCES = new Set(["85f493fc1d177af91734d7a40d7daa105b2c00e08dc4ee7c34d694ed97c456da", "c98de01845cf9c395f198b32f2214c26c759f764f663c8d8d9c7b84e865da525"]);
+// Included in the single-file native importer; no external dependency in BAZIS.
+// Profile thickness is signed extrusion length, NOT board/material thickness.
+// API: https://cdn.bazissoft.ru/documentation/ru/BAZIS-Script_functions.html
+function profilePoint(root, obj, p) {
+  return vector(root.ToObject(obj.ToGlobal(p)), 'profile.point');
+}
+
+function profilePose(root, obj) {
+  const origin = profilePoint(root, obj, {x:0,y:0,z:0});
+  const basis = ['x','y','z'].map(axis => {
+    const p = profilePoint(root, obj, {x:axis==='x'?1:0,y:axis==='y'?1:0,z:axis==='z'?1:0});
+    return {x:p.x-origin.x,y:p.y-origin.y,z:p.z-origin.z};
+  });
+  const length = Number(obj.Thickness);
+  if (!Number.isFinite(length) || Math.abs(length) < .01) throw new Error('Не прочитана длина профиля ' + obj.Name);
+  if (Math.abs(Math.abs(basis[2].x)-1) > .00001 || Math.abs(basis[2].y)+Math.abs(basis[2].z) > .00001)
+    throw new Error('Ось профиля не совпадает с шириной шкафа: ' + obj.Name);
+  return {origin, basis, length};
+}
+
+function profileAt(root, indices, names) {
+  let obj = root;
+  for (let n=0; n<indices.length; n++) {
+    obj = childAt(asList(obj), indices[n]);
+    if (!obj || String(obj.Name) !== names[n]) throw new Error('Структура профиля изменилась: ' + names.join(' / '));
+  }
+  if (!objectTypeChecker.ObjectIsExtrusionBody(obj)) throw new Error('Вместо профиля получен другой объект');
+  return obj;
+}
+
+function snapshotNativeProfiles(root, item, before, target) {
+  const sha = String(item.source_sha256 || '').toLowerCase();
+  const golaCount = NATIVE_GOLA_PROFILE_COUNTS[sha] || 0;
+  const upper = !!NATIVE_FRAME_PROFILES[sha];
+  if (!golaCount && !upper) return [];
+  const result = [], seen = new Set();
+  function visit(obj, indices, names) {
+    if (!obj || seen.has(obj)) return;
+    seen.add(obj);
+    const name = String(obj.Name || '');
+    const kind = golaCount && /^gola\s+[lc]$/i.test(name.trim()) ? 'gola' :
+      upper && name.trim()==='Профиль' && names.some(n=>/^Шина для навесов(?:\s|$)/i.test(n)) ? 'mount' : null;
+    if (kind) {
+      if (!objectTypeChecker.ObjectIsExtrusionBody(obj)) throw new Error('Недоступно тело профиля: ' + name);
+      const pose = profilePose(root, obj), endX = pose.origin.x+pose.basis[2].x*pose.length;
+      const lo = Math.min(pose.origin.x,endX), hi = Math.max(pose.origin.x,endX);
+      const min = before.min.x, max = min+before.size.x;
+      let right = false;
+      if (kind==='gola') {
+        if (Math.abs(lo-min)>.05 || Math.abs(hi-max)>.05)
+          throw new Error('Исходный Gola не совпадает с шириной рамки: ' + name);
+      } else {
+        // Audited native rail: two separate 50 mm pieces, 2 mm from cabinet ends.
+        if (Math.abs(Math.abs(pose.length)-50)>.05 ||
+            !(Math.abs(lo-min-2)<.05 || Math.abs(max-hi-2)<.05))
+          throw new Error('Не распознана привязка короткой монтажной шины');
+        right = Math.abs(max-hi-2)<.05;
+      }
+      const expected = {...pose.origin};
+      expected.x += (kind==='gola' ? pose.basis[2].x*pose.length<0 : right) ? target.x-before.size.x : 0;
+      if (kind==='mount') expected.y += target.y-before.size.y;
+      const length = kind==='gola' ? Math.sign(pose.length)*target.x : pose.length;
+      result.push({root, indices, names, kind, pose, anchor:expected, expected:{...expected}, length, before, target, moduleName:item.name});
+    }
+    let list;
+    try { list = obj.AsList(); } catch (_) { return; }
+    if (!list) return;
+    const count = Number(list.Count);
+    if (!Number.isInteger(count) || count<0) throw new Error('Не прочитан состав блока профилей');
+    for (let i=0; i<count; i++) {
+      const child = childAt(list,i);
+      if (!child) throw new Error('Не прочитан объект блока профилей: '+i);
+      visit(child, [...indices,i], [...names,String(child.Name || '')]);
+    }
+  }
+  visit(root,[],[]);
+  if (result.filter(p=>p.kind==='gola').length !== golaCount)
+    throw new Error('Не найдены все исходные профили Gola: ожидается '+golaCount);
+  if (NATIVE_CHECKED_MOUNT_SOURCES.has(sha) && result.filter(p=>p.kind==='mount').length!==2)
+    throw new Error('Не найдены оба отрезка монтажной шины');
+  return result;
+}
+
+function verifyNativeProfile(check) {
+  const obj = profileAt(check.root,check.indices,check.names), actual = profilePose(check.root,obj);
+  if (Math.abs(actual.length-check.length)>.05 || distance(actual.origin,check.expected)>.05 ||
+      actual.basis.some((axis,i)=>distance(axis,check.pose.basis[i])>.00001))
+    throw new Error('Размер или положение профиля не подтверждены: '+check.names.join(' / '));
+  return {moduleName:check.moduleName, name:String(obj.Name), kind:check.kind,
+    path:check.names, expectedLength:Math.abs(check.length), actualLength:Math.abs(actual.length),
+    signedLength:actual.length, expectedOrigin:check.expected, actualOrigin:actual.origin, verified:true};
+}
+
+function repairNativeProfiles(checks, after, log) {
+  for (const check of checks) {
+    const obj = profileAt(check.root,check.indices,check.names), current = profilePose(check.root,obj);
+    if (current.basis.some((axis,i)=>distance(axis,check.pose.basis[i])>.00001))
+      throw new Error('При изменении шкафа повернулся профиль: '+obj.Name);
+    // Gola Y/Z follow the original native elasticity; only its width is repaired.
+    // Mounts keep source offsets from the top and back, independently of nested blocks.
+    check.expected={...check.anchor};
+    if (check.kind==='gola') { check.expected.y=current.origin.y; check.expected.z=current.origin.z; }
+    for (const axis of check.kind==='gola'?['x']:['x','y','z']) check.expected[axis]+=after.min[axis]-check.before.min[axis];
+    const changed = Math.abs(current.length-check.length)>.05 || distance(current.origin,check.expected)>.05;
+    if (changed) {
+      historyOperations.RegisterObjectChanging(obj);
+      if (Math.abs(current.length-check.length)>.05) {
+        obj.Thickness=check.length;
+        obj.Build();
+      }
+      const now = obj.ToGlobal({x:0,y:0,z:0}), desired = check.root.ToGlobal(check.expected);
+      obj.TranslateGCS({x:desired.x-now.x,y:desired.y-now.y,z:desired.z-now.z});
+    }
+    const result = verifyNativeProfile(check);
+    log.push('ПРОФИЛЬ '+(changed?'ИСПРАВЛЕН':'OK')+': '+check.moduleName+' / '+obj.Name+
+      ' / '+check.kind+'; длина '+result.actualLength.toFixed(3)+' мм; положение проверено');
+  }
+}
+// END GENERATED NATIVE PROFILE REPAIR
+
 function resizeAndPlace(obj, item, log) {
   const list = asList(obj);
   if (!item.source_default || !item.target) throw new Error('Нет исходных или целевых габаритов');
@@ -904,6 +1028,7 @@ function resizeAndPlace(obj, item, log) {
   // a 320 mm native frame to the 317 mm carcass depth (which would lose 3 mm).
   const target = vector(targetVector(map, nativeDimensions(item.target, profile)), 'target');
   if (target.x <= 0 || target.y <= 0 || target.z <= 0) throw new Error('Некорректный целевой размер');
+  const profileChecks = snapshotNativeProfiles(obj, item, before, target);
   if (distance(before.size, target) > PLACEMENT_TOLERANCE_MM) {
     if (!item.elastic_resize || !elasticTransformation.ObjectIsElasticBlock(list)) {
       throw new Error('Размер отличается, но FR3D не поддерживает эластичное изменение');
@@ -916,11 +1041,12 @@ function resizeAndPlace(obj, item, log) {
     throw new Error('БАЗИС не применил размер: ' + fmtSize(after.size) + ', нужен ' + fmtSize(target));
   }
   const materialChecks = applyProjectMaterials(obj, item, log);
+  repairNativeProfiles(profileChecks, after, log);
   const placementFrame = sceneFrame(after, profile);
   if (profile.rearInsetMm) log.push('РАМКА ' + item.name + ': корпус=' + fmtSize(placementFrame.size) +
     '; с задником=' + fmtSize(after.size) + '; задник=' + profile.rearInsetMm + ' мм');
   placeByFrame(obj, placementFrame, item, log);
-  return { frame: after, placementFrame, materialChecks };
+  return { frame: after, placementFrame, materialChecks, profileChecks };
 }
 
 const CARGO_MIN_BODY = {"0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8add1b279":600,"0ac4e1b6b2d319e5227a357923458106e9511167949b02d5412e6e42484dc0d7":600,"bcf9fc814733706260bcde8808c943bfe304a0004cd2548b1545da4bd2ec5ef9":600,"0b99b75442f0e176a7664a2e657218918267466f65c3d7dc901f18ab848a6840":624,"67176019419dd7af92b6668f3029a2ce533696a296075fa545a362c2d57fc4f8":600,"c492617a97b75230df38bc2821fc37cba462a808aaf465c8684f9eb8798c4814":600,"96083d50d2c0dc0577d9541ff77a3b1f4c770bcdb9dbc36f0f57f9b0b07268ba":720,"8a45c0613aad0ac837d2492362ff94065f863c7517a9c2f798b0fd5015ce9f24":720};
@@ -992,7 +1118,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.6 UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.7 NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1107,7 +1233,7 @@ function importProject(prepared, root, payload) {
     'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКА ПОИСКА: ' + root,
     'ПРОСМОТРЕНО ПАПОК: ' + (prepared.scan?.directories ?? 'нет данных') + '; FR3D: ' + (prepared.scan?.files?.length ?? 'нет данных')];
   for (const entry of prepared.scan?.unreadable || []) log.push('ВНИМАНИЕ: недоступен путь ' + entry.path + ' (' + entry.code + ')');
-  const noteChecks = [], liveChecks = [], importedObjects = [], liveMaterials = [];
+  const noteChecks = [], liveChecks = [], importedObjects = [], liveMaterials = [], liveProfiles = [];
   let loaded = 0, failed = 0;
   const notesRequested = payload.items.filter(i => hasNote(i.production_note)).length + (brief ? 1 : 0);
   for (let index = 0; index < prepared.entries.length; index++) {
@@ -1138,6 +1264,7 @@ function importProject(prepared, root, payload) {
         liveChecks.push({ obj, result });
       }
       importedObjects.push(obj);
+      liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;
     } catch (e) {
@@ -1180,6 +1307,14 @@ function importProject(prepared, root, payload) {
     }
     return result;
   });
+  const profileChecks = liveProfiles.map(check => {
+    try { return verifyNativeProfile(check); }
+    catch (error) {
+      const message = String(error.message || error);
+      log.push("ОШИБКА ПРОФИЛЯ ПОСЛЕ COMMIT: " + check.moduleName + " — " + message);
+      return {moduleName:check.moduleName, path:check.names, verified:false, error:message};
+    }
+  });
   // Commit is not disk persistence. Read the complete text again after commit.
   for (const check of liveChecks) {
     if (!check.result.verified) continue;
@@ -1193,7 +1328,8 @@ function importProject(prepared, root, payload) {
       log.push('ЗАМЕТКИ ОШИБКА: ' + check.result.label + ' — ' + check.result.error);
     }
   }
-  return { loaded, failed, log, brief, notesRequested, noteChecks, assemblyPlacement, materialChecks,
+  return { loaded, failed, log, brief, notesRequested, noteChecks, assemblyPlacement, materialChecks, profileChecks,
+    profileErrors: profileChecks.filter(c=>!c.verified).length,
     modelObjectCount: Number(asList(currentFileData.model).Count),
     notesVerified: noteChecks.filter(c => c.verified).length,
     materialErrors: log.filter(line => line.startsWith('ОШИБКА МАТЕРИАЛА:')).length,
@@ -1325,13 +1461,14 @@ function showNotesWindow(summaryLines, noteLines) {
     try { logFilename = saveImportLog(project.filename, result, runId); }
     catch (e) { evidenceError = 'ОШИБКА СОХРАНЕНИЯ ДИАГНОСТИКИ: ' + e.message; result.log.push(evidenceError); }
     for (const line of result.log) console.log(line);
-    const hasErrors = result.failed || result.materialErrors || result.assemblyPlacement.error || evidenceError || display.errors.length || result.notesVerified < result.notesRequested;
+    const hasErrors = result.failed || result.materialErrors || result.profileErrors || result.assemblyPlacement.error || evidenceError || display.errors.length || result.notesVerified < result.notesRequested;
     const lines = [hasErrors ? 'ИМПОРТ С ОШИБКАМИ — см. диагностику ниже.' : 'Импорт выполнен. Заметки показаны ниже.',
       'Версия: ' + IMPORT_VERSION, 'Экспорт: ' + project.filename,
       'Выбор файла: ' + (project.automatic ? 'автоматически — последний в Загрузках' : 'вручную — в Загрузках экспорт не найден'),
       'Загружено модулей: ' + result.loaded + '/' + project.payload.items.length + '; ошибок загрузки: ' + result.failed,
       result.assemblyPlacement.applied ? 'Левый габарит всей сборки: X=' + result.assemblyPlacement.afterX.toFixed(3) + ' мм; минимальный Z=' + result.assemblyPlacement.afterZ.toFixed(3) + ' мм.' :
         'Привязка сборки по X/Z НЕ ВЫПОЛНЕНА: ' + (result.assemblyPlacement.error || result.assemblyPlacement.reason),
+      'Профили после Commit: ' + result.profileChecks.filter(c=>c.verified).length + '/' + result.profileChecks.length + '; ошибок: ' + result.profileErrors,
       'Ошибок назначения материала: ' + result.materialErrors,
       'Материалы прочитаны после Commit: ' + result.materialChecks.filter(c => c.verified).length + '/' + result.materialChecks.length + ' панелей.',
       'Заметки через GetObjectNotes после Commit: ' + result.notesVerified + '/' + result.notesRequested,
