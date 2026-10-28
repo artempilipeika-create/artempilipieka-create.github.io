@@ -58,6 +58,14 @@ def test_preflight_checks_saved_layout_and_pdf_retry_reuses_original_image(monke
         pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)==4
         assert pdf.pages[0].images[0].data==jpeg
     row['scene']=kitchen(35)
-    response=client.post(url,json={'version':3});assert response.status_code==400
-    assert 'Список модулей' in response.json()['detail']['code']
+    assert client.post(url,json={'version':3}).json()=={'ok':True}
+    response=client.post(f'/api/v2/3d-projects/{pid}/sales-album.pdf',json={
+        'version':3,'layout':'client','hero_data_url':encoded,'photo':True})
+    assert response.status_code==200,response.text
+    pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)>4
+    assert pdf.pages[0].images[0].data==jpeg
+    assert sum(p.extract_text().count('600 × 820 × 510 мм') for p in pdf.pages)==35
+    response=client.post(url,json={'version':3,'elevation_geometry':[]})
+    assert response.status_code==400
+    assert 'Чертёж не соответствует' in response.json()['detail']['code']
     auth['ok']=False;assert client.post(url,json={'version':3}).status_code==401

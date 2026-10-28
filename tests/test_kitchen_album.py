@@ -33,10 +33,15 @@ def test_client_album_four_pages_no_private_costs_or_false_price():
     assert 'Материал требует выбора' in text
 
 
-def test_client_material_overflow_fails_instead_of_silently_truncating():
+def test_client_material_overflow_continues_without_losing_names():
     data=scene();data['items']=[{**data['items'][0],'body_variant_id':str(i)} for i in range(30)]
-    with pytest.raises(ValueError,match='Слишком много материалов'):
-        kitchen_album.render('Кухня',data,{str(i):'Материал '+str(i) for i in range(30)},image())
+    names={str(i):f'Материал №{i:02d}' for i in range(30)}
+    pdf=PdfReader(BytesIO(kitchen_album.render('Кухня',data,names,image())))
+    assert len(pdf.pages)>4
+    text=' '.join(p.extract_text() for p in pdf.pages[2:-1])
+    assert all(text.count(name)==1 for name in names.values())
+    assert 'КОРПУС · ПРОДОЛЖЕНИЕ' in text
+    assert 'После расчёта' in pdf.pages[-1].extract_text()
 
 
 def test_receipt_is_persistent_and_never_repeats_a_failed_or_ready_request(tmp_path):

@@ -46,10 +46,15 @@ def test_missing_dimensions_are_explicit_and_are_not_invented():
     assert 'Для схемы нужно заполнить размеры' in pdf.pages[1].extract_text()
 
 
-def test_long_module_schedule_fails_instead_of_dropping_rows():
+def test_long_module_schedule_continues_without_dropping_rows():
     modules=[{**item(),'name':f'Шкафчик с индивидуальным названием {n}', 'x':n*600} for n in range(35)]
-    with pytest.raises(ValueError,match='Список модулей не помещается'):
-        kitchen_album.render('Кухня',{'items':modules},{},image())
+    pdf=PdfReader(BytesIO(kitchen_album.render('Кухня',{'items':modules},{},image())))
+    assert len(pdf.pages)>4
+    text=' '.join(p.extract_text() for p in pdf.pages[3:])
+    assert text.count('600 × 820 × 510 мм')==35
+    for n,module in enumerate(modules,1):assert f'{n}. '+module['name']+'\n' in text
+    assert text.count('После расчёта')==1
+    assert f'листы 4–{len(pdf.pages)}' in pdf.pages[1].extract_text()
 
 
 def test_dimension_extents_include_real_gaps_and_do_not_sum_unrelated_widths():

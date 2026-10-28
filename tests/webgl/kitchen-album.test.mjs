@@ -32,7 +32,7 @@ function harness({existing={state:'none'},pdfFails=false,renderPending=false,pre
     request:async(path,method='GET',body)=>{requests.push({path,method,body});
       if(path==='/3d-sales-capabilities')return {automatic_render:true};
       if(path.endsWith('/sales-album/preflight')){
-        if(preflightFails)throw Error('Список модулей не помещается на странице.');
+        if(preflightFails)throw Error('Чертёж не соответствует сохранённой кухне.');
         return {ok:true};
       }
       if(path.endsWith('/reuse')||method==='GET')return current;
@@ -63,7 +63,7 @@ test('Rebuilding a failed PDF never calls the paid provider again',async()=>{
 });
 test('Layout failure is visible and blocks charging before the paid image request',async()=>{
   const h=harness({preflightFails:true});await h.open();
-  assert.match(h.q('[data-message]').textContent,/Список модулей/);
+  assert.match(h.q('[data-message]').textContent,/Чертёж не соответствует/);
   assert.equal(h.q('[data-message]').scrolled,true);
   h.q('[data-consent]').checked=true;h.q('[data-consent]').onchange();
   assert.equal(h.q('[data-create]').disabled,true);
