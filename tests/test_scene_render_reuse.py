@@ -74,3 +74,14 @@ def test_legacy_paid_result_is_recovered_using_exact_preview_then_survives_saves
     assert store.current(tmp_path, 'owner', pid, scene(), 9)['image_data_url'] == 'old-paid-photo'
     assert store.for_scene(tmp_path, 'owner', pid, uuid4(), 9, scene(), 'new-preview',
                            lambda: pytest.fail('Already paid')) == found
+
+
+def test_an_index_cannot_serve_a_request_bound_to_another_scene(tmp_path):
+    pid, rid = uuid4(), uuid4()
+    store.for_scene(tmp_path, 'owner', pid, rid, 1, scene(), 'view', lambda: 'other-scene-photo')
+    changed = scene(); changed['items'][0]['width'] = 800
+    index = store.location(tmp_path, 'owner', pid, rid).parent / 'scenes' / store.scene_key(changed)
+    # Simulate two overlapping submissions reusing one UUID for different versions.
+    store._claim(index, rid)
+    result = store.current(tmp_path, 'owner', pid, changed, 2)
+    assert result['state'] == 'uncertain' and 'image_data_url' not in result

@@ -82,6 +82,11 @@ def _index_result(root, owner, project, index):
     reference = index / 'reference.json'
     if reference.exists():
         request_id = json.loads(reference.read_text())['request_id']
+        receipt = location(root, owner, project, request_id) / 'request.json'
+        if receipt.exists():
+            metadata = json.loads(receipt.read_text())
+            if metadata.get('scene_key') and metadata['scene_key'] != index.name:
+                return {'state': 'uncertain', 'message': 'Этот запуск относится к другой кухне. Повторный платный запрос заблокирован.'}
         result = read(root, owner, project, request_id)
         if result is not None:
             return {**result, 'request_id': request_id}
