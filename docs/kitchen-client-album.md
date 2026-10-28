@@ -160,3 +160,23 @@ INFO-сообщения Uvicorn; исключений в проверенном 
 Визуально просмотрены страница планировки для прямой и угловой расстановки и
 страница материалов. Платных запросов не было. Проверка в открытой вкладке
 остаётся недоступна: originating browser context.
+
+### Публикация страницы планировки
+
+Runtime commit: `141f22a82d42d651a5d6d8814309ca898a4df81a`.
+Ветка: `mf-reliability-album-plan-20261028`.
+Constructor reliability с PostgreSQL: SUCCESS:
+https://github.com/artempilipeika-create/artempilipieka-create.github.io/actions/runs/40769293146
+Railway deployment `ca83fba5-e9af-4600-a23d-30d24b53855f`: SUCCESS.
+Сервис закреплён за runtime commit; staged changes отсутствуют.
+Health: HTTP 200, ok=true, environment=staging. Страница конструктора использует
+`20261028-album-plan`; опубликованные 3d.js, kitchen-album-ui.mjs и
+presentation-capture.mjs побайтово совпали с релизом. В проверенном журнале
+только штатные INFO-сообщения запуска Uvicorn, исключений нет.
+
+Последняя вёрстка страницы 2 просмотрена после финальной правки подписей.
+Авторизованная проверка в живом браузере недоступна из-за originating browser
+context. Платных запросов при разработке и проверке не было.
+
+Для получения обновлённого PDF: Ctrl+F5 → «Альбом кухни» → «Скачать альбом · PDF».
+При наличии подходящего сохранённого фоторендера новый платный запуск не требуется.
