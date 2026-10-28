@@ -220,3 +220,26 @@ https://github.com/artempilipeika-create/artempilipieka-create.github.io/actions
 После подтверждения проверить staged changes, опубликовать закреплённый code
 commit, дождаться SUCCESS и проверить health, ресурсы и журнал. Этот checkpoint
 меняет только документацию и не должен заменять проверенный runtime commit.
+
+### Публикация подтверждена пользователем и завершена
+
+Пользователь ответил «да» на запрос публикации. Проверены прежние два staged
+изменения и успешный Constructor reliability `40773671190`, затем accept_deploy
+выполнен успешно. Railway deployment `79233325-ec72-41b8-9e2a-74a1fff1fc5d`: SUCCESS.
+
+Настройка source.commitSha: `e69c507e11602de6cd652c45ec3efccfd70be958`.
+Railway deployment metadata указывает `e5f2eb14633356c84b682ccbeddd28739cd8cb20`.
+GitHub compare подтверждает, что единственная разница между ними - запись
+результатов в docs/kitchen-client-album.md; код полностью совпадает с проверенным.
+Ожидающих изменений Railway нет. Переменные, БД и хранилища не менялись.
+
+Публичная проверка: /health HTTP 200, ok=true, environment=staging;
+/constructor.html HTTP 200 и версия ресурсов `20261029-album-dimensions`.
+Опубликованные 3d.js, kitchen-album-ui.mjs и presentation-capture.mjs побайтово
+совпали с локальной проверенной версией. В журнале запуска только обычные INFO
+Uvicorn, ошибочно размеченные Railway как stderr/error; исключений не обнаружено.
+
+Проверка в авторизованной вкладке остаётся недоступна из-за ранее полученной
+ошибки originating browser context. Платных генераций не запускали.
+Путь получения: Ctrl+F5 → «Альбом кухни» → «Скачать альбом · PDF».
+При подходящем сохранённом фоторендере изображение используется повторно.
