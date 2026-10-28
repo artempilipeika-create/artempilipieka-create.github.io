@@ -22,7 +22,7 @@ test('Shared drawer/combo/niche arithmetic stays finite and within cells',()=>{
 for(const [r,x,z]of [[0,0,1],[90,-1,0],[180,0,-1],[270,1,0]])test('Rotation '+r+' follows existing X/Z convention',()=>{
  assert.deepEqual(rotateXZ(0,1,r),{x,z});const b=bounds(item({rotation:r}),room,false);assert.equal(b.maxX-b.minX,r%180===0?600:560);assert.equal(b.maxZ-b.minZ,r%180===0?560:600);
 });
-test('Elevation fallback is exactly the saved v2 rule',()=>{assert.equal(elevation(item({module_type:'wall_cabinet'}),room),1480);assert.equal(elevation(item(),room),0);assert.equal(elevation(item({elevation_mm:1550}),room),1550);});
+test('Default upper bottom is independent of the ceiling',()=>{assert.equal(elevation(item({module_type:'wall_cabinet'}),room),1458);assert.equal(elevation(item(),room),0);assert.equal(elevation(item({elevation_mm:1550}),room),1550);});
 test('Kitchen selection scopes include upper cabinets instead of only lower production settings',()=>{
  const lower=item({module_type:'base_cabinet'}),upper=item({module_type:'wall_cabinet'}),tall=item({module_type:'tall_cabinet'}),other=item({module_type:'wardrobe'});
  assert.equal(scopeMatches(lower,'kitchen'),true);assert.equal(scopeMatches(upper,'kitchen'),true);assert.equal(scopeMatches(tall,'kitchen'),true);assert.equal(scopeMatches(other,'kitchen'),false);
@@ -75,7 +75,7 @@ function harness(){
     moduleDefs:{base_cabinet:{name:'Нижний',w:600,h:720,d:560,layout:'doors',drawers:0,base:'plinth'}}}};
  const adapter=new StateAdapter(bridge),history=new History(adapter);return{adapter,history};
 }
-test('Temporary preview height is not silently added to v2 payload',()=>{const {adapter}=harness();adapter.replace({...adapter.selected,elevation_mm:1480});assert.equal(Object.hasOwn(adapter.selected,'elevation_mm'),false);assert.equal(Object.hasOwn(adapter.createDraft({module:'base_cabinet'}),'elevation_mm'),false);});
+test('Temporary preview height is not silently added to v2 payload',()=>{const {adapter}=harness();adapter.replace({...adapter.selected,elevation_mm:1458});assert.equal(Object.hasOwn(adapter.selected,'elevation_mm'),false);assert.equal(Object.hasOwn(adapter.createDraft({module:'base_cabinet'}),'elevation_mm'),false);});
 test('D1 pilot draft separates 720 body, 100 base and 38 worktop while keeping 510 depth',()=>{
  const {adapter}=harness();adapter.items.splice(0);const draft=adapter.createDraft({bazis:'pilot-d1'});
  assert.equal(draft.height,820);assert.equal(draft.body_height,720);assert.equal(draft.base_height,100);
@@ -106,12 +106,12 @@ test('WebGL route has no competing legacy canvas controller',()=>{
 });
 
 
-test('Different-height upper cabinets align without changing legacy height',()=>{
+test('Different-height upper cabinets share their bottom datum',()=>{
  const upper=item({module_type:'wall_cabinet',height:720,depth:320,base:'wall'});
  const shorter=item({item_id:'b',module_type:'wall_cabinet',height:360,depth:320,base:'wall',x:615,z:0});
  const result=snapItem(shorter,[upper],room,{threshold:45,allowElevation:false});
  assert.equal(result.error,'');assert.equal(result.item.x,600);
- assert.equal(elevation(result.item,room),room.height-shorter.height-500);
+ assert.equal(elevation(result.item,room),1458);
 });
 
 

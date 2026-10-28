@@ -362,6 +362,9 @@ class PresentationView(StrictModel):
             raise ValueError('Camera needs a direction and a unit up vector')
         return self
 
+class AlbumSettings(StrictModel):
+    order_number: str=Field(default='',max_length=60)
+
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
@@ -387,9 +390,16 @@ class Scene(StrictModel):
     wallPanels: list[WallPanel]=Field(default_factory=list,max_length=16)
     wallLights: list[WallLight]=Field(default_factory=list,max_length=4)
     presentationViews: list[PresentationView]=Field(default_factory=list,max_length=6)
+    albumSettings: AlbumSettings=Field(default_factory=AlbumSettings)
+    upperMountingRule: Literal['worktop600']|None=None
 
     @model_validator(mode='after')
     def wall_finish_placement(self):
+        if self.upperMountingRule == 'worktop600':
+            from .upper_mounting import mounted_items
+            mounted = mounted_items([it.model_dump() for it in self.items])
+            for item, placed in zip(self.items, mounted):
+                if item.module_type == 'wall_cabinet': item.elevation_mm = placed['elevation_mm']
         for item in self.items:
             if item.module_type=='wall_cabinet' and item.elevation_mm is not None and item.elevation_mm+item.height>self.room.height:
                 raise ValueError('Верх шкафа выходит выше потолка. Уменьшите высоту шкафа.')
@@ -451,6 +461,23 @@ class SpecificationRender(StrictModel):
     preview_data_url: str|None=Field(default=None,max_length=6_000_000)
     module_preview_data_urls: dict[str,str]=Field(default_factory=dict,max_length=40)
 
+class AlbumShape(StrictModel):
+    x: float=Field(ge=-6000,le=6000,allow_inf_nan=False)
+    y: float=Field(ge=-100,le=6000,allow_inf_nan=False)
+    w: float=Field(gt=0,le=6000,allow_inf_nan=False)
+    h: float=Field(gt=0,le=6000,allow_inf_nan=False)
+    role: Literal['panel','front','hardware','counter','appliance','label']='panel'
+    label: Literal['','Сушка','ДШ','СВЧ','ПММ']=''
+
+class AlbumModuleGeometry(StrictModel):
+    item_id: str=Field(min_length=1,max_length=80)
+    width: float=Field(gt=0,le=6000,allow_inf_nan=False)
+    height: float=Field(gt=0,le=6000,allow_inf_nan=False)
+    depth: float=Field(gt=0,le=6000,allow_inf_nan=False)
+    source_sha256: str|None=Field(default=None,max_length=64)
+    detail: Literal['native','parametric','outline']
+    shapes: list[AlbumShape]=Field(max_length=600)
+
 class SalesAlbumRender(StrictModel):
     version: int=Field(ge=1)
     hero_data_url: str=Field(max_length=11_000_000)
@@ -458,6 +485,7 @@ class SalesAlbumRender(StrictModel):
     module_preview_data_urls: dict[str,str]=Field(default_factory=dict,max_length=40)
     photo: bool=True
     layout: Literal['technical','client']='technical'
+    elevation_geometry: list[AlbumModuleGeometry]|None=Field(default=None,max_length=100)
 
 class SalesPhotoRender(StrictModel):
     version: int=Field(ge=1)
@@ -652,7 +680,7 @@ def router(settings):
             hero=sales_image(body.hero_data_url);detail=sales_image(body.detail_data_url)
             previews=_module_previews(row['scene'],body.module_preview_data_urls)
             previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
-            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo,material_visuals=visuals)
+            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo,material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
                   if body.layout=='client' else render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version))
         except ValueError as exc:error(400,str(exc))
         return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Sales_Album.pdf','Cache-Control':'no-store'})

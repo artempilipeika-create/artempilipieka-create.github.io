@@ -34,8 +34,12 @@ def image_bytes(value):
             warnings.simplefilter('error',Image.DecompressionBombWarning)
             with Image.open(BytesIO(data)) as im:
                 if im.width*im.height>16_000_000: raise ValueError('Картинка слишком большая: максимум 16 мегапикселей')
-                im.load(); im=ImageOps.exif_transpose(im).convert('RGB')
-                im.thumbnail((2400,2400)); out=BytesIO(); im.save(out,'JPEG',quality=93)
+                im.load()
+                # The paid JPEG is embedded directly in the PDF: no repeated lossy encode.
+                if im.format == 'JPEG' and im.mode == 'RGB' and im.getexif().get(274, 1) == 1:
+                    return data
+                im=ImageOps.exif_transpose(im).convert('RGB')
+                out=BytesIO(); im.save(out,'JPEG',quality=98,subsampling=0)
         return out.getvalue()
     except (binascii.Error,OSError,Image.DecompressionBombError,Image.DecompressionBombWarning) as exc:
         raise ValueError('Не удалось прочитать изображение') from exc

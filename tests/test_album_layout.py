@@ -26,15 +26,16 @@ def test_equal_modules_are_grouped_without_losing_plan_numbers_or_original_names
         ('1, 2','НШД-600','600 × 820 × 510'),('3','НШД-600','700 × 820 × 510')]
 
 
-def test_second_page_is_a_vector_plan_and_schedule_without_any_second_image():
+def test_second_page_is_a_vector_elevation_and_schedule_moves_to_page_four():
     a=item();b=item();b.update(name='Верхний шкаф',module_type='wall_cabinet',height=720,depth=317)
     scene={'items':[a,b]};original=deepcopy(scene)
     pdf=PdfReader(BytesIO(kitchen_album.render('Кухня',scene,{},image(),b'not an image')))
     assert len(pdf.pages)==4 and len(pdf.pages[0].images)==1
     assert len(pdf.pages[1].images)==0
     text=pdf.pages[1].extract_text()
-    assert all(x in text for x in ['Планировка вашей кухни','НШД-600','600 × 820 × 510',
-                                  'Верхний шкаф','600 × 720 × 317','Напольные модули','Верхние шкафы'])
+    assert all(x in text for x in ['Кухня. Вид спереди','1','2','600','2178'])
+    schedule=pdf.pages[3].extract_text()
+    assert all(x in schedule for x in ['НШД-600','600 × 820 × 510','Верхний шкаф','600 × 720 × 317'])
     assert 'Второй ракурс' not in text and scene==original
 
 
@@ -60,7 +61,8 @@ def test_dimension_extents_include_real_gaps_and_do_not_sum_unrelated_widths():
     scene={'items':[a,b]}
     pdf=PdfReader(BytesIO(kitchen_album.render('Кухня',scene,{},image())))
     assert '1250' in pdf.pages[1].extract_text()
-    assert 'H 820' in pdf.pages[1].extract_text()
+    assert '50' in pdf.pages[1].extract_text()
+    assert '600 × 820 × 510' in pdf.pages[3].extract_text()
 
 
 def test_dimension_spans_follow_rotated_width_and_depth_with_fractional_positions():
@@ -92,5 +94,6 @@ def test_stacked_cabinets_share_an_outline_but_keep_both_numbers_and_heights():
     b=dict(a,name='Антресоль',height=360,elevation_mm=2200)
     pdf=PdfReader(BytesIO(kitchen_album.render('Кухня',{'items':[a,b]},{},image())))
     text=pdf.pages[1].extract_text()
-    assert '1, 2' in text and 'H 720 / 360' in text
-    assert '600 × 720 × 317' in text and '600 × 360 × 317' in text
+    assert '1' in text and '2' in text and 'H 720' in text and 'H 360' in text
+    schedule=pdf.pages[3].extract_text()
+    assert '600 × 720 × 317' in schedule and '600 × 360 × 317' in schedule

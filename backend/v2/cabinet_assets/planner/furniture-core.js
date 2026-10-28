@@ -851,8 +851,36 @@
   }
   function elevation(it,room){
     return Number.isFinite(it.elevation_mm)?it.elevation_mm:
-      it.module_type==='wall_cabinet'?Math.max(0,room.height-it.height-500):0;
+      it.module_type==='wall_cabinet'?1458:0;
   }
+  // The first upper row follows its worktop, never the ceiling. Millimetres.
+  function upperWorktopTop(it,items){
+    const q=rotateXZ(it.x||0,it.z||0,-(it.rotation||0)),back=q.z-it.depth/2;
+    const candidates=items.filter(b=>b.module_type==='base_cabinet'&&(b.rotation||0)===(it.rotation||0)).map(b=>{
+      const p=rotateXZ(b.x||0,b.z||0,-(b.rotation||0));return {it:b,start:p.x-b.width/2,end:p.x+b.width/2,back:p.z-b.depth/2};
+    }).filter(b=>Math.abs(b.back-back)<=180).sort((a,b)=>a.start-b.start);
+    const runs=[];
+    for(const b of candidates){const last=runs.at(-1);if(last&&b.start<=last.end+2){last.end=Math.max(last.end,b.end);last.items.push(b.it);}else runs.push({start:b.start,end:b.end,items:[b.it]});}
+    if(!runs.length)return 858;
+    const distance=r=>Math.max(r.start-q.x,q.x-r.end,0);
+    runs.sort((a,b)=>distance(a)-distance(b));
+    return Math.max(...runs[0].items.map(b=>heights(b).overall_height_with_worktop));
+  }
+  function mountedItems(items){
+    const result=items.map(it=>({...it})),uppers=result.filter(it=>it.module_type==='wall_cabinet').sort((a,b)=>elevation(a)-elevation(b));
+    const old=new Map(uppers.map(it=>[it,elevation(it)])),placed=[];
+    for(const it of uppers){
+      const q=rotateXZ(it.x||0,it.z||0,-(it.rotation||0));let parent=null,gap=0;
+      for(const other of placed){
+        if((other.rotation||0)!==(it.rotation||0))continue;
+        const p=rotateXZ(other.x||0,other.z||0,-(other.rotation||0)),overlap=Math.min(q.x+it.width/2,p.x+other.width/2)-Math.max(q.x-it.width/2,p.x-other.width/2),offset=old.get(it)-old.get(other)-other.height;
+        if(overlap>Math.min(it.width,other.width)*.5&&Math.abs(q.z-p.z)<100&&offset>=-1&&offset<=50){parent=other;gap=Math.max(0,offset);}
+      }
+      it.elevation_mm=Math.round(parent?parent.elevation_mm+parent.height+gap:upperWorktopTop(it,result)+600);placed.push(it);
+    }
+    return result;
+  }
+  function syncUpperMounting(items){const mounted=mountedItems(items);items.forEach((it,i)=>{if(it.module_type==='wall_cabinet')it.elevation_mm=mounted[i].elevation_mm;});return items;}
   function tier(it){return it.module_type==='wall_cabinet'?'wall':it.module_type==='base_cabinet'?'base':it.module_type==='tall_cabinet'?'tall':'other';}
   function rotateXZ(x,z,r){
     const a=r*Math.PI/180,c=Math.round(Math.cos(a)),s=Math.round(Math.sin(a));
@@ -1029,5 +1057,5 @@
     const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

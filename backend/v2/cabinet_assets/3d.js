@@ -213,19 +213,22 @@ function normalizeScene(s={}){
     schema_version:2,
     room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700,setup_complete:room.setup_complete??null,survey:room.survey??null,features:Array.isArray(room.features)?room.features:[]},
     displaySettings:s.displaySettings||{},
+    albumSettings:s.albumSettings||{order_number:''},
+    upperMountingRule:'worktop600',
     materialIdentities:s.materialIdentities||{},
     production_note:s.production_note||'',
     countertopSettings:s.countertopSettings||{joint:'standard'},
     plinths:s.plinths||[],
     wallPanels:s.wallPanels||[],wallLights:s.wallLights||[],
     presentationViews:s.presentationViews||[],
-    items,
+    items:globalThis.MF_FURNITURE_CORE?.syncUpperMounting?.(items)||items,
     selected_item_id:(s.selected_item_id&&items.some(x=>x.item_id===s.selected_item_id))
       ?s.selected_item_id:(items[0]?.item_id||null),
     view_mode:s.view_mode||'3d'
   };
 }
 function scenePayload(){
+  globalThis.MF_FURNITURE_CORE?.syncUpperMounting?.(state.items);
   const first=state.items[0]||legacyItem({});
   const materialIdentities={};
   for(const p of [...(state.plinths||[]),...(state.wallPanels||[])])if(p.material_id){const m=materials.get(String(p.material_id));if(m)materialIdentities[p.material_id]={materialId:m.material_id||null,article:m.article||null,manufacturer:m.manufacturer||null};else if(state.materialIdentities?.[p.material_id])materialIdentities[p.material_id]=state.materialIdentities[p.material_id];}
@@ -239,6 +242,8 @@ function scenePayload(){
     drawers:first.drawers,base:first.base,handles:first.handles,body_variant_id:first.body_variant_id,
     front_variant_id:first.front_variant_id,view_mode:viewMode,schema_version:2,room:{...state.room},
     displaySettings:state.displaySettings||{},
+    albumSettings:state.albumSettings||{order_number:''},
+    upperMountingRule:'worktop600',
     materialIdentities,
     production_note:state.production_note||'',
     countertopSettings:state.countertopSettings||{joint:'standard'},
@@ -553,19 +558,22 @@ function capturePdfPreviews(){
   }
 }
 async function openKitchenAlbumFlow(){
-  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261029-album-dimensions');
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261029-approved-album');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
   return openKitchenAlbum({
     save:async()=>{if(!state.items.length)throw Error('Добавьте мебель в проект.');await saveProject();},
     snapshot:cleanSnapshot,
+    setOrderNumber:value=>{state.albumSettings={order_number:value};updateAll();},
     capture:async()=>{
+      const {albumGeometry}=await import('/account/planner/album-geometry.mjs?v=20261029-approved-album');
+      const geometry=albumGeometry(state.items,templateFor);
       const scene=globalThis.MF_PLANNER?.scene;
-      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data};}
-      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261029-album-dimensions');
-      return captureAlbumViews(scene,{detail:false});
+      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data,geometry};}
+      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261029-approved-album');
+      return {...captureAlbumViews(scene,{detail:false}),geometry};
     },
-    request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:205000})
+    request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:325000})
   });
 }
 async function downloadSpec(){
@@ -1235,6 +1243,7 @@ function draw(){
 }
 function updateAll(){
   if(!state)return;
+  globalThis.MF_FURNITURE_CORE?.syncUpperMounting?.(state.items);
   buildBoxes();
   renderCutlist();
   renderItems();

@@ -1,5 +1,5 @@
 import {fixtureError} from './worktop-fixtures.mjs';
-import {clone,elevation,tier,isTallModule,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,TALL_GOLA_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
+import {clone,elevation,mountedItems,tier,isTallModule,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,TALL_GOLA_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
   get state(){return this.bridge.state();}
@@ -49,6 +49,14 @@ export class StateAdapter{
     const tall=isTallModule(it);
     if(!['width','height'].every(k=>Number.isInteger(it[k]))||!Number.isInteger(it.depth*(tall?2:1))||!['x','z'].every(k=>Number.isInteger(it[k]*(tall?4:2))))return tall?'Ширина и высота — целые мм; глубина — с шагом 0,5 мм, координаты — 0,25 мм':'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
     if(it.elevation_mm!=null&&(!Number.isInteger(it.elevation_mm)||it.elevation_mm<0))return 'Высота навески — целое неотрицательное число миллиметров';
+    if(this.state.upperMountingRule==='worktop600'){
+      items=mountedItems([...items.filter(other=>other.item_id!==it.item_id),it]);
+      it=items.find(other=>other.item_id===it.item_id);
+      for(const upper of items.filter(other=>other.module_type==='wall_cabinet')){
+        if(upper.elevation_mm+upper.height>this.room.height)return 'Верх шкафа выходит выше потолка. Уменьшите высоту шкафа.';
+        const error=placementError(upper,items,this.room);if(error)return error;
+      }
+    }
     const worktopError=fixtureError(it);if(worktopError)return worktopError;
     const ruleError=dimensionError(it,this.template(it));if(ruleError)return ruleError;
     const h=heights(it);

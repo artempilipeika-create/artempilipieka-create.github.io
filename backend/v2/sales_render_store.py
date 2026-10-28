@@ -27,7 +27,7 @@ def read(root, owner, project, request_id):
     result = path / 'result.json'
     if result.exists():
         return {**public, **json.loads(result.read_text(encoding='utf-8'))}
-    if time.time() - path.stat().st_mtime > 240:
+    if time.time() - path.stat().st_mtime > 420:
         return {**public, 'state': 'uncertain', 'message': 'Ответ сервиса не сохранён. Автоматического повтора не будет. Проверьте расход перед новой генерацией.'}
     return {**public, 'state': 'pending'}
 
@@ -69,7 +69,7 @@ def once(root, owner, project, request_id, version, preview, generate, render_st
 
 def scene_key(scene):
     """Saving, selecting a cabinet or switching editor view must not cost money."""
-    scene = {k: v for k, v in scene.items() if k not in ('selected_item_id', 'view_mode')}
+    scene = {k: v for k, v in scene.items() if k not in ('selected_item_id', 'view_mode', 'albumSettings', 'upperMountingRule')}
     return hashlib.sha256(json.dumps(scene, sort_keys=True, ensure_ascii=False,
                                      separators=(',', ':')).encode()).hexdigest()
 
@@ -90,7 +90,7 @@ def _index_result(root, owner, project, index):
         result = read(root, owner, project, request_id)
         if result is not None:
             return {**result, 'request_id': request_id}
-    if time.time() - index.stat().st_mtime > 240:
+    if time.time() - index.stat().st_mtime > 420:
         return {'state': 'uncertain', 'message': 'Результат запуска пока недоступен. Новая платная генерация заблокирована, чтобы не списать средства повторно.'}
     return {'state': 'pending'}
 

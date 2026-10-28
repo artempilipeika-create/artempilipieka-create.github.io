@@ -1,4 +1,4 @@
-"""Four-page client presentation, version mf-kitchen-album-v1.
+"""Four-page client album with the approved full-bleed cover and vector elevations.
 
 Only the saved project's public materials, their samples and module count enter the album.
 No procurement ledger, internal source IDs or invented quote is published.
@@ -14,9 +14,15 @@ from reportlab.lib.utils import ImageReader
 from .sales_album import fonts, client_title, material_name
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
-from .album_layout import draw as draw_layout
+from .album_elevation import draw as draw_elevation
+from .album_layout import schedule
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from pathlib import Path
+import hashlib
+from PIL import Image, ImageStat
 
-VERSION = 'mf-kitchen-album-v1'
+VERSION = 'mf-kitchen-album-v2-cover-elevation'
 W, H = landscape(A4)
 M = 36
 INK = HexColor('#19382e')
@@ -24,7 +30,7 @@ MUTED = HexColor('#647168')
 PAPER = HexColor('#f6f3ed')
 
 
-def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None):
+def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None):
     fonts()
     if not hero or not scene.get('items'):
         raise ValueError('Добавьте мебель и вид кухни.')
@@ -43,12 +49,6 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         p.drawOn(c, x, top-height)
         return height
 
-    def picture(data, x, y, width, height):
-        c.setFillColor(white)
-        c.rect(x, y, width, height, fill=1, stroke=0)
-        c.drawImage(ImageReader(BytesIO(data)), x, y, width, height,
-                    preserveAspectRatio=True, anchor='c', mask='auto')
-
     def page(number, title):
         c.setFillColor(PAPER)
         c.rect(0, 0, W, H, fill=1, stroke=0)
@@ -61,14 +61,43 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         text(f'{number:02d} / 04', W-90, 30, 54, 8, color=MUTED)
         return H-66-title_height-18
 
-    top = page(1, name[:70])
-    picture(hero, M, 108, W-2*M, top-108)
-    text('Ваш будущий интерьер', M, 94, 470, 17, True)
-    text('Визуализация проекта' if photo else 'Вид из конструктора', W-270, 91, 234, 10, color=MUTED)
+    # Approved cover 2: original image to the page edges, brand above, order/title below.
+    cover_font=Path(__file__).with_name('document_assets')/'DejaVuSerif.ttf'
+    if hashlib.sha256(cover_font.read_bytes()).hexdigest()!='8f2c103bfa3fd5de71f1b92b18f21906b5a26871fb7e19a9a4c9af539c3cc7ab':
+        raise ValueError('Font integrity failure')
+    if 'SalesSerif' not in pdfmetrics.getRegisteredFontNames():pdfmetrics.registerFont(TTFont('SalesSerif',str(cover_font)))
+    picture=ImageReader(BytesIO(hero));iw,ih=picture.getSize();factor=max(W/iw,H/ih)
+    c.drawImage(picture,(W-iw*factor)/2,(H-ih*factor)/2,iw*factor,ih*factor)
+    with Image.open(BytesIO(hero)) as im:
+        # Select readable text colour without altering or recompressing the photo.
+        grey=im.convert('L')
+        top_luma=ImageStat.Stat(grey.crop((0,0,iw,max(1,int(ih*.08))))).mean[0]
+        bottom_luma=ImageStat.Stat(grey.crop((0,int(ih*.80),iw,ih))).mean[0]
+    top_ink=INK if top_luma>140 else white;bottom_ink=INK if bottom_luma>140 else white
+    c.saveState()
+    label='MARTIN FOREST';spacing=2.4;size=19
+    brand_width=pdfmetrics.stringWidth(label,'SalesBold',size)+(len(label)-1)*spacing
+    t=c.beginText((W-brand_width)/2,H-30);t.setFont('SalesBold',size);t.setCharSpace(spacing);t.setFillColor(top_ink);t.textLine(label);c.drawText(t)
+    c.restoreState()
+    order=str((scene.get('albumSettings') or {}).get('order_number') or '').strip()
+    c.setFont('SalesBold',8.5);c.setFillColor(bottom_ink)
+    c.drawString(32,91,'ЗАКАЗ № '+(order or 'не указан'))
+    style=ParagraphStyle('cover-title',fontName='SalesSerif',fontSize=24,leading=28,textColor=bottom_ink)
+    title=Paragraph(escape(name),style);_,th=title.wrap(W-64,90)
+    if th>70:
+        style.fontSize=18;style.leading=21;title=Paragraph(escape(name),style);_,th=title.wrap(W-64,90)
+    if th>70:raise ValueError('Название слишком длинное для обложки. Сократите название проекта.')
+    title.drawOn(c,32,79-th)
     c.showPage()
 
-    page(2, 'Планировка вашей кухни')
-    draw_layout(c, scene, M, H-126, W-2*M, 115)
+    c.setFillColor(white);c.rect(0,0,W,H,fill=1,stroke=0)
+    text('MARTIN FOREST',32,H-20,240,12,True)
+    text('ЗАКАЗ № '+(order or 'не указан'),W-250,H-22,218,8,True)
+    text('Кухня. Вид спереди',32,H-50,W-64,22,True)
+    text('Фасады условно сняты. Номера модулей соответствуют составу на листе 4. Размеры в мм.',32,H-83,W-64,8,color=MUTED)
+    draw_elevation(c,scene,32,H-103,W-64,69,elevation_geometry)
+    c.setStrokeColor(HexColor('#d7ddd5'));c.line(32,48,W-32,48)
+    text(name,32,36,W-115,8,color=MUTED);text('02 / 04',W-80,36,48,8,color=MUTED)
     c.showPage()
 
     page(3, 'Материалы и характер')
@@ -131,15 +160,27 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
     c.showPage()
 
     page(4, 'Ваша кухня. Ваш комплект.')
-    text('Для самостоятельной сборки', M, H-132, W-2*M, 20, True)
-    text(f"В проекте: {len(scene['items'])} модулей. Комплект деталей по согласованной спецификации. Состав фурнитуры, обработку и комплектность подтверждаем перед заказом.", M, H-176, 440, 12)
-    c.setFillColor(INK)
-    c.roundRect(M, 156, W-2*M, 140, 9, fill=1, stroke=0)
-    text('СТОИМОСТЬ КОМПЛЕКТА', M+24, 276, W-2*M-48, 9, True, white)
-    text('После расчёта', M+24, 248, W-2*M-48, 26, True, white)
-    text('Доставка рассчитывается отдельно. Сборка и установка не включены.', M+24, 198, W-2*M-48, 11, color=white)
-    text('Следующий шаг', M, 135, 220, 13, True)
-    text('Согласовать размеры, материалы и комплектацию. Затем получить расчёт и подтвердить заказ. Техника и декор на изображении не означают включение в поставку.', M+210, 135, W-2*M-210, 10, color=MUTED)
+    text('Состав кухни',M,H-125,W-2*M,15,True)
+    entries=schedule(scene['items']);column=(W-2*M-24)/2
+    style=ParagraphStyle('schedule',fontName='Sales',fontSize=8.5,leading=11.5,textColor=INK)
+    measured=[]
+    for ids,label,dimensions in entries:
+        p=Paragraph(escape(ids+'. '+label)+'<br/>'+escape(dimensions+' мм'),style)
+        _,height=p.wrap(column-16,H);measured.append((p,max(32,height+9)))
+    split=min(range(1,len(measured)+1),key=lambda k:max(sum(h for _,h in measured[:k]),sum(h for _,h in measured[k:])))
+    columns=[measured[:split],measured[split:]]
+    if max(sum(h for _,h in part) for part in columns)>H-155-250:
+        raise ValueError('Список модулей не помещается на странице. Разделите проект на помещения.')
+    for col,part in enumerate(columns):
+        cursor=H-155;px=M+col*(column+24)
+        for p,height in part:
+            c.setFillColor(white);c.roundRect(px,cursor-height,column,height-4,4,fill=1,stroke=0)
+            _,ph=p.wrap(column-16,H);p.drawOn(c,px+8,cursor-6-ph);cursor-=height
+    c.setFillColor(INK);c.roundRect(M,140,W-2*M,96,9,fill=1,stroke=0)
+    text('СТОИМОСТЬ КОМПЛЕКТА',M+22,218,W-2*M-44,9,True,white)
+    text('После расчёта',M+22,196,W-2*M-44,24,True,white)
+    text('Для самостоятельной сборки. Доставка рассчитывается отдельно.',M+22,158,W-2*M-44,9,color=white)
+    text('Согласуйте размеры, материалы и комплектацию. Состав фурнитуры, обработку и комплектность подтверждаем перед заказом. Техника и декор на изображении не означают включение в поставку.',M,120,W-2*M,10,color=MUTED)
     c.showPage()
     c.save()
     return out.getvalue()

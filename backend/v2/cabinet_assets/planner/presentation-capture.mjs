@@ -4,7 +4,7 @@ export function captureAlbumViews(scene,{detail=true}={}){
   // Album references use the same full-size render, independent of the editor
   // viewport. render() also updates cutaway walls after moving the camera.
   return {
-    hero:capturePresentation(scene,{width:1536,height:1024,view:'threeQuarter'}).toDataURL('image/png'),
+    hero:capturePresentation(scene,{width:2048,height:1440,view:'threeQuarter'}).toDataURL('image/png'),
     ...(detail?{detail:capturePresentation(scene,{width:1536,height:1024,view:'front'}).toDataURL('image/png')}:{})
   };
 }

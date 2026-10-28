@@ -62,11 +62,11 @@ test('album references use the complete presentation pass at export size even in
   try{
     const result=captureAlbumViews(s);
     assert.deepEqual(renders,[
-      {width:1536,height:1024,client:true,view:'threeQuarter',selected:false},
+      {width:2048,height:1440,client:true,view:'threeQuarter',selected:false},
       {width:1536,height:1024,client:true,view:'front',selected:false}
     ]);
-    assert.deepEqual(encodings,[['image/png',1536,1024],['image/png',1536,1024]]);
-    assert.equal(result.hero,'image/png:1536x1024');assert.equal(result.detail,'image/png:1536x1024');
+    assert.deepEqual(encodings,[['image/png',2048,1440],['image/png',1536,1024]]);
+    assert.equal(result.hero,'image/png:2048x1440');assert.equal(result.detail,'image/png:1536x1024');
     assert.equal(s.width,540);assert.equal(s.height,360);assert.equal(s.client,false);
   }finally{globalThis.document=old;}
 });

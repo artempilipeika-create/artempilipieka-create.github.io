@@ -7,7 +7,7 @@ const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/ki
 const photo='data:image/jpeg;base64,cGFpZC1waG90bw==',view='data:image/png;base64,dmlldw==';
 function harness({existing={state:'none'},pdfFails=false,renderPending=false}={}){
   let dialog,paid=0,pdfAttempts=0,current=existing,version=1,timers=new Map(),serial=0;
-  const exports=[],requests=[],state={id:'project',version:1,user:'owner',scene:{width:600}};
+  const exports=[],requests=[],state={id:'project',version:1,user:'owner',scene:{width:600,albumSettings:{order_number:"QA-125"}}};
   class Element{
     constructor(){this.hidden=false;this.disabled=false;this.checked=false;this.parent={};this.elements=new Map();}
     set innerHTML(html){this.html=html;for(const match of html.matchAll(/<[^>]+\b(data-[\w-]+)[^>]*>/g)){
@@ -27,7 +27,7 @@ function harness({existing={state:'none'},pdfFails=false,renderPending=false}={}
       return {ok:!pdfFails||pdfAttempts>1,json:async()=>({}),blob:async()=>new Blob(['PDF'])};}
   });
   vm.runInContext(source.replace('export async function','async function'),context);
-  const options={save:async()=>{state.version=++version;},snapshot:()=>structuredClone(state),capture:async()=>({hero:view,detail:view}),
+  const options={setOrderNumber:value=>{state.scene.albumSettings={order_number:value};},save:async()=>{state.version=++version;},snapshot:()=>structuredClone(state),capture:async()=>({hero:view,detail:view}),
     request:async(path,method='GET',body)=>{requests.push({path,method,body});
       if(path==='/3d-sales-capabilities')return {automatic_render:true};
       if(path.endsWith('/reuse')||method==='GET')return current;
@@ -66,4 +66,20 @@ test('Uncertain existing charge is blocked and a changed project cannot download
   h.setResult({state:'ready',image_data_url:photo});await h.q('[data-check]').onclick();
   h.state.scene.width=700;let prevented=false;h.q('[data-pdf]').onclick({preventDefault(){prevented=true;}});
   assert.equal(prevented,true);assert.equal(h.paid,0);
+});
+test('Changing the saved order number rebuilds the PDF with the same paid photo',async()=>{
+  const h=harness({existing:{state:'ready',image_data_url:photo}});await h.open();
+  h.q('[data-order]').value='МФ-2026-126';await h.q('[data-order]').onchange();
+  assert.equal(h.state.scene.albumSettings.order_number,'МФ-2026-126');
+  assert.equal(h.paid,0);assert.equal(h.exports.length,2);
+  assert.equal(h.exports[1].hero_data_url,photo);
+  assert.equal(h.exports[1].version,h.state.version);
+});
+test('A missing order number blocks payment and PDF until it has been saved',async()=>{
+  const h=harness();h.state.scene.albumSettings.order_number='';await h.open();
+  h.q('[data-consent]').checked=true;h.q('[data-consent]').onchange();
+  assert.equal(h.q('[data-create]').disabled,true);await h.q('[data-create]').onclick();assert.equal(h.paid,0);
+  h.q('[data-order]').value='МФ-127';await h.q('[data-order]').onchange();
+  assert.equal(h.q('[data-create]').disabled,false);await h.q('[data-create]').onclick();
+  assert.equal(h.paid,1);assert.equal(h.exports.length,1);
 });

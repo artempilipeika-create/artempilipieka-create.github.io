@@ -29,8 +29,8 @@ test('Custom and zero elevations stay fixed; legacy/null elevation is pinned onl
   for(const elevation_mm of [0,1458]){
     const it=wall({elevation_mm});assert.equal(dimensionPatch(it,{body_height:900},room).elevation_mm,elevation_mm);
   }
-  const legacy=wall({elevation_mm:null});assert.equal(elevation(legacy,room),1480);
-  assert.equal(dimensionPatch(legacy,{height:900},room).elevation_mm,1480);
+  const legacy=wall({elevation_mm:null});assert.equal(elevation(legacy,room),1458);
+  assert.equal(dimensionPatch(legacy,{height:900},room).elevation_mm,1458);
   assert.equal(dimensionPatch(legacy,{width:700},room).elevation_mm,null);
   assert.equal(Object.hasOwn(dimensionPatch(wall(),{height:720},room),'elevation_mm'),false);
   const lower={...wall(),module_type:'base_cabinet',base:'plinth',base_height:100};
@@ -45,15 +45,15 @@ test('Anchor survives saved snapshots, undo/redo, horizontal moves, copies and u
     select:id=>{state.selected_item_id=id;}};
   const adapter=new StateAdapter(bridge),history=new History(adapter);
   history.run('Высота',()=>applyChanges(adapter,[dimensionPatch(adapter.selected,{height:900},room)]));
-  assert.equal(adapter.selected.elevation_mm,1480);assert.equal(adapter.selected.height,900);
-  history.undo();assert.equal(adapter.selected.height,720);assert.equal(elevation(adapter.selected,room),1480);
-  history.redo();assert.equal(adapter.selected.height,900);assert.equal(adapter.selected.elevation_mm,1480);
-  adapter.restore(JSON.parse(JSON.stringify(adapter.snapshot())));assert.equal(adapter.selected.elevation_mm,1480);
-  applyChanges(adapter,translateItems([adapter.selected],600,0));assert.equal(adapter.selected.elevation_mm,1480);
-  adapter.insert({...adapter.selected,item_id:'copy',x:1200});assert.equal(adapter.selected.elevation_mm,1480);
-  for(const source of [wall(),wall({height:900,body_height:900,elevation_mm:1480})]){
+  assert.equal(adapter.selected.elevation_mm,1458);assert.equal(adapter.selected.height,900);
+  history.undo();assert.equal(adapter.selected.height,720);assert.equal(elevation(adapter.selected,room),1458);
+  history.redo();assert.equal(adapter.selected.height,900);assert.equal(adapter.selected.elevation_mm,1458);
+  adapter.restore(JSON.parse(JSON.stringify(adapter.snapshot())));assert.equal(adapter.selected.elevation_mm,1458);
+  applyChanges(adapter,translateItems([adapter.selected],600,0));assert.equal(adapter.selected.elevation_mm,1458);
+  adapter.insert({...adapter.selected,item_id:'copy',x:1200});assert.equal(adapter.selected.elevation_mm,1458);
+  for(const source of [wall(),wall({height:900,body_height:900,elevation_mm:1458})]){
     const next=replacement(source,wall({height:600,body_height:600}),{},{},false,room);
-    assert.equal(next.height,600);assert.equal(next.elevation_mm,1480);
+    assert.equal(next.height,600);assert.equal(next.elevation_mm,1458);
   }
   assert.match(adapter.validate(dimensionPatch(adapter.selected,{height:1300},room)),/выше потолка/);
   assert.match(adapter.validate({...adapter.selected,elevation_mm:-1}),/Высота навески/);

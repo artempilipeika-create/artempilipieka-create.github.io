@@ -56,11 +56,11 @@ test('Dimension calculation does not change saved scene or extend open-door boun
   assert.equal(JSON.stringify(items),before);
   assert.equal(sceneDimensions(items,room,'a').some(d=>d.axis==='depth'),false);
 });
-test('Width chains are above each tier and upper cabinets share their top datum',()=>{
+test('Width chains are above each tier and upper width chain sits above the tallest upper',()=>{
   const lower=item('a'),upper=item('b',0,{module_type:'wall_cabinet',base:'wall',height:720}),short=item('c',600,{module_type:'wall_cabinet',base:'wall',height:500});
   const dims=sceneDimensions([lower,upper,short],room,'a');
   assert.equal(dims.find(d=>d.id==='a:width').a.y,858);
-  assert.equal(dims.find(d=>d.id==='b:width').a.y,2300);assert.equal(dims.find(d=>d.id==='c:width').a.y,2300);
+  assert.equal(dims.find(d=>d.id==='b:width').a.y,2178);assert.equal(dims.find(d=>d.id==='c:width').a.y,2178);
   assert.equal(dims.find(d=>d.kind==='run').value,1200);
   assert.equal(dims.filter(d=>d.axis==='height').length,2);assert.ok(dims.every(d=>d.axis!=='depth'));
 });

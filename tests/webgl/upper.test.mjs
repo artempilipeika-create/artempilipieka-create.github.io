@@ -41,7 +41,7 @@ for(const [id,label,sha,file,fronts,hinges,sides] of [
   assert.deepEqual(p.doors.map(x=>x.side),sides);assert.equal(hw.hinge_count,hinges);
   assert.equal(hw.items.find(x=>x.key==='shelf-support-marcopol').quantity,4);
   assert.equal(kitchenSettings(it),null);assert.equal(kitchenLegs(it),null);
-  assert.equal(elevation(it,room),1480);
+  assert.equal(elevation(it,room),1458);
 });
 
 for(const id of regularIds)test(WALL_PRODUCTION[id].label+': height above 850 creates two evenly spaced shelves',()=>{
