@@ -119,16 +119,24 @@ def test_route_requires_confirmation_ownership_and_current_version(tmp_path,monk
     assert calls==[]
     assert client.post(url,json=payload).json()['state']=='ready'
     assert client.post(url,json=payload).json()['state']=='ready' and calls==[1]
-    assert client.post(url,json={**payload,'render_style':'lived_in'}).status_code==400
+    assert client.post(url,json={**payload,'render_style':'lived_in'}).json()['state']=='ready'
     assert calls==[1]
     living={**payload,'request_id':str(uuid4()),'render_style':'lived_in'}
-    assert client.post(url,json=living).json()['render_style']=='lived_in'
-    assert calls==[1,1]
-    assert styles==['catalog','lived_in']
+    assert client.post(url,json=living).json()['render_style']=='catalog'
+    assert calls==[1] and styles==['catalog']
+    assert client.get(url).json()['image_data_url']==encoded
+    assert client.post(url+'/reuse',json={'version':3,'preview_data_url':encoded}).json()['state']=='ready'
     status=url+'/'+payload['request_id']
     assert client.get(status).json()['image_data_url']==encoded
-    row['version']=4;assert client.get(status).status_code==409
+    row['version']=4
+    assert client.get(status).status_code==200
+    assert client.post(url,json={**living,'version':4}).json()['state']=='ready' and calls==[1]
+    row['version']=5;row['scene']['items'][0]['width']=700
+    assert client.get(url).json()['state']=='none'
+    assert client.get(status).status_code==409
     auth['ok']=False;assert client.get(status).status_code==401
+    assert client.get(url).status_code==401
+    assert client.post(url+'/reuse',json={'version':5,'preview_data_url':encoded}).status_code==401
 
 
 @pytest.mark.parametrize('style',['catalog','lived_in'])

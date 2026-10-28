@@ -1,4 +1,9 @@
-# Client sales album
+# Client sales album · legacy technical API
+
+As of 2026-10-28, the constructor uses the single four-page workflow documented
+in `kitchen-client-album.md`. The old five-page dialog and its independent paid
+generation button have been removed. The technical PDF API and renderer remain
+for existing integrations. The UI review script below describes the retired dialog.
 
 The constructor's PDF menu opens a five-page A3 sales album: hero image,
 materials/second view, cabinet list, and two complete hardware sheets.

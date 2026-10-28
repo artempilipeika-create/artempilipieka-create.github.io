@@ -466,6 +466,10 @@ class SalesPhotoRender(StrictModel):
     paid_confirmed: Literal[True]
     render_style: Literal['catalog','lived_in']='catalog'
 
+class SalesPhotoLookup(StrictModel):
+    version: int=Field(ge=1)
+    preview_data_url: str=Field(max_length=11_000_000)
+
 def _preview_png(value,max_bytes=4_000_000):
     if not value:return None
     prefix='data:image/png;base64,'
@@ -662,8 +666,8 @@ def router(settings):
         try:
             sales_render.validate_render_scene(row['scene'],materials)
             if not sales_image(body.preview_data_url):raise ValueError('Не удалось получить вид кухни.')
-            result=sales_render_store.once(settings.storage_root,user['user_id'],project_id,body.request_id,
-                body.version,body.preview_data_url,
+            result=sales_render_store.for_scene(settings.storage_root,user['user_id'],project_id,body.request_id,
+                body.version,row['scene'],body.preview_data_url,
                 lambda:sales_render.generate(str(user['user_id']),row['scene'],materials,body.preview_data_url,body.render_style),
                 render_style=body.render_style)
         except ValueError as exc:error(400,str(exc))
@@ -672,13 +676,30 @@ def router(settings):
             if current['version']!=body.version:error(409,'Проект изменился во время рендера. Сформируйте новый вид.')
         return result
 
+    @api.post('/3d-projects/{project_id}/sales-photo/reuse')
+    def sales_photo_reuse(project_id:UUID,body:SalesPhotoLookup,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
+        return sales_render_store.current(settings.storage_root,user['user_id'],project_id,
+                                          row['scene'],row['version'],body.preview_data_url) or {'state':'none'}
+
+    @api.get('/3d-projects/{project_id}/sales-photo')
+    def sales_photo_current(project_id:UUID,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+        return sales_render_store.current(settings.storage_root,user['user_id'],project_id,
+                                          row['scene'],row['version']) or {'state':'none'}
+
     @api.get('/3d-projects/{project_id}/sales-photo/{request_id}')
     def sales_photo_status(project_id:UUID,request_id:UUID,request:Request):
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
         result=sales_render_store.read(settings.storage_root,user['user_id'],project_id,request_id)
         if result is None:error(404,'Запуск не найден.')
-        if result.get('version',row['version'])!=row['version']:error(409,'Проект изменился. Откройте альбом заново.')
+        if result.get('version',row['version'])!=row['version']:
+            current=sales_render_store.current(settings.storage_root,user['user_id'],project_id,row['scene'],row['version'])
+            if not current or current.get('request_id')!=str(request_id):error(409,'Проект изменился. Откройте альбом заново.')
         return result
 
     @api.post('/3d-projects/{project_id}/shares',status_code=201)

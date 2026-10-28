@@ -553,7 +553,7 @@ function capturePdfPreviews(){
   }
 }
 async function openKitchenAlbumFlow(){
-  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs');
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261028-one-album');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
   return openKitchenAlbum({
@@ -565,96 +565,9 @@ async function openKitchenAlbumFlow(){
       const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs');
       return captureAlbumViews(scene);
     },
-    request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:205000}),
-    technical:()=>openSalesAlbum(),nativeImage:()=>globalThis.MF_PLANNER?.presentation?.open()
+    request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:205000})
   });
 }
-async function openSalesAlbum(){
-  if(document.querySelector('#sales-album-dialog'))return;
-  const d=document.createElement('dialog');d.id='sales-album-dialog';d.className='mf-sales-dialog';
-  d.innerHTML=`<div class="mf-sales-heading"><div><small>MARTIN FOREST</small><h2>Альбом для клиента</h2></div><button type="button" data-close aria-label="Закрыть">×</button></div>
-    <p>5 листов: интерьер, материалы, список шкафчиков и расчёт фурнитуры. Без инструкции по сборке.</p>
-    <p data-message role="status">Сохраняем текущий проект…</p>
-    <canvas data-preview width="900" height="506" aria-label="Предпросмотр визуализации"></canvas>
-    <div class="mf-sales-files"><label>Главный фоторендер<input data-hero type="file" accept="image/png,image/jpeg,image/webp"></label><label>Второй вид (необязательно)<input data-detail type="file" accept="image/png,image/jpeg,image/webp"></label></div>
-    <button data-generate type="button" class="secondary" disabled>Создать фоторендер</button>
-    <p>Перед новой генерацией выберите материал столешницы. Подсветка и техника должны быть добавлены в проект. Готовый рендер можно использовать повторно.</p>
-    <label class="mf-sales-check"><input data-draft type="checkbox">Использовать вид конструктора</label>
-    <label class="mf-sales-check"><input data-reviewed type="checkbox">Проверил: шкафчики, фасады и материалы на изображениях соответствуют проекту</label>
-    <div class="mf-sales-actions"><button data-download disabled>Скачать PDF · 5 листов</button></div>`;
-  document.body.append(d);d.showModal();
-  const q=s=>d.querySelector(s),message=t=>q('[data-message]').textContent=t;
-  let hero=null,detail=null,snapshot=null,previews=null,busy=true,automatic=false,renderRequestId=crypto.randomUUID();
-  const refresh=()=>{
-    q('[data-download]').disabled=busy||!snapshot||(!(hero||q('[data-draft]').checked))||((hero||detail)&&!q('[data-reviewed]').checked);
-    q('[data-generate]').disabled=busy||!automatic;
-    for(const el of d.querySelectorAll('input'))el.disabled=busy;
-    q('[data-close]').disabled=busy;
-  };
-  const unchanged=()=>snapshot&&project?.project_id===snapshot.id&&project.version===snapshot.version&&JSON.stringify(scenePayload())===snapshot.scene&&$('project-name').value.trim()===snapshot.name;
-  const showImage=async data=>{
-    const raw=atob(data.split(',')[1]),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
-    const bitmap=await createImageBitmap(new Blob([bytes]));const canvas=q('[data-preview]'),ctx=canvas.getContext('2d');
-    ctx.fillStyle='#f6f3ed';ctx.fillRect(0,0,canvas.width,canvas.height);
-    const scale=Math.min(canvas.width/bitmap.width,canvas.height/bitmap.height),w=bitmap.width*scale,h=bitmap.height*scale;
-    ctx.drawImage(bitmap,(canvas.width-w)/2,(canvas.height-h)/2,w,h);bitmap.close();
-  };
-  const readImage=async file=>{
-    if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8000000)throw Error('Выберите PNG, JPEG или WebP до 8 МБ.');
-    const bitmap=await createImageBitmap(file);
-    if(bitmap.width*bitmap.height>16000000){bitmap.close();throw Error('Максимум 16 мегапикселей.');}
-    const scale=Math.min(1,2400/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');
-    canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
-    const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
-    return canvas.toDataURL('image/jpeg',.93);
-  };
-  const close=()=>{if(!busy){d.close();d.remove();}};
-  q('[data-close]').onclick=close;d.addEventListener('cancel',e=>{e.preventDefault();close();});
-  q('[data-reviewed]').onchange=refresh;
-  q('[data-draft]').onchange=async()=>{if(q('[data-draft]').checked){hero=null;detail=null;q('[data-hero]').value='';q('[data-detail]').value='';await showImage(previews.preview_data_url);message('В PDF будет обычный вид из конструктора.');}refresh();};
-  for(const kind of ['hero','detail'])q('[data-'+kind+']').onchange=async e=>{
-    if(!e.target.files[0])return;busy=true;refresh();
-    try{const value=await readImage(e.target.files[0]);if(kind==='hero'){hero=value;await showImage(hero);}else detail=value;
-      q('[data-draft]').checked=false;q('[data-reviewed]').checked=false;message('Проверьте шкафчики и материалы перед выгрузкой.');
-    }catch(e){message(e.message);}finally{busy=false;refresh();}
-  };
-  q('[data-generate]').onclick=async()=>{
-    if(busy)return;
-    if(!unchanged()){message('Проект изменился. Закройте альбом и откройте заново.');return;}
-    if(!confirm('Создать один платный фоторендер? Стоимость — по тарифу подключённого сервиса. Автоматических повторов нет.'))return;
-    busy=true;refresh();message('Создаём фоторендер. Это может занять несколько минут…');
-    try{const r=await api('/3d-projects/'+snapshot.id+'/sales-photo','POST',{version:snapshot.version,preview_data_url:previews.preview_data_url,request_id:renderRequestId,paid_confirmed:true},{},{timeoutMs:205000});
-      if(r.state!=='ready')throw Error(r.message||'Фоторендер ещё создаётся. Повторное нажатие проверит тот же запуск.');
-      if(!unchanged())throw Error('Проект изменился. Создайте новый альбом.');
-      hero=r.image_data_url;detail=null;q('[data-draft]').checked=false;q('[data-reviewed]').checked=false;await showImage(hero);message('Фоторендер готов. Проверьте геометрию фасадов и материалы.');
-    }catch(e){message(e.message);}finally{busy=false;refresh();}
-  };
-  q('[data-download]').onclick=async()=>{
-    if(!unchanged()){message('Проект изменился. Закройте альбом и откройте заново.');return;}
-    busy=true;refresh();message('Формируем альбом…');
-    try{
-      const r=await fetch('/api/v2/3d-projects/'+snapshot.id+'/sales-album.pdf',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:snapshot.version,hero_data_url:hero||previews.preview_data_url,detail_data_url:detail,photo:Boolean(hero),module_preview_data_urls:previews.module_preview_data_urls})});
-      if(!r.ok){const body=await r.json().catch(()=>({}));throw Error(body.detail?.code||'Не удалось сформировать PDF');}
-      const url=URL.createObjectURL(await r.blob()),a=document.createElement('a');a.href=url;a.download='Martin_Forest_Sales_Album.pdf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Альбом готов: 5 листов.');status('Клиентский альбом сформирован.');
-    }catch(e){message(e.message);}finally{busy=false;refresh();}
-  };
-  refresh();
-  try{
-    if(!state.items.length)throw Error('Добавьте шкафчики в проект.');
-    await saveProject();previews=capturePdfPreviews();
-    const scene=globalThis.MF_PLANNER?.scene;
-    if(scene&&!scene.isFallback){
-      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs');
-      previews.preview_data_url=captureAlbumViews(scene).hero;
-    }
-    if(!previews.preview_data_url)throw Error('Не удалось получить вид проекта. Обновите страницу и попробуйте снова.');
-    snapshot={id:project.project_id,version:project.version,scene:JSON.stringify(scenePayload()),name:$('project-name').value.trim()};
-    await showImage(previews.preview_data_url);
-    const capabilities=await api('/3d-sales-capabilities');automatic=capabilities.automatic_render;
-    message(automatic?'Добавьте готовую картинку или создайте фоторендер по текущему проекту.':'Автоматический фоторендер пока не подключён. Добавьте готовую картинку для альбома.');
-  }catch(e){message(e.message);}finally{busy=false;refresh();}
-}
-
 async function downloadSpec(){
   await saveProject();
   const previews=capturePdfPreviews();
