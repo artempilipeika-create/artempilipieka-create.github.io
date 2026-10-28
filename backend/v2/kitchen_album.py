@@ -14,6 +14,7 @@ from reportlab.lib.utils import ImageReader
 from .sales_album import fonts, client_title, material_name
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
+from .album_layout import draw as draw_layout
 
 VERSION = 'mf-kitchen-album-v1'
 W, H = landscape(A4)
@@ -66,10 +67,8 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
     text('Визуализация проекта' if photo else 'Вид из конструктора', W-270, 91, 234, 10, color=MUTED)
     c.showPage()
 
-    page(2, 'Продумано для вашей кухни')
-    picture(detail or hero, M, 139, W-2*M, H-260)
-    text('Второй ракурс из конструктора' if detail else 'Общий вид проекта', M, 123, W-2*M, 14, True)
-    text('Расположение и состав мебели — по сохранённому проекту. Фоторендер помогает представить интерьер; перед заказом сверяем его с конструкцией.', M, 96, W-2*M, 10, color=MUTED)
+    page(2, 'Планировка вашей кухни')
+    draw_layout(c, scene, M, H-126, W-2*M, 115)
     c.showPage()
 
     page(3, 'Материалы и характер')

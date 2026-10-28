@@ -42,7 +42,7 @@ test('One consent creates one photo and automatically uses the original in the f
   h.q('[data-consent]').checked=true;h.q('[data-consent]').onchange();
   await Promise.all([h.q('[data-create]').onclick(),h.q('[data-create]').onclick()]);
   assert.equal(h.paid,1);assert.equal(h.exports.length,1);
-  assert.equal(h.exports[0].hero_data_url,photo);assert.equal(h.exports[0].layout,'client');assert.equal(h.exports[0].photo,true);
+  assert.equal(h.exports[0].detail_data_url,undefined);assert.equal(h.exports[0].hero_data_url,photo);assert.equal(h.exports[0].layout,'client');assert.equal(h.exports[0].photo,true);
   assert.equal(h.q('[data-pdf]').hidden,false);assert.doesNotMatch(h.d.html,/data-technical|data-new|data-reviewed|data-hero|type="file"/);
   h.q('[data-close]').onclick();await h.open();
   assert.equal(h.paid,1);assert.equal(h.exports.length,2);assert.equal(h.exports[1].hero_data_url,photo);
@@ -57,7 +57,7 @@ test('Pending render is checked automatically using GET and then inserted into P
   const h=harness({renderPending:true});await h.open();h.q('[data-consent]').checked=true;
   await h.q('[data-create]').onclick();assert.equal(h.paid,1);assert.equal(h.exports.length,0);
   h.setResult({state:'ready',image_data_url:photo});await h.tick();
-  assert.equal(h.paid,1);assert.equal(h.exports[0].hero_data_url,photo);
+  assert.equal(h.paid,1);assert.equal(h.exports[0].detail_data_url,undefined);assert.equal(h.exports[0].hero_data_url,photo);
   assert.equal(h.requests.at(-1).method,'GET');
 });
 test('Uncertain existing charge is blocked and a changed project cannot download stale PDF',async()=>{

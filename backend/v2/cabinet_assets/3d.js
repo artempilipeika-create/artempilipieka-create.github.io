@@ -553,7 +553,7 @@ function capturePdfPreviews(){
   }
 }
 async function openKitchenAlbumFlow(){
-  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261028-one-album');
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261028-album-plan');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
   return openKitchenAlbum({
@@ -561,9 +561,9 @@ async function openKitchenAlbumFlow(){
     snapshot:cleanSnapshot,
     capture:async()=>{
       const scene=globalThis.MF_PLANNER?.scene;
-      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data,detail:data};}
-      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs');
-      return captureAlbumViews(scene);
+      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data};}
+      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261028-album-plan');
+      return captureAlbumViews(scene,{detail:false});
     },
     request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:205000})
   });

@@ -4,13 +4,13 @@ export async function openKitchenAlbum({save,snapshot,capture,request}){
   const d=document.createElement('dialog');d.id='kitchen-album-dialog';d.className='mf-sales-dialog mf-kitchen-album';
   d.setAttribute('aria-labelledby','kitchen-album-title');
   d.innerHTML=`<div class="mf-sales-heading"><div><small>MARTIN FOREST / КЛИЕНТСКАЯ ПРЕЗЕНТАЦИЯ</small><h2 id="kitchen-album-title">Альбом вашей кухни</h2></div><button type="button" data-close aria-label="Закрыть">×</button></div>
-    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: интерьер, вид кухни, материалы с образцами и комплект.</p>
+    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: интерьер, планировка и состав кухни, материалы с образцами и комплект.</p>
     <p data-message role="status" aria-live="polite">Сохраняем кухню и проверяем готовый фоторендер…</p>
     <canvas data-preview width="1200" height="800" aria-label="Главный вид кухни"></canvas>
-    <div class="mf-album-pages"><span>01 · Интерьер</span><span>02 · Вид кухни</span><span>03 · Материалы</span><span>04 · Комплект</span></div>
+    <div class="mf-album-pages"><span>01 · Интерьер</span><span>02 · Планировка</span><span>03 · Материалы</span><span>04 · Комплект</span></div>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера. Он автоматически попадёт в PDF. Открытие готового альбома и скачивание не запускают новую генерацию.</label>
     <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Проверить готовность · бесплатно</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>
-    <p class="mf-album-note">Качество «Живого интерьера» сохранено. Второй вид берётся из конструктора без платной генерации. Перед отправкой клиенту проверьте изображение и материалы.</p>`;
+    <p class="mf-album-note">Качество «Живого интерьера» сохранено. Планировка и список шкафчиков формируются по сохранённому проекту. Перед отправкой клиенту проверьте изображение и материалы.</p>`;
   document.body.append(d);d.showModal();
   const q=s=>d.querySelector(s),say=t=>q('[data-message]').textContent=t;
   let frozen,views,hero=null,pdfURL=null,busy=true,automatic=false,closed=false,requested=false,timer=null;
@@ -41,7 +41,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request}){
   };
   const build=async()=>{
     assertSame();say('Фоторендер готов. Автоматически помещаем его в PDF-альбом…');
-    const r=await fetch(`/api/v2/3d-projects/${frozen.id}/sales-album.pdf`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:frozen.version,layout:'client',hero_data_url:hero,detail_data_url:views.detail,photo:true})});
+    const r=await fetch(`/api/v2/3d-projects/${frozen.id}/sales-album.pdf`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:frozen.version,layout:'client',hero_data_url:hero,photo:true})});
     if(!r.ok){const b=await r.json().catch(()=>({}));throw Error(b.detail?.code||'Не удалось собрать PDF. Фоторендер сохранён; повторная сборка PDF бесплатна.');}
     const blob=await r.blob();assertSame();if(closed)return;
     if(pdfURL)URL.revokeObjectURL(pdfURL);pdfURL=URL.createObjectURL(blob);

@@ -84,7 +84,8 @@ def test_page_three_keeps_mixed_decors_names_and_their_samples():
     assert all(label in text for label in ['Образец, без текстуры', 'Текстура материала',
                                           'Цвет, без текстуры', 'Текстура не добавлена'])
     assert len(page.images) == 2
-    assert 'Общий вид проекта' in pdf.pages[1].extract_text()
+    assert 'Планировка вашей кухни' in pdf.pages[1].extract_text()
+    assert len(pdf.pages[1].images) == 0
 
 
 def test_album_route_uses_saved_catalogue_visuals_and_never_requests_a_photo(monkeypatch):

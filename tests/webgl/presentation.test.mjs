@@ -70,3 +70,13 @@ test('album references use the complete presentation pass at export size even in
     assert.equal(s.width,540);assert.equal(s.height,360);assert.equal(s.client,false);
   }finally{globalThis.document=old;}
 });
+
+test('client album captures only its original hero when the second image is disabled',()=>{
+  const s=mockScene(),old=globalThis.document,views=[];
+  s.render=()=>{if(s.exportSize)views.push(s.clientView);};
+  globalThis.document={createElement:()=>({getContext:()=>({drawImage(){},getImageData(){}}),toDataURL:()=> 'original hero'})};
+  try{
+    assert.deepEqual(captureAlbumViews(s,{detail:false}),{hero:'original hero'});
+    assert.deepEqual(views,['threeQuarter']);assert.equal(s.width,1000);assert.equal(s.client,false);
+  }finally{globalThis.document=old;}
+});
