@@ -1,7 +1,7 @@
 """Authenticated user-owned 3D furniture projects. No production side effects."""
 from typing import Literal,Annotated
 from uuid import UUID,uuid4
-import base64,binascii,hashlib,secrets,json
+import base64,binascii,hashlib,secrets,json,logging
 from fastapi.encoders import jsonable_encoder
 from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
@@ -478,14 +478,16 @@ class AlbumModuleGeometry(StrictModel):
     detail: Literal['native','parametric','outline']
     shapes: list[AlbumShape]=Field(max_length=600)
 
-class SalesAlbumRender(StrictModel):
+class SalesAlbumPreflight(StrictModel):
     version: int=Field(ge=1)
+    elevation_geometry: list[AlbumModuleGeometry]|None=Field(default=None,max_length=100)
+
+class SalesAlbumRender(SalesAlbumPreflight):
     hero_data_url: str=Field(max_length=11_000_000)
     detail_data_url: str|None=Field(default=None,max_length=11_000_000)
     module_preview_data_urls: dict[str,str]=Field(default_factory=dict,max_length=40)
     photo: bool=True
     layout: Literal['technical','client']='technical'
-    elevation_geometry: list[AlbumModuleGeometry]|None=Field(default=None,max_length=100)
 
 class SalesPhotoRender(StrictModel):
     version: int=Field(ge=1)
@@ -669,6 +671,26 @@ def router(settings):
             user=identity(conn,request);require(conn,user,'orders.draft.write')
         return {'automatic_render':sales_render.available(),'max_pages':5,'client_pages':4,'images_per_request':1}
 
+    @api.post('/3d-projects/{project_id}/sales-album/preflight')
+    def sales_album_preflight(project_id:UUID,body:SalesAlbumPreflight,request:Request):
+        # Exercise the complete saved-project layout before offering a paid image.
+        # The local neutral thumbnail is discarded with the probe PDF; no provider call.
+        from io import BytesIO
+        from PIL import Image
+        visuals={}
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
+            materials=project_materials(conn,row['scene'],visuals)
+        probe=BytesIO();Image.new('RGB',(8,6),'#f6f3ed').save(probe,'JPEG')
+        try:
+            kitchen_album.render(row['name'],row['scene'],materials,probe.getvalue(),photo=False,
+                material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
+        except ValueError as exc:
+            logging.getLogger(__name__).warning('Client album preflight rejected: %s',str(exc))
+            error(400,str(exc))
+        return {'ok':True}
+
     @api.post('/3d-projects/{project_id}/sales-album.pdf')
     def sales_album(project_id:UUID,body:SalesAlbumRender,request:Request):
         visuals={}
@@ -682,7 +704,9 @@ def router(settings):
             previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
             data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo,material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
                   if body.layout=='client' else render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version))
-        except ValueError as exc:error(400,str(exc))
+        except ValueError as exc:
+            logging.getLogger(__name__).warning('Client album PDF rejected: %s',str(exc))
+            error(400,str(exc))
         return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Sales_Album.pdf','Cache-Control':'no-store'})
 
     @api.post('/3d-projects/{project_id}/sales-photo')

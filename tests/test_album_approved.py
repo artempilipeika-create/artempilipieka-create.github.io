@@ -73,4 +73,4 @@ def test_elevation_module_is_served_with_the_constructor_assets():
     app=FastAPI();app.include_router(router());client=TestClient(app)
     r=client.get('/account/planner/album-geometry.mjs')
     assert r.status_code==200 and 'export function albumGeometry' in r.text
-    assert '20261029-approved-album' in client.get('/constructor').text
+    assert '20261029-album-pdf-fix' in client.get('/constructor').text

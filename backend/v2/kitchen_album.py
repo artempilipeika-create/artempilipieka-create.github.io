@@ -169,18 +169,25 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         _,height=p.wrap(column-16,H);measured.append((p,max(32,height+9)))
     split=min(range(1,len(measured)+1),key=lambda k:max(sum(h for _,h in measured[:k]),sum(h for _,h in measured[k:])))
     columns=[measured[:split],measured[split:]]
-    if max(sum(h for _,h in part) for part in columns)>H-155-250:
+    schedule_height=max(sum(h for _,h in part) for part in columns)
+    compact=schedule_height>H-155-250
+    if schedule_height>H-155-180:
         raise ValueError('Список модулей не помещается на странице. Разделите проект на помещения.')
     for col,part in enumerate(columns):
         cursor=H-155;px=M+col*(column+24)
         for p,height in part:
             c.setFillColor(white);c.roundRect(px,cursor-height,column,height-4,4,fill=1,stroke=0)
             _,ph=p.wrap(column-16,H);p.drawOn(c,px+8,cursor-6-ph);cursor-=height
-    c.setFillColor(INK);c.roundRect(M,140,W-2*M,96,9,fill=1,stroke=0)
-    text('СТОИМОСТЬ КОМПЛЕКТА',M+22,218,W-2*M-44,9,True,white)
-    text('После расчёта',M+22,196,W-2*M-44,24,True,white)
-    text('Для самостоятельной сборки. Доставка рассчитывается отдельно.',M+22,158,W-2*M-44,9,color=white)
-    text('Согласуйте размеры, материалы и комплектацию. Состав фурнитуры, обработку и комплектность подтверждаем перед заказом. Техника и декор на изображении не означают включение в поставку.',M,120,W-2*M,10,color=MUTED)
+    c.setFillColor(INK);c.roundRect(M,109 if compact else 140,W-2*M,58 if compact else 96,9,fill=1,stroke=0)
+    text('СТОИМОСТЬ КОМПЛЕКТА',M+22,155 if compact else 218,W-2*M-44,8 if compact else 9,True,white)
+    text('После расчёта',M+22,140 if compact else 196,W-2*M-44,18 if compact else 24,True,white)
+    terms='Согласуйте размеры, материалы и комплектацию. Состав фурнитуры, обработку и комплектность подтверждаем перед заказом. Техника и декор на изображении не означают включение в поставку.'
+    assembly='Для самостоятельной сборки. Доставка рассчитывается отдельно.'
+    if compact:
+        text(assembly+' '+terms,M,98,W-2*M,8.5,color=MUTED)
+    else:
+        text(assembly,M+22,158,W-2*M-44,9,color=white)
+        text(terms,M,120,W-2*M,10,color=MUTED)
     c.showPage()
     c.save()
     return out.getvalue()

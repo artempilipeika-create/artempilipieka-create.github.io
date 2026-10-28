@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {randomUUID} from 'node:crypto';
 const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/kitchen-album-ui.mjs',import.meta.url),'utf8');
 const photo='data:image/jpeg;base64,cGFpZC1waG90bw==',view='data:image/png;base64,dmlldw==';
-function harness({existing={state:'none'},pdfFails=false,renderPending=false}={}){
+function harness({existing={state:'none'},pdfFails=false,renderPending=false,preflightFails=false}={}){
   let dialog,paid=0,pdfAttempts=0,current=existing,version=1,timers=new Map(),serial=0;
   const exports=[],requests=[],state={id:'project',version:1,user:'owner',scene:{width:600,albumSettings:{order_number:"QA-125"}}};
   class Element{
@@ -16,6 +16,7 @@ function harness({existing={state:'none'},pdfFails=false,renderPending=false}={}
     querySelector(selector){assert.ok(this.elements.has(selector),selector);return this.elements.get(selector);}
     closest(){return this.parent;}
     setAttribute(){} addEventListener(){} showModal(){} close(){} remove(){dialog=null;}
+    scrollIntoView(){this.scrolled=true;}
     getContext(){return {fillRect(){},drawImage(){}};}
   }
   const context=vm.createContext({Blob,Uint8Array,atob,structuredClone,crypto:{randomUUID},
@@ -30,6 +31,10 @@ function harness({existing={state:'none'},pdfFails=false,renderPending=false}={}
   const options={setOrderNumber:value=>{state.scene.albumSettings={order_number:value};},save:async()=>{state.version=++version;},snapshot:()=>structuredClone(state),capture:async()=>({hero:view,detail:view}),
     request:async(path,method='GET',body)=>{requests.push({path,method,body});
       if(path==='/3d-sales-capabilities')return {automatic_render:true};
+      if(path.endsWith('/sales-album/preflight')){
+        if(preflightFails)throw Error('Список модулей не помещается на странице.');
+        return {ok:true};
+      }
       if(path.endsWith('/reuse')||method==='GET')return current;
       assert.match(path,/sales-photo$/);paid++;assert.equal(body.render_style,'lived_in');
       current=renderPending?{state:'pending'}:{state:'ready',image_data_url:photo};return current;
@@ -42,6 +47,7 @@ test('One consent creates one photo and automatically uses the original in the f
   h.q('[data-consent]').checked=true;h.q('[data-consent]').onchange();
   await Promise.all([h.q('[data-create]').onclick(),h.q('[data-create]').onclick()]);
   assert.equal(h.paid,1);assert.equal(h.exports.length,1);
+  assert.ok(h.requests.findIndex(r=>r.path.endsWith('/sales-album/preflight'))<h.requests.findIndex(r=>r.path.endsWith('/sales-photo')));
   assert.equal(h.exports[0].detail_data_url,undefined);assert.equal(h.exports[0].hero_data_url,photo);assert.equal(h.exports[0].layout,'client');assert.equal(h.exports[0].photo,true);
   assert.equal(h.q('[data-pdf]').hidden,false);assert.doesNotMatch(h.d.html,/data-technical|data-new|data-reviewed|data-hero|type="file"/);
   h.q('[data-close]').onclick();await h.open();
@@ -51,7 +57,17 @@ test('One consent creates one photo and automatically uses the original in the f
 test('Rebuilding a failed PDF never calls the paid provider again',async()=>{
   const h=harness({existing:{state:'ready',image_data_url:photo},pdfFails:true});await h.open();
   assert.equal(h.q('[data-build]').hidden,false);assert.equal(h.q('[data-pdf]').hidden,true);
+  assert.equal(h.q('[data-message]').scrolled,true);
+  assert.ok(h.d.html.indexOf('data-message')>h.d.html.indexOf('data-preview'));
   await h.q('[data-build]').onclick();assert.equal(h.paid,0);assert.equal(h.q('[data-pdf]').hidden,false);
+});
+test('Layout failure is visible and blocks charging before the paid image request',async()=>{
+  const h=harness({preflightFails:true});await h.open();
+  assert.match(h.q('[data-message]').textContent,/Список модулей/);
+  assert.equal(h.q('[data-message]').scrolled,true);
+  h.q('[data-consent]').checked=true;h.q('[data-consent]').onchange();
+  assert.equal(h.q('[data-create]').disabled,true);
+  await h.q('[data-create]').onclick();assert.equal(h.paid,0);
 });
 test('Pending render is checked automatically using GET and then inserted into PDF',async()=>{
   const h=harness({renderPending:true});await h.open();h.q('[data-consent]').checked=true;
