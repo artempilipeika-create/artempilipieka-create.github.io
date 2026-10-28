@@ -44,7 +44,7 @@ standalone download and versioned mirror with scripts/build-native-profile-repai
 Historical importer versions are retained unchanged. Constructor links now name
 and download version 9.9.7, avoiding the previous stale 9.9.5/9.9.6 labels.
 
-Validation: all 745 JavaScript tests passed, including 19 profile checks, including signed/mirrored profiles, widening,
+Validation: all 745 JavaScript tests passed, including 19 profile checks covering signed/mirrored profiles, widening,
 shrinking, native-offset frames, simultaneous L/C profiles, arbitrary rotations,
 unchanged sections, ignored unrelated objects, failed writes and post-commit drift.
 484 Python tests passed; 37 database checks are run by CI with disposable PostgreSQL.
@@ -57,3 +57,24 @@ script outside the BAZIS Scripts folder and replace the single active importer.
 Export the kitchen again and run the importer in a new empty unsaved model. Check
 Gola on a widened cabinet and the two upper mount pieces; save as a new B3D and
 reopen it. Existing saved B3D models are not modified by downloading this update.
+
+## Published checkpoint
+
+Runtime commit: c88b56fcb3d827c867564f6fd98bd4a7c8751273.
+Branch: mf-reliability-gola-import-20261029.
+Constructor reliability with PostgreSQL succeeded for that exact commit:
+https://github.com/artempilipeika-create/artempilipieka-create.github.io/actions/runs/40778073523
+Railway deployment 9585be8d-654a-4cfb-ad5a-91475e383278 reached SUCCESS.
+Deployment metadata and source pin both match the tested commit; no staged changes
+remain. Only the source branch and commit changed, not variables or infrastructure.
+
+Public health returned HTTP 200, ok=true and environment=staging. Constructor
+returned HTTP 200 with the 9.9.7 link and 20261029-native-profiles resource tag.
+The downloadable importer is byte-identical to the reviewed script, SHA-256:
+a5f9ece02fc10858a52a1c1a3813d99f9f71443959f7788457db53ba9a8a19d9
+The inspected runtime log contains normal Uvicorn INFO startup lines; no exception.
+Browser save/reopen/edit remains unavailable due to the originating-context error.
+Windows BAZIS execution and B3D save-close-reopen still require the user's native check.
+
+Download:
+https://martin-forest-v2-staging-production.up.railway.app/account/planner/bazis-drawers-import.js?v=20261029-native-profiles
