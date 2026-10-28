@@ -4,10 +4,10 @@ export async function openKitchenAlbum({save,snapshot,capture,request}){
   const d=document.createElement('dialog');d.id='kitchen-album-dialog';d.className='mf-sales-dialog mf-kitchen-album';
   d.setAttribute('aria-labelledby','kitchen-album-title');
   d.innerHTML=`<div class="mf-sales-heading"><div><small>MARTIN FOREST / КЛИЕНТСКАЯ ПРЕЗЕНТАЦИЯ</small><h2 id="kitchen-album-title">Альбом вашей кухни</h2></div><button type="button" data-close aria-label="Закрыть">×</button></div>
-    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: интерьер, планировка и состав кухни, материалы с образцами и комплект.</p>
+    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: интерьер, 2D-план с размерами и состав кухни, материалы с образцами и комплект.</p>
     <p data-message role="status" aria-live="polite">Сохраняем кухню и проверяем готовый фоторендер…</p>
     <canvas data-preview width="1200" height="800" aria-label="Главный вид кухни"></canvas>
-    <div class="mf-album-pages"><span>01 · Интерьер</span><span>02 · Планировка</span><span>03 · Материалы</span><span>04 · Комплект</span></div>
+    <div class="mf-album-pages"><span>01 · Интерьер</span><span>02 · 2D и размеры</span><span>03 · Материалы</span><span>04 · Комплект</span></div>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера. Он автоматически попадёт в PDF. Открытие готового альбома и скачивание не запускают новую генерацию.</label>
     <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Проверить готовность · бесплатно</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>
     <p class="mf-album-note">Качество «Живого интерьера» сохранено. Планировка и список шкафчиков формируются по сохранённому проекту. Перед отправкой клиенту проверьте изображение и материалы.</p>`;

@@ -49,3 +49,48 @@ def test_long_module_schedule_fails_instead_of_dropping_rows():
     modules=[{**item(),'name':f'Шкафчик с индивидуальным названием {n}', 'x':n*600} for n in range(35)]
     with pytest.raises(ValueError,match='Список модулей не помещается'):
         kitchen_album.render('Кухня',{'items':modules},{},image())
+
+
+def test_dimension_extents_include_real_gaps_and_do_not_sum_unrelated_widths():
+    a=item();b=item();b['x']=650
+    result=album_layout.dimension_geometry([(1,a),(2,b)])
+    assert result['bounds']==(-300,950,-255,255)
+    assert result['horizontal']==[(-300,300),(300,350),(350,950)]
+    assert result['vertical']==[]  # the overall depth supplies this dimension once
+    scene={'items':[a,b]}
+    pdf=PdfReader(BytesIO(kitchen_album.render('Кухня',scene,{},image())))
+    assert '1250' in pdf.pages[1].extract_text()
+    assert 'H 820' in pdf.pages[1].extract_text()
+
+
+def test_dimension_spans_follow_rotated_width_and_depth_with_fractional_positions():
+    a=item();a.update(rotation=90,x=900.25,z=-300.5,depth=560.5)
+    b=item();b.update(x=-300,z=0)
+    result=album_layout.dimension_geometry([(1,a),(2,b)])
+    assert result['bounds']==(-600,1180.5,-600.5,255)
+    assert (620,1180.5) in result['horizontal']
+    assert (-600.5,-.5) in result['vertical']
+    assert album_layout.number(24000.25)=='24000,25'
+
+
+def test_narrow_or_overlapping_dimensions_get_separate_label_lanes():
+    wide=album_layout.dimension_lanes([(0,600),(600,1200)],.1)
+    assert [lane for _,_,lane in wide]==[0,0]
+    narrow=album_layout.dimension_lanes([(0,150),(150,300)],.03)
+    assert [lane for _,_,lane in narrow]==[0,1]
+    overlapping=album_layout.dimension_lanes([(0,600),(300,900)],.1)
+    assert [lane for _,_,lane in overlapping]==[0,1]
+
+
+def test_number_ranges_keep_every_module_without_a_long_wrapped_id_column():
+    assert album_layout.number_ranges(['1','2','3','5','7','8'])=='1-3, 5, 7, 8'
+    assert album_layout.schedule([item() for _ in range(30)])[0][0]=='1-30'
+
+
+def test_stacked_cabinets_share_an_outline_but_keep_both_numbers_and_heights():
+    a=item();a.update(module_type='wall_cabinet',height=720,depth=317)
+    b=dict(a,name='Антресоль',height=360,elevation_mm=2200)
+    pdf=PdfReader(BytesIO(kitchen_album.render('Кухня',{'items':[a,b]},{},image())))
+    text=pdf.pages[1].extract_text()
+    assert '1, 2' in text and 'H 720 / 360' in text
+    assert '600 × 720 × 317' in text and '600 × 360 × 317' in text
