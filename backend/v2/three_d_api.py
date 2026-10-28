@@ -15,6 +15,7 @@ from . import catalogue
 from .three_d_document import render as render_spec
 from .sales_album import render as render_sales, image_bytes as sales_image
 from . import sales_render, sales_render_store, kitchen_album
+from .material_visuals import visual_metadata
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant, GOLA_VARIANTS as TALL_GOLA_VARIANTS
 from .three_d_drawers import drawer_variant, drawer_configuration, BY_ID as DRAWER_BY_ID
@@ -591,7 +592,7 @@ def router(settings):
             record_event(conn,settings,actor=user['user_id'],action='3d.project.duplicated',object_type='3d_project',object_id=pid,reason='User duplicated 3D project')
             return projection(row)
 
-    def project_materials(conn,scene):
+    def project_materials(conn,scene,visuals=None):
         release=catalogue.active(conn);materials={}
         ids=set()
         if scene.get('items'):
@@ -606,6 +607,7 @@ def router(settings):
                 found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()
                 if found:
                     m=found['snapshot'];materials[ident]=' · '.join(str(x) for x in (m.get('manufacturer'),m.get('article'),m.get('name')) if x)
+                    if visuals is not None:visuals[ident]=visual_metadata(m)
         return materials
 
     def specification_bytes(conn,row,preview_png=None,module_previews=None):
@@ -637,15 +639,16 @@ def router(settings):
 
     @api.post('/3d-projects/{project_id}/sales-album.pdf')
     def sales_album(project_id:UUID,body:SalesAlbumRender,request:Request):
+        visuals={}
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
             if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
-            materials=project_materials(conn,row['scene'])
+            materials=project_materials(conn,row['scene'],visuals if body.layout=='client' else None)
         try:
             hero=sales_image(body.hero_data_url);detail=sales_image(body.detail_data_url)
             previews=_module_previews(row['scene'],body.module_preview_data_urls)
             previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
-            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo)
+            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo,material_visuals=visuals)
                   if body.layout=='client' else render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version))
         except ValueError as exc:error(400,str(exc))
         return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Sales_Album.pdf','Cache-Control':'no-store'})

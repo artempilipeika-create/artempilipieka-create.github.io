@@ -1,6 +1,6 @@
 """Four-page client presentation, version mf-kitchen-album-v1.
 
-Only the saved project's public material names and module count enter the album.
+Only the saved project's public materials, their samples and module count enter the album.
 No procurement ledger, internal source IDs or invented quote is published.
 """
 from io import BytesIO
@@ -13,6 +13,7 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.utils import ImageReader
 from .sales_album import fonts, client_title, material_name
 from .three_d_open_tall import open_tall_variant
+from .album_materials import sample
 
 VERSION = 'mf-kitchen-album-v1'
 W, H = landscape(A4)
@@ -22,7 +23,7 @@ MUTED = HexColor('#647168')
 PAPER = HexColor('#f6f3ed')
 
 
-def render(name, scene, materials, hero, detail=None, photo=True):
+def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None):
     fonts()
     if not hero or not scene.get('items'):
         raise ValueError('Добавьте мебель и вид кухни.')
@@ -31,6 +32,7 @@ def render(name, scene, materials, hero, detail=None, photo=True):
     c = Canvas(out, pagesize=(W, H), pageCompression=1)
     c.setTitle('MARTIN FOREST | ' + name)
     c.setAuthor('MARTIN FOREST')
+    material_visuals = material_visuals or {}
 
     def text(value, x, top, width, size=11, bold=False, color=INK):
         p = Paragraph(escape(str(value)).replace('\n', '<br/>'), ParagraphStyle(
@@ -75,22 +77,58 @@ def render(name, scene, materials, hero, detail=None, photo=True):
               ('ЦОКОЛЬ', 'plinthMaterialId'), ('СТОЛЕШНИЦА', 'countertopMaterialId')]
     gap = 24
     width = (W-2*M-gap)/2
-    for i, (title, field) in enumerate(fields):
+    cards = []
+    for title, field in fields:
         relevant = [it for it in scene['items'] if not (
             field == 'front_variant_id' and open_tall_variant(it)) and not (
             field in ('plinthMaterialId', 'countertopMaterialId') and it.get('module_type') == 'wall_cabinet') and not (
             field == 'countertopMaterialId' and not it.get('countertopEnabled', True))]
-        values = list(dict.fromkeys(material_name(materials, it.get(field)) for it in relevant))
-        value = '\n'.join(values) if values else 'Не предусмотрено проектом'
+        ids = list(dict.fromkeys(str(it.get(field) or '') for it in relevant))
+        entries = []
+        swatch = 72 if len(ids) == 1 else 32
+        label_width = width-40-swatch-14
+        for ident in ids:
+            value = material_name(materials, ident)
+            visual = sample(material_visuals.get(ident)) if ident in materials else sample()
+            paragraph = Paragraph(escape(value), ParagraphStyle(
+                'material', fontName='Sales', fontSize=11, leading=14.5, textColor=INK))
+            _, name_height = paragraph.wrap(label_width, H)
+            # A real sample and its exact name stay together, even with mixed decors.
+            height = max(swatch, name_height+16)
+            entries.append((paragraph, name_height, visual, height))
+        content_height = sum(entry[3] for entry in entries) + max(0, len(entries)-1)*8
+        cards.append((title, entries, swatch, max(138, content_height+60)))
+    row_heights = [max(card[3] for card in cards[n:n+2]) for n in (0, 2)]
+    if sum(row_heights)+18 > H-126-118:
+        raise ValueError('Слишком много материалов для четырёх страниц. Разделите проект на помещения.')
+    for i, (title, entries, swatch, _) in enumerate(cards):
         x = M + (i % 2)*(width+gap)
-        top = H-126 - (i//2)*168
+        top = H-126 - (row_heights[0]+18 if i >= 2 else 0)
+        card_height = row_heights[i//2]
         c.setFillColor(white)
-        c.roundRect(x, top-150, width, 150, 8, fill=1, stroke=0)
+        c.roundRect(x, top-card_height, width, card_height, 8, fill=1, stroke=0)
         text(title, x+20, top-16, width-40, 9, True, MUTED)
-        height = text(value, x+20, top-45, width-40, 12)
-        if height > 90:
-            raise ValueError('Слишком много материалов для четырёх страниц. Разделите проект на помещения.')
-    text('Название декора берём из проекта. Оттенок на экране зависит от освещения; окончательный выбор — по образцу материала.', M, 100, W-2*M, 10, color=MUTED)
+        cursor = top-44
+        if not entries:
+            text('Не предусмотрено проектом', x+20, cursor, width-40, 11)
+        for paragraph, name_height, visual, height in entries:
+            sy = cursor-(height-swatch)/2-swatch
+            c.setFillColor(HexColor(visual['color']) if visual['color'] else PAPER)
+            c.roundRect(x+20, sy, swatch, swatch, 3, fill=1, stroke=0)
+            if visual['image']:
+                c.drawImage(ImageReader(BytesIO(visual['image'])), x+20, sy, swatch, swatch,
+                            preserveAspectRatio=True, anchor='c', mask='auto')
+            elif not visual['color']:
+                c.setStrokeColor(HexColor('#c9d0c7'))
+                c.line(x+26, sy+6, x+swatch+14, sy+swatch-6)
+            c.setStrokeColor(HexColor('#d7ddd5'))
+            c.roundRect(x+20, sy, swatch, swatch, 3, fill=0, stroke=1)
+            tx = x+20+swatch+14
+            label_top = cursor-(height-name_height-16)/2
+            paragraph.drawOn(c, tx, label_top-name_height)
+            text(visual['label'], tx, label_top-name_height-4, width-40-swatch-14, 8, color=MUTED)
+            cursor -= height+8
+    text('Декоры и образцы привязаны к выбранным материалам. Цвет и масштаб рисунка на экране условны; окончательный выбор - по физическому образцу.', M, 100, W-2*M, 10, color=MUTED)
     c.showPage()
 
     page(4, 'Ваша кухня. Ваш комплект.')
