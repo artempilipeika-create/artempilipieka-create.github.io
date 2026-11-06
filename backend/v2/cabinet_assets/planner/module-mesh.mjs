@@ -110,6 +110,7 @@ export class MeshFactory{
       if(m.userData.role==='door-pivot'){const visible=mode!=='facadesHidden';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(m.userData.role==='appliance-slot'){const visible=mode==='normal';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(!m.isMesh)return;
+      if(m.userData.blankEdge)return; // Edge tint belongs to the selected real panel edge, not a cabinet material.
       const role=m.userData.role,part=byKey.get(m.userData.part?.key);
       if(part)m.userData.part=part;
       const visible=m.userData.appliance?mode==='normal':role==='reveal'?mode==='normal'&&!it.doors_open:(role==='front'||m.userData.frontAccessory)?mode!=='facadesHidden':true;
@@ -258,7 +259,44 @@ export class MeshFactory{
       }
     });
   }
+  buildBlank(it,ghost=false){
+    const group=new THREE.Group();
+    group.userData={itemId:it.item_id,ghost,visualApproximation:false};
+    const W=it.width,H=it.height,D=it.depth,ax=it.blank_axis,code=it.blank_edge_code||'0000';
+    this.box(group,'body',W,H,D,0,H/2,0,it.body_variant_id,ghost);
+    const t=Math.min(0.8,(it.blank_thickness_mm||18)/4);
+    const addEdge=(w,h,d,x,y,z)=>{
+      const m=this.box(group,'blank-edge',w,h,d,x,y,z,it.body_variant_id,ghost,.05);
+      if(!m)return;
+      const material=this.material('body',it.body_variant_id,ghost).clone();
+      material.color.multiplyScalar(.77);
+      m.material=material;
+      m.userData.blankEdge=true;
+      m.userData.ownedMaterials=[material];
+      m.userData.visualOnly=true;
+    };
+    // Codes follow the unrotated board: long side 1 / long side 2 / short side 1 / short side 2.
+    if(ax==='side'){
+      if(code[0]==='1')addEdge(W,H,t,0,H/2,D/2-t/2);
+      if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
+      if(code[2]==='1')addEdge(W,t,D,0,t/2,0);
+      if(code[3]==='1')addEdge(W,t,D,0,H-t/2,0);
+    }else if(ax==='back'){
+      if(code[0]==='1')addEdge(W,t,D,0,t/2,0);
+      if(code[1]==='1')addEdge(W,t,D,0,H-t/2,0);
+      if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
+      if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
+    }else{
+      if(code[0]==='1')addEdge(W,H,t,0,H/2,D/2-t/2);
+      if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
+      if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
+      if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
+    }
+    this.position(group,it);
+    return group;
+  }
   build(it,ghost=false){
+    if(it.module_type==='blank')return this.buildBlank(it,ghost);
     const group=new THREE.Group();group.userData={itemId:it.item_id,ghost,visualApproximation:false};
     const {width:W,height:H,depth:D}=it,t=18,base=heights(it).base_height,bodyH=H-base;
     group.userData.heights=heights(it);
@@ -553,7 +591,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 
