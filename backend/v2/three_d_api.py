@@ -72,7 +72,7 @@ class WorktopFixture(StrictModel):
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
-    module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
+    module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity','blank']='chest'
     template_id: str|None=Field(default=None,max_length=80)
     bazis_id: str|None=Field(default=None,max_length=80)
     bazis_file: str|None=Field(default=None,max_length=240)
@@ -83,9 +83,9 @@ class FurnitureItem(StrictModel):
     z: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.25)
     elevation_mm: int|None=Field(default=None,ge=0,le=5000,strict=True)
     rotation: Literal[0,90,180,270]=0
-    width: int=Field(ge=150,le=3000)
-    height: int=Field(ge=250,le=3000)
-    body_height: int|None=Field(default=None,ge=150,le=3000)
+    width: int=Field(ge=1,le=3000)
+    height: int=Field(ge=1,le=3000)
+    body_height: int|None=Field(default=None,ge=1,le=3000)
     base_height: int|None=Field(default=None,ge=0,le=300)
     worktop_thickness: int|None=Field(default=None,ge=0,le=100)
     legHeightMm: Literal[80,100,150]|None=None
@@ -97,7 +97,7 @@ class FurnitureItem(StrictModel):
     countertopMaterialId: UUID|None=None
     countertopEnabled: bool=True
     countertopJoint: Literal['standard','euro']='standard'
-    depth: int|float=Field(ge=200,le=1200,multiple_of=0.5,allow_inf_nan=False)
+    depth: int|float=Field(ge=1,le=1200,multiple_of=0.5,allow_inf_nan=False)
     layout: Literal['drawers','doors','combo','niche']='doors'
     drawers: int=Field(default=2,ge=0,le=8)
     base: Literal['plinth','legs','wall']='plinth'
@@ -105,6 +105,12 @@ class FurnitureItem(StrictModel):
     body_variant_id: UUID|None=None
     front_variant_id: UUID|None=None
     back_variant_id: UUID|None=None
+    # Individual rectangular board; no inferred cabinet or fabricated BAZIS geometry.
+    blank_length_mm: int|None=Field(default=None,ge=100,le=3000)
+    blank_width_mm: int|None=Field(default=None,ge=100,le=1200)
+    blank_thickness_mm: int|None=Field(default=None,ge=10,le=40)
+    blank_axis: Literal['horizontal','side','back']|None=None
+    blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
@@ -116,6 +122,24 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.module_type=='blank':
+            if self.bazis_id or self.template_id or any(v is None for v in (
+                self.blank_length_mm,self.blank_width_mm,self.blank_thickness_mm,self.blank_axis,self.blank_edge_code
+            )):
+                raise ValueError('У заготовки должны быть длина, ширина, толщина, ориентация и код ПВХ')
+            l,w,t=self.blank_length_mm,self.blank_width_mm,self.blank_thickness_mm
+            expected={'horizontal':(l,t,w),'side':(t,l,w),'back':(l,w,t)}[self.blank_axis]
+            if (self.width,self.height,self.depth)!=expected:
+                raise ValueError('Габариты заготовки не соответствуют ориентации')
+            if self.base!='wall' or self.base_height not in (None,0) or self.worktop_thickness not in (None,0):
+                raise ValueError('Заготовка не имеет цоколя и столешницы')
+            if self.body_height not in (None,self.height):
+                raise ValueError('Высота заготовки должна соответствовать её геометрии')
+            if self.shelves or self.drawers or self.worktop_fixture or self.plinthMaterialId:
+                raise ValueError('У отдельной детали нет корпусного наполнения')
+            return self
+        if self.width<150 or self.height<250 or self.depth<200 or (self.body_height is not None and self.body_height<150):
+            raise ValueError('Размер меньше допустимого для модуля')
         if self.module_type!='wall_cabinet' and self.elevation_mm not in (None,0):
             raise ValueError('Высота навески доступна только для верхнего шкафа')
         if f:=self.worktop_fixture:
@@ -367,10 +391,10 @@ class AlbumSettings(StrictModel):
 
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
-    module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity']='chest'
-    width: int=Field(default=1000,ge=150,le=3000)
-    height: int=Field(default=850,ge=250,le=3000)
-    depth: int=Field(default=450,ge=200,le=1200)
+    module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity','blank']='chest'
+    width: int=Field(default=1000,ge=1,le=3000)
+    height: int=Field(default=850,ge=1,le=3000)
+    depth: int=Field(default=450,ge=1,le=1200)
     layout: Literal['drawers','doors','combo','niche']='combo'
     drawers: int=Field(default=3,ge=0,le=8)
     base: Literal['plinth','legs','wall']='plinth'
@@ -395,12 +419,16 @@ class Scene(StrictModel):
 
     @model_validator(mode='after')
     def wall_finish_placement(self):
+        if self.module_type!='blank' and (self.width<150 or self.height<250 or self.depth<200):
+            raise ValueError('Размер меньше допустимого для модуля')
         if self.upperMountingRule == 'worktop600':
             from .upper_mounting import mounted_items
             mounted = mounted_items([it.model_dump() for it in self.items])
             for item, placed in zip(self.items, mounted):
                 if item.module_type == 'wall_cabinet': item.elevation_mm = placed['elevation_mm']
         for item in self.items:
+            if item.module_type=='blank' and (item.elevation_mm or 0)+item.height>self.room.height:
+                raise ValueError('Верх заготовки выходит выше потолка.')
             if item.module_type=='wall_cabinet' and item.elevation_mm is not None and item.elevation_mm+item.height>self.room.height:
                 raise ValueError('Верх шкафа выходит выше потолка. Уменьшите высоту шкафа.')
         if len({v.id for v in self.presentationViews})!=len(self.presentationViews):

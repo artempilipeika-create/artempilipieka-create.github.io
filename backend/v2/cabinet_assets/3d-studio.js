@@ -124,9 +124,10 @@
   };
   applyCatalogueFilter=function studioCatalogueFilter(){
     const q=titleText(get('module-search').value.trim());let count=0;
-    const finishing=activeModuleFilter==='finishes',finishMenu=get('kitchen-finishes-menu');if(finishMenu)finishMenu.hidden=!finishing;
-    get('module-catalogue').hidden=finishing;const footnote=get('pane-catalog').querySelector('.studio-footnote');if(footnote)footnote.hidden=finishing;
-    get('module-search').disabled=finishing;get('studio-sort').closest('label').hidden=finishing;
+    const finishing=activeModuleFilter==='finishes',blanks=activeModuleFilter==='blanks',finishMenu=get('kitchen-finishes-menu');if(finishMenu)finishMenu.hidden=!finishing;
+    const blanksMenu=get('mf-blank-catalog');if(blanksMenu)blanksMenu.hidden=!blanks;
+    get('module-catalogue').hidden=finishing||blanks;const footnote=get('pane-catalog').querySelector('.studio-footnote');if(footnote)footnote.hidden=finishing||blanks;
+    get('module-search').disabled=finishing||blanks;get('studio-sort').closest('label').hidden=finishing||blanks;
     get('pane-catalog').dataset.category=activeModuleFilter;
     for(const b of get('module-catalogue').querySelectorAll('.mf3d-module')){
       const tags=new Set((b.dataset.tags||b.dataset.category||'other').split(' '));
@@ -141,8 +142,8 @@
       else cards.sort((a,b)=>Number(a.dataset.studioOrder)-Number(b.dataset.studioOrder));
       cards.forEach(b=>{group.append(b);if(b.dataset.roomFeature){const edit=group.querySelector('[data-edit-feature="'+b.dataset.roomFeature+'"]');if(edit){edit.hidden=b.hidden;group.append(edit);}}});group.hidden=!cards.some(b=>!b.hidden);
     }
-    get('studio-catalog-count').textContent=finishing?'3 раздела':plural(count,['позиция','позиции','позиций']);
-    get('studio-catalog-empty').hidden=finishing||count>0;
+    get('studio-catalog-count').textContent=blanks?'1 карточка':finishing?'3 раздела':plural(count,['позиция','позиции','позиций']);
+    get('studio-catalog-empty').hidden=finishing||blanks||count>0;
     get('module-tabs').querySelectorAll('button').forEach(b=>{const on=b.dataset.moduleFilter===activeModuleFilter;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));});
   };
   renderModuleCatalogue=function studioCatalogue(){

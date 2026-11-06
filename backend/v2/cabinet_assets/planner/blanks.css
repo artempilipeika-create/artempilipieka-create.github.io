@@ -1,0 +1,29 @@
+/* Martin Forest / individual board builder. Isolated from existing cabinet controls. */
+#mf-blank-catalog[hidden],#mf-blank-inspector[hidden],.mf-blank-hidden{display:none!important}
+.mf-blank-catalog,.mf-blank-inspector{display:block;width:100%;min-width:0}
+.mf-blank-card{border:1px solid #d7dfd7;border-radius:18px;background:#fff;box-shadow:0 10px 25px #172d2010;padding:18px;color:#26392c}
+.mf-blank-head h3{font-size:21px;font-weight:750;line-height:1.25;margin:7px 0}
+.mf-blank-head p{font-size:13px;line-height:1.5;color:#627568;margin:4px 0 14px}
+.mf-blank-sketch{display:flex;flex-direction:column;align-items:center;gap:2px;background:linear-gradient(140deg,#f8f6f0,#eff4ec);border:1px solid #e6e9df;border-radius:14px;padding:10px 12px;margin-bottom:15px}
+.mf-blank-sketch svg{display:block;max-width:270px;width:100%;height:auto}
+.mf-blank-code{font-size:13px;color:#617165}.mf-blank-code strong{font-size:19px;letter-spacing:.14em;color:#126a48}
+.mf-blank-form{display:grid;gap:13px}
+.mf-blank-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.mf-blank-presets button{min-height:36px;padding:6px 4px;border:1px solid #cad5cb;border-radius:8px;background:#fff;color:#314b3b;font-size:12px;cursor:pointer}
+.mf-blank-presets button[aria-pressed=true]{background:#e1f2e8;border-color:#17815a;color:#12583b;font-weight:750}
+.mf-blank-presets button:focus-visible{outline:2px solid #2a8661;outline-offset:2px}
+.mf-blank-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:650;color:#314b3b}
+.mf-blank-form label input:not([type=checkbox]),.mf-blank-form label select{width:100%;height:40px;border:1px solid #cad5cb;border-radius:9px;padding:8px 10px;background:#fff;color:#253a2b;font:600 14px/1.2 system-ui,sans-serif;box-sizing:border-box}
+.mf-blank-form label input:focus-visible,.mf-blank-form label select:focus-visible{outline:2px solid #2a8661;outline-offset:1px}
+.mf-blank-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.mf-blank-edges{min-width:0;padding:10px 12px 12px;border:1px solid #dce6db;border-radius:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mf-blank-edges legend{font-weight:700;font-size:13px;padding:0 6px;color:#304b3d}
+.mf-blank-edges label{flex-direction:row;align-items:center;gap:8px;cursor:pointer;line-height:1.3}
+.mf-blank-edges input{width:18px;height:18px;accent-color:#157750;flex:none}
+.mf-blank-result{font-weight:750;font-size:13px;color:#175a40;background:#eaf5ed;padding:9px 11px;border-radius:9px;margin:0}
+.mf-blank-source{color:#7b8176;font-size:12px;line-height:1.45;margin:0}
+.mf-blank-error{color:#a33f36;background:#fff1ef;border-radius:8px;padding:8px 10px;font-size:12px;margin:0}
+.mf-blank-primary{width:100%;padding:12px!important;background:#21694a!important;color:white!important;border:1px solid #185238!important;border-radius:11px!important;font-weight:750!important}
+.mf-blank-export{width:100%;font-size:12px!important}
+body.mf-blank-selected .mf3d-material{margin-bottom:8px}
+@media(max-width:450px){.mf-blank-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.mf-blank-edges{grid-template-columns:1fr}.mf-blank-card{padding:14px}.mf-blank-sketch svg{max-width:240px}}

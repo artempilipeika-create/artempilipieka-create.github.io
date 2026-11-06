@@ -384,6 +384,7 @@
     return target;
   }
   function dimensionError(it,template){
+    if(it.module_type==='blank')return '';
     if(it.worktop_thickness&&(it.module_type!=='base_cabinet'||it.depth>750))
       return 'Столешница доступна только нижнему модулю глубиной до 750 мм';
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
@@ -622,6 +623,7 @@
   }
   // Arithmetic transferred from the accepted 8937f3e constructor, not redesigned.
   function facadeCells(it,template){
+    if(it.module_type==='blank')return [];
     const production=template?.production,custom=production?.front_layout;
     const spec=production?.doors?.length?{kind:'doors',count:production.doors.length}:template?.front||legacyFrontSpec(it);
     const baseH=heights(it).base_height;
@@ -1017,7 +1019,7 @@
   }
   function bounds(it,room,includeFront=true){
     const points=[];
-    const extension=includeFront?(VITRINE?.info(it)?22.5:cornerSpec(it)?.front_extension_mm||20):0;
+    const extension=it.module_type==='blank'?0:includeFront?(VITRINE?.info(it)?22.5:cornerSpec(it)?.front_extension_mm||20):0;
     for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2-(includeFront?tallRearExtension(it):0),it.depth/2+extension]){
       const p=rotateXZ(x,z,it.rotation||0);points.push({x:p.x+it.x,z:p.z+it.z});
     }
@@ -1037,7 +1039,8 @@
   }
   function placementError(it,items,room){
     if(![it.x,it.z,it.width,it.height,it.depth,elevation(it,room)].every(Number.isFinite))return 'Некорректные размеры или положение';
-    if(it.width<150||it.height<250||it.depth<200)return 'Размер меньше допустимого';
+    if(it.module_type!=='blank'&&(it.width<150||it.height<250||it.depth<200))return 'Размер меньше допустимого';
+    if(it.module_type==='blank'&&(it.width<1||it.height<1||it.depth<1))return 'Некорректные размеры детали';
     const b=bounds(it,room);
     if(b.minX<-room.width/2-.5||b.maxX>room.width/2+.5||b.minZ<-room.depth/2-.5||b.maxZ>room.depth/2+.5)return 'Модуль выходит за границы помещения';
     const k=kitchenSettings(it);

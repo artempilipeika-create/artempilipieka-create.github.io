@@ -1,4 +1,5 @@
 import {fixtureError} from './worktop-fixtures.mjs';
+import {validateBlank,geometryFromBlank} from './blanks-model.mjs';
 import {clone,elevation,mountedItems,tier,isTallModule,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,TALL_GOLA_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
   constructor(bridge){this.bridge=bridge;}
@@ -41,11 +42,21 @@ export class StateAdapter{
     if(type==='base_cabinet')it.countertopJoint=this.state?.countertopSettings?.joint||'standard';
     return normalizeKitchen(withDefaultMaterials(it));
   }
-  persistent(it){const value=clone(it);if(!this.bridge.supportsElevation||it.module_type!=='wall_cabinet')delete value.elevation_mm;return value;}
+  persistent(it){const value=clone(it);if(!this.bridge.supportsElevation||!['wall_cabinet','blank'].includes(it.module_type))delete value.elevation_mm;return value;}
   insert(it){if(this.items.length>=100)throw new Error('В одном проекте поддерживается до 100 модулей');this.items.push(this.persistent(it));this.bridge.select(it.item_id);}
   replace(it){const idx=this.items.findIndex(x=>x.item_id===it.item_id);if(idx<0)return;this.items[idx]=this.persistent(it);this.notify();}
   remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
   validate(it,items=this.items){
+    if(it.module_type==='blank'){
+      const error=validateBlank(it,this.room);if(error)return error;
+      const dimensions=geometryFromBlank(it.blank_length_mm,it.blank_width_mm,it.blank_thickness_mm,it.blank_axis);
+      if(['width','height','depth'].some(key=>it[key]!==dimensions[key]))return 'Размеры заготовки не соответствуют её ориентации';
+      const material=it.body_variant_id?this.material(it.body_variant_id):null;
+      if(material?.thickness!=null&&Number(material.thickness)>0&&Number(material.thickness)!==it.blank_thickness_mm)
+        return 'Толщина выбранного ЛДСП не совпадает с толщиной заготовки. Выберите материал '+it.blank_thickness_mm+' мм.';
+      if(!Number.isInteger(it.x*2)||!Number.isInteger(it.z*2)||![0,90,180,270].includes(it.rotation))return 'Положение с шагом 0,5 мм, поворот с шагом 90°';
+      return placementError(it,items,this.room);
+    }
     const tall=isTallModule(it);
     if(!['width','height'].every(k=>Number.isInteger(it[k]))||!Number.isInteger(it.depth*(tall?2:1))||!['x','z'].every(k=>Number.isInteger(it[k]*(tall?4:2))))return tall?'Ширина и высота — целые мм; глубина — с шагом 0,5 мм, координаты — 0,25 мм':'Размеры — целые миллиметры; координаты — с шагом 0,5 мм';
     if(it.elevation_mm!=null&&(!Number.isInteger(it.elevation_mm)||it.elevation_mm<0))return 'Высота навески — целое неотрицательное число миллиметров';

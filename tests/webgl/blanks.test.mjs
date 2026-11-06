@@ -1,0 +1,88 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  geometryFromBlank,blankItem,updateBlank,edgeMeters,blanksCSV,validateBlank
+} from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
+import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
+import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
+import {bounds} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+
+test('independent panels use physical width, height and depth by orientation',()=>{
+  assert.deepEqual(geometryFromBlank(720,400,18,'horizontal'),{width:720,height:18,depth:400});
+  assert.deepEqual(geometryFromBlank(720,400,18,'side'),{width:18,height:720,depth:400});
+  assert.deepEqual(geometryFromBlank(720,400,18,'back'),{width:720,height:400,depth:18});
+});
+
+test('board retains original dimensions after rotating into a side or back',()=>{
+  const base=blankItem({blank_length_mm:720,blank_width_mm:400,blank_thickness_mm:18,blank_edge_code:'1010'});
+  assert.equal(base.module_type,'blank');
+  assert.equal(base.bazis_id,null);
+  assert.equal(base.height,18);
+  const side=updateBlank(base,{blank_axis:'side',elevation_mm:100});
+  assert.equal(side.height,720);
+  assert.equal(side.width,18);
+  assert.equal(side.blank_edge_code,'1010');
+  assert.equal(side.elevation_mm,100);
+  assert.equal(base.height,18);
+  const back=updateBlank(side,{blank_axis:'back'});
+  assert.equal(back.depth,18);
+  assert.equal(back.width,720);
+  assert.equal(back.height,400);
+});
+
+test('four edge bits follow long1, long2, short1, short2 in millimetres',()=>{
+  const item=blankItem({blank_length_mm:720,blank_width_mm:400,blank_thickness_mm:18});
+  for(const [code,m] of [['0000',0],['1000',.72],['1010',1.12],['1110',1.84],['1011',1.52],['1111',2.24]]){
+    assert.equal(edgeMeters({...item,blank_edge_code:code}),m,code);
+  }
+});
+
+test('rejects impossible dimensions and malformed PVC code',()=>{
+  const item=blankItem({blank_length_mm:720,blank_width_mm:400,blank_thickness_mm:18});
+  assert.equal(validateBlank(item,{height:2700}),'');
+  assert.match(validateBlank({...item,blank_width_mm:0}),/Ширина/);
+  assert.match(validateBlank({...item,blank_thickness_mm:4}),/Толщина/);
+  assert.match(validateBlank({...item,blank_edge_code:'1200'}),/Код ПВХ/);
+  assert.match(validateBlank({...item,blank_axis:'unknown'}),/ориентация/);
+  assert.match(validateBlank({...item,blank_axis:'side',elevation_mm:2500},{height:2700}),/высоту/);
+});
+
+test('raised shelf keeps its height through insert, edit, undo, redo, copy and reopening',()=>{
+  const room={width:4200,depth:3200,height:2700,setup_complete:true};
+  let state={room,items:[],selected_item_id:null};
+  const adapter=new StateAdapter({supportsElevation:true,state:()=>state,
+    selected:()=>state.items.find(it=>it.item_id===state.selected_item_id),
+    select:id=>{state.selected_item_id=id;},refresh:()=>{},material:()=>null,
+    snapshot:()=>({name:'QA shelves',scene:structuredClone(state)}),
+    restore:value=>{state=structuredClone(value.scene);}});
+  const history=new History(adapter);
+  const bottom=blankItem({item_id:'bottom',elevation_mm:100});
+  const shelf=blankItem({item_id:'shelf',elevation_mm:500,blank_edge_code:'1011'});
+  history.run('Add bottom',()=>adapter.insert(bottom));
+  assert.equal(adapter.validate(shelf),'');
+  history.run('Add shelf',()=>adapter.insert(shelf));
+  assert.equal(adapter.selected.elevation_mm,500);
+  assert.equal(bounds(adapter.selected,room).minY,500);
+  history.run('Raise shelf',()=>adapter.replace(updateBlank(adapter.selected,{elevation_mm:600,rotation:90})));
+  assert.equal(adapter.selected.elevation_mm,600);
+  history.undo();assert.equal(adapter.selected.elevation_mm,500);
+  history.redo();assert.equal(adapter.selected.elevation_mm,600);
+  adapter.restore(JSON.parse(JSON.stringify(adapter.snapshot())));
+  assert.equal(adapter.selected.elevation_mm,600);
+  assert.equal(adapter.selected.blank_edge_code,'1011');
+  adapter.insert({...adapter.selected,item_id:'copy',x:1000});
+  assert.equal(adapter.selected.elevation_mm,600);
+  assert.equal(adapter.validate(adapter.selected),'');
+  const overlap={...adapter.selected,x:0,elevation_mm:100,rotation:0};
+  assert.notEqual(adapter.validate(overlap),'');
+});
+
+test('CSV includes full source dimensions, material, all four edges and total PVC metres',()=>{
+  const item=blankItem({name:'Полка 1',blank_length_mm:720,blank_width_mm:400,blank_thickness_mm:18,
+    blank_edge_code:'1011',body_variant_id:'material-uuid'});
+  const csv=blanksCSV([item,{module_type:'base_cabinet'}],
+    id=>id==='material-uuid'?{name:'ЛДСП 605 PO',article:'605 PO'}:null);
+  assert.ok(csv.startsWith('\ufeff'));
+  assert.ok(csv.includes('"720";"400";"18";"1";"0";"1";"1";"1011";"1,52";"ЛДСП 605 PO";"605 PO";"material-uuid"'));
+  assert.equal(csv.split('Полка 1').length-1,1);
+});
