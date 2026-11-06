@@ -75,7 +75,7 @@ function draw(form,room){
   form.querySelector('[data-blank-summary]').textContent=error?'':
     v.blank_length_mm+' × '+v.blank_width_mm+' × '+v.blank_thickness_mm+' мм · '+count+' торц. · ПВХ '+m.toFixed(2)+' м';
   form.querySelector('[data-blank-source]').textContent=SOURCE_EDGE_CODES.includes(v.blank_edge_code)?
-    'Есть вариант с этим кодом среди 6 исходных FR3D.':'Новая комбинация ПВХ: геометрия доступна, исходный FR3D пока не предоставлен.';
+    'Есть предоставленный FR3D с таким кодом; сейчас используется универсальная геометрия.':'Новая комбинация ПВХ: геометрия доступна, исходный FR3D пока не предоставлен.';
   const box=form.querySelector('[data-blank-error]');
   box.textContent=error;box.hidden=!error;
   return !error;
