@@ -110,7 +110,8 @@ class FurnitureItem(StrictModel):
     blank_width_mm: int|None=Field(default=None,ge=100,le=1200)
     blank_thickness_mm: int|None=Field(default=None,ge=10,le=40)
     blank_axis: Literal['horizontal','side','back']|None=None
-    blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4} dict[str,UUID]=Field(default_factory=dict,max_length=32)
+    blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
+    part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
     glass_shelf_count: int|None=Field(default=None,ge=0,le=8,strict=True)
