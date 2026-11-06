@@ -335,13 +335,13 @@ function applyCatalogueFilter(){
 }
 function bindCatalogueControls(){
   $('module-search').oninput=applyCatalogueFilter;
-  for(const b of document.querySelectorAll('#module-tabs [data-module-filter]')){
-    b.onclick=()=>{
-      activeModuleFilter=b.dataset.moduleFilter;
-      document.querySelectorAll('#module-tabs [data-module-filter]').forEach(x=>x.classList.toggle('active',x===b));
-      applyCatalogueFilter();
-    };
-  }
+  $('module-tabs').addEventListener('click',event=>{
+    const b=event.target.closest('[data-module-filter]');
+    if(!b||!$('module-tabs').contains(b))return;
+    activeModuleFilter=b.dataset.moduleFilter;
+    document.querySelectorAll('#module-tabs [data-module-filter]').forEach(x=>x.classList.toggle('active',x===b));
+    applyCatalogueFilter();
+  });
 }
 function renderModuleCatalogue(){
   const root=$('module-catalogue');
