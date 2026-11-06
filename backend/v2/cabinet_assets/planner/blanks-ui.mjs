@@ -114,7 +114,7 @@ export class BlanksUI{
   add(){
     if(!draw(this.catalog,this.app.adapter.room))return;
     const spec=readForm(this.catalog);
-    const draft=blankItem({...spec,body_variant_id:globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body||null});
+    const draft=blankItem({...spec,body_variant_id:globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id||null});
     const ok=this.app.interaction.change('Добавление заготовки ЛДСП',()=>{
       const next=findSpace(draft,this.app.adapter.items,this.app.adapter.room,this.app.adapter.selected,{enabled:true,alignment:'front',wallOffset:0,autoRotate:false,allowElevation:true});
       if(!next)throw new Error('Для детали нет свободного места в помещении.');
