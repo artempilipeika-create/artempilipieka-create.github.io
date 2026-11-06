@@ -426,6 +426,8 @@ class Scene(StrictModel):
             for item, placed in zip(self.items, mounted):
                 if item.module_type == 'wall_cabinet': item.elevation_mm = placed['elevation_mm']
         for item in self.items:
+            if item.module_type=='blank' and (item.elevation_mm or 0)+item.height>self.room.height:
+                raise ValueError('Верх заготовки выходит выше потолка.')
             if item.module_type=='wall_cabinet' and item.elevation_mm is not None and item.elevation_mm+item.height>self.room.height:
                 raise ValueError('Верх шкафа выходит выше потолка. Уменьшите высоту шкафа.')
         if len({v.id for v in self.presentationViews})!=len(self.presentationViews):
