@@ -1273,6 +1273,10 @@ function exportMaterialDescriptor(id){
     article:m.article||null,thickness:m.thickness||null}:null;
 }
 async function exportBazisProjectReady(){
+  if(state.items.some(it=>it.module_type==='blank')){
+    status('В проекте есть отдельные заготовки. Родной экспорт БАЗИС пока не включает их: выгрузите CSV в разделе «Заготовки», чтобы не потерять детали.');
+    return;
+  }
   const button=$('export-bazis');
   if(button.disabled)return;
   button.disabled=true;
@@ -1413,6 +1417,9 @@ function exportBazisProject(){
 }
 
 async function toOrder(){
+  if(state.items.some(it=>it.module_type==='blank'))throw new Error(
+    'Проект содержит заготовки. Перенос в заказ с поклейкой ПВХ пока не подключён: сохраните проект и выгрузите CSV в категории «Заготовки».'
+  );
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError)throw new Error(briefError);
   for(const it of state.items)if(!it.body_variant_id||(!templateFor(it)?.production?.vitrine&&!templateFor(it)?.production?.open_tall&&!it.front_variant_id))throw new Error('Выберите материалы корпуса и фасадов для всех модулей.');
