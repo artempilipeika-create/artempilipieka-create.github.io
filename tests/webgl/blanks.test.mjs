@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {
   geometryFromBlank,blankItem,updateBlank,edgeMeters,blanksCSV,validateBlank
 } from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
+import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
+import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
+import {bounds} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 
 test('independent panels use physical width, height and depth by orientation',()=>{
   assert.deepEqual(geometryFromBlank(720,400,18,'horizontal'),{width:720,height:18,depth:400});
@@ -40,7 +43,38 @@ test('rejects impossible dimensions and malformed PVC code',()=>{
   assert.match(validateBlank({...item,blank_width_mm:0}),/Ширина/);
   assert.match(validateBlank({...item,blank_thickness_mm:4}),/Толщина/);
   assert.match(validateBlank({...item,blank_edge_code:'1200'}),/Код ПВХ/);
+  assert.match(validateBlank({...item,blank_axis:'unknown'}),/ориентация/);
   assert.match(validateBlank({...item,blank_axis:'side',elevation_mm:2500},{height:2700}),/высоту/);
+});
+
+test('raised shelf keeps its height through insert, edit, undo, redo, copy and reopening',()=>{
+  const room={width:4200,depth:3200,height:2700,setup_complete:true};
+  let state={room,items:[],selected_item_id:null};
+  const adapter=new StateAdapter({supportsElevation:true,state:()=>state,
+    selected:()=>state.items.find(it=>it.item_id===state.selected_item_id),
+    select:id=>{state.selected_item_id=id;},refresh:()=>{},material:()=>null,
+    snapshot:()=>({name:'QA shelves',scene:structuredClone(state)}),
+    restore:value=>{state=structuredClone(value.scene);}});
+  const history=new History(adapter);
+  const bottom=blankItem({item_id:'bottom',elevation_mm:100});
+  const shelf=blankItem({item_id:'shelf',elevation_mm:500,blank_edge_code:'1011'});
+  history.run('Add bottom',()=>adapter.insert(bottom));
+  assert.equal(adapter.validate(shelf),'');
+  history.run('Add shelf',()=>adapter.insert(shelf));
+  assert.equal(adapter.selected.elevation_mm,500);
+  assert.equal(bounds(adapter.selected,room).minY,500);
+  history.run('Raise shelf',()=>adapter.replace(updateBlank(adapter.selected,{elevation_mm:600,rotation:90})));
+  assert.equal(adapter.selected.elevation_mm,600);
+  history.undo();assert.equal(adapter.selected.elevation_mm,500);
+  history.redo();assert.equal(adapter.selected.elevation_mm,600);
+  adapter.restore(JSON.parse(JSON.stringify(adapter.snapshot())));
+  assert.equal(adapter.selected.elevation_mm,600);
+  assert.equal(adapter.selected.blank_edge_code,'1011');
+  adapter.insert({...adapter.selected,item_id:'copy',x:1000});
+  assert.equal(adapter.selected.elevation_mm,600);
+  assert.equal(adapter.validate(adapter.selected),'');
+  const overlap={...adapter.selected,x:0,elevation_mm:100,rotation:0};
+  assert.notEqual(adapter.validate(overlap),'');
 });
 
 test('CSV includes full source dimensions, material, all four edges and total PVC metres',()=>{

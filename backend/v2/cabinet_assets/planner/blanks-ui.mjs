@@ -4,7 +4,6 @@ import {findSpace} from './placement.mjs';
 const get=id=>document.getElementById(id);
 const numberField=(form,key)=>Number(form.querySelector('[name="'+key+'"]').value);
 const textField=(form,key)=>form.querySelector('[name="'+key+'"]').value;
-const axisNames={horizontal:'Горизонтальная · полка / крышка',side:'Вертикальная · боковая стойка',back:'Вертикальная · задняя панель / фасад'};
 const edgeNames=['Длинный торец 1','Длинный торец 2','Короткий торец 1','Короткий торец 2'];
 
 function formHtml(kind){
@@ -39,6 +38,9 @@ function formHtml(kind){
         <option value="side">Вертикально · боковая стойка</option>
         <option value="back">Вертикально · задняя панель / фасад</option>
       </select></label>
+      <div class="mf-blank-presets" role="group" aria-label="Схемы оклейки">
+        ${SOURCE_EDGE_CODES.map(code=>`<button type="button" data-blank-preset="${code}" aria-pressed="${code==='1000'}">${code==='0000'?'Без ПВХ':code==='1111'?'1111 · в круг':code}</button>`).join('')}
+      </div>
       <fieldset class="mf-blank-edges"><legend>Кромка ПВХ по торцам</legend>
         ${edgeNames.map((label,i)=>`<label><input type="checkbox" name="edge${i}" ${i===0?'checked':''}><span>${label}</span></label>`).join('')}
       </fieldset>
@@ -67,6 +69,7 @@ function readForm(form){
 function draw(form,room){
   const v=readForm(form),error=validateBlank(v,room);
   form.querySelector('[data-blank-code]').textContent=v.blank_edge_code;
+  for(const button of form.querySelectorAll('[data-blank-preset]'))button.setAttribute('aria-pressed',String(button.dataset.blankPreset===v.blank_edge_code));
   for(let i=0;i<4;i++){
     const line=form.querySelector('[data-edge-line="'+i+'"]');
     line.setAttribute('stroke',v.blank_edge_code[i]==='1'?'#17815a':'#d8ddd8');
@@ -74,8 +77,7 @@ function draw(form,room){
   const m=edgeMeters(v),count=v.blank_edge_code.split('1').length-1;
   form.querySelector('[data-blank-summary]').textContent=error?'':
     v.blank_length_mm+' × '+v.blank_width_mm+' × '+v.blank_thickness_mm+' мм · '+count+' торц. · ПВХ '+m.toFixed(2)+' м';
-  form.querySelector('[data-blank-source]').textContent=SOURCE_EDGE_CODES.includes(v.blank_edge_code)?
-    'Есть предоставленный FR3D с таким кодом; сейчас используется универсальная геометрия.':'Новая комбинация ПВХ: геометрия доступна, исходный FR3D пока не предоставлен.';
+  form.querySelector('[data-blank-source]').textContent='Кромка остаётся на выбранных торцах при повороте детали. CSV содержит заданные размеры; толщину ПВХ он пока не вычитает.';
   const box=form.querySelector('[data-blank-error]');
   box.textContent=error;box.hidden=!error;
   return !error;
@@ -100,6 +102,11 @@ export class BlanksUI{
     this.itemControls=get('item-controls');
     for(const form of [this.catalog,this.inspector]){
       form.addEventListener('submit',e=>e.preventDefault());
+      for(const button of form.querySelectorAll('[data-blank-preset]'))button.addEventListener('click',()=>{
+        for(let i=0;i<4;i++)form.querySelector('[name="edge'+i+'"]').checked=button.dataset.blankPreset[i]==='1';
+        if(form===this.inspector)this.commit();
+        else draw(form,this.app.adapter.room);
+      });
       form.addEventListener('input',()=>draw(form,this.app.adapter.room));
       form.addEventListener('change',()=>{
         if(form===this.inspector)this.commit();

@@ -16,7 +16,7 @@ export function normalizeBlank(input={}){
   const length=Number(input.blank_length_mm??input.length??720);
   const width=Number(input.blank_width_mm??input.partWidth??400);
   const thickness=Number(input.blank_thickness_mm??input.thickness??18);
-  const axis=AXES.includes(input.blank_axis??input.axis)?input.blank_axis??input.axis:'horizontal';
+  const axis=input.blank_axis??input.axis??'horizontal';
   const code=String(input.blank_edge_code??input.edges??'1000');
   const elevation=Number(input.elevation_mm??input.elevation??0);
   return {length,width,thickness,axis,code,elevation};

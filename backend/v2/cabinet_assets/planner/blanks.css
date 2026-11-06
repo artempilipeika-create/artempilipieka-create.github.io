@@ -8,6 +8,10 @@
 .mf-blank-sketch svg{display:block;max-width:270px;width:100%;height:auto}
 .mf-blank-code{font-size:13px;color:#617165}.mf-blank-code strong{font-size:19px;letter-spacing:.14em;color:#126a48}
 .mf-blank-form{display:grid;gap:13px}
+.mf-blank-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.mf-blank-presets button{min-height:36px;padding:6px 4px;border:1px solid #cad5cb;border-radius:8px;background:#fff;color:#314b3b;font-size:12px;cursor:pointer}
+.mf-blank-presets button[aria-pressed=true]{background:#e1f2e8;border-color:#17815a;color:#12583b;font-weight:750}
+.mf-blank-presets button:focus-visible{outline:2px solid #2a8661;outline-offset:2px}
 .mf-blank-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:650;color:#314b3b}
 .mf-blank-form label input:not([type=checkbox]),.mf-blank-form label select{width:100%;height:40px;border:1px solid #cad5cb;border-radius:9px;padding:8px 10px;background:#fff;color:#253a2b;font:600 14px/1.2 system-ui,sans-serif;box-sizing:border-box}
 .mf-blank-form label input:focus-visible,.mf-blank-form label select:focus-visible{outline:2px solid #2a8661;outline-offset:1px}
