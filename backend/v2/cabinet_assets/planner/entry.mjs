@@ -32,6 +32,7 @@ import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
 import {ProjectSafety} from './project-safety.mjs';
 import {SceneDimensions} from './dimensions.mjs';
+import {BlanksUI} from './blanks-ui.mjs';
 
 class PlannerApplication {
   constructor(){this.version='1.0.0';this.ready=false;this.options={enabled:true,alignment:'front',wallOffset:0,autoRotate:true,allowElevation:false};}
@@ -46,6 +47,7 @@ class PlannerApplication {
     this.presentation=new PresentationUI(this);this.executions=new ExecutionUI(this);
     this.dimensions=new SceneDimensions(this);
     this.roomSetup=new RoomSetup(this);
+    this.blanks=new BlanksUI(this);
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
       if(reason==='before-project'){
@@ -468,7 +470,7 @@ class PlannerApplication {
     const selectedId=this.adapter.state?.selected_item_id;
     if(selectedId&&!this.adapter.items.some(it=>it.item_id===selectedId)){this.adapter.select(null);return;}
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.wallFinishes?.sync();this.mobility?.sync();this.materialAppearance?.sync();
+    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.wallFinishes?.sync();this.mobility?.sync();this.materialAppearance?.sync();this.blanks?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;
@@ -477,7 +479,7 @@ class PlannerApplication {
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
     get('studio-empty-scene').hidden=Boolean(count||this.adapter.room.features?.some(f=>['window','radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)));this.paintMode();this.equipment?.sync();this.executions?.sync();
   }
-  dispose(){this.executions?.dispose();this.equipment?.dispose();this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
+  dispose(){this.blanks?.dispose();this.executions?.dispose();this.equipment?.dispose();this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
 }
 export const planner=new PlannerApplication();
 window.MF_PLANNER=planner;
