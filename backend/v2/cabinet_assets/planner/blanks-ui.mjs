@@ -114,13 +114,17 @@ export class BlanksUI{
   add(){
     if(!draw(this.catalog,this.app.adapter.room))return;
     const spec=readForm(this.catalog);
-    const draft=blankItem({...spec,body_variant_id:globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id||null});
+    const draft=blankItem({...spec,
+      // 605 PO is an 18 mm donor. Never label a thinner/thicker board as 18 mm stock.
+      body_variant_id:spec.blank_thickness_mm===18?(globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id||null):null
+    });
     const ok=this.app.interaction.change('Добавление заготовки ЛДСП',()=>{
       const next=findSpace(draft,this.app.adapter.items,this.app.adapter.room,this.app.adapter.selected,{enabled:true,alignment:'front',wallOffset:0,autoRotate:false,allowElevation:true});
       if(!next)throw new Error('Для детали нет свободного места в помещении.');
       const err=this.app.adapter.validate(next);if(err)throw new Error(err);
       this.app.adapter.insert(next);
-      this.app.adapter.status('Добавлена заготовка · ПВХ '+next.blank_edge_code);
+      this.app.adapter.status('Добавлена заготовка · ПВХ '+next.blank_edge_code+
+        (!next.body_variant_id?' · выберите ЛДСП '+next.blank_thickness_mm+' мм в материалах.':''));
     });
     if(ok)this.app.workspace?.panel('right',true,{focus:true});
   }
