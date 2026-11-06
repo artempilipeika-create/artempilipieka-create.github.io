@@ -1007,6 +1007,11 @@ function facadeCells(it){
 }
 
 function buildItem(it){
+  if(it.module_type==='blank'){
+    const scale=1/500,y=globalThis.MF_FURNITURE_CORE.elevation(it,state.room)+it.height/2;
+    addItemBox(it,it.width*scale,it.height*scale,it.depth*scale,0,y*scale,0,colorFor(materials.get(String(it.body_variant_id))));
+    return;
+  }
   const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it),id=>materials.get(String(id)));
   if(parts){
     for(const part of parts){const d=part.size,c=part.position;
@@ -1041,6 +1046,8 @@ function buildBoxes(){
 }
 
 function cutlistItem(it){
+  if(it.module_type==='blank')return [[it.name+' · ПВХ '+it.blank_edge_code,
+    it.blank_length_mm,it.blank_width_mm,1,'body',it]];
   const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
   const parts=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it),id=>materials.get(String(id)));
   if(parts){
