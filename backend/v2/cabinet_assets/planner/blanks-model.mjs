@@ -55,12 +55,12 @@ export function edgeMeters(blank){
   return Math.round((b.length*(Number(b.code[0])+Number(b.code[1]))+
     b.width*(Number(b.code[2])+Number(b.code[3])))/10)/100;
 }
-export function blanksCSV(items){
+export function blanksCSV(items,materialLookup=()=>null){
   const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-  const header=['Название','Длина, мм','Ширина, мм','Толщина, мм','Кромка 1','Кромка 2','Кромка 3','Кромка 4','Код ПВХ','ПВХ, м','Материал (ID)'];
+  const header=['Название','Длина, мм','Ширина, мм','Толщина, мм','Кромка 1','Кромка 2','Кромка 3','Кромка 4','Код ПВХ','ПВХ, м','Материал','Артикул','Материал (ID)'];
   const rows=items.filter(it=>it.module_type==='blank').map(it=>{
-    const b=normalizeBlank(it);
-    return [it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),it.body_variant_id||''];
+    const b=normalizeBlank(it),material=it.body_variant_id?materialLookup(it.body_variant_id):null;
+    return [it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),material?.name||'',material?.article||'',it.body_variant_id||''];
   });
   return '\ufeff'+[header,...rows].map(row=>row.map(quote).join(';')).join('\r\n')+'\r\n';
 }
