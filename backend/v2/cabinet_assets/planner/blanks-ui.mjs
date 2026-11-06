@@ -141,7 +141,7 @@ export class BlanksUI{
   export(){
     const items=this.app.adapter.items.filter(it=>it.module_type==='blank');
     if(!items.length){this.app.adapter.status('Сначала добавьте заготовку в проект.');return;}
-    const file=new Blob([blanksCSV(items)],{type:'text/csv;charset=utf-8'});
+    const file=new Blob([blanksCSV(items,id=>this.app.adapter.material(id))],{type:'text/csv;charset=utf-8'});
     const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download='Martin_Forest_Заготовки.csv';
     document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
