@@ -51,6 +51,9 @@ export class StateAdapter{
       const error=validateBlank(it,this.room);if(error)return error;
       const dimensions=geometryFromBlank(it.blank_length_mm,it.blank_width_mm,it.blank_thickness_mm,it.blank_axis);
       if(['width','height','depth'].some(key=>it[key]!==dimensions[key]))return 'Размеры заготовки не соответствуют её ориентации';
+      const material=it.body_variant_id?this.material(it.body_variant_id):null;
+      if(material&&Number.isFinite(Number(material.thickness))&&Number(material.thickness)!==it.blank_thickness_mm)
+        return 'Толщина выбранного ЛДСП не совпадает с толщиной заготовки. Выберите материал '+it.blank_thickness_mm+' мм.';
       if(!Number.isInteger(it.x*2)||!Number.isInteger(it.z*2)||![0,90,180,270].includes(it.rotation))return 'Положение с шагом 0,5 мм, поворот с шагом 90°';
       return placementError(it,items,this.room);
     }
