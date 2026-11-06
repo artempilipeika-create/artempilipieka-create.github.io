@@ -46,8 +46,9 @@ test('rejects impossible dimensions and malformed PVC code',()=>{
 test('CSV includes full source dimensions, material, all four edges and total PVC metres',()=>{
   const item=blankItem({name:'Полка 1',blank_length_mm:720,blank_width_mm:400,blank_thickness_mm:18,
     blank_edge_code:'1011',body_variant_id:'material-uuid'});
-  const csv=blanksCSV([item,{module_type:'base_cabinet'}]);
+  const csv=blanksCSV([item,{module_type:'base_cabinet'}],
+    id=>id==='material-uuid'?{name:'ЛДСП 605 PO',article:'605 PO'}:null);
   assert.ok(csv.startsWith('\ufeff'));
-  assert.ok(csv.includes('"720";"400";"18";"1";"0";"1";"1";"1011";"1,52";"material-uuid"'));
+  assert.ok(csv.includes('"720";"400";"18";"1";"0";"1";"1";"1011";"1,52";"ЛДСП 605 PO";"605 PO";"material-uuid"'));
   assert.equal(csv.split('Полка 1').length-1,1);
 });
