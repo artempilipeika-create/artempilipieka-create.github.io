@@ -1273,17 +1273,13 @@ function exportMaterialDescriptor(id){
     article:m.article||null,thickness:m.thickness||null}:null;
 }
 async function exportBazisProjectReady(){
-  if(state.items.some(it=>it.module_type==='blank')){
-    status('В проекте есть отдельные заготовки. Родной экспорт БАЗИС пока не включает их: выгрузите CSV в разделе «Заготовки», чтобы не потерять детали.');
-    return;
-  }
   const button=$('export-bazis');
   if(button.disabled)return;
   button.disabled=true;
   try{
     await hydrateMaterials();
     const missing=[];
-    for(const it of state.items.filter(x=>x.bazis_file)){
+    for(const it of state.items.filter(x=>x.bazis_file||x.module_type==='blank')){
       const ids=[it.body_variant_id,it.front_variant_id,it.back_variant_id,it.plinthMaterialId,it.countertopMaterialId,
         ...Object.values(it.part_materials||{}),...(it.shelves||[]).map(s=>s.material_variant_id)];
       for(const id of ids.filter(Boolean)){
@@ -1309,9 +1305,14 @@ function exportBazisProject(){
   }catch(error){status('Экспорт не создан: '+error.message);return;}
   const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
   if(invalid){status(invalid);return;}
+  let blankItems=[];
+  try{
+    if(state.items.some(it=>it.module_type==='blank')&&!globalThis.MF_BLANKS_NATIVE)throw Error('Обновите страницу: модуль заготовок не загружен.');
+    blankItems=globalThis.MF_BLANKS_NATIVE?.nativeItems(state.items,exportMaterialDescriptor)||[];
+  }catch(error){status('Экспорт не создан: '+error.message);return;}
   const bazisItems=state.items.filter(x=>x.bazis_file);
-  const missing=state.items.filter(x=>!x.bazis_file);
-  if(!bazisItems.length){
+  const missing=state.items.filter(x=>!x.bazis_file&&x.module_type!=='blank');
+  if(!bazisItems.length&&!blankItems.length){
     alert('В проекте нет модулей из раздела «Мои БАЗИС». Для родной модели .b3d нужны исходные .fr3d.');
     status('Экспорт БАЗИС: нет родных модулей.');
     return;
@@ -1391,6 +1392,8 @@ function exportBazisProject(){
       };
     })
   };
+  for(const item of blankItems){item.index=payload.items.length+1;payload.items.push(item);}
+  if(blankItems.length){payload.minimum_importer='9.9.8';payload.format='martin-forest-bazis-native-v3';}
   payload.wall_finishes=globalThis.MF_WALL_FINISHES?.schedule(state)||{panels:[],lights:[]};
   const finishNote=globalThis.MF_WALL_FINISHES?.text(state);if(finishNote&&!payload.project_note.includes(finishNote))payload.project_note+='\n'+finishNote;
   const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];

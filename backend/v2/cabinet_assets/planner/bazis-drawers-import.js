@@ -128,7 +128,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || payload.format !== 'martin-forest-bazis-native-v2' ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -1010,7 +1010,74 @@ function repairNativeProfiles(checks, after, log) {
 }
 // END GENERATED NATIVE PROFILE REPAIR
 
+const BLANK_DONORS={"2d1ab93e53d1691e1db7d058a1001888d3953400a0c6a237a150fa3b3fdd022e": "0000", "832a1af0a6e126a75af5ab54286c3f24892ed6eddc03e60b60612ca39b373a25": "1000", "dcc7cdbb5a0555789ca0955bf35fce22242b6a286c5795a27983e9701644989f": "1010", "a532f5ac5c4a6912e66ce7c9ca43caadf0e7f76a2c1e6ffab208b41511340b10": "1110", "e07c4d7834c384a3bb7a7e5a12e8c88d97ae238ff011a5db9b75e9c0f10aadfb": "1011", "bdd018565b8d860277e5d1dcd6b1312486754f53d67ca63fdc7626f11127a5d3": "1111"};
+// Native blank donors are SHA-pinned; their contour axes were read from all six FR3D files.
+// Local panel X=width, Y=length; edge bits map to contour elements 1,3,0,2.
+function blankVector(v, axis) {
+  if(axis==='horizontal')return {x:v.y,y:-v.x,z:v.z};
+  if(axis==='back')return {x:v.y,y:-v.z,z:-v.x};
+  return {x:v.x,y:v.y,z:v.z};
+}
+function resizeAndPlaceBlank(obj,item,log){
+ const b=item.blank,source=BLANK_DONORS[String(item.source_sha256||'').toLowerCase()];
+ if(!source||b?.schema!==1||b.finished_dimensions!==true)throw Error('Неизвестный исходник или формат заготовки.');
+ const L=Number(b.length),W=Number(b.width),T=Number(b.thickness),E=Number(b.edge_thickness);
+ if(!Number.isInteger(L)||L<100||L>3000||!Number.isInteger(W)||W<100||W>1200||!Number.isInteger(T)||T<10||T>40||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
+ const expected=b.axis==='side'?{width:T,height:L,depth:W}:b.axis==='back'?{width:L,height:W,depth:T}:{width:L,height:T,depth:W};
+ if(['width','height','depth'].some(k=>Number(item.target?.[k])!==expected[k]))throw Error('Габариты заготовки не совпали с её ориентацией.');
+ if(!item.material_assignments?.body?.name||Number(item.material_assignments.body.thickness)!==T)throw Error('Не задан подходящий материал заготовки.');
+ const panels=[];walkPanels(obj,p=>panels.push(p));
+ if(panels.length!==1)throw Error('В исходнике заготовки должна быть ровно одна панель.');
+ const panel=panels[0],elements=[1,3,0,2];
+ const original=[];
+ for(let i=0;i<Number(panel.Butts.Count);i++)original.push(Number(panel.Butts.Butts[i].ElemIndex));
+ const required=elements.filter((_,i)=>source[i]==='1');
+ if(original.sort().join(',')!==required.sort().join(','))throw Error('Торцы исходной панели не совпали с проверенным FR3D.');
+ obj.SetDefaultTransform();
+ historyOperations.RegisterObjectChanging(panel);
+ panel.Contour.Clear();
+ for(const line of [[0,0,W,0],[W,0,W,L],[W,L,0,L],[0,L,0,0]])panel.Contour.AddLine(...line);
+ panel.Thickness=T;panel.PositionX=T;
+ panel.Butts.Clear();
+ for(let i=0;i<4;i++)if(b.edge_code[i]==='1'){
+  const edge=panel.Butts.Add();edge.ElemIndex=elements[i];edge.Material='ПВХ В цвет корпуса\rЦвет корпуса';
+  edge.Thickness=E;edge.Width=T+4;edge.Sign='в цвет корпуса';edge.ClipPanel=true;edge.Allowance=0;edge.Overhung=0;edge.CutIndex=-1;
+ }
+ panel.Build();
+ const list=asList(obj);
+ for(let i=0;i<list.Count;i++){
+  const child=childAt(list,i);if(isServiceFrame(child)){
+   historyOperations.RegisterObjectChanging(child);child.Width=T;child.Height=L;child.Depth=W;if(typeof child.Build==='function')child.Build();
+  }
+ }
+ if(typeof obj.Build==='function')obj.Build();
+ const materialChecks=applyProjectMaterials(obj,item,log);
+ if(materialChecks.length!==1)throw Error('Материал заготовки не подтверждён.');
+ if(Number(panel.Butts.Count)!==b.edge_code.split('1').length-1)throw Error('Не сохранилась оклейка заготовки.');
+ for(let i=0;i<Number(panel.Butts.Count);i++){
+  const edge=panel.Butts.Butts[i],index=elements.indexOf(Number(edge.ElemIndex));
+  if(index<0||b.edge_code[index]!=='1'||Math.abs(Number(edge.Thickness)-E)>.001||edge.ClipPanel!==true)throw Error('Не совпали параметры ПВХ.');
+ }
+ const anchor=b.axis==='side'?{x:T/2,y:0,z:W/2}:b.axis==='horizontal'?{x:T,y:L/2,z:W/2}:{x:T/2,y:L/2,z:W};
+ if(b.axis!=='side')objectTransformation.RotateObject(obj,{x:0,y:0,z:1},-90,true);
+ if(b.axis==='back')objectTransformation.RotateObject(obj,{x:1,y:0,z:0},90,true);
+ const angle=Number(item.rotation||0),desired=vector(item.position,'position');
+ if(![0,90,180,270].includes(angle))throw Error('Поворот заготовки должен быть кратен 90°.');
+ if(angle)objectTransformation.RotateObject(obj,{x:0,y:1,z:0},-angle,true);
+ const current=vector(obj.ToGlobal(anchor),'anchor'),origin=vector(obj.ToGlobal({x:0,y:0,z:0}),'origin');
+ setObjectPosition(obj,{x:desired.x-current.x+origin.x,y:desired.y-current.y+origin.y,z:desired.z-current.z+origin.z});
+ if(distance(obj.ToGlobal(anchor),desired)>PLACEMENT_TOLERANCE_MM)throw Error('Не совпало положение заготовки.');
+ const finalOrigin=obj.ToGlobal({x:0,y:0,z:0});
+ for(const v of [{x:100,y:0,z:0},{x:0,y:100,z:0},{x:0,y:0,z:100}]){
+  const actual=obj.ToGlobal(v),expected=rotateScene(blankVector(v,b.axis),angle);
+  if(distance({x:actual.x-finalOrigin.x,y:actual.y-finalOrigin.y,z:actual.z-finalOrigin.z},expected)>PLACEMENT_TOLERANCE_MM)throw Error('Не совпала ориентация заготовки.');
+ }
+ log.push('ЗАГОТОВКА OK: '+item.name+'; '+L+' × '+W+' × '+T+' мм; ПВХ '+b.edge_code+' / '+E+' мм; подрезка включена; '+b.axis);
+ return {materialChecks,profileChecks:[]};
+}
+
 function resizeAndPlace(obj, item, log) {
+  if(item.blank)return resizeAndPlaceBlank(obj,item,log);
   const list = asList(obj);
   if (!item.source_default || !item.target) throw new Error('Нет исходных или целевых габаритов');
   obj.SetDefaultTransform();
@@ -1118,7 +1185,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.7 NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.8 BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

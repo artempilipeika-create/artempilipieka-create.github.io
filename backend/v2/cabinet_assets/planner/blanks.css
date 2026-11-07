@@ -27,3 +27,18 @@
 .mf-blank-export{width:100%;font-size:12px!important}
 body.mf-blank-selected .mf3d-material{margin-bottom:8px}
 @media(max-width:450px){.mf-blank-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.mf-blank-edges{grid-template-columns:1fr}.mf-blank-card{padding:14px}.mf-blank-sketch svg{max-width:240px}}
+
+.mf-blank-hero{position:relative;overflow:hidden;height:170px;border-radius:16px;background:radial-gradient(ellipse at 45% 20%,#fcfaf3,#e4e9e0);margin:16px 0 12px;perspective:700px}
+.mf-blank-chip{position:absolute;top:12px;left:12px;background:#ffffffcf;border:1px solid #ffffff;border-radius:99px;padding:6px 10px;font-size:11px;letter-spacing:.05em;color:#405745}
+.mf-blank-board{position:absolute;left:20%;top:45px;width:62%;height:90px;transform:rotateX(55deg) rotateZ(-28deg);background:repeating-linear-gradient(4deg,#d9c19a 0px,#e1cda9 3px,#e7d5b5 5px,#d6bd94 7px);border:1px solid #c2a67b;box-shadow:-1px 2px #c6b18e,-2px 4px #c6b18e,-3px 6px #b5a080,-4px 8px #a89270,0 30px 22px #35482e35}
+.mf-blank-board i{position:absolute;bottom:0;left:0;right:0;height:5px;background:#297b58}
+.mf-blank-hero-label{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:11px;color:#64725c}
+.mf-blank-section-title{display:flex;align-items:center;gap:9px;color:#91a294;font-size:11px;font-weight:700;letter-spacing:.1em;margin-top:4px}
+.mf-blank-section-title span{color:#354c3c;letter-spacing:0;font-size:13px}
+.mf-blank-presets button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px!important;transition:background .15s,box-shadow .15s}
+.mf-blank-presets svg{width:64px;height:44px;max-width:100%}
+.mf-blank-presets button:hover{background:#f3f7f0;box-shadow:0 3px 8px #1d432b12}
+.mf-blank-sketch{background:#fafbf8;padding:4px 8px}.mf-blank-sketch svg{max-width:220px}
+.mf-blank-cut{margin:0;padding:12px;border:1px dashed #9bb6a2;border-radius:10px;font-size:13px;color:#45634e}
+.mf-blank-downloads{display:flex;justify-content:space-between;gap:12px;font-size:11px}.mf-blank-downloads a{color:#2a7152;text-decoration:underline;text-underline-offset:3px}
+.mf-blank-inspector .mf-blank-hero{display:none}

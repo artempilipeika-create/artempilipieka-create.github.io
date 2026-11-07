@@ -166,6 +166,6 @@ test('46 catalogue source identities and profile counts match the single-file im
     for(const v of variants){const n=(v.profiles||[]).filter(p=>/^gola [lc]$/i.test(p.name)).length;if(n)expected[v.source_sha256]=n;}
   }
   assert.deepEqual(JSON.parse(JSON.stringify(counts)),expected);
-  assert.equal(source,read('tools/bazis_import/Martin_Forest_Import_v9_9_7_NATIVE_PROFILES.js'));
+  assert.equal(source,read('tools/bazis_import/Martin_Forest_Import_v9_9_8_BLANKS.js'));
   assert.ok(source.includes(read('tools/bazis_import/profile-repair.js')));
 });

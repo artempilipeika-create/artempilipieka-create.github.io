@@ -109,6 +109,7 @@ class FurnitureItem(StrictModel):
     blank_length_mm: int|None=Field(default=None,ge=100,le=3000)
     blank_width_mm: int|None=Field(default=None,ge=100,le=1200)
     blank_thickness_mm: int|None=Field(default=None,ge=10,le=40)
+    blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)

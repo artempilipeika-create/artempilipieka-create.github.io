@@ -1,4 +1,5 @@
-import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
+import './blanks-native.mjs';
+import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,blankCopies,cuttingSize,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
 
 const get=id=>document.getElementById(id);
@@ -9,9 +10,10 @@ const edgeNames=['Длинный торец 1','Длинный торец 2','К
 function formHtml(kind){
   const catalog=kind==='catalog';
   return `<div class="mf-blank-card">
-    <div class="mf-blank-head"><span class="mf3d-kicker">ОДНА КАРТОЧКА · ВСЕ ВАРИАНТЫ ПВХ</span>
+    <div class="mf-blank-head"><span class="mf3d-kicker">ДЕТАЛИ ВАШЕГО ПРОЕКТА</span>
       <h3>${catalog?'Заготовка ЛДСП':'Параметры заготовки'}</h3>
-      <p>${catalog?'Добавьте отдельную деталь, затем копируйте и располагайте её в 3D-сцене.':'Изменения сохраняются вместе с проектом. Перемещение — на самой сцене.'}</p></div>
+      <p>${catalog?'Полка, стойка или фасад — задайте размер и отметьте нужные торцы.':'Изменения сохраняются вместе с проектом. Перемещение — на самой сцене.'}</p></div>
+    <div class="mf-blank-hero" aria-hidden="true"><span class="mf-blank-chip">ЛДСП · <b data-hero-thickness>18</b> мм</span><div class="mf-blank-board"><i></i></div><span class="mf-blank-hero-label">Точная деталь. Ваша конструкция.</span></div>
     <div class="mf-blank-sketch">
       <svg viewBox="0 0 320 210" role="img" aria-label="Схема четырёх торцов прямоугольной детали">
         <rect x="64" y="31" width="192" height="136" rx="2" fill="#d2b58a" stroke="#8e704b" stroke-width="1.6"/>
@@ -28,7 +30,8 @@ function formHtml(kind){
       <span class="mf-blank-code">Код ПВХ: <strong data-blank-code>1000</strong></span>
     </div>
     <div class="mf-blank-form">
-      <div class="mf-blank-fields">
+      ${catalog?`<label>Название детали<select name="partName"><option>Полка</option><option>Стойка</option><option>Крышка</option><option>Днище</option><option>Перегородка</option><option>Фасад</option></select></label>`:''}
+      <div class="mf-blank-section-title">01 <span>Готовый размер с кромкой</span></div><div class="mf-blank-fields">
         <label>Длина, мм<input name="length" type="number" min="100" max="3000" step="1" value="720" required></label>
         <label>Ширина, мм<input name="partWidth" type="number" min="100" max="1200" step="1" value="400" required></label>
         <label>Толщина ЛДСП, мм<input name="thickness" type="number" min="10" max="40" step="1" value="18" required></label>
@@ -38,23 +41,27 @@ function formHtml(kind){
         <option value="side">Вертикально · боковая стойка</option>
         <option value="back">Вертикально · задняя панель / фасад</option>
       </select></label>
-      <div class="mf-blank-presets" role="group" aria-label="Схемы оклейки">
-        ${SOURCE_EDGE_CODES.map(code=>`<button type="button" data-blank-preset="${code}" aria-pressed="${code==='1000'}">${code==='0000'?'Без ПВХ':code==='1111'?'1111 · в круг':code}</button>`).join('')}
+      <div class="mf-blank-section-title">02 <span>Схема оклейки</span></div><div class="mf-blank-presets" role="group" aria-label="Схемы оклейки">
+        ${SOURCE_EDGE_CODES.map(code=>`<button type="button" data-blank-preset="${code}" aria-pressed="${code==='1000'}"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="12" y="8" width="40" height="28" fill="#f0e8d9"/>${['M12 36H52','M12 8H52','M12 8V36','M52 8V36'].map((d,i)=>`<path d="${d}" fill="none" stroke="${code[i]==='1'?'#247a58':'#cdd4cc'}" stroke-width="4"/>`).join('')}</svg><span>${code==='0000'?'Без ПВХ':code==='1111'?'В круг':code}</span></button>`).join('')}
       </div>
       <fieldset class="mf-blank-edges"><legend>Кромка ПВХ по торцам</legend>
         ${edgeNames.map((label,i)=>`<label><input type="checkbox" name="edge${i}" ${i===0?'checked':''}><span>${label}</span></label>`).join('')}
       </fieldset>
+      <label>Толщина ПВХ, мм<select name="edgeThickness"><option value="0.4">0,4 мм</option><option value="0.8">0,8 мм</option><option value="1" selected>1 мм · как в ваших FR3D</option><option value="2">2 мм</option><option value="3">3 мм</option></select></label>
       ${!catalog?`<div class="mf-blank-fields">
         <label>X, мм<input name="x" type="number" step="0.5" value="0"></label>
         <label>Z, мм<input name="z" type="number" step="0.5" value="0"></label>
         <label>Низ от пола, мм<input name="elevation" type="number" min="0" max="5000" step="1" value="0"></label>
       </div>
       <label>Поворот<select name="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>`:''}
-      <p class="mf-blank-result" aria-live="polite" data-blank-summary></p>
+      <p class="mf-blank-cut" data-blank-cut></p><p class="mf-blank-result" aria-live="polite" data-blank-summary></p>
       <p class="mf-blank-source" data-blank-source></p>
       <p class="mf-blank-error" data-blank-error role="alert" hidden></p>
       ${catalog?`<button type="button" class="mf-blank-primary" data-blank-add>+ Добавить заготовку в 3D</button>
-      <button type="button" class="secondary mf-blank-export" data-blank-export>Деталировка заготовок · CSV</button>`:''}
+      <button type="button" class="secondary mf-blank-export" data-blank-export>Деталировка заготовок · CSV</button>
+      <button type="button" class="mf-blank-primary" data-blank-bazis>Экспорт проекта в БАЗИС</button>
+      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261107-blanks" download="Martin_Forest_Import_v9_9_8_BLANKS.js">Импортёр 9.9.8 ↓</a><a href="/account/planner/blank-sources.zip" download>Исходные заготовки ↓</a></div>`:''}
+      ${!catalog?`<details class="mf-blank-repeat"><summary>Копировать с шагом</summary><div class="mf-blank-fields"><label>Копий<input name="copyCount" type="number" min="1" max="30" value="1"></label><label>Шаг, мм<input name="copyStep" type="number" step="0.5" value="300"></label></div><label>Направление<select name="copyAxis"><option value="elevation_mm">По высоте</option><option value="x">По X</option><option value="z">По Z</option></select></label><button type="button" data-blank-copy>Создать копии</button></details>`:''}
     </div>
   </div>`;
 }
@@ -62,7 +69,8 @@ function readForm(form){
   const code=EDGES.map((_,i)=>form.querySelector('[name="edge'+i+'"]').checked?'1':'0').join('');
   return {blank_length_mm:numberField(form,'length'),blank_width_mm:numberField(form,'partWidth'),
     blank_thickness_mm:numberField(form,'thickness'),blank_axis:textField(form,'axis'),
-    blank_edge_code:code,
+    ...(form.dataset.kind==='catalog'?{name:textField(form,'partName')}:{}),
+    blank_edge_code:code,blank_edge_thickness_mm:numberField(form,'edgeThickness'),
     ...(form.dataset.kind==='inspector'?{x:numberField(form,'x'),z:numberField(form,'z'),
       elevation_mm:numberField(form,'elevation'),rotation:numberField(form,'rotation')}:{elevation_mm:0})};
 }
@@ -74,17 +82,19 @@ function draw(form,room){
     const line=form.querySelector('[data-edge-line="'+i+'"]');
     line.setAttribute('stroke',v.blank_edge_code[i]==='1'?'#17815a':'#d8ddd8');
   }
+  form.querySelector('[data-hero-thickness]').textContent=v.blank_thickness_mm;
+  const cut=cuttingSize(v);form.querySelector('[data-blank-cut]').textContent=error?'':'Размер распила: '+cut.length+' × '+cut.width+' мм';
   const m=edgeMeters(v),count=v.blank_edge_code.split('1').length-1;
   form.querySelector('[data-blank-summary]').textContent=error?'':
     v.blank_length_mm+' × '+v.blank_width_mm+' × '+v.blank_thickness_mm+' мм · '+count+' торц. · ПВХ '+m.toFixed(2)+' м';
-  form.querySelector('[data-blank-source]').textContent='Кромка остаётся на выбранных торцах при повороте детали. CSV содержит заданные размеры; толщину ПВХ он пока не вычитает.';
+  form.querySelector('[data-blank-source]').textContent='Кромка остаётся на выбранных торцах при повороте детали. В деталировке и БАЗИС толщина ПВХ вычитается из готового размера.';
   const box=form.querySelector('[data-blank-error]');
   box.textContent=error;box.hidden=!error;
   return !error;
 }
 function values(form,item){
   const b=normalizeBlank(item);
-  for(const [key,value] of [['length',b.length],['partWidth',b.width],['thickness',b.thickness],['axis',b.axis],
+  for(const [key,value] of [['length',b.length],['partWidth',b.width],['thickness',b.thickness],['axis',b.axis],['edgeThickness',b.edgeThickness],
     ['x',item.x],['z',item.z],['elevation',b.elevation],['rotation',item.rotation]]){
     const el=form.querySelector('[name="'+key+'"]');if(el)el.value=String(value??0);
   }
@@ -107,6 +117,7 @@ export class BlanksUI{
         if(form===this.inspector)this.commit();
         else draw(form,this.app.adapter.room);
       });
+      form.querySelector('[data-blank-copy]')?.addEventListener('click',()=>this.copy());
       form.addEventListener('input',()=>draw(form,this.app.adapter.room));
       form.addEventListener('change',()=>{
         if(form===this.inspector)this.commit();
@@ -114,6 +125,7 @@ export class BlanksUI{
       });
     }
     this.catalog.querySelector('[data-blank-add]').addEventListener('click',()=>this.add());
+    this.catalog.querySelector('[data-blank-bazis]').addEventListener('click',()=>get('export-bazis').click());
     this.catalog.querySelector('[data-blank-export]').addEventListener('click',()=>this.export());
     draw(this.catalog,this.app.adapter.room);
     this.sync();
@@ -144,6 +156,16 @@ export class BlanksUI{
       this.app.adapter.replace(updated);
     });
     if(!ok)this.sync();
+  }
+  copy(){
+    const source=this.app.adapter.selected;if(source?.module_type!=='blank')return;
+    this.app.interaction.change('Копирование заготовок с шагом',()=>{
+      const copies=blankCopies(source,numberField(this.inspector,'copyCount'),numberField(this.inspector,'copyStep'),textField(this.inspector,'copyAxis'));
+      const all=[...this.app.adapter.items];
+      if(all.length+copies.length>100)throw Error('В проекте поддерживается до 100 деталей и модулей.');
+      for(const copy of copies){const error=this.app.adapter.validate(copy,all);if(error)throw Error(error);all.push(copy);}
+      for(const copy of copies)this.app.adapter.insert(copy);
+    });
   }
   export(){
     const items=this.app.adapter.items.filter(it=>it.module_type==='blank');

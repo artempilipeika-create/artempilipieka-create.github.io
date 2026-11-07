@@ -18,7 +18,7 @@ def board(**patch):
 
 
 def test_board_roundtrip_in_scene():
-    scene = Scene(items=[FurnitureItem.model_validate(board())],
+    scene = Scene(items=[FurnitureItem.model_validate(board(blank_edge_thickness_mm=2))],
                   module_type="blank", width=720, height=18, depth=400)
     saved = scene.model_dump(mode="json")
     opened = Scene.model_validate(saved)
@@ -26,6 +26,7 @@ def test_board_roundtrip_in_scene():
     assert (item.blank_length_mm, item.blank_width_mm, item.blank_thickness_mm) == (720, 400, 18)
     assert item.blank_edge_code == "1010"
     assert item.module_type == "blank"
+    assert item.blank_edge_thickness_mm == 2
 
 
 def test_board_rotation_and_elevation():
@@ -36,6 +37,8 @@ def test_board_rotation_and_elevation():
 
 
 @pytest.mark.parametrize("patch", [
+    {"blank_edge_thickness_mm": 0},
+    {"blank_edge_thickness_mm": float("nan")},
     {"blank_edge_code": "1200"},
     {"blank_edge_code": "11"},
     {"blank_length_mm": 99},

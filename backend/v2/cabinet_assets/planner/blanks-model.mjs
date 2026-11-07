@@ -19,7 +19,7 @@ export function normalizeBlank(input={}){
   const axis=input.blank_axis??input.axis??'horizontal';
   const code=String(input.blank_edge_code??input.edges??'1000');
   const elevation=Number(input.elevation_mm??input.elevation??0);
-  return {length,width,thickness,axis,code,elevation};
+  return {length,width,thickness,axis,code,elevation,edgeThickness:Number(input.blank_edge_thickness_mm??1)};
 }
 export function validateBlank(input,room){
   const b=normalizeBlank(input);
@@ -29,6 +29,7 @@ export function validateBlank(input,room){
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
   if(!Number.isInteger(b.elevation)||b.elevation<0||b.elevation>5000)return 'Высота низа детали должна быть целым числом в мм.';
+  if(!Number.isFinite(b.edgeThickness)||b.edgeThickness<0.4||b.edgeThickness>3)return 'Толщина ПВХ: от 0,4 до 3 мм.';
   const d=geometryFromBlank(b.length,b.width,b.thickness,b.axis);
   if(room&&b.elevation+d.height>room.height)return 'Верх детали выходит за высоту помещения.';
   return '';
@@ -40,7 +41,7 @@ export function blankItem(input={}){
     module_type:'blank',template_id:null,bazis_id:null,
     item_id:input.item_id||crypto.randomUUID(),name:(input.name||'Заготовка ЛДСП').slice(0,160),
     x:input.x??0,z:input.z??0,rotation:input.rotation??0,elevation_mm:b.elevation,
-    blank_length_mm:b.length,blank_width_mm:b.width,blank_thickness_mm:b.thickness,blank_axis:b.axis,blank_edge_code:b.code,
+    blank_length_mm:b.length,blank_width_mm:b.width,blank_thickness_mm:b.thickness,blank_axis:b.axis,blank_edge_code:b.code,blank_edge_thickness_mm:b.edgeThickness,
     base:'wall',base_height:0,body_height:dims.height,worktop_thickness:0,
     layout:'doors',drawers:0,handles:'handleless',shelves:[],
     body_variant_id:input.body_variant_id??null,front_variant_id:null
@@ -57,10 +58,21 @@ export function edgeMeters(blank){
 }
 export function blanksCSV(items,materialLookup=()=>null){
   const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-  const header=['Название','Длина, мм','Ширина, мм','Толщина, мм','Кромка 1','Кромка 2','Кромка 3','Кромка 4','Код ПВХ','ПВХ, м','Материал','Артикул','Материал (ID)'];
+  const header=['Название','Длина, мм','Ширина, мм','Толщина, мм','Кромка 1','Кромка 2','Кромка 3','Кромка 4','Код ПВХ','ПВХ, м','Материал','Артикул','Материал (ID)','Распил длина, мм','Распил ширина, мм','ПВХ толщина, мм'];
   const rows=items.filter(it=>it.module_type==='blank').map(it=>{
     const b=normalizeBlank(it),material=it.body_variant_id?materialLookup(it.body_variant_id):null;
-    return [it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),material?.name||'',material?.article||'',it.body_variant_id||''];
+    return [it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),material?.name||'',material?.article||'',it.body_variant_id||'',cuttingSize(it).length,cuttingSize(it).width,b.edgeThickness];
   });
   return '\ufeff'+[header,...rows].map(row=>row.map(quote).join(';')).join('\r\n')+'\r\n';
+}
+
+export function cuttingSize(input){
+  const b=normalizeBlank(input),n=i=>Number(b.code[i]);
+  return {length:Math.round((b.length-b.edgeThickness*(n(2)+n(3)))*100)/100,
+    width:Math.round((b.width-b.edgeThickness*(n(0)+n(1)))*100)/100};
+}
+export function blankCopies(source,count,step,axis){
+  if(!Number.isInteger(count)||count<1||count>30)throw Error('Количество копий: от 1 до 30.');
+  if(!Number.isFinite(step)||!Number.isInteger(step*2)||step===0||!['x','z','elevation_mm'].includes(axis))throw Error('Укажите ненулевой шаг с точностью 0,5 мм и направление.');
+  return Array.from({length:count},(_,i)=>({...source,item_id:crypto.randomUUID(),[axis]:(source[axis]||0)+step*(i+1)}));
 }
