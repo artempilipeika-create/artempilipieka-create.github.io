@@ -20,5 +20,6 @@
   ['bazis.107f19943761','tall-storage','Пенал с полками','Закрытое хранение на всю высоту','База 820 / 900','1 / 2 двери'],
   ['bazis.d9c0c30544f4','tall-appliance','Пенал под технику','Духовка или духовка + СВЧ','База 820 / 900','Дверь / ящик']
  ];
- root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:'tripo'})])));
+ for(const f of Object.values(root.MF_WALL_SPECIAL?.families||{}))rows.push([f.default_id,f.default_id.replace('bazis.','wall-special-'),f.label,f.key==='corner'?'Левый / правый угол · ручки / без ручек':'Стекло 4 мм · две полки · подсветка',f.key==='corner'?'4 исполнения':f.key==='vitrine1'?'12 исполнений':'6 исполнений','По модели БАЗИС']);
+ root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:id.startsWith('bazis.')&&root.MF_WALL_SPECIAL?.choice(id)?'native':'tripo'})])));
 })(globalThis);

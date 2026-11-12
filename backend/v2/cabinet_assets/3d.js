@@ -105,6 +105,7 @@ for(const v of globalThis.MF_GOLA.variants)bazisModules.push({id:v.id,source_fil
 for(const v of globalThis.MF_DRAWERS.variants)bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Ящики БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'drawers',drawers:v.drawer_count,base:'plinth'},resize:true});
 for(const v of globalThis.MF_UPPERS.variants.filter(v=>!v.legacy))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,group:'Верхние шкафы БАЗИС',module_type:'wall_cabinet',defaults:{w:600,h:720,d:317,layout:'doors',drawers:0,base:'wall'},front:{kind:'doors',count:v.door_count},resize:true});
 for(const v of Object.values(pilotProductionById).filter(p=>p.dishwasher).map(p=>p.dishwasher))bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:'Посудомойка',group:'Техника БАЗИС',module_type:'base_cabinet',defaults:{w:600,h:820,d:510,layout:'doors',drawers:0,base:'legs'},front:{kind:'doors',count:1},resize:true});
+for(const v of globalThis.MF_WALL_SPECIAL.variants){const p=globalThis.MF_WALL_SPECIAL.model(v);bazisModules.push({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:p.label,group:'Верхние шкафы БАЗИС',module_type:'wall_cabinet',defaults:{w:p.native_defaults.width,h:p.body_height,d:p.scene_depth,layout:'doors',drawers:0,base:'wall'},front:p.front,resize:true});}
 // Existing saved projects still refer to the earlier donor bytes and dimensions.
 const legacyBazisById=new Map(bazisModules.map(m=>[m.id,structuredClone(m)]));
 for(const m of bazisModules){
@@ -120,7 +121,7 @@ for(const m of bazisModules){
 }
 for(const m of [...bazisModules,...Object.values(kitchenTemplates)]){
   const p=m.production,front=p?.doors?.length?{kind:'doors',count:p.doors.length}:m.front;
-  if(!p?.corner&&m.resize!==false&&((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))){
+  if(!p?.wall_special&&!p?.corner&&m.resize!==false&&((front?.kind==='doors'&&front.count===1)||(front?.kind==='combo'&&front.doors===1))){
     m.limits.w=[Math.min(m.limits.w[0],600),600];m.defaults.w=Math.min(m.defaults.w,600);
   }
   if(p?.constraints?.fixed_width_mm)m.limits.w=[p.constraints.fixed_width_mm,p.constraints.fixed_width_mm];
@@ -358,6 +359,7 @@ function renderModuleCatalogue(){
     if(m?.production?.dishwasher&&m.production.dishwasher.variant!=='standard')continue;
     const baseChoice=globalThis.MF_GOLA.baseChoice(id);
     if(baseChoice&&id!==globalThis.MF_GOLA.family(baseChoice).default_id)continue;
+    const special=globalThis.MF_WALL_SPECIAL.choice(id);if(special&&id!==globalThis.MF_WALL_SPECIAL.family(special).default_id)continue;
     const upperChoice=globalThis.MF_UPPERS.choice(id);
     if(upperChoice&&id!==globalThis.MF_UPPERS.family(upperChoice).default_id)continue;
     const openTallChoice=globalThis.MF_OPEN_TALL?.choice(id);
@@ -376,7 +378,7 @@ function renderModuleCatalogue(){
     if(m.production.tall&&id!==tallFamily.default_id)continue;
     if(m.production.vitrine&&id!==globalThis.MF_FURNITURE_CORE.VITRINE_FAMILY.default_id)continue;
     const p=m.production,drawerCount=p.front_layout?.kind==='drawer'?p.front_layout.heights.length:0,isWall=p.tier==='wall';
-    const description=openTallChoice?'Полки ЛДСП 18 мм · без подсветки / AQ / LIRA · слева / справа / с двух сторон':cargoChoice?(cargoChoice.waste?'GEO X · 350 / 400 / 450 мм · обычный фасад / Gola L':'FOCUS / NORWING / ICON · 150 / 200 / 300 / 400 мм · обычное / Gola L'):dryerChoice?'Выдвижная сушка NORWING / FLAT LINE · 600 / 700 / 800 / 900 · нижний ящик · обычное / Gola II':p.dishwasher?'Фасад для ПМ · обычное / Gola L · ширина 450–600 мм':drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.execution==='gola'?'Gola L · полки / духовка / СВЧ · дверь / ящик · база 820 / 900':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
+    const description=special?(special.family==='corner'?'Левый / правый угол · ручки / без ручек · задник 3 мм':'Стекло 4 мм · две полки · Z1 · паз 4 × 8 / 17,5 × 6,5 · свет L / P / две стороны'):openTallChoice?'Полки ЛДСП 18 мм · без подсветки / AQ / LIRA · слева / справа / с двух сторон':cargoChoice?(cargoChoice.waste?'GEO X · 350 / 400 / 450 мм · обычный фасад / Gola L':'FOCUS / NORWING / ICON · 150 / 200 / 300 / 400 мм · обычное / Gola L'):dryerChoice?'Выдвижная сушка NORWING / FLAT LINE · 600 / 700 / 800 / 900 · нижний ящик · обычное / Gola II':p.dishwasher?'Фасад для ПМ · обычное / Gola L · ширина 450–600 мм':drawerChoice?'Обычные шариковые / AQ LineBox / Slimbox · 2 / 3 / 2 + внутренний · обычное / Gola II':p.vitrine?'Чёрный Z1 · подсветка L / P / две стороны · паз 4 × 8 или 17,5 × 6,5 мм':p.tall?.execution==='gola'?'Gola L · полки / духовка / СВЧ · дверь / ящик · база 820 / 900':p.tall?.family==='appliance'?'Духовка / духовка + СВЧ · дверь / шуфляда · база 820 / 900':p.tall?'База 820 / 900 · L / P / Д2 · полки · цоколь 100 мм':p.corner
       ?'Левый / правый · мойка / полка · 1 / 2 двери'
       :p.constraints?.niche_height_mm
       ?'Ширина 600 мм · ниша 595 мм · нижняя шуфляда'
@@ -629,7 +631,7 @@ function addBazisModule(bazisId,announce=true){
   };
   if(m.production){
     const p=m.production;
-    if(p.tall?.execution==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
+    if(p.wall_special&&p.wall_special.execution!=='handles'||p.tall?.execution==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
     Object.assign(it,{body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
     it.shelves=JSON.parse(JSON.stringify(globalThis.MF_FURNITURE_CORE.productionShelves(it,p)));
   }
@@ -732,8 +734,9 @@ function renderFacadeSummary(it){
     root.innerHTML='<strong>Фасады</strong><span>В этом шаблоне фасадов нет.</span>';
     return;
   }
+  const rule=root.parentElement?.querySelector('.mf3d-facade-rule strong'),p=templateFor(it)?.production;if(rule)rule.textContent='Зазор '+String(p?.facade?.gap_mm??1.5).replace('.',',')+' мм';
   const lines=[...groups.values()].map(g=>g.qty+' × '+g.title+' · '+mmText(g.w)+' × '+mmText(g.h)+' мм');
-  root.innerHTML='<strong>Фасады'+(templateFor(it)?.production?.metal_drawers?' по фрагменту':' по правилу 1,5 мм')+'</strong><span>'+lines.join('<br>')+'</span>';
+  root.innerHTML='<strong>Фасады'+(templateFor(it)?.production?.metal_drawers||templateFor(it)?.production?.wall_special?' по фрагменту':' по правилу 1,5 мм')+'</strong><span>'+lines.join('<br>')+'</span>';
 }
 async function syncControls(){
   const it=selected();
@@ -797,6 +800,7 @@ async function syncControls(){
   }
   globalThis.MF_VITRINE_UI?.sync(it,t?.production);
   globalThis.MF_DRAWER_UI?.sync(it,t?.production);
+  globalThis.MF_WALL_SPECIAL_UI?.sync(it);
   globalThis.MF_OPEN_TALL_UI?.sync(it);
   globalThis.MF_CARGO_UI?.sync(it);
   globalThis.MF_PULLOUT_DRYER_UI?.sync(it);
@@ -830,10 +834,10 @@ async function syncControls(){
     const input=$(key.replaceAll('_','-'));if(input)input.value=String(h[key]);
   }
   const kitchen=globalThis.MF_FURNITURE_CORE.kitchenSettings(it);
-  $('base').disabled=Boolean(kitchen)||Boolean(t?.production?.tall)||Boolean(t?.production?.vitrine||t?.production?.open_tall);
-  $('handles').parentElement.hidden=Boolean(t?.production?.open_tall)||Boolean(globalThis.MF_UPPERS.info(it))||Boolean(t?.production?.tall?.execution==='gola'||globalThis.MF_GOLA.info(it)||globalThis.MF_CARGO.info(it)?.execution==='gola'||globalThis.MF_PULLOUT_DRYERS.info(it)?.execution==='gola');
+  $('base').disabled=Boolean(kitchen)||Boolean(t?.production?.tall)||Boolean(t?.production?.wall_special||t?.production?.vitrine||t?.production?.open_tall);
+  $('handles').parentElement.hidden=Boolean(t?.production?.wall_special)||Boolean(t?.production?.open_tall)||Boolean(globalThis.MF_UPPERS.info(it))||Boolean(t?.production?.tall?.execution==='gola'||globalThis.MF_GOLA.info(it)||globalThis.MF_CARGO.info(it)?.execution==='gola'||globalThis.MF_PULLOUT_DRYERS.info(it)?.execution==='gola');
   globalThis.MF_GOLA_UI?.sync(it);
-  $('handles').disabled=Boolean(t?.production?.tall?.execution==='gola'||globalThis.MF_GOLA.info(it)||globalThis.MF_CARGO.info(it)?.execution==='gola'||globalThis.MF_PULLOUT_DRYERS.info(it)?.execution==='gola')||Boolean(globalThis.MF_UPPERS.info(it))||Boolean(t?.production?.vitrine||t?.production?.open_tall)||t?.production?.metal_drawers?.opening==='push';
+  $('handles').disabled=Boolean(t?.production?.tall?.execution==='gola'||globalThis.MF_GOLA.info(it)||globalThis.MF_CARGO.info(it)?.execution==='gola'||globalThis.MF_PULLOUT_DRYERS.info(it)?.execution==='gola')||Boolean(globalThis.MF_UPPERS.info(it))||Boolean(t?.production?.wall_special||t?.production?.vitrine||t?.production?.open_tall)||t?.production?.metal_drawers?.opening==='push';
   if(t?.production?.vitrine)$('handles').value='handleless';
   if($('kitchen-controls'))$('kitchen-controls').hidden=!kitchen;
   if($('base-height')){$('base-height').disabled=it.base==='wall'||Boolean(it.bazis_id);$('base-height').parentElement.hidden=Boolean(kitchen);}
@@ -868,7 +872,7 @@ async function syncControls(){
         $('shelf-position').max=String(Math.floor(h.body_height-(production.carcass.rail_height||0)-(shelf.thickness||18)/2));
       }
       if($('production-rule-note')){
-        $('production-rule-note').textContent=production.open_tall?globalThis.MF_OPEN_TALL.brief(it):production.cargo?globalThis.MF_CARGO.brief(it):production.pullout_dryer?globalThis.MF_PULLOUT_DRYERS.brief(it):production.dishwasher?'Фасад для посудомоечной машины, без корпуса, задней стенки и мебельных ножек. Посадочная отметка исходника — 100 мм.':production.gola?globalThis.MF_GOLA.brief(it):production.upper?globalThis.MF_UPPERS.brief(it):production.metal_drawers?globalThis.MF_DRAWERS.brief(it):production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. '+globalThis.MF_VITRINE.lighting(it).ui_note:production.tall?.family==='appliance'
+        $('production-rule-note').textContent=production.wall_special?globalThis.MF_WALL_SPECIAL.brief(it):production.open_tall?globalThis.MF_OPEN_TALL.brief(it):production.cargo?globalThis.MF_CARGO.brief(it):production.pullout_dryer?globalThis.MF_PULLOUT_DRYERS.brief(it):production.dishwasher?'Фасад для посудомоечной машины, без корпуса, задней стенки и мебельных ножек. Посадочная отметка исходника — 100 мм.':production.gola?globalThis.MF_GOLA.brief(it):production.upper?globalThis.MF_UPPERS.brief(it):production.metal_drawers?globalThis.MF_DRAWERS.brief(it):production.vitrine?'Рамка Z1, чёрная. Зазор 2 мм. Стекло и полки 4 мм; задняя стенка ЛДСП 18 мм. '+globalThis.MF_VITRINE.lighting(it).ui_note:production.tall?.family==='appliance'
           ?'Ширина 600 мм, глубина 600–700 мм. Духовка: ниша 564 × 595 мм.'+(production.tall.microwave?' СВЧ: ниша 564 × 380 мм.':'')+' Общая высота меняет только верхнее отделение. Задняя стенка в пазу, за техникой остаётся открытый проём.'
           :production.tall
           ?'Стык секций на высоте '+production.tall.row_height+' мм от пола. Между верхним и нижним фасадами — 1,5 мм; между створками Д2 — 3 мм. Одна нижняя полка на конфирматах; сверху '+core.tallUpperShelves(it,production).length+' съёмн. При изменении общей высоты растёт верхняя секция, выбранные полки распределяются равномерно. Столешница в высоту базы не входит.'
@@ -904,7 +908,7 @@ async function syncControls(){
   for(const [kind,m]of [['plinth',plinthMaterial],['countertop',countertopMaterial]])if($(kind+'-selected'))$(kind+'-selected').textContent=label(m);
   for(const [kind,m]of [['body',bodyMaterial],['front',frontMaterial],['plinth',plinthMaterial],['countertop',countertopMaterial]]){const hint=$(kind+'-visual');if(hint)hint.textContent=m?materialVisualLabel(m)+' · '+(m.article||m.name||''):'';}
   if($('front-search')){
-    const glass=Boolean(t?.production?.vitrine||t?.production?.open_tall);$('front-search').disabled=glass;
+    const glass=Boolean(t?.production?.wall_special||t?.production?.vitrine||t?.production?.open_tall);$('front-search').disabled=glass;
     const group=$('front-search').closest('section');if(group)group.hidden=glass;
     if(glass)$('front-results').replaceChildren();
   }
@@ -1370,7 +1374,8 @@ function exportBazisProject(){
           cargo:p.cargo?{brand:p.cargo.brand,execution:p.cargo.execution,kit:globalThis.MF_CARGO.kit(it)}:null,
           pullout_dryer:p.pullout_dryer?{brand:p.pullout_dryer.dryer_brand,kit:globalThis.MF_PULLOUT_DRYERS.kit(it)}:null,
           gola_variant:p.tall?.execution==='gola'?{execution:'gola',kind:'tall',profiles:globalThis.MF_FURNITURE_CORE.tallGolaProfiles(it)}:p.cargo?.execution==='gola'?{execution:'gola',kind:'cargo',profiles:globalThis.MF_CARGO.profiles(it)}:p.gola?.execution==='gola'?{execution:'gola',kind:p.gola.kind,source_warnings:p.gola.warnings,profiles:globalThis.MF_GOLA.profiles(it)}:null,
-          native_adjustment:p.open_tall?globalThis.MF_OPEN_TALL.adjustment(it):p.cargo?globalThis.MF_CARGO.adjustment(it):p.gola?globalThis.MF_GOLA.adjustment(it):p.upper?globalThis.MF_UPPERS.adjustment(it):p.metal_drawers?globalThis.MF_DRAWERS.adjustment(it):p.vitrine?globalThis.MF_VITRINE.adjustment(it):globalThis.MF_FURNITURE_CORE.tallShelfAdjustment(it,p),facade:p.facade||null,
+          wall_special:p.wall_special?{family:p.wall_special.family,opening:p.wall_special.opening,execution:p.wall_special.execution,light_system:p.wall_special.light_system,lighting:p.wall_special.lighting,native_dependency:p.wall_special.native_dependency}:null,
+          native_adjustment:p.wall_special?globalThis.MF_WALL_SPECIAL.adjustment(it):p.open_tall?globalThis.MF_OPEN_TALL.adjustment(it):p.cargo?globalThis.MF_CARGO.adjustment(it):p.gola?globalThis.MF_GOLA.adjustment(it):p.upper?globalThis.MF_UPPERS.adjustment(it):p.metal_drawers?globalThis.MF_DRAWERS.adjustment(it):p.vitrine?globalThis.MF_VITRINE.adjustment(it):globalThis.MF_FURNITURE_CORE.tallShelfAdjustment(it,p),facade:p.facade||null,
           parts:globalThis.MF_FURNITURE_CORE.productionParts(it,src,id=>materials.get(String(id))),
           back_variant_id:it.back_variant_id||null,part_materials:it.part_materials||{},
           carcass:p.carcass||null,
@@ -1394,6 +1399,7 @@ function exportBazisProject(){
   };
   for(const item of blankItems){item.index=payload.items.length+1;payload.items.push(item);}
   if(blankItems.length){payload.minimum_importer='9.9.9';payload.format='martin-forest-bazis-native-v3';}
+  if(payload.items.some(it=>it.construction?.wall_special)){payload.minimum_importer='9.9.10';payload.format='martin-forest-bazis-native-v3';payload.project_note+='\nВЕРХНИЕ ВИТРИНЫ / УГЛОВЫЕ: используйте импортёр 9.9.10. '+payload.items.filter(it=>it.construction?.wall_special).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n');}
   payload.wall_finishes=globalThis.MF_WALL_FINISHES?.schedule(state)||{panels:[],lights:[]};
   const finishNote=globalThis.MF_WALL_FINISHES?.text(state);if(finishNote&&!payload.project_note.includes(finishNote))payload.project_note+='\n'+finishNote;
   const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];
@@ -1547,6 +1553,8 @@ if(!plannerRequested&&$('upper-options-controls'))$('upper-options-controls').on
     state.items[state.items.findIndex(x=>x.item_id===it.item_id)]=next;syncControls();updateAll();status('Исполнение верхнего шкафа изменено');
   }catch(error){status(error.message);}
 };
+
+if(!plannerRequested&&$('wall-special-controls'))$('wall-special-controls').onclick=e=>{const b=e.target.closest('[data-wall-special-option]'),it=selected();if(!b||b.disabled||!it)return;try{const next=globalThis.MF_WALL_SPECIAL.select(it,{[b.dataset.wallSpecialOption]:b.dataset.wallSpecialValue},bazisModules);state.items[state.items.findIndex(x=>x.item_id===it.item_id)]=next;syncControls();updateAll();}catch(error){status(error.message);}};
 
 $('save-project').onclick=()=>saveProject().catch(e=>status(e.message));
 $('new-project').onclick=()=>newProject().catch(e=>status(e.message));

@@ -7,7 +7,7 @@ import {MODULE_VIEWS,moduleView,changeModuleView} from './module-view.mjs';
 const get=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text)node.textContent=text;return node;};
 const makeButton=(text)=>{const b=el('button','secondary',text);b.type='button';return b;};
-const families={base:'base-options-controls',upper:'upper-options-controls',drawer:'drawer-options-controls',corner:'corner-options-controls',tall:'tall-options-controls',vitrine:'vitrine-options-controls','open-tall':'open-tall-controls',cargo:'cargo-controls',dryer:'pullout-dryer-controls',door:'door-opening-controls',dishwasher:'dishwasher-options'};
+const families={'wall-special':'wall-special-controls',base:'base-options-controls',upper:'upper-options-controls',drawer:'drawer-options-controls',corner:'corner-options-controls',tall:'tall-options-controls',vitrine:'vitrine-options-controls','open-tall':'open-tall-controls',cargo:'cargo-controls',dryer:'pullout-dryer-controls',door:'door-opening-controls',dishwasher:'dishwasher-options'};
 
 export class ExecutionUI{
  constructor(app){

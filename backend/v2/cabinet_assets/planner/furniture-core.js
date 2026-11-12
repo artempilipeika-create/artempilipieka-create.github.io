@@ -25,7 +25,7 @@
     const p=PRODUCTION_MODELS[it.bazis_id];
     return {...it,
       body_variant_id:it.body_variant_id??DEFAULT_MATERIALS.body_variant_id,
-      front_variant_id:it.front_variant_id??(p?.vitrine||p?.open_tall?null:DEFAULT_MATERIALS.front_variant_id),
+      front_variant_id:it.front_variant_id??(p?.vitrine||p?.open_tall||(p?.wall_special&&p.wall_special.family!=='corner')?null:DEFAULT_MATERIALS.front_variant_id),
       ...(it.base==='wall'?{}:{plinthMaterialId:it.plinthMaterialId??DEFAULT_MATERIALS.plinthMaterialId})
     };
   }
@@ -264,7 +264,7 @@
   const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.all||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
   const GOLA_PRODUCTION=freeze(Object.fromEntries((root.MF_GOLA?.variants||[]).map(v=>[v.id,root.MF_GOLA.model(v)])));
   const ACCESSORY_PRODUCTION=freeze(Object.fromEntries((root.MF_ACCESSORIES?.dishwashers||[]).map(v=>[v.id,root.MF_ACCESSORIES.model(v)])));
-  const PRODUCTION_MODELS=Object.freeze({...Object.fromEntries((root.MF_OPEN_TALL?.variants||[]).map(v=>[v.id,root.MF_OPEN_TALL.model(v)])),...Object.fromEntries((root.MF_CARGO?.variants||[]).map(v=>[v.id,root.MF_CARGO.model(v)])),...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  const PRODUCTION_MODELS=Object.freeze({...Object.fromEntries((root.MF_WALL_SPECIAL?.variants||[]).map(v=>[v.id,root.MF_WALL_SPECIAL.model(v)])),...Object.fromEntries((root.MF_OPEN_TALL?.variants||[]).map(v=>[v.id,root.MF_OPEN_TALL.model(v)])),...Object.fromEntries((root.MF_CARGO?.variants||[]).map(v=>[v.id,root.MF_CARGO.model(v)])),...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
   // Resolve known historical versions without changing the stored module.
   function sourceProduction(it){
     const p=PRODUCTION_MODELS[it?.bazis_id];
@@ -391,6 +391,7 @@
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
     if(p?.dishwasher)return root.MF_ACCESSORIES.dimensionError(it);
+    if(p?.wall_special)return root.MF_WALL_SPECIAL.dimensionError(it);
     if(p?.open_tall)return root.MF_OPEN_TALL.dimensionError(it);
     if(p?.cargo)return root.MF_CARGO.dimensionError(it);
     if(p?.pullout_dryer)return root.MF_PULLOUT_DRYERS.dimensionError(it);
@@ -426,7 +427,7 @@
   }
 
   function productionShelves(it,p=sourceProduction(it)){
-    if(p?.gola||p?.cargo||p?.open_tall)return [];
+    if(p?.wall_special||p?.gola||p?.cargo||p?.open_tall)return [];
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.shelves(it,p);
     if(!p||p.tall||p.vitrine||p.metal_drawers)return [];
     if(p.corner?.purpose==='sink')return [];
@@ -455,6 +456,7 @@
   }
   function productionHardware(it,p=sourceProduction(it)){
     if(p?.dishwasher)return root.MF_ACCESSORIES.hardware(it);
+    if(p?.wall_special)return root.MF_WALL_SPECIAL.hardware(it,p);
     if(p?.open_tall)return root.MF_OPEN_TALL.hardware(it,p);
     if(p?.cargo)return root.MF_CARGO.hardware(it,p);
     if(p?.pullout_dryer)return root.MF_PULLOUT_DRYERS.hardware(it,p);
@@ -632,6 +634,7 @@
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(production?.wall_special)return root.MF_WALL_SPECIAL.facades(it);
     if(production?.open_tall)return [];
     if(production?.cargo)return root.MF_CARGO.facades(it,production);
     if(production?.dishwasher)return root.MF_ACCESSORIES.facades(it,production);
@@ -738,6 +741,7 @@
   }
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(!p?.carcass)return null;
+    if(p.wall_special)return root.MF_WALL_SPECIAL.parts(it,p,materialLookup);
     if(p.open_tall)return root.MF_OPEN_TALL.parts(it,p,materialLookup);
     if(p.cargo)return root.MF_CARGO.parts(it,p,materialLookup);
     if(p.dishwasher)return root.MF_ACCESSORIES.parts(it,p,materialLookup);
@@ -1019,7 +1023,7 @@
   }
   function bounds(it,room,includeFront=true){
     const points=[];
-    const extension=it.module_type==='blank'?0:includeFront?(VITRINE?.info(it)?22.5:cornerSpec(it)?.front_extension_mm||20):0;
+    const extension=it.module_type==='blank'?0:includeFront?(root.MF_WALL_SPECIAL?.info(it)?(root.MF_WALL_SPECIAL.info(it).family==='corner'?68:22.5):VITRINE?.info(it)?22.5:cornerSpec(it)?.front_extension_mm||20):0;
     for(const x of[-it.width/2,it.width/2])for(const z of[-it.depth/2-(includeFront?tallRearExtension(it):0),it.depth/2+extension]){
       const p=rotateXZ(x,z,it.rotation||0);points.push({x:p.x+it.x,z:p.z+it.z});
     }

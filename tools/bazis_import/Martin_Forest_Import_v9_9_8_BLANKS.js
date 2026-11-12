@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.9 CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.10 UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ v9.9.10: preserve native frame placement for 22 upper glass and corner sources.
  v9.9.9: support 80 mm rails and tall unedged HDF 3/4 mm rear panels.
  v9.9.8: native rectangular blanks and four-edge PVC mapping.
  v9.9.7: repair signed Gola extrusion lengths and upper mounting rail anchors; verify after Commit.
@@ -409,8 +410,9 @@ const NATIVE_FRAME_PROFILES = Object.freeze({
   '877ba2f68d92a70a6eab2c792300e3fea8cc126ab9fbc8966f36b6f2d52ffad3': { rearInsetMm: 3 }
 });
 
+const WALL_SPECIAL_FRAME_PROFILES={"08db1e1e2da4a30fc89ea708c0f5b37da0197beac52de817a93e20fce2bc3d73": {"rearInsetMm": 3}, "927d73c75156f382dc159f535a7904347292aaac9f4c8f9f973a41b047159d68": {"rearInsetMm": 3}, "93a91adaa8d5b777a9a7808ae71bb760c048931260ec45615f111a53375cd944": {"rearInsetMm": 3}, "fb4856b9075084780b2e6e5c5b6a51eca0ba9097a98b603c14cf1209e6280826": {"rearInsetMm": 3}, "88f382a87df6976406e2fb38f92cd7671294e9661c82cea014228065a5203af1": {"rearInsetMm": 3}, "793966aa130b425be2a6e4a2e86ec2369663bc67a9676dad43af9ec45ab7010d": {"rearInsetMm": 3}, "334f54e980a7b121c005485b7b04218b194ed63856ba1e131f32caa3db5a2ec6": {"rearInsetMm": 3}, "cfcf8f1397fe75a1575521887324c02a1829205dba86259a30e6e0260c15e812": {"rearInsetMm": 3}, "6ae46fe9b4b940ae52d8e4ba91ff2ab9d75328c5ad48c03383d2bcc1575b57f2": {"rearInsetMm": 3}, "e1f37ab359356dec40fbc46840d60c8e148cf4fb8900e4b4a6728c982807471b": {"rearInsetMm": 3}, "89a1ad3dac2c811f37b302cc1b3ccc29cb3e5d908f6b7a74bab23510a2be6633": {"rearInsetMm": 3}, "b9e90e3116a7941a3872055f428328e35ae5eb531f69d72463b16d4198deb07f": {"rearInsetMm": 3}, "d64e5f79564252994bad2487cc3ff47995df1b2eae390cccc69595b1bdff4d74": {"rearInsetMm": 3}, "be976c839ee1b2bda48b44483d6bc996f8740ceb6648fac78519050e89204b11": {"rearInsetMm": 3}, "ea13e87ee665b32e00f08e910922a1c93f8b863bbc293308ee9d69f63cc69340": {"rearInsetMm": 3}, "08de7a33f9d4f37d051416bc0ef7fdf0b85413f16d219ae283fe30d8bced3cd5": {"rearInsetMm": 3}, "749c7ce2df0343f7398597da2ece57230789b0dfb21327877f9c6815b9b0aeac": {"rearInsetMm": 3}, "c6539e0de3d1342f67ec65a3358811ebc83e4fb538094b7de95f99e05f8dc5bb": {"rearInsetMm": 3}, "4fabc7072fe1c408cbcbaa97fb0431c8d90d6f0221c301a178f00dad69342249": {"rearInsetMm": 3}, "74184f6983e5c1d71809292ef0dd07175637a82331e451769c87eed77b0db432": {"rearInsetMm": 3}, "f73104362e5d101a2322b510894ead55fade00f7e2254531035220bf511c77d1": {"rearInsetMm": 3}, "1e79fcd6423d708393eba6a5fd7b6ae092f5ff02e69c4988fe4ce7cb99a7a65b": {"rearInsetMm": 3}};
 function nativeFrameProfile(item) {
-  return NATIVE_FRAME_PROFILES[String(item.source_sha256 || '').toLowerCase()] || { rearInsetMm: 0 };
+  return WALL_SPECIAL_FRAME_PROFILES[String(item.source_sha256 || '').toLowerCase()] || NATIVE_FRAME_PROFILES[String(item.source_sha256 || '').toLowerCase()] || { rearInsetMm: 0 };
 }
 
 function nativeDimensions(dimensions, profile) {
@@ -1120,6 +1122,7 @@ function resizeAndPlace(obj, item, log) {
 }
 
 const CARGO_MIN_BODY = {"0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8add1b279":600,"0ac4e1b6b2d319e5227a357923458106e9511167949b02d5412e6e42484dc0d7":600,"bcf9fc814733706260bcde8808c943bfe304a0004cd2548b1545da4bd2ec5ef9":600,"0b99b75442f0e176a7664a2e657218918267466f65c3d7dc901f18ab848a6840":624,"67176019419dd7af92b6668f3029a2ce533696a296075fa545a362c2d57fc4f8":600,"c492617a97b75230df38bc2821fc37cba462a808aaf465c8684f9eb8798c4814":600,"96083d50d2c0dc0577d9541ff77a3b1f4c770bcdb9dbc36f0f57f9b0b07268ba":720,"8a45c0613aad0ac837d2492362ff94065f863c7517a9c2f798b0fd5015ce9f24":720};
+const WALL_SPECIAL_LIMITS = {"08db1e1e2da4a30fc89ea708c0f5b37da0197beac52de817a93e20fce2bc3d73":[300,600,317.0],"927d73c75156f382dc159f535a7904347292aaac9f4c8f9f973a41b047159d68":[300,600,317.0],"93a91adaa8d5b777a9a7808ae71bb760c048931260ec45615f111a53375cd944":[300,600,317.0],"fb4856b9075084780b2e6e5c5b6a51eca0ba9097a98b603c14cf1209e6280826":[300,600,317.0],"88f382a87df6976406e2fb38f92cd7671294e9661c82cea014228065a5203af1":[300,600,317.0],"793966aa130b425be2a6e4a2e86ec2369663bc67a9676dad43af9ec45ab7010d":[300,600,317.0],"334f54e980a7b121c005485b7b04218b194ed63856ba1e131f32caa3db5a2ec6":[300,600,317.0],"cfcf8f1397fe75a1575521887324c02a1829205dba86259a30e6e0260c15e812":[300,600,317.0],"6ae46fe9b4b940ae52d8e4ba91ff2ab9d75328c5ad48c03383d2bcc1575b57f2":[300,600,317.0],"e1f37ab359356dec40fbc46840d60c8e148cf4fb8900e4b4a6728c982807471b":[300,600,317.0],"89a1ad3dac2c811f37b302cc1b3ccc29cb3e5d908f6b7a74bab23510a2be6633":[300,600,317.0],"b9e90e3116a7941a3872055f428328e35ae5eb531f69d72463b16d4198deb07f":[300,600,317.0],"d64e5f79564252994bad2487cc3ff47995df1b2eae390cccc69595b1bdff4d74":[600,1200,317.0],"be976c839ee1b2bda48b44483d6bc996f8740ceb6648fac78519050e89204b11":[600,1200,317.0],"ea13e87ee665b32e00f08e910922a1c93f8b863bbc293308ee9d69f63cc69340":[600,1200,317.0],"08de7a33f9d4f37d051416bc0ef7fdf0b85413f16d219ae283fe30d8bced3cd5":[600,1200,317.0],"749c7ce2df0343f7398597da2ece57230789b0dfb21327877f9c6815b9b0aeac":[600,1200,317.0],"c6539e0de3d1342f67ec65a3358811ebc83e4fb538094b7de95f99e05f8dc5bb":[600,1200,317.0],"4fabc7072fe1c408cbcbaa97fb0431c8d90d6f0221c301a178f00dad69342249":[800,1000,300.0],"74184f6983e5c1d71809292ef0dd07175637a82331e451769c87eed77b0db432":[800,1000,300.0],"f73104362e5d101a2322b510894ead55fade00f7e2254531035220bf511c77d1":[800,1000,300.0],"1e79fcd6423d708393eba6a5fd7b6ae092f5ff02e69c4988fe4ce7cb99a7a65b":[800,1000,300.0]};
 const OPEN_WALL_SOURCES = new Set(["278a6a830b877c1d9984d1e901ab90a3c73620c35520d1bf7d55930b9f0c1933", "13a68b19bc93a3a48d0c56ee85ae003bf6ede576d3a57716cf4fad63d40fe0cc", "52b413624202a5b22170935a8671e762a010e5fbcbbeb279f4bda61eb1ea9802", "934509b39a14994894ede908427423484e6d68092fdd2c22dff7bcb319d15adc", "d8f4b928da18ca9e703185d608ebfb580e0c8ebe6f90703fa0f4d582666d9e64", "70c93db0d0b6a80259b2abbd0f428a506d4d18954706328e752c9cb4c07345a5", "1b01967daa24941949b6fb27f1e3a2d4b4bf8a9ec19a89353fd50245c75eac8c"]);
 const WASTE_SOURCES = new Set(["96083d50d2c0dc0577d9541ff77a3b1f4c770bcdb9dbc36f0f57f9b0b07268ba", "8a45c0613aad0ac837d2492362ff94065f863c7517a9c2f798b0fd5015ce9f24"]);
 const OPEN_TALL_SOURCES = new Set(["0f88bf06d3a83274b14045be8038e0572dfa44ee0724f2ad4b502bc0e79dd860", "7804e46e0985b41debc8e6d6529cdabfefd9a7bc7f12a8d7f10ab1e3c9a382a9", "6605c90fe9e48d73c05466bb9650c90912ff12bbc53b333ba90efc940001fc9f", "1d3c4c663a42d3c0d90087f9e899a3e2f30957ff9c134f224442949ec60db912", "dd2d6b26906f467f305002d768a976931bc619d7c99caf9a2863fb0b16facabc", "0737b0adf0525405d33b7a47854fa31aa14e958fad261e2f91f146c1d295c346", "6667341f40848950a69cb505adaa144d689dae96cb638bb213c7b38d64939ce4", "cba171b0c9ece1af1aaa30315b9c1dcd2c04b9d94138204fd0966f958ca326ab"]);
@@ -1136,6 +1139,9 @@ function prepareProject(payload, root) {
   let missingSources = 0;
   for (const original of payload.items) {
     const item = original;
+    const wallSpecial=WALL_SPECIAL_LIMITS[String(item.source_sha256||'').toLowerCase()];
+    if(wallSpecial){const t=item.target||{},w=Number(t.width),h=Number(t.height),d=Number(t.depth);if(![w,h,d].every(Number.isFinite)||w<wallSpecial[0]||w>wallSpecial[1]||h<300||h>1400||d!==wallSpecial[2]){errors.push('Верхний модуль: проверьте ширину и высоту; глубина исходника фиксирована '+wallSpecial[2]+' мм');continue;}}
+
     if(OPEN_WALL_SOURCES.has(String(item.source_sha256||'').toLowerCase())){
       const t=item.target||{},w=Number(t.width),h=Number(t.height),d=Number(t.depth);
       if(![w,h,d].every(Number.isFinite)||w<300||w>600||h<300||h>2400||d<250||d>600){errors.push('Верхний открытый: 300–600 × 300–2400 × 250–600 мм');continue;}
@@ -1188,7 +1194,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.8 BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.10 UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

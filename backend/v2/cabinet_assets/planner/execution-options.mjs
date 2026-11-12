@@ -16,9 +16,10 @@ const labels={
  row_height:{820:['820 мм','Корпус 720 + цоколь 100'],900:['900 мм','Корпус 800 + цоколь 100']},
  handles:{handles:['С ручками','Накладная ручка на фасаде'],handleless:['Без ручек','Фасад без накладной ручки']}
 };
-export const buttonFamilies=['base','upper','drawer','corner','tall','vitrine','open-tall'];
+export const buttonFamilies=['wall-special','base','upper','drawer','corner','tall','vitrine','open-tall'];
 export function optionDescriptor(family,key,value){
  let [title,hint]=labels[key]?.[value]||[String(value),''];
+ if(family==='wall-special'&&key==='execution'&&value==='handleless')hint='Родной вариант без накладной ручки';
  if(family==='corner'&&key==='side')[title,hint]=value==='left'?['Левый угол','Бленда слева']:['Правый угол','Бленда справа'];
  if(family==='corner'&&key==='purpose'&&value==='sink')hint='Без полки · царги видны';
  if(family==='base'&&key==='purpose'&&value==='sink')hint='Без полки и задней стенки';
@@ -28,7 +29,7 @@ export function optionDescriptor(family,key,value){
  const view=open?'inside':hinge?'hinge':'closed';
  const focus=['execution','handles'].includes(key)?'grip':key==='system'?'drawer':key==='brand'?'basket':key==='dryer_brand'?'dryer':null;
  const photo=key==='light_system'&&value!=='none'?({'aq-4x8':'aq-profile','lira-17.5x6.5':'lira-profile'}[value]):null;
- const action=(key==='opening'&&value==='push')||(key==='execution'&&value==='push')?'Нажать':key==='opening'&&value==='soft'?'Потянуть':key==='execution'&&value==='handleless'?'Подхват снизу':'';
+ const action=(key==='opening'&&value==='push')||(key==='execution'&&value==='push')?'Нажать':key==='opening'&&value==='soft'?'Потянуть':key==='execution'&&value==='handleless'&&family!=='wall-special'?'Подхват снизу':'';
  return {title,hint,view,focus,photo,action,highlight:family==='corner'&&key==='side'?'filler':null,front:key==='door_count'||key==='layout'||key==='lighting',tall:['tall','vitrine','open-tall'].includes(family)};
 }
 export function previewVariant(it,family,key,value,catalogue){
@@ -36,6 +37,7 @@ export function previewVariant(it,family,key,value,catalogue){
  let next;
  switch(family){
   case 'base':next=globalThis.MF_GOLA.select(copy,patch,catalogue);break;
+  case 'wall-special':next=globalThis.MF_WALL_SPECIAL.select(copy,patch,catalogue);break;
   case 'upper':next=globalThis.MF_UPPERS.select(copy,patch,catalogue);break;
   case 'drawer':next=globalThis.MF_DRAWERS.select(copy,patch,catalogue);break;
   case 'cargo':next=globalThis.MF_CARGO.select(copy,patch,catalogue);break;

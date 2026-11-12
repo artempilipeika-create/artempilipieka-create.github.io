@@ -17,7 +17,7 @@ const item=v=>normalizeKitchen({item_id:'drawer',name:'У мойки',module_typ
 
 function catalogueContext(){
  const cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}});
- const c=vm.createContext({document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,MF_UPPERS:globalThis.MF_UPPERS});
+ const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,MF_UPPERS:globalThis.MF_UPPERS});
  vm.runInContext(source.slice(0,source.indexOf('let user=null')),c);
  c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};
  c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';
@@ -126,7 +126,7 @@ test('Replacement menu also has a single family entry; selected family uses its 
 test('Actual export follows the final selected source and ordinary construction after switching',async()=>{
  const items=choices.map(v=>D.select(item(D.variants[0]),v,choices));let blob;
  const state={room:{width:6000,height:2700,depth:4000},items,production_note:''};
- const c=vm.createContext({state,templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,
+ const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,state,templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,
  MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:D,MF_GOLA:globalThis.MF_GOLA,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,
  $:()=>({value:'Unified drawer QA'}),status:()=>{},setTimeout:()=>{},alert:m=>assert.fail(m),confirm:()=>true,
  URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL:()=>{}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});

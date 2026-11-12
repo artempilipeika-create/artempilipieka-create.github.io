@@ -304,8 +304,8 @@ export class MeshFactory{
     group.userData.visualApproximation=Boolean(it.bazis_id&&!production);
     const parts=productionParts(it,template,id=>this.adapter.material(id));
     if(parts){
-      for(const part of parts.filter(p=>p.role!=='front'||p.fixed)){
-        const d=part.size,c=part.position,m=part.contour_yz?this.contourPanel(group,part,ghost):this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.visual_variant_id??part.material.variant_id,ghost);
+      for(const part of parts.filter(p=>(p.role!=='front'||p.fixed)&&!p.facade_component)){
+        const d=part.size,c=part.position,m=part.native_polygon?this.nativePolygon(group,part,ghost):part.contour_yz?this.contourPanel(group,part,ghost):this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.visual_variant_id??part.material.variant_id,ghost);
         m.userData.part=part;m.userData.productionPart=part.role;
         if(part.back_type)m.userData.backType=part.back_type;
         if(part.shelf_id)m.userData.shelfId=part.shelf_id;
@@ -334,14 +334,14 @@ export class MeshFactory{
       this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
-    if(cells.length&&production?.tall?.execution!=='gola'&&!production?.dishwasher&&!production?.cargo&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
+    if(cells.length&&!production?.wall_special&&production?.tall?.execution!=='gola'&&!production?.dishwasher&&!production?.cargo&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){
       const lo=Math.min(...cells.map(f=>f.cy-f.h/2)),hi=Math.max(...cells.map(f=>f.cy+f.h/2));
       const reveal=this.box(group,'reveal',W-2*t,hi-lo,1,0,(lo+hi)/2,D/2-1,null,ghost,0);
       reveal.userData.visualOnly=true;reveal.raycast=()=>{};
     }
 
     const fronts=parts?.filter(p=>p.role==='front'&&!p.fixed);let doorIndex=0;
-    for(const f of production?.vitrine?[]:cells){
+    for(const f of production?.wall_special||production?.vitrine?[]:cells){
       const drawer=f.kind==='drawer',part=fronts?.[doorIndex++],hasPivot=Boolean(part?.pivot)&&!drawer;
       const spec=hasPivot?{side:part.hinge_side,open_angle:Number.isFinite(part.open_angle)?part.open_angle:105}:null;
       let parent=group,px=f.cx,pz=part?.position.z??D/2+11,handleZ=pz+9;
@@ -420,6 +420,7 @@ export class MeshFactory{
         Object.assign(mesh.userData,{visualOnly:true,pulloutDryer:true,drawerIndex:2});
       }
     }
+    if(production?.wall_special)this.wallSpecial(group,it,production,parts,ghost);
     if(production?.open_tall){
       const light=globalThis.MF_OPEN_TALL.metrics(it),profile=light.light_profile_stock_count>0;
       for(const side of light.lighting_sides)for(const segment of light.segments){
@@ -464,6 +465,41 @@ export class MeshFactory{
       this.applianceAssets.attach(slot,fallback,layout,ghost,()=>!this.dead&&!group.userData.released);
     }
     this.updateAppearance(group,it);this.position(group,it);return group;
+  }
+  nativePolygon(group,part,ghost=false){
+    const c=part.position,pol=part.native_polygon,a=pol.axes[0],b=pol.axes[1],front=pol.front,back=pol.back;
+    const key='native-polygon:'+JSON.stringify(pol),geometry=this.acquire(key,()=>{
+      const flat=front.map(p=>new THREE.Vector2(p[a],p[b])),tris=THREE.ShapeUtils.triangulateShape(flat,[]),points=[];
+      const vertex=(ring,i)=>{const q=ring[i];points.push((q[0]-c.x)*S,(q[1]-c.y)*S,(q[2]-c.z)*S);};
+      for(const t of tris){for(const i of t)vertex(front,i);for(const i of [...t].reverse())vertex(back,i);}
+      for(let i=0;i<front.length;i++){const j=(i+1)%front.length;for(const [ring,n]of [[front,i],[back,i],[back,j],[front,i],[back,j],[front,j]])vertex(ring,n);}
+      const a3=new THREE.Vector3(...points.slice(0,3)),b3=new THREE.Vector3(...points.slice(3,6)),c3=new THREE.Vector3(...points.slice(6,9)),out=new THREE.Vector3(...back[0]).sub(new THREE.Vector3(...front[0]));
+      if(b3.sub(a3).cross(c3.sub(a3)).dot(out)>0)for(let i=0;i<points.length;i+=9)for(let a=0;a<3;a++)[points[i+3+a],points[i+6+a]]=[points[i+6+a],points[i+3+a]];
+      const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(points.length/3*2),2));g.computeVertexNormals();g.computeBoundingBox();physicalPanelUV(g,part.size,'x');return g;
+    });
+    const mesh=this.mesh(group,part.role,geometry,key,c.x,c.y,c.z,part.material.variant_id,ghost);return mesh;
+  }
+  wallSpecial(group,it,production,parts,ghost){
+    const U=globalThis.MF_WALL_SPECIAL,facades=U.facades(it),v=production.wall_special;
+    facades.forEach((f,i)=>{
+      const p=U.pivot(it,i),pivot=new THREE.Group();pivot.position.set(p.x*S,0,p.z*S);pivot.userData={itemId:it.item_id,role:'door-pivot',hingeSide:f.side,visualOnly:true};
+      if(it.doors_open)pivot.rotation.y=(f.side==='left'?-1:1)*Math.PI/2;group.add(pivot);
+      for(const part of parts.filter(s=>s.facade_component&&s.door_index===i)){
+        const c=part.position,d=part.size;let mesh;
+        if(part.type==='profile'){
+          const loX=c.x-d.x/2,hiX=c.x+d.x/2,loY=c.y-d.y/2,hiY=c.y+d.y/2,L=f.cx-f.w/2,R=f.cx+f.w/2,B=f.cy-f.h/2,T=f.cy+f.h/2;
+          const outline=part.profile_axis==='y'?(Math.abs(loX-L)<.1?[[loX,loY],[hiX,loY+19],[hiX,hiY-19],[loX,hiY]]:[[loX,loY+19],[hiX,loY],[hiX,hiY],[loX,hiY-19]]):(Math.abs(loY-B)<.1?[[loX,loY],[hiX,loY],[hiX-19,hiY],[loX+19,hiY]]:[[loX+19,loY],[hiX-19,loY],[hiX,hiY],[loX,hiY]]);
+          const key='upper-frame:'+JSON.stringify(outline)+':'+d.z,geo=this.acquire(key,()=>{const shape=new THREE.Shape(outline.map(([x,y])=>new THREE.Vector2((x-c.x)*S,(y-c.y)*S)));return new THREE.ExtrudeGeometry(shape,{depth:d.z*S,bevelEnabled:false,steps:1}).translate(0,0,-d.z*S/2);});
+          mesh=this.mesh(pivot,'frame',geo,key,c.x-p.x,c.y,c.z-p.z,null,ghost);mesh.userData.visualOnly=true;
+        }else mesh=this.box(pivot,part.optical_material||'front',d.x,d.y,d.z,c.x-p.x,c.y,c.z-p.z,part.material.variant_id,ghost);
+        Object.assign(mesh.userData,{part,frontAccessory:true,facade:f,productionPart:'front'});
+      }
+      if(it.handles==='handles'&&v.family==='corner')this.handle(pivot,80,f.cx+(f.side==='left'?1:-1)*(f.w/2-50)-p.x,f.cy-f.h/2+50,f.z+9-p.z,false,ghost);
+    });
+    for(const part of parts)for(const cut of part.machining||[]){
+      const a=cut.trajectory[0],b=cut.trajectory.at(-1),x=a[0]+(a[0]<0?.3:-.3),y=(a[1]+b[1])/2,z=a[2];
+      const m=this.box(group,'led',.6,Math.abs(b[1]-a[1]),v.light_system==='aq-4x8'?4:12,x,y,z,null,ghost,0);Object.assign(m.userData,{visualOnly:true,wallSpecialLighting:true});
+    }
   }
   contourPanel(group,part,ghost=false){
     const key='gola-contour:'+JSON.stringify([part.contour_yz,part.size.x]);

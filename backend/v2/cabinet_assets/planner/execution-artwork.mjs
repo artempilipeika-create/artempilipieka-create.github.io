@@ -25,6 +25,7 @@ export function executionArtwork(it,family,key,value){
   const file=(key==='opening'&&TALL_GOLA_OPEN_IMAGES[target.bazis_id])||TALL_GOLA_IMAGES[target.bazis_id];
   return file?'/account/planner/execution-card-images/'+file+'?v=20261027-pn600-gola':null;
  }
+ if(p?.wall_special&&family==='wall-special'){const v=globalThis.MF_WALL_SPECIAL.select(it,{[key]:value},globalThis.MF_WALL_SPECIAL.variants);return '/account/planner/module-card-images/'+v.bazis_id.replace('bazis.','wall-special-')+'.webp?v=20261112';}
  if(p?.open_tall?.wall&&family==='open-tall'){const v=globalThis.MF_OPEN_TALL.select(it,{[key]:value},globalThis.MF_OPEN_TALL.variants);return '/account/planner/module-card-images/'+v.bazis_id.replace('bazis.','open-wall-')+'.webp?v=20261027-full-oak';}
  if(p?.open_tall&&!p.open_tall.wall&&family==='open-tall'&&key==='lighting'&&p.open_tall.light_system==='lira-17.5x6.5'&&['left','right','both'].includes(value))return '/account/planner/execution-card-images/open-tall-lira-'+value+'.webp?v=20261027-full-oak';
  if(p?.cargo?.waste&&family==='cargo'){const v=globalThis.MF_CARGO.select(it,{[key]:value},globalThis.MF_CARGO.variants);return '/account/planner/module-card-images/'+(globalThis.MF_CARGO.info(v).execution==='gola'?'waste-gola':'waste-standard')+'.webp';}

@@ -28,7 +28,7 @@ test('Corrected D2 replaces the current choice without rewriting saved source id
 
 test('Exactly two catalogue cards expose all eighteen combinations',()=>{
  const cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}});
- const c=vm.createContext({document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:core,MF_DRAWERS:globalThis.MF_DRAWERS,MF_UPPERS:U,MF_GOLA:globalThis.MF_GOLA});
+ const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,document:{body:{dataset:{}},getElementById:node,createElement:node},structuredClone,MF_FURNITURE_CORE:core,MF_DRAWERS:globalThis.MF_DRAWERS,MF_UPPERS:U,MF_GOLA:globalThis.MF_GOLA});
  vm.runInContext(source.slice(0,source.indexOf('let user=null')),c);
  c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';
  vm.runInContext(source.slice(source.indexOf('function renderModuleCatalogue()'),source.indexOf('async function loadProjects()')),c);c.renderModuleCatalogue();
@@ -85,13 +85,13 @@ test('New drafts and stored half-millimetre shelves validate through the real ad
 
 test('Actual JSON export and importer profiles keep all eighteen exact identities',async()=>{
  const items=U.variants.map(item);let blob;
- const c=vm.createContext({state:{items,room:{width:4200,depth:3200,height:2700}},templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,
+ const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,state:{items,room:{width:4200,depth:3200,height:2700}},templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,
  MF_FURNITURE_CORE:core,MF_UPPERS:U,MF_GOLA:globalThis.MF_GOLA,MF_PRODUCTION_NOTES:globalThis.MF_PRODUCTION_NOTES,$:()=>({value:'Upper QA'}),status(){},setTimeout(){},alert:m=>assert.fail(m),confirm:()=>true,
  URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL(){}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
  vm.runInContext(source.slice(source.indexOf('function refreshUpperSource('),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);c.exportBazisProject();
  const payload=JSON.parse(await blob.text());assert.equal(payload.items.length,18);
- const script=readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8'),ic=vm.createContext({require:()=>({}),console,process});
+ const script=readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8'),ic=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,require:()=>({}),console,process});
  vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),ic);
  payload.items.forEach((out,i)=>{const v=U.variants[i];assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.source_file,v.source_file);assert.equal(out.construction.upper_variant.execution,v.execution);
   assert.equal(ic.nativeFrameProfile(out).rearInsetMm,3);assert.match(out.production_note,new RegExp(v.execution==='push'?'tip-on':U.executions[v.execution]));});
@@ -101,7 +101,7 @@ test('Actual JSON export and importer profiles keep all eighteen exact identitie
 test('Previously saved dryer donors keep both historical source hashes',()=>{
  const start=source.indexOf('function refreshUpperSource('),end=source.indexOf('function scenePayload(){');
  assert.ok(start>=0&&end>start);
- const ctx=vm.createContext({MF_UPPERS:U,MF_GOLA:globalThis.MF_GOLA,MF_FURNITURE_CORE:core});
+ const ctx=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,MF_UPPERS:U,MF_GOLA:globalThis.MF_GOLA,MF_FURNITURE_CORE:core});
  const inferStart=source.indexOf('function inferTemplate('),inferEnd=source.indexOf('function legacyItem(');
  assert.ok(inferStart>=0&&inferEnd>inferStart);
  vm.runInContext(source.slice(inferStart,inferEnd)+'\n'+source.slice(start,end),ctx);

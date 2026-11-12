@@ -127,6 +127,7 @@ class PlannerApplication {
         this.adapter.replace(next);this.adapter.status('Исполнение нижнего шкафа изменено');
       });this.bridge.refresh();
     });
+    this.listen(get('wall-special-controls'),'click',e=>{const b=e.target.closest('[data-wall-special-option]'),it=this.adapter.selected,U=globalThis.MF_WALL_SPECIAL;if(!b||b.disabled||!U.info(it)||b.getAttribute('aria-pressed')==='true')return;this.interaction.change('Исполнение верхнего модуля',()=>{const next=U.select(it,{[b.dataset.wallSpecialOption]:b.dataset.wallSpecialValue},this.bridge.catalogue.bazisModules);const error=this.adapter.validate(next);if(error)throw Error(error);this.adapter.replace(next);});this.bridge.refresh();});
     this.listen(get('upper-options-controls'),'click',e=>{
       const b=e.target.closest('[data-upper-option]'),it=this.adapter.selected,U=globalThis.MF_UPPERS;
       if(!b||b.disabled||!U.info(it))return;

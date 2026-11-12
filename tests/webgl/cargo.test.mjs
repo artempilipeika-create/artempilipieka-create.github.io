@@ -44,7 +44,7 @@ test('width restriction and variant switching preserve materials and worktop dat
 });
 test('exactly one cargo card; native baseline and importer width guards',()=>{
  const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8'),cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}});
- const c=vm.createContext({MF_CARGO:G,MF_PULLOUT_DRYERS:globalThis.MF_PULLOUT_DRYERS,MF_GOLA:globalThis.MF_GOLA,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:globalThis.MF_DRAWERS,MF_UPPERS:globalThis.MF_UPPERS,structuredClone,document:{body:{dataset:{}},getElementById:node,createElement:node}});
+ const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,MF_CARGO:G,MF_PULLOUT_DRYERS:globalThis.MF_PULLOUT_DRYERS,MF_GOLA:globalThis.MF_GOLA,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,MF_DRAWERS:globalThis.MF_DRAWERS,MF_UPPERS:globalThis.MF_UPPERS,structuredClone,document:{body:{dataset:{}},getElementById:node,createElement:node}});
  vm.runInContext(source.slice(0,source.indexOf('let user=null')),c);c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';
  vm.runInContext(source.slice(source.indexOf('function renderModuleCatalogue()'),source.indexOf('async function loadProjects()')),c);vm.runInContext('renderModuleCatalogue()',c);
  assert.equal(cards.filter(c=>G.choice(c.bazis)).length,1);
@@ -64,7 +64,7 @@ test('minimum body height clears both the kit and the Gola profile by at least 1
 
 test('native import rejects incompatible cargo dimensions before loading FR3D',()=>{
  const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');
- const context=vm.createContext({collectSourceFiles:()=>({files:[]}),canonicalBaseDonor:i=>i,canonicalUpperDonor:i=>i,resolveSourceFile:()=>'/verified.fr3d'});
+ const context=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,collectSourceFiles:()=>({files:[]}),canonicalBaseDonor:i=>i,canonicalUpperDonor:i=>i,resolveSourceFile:()=>'/verified.fr3d'});
  vm.runInContext(source.slice(source.indexOf('const CARGO_MIN_BODY'),source.indexOf('// Native API only. Node tests do not establish compatibility')),context);
  const prepare=vm.runInContext('prepareProject',context);
  for(const v of G.variants){

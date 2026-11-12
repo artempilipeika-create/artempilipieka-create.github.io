@@ -25,6 +25,7 @@ from .three_d_accessories import dishwasher, dishwasher_error, BY_ID as DISHWASH
 from .three_d_gola import gola_variant, gola_error, BY_ID as GOLA_BY_ID
 from .three_d_room import Room
 from .three_d_cargo import cargo_variant, cargo_error, BY_ID as CARGO_BY_ID
+from .three_d_wall_special import wall_special_variant, wall_special_error, BY_ID as WALL_SPECIAL_BY_ID
 from .three_d_open_tall import open_tall_variant, open_tall_error, BY_ID as OPEN_TALL_BY_ID
 from .three_d_pullout_dryers import dryer_variant, dryer_error, BY_ID as PULLOUT_DRYER_BY_ID
 
@@ -230,6 +231,12 @@ class FurnitureItem(StrictModel):
             if error:raise ValueError(error)
             v=dishwasher(self.model_dump());self.bazis_file=self.bazis_file or v['source_file'];self.bazis_resize=True
             self.layout='doors';self.drawers=0;self.handles='handleless' if v['variant']=='gola' else self.handles
+        if self.bazis_id in WALL_SPECIAL_BY_ID:
+            error=wall_special_error(self.model_dump())
+            if error:raise ValueError(error)
+            v=wall_special_variant(self.model_dump());self.bazis_file=self.bazis_file or v['source_file'];self.bazis_resize=True
+            self.layout='doors';self.drawers=0;self.shelves=[];self.handles='handles' if v['execution']=='handles' else 'handleless'
+            if v['family']!='corner':self.front_variant_id=None
         if self.bazis_id in OPEN_TALL_BY_ID:
             error=open_tall_error(self.model_dump())
             if error:raise ValueError(error)
