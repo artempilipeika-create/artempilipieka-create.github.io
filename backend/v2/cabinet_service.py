@@ -7,7 +7,22 @@ from .calculation_math import plain
 from . import document_service as documents
 
 STATUS={'draft':'Черновик','submitted':'Передан на обработку','review':'На проверке у менеджера',
- 'approved':'Согласован','completed':'Завершён','cancelled':'Отменён'}
+ 'awaiting_approval':'Ожидает согласования','approved':'Согласован',
+ 'production':'В производстве','in_production':'В производстве',
+ 'ready':'Готов к выдаче','issued':'Выдан','completed':'Завершён','cancelled':'Отменён'}
+NEXT_STEP={
+ 'draft':'Проверьте расчёт и передайте заказ на обработку.',
+ 'submitted':'Заказ отправлен. Менеджер проверит параметры и свяжется с вами.',
+ 'review':'Менеджер проверяет заказ. При необходимости он запросит уточнения.',
+ 'awaiting_approval':'Заказ подготовлен к согласованию. Проверьте документы и уточните условия у менеджера.',
+ 'approved':'Заказ согласован. Менеджер уточнит срок запуска в производство.',
+ 'production':'Заказ в производстве. Менеджер сообщит о готовности.',
+ 'in_production':'Заказ в производстве. Менеджер сообщит о готовности.',
+ 'ready':'Заказ готов. Согласуйте получение с менеджером.',
+ 'issued':'Заказ выдан. Документы доступны в этом кабинете.',
+ 'completed':'Заказ завершён. Документы доступны в этом кабинете.',
+ 'cancelled':'Заказ отменён. По вопросам возобновления обратитесь к менеджеру.',
+}
 MODE={'manager_assisted':'С помощью менеджера','self_prepared':'Самостоятельная подготовка'}
 
 
@@ -62,7 +77,7 @@ def order_view(conn,user,o,detail=False):
       'optimistic_lock_version':o['optimistic_lock_version'],'calculation_state':state,'calculation_label':state_label,
       'calculation_id':c['calculation_id'] if c else None,'amount':c['result']['total'] if c and state=='complete' else None,
       'documents':file_list(conn,user,o['order_id']),
-      'next_step':'Заказ проверит менеджер. Ожидайте согласования.' if o['workflow_status']!='draft' else 'Проверьте расчёт и передайте заказ на обработку.',
+      'next_step':NEXT_STEP.get(o['workflow_status'],'Уточните состояние заказа у менеджера.'),
       'can_submit':o['workflow_status']=='draft' and bool(user['email_verified_at']) and allowed(conn,user['user_id'],'orders.submit',order_id=o['order_id']),
       'can_generate':bool(c) and allowed(conn,user['user_id'],'documents.generate',order_id=o['order_id'])}
     if detail:

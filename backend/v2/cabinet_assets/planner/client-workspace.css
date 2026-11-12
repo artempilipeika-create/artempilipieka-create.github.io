@@ -1,0 +1,28 @@
+/* Default to the client view until the server identity has been loaded. */
+body:not([data-constructor-audience="staff"]) [data-production-only],
+body:not([data-constructor-audience="staff"]) .mf3d-cutlist,
+body:not([data-constructor-audience="staff"]) .studio-native-note,
+body:not([data-constructor-audience="staff"]) .upper-import,
+body:not([data-constructor-audience="staff"]) a[href*="bazis-drawers-import"],
+body:not([data-constructor-audience="staff"]) [data-modern-group="back"],
+body:not([data-constructor-audience="staff"]) [data-wall-special-group="light_system"],
+body:not([data-constructor-audience="staff"]) .mf3d-facade-rule,
+body:not([data-constructor-audience="staff"]) #facade-summary,
+body:not([data-constructor-audience="staff"]) #vitrine-light-system,
+body:not([data-constructor-audience="staff"]) #production-back-summary,
+body:not([data-constructor-audience="staff"]) #production-rule-note,
+body:not([data-constructor-audience="staff"]) #production-controls > strong,
+body:not([data-constructor-audience="staff"]) [data-open-tall-option="light_system"] small,
+body:not([data-constructor-audience="staff"]) .production-option { display:none !important; }
+.constructor-production-tools {margin:12px 0;padding:12px;border:1px solid #dce3dc;border-radius:12px;}
+.constructor-production-tools > summary {font-weight:600;cursor:pointer;}
+.constructor-production-tools .mf3d-cutlist {margin-top:12px;}
+.constructor-production-actions {display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+.constructor-precise-position {margin:10px 0;}
+.constructor-precise-position > summary {cursor:pointer;margin-bottom:8px;}
+#module-configuration {display:grid;gap:12px;}
+#module-configuration > h3 {margin:0;}
+#module-configuration > .mf3d-control-card {margin:0;}
+.mf-order-check-actions {display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px;}
+.mf-order-check-actions p {flex:1;min-width:200px;}
+.execution-proxied-label {display:none !important;}

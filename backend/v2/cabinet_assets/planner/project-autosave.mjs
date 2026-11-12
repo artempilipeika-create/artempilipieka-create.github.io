@@ -11,13 +11,14 @@ export class ProjectAutosave {
   constructor({snapshot,meta=null,record=null,send,persist,ack=()=>{},changed=()=>{},uuid=()=>crypto.randomUUID()}){
     this.send=send;this.persist=persist;this.ack=ack;this.changed=changed;this.uuid=uuid;
     this.id=record?.id||uuid();this.snapshot=copy(record?.snapshot||snapshot);this.meta=copy(record?.meta||meta);
+    this.savedAt=record?.saved_at||meta?.updated_at||null;
     this.baseline=record?.baseline??fingerprint(snapshot);this.pending=record?.pending||null;
     this.operation=record?.operation||null;
     this.error=null;this.localError=null;this.busy=null;
   }
   get dirty(){return Boolean(this.pending)||fingerprint(this.snapshot)!==this.baseline;}
   get conflict(){return this.error?.status===409||this.error?.message==='PROJECT_3D_VERSION_CONFLICT';}
-  record(){return copy({format:1,id:this.id,meta:this.meta,snapshot:this.snapshot,baseline:this.baseline,pending:this.pending,operation:this.operation,updated_at:new Date().toISOString()});}
+  record(){return copy({format:1,id:this.id,meta:this.meta,snapshot:this.snapshot,baseline:this.baseline,pending:this.pending,operation:this.operation,saved_at:this.savedAt,updated_at:new Date().toISOString()});}
   write(){try{this.persist(this.record(),this.dirty||Boolean(this.operation));this.localError=null;}catch(error){this.localError=error;}this.changed();}
   capture(snapshot){
     this.snapshot=copy(snapshot);
@@ -39,6 +40,7 @@ export class ProjectAutosave {
       try{
         const result=await this.send(sent.snapshot,sent.meta,sent.request_id);
         this.meta={project_id:result.project_id,version:result.version};
+        this.savedAt=result.updated_at||new Date().toISOString();
         this.baseline=fingerprint(sent.snapshot);this.pending=null;this.error=null;
         this.ack(result);this.write();
       }catch(error){

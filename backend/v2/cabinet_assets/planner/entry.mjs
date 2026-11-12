@@ -398,7 +398,7 @@ class PlannerApplication {
     // the designer must see the collected technical brief first.
     this.listen(get('to-order'),'click',event=>{
       event.preventDefault();event.stopImmediatePropagation();
-      show(true);
+      if(this.safety)this.safety.reviewBeforeOrder(()=>show(true));else show(true);
     },true);
     this.listen(input,'input',render);
     this.listen(input,'change',commit);

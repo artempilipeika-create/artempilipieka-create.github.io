@@ -119,9 +119,9 @@ test('Export button waits for selected body and drawer materials; unresolved sel
  const materials=new Map(),button={disabled:false},status=[],events=[];
  let release;const loaded=new Promise(r=>{release=r;});
  const c=vm.createContext({state:{items:[{name:'Шкаф',bazis_file:'cabinet.fr3d',body_variant_id:'BODY18',part_materials:{drawer:'BOX16'}}]},materials,
-  $:()=>button,status:s=>status.push(s),hydrateMaterials:async()=>{events.push('load');await loaded;materials.set('BODY18',body);materials.set('BOX16',drawer);},exportBazisProject:()=>events.push('export')});
+  api:async()=>({roles:['admin']}),MF_CONSTRUCTOR_ACCESS:{apply:()=>true},$:()=>button,status:s=>status.push(s),hydrateMaterials:async()=>{events.push('load');await loaded;materials.set('BODY18',body);materials.set('BOX16',drawer);},exportBazisProject:()=>events.push('export')});
  vm.runInContext(frontend.slice(frontend.indexOf('async function exportBazisProjectReady('),frontend.indexOf('function exportBazisProject(){')),c);
- const pending=c.exportBazisProjectReady();assert.equal(button.disabled,true);assert.deepEqual(events,['load']);
+ const pending=c.exportBazisProjectReady();assert.equal(button.disabled,true);await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(events,['load']);
  release();await pending;assert.deepEqual(events,['load','export']);assert.equal(button.disabled,false);
  c.hydrateMaterials=async()=>{};materials.delete('BOX16');await c.exportBazisProjectReady();
  assert.deepEqual(events,['load','export']);assert.ok(status.at(-1).includes('не удалось загрузить выбранные материалы'));assert.equal(button.disabled,false);

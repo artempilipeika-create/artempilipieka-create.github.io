@@ -40,6 +40,13 @@ test('definitive validation failure permits corrected payload with new request i
 test('clean project and initial blank scene do not create redundant writes',async()=>{
   let calls=0;const {e}=setup(async()=>{calls++;return {project_id:'p',version:1};});await e.flush();assert.equal(calls,0);await e.flush(true);await e.flush(true);assert.equal(calls,1);
 });
+test('saved time comes only from acknowledged saves, survives draft recovery and stays unchanged on failure',async()=>{
+  const updated_at='2026-11-12T18:00:00Z';let fail=false;
+  const {e,record}=setup(async()=>{if(fail)throw Error('offline');return {project_id:'p',version:1,updated_at};});
+  assert.equal(e.savedAt,null);await e.flush(true);assert.equal(e.savedAt,updated_at);
+  fail=true;e.capture(snap('Изменено'));await assert.rejects(e.flush());assert.equal(e.savedAt,updated_at);
+  const recovered=setup(async()=>{}, {record:record()});assert.equal(recovered.e.savedAt,updated_at);assert.equal(recovered.e.dirty,true);
+});
 test('undo after a 422 clears its warning only when back at the acknowledged scene',async()=>{
   let calls=0;
   const {e,record}=setup(async()=>{calls++;throw Object.assign(Error('invalid'),{status:422});},{meta:{project_id:'p',version:4}});

@@ -15,12 +15,21 @@ function exporter(items){
  let blob=null,message='',filename='';const button={disabled:false,value:'Carcass QA'};
  const state={items,room:{width:6000,depth:4000,height:3000},plinths:[],wallPanels:[]};
  const context=vm.createContext({state,materials,MF_FURNITURE_CORE:core,MF_BLANKS_NATIVE:globalThis.MF_BLANKS_NATIVE,templateFor:()=>null,
- Blob,Date,JSON,Math,FACADE_GAP_MM:1.5,$:()=>button,hydrateMaterials:async()=>{},status:s=>message=s,setTimeout:()=>{},
+ api:async()=>({roles:['admin']}),MF_CONSTRUCTOR_ACCESS:{apply:()=>true},Blob,Date,JSON,Math,FACADE_GAP_MM:1.5,$:()=>button,hydrateMaterials:async()=>{},status:s=>message=s,setTimeout:()=>{},
  alert:s=>assert.fail(s),confirm:()=>true,URL:{createObjectURL:b=>{blob=b;return 'blob:qa';},revokeObjectURL(){}},
  document:{body:{append(){}},createElement:()=>({style:{},click(){filename=this.download;},remove(){}})}});
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),context);
  return {context,button,result:async()=>({payload:blob?JSON.parse(await blob.text()):null,message,filename})};
 }
+test('export rechecks the account and refuses client or expired sessions before creating any file',async()=>{
+ for(const expired of [false,true]){
+  const e=exporter([]);let checked=0;
+  e.context.api=async()=>{checked++;if(expired)throw Error('Сессия завершена');return {roles:['client']};};
+  e.context.MF_CONSTRUCTOR_ACCESS={apply:()=>false};
+  await e.context.exportBazisProjectReady();const r=await e.result();
+  assert.equal(checked,1);assert.equal(r.payload,null);assert.equal(e.button.disabled,false);assert.ok(r.message);
+ }
+});
 for(const recipe of CARCASSES)test('full download export: '+recipe.id,async()=>{
  const b=buildCarcass({recipe:recipe.id},{bodyMaterialId:core.DEFAULT_MATERIALS.body_variant_id,backMaterialId:CARCASS_BACK_MATERIAL_ID,edges:{left:'1011'}});
  const items=placeCarcass(b,{x:200,z:300,elevation_mm:100,rotation:90});items[0].body_variant_id='custom';

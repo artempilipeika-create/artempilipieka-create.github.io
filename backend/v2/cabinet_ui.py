@@ -27,6 +27,7 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
+        'constructor-access.js','client-workspace.css',
         'wall-special-variants.js','wall-special-variants.json','wall-special-model.js','wall-special-ui.js','corner-layout.mjs',
         'open-tall-variants.js','open-tall-variants.json','open-tall-model.js','open-tall-ui.js',
         'cargo-variants.js','cargo-variants.json','cargo-model.js','cargo-ui.js',

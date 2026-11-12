@@ -54,7 +54,8 @@
 <link rel="stylesheet" href="/account/planner/production-notes.css">
 <script defer src="/account/planner/choice-card-ui.js?v=20261027-full-oak"></script>
 <script defer src="/account/planner/catalogue-artwork.js?v=20261027-full-oak"></script>
-<script defer src="/account/3d.js?v=20261106-blanks"></script><script defer src="/account/3d-studio.js?v=20261106-blanks"></script>
+<script defer src="/account/planner/constructor-access.js?v=20261112"></script>
+<script defer src="/account/3d.js?v=20261112-client-workspace"></script><script defer src="/account/3d-studio.js?v=20261106-blanks"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
 <link rel="stylesheet" href="/account/planner/blanks.css?v=20261106">
 <link rel="stylesheet" href="/account/planner/workspace.css">
@@ -66,7 +67,8 @@
 <link rel="stylesheet" href="/account/planner/surface-cards.css?v=20261025-lively-cards">
 <link rel="stylesheet" href="/account/planner/presentation.css">
 <script defer src="/account/planner/bridge.js?v=20261029-album-pagination"></script>
-<script type="module" src="/account/planner/entry.mjs?v=20261106-blanks"></script>
+<script type="module" src="/account/planner/entry.mjs?v=20261112-client-workspace"></script>
+<link rel="stylesheet" href="/account/planner/client-workspace.css?v=20261112">
 </head>
 <body class="mf-3d-page mf3d-studio" data-planner-requested="webgl">
 <div id="planner-workspace">
@@ -76,9 +78,9 @@
  <div class="mf3d-top-actions">
   <button id="new-project" class="studio-icon secondary" title="Новый проект" aria-label="Новый проект">＋</button>
   <button id="save-project" class="secondary">Сохранить</button>
-  <button id="export-bazis" class="secondary">Экспорт БАЗИС</button>
+
   <button id="production-brief-button" class="secondary" type="button" title="Заметки дизайнера и техническое задание">Задание</button>
-  <button id="to-order">В заказ <span aria-hidden="true">↗</span></button>
+  <button id="to-order">Подготовить заказ <span aria-hidden="true">↗</span></button>
   <details class="studio-menu"><summary aria-label="Другие действия">•••</summary><div class="studio-menu-panel"><button id="download-spec" class="secondary">Альбом кухни · PDF</button><button id="studio-help" class="secondary">Как пользоваться</button><a href="/account">Личный кабинет</a></div></details>
  </div>
 </header>
@@ -123,7 +125,7 @@
    <div class="mf3d-help" id="scene-help">Модуль — перемещение · фон — вращение · колесо — масштаб</div>
   </div>
   <div class="studio-scene-caption"><span>Размеры в мм · цвет материала условный</span><span id="studio-selection-caption">Ни один модуль не выбран</span></div>
-  <details class="mf3d-cutlist"><summary>Предварительная деталировка <span>Весь проект</span></summary><div id="cutlist"></div><p class="muted">В заказ передаются все модули. Кромка, склейка и расчёт проверяются в обычном редакторе Martin Forest.</p></details>
+
  </section>
  <aside class="mf3d-right" aria-label="Параметры модуля">
   <div class="studio-inspector-heading"><span class="mf3d-kicker">ТОЧНО В ВАШ РАЗМЕР</span><h2>Параметры</h2></div>
@@ -365,7 +367,6 @@
      <button type="button" class="secondary" data-upper-option="side" data-upper-value="right" aria-pressed="false"><span class="upper-option-image"></span><span>Справа · P</span></button>
      </div>
     </div>
-    <p class="studio-hint upper-import"><a href="/account/planner/bazis-drawers-import.js?v=20261112-modern" download="Martin_Forest_Import_v9_9_13.js">Импортёр для БАЗИС · версия 9.9.13</a></p>
    </div>
    <div id="door-opening-controls" class="mf3d-control-card" hidden>
     <div class="mf3d-control-title"><strong>Открывание двери</strong></div>
@@ -381,8 +382,8 @@
      <div class="mf3d-grid"><label>Глубина столешницы<input id="countertop-depth" type="number" min="300" max="1200" step="1"></label><label>Толщина столешницы<input id="countertop-thickness" type="number" min="12" max="100" step="1"></label></div>
      <p id="kitchen-summary" class="studio-hint"></p>
    </div>
-   <div class="mf3d-control-card"><div class="mf3d-control-title"><strong>02 <span>Положение</span></strong><span>от центра комнаты</span></div><div class="mf3d-grid"><label>X, мм<input id="pos-x" type="number" step="0.5" min="-12000" max="12000" step="10"></label><label>Z, мм<input id="pos-z" type="number" step="0.5" min="-12000" max="12000" step="10"></label><label>Поворот<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></div><div class="studio-nudge"><label>Шаг<select id="studio-nudge-step"><option value="10">10 мм</option><option value="50">50 мм</option><option value="100">100 мм</option></select></label><button data-nudge="left" class="secondary" aria-label="Сдвинуть влево">←</button><button data-nudge="back" class="secondary" aria-label="Сдвинуть назад">↑</button><button data-nudge="front" class="secondary" aria-label="Сдвинуть вперёд">↓</button><button data-nudge="right" class="secondary" aria-label="Сдвинуть вправо">→</button><button id="studio-rotate" class="secondary" title="Повернуть на 90 градусов" aria-label="Повернуть на 90 градусов">↻</button></div><p id="studio-position-note" class="studio-hint"></p></div>
-   <div class="mf3d-control-card"><div class="mf3d-control-title"><strong>03 <span>Фасады и конструкция</span></strong></div><div id="facade-summary" class="mf3d-facade-summary"></div><div class="mf3d-facade-rule"><strong>Зазор 1,5 мм</strong><span>Слева · справа · сверху · снизу</span></div>
+   <div class="mf3d-control-card"><div class="mf3d-control-title"><strong>02 <span>Положение</span></strong><span>от центра комнаты</span></div><details class="constructor-precise-position"><summary>Точное положение</summary><div class="mf3d-grid"><label>X, мм<input id="pos-x" type="number" step="0.5" min="-12000" max="12000" step="10"></label><label>Z, мм<input id="pos-z" type="number" step="0.5" min="-12000" max="12000" step="10"></label><label>Поворот<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></div></details><div class="studio-nudge"><label>Шаг<select id="studio-nudge-step"><option value="10">10 мм</option><option value="50">50 мм</option><option value="100">100 мм</option></select></label><button data-nudge="left" class="secondary" aria-label="Сдвинуть влево">←</button><button data-nudge="back" class="secondary" aria-label="Сдвинуть назад">↑</button><button data-nudge="front" class="secondary" aria-label="Сдвинуть вперёд">↓</button><button data-nudge="right" class="secondary" aria-label="Сдвинуть вправо">→</button><button id="studio-rotate" class="secondary" title="Повернуть на 90 градусов" aria-label="Повернуть на 90 градусов">↻</button></div><p id="studio-position-note" class="studio-hint"></p></div>
+   <div class="mf3d-control-card"><div class="mf3d-control-title"><strong>03 <span>Конструкция</span></strong></div><div id="facade-summary" class="mf3d-facade-summary"></div><div class="mf3d-facade-rule"><strong>Зазор 1,5 мм</strong><span>Слева · справа · сверху · снизу</span></div>
     <div id="production-controls" class="studio-details mf3d-production-controls" hidden>
      <strong>Производственная конструкция</strong>
      <p id="production-back-summary" class="studio-hint"></p>
@@ -399,7 +400,8 @@
    <div class="mf3d-control-card"><div class="mf3d-control-title"><strong>04 <span>Материалы</span></strong></div><section class="mf3d-material"><h3>Корпус</h3><label class="studio-sr" for="body-search">Материал корпуса</label><input id="body-search" type="search" placeholder="Артикул или название"><div id="body-results" class="mf3d-results"></div><p id="body-selected" class="muted">Материал не выбран</p><p id="body-visual" class="studio-hint"></p></section><section class="mf3d-material"><h3>Фасады</h3><label class="studio-sr" for="front-search">Материал фасадов</label><input id="front-search" type="search" placeholder="Артикул или название"><div id="front-results" class="mf3d-results"></div><p id="front-selected" class="muted">Материал не выбран</p><p id="front-visual" class="studio-hint"></p></section><section class="mf3d-material"><h3>Цоколь</h3><label class="studio-sr" for="plinth-search">Материал: Цоколь</label><input id="plinth-search" type="search" placeholder="Артикул или название"><div id="plinth-results" class="mf3d-results"></div><p id="plinth-selected" class="muted">Материал не выбран</p><p id="plinth-visual" class="studio-hint"></p></section><section class="mf3d-material"><h3>Столешница</h3><label class="studio-sr" for="countertop-search">Материал: Столешница</label><input id="countertop-search" type="search" placeholder="Артикул или название"><div id="countertop-results" class="mf3d-results"></div><p id="countertop-selected" class="muted">Материал не выбран</p><p id="countertop-visual" class="studio-hint"></p></section><p class="studio-hint">В заказ передаётся выбранный артикул, а не условный цвет на сцене.</p></div>
   </section>
   <details class="studio-room studio-details"><summary>Параметры помещения</summary><div class="mf3d-grid"><label>Ширина, мм<input id="room-width" type="number" min="1500" max="12000" step="50" value="4200"></label><label>Глубина, мм<input id="room-depth" type="number" min="1500" max="12000" step="50" value="3200"></label><label>Высота, мм<input id="room-height" type="number" min="2000" max="5000" step="50" value="2700"></label></div></details>
-  <div class="studio-native-note"><strong>Родной сценарий БАЗИС</strong><p>Экспорт .mf-bazis.json для работы с исходными .fr3d. Модули без исходного файла не входят в родной экспорт.</p></div>
+
+<details class="constructor-production-tools" data-production-only hidden><summary>Инструменты производства</summary><div class="constructor-production-actions"><button id="export-bazis" class="secondary">Экспорт БАЗИС</button><a class="button secondary" href="/account/planner/bazis-drawers-import.js?v=20261112-modern" download="Martin_Forest_Import_v9_9_13.js">Импортёр БАЗИС</a></div>  <details class="mf3d-cutlist"><summary>Предварительная деталировка <span>Весь проект</span></summary><div id="cutlist"></div><p class="muted">В заказ передаются все модули. Кромка, склейка и расчёт проверяются в обычном редакторе Martin Forest.</p></details>  <div class="studio-native-note"><strong>Родной сценарий БАЗИС</strong><p>Экспорт .mf-bazis.json для работы с исходными .fr3d. Модули без исходного файла не входят в родной экспорт.</p></div></details>
  </aside>
 </main>
 <footer class="studio-statusbar"><p id="status" class="mf3d-status" role="status" aria-live="polite">Загрузка конструктора…</p><span>Martin Forest · Конструктор мебели</span></footer>

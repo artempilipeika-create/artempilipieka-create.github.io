@@ -26,6 +26,12 @@ export class ExecutionUI{
   this.proxy(get('vitrine-light-system'),'vitrine','light_system');
   this.generic=el('section','mf3d-control-card execution-family');this.generic.id='execution-generic-grip';this.generic.append(el('h3','','Фасады'));get('door-opening-controls').after(this.generic);
   this.proxy(get('handles'),'generic','handles',this.generic);
+  this.configuration=el('section','mf3d-control-card');this.configuration.id='module-configuration';
+  this.configuration.append(el('h3','','Наполнение и фасады'));this.root.after(this.configuration);
+  for(const id of Object.values(families)){const section=get(id);if(section)this.configuration.append(section);}
+  this.configuration.append(this.generic);
+  get('vitrine-light-system').closest('label').dataset.productionOnly='';
+  for(const node of document.querySelectorAll('[data-open-tall-option="light_system"]'))node.closest('label')?.classList.add('production-option');
   this.onSourceChange=()=>this.sync();app.listen(get('item-controls'),'change',this.onSourceChange);
  }
  proxy(select,family,key,host=null){
@@ -76,14 +82,15 @@ export class ExecutionUI{
  }
  sync(){
   if(this.closed)return;const it=this.app.adapter.selected,p=PRODUCTION_MODELS[it?.bazis_id];this.root.hidden=!it||!p;
-  const handles=get('handles');handles.classList.toggle('execution-source-select',Boolean(p));if(p){handles.tabIndex=-1;handles.setAttribute('aria-hidden','true');}else{handles.removeAttribute('tabindex');handles.removeAttribute('aria-hidden');}
+  const handles=get('handles');handles.classList.toggle('execution-source-select',Boolean(p));handles.closest('label').classList.toggle('execution-proxied-label',Boolean(p));if(p){handles.tabIndex=-1;handles.setAttribute('aria-hidden','true');}else{handles.removeAttribute('tabindex');handles.removeAttribute('aria-hidden');}
+  this.configuration.hidden=!it;
   if(!it||!p){this.generic.hidden=true;return;}
   const state=moduleView(it,this.app.scene?.displayMode);
   this.viewButtons.forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.executionView===state.view));b.disabled=Boolean(this.app.scene?.isFallback||b.dataset.executionView==='open'&&!state.canOpen);b.title=b.dataset.executionView==='open'&&!state.canOpen?'У этого модуля нет распашных дверей':'';});
   this.caption.textContent=`${it.width} × ${it.height} × ${it.depth} мм · ${state.view==='inside'?'внутри':state.view==='open'?'открытые двери':'снаружи'}`;
   this.canvas.setAttribute('aria-label',it.name+' · '+this.caption.textContent);
   const options={...state.preview,tall:p.tier==='tall'},renderer=this.ensureRenderer();this.visual.hidden=!renderer;this.note.textContent=renderer?'Выбранные материалы показаны на сцене и в предпросмотре. В режиме «Внутри» стенки и фасады полупрозрачны.':'3D-предпросмотр недоступен. Выбор параметров работает ниже.';renderer?.request(this.canvas,it,options);
-  this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(p.modern||p.tall?.execution==='gola'||globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
+  this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(p.modern||p.wall_special||p.tall?.execution==='gola'||globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
   this.syncProxies(it);
   for(const family of buttonFamilies){
    const root=get(families[family]);if(!root||root.hidden)continue;

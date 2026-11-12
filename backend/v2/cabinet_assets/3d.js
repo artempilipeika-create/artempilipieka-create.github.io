@@ -1283,6 +1283,8 @@ async function exportBazisProjectReady(){
   if(button.disabled)return;
   button.disabled=true;
   try{
+  const account=await api('/auth/me');
+  if(!globalThis.MF_CONSTRUCTOR_ACCESS?.apply(account)){status('Инструменты производства доступны сотрудникам с правами на работу в конструкторе.');return;}
     await hydrateMaterials();
     const missing=[];
     for(const it of state.items.filter(x=>x.bazis_file||x.module_type==='blank')){
@@ -1430,6 +1432,7 @@ function exportBazisProject(){
 }
 
 async function toOrder(){
+  if(globalThis.MF_PROJECT_SAFETY&&!globalThis.MF_PROJECT_SAFETY.orderReady())return;
   if(state.items.some(it=>it.module_type==='blank'))throw new Error(
     'Проект содержит заготовки. Перенос в заказ с поклейкой ПВХ пока не подключён: сохраните проект и выгрузите CSV в категории «Заготовки».'
   );
@@ -1463,6 +1466,7 @@ async function toOrder(){
 
 async function start(){
   try{user=await api('/auth/me')}catch{location.assign('/login');return}
+  globalThis.MF_CONSTRUCTOR_ACCESS?.apply(user);
   await Promise.all([...new Set(Object.values(globalThis.MF_FURNITURE_CORE.DEFAULT_MATERIALS))].map(material));
   bindCatalogueControls();
   renderModuleCatalogue();
