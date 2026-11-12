@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.11 DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.12 UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ v9.9.12: restore mounting rail anchors for all 22 upper corner/vitrine sources.
  v9.9.11: allow native upper depth 250–600 mm with 3 mm rear frame inset.
  v9.9.10: preserve native frame placement for 22 upper glass and corner sources.
  v9.9.9: support 80 mm rails and tall unedged HDF 3/4 mm rear panels.
@@ -895,6 +896,7 @@ function fmtMap(map) {
 // BEGIN GENERATED NATIVE PROFILE REPAIR
 const NATIVE_GOLA_PROFILE_COUNTS = {"010a26e7897944becb274ba023100d068e07b2fa29f0d9de6d137f678280ca56":1,"053826e33ec1e10d791eea8ec56b247a4bca1dfe45541269adfdb21843183734":2,"08a67c2cc8b6825cef47ac28eb652f6f93fe241535c6e6ac6743e056f38d693f":2,"0b99b75442f0e176a7664a2e657218918267466f65c3d7dc901f18ab848a6840":1,"0ec91af8c3c52846bc9f52247dbae9b920b707919f64d9e12c390fa8add1b279":1,"133dd94f7a8ded3d6e8215c230b3f160d96215f71cd533830f48f9c00ea9f4e0":1,"16401330c6f3223c3b306b9674c2d4407fae6bb7c3d5e07555a03229d394dd0d":1,"385d2d9982da4e463dd4b41cb0cae613bf52de45b4f90f6b12600484665c9cc7":1,"3a209387ab60dd45d95163e9fe7e8fce8fcb210f0700e811bb08d0ff5ef5d56c":2,"420a726334c830196dd7f4c173321028c570272cd41c21d3b0468a8707dcfe2a":1,"4340fa69215fccf9f91c85292a959b8f040292042432799b7f501ed7bf69e150":2,"43967878ef37d286c4505b34a8f626c9d028ead76325d11a2ddc78d29aa3900e":1,"4cb4a698af61b870d5d2b918b1061c938ac14febbe6feb7430aee18bec11e873":1,"518a05a36607e4a41e8bf5ad801b7508efd542f6833491642fecb5451b1b620e":1,"587ab72c0138d1ee86a3b53dd4b644a7ca4cd23a6b85a8245f4d7d74e8933d34":1,"5b6da09508cab8b28db42bc06882e792bf1e3e2c9fc28a9f913bfe1db4a158e8":1,"5e1075374468e9ae9a7bc40a12288e27ee65fb9d79bbf09bd23fe55852bbae0d":1,"5f3a48e6a7cd394f0727d41f091017e8d8fc9a8394bd241ca37eb1d183c6189a":1,"627e0250a8e58f5e303fb11c56b4a8b881f53e5b74b5448a11a5dfdc4ce59ba8":2,"635a41232720caa3559e9606808b7f02e8e79e26b43b52d37eb22b4fdf648ad4":1,"67176019419dd7af92b6668f3029a2ce533696a296075fa545a362c2d57fc4f8":1,"6bd3b3f56d2eae8cbbcf6d0dd7d3cfa6952b1fd580fa6cb439ec94f4a91b801c":1,"6dd8f5fb6d4a53ba0bf1bac3e2603b8833841f929b8521e6d4e4bf54cf578ef1":1,"71f55f265ba42ab271c32400f84f1dd5b0228d1ddac310a7f63f1a54ba75cfd0":2,"8001bcb4cbee6ebdea8654ab04c68b5d481115b56eba5b46b2fbdfd5f051b3cf":2,"87237b2461fe1a8338f9a767dbaca75010539cc1f95484c9bdebf33d5b183f79":2,"8989e4ff7fb7f625dbe3dbe21a5712b51b80c7101ca9df20e4245cd2725064bc":1,"8c1edeae68509bcee986c19f00fa7c5566222e9c9160f0f79b8b83c9ee432f2d":2,"93e620610628b23a76028d286f7fe06f1d51acb849b0852dff2bfe03cdbdf8ba":1,"94752af0d5ec99a49052bcc3dc067137b0e285c58a482b2b64f812e7a385e08a":1,"95e7a5ce644a8123b46da405f1b5f987cb18819a47e8262759060be7a017a523":1,"96083d50d2c0dc0577d9541ff77a3b1f4c770bcdb9dbc36f0f57f9b0b07268ba":1,"99f651b86d4dc7b965e7682a7e4e7eb57912ff9e604bf93dabe768a7fc8519f3":2,"a342f12e9e533f88a72eed697d502f431c5dd15374143aea0b3ea616973c5816":1,"ad75a27a44d1e40590a515583af3f882f02b9b539a5c4ad5572b63ae594346ed":1,"afefecee12fdf21084dd0cf7f014d83d6e351381825909171da3988aa295f7d6":2,"b09ee8913055cca2aeb868311dc0e142313413e7c58450badb3249eba334ba46":2,"b4067ae2f1d643f3753c671ec12e5393aee9a6ff4df524fd40a89caad8e8961b":1,"cc671e2638f6e56aafe50fc9924aa68ee5aae2dda00c7cd509d165ee8999d4d7":1,"cd3cb599047b549d1c76ecb78fce462d191da06dbd109d994710ae48a1925764":1,"d19041cc3035f8571c6b41d4baee59718acdc8351cf92a4ed77c0dcca085e301":2,"dadbe9a423b7180bec8c4fa8d1535910465e56c53c9477299fec962546a85d5c":1,"dae71f7f74ca28342167090d0f32c02e24a0a8238a88821a9598bf2fe66d57f1":1,"f3ce77e6d36af854f74401b8ce92f414a55ff26fed097f7badb35d7dcb9984a6":1,"f4e24f941d2b3c3d0542e4de2e29ce2b4c8217123360871781495b9ddc6d8c97":1,"fdba1267e8cb92ec71ca5b201f3288a896c4fed1a2381642c68fa387c564d48e":1};
 const NATIVE_CHECKED_MOUNT_SOURCES = new Set(["85f493fc1d177af91734d7a40d7daa105b2c00e08dc4ee7c34d694ed97c456da", "c98de01845cf9c395f198b32f2214c26c759f764f663c8d8d9c7b84e865da525"]);
+const NATIVE_MOUNT_ANCHORS = {"08db1e1e2da4a30fc89ea708c0f5b37da0197beac52de817a93e20fce2bc3d73":{"left":2.0,"right":2.0},"08de7a33f9d4f37d051416bc0ef7fdf0b85413f16d219ae283fe30d8bced3cd5":{"left":2.0,"right":2.0},"1e79fcd6423d708393eba6a5fd7b6ae092f5ff02e69c4988fe4ce7cb99a7a65b":{"left":2.0,"right":12.0},"334f54e980a7b121c005485b7b04218b194ed63856ba1e131f32caa3db5a2ec6":{"left":2.0,"right":2.0},"4fabc7072fe1c408cbcbaa97fb0431c8d90d6f0221c301a178f00dad69342249":{"left":12.0,"right":2.0},"6ae46fe9b4b940ae52d8e4ba91ff2ab9d75328c5ad48c03383d2bcc1575b57f2":{"left":2.0,"right":2.0},"74184f6983e5c1d71809292ef0dd07175637a82331e451769c87eed77b0db432":{"left":12.0,"right":2.0},"749c7ce2df0343f7398597da2ece57230789b0dfb21327877f9c6815b9b0aeac":{"left":2.0,"right":2.0},"793966aa130b425be2a6e4a2e86ec2369663bc67a9676dad43af9ec45ab7010d":{"left":2.0,"right":2.0},"88f382a87df6976406e2fb38f92cd7671294e9661c82cea014228065a5203af1":{"left":2.0,"right":2.0},"89a1ad3dac2c811f37b302cc1b3ccc29cb3e5d908f6b7a74bab23510a2be6633":{"left":2.0,"right":2.0},"927d73c75156f382dc159f535a7904347292aaac9f4c8f9f973a41b047159d68":{"left":2.0,"right":2.0},"93a91adaa8d5b777a9a7808ae71bb760c048931260ec45615f111a53375cd944":{"left":2.0,"right":2.0},"b9e90e3116a7941a3872055f428328e35ae5eb531f69d72463b16d4198deb07f":{"left":2.0,"right":2.0},"be976c839ee1b2bda48b44483d6bc996f8740ceb6648fac78519050e89204b11":{"left":2.0,"right":2.0},"c6539e0de3d1342f67ec65a3358811ebc83e4fb538094b7de95f99e05f8dc5bb":{"left":2.0,"right":2.0},"cfcf8f1397fe75a1575521887324c02a1829205dba86259a30e6e0260c15e812":{"left":2.0,"right":2.0},"d64e5f79564252994bad2487cc3ff47995df1b2eae390cccc69595b1bdff4d74":{"left":2.0,"right":2.0},"e1f37ab359356dec40fbc46840d60c8e148cf4fb8900e4b4a6728c982807471b":{"left":2.0,"right":2.0},"ea13e87ee665b32e00f08e910922a1c93f8b863bbc293308ee9d69f63cc69340":{"left":2.0,"right":2.0},"f73104362e5d101a2322b510894ead55fade00f7e2254531035220bf511c77d1":{"left":2.0,"right":12.0},"fb4856b9075084780b2e6e5c5b6a51eca0ba9097a98b603c14cf1209e6280826":{"left":2.0,"right":2.0}};
 // Included in the single-file native importer; no external dependency in BAZIS.
 // Profile thickness is signed extrusion length, NOT board/material thickness.
 // API: https://cdn.bazissoft.ru/documentation/ru/BAZIS-Script_functions.html
@@ -928,7 +930,8 @@ function profileAt(root, indices, names) {
 function snapshotNativeProfiles(root, item, before, target) {
   const sha = String(item.source_sha256 || '').toLowerCase();
   const golaCount = NATIVE_GOLA_PROFILE_COUNTS[sha] || 0;
-  const upper = !!NATIVE_FRAME_PROFILES[sha];
+  const mountAnchors = NATIVE_MOUNT_ANCHORS[sha];
+  const upper = !!NATIVE_FRAME_PROFILES[sha] || !!mountAnchors;
   if (!golaCount && !upper) return [];
   const result = [], seen = new Set();
   function visit(obj, indices, names) {
@@ -947,11 +950,14 @@ function snapshotNativeProfiles(root, item, before, target) {
         if (Math.abs(lo-min)>.05 || Math.abs(hi-max)>.05)
           throw new Error('Исходный Gola не совпадает с шириной рамки: ' + name);
       } else {
-        // Audited native rail: two separate 50 mm pieces, 2 mm from cabinet ends.
+        // Audited rails stay 50 mm. Corner blind sides have a 12 mm inset;
+        // other sides have 2 mm. Retain the source-specific side offsets.
+        const leftInset = mountAnchors ? mountAnchors.left : 2;
+        const rightInset = mountAnchors ? mountAnchors.right : 2;
         if (Math.abs(Math.abs(pose.length)-50)>.05 ||
-            !(Math.abs(lo-min-2)<.05 || Math.abs(max-hi-2)<.05))
+            !(Math.abs(lo-min-leftInset)<.05 || Math.abs(max-hi-rightInset)<.05))
           throw new Error('Не распознана привязка короткой монтажной шины');
-        right = Math.abs(max-hi-2)<.05;
+        right = Math.abs(max-hi-rightInset)<.05;
       }
       const expected = {...pose.origin};
       expected.x += (kind==='gola' ? pose.basis[2].x*pose.length<0 : right) ? target.x-before.size.x : 0;
@@ -973,7 +979,7 @@ function snapshotNativeProfiles(root, item, before, target) {
   visit(root,[],[]);
   if (result.filter(p=>p.kind==='gola').length !== golaCount)
     throw new Error('Не найдены все исходные профили Gola: ожидается '+golaCount);
-  if (NATIVE_CHECKED_MOUNT_SOURCES.has(sha) && result.filter(p=>p.kind==='mount').length!==2)
+  if ((NATIVE_CHECKED_MOUNT_SOURCES.has(sha) || mountAnchors) && result.filter(p=>p.kind==='mount').length!==2)
     throw new Error('Не найдены оба отрезка монтажной шины');
   return result;
 }
@@ -1195,7 +1201,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.11 DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.12 UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

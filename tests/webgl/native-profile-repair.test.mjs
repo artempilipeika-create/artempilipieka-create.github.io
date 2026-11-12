@@ -8,6 +8,7 @@ const rootURL = new URL('../../',import.meta.url);
 const read = p=>fs.readFileSync(new URL(p,rootURL),'utf8');
 const source = read('backend/v2/cabinet_assets/planner/bazis-drawers-import.js');
 const fixtures = JSON.parse(read('tests/webgl/fixtures/native-profile-anchors.json'));
+const upperMounts = JSON.parse(read('tests/webgl/fixtures/upper-mount-anchors.json'));
 const require = createRequire(import.meta.url);
 const axes = ['x','y','z'];
 const plus=(a,b)=>Object.fromEntries(axes.map(k=>[k,a[k]+b[k]]));
@@ -156,6 +157,42 @@ test('Missing profiles, changed orientation, rejected writes and later commit dr
   c.repairNativeProfiles(checks,{...frame,size:target},[]);p.origin.x+=1;
   assert.throws(()=>c.verifyNativeProfile(checks[0]),/не подтверждены/);
   root.Objects=[];assert.throws(()=>c.snapshotNativeProfiles(root,item,frame,target),/Не найдены все/);
+});
+
+test('New upper sources repair both mounting rails for the reported resize and 90 degree placement',()=>{
+  const catalogue=JSON.parse(read('backend/v2/cabinet_assets/planner/wall-special-variants.json'));
+  assert.deepEqual(upperMounts.map(f=>f.sha256).sort(),catalogue.map(f=>f.source_sha256).sort());
+  for(const fixture of upperMounts) for(const rotation of [0,90,180,270]) {
+    const corner=fixture.file.startsWith('ВМУ');
+    const {root,profiles}=scene(fixture),item={...input(fixture,corner?800:600),rotation};
+    item.target.height=720;item.target.depth=300;
+    // Facade and other hardware extrusions must not be treated as mounting rails.
+    root.Objects.push({Name:'Верхняя Стойка',isProfile:true,Thickness:597,
+      ToGlobal(){throw Error('Z1 facade must not be inspected');}});
+    const c=runtime({elasticTransformation:{GetObjectLocalSize:o=>o.size,GetObjectMinLocalPoint:o=>o.min,ObjectIsElasticBlock:()=>true,
+      ResizeObject(o,size){o.size={...size};profiles.forEach(p=>p.origin=plus(p.origin,point(100,70,35)));}},
+      objectTransformation:{RotateObject(o,axis,angle){o.angle=-angle*Math.PI/180;}}});
+    const result=c.resizeAndPlace(root,item,[]);
+    assert.equal(result.profileChecks.length,2,fixture.file);
+    root.TranslateGCS(point(1514.5,0,1418));
+    result.profileChecks.forEach((check,i)=>{
+      const verified=c.verifyNativeProfile(check),original=fixture.profiles[i].matrix;
+      close(verified.actualLength,50);
+      close(verified.actualOrigin.x,original[0][3]+(i===0?item.target.width-fixture.frame.size[0]:0));
+      close(verified.actualOrigin.y,original[1][3]+720-fixture.frame.size[1]);
+      close(verified.actualOrigin.z,original[2][3]);
+    });
+  }
+});
+
+test('New upper sources cannot silently skip a missing or wrongly anchored mounting rail',()=>{
+  for(const fixture of upperMounts) {
+    const c=runtime(),{root,profiles,frame}=scene(fixture),item=input(fixture,800);
+    profiles[1].origin.x+=10;
+    assert.throws(()=>c.snapshotNativeProfiles(root,item,frame,frame.size),/привязка/);
+    root.Objects=[];
+    assert.throws(()=>c.snapshotNativeProfiles(root,item,frame,frame.size),/оба отрезка/);
+  }
 });
 
 test('46 catalogue source identities and profile counts match the single-file importer',()=>{

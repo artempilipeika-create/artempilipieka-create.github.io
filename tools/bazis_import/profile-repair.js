@@ -31,7 +31,8 @@ function profileAt(root, indices, names) {
 function snapshotNativeProfiles(root, item, before, target) {
   const sha = String(item.source_sha256 || '').toLowerCase();
   const golaCount = NATIVE_GOLA_PROFILE_COUNTS[sha] || 0;
-  const upper = !!NATIVE_FRAME_PROFILES[sha];
+  const mountAnchors = NATIVE_MOUNT_ANCHORS[sha];
+  const upper = !!NATIVE_FRAME_PROFILES[sha] || !!mountAnchors;
   if (!golaCount && !upper) return [];
   const result = [], seen = new Set();
   function visit(obj, indices, names) {
@@ -50,11 +51,14 @@ function snapshotNativeProfiles(root, item, before, target) {
         if (Math.abs(lo-min)>.05 || Math.abs(hi-max)>.05)
           throw new Error('Исходный Gola не совпадает с шириной рамки: ' + name);
       } else {
-        // Audited native rail: two separate 50 mm pieces, 2 mm from cabinet ends.
+        // Audited rails stay 50 mm. Corner blind sides have a 12 mm inset;
+        // other sides have 2 mm. Retain the source-specific side offsets.
+        const leftInset = mountAnchors ? mountAnchors.left : 2;
+        const rightInset = mountAnchors ? mountAnchors.right : 2;
         if (Math.abs(Math.abs(pose.length)-50)>.05 ||
-            !(Math.abs(lo-min-2)<.05 || Math.abs(max-hi-2)<.05))
+            !(Math.abs(lo-min-leftInset)<.05 || Math.abs(max-hi-rightInset)<.05))
           throw new Error('Не распознана привязка короткой монтажной шины');
-        right = Math.abs(max-hi-2)<.05;
+        right = Math.abs(max-hi-rightInset)<.05;
       }
       const expected = {...pose.origin};
       expected.x += (kind==='gola' ? pose.basis[2].x*pose.length<0 : right) ? target.x-before.size.x : 0;
@@ -76,7 +80,7 @@ function snapshotNativeProfiles(root, item, before, target) {
   visit(root,[],[]);
   if (result.filter(p=>p.kind==='gola').length !== golaCount)
     throw new Error('Не найдены все исходные профили Gola: ожидается '+golaCount);
-  if (NATIVE_CHECKED_MOUNT_SOURCES.has(sha) && result.filter(p=>p.kind==='mount').length!==2)
+  if ((NATIVE_CHECKED_MOUNT_SOURCES.has(sha) || mountAnchors) && result.filter(p=>p.kind==='mount').length!==2)
     throw new Error('Не найдены оба отрезка монтажной шины');
   return result;
 }
