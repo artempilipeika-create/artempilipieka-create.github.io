@@ -378,7 +378,9 @@ class PlannerApplication {
       errorBox=get('production-brief-error');
     const render=()=>{
       const scene={...this.adapter.state,production_note:input.value};
-      preview.textContent=brief?.projectText(scene)||'Замечаний нет. Модель техники по умолчанию считается неуточнённой.';
+      const text=brief?.userProjectText(scene)||'';
+      preview.textContent=text;preview.hidden=!text;
+      const heading=get('production-brief-summary-title');if(heading)heading.hidden=!text;
     };
     const commit=()=>{
       if(!this.adapter.state||input.value===(this.adapter.state.production_note||''))return;

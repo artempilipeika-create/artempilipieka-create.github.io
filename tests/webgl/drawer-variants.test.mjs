@@ -92,7 +92,7 @@ test('Actual native export carries eight matching files, nominal fronts and sepa
  vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);vm.runInContext('exportBazisProject()',c);
  const payload=JSON.parse(await blob.text());assert.equal(payload.items.length,8);
- for(let i=0;i<8;i++){const out=payload.items[i],v=D.variants[i];assert.equal(out.source_file,v.source_file);assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.target.height,820);assert.equal(out.construction.base_height,150);assert.deepEqual(out.construction.metal_drawers.front_heights_mm,v.front_heights);assert.ok(out.production_note.includes(v.series));}
+ for(let i=0;i<8;i++){const out=payload.items[i],v=D.variants[i];assert.equal(out.source_file,v.source_file);assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.target.height,820);assert.equal(out.construction.base_height,150);assert.deepEqual(out.construction.metal_drawers.front_heights_mm,v.front_heights);assert.ok(out.technical_note.includes(v.series));}
 });
 test('Native importer protects service-only AQ surface and keeps 16 mm board material',()=>{
  const script=readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_8_BLANKS.js',import.meta.url),'utf8');

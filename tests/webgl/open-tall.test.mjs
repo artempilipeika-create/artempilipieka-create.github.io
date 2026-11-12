@@ -71,5 +71,9 @@ test('order preparation transfers the six wooden panels without asking for a fac
  await vm.runInContext('toOrder()',c);
  const revision=requests.find(r=>r.path.endsWith('/revisions')).body;
  assert.equal(revision.details.length,6);assert.ok(revision.details.every(p=>p.variant_id==='body'));
- assert.match(revision.comment,/между полками/);assert.match(revision.comment,/75069/);
+ assert.equal(revision.comment,'');
+ it.production_note='Проверить розетку';requests.length=0;await vm.runInContext('toOrder()',c);
+ assert.equal(requests.find(r=>r.path.endsWith('/revisions')).body.comment,it.name+' — Проверить розетку');
+ it.production_note='  ';requests.length=0;await vm.runInContext('toOrder()',c);
+ assert.equal(requests.find(r=>r.path.endsWith('/revisions')).body.comment,'');
 });

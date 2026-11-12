@@ -410,10 +410,10 @@
   <button id="production-brief-close" class="secondary" type="button" aria-label="Закрыть задание">✕</button>
   <span class="mf3d-kicker">MARTIN FOREST / ПЕРЕДАЧА ПРОЕКТА</span>
   <h2>Задание конструктору</h2>
-  <p>Укажите общие замечания дизайнера. Данные о технике заполняются в параметрах каждого пенала. Всё сохраняется с проектом, переносится в заказ и записывается скриптом в заметки БАЗИС.</p>
+  <p>В заказ и заметки БАЗИС попадёт только введённый вами текст.</p>
   <label>Общие замечания к заказу<textarea id="production-brief-text" maxlength="2500" rows="5" placeholder="Обмеры, коммуникации, пожелания клиента, монтажные особенности…"></textarea></label>
-  <h3>Заметка для производства</h3>
-  <pre id="production-brief-summary" aria-live="polite"></pre>
+  <h3 id="production-brief-summary-title" hidden>Заполненные примечания</h3>
+  <pre id="production-brief-summary" aria-live="polite" hidden></pre>
   <p class="studio-hint">Стандартная ниша не означает согласование конкретной техники. Перед запуском в производство монтажные схемы нужно проверить.</p>
   <p id="production-brief-error" class="production-brief-error" role="alert" hidden></p>
   <button id="production-brief-to-order" type="button" hidden>Подтвердить и перейти в заказ</button>

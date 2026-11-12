@@ -152,10 +152,10 @@ test('Real native exporter carries exact twelve donor identities, machining, com
     assert.equal(out.construction.vitrine.groove_width_mm,i<6?4:17.5);assert.equal(out.construction.vitrine.groove_depth_mm,i<6?8:6.5);
     assert.equal(out.construction.native_adjustment.count,3);assert.ok(out.construction.native_adjustment.requires_manual_native_adjustment);
     assert.equal(out.construction.hardware.items.find(h=>h.key==='profile-z1-black').quantity,4.984);
-    assert.ok(out.production_note.includes(i<6?'15.0341':'75069'));
+    assert.ok(out.technical_note.includes(i<6?'15.0341':'75069'));
   });
 });
-test('Order transfer includes only the five LDSP panels; separate glass and frame stay in the manufacturing brief',async()=>{
+test('Order transfer keeps the five LDSP panels and only entered notes; technical brief remains separate',async()=>{
   const source=readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8'),requests=[];
   const it=item(V.variants[0]),state={room:{width:4200,height:2700,depth:3200},items:[it]};
   const context=vm.createContext({state,templateFor:template,project:{project_id:'qa-project'},materials:new Map(),
@@ -168,5 +168,7 @@ test('Order transfer includes only the five LDSP panels; separate glass and fram
   const revision=requests.find(r=>r.path.endsWith('/revisions')).body;
   assert.equal(revision.details.length,5);assert.ok(revision.details.every(p=>p.variant_id==='body'));
   assert.ok(revision.details.every(p=>!p.name.includes('Стекло')&&!p.name.includes('Z1')));
-  for(const text of ['568.5 × 1868.5 × 4','556 × 580 × 4','15.0341','4.984','4.874'])assert.ok(revision.comment.includes(text),text);
+  assert.equal(revision.comment,'');
+  const technical=globalThis.MF_PRODUCTION_NOTES.moduleText(it);
+  for(const text of ['568.5 × 1868.5 × 4','556 × 580 × 4','15.0341','4.984','4.874'])assert.ok(technical.includes(text),text);
 });

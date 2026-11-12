@@ -56,6 +56,18 @@
     }
     return lines.join('\n\n');
   }
+  // Only text explicitly entered by the designer belongs in order/import notes.
+  // Keep projectText/moduleText unchanged for existing album/technical consumers.
+  function userModuleText(item){return trimmed(item&&item.production_note,2000);}
+  function userProjectText(scene){
+    const lines=[],note=trimmed(scene&&scene.production_note,2500);
+    if(note)lines.push(note);
+    for(const item of (scene&&scene.items)||[]){
+      const text=userModuleText(item);
+      if(text)lines.push((item.name||item.item_id||'Модуль')+' — '+text);
+    }
+    return lines.join('\n\n');
+  }
   function httpUrl(value){
     if(!value)return true;
     try{const u=new URL(value);return (u.protocol==='https:'||u.protocol==='http:')&&Boolean(u.hostname);}
@@ -74,5 +86,5 @@
     }
     return '';
   }
-  root.MF_PRODUCTION_NOTES=Object.freeze({family,appliance,moduleText,projectText,validate});
+  root.MF_PRODUCTION_NOTES=Object.freeze({family,appliance,moduleText,projectText,userModuleText,userProjectText,validate});
 })(globalThis);

@@ -138,7 +138,8 @@ test('Actual export follows the final selected source and ordinary construction 
   if(v.system==='ball'){
    assert.equal(out.construction.metal_drawers,null);assert.equal(out.construction.hardware.slide_type,'ball_bearing_soft_close');
    assert.ok(out.construction.parts.filter(p=>p.role==='drawer').every(p=>p.thickness===18));
-   assert.match(out.production_note,/обычные шариковые/);
+   assert.match(out.technical_note,/обычные шариковые/);
+   assert.equal(out.production_note,items[i].production_note);
   }else assert.equal(out.construction.metal_drawers.system,v.system);
  }
 });

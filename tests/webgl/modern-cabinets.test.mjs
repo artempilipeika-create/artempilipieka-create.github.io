@@ -63,11 +63,11 @@ test('Importer converts modern source frames with the correct rear inset and pre
 });
 
 test('Actual export retains all39 source pins, native720 versus target450 and fridge installation height',async()=>{
- const items=M.variants.map(item);let blob;
+ const items=M.variants.map(item);items[0].production_note='  Розетка справа\nНе закрывать доступ  ';items[1].production_note='  ';let blob;
  const c=vm.createContext({MF_MODERN_CABINETS:M,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,MF_UPPERS:globalThis.MF_UPPERS,MF_GOLA:globalThis.MF_GOLA,MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,state:{items,room:{width:6000,depth:6000,height:3000}},templateFor:it=>catalogue.find(v=>v.id===it.bazis_id),materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,$:()=>({value:'Modern QA'}),status(){},setTimeout(){},alert:m=>assert.fail(m),confirm:()=>true,URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL(){}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
  const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8');
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);c.exportBazisProject();
- const payload=JSON.parse(await blob.text());assert.equal(payload.minimum_importer,'9.9.13');assert.equal(payload.items.length,39);
+ const payload=JSON.parse(await blob.text());assert.equal(payload.project_note,'');assert.equal(payload.items[0].production_note,'Розетка справа\nНе закрывать доступ');assert.ok(payload.items.slice(1).every(it=>!('production_note' in it)));assert.ok(payload.technical_notes.some(t=>t.includes('НОВЫЕ КОРПУСА')));assert.equal(payload.minimum_importer,'9.9.13');assert.equal(payload.items.length,39);
  payload.items.forEach((out,i)=>{const v=M.variants[i];assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.source_file,v.source_file);assert.equal(out.target.height,v.default_height);assert.equal(out.source_default.height,v.native_frame.size[1]);assert.equal(out.construction.modern_cabinet.family,v.family);});
 });
 

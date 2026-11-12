@@ -71,9 +71,10 @@ def test_designer_brief_persists_and_reaches_native_export_and_order(page,api,se
     assert item['appliance_details']['oven']['documentation_url']=='https://example.com/installation.pdf'
     exported=export_payload(page)
     assert exported['project_note']=='Проверить розетки перед выпуском'
-    assert 'ART-595' in exported['items'][0]['production_note']
-    assert 'https://example.com/installation.pdf' in exported['items'][0]['production_note']
-    assert 'Согласовать вентиляцию' in exported['items'][0]['production_note']
+    assert exported['items'][0]['production_note']=='Установить справа от колонны'
+    assert 'ART-595' in exported['items'][0]['technical_note']
+    assert 'https://example.com/installation.pdf' in exported['items'][0]['technical_note']
+    assert 'Согласовать вентиляцию' in exported['items'][0]['technical_note']
     page.goto('https://testserver/constructor')
     expect(page.locator('body')).to_have_attribute('data-planner-ready','true')
     panel(page,'left','projects')

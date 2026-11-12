@@ -55,6 +55,18 @@ test('visual-only faceplate changes do not change production niche heights',()=>
   assert.match(brief.moduleText(oven),/564 × 595/);assert.match(brief.moduleText(oven),/564 × 380/);
   factory.release(mesh);factory.dispose();
   const code=parse('../../backend/v2/cabinet_assets/3d.js');
-  assert.match(code,/project_note:state\.production_note/);
-  assert.match(code,/production_note:globalThis\.MF_PRODUCTION_NOTES\?\.moduleText\(it\)/);
+  assert.match(code,/project_note:String\(state\.production_note/);
+  assert.match(code,/production_note:String\(it\.production_note\)\.trim\(\)/);
+});
+
+test('order notes contain only entered text and disappear when cleared',()=>{
+  const item={...oven,production_note:'  Розетка справа\nПроверить по месту  '};
+  const scene={items:[{...oven,item_id:'empty'},item]};
+  assert.equal(brief.userProjectText({items:[oven]}),'');
+  assert.equal(brief.userModuleText(item),'Розетка справа\nПроверить по месту');
+  assert.equal(brief.userProjectText(scene),'ПН-600 — Розетка справа\nПроверить по месту');
+  assert.equal(brief.userProjectText({...scene,production_note:'  Общее указание  '}),'Общее указание\n\nПН-600 — Розетка справа\nПроверить по месту');
+  item.production_note=' \n ';
+  assert.equal(brief.userProjectText(scene),'');
+  assert.match(brief.projectText(scene),/564 × 595/); // Existing album brief is preserved.
 });

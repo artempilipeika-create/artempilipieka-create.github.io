@@ -94,7 +94,7 @@ test('Actual JSON export and importer profiles keep all eighteen exact identitie
  const script=readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8'),ic=vm.createContext({MF_MODERN_CABINETS:globalThis.MF_MODERN_CABINETS,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,require:()=>({}),console,process});
  vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),ic);
  payload.items.forEach((out,i)=>{const v=U.variants[i];assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.source_file,v.source_file);assert.equal(out.construction.upper_variant.execution,v.execution);
-  assert.equal(ic.nativeFrameProfile(out).rearInsetMm,3);assert.match(out.production_note,new RegExp(v.execution==='push'?'tip-on':U.executions[v.execution]));});
+  assert.equal(ic.nativeFrameProfile(out).rearInsetMm,3);assert.match(out.technical_note,new RegExp(v.execution==='push'?'tip-on':U.executions[v.execution]));});
 });
 
 

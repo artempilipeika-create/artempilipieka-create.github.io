@@ -1332,7 +1332,8 @@ function exportBazisProject(){
   const payload={
     format:'martin-forest-bazis-native-v2',
     project_name:$('project-name').value.trim()||'3D-проект',
-    project_note:state.production_note||'',
+    project_note:String(state.production_note||'').trim(),
+    technical_notes:[],
     exported_at:new Date().toISOString(),
     room:{...state.room},
     facade_gap_mm:FACADE_GAP_MM,
@@ -1357,7 +1358,8 @@ function exportBazisProject(){
         position:{x:it.x,y:globalThis.MF_FURNITURE_CORE.elevation(it,state.room),z:it.z},
         rotation:it.rotation,
         name:it.name,
-        production_note:globalThis.MF_PRODUCTION_NOTES?.moduleText(it)||'',
+        ...(String(it.production_note||'').trim()?{production_note:String(it.production_note).trim()}:{}),
+        technical_note:globalThis.MF_PRODUCTION_NOTES?.moduleText?.({...it,production_note:''})||'',
         appliance_details:it.appliance_details||null,
         body_variant_id:it.body_variant_id||null,
         front_variant_id:it.front_variant_id||null,
@@ -1402,24 +1404,24 @@ function exportBazisProject(){
       };
     })
   };
-  for(const item of blankItems){item.index=payload.items.length+1;payload.items.push(item);}
+  for(const item of blankItems){item.production_note=String(item.production_note||'').trim();if(!item.production_note)delete item.production_note;item.index=payload.items.length+1;payload.items.push(item);}
   if(blankItems.length){payload.minimum_importer='9.9.9';payload.format='martin-forest-bazis-native-v3';}
-  if(payload.items.some(it=>it.construction?.modern_cabinet)){payload.minimum_importer='9.9.13';payload.format='martin-forest-bazis-native-v3';payload.project_note+='\nНОВЫЕ КОРПУСА: импортёр 9.9.13; исходники из пакета новых модулей. '+payload.items.filter(it=>it.construction?.modern_cabinet).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n');}
-  if(!payload.items.some(it=>it.construction?.modern_cabinet)&&payload.items.some(it=>it.construction?.wall_special)){payload.minimum_importer='9.9.12';payload.format='martin-forest-bazis-native-v3';payload.project_note+='\nВЕРХНИЕ ВИТРИНЫ / УГЛОВЫЕ: используйте импортёр 9.9.12. '+payload.items.filter(it=>it.construction?.wall_special).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n');}
+  if(payload.items.some(it=>it.construction?.modern_cabinet)){payload.minimum_importer='9.9.13';payload.format='martin-forest-bazis-native-v3';payload.technical_notes.push('НОВЫЕ КОРПУСА: импортёр 9.9.13; исходники из пакета новых модулей. '+payload.items.filter(it=>it.construction?.modern_cabinet).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n'));}
+  if(!payload.items.some(it=>it.construction?.modern_cabinet)&&payload.items.some(it=>it.construction?.wall_special)){payload.minimum_importer='9.9.12';payload.format='martin-forest-bazis-native-v3';payload.technical_notes.push('ВЕРХНИЕ ВИТРИНЫ / УГЛОВЫЕ: используйте импортёр 9.9.12. '+payload.items.filter(it=>it.construction?.wall_special).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n'));}
   payload.wall_finishes=globalThis.MF_WALL_FINISHES?.schedule(state)||{panels:[],lights:[]};
-  const finishNote=globalThis.MF_WALL_FINISHES?.text(state);if(finishNote&&!payload.project_note.includes(finishNote))payload.project_note+='\n'+finishNote;
+  const finishNote=globalThis.MF_WALL_FINISHES?.text(state);if(finishNote)payload.technical_notes.push(finishNote);
   const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];
-  for(const item of plinthItems){item.index=payload.items.length+1;payload.items.push(item);}
+  for(const item of plinthItems){if(item.production_note)item.technical_note=item.production_note;delete item.production_note;item.index=payload.items.length+1;payload.items.push(item);}
   payload.kitchen_production.native_plinths_included=plinthItems.length;
-  for(const item of wallPanelItems){item.index=payload.items.length+1;payload.items.push(item);}
+  for(const item of wallPanelItems){if(item.production_note)item.technical_note=item.production_note;delete item.production_note;item.index=payload.items.length+1;payload.items.push(item);}
   payload.kitchen_production.native_wall_panels_included=wallPanelItems.length;
   const counter=globalThis.MF_COUNTERTOPS;
   const countertops=counter?.nativeItems(payload.kitchen_production.runs)||[];
-  for(const item of countertops){item.index=payload.items.length+1;payload.items.push(item);}
+  for(const item of countertops){if(item.production_note)item.technical_note=item.production_note;delete item.production_note;item.index=payload.items.length+1;payload.items.push(item);}
   const pendingCountertops=counter?.assemblies(payload.kitchen_production.runs).filter(a=>!a.native_supported)||[];
   payload.kitchen_production.native_countertops_included=countertops.length;
   payload.kitchen_production.countertops_requiring_adjustment=pendingCountertops;
-  if(pendingCountertops.length)payload.project_note+="\nСТОЛЕШНИЦЫ ДЛЯ ДОРАБОТКИ В БАЗИС (исходный блок не импортирован автоматически):\n"+pendingCountertops.map(a=>a.label+' · '+a.target.width+' × '+a.target.depth+' × '+a.target.height+' мм. '+a.native_notes.join(' ')).join('\n');
+  if(pendingCountertops.length)payload.technical_notes.push("СТОЛЕШНИЦЫ ДЛЯ ДОРАБОТКИ В БАЗИС (исходный блок не импортирован автоматически):\n"+pendingCountertops.map(a=>a.label+' · '+a.target.width+' × '+a.target.depth+' × '+a.target.height+' мм. '+a.native_notes.join(' ')).join('\n'));
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1446,8 +1448,8 @@ async function toOrder(){
     }
   }
   await saveProject();
-  const projectBrief=globalThis.MF_PRODUCTION_NOTES?.projectText(state)||'';
-  const orderComment='Создано из сохранённого 3D-проекта '+project.project_id+(projectBrief?'\n\nЗАДАНИЕ КОНСТРУКТОРУ\n'+projectBrief:'');
+  const projectBrief=globalThis.MF_PRODUCTION_NOTES?.userProjectText?.(state)||'';
+  const orderComment=projectBrief;
   if(orderComment.length>4000)throw new Error('Задание превышает 4000 символов для комментария заказа. Сократите заметки перед передачей.');
   const o=await api('/orders','POST',{business_name:$('project-name').value.trim()||'3D-проект',preparation_mode:'self_prepared'});
   const rel=await api('/catalogue/releases'),rows=allCutlist().filter(r=>r[7]?.optical_material!=='glass');
