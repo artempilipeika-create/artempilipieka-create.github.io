@@ -114,8 +114,8 @@ class FurnitureItem(StrictModel):
     back_variant_id: UUID|None=None
     # Individual rectangular board; no inferred cabinet or fabricated BAZIS geometry.
     blank_length_mm: int|None=Field(default=None,ge=100,le=3000)
-    blank_width_mm: int|None=Field(default=None,ge=100,le=1200)
-    blank_thickness_mm: int|None=Field(default=None,ge=10,le=40)
+    blank_width_mm: int|None=Field(default=None,ge=40,le=3000)
+    blank_thickness_mm: int|None=Field(default=None,ge=3,le=40)
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
@@ -139,6 +139,10 @@ class FurnitureItem(StrictModel):
             )):
                 raise ValueError('У заготовки должны быть длина, ширина, толщина, ориентация и код ПВХ')
             l,w,t=self.blank_length_mm,self.blank_width_mm,self.blank_thickness_mm
+            if w>1200 and self.blank_axis!='back':
+                raise ValueError('Ширина заготовки больше 1200 мм допустима только для задней панели')
+            if t<10 and not (t in (3,4) and self.blank_axis=='back' and self.blank_edge_code=='0000'):
+                raise ValueError('ХДФ 3/4 мм допустим только для задней панели без ПВХ')
             expected={'horizontal':(l,t,w),'side':(t,l,w),'back':(l,w,t)}[self.blank_axis]
             if (self.width,self.height,self.depth)!=expected:
                 raise ValueError('Габариты заготовки не соответствуют ориентации')

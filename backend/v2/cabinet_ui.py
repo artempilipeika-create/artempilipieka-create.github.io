@@ -32,7 +32,7 @@ def router():
         'pullout-dryer-variants.js','pullout-dryer-variants.json','pullout-dryer-model.js','pullout-dryer-ui.js',
         'worktop-fixtures.mjs','worktop-fixture-mesh.mjs','worktop-fixture-ui.mjs','worktop-fixtures.css',
         'material-appearance-ui.mjs','material-appearance.css',
-        'blanks-model.mjs','blanks-ui.mjs','blanks-native.mjs','blank-bindings.mjs','blank-sources.json','blank-sources.zip','blanks.css',
+        'blanks-model.mjs','blanks-ui.mjs','blanks-native.mjs','blank-bindings.mjs','carcass-model.mjs','carcass-ui.mjs','blank-sources.json','blank-sources.zip','blanks.css',
         'showroom.css','finish-catalogue.mjs','execution-artwork.mjs','execution-image-index.mjs','hardware-photos.mjs','execution-ui.mjs','execution-options.mjs','execution-previews.mjs','execution-cards.css','choice-card-ui.js','catalogue-artwork.js','surface-cards.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',

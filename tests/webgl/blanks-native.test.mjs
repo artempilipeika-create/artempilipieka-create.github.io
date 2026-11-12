@@ -49,3 +49,16 @@ test('cut size subtracts only the two physically opposite edges; any four bits e
  const out=blankNativeItem(blankItem({edges:'0101'}),material);assert.equal(out.source_sha256,BLANK_SOURCES['1111'].sha256);
  assert.throws(()=>blankNativeItem(blankItem(),null),/материал/);
 });
+
+for(const spec of [{axis:'back',length:598,partWidth:2198,thickness:3,edges:'0000'},
+ {axis:'horizontal',length:564,partWidth:80,thickness:18,edges:'1000'},
+ {axis:'back',length:564,partWidth:80,thickness:18,edges:'1100'}])
+test('corpus panel native rebuild '+JSON.stringify(spec),()=>{
+ const item=blankItem(spec),out=blankNativeItem(item,{name:'Материал тест',thickness:spec.thickness});
+ const {c,obj,panel}=setup(BLANK_SOURCES[spec.edges]?spec.edges:'1111');
+ c.resizeAndPlace(obj,out,[]);
+ assert.equal(panel.Thickness,spec.thickness);
+ assert.equal(panel.Butts.Count,spec.edges.split('1').length-1);
+ assert.deepEqual(panel.Contour.lines,[[0,0,spec.partWidth,0],[spec.partWidth,0,spec.partWidth,spec.length],
+   [spec.partWidth,spec.length,0,spec.length],[0,spec.length,0,0]]);
+});

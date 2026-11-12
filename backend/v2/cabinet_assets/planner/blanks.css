@@ -50,3 +50,25 @@ body.mf-blank-selected .mf3d-material{margin-bottom:8px}
 .mf-blank-binding label:has([type=checkbox]){flex-direction:row;align-items:center;gap:8px}
 .mf-blank-binding input[type=checkbox]{width:18px;height:18px;accent-color:#157750}
 .mf-blank-form label input:disabled,.mf-blank-form label select:disabled{background:#edf1ec;color:#667568}
+.mf-blank-card[hidden],.mf-carcass[hidden]{display:none!important}
+.mf-blank-modes{display:flex;gap:6px;padding:5px;background:#e7eee6;border-radius:12px;margin-bottom:16px}
+.mf-blank-modes button{flex:1;border:0;border-radius:8px;padding:10px 6px;font-size:13px;font-weight:700;color:#37543d;background:transparent}
+.mf-blank-modes button[aria-pressed=true]{background:#fff;box-shadow:0 2px 8px #294b2514;color:#175d40}
+.mf-carcass-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0 20px}
+.mf-carcass-cards button{display:flex;flex-direction:column;gap:6px;align-items:stretch;text-align:left;min-width:0;padding:12px;border:1px solid #d4decf;border-radius:14px;background:#fff;color:#2a4433;cursor:pointer}
+.mf-carcass-cards button[aria-pressed=true]{border:2px solid #247953;padding:11px;background:#eff7ed;box-shadow:0 3px 9px #1c502414}
+.mf-carcass-cards button:hover{background:#f2f7ee}.mf-carcass-cards strong{font-size:13px;line-height:1.35}
+.mf-carcass-cards span{font-size:11px;line-height:1.4;color:#617560}
+.mf-carcass-cards svg{height:116px;width:100%;display:block}
+.mf-carcass-editor{padding:16px;border:1px solid #d3dfd0;border-radius:16px;background:#fff}
+.mf-carcass-editor h3{margin:0;font-size:19px}.mf-carcass-editor summary{cursor:pointer;font-weight:700;font-size:13px;padding:9px 0;color:#28543b}
+.mf-carcass-editor details>.mf-blank-form{padding:8px 0}
+.mf-carcass-preview{border-radius:12px;background:#f4f6ee;display:flex;justify-content:center;padding:12px}
+.mf-carcass-preview svg{height:255px;max-width:100%;width:100%}
+.mf-carcass-part{padding:12px 0;border-top:1px solid #e4eae1;display:grid;gap:4px}
+.mf-carcass-part strong{font-size:13px}.mf-carcass-part span{font-size:12px;color:#405e48}.mf-carcass-part small{font-size:11px;color:#738271}
+.mf-carcass-part label{margin-top:4px}.mf-carcass-part label select{font-size:12px!important}
+.mf-carcass .mf-blank-primary:disabled{opacity:.5;cursor:not-allowed}
+.mf-carcass button:focus-visible{outline:3px solid #4b9c73;outline-offset:2px}
+.mf-carcass,.mf-carcass-editor,.mf-carcass-cards>*{min-width:0;box-sizing:border-box}
+.mf-carcass-cards button,.mf-carcass-cards strong,.mf-carcass-cards span{white-space:normal;overflow-wrap:anywhere}

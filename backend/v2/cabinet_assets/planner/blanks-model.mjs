@@ -24,8 +24,9 @@ export function normalizeBlank(input={}){
 export function validateBlank(input,room){
   const b=normalizeBlank(input);
   if(!Number.isInteger(b.length)||b.length<100||b.length>3000)return 'Длина заготовки: от 100 до 3000 мм.';
-  if(!Number.isInteger(b.width)||b.width<100||b.width>1200)return 'Ширина заготовки: от 100 до 1200 мм.';
-  if(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40)return 'Толщина ЛДСП: от 10 до 40 мм.';
+  if(!Number.isInteger(b.width)||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
+  const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
+  if(!thinBack&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
   if(!Number.isInteger(b.elevation)||b.elevation<0||b.elevation>5000)return 'Высота низа детали должна быть целым числом в мм.';

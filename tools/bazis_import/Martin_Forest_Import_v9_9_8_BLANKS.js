@@ -1,7 +1,9 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.7 NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.9 CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ v9.9.9: support 80 mm rails and tall unedged HDF 3/4 mm rear panels.
+ v9.9.8: native rectangular blanks and four-edge PVC mapping.
  v9.9.7: repair signed Gola extrusion lengths and upper mounting rail anchors; verify after Commit.
  v9.9.6: choose and remember one library root; search all subfolders, including junctions.
  v9.9.5: preserve saved source identities; report actual mismatching hashes; never replace library FR3D.
@@ -1022,7 +1024,8 @@ function resizeAndPlaceBlank(obj,item,log){
  const b=item.blank,source=BLANK_DONORS[String(item.source_sha256||'').toLowerCase()];
  if(!source||b?.schema!==1||b.finished_dimensions!==true)throw Error('Неизвестный исходник или формат заготовки.');
  const L=Number(b.length),W=Number(b.width),T=Number(b.thickness),E=Number(b.edge_thickness);
- if(!Number.isInteger(L)||L<100||L>3000||!Number.isInteger(W)||W<100||W>1200||!Number.isInteger(T)||T<10||T>40||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
+ const thinBack=b.axis==='back'&&(T===3||T===4)&&b.edge_code==='0000';
+ if(!Number.isInteger(L)||L<100||L>3000||!Number.isInteger(W)||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
  const expected=b.axis==='side'?{width:T,height:L,depth:W}:b.axis==='back'?{width:L,height:W,depth:T}:{width:L,height:T,depth:W};
  if(['width','height','depth'].some(k=>Number(item.target?.[k])!==expected[k]))throw Error('Габариты заготовки не совпали с её ориентацией.');
  if(!item.material_assignments?.body?.name||Number(item.material_assignments.body.thickness)!==T)throw Error('Не задан подходящий материал заготовки.');

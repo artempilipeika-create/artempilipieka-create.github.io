@@ -2,6 +2,7 @@ import './blanks-native.mjs';
 import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,blankCopies,cuttingSize,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
 import {localPoint} from './blank-bindings.mjs';
+import {CarcassUI} from './carcass-ui.mjs';
 
 const get=id=>document.getElementById(id);
 const numberField=(form,key)=>Number(form.querySelector('[name="'+key+'"]').value);
@@ -34,8 +35,8 @@ function formHtml(kind){
       ${catalog?`<label>Название детали<select name="partName"><option>Полка</option><option>Стойка</option><option>Крышка</option><option>Днище</option><option>Перегородка</option><option>Фасад</option></select></label>`:''}
       <div class="mf-blank-section-title">01 <span>Готовый размер с кромкой</span></div><div class="mf-blank-fields">
         <label>Длина, мм<input name="length" type="number" min="100" max="3000" step="1" value="720" required></label>
-        <label>Ширина, мм<input name="partWidth" type="number" min="100" max="1200" step="1" value="400" required></label>
-        <label>Толщина ЛДСП, мм<input name="thickness" type="number" min="10" max="40" step="1" value="18" required></label>
+        <label>Ширина, мм<input name="partWidth" type="number" min="40" max="3000" step="1" value="400" required></label>
+        <label>Толщина материала, мм<input name="thickness" type="number" min="3" max="40" step="1" value="18" required></label>
       </div>
       <label>Положение детали<select name="axis">
         <option value="horizontal">Горизонтально · полка / крышка</option>
@@ -71,7 +72,7 @@ function formHtml(kind){
       ${catalog?`<button type="button" class="mf-blank-primary" data-blank-add>+ Добавить заготовку в 3D</button>
       <button type="button" class="secondary mf-blank-export" data-blank-export>Деталировка заготовок · CSV</button>
       <button type="button" class="mf-blank-primary" data-blank-bazis>Экспорт проекта в БАЗИС</button>
-      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261107-blanks" download="Martin_Forest_Import_v9_9_8_BLANKS.js">Импортёр 9.9.8 ↓</a><a href="/account/planner/blank-sources.zip" download>Исходные заготовки ↓</a></div>`:''}
+      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261112-carcasses" download="Martin_Forest_Import_v9_9_9_CARCASSES.js">Импортёр 9.9.9 ↓</a><a href="/account/planner/blank-sources.zip" download>Исходные заготовки ↓</a></div>`:''}
       ${!catalog?`<details class="mf-blank-repeat"><summary>Копировать с шагом</summary><div class="mf-blank-fields"><label>Копий<input name="copyCount" type="number" min="1" max="30" value="1"></label><label>Шаг, мм<input name="copyStep" type="number" step="0.5" value="300"></label></div><label>Направление<select name="copyAxis"><option value="elevation_mm">По высоте</option><option value="x">По X</option><option value="z">По Z</option></select></label><button type="button" data-blank-copy>Создать копии</button></details>`:''}
     </div>
   </div>`;
@@ -140,6 +141,7 @@ export class BlanksUI{
     this.catalog.querySelector('[data-blank-bazis]').addEventListener('click',()=>get('export-bazis').click());
     this.catalog.querySelector('[data-blank-export]').addEventListener('click',()=>this.export());
     draw(this.catalog,this.app.adapter.room);
+    this.carcasses=new CarcassUI(app,this.catalog);
     this.sync();
   }
   add(){

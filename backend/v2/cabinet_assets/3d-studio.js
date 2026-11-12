@@ -142,7 +142,7 @@
       else cards.sort((a,b)=>Number(a.dataset.studioOrder)-Number(b.dataset.studioOrder));
       cards.forEach(b=>{group.append(b);if(b.dataset.roomFeature){const edit=group.querySelector('[data-edit-feature="'+b.dataset.roomFeature+'"]');if(edit){edit.hidden=b.hidden;group.append(edit);}}});group.hidden=!cards.some(b=>!b.hidden);
     }
-    get('studio-catalog-count').textContent=blanks?'1 карточка':finishing?'3 раздела':plural(count,['позиция','позиции','позиций']);
+    get('studio-catalog-count').textContent=blanks?'6 корпусов · отдельные детали':finishing?'3 раздела':plural(count,['позиция','позиции','позиций']);
     get('studio-catalog-empty').hidden=finishing||blanks||count>0;
     get('module-tabs').querySelectorAll('button').forEach(b=>{const on=b.dataset.moduleFilter===activeModuleFilter;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));});
   };
