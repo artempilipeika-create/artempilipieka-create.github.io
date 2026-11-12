@@ -14,7 +14,7 @@
 #planner-assistant-dialog [hidden]{display:none!important}
 #planner-assistant-dialog button+button{margin-left:8px}
 .planner-client #planner-workspace #planner-tools>#planner-assistant{display:inline-flex!important}
-#planner-assistant-dialog.assistant-wizard{width:min(960px,calc(100vw - 32px));box-sizing:border-box}
+#planner-assistant-dialog.assistant-wizard{width:min(960px,calc(100vw - 32px));max-width:none;box-sizing:border-box}
 .assistant-steps{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}
 #planner-assistant-dialog .assistant-steps button{margin:0;font-size:13px;padding:8px 12px}
 #planner-assistant-dialog .assistant-steps [aria-current="step"]{background:#236144;color:#fff}
