@@ -6,6 +6,8 @@ import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {blankItem,cuttingSize} from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
 import {BLANK_SOURCES,blankNativeItem} from '../../backend/v2/cabinet_assets/planner/blanks-native.mjs';
+import {buildCarcass,placeCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-model.mjs';
+import {localPoint} from '../../backend/v2/cabinet_assets/planner/blank-bindings.mjs';
 const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');
 const material={name:'ЛДСП тест',article:'T',thickness:18};
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
@@ -48,6 +50,33 @@ test('cut size subtracts only the two physically opposite edges; any four bits e
  assert.deepEqual(cuttingSize(blankItem({length:800,partWidth:500,edges:'1011',blank_edge_thickness_mm:2})),{length:796,width:498});
  const out=blankNativeItem(blankItem({edges:'0101'}),material);assert.equal(out.source_sha256,BLANK_SOURCES['1111'].sha256);
  assert.throws(()=>blankNativeItem(blankItem(),null),/материал/);
+});
+
+// Use the rebuilt panel contour and the actual donor's local transform (not the
+// service frame) to check adjoining faces after the importer has placed them.
+for(const rotation of [0,90,180,270])for(const thickness of [16,18,25])
+test(`carcass shelves reach supports after native import: ${rotation}°, ${thickness} mm`,()=>{
+ for(const shelfGap of [undefined,2])for(const edgePolicy of ['front','all']){
+  const built=buildCarcass({recipe:'divided',width:1001,sections:3,thickness,edgePolicy,
+    ...(shelfGap===undefined?{}:{shelfGap})});
+  const items=placeCarcass(built,{x:-400,z:700,elevation_mm:100,rotation});
+  const imported=new Map();
+  for(const item of items){
+   const out=blankNativeItem(item,{name:'Материал тест',thickness:item.blank_thickness_mm});
+   const {c,obj,panel}=setup(item.blank_edge_code);c.resizeAndPlace(obj,out,[]);
+   const points=panel.Contour.lines.flatMap(([u,v])=>[0,panel.Thickness].map(w=>{
+    const global=obj.ToGlobal({x:panel.PositionX-w,y:v,z:u});
+    return localPoint(global,rotation);
+   }));
+   imported.set(item.item_id,{min:Math.min(...points.map(p=>p.x)),max:Math.max(...points.map(p=>p.x))});
+  }
+  for(const shelf of items.filter(i=>i.blank_binding)){
+   const b=shelf.blank_binding,p=imported.get(shelf.item_id);
+   const gap=shelf.name.includes('Полка')?(shelfGap??0):0;
+   close(p.min-imported.get(b.left_id).max,gap);
+   close(imported.get(b.right_id).min-p.max,gap);
+  }
+ }
 });
 
 for(const spec of [{axis:'back',length:598,partWidth:2198,thickness:3,edges:'0000'},

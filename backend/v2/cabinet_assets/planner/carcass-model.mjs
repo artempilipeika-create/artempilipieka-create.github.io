@@ -21,7 +21,7 @@ export function carcassSpec(input={}){
   if(!recipe)throw Error('Выберите конструкцию корпуса.');
   const s={recipe:recipe.id,width:recipe.w,height:recipe.h,depth:recipe.d,thickness:18,
     shelves:recipe.shelves,sections:recipe.sections,back:recipe.back,elevation:0,
-    shelfSetback:20,shelfGap:1,edgeThickness:1,edgePolicy:recipe.id==='sink'?'none':'front',...input};
+    shelfSetback:20,shelfGap:0,edgeThickness:1,edgePolicy:recipe.id==='sink'?'none':'front',...input};
   for(const [key,min,max,label] of [['width',200,2400,'Ширина'],['height',200,3000,'Высота'],['depth',200,1200,'Глубина'],
     ['thickness',10,40,'Толщина'],['shelves',0,10,'Количество полок'],['sections',1,3,'Количество секций'],
     ['elevation',0,5000,'Низ от пола'],['shelfSetback',0,100,'Отступ полки'],['shelfGap',0,10,'Зазор полки']])
