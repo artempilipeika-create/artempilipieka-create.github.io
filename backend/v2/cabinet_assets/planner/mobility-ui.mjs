@@ -1,3 +1,6 @@
+import {cornerCandidates,layoutJoints} from './corner-layout.mjs';
+import {cornerReturnPlacement} from './furniture-core.mjs';
+import {applyChanges} from './mobility.mjs';
 import {kitchenGroup,doorFamilyById,CORNER_FAMILY,TALL_FAMILY,APPLIANCE_TALL_FAMILY,tallFamily,VITRINE_FAMILY} from './furniture-core.mjs';
 const el=(tag,text,id)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(id)n.id=id;return n;};
 export class MobilityUI{
@@ -14,11 +17,30 @@ export class MobilityUI{
     neighbour.append(this.shift,document.createTextNode(' При изменении ширины сдвигать соседей справа'));
     this.shift.onchange=()=>{app.options.shiftNeighbours=this.shift.checked;};
     document.getElementById('quick-widths').after(neighbour);
+    this.corner=el('section',null,'corner-connection');this.corner.className='mf3d-control-card';
+    this.corner.append(el('h3','Угол 90°'));
+    const anchorLabel=el('label','Угловой модуль');this.cornerSelect=el('select',null,'corner-anchor');anchorLabel.append(this.cornerSelect);
+    this.cornerApply=el('button','Соединить под 90°','corner-connect');this.cornerApply.type='button';this.cornerNote=el('p');
+    this.cornerApply.onclick=()=>app.interaction.change('Стык 90°',()=>{
+      const it=app.adapter.selected,anchor=app.adapter.items.find(x=>x.item_id===this.cornerSelect.value),next=anchor&&cornerReturnPlacement(anchor,it);
+      if(!next)throw Error('Выберите угловой модуль того же яруса.');
+      applyChanges(app.adapter,[next]);app.adapter.status('Стык 90° сформирован. При изменении размеров соединение сохраняется.');
+    });
+    this.corner.append(anchorLabel,this.cornerApply,this.cornerNote);neighbour.after(this.corner);
+
     document.getElementById('material-scope-hint').textContent='Группа подсвечивается на сцене. Перетаскивание, стрелки и координаты перемещают её целиком; материал применяется ко всей группе. Соседи сдвигаются только в сомкнутом прямом ряду.';
   }
   sync(){
     const selected=this.app.adapter.selected,group=kitchenGroup(selected||{});
     this.section.hidden=!selected||!group;this.shift.disabled=!selected;
+
+    const candidates=cornerCandidates(selected,this.app.adapter.items,this.app.adapter.room),previous=this.cornerSelect.value;
+    this.corner.hidden=!selected||!candidates.length;
+    this.cornerSelect.replaceChildren(...candidates.map(it=>new Option(it.name,it.item_id)));
+    if(candidates.some(it=>it.item_id===previous))this.cornerSelect.value=previous;
+    const joint=selected&&layoutJoints(this.app.adapter.items,this.app.adapter.room).find(j=>j.kind==='corner'&&j.b===selected.item_id);
+    this.cornerNote.textContent=joint?'Соединён под 90°. Угол и сомкнутые ряды сохраняются при изменении глубины и ширины.':'Выберите угловой шкаф. Стык учитывает его бленду; свободное место проверяется перед соединением.';
+    this.cornerApply.disabled=!candidates.length;
     if(!selected)return;
     const signature=group+':'+selected.bazis_id;
     if(this.group===signature)return;this.group=signature;

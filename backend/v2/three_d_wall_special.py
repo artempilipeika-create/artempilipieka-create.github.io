@@ -14,7 +14,7 @@ def wall_special_error(it):
  if it['module_type']!='wall_cabinet' or it['base']!='wall' or it.get('base_height')!=0:return 'Верхний модуль — навесной, без цоколя'
  lo,hi=(800,1000) if v['family']=='corner' else (300,600) if v['door_count']==1 else (600,1200)
  if not lo<=it['width']<=hi or not 300<=it['height']<=1400:return 'Размер верхнего модуля вне допустимого диапазона'
- if it['depth']!=v['native_frame']['size'][2]-3:return 'Глубина этого исходника фиксирована'
+ if not 250<=it['depth']<=600:return 'Глубина верхнего модуля — от 250 до 600 мм'
  return ''
 
 def wall_special_shelves(it):

@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.10 UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.11 DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ v9.9.11: allow native upper depth 250–600 mm with 3 mm rear frame inset.
  v9.9.10: preserve native frame placement for 22 upper glass and corner sources.
  v9.9.9: support 80 mm rails and tall unedged HDF 3/4 mm rear panels.
  v9.9.8: native rectangular blanks and four-edge PVC mapping.
@@ -1140,7 +1141,7 @@ function prepareProject(payload, root) {
   for (const original of payload.items) {
     const item = original;
     const wallSpecial=WALL_SPECIAL_LIMITS[String(item.source_sha256||'').toLowerCase()];
-    if(wallSpecial){const t=item.target||{},w=Number(t.width),h=Number(t.height),d=Number(t.depth);if(![w,h,d].every(Number.isFinite)||w<wallSpecial[0]||w>wallSpecial[1]||h<300||h>1400||d!==wallSpecial[2]){errors.push('Верхний модуль: проверьте ширину и высоту; глубина исходника фиксирована '+wallSpecial[2]+' мм');continue;}}
+    if(wallSpecial){const t=item.target||{},w=Number(t.width),h=Number(t.height),d=Number(t.depth);if(![w,h,d].every(Number.isFinite)||w<wallSpecial[0]||w>wallSpecial[1]||h<300||h>1400||d<250||d>600){errors.push('Верхний модуль: проверьте ширину и высоту; глубина — 250–600 мм');continue;}}
 
     if(OPEN_WALL_SOURCES.has(String(item.source_sha256||'').toLowerCase())){
       const t=item.target||{},w=Number(t.width),h=Number(t.height),d=Number(t.depth);
@@ -1194,7 +1195,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.10 UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.11 DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

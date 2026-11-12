@@ -18,7 +18,7 @@ def test_save_reopen_source_identity_and_pdf_quantities(v):
  assert len(hardware_for(it)[0])==len(wall_special_hardware(it))
  assert 'Центры полок' in module_contents(it)
  if v['family']!='corner':assert ('Фасады и полки','Стекло 4 мм') in module_materials(it,'body','front')
- for patch in [dict(bazis_sha256='0'*64),dict(depth=400),dict(height=299),dict(base='plinth',base_height=100),dict(module_type='base_cabinet')]:
+ for patch in [dict(bazis_sha256='0'*64),dict(depth=601),dict(height=299),dict(base='plinth',base_height=100),dict(module_type='base_cabinet')]:
   with pytest.raises(ValidationError):FurnitureItem(**item(v,**patch))
 def test_browser_and_server_share_resized_shelf_and_purchase_contract():
  specimens=[item(v,width=900 if v['family']=='corner' or v['door_count']==2 else 450,height=900) for v in VARIANTS]
@@ -28,3 +28,11 @@ def test_browser_and_server_share_resized_shelf_and_purchase_contract():
   FurnitureItem(**it)
   assert js['shelves']==wall_special_shelves(it)
   assert js['hardware']==wall_special_hardware(it)
+
+@pytest.mark.parametrize('depth',[250,400,600])
+def test_depth_save_reopen_keeps_source_and_dimensions(depth):
+ for v in VARIANTS:
+  it=FurnitureItem(**item(v,depth=depth)).model_dump(mode='json')
+  assert FurnitureItem(**it).depth==depth
+  assert it['bazis_sha256']==v['source_sha256']
+  assert it['bazis_file']==v['source_file']

@@ -50,7 +50,7 @@ export function snapItem(raw,items,room,options={},previous={}){
   if(cornerSpec(it)){
     const along=rotateXZ(1,0,it.rotation||0),sideAxis=along.x?'x':'z',span=along.x?room.width:room.depth;
     const sign=cornerSpec(it).side==='right'?-1:1,side=sign*(-span/2+it.width/2)*along[sideAxis];
-    if(Math.abs(it[sideAxis]-side)<threshold){it[sideAxis]=side;anchors[sideAxis]=side;guides.push({axis:sideAxis,value:side-sign*it.width/2*along[sideAxis],text:'Угловой корпус · от стены 50 мм'});}
+    if(Math.abs(it[sideAxis]-side)<threshold){it[sideAxis]=side;anchors[sideAxis]=side;guides.push({axis:sideAxis,value:side-sign*it.width/2*along[sideAxis],text:'Угловой корпус · стык 90°'});}
   }
   const b=bounds(it,room,false),axis=it.rotation===90||it.rotation===270?'z':'x',cross=axis==='x'?'z':'x';
   const min=axis==='x'?'minX':'minZ',max=axis==='x'?'maxX':'maxZ';
@@ -87,10 +87,10 @@ export function snapItem(raw,items,room,options={},previous={}){
     }
   }
   for(const corner of items){
-    if(corner.item_id===it.item_id)continue;
+    if(corner.item_id===it.item_id||!verticalPeers(it,corner,room))continue;
     const target=cornerReturnPlacement(corner,it);
     if(target&&(options.autoRotate!==false||it.rotation===target.rotation)&&Math.hypot(raw.x-target.x,raw.z-target.z)<threshold*1.65){
-      it=target;anchors.corner=corner.item_id;guides.push({axis:target.rotation%180?'x':'z',value:target.rotation%180?target.x:target.z,text:'Угловой стык · бленда 50 мм'});break;
+      it=target;anchors.corner=corner.item_id;guides.push({axis:target.rotation%180?'x':'z',value:target.rotation%180?target.x:target.z,text:'Угловой стык 90° · по бленде'});break;
     }
   }
   it=rounded(it);

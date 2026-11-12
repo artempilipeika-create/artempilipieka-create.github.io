@@ -116,7 +116,7 @@ test('Shared controls describe ordinary and metal construction accurately and di
 test('Replacement menu also has a single family entry; selected family uses its own controls',()=>{
  const {catalogue}=catalogueContext(),previous=globalThis.Option;
  globalThis.Option=class{constructor(text,value){this.text=text;this.value=value}};
- const options=[],ui={app:{adapter:{selected:{module_type:'base_cabinet',bazis_id:'bazis.0211e4f77fc4'}},bridge:{catalogue:{bazisModules:catalogue}}},section:{},shift:{},apply:{},select:{options,replaceChildren(...v){options.splice(0,options.length,...v)},append(v){options.push(v)}}};
+ const options=[],ui={app:{adapter:{selected:{module_type:'base_cabinet',bazis_id:'bazis.0211e4f77fc4'},items:[],room:{width:6000,depth:4000,height:2700}},bridge:{catalogue:{bazisModules:catalogue}}},section:{},shift:{},apply:{},corner:{},cornerSelect:{replaceChildren(){}},cornerNote:{},cornerApply:{},select:{options,replaceChildren(...v){options.splice(0,options.length,...v)},append(v){options.push(v)}}};
  try{
   MobilityUI.prototype.sync.call(ui);assert.equal(options.filter(o=>D.choice(o.value)).length,1);assert.equal(options.find(o=>D.choice(o.value)).text,D.family.label);
   ui.app.adapter.selected=item(D.variants[0]);MobilityUI.prototype.sync.call(ui);assert.equal(options.filter(o=>D.choice(o.value)).length,0);

@@ -359,7 +359,11 @@
     return {...it,bazis_id:target.id,bazis_file:target.source_file,bazis_sha256:target.source_sha256,
       bazis_resize:Boolean(target.resize),name:automatic?p.label+suffix:it.name};
   }
-  function cornerSpec(it){const p=sourceProduction(it);return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;}
+  function cornerSpec(it){
+    const p=sourceProduction(it),v=root.MF_WALL_SPECIAL?.info(it);
+    if(v?.family==='corner')return {side:v.opening,wall_gap_mm:3,front_extension_mm:68,filler_depth_mm:50,blind_width_mm:371,upper:true};
+    return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;
+  }
   function cornerVariantInfo(it){return CORNER_VARIANTS.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
   function cornerVariant(it,patch,catalogue){
     const current=cornerVariantInfo(it);
@@ -376,7 +380,7 @@
   }
   function cornerReturnPlacement(corner,it){
     const c=cornerSpec(corner);
-    if(!c||cornerSpec(it)||!isKitchenModule(it)||it.depth!==c.return_body_depth_mm)return null;
+    if(!c||cornerSpec(it)||(c.upper?it.module_type!=='wall_cabinet':!isKitchenModule(it)))return null;
     const sign=c.side==='right'?-1:1;
     const local=rotateXZ(sign*(-corner.width/2+c.wall_gap_mm+it.depth/2),corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
     const target={...it,x:corner.x+local.x,z:corner.z+local.z,rotation:((corner.rotation||0)+(sign===1?270:90))%360};
@@ -513,6 +517,7 @@
   function isTallModule(it){return kitchenGroup(it)==='tall';}
   function cabinetFrontExtension(it){
     const p=sourceProduction(it);
+    if(p?.wall_special)return p.wall_special.family==='corner'?68:22.5;
     if(p?.open_tall)return 0;
     if(p?.vitrine)return 22.5; // Outer face of Z1, including its 2 mm clearance.
     if(p?.facade)return (p.facade.clearance_mm??0)+(p.facade.thickness||18);

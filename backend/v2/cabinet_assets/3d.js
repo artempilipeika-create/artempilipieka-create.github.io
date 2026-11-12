@@ -1399,7 +1399,7 @@ function exportBazisProject(){
   };
   for(const item of blankItems){item.index=payload.items.length+1;payload.items.push(item);}
   if(blankItems.length){payload.minimum_importer='9.9.9';payload.format='martin-forest-bazis-native-v3';}
-  if(payload.items.some(it=>it.construction?.wall_special)){payload.minimum_importer='9.9.10';payload.format='martin-forest-bazis-native-v3';payload.project_note+='\nВЕРХНИЕ ВИТРИНЫ / УГЛОВЫЕ: используйте импортёр 9.9.10. '+payload.items.filter(it=>it.construction?.wall_special).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n');}
+  if(payload.items.some(it=>it.construction?.wall_special)){payload.minimum_importer='9.9.11';payload.format='martin-forest-bazis-native-v3';payload.project_note+='\nВЕРХНИЕ ВИТРИНЫ / УГЛОВЫЕ: используйте импортёр 9.9.11. '+payload.items.filter(it=>it.construction?.wall_special).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n');}
   payload.wall_finishes=globalThis.MF_WALL_FINISHES?.schedule(state)||{panels:[],lights:[]};
   const finishNote=globalThis.MF_WALL_FINISHES?.text(state);if(finishNote&&!payload.project_note.includes(finishNote))payload.project_note+='\n'+finishNote;
   const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];

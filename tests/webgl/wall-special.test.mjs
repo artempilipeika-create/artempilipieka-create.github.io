@@ -15,7 +15,7 @@ for(const v of U.variants)test(v.source_file+' exact native bounds and resized o
   assert.ok(parts.filter(p=>p.optical_material==='glass').every(p=>p.thickness===4&&p.material.variant_id===null));
   const cells=C.facadeCells(next,template(next));assert.equal(cells.length,v.door_count);if(v.door_count===2){assert.equal(cells[0].w,width/2-3);assert.equal(cells[1].w,cells[0].w);assert.equal(cells[1].cx-cells[1].w/2-(cells[0].cx+cells[0].w/2),3);}
  }
- assert.ok(C.dimensionError({...it,depth:it.depth+1},template(it)));assert.ok(C.dimensionError({...it,bazis_sha256:'0'.repeat(64)},template(it)));
+ assert.ok(C.dimensionError({...it,depth:601},template(it)));assert.ok(C.dimensionError({...it,bazis_sha256:'0'.repeat(64)},template(it)));
  for(const target of U.variants.filter(n=>n.family===v.family)){const selected=U.select({...it,body_variant_id:'custom',production_note:'Keep note'},{opening:target.opening,execution:target.execution,light_system:target.light_system,lighting:target.lighting},U.variants);assert.equal(selected.bazis_sha256,target.source_sha256);assert.equal(selected.body_variant_id,'custom');assert.equal(selected.production_note,'Keep note');}
 });
 test('native notched bottoms and corner door hinge points are preserved',()=>{for(const v of U.variants.filter(v=>v.family==='corner')){const it=item(v),parts=U.parts(it),notches=parts.filter(p=>p.native_polygon);assert.equal(notches.length,v.execution==='handleless'?1:0);const p=U.pivot(it,0);assert.ok(Math.abs(p.x-(v.door_pivot[0]-500))<1e-5);assert.ok(Math.abs(p.z-(299.3378-153))<1e-5);}});

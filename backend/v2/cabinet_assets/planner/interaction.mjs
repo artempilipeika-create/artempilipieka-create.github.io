@@ -1,3 +1,4 @@
+import {anchoredDimensions,resizeConnectedLayout} from './corner-layout.mjs';
 import {clone,MM_TO_WORLD,elevation,placementError,rightAnchoredWidth,dimensionPatch,kitchenSettings,isTallModule,tallRearExtension,tallWallPlacement,rotateXZ} from './furniture-core.mjs';
 import {snapItem,findSpace} from './placement.mjs';
 import {roomReady} from './room-plan.mjs';
@@ -147,23 +148,11 @@ export class Interaction {
       }
       let it=dimensionPatch(source,patch,this.adapter.room);
       if(Number.isFinite(patch.width)&&patch.width!==source.width)it=rightAnchoredWidth(source,it);
-      const kitchen=kitchenSettings(source),nextKitchen=kitchenSettings(it);
-      if(kitchen&&!globalThis.MF_FURNITURE_CORE.golaCountertop(source)&&(Number.isFinite(patch.depth)||Number.isFinite(patch.rearServiceGapMm))){
-        const delta=(it.depth-source.depth)/2+nextKitchen.rearServiceGapMm-kitchen.rearServiceGapMm,n=rotateXZ(0,1,source.rotation||0);
-        it.x+=n.x*delta;it.z+=n.z*delta;
-      }else if(!kitchen&&Number.isFinite(patch.depth)&&patch.depth!==source.depth){
-        if(isTallModule(source)){
-          const rear=rotateXZ(source.x,source.z,-source.rotation).z-source.depth/2-tallRearExtension(source);
-          const wall=-(source.rotation%180?this.adapter.room.width:this.adapter.room.depth)/2;
-          if(Math.abs(rear-wall)<.6)it=tallWallPlacement(it,this.adapter.room);
-        }else{
-          const r=this.adapter.room,delta=(patch.depth-source.depth)/2,clearance=this.options().wallOffset||0;
-          if(source.rotation===0&&Math.abs(source.z-source.depth/2+r.depth/2-clearance)<1)it.z+=delta;
-          if(source.rotation===180&&Math.abs(r.depth/2-source.z-source.depth/2-clearance)<1)it.z-=delta;
-          if(source.rotation===90&&Math.abs(r.width/2-source.x-source.depth/2-clearance)<1)it.x-=delta;
-          if(source.rotation===270&&Math.abs(source.x-source.depth/2+r.width/2-clearance)<1)it.x+=delta;
-          it.x=Math.round(it.x*2)/2;it.z=Math.round(it.z*2)/2;
-        }
+      const resized=['width','depth'].some(k=>Number.isFinite(patch[k])&&patch[k]!==source[k]);
+      if(resized&&source.module_type!=='blank'){
+        it=anchoredDimensions(source,it);
+        const joined=resizeConnectedLayout(source,it,this.adapter.items,this.adapter.room);
+        if(joined){applyChanges(this.adapter,joined);this.adapter.status('Размер изменён. Угол 90° и сомкнутые ряды сохранены.');return;}
       }
       applyChanges(this.adapter,widthChange(source,it,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
     });
@@ -173,7 +162,7 @@ export class Interaction {
     return this.change('Замена модуля',()=>{
       const draft=this.adapter.createDraft(opt);
       const next=replacement(source,draft,this.adapter.template(source),this.adapter.template(draft),keepDimensions,this.adapter.room);
-      applyChanges(this.adapter,widthChange(source,next,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
+      applyChanges(this.adapter,resizeConnectedLayout(source,next,this.adapter.items,this.adapter.room)||widthChange(source,next,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
       this.adapter.status('Модуль заменён. Материалы, положение и заметка сохранены.');
     });
   }
