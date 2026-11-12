@@ -69,3 +69,18 @@ def test_corpus_database_save_reopen_edge_edit(api, admin_user, recipe):
     assert final[0]['blank_edge_code']=='1011'
     for before,after in zip(data['items'],final):
         assert after['blank_binding']==before.get('blank_binding')
+
+
+def test_default_hdf_is_exact_original_catalogue_identity():
+    from backend.v2.catalogue_model import fingerprint, stable
+    raw=(ROOT/'data.js').read_text()
+    catalogue=json.loads(raw[raw.index('{'):].strip().rstrip(';'))
+    original=next(m for m in catalogue['materials'] if m['id']=='M1:2141')
+    assert original['name']=='ЛХДФ 3ММ Белый, 2800х2070 мм'
+    assert original['thickness']==3
+    identity=dict(kind='material',article=None,manufacturer=None,decor=None,structure=None,
+                  thickness='3',length='2800',width='2070',articleless_name=original['name'])
+    expected=stable('master.u2','variant',fingerprint(identity))
+    script="import {CARCASS_BACK_MATERIAL_ID} from './backend/v2/cabinet_assets/planner/carcass-model.mjs'; console.log(CARCASS_BACK_MATERIAL_ID)"
+    actual=subprocess.check_output(['node','--input-type=module','-e',script],cwd=ROOT,text=True).strip()
+    assert actual==expected

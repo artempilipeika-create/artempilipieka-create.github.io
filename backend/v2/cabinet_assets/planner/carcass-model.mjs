@@ -1,6 +1,10 @@
 import {blankItem,validateBlank,edgeMeters} from './blanks-model.mjs';
 import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
 
+// Exact master.u2 catalogue identity: ЛХДФ 3ММ Белый, 2800х2070 мм.
+// Used only when adding new carcasses; saved/manual assignments stay unchanged.
+export const CARCASS_BACK_MATERIAL_ID='fb7b270e-66ad-5411-affc-5717b1adf0d6';
+
 // Construction families grounded in the user's Zhanna albums and native kitchen
 // productionParts. These are rectangular recipes, not copies of shaped donors.
 export const CARCASSES=Object.freeze([

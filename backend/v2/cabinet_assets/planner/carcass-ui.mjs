@@ -1,4 +1,4 @@
-import {CARCASSES,buildCarcass,placeCarcass,insertCarcass} from './carcass-model.mjs';
+import {CARCASSES,CARCASS_BACK_MATERIAL_ID,buildCarcass,placeCarcass,insertCarcass} from './carcass-model.mjs';
 import {cuttingSize} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
 
@@ -47,7 +47,7 @@ export class CarcassUI{
         <p class="mf-blank-source">Высота — только корпус, без ножек. Задняя стенка добавляет 3 мм к глубине. Фасады и фурнитура не входят.</p>
         <details><summary>Материал, зазоры и кромка</summary><div class="mf-blank-form">
           ${numeric('thickness','Толщина ЛДСП, мм',18,10,40)}
-          <p class="mf-blank-source">Для ЛДСП 18 мм — BYSPAN 605 PO. Другой материал и материал ХДФ выберите у деталей после добавления.</p>
+          <p class="mf-blank-source">ЛДСП 18 мм — BYSPAN 605 PO; задняя стенка — белый ХДФ 3 мм. Материалы можно изменить у деталей после добавления. При другой толщине ЛДСП выберите подходящий материал перед экспортом.</p>
           <div class="mf-blank-fields">${numeric('shelfGap','Зазор полки с каждой стороны, мм',1,0,10)}${numeric('shelfSetback','Отступ полки от переднего края, мм',20,0,100)}</div>
           <label>Начальная схема кромки<select name="corpus-edgePolicy"><option value="front">Передние торцы · крышка тумбы в круг</option><option value="all">Все торцы ЛДСП</option><option value="none">Без ПВХ</option></select></label>
           <label>Толщина ПВХ<select name="corpus-edgeThickness">${[.4,.8,1,2,3].map(v=>`<option value="${v}" ${v===1?'selected':''}>${v} мм</option>`).join('')}</select></label>
@@ -104,7 +104,8 @@ export class CarcassUI{
     if(!this.draw(true))return;
     const spec=this.spec(),number=this.app.adapter.items.filter(i=>i.name?.includes(' · Боковина левая')).length+1;
     const built=buildCarcass(spec,{edges:this.edges,name:this.built.spec.label+' '+number,
-      bodyMaterialId:spec.thickness===18?(globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id||null):null});
+      bodyMaterialId:spec.thickness===18?(globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id||null):null,
+      backMaterialId:CARCASS_BACK_MATERIAL_ID});
     const ok=this.app.interaction.change('Добавление корпуса из заготовок',()=>{
       const envelope={module_type:'blank',item_id:'placement-envelope',name:built.spec.label,width:built.width,height:built.height,depth:built.depth,
         x:0,z:0,rotation:0,elevation_mm:spec.elevation,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
@@ -112,7 +113,7 @@ export class CarcassUI{
       if(!position)throw Error('Для корпуса нет свободного места. Проверьте габариты помещения.');
       const items=placeCarcass(built,position);insertCarcass(this.app.adapter,items);
       this.app.adapter.select(items[0].item_id);
-      this.app.adapter.status('Добавлен '+built.spec.label.toLowerCase()+' · '+items.length+' деталей. '+(spec.back?'Выберите материал ХДФ у задней стенки.':''));
+      this.app.adapter.status('Добавлен '+built.spec.label.toLowerCase()+' · '+items.length+' деталей. '+(spec.thickness===18?'Можно экспортировать проект в БАЗИС.':'Выберите материал ЛДСП '+spec.thickness+' мм перед экспортом.'));
     });
     if(ok)this.app.workspace?.panel('right',true,{focus:true});
   }

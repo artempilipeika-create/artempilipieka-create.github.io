@@ -142,6 +142,13 @@ export class BlanksUI{
     this.catalog.querySelector('[data-blank-export]').addEventListener('click',()=>this.export());
     draw(this.catalog,this.app.adapter.room);
     this.carcasses=new CarcassUI(app,this.catalog);
+    // One export section remains visible in both catalogue modes.
+    const exports=document.createElement('section');exports.className='mf-blank-card mf-blank-form';
+    exports.setAttribute('aria-label','Экспорт корпусов');
+    for(const selector of ['[data-blank-bazis]','[data-blank-export]','.mf-blank-downloads'])exports.append(this.catalog.querySelector(selector));
+    const help=document.createElement('details');
+    help.innerHTML='<summary>Как открыть в БАЗИС</summary><ol><li>Скачайте импортёр 9.9.9 и замените им действующий скрипт Martin Forest. Старую копию сохраните вне папки Scripts.</li><li>Распакуйте «Исходные заготовки» в отдельную подпапку вашей общей библиотеки модулей. Имена FR3D не меняйте.</li><li>Нажмите «Экспорт проекта в БАЗИС»: скачается файл .mf-bazis.json.</li><li>В БАЗИС откройте новую пустую модель и запустите импортёр. Он найдёт последний экспорт в Загрузках; при запросе укажите общую папку модулей.</li><li>Проверьте модель и сохраните её как B3D.</li></ol><p class="mf-blank-source">Если материал не выбран, экспорт укажет деталь. Выберите её в проекте и назначьте материал нужной толщины в панели справа.</p>';
+    exports.append(help);this.catalog.append(exports);
     this.sync();
   }
   add(){

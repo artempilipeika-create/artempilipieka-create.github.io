@@ -1393,7 +1393,7 @@ function exportBazisProject(){
     })
   };
   for(const item of blankItems){item.index=payload.items.length+1;payload.items.push(item);}
-  if(blankItems.length){payload.minimum_importer='9.9.8';payload.format='martin-forest-bazis-native-v3';}
+  if(blankItems.length){payload.minimum_importer='9.9.9';payload.format='martin-forest-bazis-native-v3';}
   payload.wall_finishes=globalThis.MF_WALL_FINISHES?.schedule(state)||{panels:[],lights:[]};
   const finishNote=globalThis.MF_WALL_FINISHES?.text(state);if(finishNote&&!payload.project_note.includes(finishNote))payload.project_note+='\n'+finishNote;
   const plinthItems=globalThis.MF_ACCESSORIES?.nativeItems(state,id=>materials.get(String(id)))||[];
@@ -1416,7 +1416,7 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
 }
 
 async function toOrder(){
