@@ -7,6 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
+from .assistant_model import AssistantCarcass
 from .db import transaction
 from .security import identity,error
 from .domain_api import require
@@ -122,6 +123,7 @@ class FurnitureItem(StrictModel):
     blank_axis: Literal['horizontal','side','back']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
     blank_binding: BlankBinding|None=None
+    assistant_carcass: AssistantCarcass|None=None
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
@@ -133,6 +135,8 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.assistant_carcass and self.module_type!='blank':
+            raise ValueError('Параметры корпуса помощника доступны только заготовкам.')
         if self.blank_binding and (self.module_type!='blank' or self.blank_axis!='horizontal'):
             raise ValueError('Привязка доступна только горизонтальной полке.')
         if self.module_type=='blank':

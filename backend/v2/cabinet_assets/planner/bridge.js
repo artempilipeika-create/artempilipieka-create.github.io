@@ -25,6 +25,7 @@
     selected:()=>selected(),
     projectId:()=>project?.project_id||null,
     userId:()=>user?.user_id,
+    assistantAdmin:()=>user?.roles?.length===1&&user.roles[0]==='admin',
     productionTools:()=>globalThis.MF_CONSTRUCTOR_ACCESS?.canUseProductionTools(user)||false,
     projectMeta:()=>project?copy({project_id:project.project_id,version:project.version,updated_at:project.updated_at}):null,
     request:(path,method,body)=>api(path,method,body,{}, {timeoutMs:20000}),

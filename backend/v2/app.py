@@ -10,6 +10,7 @@ import os
 from .config import Settings
 from .db import connect, check_identity
 from .storage import VolumeStore
+from . import assistant_api
 from .migrate import MIGRATIONS
 import hashlib
 
@@ -131,6 +132,7 @@ def create_app(settings=None, policy=None):
     app.include_router(document_api.router(settings,policy))
     app.include_router(attachment_api.router(settings,policy))
     app.include_router(three_d_api.router(settings))
+    app.include_router(assistant_api.router(settings))
     app.include_router(production_api.router(settings,policy))
     app.include_router(cabinet_ui.router())
     if os.environ.get('MF_PRESENTATION_UI','disabled') == 'enabled':

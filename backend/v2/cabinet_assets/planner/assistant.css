@@ -1,0 +1,16 @@
+#planner-assistant{color:#18573e;border-color:#6a967c;background:#eff8ef}
+#planner-assistant-dialog{width:min(560px,calc(100vw - 32px));max-height:85vh;overflow:auto;border:1px solid #b8c8b9;border-radius:18px;padding:24px;background:#fafcf8;color:#243a2e;box-shadow:0 20px 80px #18372540}
+#planner-assistant-dialog::backdrop{background:#102a2266}
+#planner-assistant-dialog .assistant-head{display:flex;justify-content:space-between;align-items:center;gap:16px}
+#planner-assistant-dialog h2{font-size:22px;margin:0}
+#planner-assistant-dialog p{line-height:1.5}
+#planner-assistant-dialog .assistant-hint,#planner-assistant-dialog .assistant-context{font-size:13px;color:#516457}
+#planner-assistant-dialog label{display:block;font-weight:600}
+#planner-assistant-dialog textarea{display:block;box-sizing:border-box;width:100%;padding:12px;margin:8px 0 14px;border:1px solid #aebfb3;border-radius:10px;font:inherit;resize:vertical;background:white;color:#243a2e}
+#planner-assistant-dialog button{padding:10px 14px;border-radius:8px;border:1px solid #b7c9bb;font:inherit;cursor:pointer;background:white;color:#244532}
+#planner-assistant-dialog button.assistant-primary{background:#236144;color:white;border-color:#236144}
+#planner-assistant-dialog button:disabled{opacity:.55;cursor:wait}
+#planner-assistant-dialog ul{padding:16px 16px 16px 34px;border:1px solid #c6d7c8;border-radius:12px;background:#edf4eb;line-height:1.6}
+#planner-assistant-dialog [hidden]{display:none!important}
+#planner-assistant-dialog button+button{margin-left:8px}
+.planner-client #planner-assistant{display:none}
