@@ -9,3 +9,5 @@ qa-output/
 # Private native originals and parser evidence; public catalogue uses derived geometry.
 backend/v2/cabinet_assets/planner/tall-gola-sources/
 docs/pn600-gola-audit-20261027/*audit.json
+
+/backend/v2/cabinet_assets/planner/modern-cabinet-sources.zip

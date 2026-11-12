@@ -7,7 +7,7 @@ import {MODULE_VIEWS,moduleView,changeModuleView} from './module-view.mjs';
 const get=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text)node.textContent=text;return node;};
 const makeButton=(text)=>{const b=el('button','secondary',text);b.type='button';return b;};
-const families={'wall-special':'wall-special-controls',base:'base-options-controls',upper:'upper-options-controls',drawer:'drawer-options-controls',corner:'corner-options-controls',tall:'tall-options-controls',vitrine:'vitrine-options-controls','open-tall':'open-tall-controls',cargo:'cargo-controls',dryer:'pullout-dryer-controls',door:'door-opening-controls',dishwasher:'dishwasher-options'};
+const families={modern:'modern-cabinet-controls','wall-special':'wall-special-controls',base:'base-options-controls',upper:'upper-options-controls',drawer:'drawer-options-controls',corner:'corner-options-controls',tall:'tall-options-controls',vitrine:'vitrine-options-controls','open-tall':'open-tall-controls',cargo:'cargo-controls',dryer:'pullout-dryer-controls',door:'door-opening-controls',dishwasher:'dishwasher-options'};
 
 export class ExecutionUI{
  constructor(app){
@@ -83,7 +83,7 @@ export class ExecutionUI{
   this.caption.textContent=`${it.width} × ${it.height} × ${it.depth} мм · ${state.view==='inside'?'внутри':state.view==='open'?'открытые двери':'снаружи'}`;
   this.canvas.setAttribute('aria-label',it.name+' · '+this.caption.textContent);
   const options={...state.preview,tall:p.tier==='tall'},renderer=this.ensureRenderer();this.visual.hidden=!renderer;this.note.textContent=renderer?'Выбранные материалы показаны на сцене и в предпросмотре. В режиме «Внутри» стенки и фасады полупрозрачны.':'3D-предпросмотр недоступен. Выбор параметров работает ниже.';renderer?.request(this.canvas,it,options);
-  this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(p.tall?.execution==='gola'||globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
+  this.generic.hidden=get('handles').disabled||get('handles').parentElement.hidden||Boolean(p.modern||p.tall?.execution==='gola'||globalThis.MF_GOLA.baseInfo(it)||globalThis.MF_UPPERS.info(it)||globalThis.MF_DRAWERS.familyInfo(it)||globalThis.MF_CARGO.info(it)||globalThis.MF_PULLOUT_DRYERS.info(it)||p.dishwasher);
   this.syncProxies(it);
   for(const family of buttonFamilies){
    const root=get(families[family]);if(!root||root.hidden)continue;

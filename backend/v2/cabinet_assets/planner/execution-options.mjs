@@ -1,6 +1,9 @@
 import {PRODUCTION_MODELS,dimensionError,cornerVariant,tallVariant,doorVariant} from './furniture-core.mjs';
 
 const labels={
+ back:{groove:['В пазу','ХДФ 3 мм · навесы 806'],overlay:['Накладная','ХДФ 3 мм · прежний корпус']},
+ dryer:{mount:['MOUNT','Белая · AKS 113272'],inox:['INOX','Нержавеющая сталь · AKS 38402']},
+ fridge_layout:{single:['Одна дверь','Без промежуточных полок'],820:['База 820','Разделение фасадов 820 мм'],900:['База 900','Разделение фасадов 900 мм']},
  purpose:{shelf:['С полками','Открытый корпус · полки внутри'],sink:['Под мойку','Открытый корпус · без полки']},
  filling:{shelves:['Полки','Хранение внутри шкафа'],dryer:['Сушка MOUNT','Посуда и поддон · схема']},
  execution:{standard:['Накладные ручки','Ручка на фасаде'],gola:['Gola','Подхват за профиль · без подсветки'],handles:['Накладные ручки','Ручка снизу фасада'],handleless:['Без ручек','Подхват снизу'],push:['Нажатие','Tip-on · нажать на фасад']},
@@ -16,9 +19,10 @@ const labels={
  row_height:{820:['820 мм','Корпус 720 + цоколь 100'],900:['900 мм','Корпус 800 + цоколь 100']},
  handles:{handles:['С ручками','Накладная ручка на фасаде'],handleless:['Без ручек','Фасад без накладной ручки']}
 };
-export const buttonFamilies=['wall-special','base','upper','drawer','corner','tall','vitrine','open-tall'];
+export const buttonFamilies=['modern','wall-special','base','upper','drawer','corner','tall','vitrine','open-tall'];
 export function optionDescriptor(family,key,value){
  let [title,hint]=labels[key]?.[value]||[String(value),''];
+ if(family==='modern'&&key==='filling'&&value==='dryer'){title='Сушка';hint='MOUNT или INOX';}
  if(family==='wall-special'&&key==='execution'&&value==='handleless')hint='Родной вариант без накладной ручки';
  if(family==='corner'&&key==='side')[title,hint]=value==='left'?['Левый угол','Бленда слева']:['Правый угол','Бленда справа'];
  if(family==='corner'&&key==='purpose'&&value==='sink')hint='Без полки · царги видны';
@@ -38,6 +42,7 @@ export function previewVariant(it,family,key,value,catalogue){
  switch(family){
   case 'base':next=globalThis.MF_GOLA.select(copy,patch,catalogue);break;
   case 'wall-special':next=globalThis.MF_WALL_SPECIAL.select(copy,patch,catalogue);break;
+  case 'modern':next=globalThis.MF_MODERN_CABINETS.select(copy,patch,catalogue);break;
   case 'upper':next=globalThis.MF_UPPERS.select(copy,patch,catalogue);break;
   case 'drawer':next=globalThis.MF_DRAWERS.select(copy,patch,catalogue);break;
   case 'cargo':next=globalThis.MF_CARGO.select(copy,patch,catalogue);break;
