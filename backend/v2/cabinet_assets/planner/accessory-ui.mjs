@@ -103,7 +103,6 @@ export class AccessoryUI{
       for(const m of options){const b=button(m.name+(m.article?' · '+m.article:''));this.app.listen(b,'click',()=>{this.app.bridge.cacheMaterial(m);this.patch(p.id,{material_id:m.variant_id});});results.append(b);}
      }catch(e){if(token===request)a.status(e.message);}
     });
-    const link=el('a','Скачать исходный FR3D');link.href='/account/planner/accessory-sources/'+encodeURIComponent(p.source.source_file);link.download=p.source.source_file;section.append(link);
    }
    const remove=button('Удалить цоколь');this.app.listen(remove,'click',()=>this.change('Удалить цоколь',()=>{s.plinths=s.plinths.filter(e=>e.id!==saved.id);}));section.append(remove);const automatic=button('Следовать за всей кухней');this.app.listen(automatic,'click',()=>this.change('Автоматический цоколь',()=>{this.automatic();}));section.append(automatic);this.list.append(section);
   }

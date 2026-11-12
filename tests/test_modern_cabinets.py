@@ -23,7 +23,7 @@ def test_modern_hardware_matches_browser_at_default_and_changed_heights():
  js="import {productionHardware} from './backend/v2/cabinet_assets/planner/furniture-core.mjs';let input='';for await(const c of process.stdin)input+=c;console.log(JSON.stringify(JSON.parse(input).map(it=>productionHardware(it).items)));"
  hardware=json.loads(subprocess.check_output(['node','--input-type=module','-e',js],input=json.dumps(inputs).encode(),cwd=ROOT))
  for it,hw in zip(inputs,hardware):assert hardware_for(FurnitureItem(**it).model_dump())[0]==[dict(name=h['name'],qty=h['quantity'],unit=h['unit'],article=h.get('article') or '') for h in hw]
-def test_controls_photos_package_and_models_are_served():
+def test_controls_and_photos_are_served_but_native_archive_stays_private():
  from fastapi import FastAPI
  from fastapi.testclient import TestClient
  from backend.v2.cabinet_ui import router
@@ -36,7 +36,7 @@ def test_controls_photos_package_and_models_are_served():
  app=FastAPI();app.include_router(router())
  with TestClient(app) as c:
   for url in ['/constructor','/constructor-legacy']:assert c.get(url).text.count('id="modern-cabinet-controls"')==1
-  for asset in ['modern-cabinet-variants.js','modern-cabinets.js','modern-cabinet-sources.zip','hardware-photos/38402.webp','hardware-photos/113272.webp']:
+  for asset in ['modern-cabinet-variants.js','modern-cabinets.js','hardware-photos/38402.webp','hardware-photos/113272.webp']:
    r=c.get('/account/planner/'+asset);assert r.status_code==200
    assert r.content==(ROOT/'backend/v2/cabinet_assets/planner'/asset).read_bytes()
-  assert c.get('/account/planner/modern-cabinet-sources.zip').headers['content-type']=='application/zip'
+  assert c.get('/account/planner/modern-cabinet-sources.zip').status_code==404

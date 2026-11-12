@@ -58,6 +58,7 @@ def test_new_assets_and_sources_are_fixed_allowlisted():
     from fastapi.testclient import TestClient
     from backend.v2.cabinet_ui import router
     app=FastAPI();app.include_router(router());client=TestClient(app)
-    for p in ['automatic-finishes.mjs','wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json','wall-panel-sources/Скиналь.Прямая.fr3d']:
+    for p in ['automatic-finishes.mjs','wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json']:
         assert client.get('/account/planner/'+p).status_code==200
+    assert client.get('/account/planner/wall-panel-sources/Скиналь.Прямая.fr3d').status_code==404
     assert client.get('/account/planner/wall-panel-sources/private.fr3d').status_code==404

@@ -33,12 +33,12 @@ def router():
         'pullout-dryer-variants.js','pullout-dryer-variants.json','pullout-dryer-model.js','pullout-dryer-ui.js',
         'worktop-fixtures.mjs','worktop-fixture-mesh.mjs','worktop-fixture-ui.mjs','worktop-fixtures.css',
         'material-appearance-ui.mjs','material-appearance.css',
-        'blanks-model.mjs','blanks-ui.mjs','blanks-native.mjs','blank-bindings.mjs','carcass-model.mjs','carcass-ui.mjs','blank-sources.json','blank-sources.zip','blanks.css',
+        'blanks-model.mjs','blanks-ui.mjs','blanks-native.mjs','blank-bindings.mjs','carcass-model.mjs','carcass-ui.mjs','blank-sources.json','blanks.css',
         'showroom.css','finish-catalogue.mjs','execution-artwork.mjs','execution-image-index.mjs','hardware-photos.mjs','execution-ui.mjs','execution-options.mjs','execution-previews.mjs','execution-cards.css','choice-card-ui.js','catalogue-artwork.js','surface-cards.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
         'module-card-images/modern-upper1.webp','module-card-images/modern-upper2.webp','module-card-images/modern-gaslift.webp','module-card-images/modern-fridge.webp',
-        'modern-cabinet-variants.js','modern-cabinet-variants.json','modern-cabinets.js','modern-cabinet-sources.zip',
+        'modern-cabinet-variants.js','modern-cabinet-variants.json','modern-cabinets.js',
         'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',
         'gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js','gola.css','drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
         'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css','module-view.mjs',
@@ -167,10 +167,6 @@ def router():
     planner_files.update(material_assets)
     planner_files.update('materials/'+asset for asset in user_textures()['assets'])
     import json
-    panels=json.loads((root/'planner/wall-panel-sources.json').read_text())
-    planner_files.update('wall-panel-sources/'+v['source_file'] for v in panels)
-    accessories=json.loads((root/'planner/accessory-variants.json').read_text())
-    planner_files.update('accessory-sources/'+v['source_file'] for v in accessories)
     planner_files.add('tall-gola-variants.json')
     planner_files.add('module-card-images/tall-gola.webp')
     planner_files.update(
@@ -180,10 +176,13 @@ def router():
     planner_files.update(f'execution-card-images/gola-820-storage-{opening}-open.webp'
                          for opening in ('left', 'right', 'double'))
     countertops=json.loads((root/'planner/countertop-variants.json').read_text())
-    planner_files.update('countertop-sources/'+v['source_file'] for v in countertops)
     planner_files.update('countertop-sources/'+v['joint']+'-'+v['shape']+'.png' for v in countertops)
     @api.get('/account/planner/{asset:path}')
     def planner_asset(asset:str):
+        # Native production models are never public assets, including known archive URLs.
+        # Keep this boundary even if a future allowlist entry is added accidentally.
+        if Path(asset).suffix.lower() in {'.fr3d','.b3d','.zip','.rar','.7z'}:
+            return Response(status_code=404,headers={'Cache-Control':'no-store'})
         if asset not in planner_files:return Response(status_code=404)
         if asset.startswith('materials/user-'):
             image=user_texture_bytes(asset.removeprefix('materials/'))

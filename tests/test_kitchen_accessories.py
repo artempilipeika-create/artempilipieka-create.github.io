@@ -43,6 +43,7 @@ def test_served_assets_are_allowlisted_without_enabling_other_paths():
  for asset in ['accessories.js','accessories.css','accessory-ui.mjs','accessory-variants.js','accessory-variants.json']:
   r=client.get('/account/planner/'+asset);assert r.status_code==200 and r.content
  for v in VARIANTS:
-  r=client.get('/account/planner/accessory-sources/'+v['source_file']);assert r.status_code==200
-  assert hashlib.sha256(r.content).hexdigest()==v['source_sha256']
+  r=client.get('/account/planner/accessory-sources/'+v['source_file']);assert r.status_code==404
+  data=(Path(__file__).resolve().parents[1]/'backend/v2/cabinet_assets/planner/accessory-sources'/v['source_file']).read_bytes()
+  assert hashlib.sha256(data).hexdigest()==v['source_sha256']
  assert client.get('/account/planner/accessory-sources/unknown.fr3d').status_code==404

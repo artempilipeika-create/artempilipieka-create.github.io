@@ -21,9 +21,7 @@ export class CountertopUI{
     }
     card.append(choices);this.summary=el('p');this.summary.className='studio-hint';this.summary.setAttribute('aria-live','polite');card.append(this.summary);
     this.outlines=el('div');this.outlines.className='countertop-outlines';card.append(this.outlines);
-    const sources=el('details');sources.append(el('summary','Исходные фрагменты · 38 мм'));
-    for(const v of C.variants){const a=el('a',C.names[v.shape]+' · '+(v.joint==='euro'?'еврозапил':'обычная'));a.href='/account/planner/countertop-sources/'+encodeURIComponent(v.source_file);a.download=v.source_file;sources.append(a);}
-    card.append(sources);document.getElementById('module-catalogue').before(card);
+    document.getElementById('module-catalogue').before(card);
     this.control=el('section');this.control.id='countertop-module-control';this.control.className='mf3d-control-card';
     const label=el('label','Столешница над этим модулем');this.enabled=el('input');this.enabled.id='countertop-enabled';this.enabled.type='checkbox';label.prepend(this.enabled);this.control.append(label);
     this.moduleNote=el('p');this.moduleNote.className='studio-hint';this.control.append(this.moduleNote);

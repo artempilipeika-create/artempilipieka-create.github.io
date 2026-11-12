@@ -26,15 +26,15 @@ def test_countertop_settings_roundtrip_and_legacy_defaults():
     assert legacy.items[0].countertopJoint==legacy.countertopSettings.joint=='standard'
     with pytest.raises(ValidationError):Scene(countertopSettings=dict(joint='guess'))
 
-def test_exact_donors_download_with_hash_and_mime():
+def test_exact_donors_remain_local_and_cannot_be_downloaded():
     app=FastAPI();app.include_router(router())
     variants=json.loads((ROOT/'backend/v2/cabinet_assets/planner/countertop-variants.json').read_text())
     with TestClient(app) as client:
         for v in variants:
             response=client.get('/account/planner/countertop-sources/'+quote(v['source_file']))
-            assert response.status_code==200
-            assert response.headers['content-type']=='application/octet-stream'
-            assert hashlib.sha256(response.content).hexdigest()==v['source_sha256']
+            assert response.status_code==404
+            data=(ROOT/'backend/v2/cabinet_assets/planner/countertop-sources'/v['source_file']).read_bytes()
+            assert hashlib.sha256(data).hexdigest()==v['source_sha256']
         assert client.get('/account/planner/countertop-sources/'+quote('Столешница_Обычная_Лево_38мм..fr3d')).status_code==404
         assert client.get('/account/planner/countertop-sources/unknown.fr3d').status_code==404
 
