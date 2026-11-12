@@ -1452,9 +1452,10 @@ async function toOrder(){
   const o=await api('/orders','POST',{business_name:$('project-name').value.trim()||'3D-проект',preparation_mode:'self_prepared'});
   const rel=await api('/catalogue/releases'),rows=allCutlist().filter(r=>r[7]?.optical_material!=='glass');
   const details=rows.map(r=>({
-    detail_id:uid(),name:r[0],comments:'Из 3D-проекта '+$('project-name').value,
+    detail_id:uid(),name:r[0],comments:'Из 3D-проекта '+$('project-name').value+
+      (r[7]&&!r[7].material?.variant_id?' · Материал уточнить у менеджера'+(r[7].thickness?' · толщина '+r[7].thickness+' мм':''):''),
     length:String(mmNumber(r[1])),width:String(mmNumber(r[2])),qty:r[3],
-    variant_id:r[7]?.material?.variant_id??(r[4]==='front'?r[5].front_variant_id:r[5].body_variant_id),
+    variant_id:r[7]?(r[7].material?.variant_id??null):(r[4]==='front'?r[5].front_variant_id:r[5].body_variant_id),
     supply_source:'company',rotation:false,grain:'unknown',route:'solid',packaging:false,edges:{}
   }));
   await api('/orders/'+o.order_id+'/revisions','POST',{

@@ -8,10 +8,28 @@ import {PRODUCTION_MODELS,productionParts,productionHardware,facadeCells,dimensi
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
 import {hardwareArtwork} from '../../backend/v2/cabinet_assets/planner/hardware-photos.mjs';
+import {checkProject} from '../../backend/v2/cabinet_assets/planner/project-checks.mjs';
 const M=globalThis.MF_MODERN_CABINETS;
 const template=v=>({id:v.id,source_file:v.source_file,source_sha256:v.source_sha256,label:v.label,resize:true,production:PRODUCTION_MODELS[v.id],module_type:v.family==='fridge'?'tall_cabinet':'wall_cabinet',defaults:{w:600,h:v.default_height,d:v.native_frame.size[2]-v.rear_inset_mm,base:v.family==='fridge'?'plinth':'wall',layout:'doors',drawers:0}});
 const catalogue=M.variants.map(template),adapter=new StateAdapter({catalogue:{bazisModules:catalogue},state:()=>({items:[],room:{width:6000,height:3000,depth:6000}}),selected:()=>null,material:()=>null});
 const item=v=>adapter.createDraft({bazis:v.id});
+test('client preflight leaves unresolved native HDF for review and order never substitutes carcass LDSP',async()=>{
+ const v=M.variants.find(v=>v.family==='upper1'&&v.dryer==='inox'),it=item(v);
+ it.body_variant_id='body';it.front_variant_id='front';
+ const state={room:{width:6000,depth:6000,height:3000,setup_complete:true,survey:'none'},items:[it]};
+ const report=checkProject(state,{template:()=>template(v),material:id=>({variant_id:id,name:'ЛДСП',thickness:18})});
+ assert.ok(report.issues.some(i=>i.code==='material-back-review'&&i.severity==='warning'));
+ assert.ok(!report.issues.some(i=>i.code==='material'));
+ const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',import.meta.url),'utf8'),requests=[];
+ const context=vm.createContext({state,templateFor:()=>template(v),project:{project_id:'qa'},materials:new Map(),
+  MF_FURNITURE_CORE:globalThis.MF_FURNITURE_CORE,$:()=>({value:'QA'}),saveProject:async()=>{},uid:()=>String(requests.length),mmNumber:n=>n,location:{assign(){}},
+  api:async(path,method,body)=>{requests.push({path,body});return path==='/orders'?{order_id:'qa',optimistic_lock_version:1}:{active_release:'qa'};}});
+ vm.runInContext(source.slice(source.indexOf('function cutlistItem('),source.indexOf('function renderCutlist(')),context);
+ vm.runInContext(source.slice(source.indexOf('async function toOrder('),source.indexOf('async function start(')),context);
+ await context.toOrder();const rows=requests.find(r=>r.path.endsWith('/revisions')).body.details;
+ const back=rows.find(r=>r.comments.includes('толщина 3 мм'));assert.ok(back);assert.equal(back.variant_id,null);
+ assert.ok(rows.some(r=>r.variant_id==='body'));assert.ok(rows.some(r=>r.variant_id==='front'));
+});
 test('Reviewed package excludes exact duplicate and incorrect dryer; actual bytes keep exact SHA',()=>{
  assert.equal(M.variants.length,39);assert.equal(new Set(M.variants.map(v=>v.source_sha256)).size,39);
  for(const v of M.variants){assert.equal(crypto.createHash('sha256').update(fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/modern-cabinet-sources/'+v.source_file,import.meta.url))).digest('hex'),v.source_sha256);assert.ok(!['09f5f653393a','297e66ac9c58'].includes(v.source_sha256.slice(0,12)));}

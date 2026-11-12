@@ -80,6 +80,10 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
     const needed=parts?parts.filter(p=>p.type==='panel'&&!p.optical_material):[
       {name:'Корпус',material:{variant_id:it.body_variant_id}},...(it.layout==='niche'?[]:[{name:'Фасад',material:{variant_id:it.front_variant_id}}])];
     const missing=needed.filter(p=>!p.material?.variant_id),unresolved=needed.filter(p=>p.material?.variant_id&&!material(p.material.variant_id));
+    const backForReview=missing.filter(p=>p.role==='back'&&(t?.production?.modern||t?.production?.wall_special));
+    for(const part of backForReview)missing.splice(missing.indexOf(part),1);
+    if(backForReview.length)add('material-back-review','warning','Материал задней стенки уточнит менеджер.',it,
+      'Требуемая толщина: '+[...new Set(backForReview.map(p=>p.thickness+' мм'))].join(', ')+'. В заказе материал останется неназначенным до проверки.');
     if(missing.length)add('material','error','Не назначен материал: '+[...new Set(missing.map(p=>p.name))].join(', ')+'.',it);
     if(unresolved.length)add('material-unavailable','warning','Материал назначен, но не найден в доступном каталоге.',it,[...new Set(unresolved.map(p=>p.name))].join(', '));
     const price=modulePriceBreakdown(it,t,material,priceList);
