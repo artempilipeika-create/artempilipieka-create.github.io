@@ -11,7 +11,7 @@ const item=v=>C.normalizeKitchen({item_id:'gola',name:'У окна',bazis_id:v.i
 const template=it=>({production:C.PRODUCTION_MODELS[it.bazis_id]});
 const globals={MF_GOLA:G,MF_FURNITURE_CORE:core,MF_DRAWERS:D,MF_UPPERS:globalThis.MF_UPPERS};
 function catalog(){
- const cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}}),c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,structuredClone,document:{body:{dataset:{}},getElementById:node,createElement:node}});
+ const cards=[],node=()=>({dataset:{},append(){},replaceChildren(){}}),c=vm.createContext({MF_MODERN_CABINETS:globalThis.MF_MODERN_CABINETS,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,structuredClone,document:{body:{dataset:{}},getElementById:node,createElement:node}});
  vm.runInContext(source.slice(0,source.indexOf('let user=null')),c);c.addCatalogueButton=(root,opt)=>cards.push(opt);c.applyCatalogueFilter=()=>{};
  c.categoryKey=t=>t.module_type==='base_cabinet'?'base':t.module_type==='wall_cabinet'?'wall':'tall';
  vm.runInContext(source.slice(source.indexOf('function renderModuleCatalogue()'),source.indexOf('async function loadProjects()')),c);vm.runInContext('renderModuleCatalogue()',c);
@@ -61,13 +61,13 @@ test('Gola metal boards retain 16 mm, and ball drawers retain 18/3 mm after resi
 });
 test('Real JSON exporter keeps exact Gola source SHA, contours, hardware and source warnings',async()=>{
  let blob;const state={room:{width:6000,height:2700,depth:4000},items:G.variants.map(item),production_note:''};
- const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,state,templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,$:()=>({value:'Gola QA'}),status:()=>{},setTimeout:()=>{},alert:m=>assert.fail(m),confirm:()=>true,URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL:()=>{}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
+ const c=vm.createContext({MF_MODERN_CABINETS:globalThis.MF_MODERN_CABINETS,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,state,templateFor:template,materials:new Map(),Blob,Date,JSON,Math,console,FACADE_GAP_MM:1.5,$:()=>({value:'Gola QA'}),status:()=>{},setTimeout:()=>{},alert:m=>assert.fail(m),confirm:()=>true,URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL:()=>{}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
  vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);c.exportBazisProject();const payload=JSON.parse(await blob.text());
  assert.equal(payload.items.length,13);for(const [i,out]of payload.items.entries()){assert.equal(out.source_sha256,G.variants[i].source_sha256);assert.equal(out.source_file,G.variants[i].source_file);assert.equal(out.construction.gola_variant.execution,'gola');assert.ok(out.construction.parts.filter(p=>p.contour_yz).length===2);}
 });
 test('Current native importer protects all five Gola metal donors from 18 mm substitution',()=>{
- const script=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8'),c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,require:createRequire(import.meta.url),console,process});vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),c);
+ const script=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8'),c=vm.createContext({MF_MODERN_CABINETS:globalThis.MF_MODERN_CABINETS,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,require:createRequire(import.meta.url),console,process});vm.runInContext(script.slice(0,script.lastIndexOf('(function main()')),c);
  for(const v of G.variants.filter(v=>v.kind==='drawers'&&v.system!=='ball')){
   const it=item(v);it.body_variant_id='body18';const parts=C.productionParts(it,template(it));parts.find(p=>p.role==='body').material={name:'White 18',variant_id:'body18'};
   assert.equal(c.materialPalette({source_sha256:v.source_sha256,body_variant_id:'body18',construction:{parts}}).drawer,null);
