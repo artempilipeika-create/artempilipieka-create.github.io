@@ -28,6 +28,7 @@ export function carcassSpec(input={}){
     if(!Number.isInteger(s[key])||s[key]<min||s[key]>max)throw Error(label+': '+min+'–'+max+'.');
   if(![.4,.8,1,2,3].includes(s.edgeThickness)||!['front','all','none'].includes(s.edgePolicy))throw Error('Проверьте схему и толщину ПВХ.');
   if(typeof s.back!=='boolean')throw Error('Выберите вариант задней стенки.');
+  if(s.sectionShelves!=null&&(!Array.isArray(s.sectionShelves)||s.sectionShelves.length!==s.sections||s.sectionShelves.some(n=>!Number.isInteger(n)||n<0||n>10)||Math.max(...s.sectionShelves)!==s.shelves||!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте количество полок в каждой секции.');
   if(recipe.id==='sink'&&(s.back||s.shelves||s.sections!==1))throw Error('У корпуса под мойку нет полок, перегородок и задней стенки.');
   if(['base','cap'].includes(recipe.id)&&s.sections!==1)throw Error('У этой конструкции одна секция.');
   return {...s,top:recipe.top,bottom:recipe.bottom,label:recipe.name};
@@ -64,9 +65,10 @@ export function buildCarcass(input={},options={}){
     x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D,t,x+t/2,t,0,edge()));x+=t;
   }
   supports.push(right);
-  if(topBottom-bottomTop-s.shelves*t<(s.shelves+1)*60)throw Error('Для полок недостаточно высоты. Уменьшите их количество.');
-  for(let section=0;section<s.sections;section++)for(let i=0;i<s.shelves;i++){
-    const y=bottomTop+Math.round((i+1)*(topBottom-bottomTop-s.shelves*t)/(s.shelves+1))+i*t;
+  const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
+  if(counts.some(n=>topBottom-bottomTop-n*t<(n+1)*60))throw Error('Для полок недостаточно высоты. Уменьшите их количество.');
+  for(let section=0;section<s.sections;section++)for(let i=0;i<counts[section];i++){
+    const count=counts[section],y=bottomTop+Math.round((i+1)*(topBottom-bottomTop-count*t)/(count+1))+i*t;
     const a=supports[section],b=supports[section+1];
     add('shelf-'+section+'-'+i,'Полка '+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
       widths[section]-2*s.shelfGap,D-s.shelfSetback,t,(a.x+b.x)/2,y,-s.shelfSetback/2,edge(),binding(a,b,s.shelfGap,-s.shelfSetback/2));

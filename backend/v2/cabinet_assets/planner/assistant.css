@@ -14,3 +14,28 @@
 #planner-assistant-dialog [hidden]{display:none!important}
 #planner-assistant-dialog button+button{margin-left:8px}
 .planner-client #planner-workspace #planner-tools>#planner-assistant{display:inline-flex!important}
+#planner-assistant-dialog.assistant-wizard{width:min(960px,calc(100vw - 32px));box-sizing:border-box}
+.assistant-steps{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}
+#planner-assistant-dialog .assistant-steps button{margin:0;font-size:13px;padding:8px 12px}
+#planner-assistant-dialog .assistant-steps [aria-current="step"]{background:#236144;color:#fff}
+.assistant-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:28px}
+.assistant-fields{display:grid;gap:12px;align-content:start}
+#planner-assistant-dialog .assistant-fields p{font-size:13px;margin:4px 0;color:#516457}
+#planner-assistant-dialog input,#planner-assistant-dialog select{box-sizing:border-box;width:100%;padding:10px;border:1px solid #afc2b4;border-radius:8px;background:white;color:#243a2e;font:inherit;margin-top:5px}
+.assistant-drawing{background:#edf2e9;border-radius:14px;padding:18px;text-align:center;align-self:start;position:sticky;top:0}
+.assistant-drawing svg{display:block;width:100%;height:300px}
+.assistant-drawing p{font-size:14px}
+.assistant-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#planner-assistant-dialog .assistant-cards button{margin:0;padding:12px 6px;font-size:12px}
+#planner-assistant-dialog .assistant-cards [aria-pressed="true"]{border:2px solid #236144;background:#e5f0e3}
+.assistant-section-icon{display:flex;height:80px;border:3px solid #737d66;margin:0 8px 12px;background:#e4d8bc}
+.assistant-section-icon i{flex:1;border-right:2px solid #737d66}.assistant-section-icon i:last-child{border:0}
+.assistant-fields fieldset{border:1px solid #c7d4c8;border-radius:10px;padding:12px;min-width:0;display:grid;gap:8px}
+.assistant-fields legend{font-weight:600;padding:0 6px}
+.assistant-choice,.assistant-unavailable{padding:16px;border:1px solid #b5cbb6;border-radius:10px;background:#edf5e9}
+.assistant-unavailable{background:#f0f1ed;border-color:#d6dbd2;color:#5c685d}
+.assistant-footer{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+#planner-assistant-dialog .assistant-footer button{margin:0}
+.assistant-material-results{display:grid;gap:6px;max-height:180px;overflow:auto}
+#planner-assistant-dialog .assistant-material-results button{text-align:left;font-size:12px;margin:0}
+@media(max-width:640px){.assistant-grid{grid-template-columns:1fr}.assistant-drawing{position:static;order:-1}.assistant-drawing svg{height:145px}.assistant-steps{gap:4px}#planner-assistant-dialog.assistant-wizard{padding:16px}.assistant-drawing{padding:8px}.assistant-drawing p{margin:4px}}

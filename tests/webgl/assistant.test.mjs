@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {prepareAssistantPlan,applyAssistantPlan,selectedCarcass} from '../../backend/v2/cabinet_assets/planner/assistant-model.mjs';
+import {wardrobeSpec,sectionWidths,questionnaireMaterialError} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
 const spec={recipe:'shelves',width:800,height:2200,depth:577,thickness:18,shelves:4,sections:1,back:true,elevation:0,shelfSetback:20,shelfGap:0,edgeThickness:1,edgePolicy:'front'};
 function setup(){
  let state={room:{width:6000,depth:5000,height:2700,setup_complete:true},items:[]};
@@ -33,4 +34,19 @@ test('removing noted shelves is explicit in preview; shrinking does not mutate e
  a.items.find(i=>i.item_id.endsWith(':shelf-0-3')).production_note='Специальное крепление';
  const p=prepareAssistantPlan(a,{action:'update',spec:{...spec,shelves:1}});
  assert.ok(p.summary.some(s=>s.includes('есть примечание')));assert.equal(a.items.length,9);
+});
+test('questionnaire builds independent section fill, exact materials and reversible edits',()=>{
+ const {a,h}=setup(),s=wardrobeSpec({...spec,width:1200,sections:3,sectionShelves:[2,0,5]});
+ assert.equal(s.shelves,5);assert.deepEqual(sectionWidths(s),[376,376,376]);
+ const p=prepareAssistantPlan(a,{action:'create',spec:s},{bodyMaterialId:'body-choice',backMaterialId:'back-choice'});
+ h.run('form',()=>applyAssistantPlan(a,p));assert.equal(a.items.filter(i=>i.item_id.includes(':shelf-')).length,7);
+ assert.equal(a.items.filter(i=>i.item_id.includes(':shelf-1-')).length,0);
+ assert.ok(a.items.every(i=>i.body_variant_id===(i.item_id.endsWith(':back')?'back-choice':'body-choice')));
+ a.restore(JSON.parse(JSON.stringify(a.snapshot())));assert.deepEqual(selectedCarcass(a).metadata.spec.sectionShelves,[2,0,5]);
+ const changed=prepareAssistantPlan(a,{action:'update',spec:wardrobeSpec({...s,sectionShelves:[1,3,0]})},{bodyMaterialId:'new-body',backMaterialId:'new-back'});
+ h.run('edit',()=>applyAssistantPlan(a,changed));assert.equal(a.items.filter(i=>i.item_id.includes(':shelf-')).length,4);
+ assert.ok(a.items.every(i=>i.body_variant_id===(i.item_id.endsWith(':back')?'new-back':'new-body')));
+ h.undo();assert.deepEqual(selectedCarcass(a).metadata.spec.sectionShelves,[2,0,5]);
+ assert.throws(()=>wardrobeSpec({...s,sectionShelves:[1]}));assert.throws(()=>wardrobeSpec({...s,sectionShelves:[1,2,11]}));
+ assert.match(questionnaireMaterialError({variant_id:'x',thickness:16},18),/18 мм/);
 });

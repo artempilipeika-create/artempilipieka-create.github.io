@@ -1,5 +1,5 @@
 """Bounded carcass plans. Geometry remains owned by the existing constructor."""
-from typing import Literal
+from typing import Literal, Annotated
 from uuid import UUID
 from pydantic import Field, model_validator
 from .auth_api import StrictModel
@@ -41,9 +41,20 @@ class CarcassPosition(StrictModel):
     rotation: Literal[0, 90, 180, 270]
 
 
+class CarcassDesign(CarcassSpec):
+    sectionShelves: list[Annotated[int, Field(ge=0, le=10, strict=True)]] | None = Field(default=None, min_length=1, max_length=3)
+
+    @model_validator(mode='after')
+    def section_layout(self):
+        if self.sectionShelves is not None:
+            if self.recipe not in ('shelves', 'divided') or len(self.sectionShelves) != self.sections or max(self.sectionShelves) != self.shelves:
+                raise ValueError('Invalid section layout')
+        return self
+
+
 class AssistantCarcass(StrictModel):
     group_id: UUID
-    spec: CarcassSpec
+    spec: CarcassDesign
     position: CarcassPosition
 
 

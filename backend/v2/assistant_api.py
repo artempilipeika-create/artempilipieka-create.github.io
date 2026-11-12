@@ -7,9 +7,11 @@ from pathlib import Path
 from uuid import UUID
 import httpx
 from fastapi import APIRouter, Request
-from pydantic import Field
+from pydantic import Field, ValidationError
 from .auth_api import StrictModel
-from .assistant_model import AssistantPlan, CarcassSpec
+from .assistant_model import AssistantPlan, CarcassSpec, CarcassDesign
+from . import catalogue
+from typing import Literal
 from .db import transaction
 from .domain_api import require
 from .security import identity, verified, error
@@ -43,6 +45,21 @@ class PlanRequest(StrictModel):
     room_height: int = Field(ge=200, le=8000)
 
 
+class QuestionnaireRequest(StrictModel):
+    request_id: UUID
+    action: Literal['create', 'update']
+    spec: CarcassDesign
+    fronts: Literal['none']
+    body_material_id: UUID
+    back_material_id: UUID | None
+    room_height: int = Field(ge=200, le=8000)
+
+
+class QuestionnaireReview(StrictModel):
+    approved: bool
+    message: str = Field(min_length=1, max_length=800)
+
+
 def configured():
     return (os.environ.get('MF_AI_ASSISTANT') == 'enabled'
             and bool(os.environ.get('MF_AI_API_KEY') or os.environ.get('MF_IMAGE_API_KEY'))
@@ -64,6 +81,19 @@ def generate(body):
                'input': json.dumps(body.model_dump(mode='json', exclude={'request_id'}), ensure_ascii=False),
                'text': {'format': {'type': 'json_schema', 'name': 'carcass_plan', 'strict': True,
                                    'schema': AssistantPlan.model_json_schema()}}}
+    text = provider_text(payload)
+    try:
+        plan = AssistantPlan.model_validate_json(text)
+    except Exception:
+        raise ValueError('Предложение не прошло проверку конструкции. Проект не изменён.') from None
+    if plan.action == 'update' and body.current is None:
+        raise ValueError('Сначала выберите деталь корпуса, созданного помощником.')
+    if plan.spec and plan.spec.height+plan.spec.elevation > body.room_height:
+        raise ValueError('Предложенный корпус выше помещения. Уточните высоту.')
+    return plan.model_dump(mode='json')
+
+
+def provider_text(payload):
     raw = json.dumps(payload, ensure_ascii=False).encode()
     if len(raw) > 32000:
         raise ValueError('Сократите описание шкафа.')
@@ -81,17 +111,30 @@ def generate(body):
     data = response.json()
     if data.get('status') != 'completed':
         raise ValueError('ИИ не завершил предложение. Проект не изменён.')
-    text = ''.join(c.get('text', '') for item in data.get('output', []) if item.get('type') == 'message'
+    return ''.join(c.get('text', '') for item in data.get('output', []) if item.get('type') == 'message'
                    for c in item.get('content', []) if c.get('type') == 'output_text')
+
+
+def review_questionnaire(body):
+    # The model reviews compatibility, but cannot rewrite form values or invent
+    # parts, hardware, source files, materials or manufacturing dimensions.
+    payload = {'model': MODEL, 'store': False, 'service_tier': 'default',
+               'max_output_tokens': 2000, 'reasoning': {'effort': 'low'},
+               'instructions': 'Проверь анкету открытого шкафа Martin Forest. Размеры в мм. Конструктор уже проверил габариты, толщины и привязки. Используется существующий корпус shelves (одна секция) или divided (две/три секции), накладная ХДФ 3мм при back=true. sectionShelves — полки по секциям, 0 означает пустую нишу. shelves — максимум этого массива. Фасады, ящики, штанги и фурнитура не входят. Не предлагай менять заданные параметры, не выдумывай детали. Если конструкция совместима, approved=true и короткое подтверждение на русском. Если есть конструктивное противоречие, approved=false и конкретная причина. Никакие изменения ещё не применены.',
+               'input': body.model_dump_json(exclude={'request_id', 'body_material_id', 'back_material_id'}),
+               'text': {'format': {'type': 'json_schema', 'name': 'wardrobe_review', 'strict': True,
+                                   'schema': QuestionnaireReview.model_json_schema()}}}
     try:
-        plan = AssistantPlan.model_validate_json(text)
+        review = QuestionnaireReview.model_validate_json(provider_text(payload))
+    except ValidationError:
+        raise ValueError('Не удалось проверить анкету. Проект не изменён.') from None
+    except ValueError:
+        raise
     except Exception:
-        raise ValueError('Предложение не прошло проверку конструкции. Проект не изменён.') from None
-    if plan.action == 'update' and body.current is None:
-        raise ValueError('Сначала выберите деталь корпуса, созданного помощником.')
-    if plan.spec and plan.spec.height+plan.spec.elevation > body.room_height:
-        raise ValueError('Предложенный корпус выше помещения. Уточните высоту.')
-    return plan.model_dump(mode='json')
+        raise ValueError('Не удалось проверить анкету. Проект не изменён.') from None
+    if not review.approved:
+        return {'action': 'clarify', 'message': review.message, 'spec': None}
+    return {'action': body.action, 'message': review.message, 'spec': body.spec.model_dump(mode='json')}
 
 
 def folder(root):
@@ -154,6 +197,28 @@ def router(settings):
             error(503, 'ASSISTANT_NOT_CONFIGURED')
         try:
             return once(settings.storage_root, owner, body)
+        except ValueError as exc:
+            return {'state': 'failed', 'message': str(exc), 'remaining': remaining(settings.storage_root)}
+
+    @api.post('/questionnaire')
+    def questionnaire(body: QuestionnaireRequest, request: Request):
+        owner = authorize(settings, request)
+        if not configured():
+            error(503, 'ASSISTANT_NOT_CONFIGURED')
+        if body.spec.recipe not in ('shelves', 'divided') or body.spec.sectionShelves is None:
+            error(422, 'WARDROBE_RECIPE_REQUIRED')
+        if body.spec.height+body.spec.elevation > body.room_height:
+            error(422, 'WARDROBE_ABOVE_CEILING')
+        with transaction(settings) as conn:
+            release = catalogue.active(conn)
+            for variant, thickness in [(body.body_material_id, body.spec.thickness), *([(body.back_material_id, 3)] if body.spec.back else [])]:
+                if variant is None:
+                    error(422, 'WARDROBE_MATERIAL_REQUIRED')
+                material = catalogue.get_item(conn, release, variant, 'material')
+                if float(material.get('thickness') or 0) != thickness:
+                    error(422, 'WARDROBE_MATERIAL_THICKNESS')
+        try:
+            return once(settings.storage_root, owner, body, review_questionnaire)
         except ValueError as exc:
             return {'state': 'failed', 'message': str(exc), 'remaining': remaining(settings.storage_root)}
     return api
