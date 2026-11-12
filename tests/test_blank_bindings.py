@@ -5,6 +5,20 @@ from tests.test_blanks import board
 from tests.stage03.test_api import settings, api, admin_user
 
 
+def test_binding_module_is_served_with_its_dependencies():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from backend.v2.cabinet_ui import router, CSP
+    app = FastAPI()
+    app.include_router(router())
+    with TestClient(app) as client:
+        for name in ('blank-bindings.mjs', 'blanks-model.mjs'):
+            response = client.get('/account/planner/' + name)
+            assert response.status_code == 200
+            assert response.headers['content-type'].startswith('application/javascript')
+            assert response.headers['content-security-policy'] == CSP
+
+
 def bound_scene():
     left = board(item_id='left', name='Левая', x=-391, width=18, height=720,
                  body_height=720, blank_axis='side')
