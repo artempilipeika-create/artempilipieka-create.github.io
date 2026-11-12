@@ -264,7 +264,7 @@
   const UPPER_PRODUCTION=freeze(Object.fromEntries((root.MF_UPPERS?.all||[]).map(v=>[v.id,root.MF_UPPERS.model(v,WALL_PRODUCTION[v.id])])));
   const GOLA_PRODUCTION=freeze(Object.fromEntries((root.MF_GOLA?.variants||[]).map(v=>[v.id,root.MF_GOLA.model(v)])));
   const ACCESSORY_PRODUCTION=freeze(Object.fromEntries((root.MF_ACCESSORIES?.dishwashers||[]).map(v=>[v.id,root.MF_ACCESSORIES.model(v)])));
-  const PRODUCTION_MODELS=Object.freeze({...Object.fromEntries((root.MF_WALL_SPECIAL?.variants||[]).map(v=>[v.id,root.MF_WALL_SPECIAL.model(v)])),...Object.fromEntries((root.MF_OPEN_TALL?.variants||[]).map(v=>[v.id,root.MF_OPEN_TALL.model(v)])),...Object.fromEntries((root.MF_CARGO?.variants||[]).map(v=>[v.id,root.MF_CARGO.model(v)])),...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
+  const PRODUCTION_MODELS=Object.freeze({...Object.fromEntries((root.MF_MODERN_CABINETS?.variants||[]).map(v=>[v.id,root.MF_MODERN_CABINETS.model(v)])),...Object.fromEntries((root.MF_WALL_SPECIAL?.variants||[]).map(v=>[v.id,root.MF_WALL_SPECIAL.model(v)])),...Object.fromEntries((root.MF_OPEN_TALL?.variants||[]).map(v=>[v.id,root.MF_OPEN_TALL.model(v)])),...Object.fromEntries((root.MF_CARGO?.variants||[]).map(v=>[v.id,root.MF_CARGO.model(v)])),...ACCESSORY_PRODUCTION,...GOLA_PRODUCTION,...Object.fromEntries((root.MF_PULLOUT_DRYERS?.variants||[]).map(v=>[v.id,root.MF_PULLOUT_DRYERS.model(v)])),...DRAWER_PRODUCTION,...VITRINE_PRODUCTION,...PILOT_PRODUCTION,...WALL_PRODUCTION,...UPPER_PRODUCTION,...SPECIAL_BASE_PRODUCTION,...CORNER_PRODUCTION,...TALL_PRODUCTION});
   // Resolve known historical versions without changing the stored module.
   function sourceProduction(it){
     const p=PRODUCTION_MODELS[it?.bazis_id];
@@ -394,6 +394,7 @@
     const known=PRODUCTION_MODELS[it?.bazis_id],p=template?template.production:known,c=p?.constraints;
     if(known?.constraints?.fixed_width_mm&&it.width!==known.constraints.fixed_width_mm)return 'Ширина НШД-600 фиксирована: 600 мм';
     if(c?.min_body_height_mm&&heights(it).body_height<c.min_body_height_mm)return 'Для ниши 595 мм высота корпуса НШД должна быть не меньше '+c.min_body_height_mm+' мм';
+    if(p?.modern)return root.MF_MODERN_CABINETS.dimensionError(it);
     if(p?.dishwasher)return root.MF_ACCESSORIES.dimensionError(it);
     if(p?.wall_special)return root.MF_WALL_SPECIAL.dimensionError(it);
     if(p?.open_tall)return root.MF_OPEN_TALL.dimensionError(it);
@@ -431,7 +432,7 @@
   }
 
   function productionShelves(it,p=sourceProduction(it)){
-    if(p?.wall_special||p?.gola||p?.cargo||p?.open_tall)return [];
+    if(p?.modern||p?.wall_special||p?.gola||p?.cargo||p?.open_tall)return [];
     if(p?.upper&&!p.upper.legacy)return root.MF_UPPERS.shelves(it,p);
     if(!p||p.tall||p.vitrine||p.metal_drawers)return [];
     if(p.corner?.purpose==='sink')return [];
@@ -460,6 +461,7 @@
   }
   function productionHardware(it,p=sourceProduction(it)){
     if(p?.dishwasher)return root.MF_ACCESSORIES.hardware(it);
+    if(p?.modern)return root.MF_MODERN_CABINETS.hardware(it);
     if(p?.wall_special)return root.MF_WALL_SPECIAL.hardware(it,p);
     if(p?.open_tall)return root.MF_OPEN_TALL.hardware(it,p);
     if(p?.cargo)return root.MF_CARGO.hardware(it,p);
@@ -639,6 +641,7 @@
       const fw=Math.max(1,w-2*g),fh=Math.max(1,h-2*g);
       cells.push({kind,w:mmNumber(fw),h:mmNumber(fh),cx:mmNumber(x+w/2),cy:mmNumber(y+h/2)});
     };
+    if(production?.modern)return root.MF_MODERN_CABINETS.facades(it);
     if(production?.wall_special)return root.MF_WALL_SPECIAL.facades(it);
     if(production?.open_tall)return [];
     if(production?.cargo)return root.MF_CARGO.facades(it,production);
@@ -746,6 +749,7 @@
   }
   function productionParts(it,template,materialLookup=()=>null){
     const p=template?.production;if(!p?.carcass)return null;
+    if(p.modern)return root.MF_MODERN_CABINETS.parts(it,p,materialLookup);
     if(p.wall_special)return root.MF_WALL_SPECIAL.parts(it,p,materialLookup);
     if(p.open_tall)return root.MF_OPEN_TALL.parts(it,p,materialLookup);
     if(p.cargo)return root.MF_CARGO.parts(it,p,materialLookup);

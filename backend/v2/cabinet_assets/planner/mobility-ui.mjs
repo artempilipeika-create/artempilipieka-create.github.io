@@ -55,7 +55,8 @@ export class MobilityUI{
       const lower=globalThis.MF_GOLA.baseChoice(t.id);
       if(lower&&(t.id!==globalThis.MF_GOLA.family(lower).default_id||globalThis.MF_GOLA.baseInfo(selected)?.door_count===lower.door_count))continue;
       const special=globalThis.MF_WALL_SPECIAL.choice(t.id);if(special&&t.id!==globalThis.MF_WALL_SPECIAL.family(special).default_id)continue;
-      const upper=globalThis.MF_UPPERS.choice(t.id);
+      const modern=globalThis.MF_MODERN_CABINETS.choice(t.id);if(modern&&t.id!==globalThis.MF_MODERN_CABINETS.families[modern.family].default_id)continue;
+      const upper=globalThis.MF_UPPERS.choice(t.id);if(upper)continue;
       if(upper&&(t.id!==globalThis.MF_UPPERS.family(upper).default_id||globalThis.MF_UPPERS.info(selected)?.door_count===upper.door_count))continue;
       const family=doorFamilyById(t.id);
       if(family&&t.id!==family.left)continue;

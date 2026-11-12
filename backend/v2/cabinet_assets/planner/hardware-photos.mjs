@@ -138,6 +138,7 @@ const PHOTOS=Object.freeze({
   "name": "Выдвижная корзина-сушка 900 FLAT LINE нерж.сталь, хром AKS",
   "supplier": "AKS"
  },
+ "38402": {"file":"38402.webp","source":"https://aksmebel.ru/product/sushka-dvukhurovnevaya-s-teleskopicheskim-krepleniem-11660-p/48320/","name":"Сушка AKS INOX 600","supplier":"AKS"},
  "113272": {
   "file": "113272.webp",
   "source": "https://aks.by/123553-146385-p?OFFER_ID=146389",
@@ -148,6 +149,7 @@ const PHOTOS=Object.freeze({
 
 const photo=(article,hint)=>{const p=PHOTOS[article];return p?{...p,article,src:'/account/planner/hardware-photos/'+p.file+'?v=20261026-supplier-photos',hint}:null;};
 export function hardwareArtwork(it,family,key,value){
+ if(family==='modern'&&(key==='dryer'||key==='filling'&&value==='dryer')){const v=globalThis.MF_MODERN_CABINETS.info(it);if(v?.dryer!=='none')return photo(v.dryer==='inox'?'38402':'113272',v.dryer.toUpperCase()+' · 600 мм · арт. '+(v.dryer==='inox'?'38402':'113272'));}
  if(family==='cargo'&&key==='brand'){
   const kit=globalThis.MF_CARGO.kit(it);if(!kit)return null;
   return photo(kit.article,(value==='norwing'?'Хром':'Графит')+' · '+it.width+' мм · '+(kit.mounting==='side_left'?'крепление слева':'крепление снизу')+' · арт. '+kit.article);

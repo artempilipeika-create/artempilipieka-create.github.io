@@ -19,6 +19,8 @@ import './cargo-variants.js';
 import './cargo-model.js';
 import './wall-special-variants.js';
 import './wall-special-model.js';
+import './modern-cabinet-variants.js';
+import './modern-cabinets.js';
 import './furniture-core.js?v=20261029-upper-600';
 export const {VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY}=globalThis.MF_FURNITURE_CORE;
 export const {APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote}=globalThis.MF_FURNITURE_CORE;
