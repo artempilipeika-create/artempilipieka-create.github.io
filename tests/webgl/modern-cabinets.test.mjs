@@ -52,3 +52,46 @@ test('Actual export retains all39 source pins, native720 versus target450 and fr
  const payload=JSON.parse(await blob.text());assert.equal(payload.minimum_importer,'9.9.13');assert.equal(payload.items.length,39);
  payload.items.forEach((out,i)=>{const v=M.variants[i];assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.source_file,v.source_file);assert.equal(out.target.height,v.default_height);assert.equal(out.source_default.height,v.native_frame.size[1]);assert.equal(out.construction.modern_cabinet.family,v.family);});
 });
+
+test('Updated upper bodies keep the previously approved catalogue and option photographs',async()=>{
+ await import('../../backend/v2/cabinet_assets/planner/catalogue-artwork.js');
+ const {executionArtwork}=await import('../../backend/v2/cabinet_assets/planner/execution-artwork.mjs');
+ for(const [family,legacy,file]of [['upper1','bazis.858266606bc5','upper-upper-execution-handles.webp'],['upper2','bazis.6c187245284a','upper-double-upper-execution-handles.webp']]){
+  const id=M.families[family].default_id,art=globalThis.MF_CATALOGUE_ARTWORK;
+  assert.equal(art[id].file,art[legacy].file);assert.equal(art[id].source,'tripo');
+  assert.ok(executionArtwork(item(M.choice(id)),'modern','execution','handles').includes(file));
+ }
+});
+test('Both photographed dryers can be selected directly from a shelf cabinet without changing the source pins',async()=>{
+ const {previewVariant}=await import('../../backend/v2/cabinet_assets/planner/execution-options.mjs');
+ for(const family of ['upper1','upper2']){
+  const original=item(M.choice(M.families[family].default_id));
+  for(const [dryer,article]of [['mount','113272'],['inox','38402']]){
+   const next=previewVariant(original,'modern','dryer',dryer,catalogue),v=M.info(next);
+   assert.equal(v.filling,'dryer');assert.equal(v.dryer,dryer);
+   assert.equal(next.bazis_file,v.source_file);assert.equal(next.bazis_sha256,v.source_sha256);
+   assert.match(hardwareArtwork(next,'modern','dryer',dryer).src,new RegExp(article+'\\.webp'));
+  }
+  assert.equal(M.info(original).filling,'shelves');
+ }
+});
+test('Gaslift handle is horizontal at the bottom centre and stays attached when opened',()=>{
+ const v=M.variants.find(v=>v.family==='gaslift'&&v.execution==='handles'),it=item(v),p=PRODUCTION_MODELS[v.id];
+ const factory=new MeshFactory({room:{width:6000,depth:6000,height:3000},state:{items:[],plinths:[]},template:()=>({production:p}),material:()=>null},()=>{});
+ for(const width of [300,600])for(const doors_open of [false,true]){
+  const resized={...it,width,doors_open},front=M.parts(resized).find(p=>p.role==='front'),mesh=factory.build(resized),handles=[];
+  mesh.traverse(o=>{if(o.userData.role==='handle')handles.push(o);});assert.equal(handles.length,1);
+  const h=handles[0];assert.equal(h.parent.userData.role,'door-pivot');assert.equal(h.rotation.z,Math.PI/2);
+  assert.ok(Math.abs(h.position.x)<1e-9);assert.ok(Math.abs(h.position.y-(front.position.y-front.size.y/2+50-front.pivot.y)/1000)<1e-9);
+  assert.equal(h.parent.rotation.x,doors_open?-Math.PI/2:0);
+ }
+ factory.dispose();
+});
+test('Every fridge layout is handle-free, including older saved items with handles enabled',()=>{
+ for(const v of M.variants.filter(v=>v.family==='fridge')){
+  const it=item(v),p=PRODUCTION_MODELS[v.id];assert.equal(it.handles,'handleless');assert.equal(M.select({...it,handles:'handles'},{},catalogue).handles,'handleless');
+  const factory=new MeshFactory({room:{width:6000,depth:6000,height:3000},state:{items:[],plinths:[]},template:()=>({production:p}),material:()=>null},()=>{});
+  for(const doors_open of [false,true]){const mesh=factory.build({...it,handles:'handles',doors_open}),handles=[];mesh.traverse(o=>{if(o.userData.role==='handle')handles.push(o);});assert.equal(handles.length,0);}
+  factory.dispose();
+ }
+});

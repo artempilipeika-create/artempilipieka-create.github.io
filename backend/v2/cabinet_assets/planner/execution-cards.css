@@ -42,3 +42,7 @@
 @media(max-width:760px){.execution-hero-visual canvas{height:250px}#planner-workspace .execution-family .execution-grid{gap:8px!important}}
 @media(prefers-reduced-motion:reduce){.execution-choice{transition:none!important}}
 #planner-workspace .execution-family .execution-choice[hidden],#planner-workspace .execution-family .execution-choice [hidden],#planner-workspace .execution-hero [hidden]{display:none!important}
+
+/* Keep the two dryer photographs visible together and honour hidden option groups. */
+#planner-workspace .execution-family [data-modern-group="dryer"].execution-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#planner-workspace .execution-family .execution-grid[hidden]{display:none!important}

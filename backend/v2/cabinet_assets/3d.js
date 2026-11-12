@@ -632,7 +632,7 @@ function addBazisModule(bazisId,announce=true){
   };
   if(m.production){
     const p=m.production;
-    if(p.modern&&p.modern.execution!=='handles'||p.wall_special&&p.wall_special.execution!=='handles'||p.tall?.execution==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
+    if(p.modern&&(p.modern.family==='fridge'||p.modern.execution!=='handles')||p.wall_special&&p.wall_special.execution!=='handles'||p.tall?.execution==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
     Object.assign(it,{body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
     it.shelves=JSON.parse(JSON.stringify(globalThis.MF_FURNITURE_CORE.productionShelves(it,p)));
   }

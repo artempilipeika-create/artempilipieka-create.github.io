@@ -149,7 +149,7 @@ const PHOTOS=Object.freeze({
 
 const photo=(article,hint)=>{const p=PHOTOS[article];return p?{...p,article,src:'/account/planner/hardware-photos/'+p.file+'?v=20261026-supplier-photos',hint}:null;};
 export function hardwareArtwork(it,family,key,value){
- if(family==='modern'&&(key==='dryer'||key==='filling'&&value==='dryer')){const v=globalThis.MF_MODERN_CABINETS.info(it);if(v?.dryer!=='none')return photo(v.dryer==='inox'?'38402':'113272',v.dryer.toUpperCase()+' · 600 мм · арт. '+(v.dryer==='inox'?'38402':'113272'));}
+ if(family==='modern'&&(key==='dryer'||key==='filling'&&value==='dryer')){const v=globalThis.MF_MODERN_CABINETS.info(it);if(v&&v.dryer!=='none')return photo(v.dryer==='inox'?'38402':'113272',v.dryer.toUpperCase()+' · 600 мм · арт. '+(v.dryer==='inox'?'38402':'113272'));}
  if(family==='cargo'&&key==='brand'){
   const kit=globalThis.MF_CARGO.kit(it);if(!kit)return null;
   return photo(kit.article,(value==='norwing'?'Хром':'Графит')+' · '+it.width+' мм · '+(kit.mounting==='side_left'?'крепление слева':'крепление снизу')+' · арт. '+kit.article);

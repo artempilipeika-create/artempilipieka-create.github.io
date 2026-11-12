@@ -355,7 +355,7 @@ export class MeshFactory{
       }
       const panel=this.box(parent,'front',f.w,f.h,part?.thickness??18,px,f.cy-(hasPivot?part.pivot.y:0),pz,part?.material.variant_id??front,ghost);panel.userData.facade={...f};
       if(part){panel.userData.part=part;if(spec)panel.userData.hingeSide=spec.side;}
-      if(it.handles==='handles'&&f.w>140&&f.h>100){
+      if(it.handles==='handles'&&production?.modern?.family!=='fridge'&&f.w>140&&f.h>100){
         const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
         const side=spec?(spec.side==='right'?-1:1):rowDoors.length>1?(f.cx<0?1:-1):/отк P/.test(it.bazis_file||'')?-1:1;
         const x=spec?.side==='up'?f.cx:drawer?f.cx:f.cx+side*(f.w/2-50),localX=hasPivot?x-part.pivot.x:x;
@@ -364,7 +364,7 @@ export class MeshFactory{
         const y=drawer?f.cy+f.h/2-36:bottomHandle?f.cy-f.h/2+50:f.cy+f.h/2-50;
         // Tall upper and lower handles meet at the section joint; wall handles use the bottom edge.
         // The pilot swing doors keep the handle on the rotating facade.
-        this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y-(hasPivot?part.pivot.y:0),handleZ,drawer,ghost);
+        this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y-(hasPivot?part.pivot.y:0),handleZ,drawer||spec?.side==='up',ghost);
       }
     }
     if(production?.tall?.execution==='gola'||production?.cargo||production?.gola||production?.dishwasher)for(const profile of production.tall?.execution==='gola'?globalThis.MF_FURNITURE_CORE.tallGolaProfiles(it):production.cargo?globalThis.MF_CARGO.profiles(it):production.dishwasher?globalThis.MF_ACCESSORIES.profiles(it):globalThis.MF_GOLA.profiles(it)){
