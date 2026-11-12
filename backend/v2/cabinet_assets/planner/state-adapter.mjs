@@ -1,4 +1,6 @@
 import {fixtureError} from './worktop-fixtures.mjs';
+import {resolveBlankBindings,assertRemovable} from './blank-bindings.mjs';
+import {applyChanges} from './mobility.mjs';
 import {validateBlank,geometryFromBlank} from './blanks-model.mjs';
 import {clone,elevation,mountedItems,tier,isTallModule,heights,dimensionError,placementError,normalizeKitchen,withDefaultMaterials,kitchenSettings,productionShelves,TALL_FAMILY,TALL_GOLA_FAMILY,APPLIANCE_TALL_FAMILY,tallDefaultId} from './furniture-core.mjs';
 export class StateAdapter{
@@ -43,9 +45,9 @@ export class StateAdapter{
     return normalizeKitchen(withDefaultMaterials(it));
   }
   persistent(it){const value=clone(it);if(!this.bridge.supportsElevation||!['wall_cabinet','blank'].includes(it.module_type))delete value.elevation_mm;return value;}
-  insert(it){if(this.items.length>=100)throw new Error('В одном проекте поддерживается до 100 модулей');this.items.push(this.persistent(it));this.bridge.select(it.item_id);}
-  replace(it){const idx=this.items.findIndex(x=>x.item_id===it.item_id);if(idx<0)return;this.items[idx]=this.persistent(it);this.notify();}
-  remove(id){const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
+  insert(it){if(this.items.length>=100)throw new Error('В одном проекте поддерживается до 100 модулей');const next=resolveBlankBindings([...this.items,it]),resolved=next.at(-1);if(it.blank_binding){const error=this.validate(resolved,next);if(error)throw Error(error);}this.items.push(this.persistent(resolved));this.bridge.select(it.item_id);}
+  replace(it){if(!this.items.some(x=>x.item_id===it.item_id))return;applyChanges(this,[it]);}
+  remove(id){assertRemovable(this.items,id);const idx=this.items.findIndex(x=>x.item_id===id);if(idx>=0)this.items.splice(idx,1);this.bridge.select(this.items[Math.min(idx,this.items.length-1)]?.item_id||null);}
   validate(it,items=this.items){
     if(it.module_type==='blank'){
       const error=validateBlank(it,this.room);if(error)return error;

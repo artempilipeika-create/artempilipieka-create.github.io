@@ -42,3 +42,11 @@ body.mf-blank-selected .mf3d-material{margin-bottom:8px}
 .mf-blank-cut{margin:0;padding:12px;border:1px dashed #9bb6a2;border-radius:10px;font-size:13px;color:#45634e}
 .mf-blank-downloads{display:flex;justify-content:space-between;gap:12px;font-size:11px}.mf-blank-downloads a{color:#2a7152;text-decoration:underline;text-underline-offset:3px}
 .mf-blank-inspector .mf-blank-hero{display:none}
+.mf-blank-binding{min-width:0;display:grid;gap:12px;border:1px solid #b5cdbb;border-radius:12px;padding:12px;background:#f5f9f4}
+.mf-blank-binding[hidden]{display:none}
+.mf-blank-binding legend{font-size:14px;font-weight:750;color:#27543b;padding:0 5px}
+.mf-blank-binding p{font-size:12px;line-height:1.5;margin:0;color:#516957}
+.mf-blank-binding .mf-blank-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mf-blank-binding label:has([type=checkbox]){flex-direction:row;align-items:center;gap:8px}
+.mf-blank-binding input[type=checkbox]{width:18px;height:18px;accent-color:#157750}
+.mf-blank-form label input:disabled,.mf-blank-form label select:disabled{background:#edf1ec;color:#667568}

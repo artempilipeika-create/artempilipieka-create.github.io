@@ -69,6 +69,13 @@ class WorktopFixture(StrictModel):
             raise ValueError('Вытяжка доступна над варочной панелью.')
         return self
 
+class BlankBinding(StrictModel):
+    left_id: str=Field(min_length=1,max_length=80)
+    right_id: str=Field(min_length=1,max_length=80)
+    gap_left_mm: int=Field(default=0,ge=0,le=100,strict=True)
+    gap_right_mm: int=Field(default=0,ge=0,le=100,strict=True)
+    depth_offset_mm: float=Field(default=0,ge=-1200,le=1200,multiple_of=0.5,allow_inf_nan=False)
+
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
@@ -112,6 +119,7 @@ class FurnitureItem(StrictModel):
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
+    blank_binding: BlankBinding|None=None
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
     doors_open: bool=False
@@ -123,6 +131,8 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.blank_binding and (self.module_type!='blank' or self.blank_axis!='horizontal'):
+            raise ValueError('Привязка доступна только горизонтальной полке.')
         if self.module_type=='blank':
             if self.bazis_id or self.template_id or any(v is None for v in (
                 self.blank_length_mm,self.blank_width_mm,self.blank_thickness_mm,self.blank_axis,self.blank_edge_code
@@ -420,6 +430,8 @@ class Scene(StrictModel):
 
     @model_validator(mode='after')
     def wall_finish_placement(self):
+        from .blank_bindings import validate_bindings
+        validate_bindings(self.items)
         if self.module_type!='blank' and (self.width<150 or self.height<250 or self.depth<200):
             raise ValueError('Размер меньше допустимого для модуля')
         if self.upperMountingRule == 'worktop600':

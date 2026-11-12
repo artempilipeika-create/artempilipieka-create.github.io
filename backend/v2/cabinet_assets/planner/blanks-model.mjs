@@ -39,6 +39,7 @@ export function blankItem(input={}){
   return {
     ...dims,
     module_type:'blank',template_id:null,bazis_id:null,
+    ...(input.blank_binding?{blank_binding:structuredClone(input.blank_binding)}:{}),
     item_id:input.item_id||crypto.randomUUID(),name:(input.name||'Заготовка ЛДСП').slice(0,160),
     x:input.x??0,z:input.z??0,rotation:input.rotation??0,elevation_mm:b.elevation,
     blank_length_mm:b.length,blank_width_mm:b.width,blank_thickness_mm:b.thickness,blank_axis:b.axis,blank_edge_code:b.code,blank_edge_thickness_mm:b.edgeThickness,
@@ -49,7 +50,7 @@ export function blankItem(input={}){
 }
 export function updateBlank(source,patch){
   const fresh=blankItem({...source,...patch,item_id:source.item_id});
-  return {...source,...fresh};
+  return {...source,...fresh,...(patch.blank_binding===null?{blank_binding:null}:{})};
 }
 export function edgeMeters(blank){
   const b=normalizeBlank(blank);
@@ -74,5 +75,5 @@ export function cuttingSize(input){
 export function blankCopies(source,count,step,axis){
   if(!Number.isInteger(count)||count<1||count>30)throw Error('Количество копий: от 1 до 30.');
   if(!Number.isFinite(step)||!Number.isInteger(step*2)||step===0||!['x','z','elevation_mm'].includes(axis))throw Error('Укажите ненулевой шаг с точностью 0,5 мм и направление.');
-  return Array.from({length:count},(_,i)=>({...source,item_id:crypto.randomUUID(),[axis]:(source[axis]||0)+step*(i+1)}));
+  return Array.from({length:count},(_,i)=>({...structuredClone(source),...(axis!=='elevation_mm'?{blank_binding:null}:{}),item_id:crypto.randomUUID(),[axis]:(source[axis]||0)+step*(i+1)}));
 }

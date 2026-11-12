@@ -1,6 +1,7 @@
 import './blanks-native.mjs';
 import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,blankCopies,cuttingSize,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
+import {localPoint} from './blank-bindings.mjs';
 
 const get=id=>document.getElementById(id);
 const numberField=(form,key)=>Number(form.querySelector('[name="'+key+'"]').value);
@@ -54,6 +55,16 @@ function formHtml(kind){
         <label>Низ от пола, мм<input name="elevation" type="number" min="0" max="5000" step="1" value="0"></label>
       </div>
       <label>Поворот<select name="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>`:''}
+      ${!catalog?`<fieldset class="mf-blank-binding"><legend>Привязки и размеры</legend>
+        <label><input type="checkbox" name="bound"> Полка между двумя стойками</label>
+        <p>Длина считается между внутренними сторонами стоек с учётом зазоров. Высоту полки задайте в поле «Низ от пола».</p>
+        <label>Левая стойка<select name="leftSupport"></select></label>
+        <label>Правая стойка<select name="rightSupport"></select></label>
+        <div class="mf-blank-fields"><label>Зазор слева, мм<input name="gapLeft" type="number" min="0" max="100" step="1" value="0"></label>
+        <label>Зазор справа, мм<input name="gapRight" type="number" min="0" max="100" step="1" value="0"></label></div>
+        <label>Смещение от центра левой стойки по глубине, мм<input name="depthOffset" type="number" min="-1200" max="1200" step="0.5" value="0"></label>
+        <p data-binding-result aria-live="polite"></p>
+      </fieldset>`:''}
       <p class="mf-blank-cut" data-blank-cut></p><p class="mf-blank-result" aria-live="polite" data-blank-summary></p>
       <p class="mf-blank-source" data-blank-source></p>
       <p class="mf-blank-error" data-blank-error role="alert" hidden></p>
@@ -119,7 +130,8 @@ export class BlanksUI{
       });
       form.querySelector('[data-blank-copy]')?.addEventListener('click',()=>this.copy());
       form.addEventListener('input',()=>draw(form,this.app.adapter.room));
-      form.addEventListener('change',()=>{
+      form.addEventListener('change',e=>{
+        if(e.target.closest('.mf-blank-binding')&&e.target.name!=='bound'&&!form.querySelector('[name="bound"]').checked)return;
         if(form===this.inspector)this.commit();
         else draw(form,this.app.adapter.room);
       });
@@ -150,9 +162,11 @@ export class BlanksUI{
   commit(){
     const source=this.app.adapter.selected;if(source?.module_type!=='blank')return;
     if(!draw(this.inspector,this.app.adapter.room))return;
-    const updated=updateBlank(source,readForm(this.inspector));
+    const form=this.inspector,bound=form.querySelector('[name="bound"]').checked;
+    const binding=bound?{left_id:textField(form,'leftSupport'),right_id:textField(form,'rightSupport'),
+      gap_left_mm:numberField(form,'gapLeft'),gap_right_mm:numberField(form,'gapRight'),depth_offset_mm:numberField(form,'depthOffset')}:null;
+    const updated=updateBlank(source,{...readForm(form),blank_binding:binding});
     const ok=this.app.interaction.change('Параметры заготовки',()=>{
-      const error=this.app.adapter.validate(updated);if(error)throw new Error(error);
       this.app.adapter.replace(updated);
     });
     if(!ok)this.sync();
@@ -188,6 +202,18 @@ export class BlanksUI{
     if(!isBlank)return;
     const badge=get('studio-item-type');if(badge)badge.textContent='Заготовка';
     values(this.inspector,item);draw(this.inspector,this.app.adapter.room);
+    const form=this.inspector,b=item.blank_binding,field=form.querySelector('.mf-blank-binding');
+    field.hidden=item.blank_axis!=='horizontal';
+    const supports=this.app.adapter.items.filter(it=>it.module_type==='blank'&&it.blank_axis==='side'&&it.rotation===item.rotation);
+    for(const [name,id] of [['leftSupport',b?.left_id],['rightSupport',b?.right_id]]){
+      const select=form.querySelector('[name="'+name+'"]');select.replaceChildren(new Option('Выберите стойку',''));
+      for(const support of supports){const p=localPoint(support,item.rotation);select.add(new Option(support.name+' · '+support.blank_thickness_mm+' мм · позиция '+p.x+' мм',support.item_id));}
+      select.value=id||'';
+    }
+    form.querySelector('[name="bound"]').checked=Boolean(b);
+    for(const [name,value] of [['gapLeft',b?.gap_left_mm],['gapRight',b?.gap_right_mm],['depthOffset',b?.depth_offset_mm]])form.querySelector('[name="'+name+'"]').value=value??0;
+    for(const name of ['length','x','z','rotation','axis'])form.querySelector('[name="'+name+'"]').disabled=Boolean(b);
+    form.querySelector('[data-binding-result]').textContent=b?'Расчётная длина: '+item.blank_length_mm+' мм. При изменении стоек полка пересчитывается автоматически. Чтобы двигать её отдельно, снимите привязку.':'Выберите стойки и зазоры, затем включите привязку.';
   }
   dispose(){this.catalog.remove();this.inspector.remove();get('module-tabs')?.querySelector('[data-module-filter="blanks"]')?.remove();document.body.classList.remove('mf-blank-selected');}
 }

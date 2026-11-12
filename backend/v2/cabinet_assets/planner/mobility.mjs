@@ -1,4 +1,5 @@
 import {clone,rotateXZ,elevation,heights,kitchenGroup,kitchenSettings,golaCountertop,isTallModule,tallRearExtension,scopeMatches,PRODUCTION_MODELS,dimensionPatch,rightAnchoredWidth,productionParts,normalizeKitchen} from './furniture-core.mjs';
+import {resolveBlankBindings} from './blank-bindings.mjs';
 
 export function movementTargets(selected,items,scope='module'){
   if(!selected)return [];
@@ -33,8 +34,8 @@ export function widthChange(source,next,items,room,shiftNeighbours){
 export function validateChanges(adapter,changed){
   const ids=new Set(changed.map(it=>it.item_id));
   if(ids.size!==changed.length||changed.some(it=>!adapter.items.some(old=>old.item_id===it.item_id)))throw new Error('Состав проекта изменился. Повторите действие.');
-  const next=adapter.items.map(it=>changed.find(x=>x.item_id===it.item_id)||it);
-  for(const it of changed){const error=adapter.validate(it,next);if(error)throw new Error(it.name+': '+error);}
+  const next=resolveBlankBindings(adapter.items.map(it=>changed.find(x=>x.item_id===it.item_id)||it));
+  for(const it of next.filter(it=>ids.has(it.item_id)||it.blank_binding)){const error=adapter.validate(it,next);if(error)throw new Error(it.name+': '+error);}
   return next;
 }
 export function applyChanges(adapter,changed){

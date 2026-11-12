@@ -67,6 +67,7 @@ export class Interaction {
     if(!hit?.id){this.scene.hover(null);return;}
     const it=this.adapter.items.find(x=>x.item_id===hit.id);if(!it)return;
     this.consume(e);this.adapter.select(it.item_id);
+    if(it.blank_binding&&this.targets(it).length===1){this.adapter.status('Полка привязана к стойкам. Измените стойки или снимите привязку в разделе «Привязки и размеры».');return;}
     const plane=this.scene.makePlane(it,hit.point),start=this.scene.planePoint(e.clientX,e.clientY,plane);
     if(!start)return;
     const targets=this.targets(it).map(clone);
@@ -139,6 +140,7 @@ export class Interaction {
   });}
   modify(patch,label='Изменение модуля'){
     const source=this.adapter.selected;if(!source)return false;
+    if(source.blank_binding&&this.targets().length===1&&Object.keys(patch).some(k=>['x','z','width','rotation'].includes(k))){this.adapter.status('Сначала снимите привязку полки к стойкам.');return false;}
     return this.change(label,()=>{
       if(Object.keys(patch).every(k=>['x','z'].includes(k))&&this.targets().length>1){
         applyChanges(this.adapter,translateItems(this.targets(),(patch.x??source.x)-source.x,(patch.z??source.z)-source.z));return;
@@ -179,14 +181,14 @@ export class Interaction {
   duplicate(){
     const source=this.adapter.selected;if(!source)return;
     this.change('Копирование модуля',()=>{
-      const draft={...clone(source),item_id:crypto.randomUUID(),name:(source.name+' — копия').slice(0,160)};
+      const draft={...clone(source),...(source.blank_binding?{blank_binding:null}:{}),item_id:crypto.randomUUID(),name:(source.name+' — копия').slice(0,160)};
       const it=findSpace(draft,this.adapter.items,this.adapter.room,source,this.options());
       if(!it)throw new Error('Нет свободного места для копии.');
       this.adapter.insert(it);
     });
   }
   rotate(){const it=this.adapter.selected;if(it)this.modify({rotation:(it.rotation+90)%360},'Поворот модуля');}
-  nudge(dx,dz){const targets=this.targets();if(targets.length)this.change(targets.length>1?'Перемещение группы':'Точное перемещение',()=>applyChanges(this.adapter,translateItems(targets,dx,dz)));}
+  nudge(dx,dz){const targets=this.targets();if(targets.length===1&&targets[0].blank_binding){this.adapter.status('Сначала снимите привязку полки к стойкам.');return;}if(targets.length)this.change(targets.length>1?'Перемещение группы':'Точное перемещение',()=>applyChanges(this.adapter,translateItems(targets,dx,dz)));}
   key(e){
     if(e.key==='Escape'&&(this.gesture||this.catalogueDraft||this.equipment?.gesture||this.equipment?.catalogueDraft)){this.consume(e);this.cancel();return;}
     if(!this.editable()||document.querySelector('dialog[open]')||e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
