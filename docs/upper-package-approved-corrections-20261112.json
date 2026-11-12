@@ -1,0 +1,22 @@
+{
+  "status": "implemented_for_authorized_publication",
+  "approved_on": "2026-11-12",
+  "height_adjustment": {
+    "source_file": "ВМД1-600. Газ.Лифт.Без ручек.Паз.fr3d",
+    "source_sha256": "5d88b547b2578a08f3cfbd71989232f9ff63c4ceb7ad4ca833d2599fcc01a4f1",
+    "source_default_mm": { "width": 600, "height": 720, "depth": 320 },
+    "target_default_mm": { "width": 600, "height": 450, "depth": 320 },
+    "elastic_resize": true,
+    "native_resize_verified": false,
+    "note": "User approved 450 mm for the handleless gas-lift cabinet. Preserve source identity and native 720 mm source dimensions; use elastic resize to reach 450 mm, including panels, facade and hardware. Do not scale panel thickness or overwrite source_default with the target height."
+  },
+  "replacement_source": {
+    "file": "ВМД1-600. отк P. (Сушка).Inox(1).fr3d",
+    "sha256": "6cf19ba8cfcded84d2c29016b97732ddfb09bc6e8faf9f8d72cc7a8cb7f97fae",
+    "source_default_mm": { "width": 600, "height": 720, "depth": 320 },
+    "dryer": { "name": "AKS INOX 600", "article": "38402" },
+    "replaces_file": "ВМД1-600. отк P. (Сушка).Inox.fr3d",
+    "replaces_sha256": "297e66ac9c5897f29fbe71721d24de8567f33215f065cc5650386d4378f91dd9",
+    "note": "Corrected upload inspected: contains INOX 38402. Use as the replacement source for new selections, not an extra card. Preserve existing saved source identities."
+  }
+}

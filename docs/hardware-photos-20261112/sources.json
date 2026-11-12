@@ -1,0 +1,32 @@
+[
+  {
+    "article": "113272",
+    "name": "Сушка для посуды 600 MOUNT, белый холодный AKS (без коробки)",
+    "supplier": "AKS",
+    "page_url": "https://aks.by/123553-146385-p?OFFER_ID=146389",
+    "image_url": "https://aks.by/upload/Sh/imageCache/246/073/0730802764135413.webp",
+    "file": "backend/v2/cabinet_assets/planner/hardware-photos/113272.webp",
+    "pixels": [
+      800,
+      800
+    ],
+    "sha256": "dbfb0187938e77cf53ff7a71f004f1bb1368078c6693c3edb67f58ae7e4def7b",
+    "reused_existing_asset": true,
+    "visually_verified": true
+  },
+  {
+    "article": "38402",
+    "name": "Сушка для посуды 600 INOX нерж.сталь, инокс AKS",
+    "supplier": "AKS",
+    "page_url": "https://aksmebel.ru/product/sushka-dvukhurovnevaya-s-teleskopicheskim-krepleniem-11660-p/48320/",
+    "image_url": "https://aksmebel.ru/upload/Sh/imageCache/242/686/6864132739143647.webp",
+    "file": "backend/v2/cabinet_assets/planner/hardware-photos/38402.webp",
+    "pixels": [
+      500,
+      268
+    ],
+    "sha256": "47aa2b9a3bcf634406a9368ec3f9896fbf15d910188079d3ddf904f2cf1de539",
+    "reused_existing_asset": false,
+    "visually_verified": true
+  }
+]

@@ -9,7 +9,7 @@ const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/3d.js',imp
 const core=globalThis.MF_FURNITURE_CORE,D=C.DEFAULT_MATERIALS;
 const node=()=>({dataset:{},children:[],append(...xs){this.children.push(...xs)},replaceChildren(...xs){this.children=xs},setAttribute(){}});
 const globals={MF_FURNITURE_CORE:core,MF_GOLA:globalThis.MF_GOLA,MF_DRAWERS:globalThis.MF_DRAWERS,MF_UPPERS:globalThis.MF_UPPERS,MF_ACCESSORIES:globalThis.MF_ACCESSORIES};
-const ctx=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,structuredClone,document:{body:{dataset:{}},getElementById:node,createElement:node}});
+const ctx=vm.createContext({MF_MODERN_CABINETS:globalThis.MF_MODERN_CABINETS,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,structuredClone,document:{body:{dataset:{}},getElementById:node,createElement:node}});
 vm.runInContext(source.slice(0,source.indexOf('let user=null')),ctx);
 const catalogue=vm.runInContext('({bazisModules,templates:kitchenTemplates,moduleDefs})',ctx);
 const state={room:{width:6000,depth:4000,height:2700},items:[],plinths:[]};
@@ -46,7 +46,7 @@ test('Saved scenes and chosen materials do not acquire or reset defaults on norm
 
 test('Existing picker can replace all three defaults and retains the result through save/load',async()=>{
  state.items=[draft('bazis.3079d0656398')];
- const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,state,selected:()=>state.items[0],templateFor:it=>adapter.template(it),materials,label:m=>m.name,status:()=>{},updateAll:()=>{},syncControls:()=>{},$:id=>id==='material-scope'?{value:'module'}:node(),document:{createElement:node},api:async()=>({items:[materials.get('custom')]})});
+ const c=vm.createContext({MF_MODERN_CABINETS:globalThis.MF_MODERN_CABINETS,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,state,selected:()=>state.items[0],templateFor:it=>adapter.template(it),materials,label:m=>m.name,status:()=>{},updateAll:()=>{},syncControls:()=>{},$:id=>id==='material-scope'?{value:'module'}:node(),document:{createElement:node},api:async()=>({items:[materials.get('custom')]})});
  vm.runInContext(source.slice(source.indexOf('function materialVisualLabel('),source.indexOf('function setMode(')),c);
  for(const [kind,key]of [['body','body_variant_id'],['front','front_variant_id'],['plinth','plinthMaterialId']]){
   const input={value:'custom',dataset:{}},results=node();await c.searchMaterial(input,results,kind);results.children[0].onclick();assert.equal(state.items[0][key],'custom');
@@ -57,7 +57,7 @@ test('Existing picker can replace all three defaults and retains the result thro
 
 test('Real BAZIS exporter includes the defaults as actual articles for the cabinet and automatic plinth',async()=>{
  let blob;state.items=[draft('bazis.3079d0656398')];state.plinths=[{id:'auto',automatic:true,members:[],shape:'straight',excluded_members:[]}];
- const c=vm.createContext({MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,state,templateFor:it=>adapter.template(it),materials,Blob,Date,JSON,Math,FACADE_GAP_MM:1.5,$:()=>({value:'Defaults QA'}),status:()=>{},setTimeout:()=>{},alert:m=>assert.fail(m),confirm:()=>true,URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL(){}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
+ const c=vm.createContext({MF_MODERN_CABINETS:globalThis.MF_MODERN_CABINETS,MF_WALL_SPECIAL:globalThis.MF_WALL_SPECIAL,...globals,state,templateFor:it=>adapter.template(it),materials,Blob,Date,JSON,Math,FACADE_GAP_MM:1.5,$:()=>({value:'Defaults QA'}),status:()=>{},setTimeout:()=>{},alert:m=>assert.fail(m),confirm:()=>true,URL:{createObjectURL:b=>{blob=b;return 'blob:test'},revokeObjectURL(){}},document:{createElement:()=>({style:{},click(){},remove(){}}),body:{append(){}}}});
  vm.runInContext(source.slice(source.indexOf('const UPPER_SOURCE_REFRESH='),source.indexOf('function normalizeItem(')),c);
  vm.runInContext(source.slice(source.indexOf('function exportSafeName('),source.indexOf('async function toOrder(')),c);c.exportBazisProject();
  const payload=JSON.parse(await blob.text());assert.equal(payload.items[0].material_assignments.body.article,'605 PO');assert.equal(payload.items[0].material_assignments.front.article,'890 PO');

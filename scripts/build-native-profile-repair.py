@@ -33,6 +33,18 @@ for source in json.loads((ROOT / 'tests/webgl/fixtures/upper-mount-anchors.json'
     anchors[source['sha256']] = dict(left=round(min(ends)-minimum, 4),
         right=round(minimum+source['frame']['size'][0]-max(ends), 4))
 assert set(anchors) == {v['source_sha256'] for v in json.loads((ASSETS / 'wall-special-variants.json').read_text())}
+# New overlay sources retain their measured short mounting rails; grooved 806 sources have none.
+modern = json.loads((ASSETS / 'modern-cabinet-variants.json').read_text())
+for source in modern:
+    if not source['rails']: continue
+    ends=[]
+    for rail in source['rails']:
+        m,length=rail['matrix'],rail['length']
+        assert abs(abs(length)-50)<.001
+        ends.extend([m[0][3],m[0][3]+m[0][2]*length])
+    assert len(source['rails'])==2
+    anchors[source['source_sha256']]={'left':round(min(ends),4),'right':round(source['native_frame']['size'][0]-max(ends),4)}
+code += 'const MODERN_FRAME_PROFILES = ' + json.dumps({v['source_sha256']:{'rearInsetMm':v['rear_inset_mm']} for v in modern},separators=(',',':')) + ';\n'
 code += 'const NATIVE_MOUNT_ANCHORS = ' + json.dumps(anchors, sort_keys=True, separators=(',', ':')) + ';\n'
 code += (ROOT / 'tools/bazis_import/profile-repair.js').read_text()
 path = ASSETS / 'bazis-drawers-import.js'
