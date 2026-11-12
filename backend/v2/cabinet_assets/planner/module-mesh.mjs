@@ -349,21 +349,22 @@ export class MeshFactory{
         const hingeX=part.pivot.x,pivot=new THREE.Group();
         pivot.userData={itemId:it.item_id,role:'door-pivot',visualOnly:true,hingeSide:spec.side};
         pivot.position.set(hingeX*S,part.pivot.y*S,part.pivot.z*S);
-        if(it.doors_open)pivot.rotation.y=(spec.side==='left'?-1:1)*spec.open_angle*Math.PI/180;
+        if(it.doors_open&&spec.side==='up')pivot.rotation.x=-spec.open_angle*Math.PI/180;
+        else if(it.doors_open)pivot.rotation.y=(spec.side==='left'?-1:1)*spec.open_angle*Math.PI/180;
         group.add(pivot);parent=pivot;px=part.position.x-hingeX;pz=0;handleZ=part.thickness/2;
       }
-      const panel=this.box(parent,'front',f.w,f.h,part?.thickness??18,px,f.cy,pz,part?.material.variant_id??front,ghost);panel.userData.facade={...f};
+      const panel=this.box(parent,'front',f.w,f.h,part?.thickness??18,px,f.cy-(hasPivot?part.pivot.y:0),pz,part?.material.variant_id??front,ghost);panel.userData.facade={...f};
       if(part){panel.userData.part=part;if(spec)panel.userData.hingeSide=spec.side;}
       if(it.handles==='handles'&&f.w>140&&f.h>100){
         const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
         const side=spec?(spec.side==='right'?-1:1):rowDoors.length>1?(f.cx<0?1:-1):/отк P/.test(it.bazis_file||'')?-1:1;
-        const x=drawer?f.cx:f.cx+side*(f.w/2-50),localX=spec?x-(f.cx+(spec.side==='right'?f.w/2:-f.w/2)):x;
+        const x=spec?.side==='up'?f.cx:drawer?f.cx:f.cx+side*(f.w/2-50),localX=hasPivot?x-part.pivot.x:x;
         const bottomHandle=!drawer&&(production?.tier==='wall'||it.module_type==='wall_cabinet'||
           (production?.tall&&f.cy-f.h/2>=production.tall.row_height));
         const y=drawer?f.cy+f.h/2-36:bottomHandle?f.cy-f.h/2+50:f.cy+f.h/2-50;
         // Tall upper and lower handles meet at the section joint; wall handles use the bottom edge.
         // The pilot swing doors keep the handle on the rotating facade.
-        this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y,handleZ,drawer,ghost);
+        this.handle(parent,drawer?Math.min(160,f.w*.34):80,localX,y-(hasPivot?part.pivot.y:0),handleZ,drawer,ghost);
       }
     }
     if(production?.tall?.execution==='gola'||production?.cargo||production?.gola||production?.dishwasher)for(const profile of production.tall?.execution==='gola'?globalThis.MF_FURNITURE_CORE.tallGolaProfiles(it):production.cargo?globalThis.MF_CARGO.profiles(it):production.dishwasher?globalThis.MF_ACCESSORIES.profiles(it):globalThis.MF_GOLA.profiles(it)){

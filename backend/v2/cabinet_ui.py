@@ -37,6 +37,8 @@ def router():
         'showroom.css','finish-catalogue.mjs','execution-artwork.mjs','execution-image-index.mjs','hardware-photos.mjs','execution-ui.mjs','execution-options.mjs','execution-previews.mjs','execution-cards.css','choice-card-ui.js','catalogue-artwork.js','surface-cards.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
+        'module-card-images/modern-upper1.webp','module-card-images/modern-upper2.webp','module-card-images/modern-gaslift.webp','module-card-images/modern-fridge.webp',
+        'modern-cabinet-variants.js','modern-cabinet-variants.json','modern-cabinets.js','modern-cabinet-sources.zip',
         'upper-variants.js','upper-variants.json','upper-model.js','upper-ui.js','upper.css',
         'gola-variants.js','gola-variants.json','gola-model.js','gola-ui.js','gola.css','drawer-variants.js','drawer-variants.json','drawer-model.js','drawer-ui.js','drawer.css','bazis-drawers-import.js',
         'dimensions.mjs','dimension-geometry.mjs','room-dimensions.mjs','dimensions.css','module-view.mjs',
@@ -51,7 +53,7 @@ def router():
     }
     planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave','sink','faucet','hood','gas_cooker','radiator','gas_boiler','water_heater','window') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp'))
     planner_files.update('hardware-photos/'+name for name in (
-        '114064.webp',
+        '38402.webp', '114064.webp',
         '115622.webp',
         '114066.webp',
         '36028.webp',
@@ -190,7 +192,7 @@ def router():
                 return Response(image,media_type=mime,headers={'Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'})
         file=root/'planner'/asset
         if not file.is_file():return Response(status_code=404)
-        mime='application/octet-stream' if asset.endswith(('.fr3d','.bin')) else 'image/svg+xml' if asset.endswith('.svg') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
+        mime='application/zip' if asset.endswith('.zip') else 'application/octet-stream' if asset.endswith(('.fr3d','.bin')) else 'image/svg+xml' if asset.endswith('.svg') else 'image/webp' if asset.endswith('.webp') else 'image/jpeg' if asset.endswith('.jpg') else 'image/png' if asset.endswith('.png') else 'text/css' if asset.endswith('.css') else 'application/json' if asset.endswith('.json') else 'text/plain' if asset.endswith('.txt') else 'application/javascript'
         return Response(file.read_bytes(),media_type=mime,headers={'Content-Security-Policy':CSP,'X-Content-Type-Options':'nosniff'})
     @api.get('/3d-view')
     @api.get('/3d-view.html')

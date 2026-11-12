@@ -22,6 +22,7 @@ from .three_d_tall import tall_variant,tall_shelf_count,tall_hardware,tall_drawe
 from .three_d_accessories import dishwasher, dishwasher_hardware, dishwasher_contents, plinth_summary
 from .three_d_gola import gola_variant, gola_contents, gola_hardware, gola_note
 from .three_d_drawers import drawer_variant, drawer_contents, drawer_hardware as metal_drawer_hardware
+from .three_d_modern import modern_variant, modern_hardware, modern_contents
 from .three_d_upper import upper_variant, upper_contents, upper_hardware, upper_adjustment_note
 from .three_d_vitrine import vitrine_variant,vitrine_hardware,vitrine_contents
 
@@ -95,6 +96,7 @@ def drawer_hardware(count,depth):
 
 def hardware_for(it):
     it=refresh_dryer_source(it)
+    if modern_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in modern_hardware(it)],modern_contents(it)
     if wall_special_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in wall_special_hardware(it)],wall_special_contents(it)
     if open_tall_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in open_tall_hardware(it)],' '.join(filter(None,[open_tall_adjustment(it),open_tall_metrics(it)['lighting_note']])) or None
     if cargo_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in cargo_hardware(it)],cargo_adjustment(it)
@@ -162,6 +164,7 @@ def module_contents(it):
     v=gola_variant(it) or dryer_variant(it) or cargo_variant(it);dish=dishwasher(it)
     gola_front=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
     alignment=' От лицевой поверхности закрытого фасада до переднего края столешницы 0,5 мм.' if gola_front else ''
+    if modern_variant(it):return modern_contents(it)+alignment
     if wall_special_variant(it):return wall_special_contents(it)+alignment
     if open_tall_variant(it):return open_tall_contents(it)+alignment
     if cargo_variant(it):return cargo_contents(it)+alignment
@@ -226,6 +229,10 @@ def module_materials(it,body,front,materials=None):
         profiles=dishwasher(it)['profiles']
         profile=profiles[0].get('documentation_profile',profiles[0]) if profiles else None
         return [('Фасад 18 мм',front if front and front!='Не выбран' else 'Evagloss P004')]+([('Профиль',profile['material_name'])] if profile else [])
+    if modern_variant(it):
+        v=modern_variant(it);rows=[('Корпус 18 мм',body or 'Не выбран'),('Фасады 18 мм',front or 'Не выбран')]
+        if v['back']!='none':rows.append(('Задняя стенка 3 мм',(materials or {}).get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый')))
+        return rows
     if wall_special_variant(it) and wall_special_variant(it)['family']!='corner':return [('Корпус 18 мм',body or 'Не выбран'),('Задняя стенка 3 мм',(materials or {}).get(str(it.get('back_variant_id')),'ЛХДФ 3ММ Белый')),('Фасады и полки','Стекло 4 мм'),('Рамки фасадов','Z1')]
     if open_tall_variant(it):return [('Корпус и полки 18 мм',body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'),('Задняя стенка ЛДСП 18 мм',(materials or {}).get(str(it.get('back_variant_id')),body if body and body!='Не выбран' else 'ЛДСП- БЕЛЫЙ'))]
     cargo=cargo_variant(it)

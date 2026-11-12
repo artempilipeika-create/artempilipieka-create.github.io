@@ -33,7 +33,7 @@ export class StateAdapter{
     if(opt.bazis)Object.assign(it,{bazis_id:t.id,bazis_file:t.source_file,bazis_sha256:t.source_sha256,bazis_resize:Boolean(t.resize)});
     if(opt.bazis&&t.production){
       const p=t.production;
-      if(p.wall_special&&p.wall_special.execution!=='handles'||p.tall?.execution==='gola'||p.cargo?.execution==='gola'||p.gola?.execution==='gola'||p.dishwasher?.variant==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
+      if(p.modern&&p.modern.execution!=='handles'||p.wall_special&&p.wall_special.execution!=='handles'||p.tall?.execution==='gola'||p.cargo?.execution==='gola'||p.gola?.execution==='gola'||p.dishwasher?.variant==='gola'||p.upper&&p.upper.execution!=='handles'||p.vitrine||p.open_tall||p.metal_drawers?.opening==='push')it.handles='handleless';
       Object.assign(it,{height:p.body_height+p.base_height,depth:p.scene_depth??it.depth,
         body_height:p.body_height,base_height:p.base_height,worktop_thickness:p.worktop_thickness,doors_open:false});
       it.shelves=clone(productionShelves(it,p));
