@@ -131,8 +131,9 @@ export class AssistantUI{
    if(this.disposed||epoch!==this.epoch)return;if(response.remaining!=null)this.remainingCount=response.remaining;
    if(response.state!=='ready')throw Error(response.message||'Проверка пока не завершена.');
    if(assistantStamp(this.app.adapter)!==stamp)throw Error('Проект изменился. Проверьте анкету заново.');
-   this.output.textContent=response.plan.message;if(response.plan.action==='clarify')return;
+   if(response.plan.action==='clarify'){this.output.textContent=response.plan.message;return;}
    if(response.plan.action!==action||Object.keys(spec).some(k=>JSON.stringify(spec[k])!==JSON.stringify(response.plan.spec?.[k])))throw Error('Ответ не соответствует анкете. Проект не изменён.');
+   this.output.textContent='Параметры совместимы. Проверьте состав шкафа и добавьте его в проект.';
    this.pending=pending;this.summary.replaceChildren(...pending.summary.map(s=>el('li',s)),el('li','Корпус: '+this.materials.body.name));this.summary.hidden=false;
   }catch(e){if(!this.disposed&&epoch===this.epoch)this.output.textContent=e.message;}
   finally{if(!this.disposed&&epoch===this.epoch){this.busy=false;this.controls();}}
