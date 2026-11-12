@@ -8,6 +8,7 @@ from backend.v2 import assistant_api as assistant
 from backend.v2.assistant_model import AssistantPlan
 from backend.v2.three_d_api import Scene
 from backend.v2.db import transaction
+from backend.v2.security import grant
 from tests.stage03.test_api import settings, api, admin_user
 
 SPEC = dict(recipe='shelves', width=800, height=2200, depth=577, thickness=18,
@@ -115,3 +116,17 @@ def test_api_private_and_project_save_reopen(api,admin_user,settings,monkeypatch
     assert api.get('/api/v2/3d-assistant/status').status_code==403
     assert api.post('/api/v2/3d-assistant/plan',json=request().model_dump(mode='json')).status_code==403
     assert len(calls)==1
+    # A real client must receive an own-scope grant; staff's all-scope grant
+    # cannot accidentally make a client eligible.
+    with transaction(settings) as conn:
+        conn.execute("UPDATE mf_user_roles SET role='client' WHERE user_id=%s",(admin_user['user_id'],))
+        grant(conn,user_id=admin_user['user_id'],permission='orders.draft.write',scope='own',actor=admin_user['user_id'])
+    assert api.get('/api/v2/3d-assistant/status').json()['available'] is True
+    assert api.post('/api/v2/3d-assistant/plan',json=request().model_dump(mode='json')).status_code==200
+    assert len(calls)==2
+    with transaction(settings) as conn:
+        conn.execute("UPDATE mf_users SET account_status='blocked' WHERE user_id=%s",(admin_user['user_id'],))
+    assert api.post('/api/v2/3d-assistant/plan',json=request().model_dump(mode='json')).status_code==403
+    assert len(calls)==2
+    api.cookies.clear()
+    assert api.get('/api/v2/3d-assistant/status').status_code==401

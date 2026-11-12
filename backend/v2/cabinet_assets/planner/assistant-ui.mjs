@@ -3,11 +3,11 @@ const el=(tag,text)=>{const x=document.createElement(tag);if(text)x.textContent=
 export class AssistantUI{
  constructor(app){this.app=app;this.disposed=false;this.start().catch(()=>{});}
  async start(){
-  if(!this.app.bridge.assistantAdmin?.())return;
-  // This private endpoint independently checks the admin role; no capability
-  // is inferred from client-side CSS or from the broader production-tool role.
+  if(!this.app.bridge.assistantAccess?.())return;
+  // The server independently checks the same project-editing permission.
   const status=await this.app.bridge.request('/3d-assistant/status');
-  if(this.disposed||!status.available)return;
+  if(this.disposed)return;
+  this.available=status.available;
   const style=el('link');style.rel='stylesheet';style.href='/account/planner/assistant.css';document.head.append(style);this.style=style;
   this.button=el('button','Собрать с ИИ');this.button.type='button';this.button.id='planner-assistant';this.button.className='secondary';
   document.getElementById('planner-tools').append(this.button);
@@ -15,7 +15,7 @@ export class AssistantUI{
   const head=el('div');head.className='assistant-head';const title=el('h2','Помощник конструктора');title.id='assistant-title';
   const close=el('button','Закрыть');close.type='button';head.append(title,close);
   const intro=el('p','Опишите корпус: ширину, высоту, глубину и полки. Чтобы изменить корпус помощника, выберите любую его деталь.');
-  const hint=el('p','Пробная версия · только для администратора. Сейчас доступны корпуса без фасадов и фурнитуры; фото подключим следующим этапом.');hint.className='assistant-hint';
+  const hint=el('p','Пробная версия. Сейчас доступны корпуса без фасадов и фурнитуры. Работа по фотографии пока недоступна.');hint.className='assistant-hint';
   this.context=el('p');this.context.className='assistant-context';
   const label=el('label','Что собрать или изменить?');this.input=el('textarea');this.input.id='assistant-prompt';this.input.rows=4;this.input.maxLength=2000;
   this.input.placeholder='Шкаф шириной 800, высотой 2200, глубиной 577 мм, 5 полок';label.append(this.input);
@@ -26,17 +26,17 @@ export class AssistantUI{
   this.apply=el('button','Применить к проекту');this.apply.type='button';this.apply.className='assistant-primary';this.apply.hidden=true;
   const undo=el('button','Отменить последнее действие');undo.type='button';
   this.dialog.append(head,intro,hint,this.context,label,this.send,this.remaining,this.output,this.preview,this.apply,undo);document.body.append(this.dialog);
-  this.button.onclick=()=>{this.pending=null;this.apply.hidden=true;this.preview.hidden=true;this.output.textContent='';
+  this.button.onclick=()=>{if(this.app.workspace?.isClient())this.app.workspace.client();this.pending=null;this.apply.hidden=true;this.preview.hidden=true;this.output.textContent=this.available?'':'Помощник ещё подключается. Попробуйте позже.';
    try{const c=selectedCarcass(this.app.adapter);this.context.textContent=c?'Выбран корпус: '+c.metadata.spec.width+' × '+c.metadata.spec.height+' × '+c.metadata.spec.depth+' мм':'Новый корпус · размеры помещения учитываются при размещении.';}catch(e){this.context.textContent=e.message;}
    this.dialog.showModal();this.input.focus();};
   close.onclick=()=>this.dialog.close();this.send.onclick=()=>this.ask();
   this.apply.onclick=()=>this.commit();undo.onclick=()=>{this.app.interaction.cancel();this.app.history.undo();this.invalidate();this.output.textContent='Последнее действие отменено.';};
   this.unsubscribe=this.app.bridge.subscribe(reason=>{if(reason==='before-project'||reason==='project'){this.epoch=(this.epoch||0)+1;this.invalidate();this.dialog.close();}});
  }
- count(n){this.remaining.textContent='Пробных обращений осталось: '+n+'. Каждая отправка использует API-кредиты.';}
+ count(n){this.remainingCount=n;this.remaining.textContent='Пробных обращений на сайте осталось: '+n+'.';this.send.disabled=!this.available||n<=0;}
  invalidate(){this.pending=null;this.apply.hidden=true;this.preview.hidden=true;}
  async ask(){
-  if(this.busy)return;
+  if(this.busy||!this.available||this.remainingCount<=0)return;
   if(!this.app.interaction.editable()){this.output.textContent='Сначала задайте размеры помещения и включите редактирование проекта.';return;}
   const message=this.input.value.trim();if(!message){this.input.focus();return;}
   this.invalidate();this.busy=true;this.send.disabled=true;this.output.textContent='Подготавливаю предложение…';
@@ -55,7 +55,7 @@ export class AssistantUI{
    this.pending=prepareAssistantPlan(this.app.adapter,result.plan,{defaultMaterial:globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id||null});
    this.preview.replaceChildren(...this.pending.summary.map(s=>el('li',s)));this.preview.hidden=false;this.apply.hidden=false;
   }catch(e){if(!this.disposed&&(this.epoch||0)===epoch)this.output.textContent=e.message;}
-  finally{this.busy=false;if(!this.disposed)this.send.disabled=false;}
+  finally{this.busy=false;if(!this.disposed)this.send.disabled=!this.available||this.remainingCount<=0;}
  }
  commit(){
   if(!this.pending)return;

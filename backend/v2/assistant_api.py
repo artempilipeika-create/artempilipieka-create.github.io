@@ -1,4 +1,4 @@
-"""Admin-only, single-call pilot. No project writes, orders, code execution or retries."""
+"""Authenticated constructor pilot. No project writes, orders, code execution or retries."""
 import fcntl
 import hashlib
 import json
@@ -54,8 +54,6 @@ def authorize(settings, request):
         user = identity(conn, request)
         require(conn, user, 'orders.draft.write')
         verified(user)
-        if user['roles'] != {'admin'}:
-            error(403, 'ASSISTANT_ADMIN_ONLY')
         return str(user['user_id'])
 
 
