@@ -4,7 +4,10 @@ import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
 const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null});
-const geometry=i=>JSON.stringify(['item_id','x','z','rotation','elevation_mm','width','height','depth','blank_axis','blank_length_mm','blank_width_mm','blank_thickness_mm','blank_binding'].map(k=>i[k]??null));
+// PostgreSQL JSONB may reorder object keys without changing their values.
+const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
+const signature=v=>JSON.stringify(ordered(v));
+const geometry=i=>signature(['item_id','x','z','rotation','elevation_mm','width','height','depth','blank_axis','blank_length_mm','blank_width_mm','blank_thickness_mm','blank_binding'].map(k=>i[k]??null));
 export const assistantStamp=adapter=>JSON.stringify([adapter.projectId,adapter.room,adapter.items]);
 
 export function selectedCarcass(adapter){
@@ -14,7 +17,7 @@ export function selectedCarcass(adapter){
  const expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id}),metadata.position);
  if(items.length!==expected.length||expected.some(i=>geometry(items.find(p=>p.item_id===i.item_id)||{})!==geometry(i)))
   throw Error('Геометрия этого корпуса изменена вручную. Продолжите редактировать детали в параметрах или создайте новый корпус.');
- if(items.some(i=>JSON.stringify(i.assistant_carcass)!==JSON.stringify(metadata)))throw Error('Параметры деталей корпуса различаются. Продолжите ручное редактирование.');
+ if(items.some(i=>signature(i.assistant_carcass)!==signature(metadata)))throw Error('Параметры деталей корпуса различаются. Продолжите ручное редактирование.');
  return {metadata,items};
 }
 

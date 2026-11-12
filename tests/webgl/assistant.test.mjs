@@ -50,3 +50,13 @@ test('questionnaire builds independent section fill, exact materials and reversi
  assert.throws(()=>wardrobeSpec({...s,sectionShelves:[1]}));assert.throws(()=>wardrobeSpec({...s,sectionShelves:[1,2,11]}));
  assert.match(questionnaireMaterialError({variant_id:'x',thickness:16},18),/18 мм/);
 });
+
+test('database JSON key order does not make a saved wardrobe look manually altered',()=>{
+ const {a}=setup();applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec}));
+ const reorder=v=>Array.isArray(v)?v.map(reorder):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,reorder(v[k])])):v;
+ a.restore(reorder(a.snapshot()));assert.equal(selectedCarcass(a).items.length,9);
+ const updated=prepareAssistantPlan(a,{action:'update',spec:{...spec,shelves:5}});
+ applyAssistantPlan(a,updated);assert.equal(a.items.length,10);
+ a.items.find(i=>i.blank_binding).blank_binding.gap_left_mm=1;
+ assert.throws(()=>selectedCarcass(a),/изменена вручную/);
+});
