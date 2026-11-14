@@ -56,13 +56,24 @@ def shelf_valid(value, thickness):
     return size in ('4','6','8') and int(size) in GLASS_SUPPORTS.get(article, ())
 
 ShelfValue = Annotated[str, Field(max_length=15)]
+class CarcassJoints(StrictModel):
+    top: Literal['none','confirmat','cam_dowel']
+    bottom: Literal['none','confirmat','cam_dowel']
+
+
 class CarcassDesign(CarcassSpec):
+    joints: CarcassJoints | None = Field(default=None,exclude_if=lambda v:v is None)
     shelfChoices: list[Annotated[list[ShelfValue], Field(max_length=10)]] | None = Field(default=None,max_length=3,exclude_if=lambda v:v is None)
 
     sectionShelves: list[Annotated[int, Field(ge=0, le=10, strict=True)]] | None = Field(default=None, min_length=1, max_length=3)
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.joints:
+            if self.thickness != 18 or self.recipe not in ('shelves','divided'):
+                raise ValueError('Для крепежа нужны вкладные детали 18 мм.')
+            if 'cam_dowel' in (self.joints.top,self.joints.bottom) and self.depth < 276:
+                raise ValueError('Глубина для эксцентриков со шкантами от 276 мм.')
         if self.shelfChoices is not None:
             if not self.sectionShelves or [len(row) for row in self.shelfChoices] != self.sectionShelves:
                 raise ValueError('Проверьте выбор полок по секциям.')

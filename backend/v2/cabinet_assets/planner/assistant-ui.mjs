@@ -1,5 +1,6 @@
 import {selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
+import {jointOptions,jointQuantity} from './carcass-joints.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
@@ -68,12 +69,12 @@ export class AssistantUI{
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;if(index>this.step){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===2 && this.fields.joints)){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
  render(){
   this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
    this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
-   this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
+   this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
    this.select(this.form,'Задняя стенка',[['yes','Накладная ХДФ 3 мм'],['no','Без задней стенки']],this.fields.back?'yes':'no',v=>{this.fields.back=v==='yes';this.changed();});
    this.form.append(el('p','Высота без ножек и цоколя. Задняя стенка добавляет 3 мм к глубине.'));
   }else if(this.step===1){
@@ -82,6 +83,7 @@ export class AssistantUI{
     const pict=el('span');pict.className='assistant-section-icon';for(let i=0;i<n;i++)pict.append(el('i'));b.append(pict,el('strong',n===1?'Одна секция':n===2?'Две секции':'Три секции'));b.setAttribute('aria-pressed',String(this.fields.sections===n));choices.append(b);}
    this.form.append(choices,el('p','Секции равной ширины, с общими перегородками.'));try{this.form.append(el('p','Внутренняя ширина: '+sectionWidths(this.spec()).join(' / ')+' мм.'));}catch{}
   }else if(this.step===2){
+   this.jointQuestionnaire();
    this.fields.sectionShelves.forEach((count,i)=>{const group=el('fieldset');group.append(el('legend','Секция '+(i+1)));
     this.select(group,'Наполнение секции '+(i+1),[['shelves','Полки'],['empty','Пустая ниша'],['drawers','Ящики — комплект для шкафа ещё не подключён',true],['rod','Штанга — заготовка ещё не подключена',true]],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});
     if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count)shelfQuestionnaire(this,group,i);this.form.append(group);
@@ -93,6 +95,29 @@ export class AssistantUI{
    this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.back)this.materialPicker('back','Задняя стенка',3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
+ }
+ jointQuestionnaire(){
+  const box=el('fieldset');box.append(el('legend','Крепёж корпуса'));this.form.append(box);
+  if(this.fields.thickness!==18){box.append(el('p','Эти схемы доступны для плиты 18 мм.'));return;}
+  const current=this.fields.joints??{top:'none',bottom:'none'};
+  for(const [key,label] of [['top','Крыша'],['bottom','Дно']]){
+   const value=current[key];
+   this.select(box,label+' · крепёж',Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth<276]),value,v=>{
+    this.fields.joints={...current,[key]:v};this.changed();this.render();
+   });
+   if(value==='none')continue;
+   const ns='http://www.w3.org/2000/svg',diagram=document.createElementNS(ns,'svg');
+   diagram.setAttribute('class','joint-layout');diagram.setAttribute('viewBox','0 0 500 28');diagram.setAttribute('aria-hidden','true');
+   const cam=value==='cam_dowel',inset=cam?100:70,depth=this.fields.depth;
+   const positions=cam?[inset,inset+32,depth-inset-32,depth-inset]:[inset,depth-inset];
+   for(const [i,z] of positions.entries()){
+    const isDowel=cam&&(i===1||i===2);
+    const x=500*z/depth,dot=document.createElementNS(ns,'circle');
+    dot.setAttribute('cx',x);dot.setAttribute('cy','14');dot.setAttribute('r',isDowel?'3.5':'5.5');
+    dot.setAttribute('fill',isDowel?'#a57440':'#315e4d');diagram.append(dot);
+   }
+   box.append(diagram,el('small',jointQuantity(value)),el('small','Оси от переднего края, мм: '+positions.join(' · ')));
+  }
  }
  materialPicker(role,title,thickness){
   const card=el('fieldset');card.append(el('legend',title));const m=this.materials[role];card.append(el('p',m?m.name+' · '+m.thickness+' мм':'Материал не выбран'));

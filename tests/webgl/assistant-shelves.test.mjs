@@ -21,3 +21,27 @@ test('mixed questionnaire preserves shelf tops and exact native articles after a
  }
  assert.throws(()=>wardrobeSpec({...base,shelfChoices:[['4/80936']]}),/держатель/);
 });
+
+import {nativeCarcassJoints} from '../../backend/v2/cabinet_assets/planner/carcass-joints.mjs';
+import {localPoint} from '../../backend/v2/cabinet_assets/planner/blank-bindings.mjs';
+test('cabinet joints follow both inset panels independently of shelves and project rotation',()=>{
+ const spec=wardrobeSpec({...base,joints:{top:'cam_dowel',bottom:'confirmat'}});
+ const built=buildCarcass(spec,{idPrefix:'q'});
+ for(const rotation of [0,90,180,270]){
+   const shift={x:220,z:310,rotation,elevation_mm:90};
+   const panels=placeCarcass(built,shift).map(i=>({...i,assistant_carcass:{group_id:'q',spec}}));
+   const hardware=nativeCarcassJoints(panels);
+   assert.equal(hardware.length,12);
+   for(const h of hardware){
+     const panel=panels.find(i=>i.item_id===h.joined_panel_id);
+     const local=localPoint({x:h.position.x-panel.x,z:h.position.z-panel.z},rotation);
+     assert.equal(Math.abs(local.x),panel.width/2);
+     assert.equal(panel.depth/2-Math.abs(local.z),{cam:100,dowel:132,confirmat:70}[h.joint_part]);
+     assert.equal(h.position.y,panel.elevation_mm+9);
+     assert.equal(h.rotation,(rotation+(h.host_blank_id==='q:right'?180:0))%360);
+   }
+ }
+ assert.deepEqual(nativeCarcassJoints(built.items),[]);
+ assert.throws(()=>wardrobeSpec({...base,depth:250,joints:spec.joints}),/276/);
+ assert.throws(()=>wardrobeSpec({...base,thickness:16,joints:spec.joints}),/18/);
+});
