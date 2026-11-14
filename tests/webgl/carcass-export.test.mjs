@@ -76,7 +76,8 @@ test('shared divider seats, drilling separation, legacy shelves and disabled fix
   const shelf=items.find(i=>i.item_id==='probe:shelf-0-0');
   shelf.blank_binding.mounting='none';assert.equal(globalThis.MF_BLANKS_NATIVE.supportItems(items).length,4);
   delete shelf.blank_binding.mounting;
-  items.find(i=>i.item_id==='probe:left').width=10;
-  assert.throws(()=>globalThis.MF_BLANKS_NATIVE.supportItems(items),/стойк/);
+  const host=items.find(i=>i.item_id==='probe:left');host.width=10;
+  const inward={0:[4,0],90:[0,4],180:[-4,0],270:[0,-4]}[rotation];host.x+=inward[0];host.z+=inward[1];
+  assert.throws(()=>globalThis.MF_BLANKS_NATIVE.supportItems(items),/12 мм/);
  }
 });
