@@ -1,4 +1,5 @@
 /** Universal rectangular board. Dimensions in mm, never inferred from a cabinet. */
+import {hookError} from './blank-hook.mjs';
 export const SOURCE_EDGE_CODES=Object.freeze(['0000','1000','1010','1110','1011','1111']);
 export const AXES=Object.freeze(['horizontal','side','back']);
 export const EDGES=Object.freeze([
@@ -32,6 +33,8 @@ export function validateBlank(input,room){
   if(!Number.isInteger(b.elevation)||b.elevation<0||b.elevation>5000)return 'Высота низа детали должна быть целым числом в мм.';
   if(!Number.isFinite(b.edgeThickness)||b.edgeThickness<0.4||b.edgeThickness>3)return 'Толщина ПВХ: от 0,4 до 3 мм.';
   const d=geometryFromBlank(b.length,b.width,b.thickness,b.axis);
+  const hardwareError=hookError({...input,...d,blank_axis:b.axis});
+  if(hardwareError)return hardwareError;
   if(room&&b.elevation+d.height>room.height)return 'Верх детали выходит за высоту помещения.';
   return '';
 }
@@ -40,6 +43,7 @@ export function blankItem(input={}){
   return {
     ...dims,
     module_type:'blank',template_id:null,bazis_id:null,
+    ...(input.blank_hook?{blank_hook:{...input.blank_hook}}:{}),
     ...(input.blank_binding?{blank_binding:structuredClone(input.blank_binding)}:{}),
     item_id:input.item_id||crypto.randomUUID(),name:(input.name||'Заготовка ЛДСП').slice(0,160),
     x:input.x??0,z:input.z??0,rotation:input.rotation??0,elevation_mm:b.elevation,
@@ -51,7 +55,7 @@ export function blankItem(input={}){
 }
 export function updateBlank(source,patch){
   const fresh=blankItem({...source,...patch,item_id:source.item_id});
-  return {...source,...fresh,...(patch.blank_binding===null?{blank_binding:null}:{})};
+  return {...source,...fresh,...(patch.blank_hook===null?{blank_hook:null}:{}),...(patch.blank_binding===null?{blank_binding:null}:{})};
 }
 export function edgeMeters(blank){
   const b=normalizeBlank(blank);

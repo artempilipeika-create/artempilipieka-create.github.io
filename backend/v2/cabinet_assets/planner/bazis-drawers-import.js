@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.15 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.16 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -471,13 +471,13 @@ function distance(a, b) {
   return Math.hypot(a.x-b.x, a.y-b.y, a.z-b.z);
 }
 
-function placeByFrame(obj, frame, item, log) {
+function placeByFrame(obj, frame, item, log, mountingPoint = null) {
   const desired = vector(item.position, 'position');
   const angle = Number(item.rotation || 0);
   if (!Number.isFinite(angle)) throw new Error('Некорректный угол поворота');
   // This anchor includes empty installation allowances (corner: left 50 mm),
   // excludes protruding fronts/handles, and preserves floor/upper elevation.
-  const anchor = {
+  const anchor = mountingPoint || {
     x: frame.min.x + frame.size.x/2,
     y: frame.min.y,
     z: frame.min.z + frame.size.z/2
@@ -504,7 +504,7 @@ function placeByFrame(obj, frame, item, log) {
   }
   log.push('ПОЗИЦИЯ OK ' + item.name + ': центр низа=' + fmtSize(actual) +
     '; поворот сайта=' + angle + '°; ошибка=' + error.toFixed(3) + ' мм' +
-    '; min рамки=' + fmtSize(frame.min));
+    (mountingPoint ? '; центр крепления=' + fmtSize(mountingPoint) : '; min рамки=' + fmtSize(frame.min)));
 }
 
 function globalMinimum(obj) {
@@ -1109,12 +1109,21 @@ function resizeAndPlaceBlank(obj,item,log){
  return {materialChecks,profileChecks:[]};
 }
 
+function isBlankHook(item) {
+  return item.source_sha256==='0c7176c2b675cfb48eb2f5de2ba6adbebb09d7c315c30b6f6d07628808dac3db';
+}
 function isNativeSocket(item) {
   return ['2d8945a5176981eebe0b9206ce3c6f1d47aa3e77baebe13ef586e7586138f485',
     'e97c325787e7237bb18511ceae98a5e00c1570f00eec914c79d52f02a152ca0d'].includes(item.source_sha256);
 }
 function resizeAndPlace(obj, item, log) {
   if(item.blank)return resizeAndPlaceBlank(obj,item,log);
+  if (isBlankHook(item)) {
+    // Source coordinates at the midpoint of the actual two fixings (the service frame is offset).
+    const anchor={x:0,y:0,z:-1.3385};
+    placeByFrame(obj,null,item,log,anchor);
+    return {materialChecks:[],profileChecks:[]};
+  }
   const list = asList(obj);
   if (isNativeSocket(item)) {
     obj.SetDefaultTransform();
@@ -1245,7 +1254,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.15 SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.16 BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1361,6 +1370,7 @@ function importProject(prepared, root, payload) {
     'ПРОСМОТРЕНО ПАПОК: ' + (prepared.scan?.directories ?? 'нет данных') + '; FR3D: ' + (prepared.scan?.files?.length ?? 'нет данных')];
   for (const entry of prepared.scan?.unreadable || []) log.push('ВНИМАНИЕ: недоступен путь ' + entry.path + ' (' + entry.code + ')');
   const noteChecks = [], liveChecks = [], importedObjects = [], furnitureObjects = [], liveMaterials = [], liveProfiles = [];
+  const loadedBlanks=new Set();
   let loaded = 0, failed = 0;
   const notesRequested = payload.items.filter(i => hasNote(i.production_note)).length + (brief ? 1 : 0);
   for (let index = 0; index < prepared.entries.length; index++) {
@@ -1368,6 +1378,7 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
+      if(isBlankHook(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Опорная заготовка не импортирована.');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');
@@ -1391,7 +1402,8 @@ function importProject(prepared, root, payload) {
         liveChecks.push({ obj, result });
       }
       importedObjects.push(obj);
-      if (!isNativeSocket(item)) furnitureObjects.push(obj);
+      if (item.blank && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
+      if (!isNativeSocket(item) && !isBlankHook(item)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;

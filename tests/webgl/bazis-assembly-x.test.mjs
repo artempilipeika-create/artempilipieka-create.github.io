@@ -116,3 +116,13 @@ test('a rigid socket outside the furniture bounds follows the furniture origin s
  close(cabinet.GabMin.x,0);close(cabinet.GabMin.z,0);close(outlet.PositionY,300);
  close(outlet.PositionX-cabinet.PositionX,offset.x);close(outlet.PositionZ-cabinet.PositionZ,offset.z);
 });
+
+test('the original AKKORD fixing midpoint lands on the requested face independently of the service frame',()=>{
+ const c=runtime();
+ for(const rotation of [0,90,180,270]){
+  const obj=moduleObject(),position={x:136,y:987,z:-412};
+  c.resizeAndPlace(obj,{source_sha256:'0c7176c2b675cfb48eb2f5de2ba6adbebb09d7c315c30b6f6d07628808dac3db',position,rotation},[]);
+  const fixing=obj.ToGlobal({x:0,y:0,z:-1.3385});
+  for(const k of ['x','y','z'])close(fixing[k],position[k]);
+ }
+});

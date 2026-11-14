@@ -1,4 +1,5 @@
 import './blanks-native.mjs';
+import {defaultHookFace} from './blank-hook.mjs';
 import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,blankCopies,cuttingSize,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
 import {localPoint} from './blank-bindings.mjs';
@@ -66,20 +67,29 @@ function formHtml(kind){
         <label>Смещение от центра левой стойки по глубине, мм<input name="depthOffset" type="number" min="-1200" max="1200" step="0.5" value="0"></label>
         <p data-binding-result aria-live="polite"></p>
       </fieldset>`:''}
-      <p class="mf-blank-cut" data-blank-cut></p><p class="mf-blank-result" aria-live="polite" data-blank-summary></p>
+      ${!catalog?`<fieldset data-hook-panel><legend>Фурнитура</legend>
+        <label>Крючок<select name="hook"><option value="">Без крючка</option><option value="68416">AKKORD · два рожка · античная латунь · 68416</option></select></label>
+        <div data-hook-controls><label>Сторона крепления<select name="hookFace"></select></label>
+        <label><span data-hook-along-label></span><input name="hookAlong" type="number" min="0" step="0.5" placeholder="По центру"></label>
+        <label>От низа детали до оси крепления, мм<input name="hookHeight" type="number" min="0" step="0.5" placeholder="По центру"></label>
+        <small>Пустое поле сохраняет привязку к центру детали.</small></div>
+      </fieldset>`:''}
+      <p class="mf-blank-cut"  data-blank-cut></p><p class="mf-blank-result" aria-live="polite" data-blank-summary></p>
       <p class="mf-blank-source" data-blank-source></p>
       <p class="mf-blank-error" data-blank-error role="alert" hidden></p>
       ${catalog?`<button type="button" class="mf-blank-primary" data-blank-add>+ Добавить заготовку в 3D</button>
       <button type="button" class="secondary mf-blank-export" data-blank-export>Деталировка заготовок · CSV</button>
       <button type="button" class="mf-blank-primary" data-blank-bazis>Экспорт проекта в БАЗИС</button>
-      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261112-carcasses" download="Martin_Forest_Import_v9_9_9_CARCASSES.js">Импортёр 9.9.9 ↓</a></div>`:''}
+      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261114-blank-hooks" download="Martin_Forest_Import_v9_9_16.js">Импортёр 9.9.16 ↓</a></div>`:''}
       ${!catalog?`<details class="mf-blank-repeat"><summary>Копировать с шагом</summary><div class="mf-blank-fields"><label>Копий<input name="copyCount" type="number" min="1" max="30" value="1"></label><label>Шаг, мм<input name="copyStep" type="number" step="0.5" value="300"></label></div><label>Направление<select name="copyAxis"><option value="elevation_mm">По высоте</option><option value="x">По X</option><option value="z">По Z</option></select></label><button type="button" data-blank-copy>Создать копии</button></details>`:''}
     </div>
   </div>`;
 }
 function readForm(form){
   const code=EDGES.map((_,i)=>form.querySelector('[name="edge'+i+'"]').checked?'1':'0').join('');
-  return {blank_length_mm:numberField(form,'length'),blank_width_mm:numberField(form,'partWidth'),
+  const hook=form.elements.hook;
+  const offset=name=>form.elements[name].value===''?null:numberField(form,name);
+  return {...(hook?{blank_hook:hook.value?{article:hook.value,face:textField(form,'hookFace'),along_mm:offset('hookAlong'),height_mm:offset('hookHeight')}:null}:{}),blank_length_mm:numberField(form,'length'),blank_width_mm:numberField(form,'partWidth'),
     blank_thickness_mm:numberField(form,'thickness'),blank_axis:textField(form,'axis'),
     ...(form.dataset.kind==='catalog'?{name:textField(form,'partName')}:{}),
     blank_edge_code:code,blank_edge_thickness_mm:numberField(form,'edgeThickness'),
@@ -88,6 +98,7 @@ function readForm(form){
 }
 function draw(form,room){
   const v=readForm(form),error=validateBlank(v,room);
+  if(form.elements.hook)form.querySelector('[data-hook-controls]').hidden=!v.blank_hook;
   form.querySelector('[data-blank-code]').textContent=v.blank_edge_code;
   for(const button of form.querySelectorAll('[data-blank-preset]'))button.setAttribute('aria-pressed',String(button.dataset.blankPreset===v.blank_edge_code));
   for(let i=0;i<4;i++){
@@ -147,7 +158,7 @@ export class BlanksUI{
     exports.setAttribute('aria-label','Экспорт корпусов');
     for(const selector of ['[data-blank-bazis]','[data-blank-export]','.mf-blank-downloads'])exports.append(this.catalog.querySelector(selector));
     const help=document.createElement('details');
-    help.innerHTML='<summary>Как открыть в БАЗИС</summary><ol><li>Скачайте импортёр 9.9.9 и замените им действующий скрипт Martin Forest. Старую копию сохраните вне папки Scripts.</li><li>Распакуйте «Исходные заготовки» в отдельную подпапку вашей общей библиотеки модулей. Имена FR3D не меняйте.</li><li>Нажмите «Экспорт проекта в БАЗИС»: скачается файл .mf-bazis.json.</li><li>В БАЗИС откройте новую пустую модель и запустите импортёр. Он найдёт последний экспорт в Загрузках; при запросе укажите общую папку модулей.</li><li>Проверьте модель и сохраните её как B3D.</li></ol><p class="mf-blank-source">Если материал не выбран, экспорт укажет деталь. Выберите её в проекте и назначьте материал нужной толщины в панели справа.</p>';
+    help.innerHTML='<summary>Как открыть в БАЗИС</summary><ol><li>Скачайте импортёр 9.9.16 и замените им действующий скрипт Martin Forest. Старую копию сохраните вне папки Scripts.</li><li>Распакуйте «Исходные заготовки» в отдельную подпапку вашей общей библиотеки модулей. Имена FR3D не меняйте.</li><li>Нажмите «Экспорт проекта в БАЗИС»: скачается файл .mf-bazis.json.</li><li>В БАЗИС откройте новую пустую модель и запустите импортёр. Он найдёт последний экспорт в Загрузках; при запросе укажите общую папку модулей.</li><li>Проверьте модель и сохраните её как B3D.</li></ol><p class="mf-blank-source">Если материал не выбран, экспорт укажет деталь. Выберите её в проекте и назначьте материал нужной толщины в панели справа.</p>';
     exports.append(help);this.catalog.append(exports);
     this.sync();
   }
@@ -210,6 +221,14 @@ export class BlanksUI{
     }
     if(!isBlank)return;
     const badge=get('studio-item-type');if(badge)badge.textContent='Заготовка';
+    const controls=this.inspector.elements, hook=item.blank_hook, side=item.blank_axis==='side';
+    this.inspector.querySelector('[data-hook-panel]').hidden=item.blank_axis==='horizontal'&&!hook;
+    controls.hook.value=hook?.article||'';
+    controls.hookFace.replaceChildren(new Option(side?'Вправо · внутрь левой боковины':'Вперёд · в шкаф','positive'), new Option(side?'Влево · внутрь правой боковины':'Назад','negative'));
+    controls.hookFace.value=hook?.face||defaultHookFace(item);
+    controls.hookAlong.value=hook?.along_mm??'';controls.hookHeight.value=hook?.height_mm??'';
+    this.inspector.querySelector('[data-hook-along-label]').textContent=side?'От заднего края до оси, мм':'От левого края до оси, мм';
+    this.inspector.querySelector('[data-hook-controls]').hidden=!hook;
     values(this.inspector,item);draw(this.inspector,this.app.adapter.room);
     const form=this.inspector,b=item.blank_binding,field=form.querySelector('.mf-blank-binding');
     field.hidden=item.blank_axis!=='horizontal';

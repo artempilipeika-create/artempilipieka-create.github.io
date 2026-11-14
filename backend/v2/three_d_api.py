@@ -72,6 +72,12 @@ class WorktopFixture(StrictModel):
             raise ValueError('Вытяжка доступна над варочной панелью.')
         return self
 
+class BlankHook(StrictModel):
+    article: Literal['68416']
+    face: Literal['positive','negative']
+    along_mm: float|None=Field(default=None,ge=0,le=3000,multiple_of=0.5,allow_inf_nan=False)
+    height_mm: float|None=Field(default=None,ge=0,le=3000,multiple_of=0.5,allow_inf_nan=False)
+
 class BlankBinding(StrictModel):
     left_id: str=Field(min_length=1,max_length=80)
     right_id: str=Field(min_length=1,max_length=80)
@@ -123,6 +129,7 @@ class FurnitureItem(StrictModel):
     blank_axis: Literal['horizontal','side','back']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
     blank_binding: BlankBinding|None=None
+    blank_hook: BlankHook|None=None
     assistant_carcass: AssistantCarcass|None=None
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
@@ -135,6 +142,14 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.blank_hook:
+            if self.module_type!='blank' or self.blank_axis not in ('back','side'):
+                raise ValueError('Крючок доступен на вертикальной заготовке.')
+            span=self.width if self.blank_axis=='back' else self.depth
+            along=self.blank_hook.along_mm if self.blank_hook.along_mm is not None else span/2
+            height=self.blank_hook.height_mm if self.blank_hook.height_mm is not None else self.height/2
+            if along<15 or along+15>span or height<27.592 or height+98.148>self.height:
+                raise ValueError('Крючок выходит за край заготовки.')
         if self.assistant_carcass and self.module_type!='blank':
             raise ValueError('Параметры корпуса помощника доступны только заготовкам.')
         if self.blank_binding and (self.module_type!='blank' or self.blank_axis!='horizontal'):

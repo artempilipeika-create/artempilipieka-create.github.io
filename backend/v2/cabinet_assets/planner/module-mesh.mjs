@@ -1,3 +1,5 @@
+import {hookPlacement} from './blank-hook.mjs';
+import {vertices as hookVertices, indices as hookIndices} from './akkord-mesh.mjs';
 import * as THREE from './vendor/three.module.js';
 import {materialVisual,physicalPanelUV,surfaceFinish} from './material-visuals.mjs';
 import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
@@ -110,7 +112,7 @@ export class MeshFactory{
       if(m.userData.role==='door-pivot'){const visible=mode!=='facadesHidden';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(m.userData.role==='appliance-slot'){const visible=mode==='normal';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(!m.isMesh)return;
-      if(m.userData.blankEdge)return; // Edge tint belongs to the selected real panel edge, not a cabinet material.
+      if(m.userData.blankEdge||m.userData.blankHook)return; // Edge tint belongs to the selected real panel edge, not a cabinet material.
       const role=m.userData.role,part=byKey.get(m.userData.part?.key);
       if(part)m.userData.part=part;
       const visible=m.userData.appliance?mode==='normal':role==='reveal'?mode==='normal'&&!it.doors_open:(role==='front'||m.userData.frontAccessory)?mode!=='facadesHidden':true;
@@ -291,6 +293,18 @@ export class MeshFactory{
       if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
+    }
+    if(it.blank_hook){
+      const h=hookPlacement(it), key='hook:68416';
+      const geometry=this.acquire(key,()=>{
+        const g=new THREE.BufferGeometry();
+        g.setAttribute('position',new THREE.Float32BufferAttribute(hookVertices,3));g.setIndex(hookIndices);
+        const surface=g.toNonIndexed();g.dispose();surface.computeVertexNormals();return surface.scale(S,S,S);
+      });
+      const m=this.mesh(group,'handle',geometry,key,h.x,h.y,h.z,null,ghost);
+      const brass=m.material.clone();brass.color.set('#927348');brass.metalness=.62;brass.roughness=.52;
+      m.material=brass;m.userData.ownedMaterials=[brass];m.userData.blankHook=true;
+      m.rotation.y=-h.rotation*Math.PI/180;
     }
     this.position(group,it);
     return group;
@@ -628,7 +642,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.blank_hook,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 
