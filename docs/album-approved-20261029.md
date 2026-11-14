@@ -9,3 +9,11 @@ The first wall-cabinet tier follows the associated lower run's worktop plus 600 
 Validation: 750 JavaScript checks; 490 Python checks plus a dedicated asset-route check passed locally. 37 database checks were skipped locally and are required in the disposable-Postgres Constructor reliability workflow before deployment. All four PDF pages were rendered and visually inspected. Tests cover all 151 registered native variants, mounting/ceiling constraints, saved order metadata, one-paid-image reuse and byte-for-byte JPEG preservation.
 
 Publication must pin the exact successful workflow commit to the existing martin-forest-v2-staging Railway service. No importer changes are part of this update.
+
+## Постоянное правило для 2D-чертежей шкафов
+
+Этот стандарт действует для каждого шкафа Martin Forest во всех следующих заказах, включая новые модели и шкафы с несколькими секциями.
+
+На виде спереди каждая секция с полками получает отдельную вертикальную размерную цепь со стрелками на обоих концах каждого участка. Начало цепи — пол. Промежуточные точки — верхние поверхности полок в порядке снизу вверх. Конец — верх шкафа. Между стрелками указывается длина соответствующего участка в миллиметрах. Рядом приводится таблица по секциям с отметками от пола и шагом. При смене толщины полки или высоты установки размеры берутся из сохранённой геометрии.
+
+На виде спереди указываются габаритные высота и ширина шкафа, на виде сбоку — полная глубина, включая накладную заднюю стенку, если она выступает за корпус. Габаритные размерные линии также оформляются стрелками.
