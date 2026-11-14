@@ -1,5 +1,4 @@
 import {choice,defaultShelf,fittings,shelfRows} from './shelf-choices.mjs';
-import {photoArticles} from './shelf-images.mjs';
 const element=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=text;return node;};
 export function shelfQuestionnaire(ui,parent,section){
  const f=ui.fields,count=f.sectionShelves[section],rows=shelfRows(f),row=rows[section];
@@ -32,7 +31,7 @@ export function shelfQuestionnaire(ui,parent,section){
    const h=selected??variants[0],active=!mixed&&Boolean(selected);
    const card=element('div'),b=element('button');b.type='button';b.setAttribute('aria-pressed',String(active));
    b.setAttribute('aria-label',family+' · '+h.finish+' · '+h.article);
-   const img=element('img');img.src='/account/planner/shelf-images/'+h.article+'.webp';img.alt=(photoArticles.includes(h.article)?'Фото ':'Вид из БАЗИС · ')+family;
+   const img=element('img');img.src='/account/planner/shelf-images/'+h.article+'.webp';img.alt='Фото '+family;
    b.append(img,element('strong',family),element('small',h.finish+' · '+h.article));b.onclick=()=>set(draft+'/'+h.article);card.append(b);
    if(active&&variants.length>1)ui.select(card,'Исполнение '+family,variants.map(v=>[v.article,[v.finish,v.detail,v.article].filter(Boolean).join(' · ')]),h.article,v=>set(draft+'/'+v));
    if(active&&family==='Casper')card.append(element('small','Плита '+thickness+' мм · левый и правый фрагменты'));
