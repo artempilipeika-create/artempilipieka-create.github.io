@@ -157,6 +157,9 @@ export class Interaction {
       applyChanges(this.adapter,widthChange(source,it,this.adapter.items,this.adapter.room,this.options().shiftNeighbours===true));
     });
   }
+  replaceConnectedVariant(source,next){
+    applyChanges(this.adapter,resizeConnectedLayout(source,next,this.adapter.items,this.adapter.room)||[next]);
+  }
   replaceModule(opt,keepDimensions=true){
     const source=this.adapter.selected;if(!source)return false;
     return this.change('Замена модуля',()=>{

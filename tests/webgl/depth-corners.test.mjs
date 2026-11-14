@@ -52,7 +52,8 @@ for(const upper of [false,true])for(const side of ['left','right'])for(const rot
  list=resizeConnectedLayout(first,anchoredDimensions(first,next),JSON.parse(JSON.stringify(list)),room);
  assert.deepEqual(list[0],rootBefore);[root,first,second]=list;
  const q=C.rotateXZ(first.x-root.x,first.z-root.z,-rotation),s=side==='left'?1:-1;
- near(s*q.x-first.depth/2,-root.width/2+(upper?3:50));
+ if(upper)near(s*q.x+first.depth/2+C.cabinetFrontExtension(first),-root.width/2+321);
+ else near(s*q.x-first.depth/2,-root.width/2+50);
  near(q.z-first.width/2,root.depth/2+68);
  assert.equal(layoutJoints(list,room).length,2);
  for(const it of list)assert.equal(C.placementError(it,list,room),'');
@@ -71,4 +72,21 @@ test('Deliberate gaps and other tiers do not follow, and invalid resize rolls ba
  const adapter=new StateAdapter({state:()=>state,selected:()=>state.items.find(it=>it.item_id===selectedId),template,refresh(){},select(id){selectedId=id;},snapshot:()=>({name:'QA depth',scene:structuredClone(state)}),restore:value=>{state=structuredClone(value.scene);},supportsElevation:true});
  const history=new History(adapter);history.run('Depth',()=>applyChanges(adapter,resized));assert.equal(history.undoStack.length,1);history.undo();assert.deepEqual(state.items,list);history.redo();assert.equal(state.items[0].depth,400);
  const before=structuredClone(state);assert.throws(()=>history.run('Invalid',()=>applyChanges(adapter,resizeConnectedLayout(state.items[0],{...state.items[0],depth:601},state.items,room))),/диапазона/);assert.deepEqual(state,before);
+});
+
+test('logged 340 mm return: actual door faces coincide with the corner filler in exported scene coordinates',()=>{
+ const door=item('return','bazis.d850b6a88a43',{width:600,depth:340,elevation_mm:1458});
+ for(const v of U.variants.filter(v=>v.family==='corner'))for(const rotation of [0,90,180,270]){
+  const root=item('corner',v.id,{x:-1000,z:-850,rotation,elevation_mm:1458});
+  const mate=C.cornerReturnPlacement(root,{...door,depth:Number(v.return_depth)});
+  const s=v.opening==='left'?1:-1;
+  const face=Math.max(...U.parts(root).filter(p=>p.name==='Бленда').map(p=>s*p.position.x+p.size.x/2));
+  const doors=C.productionParts(mate,template(mate)).filter(p=>p.role==='front');
+  assert.equal(doors.length,2);
+  for(const p of doors){
+   const offset=C.rotateXZ(p.position.x,p.position.z+p.size.z/2,mate.rotation);
+   near(s*C.rotateXZ(mate.x+offset.x-root.x,mate.z+offset.z-root.z,-rotation).x,face);
+  }
+  if(v.id==='bazis.6005ad4c2f5e'&&rotation===0){near(mate.x,-1330);near(mate.z,-332);assert.equal(mate.rotation,270);}
+ }
 });

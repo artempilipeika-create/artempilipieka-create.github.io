@@ -361,7 +361,12 @@
   }
   function cornerSpec(it){
     const p=sourceProduction(it),v=root.MF_WALL_SPECIAL?.info(it);
-    if(v?.family==='corner')return {side:v.opening,wall_gap_mm:3,front_extension_mm:68,filler_depth_mm:50,blind_width_mm:v.panels.filter(p=>p.name==='ФП Планка').reduce((width,p)=>width+p.size[0],0),upper:true};
+    if(v?.family==='corner'){
+      const width=v.native_frame.size[0];
+      const fillers=v.panels.filter(panel=>panel.name==='Бленда');
+      const returnFace=Math.max(...fillers.map(panel=>v.opening==='left'?panel.lo[0]+panel.size[0]:width-panel.lo[0]));
+      return {side:v.opening,return_face_mm:returnFace,front_extension_mm:68,filler_depth_mm:50,blind_width_mm:v.panels.filter(p=>p.name==='ФП Планка').reduce((width,p)=>width+p.size[0],0),upper:true};
+    }
     return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;
   }
   function cornerVariantInfo(it){return CORNER_VARIANTS.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}
@@ -382,7 +387,9 @@
     const c=cornerSpec(corner);
     if(!c||cornerSpec(it)||(c.upper?it.module_type!=='wall_cabinet':!isKitchenModule(it)))return null;
     const sign=c.side==='right'?-1:1;
-    const local=rotateXZ(sign*(-corner.width/2+c.wall_gap_mm+it.depth/2),corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
+    // Upper returns meet the exposed filler face. Both offsets use the carcass-centred scene frame.
+    const fromSide=c.upper?c.return_face_mm-it.depth/2-cabinetFrontExtension(it):c.wall_gap_mm+it.depth/2;
+    const local=rotateXZ(sign*(-corner.width/2+fromSide),corner.depth/2+c.front_extension_mm+it.width/2,corner.rotation||0);
     const target={...it,x:corner.x+local.x,z:corner.z+local.z,rotation:((corner.rotation||0)+(sign===1?270:90))%360};
     if(golaCountertop(it)){const shift=rotateXZ(0,kitchenSettings(it).rearServiceGapMm-50,target.rotation);target.x+=shift.x;target.z+=shift.z;}
     return target;
