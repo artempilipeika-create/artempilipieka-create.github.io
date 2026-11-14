@@ -1320,7 +1320,14 @@ function exportBazisProject(){
   }catch(error){status('Экспорт не создан: '+error.message);return;}
   const bazisItems=state.items.filter(x=>x.bazis_file);
   const missing=state.items.filter(x=>!x.bazis_file&&x.module_type!=='blank');
-  if(!bazisItems.length&&!blankItems.length){
+  let socketItems=[];
+  if(state.room?.features?.some(f=>f.kind==='socket')){
+    try{
+      if(!globalThis.MF_NATIVE_SOCKETS)throw Error('Обновите страницу для экспорта розеток.');
+      socketItems=globalThis.MF_NATIVE_SOCKETS(state.room);
+    }catch(error){status('Экспорт не создан: '+error.message);return;}
+  }
+  if(!bazisItems.length&&!blankItems.length&&!socketItems.length){
     alert('В проекте нет модулей из раздела «Мои БАЗИС». Для родной модели .b3d нужны исходные .fr3d.');
     status('Экспорт БАЗИС: нет родных модулей.');
     return;
@@ -1422,6 +1429,11 @@ function exportBazisProject(){
   payload.kitchen_production.native_countertops_included=countertops.length;
   payload.kitchen_production.countertops_requiring_adjustment=pendingCountertops;
   if(pendingCountertops.length)payload.technical_notes.push("СТОЛЕШНИЦЫ ДЛЯ ДОРАБОТКИ В БАЗИС (исходный блок не импортирован автоматически):\n"+pendingCountertops.map(a=>a.label+' · '+a.target.width+' × '+a.target.depth+' × '+a.target.height+' мм. '+a.native_notes.join(' ')).join('\n'));
+  for(const item of socketItems){item.index=payload.items.length+1;payload.items.push(item);}
+  if(socketItems.length){
+    payload.format='martin-forest-bazis-native-v3';
+    payload.minimum_importer='9.9.15';
+  }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1430,7 +1442,7 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, блоков розеток: '+socketItems.length+', деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
 }
 
 async function toOrder(){

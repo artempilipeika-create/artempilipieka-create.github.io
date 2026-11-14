@@ -5,7 +5,7 @@ export const FEATURES=Object.freeze({window:['Окно','#68a6b8'],door:['Две
 export const wallLength=(room,wall)=>['a','c'].includes(wall)?room.width:room.depth;
 export const roomReady=room=>room.setup_complete!==false; // Legacy projects stay accessible.
 export const socketCount=f=>f.socket_count??1;
-export const socketBlockWidth=(count,height=86)=>Math.round(height*(1+(count-1)*71/86));
+export const socketBlockWidth=(count,height=82)=>Math.round(height*count);
 // Socket offsets are local to the chosen face; elevations stay measured from the room floor.
 export function socketSurface(f,r){
   if(f.kind!=='socket'||!f.mount_id)return null;

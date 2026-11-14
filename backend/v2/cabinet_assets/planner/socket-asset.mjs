@@ -4,6 +4,7 @@ export const SOCKET_ASSET_URL=new URL('./room-assets/socket-tripo.json',import.m
 export const socketRotation=wall=>({a:0,b:-Math.PI/2,c:Math.PI,d:Math.PI/2})[wall];
 export function socketLayout(f){
   const count=socketCount(f);if(count===1)return [{x:0,width:f.width,height:f.height}];
+  if(f.width===count*82&&f.height===82)return Array.from({length:count},(_,i)=>({x:(i-(count-1)/2)*82,width:82,height:82}));
   const size=Math.min(f.height*71/86,f.width/count),margin=Math.min(f.height*7.5/86,Math.max(0,(f.width-size*count)/2)),pitch=(f.width-size-2*margin)/(count-1);
   return Array.from({length:count},(_,i)=>({x:(i-(count-1)/2)*pitch,width:size,height:size}));
 }

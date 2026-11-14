@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.14 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.15 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
  v9.9.11: allow native upper depth 250–600 mm with 3 mm rear frame inset.
@@ -522,7 +523,7 @@ function alignAssemblyX(objects, targetX, log) {
   return alignAssemblyXZ(objects, targetX, null, log);
 }
 
-function alignAssemblyXZ(objects, targetX, targetZ, log) {
+function alignAssemblyXZ(objects, targetX, targetZ, log, furniture = objects) {
   if (!Number.isFinite(targetX)) throw new Error('Некорректная координата левого края сборки');
   if (targetZ !== null && !Number.isFinite(targetZ)) throw new Error('Некорректная координата Z сборки');
   if (!objects.length) return { applied: false, targetX, targetZ, reason: 'Нет загруженных модулей' };
@@ -534,8 +535,11 @@ function alignAssemblyXZ(objects, targetX, targetZ, log) {
       position: vector({x:obj.PositionX,y:obj.PositionY,z:obj.PositionZ}, 'Position'),
       points: probes.map(p => vector(obj.ToGlobal(p), 'assembly.before')) };
   });
-  const beforeX = Math.min(...snapshots.map(s => s.minimum.x));
-  const beforeZ = Math.min(...snapshots.map(s => s.minimum.z));
+  const anchors = furniture.length ? furniture : objects;
+  const anchored = new Set(anchors);
+  const anchorSnapshots = snapshots.filter(s => anchored.has(s.obj));
+  const beforeX = Math.min(...anchorSnapshots.map(s => s.minimum.x));
+  const beforeZ = Math.min(...anchorSnapshots.map(s => s.minimum.z));
   const shiftX = targetX - beforeX, shiftZ = targetZ === null ? 0 : targetZ - beforeZ;
   let afterX, afterZ;
   try {
@@ -549,8 +553,8 @@ function alignAssemblyXZ(objects, targetX, targetZ, log) {
         }
       }
     }
-    afterX = Math.min(...objects.map(globalLeftX));
-    afterZ = Math.min(...objects.map(obj => globalMinimum(obj).z));
+    afterX = Math.min(...anchors.map(globalLeftX));
+    afterZ = Math.min(...anchors.map(obj => globalMinimum(obj).z));
     if (targetZ !== null && Math.abs(afterZ-targetZ) > PLACEMENT_TOLERANCE_MM) {
       throw new Error('Габарит сборки Z=' + afterZ.toFixed(3) + ', нужен ' + targetZ);
     }
@@ -1105,9 +1109,19 @@ function resizeAndPlaceBlank(obj,item,log){
  return {materialChecks,profileChecks:[]};
 }
 
+function isNativeSocket(item) {
+  return ['2d8945a5176981eebe0b9206ce3c6f1d47aa3e77baebe13ef586e7586138f485',
+    'e97c325787e7237bb18511ceae98a5e00c1570f00eec914c79d52f02a152ca0d'].includes(item.source_sha256);
+}
 function resizeAndPlace(obj, item, log) {
   if(item.blank)return resizeAndPlaceBlank(obj,item,log);
   const list = asList(obj);
+  if (isNativeSocket(item)) {
+    obj.SetDefaultTransform();
+    const frame = readFrame(list);
+    placeByFrame(obj, frame, item, log);
+    return { frame, placementFrame: frame, materialChecks: [], profileChecks: [] };
+  }
   if (!item.source_default || !item.target) throw new Error('Нет исходных или целевых габаритов');
   obj.SetDefaultTransform();
   const before = readFrame(list);
@@ -1231,7 +1245,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.14 MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.15 SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1346,7 +1360,7 @@ function importProject(prepared, root, payload) {
     'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКИ ПОИСКА: ' + (prepared.scan?.roots || [root]).join(' | '),
     'ПРОСМОТРЕНО ПАПОК: ' + (prepared.scan?.directories ?? 'нет данных') + '; FR3D: ' + (prepared.scan?.files?.length ?? 'нет данных')];
   for (const entry of prepared.scan?.unreadable || []) log.push('ВНИМАНИЕ: недоступен путь ' + entry.path + ' (' + entry.code + ')');
-  const noteChecks = [], liveChecks = [], importedObjects = [], liveMaterials = [], liveProfiles = [];
+  const noteChecks = [], liveChecks = [], importedObjects = [], furnitureObjects = [], liveMaterials = [], liveProfiles = [];
   let loaded = 0, failed = 0;
   const notesRequested = payload.items.filter(i => hasNote(i.production_note)).length + (brief ? 1 : 0);
   for (let index = 0; index < prepared.entries.length; index++) {
@@ -1377,6 +1391,7 @@ function importProject(prepared, root, payload) {
         liveChecks.push({ obj, result });
       }
       importedObjects.push(obj);
+      if (!isNativeSocket(item)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;
@@ -1392,7 +1407,7 @@ function importProject(prepared, root, payload) {
     }
   }
   let assemblyPlacement;
-  try { assemblyPlacement = alignAssemblyXZ(importedObjects, ASSEMBLY_LEFT_X_MM, ASSEMBLY_MIN_Z_MM, log); }
+  try { assemblyPlacement = alignAssemblyXZ(importedObjects, ASSEMBLY_LEFT_X_MM, ASSEMBLY_MIN_Z_MM, log, furnitureObjects); }
   catch (error) {
     assemblyPlacement = { applied: false, targetX: ASSEMBLY_LEFT_X_MM, targetZ: ASSEMBLY_MIN_Z_MM, error: String(error.message || error) };
     log.push('ОШИБКА ПРИВЯЗКИ СБОРКИ: ' + assemblyPlacement.error);

@@ -2,8 +2,8 @@ import {WALLS,ORIGINS,dimensionsError,wallLength,socketCount,socketBlockWidth,so
 const el=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
 export function newSocket(room,id){
   const last=(room.features||[]).filter(f=>f.kind==='socket').at(-1),wall=last?.wall||'a';
-  const offset=last&&last.offset+last.width+100<=wallLength(room,wall)?last.offset+last.width+14:300;
-  return {id,kind:'socket',wall,offset,elevation:last?Math.min(last.elevation,room.height-86):300,width:86,height:86,projection:12,label:'Розетка',notes:''};
+  const offset=last&&last.offset+last.width+100<=wallLength(room,wall)?last.offset+last.width+18:300;
+  return {id,kind:'socket',wall,offset,elevation:last?Math.min(last.elevation,room.height-82):300,width:82,height:82,projection:10,label:'Розетка',notes:''};
 }
 export function reconcileSurvey(room){
   if(room.survey!=null)room.survey=room.features.length?'present':null;
@@ -22,7 +22,7 @@ export class SocketEditor{
   constructor(setup){
     this.setup=setup;this.root=el('section');this.root.id='room-sockets';
     this.root.append(el('h3','Розетки'),el('p','Блок на 1–4 розетки: на стене или на грани вентшахты. Высота от пола — до низа рамки. Все размеры — в мм.'));
-    const sample=el('div');sample.className='room-socket-sample';const picture=el('img');picture.src='/account/planner/room-assets/socket-tripo-preview.webp';picture.alt='Белая розетка с заземлением';picture.width=88;picture.height=88;const info=el('div');info.append(el('strong','Белая розетка'),el('small','Настенная · с заземлением'),el('small','Размеры рамки можно уточнить по замеру'));sample.append(picture,info);this.root.append(sample);
+    const sample=el('div');sample.className='room-socket-sample';const picture=el('img');picture.src='/account/planner/room-assets/socket-tripo-preview.webp';picture.alt='Белая розетка с заземлением';picture.width=88;picture.height=88;const info=el('div');info.append(el('strong','Белая розетка'),el('small','Настенная · с заземлением'),el('small','БАЗИС: рамка 82 × 82 × 10 мм на одну розетку. Привязка по отступу и низу рамки.'));sample.append(picture,info);this.root.append(sample);
     this.list=el('div');this.root.append(this.list);
     const add=el('button','＋ Добавить розетку');add.type='button';add.id='room-socket-add';add.onclick=()=>this.add();this.root.append(add);setup.dimensions.append(this.root);
   }

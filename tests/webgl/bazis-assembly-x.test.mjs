@@ -104,3 +104,15 @@ test('Import aligns only successful modules before commit and reports the measur
   assert.equal(result.assemblyPlacement.applied,true);close(result.assemblyPlacement.afterX,0);
   close(objects[1].PositionX-objects[0].PositionX,600);
 });
+
+test('a rigid socket outside the furniture bounds follows the furniture origin shift',()=>{
+ const c=runtime(),cabinet=moduleObject(),outlet=moduleObject();
+ outlet.min={x:0,y:0,z:0};outlet.size={x:82,y:82,z:10};
+ const item={source_sha256:'2d8945a5176981eebe0b9206ce3c6f1d47aa3e77baebe13ef586e7586138f485',
+   name:'Розетка',rotation:90,position:{x:-650,y:300,z:-700}};
+ const {materialChecks}=c.resizeAndPlace(outlet,item,[]);assert.equal(materialChecks.length,0);
+ const offset={x:outlet.PositionX-cabinet.PositionX,z:outlet.PositionZ-cabinet.PositionZ};
+ c.alignAssemblyXZ([cabinet,outlet],0,0,[],[cabinet]);
+ close(cabinet.GabMin.x,0);close(cabinet.GabMin.z,0);close(outlet.PositionY,300);
+ close(outlet.PositionX-cabinet.PositionX,offset.x);close(outlet.PositionZ-cabinet.PositionZ,offset.z);
+});

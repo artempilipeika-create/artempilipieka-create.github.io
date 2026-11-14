@@ -25,9 +25,9 @@ test('attached outlets track shaft depth and wall changes without rewriting thei
   host.projection+=125;assert.equal(featureBox(f,r).z-b.z,125);host.wall='d';assert.equal(featureWall(f,r),'d');assert.equal(f.offset,offset);assert.equal(roomError(r),'');
 });
 test('count changes preserve measured frame proportion and single legacy outlets stay unchanged',()=>{
-  const f=newSocket(room(),'s');assert.deepEqual(socketLayout(f),[{x:0,width:86,height:86}]);
+  const f=newSocket(room(),'s');assert.deepEqual(socketLayout(f),[{x:0,width:82,height:82}]);
   for(const count of [2,3,4,1]){setSocketCount(f,count);assert.equal(f.width,socketBlockWidth(count));assert.equal(socketLayout(f).length,count);}
-  setSocketCount(f,2);f.width=314;setSocketCount(f,3);assert.equal(f.width,456);
+  setSocketCount(f,2);f.width=314;setSocketCount(f,3);assert.equal(f.width,471);
 });
 test('dangling mounts, obstructed faces, oversized blocks and invalid counts are rejected',()=>{
   const r=room(),host=newShaft(r,'shaft'),f=newSocket(r,'s');r.features=[host,f];assert.match(roomError(r),/пересекает выступ/);
@@ -50,4 +50,23 @@ test('mounted block survives save and undo/redo together with its parent shaft',
   const before=structuredClone(state),history=new History({snapshot:()=>structuredClone(state),restore:s=>state=structuredClone(s)});
   history.run('Add mounted block',()=>{const f=newSocket(r,'block');setSocketCount(f,4);mountSocket(f,r,'shaft');r.features.push(f);});const saved=JSON.parse(JSON.stringify(state));assert.equal(roomError(saved.scene.room),'');
   history.undo();assert.deepEqual(state,before);history.redo();assert.deepEqual(state,saved);
+});
+
+import {nativeSocketItems} from '../../backend/v2/cabinet_assets/planner/socket-native.mjs';
+test('native export resolves one/triple donors and rigid offsets on walls and shaft faces',()=>{
+  for(const wall of 'abcd')for(const face of ['wall','front','start','end'])for(const count of [1,2,3,4]){
+    const r=room(),f=newSocket(r,'block');f.wall=wall;setSocketCount(f,count);
+    if(face==='wall')r.features=[f];
+    else{const host={...newShaft(r,'shaft'),wall,offset:900};r.features=[host,f];mountSocket(f,r,host.id,face);}
+    const items=nativeSocketItems(JSON.parse(JSON.stringify(r))),sizes=[[1],[1,1],[3],[3,1]][count-1];
+    const center=featureBox(f,r),rotation={a:0,b:90,c:180,d:270}[featureWall(f,r)];
+    assert.deepEqual(items.map(i=>i.source_file),sizes.map(n=>'Розетка_'+n+'шт.fr3d'));
+    let along=-f.width/2;
+    items.forEach((i,k)=>{
+      const w=82*sizes[k];assert.deepEqual(i.target,{width:w,height:82,depth:10});
+      assert.equal(i.rotation,rotation);assert.equal(i.position.y,f.elevation);assert.equal(i.elastic_resize,false);
+      assert.ok(Math.abs(i.position.x-center.x-(along+w/2)*Math.cos(rotation*Math.PI/180))<1e-6);
+      assert.ok(Math.abs(i.position.z-center.z-(along+w/2)*Math.sin(rotation*Math.PI/180))<1e-6);along+=w;
+    });
+  }
 });
