@@ -5,6 +5,10 @@ const round=n=>Math.round(n*1000)/1000;
 
 export function albumGeometry(items,templateFor=()=>null){
   return items.map(it=>{
+    if(it.module_type==='blank'){
+      return {item_id:it.item_id,width:it.width,height:it.height,depth:it.depth,
+        source_sha256:it.bazis_sha256||null,detail:'outline',shapes:[]};
+    }
     const production=sourceProduction(it),template=production?{production}:templateFor(it);
     const parts=productionParts(it,template),shapes=[],seen=new Set();
     const rect=(x,y,w,h,role='panel',label='')=>{

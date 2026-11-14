@@ -74,3 +74,27 @@ def test_elevation_module_is_served_with_the_constructor_assets():
     r=client.get('/account/planner/album-geometry.mjs')
     assert r.status_code==200 and 'export function albumGeometry' in r.text
     assert '20261029-album-pagination' in client.get('/constructor').text
+
+
+def test_two_section_wardrobe_pdf_before_and_after_photo():
+    from backend.v2.album_elevation import dimension_entries
+    def panel(key,axis,x,y,w,h):
+        return dict(item_id=key, module_type='blank', blank_axis=axis, name=key,
+                    width=w,height=h,depth=340,x=x,z=0,elevation_mm=y,
+                    assistant_carcass={'group_id':'cabinet'})
+    items=[panel('left','side',9,0,18,2200),panel('right','side',791,0,18,2200),
+           panel('divider','side',400,18,18,2164),panel('HDF','back',400,1,798,2198),
+           panel('top','horizontal',400,2182,764,18),panel('bottom','horizontal',400,0,764,18)]
+    items.extend(panel('shelf'+str(i),'horizontal',x,y,w,h)
+                 for i,(x,y,w,h) in enumerate([(204.5,680,371,6),(204.5,1400,371,6),
+                                                (595.5,480,373,18),(595.5,960,373,18),(595.5,1440,373,18)]))
+    group,=elevations(items)
+    assert [e['bottom'] for e in group['items']]==[it['elevation_mm'] for it in items]
+    assert dimension_entries(group['items'])=={(0,800)}
+    jpeg=BytesIO();Image.new('RGB',(24,18),'ivory').save(jpeg,'JPEG')
+    for photo in (False,True):
+        data=kitchen_album.render('Шкаф-1',{'items':items},{},jpeg.getvalue(),photo=photo)
+        pdf=PdfReader(BytesIO(data));drawing=pdf.pages[1].extract_text()
+        assert '2200' in drawing and '800' in drawing
+        assert 'Контур' not in drawing
+        assert 'shelf4' in ''.join(p.extract_text() for p in pdf.pages[2:])

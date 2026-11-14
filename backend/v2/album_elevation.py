@@ -36,7 +36,9 @@ def elevations(items):
         x,z=local(it);back=z-it['depth']/2
         group=next((g for g in groups if g['rotation']==rotation and abs(g['back']-back)<=180),None)
         if group is None: group={'rotation':rotation,'back':back,'items':[]};groups.append(group)
-        bottom=(it.get('elevation_mm') if it.get('elevation_mm') is not None else 1458) if it.get('module_type')=='wall_cabinet' else 0
+        bottom=it.get('elevation_mm') or 0
+        if it.get('module_type')=='wall_cabinet' and it.get('elevation_mm') is None:
+            bottom=1458
         group['items'].append({'number':n,'item':it,'x':x,'bottom':bottom})
     return sorted(groups,key=lambda g:(g['rotation'],g['back']))
 
@@ -55,6 +57,39 @@ def draw(c,scene,x,top,width,bottom,geometry=None):
         _view(c,g,details,gx,gt,cell_w,cell_h,letter=chr(65+i),single=len(groups)==1)
 
 
+def dimension_entries(entries):
+    """Dimension each assembled carcass once, retaining individual panels for drawing."""
+    panels={e['item']['item_id']:e for e in entries if e['item'].get('module_type')=='blank' and e['item'].get('item_id')}
+    parents={key:key for key in panels}
+    def root(key):
+        while parents[key]!=key:
+            parents[key]=parents[parents[key]]
+            key=parents[key]
+        return key
+    groups={}
+    for key,entry in panels.items():
+        panel=entry['item']
+        group=(panel.get('assistant_carcass') or {}).get('group_id')
+        if group:
+            parents[root(key)]=root(groups.setdefault(group,key))
+        binding=panel.get('blank_binding') or {}
+        for side in ('left_id','right_id'):
+            host=binding.get(side)
+            if host in panels:
+                parents[root(key)]=root(host)
+    spans={}
+    for entry in entries:
+        panel=entry['item']
+        key=panel.get('item_id')
+        group=('panel',root(key)) if key in panels else ('item',entry['number'])
+        a,b=entry['x']-panel['width']/2,entry['x']+panel['width']/2
+        if group in spans:
+            start,end=spans[group]
+            a,b=min(a,start),max(b,end)
+        spans[group]=(a,b)
+    return set(spans.values())
+
+
 def _view(c,group,details,x,top,width,height,letter,single):
     entries=group['items'];left=min(e['x']-e['item']['width']/2 for e in entries);right=max(e['x']+e['item']['width']/2 for e in entries)
     overall=max(e['bottom']+e['item']['height']+(worktop_top(e['item'])-e['item']['height'] if e['item'].get('module_type')=='base_cabinet' else 0) for e in entries)
@@ -64,16 +99,19 @@ def _view(c,group,details,x,top,width,height,letter,single):
     lower=[e for e in entries if e['item'].get('module_type')!='wall_cabinet']
     upper=[e for e in entries if e['item'].get('module_type')=='wall_cabinet']
     def chain(rows):
-        spans=sorted(set((e['x']-e['item']['width']/2,e['x']+e['item']['width']/2) for e in rows))
+        spans=sorted(dimension_entries(rows))
         gaps=[];edge=None
         for a,b in spans:
             if edge is not None and a>edge: gaps.append((edge,a))
             edge=max(edge,b) if edge is not None else b
-        return dimension_lanes(sorted(spans+gaps),scale)
+        return dimension_lanes([s for s in spans+gaps if s!=(left,right)],scale)
     low_lanes=chain(lower);high_lanes=chain(upper)
     low_count=max((n for _,_,n in low_lanes),default=0)+1
     high_count=max((n for _,_,n in high_lanes),default=0)+1
-    if max(low_count,high_count)>3: raise ValueError('Размерные линии не помещаются. Разделите сложную расстановку на отдельные проекты.')
+    # For dense overlapping projections the schedule carries each full part size.
+    # Keep the overall width/height and omit only the crowded dimension chain.
+    if low_count>3: low_lanes,low_count=[],1
+    if high_count>3: high_lanes,high_count=[],1
     scale=min(scale,(height-100-(low_count+high_count-2)*12)/overall)
     ox=x+58+(width-102-(right-left)*scale)/2;oy=top-height+54+(low_count-1)*12
     def point(xx,yy):return ox+(xx-left)*scale,oy+yy*scale
@@ -91,9 +129,17 @@ def _view(c,group,details,x,top,width,height,letter,single):
         line((edge-3,y1),(xx-4,y1));line((edge-3,y2),(xx-4,y2));line((xx,y1),(xx,y2),color);tick(xx,y1,color);tick(xx,y2,color)
         c.saveState();c.translate(xx-4,(y1+y2)/2);c.rotate(90);txt(value,0,0,color=color,bold=bold);c.restoreState()
     txt('Вид '+letter if not single else 'Внутреннее наполнение',x,top-8,8,MUTED,align='left')
-    for e in entries:
+    # Behind the open shelves lies the HDF. Draw it before the panels.
+    for e in sorted(entries,key=lambda e:e['item'].get('blank_axis')!='back'):
         it=e['item'];px=e['x'];by=e['bottom'];w=it['width'];h=it['height'];g=details.get(it.get('item_id'))
-        a,b=point(px-w/2,by);c.setStrokeColor(INK);c.setLineWidth(.65);c.rect(a,b,w*scale,h*scale,fill=0,stroke=1)
+        a,b=point(px-w/2,by)
+        if it.get('module_type')=='blank':
+            glass=(it.get('blank_shelf') or '').split('/')[0] in ('4','6','8')
+            c.setStrokeColor(LINE if it.get('blank_axis')=='back' else INK)
+            c.setFillColor(HexColor('#e2f1f4') if glass else white if it.get('blank_axis')=='back' else HexColor('#e7e1d8'))
+            c.setLineWidth(.5);c.rect(a,b,w*scale,h*scale,fill=1,stroke=1)
+            continue
+        c.setStrokeColor(INK);c.setLineWidth(.65);c.rect(a,b,w*scale,h*scale,fill=0,stroke=1)
         if g and g.get('detail')!='outline':
             for s in sorted(g['shapes'],key=lambda s:s['role']=='front'):
                 role=s['role'];sx,sy=point(px+s['x'],by+s['y']);sw,sh=s['w']*scale,s['h']*scale
