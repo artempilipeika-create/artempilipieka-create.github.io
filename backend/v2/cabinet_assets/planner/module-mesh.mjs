@@ -1,3 +1,5 @@
+import {fixedShelfScheme} from './shelf-choices.mjs';
+import {jointRows} from './carcass-joints.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
 import {vertices as supportVertices,indices as supportIndices} from './sekura-mesh.mjs';
 import {hookPlacement} from './blank-hook.mjs';
@@ -296,7 +298,43 @@ export class MeshFactory{
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
     }
-    for(const h of (it.blank_shelf?[]:shelfSupportPlan(it,this.adapter.items||[]).parts)){
+    const shelfScheme=fixedShelfScheme(it);
+    if(shelfScheme)for(const sign of [-1,1])for(const row of jointRows(shelfScheme,D,true)){
+      const x=sign*W/2;
+      if(row.kind==='cam'){
+        const key='joint:cam-cup';
+        const cup=this.mesh(group,'shelfSupport',this.acquire(key,()=>new THREE.CylinderGeometry(7.5*S,7.5*S,13*S,20)),key,x-sign*34,6.4,row.z,null,ghost);
+        cup.userData.joint='cam';this.box(group,'reveal',8,.3,1.2,x-sign*34,-.16,row.z,null,ghost);
+      }else{
+        const isScrew=row.kind==='confirmat',radius=isScrew?3.5:4,length=isScrew?50:35;
+        const key='joint:'+row.kind;
+        const g=this.acquire(key,()=>new THREE.CylinderGeometry(radius*S,radius*S,length*S,12).rotateZ(Math.PI/2));
+        const mesh=this.mesh(group,isScrew?'shelfSupport':'body',g,key,x-sign*(isScrew?7:5),9,row.z,null,ghost);
+        mesh.userData.joint=row.kind;
+        if(isScrew){
+          const head=this.acquire('joint:head',()=>new THREE.CylinderGeometry(5*S,5*S,1.5*S,16).rotateZ(Math.PI/2));
+          this.mesh(group,'shelfSupport',head,'joint:head',x+sign*18,9,row.z,null,ghost);
+        }
+      }
+    }
+    for(const h of shelfSupportPlan(it,this.adapter.items||[]).parts){
+      if(it.blank_shelf && !it.blank_shelf.startsWith('board/'))continue;
+      const article=it.blank_shelf?.split('/')[1]??'95388';
+      if(article!=='95388'){
+        const key='board-support:'+article;
+        const geometry=this.acquire(key,()=>{
+          if(article==='70245'||article==='60714')return combine([
+            new THREE.BoxGeometry(9*S,3*S,13.5*S).translate(0,-1.5*S,6.75*S),
+            new THREE.CylinderGeometry(2.5*S,2.5*S,10*S,12).rotateX(Math.PI/2).translate(0,-2*S,-5*S)
+          ]);
+          const casper=article==='134286',width=casper?26:article==='134762'?12:14,depth=casper?13:article==='134762'?22:16;
+          return combine([new THREE.BoxGeometry(width*S,8*S,depth*S).translate(width*S/2,0,0),
+            new THREE.CylinderGeometry(2.5*S,2.5*S,10*S,12).rotateZ(Math.PI/2).translate(-5*S,0,0)]);
+        });
+        const hidden=['134286','134762','134763'].includes(article);
+        const mesh=this.mesh(group,'shelfSupport',geometry,key,h.x,hidden?H/2:h.y,h.z,null,ghost);
+        mesh.rotation.y=-h.rotation*Math.PI/180;mesh.userData.article=article;continue;
+      }
       const key='sekura:95388',geometry=this.acquire(key,()=>{
         const g=new THREE.BufferGeometry();
         g.setAttribute('position',new THREE.Float32BufferAttribute(supportVertices,3));g.setIndex(supportIndices);

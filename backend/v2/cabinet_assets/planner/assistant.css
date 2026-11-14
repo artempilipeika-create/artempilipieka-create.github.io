@@ -55,3 +55,5 @@
 .assistant-material-results{display:grid;gap:6px;max-height:180px;overflow:auto}
 #planner-assistant-dialog .assistant-material-results button{text-align:left;font-size:12px;margin:0}
 @media(max-width:640px){.assistant-grid{grid-template-columns:1fr}.assistant-drawing{position:static;order:-1}.assistant-drawing svg{height:145px}.assistant-steps{gap:4px}#planner-assistant-dialog.assistant-wizard{padding:16px}.assistant-drawing{padding:8px}.assistant-drawing p{margin:4px}}
+
+.fitting-photos{display:flex;align-items:center;justify-content:center;gap:3px;height:66px}.assistant-wizard .fitting-photos img{width:auto;max-width:47%;height:62px;object-fit:contain}.fitting-photos img:only-child{max-width:94%}

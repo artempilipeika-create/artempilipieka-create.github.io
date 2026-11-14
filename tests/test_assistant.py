@@ -170,3 +170,16 @@ def test_glass_and_board_answers_survive_storage_and_reject_incompatible_fitting
     assert CarcassDesign.model_validate(mixed).model_dump(mode='json')==mixed
     with pytest.raises(ValidationError):
         CarcassDesign.model_validate({**mixed,'shelfChoices':[['4/80936']*4]})
+
+
+def test_fixed_shelves_validate_and_report_exact_fittings():
+    from backend.v2.assistant_model import CarcassDesign
+    from backend.v2.three_d_document import hardware_for
+    spec = dict(SPEC, sectionShelves=[4], shelfChoices=[['board/confirmat','board/cam_dowel','board/134286','6/80936']])
+    assert CarcassDesign.model_validate(spec).shelfChoices == spec['shelfChoices']
+    for change in ({'depth':220}, {'thickness':16}):
+        with pytest.raises(ValidationError):
+            CarcassDesign.model_validate(dict(spec, **change))
+    for value, expected in zip(spec['shelfChoices'][0], ([4],[4,4],[4],[4])):
+        rows,_ = hardware_for(dict(item_id='q:shelf-0',module_type='blank',blank_axis='horizontal',blank_binding={'mounting':'none'},blank_shelf=value))
+        assert [row['qty'] for row in rows] == expected

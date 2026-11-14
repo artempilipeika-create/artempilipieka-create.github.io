@@ -39,7 +39,7 @@ export class AssistantUI{
   this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
-  this.shelfScopes={};this.shelfDrafts={};
+  this.shelfScopes={};this.shelfDrafts={};this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -69,7 +69,7 @@ export class AssistantUI{
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===2 && this.fields.joints)){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===2 && (this.fields.joints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
  render(){
   this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
@@ -92,6 +92,11 @@ export class AssistantUI{
    const card=el('div');card.className='assistant-choice';card.append(el('strong','Открытый шкаф'),el('p','Без фасадов. Наполнение видно и доступно.'));this.form.append(card);
    const unavailable=el('div');unavailable.className='assistant-unavailable';unavailable.append(el('strong','Распашные и раздвижные фасады'),el('p','Для этой сборки пока не подключены подходящие заготовки фасадов с петлями и ручками. Сейчас можно собрать открытый шкаф.'));this.form.append(unavailable);
   }else{
+   if(this.mode.value==='update'){
+    const label=el('label'),input=el('input');input.type='checkbox';input.checked=this.resetSideEdges;
+    input.onchange=()=>{this.resetSideEdges=input.checked;this.changed();};
+    label.append(input,document.createTextNode('Пересчитать кромку обеих стоек по конструкции'));this.form.append(label);
+   }
    this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.back)this.materialPicker('back','Задняя стенка',3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
@@ -106,6 +111,11 @@ export class AssistantUI{
     this.fields.joints={...current,[key]:v};this.changed();this.render();
    });
    if(value==='none')continue;
+   const photos=el('div');photos.className='fitting-photos';
+   for(const [file,name] of (value==='confirmat'?[['confirmat','Конфирмат']]:[['cam','Эксцентрик'],['dowel','Шкант']])){
+     const image=el('img');image.src='/account/planner/shelf-images/'+file+'.webp';image.alt=name;photos.append(image);
+   }
+   box.append(photos);
    const ns='http://www.w3.org/2000/svg',diagram=document.createElementNS(ns,'svg');
    diagram.setAttribute('class','joint-layout');diagram.setAttribute('viewBox','0 0 500 28');diagram.setAttribute('aria-hidden','true');
    const cam=value==='cam_dowel',inset=cam?100:70,depth=this.fields.depth;
@@ -143,7 +153,7 @@ export class AssistantUI{
   this.remaining.textContent='Проверка ИИ запускается только по кнопке. Пробных обращений на сайте осталось: '+this.remainingCount+'.';
  }
  materialOptions(){
-  const options={defaultMaterial:this.materials.body?.variant_id||null};
+  const options={resetSideEdges:this.resetSideEdges,defaultMaterial:this.materials.body?.variant_id||null};
   if(this.mode.value==='create'||this.materialChanged.body)options.bodyMaterialId=this.materials.body?.variant_id||null;
   if(this.mode.value==='create'||this.materialChanged.back)options.backMaterialId=this.materials.back?.variant_id||null;return options;
  }

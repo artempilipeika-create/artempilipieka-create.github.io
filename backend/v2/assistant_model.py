@@ -50,6 +50,7 @@ GLASS_SUPPORTS = {
 def shelf_valid(value, thickness):
     size, sep, article = value.partition('/')
     if size == 'board':
+        if article in ('cam_dowel','confirmat'): return thickness == 18
         if article == '95388': return True
         if article == '134286': return thickness in (16,18)
         return article in ('60714','70245','134762','134763') and thickness in (16,18,25)
@@ -79,6 +80,10 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Проверьте выбор полок по секциям.')
             if any(not shelf_valid(value,self.thickness) for row in self.shelfChoices for value in row):
                 raise ValueError('Держатель не подходит к полке.')
+            depth = self.depth - self.shelfSetback
+            for row in self.shelfChoices:
+                if ('board/cam_dowel' in row and depth < 216) or ('board/confirmat' in row and depth < 152):
+                    raise ValueError('Для крепежа недостаточно глубины самой полки.')
         if self.sectionShelves is not None:
             if self.recipe not in ('shelves', 'divided') or len(self.sectionShelves) != self.sections or max(self.sectionShelves) != self.shelves:
                 raise ValueError('Invalid section layout')

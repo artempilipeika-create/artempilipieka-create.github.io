@@ -53,7 +53,7 @@ def router():
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
-    planner_files.update('shelf-images/'+sku+'.webp' for sku in ['103814', '103816', '103817', '103818', '103819', '103820', '13110', '134286', '134762', '134763', '38334', '39543', '39544', '39653', '48846', '48848', '48862', '60714', '64145', '64149', '70245', '80054', '80936', '95388'])
+    planner_files.update('shelf-images/'+sku+'.webp' for sku in ['cam','confirmat','dowel','103814', '103816', '103817', '103818', '103819', '103820', '13110', '134286', '134762', '134763', '38334', '39543', '39544', '39653', '48846', '48848', '48862', '60714', '64145', '64149', '70245', '80054', '80936', '95388'])
     planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave','sink','faucet','hood','gas_cooker','radiator','gas_boiler','water_heater','window') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp'))
     planner_files.update('hardware-photos/'+name for name in (
         '38402.webp', '114064.webp',

@@ -50,7 +50,7 @@ export class CarcassUI{
           <p class="mf-blank-source">ЛДСП 18 мм — BYSPAN 605 PO; задняя стенка — белый ХДФ 3 мм. Материалы можно изменить у деталей после добавления. При другой толщине ЛДСП выберите подходящий материал перед экспортом.</p>
           <div class="mf-blank-fields">${numeric('shelfGap','Зазор полки с каждой стороны, мм',0,0,10)}${numeric('shelfSetback','Отступ полки от переднего края, мм',20,0,100)}</div>
           <p class="mf-blank-source">По умолчанию полки доходят до стоек. Для съёмных полок зазор можно задать вручную.</p>
-          <label>Начальная схема кромки<select name="corpus-edgePolicy"><option value="front">Передние торцы · крышка тумбы в круг</option><option value="all">Все торцы ЛДСП</option><option value="none">Без ПВХ</option></select></label>
+          <label>Начальная схема кромки<select name="corpus-edgePolicy"><option value="front">По конструкции · открытые торцы стоек</option><option value="all">Все торцы ЛДСП</option><option value="none">Без ПВХ</option></select></label>
           <label>Толщина ПВХ<select name="corpus-edgeThickness">${[.4,.8,1,2,3].map(v=>`<option value="${v}" ${v===1?'selected':''}>${v} мм</option>`).join('')}</select></label>
           <p class="mf-blank-source">Начальная схема — редактируемая настройка. Индексы рёбер E из альбомов не переносятся на другую деталь автоматически. Для мойки исходная схема без ПВХ.</p>
         </div></details>

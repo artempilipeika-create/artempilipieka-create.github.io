@@ -48,8 +48,10 @@ export function buildCarcass(input={},options={}){
     parts.push({key,label:name,item});return item;
   };
   const edge=(special='1000')=>s.edgePolicy==='all'?'1111':s.edgePolicy==='none'?'0000':special;
-  const left=add('left','Боковина левая','side',sideH,D,t,-(W-t)/2,sideY,0,edge());
-  const right=add('right','Боковина правая','side',sideH,D,t,(W-t)/2,sideY,0,edge());
+  // Side panel edge order: front, rear, bottom, top.
+  const sideEdges=edge('1'+(s.back?'0':'1')+(s.bottom==='overlay'?'0':'1')+(s.top==='overlay'?'0':'1'));
+  const left=add('left','Боковина левая','side',sideH,D,t,-(W-t)/2,sideY,0,sideEdges);
+  const right=add('right','Боковина правая','side',sideH,D,t,(W-t)/2,sideY,0,sideEdges);
   const binding=(a,b,gap=0,z=0)=>({left_id:a.item_id,right_id:b.item_id,gap_left_mm:gap,gap_right_mm:gap,depth_offset_mm:z});
   add('bottom','Дно','horizontal',s.bottom==='overlay'?W:W-2*t,D,t,0,0,0,edge(),s.bottom==='inset'?binding(left,right):null);
   if(['inset','overlay'].includes(s.top))add('top','Крыша','horizontal',s.top==='overlay'?W:W-2*t,D,t,0,H-t,0,
@@ -72,8 +74,9 @@ export function buildCarcass(input={},options={}){
     const count=counts[section],y=bottomTop+Math.round((i+1)*(topBottom-bottomTop-count*t)/(count+1))+i*t;
     const a=supports[section],b=supports[section+1];
     const value=s.shelfChoices?.[section]?.[i]??defaultShelf;
-    const {kind,thickness,hardware}=choice(value,t);
-    const gap=Math.max(s.shelfGap,fittingGap(hardware.article));
+    const {kind,thickness,hardware,scheme}=choice(value,t);
+    const gap=scheme?0:Math.max(s.shelfGap,kind==='glass'&&!options.legacyGlassGap?1:0,fittingGap(hardware.article));
+    if(scheme && D-s.shelfSetback < (scheme==='cam_dowel'?216:152))throw Error('Для выбранного крепежа недостаточно глубины полки после отступа.');
     const label=kind==='glass'?'Стекло '+thickness+' мм · полка ':'Полка ';
     add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
       widths[section]-2*gap,D-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,-s.shelfSetback/2,kind==='glass'?'0000':edge(),binding(a,b,gap,-s.shelfSetback/2),value===defaultShelf?null:value);

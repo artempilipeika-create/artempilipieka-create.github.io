@@ -100,6 +100,20 @@ def hardware_for(it):
         key=it.get('item_id','').rsplit(':',1)[-1]
         fixed=':' in it.get('item_id','') and (key in ('bottom','top') or key.startswith('rail-'))
         mounting=binding.get('mounting') or ('none' if fixed else 'sekura-95388')
+        shelf = it.get('blank_shelf') or ''
+        article = shelf.partition('/')[2]
+        metadata = it.get('assistant_carcass') or {}
+        scheme = article if shelf else ((metadata.get('spec') or {}).get('joints') or {}).get(key)
+        if scheme == 'cam_dowel':
+            return [_row('Эксцентриковая стяжка для плиты 18 мм',4),_row('Шкант деревянный 8×35',4,'pcs','39319')],None
+        if scheme == 'confirmat':
+            return [_row('Конфирмат 7×50',4)],None
+        if article:
+            names={'95388':'SEKURA 2','60714':'SEKURA 6','70245':'SEKURA 6','134286':'Casper',
+                   '134762':'MYSTI 12×22','134763':'MYSTI 14×16','80936':'АК133','103819':'АК133',
+                   '103814':'306','103820':'MV-09','103816':'АК104','103817':'АК104','64145':'АК104','103818':'АК104',
+                   '48846':'SEKURA 0.8','48848':'SEKURA 0.8','39544':'SEKURA 0.8','39543':'L-003B','48862':'L-003B'}
+            return [_row('Полкодержатель '+names.get(article,article),4,'pcs',article)],None
         if mounting=='sekura-95388':
             return [_row('Полкодержатель SEKURA 2 никель AKS',4,'pcs','95388')],None
     it=refresh_dryer_source(it)

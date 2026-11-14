@@ -1,7 +1,7 @@
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
-import {jointQuantity} from './carcass-joints.mjs';
-import {choice} from './shelf-choices.mjs';
+import {jointQuantity,nativeCarcassJoints} from './carcass-joints.mjs';
+import {choice,shelfDescription} from './shelf-choices.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
@@ -17,14 +17,17 @@ export function selectedCarcass(adapter){
  const metadata=adapter.selected?.assistant_carcass;
  if(!metadata)return null;
  const items=adapter.items.filter(i=>i.assistant_carcass?.group_id===metadata.group_id);
- const expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id}),metadata.position);
- if(items.length!==expected.length||expected.some(i=>geometry(items.find(p=>p.item_id===i.item_id)||{})!==geometry(i)))
+ const matches=(legacyGlassGap=false)=>{
+  const expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id,legacyGlassGap}),metadata.position);
+  return items.length===expected.length&&expected.every(i=>geometry(items.find(p=>p.item_id===i.item_id)||{})===geometry(i));
+ };
+ if(!matches()&&!(items.some(i=>/^[468]\//.test(i.blank_shelf))&&matches(true)))
   throw Error('Геометрия этого корпуса изменена вручную. Продолжите редактировать детали в параметрах или создайте новый корпус.');
  if(items.some(i=>signature(i.assistant_carcass)!==signature(metadata)))throw Error('Параметры деталей корпуса различаются. Продолжите ручное редактирование.');
  return {metadata,items};
 }
 
-export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,bodyMaterialId,backMaterialId}={}){
+export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,bodyMaterialId,backMaterialId,resetSideEdges=false}={}){
  if(!['create','update'].includes(plan.action)||!plan.spec)throw Error('Нет предложения для применения.');
  const current=plan.action==='update'?selectedCarcass(adapter):null;
  if(plan.action==='update'&&!current)throw Error('Выберите деталь корпуса, созданного помощником.');
@@ -47,6 +50,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  }
  position=Object.fromEntries(['x','z','elevation_mm','rotation'].map(k=>[k,position[k]??0]));
  const metadata={group_id:prefix,spec,position};
+ const previousSides=current && spec.back!==current.metadata.spec.back
+   ?buildCarcass(current.metadata.spec,{idPrefix:prefix}).items.filter(i=>i.item_id===prefix+':left'||i.item_id===prefix+':right'):[];
  const items=placeCarcass(built,position).map(generated=>{
   const old=current?.items.find(i=>i.item_id===generated.item_id);
   const item={...old,...generated,blank_binding:generated.blank_binding??null,assistant_carcass:metadata};
@@ -55,7 +60,11 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    if(!generated.blank_shelf)delete item.blank_shelf;
    if(!old.blank_shelf&&!generated.blank_shelf&&old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
    if(old.blank_thickness_mm===generated.blank_thickness_mm)item.body_variant_id=old.body_variant_id;
-   if(!old.blank_shelf&&!generated.blank_shelf&&spec.edgePolicy===current.metadata.spec.edgePolicy)item.blank_edge_code=old.blank_edge_code;
+   if(!old.blank_shelf?.match(/^[468]\//)&&!generated.blank_shelf?.match(/^[468]\//)&&spec.edgePolicy===current.metadata.spec.edgePolicy){
+    const oldSide=previousSides.find(i=>i.item_id===old.item_id);
+    const recalculate=resetSideEdges&&[prefix+':left',prefix+':right'].includes(item.item_id);
+    if(!recalculate&&(!oldSide||oldSide.blank_edge_code!==old.blank_edge_code))item.blank_edge_code=old.blank_edge_code;
+   }
    if(spec.edgeThickness===current.metadata.spec.edgeThickness)item.blank_edge_thickness_mm=old.blank_edge_thickness_mm;
   }
   if(generated.item_id.endsWith(':back')){if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
@@ -71,16 +80,17 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  for(const shelf of next.filter(i=>i.blank_shelf)){
   const mount=shelfSupportPlan(shelf,next);if(mount.error)throw Error(shelf.name+' · '+mount.error);
  }
+ nativeCarcassJoints(next);
  const summary=[plan.action==='create'?'Добавить корпус':'Изменить выбранный корпус',
   `${spec.width} × ${spec.height} × ${spec.depth} мм · ЛДСП ${spec.thickness} мм`,
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
-  `Зазор полок: ${spec.shelfGap} мм с каждой стороны`,
+  `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
   spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...(spec.joints?['Крыша · '+jointQuantity(spec.joints.top),'Дно · '+jointQuantity(spec.joints.bottom)]:[]),
   ...(spec.shelfChoices?spec.shelfChoices.flatMap((row,i)=>{
    const quantities=new Map();
    for(const value of row)quantities.set(value,(quantities.get(value)||0)+1);
-   return [...quantities].map(([value,n])=>{const c=choice(value,spec.thickness);return 'Секция '+(i+1)+' · '+(c.kind==='glass'?'стекло':'ЛДСП')+' '+c.thickness+' мм × '+n+' · '+c.hardware.name+' '+c.hardware.finish+' · арт. '+c.hardware.article+' × '+(4*n);});
+   return [...quantities].map(([value,n])=>{const c=choice(value,spec.thickness);return 'Секция '+(i+1)+' · '+(c.kind==='glass'?'стекло':'ЛДСП')+' '+c.thickness+' мм × '+n+' · '+shelfDescription(c,n);});
   }):['Открытый шкаф. На съёмную полку — четыре SEKURA 2.'])];
  if(removed.length)summary.push('Будут удалены детали: '+removed.map(i=>i.name+(i.production_note?' (есть примечание)':'')).join(', '));
  if(current&&spec.thickness!==current.metadata.spec.thickness)summary.push('Толщина изменится: выберите соответствующий материал перед экспортом.');

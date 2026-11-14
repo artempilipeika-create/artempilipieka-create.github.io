@@ -30,6 +30,11 @@ export const fittings=[
 export const defaultShelf='board/95388';
 export function choice(value,boardThickness){
  const [size,article]=String(value).split('/');
+ const scheme=size==='board' && ['confirmat','cam_dowel'].includes(article) ? article : null;
+ if(scheme && boardThickness===18 && value==='board/'+scheme){
+   const name=scheme==='confirmat'?'Конфирмат 7×50':'Эксцентрик + шкант';
+   return {kind:'board',thickness:18,scheme,hardware:{name,article:scheme}};
+ }
  const hardware=fittings.find(f=>f.article===article);
  const kind=size==='board'?'board':'glass';
  const thickness=kind==='board'?boardThickness:Number(size);
@@ -46,4 +51,16 @@ export function fittingGap(article){
  if(['80936','103819'].includes(article))return 8;
  if(['103814','103816','103817','64145','103818'].includes(article))return 3;
  return 0;
+}
+
+export function fixedShelfScheme(it){
+ const value=it?.blank_shelf;
+ if(value==='board/confirmat')return 'confirmat';
+ if(value==='board/cam_dowel')return 'cam_dowel';
+ return null;
+}
+export function shelfDescription(c,n){
+ if(c.scheme==='cam_dowel')return 'Эксцентрики × '+(4*n)+' · шканты × '+(4*n);
+ if(c.scheme==='confirmat')return 'Конфирматы 7×50 × '+(4*n);
+ return c.hardware.name+' · арт. '+c.hardware.article+' × '+(4*n)+' шт.';
 }

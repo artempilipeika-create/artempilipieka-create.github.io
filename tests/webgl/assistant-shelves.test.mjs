@@ -45,3 +45,33 @@ test('cabinet joints follow both inset panels independently of shelves and proje
  assert.throws(()=>wardrobeSpec({...base,depth:250,joints:spec.joints}),/276/);
  assert.throws(()=>wardrobeSpec({...base,thickness:16,joints:spec.joints}),/18/);
 });
+
+test('fixed shelf patterns keep the same working height, meet both sides and exclude holders',()=>{
+ const spec=wardrobeSpec({...base,sections:1,sectionShelves:[3],shelfChoices:[['board/confirmat','board/cam_dowel','4/48846']]});
+ const built=buildCarcass(spec,{idPrefix:'p'});
+ for(const rotation of [0,90,180,270]){
+  const items=placeCarcass(built,{x:520,z:360,elevation_mm:50,rotation});
+  const joints=nativeCarcassJoints(items);
+  assert.equal(joints.length,12);
+  for(const h of joints){
+   const p=items.find(i=>i.item_id===h.joined_panel_id);
+   const offset=localPoint({x:h.position.x-p.x,z:h.position.z-p.z},rotation);
+   assert.equal(p.depth/2-Math.abs(offset.z),h.joint_part==='dowel'?102:70);
+   assert.equal(Math.abs(offset.x),p.width/2);
+   assert.equal(h.position.y,p.elevation_mm+9);
+   assert.equal(p.blank_binding.gap_left_mm,0);
+  }
+  assert.equal(nativeShelfSupports(items).length,4);
+  assert.equal(items.find(i=>i.blank_shelf==='4/48846').blank_binding.gap_right_mm,1);
+ }
+ assert.throws(()=>wardrobeSpec({...base,sectionShelves:[1,1],shelfChoices:[['board/confirmat'],['board/cam_dowel']]}),/Встречная присадка/);
+});
+
+test('both outer sides receive PVC according to the covering panels and individual assignments',()=>{
+ for(const [recipe,back,expected] of [['shelves',true,'1011'],['shelves',false,'1111'],['cap',false,'1110'],['base',true,'1001']]){
+  const model=buildCarcass({recipe,back},{idPrefix:'s'});
+  assert.deepEqual(model.items.slice(0,2).map(x=>x.blank_edge_code),[expected,expected]);
+  const manual=buildCarcass({recipe,back},{idPrefix:'s',edges:{left:'0000'}});
+  assert.deepEqual(manual.items.slice(0,2).map(x=>x.blank_edge_code),['0000',expected]);
+ }
+});

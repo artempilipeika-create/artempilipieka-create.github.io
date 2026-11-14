@@ -1,4 +1,4 @@
-import {validateJoints} from './carcass-joints.mjs';
+import {validateJoints,nativeCarcassJoints} from './carcass-joints.mjs';
 import {buildCarcass} from './carcass-model.mjs';
 import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
 export const WARDROBE_STEPS=['Размеры','Секции','Наполнение','Фасады','Материалы'];
@@ -12,7 +12,9 @@ export function wardrobeSpec(f){
  const rows=shelfRows(f);
  for(const row of rows)for(const value of row)choice(value,spec.thickness);
  if(rows.some(row=>row.some(value=>value!==defaultShelf)))spec.shelfChoices=rows;
- buildCarcass(spec);return spec;
+ const built=buildCarcass(spec);
+ if(rows.some(row=>row.includes('board/confirmat')||row.includes('board/cam_dowel')))nativeCarcassJoints(built.items);
+ return spec;
 }
 export function sectionWidths(s){const clear=s.width-(s.sections+1)*s.thickness;return Array.from({length:s.sections},(_,i)=>Math.floor(clear/s.sections)+(i<clear%s.sections?1:0));}
 export function questionnaireMaterialError(m,thickness){return !m?.variant_id?'Выберите материал из каталога.':Number(m.thickness)!==thickness?'Нужен материал толщиной '+thickness+' мм.':'';}
