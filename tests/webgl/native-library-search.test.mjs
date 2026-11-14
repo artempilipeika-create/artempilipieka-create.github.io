@@ -108,3 +108,23 @@ test('Repeated project items hash each candidate only once per scan',()=>{
   const {c}=runtime(f,[],{fs:wrapped});const item={...d.item,source_file:'renamed.fr3d'};assert.equal(c.prepareProject({items:[item,item,item]},f.root).entries.length,3);assert.ok(reads<=2);
  }finally{f.cleanup();}
 });
+
+test('Add a separate donor folder without losing the original library and reuse both after restart',()=>{
+ const f=fixture();try{
+  const a=donor(f.root,'Нижние/Корпус.fr3d','original');
+  donor(f.root,'Верхние/ВМУД1L-1000.ГЛ-340мм.fr3d','previous revision');
+  const second=path.join(f.temp,'Новые модули'),b=donor(second,'Верхние/ВМУД1L-1000.ГЛ-340мм.fr3d','corrected');
+  const payload={items:[a.item,{...b.item,source_file:'ВМУД1L-1000.ГЛ-340мм(1).fr3d'}]};
+  const first=runtime(f,[f.root,second]);const imported=first.c.prepareProjectWithLibrary(payload);
+  assert.deepEqual(Array.from(imported.prepared.entries,e=>e.source),[a.file,b.file]);
+  const again=runtime(f);assert.equal(again.c.prepareProjectWithLibrary(payload).prepared.entries.length,2);
+  assert.equal(again.prompts.length,0);
+ }finally{f.cleanup();}
+});
+test('A repeat selection rescans when the requested FR3D was just added to the same folder',()=>{
+ const f=fixture();try{
+  const {c}=runtime(f,[f.root]);c.libraryRoot();const content='just copied',name='Новый.fr3d';
+  c.UI.dialogs.RunDirectorySelectDialog=()=>{donor(f.root,name,content);return f.root;};
+  assert.equal(c.prepareProjectWithLibrary({items:[{source_file:name,source_sha256:digest(content)}]}).prepared.entries.length,1);
+ }finally{f.cleanup();}
+});

@@ -1,7 +1,8 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.13 UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.14 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
  v9.9.11: allow native upper depth 250–600 mm with 3 mm rear frame inset.
  v9.9.10: preserve native frame placement for 22 upper glass and corner sources.
@@ -148,21 +149,35 @@ function librarySettingsFile() {
   const base = env.LOCALAPPDATA || env.APPDATA || (env.USERPROFILE ? path.join(env.USERPROFILE, 'AppData', 'Local') : '');
   return base ? path.join(base, 'MartinForest', 'bazis-import-settings.json') : '';
 }
-function savedLibraryRoot() {
+function libraryPathKey(value) {
+  const absolute = path.resolve(value);
+  return process.platform === 'win32' ? absolute.toLowerCase() : absolute;
+}
+function uniqueLibraryRoots(values) {
+  const roots = new Map();
+  for (const value of values) {
+    if (typeof value !== 'string' || !value.trim()) continue;
+    const key = libraryPathKey(value);
+    if (!roots.has(key)) roots.set(key, path.resolve(value));
+  }
+  return Array.from(roots.values());
+}
+function savedLibraryRoots() {
   const filename = librarySettingsFile();
-  if (!filename) return '';
+  if (!filename) return [];
   try {
     const settings = JSON.parse(fs.readFileSync(filename, 'utf8').replace(/^\uFEFF/, ''));
-    return typeof settings.libraryRoot === 'string' ? settings.libraryRoot : '';
-  } catch (_) { return ''; }
+    return uniqueLibraryRoots([settings.libraryRoot, ...(Array.isArray(settings.libraryRoots) ? settings.libraryRoots : [])]);
+  } catch (_) { return []; }
 }
-function rememberLibraryRoot(root) {
+function savedLibraryRoot() { return savedLibraryRoots()[0] || ''; }
+function rememberLibraryRoot(root, roots = [root]) {
   const filename = librarySettingsFile();
   if (!filename) { console.log('ПАПКА НЕ ЗАПОМНЕНА: недоступна папка настроек пользователя.'); return; }
   const temp = filename + '.' + Date.now() + '-' + Math.random().toString(16).slice(2) + '.tmp';
   try {
     fs.mkdirSync(path.dirname(filename), { recursive: true });
-    fs.writeFileSync(temp, JSON.stringify({ version: 1, libraryRoot: root }, null, 2), { encoding: 'utf8', flag: 'wx' });
+    fs.writeFileSync(temp, JSON.stringify({ version: 2, libraryRoot: root, libraryRoots: uniqueLibraryRoots([root, ...roots]) }, null, 2), { encoding: 'utf8', flag: 'wx' });
     fs.renameSync(temp, filename);
   } catch (error) {
     try { fs.unlinkSync(temp); } catch (_) {}
@@ -187,7 +202,7 @@ function libraryRoot(forceSelection, reason) {
   if (!selected) return '';
   const root = path.resolve(String(selected));
   if (!readableLibraryDirectory(root)) throw new Error('Папка недоступна для чтения:\n' + root);
-  rememberLibraryRoot(root);
+  if (!forceSelection) rememberLibraryRoot(root, savedLibraryRoots());
   return root;
 }
 
@@ -203,7 +218,8 @@ function normalizeSourceName(filename) {
 }
 
 function collectSourceFiles(root) {
-  const files = [], unreadable = [], stack = [root], seen = new Set(), seenFiles = new Set();
+  const roots = uniqueLibraryRoots(Array.isArray(root) ? root : [root]);
+  const files = [], unreadable = [], stack = roots.slice().reverse(), seen = new Set(), seenFiles = new Set();
   const key = value => process.platform === 'win32' ? String(value).toLowerCase() : String(value);
   while (stack.length) {
     const dir = stack.pop();
@@ -227,7 +243,7 @@ function collectSourceFiles(root) {
       } catch (error) { unreadable.push({ path: full, code: error.code || error.message }); }
     }
   }
-  return { files, directories: seen.size, truncated: false, unreadable };
+  return { roots, files, directories: seen.size, truncated: false, unreadable };
 }
 
 function sha256File(filename) {
@@ -310,7 +326,7 @@ function sourceMismatchMessage(root,item,scan){
   if(sameName.length){
     message+='\nОдноимённые файлы имеют другое содержимое:';
     for(const file of sameName.slice(0,5))message+='\n'+file+'\nФактический SHA-256: '+(scan.hashes?.get(file)||sha256File(file));
-  }else message+='\nФайл с таким именем отсутствует в выбранной папке и её подпапках.';
+  }else message+='\nФайл с таким именем отсутствует в выбранных папках и их подпапках.';
   return message+'\nПривязка модуля сохранена. Автозамена отключена. Добавьте нужную версию FR3D в отдельную подпапку или явно выберите другой модуль на сайте. Существующие FR3D не заменяйте.';
 }
 
@@ -1141,8 +1157,8 @@ function canonicalDryerDonor(item) {
   // The export pins exact bytes. Never replace a donor during import.
   return item;
 }
-function prepareProject(payload, root) {
-  const scan = collectSourceFiles(root);
+function prepareProject(payload, root, roots = [root]) {
+  const scan = collectSourceFiles(roots);
   const entries = [], errors = [];
   let missingSources = 0;
   for (const original of payload.items) {
@@ -1176,7 +1192,7 @@ function prepareProject(payload, root) {
     const unreadable = (scan.unreadable || []).map(entry => entry.path + ' (' + entry.code + ')');
     const hashErrors = scan.hashErrors || [];
     const error = new Error('Проверьте исходные FR3D в библиотеке:\n' + errors.join('\n') +
-      '\nПапка поиска: ' + root + '\nПросмотрено папок: ' + scan.directories + '\nНайдено FR3D: ' + scan.files.length +
+      '\nПапки поиска:\n' + roots.join('\n') + '\nПросмотрено папок: ' + scan.directories + '\nНайдено FR3D: ' + scan.files.length +
       (unreadable.length ? '\nНе удалось прочитать пути (' + unreadable.length + '):\n' + unreadable.slice(0,10).join('\n') : '') +
       (hashErrors.length ? '\nНе удалось проверить содержимое FR3D:\n' + hashErrors.slice(0,10).join('\n') : '') +
       (scan.truncated ? '\nДостигнут предел обхода папок.' : ''));
@@ -1189,20 +1205,33 @@ function prepareProject(payload, root) {
 function prepareProjectWithLibrary(payload) {
   let root = libraryRoot();
   if (!root) return null;
-  try { return { root, prepared: prepareProject(payload, root) }; }
-  catch (error) {
-    if (error.code !== 'MF_LIBRARY_SOURCES_MISSING') throw error;
-    console.log(error.message);
-    const previous = root;
-    root = libraryRoot(true, 'Martin Forest — не все модули найдены. Выберите ОБЩУЮ папку со всеми подпапками');
-    if (!root) return null;
-    if (root === previous) throw error;
-    return { root, prepared: prepareProject(payload, root) };
+  const bundled = typeof __filename === 'string' ? path.join(path.dirname(__filename), 'Модули Martin Forest') : '';
+  let roots = uniqueLibraryRoots([root, ...savedLibraryRoots(), bundled]).filter(readableLibraryDirectory);
+  const attempted = new Set();
+  let added = false;
+  while (true) {
+    try {
+      const prepared = prepareProject(payload, root, roots);
+      if (added) rememberLibraryRoot(root, roots);
+      return { root, prepared };
+    } catch (error) {
+      if (error.code !== 'MF_LIBRARY_SOURCES_MISSING') throw error;
+      console.log(error.message);
+      const selected = libraryRoot(true, 'Martin Forest — выберите папку с недостающими FR3D. Уже выбранные папки сохраняются');
+      if (!selected) return null;
+      const key = libraryPathKey(selected);
+      // Allow a fresh scan after files were copied into the same directory.
+      if (attempted.has(key)) throw error;
+      attempted.add(key);
+      root = selected;
+      roots = uniqueLibraryRoots([root, ...roots]);
+      added = true;
+    }
   }
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.13 MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.14 MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1314,7 +1343,7 @@ function assertEmptyTestModel() {
 function importProject(prepared, root, payload) {
   const brief = projectBrief(payload);
   const log = ['ИМПОРТЁР: Martin Forest ' + IMPORT_VERSION, 'СКРИПТ: ' + IMPORT_SCRIPT_PATH,
-    'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКА ПОИСКА: ' + root,
+    'SHA-256 СКРИПТА: ' + (sha256File(IMPORT_SCRIPT_PATH) || 'НЕ ПОЛУЧЕН'), 'ПАПКИ ПОИСКА: ' + (prepared.scan?.roots || [root]).join(' | '),
     'ПРОСМОТРЕНО ПАПОК: ' + (prepared.scan?.directories ?? 'нет данных') + '; FR3D: ' + (prepared.scan?.files?.length ?? 'нет данных')];
   for (const entry of prepared.scan?.unreadable || []) log.push('ВНИМАНИЕ: недоступен путь ' + entry.path + ' (' + entry.code + ')');
   const noteChecks = [], liveChecks = [], importedObjects = [], liveMaterials = [], liveProfiles = [];
