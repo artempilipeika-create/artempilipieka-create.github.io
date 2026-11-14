@@ -29,10 +29,10 @@ export function shelfSupportPlan(it,items){
     const gap=b['gap_'+side+'_mm'],sign=side==='left'?-1:1;
     if(Math.abs(local.x+sign*(it.width/2+gap)-face)>.01 || Math.abs(local.z-center.z)+it.depth/2>host.depth/2+.01)
       return {parts:[],error:'Полка не совпадает с положением опорных стоек.'};
-    if(host.width<=12)return {parts:[],error:'Глубина отверстия SEKURA 2 — 12 мм. Проверьте толщину стойки.'};
+    if(h.name.startsWith('SEKURA')&&host.width<=12)return {parts:[],error:'Глубина отверстия SEKURA 2 — 12 мм. Проверьте толщину стойки.'};
     if(hidden&&gap!==0)return {parts:[],error:'Для скрытого крепления нужен нулевой боковой зазор.'};
     if(gap>=(h.name==='SEKURA 6'?13.5:14.5))return {parts:[],error:'Боковой зазор выходит за опорную площадку '+h.name+'.'};
-    if((it.elevation_mm||0)-(host.elevation_mm||0)<14.5)return {parts:[],error:'Под полкой не хватает высоты для SEKURA 2.'};
+    if(h.name.startsWith('SEKURA')&&(it.elevation_mm||0)-(host.elevation_mm||0)<14.5)return {parts:[],error:'Под полкой не хватает высоты для SEKURA 2.'};
     const centers=rows(it);
     if(side==='left'&&host.width<=24){
       // The other section bears on the opposite face. Keep its reference row unchanged.

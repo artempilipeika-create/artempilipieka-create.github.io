@@ -163,3 +163,10 @@ def test_api_private_and_project_save_reopen(api,admin_user,settings,monkeypatch
     assert len(calls)==3
     api.cookies.clear()
     assert api.get('/api/v2/3d-assistant/status').status_code==401
+
+def test_glass_and_board_answers_survive_storage_and_reject_incompatible_fittings():
+    from backend.v2.assistant_model import CarcassDesign
+    mixed={**SPEC,'sectionShelves':[4],'shelfChoices':[['board/95388','board/134286','4/48846','6/80936']]}
+    assert CarcassDesign.model_validate(mixed).model_dump(mode='json')==mixed
+    with pytest.raises(ValidationError):
+        CarcassDesign.model_validate({**mixed,'shelfChoices':[['4/80936']*4]})
