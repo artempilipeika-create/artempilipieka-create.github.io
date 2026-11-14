@@ -14,7 +14,8 @@ from reportlab.lib.utils import ImageReader
 from .sales_album import fonts, client_title, material_name
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
-from .album_elevation import draw as draw_elevation
+from .album_elevation import draw as draw_elevation, validate_geometry
+from . import album_wardrobe
 from .album_layout import schedule
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -108,8 +109,11 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
     material_visuals = material_visuals or {}
     material_sheets=material_pages(scene,materials,material_visuals)
     schedule_sheets=schedule_pages(scene['items'])
-    schedule_start=3+len(material_sheets)
-    page_count=2+len(material_sheets)+len(schedule_sheets)
+    drawings=album_wardrobe.drawing_sets(scene['items'])
+    details=validate_geometry(scene['items'],elevation_geometry)
+    material_start=2+len(drawings)
+    schedule_start=material_start+len(material_sheets)
+    page_count=schedule_start-1+len(schedule_sheets)
     out = BytesIO()
     c = Canvas(out, pagesize=(W, H), pageCompression=1)
     c.setTitle('MARTIN FOREST | ' + name)
@@ -164,21 +168,26 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
     title.drawOn(c,32,79-th)
     c.showPage()
 
-    c.setFillColor(white);c.rect(0,0,W,H,fill=1,stroke=0)
-    text('MARTIN FOREST',32,H-20,240,12,True)
-    text('ЗАКАЗ № '+(order or 'не указан'),W-250,H-22,218,8,True)
-    text('Кухня. Вид спереди',32,H-50,W-64,22,True)
-    reference=f'лист {schedule_start}' if len(schedule_sheets)==1 else f'листы {schedule_start}–{page_count}'
-    text(f'Фасады условно сняты. Состав модулей — {reference}. Размеры в мм.',32,H-83,W-64,8,color=MUTED)
-    draw_elevation(c,scene,32,H-103,W-64,69,elevation_geometry)
-    c.setStrokeColor(HexColor('#d7ddd5'));c.line(32,48,W-32,48)
-    text(name,32,36,W-115,8,color=MUTED);text(f'02 / {page_count:02d}',W-80,36,48,8,color=MUTED)
-    c.showPage()
+    for sheet_number,cabinet in enumerate(drawings,2):
+        c.setFillColor(white);c.rect(0,0,W,H,fill=1,stroke=0)
+        text('MARTIN FOREST',32,H-20,240,12,True)
+        text('ЗАКАЗ № '+(order or 'не указан'),W-250,H-22,218,8,True)
+        title='Кухня. Вид спереди' if cabinet is None else cabinet[0]['name'].split(' · ')[0]+' · 2D'
+        text(title,32,H-50,W-64,22,True)
+        reference=f'лист {schedule_start}' if len(schedule_sheets)==1 else f'листы {schedule_start}–{page_count}'
+        text(f'Фасады условно сняты. Состав модулей — {reference}. Размеры в мм.',32,H-83,W-64,8,color=MUTED)
+        if cabinet is None:
+            draw_elevation(c,scene,32,H-103,W-64,69,elevation_geometry)
+        else:
+            album_wardrobe.draw(c,cabinet,32,H-103,W-64,69,details)
+        c.setStrokeColor(HexColor('#d7ddd5'));c.line(32,48,W-32,48)
+        text(name,32,36,W-115,8,color=MUTED);text(f'{sheet_number:02d} / {page_count:02d}',W-80,36,48,8,color=MUTED)
+        c.showPage()
 
     gap = 24
     width = (W-2*M-gap)/2
     for sheet, rows in enumerate(material_sheets):
-        page(3+sheet, 'Материалы и характер' if sheet == 0 else 'Материалы · продолжение')
+        page(material_start+sheet, 'Материалы и характер' if sheet == 0 else 'Материалы · продолжение')
         top = H-126
         for cards, card_height in rows:
             for col, (title, entries, swatch, _) in enumerate(cards):

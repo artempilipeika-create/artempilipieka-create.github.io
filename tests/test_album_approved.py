@@ -98,3 +98,38 @@ def test_two_section_wardrobe_pdf_before_and_after_photo():
         assert '2200' in drawing and '800' in drawing
         assert 'Контур' not in drawing
         assert 'shelf4' in ''.join(p.extract_text() for p in pdf.pages[2:])
+
+
+@pytest.mark.parametrize('rotation', [0,90,180,270])
+def test_wardrobe_section_levels_and_depth_use_saved_finished_faces(rotation):
+    from backend.v2.album_wardrobe import drawing_sets,profile
+    from math import cos,sin,radians
+    def panel(key,axis,x,z,y,w,h,d):
+        c,s=round(cos(radians(rotation))),round(sin(radians(rotation)))
+        return dict(item_id='q:'+key,name='Шкаф ИИ · '+key,module_type='blank',
+                    blank_axis=axis,width=w,height=h,depth=d,x=400+x*c-z*s,
+                    z=500+x*s+z*c,elevation_mm=y,rotation=rotation,
+                    assistant_carcass={'group_id':'q','spec':{'recipe':'divided','sections':2}})
+    items=[panel('left','side',-391,0,80,18,2200,340),panel('right','side',391,0,80,18,2200,340),
+           panel('back','back',0,-171.5,81,798,2198,3),panel('top','horizontal',0,0,2262,764,18,340),
+           panel('shelf-0-0','horizontal',-190,-10,760,370,6,320),
+           panel('shelf-1-0','horizontal',190,-10,560,373,18,320)]
+    assert drawing_sets(specimen()['items'])==[None]
+    assert drawing_sets(items)==[items]
+    assert drawing_sets(items+specimen()['items'])==[None,items]
+    blocks,levels=profile(items)
+    assert levels==[[766],[578]]
+    assert max(z+d for _,z,_,_,d,_,_ in blocks)-min(p[1] for p in blocks)==343
+    buf=BytesIO();Image.new('RGB',(12,8)).save(buf,'JPEG')
+    pages=PdfReader(BytesIO(kitchen_album.render('Шкаф',{'items':items},{},buf.getvalue()))).pages
+    text=pages[1].extract_text()
+    assert all(t in text for t in ('Вид сбоку','Сек. 2','343','766','578','2200','800'))
+
+
+def test_standard_wardrobe_uses_enabled_shelf_top_above_base_and_floor():
+    from backend.v2.album_wardrobe import profile,drawing_sets
+    item=dict(item_id='w',module_type='wardrobe',name='Шкаф',width=600,height=2000,depth=340,
+              base='legs',base_height=100,elevation_mm=50,
+              shelves=[dict(offset_mm=400,thickness=18),dict(offset_mm=320,thickness=6,enabled=False)])
+    assert drawing_sets([item])==[[item]]
+    assert profile([item])[1]==[[559]]
