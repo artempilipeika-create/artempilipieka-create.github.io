@@ -1,5 +1,6 @@
 """Wardrobe projections and finished shelf levels from the saved scene, in millimetres."""
 import re
+from math import hypot
 from collections import OrderedDict
 
 from reportlab.lib.colors import HexColor, white
@@ -81,13 +82,26 @@ def draw(c,parts,x,top,width,bottom,details):
         (c.drawCentredString if center else c.drawString)(px,py,str(value))
     def stroke(x1,y1,x2,y2):
         c.setStrokeColor(line);c.setLineWidth(.55);c.line(x1,y1,x2,y2)
-    table_w=170
+    def arrows(x1,y1,x2,y2,color):
+        length=hypot(x2-x1,y2-y1)
+        if length<=0:return
+        dx,dy=(x2-x1)/length,(y2-y1)/length
+        head=min(4,length*.36);half=head*.36
+        c.setStrokeColor(color);c.setLineWidth(.45);c.line(x1,y1,x2,y2)
+        c.setFillColor(color)
+        for px,py,sign in ((x1,y1,1),(x2,y2,-1)):
+            bx,by=px+sign*head*dx,py+sign*head*dy
+            path=c.beginPath();path.moveTo(px,py)
+            path.lineTo(bx-half*dy,by+half*dx);path.lineTo(bx+half*dy,by-half*dx)
+            path.close();c.drawPath(path,fill=1,stroke=0)
+    table_w=220
     available=width-table_w-74
-    scale=min(available/(xmax-xmin+zmax-zmin),(top-bottom-90)/(ymax-ymin))
+    scale=min(available/(xmax-xmin+zmax-zmin),(top-bottom-90)/ymax)
     fw=(xmax-xmin)*scale;dw=(zmax-zmin)*scale
     front=x+35+(available-fw-dw)/2
     side=front+fw+31
-    y0=bottom+46
+    floor=bottom+46
+    y0=floor+ymin*scale
     for xx,label in ((front,'Вид спереди'),(side,'Вид сбоку')):
         text(xx,top-12,label,9,True)
     for a,z,y,w,d,h,axis in sorted(blocks,key=lambda b:0 if b[6] in ('envelope','back') else 1 if b[6]=='side' else 2):
@@ -103,46 +117,63 @@ def draw(c,parts,x,top,width,bottom,details):
             if s['role'] not in ('panel','hardware','appliance'):continue
             c.setStrokeColor(muted);c.setLineWidth(.4)
             c.rect(front+(s['x']+p['width']/2)*scale,y0+s['y']*scale,s['w']*scale,s['h']*scale,fill=0)
-    # Place levels directly above the shelves when their projection has room.
-    # The adjacent schedule also covers narrow sections and closely spaced shelves.
-    upper_limit=y0+(ymax-ymin)*scale
-    last_label={}
-    for a,z,y,w,d,h,axis in sorted(blocks,key=lambda b:b[2]):
-        level=y+h
-        if axis!='horizontal' or not any(level in column for column in levels):
-            continue
-        section_x=round(a+w/2,1)
-        py=y0+(level-ymin)*scale+2
-        if w*scale>=31 and py-last_label.get(section_x,float('-inf'))>=11 and py+8<upper_limit:
-            text(front+(section_x-xmin)*scale,py,number(level),7,False,True,green)
-            last_label[section_x]=py
+    # Each chain is anchored to the actual shelf span in its own section.
+    centers={}
+    for p in parts:
+        match=re.fullmatch(r'shelf-(\d+)-(\d+)',p.get('item_id','').rpartition(':')[2])
+        if match:
+            centers[int(match[1])]=local(p)[0]
+    if ymin>0:
+        stroke(front-5,floor,front+fw+5,floor)
+        text(front+fw+7,floor-2,'Пол',7,color=muted)
+    for index,column in enumerate(levels):
+        if not column:continue
+        center=centers.get(index,xmin+(index+.5)*(xmax-xmin)/len(levels))
+        cx=front+(center-xmin)*scale
+        nodes=sorted(set([0,*column,ymax]))
+        for level in nodes:
+            yy=floor+level*scale
+            stroke(cx-4,yy,cx+4,yy)
+        for start,end in zip(nodes,nodes[1:]):
+            lo=floor+start*scale; hi=floor+end*scale
+            arrows(cx,lo,cx,hi,green)
+            if hi-lo>=10:
+                text(cx+3,(lo+hi)/2-2.5,number(end-start),7,color=green)
     for xx,span,mm in ((front,fw,xmax-xmin),(side,dw,zmax-zmin)):
-        at=y0-15
-        stroke(xx,at,xx+span,at)
+        at=floor-15
+        arrows(xx,at,xx+span,at,ink)
         for end in (xx,xx+span):
-            stroke(end,y0-2,end,at-3);stroke(end-2,at-2,end+2,at+2)
+            stroke(end,y0-2,end,at-3)
         text(xx+span/2,at-12,number(mm),10,True,True)
     xx=front-16;upper=y0+(ymax-ymin)*scale
-    stroke(xx,y0,xx,upper)
+    arrows(xx,y0,xx,upper,ink)
     for at in (y0,upper):
-        stroke(xx-3,at,front-2,at);stroke(xx-2,at-2,xx+2,at+2)
+        stroke(xx-3,at,front-2,at)
     c.saveState();c.translate(xx-4,(upper+y0)/2);c.rotate(90)
     text(0,0,number(ymax-ymin),10,True,True);c.restoreState()
     tx=x+width-table_w+7
     text(tx,top-12,'Высота полок, мм',12,True)
     text(tx,top-29,'От пола до верха полки',9,color=muted)
-    text(tx,top-43,'Нумерация снизу вверх',8,color=muted)
+    text(tx,top-43,'Шаг — размер между стрелками',8,color=muted)
     count=max(map(len,levels),default=0)
     if not count:
         text(tx,top-68,'Полок нет',9);return
-    step=(table_w-30)/len(levels)
-    text(tx,top-66,'№',8,True)
+    step=(table_w-36)/len(levels)
+    text(tx,top-77,'№',8,True)
     for i in range(len(levels)):
-        text(tx+21+(i+.5)*step,top-66,'Сек. '+str(i+1),8,True,True)
-    stroke(tx,top-72,x+width,top-72)
-    for row in range(count):
-        py=top-86-row*16
-        text(tx,py,str(row+1),9,color=muted)
+        mid=tx+25+(i+.5)*step
+        text(mid,top-63,'Сек. '+str(i+1),8,True,True)
+        text(mid-step*.24,top-77,'Отм.',8,center=True)
+        text(mid+step*.24,top-77,'Шаг',8,center=True)
+    stroke(tx,top-82,x+width,top-82)
+    for row in range(count+1):
+        py=top-96-row*16
+        roof=row==count
+        text(tx,py,'Верх' if roof else str(row+1),8,color=muted)
         for i,section in enumerate(levels):
-            val=number(section[row]) if row<len(section) else '—'
-            text(tx+21+(i+.5)*step,py,val,9,False,True,green)
+            if not section or (not roof and row>=len(section)):continue
+            level=ymax if roof else section[row]
+            previous=section[-1] if roof else section[row-1] if row else 0
+            mid=tx+25+(i+.5)*step
+            text(mid-step*.24,py,number(level),8,center=True)
+            text(mid+step*.24,py,number(level-previous) if level>previous else '0',8,center=True,color=green)

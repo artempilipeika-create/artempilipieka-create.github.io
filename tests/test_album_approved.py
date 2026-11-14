@@ -123,7 +123,7 @@ def test_wardrobe_section_levels_and_depth_use_saved_finished_faces(rotation):
     buf=BytesIO();Image.new('RGB',(12,8)).save(buf,'JPEG')
     pages=PdfReader(BytesIO(kitchen_album.render('Шкаф',{'items':items},{},buf.getvalue()))).pages
     text=pages[1].extract_text()
-    assert all(t in text for t in ('Вид сбоку','Сек. 2','343','766','578','2200','800'))
+    assert all(t in text for t in ('Вид сбоку','Сек. 2','343','766','578','2200','800','Шаг','1514','1702'))
 
 
 def test_standard_wardrobe_uses_enabled_shelf_top_above_base_and_floor():
