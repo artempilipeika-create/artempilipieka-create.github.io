@@ -42,7 +42,7 @@ export function buildCarcass(input={},options={}){
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null)=>{
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
       x,z,elevation:y+s.elevation,edges:options.edges?.[key]??code,blank_edge_thickness_mm:s.edgeThickness,
-      body_variant_id:key==='back'?(options.backMaterialId??null):(options.bodyMaterialId??null),blank_binding:binding});
+      body_variant_id:key==='back'?(options.backMaterialId??null):(options.bodyMaterialId??null),blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')?'sekura-95388':'none'}:null});
     const error=validateBlank(item);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
   };

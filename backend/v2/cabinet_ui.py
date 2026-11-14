@@ -34,7 +34,7 @@ def router():
         'pullout-dryer-variants.js','pullout-dryer-variants.json','pullout-dryer-model.js','pullout-dryer-ui.js',
         'worktop-fixtures.mjs','worktop-fixture-mesh.mjs','worktop-fixture-ui.mjs','worktop-fixtures.css',
         'material-appearance-ui.mjs','material-appearance.css',
-        'blank-hook.mjs','akkord-mesh.mjs','blanks-model.mjs','blanks-ui.mjs','blanks-native.mjs','blank-bindings.mjs','carcass-model.mjs','carcass-ui.mjs','blank-sources.json','blanks.css',
+        'sekura.mjs','sekura-mesh.mjs','blank-hook.mjs','akkord-mesh.mjs','blanks-model.mjs','blanks-ui.mjs','blanks-native.mjs','blank-bindings.mjs','carcass-model.mjs','carcass-ui.mjs','blank-sources.json','blanks.css',
         'assistant-model.mjs','assistant-ui.mjs','assistant.css','wardrobe-questionnaire.mjs',
         'showroom.css','finish-catalogue.mjs','execution-artwork.mjs','execution-image-index.mjs','hardware-photos.mjs','execution-ui.mjs','execution-options.mjs','execution-previews.mjs','execution-cards.css','choice-card-ui.js','catalogue-artwork.js','surface-cards.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs','socket-native.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',

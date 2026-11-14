@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.16 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.17 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -1109,6 +1109,9 @@ function resizeAndPlaceBlank(obj,item,log){
  return {materialChecks,profileChecks:[]};
 }
 
+function isShelfSupport(item) {
+  return item.source_sha256==='cf72a81dc2c56a8abf269d845ecd99a0176d5bc4582cde45e738c1eabd3623f9';
+}
 function isBlankHook(item) {
   return item.source_sha256==='0c7176c2b675cfb48eb2f5de2ba6adbebb09d7c315c30b6f6d07628808dac3db';
 }
@@ -1118,6 +1121,10 @@ function isNativeSocket(item) {
 }
 function resizeAndPlace(obj, item, log) {
   if(item.blank)return resizeAndPlaceBlank(obj,item,log);
+  if (isShelfSupport(item)) {
+    placeByFrame(obj,null,item,log,{x:0,y:0,z:0});
+    return {materialChecks:[],profileChecks:[]};
+  }
   if (isBlankHook(item)) {
     // Source coordinates at the midpoint of the actual two fixings (the service frame is offset).
     const anchor={x:0,y:0,z:-1.3385};
@@ -1254,7 +1261,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.16 BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.17 SEKURA + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1378,6 +1385,7 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
+      if(isShelfSupport(item)&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.shelf_blank_id)))throw Error('Не импортирована полка или её опорная стойка.');
       if(isBlankHook(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Опорная заготовка не импортирована.');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
@@ -1403,7 +1411,7 @@ function importProject(prepared, root, payload) {
       }
       importedObjects.push(obj);
       if (item.blank && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
-      if (!isNativeSocket(item) && !isBlankHook(item)) furnitureObjects.push(obj);
+      if (!isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;

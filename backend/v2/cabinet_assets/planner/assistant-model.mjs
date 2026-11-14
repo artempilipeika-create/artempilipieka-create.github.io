@@ -7,7 +7,7 @@ const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShe
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
-const geometry=i=>signature(['item_id','x','z','rotation','elevation_mm','width','height','depth','blank_axis','blank_length_mm','blank_width_mm','blank_thickness_mm','blank_binding'].map(k=>i[k]??null));
+const geometry=i=>signature(['item_id','x','z','rotation','elevation_mm','width','height','depth','blank_axis','blank_length_mm','blank_width_mm','blank_thickness_mm','blank_binding'].map(k=>k==='blank_binding'&&i[k]?Object.fromEntries(Object.entries(i[k]).filter(([key])=>key!=='mounting')):i[k]??null));
 export const assistantStamp=adapter=>JSON.stringify([adapter.projectId,adapter.room,adapter.items]);
 
 export function selectedCarcass(adapter){
@@ -49,6 +49,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   const item={...old,...generated,blank_binding:generated.blank_binding??null,assistant_carcass:metadata};
   if(old){
    item.name=old.name;
+   if(old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
    if(old.blank_thickness_mm===generated.blank_thickness_mm)item.body_variant_id=old.body_variant_id;
    if(spec.edgePolicy===current.metadata.spec.edgePolicy)item.blank_edge_code=old.blank_edge_code;
    if(spec.edgeThickness===current.metadata.spec.edgeThickness)item.blank_edge_thickness_mm=old.blank_edge_thickness_mm;
@@ -67,7 +68,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Зазор полок: ${spec.shelfGap} мм с каждой стороны`,
   spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
-  'Открытый шкаф, без фасадов и фурнитуры.'];
+  'Открытый шкаф. На съёмную полку — четыре SEKURA 2.'];
  if(removed.length)summary.push('Будут удалены детали: '+removed.map(i=>i.name+(i.production_note?' (есть примечание)':'')).join(', '));
  if(current&&spec.thickness!==current.metadata.spec.thickness)summary.push('Толщина изменится: выберите соответствующий материал перед экспортом.');
  return {stamp:assistantStamp(adapter),next,items,summary,spec};

@@ -80,6 +80,7 @@ class BlankHook(StrictModel):
     height_mm: float|None=Field(default=None,ge=0,le=3000,multiple_of=0.5,allow_inf_nan=False)
 
 class BlankBinding(StrictModel):
+    mounting: Literal['sekura-95388','none']|None=None
     left_id: str=Field(min_length=1,max_length=80)
     right_id: str=Field(min_length=1,max_length=80)
     gap_left_mm: int=Field(default=0,ge=0,le=100,strict=True)

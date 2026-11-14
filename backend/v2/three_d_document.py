@@ -95,6 +95,13 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    binding=it.get('blank_binding')
+    if it.get('module_type')=='blank' and it.get('blank_axis')=='horizontal' and binding:
+        key=it.get('item_id','').rsplit(':',1)[-1]
+        fixed=':' in it.get('item_id','') and (key in ('bottom','top') or key.startswith('rail-'))
+        mounting=binding.get('mounting') or ('none' if fixed else 'sekura-95388')
+        if mounting=='sekura-95388':
+            return [_row('Полкодержатель SEKURA 2 никель AKS',4,'pcs','95388')],None
     it=refresh_dryer_source(it)
     if modern_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in modern_hardware(it)],modern_contents(it)
     if wall_special_variant(it):return [_row(r['name'],r['quantity'],r['unit'],r.get('article') or '') for r in wall_special_hardware(it)],wall_special_contents(it)

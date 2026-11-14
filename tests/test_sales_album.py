@@ -148,3 +148,10 @@ def test_client_album_technical_name_and_unapproved_visual_details():
     assert 'QA_Equipment' not in text and 'QA_Equipment' not in pdf.metadata.title
     assert 'Столешница не согласована' in text and 'Подсветка на визуализации' in text
     assert 'Комплект шариковых направляющих = пара' in text
+
+def test_bound_shelf_sekura_count_and_fixed_parts():
+    def shelf(key, mounting=None):
+        return dict(item_id='case:'+key,module_type='blank',blank_axis='horizontal',
+                    blank_binding=dict(left_id='l',right_id='r',mounting=mounting))
+    rows,_=ledger({'items':[shelf('shelf-0-0'),shelf('shelf-1-0','sekura-95388'),shelf('top'),shelf('shelf-1-1','none')]})
+    assert [(r['article'],r['qty']) for r in rows if r['article']=='95388']==[('95388',8)]

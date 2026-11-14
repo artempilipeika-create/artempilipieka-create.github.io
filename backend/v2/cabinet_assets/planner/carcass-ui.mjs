@@ -44,7 +44,7 @@ export class CarcassUI{
         <div class="mf-blank-fields">${numeric('width','Ширина, мм',600,200,2400)}${numeric('height','Высота корпуса, мм',2200,200,3000)}${numeric('depth','Глубина ЛДСП, мм',577,200,1200)}</div>
         <div class="mf-blank-fields">${numeric('shelves','Полок в секции',4,0,10)}${numeric('sections','Секций',1,1,3)}${numeric('elevation','Низ от пола, мм',0,0,5000)}</div>
         <label>Задняя стенка<select name="corpus-back"><option value="yes">Накладная ХДФ 3 мм</option><option value="no">Без задней стенки</option></select></label>
-        <p class="mf-blank-source">Высота — только корпус, без ножек. Задняя стенка добавляет 3 мм к глубине. Фасады и фурнитура не входят.</p>
+        <p class="mf-blank-source">Высота — только корпус, без ножек. Задняя стенка добавляет 3 мм к глубине. На каждую съёмную полку устанавливаются четыре SEKURA 2.</p>
         <details><summary>Материал, зазоры и кромка</summary><div class="mf-blank-form">
           ${numeric('thickness','Толщина ЛДСП, мм',18,10,40)}
           <p class="mf-blank-source">ЛДСП 18 мм — BYSPAN 605 PO; задняя стенка — белый ХДФ 3 мм. Материалы можно изменить у деталей после добавления. При другой толщине ЛДСП выберите подходящий материал перед экспортом.</p>

@@ -34,7 +34,9 @@ for(const recipe of CARCASSES)test('full download export: '+recipe.id,async()=>{
  const b=buildCarcass({recipe:recipe.id},{bodyMaterialId:core.DEFAULT_MATERIALS.body_variant_id,backMaterialId:CARCASS_BACK_MATERIAL_ID,edges:{left:'1011'}});
  const items=placeCarcass(b,{x:200,z:300,elevation_mm:100,rotation:90});items[0].body_variant_id='custom';
  const before=JSON.stringify(items),e=exporter(items);await e.context.exportBazisProjectReady();const {payload,message,filename}=await e.result();
- assert.equal(payload.minimum_importer,'9.9.9');assert.equal(payload.items.length,items.length);assert.equal(filename,'Carcass_QA.mf-bazis.json');
+ const supports=recipe.sections*recipe.shelves*4;
+ assert.equal(payload.minimum_importer,supports?'9.9.17':'9.9.9');assert.equal(payload.items.length,items.length+supports);
+ assert.equal(payload.items.filter(p=>p.article==='95388').length,supports);assert.equal(filename,'Carcass_QA.mf-bazis.json');
  assert.match(message,new RegExp('деталей корпуса: '+items.length));assert.equal(e.button.disabled,false);
  assert.equal(payload.items[0].material_assignments.body.article,'CUSTOM');assert.equal(payload.items[0].blank.edge_code,'1011');
  for(let i=0;i<items.length;i++){
@@ -50,5 +52,31 @@ test('missing or wrong HDF assignment blocks the download with the named panel',
   const b=buildCarcass({recipe:'shelves'},{bodyMaterialId:core.DEFAULT_MATERIALS.body_variant_id,backMaterialId:id});
   const e=exporter(b.items);await e.context.exportBazisProjectReady();const r=await e.result();
   assert.equal(r.payload,null);assert.match(r.message,/Задняя стенка ХДФ 3 мм: выберите материал толщиной 3 мм/);assert.equal(e.button.disabled,false);
+ }
+});
+
+test('shared divider seats, drilling separation, legacy shelves and disabled fixings',()=>{
+ for(const rotation of [0,90,180,270]){
+  const built=buildCarcass({recipe:'divided',shelves:1},{idPrefix:'probe'});
+  const items=placeCarcass(built,{x:65,z:34,elevation_mm:120,rotation});
+  for(const it of items)if(it.blank_binding)delete it.blank_binding.mounting;
+  const supports=globalThis.MF_BLANKS_NATIVE.supportItems(items);
+  assert.equal(supports.length,8);
+  const shared=supports.filter(x=>x.host_blank_id==='probe:divider-0');
+  assert.equal(shared.length,4);
+  for(const a of shared){
+   const shelf=items.find(i=>i.item_id===a.shelf_blank_id);
+   assert.equal(a.position.y,shelf.elevation_mm);
+   const others=shared.filter(b=>a.rotation!==b.rotation);
+   for(const b of others){
+    const axis=[0,180].includes(rotation)?'z':'x';
+    assert.ok(Math.abs(a.position[axis]-b.position[axis])>5);
+   }
+  }
+  const shelf=items.find(i=>i.item_id==='probe:shelf-0-0');
+  shelf.blank_binding.mounting='none';assert.equal(globalThis.MF_BLANKS_NATIVE.supportItems(items).length,4);
+  delete shelf.blank_binding.mounting;
+  items.find(i=>i.item_id==='probe:left').width=10;
+  assert.throws(()=>globalThis.MF_BLANKS_NATIVE.supportItems(items),/стойк/);
  }
 });

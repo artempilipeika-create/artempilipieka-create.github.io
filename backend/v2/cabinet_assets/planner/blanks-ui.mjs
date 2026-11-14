@@ -1,4 +1,5 @@
 import './blanks-native.mjs';
+import {shelfMounting,shelfSupportPlan} from './sekura.mjs';
 import {defaultHookFace,hookHeightLimits} from './blank-hook.mjs';
 import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,blankCopies,cuttingSize,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
@@ -65,6 +66,8 @@ function formHtml(kind){
         <div class="mf-blank-fields"><label>Зазор слева, мм<input name="gapLeft" type="number" min="0" max="100" step="1" value="0"></label>
         <label>Зазор справа, мм<input name="gapRight" type="number" min="0" max="100" step="1" value="0"></label></div>
         <label>Смещение от центра левой стойки по глубине, мм<input name="depthOffset" type="number" min="-1200" max="1200" step="0.5" value="0"></label>
+        <label>Крепление полки<select name="shelfMounting"><option value="sekura-95388">SEKURA 2 · никель AKS · 95388 · 4 шт.</option><option value="none">Без полкодержателей</option></select></label>
+        <p data-support-note></p>
         <p data-binding-result aria-live="polite"></p>
       </fieldset>`:''}
       ${!catalog?`<fieldset data-hook-panel><legend>Фурнитура</legend>
@@ -82,7 +85,7 @@ function formHtml(kind){
       ${catalog?`<button type="button" class="mf-blank-primary" data-blank-add>+ Добавить заготовку в 3D</button>
       <button type="button" class="secondary mf-blank-export" data-blank-export>Деталировка заготовок · CSV</button>
       <button type="button" class="mf-blank-primary" data-blank-bazis>Экспорт проекта в БАЗИС</button>
-      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261114-blank-hooks" download="Martin_Forest_Import_v9_9_16.js">Импортёр 9.9.16 ↓</a></div>`:''}
+      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261114-sekura" download="Martin_Forest_Import_v9_9_17.js">Импортёр 9.9.17 ↓</a></div>`:''}
       ${!catalog?`<details class="mf-blank-repeat"><summary>Копировать с шагом</summary><div class="mf-blank-fields"><label>Копий<input name="copyCount" type="number" min="1" max="30" value="1"></label><label>Шаг, мм<input name="copyStep" type="number" step="0.5" value="300"></label></div><label>Направление<select name="copyAxis"><option value="elevation_mm">По высоте</option><option value="x">По X</option><option value="z">По Z</option></select></label><button type="button" data-blank-copy>Создать копии</button></details>`:''}
     </div>
   </div>`;
@@ -184,7 +187,7 @@ export class BlanksUI{
     exports.setAttribute('aria-label','Экспорт корпусов');
     for(const selector of ['[data-blank-bazis]','[data-blank-export]','.mf-blank-downloads'])exports.append(this.catalog.querySelector(selector));
     const help=document.createElement('details');
-    help.innerHTML='<summary>Как открыть в БАЗИС</summary><ol><li>Скачайте импортёр 9.9.16 и замените им действующий скрипт Martin Forest. Старую копию сохраните вне папки Scripts.</li><li>Распакуйте «Исходные заготовки» в отдельную подпапку вашей общей библиотеки модулей. Имена FR3D не меняйте.</li><li>Нажмите «Экспорт проекта в БАЗИС»: скачается файл .mf-bazis.json.</li><li>В БАЗИС откройте новую пустую модель и запустите импортёр. Он найдёт последний экспорт в Загрузках; при запросе укажите общую папку модулей.</li><li>Проверьте модель и сохраните её как B3D.</li></ol><p class="mf-blank-source">Если материал не выбран, экспорт укажет деталь. Выберите её в проекте и назначьте материал нужной толщины в панели справа.</p>';
+    help.innerHTML='<summary>Как открыть в БАЗИС</summary><ol><li>Скачайте импортёр 9.9.17 и замените им действующий скрипт Martin Forest. Старую копию сохраните вне папки Scripts.</li><li>Распакуйте «Исходные заготовки» в отдельную подпапку вашей общей библиотеки модулей. Имена FR3D не меняйте.</li><li>Нажмите «Экспорт проекта в БАЗИС»: скачается файл .mf-bazis.json.</li><li>В БАЗИС откройте новую пустую модель и запустите импортёр. Он найдёт последний экспорт в Загрузках; при запросе укажите общую папку модулей.</li><li>Проверьте модель и сохраните её как B3D.</li></ol><p class="mf-blank-source">Если материал не выбран, экспорт укажет деталь. Выберите её в проекте и назначьте материал нужной толщины в панели справа.</p>';
     exports.append(help);this.catalog.append(exports);
     this.sync();
   }
@@ -209,7 +212,7 @@ export class BlanksUI{
     const source=this.app.adapter.selected;if(source?.module_type!=='blank')return;
     if(!draw(this.inspector,this.app.adapter.room))return;
     const form=this.inspector,bound=form.querySelector('[name="bound"]').checked;
-    const binding=bound?{left_id:textField(form,'leftSupport'),right_id:textField(form,'rightSupport'),
+    const binding=bound?{mounting:textField(form,'shelfMounting'),left_id:textField(form,'leftSupport'),right_id:textField(form,'rightSupport'),
       gap_left_mm:numberField(form,'gapLeft'),gap_right_mm:numberField(form,'gapRight'),depth_offset_mm:numberField(form,'depthOffset')}:null;
     const updated=updateBlank(source,{...readForm(form),blank_binding:binding});
     const ok=this.app.interaction.change('Параметры заготовки',()=>{
@@ -258,6 +261,10 @@ export class BlanksUI{
     values(this.inspector,item);draw(this.inspector,this.app.adapter.room);
     const form=this.inspector,b=item.blank_binding,field=form.querySelector('.mf-blank-binding');
     field.hidden=item.blank_axis!=='horizontal';
+    const mounting=form.elements.shelfMounting;
+    mounting.value=b?shelfMounting(item):'sekura-95388';mounting.disabled=!b;
+    const plan=shelfSupportPlan(item,this.app.adapter.items);
+    form.querySelector('[data-support-note]').textContent=plan.error||(plan.parts.length?'По два держателя на каждой стойке. Артикул 95388.':'');
     const supports=this.app.adapter.items.filter(it=>it.module_type==='blank'&&it.blank_axis==='side'&&it.rotation===item.rotation);
     for(const [name,id] of [['leftSupport',b?.left_id],['rightSupport',b?.right_id]]){
       const select=form.querySelector('[name="'+name+'"]');select.replaceChildren(new Option('Выберите стойку',''));
