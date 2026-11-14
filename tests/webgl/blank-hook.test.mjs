@@ -23,3 +23,18 @@ test('mesh uses the measured hardware bounds and mounting centre follows resized
  assert.equal(hookPlacement(it).y,200);assert.equal(hookPlacement(updateBlank(it,{blank_width_mm:500})).y,250);
  assert.ok(validateBlank(updateBlank(it,{blank_width_mm:90})));
 });
+
+test('hook rows preserve centre, pitch and height on both panel types after save and rotation',async()=>{
+ await import('../../backend/v2/cabinet_assets/planner/blanks-native.mjs');
+ for(const axis of ['side','back'])for(const count of [1,2,3,4])for(const rotation of [0,90,180,270]){
+  const it=blankItem({item_id:'panel',axis,length:600,partWidth:480,rotation,x:25,z:-40,blank_hook:{article:'68416',face:'negative',height_mm:250,count}});
+  const span=axis==='side'?480:600;
+  assert.equal(validateBlank(it),'');
+  const entries=globalThis.MF_BLANKS_NATIVE.hookItems([JSON.parse(JSON.stringify(it))]);
+  assert.equal(entries.length,count);const pos=entries.map(e=>e.position);
+  assert.ok(pos.every(p=>p.y===250));assert.ok(entries.every(e=>e.host_blank_id===it.item_id));
+  for(let i=1;i<count;i++)assert.equal(Math.hypot(pos[i].x-pos[i-1].x,pos[i].z-pos[i-1].z),span/count);
+  assert.equal(hookPlacement(it,0)[axis==='side'?'z':'x'],-span/2+span/(2*count));
+  assert.ok(validateBlank(updateBlank(it,{blank_hook:{...it.blank_hook,count:5}})));
+ }
+});

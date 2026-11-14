@@ -294,8 +294,8 @@ export class MeshFactory{
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
     }
-    if(it.blank_hook){
-      const h=hookPlacement(it), key='hook:68416';
+    for(let i=0;i<(it.blank_hook?(it.blank_hook.count??1):0);i++){
+      const h=hookPlacement(it,i), key='hook:68416';
       const geometry=this.acquire(key,()=>{
         const g=new THREE.BufferGeometry();
         g.setAttribute('position',new THREE.Float32BufferAttribute(hookVertices,3));g.setIndex(hookIndices);

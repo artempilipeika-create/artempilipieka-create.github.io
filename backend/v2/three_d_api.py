@@ -73,6 +73,7 @@ class WorktopFixture(StrictModel):
         return self
 
 class BlankHook(StrictModel):
+    count: int=Field(default=1,ge=1,le=4,strict=True)
     article: Literal['68416']
     face: Literal['positive','negative']
     along_mm: float|None=Field(default=None,ge=0,le=3000,multiple_of=0.5,allow_inf_nan=False)
@@ -148,7 +149,9 @@ class FurnitureItem(StrictModel):
             span=self.width if self.blank_axis=='back' else self.depth
             along=self.blank_hook.along_mm if self.blank_hook.along_mm is not None else span/2
             height=self.blank_hook.height_mm if self.blank_hook.height_mm is not None else self.height/2
-            if along<15 or along+15>span or height<27.592 or height+98.148>self.height:
+            count=self.blank_hook.count
+            half_row=(count-1)*span/(2*count)
+            if along-half_row<15 or along+half_row+15>span or (count>1 and span/count<30) or height<27.592 or height+98.148>self.height:
                 raise ValueError('Крючок выходит за край заготовки.')
         if self.assistant_carcass and self.module_type!='blank':
             raise ValueError('Параметры корпуса помощника доступны только заготовкам.')

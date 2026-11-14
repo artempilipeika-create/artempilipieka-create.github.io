@@ -69,10 +69,10 @@ function formHtml(kind){
       </fieldset>`:''}
       ${!catalog?`<fieldset data-hook-panel><legend>Фурнитура</legend>
         <label>Крючок<select name="hook"><option value="">Без крючка</option><option value="68416">AKKORD · два рожка · античная латунь · 68416</option></select></label>
-        <div data-hook-controls><label>Сторона крепления<select name="hookFace"></select></label>
+        <div data-hook-controls><label>Количество крючков<select name="hookCount"><option value="1">1 шт.</option><option value="2">2 шт.</option><option value="3">3 шт.</option><option value="4">4 шт.</option></select></label><label>Сторона крепления<select name="hookFace"></select></label>
         <label><span data-hook-along-label></span><input name="hookAlong" type="number" min="0" step="0.5" placeholder="По центру"></label>
         <label>От низа детали до оси крепления, мм<input name="hookHeight" type="number" min="0" step="0.5" placeholder="По центру"></label>
-        <small>Пустое поле сохраняет привязку к центру детали.</small></div>
+        <small>Крючки в ряду стоят на одной высоте с равным шагом. Оставьте отступ пустым, чтобы ряд оставался по центру детали.</small></div>
       </fieldset>`:''}
       <p class="mf-blank-cut"  data-blank-cut></p><p class="mf-blank-result" aria-live="polite" data-blank-summary></p>
       <p class="mf-blank-source" data-blank-source></p>
@@ -89,7 +89,7 @@ function readForm(form){
   const code=EDGES.map((_,i)=>form.querySelector('[name="edge'+i+'"]').checked?'1':'0').join('');
   const hook=form.elements.hook;
   const offset=name=>form.elements[name].value===''?null:numberField(form,name);
-  return {...(hook?{blank_hook:hook.value?{article:hook.value,face:textField(form,'hookFace'),along_mm:offset('hookAlong'),height_mm:offset('hookHeight')}:null}:{}),blank_length_mm:numberField(form,'length'),blank_width_mm:numberField(form,'partWidth'),
+  return {...(hook?{blank_hook:hook.value?{article:hook.value,count:numberField(form,'hookCount'),face:textField(form,'hookFace'),along_mm:offset('hookAlong'),height_mm:offset('hookHeight')}:null}:{}),blank_length_mm:numberField(form,'length'),blank_width_mm:numberField(form,'partWidth'),
     blank_thickness_mm:numberField(form,'thickness'),blank_axis:textField(form,'axis'),
     ...(form.dataset.kind==='catalog'?{name:textField(form,'partName')}:{}),
     blank_edge_code:code,blank_edge_thickness_mm:numberField(form,'edgeThickness'),
@@ -223,11 +223,11 @@ export class BlanksUI{
     const badge=get('studio-item-type');if(badge)badge.textContent='Заготовка';
     const controls=this.inspector.elements, hook=item.blank_hook, side=item.blank_axis==='side';
     this.inspector.querySelector('[data-hook-panel]').hidden=item.blank_axis==='horizontal'&&!hook;
-    controls.hook.value=hook?.article||'';
+    controls.hook.value=hook?.article||'';controls.hookCount.value=String(hook?.count??1);
     controls.hookFace.replaceChildren(new Option(side?'Вправо · внутрь левой боковины':'Вперёд · в шкаф','positive'), new Option(side?'Влево · внутрь правой боковины':'Назад','negative'));
     controls.hookFace.value=hook?.face||defaultHookFace(item);
     controls.hookAlong.value=hook?.along_mm??'';controls.hookHeight.value=hook?.height_mm??'';
-    this.inspector.querySelector('[data-hook-along-label]').textContent=side?'От заднего края до оси, мм':'От левого края до оси, мм';
+    this.inspector.querySelector('[data-hook-along-label]').textContent=side?'От заднего края до центра ряда, мм':'От левого края до центра ряда, мм';
     this.inspector.querySelector('[data-hook-controls]').hidden=!hook;
     values(this.inspector,item);draw(this.inspector,this.app.adapter.room);
     const form=this.inspector,b=item.blank_binding,field=form.querySelector('.mf-blank-binding');

@@ -15,4 +15,4 @@ export function blankNativeItem(it,material){
  edge_code:b.code,edge_thickness:b.edgeThickness,finished_dimensions:true,
  cut:cuttingSize(it),edge_elements:[1,3,0,2]}};
 }
-globalThis.MF_BLANKS_NATIVE={hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).map(hookNativeItem),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id)))};
+globalThis.MF_BLANKS_NATIVE={hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id)))};
