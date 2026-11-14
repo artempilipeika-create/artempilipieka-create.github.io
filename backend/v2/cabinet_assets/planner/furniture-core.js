@@ -361,7 +361,7 @@
   }
   function cornerSpec(it){
     const p=sourceProduction(it),v=root.MF_WALL_SPECIAL?.info(it);
-    if(v?.family==='corner')return {side:v.opening,wall_gap_mm:3,front_extension_mm:68,filler_depth_mm:50,blind_width_mm:371,upper:true};
+    if(v?.family==='corner')return {side:v.opening,wall_gap_mm:3,front_extension_mm:68,filler_depth_mm:50,blind_width_mm:v.panels.filter(p=>p.name==='ФП Планка').reduce((width,p)=>width+p.size[0],0),upper:true};
     return p?.corner&&(!it.bazis_sha256||it.bazis_sha256===p.source_sha256)?p.corner:null;
   }
   function cornerVariantInfo(it){return CORNER_VARIANTS.find(v=>v.id===it?.bazis_id&&v.source_sha256===it.bazis_sha256)||null;}

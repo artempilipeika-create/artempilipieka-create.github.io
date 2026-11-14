@@ -96,7 +96,7 @@ export class ExecutionUI{
    const root=get(families[family]);if(!root||root.hidden)continue;
    for(const b of root.querySelectorAll('[data-'+family+'-option]')){
     if(b.hidden)continue;const key=b.getAttribute('data-'+family+'-option'),value=b.getAttribute('data-'+family+'-value');
-    if(key==='row_height'){b.classList.add('execution-number-choice');continue;}
+    if(key==='row_height'||key==='return_depth'){b.classList.add('execution-number-choice');continue;}
     this.update(b,it,family,key,value);
    }
   }

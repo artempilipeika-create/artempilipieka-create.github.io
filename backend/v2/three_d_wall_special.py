@@ -33,5 +33,5 @@ def wall_special_hardware(it):
 
 def wall_special_contents(it):
  v=wall_special_variant(it)
- text=LABELS[v['family']]+'; '+('ЛДСП 18 мм; '+('накладные ручки' if v['execution']=='handles' else 'без ручек') if v['family']=='corner' else 'Z1; стекло 4 мм; две стеклянные полки; паз '+('4 × 8' if v['light_system']=='aq-4x8' else '17,5 × 6,5')+' мм; подсветка '+{'left':'слева','right':'справа','both':'с двух сторон'}[v['lighting']])
+ text=LABELS[v['family']]+'; '+('Примыкание '+v['return_depth']+' мм; ЛДСП 18 мм; '+('накладные ручки' if v['execution']=='handles' else 'без ручек') if v['family']=='corner' else 'Z1; стекло 4 мм; две стеклянные полки; паз '+('4 × 8' if v['light_system']=='aq-4x8' else '17,5 × 6,5')+' мм; подсветка '+{'left':'слева','right':'справа','both':'с двух сторон'}[v['lighting']])
  return text+'. Центры полок от низа корпуса: '+', '.join(f'{n:g}' for n in wall_special_shelves(it))+' мм. '+' '.join(v['warnings'])

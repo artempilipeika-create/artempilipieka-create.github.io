@@ -1,9 +1,12 @@
-"""Build the public 22-donor catalogue from the static audit; never execute FR3D code.
+"""Build the public donor catalogue from the static audit; never execute FR3D code.
 Usage: python scripts/build-wall-special-variants.py qa-output/upper-donor-audit.json
 """
 import json, sys
 from pathlib import Path
-source=json.loads(Path(sys.argv[1]).read_text())['variants'];rows=[]
+out=Path(__file__).resolve().parents[1]/'backend/v2/cabinet_assets/planner'
+append='--append' in sys.argv[2:]
+source=json.loads(Path(sys.argv[1]).read_text())['variants']
+rows=json.loads((out/'wall-special-variants.json').read_text()) if append else []
 for v in source:
  corner=v['family']=='upper_corner'
  row={k:v[k] for k in ['id','source_file','source_sha256','native_frame','global_planes','door_count','execution']}
@@ -20,15 +23,24 @@ for v in source:
  row['warnings']=[]
  row['door_pivot']=next((p['origin'] for p in v.get('animation_points',[]) if p['name']=='Точка анимации двери'),None)
  if corner:
-  row['warnings'].append('В исходнике ВМУД1-1000 фасад 626 мм. Для фасада не шире 600 мм уменьшите ширину корпуса до 974 мм.')
+  insert=next(p for p in row['panels'] if p['name']=='Вставка низ')['size'][0]
+  depth={303:300,340:340}[insert]
+  if '340' in v['source_file'] and depth!=340:
+   print('Skipping mismatched 340 mm source:',v['source_file']);continue
+  row['return_depth']=str(depth)
+  face=next(p for p in row['panels'] if p['role']=='front')['size'][0]
+  if face>600:
+   limit=v['native_frame']['size'][0]-(face-600)
+   row['warnings'].append(f'В исходнике ВМУД1-1000 фасад {face:g} мм. Для фасада не шире 600 мм уменьшите ширину корпуса до {limit:g} мм.')
   row['warnings'].append('Гвозди задней стенки в перечне фурнитуры исходника не указаны; количество уточнить при сборке.')
   if v['execution']=='handleless':row['warnings'].append('В исполнении без ручек стоят обычные петли; толкателя в исходнике нет. Способ открывания проверить.')
   if v['door_side']=='right':row['warnings'].append('В правом исходнике отсутствуют четыре крепежа 6,3 × 13, присутствующие в левом. Комплектность крепежа проверить перед сборкой.')
  else:row['warnings'].append('Для перестроения полок в БАЗИС нужен родной фрагмент KUBIC со стеклом 4 мм в библиотеке базовых элементов. После импорта проверить две полки и восемь полкодержателей.')
  row['native_dependency']=next((r.get('cached',{}).get('file') for r in v['shelf_rules'] if r.get('cached',{}).get('missing_cache')),None)
- rows.append(row)
-assert len(rows)==22 and len({r['id'] for r in rows})==22
-out=Path(__file__).resolve().parents[1]/'backend/v2/cabinet_assets/planner'
+ if not any(r['id']==row['id'] for r in rows):rows.append(row)
+for row in rows:
+ if row['family']=='corner':row.setdefault('return_depth','300')
+assert rows and len({r['id'] for r in rows})==len(rows)
 (out/'wall-special-variants.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2)+'\n')
-(out/'wall-special-variants.js').write_text('/* Static geometry from 22 source-pinned FR3D files, 2026-11-12. */\nglobalThis.MF_WALL_SPECIAL_VARIANTS='+json.dumps(rows,ensure_ascii=False,separators=(',',':'))+';\n')
+(out/'wall-special-variants.js').write_text('/* Static geometry from source-pinned FR3D files. */\nglobalThis.MF_WALL_SPECIAL_VARIANTS='+json.dumps(rows,ensure_ascii=False,separators=(',',':'))+';\n')
 print('Built',len(rows),'variants')

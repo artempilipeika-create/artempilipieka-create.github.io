@@ -85,7 +85,7 @@ for source in sorted(SRC.glob('*.fr3d')):
  row['resize_recommendation']={
   'native_exact_geometry_supported':True,
   'verified_numeric_size_limits':None,
-  'width':{'policy':'supported with component-aware deformation','corner_transform':'shift coordinates above source global X plane by deltaW; keep blind block width371 and exposed leaf width W-374' if row['family']=='upper_corner' else 'single leaf widthW-4; double leaves W/2-3 with equal half-delta distribution across facade X243/511 planes; keep rail section19x20.5, preserve individual edge clearances'},
+  'width':{'policy':'supported with component-aware deformation','corner_transform':'shift coordinates above source global X plane by deltaW; preserve measured blind block width and resize exposed leaf' if row['family']=='upper_corner' else 'single leaf widthW-4; double leaves W/2-3 with equal half-delta distribution across facade X243/511 planes; keep rail section19x20.5, preserve individual edge clearances'},
   'height':{'policy':'supported with body/facade deformation plus shelf recomputation','shelf_count':2 if row['family']=='upper_vitrine' else 1,'shelf_section_bottom_mm':18,'shelf_section_height_formula':'H-36','shelf_instance_frame_height_mm':18,'shelf_bottom_formula':'18 + (i+1)*(H-36-N*18)/(N+1) + i*18; i=0..N-1; glass actual thickness4, corner shelf18'},
   'depth':{'policy':'lock at source depth until native regeneration validated','native_depth_mm':row['native_frame']['size'][2],'reason':'Vitrine groove position follows nested body elastic planes; global Z plane alone disagrees. Corner blind block dimensions also encode source-depth relationship.'},
   'scope':'Preview resizing inferred from measured native parts and serialized elastic rules; not a native regeneration or load-bearing certification.'}
@@ -101,7 +101,7 @@ for source in sorted(SRC.glob('*.fr3d')):
  else:
   fp=next(p for p in row['panels'] if p['name']=='Фасад')
   row['front_leaves']=[dict(index=0,side=row['door_side'],panel_id=fp['id'],bounds=fp['bounds'],hinge_pivot_note='Hinged against blind filler using GTV HCKT hinge; no diagonal facade.')]
-  row['warnings'].append('Native exposed facade width626mm at module width1000; preserve source size and flag any application600mm facade limit instead of silently shrinking it.')
+  if fp['bounds']['size'][0]>600:row['warnings'].append('Native exposed facade exceeds 600 mm; preserve source size and flag for review.')
   row['warnings'].append('Native file name says nails for rear panel, but nail quantities are absent from extracted purchase hardware.')
   if row['execution']=='handleless':row['warnings'].append('Handleless source has bottom notch and ordinary hydraulic hinges; no push-to-open item exists in extracted purchase hardware. Opening solution needs confirmation.')
   if row['door_side']=='right':row['warnings'].append('Right corner source has no 6.3x13 confirmats in purchase hardware while corresponding left donor has4; preserve source difference pending confirmation.')
@@ -110,7 +110,7 @@ for source in sorted(SRC.glob('*.fr3d')):
  row['material_counts']=dict(collections.Counter(p['material'] for p in row['panels']))
  row['solid_geometry_bounds']=points_bound([q for p in row['panels']+row['profiles'] for q in [p['bounds']['lo'],p['bounds']['hi']]])
  rows.append(row)
-assert len(rows)==22,len(rows)
+assert rows and len({v['id'] for v in rows})==len(rows)
 assert not any('EXTRACTION ERROR' in w for x in rows for w in x['warnings'])
 out=dict(schema_version=1,units='mm',native_axes=dict(x='width, increasing left to right in front view',y='vertical, increasing up',z='depth, increasing from back toward front'),notes=['FR3D parsed as static serialized data. Native scripts are never executed.','Panel local_vertices are boundary ordered; use matrix to place extruded polygon, do not replace shape panels with AABB.','Profile thickness means extrusion length, not section thickness; section is local_contour.','Hardware items are native purchase leaf/kit quantities, excluding drill-only entries; inherited nested kits are not double counted.','Global planes come from ModelParams/Params/Elastic and are in native frame axes. Group planes use each recorded matrix.','Global stretch alone does not regenerate repeated shelves: shelf_rules and existing geometry must both be respected.'],variants=rows)
 OUTPUT.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n')
