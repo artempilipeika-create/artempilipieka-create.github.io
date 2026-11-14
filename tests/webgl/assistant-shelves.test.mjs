@@ -31,8 +31,18 @@ test('cabinet joints follow both inset panels independently of shelves and proje
    const shift={x:220,z:310,rotation,elevation_mm:90};
    const panels=placeCarcass(built,shift).map(i=>({...i,assistant_carcass:{group_id:'q',spec}}));
    const hardware=nativeCarcassJoints(panels);
-   assert.equal(hardware.length,12);
-   for(const h of hardware){
+   assert.equal(hardware.length,18);
+   const vertical=hardware.filter(h=>h.joint_roll_deg);
+   assert.equal(vertical.length,6);
+   for(const v of vertical){
+     const top=v.host_blank_id==='q:top',divider=panels.find(p=>p.item_id===v.joined_panel_id);
+     assert.equal(divider.item_id,'q:divider-0');
+     assert.equal(v.joint_roll_deg,top?-90:90);assert.equal(v.rotation,rotation);
+     assert.equal(v.position.y,divider.elevation_mm+(top?divider.height:0));
+     const offset=localPoint({x:v.position.x-divider.x,z:v.position.z-divider.z},rotation);
+     assert.equal(Math.abs(offset.x),0);assert.equal(divider.depth/2-Math.abs(offset.z),v.joint_part==='dowel'?102:70);
+   }
+   for(const h of hardware.filter(h=>!h.joint_roll_deg)){
      const panel=panels.find(i=>i.item_id===h.joined_panel_id);
      const local=localPoint({x:h.position.x-panel.x,z:h.position.z-panel.z},rotation);
      assert.equal(Math.abs(local.x),panel.width/2);
@@ -41,7 +51,7 @@ test('cabinet joints follow both inset panels independently of shelves and proje
      assert.equal(h.rotation,(rotation+(h.host_blank_id==='q:right'?180:0))%360);
    }
  }
- assert.deepEqual(nativeCarcassJoints(built.items),[]);
+ assert.equal(nativeCarcassJoints(built.items).filter(v=>v.joint_part==='confirmat').length,4);
  assert.throws(()=>wardrobeSpec({...base,depth:250,joints:spec.joints}),/276/);
  assert.throws(()=>wardrobeSpec({...base,thickness:16,joints:spec.joints}),/18/);
 });

@@ -35,7 +35,8 @@ for(const recipe of CARCASSES)test('full download export: '+recipe.id,async()=>{
  const items=placeCarcass(b,{x:200,z:300,elevation_mm:100,rotation:90});items[0].body_variant_id='custom';
  const before=JSON.stringify(items),e=exporter(items);await e.context.exportBazisProjectReady();const {payload,message,filename}=await e.result();
  const supports=recipe.sections*recipe.shelves*4;
- assert.equal(payload.minimum_importer,supports?'9.9.17':'9.9.9');assert.equal(payload.items.length,items.length+supports);
+ const vertical=recipe.id==='divided'?4:0;
+ assert.equal(payload.minimum_importer,vertical?'9.9.20':supports?'9.9.17':'9.9.9');assert.equal(payload.items.length,items.length+supports+vertical);
  assert.equal(payload.items.filter(p=>p.article==='95388').length,supports);assert.equal(filename,'Carcass_QA.mf-bazis.json');
  assert.match(message,new RegExp('деталей корпуса: '+items.length));assert.equal(e.button.disabled,false);
  assert.equal(payload.items[0].material_assignments.body.article,'CUSTOM');assert.equal(payload.items[0].blank.edge_code,'1011');

@@ -1,6 +1,6 @@
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
-import {jointQuantity,nativeCarcassJoints} from './carcass-joints.mjs';
+import {jointQuantity,nativeCarcassJoints,dividerDescription} from './carcass-joints.mjs';
 import {choice,shelfDescription} from './shelf-choices.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
@@ -86,6 +86,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
   spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
+  ...(spec.sections>1&&spec.thickness===18?[dividerDescription(spec.joints)]:[]),
   ...(spec.joints?['Крыша · '+jointQuantity(spec.joints.top),'Дно · '+jointQuantity(spec.joints.bottom)]:[]),
   ...(spec.shelfChoices?spec.shelfChoices.flatMap((row,i)=>{
    const quantities=new Map();

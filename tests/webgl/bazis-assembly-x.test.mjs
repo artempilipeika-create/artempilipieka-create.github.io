@@ -126,3 +126,25 @@ test('the original AKKORD fixing midpoint lands on the requested face independen
   for(const k of ['x','y','z'])close(fixing[k],position[k]);
  }
 });
+
+test('divider fasteners enter upward from the bottom and downward from the roof at any cabinet yaw',()=>{
+ const c=runtime({objectTransformation:{RotateObject(obj,axis,deg){
+   obj.turns.push({axis,rad:deg*Math.PI/180});
+ }}});
+ for(const rotation of [0,90,180,270])for(const roll of [-90,90]){
+   const obj=moduleObject();obj.turns=[];
+   obj.ToGlobal=function(p){
+     let {x,y,z}=p;
+     for(const {axis,rad} of this.turns){
+       const a=Math.cos(rad),b=Math.sin(rad);
+       if(axis.z)[x,y]=[a*x-b*y,b*x+a*y];else [x,z]=[a*x+b*z,-b*x+a*z];
+     }
+     return {x:x+this.PositionX,y:y+this.PositionY,z:z+this.PositionZ};
+   };
+   const position={x:500,y:roll===90?18:2182,z:120};
+   c.resizeAndPlace(obj,{source_sha256:'af876819d041ee19ab0217cc9d266210c70480206a1de1652847c12d7af65783',
+     joint_roll_deg:roll,rotation,position},[]);
+   const p=obj.ToGlobal({x:20,y:0,z:0});
+   close(p.x,position.x);close(p.y,position.y+20*Math.sign(roll));close(p.z,position.z);
+ }
+});

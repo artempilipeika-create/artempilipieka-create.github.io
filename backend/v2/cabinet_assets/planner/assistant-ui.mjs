@@ -1,6 +1,6 @@
 import {selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
-import {jointOptions,jointQuantity} from './carcass-joints.mjs';
+import {jointOptions,jointQuantity,dividerDescription} from './carcass-joints.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
@@ -105,6 +105,7 @@ export class AssistantUI{
   const box=el('fieldset');box.append(el('legend','Крепёж корпуса'));this.form.append(box);
   if(this.fields.thickness!==18){box.append(el('p','Эти схемы доступны для плиты 18 мм.'));return;}
   const current=this.fields.joints??{top:'none',bottom:'none'};
+  if(this.fields.sections>1)box.append(el('p',dividerDescription(current)));
   for(const [key,label] of [['top','Крыша'],['bottom','Дно']]){
    const value=current[key];
    this.select(box,label+' · крепёж',Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth<276]),value,v=>{

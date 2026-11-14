@@ -4,6 +4,7 @@ from pathlib import Path
 from html import escape
 from collections import OrderedDict
 import hashlib
+import re
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4,landscape
 from reportlab.lib.units import mm
@@ -95,6 +96,14 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    if (it.get('module_type')=='blank' and it.get('blank_axis')=='side' and it.get('width')==18
+            and re.search(r':divider-\d+$',it.get('item_id',''))):
+        joints=((it.get('assistant_carcass') or {}).get('spec') or {}).get('joints') or {}
+        pairs=sum(joints.get(end)=='cam_dowel' for end in ('top','bottom'))
+        rows=[]
+        if pairs<2:rows.append(_row('Конфирмат 7×50',2*(2-pairs)))
+        if pairs:rows.extend([_row('Эксцентриковая стяжка для плиты 18 мм',2*pairs),_row('Шкант деревянный 8×35',2*pairs,'pcs','39319')])
+        return rows,None
     binding=it.get('blank_binding')
     if it.get('module_type')=='blank' and it.get('blank_axis')=='horizontal' and binding:
         key=it.get('item_id','').rsplit(':',1)[-1]

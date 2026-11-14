@@ -1,5 +1,5 @@
 import {fixedShelfScheme} from './shelf-choices.mjs';
-import {jointRows} from './carcass-joints.mjs';
+import {jointRows,dividerEnds} from './carcass-joints.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
 import {vertices as supportVertices,indices as supportIndices} from './sekura-mesh.mjs';
 import {hookPlacement} from './blank-hook.mjs';
@@ -297,6 +297,24 @@ export class MeshFactory{
       if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
+    }
+    for(const {level,scheme,roll} of dividerEnds(it)){
+      const base=level==='bottom'?0:H,inward=roll/90;
+      for(const row of jointRows(scheme,D,true)){
+        const cam=row.kind==='cam',screw=row.kind==='confirmat';
+        const key='divider:'+row.kind,radius=cam?7.5:screw?3.5:4,length=cam?13:screw?50:35;
+        const geo=this.acquire(key,()=>{
+          const g=new THREE.CylinderGeometry(radius*S,radius*S,length*S,20);
+          return cam?g.rotateZ(Math.PI/2):g;
+        });
+        const m=this.mesh(group,row.kind==='dowel'?'body':'shelfSupport',geo,key,cam?inward*2.6:0,
+          base+inward*(cam?34:screw?7:5),row.z,null,ghost);
+        m.userData.joint=row.kind;
+        if(screw){
+          const head=this.acquire('divider:head',()=>new THREE.CylinderGeometry(5*S,5*S,1.5*S,16));
+          this.mesh(group,'shelfSupport',head,'divider:head',0,base-inward*18,row.z,null,ghost);
+        }
+      }
     }
     const shelfScheme=fixedShelfScheme(it);
     if(shelfScheme)for(const sign of [-1,1])for(const row of jointRows(shelfScheme,D,true)){
@@ -691,7 +709,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

@@ -36,6 +36,37 @@ export function jointRows(scheme,depth,isShelf){
  return rows;
 }
 
+export function dividerEnds(it){
+ if(it?.module_type!=='blank'||it.blank_axis!=='side'||it.width!==18||!/:divider-\d+$/.test(it.item_id))return [];
+ const prefix=it.item_id.slice(0,it.item_id.lastIndexOf(':')),joints=it.assistant_carcass?.spec.joints;
+ return ['bottom','top'].map(level=>({level,hostId:prefix+':'+level,
+   scheme:joints?.[level]==='cam_dowel'?'cam_dowel':'confirmat',roll:level==='bottom'?90:-90}));
+}
+export function dividerDescription(joints){
+ const label=level=>joints?.[level]==='cam_dowel'?'2 эксцентрика + 2 шканта':'2 конфирмата';
+ return 'На каждую внутреннюю стойку: сверху '+label('top')+', снизу '+label('bottom')+'. Отступ 70 мм, шкант в паре — 102 мм.';
+}
+
+function dividerJoints(it,byId){
+ const result=[],rotation=it.rotation||0,centre=localPoint(it,rotation);
+ for(const {level,hostId,scheme,roll} of dividerEnds(it)){
+   const host=byId.get(hostId),bottom=level==='bottom',y=it.elevation_mm+(bottom?0:it.height);
+   const at=host&&localPoint(host,rotation);
+   if(!host||host.blank_axis!=='horizontal'||host.height!==18||rotation!==(host.rotation||0)||
+       y!==host.elevation_mm+(bottom?host.height:0)||Math.abs(centre.x-at.x)+9>host.width/2+.01||
+       Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01||it.depth<(scheme==='cam_dowel'?216:152))
+     throw Error(it.name+' · проверьте контакт с '+(bottom?'дном':'крышей')+' и глубину для крепежа.');
+   for(const {kind,z} of jointRows(scheme,it.depth,true)){
+     const point=worldPoint({x:centre.x,z:centre.z+z},rotation);
+     const [source_file,source_sha256]=fittings[kind];
+     result.push({name:source_file.slice(0,-5)+' · '+it.name+' · '+(bottom?'снизу':'сверху'),
+       joint_part:kind,joined_panel_id:it.item_id,host_blank_id:hostId,source_file,source_sha256,
+       rotation,joint_roll_deg:roll,position:{x:point.x,y,z:point.z},elastic_resize:false});
+   }
+ }
+ return result;
+}
+
 export function nativeCarcassJoints(items) {
   const byId=new Map(items.map(it=>[it.item_id,it])),out=[];
   for (const panel of items) {
@@ -92,5 +123,6 @@ export function nativeCarcassJoints(items) {
       for(const a of list)check(a,pt,10);
     }
   }
+  for(const it of items)out.push(...dividerJoints(it,byId));
   return out;
 }

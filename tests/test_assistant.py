@@ -183,3 +183,11 @@ def test_fixed_shelves_validate_and_report_exact_fittings():
     for value, expected in zip(spec['shelfChoices'][0], ([4],[4,4],[4],[4])):
         rows,_ = hardware_for(dict(item_id='q:shelf-0',module_type='blank',blank_axis='horizontal',blank_binding={'mounting':'none'},blank_shelf=value))
         assert [row['qty'] for row in rows] == expected
+
+
+def test_divider_bom_counts_both_ends_and_defaults_to_confirmats():
+    from backend.v2.three_d_document import hardware_for
+    divider=dict(item_id='q:divider-0', module_type='blank', blank_axis='side',width=18)
+    assert [r['qty'] for r in hardware_for(divider)[0]]==[4]
+    divider['assistant_carcass']={'spec':{'joints':{'top':'cam_dowel','bottom':'confirmat'}}}
+    assert [r['qty'] for r in hardware_for(divider)[0]]==[2,2,2]
