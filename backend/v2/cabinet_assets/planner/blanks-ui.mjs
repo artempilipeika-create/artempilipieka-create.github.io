@@ -1,5 +1,5 @@
 import './blanks-native.mjs';
-import {defaultHookFace} from './blank-hook.mjs';
+import {defaultHookFace,hookHeightLimits} from './blank-hook.mjs';
 import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,blankCopies,cuttingSize,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
 import {localPoint} from './blank-bindings.mjs';
@@ -71,7 +71,9 @@ function formHtml(kind){
         <label>Крючок<select name="hook"><option value="">Без крючка</option><option value="68416">AKKORD · два рожка · античная латунь · 68416</option></select></label>
         <div data-hook-controls><label>Количество крючков<select name="hookCount"><option value="1">1 шт.</option><option value="2">2 шт.</option><option value="3">3 шт.</option><option value="4">4 шт.</option></select></label><label>Сторона крепления<select name="hookFace"></select></label>
         <label><span data-hook-along-label></span><input name="hookAlong" type="number" min="0" step="0.5" placeholder="По центру"></label>
-        <label>От низа детали до оси крепления, мм<input name="hookHeight" type="number" min="0" step="0.5" placeholder="По центру"></label>
+        <label>Высота крючков от низа детали до оси, мм<input name="hookHeight" type="number" step="0.5" placeholder="По центру"></label>
+        <input name="hookHeightSlider" type="range" step="0.5" aria-label="Передвинуть ряд крючков по высоте">
+        <output data-hook-height-note></output>
         <small>Крючки в ряду стоят на одной высоте с равным шагом. Оставьте отступ пустым, чтобы ряд оставался по центру детали.</small></div>
       </fieldset>`:''}
       <p class="mf-blank-cut"  data-blank-cut></p><p class="mf-blank-result" aria-live="polite" data-blank-summary></p>
@@ -98,7 +100,17 @@ function readForm(form){
 }
 function draw(form,room){
   const v=readForm(form),error=validateBlank(v,room);
-  if(form.elements.hook)form.querySelector('[data-hook-controls]').hidden=!v.blank_hook;
+  if(form.elements.hook){
+    form.querySelector('[data-hook-controls]').hidden=!v.blank_hook;
+    if(v.blank_hook){
+      const height=v.blank_axis==='side'?v.blank_length_mm:v.blank_width_mm;
+      const {min,max}=hookHeightLimits(height),input=form.elements.hookHeight,slider=form.elements.hookHeightSlider;
+      input.min=slider.min=min;input.max=slider.max=Math.max(min,max);slider.disabled=max<min;
+      const y=v.blank_hook.height_mm??height/2;
+      slider.value=y;input.placeholder='По центру · '+height/2;
+      form.querySelector('[data-hook-height-note]').textContent=max<min?'Крючок не помещается по высоте.':'Ось крепления: '+y+' мм. Диапазон '+min+'–'+max+' мм.';
+    }
+  }
   form.querySelector('[data-blank-code]').textContent=v.blank_edge_code;
   for(const button of form.querySelectorAll('[data-blank-preset]'))button.setAttribute('aria-pressed',String(button.dataset.blankPreset===v.blank_edge_code));
   for(let i=0;i<4;i++){
@@ -141,7 +153,21 @@ export class BlanksUI{
         else draw(form,this.app.adapter.room);
       });
       form.querySelector('[data-blank-copy]')?.addEventListener('click',()=>this.copy());
-      form.addEventListener('input',()=>draw(form,this.app.adapter.room));
+      form.addEventListener('input',e=>{
+        const name=e.target.name;
+        if(name==='hookHeightSlider')form.elements.hookHeight.value=e.target.value;
+        const valid=draw(form,this.app.adapter.room);
+        if(name==='hookHeightSlider'||name==='hookHeight'){
+          const it=this.app.adapter.selected;
+          if(it?.blank_hook){
+            const height=valid?readForm(form).blank_hook.height_mm:it.blank_hook.height_mm;
+            this.app.scene?.previewHookHeight?.(it.item_id,height??it.height/2);
+          }
+        }
+      });
+      form.elements.hookHeight?.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){e.preventDefault();e.target.blur();}
+      });
       form.addEventListener('change',e=>{
         if(e.target.closest('.mf-blank-binding')&&e.target.name!=='bound'&&!form.querySelector('[name="bound"]').checked)return;
         if(form===this.inspector)this.commit();

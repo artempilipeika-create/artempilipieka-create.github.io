@@ -38,3 +38,12 @@ test('hook rows preserve centre, pitch and height on both panel types after save
   assert.ok(validateBlank(updateBlank(it,{blank_hook:{...it.blank_hook,count:5}})));
  }
 });
+
+test('height controls accept the displayed limits and keep a raised panel elevation separate',async()=>{
+ const {hookHeightLimits}=await import('../../backend/v2/cabinet_assets/planner/blank-hook.mjs');
+ const board=blankItem({item_id:'panel',axis:'back',length:600,partWidth:900,elevation:120,blank_hook:{article:'68416',face:'positive',count:4}});
+ const {min,max}=hookHeightLimits(board.height);assert.deepEqual([min,max],[28,801.5]);
+ for(const y of [min,520,max]){const it=updateBlank(board,{blank_hook:{...board.blank_hook,height_mm:y}});
+   assert.equal(validateBlank(it),'');for(let n=0;n<4;n++)assert.equal(hookNativeItem(it,n).position.y,120+y);}
+ for(const y of [min-.5,max+.5])assert.match(validateBlank(updateBlank(board,{blank_hook:{...board.blank_hook,height_mm:y}})),/Высота оси/);
+});

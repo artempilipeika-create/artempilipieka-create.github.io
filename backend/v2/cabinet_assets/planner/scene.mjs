@@ -427,6 +427,13 @@ export class PlannerScene{
     return new THREE.Plane(new THREE.Vector3(0,1,0),-(hit?.y??elevation(it,this.adapter.room)*S));
   }
   pixelThreshold(it){const distance=this.camera.position.distanceTo(this.controls.target);return this.mode==='3d'?Math.max(15,Math.min(85,distance*1000*.018)):Math.max(12,Math.min(85,2*this.orthoSpan/this.camera.zoom/this.height*1000*14));}
+  previewHookHeight(itemId,height){
+    const group=this.entries.get(itemId)?.group;
+    if(!group)return;
+    for(const mesh of group.children)if(mesh.userData.blankHook)mesh.position.y=height*S;
+    this.renderer.shadowMap.needsUpdate=true;
+    this.invalidate();
+  }
   showPreview(it,error,guides=[]){
     this.previewItems=[it];
     if(!this.preview||this.preview.userData.itemId!==it.item_id||this.previewSignature!==this.factory.signature(it)){

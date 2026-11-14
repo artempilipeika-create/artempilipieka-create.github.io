@@ -8,6 +8,10 @@ export function hookPlacement(it,index=0){
   return side?{x:sign*it.width/2,y,z:along,rotation:sign===1?270:90}
     :{x:along,y,z:sign*it.depth/2,rotation:sign===1?0:180};
 }
+export function hookHeightLimits(height){
+  // Lowest and highest half-millimetre settings that keep the whole casting on the panel.
+  return {min:Math.ceil(27.592*2)/2,max:Math.floor((height-98.148)*2)/2};
+}
 export function hookError(it){
   const h=it.blank_hook;if(!h)return '';
   if(!['side','back'].includes(it.blank_axis))return 'Для крючка выберите вертикальную заготовку или снимите крючок.';
@@ -16,7 +20,10 @@ export function hookError(it){
   const count=h.count??1;
   if(!Number.isInteger(count)||count<1||count>4)return 'Выберите от одного до четырёх крючков.';
   const halfRow=(count-1)*span/(2*count);
-  if(![along,y].every(v=>Number.isInteger(v*2))||along-halfRow<15||along+halfRow+15>span||(count>1&&span/count<30)||y<27.592||y+98.148>it.height)return 'Крючок выходит за край детали. Проверьте отступ и высоту оси крепления.';
+  const {min,max}=hookHeightLimits(it.height);
+  if(max<min)return 'Деталь слишком низкая для этого крючка.';
+  if(!Number.isInteger(y*2)||y<min||y>max)return 'Высота оси крючков: от '+min+' до '+max+' мм от низа детали, шаг 0,5 мм.';
+  if(!Number.isInteger(along*2)||along-halfRow<15||along+halfRow+15>span||(count>1&&span/count<30))return 'Крючок выходит за край детали. Проверьте отступ и высоту оси крепления.';
   return '';
 }
 export function hookNativeItem(it,index=0){
