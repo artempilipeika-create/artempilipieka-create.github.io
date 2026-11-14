@@ -1,3 +1,11 @@
+#planner-assistant-dialog .shelf-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:6px;margin:10px 0}
+#planner-assistant-dialog .shelf-options button{display:grid;justify-items:center;width:100%;height:100%;padding:6px;margin:0;align-content:start}
+#planner-assistant-dialog .shelf-options button[aria-pressed=true]{outline:2px solid #236144;outline-offset:-2px}
+#planner-assistant-dialog .shelf-options img{width:100%;height:76px;object-fit:contain;background:white}
+#planner-assistant-dialog .shelf-options small{display:block;font-size:11px;text-align:center}
+#planner-assistant-dialog .shelf-options>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+#planner-assistant-dialog .shelf-options select{font-size:12px;padding:3px}
+#planner-assistant-dialog .shelf-schedule{font-size:12px;margin-bottom:0}
 #planner-assistant{color:#18573e;border-color:#6a967c;background:#eff8ef}
 #planner-assistant-dialog{width:min(560px,calc(100vw - 32px));max-height:85vh;overflow:auto;border:1px solid #b8c8b9;border-radius:18px;padding:24px;background:#fafcf8;color:#243a2e;box-shadow:0 20px 80px #18372540}
 #planner-assistant-dialog::backdrop{background:#102a2266}
@@ -13,7 +21,15 @@
 #planner-assistant-dialog ul{padding:16px 16px 16px 34px;border:1px solid #c6d7c8;border-radius:12px;background:#edf4eb;line-height:1.6}
 #planner-assistant-dialog [hidden]{display:none!important}
 #planner-assistant-dialog button+button{margin-left:8px}
-.planner-client #planner-workspace #planner-tools>#planner-assistant{display:inline-flex!important}
+.planner-client #planner-workspace #planner-tools>#planner-assistant-dialog .shelf-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:6px;margin:10px 0}
+#planner-assistant-dialog .shelf-options button{display:grid;justify-items:center;width:100%;height:100%;padding:6px;margin:0;align-content:start}
+#planner-assistant-dialog .shelf-options button[aria-pressed=true]{outline:2px solid #236144;outline-offset:-2px}
+#planner-assistant-dialog .shelf-options img{width:100%;height:76px;object-fit:contain;background:white}
+#planner-assistant-dialog .shelf-options small{display:block;font-size:11px;text-align:center}
+#planner-assistant-dialog .shelf-options>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+#planner-assistant-dialog .shelf-options select{font-size:12px;padding:3px}
+#planner-assistant-dialog .shelf-schedule{font-size:12px;margin-bottom:0}
+#planner-assistant{display:inline-flex!important}
 #planner-assistant-dialog.assistant-wizard{width:min(960px,calc(100vw - 32px));max-width:none;box-sizing:border-box}
 .assistant-steps{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}
 #planner-assistant-dialog .assistant-steps button{margin:0;font-size:13px;padding:8px 12px}

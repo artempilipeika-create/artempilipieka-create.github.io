@@ -41,11 +41,33 @@ class CarcassPosition(StrictModel):
     rotation: Literal[0, 90, 180, 270]
 
 
+# Keys correspond to the shelf fragments available in the questionnaire.
+GLASS_SUPPORTS = {
+    **dict.fromkeys(('39543','48862','39544','48846','48848'), (4,6,8)),
+    **dict.fromkeys(('80936','103819','103816','103817','103814'), (6,8)),
+    **dict.fromkeys(('64145','103818'), (8,)),
+}
+def shelf_valid(value, thickness):
+    size, sep, article = value.partition('/')
+    if size == 'board':
+        if article == '95388': return True
+        if article == '134286': return thickness in (16,18)
+        return article in ('60714','70245','134762','134763') and thickness in (16,18,25)
+    return size in ('4','6','8') and int(size) in GLASS_SUPPORTS.get(article, ())
+
+ShelfValue = Annotated[str, Field(max_length=15)]
 class CarcassDesign(CarcassSpec):
+    shelfChoices: list[Annotated[list[ShelfValue], Field(max_length=10)]] | None = Field(default=None,max_length=3,exclude_if=lambda v:v is None)
+
     sectionShelves: list[Annotated[int, Field(ge=0, le=10, strict=True)]] | None = Field(default=None, min_length=1, max_length=3)
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.shelfChoices is not None:
+            if not self.sectionShelves or [len(row) for row in self.shelfChoices] != self.sectionShelves:
+                raise ValueError('Проверьте выбор полок по секциям.')
+            if any(not shelf_valid(value,self.thickness) for row in self.shelfChoices for value in row):
+                raise ValueError('Держатель не подходит к полке.')
         if self.sectionShelves is not None:
             if self.recipe not in ('shelves', 'divided') or len(self.sectionShelves) != self.sections or max(self.sectionShelves) != self.shelves:
                 raise ValueError('Invalid section layout')

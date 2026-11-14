@@ -7,7 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
-from .assistant_model import AssistantCarcass
+from .assistant_model import AssistantCarcass, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
 from .domain_api import require
@@ -132,6 +132,7 @@ class FurnitureItem(StrictModel):
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
     blank_binding: BlankBinding|None=None
     blank_hook: BlankHook|None=None
+    blank_shelf: ShelfValue|None=None
     assistant_carcass: AssistantCarcass|None=None
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
@@ -154,6 +155,8 @@ class FurnitureItem(StrictModel):
             half_row=(count-1)*span/(2*count)
             if along-half_row<15 or along+half_row+15>span or (count>1 and span/count<30) or height<27.592 or height+98.148>self.height:
                 raise ValueError('Крючок выходит за край заготовки.')
+        if self.blank_shelf and (self.module_type!='blank' or self.blank_axis!='horizontal' or not shelf_valid(self.blank_shelf,self.blank_thickness_mm)):
+            raise ValueError('Проверьте фурнитуру полки.')
         if self.assistant_carcass and self.module_type!='blank':
             raise ValueError('Параметры корпуса помощника доступны только заготовкам.')
         if self.blank_binding and (self.module_type!='blank' or self.blank_axis!='horizontal'):
@@ -166,7 +169,10 @@ class FurnitureItem(StrictModel):
             l,w,t=self.blank_length_mm,self.blank_width_mm,self.blank_thickness_mm
             if w>1200 and self.blank_axis!='back':
                 raise ValueError('Ширина заготовки больше 1200 мм допустима только для задней панели')
-            if t<10 and not (t in (3,4) and self.blank_axis=='back' and self.blank_edge_code=='0000'):
+            glass=bool(self.blank_shelf and not self.blank_shelf.startswith('board/'))
+            if glass and (self.blank_edge_code!='0000' or self.body_variant_id or int(self.blank_shelf.split('/')[0])!=t):
+                raise ValueError('Неверная толщина или материал стеклянной полки.')
+            if t<10 and not glass and not (t in (3,4) and self.blank_axis=='back' and self.blank_edge_code=='0000'):
                 raise ValueError('ХДФ 3/4 мм допустим только для задней панели без ПВХ')
             expected={'horizontal':(l,t,w),'side':(t,l,w),'back':(l,w,t)}[self.blank_axis]
             if (self.width,self.height,self.depth)!=expected:

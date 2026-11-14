@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.17 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.18 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -1109,8 +1109,59 @@ function resizeAndPlaceBlank(obj,item,log){
  return {materialChecks,profileChecks:[]};
 }
 
+const GLASS_SHELVES = {"a3ba7315723500c0cda62751195a2917511e0738924adc0ea76f9416af3aa0d8": 4, "e62793eec974a6ffcc385e5d92d5fb42ad25aa393d4f900569c5fc97288cdade": 8, "acec3cbac6262b250f1abbf901c4804da07748fbf2926948645e0b48eff12bb7": 6};
+function placeGlassShelf(obj,item,log){
+  const target=item.target, thick=GLASS_SHELVES[item.source_sha256];
+  if(!thick || target.height!==thick || !Number.isInteger(target.width)||target.width<100||target.width>3000||
+     !Number.isInteger(target.depth)||target.depth<40||target.depth>1200)throw Error('Неверные параметры стеклянной полки.');
+  obj.SetDefaultTransform();
+  const list=asList(obj),panels=[];walkPanels(obj,panel=>panels.push(panel));
+  if(panels.length!==1||Number(panels[0].Thickness)!==thick)throw Error('Исходное стекло не совпало с анкетой.');
+  const panel=panels[0],w=target.width,d=target.depth;
+  historyOperations.RegisterObjectChanging(panel);
+  panel.Contour.Clear();
+  for(const line of [[0,0,w,0],[w,0,w,d],[w,d,0,d],[0,d,0,0]])panel.Contour.AddLine(...line);
+  panel.PositionZ=d;panel.Build();
+  for(let i=0;i<list.Count;i++){const frame=childAt(list,i);if(isServiceFrame(frame)){
+    historyOperations.RegisterObjectChanging(frame);frame.Width=w;frame.Depth=d;if(typeof frame.Build==='function')frame.Build();
+  }}
+  if(typeof obj.Build==='function')obj.Build();
+  const frame=readFrame(list);
+  if(distance(frame.size,{x:w,y:thick,z:d})>PLACEMENT_TOLERANCE_MM)throw Error('Не совпали габариты стекла.');
+  placeByFrame(obj,frame,item,log);
+  return {materialChecks:[],profileChecks:[]};
+}
+const SHELF_HOLDERS = new Set([
+  "879fbb8813f26ff84573bc25eeb6d2eb0ef9c792d438af4f23fd8b8e22561eb2",
+  "7f4c8fa19aa9e40f5ccec66a654da8102981f6e05273793d59b7f1304a58e7c6",
+  "835eec7c084ee39ef7d2abf0559c9b24956370fbd52769cd4bba02260294efaf",
+  "7a04d29a9144586b863f1efa94bcc220f69a3e3b03e4f7c26a87f045ab7f3026",
+  "a3c8cb4777991f725662ae258c0c75b4ce244417722e7a557aea3f2336c8510d",
+  "4648a3f9b56b10993f4de071306d4b817bae629a2d5c78e1c519310a98a4aaaa",
+  "e4b91d80b94fce9574629450793462093d30b42f25ee3f3e54c852e9526f4383",
+  "78bcf112c03e59ce71fe42582289c122142d38859253bc18d162dde130521c62",
+  "43351b998c22536fb3292d574f9f123df85c5572c5ac7f9f063cf3aa3320b2bd",
+  "39c87e175be8dac0ebbdf70f35dbd4c0f006e6f1440d2d1f2092d69f9d1700cb",
+  "7628969d1ea59f7ebef4e4a7bc3a1a6ef29cb7206d2dde6a78fe834781ea6179",
+  "0823048ed2dee11dbb9a194933bc9f5c89892a11489e1ac2845fa70bedbc8eb3",
+  "cf72a81dc2c56a8abf269d845ecd99a0176d5bc4582cde45e738c1eabd3623f9",
+  "dd48218e33581747eed02fc0d29114aad9a85c4b27605a157f40f0f269333b21",
+  "03101f244deff7c44774b283ffba09d1dec237703155cf1d38671083424933a0",
+  "a26ca9da7c9cdb75935fb56cda96d1bd9aa873f908617a8620dd6bbea7f30045",
+  "1ae14d79bb1b3852fbe794dc9a130d068474aedde7ae64e27e0e3ebe91470053",
+  "6efefc396fdb85865447d35808db1872352eff61bf52c932bf876df0e2da4bc3",
+  "19c91fbcfb728e55b51596b8c52b7be8d8d7e5956baf82d6f82d5a7aeca0185a",
+  "6451826c6b81e00084319c8fbc87d526bb0fe8869901fd1941c3514ade61acc6",
+  "a09395dd224b77151e7b49453fc9d11bfc600f889226403acbbbe6b9ec3b0ff6",
+  "176eaf1c2110f16e0583cdf5c39418539ca4fc1e2f1f7862f809f7f2a347de17",
+  "cd07167c3257cf83088552d1db5be514da510241584b09c2829d42c2074ee31b",
+  "70beead8504598428e7b6c3ab4ed43a6bf782c670873ca9247f2b541f62cb6b8",
+  "0d47361fc7bc5bc8a92d502f09b3b2a4b9bc363abd750131182e8cbffdc56060",
+  "9f175f967733d68ade214e72a7fded92588b1d1e697d9d190591551d26d828f4",
+  "15dbc92cb6ece7185083c7f02c6f502f6ce62724159d8d5be6d0181ba971856c"
+]);
 function isShelfSupport(item) {
-  return item.source_sha256==='cf72a81dc2c56a8abf269d845ecd99a0176d5bc4582cde45e738c1eabd3623f9';
+  return SHELF_HOLDERS.has(item.source_sha256);
 }
 function isBlankHook(item) {
   return item.source_sha256==='0c7176c2b675cfb48eb2f5de2ba6adbebb09d7c315c30b6f6d07628808dac3db';
@@ -1120,6 +1171,7 @@ function isNativeSocket(item) {
     'e97c325787e7237bb18511ceae98a5e00c1570f00eec914c79d52f02a152ca0d'].includes(item.source_sha256);
 }
 function resizeAndPlace(obj, item, log) {
+  if(item.glass_shelf)return placeGlassShelf(obj,item,log);
   if(item.blank)return resizeAndPlaceBlank(obj,item,log);
   if (isShelfSupport(item)) {
     placeByFrame(obj,null,item,log,{x:0,y:0,z:0});
@@ -1261,7 +1313,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.17 SEKURA + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.18 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1410,7 +1462,7 @@ function importProject(prepared, root, payload) {
         liveChecks.push({ obj, result });
       }
       importedObjects.push(obj);
-      if (item.blank && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
+      if ((item.blank||item.glass_shelf) && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
       if (!isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });

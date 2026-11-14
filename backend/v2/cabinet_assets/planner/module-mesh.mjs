@@ -267,7 +267,7 @@ export class MeshFactory{
     const group=new THREE.Group();
     group.userData={itemId:it.item_id,ghost,visualApproximation:false};
     const W=it.width,H=it.height,D=it.depth,ax=it.blank_axis,code=it.blank_edge_code||'0000';
-    this.box(group,'body',W,H,D,0,H/2,0,it.body_variant_id,ghost);
+    this.box(group,it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'glass':'body',W,H,D,0,H/2,0,it.body_variant_id,ghost);
     const t=Math.min(0.8,(it.blank_thickness_mm||18)/4);
     const addEdge=(w,h,d,x,y,z)=>{
       const m=this.box(group,'blank-edge',w,h,d,x,y,z,it.body_variant_id,ghost,.05);
@@ -296,7 +296,7 @@ export class MeshFactory{
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
     }
-    for(const h of shelfSupportPlan(it,this.adapter.items||[]).parts){
+    for(const h of (it.blank_shelf?[]:shelfSupportPlan(it,this.adapter.items||[]).parts)){
       const key='sekura:95388',geometry=this.acquire(key,()=>{
         const g=new THREE.BufferGeometry();
         g.setAttribute('position',new THREE.Float32BufferAttribute(supportVertices,3));g.setIndex(supportIndices);
@@ -653,7 +653,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

@@ -27,7 +27,7 @@ export function carcassSVG(built,small=false){
   }).sort((a,b)=>a.sort-b.sort);
   const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),minX=Math.min(...xs),minY=Math.min(...ys),W=Math.max(...xs)-minX,H=Math.max(...ys)-minY,pad=Math.max(W,H)*.08;
   return `<svg viewBox="${minX-pad} ${minY-pad} ${W+2*pad} ${H+2*pad}" role="img" aria-label="${escape(s.label)}: схема деталей корпуса">${panels.map(({key,i,faces,e})=>
-    `<g>${faces.map((f,n)=>`<polygon points="${f.map(p=>p.join(',')).join(' ')}" fill="${key==='back'?'#e5e8df':['#e4d8bc','#b5a98e','#f5edda'][n]}" stroke="#6b7567" stroke-width="${Math.max(W,H)*.0017}"/>`).join('')}${e.map((line,n)=>i.blank_edge_code[n]==='1'?`<path d="M${line[0].join(',')}L${line[1].join(',')}" stroke="#15845b" stroke-width="${Math.max(W,H)*(small?.006:.0035)}" fill="none"/>`:'').join('')}</g>`).join('')}</svg>`;
+    `<g>${faces.map((f,n)=>`<polygon points="${f.map(p=>p.join(',')).join(' ')}" fill-opacity="${i.blank_shelf&&!i.blank_shelf.startsWith('board/')?.55:1}" fill="${i.blank_shelf&&!i.blank_shelf.startsWith('board/')?'#8cc5ce':key==='back'?'#e5e8df':['#e4d8bc','#b5a98e','#f5edda'][n]}" stroke="#6b7567" stroke-width="${Math.max(W,H)*.0017}"/>`).join('')}${e.map((line,n)=>i.blank_edge_code[n]==='1'?`<path d="M${line[0].join(',')}L${line[1].join(',')}" stroke="#15845b" stroke-width="${Math.max(W,H)*(small?.006:.0035)}" fill="none"/>`:'').join('')}</g>`).join('')}</svg>`;
 }
 
 export class CarcassUI{

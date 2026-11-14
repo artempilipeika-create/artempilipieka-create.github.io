@@ -32,7 +32,7 @@ def test_controls_and_photos_are_served_but_native_archive_stays_private():
  import zipfile
  with zipfile.ZipFile(archive) as z:
   assert len(z.namelist())==41
-  assert z.read("Martin_Forest_Import_v9_9_17.js")== (ROOT/"backend/v2/cabinet_assets/planner/bazis-drawers-import.js").read_bytes()
+  assert z.read("Martin_Forest_Import_v9_9_18.js")== (ROOT/"backend/v2/cabinet_assets/planner/bazis-drawers-import.js").read_bytes()
  app=FastAPI();app.include_router(router())
  with TestClient(app) as c:
   for url in ['/constructor','/constructor-legacy']:assert c.get(url).text.count('id="modern-cabinet-controls"')==1

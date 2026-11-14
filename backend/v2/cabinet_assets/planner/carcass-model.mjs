@@ -3,6 +3,7 @@ import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
 
 // Exact master.u2 catalogue identity: ЛХДФ 3ММ Белый, 2800х2070 мм.
 // Used only when adding new carcasses; saved/manual assignments stay unchanged.
+import {choice,defaultShelf,fittingGap} from './shelf-choices.mjs';
 export const CARCASS_BACK_MATERIAL_ID='fb7b270e-66ad-5411-affc-5717b1adf0d6';
 
 // Construction families grounded in the user's Zhanna albums and native kitchen
@@ -39,10 +40,10 @@ export function buildCarcass(input={},options={}){
   const prefix=options.idPrefix||crypto.randomUUID(),parts=[];
   const sideY=s.bottom==='overlay'?t:0,sideH=H-sideY-(s.top==='overlay'?t:0);
   const bottomTop=t,topBottom=['inset','overlay','rails'].includes(s.top)?H-t:H-80;
-  const add=(key,name,axis,L,B,T,x,y,z,code,binding=null)=>{
+  const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
       x,z,elevation:y+s.elevation,edges:options.edges?.[key]??code,blank_edge_thickness_mm:s.edgeThickness,
-      body_variant_id:key==='back'?(options.backMaterialId??null):(options.bodyMaterialId??null),blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')?'sekura-95388':'none'}:null});
+      blank_shelf:shelf,body_variant_id:shelf?.startsWith('board/')||!shelf?(key==='back'?(options.backMaterialId??null):(options.bodyMaterialId??null)):null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
     const error=validateBlank(item);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
   };
@@ -70,8 +71,12 @@ export function buildCarcass(input={},options={}){
   for(let section=0;section<s.sections;section++)for(let i=0;i<counts[section];i++){
     const count=counts[section],y=bottomTop+Math.round((i+1)*(topBottom-bottomTop-count*t)/(count+1))+i*t;
     const a=supports[section],b=supports[section+1];
-    add('shelf-'+section+'-'+i,'Полка '+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
-      widths[section]-2*s.shelfGap,D-s.shelfSetback,t,(a.x+b.x)/2,y,-s.shelfSetback/2,edge(),binding(a,b,s.shelfGap,-s.shelfSetback/2));
+    const value=s.shelfChoices?.[section]?.[i]??defaultShelf;
+    const {kind,thickness,hardware}=choice(value,t);
+    const gap=Math.max(s.shelfGap,fittingGap(hardware.article));
+    const label=kind==='glass'?'Стекло '+thickness+' мм · полка ':'Полка ';
+    add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
+      widths[section]-2*gap,D-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,-s.shelfSetback/2,kind==='glass'?'0000':edge(),binding(a,b,gap,-s.shelfSetback/2),value===defaultShelf?null:value);
   }
   // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
   if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');

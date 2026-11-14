@@ -1,5 +1,7 @@
 import {selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
+import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
+import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
 import {WARDROBE_STEPS,wardrobeSpec,sectionWidths,questionnaireMaterialError} from './wardrobe-questionnaire.mjs';
 const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x;};
@@ -36,6 +38,7 @@ export class AssistantUI{
   this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
+  this.shelfScopes={};this.shelfDrafts={};
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -70,19 +73,19 @@ export class AssistantUI{
   this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
    this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
-   this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
+   this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
    this.select(this.form,'Задняя стенка',[['yes','Накладная ХДФ 3 мм'],['no','Без задней стенки']],this.fields.back?'yes':'no',v=>{this.fields.back=v==='yes';this.changed();});
    this.form.append(el('p','Высота без ножек и цоколя. Задняя стенка добавляет 3 мм к глубине.'));
   }else if(this.step===1){
    const choices=el('div');choices.className='assistant-cards';
-   for(const n of [1,2,3]){const b=button('',()=>{this.fields.sections=n;this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.changed();this.render();});
+   for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};this.fields.sections=n;this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
     const pict=el('span');pict.className='assistant-section-icon';for(let i=0;i<n;i++)pict.append(el('i'));b.append(pict,el('strong',n===1?'Одна секция':n===2?'Две секции':'Три секции'));b.setAttribute('aria-pressed',String(this.fields.sections===n));choices.append(b);}
    this.form.append(choices,el('p','Секции равной ширины, с общими перегородками.'));try{this.form.append(el('p','Внутренняя ширина: '+sectionWidths(this.spec()).join(' / ')+' мм.'));}catch{}
   }else if(this.step===2){
    this.fields.sectionShelves.forEach((count,i)=>{const group=el('fieldset');group.append(el('legend','Секция '+(i+1)));
-    this.select(group,'Наполнение секции '+(i+1),[['shelves','Полки'],['empty','Пустая ниша'],['drawers','Ящики — комплект для шкафа ещё не подключён',true],['rod','Штанга — заготовка ещё не подключена',true]],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;this.changed();this.render();});
-    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.changed();});this.form.append(group);
-   });this.form.append(el('p','Полки привязаны к стойкам. Зазор по бокам — '+(this.fields.shelfGap??0)+' мм.'));
+    this.select(group,'Наполнение секции '+(i+1),[['shelves','Полки'],['empty','Пустая ниша'],['drawers','Ящики — комплект для шкафа ещё не подключён',true],['rod','Штанга — заготовка ещё не подключена',true]],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});
+    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count)shelfQuestionnaire(this,group,i);this.form.append(group);
+   });this.form.append(el('p','Полки пронумерованы снизу вверх. Базовый зазор по бокам — '+(this.fields.shelfGap??0)+' мм.'));
   }else if(this.step===3){
    const card=el('div');card.className='assistant-choice';card.append(el('strong','Открытый шкаф'),el('p','Без фасадов. Наполнение видно и доступно.'));this.form.append(card);
    const unavailable=el('div');unavailable.className='assistant-unavailable';unavailable.append(el('strong','Распашные и раздвижные фасады'),el('p','Для этой сборки пока не подключены подходящие заготовки фасадов с петлями и ручками. Сейчас можно собрать открытый шкаф.'));this.form.append(unavailable);

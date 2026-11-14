@@ -35,7 +35,7 @@ def router():
         'worktop-fixtures.mjs','worktop-fixture-mesh.mjs','worktop-fixture-ui.mjs','worktop-fixtures.css',
         'material-appearance-ui.mjs','material-appearance.css',
         'sekura.mjs','sekura-mesh.mjs','blank-hook.mjs','akkord-mesh.mjs','blanks-model.mjs','blanks-ui.mjs','blanks-native.mjs','blank-bindings.mjs','carcass-model.mjs','carcass-ui.mjs','blank-sources.json','blanks.css',
-        'assistant-model.mjs','assistant-ui.mjs','assistant.css','wardrobe-questionnaire.mjs',
+        'assistant-model.mjs','assistant-ui.mjs','assistant.css','wardrobe-questionnaire.mjs','shelf-choices.mjs','shelf-donors.mjs','shelf-questionnaire.mjs','shelf-images.mjs',
         'showroom.css','finish-catalogue.mjs','execution-artwork.mjs','execution-image-index.mjs','hardware-photos.mjs','execution-ui.mjs','execution-options.mjs','execution-previews.mjs','execution-cards.css','choice-card-ui.js','catalogue-artwork.js','surface-cards.css','appliance-assets.mjs','appliance-finish.mjs','shaft-editor.mjs','room-equipment.mjs','room-equipment-mesh.mjs','equipment-controls.mjs','equipment-placement.mjs','window-preview.svg','socket-editor.mjs','socket-asset.mjs','socket-native.mjs',
         'room-assets/socket-tripo.json','room-assets/socket-tripo.bin','room-assets/socket-tripo-color.webp','room-assets/socket-tripo-rm.webp','room-assets/socket-tripo-normal.webp','room-assets/socket-tripo-preview.webp',
         'accessory-variants.js','accessory-variants.json','accessories.js','accessory-ui.mjs','accessories.css',
@@ -53,6 +53,7 @@ def router():
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
+    planner_files.update('shelf-images/'+sku+'.webp' for sku in ['103814', '103816', '103817', '103818', '103819', '103820', '13110', '134286', '134762', '134763', '38334', '39543', '39544', '39653', '48846', '48848', '48862', '60714', '64145', '64149', '70245', '80054', '80936', '95388'])
     planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave','sink','faucet','hood','gas_cooker','radiator','gas_boiler','water_heater','window') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp'))
     planner_files.update('hardware-photos/'+name for name in (
         '38402.webp', '114064.webp',

@@ -1,5 +1,6 @@
 /** Universal rectangular board. Dimensions in mm, never inferred from a cabinet. */
 import {hookError} from './blank-hook.mjs';
+import {choice} from './shelf-choices.mjs';
 export const SOURCE_EDGE_CODES=Object.freeze(['0000','1000','1010','1110','1011','1111']);
 export const AXES=Object.freeze(['horizontal','side','back']);
 export const EDGES=Object.freeze([
@@ -27,7 +28,14 @@ export function validateBlank(input,room){
   if(!Number.isInteger(b.length)||b.length<100||b.length>3000)return 'Длина заготовки: от 100 до 3000 мм.';
   if(!Number.isInteger(b.width)||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
   const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
-  if(!thinBack&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
+  let glass=false;
+  if(input.blank_shelf){
+    try{
+      const c=choice(input.blank_shelf,b.thickness);glass=c.kind==='glass';
+      if(b.axis!=='horizontal'||(glass&&(b.code!=='0000'||b.thickness!==c.thickness||input.body_variant_id)))return 'Стеклянная полка должна сохранять толщину стекла и быть без ПВХ.';
+    }catch(e){return e.message;}
+  }
+  if(!glass&&!thinBack&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
   if(!Number.isInteger(b.elevation)||b.elevation<0||b.elevation>5000)return 'Высота низа детали должна быть целым числом в мм.';
@@ -43,6 +51,7 @@ export function blankItem(input={}){
   return {
     ...dims,
     module_type:'blank',template_id:null,bazis_id:null,
+    ...(input.blank_shelf?{blank_shelf:input.blank_shelf}:{}),
     ...(input.blank_hook?{blank_hook:{...input.blank_hook}}:{}),
     ...(input.blank_binding?{blank_binding:structuredClone(input.blank_binding)}:{}),
     item_id:input.item_id||crypto.randomUUID(),name:(input.name||'Заготовка ЛДСП').slice(0,160),
@@ -67,7 +76,7 @@ export function blanksCSV(items,materialLookup=()=>null){
   const header=['Название','Длина, мм','Ширина, мм','Толщина, мм','Кромка 1','Кромка 2','Кромка 3','Кромка 4','Код ПВХ','ПВХ, м','Материал','Артикул','Материал (ID)','Распил длина, мм','Распил ширина, мм','ПВХ толщина, мм'];
   const rows=items.filter(it=>it.module_type==='blank').map(it=>{
     const b=normalizeBlank(it),material=it.body_variant_id?materialLookup(it.body_variant_id):null;
-    return [it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),material?.name||'',material?.article||'',it.body_variant_id||'',cuttingSize(it).length,cuttingSize(it).width,b.edgeThickness];
+    return [it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),material?.name||(it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'Стекло '+b.thickness+' мм':''),material?.article||'',it.body_variant_id||'',cuttingSize(it).length,cuttingSize(it).width,b.edgeThickness];
   });
   return '\ufeff'+[header,...rows].map(row=>row.map(quote).join(';')).join('\r\n')+'\r\n';
 }

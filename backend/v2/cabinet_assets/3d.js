@@ -1440,6 +1440,8 @@ function exportBazisProject(){
   if(hookItems.length){payload.format='martin-forest-bazis-native-v3';payload.minimum_importer='9.9.16';}
   for(const item of supportItems){item.index=payload.items.length+1;payload.items.push(item);}
   if(supportItems.length){payload.format='martin-forest-bazis-native-v3';payload.minimum_importer='9.9.17';}
+  const customShelves=blankItems.some(item=>item.glass_shelf)||supportItems.some(item=>item.article!=='95388');
+  if(customShelves)payload.minimum_importer='9.9.18';
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1448,7 +1450,7 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, полкодержателей: '+supportItems.length+', крючков: '+hookItems.length+', блоков розеток: '+socketItems.length+', деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(supportItems.length?' Для полкодержателей используйте импортёр 9.9.17.':hookItems.length?' Для крючков используйте импортёр 9.9.16.':blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, полкодержателей: '+supportItems.length+', крючков: '+hookItems.length+', блоков розеток: '+socketItems.length+', деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(customShelves?' Для выбранных полок используйте импортёр 9.9.18.':supportItems.length?' Для полкодержателей используйте импортёр 9.9.17.':hookItems.length?' Для крючков используйте импортёр 9.9.16.':blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
 }
 
 async function toOrder(){

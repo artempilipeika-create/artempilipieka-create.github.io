@@ -1,9 +1,11 @@
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
+import {shelfSupportPlan} from './sekura.mjs';
+import {choice} from './shelf-choices.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null,...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -48,13 +50,15 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   const old=current?.items.find(i=>i.item_id===generated.item_id);
   const item={...old,...generated,blank_binding:generated.blank_binding??null,assistant_carcass:metadata};
   if(old){
-   item.name=old.name;
-   if(old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
+   if(old.blank_shelf===generated.blank_shelf)item.name=old.name;
+   if(!generated.blank_shelf)delete item.blank_shelf;
+   if(!old.blank_shelf&&!generated.blank_shelf&&old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
    if(old.blank_thickness_mm===generated.blank_thickness_mm)item.body_variant_id=old.body_variant_id;
-   if(spec.edgePolicy===current.metadata.spec.edgePolicy)item.blank_edge_code=old.blank_edge_code;
+   if(!old.blank_shelf&&!generated.blank_shelf&&spec.edgePolicy===current.metadata.spec.edgePolicy)item.blank_edge_code=old.blank_edge_code;
    if(spec.edgeThickness===current.metadata.spec.edgeThickness)item.blank_edge_thickness_mm=old.blank_edge_thickness_mm;
   }
   if(generated.item_id.endsWith(':back')){if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
+  else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
   else if(bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;
   return item;
  });
@@ -63,12 +67,19 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  const next=resolveBlankBindings([...adapter.items.filter(i=>!oldIds.has(i.item_id)),...items]);
  if(next.length>100)throw Error('В проекте поддерживается до 100 деталей и модулей.');
  for(const i of next){const error=adapter.validate(i,next);if(error)throw Error(i.name+': '+error);}
+ for(const shelf of next.filter(i=>i.blank_shelf)){
+  const mount=shelfSupportPlan(shelf,next);if(mount.error)throw Error(shelf.name+' · '+mount.error);
+ }
  const summary=[plan.action==='create'?'Добавить корпус':'Изменить выбранный корпус',
   `${spec.width} × ${spec.height} × ${spec.depth} мм · ЛДСП ${spec.thickness} мм`,
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Зазор полок: ${spec.shelfGap} мм с каждой стороны`,
   spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
-  'Открытый шкаф. На съёмную полку — четыре SEKURA 2.'];
+  ...(spec.shelfChoices?spec.shelfChoices.flatMap((row,i)=>{
+   const quantities=new Map();
+   for(const value of row)quantities.set(value,(quantities.get(value)||0)+1);
+   return [...quantities].map(([value,n])=>{const c=choice(value,spec.thickness);return 'Секция '+(i+1)+' · '+(c.kind==='glass'?'стекло':'ЛДСП')+' '+c.thickness+' мм × '+n+' · '+c.hardware.name+' '+c.hardware.finish+' · арт. '+c.hardware.article+' × '+(4*n);});
+  }):['Открытый шкаф. На съёмную полку — четыре SEKURA 2.'])];
  if(removed.length)summary.push('Будут удалены детали: '+removed.map(i=>i.name+(i.production_note?' (есть примечание)':'')).join(', '));
  if(current&&spec.thickness!==current.metadata.spec.thickness)summary.push('Толщина изменится: выберите соответствующий материал перед экспортом.');
  return {stamp:assistantStamp(adapter),next,items,summary,spec};
