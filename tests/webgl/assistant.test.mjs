@@ -60,3 +60,28 @@ test('database JSON key order does not make a saved wardrobe look manually alter
  a.items.find(i=>i.blank_binding).blank_binding.gap_left_mm=1;
  assert.throws(()=>selectedCarcass(a),/изменена вручную/);
 });
+
+test('manual divider datums produce exact openings and front setbacks through save, update and native export',async()=>{
+ const {nativeCarcassJoints}=await import('../../backend/v2/cabinet_assets/planner/carcass-joints.mjs');
+ const {blankNativeItem}=await import('../../backend/v2/cabinet_assets/planner/blanks-native.mjs');
+ const {a,h}=setup();
+ const design=wardrobeSpec({...spec,width:1200,sections:3,sectionShelves:[1,1,1],dividerPositions:[320,800],
+  shelfChoices:[['4/48846'],['board/confirmat'],['board/95388']]});
+ assert.deepEqual(sectionWidths(design),[320,462,346]);
+ const plan=prepareAssistantPlan(a,{action:'create',spec:design});
+ h.run('manual',()=>applyAssistantPlan(a,plan));a.restore(JSON.parse(JSON.stringify(a.snapshot())));
+ const meta=selectedCarcass(a).metadata;assert.deepEqual(meta.spec.dividerPositions,[320,800]);
+ const byKey=Object.fromEntries(a.items.map(it=>[it.item_id.split(':').pop(),it]));
+ const side=byKey.left;for(const k of ['divider-0','divider-1','shelf-0-0','shelf-1-0','shelf-2-0']){
+  const part=byKey[k];assert.equal(part.depth,side.depth-1);
+  assert.equal(part.z-part.depth/2,side.z-side.depth/2);
+  assert.equal(part.z+part.depth/2,side.z+side.depth/2-1);
+  assert.equal(blankNativeItem(part,{name:'QA',thickness:18}).target.depth,576);
+ }
+ assert.deepEqual([byKey['shelf-0-0'].width,byKey['shelf-1-0'].width,byKey['shelf-2-0'].width],[318,462,346]);
+ for(const x of nativeCarcassJoints(a.items).filter(x=>x.joint_roll_deg))assert.equal(x.position.x,a.items.find(i=>i.item_id===x.joined_panel_id).x);
+ assert.throws(()=>wardrobeSpec({...design,dividerPositions:[810,800]}),/узкие/);
+ const centered={...design};delete centered.dividerPositions;
+ const update=prepareAssistantPlan(a,{action:'update',spec:wardrobeSpec(centered)});
+ assert.deepEqual(sectionWidths(update.spec),[376,376,376]);
+});

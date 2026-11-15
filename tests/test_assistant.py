@@ -205,3 +205,15 @@ def test_custom_divider_choices_round_trip_and_count_only_selected_ends():
     for index,expected in enumerate(([2,2],[])):
         divider=dict(item_id=f'q:divider-{index}',module_type='blank',blank_axis='side',width=18,assistant_carcass={'spec':spec})
         assert [r['qty'] for r in hardware_for(divider)[0]]==expected
+
+
+def test_wardrobe_manual_openings_and_actual_divider_depth():
+    from backend.v2.assistant_model import CarcassDesign
+    valid=dict(SPEC,recipe='divided',width=1200,sections=3,sectionShelves=[4]*3,
+               shelfSetback=1,dividerSetback=1,dividerPositions=[320,800],
+               dividerJoints=[dict(top='cam_dowel',bottom='none')]*2)
+    assert CarcassDesign.model_validate(valid).model_dump(mode='json')==valid
+    for change in ({'dividerPositions':[320]}, {'dividerPositions':[320,418]},
+                   {'dividerPositions':[320,1080]}, {'depth':216}):
+        with pytest.raises(ValidationError):
+            CarcassDesign.model_validate(dict(valid,**change))

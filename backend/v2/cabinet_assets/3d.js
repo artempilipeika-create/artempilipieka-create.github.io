@@ -1037,7 +1037,8 @@ function buildItem(it){
   if(it.base==='plinth')addItemBox(it,W,baseH,D*.78,0,y0+baseH/2,0,bc);
   if(it.layout==='niche'){
     const inner=H-baseH-2*t,nh=inner*.35;
-    addItemBox(it,W-2*t,t,D*.92,0,y0+H-t-nh,0,bc);
+    const wardrobe=it.module_type==='wardrobe';
+    addItemBox(it,W-2*t,t,wardrobe?D-S:D*.92,0,y0+H-t-nh,wardrobe?-S/2:0,bc);
   }
   const frontT=18*S,fz=D/2+frontT/2+.004;
   for(const f of facadeCells(it))addItemBox(it,f.w*S,f.h*S,frontT,f.cx*S,y0+f.cy*S,fz,fc);
@@ -1067,8 +1068,9 @@ function cutlistItem(it){
     a.push([prefix+'Боковина',it.height-baseH,it.depth,2,'body',it]);
     a.push([prefix+'Крышка/дно',inner,it.depth,2,'body',it]);
     if(it.base==='plinth')a.push([prefix+'Цоколь',it.width,Math.round(it.depth*.78),1,'body',it]);
-    if(['tall_cabinet','wardrobe'].includes(it.module_type))a.push([prefix+'Полка',inner,it.depth,Math.max(2,Math.floor(it.height/500)),'body',it]);
-    if(it.layout==='niche')a.push([prefix+'Полка ниши',inner,it.depth,1,'body',it]);
+    const shelfDepth=it.depth-(it.module_type==='wardrobe'?1:0);
+    if(['tall_cabinet','wardrobe'].includes(it.module_type))a.push([prefix+'Полка',inner,shelfDepth,Math.max(2,Math.floor(it.height/500)),'body',it]);
+    if(it.layout==='niche')a.push([prefix+'Полка ниши',inner,shelfDepth,1,'body',it]);
   }
 
   const grouped=new Map();

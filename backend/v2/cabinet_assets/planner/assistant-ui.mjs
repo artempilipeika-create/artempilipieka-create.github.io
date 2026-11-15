@@ -70,7 +70,7 @@ export class AssistantUI{
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
  render(){
   this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
@@ -80,9 +80,15 @@ export class AssistantUI{
    this.form.append(el('p','Высота без ножек и цоколя. Задняя стенка добавляет 3 мм к глубине.'));
   }else if(this.step===1){
    const choices=el('div');choices.className='assistant-cards';
-   for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};this.fields.sections=n;resizeDividerChoices(this.fields);this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
+   for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};if(this.fields.dividerPositions&&n!==this.fields.sections){
+      const positions=this.fields.dividerPositions;
+      if(n===1)delete this.fields.dividerPositions;
+      else if(n===2)this.fields.dividerPositions=positions.slice(0,1);
+      else positions.push(positions[0]+this.fields.thickness+Math.ceil((this.fields.width-4*this.fields.thickness-positions[0])/2));
+    }this.fields.sections=n;resizeDividerChoices(this.fields);this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
     const pict=el('span');pict.className='assistant-section-icon';for(let i=0;i<n;i++)pict.append(el('i'));b.append(pict,el('strong',n===1?'Одна секция':n===2?'Две секции':'Три секции'));b.setAttribute('aria-pressed',String(this.fields.sections===n));choices.append(b);}
-   this.form.append(choices,el('p','Секции равной ширины, с общими перегородками.'));try{this.form.append(el('p','Внутренняя ширина: '+sectionWidths(this.spec()).join(' / ')+' мм.'));}catch{}
+   this.form.append(choices);this.sectionPositions();
+   this.form.append(el('p','Передние кромки полок и внутренних стоек утоплены на 1 мм от переднего края боковин.'));
   }else if(this.step===2){
    this.jointQuestionnaire();
    this.fields.sectionShelves.forEach((count,i)=>{const group=el('fieldset');group.append(el('legend','Секция '+(i+1)));
@@ -101,6 +107,29 @@ export class AssistantUI{
    this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.back)this.materialPicker('back','Задняя стенка',3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
+ }
+ sectionPositions(){
+  const f=this.fields;
+  if(f.sections>1)this.select(this.form,'Положение внутренних стоек',[['center','Равные секции'],['manual','Вручную, мм']],f.dividerPositions?'manual':'center',mode=>{
+   if(mode==='manual'){
+    let start=0;
+    f.dividerPositions=sectionWidths(f).slice(0,-1).map(width=>{const end=start+width;start=end+f.thickness;return end;});
+   }else delete f.dividerPositions;
+   this.changed();this.render();
+  });
+  const sizes=el('p');
+  const update=()=>{if(f.dividerPositions?.some(n=>!Number.isInteger(n))){sizes.textContent='';return;}const widths=sectionWidths(f);sizes.textContent=widths.every(n=>Number.isInteger(n)&&n>0)?'Чистая ширина секций слева направо: '+widths.join(' / ')+' мм.':'';};
+  if(f.dividerPositions){
+   this.form.append(el('p','От внутренней плоскости левой боковины до левой плоскости каждой стойки.'));
+   f.dividerPositions.forEach((position,i)=>{
+    const label='Положение стойки '+(i+1)+', мм',wrap=el('label',label),input=el('input');
+    input.type='number';input.step='1';input.min='0';input.max=String(f.width-2*f.thickness);
+    input.setAttribute('aria-label',label);input.value=Number.isFinite(position)?position:'';
+    input.oninput=()=>{f.dividerPositions[i]=input.valueAsNumber;update();this.changed();};
+    wrap.append(input);this.form.append(wrap);
+   });
+  }
+  update();this.form.append(sizes);
  }
  jointQuestionnaire(){
   const box=el('fieldset');box.append(el('legend','Крепёж корпуса'));this.form.append(box);
@@ -133,7 +162,7 @@ export class AssistantUI{
    const group=el('fieldset'),number=i+1;
    group.append(el('legend','Внутренняя стойка '+number+' · между секциями '+number+' и '+(number+1)));
    for(const [end,direction] of [['top','сверху'],['bottom','снизу']]){
-    const options=Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth<216]);
+    const options=Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth-1<216]);
     this.select(group,'Стойка '+number+' · крепление '+direction,options,settings[end],value=>{
      settings[end]=value;this.changed();this.render();
     });

@@ -399,7 +399,8 @@ export class MeshFactory{
       if(!it.bazis_id)this.box(group,'back',W-2*t,bodyH-2*t,4,0,base+bodyH/2,-D/2+2,body,ghost);
       for(const shelf of it.shelves||[]){
         if(shelf.enabled===false)continue;
-        const m=this.box(group,'shelf',W-shelf.width_clearance,shelf.thickness,D-shelf.depth_clearance,0,base+shelf.offset_mm,shelf.depth_clearance/2,shelf.material_variant_id||body,ghost);if(m)m.userData.shelfId=shelf.shelf_id;
+        const wardrobe=it.module_type==='wardrobe',inset=wardrobe?1:shelf.depth_clearance;
+        const m=this.box(group,'shelf',W-shelf.width_clearance,shelf.thickness,D-inset,0,base+shelf.offset_mm,(wardrobe?-1:1)*inset/2,shelf.material_variant_id||body,ghost);if(m)m.userData.shelfId=shelf.shelf_id;
       }
     }
 
@@ -412,7 +413,8 @@ export class MeshFactory{
     else if(base>0)for(const x of[-W/2+45,W/2-45])for(const z of[-D/2+45,D/2-95])this.foot(group,x,z,base,ghost);
     if(!it.bazis_id&&it.layout==='niche'){
       const ratio=template?.front?.nicheRatio||.35,y=base+bodyH*(1-ratio);
-      this.box(group,'body',W-2*t,t,D-8,0,y-t/2,-4,body,ghost);
+      const inset=it.module_type==='wardrobe'?1:8;
+      this.box(group,'body',W-2*t,t,D-inset,0,y-t/2,-inset/2,body,ghost);
     }
     // A solid gap-shading panel would hide the real back and shelf behind open doors.
     if(cells.length&&!production?.wall_special&&production?.tall?.execution!=='gola'&&!production?.dishwasher&&!production?.cargo&&!production?.gola&&!production?.metal_drawers&&!production?.vitrine&&!production?.corner&&production?.tall?.family!=='appliance'&&!(production?.doors?.length&&it.doors_open)){

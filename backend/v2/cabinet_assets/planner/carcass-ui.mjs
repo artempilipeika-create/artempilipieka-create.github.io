@@ -48,7 +48,7 @@ export class CarcassUI{
         <details><summary>Материал, зазоры и кромка</summary><div class="mf-blank-form">
           ${numeric('thickness','Толщина ЛДСП, мм',18,10,40)}
           <p class="mf-blank-source">ЛДСП 18 мм — BYSPAN 605 PO; задняя стенка — белый ХДФ 3 мм. Материалы можно изменить у деталей после добавления. При другой толщине ЛДСП выберите подходящий материал перед экспортом.</p>
-          <div class="mf-blank-fields">${numeric('shelfGap','Зазор полки с каждой стороны, мм',0,0,10)}${numeric('shelfSetback','Отступ полки от переднего края, мм',20,0,100)}</div>
+          <div class="mf-blank-fields">${numeric('shelfGap','Зазор полки с каждой стороны, мм',0,0,10)}${numeric('shelfSetback','Отступ полки от переднего края, мм',1,0,100)}</div>
           <p class="mf-blank-source">По умолчанию полки доходят до стоек. Для съёмных полок зазор можно задать вручную.</p>
           <label>Начальная схема кромки<select name="corpus-edgePolicy"><option value="front">По конструкции · открытые торцы стоек</option><option value="all">Все торцы ЛДСП</option><option value="none">Без ПВХ</option></select></label>
           <label>Толщина ПВХ<select name="corpus-edgeThickness">${[.4,.8,1,2,3].map(v=>`<option value="${v}" ${v===1?'selected':''}>${v} мм</option>`).join('')}</select></label>
@@ -61,7 +61,7 @@ export class CarcassUI{
         <button type="button" class="mf-blank-primary" data-carcass-add>Добавить корпус в проект</button>
         <p class="mf-blank-source">Добавление отменяется одним шагом. Полки связаны со стойками. Размеры корпуса задаются здесь до добавления; затем редактируются отдельные детали.</p>
       </div>`;
-    this.recipe='shelves';
+    this.recipe='shelves';this.field('shelfSetback').disabled=true;
     this.root.addEventListener('input',e=>{e.stopPropagation();if(!e.target.matches('[data-part-edge]'))this.draw(false);});
     this.root.addEventListener('change',e=>{
       e.stopPropagation();
@@ -76,10 +76,12 @@ export class CarcassUI{
   spec(){
     const spec={recipe:this.recipe,back:this.field('back').value==='yes',edgePolicy:this.field('edgePolicy').value};
     for(const name of ['width','height','depth','thickness','shelves','sections','elevation','shelfGap','shelfSetback','edgeThickness'])spec[name]=Number(this.field(name).value);
+    if(this.recipe==='shelves'||this.recipe==='divided'){spec.shelfSetback=1;spec.dividerSetback=1;}
     return spec;
   }
   choose(id){
     const r=CARCASSES.find(r=>r.id===id);this.recipe=id;this.edges={};
+    const wardrobe=id==='shelves'||id==='divided';this.field('shelfSetback').value=wardrobe?1:20;this.field('shelfSetback').disabled=wardrobe;
     for(const [key,value] of Object.entries({width:r.w,height:r.h,depth:r.d,shelves:r.shelves,sections:r.sections,elevation:0,back:r.back?'yes':'no',edgePolicy:r.id==='sink'?'none':'front'}))this.field(key).value=value;
     for(const key of ['back','shelves','sections'])this.field(key).disabled=r.id==='sink'||key==='sections'&&['base','cap'].includes(r.id);
     for(const b of this.root.querySelectorAll('[data-carcass]'))b.setAttribute('aria-pressed',String(b.dataset.carcass===id));

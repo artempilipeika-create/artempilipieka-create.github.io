@@ -52,10 +52,10 @@ def profile(parts):
                     continue
                 t = s['thickness']
                 level = y+base+s['offset_mm']+t/2
-                inset = s.get('depth_clearance',1)
+                inset = 1
                 sw = w-s.get('width_clearance',36)
                 levels.setdefault(1,[]).append(level)
-                blocks.append((x-sw/2,z-d/2+inset,level-t,sw,d-inset,t,'horizontal'))
+                blocks.append((x-sw/2,z-d/2,level-t,sw,d-inset,t,'horizontal'))
         else:
             sections=max(sections, ((p.get('assistant_carcass') or {}).get('spec') or {}).get('sections',1))
             suffix=p.get('item_id','').rpartition(':')[2]

@@ -34,7 +34,7 @@ export function shelfQuestionnaire(ui,parent,section){
    }
    parent.append(methods);
    if(sample.scheme && !mixed){
-     const cam=sample.scheme==='cam_dowel',depth=f.depth-(f.shelfSetback??20);
+     const cam=sample.scheme==='cam_dowel',depth=f.depth-1;
      const axes=cam?[70,102,depth-102,depth-70]:[70,depth-70];
      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
      svg.setAttribute('viewBox','0 0 400 72');svg.setAttribute('role','img');svg.setAttribute('aria-label','Расположение крепежа на обоих торцах полки, вид снизу');

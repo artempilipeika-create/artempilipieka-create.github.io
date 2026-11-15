@@ -35,6 +35,22 @@ export function carcassSpec(input={}){
   return {...s,top:recipe.top,bottom:recipe.bottom,label:recipe.name};
 }
 
+// Positions are measured from the inside face of the left side to the
+// left face of each divider. The last clear opening takes the remainder.
+export function sectionWidths(s){
+  const inner=s.width-2*s.thickness;
+  if(s.dividerPositions!=null){
+    if(!Array.isArray(s.dividerPositions)||s.dividerPositions.length!==s.sections-1||
+       !s.dividerPositions.every(Number.isInteger))throw Error('Задайте положение каждой внутренней стойки в целых мм.');
+    let start=0;
+    return [...s.dividerPositions,inner].map(end=>{
+      const width=end-start;start=end+s.thickness;return width;
+    });
+  }
+  const clear=inner-(s.sections-1)*s.thickness;
+  return Array.from({length:s.sections},(_,i)=>Math.floor(clear/s.sections)+(i<clear%s.sections?1:0));
+}
+
 export function buildCarcass(input={},options={}){
   const s=carcassSpec(input),{width:W,height:H,depth:D,thickness:t}=s;
   const prefix=options.idPrefix||crypto.randomUUID(),parts=[];
@@ -60,12 +76,11 @@ export function buildCarcass(input={},options={}){
     add('rail-'+key,'Царга '+(key==='front'?'передняя':'задняя'),'horizontal',W-2*t,80,t,0,H-t,z,edge(key==='front'?'1000':'0100'),binding(left,right,0,z));
   if(s.top==='sink')for(const [key,name,y,z] of [['front','передняя',H-80,(D-t)/2],['rear','задняя',H-80,-(D-t)/2],['rear-lower','задняя нижняя',t,-(D-t)/2]])
     add('rail-'+key,'Царга '+name,'back',W-2*t,80,t,0,y,z,edge('1100'));
-  const inner=W-2*t,clear=inner-(s.sections-1)*t;
-  const widths=Array.from({length:s.sections},(_,i)=>Math.floor(clear/s.sections)+(i<clear%s.sections?1:0));
-  if(widths.some(w=>w-2*s.shelfGap<100))throw Error('Секции слишком узкие: уменьшите их количество.');
+  const widths=sectionWidths(s),dividerSetback=s.dividerSetback??0;
+  if(widths.some(w=>w-2*s.shelfGap<100))throw Error('Секции слишком узкие. Измените положение стойки, ширину шкафа или количество секций.');
   const supports=[left];let x=-W/2+t;
   for(let i=0;i<s.sections-1;i++){
-    x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D,t,x+t/2,t,0,edge()));x+=t;
+    x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D-dividerSetback,t,x+t/2,t,-dividerSetback/2,edge()));x+=t;
   }
   supports.push(right);
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
@@ -79,7 +94,7 @@ export function buildCarcass(input={},options={}){
     if(scheme && D-s.shelfSetback < (scheme==='cam_dowel'?216:152))throw Error('Для выбранного крепежа недостаточно глубины полки после отступа.');
     const label=kind==='glass'?'Стекло '+thickness+' мм · полка ':'Полка ';
     add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
-      widths[section]-2*gap,D-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,-s.shelfSetback/2,kind==='glass'?'0000':edge(),binding(a,b,gap,-s.shelfSetback/2),value===defaultShelf?null:value);
+      widths[section]-2*gap,D-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,-s.shelfSetback/2,kind==='glass'?'0000':edge(),binding(a,b,gap,-s.shelfSetback/2-a.z),value===defaultShelf?null:value);
   }
   // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
   if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
