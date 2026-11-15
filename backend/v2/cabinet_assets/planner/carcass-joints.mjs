@@ -47,6 +47,11 @@ export function dividerScheme(spec,index){
 
 export function dividerEnds(it){
  if(it?.module_type!=='blank'||it.blank_axis!=='side'||it.width!==18)return [];
+ const spec=it.assistant_carcass?.spec;
+ if(spec&&['left','right'].some(side=>it.item_id===it.assistant_carcass.group_id+':'+side)){
+   return ['bottom','top'].filter(level=>spec[level+'Fit']==='overlay'&&spec.joints?.[level]&&spec.joints[level]!=='none')
+     .map(level=>({level,hostId:it.assistant_carcass.group_id+':'+level,scheme:spec.joints[level],outer:true,roll:level==='bottom'?90:-90}));
+ }
  const match=/^(.*):divider-(\d+)$/.exec(it.item_id);
  if(!match)return [];
  const joints=dividerScheme(it.assistant_carcass?.spec,Number(match[2]));
@@ -57,14 +62,14 @@ export function dividerEnds(it){
 
 function dividerJoints(it,byId){
  const result=[],rotation=it.rotation||0,centre=localPoint(it,rotation);
- for(const {level,hostId,scheme,roll} of dividerEnds(it)){
+ for(const {level,hostId,scheme,roll,outer} of dividerEnds(it)){
    const host=byId.get(hostId),bottom=level==='bottom',y=it.elevation_mm+(bottom?0:it.height);
    const at=host&&localPoint(host,rotation);
    if(!host||host.blank_axis!=='horizontal'||host.height!==18||rotation!==(host.rotation||0)||
        y!==host.elevation_mm+(bottom?host.height:0)||Math.abs(centre.x-at.x)+9>host.width/2+.01||
        Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01||it.depth<(scheme==='cam_dowel'?216:152))
      throw Error(it.name+' · проверьте контакт с '+(bottom?'дном':'крышей')+' и глубину для крепежа.');
-   for(const {kind,z} of jointRows(scheme,it.depth,true)){
+   for(const {kind,z} of jointRows(scheme,it.depth,!outer)){
      const point=worldPoint({x:centre.x,z:centre.z+z},rotation);
      const [source_file,source_sha256]=fittings[kind];
      result.push({name:source_file.slice(0,-5)+' · '+it.name+' · '+(bottom?'снизу':'сверху'),
@@ -82,7 +87,7 @@ export function nativeCarcassJoints(items) {
     const shelfScheme=fixedShelfScheme(panel);
     if (!shelfScheme && !meta?.spec.joints) continue;
     const level=['top','bottom'].find(key=>panel.item_id===meta?.group_id+':'+key);
-    if (!shelfScheme && !level) continue;
+    if (!shelfScheme && (!level||meta.spec[level+'Fit']==='overlay')) continue;
     const scheme=shelfScheme || meta.spec.joints[level];
     if (scheme==='none') continue;
     if(shelfScheme){

@@ -96,6 +96,19 @@ def drawer_hardware(count,depth):
     return rows
 
 def hardware_for(it):
+    rows,description=_panel_hardware(it)
+    meta=it.get('assistant_carcass') or {}
+    spec=meta.get('spec') or {}
+    key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
+    if spec.get('feet') and key in ('left','right','bottom'):
+        overlay=spec.get('bottomFit')=='overlay'
+        inner=spec['sections']-1 or int(spec['width']>900)
+        count=2*(inner+2*int(overlay)) if key=='bottom' else (0 if overlay else 2)
+        if count:
+            rows=[*rows,_row('Регулятор уровня М6 чёрный',count,'pcs','118779'),_row('Муфта регулятора М6 вбиваемая',count,'pcs','106466')]
+    return rows,description
+
+def _panel_hardware(it):
     if (it.get('module_type')=='blank' and it.get('blank_axis')=='side' and it.get('width')==18
             and re.search(r':divider-\d+$',it.get('item_id',''))):
         spec=(it.get('assistant_carcass') or {}).get('spec') or {}
@@ -113,7 +126,8 @@ def hardware_for(it):
         if pairs:rows.extend([_row('Эксцентриковая стяжка для плиты 18 мм',2*pairs),_row('Шкант деревянный 8×35',2*pairs,'pcs','39319')])
         return rows,None
     binding=it.get('blank_binding')
-    if it.get('module_type')=='blank' and it.get('blank_axis')=='horizontal' and binding:
+    if it.get('module_type')=='blank' and it.get('blank_axis')=='horizontal' and (binding or (it.get('assistant_carcass') or {}).get('spec',{}).get(it.get('item_id','').rsplit(':',1)[-1]+'Fit')=='overlay'):
+        binding=binding or {}
         key=it.get('item_id','').rsplit(':',1)[-1]
         fixed=':' in it.get('item_id','') and (key in ('bottom','top') or key.startswith('rail-'))
         mounting=binding.get('mounting') or ('none' if fixed else 'sekura-95388')

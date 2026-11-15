@@ -32,7 +32,7 @@ export function carcassSpec(input={}){
   if(s.sectionShelves!=null&&(!Array.isArray(s.sectionShelves)||s.sectionShelves.length!==s.sections||s.sectionShelves.some(n=>!Number.isInteger(n)||n<0||n>10)||Math.max(...s.sectionShelves)!==s.shelves||!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте количество полок в каждой секции.');
   if(recipe.id==='sink'&&(s.back||s.shelves||s.sections!==1))throw Error('У корпуса под мойку нет полок, перегородок и задней стенки.');
   if(['base','cap'].includes(recipe.id)&&s.sections!==1)throw Error('У этой конструкции одна секция.');
-  return {...s,top:recipe.top,bottom:recipe.bottom,label:recipe.name};
+  return {...s,top:s.topFit??recipe.top,bottom:s.bottomFit??recipe.bottom,label:recipe.name};
 }
 
 // Positions are measured from the inside face of the left side to the
@@ -69,7 +69,7 @@ export function buildCarcass(input={},options={}){
   const left=add('left','Боковина левая','side',sideH,D,t,-(W-t)/2,sideY,0,sideEdges);
   const right=add('right','Боковина правая','side',sideH,D,t,(W-t)/2,sideY,0,sideEdges);
   const binding=(a,b,gap=0,z=0)=>({left_id:a.item_id,right_id:b.item_id,gap_left_mm:gap,gap_right_mm:gap,depth_offset_mm:z});
-  add('bottom','Дно','horizontal',s.bottom==='overlay'?W:W-2*t,D,t,0,0,0,edge(),s.bottom==='inset'?binding(left,right):null);
+  add('bottom','Дно','horizontal',s.bottom==='overlay'?W:W-2*t,D,t,0,0,0,edge(s.bottomFit==='overlay'?'1011':'1000'),s.bottom==='inset'?binding(left,right):null);
   if(['inset','overlay'].includes(s.top))add('top','Крыша','horizontal',s.top==='overlay'?W:W-2*t,D,t,0,H-t,0,
     edge(s.top==='overlay'?'1111':'1000'),s.top==='inset'?binding(left,right):null);
   if(s.top==='rails')for(const [key,z] of [['front',(D-80)/2],['rear',-(D-80)/2]])
@@ -107,7 +107,7 @@ export function placeCarcass(built,position){
   // Placement envelope includes the overlay back; recipe origin remains at the carcass centre.
   const shift=built.spec.back?1.5:0;
   return built.items.map(it=>({...it,...worldPoint({x:it.x,z:it.z+shift},position.rotation||0),rotation:position.rotation||0}))
-    .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm}));
+    .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?10:0)}));
 }
 
 export function insertCarcass(adapter,items){

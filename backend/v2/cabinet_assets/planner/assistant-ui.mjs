@@ -1,3 +1,4 @@
+import {feetCatalogue,footPlan,feetDrawing} from './wardrobe-feet.mjs';
 import {selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
@@ -65,7 +66,7 @@ export class AssistantUI{
   for(const [v,text,disabled]of choices){const o=el('option',text);o.value=v;o.disabled=Boolean(disabled);s.append(o);}s.value=String(value);s.onchange=()=>change(s.value);wrap.append(s);parent.append(wrap);return s;
  }
  error(step=this.step){
-  try{const s=this.spec();if(s.height+s.elevation>this.app.adapter.room.height)throw Error('Шкаф выше помещения. Уменьшите высоту.');
+  try{const s=this.spec();if(s.height+s.elevation+(s.feet?10:0)>this.app.adapter.room.height)throw Error('Шкаф выше помещения. Уменьшите высоту.');
    if(step>=4)for(const role of ['body',...(s.back?['back']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?3:s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':'Корпус: ')+e);}
    return '';
   }catch(e){return e.message;}
@@ -77,6 +78,9 @@ export class AssistantUI{
    this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
    this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);resizeDividerChoices(this.fields);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
    this.select(this.form,'Задняя стенка',[['yes','Накладная ХДФ 3 мм'],['no','Без задней стенки']],this.fields.back?'yes':'no',v=>{this.fields.back=v==='yes';this.changed();});
+   for(const [key,title,overlay] of [['bottomFit','Конструкция дна','Накладное дно'],['topFit','Конструкция крыши','Накладная крыша']])
+    this.select(this.form,title,[['inset','Между боковинами'],['overlay',overlay]],this.fields[key]??'inset',v=>{this.fields[key]=v;this.changed();this.render();});
+   this.footControls();
    this.form.append(el('p','Высота без ножек и цоколя. Задняя стенка добавляет 3 мм к глубине.'));
   }else if(this.step===1){
    const choices=el('div');choices.className='assistant-cards';
@@ -107,6 +111,24 @@ export class AssistantUI{
    this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.back)this.materialPicker('back','Задняя стенка',3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
+ }
+ footControls(){
+  const box=el('fieldset');box.append(el('legend','Опоры'));const cards=el('div');cards.className='assistant-cards';
+  const none=button('Без опор',()=>{delete this.fields.feet;this.changed();this.render();});
+  none.setAttribute('aria-pressed',String(!this.fields.feet));cards.append(none);
+  for(const leg of feetCatalogue){
+   const card=button('',()=>{this.fields.feet={article:leg.article,front:this.fields.feet?.front??50,rear:this.fields.feet?.rear??50};this.changed();this.render();});
+   const image=el('img');image.src='/account/planner/shelf-images/'+leg.article+'.webp';image.alt='';image.width=76;image.height=68;
+   card.append(image,el('strong',leg.name+' · '+leg.article));card.setAttribute('aria-pressed',String(this.fields.feet?.article===leg.article));cards.append(card);
+  }
+  box.append(cards);this.form.append(box);
+  if(this.fields.feet){
+   for(const [key,title] of [['front','От переднего края до оси, мм'],['rear','От заднего края до оси, мм']]){
+    const wrap=el('label',title),input=el('input');input.type='number';input.min=10;input.step=1;input.value=this.fields.feet[key];input.setAttribute('aria-label',title);
+    input.oninput=()=>{this.fields.feet[key]=input.valueAsNumber;this.changed();};wrap.append(input);box.append(wrap);
+   }
+   box.append(el('small','Пятка Ø20 мм · муфта М6 (106466) · присадка Ø8 × 16 мм'));
+  }
  }
  sectionPositions(){
   const f=this.fields;
@@ -183,7 +205,8 @@ export class AssistantUI{
   });input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();search.click();}};card.append(search,results);this.form.append(card);
  }
  draw(){
-  try{const built=buildCarcass(this.spec(),{idPrefix:'questionnaire-preview'});this.drawing.innerHTML=carcassSVG(built);this.dimensions.textContent=built.spec.width+' × '+built.spec.height+' × '+built.depth+' мм';this.description.textContent=built.items.length+' деталей · '+built.spec.sectionShelves.reduce((a,b)=>a+b,0)+' полок · '+(built.spec.back?'с ХДФ':'без задней стенки');}
+  try{const built=buildCarcass(this.spec(),{idPrefix:'questionnaire-preview'});this.drawing.innerHTML=carcassSVG(built);
+   if(built.spec.feet){this.drawing.append(el('h4','Вид снизу · '+footPlan(built.spec).length+' опор'));this.drawing.insertAdjacentHTML('beforeend',feetDrawing(built.spec));}this.dimensions.textContent=built.spec.width+' × '+(built.spec.height+(built.spec.feet?10:0))+' × '+built.depth+' мм';this.description.textContent=built.items.length+' деталей · '+built.spec.sectionShelves.reduce((a,b)=>a+b,0)+' полок · '+(built.spec.back?'с ХДФ':'без задней стенки');}
   catch(e){this.drawing.replaceChildren();this.dimensions.textContent='Проверьте размеры';this.description.textContent=e.message;}
  }
  controls(){

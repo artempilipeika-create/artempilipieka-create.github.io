@@ -6,7 +6,7 @@ import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null,...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -43,15 +43,15 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
-  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.height,depth:built.depth,
+  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.height+(spec.feet?10:0),depth:built.depth,
    x:0,z:0,rotation:0,elevation_mm:spec.elevation,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
   position=findSpace(envelope,adapter.items,adapter.room,adapter.selected,{wallOffset:0,autoRotate:false});
   if(!position)throw Error('Для корпуса нет свободного места. Проверьте размеры помещения.');
  }
  position=Object.fromEntries(['x','z','elevation_mm','rotation'].map(k=>[k,position[k]??0]));
  const metadata={group_id:prefix,spec,position};
- const previousSides=current && spec.back!==current.metadata.spec.back
-   ?buildCarcass(current.metadata.spec,{idPrefix:prefix}).items.filter(i=>i.item_id===prefix+':left'||i.item_id===prefix+':right'):[];
+ const previousSides=current && (spec.back!==current.metadata.spec.back||spec.topFit!==current.metadata.spec.topFit||spec.bottomFit!==current.metadata.spec.bottomFit)
+   ?buildCarcass(current.metadata.spec,{idPrefix:prefix}).items.filter(i=>i.item_id===prefix+':left'||i.item_id===prefix+':right'||i.item_id===prefix+':top'||i.item_id===prefix+':bottom'):[];
  const items=placeCarcass(built,position).map(generated=>{
   const old=current?.items.find(i=>i.item_id===generated.item_id);
   const item={...old,...generated,blank_binding:generated.blank_binding??null,assistant_carcass:metadata};

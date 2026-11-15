@@ -62,7 +62,15 @@ class CarcassJoints(StrictModel):
     bottom: Literal['none','confirmat','cam_dowel']
 
 
+class WardrobeFeet(StrictModel):
+    article: Literal['118779']
+    front: int = Field(ge=10,le=1200,strict=True)
+    rear: int = Field(ge=10,le=1200,strict=True)
+
 class CarcassDesign(CarcassSpec):
+    topFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    bottomFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    feet: WardrobeFeet | None = Field(default=None,exclude_if=lambda v:v is None)
     joints: CarcassJoints | None = Field(default=None,exclude_if=lambda v:v is None)
     dividerSetback: Literal[1] | None = Field(default=None,exclude_if=lambda v:v is None)
     dividerPositions: list[Annotated[int, Field(ge=0,le=2400,strict=True)]] | None = Field(default=None,min_length=1,max_length=2,exclude_if=lambda v:v is None)
@@ -73,6 +81,13 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
+        if (self.feet or self.topFit or self.bottomFit) and self.recipe not in ('shelves','divided'):
+            raise ValueError('Опоры и конструкция панелей задаются для шкафа.')
+        if self.feet:
+            if self.depth-self.feet.front-self.feet.rear<20:
+                raise ValueError('Не помещаются два ряда опор.')
+            if (self.bottomFit or self.sections>1 or self.width>900) and self.thickness<=16:
+                raise ValueError('Дно должно быть толще 16 мм для выбранной муфты.')
         if self.joints:
             if self.thickness != 18 or self.recipe not in ('shelves','divided'):
                 raise ValueError('Для крепежа нужны вкладные детали 18 мм.')

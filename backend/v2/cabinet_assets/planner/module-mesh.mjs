@@ -1,5 +1,6 @@
 import {fixedShelfScheme} from './shelf-choices.mjs';
 import {jointRows,dividerEnds} from './carcass-joints.mjs';
+import {panelFeet} from './wardrobe-feet.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
 import {vertices as mystiVertices,indices as mystiIndices} from './mysti-mesh.mjs';
 import {vertices as supportVertices,indices as supportIndices} from './sekura-mesh.mjs';
@@ -20,6 +21,7 @@ export const VISUAL_FINISHES=Object.freeze({
   glass:{color:'#f4faf7',roughness:.075,metalness:0},
   frame:{color:'#202321',roughness:.3,metalness:.72},
   hinge:{color:'#b9bdc1',roughness:.32,metalness:.72},
+  regulator:{color:'#292c2d',roughness:.68,metalness:0},
   shelfSupport:{color:'#656766',roughness:.24,metalness:.78},
   supportPad:{color:'#969c98',roughness:.85,metalness:0},
   lightProfile:{color:'#202321',roughness:.3,metalness:.72},
@@ -299,9 +301,17 @@ export class MeshFactory{
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
     }
-    for(const {level,scheme,roll} of dividerEnds(it)){
+    for(const foot of panelFeet(it)){
+      const key='regulator:118779';
+      const geometry=this.acquire(key,()=>combine([
+       new THREE.CylinderGeometry(10*S,10*S,10*S,12).translate(0,-5*S,0),
+       new THREE.CylinderGeometry(3*S,3*S,8*S,12).translate(0,4*S,0)
+      ]));
+      this.mesh(group,'regulator',geometry,key,foot.x,0,foot.z,null,ghost).userData.article='118779';
+    }
+    for(const {level,scheme,roll,outer} of dividerEnds(it)){
       const base=level==='bottom'?0:H,inward=roll/90;
-      for(const row of jointRows(scheme,D,true)){
+      for(const row of jointRows(scheme,D,!outer)){
         const cam=row.kind==='cam',screw=row.kind==='confirmat';
         const key='divider:'+row.kind,radius=cam?7.5:screw?3.5:4,length=cam?13:screw?50:35;
         const geo=this.acquire(key,()=>{
@@ -712,7 +722,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,panelFeet(it),dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 
