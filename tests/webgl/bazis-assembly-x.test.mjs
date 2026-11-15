@@ -165,12 +165,22 @@ test('MYSTI 134762 native bore enters the shelf underside and side pin stays 8.5
      assert.equal(support.support_mount_face,'bottom');assert.equal(support.position.y,shelf.elevation_mm);
      const obj=moduleObject(),transform=obj.ToGlobal;
      obj.ToGlobal=function(p){return transform.call(this,this.flip?{x:p.x,y:-p.y,z:-p.z}:p);};
-     c.resizeAndPlace(obj,support,[]);
+     // BAZIS may give a loaded assembly an offset from the drawn panel's physical face.
+     const shift={x:7,y:-11,z:4},bottom=shelf.elevation_mm+2;
+     const global=(x,y,z)=>obj.ToGlobal({x:x+shift.x,y:y+shift.y,z:z+shift.z});
+     obj.Count=1;obj.Objects=[{Count:2,Objects:[
+       {Name:'15x14',ToGlobal:p=>global(3.443644,p.z,0)},
+       {Name:'5x8',ToGlobal:p=>global(p.z,-8.5,0)}
+     ]}];
+     const legacy=rotation===0||rotation===180;
+     const data={...support,position:{...support.position,y:legacy?shelf.elevation_mm+thickness:shelf.elevation_mm}};
+     if(legacy)delete data.support_mount_face;
+     c.resizeAndPlace(obj,data,[],{GabMin:{x:0,y:bottom,z:0},GabMax:{x:0,y:bottom+thickness,z:0}});
      // The FR3D contains these two drilling objects with their own transforms.
-     close(obj.ToGlobal({x:3.443644,y:0,z:0}).y,shelf.elevation_mm);
-     close(obj.ToGlobal({x:3.443644,y:-14,z:0}).y,shelf.elevation_mm+14);
-     const pin=obj.ToGlobal({x:-8,y:-8.5,z:0});
-     close(pin.y,shelf.elevation_mm+8.5);
+     close(global(3.443644,0,0).y,bottom);
+     close(global(3.443644,-14,0).y,bottom+14);
+     const pin=global(-8,-8.5,0);
+     close(pin.y,bottom+8.5);
      const host=panels.find(p=>p.item_id===support.host_blank_id);
      assert.ok(Math.abs(rotation%180?pin.z-host.z:pin.x-host.x)<host.width/2);
    }

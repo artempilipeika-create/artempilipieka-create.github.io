@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.21 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.22 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -483,11 +483,6 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
     z: frame.min.z + frame.size.z/2
   };
   obj.SetDefaultTransform();
-  const underside=item.support_mount_face==='bottom';
-  if(underside){
-    if(item.source_sha256!=='a26ca9da7c9cdb75935fb56cda96d1bd9aa873f908617a8620dd6bbea7f30045')throw Error('Неизвестный полкодержатель нижнего монтажа.');
-    objectTransformation.RotateObject(obj,{x:1,y:0,z:0},180,true);
-  }
   const roll=item.joint_roll_deg??0;
   if(roll){
     if(!JOINT_HASHES.has(item.source_sha256)||![90,-90].includes(roll))throw Error('Некорректная ориентация крепежа стойки.');
@@ -510,7 +505,7 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
     const measured = vector(obj.ToGlobal(unit), 'basis');
     const sign=roll/90;
     const tilted=roll?{x:-sign*unit.y,y:sign*unit.x,z:unit.z}:unit;
-    const expected = rotateScene(underside?{x:unit.x,y:-unit.y,z:-unit.z}:tilted, angle);
+    const expected = rotateScene(tilted, angle);
     const difference = distance({x:measured.x-finalOrigin.x,y:measured.y-finalOrigin.y,z:measured.z-finalOrigin.z}, expected);
     if (difference > PLACEMENT_TOLERANCE_MM) throw new Error('Поворот БАЗИС не совпал с экспортом: ' + angle + '°');
   }
@@ -1187,7 +1182,44 @@ function isNativeSocket(item) {
   return ['2d8945a5176981eebe0b9206ce3c6f1d47aa3e77baebe13ef586e7586138f485',
     'e97c325787e7237bb18511ceae98a5e00c1570f00eec914c79d52f02a152ca0d'].includes(item.source_sha256);
 }
-function resizeAndPlace(obj, item, log) {
+const MYSTI_12_22_HASH='a26ca9da7c9cdb75935fb56cda96d1bd9aa873f908617a8620dd6bbea7f30045';
+
+function placeMystiBelow(obj,item,shelfPanel,log){
+  if(!shelfPanel)throw Error('MYSTI 134762: отсутствует связанная полка.');
+  const bottom=vector(shelfPanel.GabMin,'shelf.min').y,top=vector(shelfPanel.GabMax,'shelf.max').y;
+  const parts={};
+  function visit(parent){
+    const list=asList(parent);
+    for(let i=0;i<Number(list?.Count||0);i++){
+      const child=childAt(list,i);
+      if(!child)continue;
+      const name=String(child.Name||'').trim().toLowerCase().replace(/[х×]/g,'x');
+      if(name==='15x14'||name==='5x8')parts[name]=child;
+      else visit(child);
+    }
+  }
+  visit(obj);
+  const cup=parts['15x14'],pin=parts['5x8'];
+  if(!cup||!pin)throw Error('MYSTI 134762: не найдены присадки 15×14 и 5×8.');
+  const origin={x:0,y:0,z:0};
+  const start=part=>vector(part.ToGlobal(origin),'drill.start');
+  const tip=()=>vector(cup.ToGlobal({x:0,y:0,z:-14}),'drill.end');
+  obj.SetDefaultTransform();
+  if(tip().y<start(cup).y)objectTransformation.RotateObject(obj,{x:1,y:0,z:0},180,true);
+  const angle=Number(item.rotation||0);
+  if(angle)objectTransformation.RotateObject(obj,{x:0,y:1,z:0},-angle,true);
+  const desired=vector(item.position,'position'),at=start(pin),root=start(obj);
+  setObjectPosition(obj,{x:root.x+desired.x-at.x,y:root.y+bottom-start(cup).y,z:root.z+desired.z-at.z});
+  const mouth=start(cup),end=tip(),side=start(pin),tol=PLACEMENT_TOLERANCE_MM;
+  if(Math.abs(mouth.y-bottom)>tol||Math.abs(end.y-bottom-14)>tol||end.y>top+tol||
+     Math.abs(side.y-bottom-8.5)>tol||Math.hypot(side.x-desired.x,side.z-desired.z)>tol)
+    throw Error('MYSTI 134762: не подтверждена посадка снизу полки.');
+  log.push('MYSTI 134762: нижняя пласть Y='+bottom+'; вход чашки Y='+mouth.y+'; конец присадки Y='+end.y);
+  return {materialChecks:[],profileChecks:[]};
+}
+
+function resizeAndPlace(obj, item, log, shelfPanel) {
+  if(item.source_sha256===MYSTI_12_22_HASH)return placeMystiBelow(obj,item,shelfPanel,log);
   if(item.glass_shelf)return placeGlassShelf(obj,item,log);
   if(item.blank)return resizeAndPlaceBlank(obj,item,log);
   if (isShelfSupport(item) || JOINT_HASHES.has(item.source_sha256)) {
@@ -1330,7 +1362,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.21 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.22 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1446,7 +1478,8 @@ function importProject(prepared, root, payload) {
     'ПРОСМОТРЕНО ПАПОК: ' + (prepared.scan?.directories ?? 'нет данных') + '; FR3D: ' + (prepared.scan?.files?.length ?? 'нет данных')];
   for (const entry of prepared.scan?.unreadable || []) log.push('ВНИМАНИЕ: недоступен путь ' + entry.path + ' (' + entry.code + ')');
   const noteChecks = [], liveChecks = [], importedObjects = [], furnitureObjects = [], liveMaterials = [], liveProfiles = [];
-  const loadedBlanks=new Set();
+  const loadedBlanks=new Set(),mystiShelves=new Map();
+  const requiredShelves=new Set(payload.items.filter(i=>i.source_sha256===MYSTI_12_22_HASH).map(i=>i.shelf_blank_id));
   let loaded = 0, failed = 0;
   const notesRequested = payload.items.filter(i => hasNote(i.production_note)).length + (brief ? 1 : 0);
   for (let index = 0; index < prepared.entries.length; index++) {
@@ -1461,7 +1494,10 @@ function importProject(prepared, root, payload) {
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');
       obj.Name = item.name || item.source_file;
-      const placement = resizeAndPlace(obj, item, log);
+      const placement = resizeAndPlace(obj, item, log, mystiShelves.get(item.shelf_blank_id));
+      if(item.blank?.axis==='horizontal'&&requiredShelves.has(item.blank_item_id)){
+        walkPanels(obj,panel=>mystiShelves.set(item.blank_item_id,panel));
+      }
       if (hasNote(item.production_note)) {
         const result = verifiedObjectNote(obj, 'MARTIN FOREST / УКАЗАНИЯ ПО МОДУЛЮ\n' +
           normalizedNote(item.production_note), label, log);
