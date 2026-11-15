@@ -148,3 +148,31 @@ test('divider fasteners enter upward from the bottom and downward from the roof 
    close(p.x,position.x);close(p.y,position.y+20*Math.sign(roll));close(p.z,position.z);
  }
 });
+
+test('MYSTI 134762 native bore enters the shelf underside and side pin stays 8.5 mm above it',async()=>{
+ const {buildCarcass,placeCarcass}=await import('../../backend/v2/cabinet_assets/planner/carcass-model.mjs');
+ const {nativeShelfSupports}=await import('../../backend/v2/cabinet_assets/planner/sekura.mjs');
+ const c=runtime({objectTransformation:{RotateObject(obj,axis,deg){
+   if(axis.x){assert.equal(deg,180);obj.flip=true;}
+   else {assert.equal(axis.y,1);obj.angle=-deg*Math.PI/180;}
+ }}});
+ for(const thickness of [16,18,25])for(const rotation of [0,90,180,270]){
+   const built=buildCarcass({recipe:'shelves',shelves:1,thickness,shelfChoices:[['board/134762']]});
+   const panels=placeCarcass(built,{x:240,z:400,elevation_mm:100,rotation});
+   const shelf=panels.find(p=>p.blank_shelf),supports=nativeShelfSupports(panels);
+   assert.equal(supports.length,4);
+   for(const support of supports){
+     assert.equal(support.support_mount_face,'bottom');assert.equal(support.position.y,shelf.elevation_mm);
+     const obj=moduleObject(),transform=obj.ToGlobal;
+     obj.ToGlobal=function(p){return transform.call(this,this.flip?{x:p.x,y:-p.y,z:-p.z}:p);};
+     c.resizeAndPlace(obj,support,[]);
+     // The FR3D contains these two drilling objects with their own transforms.
+     close(obj.ToGlobal({x:3.443644,y:0,z:0}).y,shelf.elevation_mm);
+     close(obj.ToGlobal({x:3.443644,y:-14,z:0}).y,shelf.elevation_mm+14);
+     const pin=obj.ToGlobal({x:-8,y:-8.5,z:0});
+     close(pin.y,shelf.elevation_mm+8.5);
+     const host=panels.find(p=>p.item_id===support.host_blank_id);
+     assert.ok(Math.abs(rotation%180?pin.z-host.z:pin.x-host.x)<host.width/2);
+   }
+ }
+});

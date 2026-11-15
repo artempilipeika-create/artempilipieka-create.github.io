@@ -20,7 +20,8 @@ export function shelfSupportPlan(it,items){
   if(mounting==='none')return {parts:[]};
   const h=choice(it.blank_shelf||'board/95388',it.blank_thickness_mm).hardware;
   const hidden=['Casper','MYSTI'].includes(h.name);
-  const anchorY=hidden?it.height:({'АК104':h.detail==='8–10 мм'?5:4,'АК133':4,'306':4.4}[h.name]??0);
+  const topMounted=hidden && h.article!=='134762';
+  const anchorY=topMounted?it.height:({'АК104':h.detail==='8–10 мм'?5:4,'АК133':4,'306':4.4}[h.name]??0);
   const parts=[],b=it.blank_binding, local=localPoint(it,it.rotation);
   for(const side of ['left','right']){
     const host=items.find(p=>p.item_id===b[side+'_id']);
@@ -67,6 +68,7 @@ export function nativeShelfSupports(items){
       const source=holders[h.article][version];
       out.push({name:h.name+' · '+h.finish+' · '+it.name,article:h.article,shelf_blank_id:it.item_id,host_blank_id:p.host,
         source_file:source.file,source_sha256:source.sha,
+        ...(h.article==='134762'?{support_mount_face:'bottom'}:{}),
         position:{x:it.x+point.x,y:(it.elevation_mm||0)+p.y,z:it.z+point.z},rotation:((it.rotation||0)+p.rotation)%360,elastic_resize:false});
     }
   }

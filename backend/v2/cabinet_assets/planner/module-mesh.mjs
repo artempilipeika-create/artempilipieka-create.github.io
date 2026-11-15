@@ -1,6 +1,7 @@
 import {fixedShelfScheme} from './shelf-choices.mjs';
 import {jointRows,dividerEnds} from './carcass-joints.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
+import {vertices as mystiVertices,indices as mystiIndices} from './mysti-mesh.mjs';
 import {vertices as supportVertices,indices as supportIndices} from './sekura-mesh.mjs';
 import {hookPlacement} from './blank-hook.mjs';
 import {vertices as hookVertices, indices as hookIndices} from './akkord-mesh.mjs';
@@ -338,28 +339,28 @@ export class MeshFactory{
     for(const h of shelfSupportPlan(it,this.adapter.items||[]).parts){
       if(it.blank_shelf && !it.blank_shelf.startsWith('board/'))continue;
       const article=it.blank_shelf?.split('/')[1]??'95388';
-      if(article!=='95388'){
+      if(article!=='95388'&&article!=='134762'){
         const key='board-support:'+article;
         const geometry=this.acquire(key,()=>{
           if(article==='70245'||article==='60714')return combine([
             new THREE.BoxGeometry(9*S,3*S,13.5*S).translate(0,-1.5*S,6.75*S),
             new THREE.CylinderGeometry(2.5*S,2.5*S,10*S,12).rotateX(Math.PI/2).translate(0,-2*S,-5*S)
           ]);
-          const casper=article==='134286',width=casper?26:article==='134762'?12:14,depth=casper?13:article==='134762'?22:16;
+          const casper=article==='134286',width=casper?26:14,depth=casper?13:16;
           return combine([new THREE.BoxGeometry(width*S,8*S,depth*S).translate(width*S/2,0,0),
             new THREE.CylinderGeometry(2.5*S,2.5*S,10*S,12).rotateZ(Math.PI/2).translate(-5*S,0,0)]);
         });
-        const hidden=['134286','134762','134763'].includes(article);
+        const hidden=['134286','134763'].includes(article);
         const mesh=this.mesh(group,'shelfSupport',geometry,key,h.x,hidden?H/2:h.y,h.z,null,ghost);
         mesh.rotation.y=-h.rotation*Math.PI/180;mesh.userData.article=article;continue;
       }
-      const key='sekura:95388',geometry=this.acquire(key,()=>{
+      const mysti=article==='134762',key=mysti?'mysti:134762':'sekura:95388',geometry=this.acquire(key,()=>{
         const g=new THREE.BufferGeometry();
-        g.setAttribute('position',new THREE.Float32BufferAttribute(supportVertices,3));g.setIndex(supportIndices);
+        g.setAttribute('position',new THREE.Float32BufferAttribute(mysti?mystiVertices:supportVertices,3));g.setIndex(mysti?mystiIndices:supportIndices);
         const surface=g.toNonIndexed();g.dispose();surface.computeVertexNormals();return surface.scale(S,S,S);
       });
-      const mesh=this.mesh(group,'shelfSupport',geometry,key,h.x,0,h.z,null,ghost);
-      mesh.rotation.y=-h.rotation*Math.PI/180;mesh.userData.article='95388';
+      const mesh=this.mesh(group,'shelfSupport',geometry,key,h.x,h.y,h.z,null,ghost);
+      mesh.rotation.y=-h.rotation*Math.PI/180;mesh.userData.article=article;
     }
     for(let i=0;i<(it.blank_hook?(it.blank_hook.count??1):0);i++){
       const h=hookPlacement(it,i), key='hook:68416';

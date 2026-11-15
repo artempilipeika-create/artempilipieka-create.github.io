@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.20 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.21 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,7 +135,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -483,6 +483,11 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
     z: frame.min.z + frame.size.z/2
   };
   obj.SetDefaultTransform();
+  const underside=item.support_mount_face==='bottom';
+  if(underside){
+    if(item.source_sha256!=='a26ca9da7c9cdb75935fb56cda96d1bd9aa873f908617a8620dd6bbea7f30045')throw Error('Неизвестный полкодержатель нижнего монтажа.');
+    objectTransformation.RotateObject(obj,{x:1,y:0,z:0},180,true);
+  }
   const roll=item.joint_roll_deg??0;
   if(roll){
     if(!JOINT_HASHES.has(item.source_sha256)||![90,-90].includes(roll))throw Error('Некорректная ориентация крепежа стойки.');
@@ -505,7 +510,7 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
     const measured = vector(obj.ToGlobal(unit), 'basis');
     const sign=roll/90;
     const tilted=roll?{x:-sign*unit.y,y:sign*unit.x,z:unit.z}:unit;
-    const expected = rotateScene(tilted, angle);
+    const expected = rotateScene(underside?{x:unit.x,y:-unit.y,z:-unit.z}:tilted, angle);
     const difference = distance({x:measured.x-finalOrigin.x,y:measured.y-finalOrigin.y,z:measured.z-finalOrigin.z}, expected);
     if (difference > PLACEMENT_TOLERANCE_MM) throw new Error('Поворот БАЗИС не совпал с экспортом: ' + angle + '°');
   }
@@ -1325,7 +1330,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.20 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.21 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

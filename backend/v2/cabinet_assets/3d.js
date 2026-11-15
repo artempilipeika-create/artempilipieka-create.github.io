@@ -1451,6 +1451,10 @@ function exportBazisProject(){
     payload.format=vertical?'martin-forest-bazis-native-v4':'martin-forest-bazis-native-v3';
     payload.minimum_importer=vertical?'9.9.20':'9.9.19';
   }
+  if(supportItems.some(item=>item.support_mount_face==='bottom')){
+    payload.format='martin-forest-bazis-native-v5';
+    payload.minimum_importer='9.9.21';
+  }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
