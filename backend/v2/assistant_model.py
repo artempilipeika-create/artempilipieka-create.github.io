@@ -64,6 +64,7 @@ class CarcassJoints(StrictModel):
 
 class CarcassDesign(CarcassSpec):
     joints: CarcassJoints | None = Field(default=None,exclude_if=lambda v:v is None)
+    dividerJoints: list[CarcassJoints] | None = Field(default=None,min_length=1,max_length=2,exclude_if=lambda v:v is None)
     shelfChoices: list[Annotated[list[ShelfValue], Field(max_length=10)]] | None = Field(default=None,max_length=3,exclude_if=lambda v:v is None)
 
     sectionShelves: list[Annotated[int, Field(ge=0, le=10, strict=True)]] | None = Field(default=None, min_length=1, max_length=3)
@@ -75,6 +76,11 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Для крепежа нужны вкладные детали 18 мм.')
             if 'cam_dowel' in (self.joints.top,self.joints.bottom) and self.depth < 276:
                 raise ValueError('Глубина для эксцентриков со шкантами от 276 мм.')
+        if self.dividerJoints is not None:
+            if self.thickness != 18 or self.recipe != 'divided' or len(self.dividerJoints) != self.sections - 1:
+                raise ValueError('Проверьте количество и толщину внутренних стоек.')
+            if self.depth < 216 and any('cam_dowel' in (row.top,row.bottom) for row in self.dividerJoints):
+                raise ValueError('Для эксцентрика со шкантом в стойке нужна глубина от 216 мм.')
         if self.shelfChoices is not None:
             if not self.sectionShelves or [len(row) for row in self.shelfChoices] != self.sectionShelves:
                 raise ValueError('Проверьте выбор полок по секциям.')

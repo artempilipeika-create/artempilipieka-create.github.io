@@ -1,12 +1,12 @@
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
-import {jointQuantity,nativeCarcassJoints,dividerDescription} from './carcass-joints.mjs';
+import {jointQuantity,nativeCarcassJoints,dividerScheme,jointOptions} from './carcass-joints.mjs';
 import {choice,shelfDescription} from './shelf-choices.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null,...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null,...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -86,7 +86,10 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
   spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
-  ...(spec.sections>1&&spec.thickness===18?[dividerDescription(spec.joints)]:[]),
+  ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{
+   const ends=dividerScheme(spec,i);
+   return 'Стойка '+(i+1)+' · сверху: '+jointOptions[ends.top]+' · снизу: '+jointOptions[ends.bottom];
+  }),
   ...(spec.joints?['Крыша · '+jointQuantity(spec.joints.top),'Дно · '+jointQuantity(spec.joints.bottom)]:[]),
   ...(spec.shelfChoices?spec.shelfChoices.flatMap((row,i)=>{
    const quantities=new Map();

@@ -191,3 +191,17 @@ def test_divider_bom_counts_both_ends_and_defaults_to_confirmats():
     assert [r['qty'] for r in hardware_for(divider)[0]]==[4]
     divider['assistant_carcass']={'spec':{'joints':{'top':'cam_dowel','bottom':'confirmat'}}}
     assert [r['qty'] for r in hardware_for(divider)[0]]==[2,2,2]
+
+
+def test_custom_divider_choices_round_trip_and_count_only_selected_ends():
+    from backend.v2.assistant_model import CarcassDesign
+    from backend.v2.three_d_document import hardware_for
+    settings=[dict(top='none',bottom='cam_dowel'),dict(top='none',bottom='none')]
+    spec=dict(SPEC,recipe='divided',sections=3,sectionShelves=[4]*3,dividerJoints=settings)
+    assert CarcassDesign.model_validate(spec).model_dump(mode='json')['dividerJoints']==settings
+    for change in ({'sections':2},{'thickness':16},{'depth':210}):
+        with pytest.raises(ValidationError):
+            CarcassDesign.model_validate(dict(spec,**change))
+    for index,expected in enumerate(([2,2],[])):
+        divider=dict(item_id=f'q:divider-{index}',module_type='blank',blank_axis='side',width=18,assistant_carcass={'spec':spec})
+        assert [r['qty'] for r in hardware_for(divider)[0]]==expected

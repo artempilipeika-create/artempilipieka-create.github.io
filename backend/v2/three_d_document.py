@@ -98,10 +98,18 @@ def drawer_hardware(count,depth):
 def hardware_for(it):
     if (it.get('module_type')=='blank' and it.get('blank_axis')=='side' and it.get('width')==18
             and re.search(r':divider-\d+$',it.get('item_id',''))):
-        joints=((it.get('assistant_carcass') or {}).get('spec') or {}).get('joints') or {}
-        pairs=sum(joints.get(end)=='cam_dowel' for end in ('top','bottom'))
+        spec=(it.get('assistant_carcass') or {}).get('spec') or {}
+        index=int(it['item_id'].rsplit('-',1)[1])
+        choices=spec.get('dividerJoints') or []
+        if index < len(choices):
+            ends=choices[index].values()
+        else:
+            legacy=spec.get('joints') or {}
+            ends=['cam_dowel' if legacy.get(end)=='cam_dowel' else 'confirmat' for end in ('top','bottom')]
+        pairs=sum(scheme=='cam_dowel' for scheme in ends)
+        confirmats=2*sum(scheme=='confirmat' for scheme in ends)
         rows=[]
-        if pairs<2:rows.append(_row('Конфирмат 7×50',2*(2-pairs)))
+        if confirmats:rows.append(_row('Конфирмат 7×50',confirmats))
         if pairs:rows.extend([_row('Эксцентриковая стяжка для плиты 18 мм',2*pairs),_row('Шкант деревянный 8×35',2*pairs,'pcs','39319')])
         return rows,None
     binding=it.get('blank_binding')

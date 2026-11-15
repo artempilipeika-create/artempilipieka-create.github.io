@@ -1,10 +1,10 @@
 import {selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
-import {jointOptions,jointQuantity,dividerDescription} from './carcass-joints.mjs';
+import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
-import {WARDROBE_STEPS,wardrobeSpec,sectionWidths,questionnaireMaterialError} from './wardrobe-questionnaire.mjs';
+import {WARDROBE_STEPS,resizeDividerChoices,wardrobeSpec,sectionWidths,questionnaireMaterialError} from './wardrobe-questionnaire.mjs';
 const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x;};
 const button=(text,fn)=>{const b=el('button',text);b.type='button';b.onclick=fn;return b;};
 export class AssistantUI{
@@ -39,6 +39,7 @@ export class AssistantUI{
   this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
+  if(s?.thickness===18&&s.sections>1)this.fields.dividerJoints=Array.from({length:s.sections-1},(_,i)=>dividerScheme(s,i));
   this.shelfScopes={};this.shelfDrafts={};this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
@@ -69,17 +70,17 @@ export class AssistantUI{
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===2 && (this.fields.joints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
  render(){
   this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
    this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
-   this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
+   this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);resizeDividerChoices(this.fields);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
    this.select(this.form,'Задняя стенка',[['yes','Накладная ХДФ 3 мм'],['no','Без задней стенки']],this.fields.back?'yes':'no',v=>{this.fields.back=v==='yes';this.changed();});
    this.form.append(el('p','Высота без ножек и цоколя. Задняя стенка добавляет 3 мм к глубине.'));
   }else if(this.step===1){
    const choices=el('div');choices.className='assistant-cards';
-   for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};this.fields.sections=n;this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
+   for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};this.fields.sections=n;resizeDividerChoices(this.fields);this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
     const pict=el('span');pict.className='assistant-section-icon';for(let i=0;i<n;i++)pict.append(el('i'));b.append(pict,el('strong',n===1?'Одна секция':n===2?'Две секции':'Три секции'));b.setAttribute('aria-pressed',String(this.fields.sections===n));choices.append(b);}
    this.form.append(choices,el('p','Секции равной ширины, с общими перегородками.'));try{this.form.append(el('p','Внутренняя ширина: '+sectionWidths(this.spec()).join(' / ')+' мм.'));}catch{}
   }else if(this.step===2){
@@ -105,7 +106,6 @@ export class AssistantUI{
   const box=el('fieldset');box.append(el('legend','Крепёж корпуса'));this.form.append(box);
   if(this.fields.thickness!==18){box.append(el('p','Эти схемы доступны для плиты 18 мм.'));return;}
   const current=this.fields.joints??{top:'none',bottom:'none'};
-  if(this.fields.sections>1)box.append(el('p',dividerDescription(current)));
   for(const [key,label] of [['top','Крыша'],['bottom','Дно']]){
    const value=current[key];
    this.select(box,label+' · крепёж',Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth<276]),value,v=>{
@@ -128,6 +128,17 @@ export class AssistantUI{
     dot.setAttribute('fill',isDowel?'#a57440':'#315e4d');diagram.append(dot);
    }
    box.append(diagram,el('small',jointQuantity(value)),el('small','Оси от переднего края, мм: '+positions.join(' · ')));
+  }
+  for(const [i,settings] of (this.fields.dividerJoints??[]).entries()){
+   const group=el('fieldset'),number=i+1;
+   group.append(el('legend','Внутренняя стойка '+number+' · между секциями '+number+' и '+(number+1)));
+   for(const [end,direction] of [['top','сверху'],['bottom','снизу']]){
+    const options=Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth<216]);
+    this.select(group,'Стойка '+number+' · крепление '+direction,options,settings[end],value=>{
+     settings[end]=value;this.changed();this.render();
+    });
+   }
+   this.form.append(group);
   }
  }
  materialPicker(role,title,thickness){

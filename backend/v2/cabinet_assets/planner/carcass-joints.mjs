@@ -36,15 +36,23 @@ export function jointRows(scheme,depth,isShelf){
  return rows;
 }
 
-export function dividerEnds(it){
- if(it?.module_type!=='blank'||it.blank_axis!=='side'||it.width!==18||!/:divider-\d+$/.test(it.item_id))return [];
- const prefix=it.item_id.slice(0,it.item_id.lastIndexOf(':')),joints=it.assistant_carcass?.spec.joints;
- return ['bottom','top'].map(level=>({level,hostId:prefix+':'+level,
-   scheme:joints?.[level]==='cam_dowel'?'cam_dowel':'confirmat',roll:level==='bottom'?90:-90}));
+export function dividerScheme(spec,index){
+ const saved=spec?.dividerJoints?.[index];
+ if(saved)return {...saved};
+ // Before stand-specific settings existed, each end followed the outer joint,
+ // with confirmats also installed when the outer joint was disabled.
+ const legacy=level=>spec?.joints?.[level]==='cam_dowel'?'cam_dowel':'confirmat';
+ return {top:legacy('top'),bottom:legacy('bottom')};
 }
-export function dividerDescription(joints){
- const label=level=>joints?.[level]==='cam_dowel'?'2 эксцентрика + 2 шканта':'2 конфирмата';
- return 'На каждую внутреннюю стойку: сверху '+label('top')+', снизу '+label('bottom')+'. Отступ 70 мм, шкант в паре — 102 мм.';
+
+export function dividerEnds(it){
+ if(it?.module_type!=='blank'||it.blank_axis!=='side'||it.width!==18)return [];
+ const match=/^(.*):divider-(\d+)$/.exec(it.item_id);
+ if(!match)return [];
+ const joints=dividerScheme(it.assistant_carcass?.spec,Number(match[2]));
+ return ['bottom','top'].filter(level=>joints[level]!=='none').map(level=>({
+   level,hostId:match[1]+':'+level,scheme:joints[level],roll:level==='bottom'?90:-90
+ }));
 }
 
 function dividerJoints(it,byId){
