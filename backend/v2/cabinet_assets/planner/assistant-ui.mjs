@@ -38,7 +38,7 @@ export class AssistantUI{
  reset(){
   this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
-  this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
+  this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
   if(s?.thickness===18&&s.sections>1)this.fields.dividerJoints=Array.from({length:s.sections-1},(_,i)=>dividerScheme(s,i));
   this.shelfScopes={};this.shelfDrafts={};this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
