@@ -26,7 +26,8 @@ export function hingeLoad(width,height,massKg){
  const mass=massKg??width*height*18*700/1e9;
  const levels=[[900,8],[1600,13],[2000,17],[2400,22]];
  const level=levels.findIndex(([h,m])=>height<=h&&mass<=m);
- if(width>600||mass<=0||level<0)throw Error('Таблица AKS Ø35 охватывает створки до 600 × 2400 мм и до 22 кг. Проверьте размеры и массу одной створки.');
+ if(width>600)throw Error('Ширина створки '+String(width).replace('.',',')+' мм. Для петли PRIME 112595 допустимо до 600 мм на створку.');
+ if(mass<=0||level<0)throw Error('Таблица AKS Ø35 охватывает створки до 600 × 2400 мм и до 22 кг. Проверьте размеры и массу одной створки.');
  return {mass,count:level+2};
 }
 

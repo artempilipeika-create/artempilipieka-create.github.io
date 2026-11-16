@@ -3,6 +3,7 @@ import {backRows} from './carcass-joints.mjs';
 import {footPlan,feetCatalogue} from './wardrobe-feet.mjs';
 import {footHeight,plinthPanel,floorSide} from './plinth-options.mjs';
 import {turn} from './decor-feet.mjs';
+import {doorLeaves,swingNames} from './door-swing.mjs';
 
 export const drawingTitles={body:'Корпус',sections:'Секции и полки',feet:'Опоры',plinth:'Цоколь',back:'Задняя стенка',fronts:'Фасады'};
 const edge='#495b54',accent='#19664f',wood='#e6dcc9',end='#c4b8a2';
@@ -29,24 +30,22 @@ function openCabinet(built){
      polygon([point(x,y,Z),point(X,y,Z),point(X,Y,Z),point(x,Y,Z)],glass?'#d6e7e0':key==='back'?'#dedbcc':wood)+'</g>';
  }).join('');
 }
-function elevationView(built,view,section){
+function elevationView(built,view,section,front){
  const s=built.spec,H=built.height+footHeight(s),W=s.width;
  const zoom=view==='plinth',height=zoom?Math.min(H,Math.max(240,footHeight(s)+W*.22)):H;
- const k=Math.min(328/W,(zoom?200:258)/height),bottom=zoom?238:289;
+ const facade=view==='fronts';
+ const k=Math.min(328/W,(zoom?200:facade?224:258)/height),bottom=zoom?238:facade?253:289;
  const X=x=>200+x*k,Y=y=>bottom-y*k;
  const panel=i=>({x:i.x-i.width/2,y:i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),w:i.width,h:i.height});
  let drawing='';
- const ordered=built.parts.filter(p=>view==='fronts'||p.item.blank_axis!=='front').sort((a,b)=>panelOrder(a)-panelOrder(b));
- function panelOrder(p){return p.key==='back'?-3:p.item.blank_axis==='front'?3:p.key==='plinth'?2:0;}
+ const ordered=built.parts.filter(p=>p.item.blank_axis!=='front').sort((a,b)=>panelOrder(a)-panelOrder(b));
+ function panelOrder(p){return p.key==='back'?-3:p.key==='plinth'?2:0;}
  for(const {key,item} of ordered){
    const q=panel(item);if(q.y>=height)continue;
-   const grey=key==='back'?'#edece5':item.blank_axis==='front'?'#e8e0d2':wood;
+   const grey=key==='back'?'#edece5':wood;
    drawing+=rect(X(q.x),Y(Math.min(height,q.y+q.h)),q.w*k,(Math.min(height,q.y+q.h)-q.y)*k,key==='plinth'&&zoom?'#bed9cd':grey);
-   if(item.blank_axis==='front'){
-     const hingeRight=key==='door-right',pivot=hingeRight?q.x+q.w:q.x,other=hingeRight?q.x:q.x+q.w;
-     drawing+='<path d="M'+points([[X(pivot),Y(q.y+q.h)],[X(other),Y(q.y+q.h/2)],[X(pivot),Y(q.y)]])+'" fill="none" stroke="'+accent+'" stroke-width="1.4" stroke-dasharray="5 4"/>';
-   }
  }
+ if(facade&&front)drawing+=doorLeaves(s,front.swing,X(-W/2),Y(footHeight(s)),k,40)+label(200,312,swingNames[front.swing]);
  if(view==='sections'){
    const widths=sectionWidths(s);section=Math.max(0,Math.min(widths.length-1,section));
    const left=-W/2+s.thickness+widths.slice(0,section).reduce((sum,w)=>sum+w+s.thickness,0);
@@ -99,13 +98,13 @@ function rear(built){
    }).join('');
  }
 }
-export function wardrobeDrawing(built,view='body',section=0){
+export function wardrobeDrawing(built,view='body',section=0,front=built.spec.front){
  const s=built.spec,feet=footPlan(s),shelves=(s.sectionShelves??Array(s.sections).fill(s.shelves)).reduce((a,b)=>a+b,0);
- const art=view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section);
+ const art=view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front);
  const notes={body:s.sections+' секц. · полок '+shelves+' · плита '+s.thickness+' мм',sections:'Вид спереди · чистая ширина выделенной секции',
    feet:feet.length?'Установлено опор: '+feet.length+' · арт. '+s.feet.article:'Опоры не выбраны',
    plinth:plinthPanel(s)?'Планка '+plinthPanel(s).height+' мм · верхний зазор 3 мм':'Цоколь для этого исполнения отсутствует',
    back:s.backThickness?'ЛДСП '+s.backThickness+' мм · ● эксцентрик   ○ шкант':s.back?'Накладная ЛХДФ 3 мм':'Открытый корпус без задней стенки',
-   fronts:s.front?'Зазор по периметру 1,5 мм'+(s.front.swing==='pair'?' · между створками 3 мм':''):'Открытый шкаф'};
+   fronts:front?'Зазор по периметру 1,5 мм'+(front.swing==='pair'?' · между створками 3 мм':''):'Открытый шкаф'};
  return {svg:sheet(view,art),caption:notes[view]};
 }

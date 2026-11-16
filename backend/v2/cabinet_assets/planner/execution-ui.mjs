@@ -4,6 +4,7 @@ import {PRODUCTION_MODELS,productionHardware} from './furniture-core.mjs';
 import {executionArtwork} from './execution-artwork.mjs';
 import {hardwareArtwork,productionHingeArticles,hingePhotoCard} from './hardware-photos.mjs';
 import {MODULE_VIEWS,moduleView,changeModuleView} from './module-view.mjs';
+import {doorOptionDrawing} from './door-swing.mjs';
 const get=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text)node.textContent=text;return node;};
 const makeButton=(text)=>{const b=el('button','secondary',text);b.type='button';return b;};
@@ -49,7 +50,12 @@ export class ExecutionUI{
   const visual=button.querySelector(':scope > .execution-visual');button.querySelector('.execution-title').textContent=descriptor.title;button.querySelector('.execution-hint').textContent=descriptor.hint;
   button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);
   visual.classList.toggle('execution-tall',Boolean(descriptor.tall&&!descriptor.focus));
-  if(descriptor.art||descriptor.photo){let img=visual.querySelector('img');if(!img){img=el('img','execution-photo');img.alt='';img.loading='lazy';img.decoding='async';visual.append(img);}const src=descriptor.art||globalThis.MF_CHOICE_CARDS.image(descriptor.photo);if(img.getAttribute('src')!==src)img.src=src;img.classList.toggle('execution-tripo-photo',Boolean(descriptor.art&&!descriptor.hardware));img.classList.toggle('execution-hardware-photo',Boolean(descriptor.hardware));visual.querySelector('canvas').hidden=true;}
+  if(!descriptor.swing&&visual.dataset.swing){visual.querySelector('.door-opening-picture')?.remove();delete visual.dataset.swing;}
+  if(descriptor.swing){
+   visual.querySelector('img')?.remove();
+   if(visual.dataset.swing!==descriptor.swing){visual.querySelector('.door-opening-picture')?.remove();visual.insertAdjacentHTML('beforeend',doorOptionDrawing(descriptor.swing));visual.dataset.swing=descriptor.swing;}
+   visual.querySelector('canvas').hidden=true;
+  }else if(descriptor.art||descriptor.photo){let img=visual.querySelector('img');if(!img){img=el('img','execution-photo');img.alt='';img.loading='lazy';img.decoding='async';visual.append(img);}const src=descriptor.art||globalThis.MF_CHOICE_CARDS.image(descriptor.photo);if(img.getAttribute('src')!==src)img.src=src;img.classList.toggle('execution-tripo-photo',Boolean(descriptor.art&&!descriptor.hardware));img.classList.toggle('execution-hardware-photo',Boolean(descriptor.hardware));visual.querySelector('canvas').hidden=true;}
   else{visual.querySelector('img')?.remove();visual.querySelector('canvas').hidden=false;}
   button.classList.toggle('execution-hardware-choice',Boolean(descriptor.hardware));
   let action=visual.querySelector('.execution-action');if(descriptor.action){if(!action){action=el('span','execution-action');visual.append(action);}action.textContent=descriptor.action;}else action?.remove();
@@ -58,13 +64,13 @@ export class ExecutionUI{
  update(button,it,family,key,value,sourceDisabled=false){
   const descriptor=optionDescriptor(family,key,value);if(PRODUCTION_MODELS[it.bazis_id]?.open_tall?.wall)descriptor.tall=false;let target,error='';
   try{target=previewVariant(it,family,key,value,this.app.bridge.catalogue.bazisModules);}catch(e){error=e.message;}
-  if(target){const hardware=hardwareArtwork(target,family,key,value);if(hardware){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
+  if(target&&!descriptor.swing){const hardware=hardwareArtwork(target,family,key,value);if(hardware){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
   const visual=this.decorate(button,descriptor);
   if(target&&family==='cargo'&&key==='brand'&&!descriptor.hardware){const kit=globalThis.MF_CARGO.kit(target);descriptor.hint=(value==='norwing'?'Хром':'Графит')+' · '+(kit?.mounting==='side_left'?'крепление слева':'крепление снизу')+(kit?.article?' · '+kit.article:'');button.querySelector('.execution-hint').textContent=descriptor.hint;button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);}
   if(sourceDisabled&&!error)error=button.title||'Недоступно для выбранного исполнения';
   button.disabled=Boolean(error);button.title=error;button.querySelector('.execution-reason').textContent=error;button.querySelector('.execution-reason').hidden=!error;
   const canvas=visual.querySelector('canvas');visual.classList.toggle('execution-unavailable',Boolean(error));
-  if(target&&!descriptor.photo&&!descriptor.art){const renderer=this.ensureRenderer();if(renderer)renderer.request(canvas,target,descriptor);else visual.classList.add('execution-failed');}
+  if(target&&!descriptor.swing&&!descriptor.photo&&!descriptor.art){const renderer=this.ensureRenderer();if(renderer)renderer.request(canvas,target,descriptor);else visual.classList.add('execution-failed');}
   else{this.renderer?.cancel(canvas);if(error){canvas.width=1;canvas.height=1;delete canvas.dataset.previewReady;}}
   if(descriptor.art){visual.classList.remove('execution-failed');const img=visual.querySelector('img');img.alt=descriptor.hardware?descriptor.title+' · '+descriptor.hardware.article:'';
    img.onerror=()=>{if(descriptor.hardware){img.alt='Фото недоступно · '+descriptor.hardware.article;return;}this.failedArtwork.add(descriptor.art);img.remove();canvas.hidden=false;delete descriptor.art;this.ensureRenderer()?.request(canvas,target,descriptor);};}

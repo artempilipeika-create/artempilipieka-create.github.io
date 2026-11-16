@@ -7,6 +7,8 @@ import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-que
 import {cabinetId,commitCabinet,heightTargets,matchCabinetHeight} from '../../backend/v2/cabinet_assets/planner/cabinet-actions.mjs';
 import {buildCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-model.mjs';
 import {wardrobeDrawing} from '../../backend/v2/cabinet_assets/planner/wardrobe-drawing.mjs';
+import {AssistantUI} from '../../backend/v2/cabinet_assets/planner/assistant-ui.mjs';
+import {furnitureMeasures} from '../../backend/v2/cabinet_assets/planner/dimension-geometry.mjs';
 import {splitPlinths} from '../../backend/v2/cabinet_assets/planner/wardrobe-plinth-runs.mjs';
 import {PRODUCTION_MODELS,dimensionPatch,productionParts} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import '../../backend/v2/cabinet_assets/planner/blanks-native.mjs';
@@ -69,6 +71,43 @@ test('individual panel view selects exactly one SVG with stable coordinates and 
  assert.match(wardrobeDrawing(make(spec),'feet').caption,/опор: 6/);
  const back=wardrobeDrawing(make(spec),'back').svg;assert.ok((back.match(/<circle/g)||[]).length>20);
  assert.ok(!wardrobeDrawing(make({...spec,backThickness:undefined}),'back').svg.includes('<circle'));
+});
+
+test('switching paired, left and right fronts immediately replaces the drawing, including an over-width single door',()=>{
+ const fields=structuredClone(spec),warning={},drawing={replaceChildren(){this.innerHTML='';}};
+ const ui={fields,view:'fronts',figureTitle:{},form:{querySelector:()=>warning},drawing,dimensions:{},description:{},spec(){return wardrobeSpec(this.fields);}};
+ for(const width of [900,550]){
+   fields.width=width;fields.dividerPositions=[230];
+   for(const swing of ['pair','left','right','pair',null]){
+     if(swing)fields.front={swing,offset:90};else delete fields.front;
+     AssistantUI.prototype.draw.call(ui);
+     assert.equal((drawing.innerHTML.match(/<svg/g)||[]).length,1);
+     assert.deepEqual([...drawing.innerHTML.matchAll(/data-hinge="(\w+)"/g)].map(m=>m[1]),swing==='pair'?['left','right']:swing?[swing]:[]);
+     if(width===900&&['left','right'].includes(swing)){
+       assert.equal(warning.hidden,false);assert.match(warning.textContent,/600/);assert.throws(()=>ui.spec(),/600/);
+     }else assert.equal(warning.hidden,true);
+   }
+ }
+});
+
+test('overview measures two distinct wardrobes and their run, detail measures the shelf and its underside from the floor',()=>{
+ const {a}=project();
+ for(const id of ['left-product','right-product'])applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec},{id}));
+ const selected=a.items.find(it=>it.item_id==='right-product:shelf-1-1');
+ const input=JSON.stringify(a.items);
+ for(const mode of ['3d','front','top']){
+   const {dims,subject}=furnitureMeasures(a.items,a.room,{selectedId:selected.item_id,mode});
+   assert.equal(subject.item_id,'right-product');assert.equal(subject.depth,568);
+   assert.deepEqual(dims.filter(d=>d.axis==='width').map(d=>d.value),[900,900]);
+   assert.deepEqual(dims.filter(d=>d.kind==='run').map(d=>d.value),[1800]);
+   assert.equal(dims.filter(d=>d.axis===(mode==='top'?'depth':'height')).length,1);
+   assert.ok(dims.filter(d=>d.kind==='module').every(d=>d.readOnly));
+ }
+ const {dims,subject}=furnitureMeasures(a.items,a.room,{selectedId:selected.item_id,scope:'detail',mode:'3d'});
+ assert.equal(subject,selected);assert.deepEqual(dims.map(d=>[d.axis,d.value]),[['width',selected.width],['depth',selected.depth],['elevation',selected.elevation_mm]]);
+ assert.equal(dims.at(-1).a.y,0);assert.equal(dims.at(-1).b.y,selected.elevation_mm);
+ assert.deepEqual(furnitureMeasures(a.items,a.room,{scope:'detail'}).dims,[]);
+ assert.equal(JSON.stringify(a.items),input);
 });
 test('absolute kitchen row height preserves legs, individual upper bottoms, fixed oven cavity, rejects invalid target atomically',()=>{
  const base=(id,x,h,leg)=>({name:id,item_id:id,module_type:'base_cabinet',width:600,depth:510,height:h,base:'legs',base_height:leg,body_height:h-leg,worktop_thickness:38,x,z:0,rotation:0,layout:'doors',drawers:0});

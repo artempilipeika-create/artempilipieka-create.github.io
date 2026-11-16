@@ -1,4 +1,5 @@
 import {bounds,elevation,heights,rotateXZ,tier,isTallModule,kitchenSettings} from './furniture-core.mjs';
+import {cabinetId,cabinetEnvelope} from './cabinet-actions.mjs';
 
 export const formatMm=value=>Number.isInteger(value)?String(value):String(Math.round(value*10)/10).replace('.',',');
 export function dimensionValue(it,axis){return axis==='height'?heights(it).overall_height_with_worktop:it[axis];}
@@ -57,26 +58,77 @@ export function overallDimensions(items,room){
       }
     }
     if(members.length<2)return [];
-    const point=(x,y)=>({x:u.x*x+n.x*g.back,y,z:u.z*x+n.z*g.back});
+    const point=(x,y,back=g.back)=>({x:u.x*x+n.x*back,y,z:u.z*x+n.z*back});
     return [{id:'overall:'+g.rotation+':'+g.items.map(it=>it.item_id).sort().join(':'),kind:'run',overall:true,value:hi-lo,
-      a:point(lo,g.top),b:point(hi,g.top),out:point((lo+hi)/2,g.top+200),offset:65}];
+      a:point(lo,g.top),b:point(hi,g.top),out:point((lo+hi)/2,g.top+200,g.back-200),offset:60}];
   });
 }
-export function sceneDimensions(items,room,selectedId){
+export function sceneDimensions(items,room,selectedId,runs=dimensionRuns(items,room)){
   const result=[];
-  for(const run of dimensionRuns(items,room)){
+  for(const run of runs){
     const top=Math.max(...run.items.map(it=>elevation(it,room)+dimensionValue(it,'height')));
     const point=(x,y,z=run.back)=>({x:run.u.x*x+run.n.x*z,y,z:run.u.z*x+run.n.z*z});
     for(const it of run.items){
       const x=dot(it,run.u),y=elevation(it,room)+dimensionValue(it,'height'),w=it.width/2;
       result.push({id:it.item_id+':width',itemId:it.item_id,axis:'width',value:it.width,kind:'module',selected:it.item_id===selectedId,
-        a:point(x-w,top),b:point(x+w,top),sourceA:point(x-w,y),sourceB:point(x+w,y),out:point(x,top+200),offset:26});
+        a:point(x-w,top),b:point(x+w,top),sourceA:point(x-w,y),sourceB:point(x+w,y),out:point(x,top+200,run.back-200),offset:25});
     }
     const representative=run.items.find(it=>it.item_id===selectedId)||run.items[0],level=elevation(representative,room),height=dimensionValue(representative,'height');
     result.push({id:representative.item_id+':height',itemId:representative.item_id,axis:'height',value:height,kind:'module',selected:representative.item_id===selectedId,
       a:point(run.lo,level),b:point(run.lo,level+height),out:point(run.lo-200,level+height/2),offset:32});
   }
   return result.concat(overallDimensions(items,room));
+}
+
+function objectMeasure(it,room,axis,selected=true){
+  const w=it.width/2,d=it.depth/2,bottom=elevation(it,room),h=dimensionValue(it,'height'),top=bottom+h;
+  const point=(x,y,z)=>local(it,x,y,z);
+  let a,b,out;
+  if(axis==='width'){a=point(-w,top,-d);b=point(w,top,-d);out=point(0,top+200,-d-200);}
+  else if(axis==='depth'){a=point(w,top,-d);b=point(w,top,d);out=point(w+200,top,0);}
+  else if(axis==='height'){a=point(-w,bottom,d);b=point(-w,top,d);out=point(-w-200,bottom+h/2,d);}
+  else{a=point(-w,0,d);b=point(-w,bottom,d);out=point(-w-200,bottom/2,d);}
+  const level=axis==='elevation';
+  return {id:it.item_id+':'+axis,itemId:it.item_id,axis,value:level?bottom:dimensionValue(it,axis),
+    kind:level?'level':'module',title:level?'От пола до низа детали':it.name,readOnly:level||it.module_type==='blank',selected,a,b,out,offset:26};
+}
+
+// Saved group identity is the only way to combine AI panels into a product.
+export function furnitureMeasures(items,room,{scope='products',mode='3d',selectedId,wholeId}={}){
+  const selected=items.find(it=>it.item_id===selectedId);
+  const products=new Map();
+  for(const it of items){
+    const group=cabinetId(it),meta=it.assistant_carcass;
+    if(group&&meta.spec&&meta.position){
+      if(!products.has(group))products.set(group,cabinetEnvelope(meta));
+    }else if(it.module_type!=='blank')products.set(it.item_id,it);
+  }
+  const product=products.get(wholeId||cabinetId(selected)||selectedId);
+  if(scope==='detail'||!products.size){
+    const it=wholeId?product:selected;
+    if(!it)return {dims:[],subject:null,detail:true};
+    const axes=mode==='top'?['width','depth']:mode==='front'?['width','height']:['width','height','depth'];
+    const thicknessAxis={horizontal:'height',side:'width',back:'depth',front:'depth'}[it.blank_axis];
+    const dims=axes.filter(axis=>axis!==thicknessAxis).map(axis=>objectMeasure(it,room,axis));
+    if(mode!=='top'&&it.blank_axis==='horizontal'&&elevation(it,room)>0)dims.push(objectMeasure(it,room,'elevation'));
+    return {dims,subject:it,detail:true};
+  }
+  const units=[...products.values()],runs=dimensionRuns(units,room);
+  const dims=sceneDimensions(units,room,product?.item_id,runs).filter(d=>d.axis!=='height');
+  for(const dim of dims){
+    const it=products.get(dim.itemId);
+    if(it){dim.readOnly=it.module_type==='blank';dim.title=it.name;}
+  }
+  const axis=mode==='top'?'depth':'height';
+  for(const run of runs){
+    const spans=new Map();
+    for(const it of run.items){
+      const span=axis==='depth'?it.depth:elevation(it,room)+':'+dimensionValue(it,'height');
+      if(!spans.has(span)||it===product)spans.set(span,it);
+    }
+    for(const it of spans.values())dims.push(objectMeasure(it,room,axis,it===product));
+  }
+  return {dims,subject:product,detail:false};
 }
 export function clearanceDimensions(it,items,room,ignoredIds=[]){
   const group=Array.isArray(it)?it:[it],boxes=group.map(it=>bounds(it,room));if(!boxes.length)return [];

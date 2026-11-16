@@ -140,6 +140,7 @@ export class AssistantUI{
     this.changed();this.render();
    });
    if(this.fields.front){
+    const warning=el('p');warning.className='front-choice-warning';warning.setAttribute('role','status');warning.hidden=true;this.form.append(warning);
     const box=el('fieldset');box.className='wardrobe-hinge';box.append(el('legend','Накладная петля'));
     box.append(hingePhotoCard(primeHinge.article));
     this.select(box,'Отступ до оси чашки',[[90,'90 мм сверху и снизу'],[130,'130 мм сверху и снизу']],this.fields.front.offset,v=>{this.fields.front.offset=Number(v);this.changed();});
@@ -340,13 +341,25 @@ export class AssistantUI{
  }
  draw(){
   this.figureTitle.textContent=drawingTitles[this.view];
+  const warning=this.form.querySelector('.front-choice-warning');
+  if(warning)warning.hidden=true;
   try{
-   const built=buildCarcass(this.spec(),{idPrefix:'questionnaire-preview'});
-   const {svg,caption}=wardrobeDrawing(built,this.view,this.activeSection);
-   this.drawing.innerHTML=svg;this.dimensions.textContent=built.spec.width+' × '+(built.spec.height+footHeight(built.spec))+' × '+built.depth+' мм';
+   const options={idPrefix:'questionnaire-preview'};
+   let built,issue='';
+   try{built=buildCarcass(this.spec(),options);}
+   catch(error){
+    if(this.view!=='fronts'||!this.fields.front)throw error;
+    built=buildCarcass(wardrobeSpec({...this.fields,front:null}),options);
+    issue=error.message;
+   }
+   const {svg,caption}=wardrobeDrawing(built,this.view,this.activeSection,this.fields.front);
+   this.drawing.innerHTML=svg;
+   this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';
    this.description.textContent=caption;
+   if(issue&&warning){warning.textContent=issue;warning.hidden=false;}
+   else if(issue)this.description.textContent=issue;
   }catch(e){
-   if(this.drawing.firstElementChild?.dataset.view!==this.view)this.drawing.replaceChildren();
+   this.drawing.replaceChildren();
    this.dimensions.textContent='Проверьте параметры';this.description.textContent=e.message;
   }
  }

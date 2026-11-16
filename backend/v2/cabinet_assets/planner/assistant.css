@@ -89,4 +89,5 @@
 #planner-assistant-dialog .wardrobe-hinge figure{margin:0;display:grid;justify-items:center;gap:6px}
 #planner-assistant-dialog .wardrobe-hinge img{width:min(100%,260px);height:160px;object-fit:contain;background:white}
 #planner-assistant-dialog .wardrobe-hinge figcaption{font-size:13px;font-weight:600}
+#planner-assistant-dialog .front-choice-warning{padding:8px 10px;border-left:3px solid #a86c20;color:#704910;background:#faf2e2;line-height:1.4}
 @media(max-width:640px){#planner-assistant-dialog .assistant-drawing{height:238px;padding:7px;gap:2px;grid-template-rows:18px minmax(0,1fr) 18px 21px}#planner-assistant-dialog .assistant-drawing p:last-child{font-size:11px}}

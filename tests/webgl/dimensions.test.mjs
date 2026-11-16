@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {dimensionRuns,sceneDimensions,overallDimensions,clearanceDimensions,dimensionValue,dimensionEdit} from '../../backend/v2/cabinet_assets/planner/dimension-geometry.mjs';
+import {dimensionRuns,sceneDimensions,overallDimensions,clearanceDimensions,dimensionValue,dimensionEdit,furnitureMeasures} from '../../backend/v2/cabinet_assets/planner/dimension-geometry.mjs';
+import {placeMeasure} from '../../backend/v2/cabinet_assets/planner/dimensions.mjs';
 import {rotateXZ,dimensionPatch,heights,CORNER_VARIANTS,PRODUCTION_MODELS,cornerReturnPlacement} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 const room={width:6000,depth:5000,height:2800};
 const item=(id,x=0,extra={})=>({item_id:id,name:id,module_type:'base_cabinet',width:600,height:820,depth:510,base:'legs',legHeightMm:100,base_height:100,body_height:720,countertopThicknessMm:38,worktop_thickness:38,rotation:0,x,z:0,...extra});
@@ -68,4 +69,23 @@ test('Group move clearance starts at its outer envelope',()=>{
   const a=item('a'),b=item('b',600),outside=item('c',1400);
   const gap=clearanceDimensions([a,b],[a,b,outside],room).find(d=>d.id==='gap:x1');
   assert.equal(gap.a.x,900);assert.equal(gap.value,200);
+});
+
+test('adjacent unequal kitchen heights have separate, editable measurements anchored to their own cabinets',()=>{
+  const first=item('a'),second=item('b',600,{height:900});
+  const dims=furnitureMeasures([first,second],room,{selectedId:'b'}).dims.filter(d=>d.axis==='height');
+  assert.deepEqual(dims.map(d=>[d.itemId,d.value,d.a.x,d.readOnly]),[['a',858,-300,false],['b',938,300,false]]);
+});
+test('labels stay on their measured line, avoid each other and stay in the visible part of a narrow viewport',()=>{
+  const a={x:-320,y:160,visible:true},b={x:280,y:160,visible:true},out={x:0,y:0};
+  const size={width:64,height:28},view={left:22,right:205,top:40,bottom:250};
+  const occupied=[];
+  for(let i=0;i<3;i++){
+    const p=placeMeasure(a,b,out,24,size,view,occupied);
+    assert.ok(p);assert.equal(p.cy,160-p.distance);
+    assert.ok(p.box.left>=view.left&&p.box.right<=view.right);
+    assert.ok(occupied.every(r=>p.box.right+4<=r.left||r.right+4<=p.box.left||p.box.bottom+4<=r.top||r.bottom+4<=p.box.top));
+    occupied.push(p.box);
+  }
+  assert.equal(placeMeasure({...a,visible:false},b,out,24,size,view,[]),null);
 });

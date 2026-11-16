@@ -7,7 +7,7 @@ const labels={
  purpose:{shelf:['С полками','Открытый корпус · полки внутри'],sink:['Под мойку','Открытый корпус · без полки']},
  filling:{shelves:['Полки','Хранение внутри шкафа'],dryer:['Сушка MOUNT','Посуда и поддон · схема']},
  execution:{standard:['Накладные ручки','Ручка на фасаде'],gola:['Gola','Подхват за профиль · без подсветки'],handles:['Накладные ручки','Ручка снизу фасада'],handleless:['Без ручек','Подхват снизу'],push:['Нажатие','Tip-on · нажать на фасад']},
- side:{left:['Петли слева','Дверь открывается влево'],right:['Петли справа','Дверь открывается вправо']},
+ side:{left:['Петли слева','Дверь открывается влево'],right:['Петли справа','Дверь открывается вправо'],double:['Две створки','Петли по краям']},
  opening:{left:['Петли слева','Дверь открывается влево'],right:['Петли справа','Дверь открывается вправо'],double:['Две створки','По две двери в каждой секции'],soft:['С доводчиком','Потянуть · плавное закрывание'],push:['Нажатие','Push to open · без ручки']},
  door_count:{1:['Одна дверь','Один открывающийся фасад'],2:['Две двери','Два открывающихся фасада']},
  layout:{storage:['Полки','Закрытое хранение · без техники'],two:['2 ящика','Два наружных фасада'],three:['3 ящика','Два малых и один большой'],inner:['2 + внутренний','Дополнительный ящик за фасадом'],door_oven:['Дверь + духовка','Нижняя секция с дверью'],door_oven_micro:['Духовка + СВЧ','Нижняя секция с дверью'],drawer_oven:['Ящик + духовка','Выдвижная нижняя секция'],drawer_oven_micro:['Ящик + духовка + СВЧ','Два прибора и нижний ящик']},
@@ -29,12 +29,12 @@ export function optionDescriptor(family,key,value){
  if(family==='base'&&key==='purpose'&&value==='sink')hint='Без полки и задней стенки';
  if(key==='execution'&&value==='gola')title=['drawer','dryer'].includes(family)?'Gola II':'Gola L';
  const open=key==='purpose'||key==='filling'||['brand','dryer_brand','system'].includes(key)||(key==='layout'&&value==='inner');
- const hinge=(key==='side'&&family!=='corner')||(key==='opening'&&['left','right','double'].includes(value));
+ const hinge=['left','right','double'].includes(value)&&((key==='side'&&family!=='corner')||key==='opening');
  const view=open?'inside':hinge?'hinge':'closed';
  const focus=['execution','handles'].includes(key)?'grip':key==='system'?'drawer':key==='brand'?'basket':key==='dryer_brand'?'dryer':null;
  const photo=key==='light_system'&&value!=='none'?({'aq-4x8':'aq-profile','lira-17.5x6.5':'lira-profile'}[value]):null;
  const action=(key==='opening'&&value==='push')||(key==='execution'&&value==='push')?'Нажать':key==='opening'&&value==='soft'?'Потянуть':key==='execution'&&value==='handleless'&&family!=='wall-special'?'Подхват снизу':'';
- return {title,hint,view,focus,photo,action,highlight:family==='corner'&&key==='side'?'filler':null,front:key==='door_count'||key==='layout'||key==='lighting',tall:['tall','vitrine','open-tall'].includes(family)};
+ return {title,hint,view,focus,photo,action,swing:hinge?(value==='double'?'pair':value):null,highlight:family==='corner'&&key==='side'?'filler':null,front:key==='door_count'||key==='layout'||key==='lighting',tall:['tall','vitrine','open-tall'].includes(family)};
 }
 export function previewVariant(it,family,key,value,catalogue){
  const copy=structuredClone(it),patch={[key]:['row_height','door_count','width'].includes(key)?Number(value):value};
