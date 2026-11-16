@@ -36,14 +36,14 @@ test('every supplied kitchen foot raises the body and exports a four-edge plinth
   const built=buildCarcass(spec,{idPrefix:'q'});
   const items=placeCarcass(built,{rotation:90,x:200,z:300,elevation_mm:0}).map(i=>({...i,assistant_carcass:{group_id:'q',spec}}));
   const panel=items.find(i=>i.item_id==='q:plinth'),bottom=items.find(i=>i.item_id==='q:bottom');
-  assert.equal(panel.height,leg.height-2);assert.equal(panel.width,782);assert.equal(panel.elevation_mm,0);
+  assert.equal(panel.height,leg.height-3);assert.equal(panel.width,782);assert.equal(panel.elevation_mm,0);
   assert.equal(bottom.elevation_mm,leg.height);assert.equal(items[0].elevation_mm,0);
   const native=blankNativeItem(panel,{name:'ЛДСП',thickness:18});
   assert.equal(native.source_file,'Заготовка_6.ПВХ_в круг..fr3d');
   assert.equal(native.blank.edge_code,'1111');
-  assert.equal(native.target.height,leg.height-2);
-  assert.equal(native.blank.cut.width,leg.height-2-2*spec.edgeThickness);
-  assert.equal(bottom.elevation_mm-(panel.elevation_mm+panel.height),2);
+  assert.equal(native.target.height,leg.height-3);
+  assert.equal(native.blank.cut.width,leg.height-3-2*spec.edgeThickness);
+  assert.equal(bottom.elevation_mm-(panel.elevation_mm+panel.height),3);
   assert.equal(items[0].height,base.height+leg.height);
   const feet=nativeFeet(items);assert.equal(feet.length,4);
   assert.ok(feet.every(f=>f.host_blank_id===bottom.item_id&&f.position.y===leg.height&&f.source_sha256===leg.sha));

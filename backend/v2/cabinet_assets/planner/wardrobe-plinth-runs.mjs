@@ -9,12 +9,12 @@ function span(item,start,width){
 
 // Reconstruct editable cabinet segments before resizing a cabinet in an existing row.
 export function splitPlinths(items){
- // Older test projects used the entire foot height for the finished board.
+ // Earlier generated boards had either no clearance or a 2 mm clearance.
  items=items.map(item=>{
   const meta=item.assistant_carcass;
   if(!meta||item.item_id!==meta.group_id+':plinth')return item;
   const leg=plinthFoot(meta.spec);
-  if(!leg||item.height!==leg.height||item.blank_width_mm!==leg.height)return item;
+  if(!leg||![0,2].includes(leg.height-item.height)||item.blank_width_mm!==item.height)return item;
   return updateBlank(item,{blank_width_mm:plinthPanel(meta.spec).height});
  });
  if(!items.some(it=>it.blank_plinth_run?.length))return items;
