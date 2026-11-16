@@ -217,3 +217,14 @@ def test_wardrobe_manual_openings_and_actual_divider_depth():
                    {'dividerPositions':[320,1080]}, {'depth':216}):
         with pytest.raises(ValidationError):
             CarcassDesign.model_validate(dict(valid,**change))
+
+
+def test_back_hardware_uses_panel_height_and_each_horizontal_length():
+    from backend.v2.three_d_document import hardware_for
+    for thickness in (16, 18):
+        spec = {'backThickness': thickness, 'width': 836, 'bottomFit': 'overlay'}
+        back = {'module_type': 'blank', 'item_id': 'g:back', 'width': 800,
+                'assistant_carcass': {'group_id': 'g', 'spec': spec}}
+        for height, per_side in [(120, 2), (600, 2), (601, 3), (1500, 5), (2200, 6), (2201, 7), (2980, 8)]:
+            hardware, _ = hardware_for({**back, 'height': height})
+            assert [r['qty'] for r in hardware] == [2 * per_side + 3] * 2

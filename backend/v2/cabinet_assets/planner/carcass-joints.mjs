@@ -86,19 +86,24 @@ export function backRows(panel){
  const meta=panel.assistant_carcass,s=meta?.spec;
  if(!s?.backThickness||panel.item_id!==meta.group_id+':back')return [];
  const w=panel.width,h=panel.height,rows=[];
- function pair(edge,x,y,dx,dy,roll){
-   for(const [kind,offset] of [['cam',-16],['dowel',16]])
-     rows.push({edge,kind,x:x+Math.abs(dy)*offset,y:y+Math.abs(dx)*offset,dx,dy,roll});
+ function pair(edge,x,y,dx,dy,roll,alongX,alongY){
+   rows.push({edge,kind:'cam',x,y,dx,dy,roll},
+             {edge,kind:'dowel',x:x+32*alongX,y:y+32*alongY,dx,dy,roll});
  }
- for(const fraction of [1/6,1/2,5/6]){
-   const y=Math.round(h*fraction);
-   pair('left',-w/2,y,1,0,0);pair('right',w/2,y,-1,0,180);
+ // Keep opposing dowels clear on shallow-height panels, then distribute
+ // integer cam axes evenly between the end offsets.
+ const margin=Math.min(100,Math.floor((h-80)/2));
+ const span=h-2*margin,intervals=Math.max(1,Math.ceil(span/400));
+ for(let i=0;i<=intervals;i++){
+   const y=margin+Math.round(i*span/intervals),alongY=y<=h/2?1:-1;
+   pair('left',-w/2,y,1,0,0,0,alongY);
+   pair('right',w/2,y,-1,0,180,0,alongY);
  }
  for(const edge of ['bottom','top']){
    const length=s[edge+'Fit']==='overlay'?s.width:w;
-   for(const fraction of length>800?[.25,.75]:[.5]){
+   for(const x of length>800?[-w/4,w/4]:[0]){
      const bottom=edge==='bottom';
-     pair(edge,Math.round(w*fraction)-w/2,bottom?0:h,0,bottom?1:-1,bottom?90:-90);
+     pair(edge,x,bottom?0:h,0,bottom?1:-1,bottom?90:-90,x<=0?1:-1,0);
    }
  }
  return rows;

@@ -3,6 +3,7 @@ from io import BytesIO
 from pathlib import Path
 from html import escape
 from collections import OrderedDict
+from math import ceil
 import hashlib
 import re
 from reportlab.lib import colors
@@ -133,7 +134,9 @@ def _panel_hardware(it):
     meta = it.get('assistant_carcass') or {}
     spec = meta.get('spec') or {}
     if spec.get('backThickness') and it.get('item_id') == str(meta['group_id'])+':back':
-        pairs = 6 + sum(1 + int((spec['width'] if spec.get(edge+'Fit')=='overlay' else it['width']) > 800)
+        # Two end cams, plus intermediate cams wherever a span exceeds 400 mm.
+        per_side = max(2, 1 + ceil((it['height'] - 200) / 400))
+        pairs = 2 * per_side + sum(1 + int((spec['width'] if spec.get(edge+'Fit')=='overlay' else it['width']) > 800)
                         for edge in ('bottom','top'))
         return [_row('Эксцентриковая стяжка · задняя стенка',pairs),_row('Шкант деревянный 8×35',pairs,'pcs','39319')],None
     if (it.get('module_type')=='blank' and it.get('blank_axis')=='side' and it.get('width')==18

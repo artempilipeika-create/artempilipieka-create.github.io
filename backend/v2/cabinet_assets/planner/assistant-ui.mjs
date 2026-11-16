@@ -90,7 +90,7 @@ export class AssistantUI{
    for(const [key,title,overlay] of [['bottomFit','Конструкция дна','Накладное дно'],['topFit','Конструкция крыши','Накладная крыша']])
     this.select(this.form,title,[['inset','Между боковинами'],['overlay',overlay]],this.fields[key]??'inset',v=>{this.fields[key]=v;this.changed();this.render();});
    this.footControls();
-   this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Без кромки. Чашки открываются сзади. Слева и справа по 3 пары. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':'Высота без ножек и цоколя.'+(this.fields.back?' Накладная ЛХДФ добавляет 3 мм к глубине.':'')));
+   this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Без кромки. Чашки открываются сзади. На обеих боковинах эксцентрики стоят равномерно с шагом до 400 мм. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':'Высота без ножек и цоколя.'+(this.fields.back?' Накладная ЛХДФ добавляет 3 мм к глубине.':'')));
   }else if(this.step===1){
    const choices=el('div');choices.className='assistant-cards';
    for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};if(this.fields.dividerPositions&&n!==this.fields.sections){
@@ -304,7 +304,10 @@ export class AssistantUI{
       const x=140-(r.x+r.dx*34)*220/back.width,y=150-(r.y+r.dy*34)*132/back.height;
       return '<circle cx="'+x+'" cy="'+y+'" r="3" fill="#276958"/>';
     }).join('');
-    this.drawing.append(el('h4','Вид сзади · '+(rows.length/2)+' пар'));
+    const side=rows.filter(r=>r.edge==='left'&&r.kind==='cam');
+    const pitch=Math.max(...side.slice(1).map((r,i)=>r.y-side[i].y));
+    this.drawing.append(el('h4','Крепление задней стенки · вид сзади'));
+    this.drawing.append(el('p','Высота стенки '+back.height+' мм. Пар на каждой боковине — '+side.length+' (эксцентрик + шкант). Отступ от краёв '+side[0].y+' мм, наибольший шаг '+pitch+' мм.'));
     this.drawing.insertAdjacentHTML('beforeend','<svg role="img" aria-label="Расположение пар эксцентрик и шкант со стороны задней стенки" viewBox="0 0 280 168"><rect x="25" y="13" width="230" height="142" fill="#aa926c"/><rect x="30" y="18" width="220" height="132" fill="#e8dcc5"/>'+marks+'</svg>');
    }
    if(built.spec.feet){const count=footPlan(built.spec).length;this.drawing.append(el('h4','Вид снизу · '+count+(count===4?' опоры':' опор')));this.drawing.insertAdjacentHTML('beforeend',feetDrawing(built.spec));}this.dimensions.textContent=built.spec.width+' × '+(built.spec.height+footHeight(built.spec))+' × '+built.depth+' мм';this.description.textContent=built.items.length+' деталей · '+built.spec.sectionShelves.reduce((a,b)=>a+b,0)+' полок · '+(built.spec.backThickness?'вкладная ЛДСП '+built.spec.backThickness+' мм':built.spec.back?'с ХДФ':'без задней стенки');}
