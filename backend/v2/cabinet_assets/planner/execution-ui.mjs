@@ -1,8 +1,8 @@
 import {ExecutionPreviews} from './execution-previews.mjs';
 import {buttonFamilies,optionDescriptor,previewVariant} from './execution-options.mjs';
-import {PRODUCTION_MODELS} from './furniture-core.mjs';
+import {PRODUCTION_MODELS,productionHardware} from './furniture-core.mjs';
 import {executionArtwork} from './execution-artwork.mjs';
-import {hardwareArtwork} from './hardware-photos.mjs';
+import {hardwareArtwork,productionHingeArticles,hingePhotoCard} from './hardware-photos.mjs';
 import {MODULE_VIEWS,moduleView,changeModuleView} from './module-view.mjs';
 const get=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text)node.textContent=text;return node;};
@@ -21,6 +21,7 @@ export class ExecutionUI{
   document.body.classList.add('module-view-unified');
   this.note=el('p','studio-hint execution-preview-note','Вид конструкции в выбранных размерах. Материалы — на основной сцене.');this.root.append(this.note);
   get('base-options-controls').before(this.root);
+  this.hinges=el('div','production-hinge-photos');get('production-hardware-summary')?.after(this.hinges);
   for(const [family,id]of Object.entries(families)){const root=get(id);if(root)root.classList.add('execution-family');}
   for(const [family,selector,keyAttr]of [['cargo','[data-cargo-option]','cargoOption'],['dryer','[data-dryer-option]','dryerOption']])for(const select of get(families[family]).querySelectorAll(selector))this.proxy(select,family,select.dataset[keyAttr]);
   this.proxy(get('vitrine-light-system'),'vitrine','light_system');
@@ -57,7 +58,7 @@ export class ExecutionUI{
  update(button,it,family,key,value,sourceDisabled=false){
   const descriptor=optionDescriptor(family,key,value);if(PRODUCTION_MODELS[it.bazis_id]?.open_tall?.wall)descriptor.tall=false;let target,error='';
   try{target=previewVariant(it,family,key,value,this.app.bridge.catalogue.bazisModules);}catch(e){error=e.message;}
-  if(target){const hardware=PRODUCTION_MODELS[target.bazis_id]?.cargo?.waste?null:hardwareArtwork(target,family,key,value);if(hardware&&!this.failedArtwork.has(hardware.src)){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
+  if(target){const hardware=hardwareArtwork(target,family,key,value);if(hardware){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
   const visual=this.decorate(button,descriptor);
   if(target&&family==='cargo'&&key==='brand'&&!descriptor.hardware){const kit=globalThis.MF_CARGO.kit(target);descriptor.hint=(value==='norwing'?'Хром':'Графит')+' · '+(kit?.mounting==='side_left'?'крепление слева':'крепление снизу')+(kit?.article?' · '+kit.article:'');button.querySelector('.execution-hint').textContent=descriptor.hint;button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);}
   if(sourceDisabled&&!error)error=button.title||'Недоступно для выбранного исполнения';
@@ -65,7 +66,8 @@ export class ExecutionUI{
   const canvas=visual.querySelector('canvas');visual.classList.toggle('execution-unavailable',Boolean(error));
   if(target&&!descriptor.photo&&!descriptor.art){const renderer=this.ensureRenderer();if(renderer)renderer.request(canvas,target,descriptor);else visual.classList.add('execution-failed');}
   else{this.renderer?.cancel(canvas);if(error){canvas.width=1;canvas.height=1;delete canvas.dataset.previewReady;}}
-  if(descriptor.art){visual.classList.remove('execution-failed');const img=visual.querySelector('img');img.onerror=()=>{this.failedArtwork.add(descriptor.art);img.remove();canvas.hidden=false;delete descriptor.art;this.ensureRenderer()?.request(canvas,target,descriptor);};}
+  if(descriptor.art){visual.classList.remove('execution-failed');const img=visual.querySelector('img');img.alt=descriptor.hardware?descriptor.title+' · '+descriptor.hardware.article:'';
+   img.onerror=()=>{if(descriptor.hardware){img.alt='Фото недоступно · '+descriptor.hardware.article;return;}this.failedArtwork.add(descriptor.art);img.remove();canvas.hidden=false;delete descriptor.art;this.ensureRenderer()?.request(canvas,target,descriptor);};}
  }
  syncProxies(it){
   for(const row of this.proxies){
@@ -84,7 +86,12 @@ export class ExecutionUI{
   if(this.closed)return;const it=this.app.adapter.selected,p=PRODUCTION_MODELS[it?.bazis_id];this.root.hidden=!it||!p;
   const handles=get('handles');handles.classList.toggle('execution-source-select',Boolean(p));handles.closest('label').classList.toggle('execution-proxied-label',Boolean(p));if(p){handles.tabIndex=-1;handles.setAttribute('aria-hidden','true');}else{handles.removeAttribute('tabindex');handles.removeAttribute('aria-hidden');}
   this.configuration.hidden=!it;
-  if(!it||!p){this.generic.hidden=true;return;}
+  if(!it||!p){this.generic.hidden=true;this.hinges.hidden=true;return;}
+  const hingeArticles=productionHingeArticles(productionHardware(it,p)),hingeKey=hingeArticles.join('|');
+  if(this.hinges.dataset.articles!==hingeKey){
+    this.hinges.dataset.articles=hingeKey;this.hinges.replaceChildren(...hingeArticles.map(hingePhotoCard));
+  }
+  this.hinges.hidden=!hingeArticles.length;
   const state=moduleView(it,this.app.scene?.displayMode);
   this.viewButtons.forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.executionView===state.view));b.disabled=Boolean(this.app.scene?.isFallback||b.dataset.executionView==='open'&&!state.canOpen);b.title=b.dataset.executionView==='open'&&!state.canOpen?'У этого модуля нет распашных дверей':'';});
   this.caption.textContent=`${it.width} × ${it.height} × ${it.depth} мм · ${state.view==='inside'?'внутри':state.view==='open'?'открытые двери':'снаружи'}`;
@@ -104,5 +111,5 @@ export class ExecutionUI{
   const dish=get('dishwasher-options');if(dish&&!dish.hidden)for(const b of dish.querySelectorAll('[data-variant]'))this.update(b,it,'dishwasher','execution',b.dataset.variant);
   document.body.classList.add('execution-cards-ready');
  }
- dispose(){this.closed=true;this.renderer?.dispose();this.root.remove();this.generic.remove();for(const p of this.proxies){p.group.remove();p.select.classList.remove('execution-source-select');p.select.removeAttribute('aria-hidden');p.select.removeAttribute('tabindex');}document.body.classList.remove('execution-cards-ready','module-view-unified');}
+ dispose(){this.closed=true;this.renderer?.dispose();this.root.remove();this.hinges.remove();this.generic.remove();for(const p of this.proxies){p.group.remove();p.select.classList.remove('execution-source-select');p.select.removeAttribute('aria-hidden');p.select.removeAttribute('tabindex');}document.body.classList.remove('execution-cards-ready','module-view-unified');}
 }

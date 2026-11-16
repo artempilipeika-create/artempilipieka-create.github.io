@@ -67,7 +67,7 @@ export class SceneDimensions{
     return {x:(v.x+1)*scene.width/2,y:(1-v.y)*scene.height/2,visible:v.z>=-1&&v.z<=1};
   }
   render(){
-    const {app}=this,s=app.scene,hidden=!this.enabled||s.isFallback||Boolean(s.cabinetSelection||s.xrayKey)||document.body.classList.contains('planner-client');
+    const {app}=this,s=app.scene,hidden=!this.enabled||s.isFallback||Boolean(s.cabinetSelection||s.xrayEnabled)||document.body.classList.contains('planner-client');
     this.root.hidden=hidden;document.getElementById('planner-dimension').hidden=true;if(hidden)return;
     const preview=s.previewItems||[],ids=new Set(preview.map(it=>it.item_id));
     const items=app.adapter.items.map(it=>preview.find(p=>p.item_id===it.item_id)||it).concat(preview.filter(it=>!app.adapter.items.some(p=>p.item_id===it.item_id))).filter(it=>s.layer==='all'||tier(it)===s.layer);

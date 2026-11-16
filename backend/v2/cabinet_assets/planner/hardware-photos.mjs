@@ -148,10 +148,42 @@ const PHOTOS=Object.freeze({
 });
 
 const photo=(article,hint)=>{const p=PHOTOS[article];return p?{...p,article,src:'/account/planner/hardware-photos/'+p.file+'?v=20261026-supplier-photos',hint}:null;};
+
+// The gold HELLY 150 donor has no supplier photo for its article. The card labels the pictured size.
+export const fittingPhotoUrl=article=>'/account/planner/shelf-images/'+encodeURIComponent(article==='85881'?'112445':article)+'.webp?v=20261116-catalogue';
+export function fittingImage(article,name){
+ const image=document.createElement('img');
+ image.alt=name;image.src=fittingPhotoUrl(article);image.decoding='async';
+ return image;
+}
+export function jointPhotos(scheme){
+ const strip=document.createElement('span');strip.className='fitting-photos';
+ const parts=scheme==='cam_dowel'?[['cam','Эксцентрик'],['dowel','Шкант 8×35']]:
+   scheme==='confirmat'?[['confirmat','Конфирмат 7×50']]:[['95388','Полкодержатель SEKURA 2 · арт. 95388']];
+ for(const [article,name] of parts)strip.append(fittingImage(article,name));
+ return strip;
+}
+const hinges={
+ '112595':['112595','AKS PRIME 3D · H0'],
+ '112602':['112602','AKS PRIME · H2'],
+ 'ZM-HCKT90-3DBEO-S':['ZM-HCKT90-3DBEO-S','GTV HCKT · H0'],
+ '70T950A.TLMB V50 NI':['70T950A.TLMB-V50-NI','Blum CLIP top · для алюминиевой рамки']
+};
+export function hingePhotoCard(article){
+ const hinge=hinges[article];if(!hinge)return null;
+ const figure=document.createElement('figure'),caption=document.createElement('figcaption');
+ figure.className='fitting-card';caption.textContent=hinge[1]+' · арт. '+article;
+ figure.append(fittingImage(hinge[0],'Петля '+hinge[1]+' · '+article),caption);return figure;
+}
+export function productionHingeArticles(hw){
+ const articles=[hw?.hinge_article,...(hw?.items||[]).map(item=>item.article)];
+ return [...new Set(articles.filter(Boolean).map(value=>String(value).replace(/\s+/g,' ').trim()).filter(article=>Object.hasOwn(hinges,article)))];
+}
 export function hardwareArtwork(it,family,key,value){
  if(family==='modern'&&(key==='dryer'||key==='filling'&&value==='dryer')){const v=globalThis.MF_MODERN_CABINETS.info(it);if(v&&v.dryer!=='none')return photo(v.dryer==='inox'?'38402':'113272',v.dryer.toUpperCase()+' · 600 мм · арт. '+(v.dryer==='inox'?'38402':'113272'));}
  if(family==='cargo'&&key==='brand'){
   const kit=globalThis.MF_CARGO.kit(it);if(!kit)return null;
+  if(globalThis.MF_CARGO.info(it)?.waste)return {article:kit.article,src:fittingPhotoUrl(kit.article),hint:'Комплект '+it.width+' мм · арт. '+kit.article};
   return photo(kit.article,(value==='norwing'?'Хром':'Графит')+' · '+it.width+' мм · '+(kit.mounting==='side_left'?'крепление слева':'крепление снизу')+' · арт. '+kit.article);
  }
  if(family==='dryer'&&key==='dryer_brand'){

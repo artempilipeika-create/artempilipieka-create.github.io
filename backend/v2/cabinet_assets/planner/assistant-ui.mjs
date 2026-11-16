@@ -1,6 +1,8 @@
 import {wardrobeDrawing,drawingTitles} from './wardrobe-drawing.mjs';
 import {footHeight,plinthFoot,plinthPanel,plinthClearanceMm} from './plinth-options.mjs';
 import {feetCatalogue} from './wardrobe-feet.mjs';
+import {fittingImage,hingePhotoCard,jointPhotos} from './hardware-photos.mjs';
+import {primeHinge} from './wardrobe-fronts.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
@@ -113,6 +115,7 @@ export class AssistantUI{
     this.changed();this.render();
    });
    this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Без кромки. Чашки открываются сзади. На обеих боковинах эксцентрики стоят равномерно с шагом до 400 мм. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':this.fields.back?'Накладная ЛХДФ добавляет 3 мм к глубине.':'Задняя стенка отсутствует.'));
+   if(this.fields.backThickness)this.form.append(jointPhotos('cam_dowel'));
    }
   }else if(this.step===1){
    const choices=el('div');choices.className='assistant-cards';
@@ -138,7 +141,7 @@ export class AssistantUI{
    });
    if(this.fields.front){
     const box=el('fieldset');box.className='wardrobe-hinge';box.append(el('legend','Накладная петля'));
-    const photo=el('img');photo.src='/account/planner/shelf-images/112595.webp';photo.alt='Накладная PRIME 3D с планкой H0';photo.width=180;const fig=el('figure');fig.append(photo,el('figcaption','AKS PRIME 3D · H0 · арт. 112595'));box.append(fig);
+    box.append(hingePhotoCard(primeHinge.article));
     this.select(box,'Отступ до оси чашки',[[90,'90 мм сверху и снизу'],[130,'130 мм сверху и снизу']],this.fields.front.offset,v=>{this.fields.front.offset=Number(v);this.changed();});
     const lbl=el('label','Масса одной готовой створки, кг'),input=el('input');
     input.type='number';input.min='0.01';input.max='22';input.step='0.01';input.placeholder='Авто · ЛДСП 700 кг/м³';input.value=this.fields.front.massKg??'';
@@ -196,7 +199,7 @@ export class AssistantUI{
      this.footGroup=id;this.invalidate();refresh('[data-foot="'+leg.article+'"]');
     });
     row.className='foot-row';row.dataset.foot=leg.article;row.setAttribute('aria-pressed',String(selected===leg));
-    const image=el('img');image.src='/account/planner/shelf-images/'+leg.article+'.webp';image.alt='';
+    const image=fittingImage(leg.article,leg.name+' · '+leg.article);
     const text=el('span');text.append(el('strong',leg.name.split(' · ')[0]),el('small','Арт. '+leg.article+' · '+leg.height+' мм'+(leg.plinth?(leg.white?' · белая':' · чёрная'):'')));
     row.append(image,text);group.append(row);
    }
@@ -238,10 +241,11 @@ export class AssistantUI{
    const focus='[data-series="'+family+'"]';
    const card=button('',()=>choose(shown,focus));card.dataset.series=family;card.className='foot-row';
    card.setAttribute('aria-pressed',String(!!active));
-   const photo=el('img');photo.alt='';photo.src='/account/planner/shelf-images/'+shown.article+'.webp';
+   const photo=fittingImage(shown.article,family+' · '+shown.finish);
    const text=el('span');text.append(el('strong',family));
    const heights=[...new Set(variants.map(f=>f.height))].sort((a,b)=>a-b);
    text.append(el('small',shown.issue?'Проверяется высота фрагмента':active?active.height+' мм · '+active.finish+' · арт. '+active.article:heights.join(' / ')+' мм'));
+   if(shown.article==='85881')text.append(el('small','На фото HELLY 130 мм · арт. 112445. Выбрана опора 150 мм · арт. 85881.'));
    card.append(photo,text);section.append(card);group.append(section);
    if(shown.issue){card.dataset.unavailable='true';card.disabled=true;continue;}
    if(!active)continue;
@@ -295,11 +299,7 @@ export class AssistantUI{
     this.fields.joints={...current,[key]:v};this.changed();this.render();
    });
    if(value==='none')continue;
-   const photos=el('div');photos.className='fitting-photos';
-   for(const [file,name] of (value==='confirmat'?[['confirmat','Конфирмат']]:[['cam','Эксцентрик'],['dowel','Шкант']])){
-     const image=el('img');image.src='/account/planner/shelf-images/'+file+'.webp';image.alt=name;photos.append(image);
-   }
-   box.append(photos);
+   box.append(jointPhotos(value));
    const ns='http://www.w3.org/2000/svg',diagram=document.createElementNS(ns,'svg');
    diagram.setAttribute('class','joint-layout');diagram.setAttribute('viewBox','0 0 500 28');diagram.setAttribute('aria-hidden','true');
    const cam=value==='cam_dowel',inset=cam?100:70,depth=this.fields.depth;
@@ -320,6 +320,7 @@ export class AssistantUI{
     this.select(group,'Стойка '+number+' · крепление '+direction,options,settings[end],value=>{
      settings[end]=value;this.changed();this.render();
     });
+    if(settings[end]&&settings[end]!=='none')group.append(jointPhotos(settings[end]));
    }
    this.form.append(group);
   }

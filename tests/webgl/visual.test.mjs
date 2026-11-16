@@ -8,6 +8,22 @@ const item={item_id:'fixed',module_type:'base_cabinet',width:800,height:720,dept
 const roles=(g,r)=>g.children.filter(o=>o.userData.role===r);
 const deepRoles=(g,r)=>{const out=[];g.traverse(o=>{if(o.userData?.role===r)out.push(o);});return out;};
 function size(g){g.computeBoundingBox();const b=g.boundingBox;return[b.max.x-b.min.x,b.max.y-b.min.y,b.max.z-b.min.z].map(v=>Math.round(v*10000)/10);}
+test('X-ray preserves materials on fittings and restores both adjacent cabinets exactly',()=>{
+  const f=make(),items=[{...item,x:-400,item_id:'left'},{...item,x:400,item_id:'right'}];
+  const before=JSON.stringify(items);
+  for(const it of items){
+    const group=f.build(it),panels=['front','body','back'].flatMap(role=>deepRoles(group,role)).filter(m=>m.isMesh);
+    const fittings=deepRoles(group,'handle').filter(m=>m.isMesh),materials=panels.map(m=>m.material);
+    assert.ok(panels.length>=6);assert.ok(fittings.length>=2);
+    f.updateAppearance(group,it,'xray');
+    assert.ok(panels.every(m=>m.material.opacity<1&&m.userData.xrayOutline.visible));
+    assert.ok(fittings.every(m=>m.material.opacity===1&&!m.userData.xrayOutline));
+    f.updateAppearance(group,it,'normal');
+    assert.ok(panels.every((m,i)=>m.material===materials[i]&&!m.userData.xrayOutline.visible));
+    f.release(group);
+  }
+  f.dispose();assert.equal(JSON.stringify(items),before);
+});
 test('Bevel stays inside the exact 397 by 637 by 18 mm facade envelope',()=>{const g=panelGeometry(397,637,18,.85);assert.deepEqual(size(g),[397,637,18]);assert.equal(g.index.count/3,108);assert.ok([...g.attributes.normal.array].every(Number.isFinite));g.dispose();});
 test('Two separate doors, 1.5 mm on each side, handles at the meeting edges',()=>{const f=make(),g=f.build(item),doors=roles(g,'front'),handles=roles(g,'handle');assert.equal(doors.length,2);assert.equal(handles.length,2);assert.deepEqual(doors.map(m=>size(m.geometry)),[[397,637,18],[397,637,18]]);assert.ok(handles[0].position.x<0&&handles[1].position.x>0);assert.deepEqual(handles.map(m=>Math.round(m.position.x*10000)/10),[-51.5,51.5]);assert.ok(handles.every(m=>Math.abs(m.position.y*1000-668.5)<1e-6));f.dispose();});
 test('Three drawers have three independent meshes and horizontal low-poly handles',()=>{const f=make({kind:'drawers',count:3}),g=f.build({...item,layout:'drawers',drawers:3});assert.equal(roles(g,'front').length,3);assert.equal(roles(g,'handle').length,3);assert.ok(roles(g,'handle').every(m=>m.rotation.z===Math.PI/2));f.dispose();});

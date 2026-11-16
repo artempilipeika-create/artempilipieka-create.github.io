@@ -1,4 +1,4 @@
-import {cabinetId,viewKey,heightTargets,matchCabinetHeight} from './cabinet-actions.mjs';
+import {cabinetId,heightTargets,matchCabinetHeight} from './cabinet-actions.mjs';
 import {kitchenGroup,heights} from './furniture-core.mjs';
 
 const node=(tag,text)=>Object.assign(document.createElement(tag),text?{textContent:text}:{});
@@ -11,7 +11,7 @@ export class CabinetControls{
    const title=document.getElementById('item-title');
    this.choose=button('Выбрать шкаф целиком',()=>{
      app.scene.selectionScope='module';app.scene.cabinetSelection=cabinetId(app.adapter.selected);
-     app.scene.xrayKey=null;app.scene.pickedInterior=null;app.sync();
+     app.scene.pickedInterior=null;app.sync();
    });
    this.choose.id='cabinet-select';title.after(this.choose);
    this.panel=node('section');this.panel.id='cabinet-actions';this.panel.className='mf3d-control-card';
@@ -29,10 +29,12 @@ export class CabinetControls{
      app.scene.cabinetSelection=null;app.sync();
    }));
    title.closest('.mf3d-section-head').after(this.panel);
+   this.xrayEnabled=false;
    this.xray=button('Рентген',()=>{
-     const key=viewKey(app.adapter.selected);app.scene.xrayKey=app.scene.xrayKey===key?null:key;
-     app.scene.cabinetSelection=null;app.scene.pickedInterior=null;app.sync();
+     this.xrayEnabled=!this.xrayEnabled;
+     app.scene.pickedInterior=null;app.sync();
    });
+   this.xray.title='Показать или скрыть наполнение всех шкафов';
    this.xray.id='cabinet-xray';document.getElementById('mode-3d').parentElement.append(this.xray);
    this.part=node('small');title.after(this.part);
    this.apply=button('',()=>{
@@ -48,11 +50,11 @@ export class CabinetControls{
  sync(){
    const {adapter,scene}=this.app,it=adapter.selected,id=cabinetId(it);
    if(!id||scene.cabinetSelection!==id)scene.cabinetSelection=null;
-   if(scene.xrayKey!==viewKey(it)){scene.xrayKey=null;scene.pickedInterior=null;}
-   this.xray.disabled=!it||(!id&&(!kitchenGroup(it)&&it.module_type!=='wardrobe'));
-   this.xray.setAttribute('aria-pressed',String(Boolean(scene.xrayKey)));
+   scene.xrayEnabled=this.xrayEnabled;
+   if(scene.pickedInterior?.itemId!==it?.item_id)scene.pickedInterior=null;
+   this.xray.setAttribute('aria-pressed',String(this.xrayEnabled));
    this.panel.hidden=!scene.cabinetSelection;this.choose.hidden=!id||!this.panel.hidden;
-   this.part.hidden=!scene.xrayKey||!scene.pickedInterior;this.part.textContent=scene.pickedInterior?.name||'';
+   this.part.hidden=!scene.xrayEnabled||!scene.pickedInterior;this.part.textContent=scene.pickedInterior?.name||'';
    this.edit.hidden=!this.app.assistant?.button;
    document.getElementById('item-controls').classList.toggle('whole-cabinet',!this.panel.hidden);
    if(!this.panel.hidden){

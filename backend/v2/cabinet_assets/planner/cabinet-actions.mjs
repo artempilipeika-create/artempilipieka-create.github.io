@@ -4,7 +4,6 @@ import {footHeight} from './plinth-options.mjs';
 import {placementError,kitchenGroup,dimensionPatch,heights,elevation,mountedItems,upperWorktopTop} from './furniture-core.mjs';
 
 export const cabinetId=item=>item?.assistant_carcass?.group_id;
-export const viewKey=item=>cabinetId(item)??item?.item_id;
 export const isInterior=item=>Boolean(cabinetId(item)&&/^(shelf-|divider-)/.test(item.item_id.slice(cabinetId(item).length+1)));
 
 export function cabinetEnvelope(meta){

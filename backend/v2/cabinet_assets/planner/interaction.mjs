@@ -69,7 +69,7 @@ export class Interaction {
     if(!hit?.id){this.scene.hover(null);return;}
     const it=this.adapter.items.find(x=>x.item_id===hit.id);if(!it)return;
     this.consume(e);
-    if(this.scene.cabinetSelection!==cabinetId(it)||this.scene.xrayKey)this.scene.cabinetSelection=null;
+    if(this.scene.cabinetSelection!==cabinetId(it)||this.scene.xrayEnabled)this.scene.cabinetSelection=null;
     this.scene.pickedInterior=hit.part||null;
     this.adapter.select(it.item_id);
     if(this.scene.cabinetSelection){

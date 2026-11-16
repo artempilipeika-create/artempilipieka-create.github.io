@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
 import {PlannerScene} from '../../backend/v2/cabinet_assets/planner/scene.mjs';
+import {CabinetControls} from '../../backend/v2/cabinet_assets/planner/cabinet-controls.mjs';
 
 globalThis.document={getElementById:()=>null,body:{classList:{contains:()=>false}}};
 function fixture(){
@@ -37,4 +38,26 @@ test('project reset releases the old object graph and transient selection',()=>{
   assert.equal(s.entries.size,0);assert.equal(s.kitchenBoxes.size,0);assert.equal(s.root.children.length,0);
   assert.ok(objects.every(o=>o.parent===null));assert.equal(s.selectionScope,'module');assert.equal(s.displayMode,'normal');
   assert.equal(s.displayItemId,null);assert.equal(s.preview,null);assert.equal(s.hoverBox.visible,false);
+});
+
+test('the X-ray button works without a selection, survives a scene replacement and never selects a cabinet',t=>{
+  const node=()=>({after(){},append(){},parentElement:{append(){}},closest(){return this;},
+    setAttribute(name,value){this[name]=value;},classList:{toggle(){}}});
+  t.mock.method(document,'getElementById',node);
+  const previous=document.createElement;document.createElement=node;t.after(()=>{document.createElement=previous;});
+  const adapter={selected:null,items:[]},app={adapter,scene:{},sync(){controls.sync();}};
+  const controls=new CabinetControls(app);controls.sync();
+  assert.equal(controls.xray['aria-pressed'],'false');assert.ok(!controls.xray.disabled);
+  controls.xray.onclick();assert.equal(app.scene.xrayEnabled,true);assert.equal(adapter.selected,null);
+  app.scene={};controls.sync();assert.equal(app.scene.xrayEnabled,true);
+  assert.equal(app.scene.cabinetSelection,null);assert.equal(controls.xray['aria-pressed'],'true');
+  controls.xray.onclick();assert.equal(app.scene.xrayEnabled,false);assert.equal(adapter.selected,null);
+});
+
+test('X-ray hides existing individual, whole-kitchen and hover outlines and restores normal selection on exit',()=>{
+  const s=fixture();s.xrayEnabled=true;s.highlight();s.hover('old');
+  assert.equal(s.kitchenBoxes.get('old').visible,false);assert.equal(s.hoverBox.visible,false);
+  s.selectionScope='module';s.highlight();assert.equal(s.selectedBox.visible,false);
+  s.clearSelection();assert.equal(s.xrayEnabled,true);
+  s.xrayEnabled=false;s.highlight();assert.equal(s.selectedBox.visible,true);
 });

@@ -1,8 +1,8 @@
-import {cabinetId,cabinetEnvelope,viewKey,isInterior} from './cabinet-actions.mjs';
+import {cabinetId,cabinetEnvelope,isInterior} from './cabinet-actions.mjs';
 import {nativeFeet} from './wardrobe-feet.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {isEquipment} from './equipment-placement.mjs';
-import {bounds,elevation,tier,scopeMatches,MM_TO_WORLD as S} from './furniture-core.mjs';
+import {bounds,elevation,tier,scopeMatches,productionParts,MM_TO_WORLD as S} from './furniture-core.mjs';
 import {FEATURES,featureBox,floorOutline} from './room-plan.mjs';
 import {fixturePlans,roundedOutline} from './worktop-fixtures.mjs';
 /** Used only after the WebGL renderer is disposed. Same adapter, no page reload. */
@@ -32,19 +32,28 @@ export class FallbackPlan {
     for(let z=500;z<r.depth;z+=500){c.beginPath();c.moveTo(left,top+z*m.scale);c.lineTo(left+r.width*m.scale,top+z*m.scale);c.stroke();}
     for(const it of this.adapter.items){
       if(this.layer!=='all'&&tier(it)!==this.layer)continue;if(this.preview?.items?.some(p=>p.item_id===it.item_id)||this.preview?.item.item_id===it.item_id)continue;
-      const b=this.rectangle(it),on=this.heightHighlights?.has(it.item_id)||(this.selectionScope&&this.selectionScope!=='module'?scopeMatches(it,this.selectionScope):it.item_id===this.adapter.selected?.item_id&&!this.cabinetSelection);
-      c.fillStyle=on?'#d5e8ff':tier(it)==='wall'?'#e4ece2':'#dce0d1';c.globalAlpha=this.xrayKey&&viewKey(it)===this.xrayKey?0.12:1;c.fillRect(b.x,b.y,b.w,b.h);c.globalAlpha=1;c.strokeStyle=on?'#1677ff':'#8d9d86';c.lineWidth=on?3:1;
+      const b=this.rectangle(it),on=!this.xrayEnabled&&(this.heightHighlights?.has(it.item_id)||(this.selectionScope&&this.selectionScope!=='module'?scopeMatches(it,this.selectionScope):it.item_id===this.adapter.selected?.item_id&&!this.cabinetSelection));
+      c.fillStyle=on?'#d5e8ff':tier(it)==='wall'?'#e4ece2':'#dce0d1';c.globalAlpha=this.xrayEnabled?0.12:1;c.fillRect(b.x,b.y,b.w,b.h);c.globalAlpha=1;c.strokeStyle=on?'#1677ff':'#8d9d86';c.lineWidth=on?3:1;
       if(tier(it)==='wall')c.setLineDash([5,3]);c.strokeRect(b.x,b.y,b.w,b.h);c.setLineDash([]);
-      c.save();c.beginPath();c.rect(b.x+3,b.y+3,Math.max(0,b.w-6),Math.max(0,b.h-6));c.clip();c.font='10px Arial';c.fillStyle='#47603e';c.textAlign='center';c.fillText(it.name,b.x+b.w/2,b.y+b.h/2+3);c.restore();
+      if(this.xrayEnabled){
+        const parts=productionParts(it,this.adapter.template(it))||[];
+        c.save();c.translate(m.ox+(it.x-m.cx)*m.scale,m.oy+(it.z-m.cz)*m.scale);c.rotate((it.rotation||0)*Math.PI/180);
+        c.strokeStyle='#34565c';
+        for(const p of parts.filter(p=>p.type==='panel'))c.strokeRect((p.position.x-p.size.x/2)*m.scale,(p.position.z-p.size.z/2)*m.scale,p.size.x*m.scale,p.size.z*m.scale);
+        c.restore();
+      }else{
+        c.save();c.beginPath();c.rect(b.x+3,b.y+3,Math.max(0,b.w-6),Math.max(0,b.h-6));c.clip();c.font='10px Arial';c.fillStyle='#47603e';c.textAlign='center';c.fillText(it.name,b.x+b.w/2,b.y+b.h/2+3);c.restore();
+      }
     }
     const selected=this.adapter.selected;
-    if(this.cabinetSelection&&cabinetId(selected)===this.cabinetSelection){
+    if(!this.xrayEnabled&&this.cabinetSelection&&cabinetId(selected)===this.cabinetSelection){
       const b=this.rectangle(cabinetEnvelope(selected.assistant_carcass));c.strokeStyle='#1677ff';c.lineWidth=3;c.strokeRect(b.x,b.y,b.w,b.h);
     }
-    if(this.xrayKey&&selected?.assistant_carcass){
-      const members=this.adapter.items.filter(it=>viewKey(it)===this.xrayKey),fittings=nativeFeet(members);
-      for(const door of members.filter(it=>it.blank_axis==='front')){
-        try{fittings.push(...doorHinges(door,members));}catch{/* Manually moved panels can no longer host their hinges. */}
+    if(this.xrayEnabled){
+      const members=this.adapter.items.filter(it=>cabinetId(it)&&(this.layer==='all'||tier(it)===this.layer)),fittings=[];
+      for(const member of members){
+        try{fittings.push(...(member.blank_axis==='front'?doorHinges(member,members):nativeFeet([member])));}
+        catch{/* A manually edited panel can lose its mounting points. Keep drawing the other cabinets. */}
       }
       c.fillStyle='#34565c';for(const {position:p} of fittings){c.beginPath();c.arc(m.ox+(p.x-m.cx)*m.scale,m.oy+(p.z-m.cz)*m.scale,3,0,2*Math.PI);c.fill();}
     }
@@ -59,7 +68,7 @@ export class FallbackPlan {
     for(const [i,stored]of features.entries()){
       const f=this.equipmentPreview?.feature.id===stored.id?this.equipmentPreview.feature:stored;
       const b=featureBox(f,r,['shaft','column'].includes(f.kind)?0:70),x=m.ox+(b.x-b.w/2-m.cx)*m.scale,y=m.oy+(b.z-b.d/2-m.cz)*m.scale;
-      c.fillStyle=FEATURES[f.kind][1];c.fillRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));if(this.equipmentSelected?.id===f.id||this.equipmentPreview?.feature.id===f.id){c.strokeStyle=this.equipmentPreview?.error?'#b65336':'#1677ff';c.lineWidth=2;c.strokeRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));}c.font='bold 12px Arial';c.fillStyle='#243e30';c.textAlign='center';c.fillText(String(i+1),x+b.w*m.scale/2,y+b.d*m.scale/2-5);
+      c.fillStyle=FEATURES[f.kind][1];c.fillRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));if(!this.xrayEnabled&&this.equipmentSelected?.id===f.id||this.equipmentPreview?.feature.id===f.id){c.strokeStyle=this.equipmentPreview?.error?'#b65336':'#1677ff';c.lineWidth=2;c.strokeRect(x,y,Math.max(4,b.w*m.scale),Math.max(4,b.d*m.scale));}c.font='bold 12px Arial';c.fillStyle='#243e30';c.textAlign='center';c.fillText(String(i+1),x+b.w*m.scale/2,y+b.d*m.scale/2-5);
     }
     c.strokeStyle='#536958';c.lineWidth=2;c.beginPath();for(const e of floorOutline(r)){c.moveTo(m.ox+(e.x1-m.cx)*m.scale,m.oy+(e.z1-m.cz)*m.scale);c.lineTo(m.ox+(e.x2-m.cx)*m.scale,m.oy+(e.z2-m.cz)*m.scale);}c.stroke();
     if(this.preview)for(const it of this.preview.items||[this.preview.item]){const b=this.rectangle(it);c.fillStyle=this.preview.error?'#dab09188':'#82b6ff88';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=this.preview.error?'#a86b44':'#1677ff';c.strokeRect(b.x,b.y,b.w,b.h);}
@@ -75,7 +84,7 @@ export class FallbackPlan {
     if(this.layer!=='all'&&tier(it)!==this.layer)continue;const b=this.rectangle(it);
     if(x-r.left>=b.x&&x-r.left<=b.x+b.w&&y-r.top>=b.y&&y-r.top<=b.y+b.h){
       const hit={id:it.item_id,point:this.planePoint(x,y,{y:elevation(it,this.adapter.room)*S})};
-      if(!this.xrayKey||viewKey(it)!==this.xrayKey)return shell||hit;
+      if(!this.xrayEnabled)return hit;
       if(isInterior(it))return hit;shell??=hit;
     }
   }if(shell)return shell;const point=this.planePoint(x,y);for(const f of (this.adapter.room.features||[]).filter(isEquipment).reverse()){const b=featureBox(f,this.adapter.room);if(Math.abs(point.x/S-b.x)<=b.w/2&&Math.abs(point.z/S-b.z)<=b.d/2)return {featureId:f.id,point};}return null;}

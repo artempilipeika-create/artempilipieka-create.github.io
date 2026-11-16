@@ -2,6 +2,7 @@ import './blanks-native.mjs';
 import {choice,shelfDescription} from './shelf-choices.mjs';
 import {shelfMounting,shelfSupportPlan} from './sekura.mjs';
 import {defaultHookFace,hookHeightLimits} from './blank-hook.mjs';
+import {fittingPhotoUrl,fittingImage,jointPhotos} from './hardware-photos.mjs';
 import {blankItem,updateBlank,normalizeBlank,validateBlank,edgeMeters,blanksCSV,blankCopies,cuttingSize,SOURCE_EDGE_CODES,EDGES} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
 import {localPoint} from './blank-bindings.mjs';
@@ -68,11 +69,13 @@ function formHtml(kind){
         <label>Зазор справа, мм<input name="gapRight" type="number" min="0" max="100" step="1" value="0"></label></div>
         <label>Смещение от центра левой стойки по глубине, мм<input name="depthOffset" type="number" min="-1200" max="1200" step="0.5" value="0"></label>
         <label>Крепление полки<select name="shelfMounting"><option value="sekura-95388">SEKURA 2 · никель AKS · 95388 · 4 шт.</option><option value="none">Без полкодержателей</option></select></label>
+        <figure class="fitting-card" data-holder-photo hidden></figure>
         <p data-support-note></p>
         <p data-binding-result aria-live="polite"></p>
       </fieldset>`:''}
       ${!catalog?`<fieldset data-hook-panel><legend>Фурнитура</legend>
         <label>Крючок<select name="hook"><option value="">Без крючка</option><option value="68416">AKKORD · два рожка · античная латунь · 68416</option></select></label>
+        <figure class="fitting-card"><img width="140" height="90" src="${fittingPhotoUrl('68416')}" alt="Крючок AKKORD, античная латунь"><figcaption>AKKORD · арт. 68416</figcaption></figure>
         <div data-hook-controls><label>Количество крючков<select name="hookCount"><option value="1">1 шт.</option><option value="2">2 шт.</option><option value="3">3 шт.</option><option value="4">4 шт.</option></select></label><label>Сторона крепления<select name="hookFace"></select></label>
         <label><span data-hook-along-label></span><input name="hookAlong" type="number" min="0" step="0.5" placeholder="По центру"></label>
         <label>Высота крючков от низа детали до оси, мм<input name="hookHeight" type="number" step="0.5" placeholder="По центру"></label>
@@ -102,8 +105,25 @@ function readForm(form){
     ...(form.dataset.kind==='inspector'?{x:numberField(form,'x'),z:numberField(form,'z'),
       elevation_mm:numberField(form,'elevation'),rotation:numberField(form,'rotation')}:{elevation_mm:0})};
 }
+function showHolderPhoto(form){
+  const field=form.elements.shelfMounting;
+  if(!field)return;
+  const figure=form.querySelector('[data-holder-photo]');
+  figure.hidden=!form.elements.bound.checked||!field.value||field.value==='none';
+  if(figure.hidden||figure.dataset.choice===field.value)return;
+  const selected=field.value==='sekura-95388'?'board/95388':field.value;
+  let holder;
+  try{holder=choice(selected,Number(form.elements.thickness.value));}
+  catch{figure.hidden=true;delete figure.dataset.choice;return;}
+  const {hardware,scheme}=holder;
+  const caption=document.createElement('figcaption');
+  caption.textContent=scheme?hardware.name:[hardware.name,hardware.finish,'арт. '+hardware.article].join(' · ');
+  figure.replaceChildren(scheme?jointPhotos(scheme):fittingImage(hardware.article,hardware.name),caption);
+  figure.dataset.choice=field.value;
+}
 function draw(form,room){
   const v=readForm(form),error=validateBlank(v,room);
+  showHolderPhoto(form);
   if(form.elements.hook){
     form.querySelector('[data-hook-controls]').hidden=!v.blank_hook;
     if(v.blank_hook){
@@ -279,6 +299,7 @@ export class BlanksUI{
       select.value=id||'';
     }
     form.querySelector('[name="bound"]').checked=Boolean(b);
+    showHolderPhoto(form);
     for(const [name,value] of [['gapLeft',b?.gap_left_mm],['gapRight',b?.gap_right_mm],['depthOffset',b?.depth_offset_mm]])form.querySelector('[name="'+name+'"]').value=value??0;
     for(const name of ['length','x','z','rotation','axis'])form.querySelector('[name="'+name+'"]').disabled=Boolean(b);
     form.querySelector('[data-binding-result]').textContent=b?'Расчётная длина: '+item.blank_length_mm+' мм. При изменении стоек полка пересчитывается автоматически. Чтобы двигать её отдельно, снимите привязку.':'Выберите стойки и зазоры, затем включите привязку.';

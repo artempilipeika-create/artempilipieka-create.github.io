@@ -1,4 +1,4 @@
-import {cabinetId,cabinetEnvelope,viewKey,isInterior} from './cabinet-actions.mjs';
+import {cabinetId,cabinetEnvelope,isInterior} from './cabinet-actions.mjs';
 import * as THREE from './vendor/three.module.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
@@ -165,7 +165,7 @@ export class PlannerScene{
     const grid=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color:0xa2afa7,transparent:true,opacity:.12}));grid.userData.ownMaterial=true;this.grid=grid;this.roomRoot.add(grid);this.renderer.shadowMap.needsUpdate=true;
   }
   clearSelection(){
-    this.cabinetSelection=null;this.xrayKey=null;this.pickedInterior=null;this.heightOffer=null;this.heightHighlights=null;
+    this.cabinetSelection=null;this.pickedInterior=null;this.heightOffer=null;this.heightHighlights=null;
     this.selectionScope='module';this.displayMode='normal';this.displayItemId=null;
     this.selectedBox.visible=false;this.selectedBox.box.makeEmpty();
     this.hoverBox.visible=false;this.hoverBox.box.makeEmpty();
@@ -201,7 +201,7 @@ export class PlannerScene{
       if(!entry||entry.group.parent!==this.root||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}
       this.factory.position(entry.group,it);entry.group.visible=this.layer==='all'||tier(it)===this.layer;
       const groupedDisplay=this.selectionScope!=='module'&&scopeMatches(it,this.selectionScope);
-      const mode=this.xrayKey&&this.xrayKey===viewKey(it)&&!it.blank_plinth_run?'xray':(groupedDisplay||it.item_id===this.displayItemId?this.displayMode:'normal');
+      const mode=this.xrayEnabled?'xray':(groupedDisplay||it.item_id===this.displayItemId?this.displayMode:'normal');
       if(this.factory.updateAppearance(entry.group,it,mode))this.renderer.shadowMap.needsUpdate=true;
     }
     const dressing=JSON.stringify(this.adapter.state?.plinths)+JSON.stringify(this.adapter.items.map(it=>[it.item_id,it.bazis_id,it.x,it.z,it.rotation,it.width,it.height,it.depth,it.elevation_mm,it.base,it.base_height,it.plinthMaterialId,it.worktop_thickness,it.worktop_fixture,kitchenSettings(it)]));
@@ -211,7 +211,15 @@ export class PlannerScene{
       for(const [id,entry]of this.entries)entry.group.traverse(m=>{if(m.userData.role==='plinth')m.visible=!merged.has(id);});
       for(const g of this.dressing.children){
         g.visible=this.layer==='all'||g.userData.tier===this.layer||g.userData.tiers?.includes(this.layer)===true;
-        if(g.userData.productionRun)g.traverse(m=>{if(m.isMesh&&m.userData.part)m.material=this.factory.material(m.userData.role,m.userData.part.material.variant_id);});
+        g.traverse(m=>{
+          if(!m.isMesh)return;
+          const {role,part}=m.userData;
+          if(role==='counter'||role==='plinth'){
+            this.factory.xrayOutline(m,Boolean(this.xrayEnabled));
+            m.material=this.factory.material(role,part?.material?.variant_id??null,false,Boolean(this.xrayEnabled));
+            m.castShadow=m.receiveShadow=!this.xrayEnabled;
+          }else if(g.userData.productionRun&&part)m.material=this.factory.material(role,part.material.variant_id);
+        });
       }
     }
     this.wallFinishes.sync();
@@ -259,7 +267,7 @@ export class PlannerScene{
   setLayer(value){this.layer=value;this.renderer.shadowMap.needsUpdate=true;this.sync();}
   highlight(error=''){
     const items=this.adapter.items,it=this.adapter.selected,entry=it?this.liveEntry(it.item_id,items):null;
-    let grouped=this.selectionScope!=='module';const show=!this.preview;
+    let grouped=this.selectionScope!=='module';const show=!this.preview&&!this.xrayEnabled;
     if(grouped&&!items.some(item=>scopeMatches(item,this.selectionScope))){this.selectionScope='module';grouped=false;}
     for(const [id,box]of this.kitchenBoxes)if(!this.liveEntry(id,items)){this.disposeTree(box);this.kitchenBoxes.delete(id);}
     for(const [id,e]of this.entries){
@@ -273,12 +281,12 @@ export class PlannerScene{
     if(this.selectedBox.visible){if(this.cabinetSelection&&this.cabinetSelection===cabinetId(it)){
       const b=bounds(cabinetEnvelope(it.assistant_carcass),this.adapter.room);
       this.selectedBox.box.min.set(b.minX*S,b.minY*S,b.minZ*S);this.selectedBox.box.max.set(b.maxX*S,b.maxY*S,b.maxZ*S);
-    }else this.selectedBox.box.setFromObject(this.pickedInterior?.mesh?.parent&&this.xrayKey===viewKey(it)?this.pickedInterior.mesh:entry.group);
+    }else this.selectedBox.box.setFromObject(entry.group);
     this.selectedBox.box.expandByScalar(.003);this.selectionColor(this.selectedBox,error?'#bf6c43':SELECTION_BLUE);}
     else this.selectedBox.box.makeEmpty();
     this.placeLabel();if(this.equipmentSelected&&!this.adapter.selected&&!this.equipmentPreview){const f=this.adapter.room.features?.find(f=>f.id===this.equipmentSelected.id);if(f)this.highlightEquipment(f);else this.equipmentSelected=null;}
   }
-  hover(id){const entry=this.liveEntry(id);this.hoverBox.visible=Boolean(entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview&&!document.body.classList.contains('planner-client'));if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group).expandByScalar(.003);else this.hoverBox.box.makeEmpty();this.invalidate();}
+  hover(id){const entry=this.liveEntry(id);this.hoverBox.visible=Boolean(!this.xrayEnabled&&entry?.group.visible&&id!==this.adapter.selected?.item_id&&!this.preview&&!document.body.classList.contains('planner-client'));if(this.hoverBox.visible)this.hoverBox.box.setFromObject(entry.group).expandByScalar(.003);else this.hoverBox.box.makeEmpty();this.invalidate();}
   placeLabel(){
     if(this.onDimensionsRender){this.onDimensionsRender();return;}
     const label=document.getElementById('planner-dimension');if(!label)return;
@@ -401,13 +409,12 @@ export class PlannerScene{
       const data=mesh.userData,id=data.itemId;
       if(id){
         const result={id,point:hit.point};
-        if(!this.xrayKey)return result;
+        if(!this.xrayEnabled)return result;
         const item=this.adapter.items.find(it=>it.item_id===id);
-        if(viewKey(item)!==this.xrayKey)return shell||result;
         if(isInterior(item))return result;
         const panel=data.part;
         if(!cabinetId(item)&&(data.shelfId||data.role==='shelf'||/shelf|divider|drawer-bottom/.test(panel?.key||''))){
-          result.part={name:panel?.name||'Внутренняя полка',mesh};return result;
+          result.part={name:panel?.name||'Внутренняя полка',itemId:id};return result;
         }
         if(!shell)shell=result;
       }else for(let p=mesh;p;p=p.parent)if(p.userData.roomFeatureId)return shell||{featureId:p.userData.roomFeatureId,point:hit.point};
@@ -420,7 +427,7 @@ export class PlannerScene{
   highlightEquipment(f,error=''){
     const previous=this.equipmentSelected;this.equipmentSelected=f;if(!f){if(previous&&!this.adapter.selected){this.selectedBox.visible=false;this.invalidate();}return;}
     const b=featureBox(f,this.adapter.room);this.selectedBox.box.min.set((b.x-b.w/2)*S,(b.y-b.h/2)*S,(b.z-b.d/2)*S);this.selectedBox.box.max.set((b.x+b.w/2)*S,(b.y+b.h/2)*S,(b.z+b.d/2)*S);
-    this.selectionColor(this.selectedBox,error?'#b65336':SELECTION_BLUE);this.selectedBox.visible=!this.client;this.invalidate();
+    this.selectionColor(this.selectedBox,error?'#b65336':SELECTION_BLUE);this.selectedBox.visible=!this.client&&!this.xrayEnabled;this.invalidate();
   }
   previewEquipment(f,error=''){
     if(this.equipmentPreview?.id!==f.id){

@@ -1,4 +1,5 @@
 import {choice,defaultShelf,fittings,shelfRows,shelfDescription} from './shelf-choices.mjs';
+import {fittingImage,jointPhotos} from './hardware-photos.mjs';
 const element=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=text;return node;};
 export function shelfQuestionnaire(ui,parent,section){
  const f=ui.fields,count=f.sectionShelves[section],rows=shelfRows(f),row=rows[section];
@@ -24,12 +25,10 @@ export function shelfQuestionnaire(ui,parent,section){
  const kind=draft==='board'?'board':'glass',thickness=kind==='board'?f.thickness:Number(draft);
  if(kind==='board' && thickness===18){
    const methods=element('div');methods.className='shelf-options';methods.setAttribute('aria-label','Крепление полки 18 мм');
-   for(const [code,label,pictures] of [['holder','Полкодержатели',['95388']],['confirmat','Конфирматы 7×50',['confirmat']],['cam_dowel','Эксцентрики + шканты',['cam','dowel']]]){
+   for(const [code,label] of [['holder','Полкодержатели'],['confirmat','Конфирматы 7×50'],['cam_dowel','Эксцентрики + шканты']]){
      const b=element('button');b.type='button';b.setAttribute('aria-label',label);
      b.setAttribute('aria-pressed',String(!mixed&&(sample.scheme??'holder')===code));
-     const photos=element('span');photos.className='fitting-photos';
-     for(const photo of pictures){const img=element('img');img.src='/account/planner/shelf-images/'+photo+'.webp';img.alt='';photos.append(img);}
-     b.append(photos,element('strong',label),element('small',code==='holder'?'Съёмная полка':'Фиксированная полка'));
+     b.append(jointPhotos(code),element('strong',label),element('small',code==='holder'?'Съёмная полка':'Фиксированная полка'));
      b.onclick=()=>set('board/'+(code==='holder'?(sample.kind==='board'&&!sample.scheme?sample.hardware.article:'95388'):code));methods.append(b);
    }
    parent.append(methods);
@@ -58,7 +57,7 @@ export function shelfQuestionnaire(ui,parent,section){
    const h=selected??variants[0],active=!mixed&&Boolean(selected);
    const card=element('div'),b=element('button');b.type='button';b.setAttribute('aria-pressed',String(active));
    b.setAttribute('aria-label',family+' · '+h.finish+' · '+h.article);
-   const img=element('img');img.src='/account/planner/shelf-images/'+h.article+'.webp';img.alt='Фото '+family;
+   const img=fittingImage(h.article,family+' · '+h.finish+' · '+h.article);
    b.append(img,element('strong',family),element('small',h.finish+' · '+h.article));b.onclick=()=>set(draft+'/'+h.article);card.append(b);
    if(active&&variants.length>1)ui.select(card,'Исполнение '+family,variants.map(v=>[v.article,[v.finish,v.detail,v.article].filter(Boolean).join(' · ')]),h.article,v=>set(draft+'/'+v));
    if(active&&family==='Casper')card.append(element('small','Плита '+thickness+' мм · левый и правый фрагменты'));
@@ -69,7 +68,7 @@ export function shelfQuestionnaire(ui,parent,section){
  const others=fittings.filter(h=>h.kind===kind&&!h.sizes.length);
  if(others.length && (!sample.scheme||mixed)){const panel=element('details');panel.append(element('summary','Ещё в каталоге · требуется сверка установки'));
   const otherGrid=element('div');otherGrid.className='shelf-options';
-  for(const h of others){const card=element('div'),img=element('img');img.src='/account/planner/shelf-images/'+h.article+'.webp';img.alt=h.name;card.append(img,element('small',h.name+' · '+h.finish+' · '+h.article));otherGrid.append(card);}
+  for(const h of others){const card=element('div');card.append(fittingImage(h.article,h.name),element('small',h.name+' · '+h.finish+' · '+h.article));otherGrid.append(card);}
   panel.append(otherGrid);parent.append(panel);}
  const list=element('ul');list.className='shelf-schedule';
  const grouped=new Map();

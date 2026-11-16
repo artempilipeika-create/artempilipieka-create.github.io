@@ -56,6 +56,7 @@ def router():
     from .assistant_model import ASSETS
     import json
     planner_files.update('shelf-images/'+row['article']+'.webp' for row in json.loads((ASSETS/'decor-feet.json').read_text()))
+    planner_files.update('shelf-images/'+sku+'.webp' for sku in ('112602','68416','ZM-HCKT90-3DBEO-S','70T950A.TLMB-V50-NI','122847','122848','122849'))
     planner_files.update('shelf-images/'+sku+'.webp' for sku in ['112595','86505', '86502', '88213', '89160', '29669', '78517', '69055', '112374', '107270', '88214', '57949', '11100', '86503','118779','cam','confirmat','dowel','103814', '103816', '103817', '103818', '103819', '103820', '13110', '134286', '134762', '134763', '38334', '39543', '39544', '39653', '48846', '48848', '48862', '60714', '64145', '64149', '70245', '80054', '80936', '95388'])
     planner_files.update('appliance-assets/'+kind+'-tripo'+suffix for kind in ('oven','microwave','sink','faucet','hood','gas_cooker','radiator','gas_boiler','water_heater','window') for suffix in ('.json','.bin','-color.webp','-rm.webp','-normal.webp','-preview.webp'))
     planner_files.update('hardware-photos/'+name for name in (
