@@ -1,4 +1,4 @@
-import {footHeight,plinthFoot} from './plinth-options.mjs';
+import {footHeight,plinthFoot,plinthPanel,plinthClearanceMm} from './plinth-options.mjs';
 import {feetCatalogue,footPlan,feetDrawing} from './wardrobe-feet.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
@@ -142,7 +142,7 @@ export class AssistantUI{
      this.select(box,label,[['end','До края корпуса / стены'],['side','До стойки в пол',this.fields.bottomFit==='overlay']],this.fields.feet[key]??'end',value=>{
       if(value==='side')this.fields.feet[key]='side';else delete this.fields.feet[key];this.changed();this.render();
      });
-    box.append(el('small','Цоколь '+current.height+' мм · ПВХ по четырём торцам · '+current.screws+' самореза на опору'));
+    box.append(el('small','Опора '+current.height+' мм · цоколь с кромкой '+plinthPanel(this.fields).height+' мм · зазор сверху '+plinthClearanceMm+' мм · ПВХ по четырём торцам · '+current.screws+' самореза на опору'));
    }else box.append(el('small','Пятка Ø20 мм · муфта М6 (106466) · присадка Ø8 × 16 мм'));
   }
  }

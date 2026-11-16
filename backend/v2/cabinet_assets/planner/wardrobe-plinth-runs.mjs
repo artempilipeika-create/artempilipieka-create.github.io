@@ -1,6 +1,6 @@
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 import {updateBlank} from './blanks-model.mjs';
-import {plinthPanel} from './plinth-options.mjs';
+import {plinthFoot,plinthPanel} from './plinth-options.mjs';
 
 function span(item,start,width){
  const p=localPoint(item,item.rotation);
@@ -9,6 +9,14 @@ function span(item,start,width){
 
 // Reconstruct editable cabinet segments before resizing a cabinet in an existing row.
 export function splitPlinths(items){
+ // Older test projects used the entire foot height for the finished board.
+ items=items.map(item=>{
+  const meta=item.assistant_carcass;
+  if(!meta||item.item_id!==meta.group_id+':plinth')return item;
+  const leg=plinthFoot(meta.spec);
+  if(!leg||item.height!==leg.height||item.blank_width_mm!==leg.height)return item;
+  return updateBlank(item,{blank_width_mm:plinthPanel(meta.spec).height});
+ });
  if(!items.some(it=>it.blank_plinth_run?.length))return items;
  const groups=new Map(items.filter(it=>it.assistant_carcass).map(it=>[it.assistant_carcass.group_id,it.assistant_carcass]));
  return items.flatMap(item=>{

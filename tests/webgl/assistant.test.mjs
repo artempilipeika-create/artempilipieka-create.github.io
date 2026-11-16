@@ -138,9 +138,12 @@ test('compatible wardrobe plinths form one edged board and split when the middle
  for(let i=0;i<3;i++)applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec:{...spec,feet}},{id:'g'+i}));
  const panels=()=>a.items.filter(it=>it.item_id.endsWith(':plinth'));
  assert.equal(panels().length,1);assert.equal(panels()[0].width,2400);
+ assert.equal(panels()[0].height,98);
+ // A row saved by the earlier preview still has the nominal board height.
+ Object.assign(panels()[0],{height:100,body_height:100,blank_width_mm:100});
  a.restore(JSON.parse(JSON.stringify(a.snapshot())));
  a.select('g1:left');assert.equal(selectedCarcass(a).items.find(it=>it.item_id.endsWith(':plinth')).width,800);
  applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:{...spec,feet:{...feet,article:'86503'}}}));
- assert.deepEqual(panels().map(it=>it.height).sort((a,b)=>a-b),[100,100,150]);
+ assert.deepEqual(panels().map(it=>it.height).sort((a,b)=>a-b),[98,98,148]);
  assert.ok(panels().every(it=>it.blank_edge_code==='1111'&&it.width===800));
 });
