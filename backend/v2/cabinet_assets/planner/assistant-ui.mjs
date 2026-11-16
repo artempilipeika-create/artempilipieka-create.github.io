@@ -1,3 +1,5 @@
+import {hingeLoad} from './wardrobe-fronts.mjs';
+import {doorHinges} from './wardrobe-hinges.mjs';
 import {footHeight,plinthFoot,plinthPanel,plinthClearanceMm} from './plinth-options.mjs';
 import {feetCatalogue,footPlan,feetDrawing} from './wardrobe-feet.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
@@ -10,7 +12,7 @@ import {WARDROBE_STEPS,resizeDividerChoices,wardrobeSpec,sectionWidths,questionn
 const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x;};
 const button=(text,fn)=>{const b=el('button',text);b.type='button';b.onclick=fn;return b;};
 export class AssistantUI{
- constructor(app){this.app=app;this.disposed=false;this.materials={};this.serial={body:0,back:0};this.start().catch(()=>{});}
+ constructor(app){this.app=app;this.disposed=false;this.materials={};this.serial={body:0,back:0,front:0};this.start().catch(()=>{});}
  async start(){
   if(!this.app.bridge.assistantAccess?.())return;
   const status=await this.app.bridge.request('/3d-assistant/status');if(this.disposed)return;
@@ -38,7 +40,7 @@ export class AssistantUI{
   this.mode.value='create';this.reset();this.dialog.showModal();this.steps[0].focus();
  }
  reset(){
-  this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;
+  this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;this.serial.front++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
   if(s?.thickness===18&&s.sections>1)this.fields.dividerJoints=Array.from({length:s.sections-1},(_,i)=>dividerScheme(s,i));
@@ -47,6 +49,7 @@ export class AssistantUI{
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
+  this.loadMaterial('front',c?.items.find(i=>i.blank_axis==='front')?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.front_variant_id);
   this.loadMaterial('back',c?.items.find(i=>i.item_id.endsWith(':back'))?.body_variant_id||(s?.backThickness?null:CARCASS_BACK_MATERIAL_ID));
  }
  async loadMaterial(role,id){
@@ -69,11 +72,11 @@ export class AssistantUI{
  }
  error(step=this.step){
   try{const s=this.spec();if(s.height+s.elevation+footHeight(s)>this.app.adapter.room.height)throw Error('Шкаф выше помещения. Уменьшите высоту.');
-   if(step>=4)for(const role of ['body',...(s.back?['back']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?(s.backThickness??3):s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':'Корпус: ')+e);}
+   if(step>=4)for(const role of ['body',...(s.back?['back']:[]),...(s.front?['front']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?(s.backThickness??3):role==='front'?18:s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':role==='front'?'Фасад: ':'Корпус: ')+e);}
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===3&&this.fields.front) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.render();this.steps[index].focus();}
  render(){
   this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
@@ -109,15 +112,27 @@ export class AssistantUI{
     if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count)shelfQuestionnaire(this,group,i);this.form.append(group);
    });this.form.append(el('p','Полки пронумерованы снизу вверх. Базовый зазор по бокам — '+(this.fields.shelfGap??0)+' мм.'));
   }else if(this.step===3){
-   const card=el('div');card.className='assistant-choice';card.append(el('strong','Открытый шкаф'),el('p','Без фасадов. Наполнение видно и доступно.'));this.form.append(card);
-   const unavailable=el('div');unavailable.className='assistant-unavailable';unavailable.append(el('strong','Распашные и раздвижные фасады'),el('p','Для этой сборки пока не подключены подходящие заготовки фасадов с петлями и ручками. Сейчас можно собрать открытый шкаф.'));this.form.append(unavailable);
+   this.select(this.form,'Исполнение фасада',[['none','Открытый шкаф'],['left','Одна створка · петли слева'],['right','Одна створка · петли справа'],['pair','Две равные створки']],this.fields.front?.swing??'none',value=>{
+    if(value==='none')delete this.fields.front;else this.fields.front={...this.fields.front,swing:value,offset:this.fields.front?.offset??90};
+    this.changed();this.render();
+   });
+   if(this.fields.front){
+    const box=el('fieldset');box.append(el('legend','Накладная петля PRIME 3D · 112595'));
+    const photo=el('img');photo.src='/account/planner/shelf-images/112595.webp';photo.alt='Накладная PRIME 3D с планкой H0';photo.width=96;box.append(photo);
+    this.select(box,'Отступ до оси чашки',[[90,'90 мм сверху и снизу'],[130,'130 мм сверху и снизу']],this.fields.front.offset,v=>{this.fields.front.offset=Number(v);this.changed();});
+    const lbl=el('label','Масса одной готовой створки, кг'),input=el('input');
+    input.type='number';input.min='0.01';input.max='22';input.step='0.01';input.placeholder='Авто · ЛДСП 700 кг/м³';input.value=this.fields.front.massKg??'';
+    input.oninput=()=>{if(input.value==='')delete this.fields.front.massKg;else this.fields.front.massKg=Number(input.value);this.changed();};lbl.append(input);box.append(lbl);
+    const hint=el('details');hint.append(el('summary','Как рассчитаны петли'),el('p','Петля и планка H0 идут комплектом на саморезах. Таблица AKS для чашки Ø35 учитывает высоту и массу одной двери шириной до 600 мм. Уточните массу, если известен вес готового фасада. Отступ 130 мм — схема мастерской.'));box.append(hint);this.form.append(box);
+   }
+
   }else{
    if(this.mode.value==='update'){
     const label=el('label'),input=el('input');input.type='checkbox';input.checked=this.resetSideEdges;
     input.onchange=()=>{this.resetSideEdges=input.checked;this.changed();};
     label.append(input,document.createTextNode('Пересчитать кромку обеих стоек по конструкции'));this.form.append(label);
    }
-   this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.back)this.materialPicker('back','Задняя стенка',this.fields.backThickness??3);
+   this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.front)this.materialPicker('front','Материал фасадов',18);if(this.fields.back)this.materialPicker('back','Задняя стенка',this.fields.backThickness??3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
  }
@@ -297,6 +312,14 @@ export class AssistantUI{
  }
  draw(){
   try{const built=buildCarcass(this.spec(),{idPrefix:'questionnaire-preview'});this.drawing.innerHTML=carcassSVG(built);
+   if(built.spec.front){
+    const meta={group_id:'questionnaire-preview',spec:built.spec};
+    for(const door of built.items.filter(i=>i.blank_axis==='front')){
+      const parts=doorHinges({...door,assistant_carcass:meta},built.items);
+      const {mass}=hingeLoad(door.width,door.height,built.spec.front.massKg);
+      this.drawing.append(el('p',door.name+' · '+door.width+' × '+door.height+' мм · '+(built.spec.front.massKg?'':'≈ ')+mass.toFixed(2)+' кг · петель '+parts.length+'. Оси от низа створки, мм: '+parts.map(p=>p.position.y-door.elevation_mm).join(' · ')));
+    }
+   }
    if(built.spec.backThickness){
     const back=built.parts.find(p=>p.key==='back').item;
     const rows=backRows({...back,assistant_carcass:{group_id:'questionnaire-preview',spec:built.spec}});
@@ -321,7 +344,7 @@ export class AssistantUI{
   this.remaining.textContent='Проверка ИИ запускается только по кнопке. Пробных обращений на сайте осталось: '+this.remainingCount+'.';
  }
  materialOptions(){
-  const options={resetSideEdges:this.resetSideEdges,defaultMaterial:this.materials.body?.variant_id||null};
+  const options={frontMaterialId:this.materials.front?.variant_id,resetSideEdges:this.resetSideEdges,defaultMaterial:this.materials.body?.variant_id||null};
   if(this.mode.value==='create'||this.materialChanged.body)options.bodyMaterialId=this.materials.body?.variant_id||null;
   if(this.mode.value==='create'||this.materialChanged.back)options.backMaterialId=this.materials.back?.variant_id||null;return options;
  }
@@ -333,7 +356,7 @@ export class AssistantUI{
    const spec=this.spec(),action=this.mode.value,options=this.materialOptions();
    const pending=prepareAssistantPlan(this.app.adapter,{action,spec},options);
    this.busy=true;this.controls();this.output.textContent='Проверяю выбранные параметры…';
-   const response=await this.app.bridge.request('/3d-assistant/questionnaire','POST',{request_id:crypto.randomUUID(),action,spec,fronts:'none',body_material_id:this.materials.body.variant_id,back_material_id:spec.back?this.materials.back.variant_id:null,room_height:this.app.adapter.room.height});
+   const response=await this.app.bridge.request('/3d-assistant/questionnaire','POST',{request_id:crypto.randomUUID(),action,spec,fronts:spec.front?'overlay':'none',...(spec.front?{front_material_id:this.materials.front.variant_id}:{}),body_material_id:this.materials.body.variant_id,back_material_id:spec.back?this.materials.back.variant_id:null,room_height:this.app.adapter.room.height});
    if(this.disposed||epoch!==this.epoch)return;if(response.remaining!=null)this.remainingCount=response.remaining;
    if(response.state!=='ready')throw Error(response.message||'Проверка пока не завершена.');
    if(assistantStamp(this.app.adapter)!==stamp)throw Error('Проект изменился. Проверьте анкету заново.');

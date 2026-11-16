@@ -18,7 +18,7 @@ export function carcassSVG(built,small=false){
       [p(X,Y+h,Z),p(X+w,Y+h,Z),p(X+w,Y+h,Z+d),p(X,Y+h,Z+d)]];
     const e=i.blank_axis==='side'?[
       [p(X+w,Y,Z+d),p(X+w,Y+h,Z+d)],[p(X+w,Y,Z),p(X+w,Y+h,Z)],
-      [p(X+w,Y,Z),p(X+w,Y,Z+d)],[p(X+w,Y+h,Z),p(X+w,Y+h,Z+d)]]:i.blank_axis==='back'?[
+      [p(X+w,Y,Z),p(X+w,Y,Z+d)],[p(X+w,Y+h,Z),p(X+w,Y+h,Z+d)]]:['front','back'].includes(i.blank_axis)?[
       [p(X,Y,Z+d),p(X+w,Y,Z+d)],[p(X,Y+h,Z+d),p(X+w,Y+h,Z+d)],
       [p(X,Y,Z+d),p(X,Y+h,Z+d)],[p(X+w,Y,Z+d),p(X+w,Y+h,Z+d)]]:[
       [p(X,Y+h,Z+d),p(X+w,Y+h,Z+d)],[p(X,Y+h,Z),p(X+w,Y+h,Z)],

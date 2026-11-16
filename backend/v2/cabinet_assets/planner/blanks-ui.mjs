@@ -44,7 +44,7 @@ function formHtml(kind){
       <label>Положение детали<select name="axis">
         <option value="horizontal">Горизонтально · полка / крышка</option>
         <option value="side">Вертикально · боковая стойка</option>
-        <option value="back">Вертикально · задняя панель / фасад</option>
+        <option value="back">Вертикально · задняя панель / фасад</option><option value="front">Фасад · длина по высоте</option>
       </select></label>
       <div class="mf-blank-section-title">02 <span>Схема оклейки</span></div><div class="mf-blank-presets" role="group" aria-label="Схемы оклейки">
         ${SOURCE_EDGE_CODES.map(code=>`<button type="button" data-blank-preset="${code}" aria-pressed="${code==='1000'}"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="12" y="8" width="40" height="28" fill="#f0e8d9"/>${['M12 36H52','M12 8H52','M12 8V36','M52 8V36'].map((d,i)=>`<path d="${d}" fill="none" stroke="${code[i]==='1'?'#247a58':'#cdd4cc'}" stroke-width="4"/>`).join('')}</svg><span>${code==='0000'?'Без ПВХ':code==='1111'?'В круг':code}</span></button>`).join('')}
@@ -86,7 +86,7 @@ function formHtml(kind){
       ${catalog?`<button type="button" class="mf-blank-primary" data-blank-add>+ Добавить заготовку в 3D</button>
       <button type="button" class="secondary mf-blank-export" data-blank-export>Деталировка заготовок · CSV</button>
       <button type="button" class="mf-blank-primary" data-blank-bazis>Экспорт проекта в БАЗИС</button>
-      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261116-9.9.26" download="Martin_Forest_Import_v9_9_26.js">Импортёр 9.9.26 ↓</a></div>`:''}
+      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261116-9.9.27" download="Martin_Forest_Import_v9_9_27.js">Импортёр 9.9.27 ↓</a></div>`:''}
       ${!catalog?`<details class="mf-blank-repeat"><summary>Копировать с шагом</summary><div class="mf-blank-fields"><label>Копий<input name="copyCount" type="number" min="1" max="30" value="1"></label><label>Шаг, мм<input name="copyStep" type="number" step="0.5" value="300"></label></div><label>Направление<select name="copyAxis"><option value="elevation_mm">По высоте</option><option value="x">По X</option><option value="z">По Z</option></select></label><button type="button" data-blank-copy>Создать копии</button></details>`:''}
     </div>
   </div>`;
@@ -252,7 +252,7 @@ export class BlanksUI{
     if(!isBlank)return;
     const badge=get('studio-item-type');if(badge)badge.textContent='Заготовка';
     const controls=this.inspector.elements, hook=item.blank_hook, side=item.blank_axis==='side';
-    this.inspector.querySelector('[data-hook-panel]').hidden=item.blank_axis==='horizontal'&&!hook;
+    this.inspector.querySelector('[data-hook-panel]').hidden=!['side','back'].includes(item.blank_axis)&&!hook;
     controls.hook.value=hook?.article||'';controls.hookCount.value=String(hook?.count??1);
     controls.hookFace.replaceChildren(new Option(side?'Вправо · внутрь левой боковины':'Вперёд · в шкаф','positive'), new Option(side?'Влево · внутрь правой боковины':'Назад','negative'));
     controls.hookFace.value=hook?.face||defaultHookFace(item);

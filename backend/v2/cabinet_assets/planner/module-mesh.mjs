@@ -1,3 +1,6 @@
+import primeMesh from './prime-hinge-mesh.json' with {type:'json'};
+import {doorHinges} from './wardrobe-hinges.mjs';
+import {localPoint} from './blank-bindings.mjs';
 import {fixedShelfScheme} from './shelf-choices.mjs';
 import {jointRows,dividerEnds,backRows} from './carcass-joints.mjs';
 import meshes from './plinth-foot-meshes.json' with {type:'json'};
@@ -298,7 +301,7 @@ export class MeshFactory{
       if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
       if(code[2]==='1')addEdge(W,t,D,0,t/2,0);
       if(code[3]==='1')addEdge(W,t,D,0,H-t/2,0);
-    }else if(ax==='back'){
+    }else if(ax==='back'||ax==='front'){
       if(code[0]==='1')addEdge(W,t,D,0,t/2,0);
       if(code[1]==='1')addEdge(W,t,D,0,H-t/2,0);
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
@@ -308,6 +311,19 @@ export class MeshFactory{
       if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
+    }
+    for(const hinge of this.visibleDoorHinges(it)){
+      const side=hinge.door_side==='left'?1:-1,key='prime:112595:'+side;
+      const geometry=this.acquire(key,()=>{
+        const decode=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0)).buffer;
+        const vertices=Float32Array.from(new Int16Array(decode(primeMesh[0])),v=>v*S/10);
+        const g=new THREE.BufferGeometry();
+        g.setAttribute('position',new THREE.BufferAttribute(vertices,3));
+        g.setIndex(new THREE.BufferAttribute(new Uint16Array(decode(primeMesh[1])),1));
+        g.rotateY(Math.PI/2);g.rotateZ(-side*Math.PI/2);g.computeVertexNormals();return g;
+      });
+      const at=localPoint({x:hinge.position.x-it.x,z:hinge.position.z-it.z},it.rotation);
+      this.mesh(group,'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost).userData.article='112595';
     }
     for(const foot of panelFeet(it)){
       const decor=decorFoot(it.assistant_carcass.spec);
@@ -758,7 +774,11 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  visibleDoorHinges(it){
+    if(it.blank_axis!=='front')return [];
+    try{return doorHinges(it,this.adapter.items||[]);}catch{return [];}
+  }
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,this.visibleDoorHinges(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

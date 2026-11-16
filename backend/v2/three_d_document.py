@@ -133,6 +133,13 @@ def hardware_for(it):
 def _panel_hardware(it):
     meta = it.get('assistant_carcass') or {}
     spec = meta.get('spec') or {}
+    if it.get('blank_axis')=='front' and spec.get('front'):
+        w,h=it['width'],it['height']
+        mass=spec['front'].get('massKg') or w*h*18*700/1e9
+        for n,(limit,kg) in enumerate([(900,8),(1600,13),(2000,17),(2400,22)],2):
+            if w<=600 and h<=limit and mass<=kg:
+                return [_row('Петля PRIME 3D накладная с планкой H0 · саморезы',n,'pcs','112595')],None
+        raise ValueError('Створка выходит за пределы таблицы AKS Ø35.')
     if spec.get('backThickness') and it.get('item_id') == str(meta['group_id'])+':back':
         # Two end cams, plus intermediate cams wherever a span exceeds 400 mm.
         per_side = max(2, 1 + ceil((it['height'] - 200) / 400))

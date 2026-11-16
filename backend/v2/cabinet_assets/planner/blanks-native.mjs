@@ -1,3 +1,4 @@
+import {doorHinges} from './wardrobe-hinges.mjs';
 import {nativeFeet} from './wardrobe-feet.mjs';
 import {normalizeBlank,validateBlank,cuttingSize} from './blanks-model.mjs';
 import {glassShelves} from './shelf-donors.mjs';
@@ -25,4 +26,4 @@ export function blankNativeItem(it,material){
  edge_code:b.code,edge_thickness:b.edgeThickness,finished_dimensions:true,
  cut:cuttingSize(it),edge_elements:[1,3,0,2]}};
 }
-globalThis.MF_BLANKS_NATIVE={footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id)))};
+globalThis.MF_BLANKS_NATIVE={hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>doorHinges(it,items)),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id)))};

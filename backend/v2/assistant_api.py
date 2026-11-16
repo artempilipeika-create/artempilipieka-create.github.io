@@ -49,7 +49,8 @@ class QuestionnaireRequest(StrictModel):
     request_id: UUID
     action: Literal['create', 'update']
     spec: CarcassDesign
-    fronts: Literal['none']
+    fronts: Literal['none','overlay']
+    front_material_id: UUID | None = None
     body_material_id: UUID
     back_material_id: UUID | None
     room_height: int = Field(ge=200, le=8000)
@@ -120,7 +121,7 @@ def review_questionnaire(body):
     # parts, hardware, source files, materials or manufacturing dimensions.
     payload = {'model': MODEL, 'store': False, 'service_tier': 'default',
                'max_output_tokens': 2000, 'reasoning': {'effort': 'low'},
-               'instructions': 'Проверь анкету открытого шкафа Martin Forest. Размеры в мм. Конструктор уже проверил габариты, толщины и привязки. Используется существующий корпус shelves (одна секция) или divided (две/три секции), при back=true по умолчанию накладная ЛХДФ 3 мм; backThickness 16/18 задаёт вкладную ЛДСП без кромки, полки и стойки укорочены, чашки эксцентриков сзади. sectionShelves — полки по секциям, 0 означает пустую нишу. shelves — максимум этого массива. shelfChoices задаёт материал и артикул крепления каждой полки снизу вверх. board означает плиту, 4/6/8 — толщину стекла. topFit/bottomFit=overlay означает накладную панель. feet задаёт модель опоры; кухонные опоры требуют цоколь с ПВХ по четырём торцам. joints задаёт крепление крыши и дна к боковинам для плиты 18 мм, confirmat — конфирматы, cam_dowel — эксцентрики со шкантами. dividerPositions — расстояния от внутренней плоскости левой боковины до левой плоскости каждой стойки. Без них секции равные. Передний отступ полок и стоек в новой анкете 1 мм. dividerJoints задаёт независимо верхний и нижний крепёж каждой внутренней стойки слева направо, none означает без крепежа на этом торце. Проверяй только выбранное исполнение. Фасады, ящики и штанги не входят. Не предлагай менять заданные параметры, не выдумывай детали. Если конструкция совместима, approved=true и короткое подтверждение на русском. Если есть конструктивное противоречие, approved=false и конкретная причина. Никакие изменения ещё не применены.',
+               'instructions': 'Проверь анкету открытого шкафа Martin Forest. Размеры в мм. Конструктор уже проверил габариты, толщины и привязки. Используется существующий корпус shelves (одна секция) или divided (две/три секции), при back=true по умолчанию накладная ЛХДФ 3 мм; backThickness 16/18 задаёт вкладную ЛДСП без кромки, полки и стойки укорочены, чашки эксцентриков сзади. sectionShelves — полки по секциям, 0 означает пустую нишу. shelves — максимум этого массива. shelfChoices задаёт материал и артикул крепления каждой полки снизу вверх. board означает плиту, 4/6/8 — толщину стекла. topFit/bottomFit=overlay означает накладную панель. feet задаёт модель опоры; кухонные опоры требуют цоколь с ПВХ по четырём торцам. joints задаёт крепление крыши и дна к боковинам для плиты 18 мм, confirmat — конфирматы, cam_dowel — эксцентрики со шкантами. dividerPositions — расстояния от внутренней плоскости левой боковины до левой плоскости каждой стойки. Без них секции равные. Передний отступ полок и стоек в новой анкете 1 мм. dividerJoints задаёт независимо верхний и нижний крепёж каждой внутренней стойки слева направо, none означает без крепежа на этом торце. Проверяй только выбранное исполнение. При spec.front ставятся накладные фасады 18 мм с петлями PRIME 3D и зазорами 1,5/3 мм. Без spec.front шкаф открытый. Не предлагай менять заданные параметры, не выдумывай детали. Если конструкция совместима, approved=true и короткое подтверждение на русском. Если есть конструктивное противоречие, approved=false и конкретная причина. Никакие изменения ещё не применены.',
                'input': body.model_dump_json(exclude={'request_id', 'body_material_id', 'back_material_id'}),
                'text': {'format': {'type': 'json_schema', 'name': 'wardrobe_review', 'strict': True,
                                    'schema': QuestionnaireReview.model_json_schema()}}}
@@ -205,13 +206,15 @@ def router(settings):
         owner = authorize(settings, request)
         if not configured():
             error(503, 'ASSISTANT_NOT_CONFIGURED')
+        if (body.fronts=='overlay')!=bool(body.spec.front):
+            error(422,'WARDROBE_FRONT_MISMATCH')
         if body.spec.recipe not in ('shelves', 'divided') or body.spec.sectionShelves is None:
             error(422, 'WARDROBE_RECIPE_REQUIRED')
         if body.spec.height+body.spec.elevation+(body.spec.feet.height if body.spec.feet else 0) > body.room_height:
             error(422, 'WARDROBE_ABOVE_CEILING')
         with transaction(settings) as conn:
             release = catalogue.active(conn)
-            for variant, thickness in [(body.body_material_id, body.spec.thickness), *([(body.back_material_id, body.spec.backThickness or 3)] if body.spec.back else [])]:
+            for variant, thickness in [(body.body_material_id, body.spec.thickness), *([(body.front_material_id,18)] if body.spec.front else []), *([(body.back_material_id, body.spec.backThickness or 3)] if body.spec.back else [])]:
                 if variant is None:
                     error(422, 'WARDROBE_MATERIAL_REQUIRED')
                 material = catalogue.get_item(conn, release, variant, 'material')

@@ -56,7 +56,8 @@ export class StateAdapter{
       const material=it.body_variant_id?this.material(it.body_variant_id):null;
       if(material?.thickness!=null&&Number(material.thickness)>0&&Number(material.thickness)!==it.blank_thickness_mm)
         return 'Толщина выбранного ЛДСП не совпадает с толщиной заготовки. Выберите материал '+it.blank_thickness_mm+' мм.';
-      if(!Number.isInteger(it.x*2)||!Number.isInteger(it.z*2)||![0,90,180,270].includes(it.rotation))return 'Положение с шагом 0,5 мм, поворот с шагом 90°';
+      const precision=it.blank_axis==='front'?4:2;
+      if(!Number.isInteger(it.x*precision)||!Number.isInteger(it.z*precision)||![0,90,180,270].includes(it.rotation))return 'Положение с шагом 0,5 мм, поворот с шагом 90°';
       return placementError(it,items,this.room);
     }
     const tall=isTallModule(it);

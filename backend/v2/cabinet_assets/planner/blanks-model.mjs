@@ -2,7 +2,7 @@
 import {hookError} from './blank-hook.mjs';
 import {choice} from './shelf-choices.mjs';
 export const SOURCE_EDGE_CODES=Object.freeze(['0000','1000','1010','1110','1011','1111']);
-export const AXES=Object.freeze(['horizontal','side','back']);
+export const AXES=Object.freeze(['horizontal','side','back','front']);
 export const EDGES=Object.freeze([
   ['longFront','Длинный торец 1'],
   ['longRear','Длинный торец 2'],
@@ -10,6 +10,7 @@ export const EDGES=Object.freeze([
   ['shortRight','Короткий торец 2']
 ]);
 export function geometryFromBlank(length,width,thickness,axis='horizontal'){
+  if(axis==='front')return {width,height:length,depth:thickness};
   if(axis==='side')return {width:thickness,height:length,depth:width};
   if(axis==='back')return {width:length,height:width,depth:thickness};
   return {width:length,height:thickness,depth:width};
@@ -26,10 +27,11 @@ export function normalizeBlank(input={}){
 export function validateBlank(input,room){
   const b=normalizeBlank(input);
   if(!Number.isInteger(b.length)||b.length<100||b.length>3000)return 'Длина заготовки: от 100 до 3000 мм.';
-  if(!Number.isInteger(b.width)||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
+  if(!Number.isInteger(b.width*(b.axis==='front'?2:1))||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
   if(input.assistant_carcass?.spec?.backThickness&&input.item_id===input.assistant_carcass.group_id+':back'&&(b.axis!=='back'||b.code!=='0000'||b.thickness!==input.assistant_carcass.spec.backThickness))return 'Вкладная задняя стенка должна соответствовать выбранной толщине и быть без кромки.';
+  if(b.axis==='front'&&(b.code!=='1111'||b.edgeThickness!==2||b.thickness!==18))return 'Для фасада нужна плита 18 мм и ПВХ 2 мм в круг.';
   const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
   let glass=false;
   if(input.blank_shelf){
@@ -41,7 +43,7 @@ export function validateBlank(input,room){
   if(!glass&&!thinBack&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
-  if(!Number.isInteger(b.elevation)||b.elevation<0||b.elevation>5000)return 'Высота низа детали должна быть целым числом в мм.';
+  if(!Number.isInteger(b.elevation*(b.axis==='front'?2:1))||b.elevation<0||b.elevation>5000)return 'Высота низа детали должна быть целым числом в мм.';
   if(!Number.isFinite(b.edgeThickness)||b.edgeThickness<0.4||b.edgeThickness>3)return 'Толщина ПВХ: от 0,4 до 3 мм.';
   const d=geometryFromBlank(b.length,b.width,b.thickness,b.axis);
   const hardwareError=hookError({...input,...d,blank_axis:b.axis});

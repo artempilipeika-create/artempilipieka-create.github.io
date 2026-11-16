@@ -110,3 +110,28 @@ test('back cam entry is on rear face and blind bore remains inside 16/18 mm stoc
   }
  }
 });
+
+test('PRIME 112595 native blank, cup and two plate holes on each side after all room rotations',async()=>{
+ const {doorHinges}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-hinges.mjs');
+ for(const rotation of [0,90,180,270]){
+  const spec={recipe:'shelves',width:801,height:1500,sections:1,shelves:0,front:{swing:'pair',offset:130}};
+  const items=placeCarcass(buildCarcass(spec,{idPrefix:'g'}),{x:800,z:700,elevation_mm:80,rotation}).map(it=>({...it,assistant_carcass:{group_id:'g',spec}}));
+  for(const door of items.filter(it=>it.blank_axis==='front')){
+   const {c,obj}=setup('1111'),pos=localPoint(door,rotation),out=blankNativeItem(door,material);
+   c.resizeAndPlace(obj,out,[]);
+   const rear=localPoint(obj.ToGlobal({x:18,y:0,z:0}),rotation);
+   close(rear.x,pos.x-door.width/2);close(rear.z,pos.z-9);
+   for(const joint of doorHinges(door,items)){
+    const {c,obj}=setup('0000');c.resizeAndPlace(obj,joint,[]);
+    const sign=joint.door_side==='left'?1:-1,edge=pos.x-sign*door.width/2;
+    const pt=(x,y,z)=>localPoint(obj.ToGlobal({x,y,z}),rotation);
+    close(pt(0,4.5,0).x,edge+sign*21);close(pt(0,4.5,0).z,rear.z);
+    close(pt(-12,4.5,0).z,rear.z+12);
+    for(const z of [-16,16]){
+     close(pt(37,0,z).x,edge+sign*16.5);close(pt(37,0,z).z,rear.z-37);
+     close(obj.ToGlobal({x:37,y:0,z}).y,joint.position.y-sign*z);
+    }
+   }
+  }
+ }
+});

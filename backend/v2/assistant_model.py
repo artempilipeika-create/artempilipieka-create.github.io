@@ -96,7 +96,14 @@ def inner_foot_pairs(width, sections, layout):
     return sections - 1 or int(width > 900)
 
 
+class OverlayFront(StrictModel):
+    swing: Literal['left','right','pair']
+    offset: Literal[90,130]
+    massKg: float | None = Field(default=None,gt=0,le=22,exclude_if=lambda v:v is None)
+
+
 class CarcassDesign(CarcassSpec):
+    front: OverlayFront | None = Field(default=None,exclude_if=lambda v:v is None)
     backThickness: Literal[16,18] | None = Field(default=None,exclude_if=lambda v:v is None)
     topFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
     bottomFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -111,6 +118,11 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.front:
+            count = 2 if self.front.swing=='pair' else 1
+            width = (self.width-3*count)/count
+            if self.recipe not in ('shelves','divided') or width>600 or self.height-3>2400 or self.height-3<2*self.front.offset+64:
+                raise ValueError('Проверьте габариты створки и отступ петель.')
         if self.backThickness and (not self.back or self.recipe not in ('shelves','divided') or (self.backThickness>=16 and self.thickness<16)):
             raise ValueError('Проверьте конструкцию и толщины панелей вкладной задней стенки.')
         if (self.feet or self.topFit or self.bottomFit) and self.recipe not in ('shelves','divided'):

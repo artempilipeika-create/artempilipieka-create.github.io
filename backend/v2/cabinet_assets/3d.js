@@ -1315,9 +1315,10 @@ function exportBazisProject(){
   }catch(error){status('Экспорт не создан: '+error.message);return;}
   const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
   if(invalid){status(invalid);return;}
-  let blankItems=[],hookItems=[],supportItems=[],jointItems=[],footItems=[];
+  let hingeItems=[],blankItems=[],hookItems=[],supportItems=[],jointItems=[],footItems=[];
   try{
     if(state.items.some(it=>it.module_type==='blank')&&!globalThis.MF_BLANKS_NATIVE)throw Error('Обновите страницу: модуль заготовок не загружен.');
+    hingeItems=globalThis.MF_BLANKS_NATIVE?.hingeItems?.(state.items)||[];
     footItems=globalThis.MF_BLANKS_NATIVE?.footItems?.(state.items)||[];
     jointItems=globalThis.MF_BLANKS_NATIVE?.jointItems?.(state.items)||[];
     supportItems=globalThis.MF_BLANKS_NATIVE?.supportItems?.(state.items)||[];
@@ -1463,6 +1464,10 @@ function exportBazisProject(){
     if(footItems.some(it=>it.decorative_support)){payload.format='martin-forest-bazis-native-v8';payload.minimum_importer='9.9.25';}
   }
   if(jointItems.some(it=>it.joint_back_face)){payload.format='martin-forest-bazis-native-v9';payload.minimum_importer='9.9.26';}
+  if(hingeItems.length||blankItems.some(it=>it.blank?.axis==='front')){
+    for(const item of hingeItems){item.index=payload.items.length+1;payload.items.push(item);}
+    payload.format='martin-forest-bazis-native-v10';payload.minimum_importer='9.9.27';
+  }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
