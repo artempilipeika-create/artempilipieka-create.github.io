@@ -55,16 +55,6 @@
   ]
  },
  {
-  "article": "113002",
-  "name": "BONDA",
-  "height": 150,
-  "finish": "чёрный матовый",
-  "category": "decor",
-  "file": "Опора BONDA h150 черный матовый AKS (113002).fr3d",
-  "sha": "8e5a16d9956d6cc3fe83bb956efa6f2fbbcf154021dae24ef12d27f937148482",
-  "issue": "Проверяется фрагмент БАЗИС"
- },
- {
   "article": "113012",
   "name": "DELI",
   "height": 120,
@@ -1428,26 +1418,6 @@
    -89.2
   ],
   "screws": []
- },
- {
-  "article": "112848",
-  "name": "OLYMPIA",
-  "height": 120,
-  "finish": "чёрный матовый",
-  "category": "decor",
-  "file": "Опора OLYMPIA h120 черный матовый AKS (112848).fr3d",
-  "sha": "712ea1cfda85148c80df011067bcb0af9e94689e84b2f959a9e4e9c28c68283b",
-  "issue": "Проверяется фрагмент БАЗИС"
- },
- {
-  "article": "112849",
-  "name": "OLYMPIA",
-  "height": 120,
-  "finish": "чёрный хром",
-  "category": "decor",
-  "file": "Опора OLYMPIA h120 черный хром AKS (112849).fr3d",
-  "sha": "ffc833265a95c20585e5420fd736a6a1be22457fd8a95bfe51f3ce93194cf74a",
-  "issue": "Проверяется фрагмент БАЗИС"
  },
  {
   "article": "113000",
