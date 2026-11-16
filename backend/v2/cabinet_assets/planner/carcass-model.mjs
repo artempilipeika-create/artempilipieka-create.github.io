@@ -1,3 +1,4 @@
+import {shelfUndersides} from './shelf-levels.mjs';
 import {overlayFronts,hingeLoad} from './wardrobe-fronts.mjs';
 import {blankItem,validateBlank,edgeMeters} from './blanks-model.mjs';
 import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
@@ -90,9 +91,10 @@ export function buildCarcass(input={},options={}){
   }
   supports.push(right);
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
-  if(counts.some(n=>topBottom-bottomTop-n*t<(n+1)*60))throw Error('Для полок недостаточно высоты. Уменьшите их количество.');
+  const shelfYs=counts.map((count,section)=>shelfUndersides(s,section,bottomTop,topBottom,
+    Array.from({length:count},(_,i)=>choice(s.shelfChoices?.[section]?.[i]??defaultShelf,t).thickness),s.elevation+footHeight(s)));
   for(let section=0;section<s.sections;section++)for(let i=0;i<counts[section];i++){
-    const count=counts[section],y=bottomTop+Math.round((i+1)*(topBottom-bottomTop-count*t)/(count+1))+i*t;
+    const y=shelfYs[section][i];
     const a=supports[section],b=supports[section+1];
     const value=s.shelfChoices?.[section]?.[i]??defaultShelf;
     const {kind,thickness,hardware,scheme}=choice(value,t);
@@ -100,7 +102,7 @@ export function buildCarcass(input={},options={}){
     if(scheme && D-rear-s.shelfSetback < (scheme==='cam_dowel'?216:152))throw Error('Для выбранного крепежа недостаточно глубины полки после отступа.');
     const label=kind==='glass'?'Стекло '+thickness+' мм · полка ':'Полка ';
     add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
-      widths[section]-2*gap,D-rear-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,shelfCentre,kind==='glass'?'0000':edge(),binding(a,b,gap,shelfCentre-a.z),value===defaultShelf?null:value);
+      widths[section]-2*gap,D-rear-s.shelfSetback,thickness,(a.x+b.x)/2,y,shelfCentre,kind==='glass'?'0000':edge(),binding(a,b,gap,shelfCentre-a.z),value===defaultShelf?null:value);
   }
   if(s.front){
     if(!['left','right','pair'].includes(s.front.swing)||![90,130].includes(s.front.offset))throw Error('Выберите сторону открывания и отступ петель.');

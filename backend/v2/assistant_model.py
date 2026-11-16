@@ -102,7 +102,13 @@ class OverlayFront(StrictModel):
     massKg: float | None = Field(default=None,gt=0,le=22,exclude_if=lambda v:v is None)
 
 
+class ShelfLevel(StrictModel):
+    mode: Literal['floor','gap']
+    mm: int = Field(ge=0, le=5000, strict=True)
+
+
 class CarcassDesign(CarcassSpec):
+    shelfLevels: list[Annotated[list[ShelfLevel | None], Field(max_length=10)]] | None = Field(default=None, max_length=3, exclude_if=lambda v:v is None)
     front: OverlayFront | None = Field(default=None,exclude_if=lambda v:v is None)
     backThickness: Literal[16,18] | None = Field(default=None,exclude_if=lambda v:v is None)
     topFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -156,6 +162,12 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Проверьте количество и толщину внутренних стоек.')
             if self.depth-(self.backThickness or 0)-(self.dividerSetback or 0) < 216 and any('cam_dowel' in (row.top,row.bottom) for row in self.dividerJoints):
                 raise ValueError('Для эксцентрика со шкантом в стойке нужна глубина от 216 мм.')
+        if self.shelfLevels is not None:
+            if not self.sectionShelves or [len(row) for row in self.shelfLevels] != self.sectionShelves:
+                raise ValueError('Проверьте число высот полок по секциям.')
+            for row in self.shelfLevels:
+                if any(level and level.mode=='gap' and level.mm<60 for level in row):
+                    raise ValueError('Чистый проём под полкой должен быть от 60 мм.')
         if self.shelfChoices is not None:
             if not self.sectionShelves or [len(row) for row in self.shelfChoices] != self.sectionShelves:
                 raise ValueError('Проверьте выбор полок по секциям.')

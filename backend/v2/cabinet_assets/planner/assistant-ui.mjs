@@ -6,6 +6,7 @@ import {primeHinge} from './wardrobe-fronts.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
+import {shelfLevelControls,selectShelf} from './wardrobe-interior-ui.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {WARDROBE_STEPS,resizeDividerChoices,wardrobeSpec,sectionWidths,questionnaireMaterialError} from './wardrobe-questionnaire.mjs';
@@ -25,7 +26,8 @@ export class AssistantUI{
   this.nav=el('nav');this.nav.setAttribute('aria-label','Шаги анкеты');this.nav.className='assistant-steps';
   this.steps=WARDROBE_STEPS.map((name,i)=>{const b=button((i+1)+'. '+name,()=>this.go(i));this.nav.append(b);return b;});
   const grid=el('div');grid.className='assistant-grid';this.form=el('div');this.form.className='assistant-fields';
-  const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.dimensions=el('p');this.description=el('p');aside.append(this.figureTitle,this.drawing,this.dimensions,this.description);grid.append(this.form,aside);
+  const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.drawing.onclick=e=>this.pickShelf(e);
+  this.drawing.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.pickShelf(e);}};this.dimensions=el('p');this.description=el('p');aside.append(this.figureTitle,this.drawing,this.dimensions,this.description);grid.append(this.form,aside);
   this.output=el('p');this.output.setAttribute('role','status');this.output.setAttribute('aria-live','polite');this.summary=el('ul');this.summary.hidden=true;
   const footer=el('div');footer.className='assistant-footer';this.previous=button('Назад',()=>this.go(this.step-1));this.next=button('Далее',()=>this.go(this.step+1));
   this.send=button('Проверить и собрать с ИИ',()=>this.ask());this.send.className='assistant-primary';this.apply=button('Добавить в проект',()=>this.commit());this.apply.className='assistant-primary';this.apply.hidden=true;
@@ -45,7 +47,7 @@ export class AssistantUI{
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
   if(s?.thickness===18&&s.sections>1)this.fields.dividerJoints=Array.from({length:s.sections-1},(_,i)=>dividerScheme(s,i));
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
-  this.shelfScopes={};this.shelfDrafts={};this.resetSideEdges=false;
+  this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.previewBuilt=null;this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -58,6 +60,9 @@ export class AssistantUI{
    if(this.disposed||epoch!==this.epoch||serial!==this.serial[role])return;
    this.app.bridge.cacheMaterial(m);this.materials[role]=m;if(this.step===4)this.render();
   }catch{if(epoch===this.epoch&&serial===this.serial[role]&&this.step===4)this.render();}
+ }
+ pickShelf(event){
+  const hit=event.target.closest?.('[data-shelf-index]');if(hit)selectShelf(this,Number(hit.dataset.section),Number(hit.dataset.shelfIndex));
  }
  spec(){return wardrobeSpec(this.fields);}
  invalidate(){this.pending=null;this.apply.hidden=true;this.summary.hidden=true;this.output.textContent='';}
@@ -76,7 +81,7 @@ export class AssistantUI{
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===3&&this.fields.front) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===3&&this.fields.front) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices||this.fields.shelfLevels))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
  groupTabs(){
   const nav=el('nav');nav.className='wardrobe-subsections';nav.setAttribute('aria-label','Подразделы корпуса');
   for(const key of ['body','feet','plinth','back']){
@@ -132,7 +137,7 @@ export class AssistantUI{
    this.sectionTabs();this.jointQuestionnaire();
    this.fields.sectionShelves.forEach((count,i)=>{const group=el('fieldset');group.append(el('legend','Секция '+(i+1)));if(i!==this.activeSection)return;
     this.select(group,'Наполнение секции '+(i+1),[['shelves','Полки'],['empty','Пустая ниша'],['drawers','Ящики — комплект для шкафа ещё не подключён',true],['rod','Штанга — заготовка ещё не подключена',true]],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});
-    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count)shelfQuestionnaire(this,group,i);this.form.append(group);
+    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count){shelfLevelControls(this,group,i);shelfQuestionnaire(this,group,i);}this.form.append(group);
    });this.form.append(el('p','Полки пронумерованы снизу вверх. Базовый зазор по бокам — '+(this.fields.shelfGap??0)+' мм.'));
   }else if(this.step===3){
    this.select(this.form,'Исполнение фасада',[['none','Открытый шкаф'],['left','Одна створка · петли слева'],['right','Одна створка · петли справа'],['pair','Две равные створки']],this.fields.front?.swing??'none',value=>{
@@ -352,7 +357,8 @@ export class AssistantUI{
     built=buildCarcass(wardrobeSpec({...this.fields,front:null}),options);
     issue=error.message;
    }
-   const {svg,caption}=wardrobeDrawing(built,this.view,this.activeSection,this.fields.front);
+   this.previewBuilt=built;
+   const {svg,caption}=wardrobeDrawing(built,this.view,this.activeSection,this.fields.front,this.step===2?(this.levelIndex??0):null);
    this.drawing.innerHTML=svg;
    this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';
    this.description.textContent=caption;

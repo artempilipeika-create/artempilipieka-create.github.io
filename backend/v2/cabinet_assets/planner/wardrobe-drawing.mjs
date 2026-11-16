@@ -30,7 +30,7 @@ function openCabinet(built){
      polygon([point(x,y,Z),point(X,y,Z),point(X,Y,Z),point(x,Y,Z)],glass?'#d6e7e0':key==='back'?'#dedbcc':wood)+'</g>';
  }).join('');
 }
-function elevationView(built,view,section,front){
+function elevationView(built,view,section,front,selectedShelf){
  const s=built.spec,H=built.height+footHeight(s),W=s.width;
  const zoom=view==='plinth',height=zoom?Math.min(H,Math.max(240,footHeight(s)+W*.22)):H;
  const facade=view==='fronts';
@@ -51,6 +51,14 @@ function elevationView(built,view,section,front){
    const left=-W/2+s.thickness+widths.slice(0,section).reduce((sum,w)=>sum+w+s.thickness,0);
    const y=footHeight(s)+s.thickness;
    drawing+='<rect x="'+num(X(left))+'" y="'+num(Y(H-s.thickness))+'" width="'+num(widths[section]*k)+'" height="'+num((H-s.thickness-y)*k)+'" fill="'+accent+'" fill-opacity=".07" stroke="'+accent+'" stroke-width="1.8"/>';
+   for(const {key,item} of built.parts){
+     const match=/^shelf-(\d+)-(\d+)$/.exec(key);if(!match)continue;
+     const q=panel(item),sec=Number(match[1]),index=Number(match[2]),cy=Y(q.y+q.h/2);
+     const selected=section===sec&&selectedShelf===index;
+     drawing+='<g class="shelf-target" role="button" tabindex="0" data-section="'+sec+'" data-shelf-index="'+index+'" aria-label="Секция '+(sec+1)+', полка '+(index+1)+'"><title>Полка '+(index+1)+'</title>'+
+       (selected?rect(X(q.x),Y(q.y+q.h),q.w*k,Math.max(2,q.h*k),'#8cba9f',accent):'')+
+       '<rect x="'+num(X(q.x))+'" y="'+num(cy-5)+'" width="'+num(q.w*k)+'" height="10" fill="transparent"/></g>';
+   }
    drawing+=label(200,313,'Секция '+(section+1)+' · '+widths[section]+' мм');
  }
  if(zoom){
@@ -98,9 +106,9 @@ function rear(built){
    }).join('');
  }
 }
-export function wardrobeDrawing(built,view='body',section=0,front=built.spec.front){
+export function wardrobeDrawing(built,view='body',section=0,front=built.spec.front,selectedShelf=null){
  const s=built.spec,feet=footPlan(s),shelves=(s.sectionShelves??Array(s.sections).fill(s.shelves)).reduce((a,b)=>a+b,0);
- const art=view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front);
+ const art=view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front,selectedShelf);
  const notes={body:s.sections+' секц. · полок '+shelves+' · плита '+s.thickness+' мм',sections:'Вид спереди · чистая ширина выделенной секции',
    feet:feet.length?'Установлено опор: '+feet.length+' · арт. '+s.feet.article:'Опоры не выбраны',
    plinth:plinthPanel(s)?'Планка '+plinthPanel(s).height+' мм · верхний зазор 3 мм':'Цоколь для этого исполнения отсутствует',
