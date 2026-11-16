@@ -34,7 +34,7 @@ export class AssistantUI{
   if(this.app.workspace?.isClient())this.app.workspace.client();this.current=null;
   try{const c=selectedCarcass(this.app.adapter);if(c&&['shelves','divided'].includes(c.metadata.spec.recipe))this.current=c;}catch{}
   this.mode.replaceChildren();for(const [value,text]of [['create','Новый шкаф'],...(this.current?[['update','Изменить выбранный шкаф']]:[])]){const o=el('option',text);o.value=value;this.mode.append(o);}
-  this.mode.value=this.current?'update':'create';this.reset();this.dialog.showModal();this.steps[0].focus();
+  this.mode.value='create';this.reset();this.dialog.showModal();this.steps[0].focus();
  }
  reset(){
   this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;
@@ -235,7 +235,7 @@ export class AssistantUI{
    if(assistantStamp(this.app.adapter)!==stamp)throw Error('Проект изменился. Проверьте анкету заново.');
    if(response.plan.action==='clarify'){this.output.textContent=response.plan.message;return;}
    if(response.plan.action!==action||Object.keys(spec).some(k=>JSON.stringify(spec[k])!==JSON.stringify(response.plan.spec?.[k])))throw Error('Ответ не соответствует анкете. Проект не изменён.');
-   this.output.textContent='Параметры совместимы. Проверьте состав шкафа и добавьте его в проект.';
+   this.output.textContent=action==='create'?'Проверьте состав нового шкафа и добавьте его в проект.':'Проверьте изменения выбранного шкафа.';
    this.pending=pending;this.summary.replaceChildren(...pending.summary.map(s=>el('li',s)),el('li','Корпус: '+this.materials.body.name));this.summary.hidden=false;
   }catch(e){if(!this.disposed&&epoch===this.epoch)this.output.textContent=e.message;}
   finally{if(!this.disposed&&epoch===this.epoch){this.busy=false;this.controls();}}

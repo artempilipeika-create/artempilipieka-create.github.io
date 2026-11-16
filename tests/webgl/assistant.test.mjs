@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
+import {AssistantUI} from '../../backend/v2/cabinet_assets/planner/assistant-ui.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {prepareAssistantPlan,applyAssistantPlan,selectedCarcass} from '../../backend/v2/cabinet_assets/planner/assistant-model.mjs';
 import {wardrobeSpec,sectionWidths,questionnaireMaterialError} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
@@ -84,4 +85,49 @@ test('manual divider datums produce exact openings and front setbacks through sa
  const centered={...design};delete centered.dividerPositions;
  const update=prepareAssistantPlan(a,{action:'update',spec:wardrobeSpec(centered)});
  assert.deepEqual(sectionWidths(update.spec),[376,376,376]);
+});
+
+test('reopening the build wizard defaults to a new wardrobe with the previous one selected',()=>{
+ const {a}=setup();
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec}));
+ const options=[];
+ const previous=globalThis.document;
+ globalThis.document={createElement:()=>({})};
+ try{
+  const ui={app:{adapter:a},mode:{replaceChildren(){options.length=0;},append(option){options.push(option.value);}},
+   reset(){},dialog:{showModal(){}},steps:[{focus(){}}]};
+  AssistantUI.prototype.open.call(ui);
+  assert.deepEqual(options,['create','update']);
+  assert.equal(ui.mode.value,'create');
+ }finally{
+  if(previous===undefined)delete globalThis.document;
+  else globalThis.document=previous;
+ }
+});
+
+test('successive wardrobe builds extend the row and editing one group preserves its neighbours',()=>{
+ const {a,h}=setup();
+ const groups=[];
+ for(const width of [800,650,1000]){
+  const before=structuredClone(a.items);
+  const plan=prepareAssistantPlan(a,{action:'create',spec:{...spec,width}});
+  h.run('create',()=>applyAssistantPlan(a,plan));
+  assert.deepEqual(a.items.slice(0,before.length),before);
+  const {metadata}=selectedCarcass(a);
+  assert.ok(!groups.some(g=>g.group_id===metadata.group_id));
+  if(groups.length){
+   const previous=groups.at(-1);
+   assert.equal(metadata.position.x,previous.position.x+(previous.spec.width+width)/2);
+   assert.equal(metadata.position.z,previous.position.z);
+  }
+  groups.push(metadata);
+ }
+ a.restore(JSON.parse(JSON.stringify(a.snapshot())));
+ const neighbours=()=>a.items.filter(i=>i.assistant_carcass.group_id!==groups[1].group_id);
+ const before=structuredClone(neighbours());
+ a.select(groups[1].group_id+':left');
+ const edit=prepareAssistantPlan(a,{action:'update',spec:{...groups[1].spec,shelves:2}});
+ h.run('edit',()=>applyAssistantPlan(a,edit));
+ assert.deepEqual(neighbours(),before);
+ assert.equal(selectedCarcass(a).metadata.spec.shelves,2);
 });
