@@ -33,7 +33,7 @@ export function dimensionRuns(items,room){
 // Overall installation extent along each rear line. Deliberate gaps count, and
 // a perpendicular cabinet contributes its footprint only where it meets that
 // line. An island or an opposite wall must not enlarge another wall's total.
-export function overallDimensions(items,room){
+export function overallDimensions(items,room,atBase=false){
   const groups=[];
   for(const it of items){
     const back=backDatum(it),rotation=it.rotation||0,level=elevation(it,room),top=level+dimensionValue(it,'height');
@@ -58,12 +58,15 @@ export function overallDimensions(items,room){
       }
     }
     if(members.length<2)return [];
-    const point=(x,y,back=g.back)=>({x:u.x*x+n.x*back,y,z:u.z*x+n.z*back});
+    const datum=atBase?Math.max(...g.items.map(it=>interval(it,n)[1])):g.back;
+    const y=atBase?Math.min(...g.items.map(it=>elevation(it,room))):g.top;
+    const outward=atBase?1:-1;
+    const point=(x,height,wall=datum)=>({x:u.x*x+n.x*wall,y:height,z:u.z*x+n.z*wall});
     return [{id:'overall:'+g.rotation+':'+g.items.map(it=>it.item_id).sort().join(':'),kind:'run',overall:true,value:hi-lo,
-      a:point(lo,g.top),b:point(hi,g.top),out:point((lo+hi)/2,g.top+200,g.back-200),offset:60}];
+      a:point(lo,y),b:point(hi,y),out:point((lo+hi)/2,y-outward*200,datum+outward*200),offset:atBase?27:60}];
   });
 }
-export function sceneDimensions(items,room,selectedId,runs=dimensionRuns(items,room)){
+export function sceneDimensions(items,room,selectedId,runs=dimensionRuns(items,room),rowAtBase=false){
   const result=[];
   for(const run of runs){
     const top=Math.max(...run.items.map(it=>elevation(it,room)+dimensionValue(it,'height')));
@@ -77,16 +80,16 @@ export function sceneDimensions(items,room,selectedId,runs=dimensionRuns(items,r
     result.push({id:representative.item_id+':height',itemId:representative.item_id,axis:'height',value:height,kind:'module',selected:representative.item_id===selectedId,
       a:point(run.lo,level),b:point(run.lo,level+height),out:point(run.lo-200,level+height/2),offset:32});
   }
-  return result.concat(overallDimensions(items,room));
+  return result.concat(overallDimensions(items,room,rowAtBase));
 }
 
-function objectMeasure(it,room,axis,selected=true){
+function objectMeasure(it,room,axis,selected=true,heightSide=-1){
   const w=it.width/2,d=it.depth/2,bottom=elevation(it,room),h=dimensionValue(it,'height'),top=bottom+h;
   const point=(x,y,z)=>local(it,x,y,z);
   let a,b,out;
   if(axis==='width'){a=point(-w,top,-d);b=point(w,top,-d);out=point(0,top+200,-d-200);}
   else if(axis==='depth'){a=point(w,top,-d);b=point(w,top,d);out=point(w+200,top,0);}
-  else if(axis==='height'){a=point(-w,bottom,d);b=point(-w,top,d);out=point(-w-200,bottom+h/2,d);}
+  else if(axis==='height'){a=point(heightSide*w,bottom,d);b=point(heightSide*w,top,d);out=point(heightSide*(w+200),bottom+h/2,d);}
   else{a=point(-w,0,d);b=point(-w,bottom,d);out=point(-w-200,bottom/2,d);}
   const level=axis==='elevation';
   return {id:it.item_id+':'+axis,itemId:it.item_id,axis,value:level?bottom:dimensionValue(it,axis),
@@ -114,7 +117,7 @@ export function furnitureMeasures(items,room,{scope='products',mode='3d',selecte
     return {dims,subject:it,detail:true};
   }
   const units=[...products.values()],runs=dimensionRuns(units,room);
-  const dims=sceneDimensions(units,room,product?.item_id,runs).filter(d=>d.axis!=='height');
+  const dims=sceneDimensions(units,room,product?.item_id,runs,true).filter(d=>d.axis!=='height');
   for(const dim of dims){
     const it=products.get(dim.itemId);
     if(it){dim.readOnly=it.module_type==='blank';dim.title=it.name;}
@@ -126,7 +129,10 @@ export function furnitureMeasures(items,room,{scope='products',mode='3d',selecte
       const span=axis==='depth'?it.depth:elevation(it,room)+':'+dimensionValue(it,'height');
       if(!spans.has(span)||it===product)spans.set(span,it);
     }
-    for(const it of spans.values())dims.push(objectMeasure(it,room,axis,it===product));
+    for(const it of spans.values()){
+      const side=run.items.length>1&&it===run.items.at(-1)?1:-1;
+      dims.push(objectMeasure(it,room,axis,it===product,side));
+    }
   }
   return {dims,subject:product,detail:false};
 }

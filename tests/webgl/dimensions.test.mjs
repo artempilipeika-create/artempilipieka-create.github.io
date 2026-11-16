@@ -74,7 +74,7 @@ test('Group move clearance starts at its outer envelope',()=>{
 test('adjacent unequal kitchen heights have separate, editable measurements anchored to their own cabinets',()=>{
   const first=item('a'),second=item('b',600,{height:900});
   const dims=furnitureMeasures([first,second],room,{selectedId:'b'}).dims.filter(d=>d.axis==='height');
-  assert.deepEqual(dims.map(d=>[d.itemId,d.value,d.a.x,d.readOnly]),[['a',858,-300,false],['b',938,300,false]]);
+  assert.deepEqual(dims.map(d=>[d.itemId,d.value,d.a.x,d.readOnly]),[['a',858,-300,false],['b',938,900,false]]);
 });
 test('labels stay on their measured line, avoid each other and stay in the visible part of a narrow viewport',()=>{
   const a={x:-320,y:160,visible:true},b={x:280,y:160,visible:true},out={x:0,y:0};
