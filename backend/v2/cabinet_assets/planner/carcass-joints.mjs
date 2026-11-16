@@ -80,6 +80,49 @@ function dividerJoints(it,byId){
  return result;
 }
 
+// Positions are on the mating edge, measured from the back panel centre in X
+// and from its lower edge in Y. The cam and dowel of each pair are 32 mm apart.
+export function backRows(panel){
+ const meta=panel.assistant_carcass,s=meta?.spec;
+ if(!s?.backThickness||panel.item_id!==meta.group_id+':back')return [];
+ const w=panel.width,h=panel.height,rows=[];
+ function pair(edge,x,y,dx,dy,roll){
+   for(const [kind,offset] of [['cam',-16],['dowel',16]])
+     rows.push({edge,kind,x:x+Math.abs(dy)*offset,y:y+Math.abs(dx)*offset,dx,dy,roll});
+ }
+ for(const fraction of [1/6,1/2,5/6]){
+   const y=Math.round(h*fraction);
+   pair('left',-w/2,y,1,0,0);pair('right',w/2,y,-1,0,180);
+ }
+ for(const edge of ['bottom','top']){
+   const length=s[edge+'Fit']==='overlay'?s.width:w;
+   for(const fraction of length>800?[.25,.75]:[.5]){
+     const bottom=edge==='bottom';
+     pair(edge,Math.round(w*fraction)-w/2,bottom?0:h,0,bottom?1:-1,bottom?90:-90);
+   }
+ }
+ return rows;
+}
+
+function nativeBackJoints(panel,byId){
+ const angle=panel.rotation||0,centre=localPoint(panel,angle);
+ return backRows(panel).map(({edge,kind,x,y,dx,dy,roll})=>{
+   const hostId=panel.assistant_carcass.group_id+':'+edge,host=byId.get(hostId);
+   const mount={x:centre.x+x,z:centre.z-panel.depth/2+9},height=panel.elevation_mm+y;
+   const at=host&&localPoint(host,angle),side=dx!==0;
+   if(!host||host.rotation!==panel.rotation||host.blank_axis!==(side?'side':'horizontal')||
+       (side?host.width:host.height)<16||panel.depth!==panel.assistant_carcass.spec.backThickness||
+       Math.abs(mount.z-at.z)+4>host.depth/2+.01||
+       (side?(Math.abs(at.x+dx*host.width/2-mount.x)>.01||height-4<host.elevation_mm||height+4>host.elevation_mm+host.height):
+       (Math.abs(host.elevation_mm+(dy>0?host.height:0)-height)>.01||Math.abs(mount.x-at.x)+4>host.width/2+.01)))
+     throw Error(panel.name+' · проверьте прилегание к детали «'+(host?.name||edge)+'».');
+   const [source_file,source_sha256]=fittings[kind];
+   return {name:source_file.slice(0,-5)+' · '+panel.name,joint_part:kind,joint_back_face:true,
+     joint_roll_deg:roll,joined_panel_id:panel.item_id,host_blank_id:hostId,source_file,source_sha256,
+     rotation:angle,position:{...worldPoint(mount,angle),y:height},elastic_resize:false};
+ });
+}
+
 export function nativeCarcassJoints(items) {
   const byId=new Map(items.map(it=>[it.item_id,it])),out=[];
   for (const panel of items) {
@@ -136,6 +179,6 @@ export function nativeCarcassJoints(items) {
       for(const a of list)check(a,pt,10);
     }
   }
-  for(const it of items)out.push(...dividerJoints(it,byId));
+  for(const it of items)out.push(...dividerJoints(it,byId),...nativeBackJoints(it,byId));
   return out;
 }

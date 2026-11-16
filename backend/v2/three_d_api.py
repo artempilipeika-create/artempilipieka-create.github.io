@@ -146,6 +146,9 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.assistant_carcass and self.assistant_carcass.spec.backThickness and self.item_id==str(self.assistant_carcass.group_id)+':back':
+            if self.blank_axis!='back' or self.blank_edge_code!='0000' or self.blank_thickness_mm!=self.assistant_carcass.spec.backThickness:
+                raise ValueError('Вкладная задняя стенка должна соответствовать выбранной толщине и быть без кромки.')
         if self.assistant_carcass and self.item_id==str(self.assistant_carcass.group_id)+':plinth':
             if self.blank_axis!='back' or self.blank_edge_code!='1111':
                 raise ValueError('Цоколь шкафа должен иметь ПВХ по четырём торцам.')

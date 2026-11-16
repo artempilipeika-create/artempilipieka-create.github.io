@@ -97,6 +97,7 @@ def inner_foot_pairs(width, sections, layout):
 
 
 class CarcassDesign(CarcassSpec):
+    backThickness: Literal[16,18] | None = Field(default=None,exclude_if=lambda v:v is None)
     topFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
     bottomFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
     feet: WardrobeFeet | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -110,6 +111,8 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.backThickness and (not self.back or self.recipe not in ('shelves','divided') or (self.backThickness>=16 and self.thickness<16)):
+            raise ValueError('Проверьте конструкцию и толщины панелей вкладной задней стенки.')
         if (self.feet or self.topFit or self.bottomFit) and self.recipe not in ('shelves','divided'):
             raise ValueError('Опоры и конструкция панелей задаются для шкафа.')
         if self.feet:
@@ -139,14 +142,14 @@ class CarcassDesign(CarcassSpec):
         if self.dividerJoints is not None:
             if self.thickness != 18 or self.recipe != 'divided' or len(self.dividerJoints) != self.sections - 1:
                 raise ValueError('Проверьте количество и толщину внутренних стоек.')
-            if self.depth-(self.dividerSetback or 0) < 216 and any('cam_dowel' in (row.top,row.bottom) for row in self.dividerJoints):
+            if self.depth-(self.backThickness or 0)-(self.dividerSetback or 0) < 216 and any('cam_dowel' in (row.top,row.bottom) for row in self.dividerJoints):
                 raise ValueError('Для эксцентрика со шкантом в стойке нужна глубина от 216 мм.')
         if self.shelfChoices is not None:
             if not self.sectionShelves or [len(row) for row in self.shelfChoices] != self.sectionShelves:
                 raise ValueError('Проверьте выбор полок по секциям.')
             if any(not shelf_valid(value,self.thickness) for row in self.shelfChoices for value in row):
                 raise ValueError('Держатель не подходит к полке.')
-            depth = self.depth - self.shelfSetback
+            depth = self.depth - self.shelfSetback - (self.backThickness or 0)
             for row in self.shelfChoices:
                 if ('board/cam_dowel' in row and depth < 216) or ('board/confirmat' in row and depth < 152):
                     raise ValueError('Для крепежа недостаточно глубины самой полки.')

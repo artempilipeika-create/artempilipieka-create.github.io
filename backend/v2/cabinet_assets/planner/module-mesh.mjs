@@ -1,5 +1,5 @@
 import {fixedShelfScheme} from './shelf-choices.mjs';
-import {jointRows,dividerEnds} from './carcass-joints.mjs';
+import {jointRows,dividerEnds,backRows} from './carcass-joints.mjs';
 import meshes from './plinth-foot-meshes.json' with {type:'json'};
 import {plinthFoot} from './plinth-options.mjs';
 import decorMeshes from './decor-meshes.json' with {type:'json'};
@@ -335,6 +335,15 @@ export class MeshFactory{
        new THREE.CylinderGeometry(3*S,3*S,8*S,12).translate(0,4*S,0)
       ]));
       this.mesh(group,'regulator',geometry,key,foot.x,0,foot.z,null,ghost).userData.article='118779';
+    }
+    for(const {kind,x,y,dx,dy} of backRows(it)){
+      const cam=kind==='cam',key='back:'+kind+(cam?'':dx?'X':'Y');
+      const geometry=this.acquire(key,()=>{
+        const g=new THREE.CylinderGeometry((cam?7.5:4)*S,(cam?7.5:4)*S,(cam?13:35)*S,20);
+        return cam?g.rotateX(Math.PI/2):dx?g.rotateZ(Math.PI/2):g;
+      });
+      const inset=cam?34:5;
+      this.mesh(group,cam?'shelfSupport':'body',geometry,key,x+dx*inset,y+dy*inset,-D/2+(cam?6.4:9),null,ghost).userData.joint=kind;
     }
     for(const {level,scheme,roll,outer} of dividerEnds(it)){
       const base=level==='bottom'?0:H,inward=roll/90;
@@ -749,7 +758,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,panelFeet(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

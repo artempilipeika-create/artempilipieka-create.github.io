@@ -2,7 +2,7 @@ import {footHeight,plinthFoot,plinthPanel,plinthClearanceMm} from './plinth-opti
 import {feetCatalogue,footPlan,feetDrawing} from './wardrobe-feet.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
-import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
+import {jointOptions,jointQuantity,dividerScheme,backRows} from './carcass-joints.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
@@ -47,7 +47,7 @@ export class AssistantUI{
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
-  this.loadMaterial('back',c?.items.find(i=>i.item_id.endsWith(':back'))?.body_variant_id||CARCASS_BACK_MATERIAL_ID);
+  this.loadMaterial('back',c?.items.find(i=>i.item_id.endsWith(':back'))?.body_variant_id||(s?.backThickness?null:CARCASS_BACK_MATERIAL_ID));
  }
  async loadMaterial(role,id){
   if(!id)return;const epoch=this.epoch,serial=++this.serial[role];
@@ -69,7 +69,7 @@ export class AssistantUI{
  }
  error(step=this.step){
   try{const s=this.spec();if(s.height+s.elevation+footHeight(s)>this.app.adapter.room.height)throw Error('Шкаф выше помещения. Уменьшите высоту.');
-   if(step>=4)for(const role of ['body',...(s.back?['back']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?3:s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':'Корпус: ')+e);}
+   if(step>=4)for(const role of ['body',...(s.back?['back']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?(s.backThickness??3):s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':'Корпус: ')+e);}
    return '';
   }catch(e){return e.message;}
  }
@@ -79,11 +79,18 @@ export class AssistantUI{
   if(this.step===0){
    this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
    this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);resizeDividerChoices(this.fields);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
-   this.select(this.form,'Задняя стенка',[['yes','Накладная ХДФ 3 мм'],['no','Без задней стенки']],this.fields.back?'yes':'no',v=>{this.fields.back=v==='yes';this.changed();});
+   this.select(this.form,'Задняя стенка',[['yes','Накладная ЛХДФ 3 мм'],...[16,18].map(n=>[String(n),'Вкладная ЛДСП '+n+' мм']),['no','Без задней стенки']],this.fields.back?(this.fields.backThickness??'yes'):'no',v=>{
+    this.fields.back=v!=='no';delete this.fields.backThickness;
+    if(['16','18'].includes(v))this.fields.backThickness=Number(v);
+    this.serial.back++;this.materialChanged.back=true;this.materials.back=null;
+    if(v==='yes')this.loadMaterial('back',CARCASS_BACK_MATERIAL_ID);
+    else if(Number(this.materials.body?.thickness)===Number(v))this.materials.back=this.materials.body;
+    this.changed();this.render();
+   });
    for(const [key,title,overlay] of [['bottomFit','Конструкция дна','Накладное дно'],['topFit','Конструкция крыши','Накладная крыша']])
     this.select(this.form,title,[['inset','Между боковинами'],['overlay',overlay]],this.fields[key]??'inset',v=>{this.fields[key]=v;this.changed();this.render();});
    this.footControls();
-   this.form.append(el('p','Высота без ножек и цоколя. Задняя стенка добавляет 3 мм к глубине.'));
+   this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Без кромки. Чашки открываются сзади. Слева и справа по 3 пары. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':'Высота без ножек и цоколя.'+(this.fields.back?' Накладная ЛХДФ добавляет 3 мм к глубине.':'')));
   }else if(this.step===1){
    const choices=el('div');choices.className='assistant-cards';
    for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};if(this.fields.dividerPositions&&n!==this.fields.sections){
@@ -110,7 +117,7 @@ export class AssistantUI{
     input.onchange=()=>{this.resetSideEdges=input.checked;this.changed();};
     label.append(input,document.createTextNode('Пересчитать кромку обеих стоек по конструкции'));this.form.append(label);
    }
-   this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.back)this.materialPicker('back','Задняя стенка',3);
+   this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.back)this.materialPicker('back','Задняя стенка',this.fields.backThickness??3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
  }
@@ -268,7 +275,7 @@ export class AssistantUI{
    const group=el('fieldset'),number=i+1;
    group.append(el('legend','Внутренняя стойка '+number+' · между секциями '+number+' и '+(number+1)));
    for(const [end,direction] of [['top','сверху'],['bottom','снизу']]){
-    const options=Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth-1<216]);
+    const options=Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth-1-(this.fields.backThickness??0)<216]);
     this.select(group,'Стойка '+number+' · крепление '+direction,options,settings[end],value=>{
      settings[end]=value;this.changed();this.render();
     });
@@ -281,7 +288,7 @@ export class AssistantUI{
   const label=el('label','Поиск: '+title),input=el('input');input.type='search';input.placeholder='Название или артикул';input.setAttribute('aria-label','Поиск: '+title);label.append(input);card.append(label);
   const results=el('div');results.className='assistant-material-results';
   const search=button('Найти материал',async()=>{const epoch=this.epoch,serial=++this.serial[role];search.disabled=true;results.textContent='Поиск…';
-   try{const r=await this.app.bridge.request('/catalogue/materials?q='+encodeURIComponent(input.value.trim())+'&limit=100');if(this.disposed||epoch!==this.epoch||serial!==this.serial[role]||this.step!==4)return;
+   try{const r=await this.app.bridge.request('/catalogue/materials?q='+encodeURIComponent(input.value.trim())+'&thickness='+thickness+'&limit=100');if(this.disposed||epoch!==this.epoch||serial!==this.serial[role]||this.step!==4)return;
     const matches=r.items.filter(x=>Number(x.thickness)===thickness).slice(0,12);results.replaceChildren();
     for(const material of matches)results.append(button(material.name+' · '+material.thickness+' мм',()=>{this.serial[role]++;this.materials[role]=material;this.materialChanged[role]=true;this.app.bridge.cacheMaterial(material);this.changed();this.render();}));
     if(!matches.length)results.textContent='Нет подходящего материала '+thickness+' мм. Уточните название или артикул.';
@@ -290,7 +297,17 @@ export class AssistantUI{
  }
  draw(){
   try{const built=buildCarcass(this.spec(),{idPrefix:'questionnaire-preview'});this.drawing.innerHTML=carcassSVG(built);
-   if(built.spec.feet){const count=footPlan(built.spec).length;this.drawing.append(el('h4','Вид снизу · '+count+(count===4?' опоры':' опор')));this.drawing.insertAdjacentHTML('beforeend',feetDrawing(built.spec));}this.dimensions.textContent=built.spec.width+' × '+(built.spec.height+footHeight(built.spec))+' × '+built.depth+' мм';this.description.textContent=built.items.length+' деталей · '+built.spec.sectionShelves.reduce((a,b)=>a+b,0)+' полок · '+(built.spec.back?'с ХДФ':'без задней стенки');}
+   if(built.spec.backThickness){
+    const back=built.parts.find(p=>p.key==='back').item;
+    const rows=backRows({...back,assistant_carcass:{group_id:'questionnaire-preview',spec:built.spec}});
+    const marks=rows.filter(r=>r.kind==='cam').map(r=>{
+      const x=140-(r.x+r.dx*34)*220/back.width,y=150-(r.y+r.dy*34)*132/back.height;
+      return '<circle cx="'+x+'" cy="'+y+'" r="3" fill="#276958"/>';
+    }).join('');
+    this.drawing.append(el('h4','Вид сзади · '+(rows.length/2)+' пар'));
+    this.drawing.insertAdjacentHTML('beforeend','<svg role="img" aria-label="Расположение пар эксцентрик и шкант со стороны задней стенки" viewBox="0 0 280 168"><rect x="25" y="13" width="230" height="142" fill="#aa926c"/><rect x="30" y="18" width="220" height="132" fill="#e8dcc5"/>'+marks+'</svg>');
+   }
+   if(built.spec.feet){const count=footPlan(built.spec).length;this.drawing.append(el('h4','Вид снизу · '+count+(count===4?' опоры':' опор')));this.drawing.insertAdjacentHTML('beforeend',feetDrawing(built.spec));}this.dimensions.textContent=built.spec.width+' × '+(built.spec.height+footHeight(built.spec))+' × '+built.depth+' мм';this.description.textContent=built.items.length+' деталей · '+built.spec.sectionShelves.reduce((a,b)=>a+b,0)+' полок · '+(built.spec.backThickness?'вкладная ЛДСП '+built.spec.backThickness+' мм':built.spec.back?'с ХДФ':'без задней стенки');}
   catch(e){this.drawing.replaceChildren();this.dimensions.textContent='Проверьте размеры';this.description.textContent=e.message;}
  }
  controls(){

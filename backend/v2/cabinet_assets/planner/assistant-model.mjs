@@ -8,7 +8,7 @@ import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -37,12 +37,12 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  const spec=cleanSpec(plan.spec),prefix=current?.metadata.group_id||id;
  const first=current?.items.find(i=>i.item_id.endsWith(':left'));
  const built=buildCarcass(spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]||'Корпус ИИ',
-  bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),backMaterialId:backMaterialId??CARCASS_BACK_MATERIAL_ID});
+  bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
  if(current){
   // Resize from the right and front, keeping the left edge and rear envelope.
   const previous=current.metadata.spec;
-  const delta=worldPoint({x:(spec.width-previous.width)/2,z:(built.depth-previous.depth-(previous.back?3:0))/2},position.rotation);
+  const delta=worldPoint({x:(spec.width-previous.width)/2,z:(built.depth-previous.depth-(previous.back&&!previous.backThickness?3:0))/2},position.rotation);
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
@@ -53,13 +53,13 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  }
  position=Object.fromEntries(['x','z','elevation_mm','rotation'].map(k=>[k,position[k]??0]));
  const metadata={group_id:prefix,spec,position};
- const previousSides=current && (spec.back!==current.metadata.spec.back||spec.topFit!==current.metadata.spec.topFit||spec.bottomFit!==current.metadata.spec.bottomFit)
+ const previousSides=current && (spec.back!==current.metadata.spec.back||spec.backThickness!==current.metadata.spec.backThickness||spec.topFit!==current.metadata.spec.topFit||spec.bottomFit!==current.metadata.spec.bottomFit)
    ?buildCarcass(current.metadata.spec,{idPrefix:prefix}).items.filter(i=>i.item_id===prefix+':left'||i.item_id===prefix+':right'||i.item_id===prefix+':top'||i.item_id===prefix+':bottom'):[];
  const items=placeCarcass(built,position).map(generated=>{
   const old=current?.items.find(i=>i.item_id===generated.item_id);
   const item={...old,...generated,blank_binding:generated.blank_binding??null,assistant_carcass:metadata};
   if(old){
-   if(old.blank_shelf===generated.blank_shelf)item.name=old.name;
+   if(old.blank_shelf===generated.blank_shelf&&(!item.item_id.endsWith(':back')||old.depth===generated.depth))item.name=old.name;
    if(!generated.blank_shelf)delete item.blank_shelf;
    if(!old.blank_shelf&&!generated.blank_shelf&&old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
    if(old.blank_thickness_mm===generated.blank_thickness_mm)item.body_variant_id=old.body_variant_id;
@@ -70,7 +70,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    }
    if(spec.edgeThickness===current.metadata.spec.edgeThickness)item.blank_edge_thickness_mm=old.blank_edge_thickness_mm;
   }
-  if(generated.item_id.endsWith(':back')){if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
+  if(generated.item_id.endsWith(':back')){item.blank_edge_code='0000';if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
   else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
   else if(bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;
   if(item.item_id===prefix+':plinth')item.blank_edge_code='1111';
@@ -89,7 +89,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.width} × ${spec.height} × ${spec.depth} мм · ЛДСП ${spec.thickness} мм`,
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
-  spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
+  spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм без кромки · полки короче на '+spec.backThickness+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{
    const ends=dividerScheme(spec,i);
    return 'Стойка '+(i+1)+' · сверху: '+jointOptions[ends.top]+' · снизу: '+jointOptions[ends.bottom];

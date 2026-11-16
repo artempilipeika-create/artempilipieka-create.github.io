@@ -1462,6 +1462,7 @@ function exportBazisProject(){
     if(footItems.some(it=>it.article!=='118779')){payload.format='martin-forest-bazis-native-v7';payload.minimum_importer='9.9.24';}
     if(footItems.some(it=>it.decorative_support)){payload.format='martin-forest-bazis-native-v8';payload.minimum_importer='9.9.25';}
   }
+  if(jointItems.some(it=>it.joint_back_face)){payload.format='martin-forest-bazis-native-v9';payload.minimum_importer='9.9.26';}
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');

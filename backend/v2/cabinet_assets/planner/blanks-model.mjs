@@ -29,6 +29,7 @@ export function validateBlank(input,room){
   if(!Number.isInteger(b.width)||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
+  if(input.assistant_carcass?.spec?.backThickness&&input.item_id===input.assistant_carcass.group_id+':back'&&(b.axis!=='back'||b.code!=='0000'||b.thickness!==input.assistant_carcass.spec.backThickness))return 'Вкладная задняя стенка должна соответствовать выбранной толщине и быть без кромки.';
   const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
   let glass=false;
   if(input.blank_shelf){

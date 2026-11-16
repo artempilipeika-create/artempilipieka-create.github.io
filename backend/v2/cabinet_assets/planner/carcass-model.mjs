@@ -30,6 +30,8 @@ export function carcassSpec(input={}){
     if(!Number.isInteger(s[key])||s[key]<min||s[key]>max)throw Error(label+': '+min+'–'+max+'.');
   if(![.4,.8,1,2,3].includes(s.edgeThickness)||!['front','all','none'].includes(s.edgePolicy))throw Error('Проверьте схему и толщину ПВХ.');
   if(typeof s.back!=='boolean')throw Error('Выберите вариант задней стенки.');
+  if(s.backThickness!=null&&(!s.back||![16,18].includes(s.backThickness)||!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте толщину вкладной задней стенки.');
+  if(s.backThickness>=16&&s.thickness<16)throw Error('Для крепления вкладной стенки нужны боковины, дно и крыша толщиной от 16 мм.');
   if(s.sectionShelves!=null&&(!Array.isArray(s.sectionShelves)||s.sectionShelves.length!==s.sections||s.sectionShelves.some(n=>!Number.isInteger(n)||n<0||n>10)||Math.max(...s.sectionShelves)!==s.shelves||!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте количество полок в каждой секции.');
   if(recipe.id==='sink'&&(s.back||s.shelves||s.sections!==1))throw Error('У корпуса под мойку нет полок, перегородок и задней стенки.');
   if(['base','cap'].includes(recipe.id)&&s.sections!==1)throw Error('У этой конструкции одна секция.');
@@ -54,20 +56,21 @@ export function sectionWidths(s){
 
 export function buildCarcass(input={},options={}){
   const s=carcassSpec(input),{width:W,height:H,depth:D,thickness:t}=s;
+  const rear=s.backThickness??0,shelfCentre=(rear-s.shelfSetback)/2;
   const prefix=options.idPrefix||crypto.randomUUID(),parts=[];
   const plinth=plinthPanel(s),legHeight=s.feet?.article==='118779'?0:footHeight(s);
   const sideY=s.bottom==='overlay'?t:0,sideH=H-sideY-(s.top==='overlay'?t:0);
   const bottomTop=t,topBottom=['inset','overlay','rails'].includes(s.top)?H-t:H-80;
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
-      x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:s.edgeThickness,
+      x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:s.edgeThickness,
       blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(key==='back'?options.backMaterialId:options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
     const error=validateBlank(item);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
   };
   const edge=(special='1000')=>s.edgePolicy==='all'?'1111':s.edgePolicy==='none'?'0000':special;
   // Side panel edge order: front, rear, bottom, top.
-  const sideEdges=edge('1'+(s.back?'0':'1')+(s.bottom==='overlay'?'0':'1')+(s.top==='overlay'?'0':'1'));
+  const sideEdges=edge('1'+(s.back&&!rear?'0':'1')+(s.bottom==='overlay'?'0':'1')+(s.top==='overlay'?'0':'1'));
   const left=add('left','Боковина левая','side',sideH+(floorSide(s,'left')?legHeight:0),D,t,-(W-t)/2,sideY,0,sideEdges);
   const right=add('right','Боковина правая','side',sideH+(floorSide(s,'right')?legHeight:0),D,t,(W-t)/2,sideY,0,sideEdges);
   const binding=(a,b,gap=0,z=0)=>({left_id:a.item_id,right_id:b.item_id,gap_left_mm:gap,gap_right_mm:gap,depth_offset_mm:z});
@@ -82,7 +85,7 @@ export function buildCarcass(input={},options={}){
   if(widths.some(w=>w-2*s.shelfGap<100))throw Error('Секции слишком узкие. Измените положение стойки, ширину шкафа или количество секций.');
   const supports=[left];let x=-W/2+t;
   for(let i=0;i<s.sections-1;i++){
-    x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D-dividerSetback,t,x+t/2,t,-dividerSetback/2,edge()));x+=t;
+    x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D-rear-dividerSetback,t,x+t/2,t,(rear-dividerSetback)/2,edge()));x+=t;
   }
   supports.push(right);
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
@@ -93,22 +96,23 @@ export function buildCarcass(input={},options={}){
     const value=s.shelfChoices?.[section]?.[i]??defaultShelf;
     const {kind,thickness,hardware,scheme}=choice(value,t);
     const gap=scheme?0:Math.max(s.shelfGap,kind==='glass'&&!options.legacyGlassGap?1:0,fittingGap(hardware.article));
-    if(scheme && D-s.shelfSetback < (scheme==='cam_dowel'?216:152))throw Error('Для выбранного крепежа недостаточно глубины полки после отступа.');
+    if(scheme && D-rear-s.shelfSetback < (scheme==='cam_dowel'?216:152))throw Error('Для выбранного крепежа недостаточно глубины полки после отступа.');
     const label=kind==='glass'?'Стекло '+thickness+' мм · полка ':'Полка ';
     add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
-      widths[section]-2*gap,D-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,-s.shelfSetback/2,kind==='glass'?'0000':edge(),binding(a,b,gap,-s.shelfSetback/2-a.z),value===defaultShelf?null:value);
+      widths[section]-2*gap,D-rear-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,shelfCentre,kind==='glass'?'0000':edge(),binding(a,b,gap,shelfCentre-a.z),value===defaultShelf?null:value);
   }
   if(plinth)add('plinth','Цоколь','back',plinth.width,plinth.height,t,plinth.x,0,plinth.z,'1111');
   // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
-  if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
+  if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-2*t,rear,0,t,(rear-D)/2,'0000');
+  else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   const items=resolveBlankBindings(parts.map(p=>p.item));
   return {spec:s,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
-    width:W,height:H,depth:D+(s.back?3:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
+    width:W,height:H,depth:D+(s.back&&!rear?3:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 
 export function placeCarcass(built,position){
   // Placement envelope includes the overlay back; recipe origin remains at the carcass centre.
-  const shift=built.spec.back?1.5:0;
+  const shift=built.spec.back&&!built.spec.backThickness?1.5:0;
   return built.items.map(it=>({...it,...worldPoint({x:it.x,z:it.z+shift},position.rotation||0),rotation:position.rotation||0}))
     .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?.article==='118779'?10:0)}));
 }

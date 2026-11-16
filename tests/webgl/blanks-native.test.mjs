@@ -91,3 +91,22 @@ test('corpus panel native rebuild '+JSON.stringify(spec),()=>{
  assert.deepEqual(panel.Contour.lines,[[0,0,spec.partWidth,0],[spec.partWidth,0,spec.partWidth,spec.length],
    [spec.partWidth,spec.length,0,spec.length],[0,spec.length,0,0]]);
 });
+
+test('back cam entry is on rear face and blind bore remains inside 16/18 mm stock at every edge and yaw',async()=>{
+ const {nativeCarcassJoints}=await import('../../backend/v2/cabinet_assets/planner/carcass-joints.mjs');
+ for(const thickness of [16,18])for(const rotation of [0,90,180,270]){
+  const spec={recipe:'shelves',width:920,back:true,backThickness:thickness};
+  const items=placeCarcass(buildCarcass(spec,{idPrefix:'g'}),{x:1000,z:750,elevation_mm:80,rotation})
+   .map(it=>({...it,assistant_carcass:{group_id:'g',spec}}));
+  const back=items.find(i=>i.item_id==='g:back'),centre=localPoint(back,rotation),rear=centre.z-thickness/2;
+  for(const joint of nativeCarcassJoints(items).filter(i=>i.joint_part==='cam'&&i.joint_back_face)){
+   const {obj,c}=setup('0000');c.placeByFrame(obj,null,joint,[],{x:0,y:0,z:0});
+   const entry=obj.ToGlobal({x:34,y:-9,z:0}),end=obj.ToGlobal({x:34,y:4,z:0});
+   close(localPoint(entry,rotation).z,rear);close(localPoint(end,rotation).z,rear+13);
+   close(localPoint(entry,rotation).x,localPoint(end,rotation).x);close(entry.y,end.y);
+   const x=localPoint(entry,rotation).x-centre.x,y=entry.y-back.elevation_mm;
+   assert.ok(Math.abs(x)+7.5<back.width/2 && y>7.5 && y<back.height-7.5);
+   assert.ok(thickness-13>=3);
+  }
+ }
+});

@@ -130,6 +130,12 @@ def hardware_for(it):
     return rows,description
 
 def _panel_hardware(it):
+    meta = it.get('assistant_carcass') or {}
+    spec = meta.get('spec') or {}
+    if spec.get('backThickness') and it.get('item_id') == str(meta['group_id'])+':back':
+        pairs = 6 + sum(1 + int((spec['width'] if spec.get(edge+'Fit')=='overlay' else it['width']) > 800)
+                        for edge in ('bottom','top'))
+        return [_row('Эксцентриковая стяжка · задняя стенка',pairs),_row('Шкант деревянный 8×35',pairs,'pcs','39319')],None
     if (it.get('module_type')=='blank' and it.get('blank_axis')=='side' and it.get('width')==18
             and re.search(r':divider-\d+$',it.get('item_id',''))):
         spec=(it.get('assistant_carcass') or {}).get('spec') or {}

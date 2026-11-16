@@ -209,11 +209,13 @@ def router(settings,policy):
             return {'items':[{'file_id':r['file_id'],'name':r['original_name'],'download_url':'/api/v2/files/'+str(r['file_id'])+'/download'} for r in rows if 'client' not in user['roles'] or r['created_by']==user['user_id']]}
 
     @api.get('/catalogue/materials')
-    def materials(request:Request,q:str='',release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
+    def materials(request:Request,q:str='',thickness:float|None=Query(None,gt=0),release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
         with transaction(settings) as conn:
             user=identity(conn,request);require(conn,user,'catalogue.read')
             version=release_or_active(conn,release)
             found=[safe_item(i,version) for i in catalogue.items(conn,version,'material') if matches(i,q)]
+            if thickness is not None:
+                found=[i for i in found if i.get('thickness') is not None and float(i['thickness'])==thickness]
             return {'kind':'candidates','catalogue_release':version,'items':found[offset:offset+limit],
                     'total':len(found),'next_offset':offset+limit if len(found)>offset+limit else None}
 
