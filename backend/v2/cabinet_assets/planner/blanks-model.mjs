@@ -27,6 +27,8 @@ export function validateBlank(input,room){
   const b=normalizeBlank(input);
   if(!Number.isInteger(b.length)||b.length<100||b.length>3000)return 'Длина заготовки: от 100 до 3000 мм.';
   if(!Number.isInteger(b.width)||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
+  if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
+    return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
   const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
   let glass=false;
   if(input.blank_shelf){

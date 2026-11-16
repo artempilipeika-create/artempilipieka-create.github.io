@@ -26,3 +26,22 @@ test('wardrobe top and bottom construction, front and rear feet follow panels an
  assert.throws(()=>wardrobeSpec({...base,feet:{...base.feet,front:70}}),/присадкой/);
  assert.throws(()=>wardrobeSpec({...base,joints:undefined,bottomFit:'overlay',thickness:16}),/толще/);
 });
+
+test('every supplied kitchen foot raises the body and exports a four-edge plinth and the exact source',async()=>{
+ const {plinthFeet}=await import('../../backend/v2/cabinet_assets/planner/plinth-options.mjs');
+ const {blankNativeItem}=await import('../../backend/v2/cabinet_assets/planner/blanks-native.mjs');
+ assert.equal(plinthFeet.length,13);
+ for(const leg of plinthFeet){
+  const spec=wardrobeSpec({...base,feet:{article:leg.article,front:80,rear:50,left:'side'},edgePolicy:'none',edgeThickness:2});
+  const built=buildCarcass(spec,{idPrefix:'q'});
+  const items=placeCarcass(built,{rotation:90,x:200,z:300,elevation_mm:0}).map(i=>({...i,assistant_carcass:{group_id:'q',spec}}));
+  const panel=items.find(i=>i.item_id==='q:plinth'),bottom=items.find(i=>i.item_id==='q:bottom');
+  assert.equal(panel.height,leg.height);assert.equal(panel.width,782);assert.equal(panel.elevation_mm,0);
+  assert.equal(bottom.elevation_mm,leg.height);assert.equal(items[0].elevation_mm,0);
+  const native=blankNativeItem(panel,{name:'ЛДСП',thickness:18});
+  assert.equal(native.source_file,'Заготовка_6.ПВХ_в круг..fr3d');
+  assert.equal(native.blank.edge_code,'1111');
+  const feet=nativeFeet(items);assert.equal(feet.length,4);
+  assert.ok(feet.every(f=>f.host_blank_id===bottom.item_id&&f.position.y===leg.height&&f.source_sha256===leg.sha));
+ }
+});

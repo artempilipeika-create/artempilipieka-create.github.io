@@ -133,6 +133,7 @@ class FurnitureItem(StrictModel):
     blank_binding: BlankBinding|None=None
     blank_hook: BlankHook|None=None
     blank_shelf: ShelfValue|None=None
+    blank_plinth_run: list[UUID]|None=Field(default=None,min_length=2,max_length=100,exclude_if=lambda v:v is None)
     assistant_carcass: AssistantCarcass|None=None
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
@@ -145,6 +146,12 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.assistant_carcass and self.item_id==str(self.assistant_carcass.group_id)+':plinth':
+            if self.blank_axis!='back' or self.blank_edge_code!='1111':
+                raise ValueError('Цоколь шкафа должен иметь ПВХ по четырём торцам.')
+        if self.blank_plinth_run and (not self.assistant_carcass or self.blank_plinth_run[0]!=self.assistant_carcass.group_id or
+                                     self.item_id!=str(self.assistant_carcass.group_id)+':plinth' or len(set(self.blank_plinth_run))!=len(self.blank_plinth_run)):
+            raise ValueError('Общий цоколь должен ссылаться на шкафы своего ряда.')
         if self.blank_hook:
             if self.module_type!='blank' or self.blank_axis not in ('back','side'):
                 raise ValueError('Крючок доступен на вертикальной заготовке.')

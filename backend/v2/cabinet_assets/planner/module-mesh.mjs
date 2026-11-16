@@ -1,5 +1,7 @@
 import {fixedShelfScheme} from './shelf-choices.mjs';
 import {jointRows,dividerEnds} from './carcass-joints.mjs';
+import meshes from './plinth-foot-meshes.json' with {type:'json'};
+import {plinthFoot} from './plinth-options.mjs';
 import {panelFeet} from './wardrobe-feet.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
 import {vertices as mystiVertices,indices as mystiIndices} from './mysti-mesh.mjs';
@@ -21,6 +23,7 @@ export const VISUAL_FINISHES=Object.freeze({
   glass:{color:'#f4faf7',roughness:.075,metalness:0},
   frame:{color:'#202321',roughness:.3,metalness:.72},
   hinge:{color:'#b9bdc1',roughness:.32,metalness:.72},
+  whiteFoot:{color:'#f7f6f1',roughness:.68,metalness:0},
   regulator:{color:'#292c2d',roughness:.68,metalness:0},
   shelfSupport:{color:'#656766',roughness:.24,metalness:.78},
   supportPad:{color:'#969c98',roughness:.85,metalness:0},
@@ -302,6 +305,21 @@ export class MeshFactory{
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
     }
     for(const foot of panelFeet(it)){
+      const leg=plinthFoot(it.assistant_carcass.spec);
+      if(leg){
+       const key='plinth-foot:'+leg.article;
+       const geometry=this.acquire(key,()=>{
+        const bytes=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0)).buffer;
+        const [positions,indices]=meshes[leg.article];
+        const v=Float32Array.from(new Int16Array(bytes(positions)),n=>n*S/10);
+        const shape=new THREE.BufferGeometry();
+        shape.setAttribute('position',new THREE.BufferAttribute(v,3));
+        shape.setIndex(new THREE.BufferAttribute(new Uint16Array(bytes(indices)),1));
+        shape.rotateX(Math.PI/2);shape.computeVertexNormals();return shape;
+       });
+       this.mesh(group,leg.white?'whiteFoot':'regulator',geometry,key,foot.x,0,foot.z,null,ghost).userData.article=leg.article;
+       continue;
+      }
       const key='regulator:118779';
       const geometry=this.acquire(key,()=>combine([
        new THREE.CylinderGeometry(10*S,10*S,10*S,12).translate(0,-5*S,0),
@@ -722,7 +740,7 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,panelFeet(it),dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,panelFeet(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

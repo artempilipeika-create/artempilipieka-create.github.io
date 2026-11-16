@@ -131,3 +131,16 @@ test('successive wardrobe builds extend the row and editing one group preserves 
  assert.deepEqual(neighbours(),before);
  assert.equal(selectedCarcass(a).metadata.spec.shelves,2);
 });
+
+test('compatible wardrobe plinths form one edged board and split when the middle model changes',()=>{
+ const {a}=setup();
+ const feet={article:'78517',front:80,rear:50};
+ for(let i=0;i<3;i++)applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec:{...spec,feet}},{id:'g'+i}));
+ const panels=()=>a.items.filter(it=>it.item_id.endsWith(':plinth'));
+ assert.equal(panels().length,1);assert.equal(panels()[0].width,2400);
+ a.restore(JSON.parse(JSON.stringify(a.snapshot())));
+ a.select('g1:left');assert.equal(selectedCarcass(a).items.find(it=>it.item_id.endsWith(':plinth')).width,800);
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:{...spec,feet:{...feet,article:'86503'}}}));
+ assert.deepEqual(panels().map(it=>it.height).sort((a,b)=>a-b),[100,100,150]);
+ assert.ok(panels().every(it=>it.blank_edge_code==='1111'&&it.width===800));
+});

@@ -2,6 +2,8 @@ import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-mode
 import {shelfSupportPlan} from './sekura.mjs';
 import {jointQuantity,nativeCarcassJoints,dividerScheme,jointOptions} from './carcass-joints.mjs';
 import {choice,shelfDescription} from './shelf-choices.mjs';
+import {joinPlinths,splitPlinths} from './wardrobe-plinth-runs.mjs';
+import {footHeight} from './plinth-options.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
@@ -11,12 +13,13 @@ const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),sectionShe
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
 const geometry=i=>signature(['item_id','x','z','rotation','elevation_mm','width','height','depth','blank_axis','blank_length_mm','blank_width_mm','blank_thickness_mm','blank_binding'].map(k=>k==='blank_binding'&&i[k]?Object.fromEntries(Object.entries(i[k]).filter(([key])=>key!=='mounting')):i[k]??null));
+export const sameAssistantSpec=(a,b)=>signature(a)===signature(b);
 export const assistantStamp=adapter=>JSON.stringify([adapter.projectId,adapter.room,adapter.items]);
 
 export function selectedCarcass(adapter){
  const metadata=adapter.selected?.assistant_carcass;
  if(!metadata)return null;
- const items=adapter.items.filter(i=>i.assistant_carcass?.group_id===metadata.group_id);
+ const items=splitPlinths(adapter.items).filter(i=>i.assistant_carcass?.group_id===metadata.group_id);
  const matches=(legacyGlassGap=false)=>{
   const expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id,legacyGlassGap}),metadata.position);
   return items.length===expected.length&&expected.every(i=>geometry(items.find(p=>p.item_id===i.item_id)||{})===geometry(i));
@@ -43,7 +46,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
-  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.height+(spec.feet?10:0),depth:built.depth,
+  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.height+footHeight(spec),depth:built.depth,
    x:0,z:0,rotation:0,elevation_mm:spec.elevation,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
   position=findSpace(envelope,adapter.items,adapter.room,adapter.selected,{wallOffset:0,autoRotate:false});
   if(!position)throw Error('Для корпуса нет свободного места. Проверьте размеры помещения.');
@@ -70,11 +73,12 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   if(generated.item_id.endsWith(':back')){if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
   else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
   else if(bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;
+  if(item.item_id===prefix+':plinth')item.blank_edge_code='1111';
   return item;
  });
  const removed=current?.items.filter(i=>!items.some(p=>p.item_id===i.item_id))||[];
  const oldIds=new Set(current?.items.map(i=>i.item_id)||[]);
- const next=resolveBlankBindings([...adapter.items.filter(i=>!oldIds.has(i.item_id)),...items]);
+ const next=resolveBlankBindings(joinPlinths([...splitPlinths(adapter.items).filter(i=>!oldIds.has(i.item_id)),...items]));
  if(next.length>100)throw Error('В проекте поддерживается до 100 деталей и модулей.');
  for(const i of next){const error=adapter.validate(i,next);if(error)throw Error(i.name+': '+error);}
  for(const shelf of next.filter(i=>i.blank_shelf)){

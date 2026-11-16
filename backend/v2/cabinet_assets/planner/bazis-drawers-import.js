@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.23 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.24 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,7 +135,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -1219,8 +1219,9 @@ function placeMystiBelow(obj,item,shelfPanel,log){
 }
 
 const LEVEL_FOOT_HASH='9d939e3cbf71b17dad69eacce37b305d323b6dc2e7898e3861e6772f81c87090';
+const PLINTH_FOOT_HASHES=new Set(["748f7dfc9c5e9f6795cf2af7a84e261b02a56917f7d83ddb61bc1640a88965ea", "208e694dcad2eb55bd56d725d85d95351df2ca8fb3e841127ddd19b357632860", "ae4cf4ff04e7da78b75e4cc7e800d8c52d7eae0afdc4ed09d5155332840b3865", "ec84ce11e6a2e25315a994fb2b76230e4ccb988c7fc82de2f9b742d95d7a1081", "98382596ab2a3344276158b199f9d18b107759d2b1b8e86362bfeb207439e18b", "cb7d9bd05315ea0cb9bea26e4302f0b5ca62e563b4fb0510a3a54496b089126e", "6c710edd9a5d650b67459062cdd1a09877aaf123e17cb5007e12e768529cbcc1", "766fb6eff1d5eb4d04af73dd4b8ed5512b73a85a671a9f7e8691ce513854993e", "22bff0468a0c2cfeb2a0acf117d92bb0074b9cbe00c1e17c43dd75e162465a80", "4febd80d47e28b27f566c45672eff2e98f706f1a34eafadfabdde6cb667caea8", "ab31999962007aec93d8dc26de164ab74b504c3c5f255f539ba4ebb735fe94ce", "c95ec7be2657c40c8d5cfad290f16f2820ce468086fa1f2327b4cac22c5246d2", "4361ae54c01d70112ac344aa69c3cef378016445816c9f8310379eb4c3c2a14f"]);
 function resizeAndPlace(obj, item, log, shelfPanel) {
-  if(item.source_sha256===LEVEL_FOOT_HASH){
+  if(item.source_sha256===LEVEL_FOOT_HASH||PLINTH_FOOT_HASHES.has(item.source_sha256)){
     const desired=vector(item.position,'foot.position');
     obj.SetDefaultTransform();
     objectTransformation.RotateObject(obj,{x:1,y:0,z:0},90,true);
@@ -1228,7 +1229,7 @@ function resizeAndPlace(obj, item, log, shelfPanel) {
     setObjectPosition(obj,desired);
     if(distance(obj.ToGlobal({x:0,y:0,z:0}),desired)>PLACEMENT_TOLERANCE_MM||
        Math.abs(obj.ToGlobal({x:0,y:0,z:-16}).y-desired.y-16)>PLACEMENT_TOLERANCE_MM)
-      throw Error('Регулятор 118779: не подтверждена присадка снизу.');
+      throw Error('Опора: не подтверждена ориентация присадки снизу.');
     return {materialChecks:[],profileChecks:[]};
   }
   if(item.source_sha256===MYSTI_12_22_HASH)return placeMystiBelow(obj,item,shelfPanel,log);
@@ -1374,7 +1375,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.23 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.24 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

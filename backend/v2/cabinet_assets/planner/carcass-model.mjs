@@ -3,6 +3,7 @@ import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
 
 // Exact master.u2 catalogue identity: ЛХДФ 3ММ Белый, 2800х2070 мм.
 // Used only when adding new carcasses; saved/manual assignments stay unchanged.
+import {plinthPanel,floorSide} from './plinth-options.mjs';
 import {choice,defaultShelf,fittingGap} from './shelf-choices.mjs';
 export const CARCASS_BACK_MATERIAL_ID='fb7b270e-66ad-5411-affc-5717b1adf0d6';
 
@@ -54,11 +55,12 @@ export function sectionWidths(s){
 export function buildCarcass(input={},options={}){
   const s=carcassSpec(input),{width:W,height:H,depth:D,thickness:t}=s;
   const prefix=options.idPrefix||crypto.randomUUID(),parts=[];
+  const plinth=plinthPanel(s);
   const sideY=s.bottom==='overlay'?t:0,sideH=H-sideY-(s.top==='overlay'?t:0);
   const bottomTop=t,topBottom=['inset','overlay','rails'].includes(s.top)?H-t:H-80;
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
-      x,z,elevation:y+s.elevation,edges:options.edges?.[key]??code,blank_edge_thickness_mm:s.edgeThickness,
+      x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:plinth?.height??0),edges:key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:s.edgeThickness,
       blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(key==='back'?options.backMaterialId:options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
     const error=validateBlank(item);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
@@ -66,8 +68,8 @@ export function buildCarcass(input={},options={}){
   const edge=(special='1000')=>s.edgePolicy==='all'?'1111':s.edgePolicy==='none'?'0000':special;
   // Side panel edge order: front, rear, bottom, top.
   const sideEdges=edge('1'+(s.back?'0':'1')+(s.bottom==='overlay'?'0':'1')+(s.top==='overlay'?'0':'1'));
-  const left=add('left','Боковина левая','side',sideH,D,t,-(W-t)/2,sideY,0,sideEdges);
-  const right=add('right','Боковина правая','side',sideH,D,t,(W-t)/2,sideY,0,sideEdges);
+  const left=add('left','Боковина левая','side',sideH+(floorSide(s,'left')?plinth.height:0),D,t,-(W-t)/2,sideY,0,sideEdges);
+  const right=add('right','Боковина правая','side',sideH+(floorSide(s,'right')?plinth.height:0),D,t,(W-t)/2,sideY,0,sideEdges);
   const binding=(a,b,gap=0,z=0)=>({left_id:a.item_id,right_id:b.item_id,gap_left_mm:gap,gap_right_mm:gap,depth_offset_mm:z});
   add('bottom','Дно','horizontal',s.bottom==='overlay'?W:W-2*t,D,t,0,0,0,edge(s.bottomFit==='overlay'?'1011':'1000'),s.bottom==='inset'?binding(left,right):null);
   if(['inset','overlay'].includes(s.top))add('top','Крыша','horizontal',s.top==='overlay'?W:W-2*t,D,t,0,H-t,0,
@@ -96,6 +98,7 @@ export function buildCarcass(input={},options={}){
     add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
       widths[section]-2*gap,D-s.shelfSetback,thickness,(a.x+b.x)/2,y+t-thickness,-s.shelfSetback/2,kind==='glass'?'0000':edge(),binding(a,b,gap,-s.shelfSetback/2-a.z),value===defaultShelf?null:value);
   }
+  if(plinth)add('plinth','Цоколь','back',plinth.width,plinth.height,t,plinth.x,0,plinth.z,'1111');
   // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
   if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   const items=resolveBlankBindings(parts.map(p=>p.item));
@@ -107,7 +110,7 @@ export function placeCarcass(built,position){
   // Placement envelope includes the overlay back; recipe origin remains at the carcass centre.
   const shift=built.spec.back?1.5:0;
   return built.items.map(it=>({...it,...worldPoint({x:it.x,z:it.z+shift},position.rotation||0),rotation:position.rotation||0}))
-    .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?10:0)}));
+    .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?.article==='118779'?10:0)}));
 }
 
 export function insertCarcass(adapter,items){
