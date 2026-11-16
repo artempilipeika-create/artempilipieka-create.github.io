@@ -42,6 +42,7 @@ export class AssistantUI{
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
   if(s?.thickness===18&&s.sections>1)this.fields.dividerJoints=Array.from({length:s.sections-1},(_,i)=>dividerScheme(s,i));
+  this.footOpen=false;this.footGroup=null;this.footFilter='all';
   this.shelfScopes={};this.shelfDrafts={};this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
@@ -114,24 +115,49 @@ export class AssistantUI{
   }this.draw();this.controls();
  }
  footControls(){
-  const box=el('fieldset');box.append(el('legend','Опоры'));const cards=el('div');cards.className='assistant-cards';
-  const none=button('Без опор',()=>{delete this.fields.feet;this.changed();this.render();});
-  none.setAttribute('aria-pressed',String(!this.fields.feet));cards.append(none);
+  const box=el('details');box.className='foot-picker';box.open=this.footOpen;
+  box.ontoggle=()=>{if(box.isConnected)this.footOpen=box.open;};
+  const selected=feetCatalogue.find(leg=>leg.article===this.fields.feet?.article);
   const current=plinthFoot(this.fields);
-  const height=current?.height??this.footFilter??100;
-  this.select(box,'Высота цокольных ножек, мм',[...new Set(feetCatalogue.filter(leg=>leg.plinth).map(leg=>leg.height))].map(h=>[h,h+' мм']),height,value=>{
-   this.footFilter=Number(value);
-   if(current){const candidates=feetCatalogue.filter(leg=>leg.plinth&&leg.height===this.footFilter);
-    this.fields.feet.article=(candidates.find(leg=>leg.name===current.name)??candidates[0]).article;}
-   this.changed();this.render();
-  });
-  for(const leg of feetCatalogue.filter(l=>!l.plinth||l.height===height)){
-   const card=button('',()=>{const old=this.fields.feet;
-    this.fields.feet={...(current&&leg.plinth?old:{}),article:leg.article,front:leg.plinth?current?old.front:80:50,rear:current&&leg.plinth?old.rear:50};this.changed();this.render();});
-   const image=el('img');image.src='/account/planner/shelf-images/'+leg.article+'.webp';image.alt='';image.width=76;image.height=68;
-   card.append(image,el('strong',leg.name+' · '+leg.article+(leg.plinth?(leg.white?'':' · чёрная')+' · с цоколем':'')));card.setAttribute('aria-pressed',String(this.fields.feet?.article===leg.article));cards.append(card);
+  const summary=el('summary','Опоры'),caption=el('small',selected?selected.name.split(' · ')[0]+(selected.plinth?(selected.white?', белая':', чёрная'):'')+' · '+selected.height+' мм · арт. '+selected.article:'Без опор');
+  summary.append(caption);box.append(summary);this.form.append(box);
+  const refresh=focus=>{
+   this.footOpen=true;this.render();this.form.querySelector(focus)?.focus({preventScroll:true});
+  };
+  for(const [id,title] of [['plinth','Накладные под цоколь'],['decor','Декоративные опоры'],['end','Торцевые опоры']]){
+   const group=el('details');group.className='foot-group';group.setAttribute('name','wardrobe-foot-category');
+   group.open=this.footGroup===id;
+   group.ontoggle=()=>{
+    if(!group.isConnected)return;
+    if(group.open){
+     this.footGroup=id;
+     for(const sibling of box.querySelectorAll('.foot-group'))if(sibling!==group)sibling.open=false;
+    }else if(this.footGroup===id)this.footGroup=null;
+   };
+   group.append(el('summary',title));box.append(group);
+   const models=feetCatalogue.filter(leg=>leg.category===id);
+   if(!models.length){group.append(el('p','Модели пока не добавлены.'));continue;}
+   if(id==='plinth'){
+    const heights=[...new Set(models.map(leg=>leg.height))].sort((a,b)=>a-b);
+    this.select(group,'Высота цокольных ножек, мм',[['all','Все высоты'],...heights.map(h=>[h,h+' мм'])],this.footFilter,v=>{
+     this.footFilter=v;this.footGroup=id;refresh('.foot-group select');
+    });
+   }
+   for(const leg of models){
+    if(id==='plinth'&&this.footFilter!=='all'&&leg.height!==Number(this.footFilter))continue;
+    const row=button('',()=>{
+     const old=this.fields.feet;
+     this.fields.feet={...(current&&leg.plinth?old:{}),article:leg.article,front:leg.plinth?(current?old.front:80):50,rear:current&&leg.plinth?old.rear:50};
+     this.footGroup=id;this.invalidate();refresh('[data-foot="'+leg.article+'"]');
+    });
+    row.className='foot-row';row.dataset.foot=leg.article;row.setAttribute('aria-pressed',String(selected===leg));
+    const image=el('img');image.src='/account/planner/shelf-images/'+leg.article+'.webp';image.alt='';
+    const text=el('span');text.append(el('strong',leg.name.split(' · ')[0]),el('small','Арт. '+leg.article+' · '+leg.height+' мм'+(leg.plinth?(leg.white?' · белая':' · чёрная'):'')));
+    row.append(image,text);group.append(row);
+   }
   }
-  box.append(cards);this.form.append(box);
+  const none=button('Без опор',()=>{delete this.fields.feet;this.invalidate();refresh('.foot-clear');});
+  none.className='foot-clear';none.setAttribute('aria-pressed',String(!selected));box.append(none);
   if(this.fields.feet){
    for(const [key,title] of [['front','От переднего края до оси, мм'],['rear','От заднего края до оси, мм']]){
     const wrap=el('label',title),input=el('input');input.type='number';input.min=10;input.step=1;input.value=this.fields.feet[key];input.setAttribute('aria-label',title);
@@ -222,7 +248,7 @@ export class AssistantUI{
  }
  draw(){
   try{const built=buildCarcass(this.spec(),{idPrefix:'questionnaire-preview'});this.drawing.innerHTML=carcassSVG(built);
-   if(built.spec.feet){this.drawing.append(el('h4','Вид снизу · '+footPlan(built.spec).length+' опор'));this.drawing.insertAdjacentHTML('beforeend',feetDrawing(built.spec));}this.dimensions.textContent=built.spec.width+' × '+(built.spec.height+footHeight(built.spec))+' × '+built.depth+' мм';this.description.textContent=built.items.length+' деталей · '+built.spec.sectionShelves.reduce((a,b)=>a+b,0)+' полок · '+(built.spec.back?'с ХДФ':'без задней стенки');}
+   if(built.spec.feet){const count=footPlan(built.spec).length;this.drawing.append(el('h4','Вид снизу · '+count+(count===4?' опоры':' опор')));this.drawing.insertAdjacentHTML('beforeend',feetDrawing(built.spec));}this.dimensions.textContent=built.spec.width+' × '+(built.spec.height+footHeight(built.spec))+' × '+built.depth+' мм';this.description.textContent=built.items.length+' деталей · '+built.spec.sectionShelves.reduce((a,b)=>a+b,0)+' полок · '+(built.spec.back?'с ХДФ':'без задней стенки');}
   catch(e){this.drawing.replaceChildren();this.dimensions.textContent='Проверьте размеры';this.description.textContent=e.message;}
  }
  controls(){

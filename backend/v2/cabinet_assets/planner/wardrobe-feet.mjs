@@ -4,8 +4,22 @@ import {sectionWidths} from './carcass-model.mjs';
 
 import {plinthFeet,plinthPanel} from './plinth-options.mjs';
 
-export const feetCatalogue=[{article:'118779',name:'Регулятор М6',height:10,diameter:20,drillDepth:16,
- file:'Регулятор уровня М6_8_16 черный (118779).fr3d',sha:'9d939e3cbf71b17dad69eacce37b305d323b6dc2e7898e3861e6772f81c87090'},...plinthFeet];
+export const feetCatalogue=[{article:'118779',name:'Регулятор М6',category:'end',height:10,diameter:20,drillDepth:16,
+ file:'Регулятор уровня М6_8_16 черный (118779).fr3d',sha:'9d939e3cbf71b17dad69eacce37b305d323b6dc2e7898e3861e6772f81c87090'},...plinthFeet.map(leg=>({...leg,category:'plinth'}))];
+
+// Saved designs keep their drilling layout until the cabinet is rebuilt.
+function innerAxes(spec){
+ const dividers=[];
+ let x=spec.thickness/2;
+ for(const [index,opening] of sectionWidths(spec).slice(0,-1).entries()){
+   x+=opening+spec.thickness;
+   dividers.push({x,index});
+ }
+ if(spec.feet.layout!=='width')return dividers.length?dividers:spec.width>900?[{x:spec.width/2}]:[];
+ if(spec.width<=800)return [];
+ const centre=spec.width/2;
+ return [{x:centre,index:dividers.find(axis=>Math.abs(axis.x-centre)<9)?.index}];
+}
 
 export function footPlan(spec){
  if(!spec?.feet)return [];
@@ -20,21 +34,16 @@ export function footPlan(spec){
      throw Error('Проверьте отступы для монтажной площадки и цоколя.');
    if(spec.bottomFit==='overlay'&&[spec.feet.left,spec.feet.right].includes('side'))
      throw Error('Для стойки до пола выберите дно между боковинами.');
-   const xs=[margin];
-   let cursor=t/2;
-   for(const opening of sectionWidths(spec).slice(0,-1)){cursor+=opening+t;xs.push(cursor);}
-   if(width>900&&xs.length===1)xs.push(width/2);
-   xs.push(width-margin);
+   const xs=[margin,...innerAxes(spec).map(axis=>axis.x),width-margin];
    if(xs.some((x,i)=>i&&x-xs[i-1]<2*fitting.radius))throw Error('Монтажные площадки опор пересекаются по ширине.');
    return xs.flatMap(x=>[depth/2-front,-depth/2+rear].map(z=>({host:'bottom',x:x-width/2,z})));
  }
  const specs=spec.joints?.bottom;
  const axes=[{x:t/2,key:'left',scheme:specs}];
- let x=t/2;
- for(const [i,width] of sectionWidths(spec).slice(0,-1).entries()){
-   x+=width+t;axes.push({x,key:'bottom',divider:true,scheme:t===18?dividerScheme(spec,i).bottom:null});
+ for(const axis of innerAxes(spec)){
+   const divider=axis.index!==undefined;
+   axes.push({x:axis.x,key:'bottom',divider,scheme:divider&&t===18?dividerScheme(spec,axis.index).bottom:null});
  }
- if(width>900&&axes.length===1)axes.push({x:width/2,key:'bottom'});
  axes.push({x:width-t/2,key:'right',scheme:specs});
  const rows=[];
  for(const axis of axes){
@@ -81,7 +90,7 @@ export function feetDrawing(spec){
  const strips=sectionWidths(spec).slice(0,-1).map(width=>{cursor+=width;const strip=rect(left+cursor*scale,y,t*scale,h,'#c4a67a');cursor+=t;return strip}).join('');
  const panel=plinthPanel(spec);
  const frontPanel=panel?rect(left+(w/2+panel.x-panel.width/2)*scale,y+(panel.z+d/2-t/2)*scale,panel.width*scale,t*scale,'#28755d'):'';
- return '<svg viewBox="0 0 360 '+(h+68)+'" role="img" aria-label="Вид снизу: '+plan.length+' опор"><text x="180" y="18" text-anchor="middle">Задний край · '+spec.feet.rear+' мм</text>'+
+ return '<svg viewBox="0 0 360 '+(h+68)+'" role="img" aria-label="Вид снизу: '+plan.length+(plan.length===4?' опоры':' опор')+'"><text x="180" y="18" text-anchor="middle">Задний край · '+spec.feet.rear+' мм</text>'+
  rect(left,y,b,h,'#ede0c9')+rect(left,y,t*scale,h,'#c4a67a')+rect(left+b-t*scale,y,t*scale,h,'#c4a67a')+strips+circles+frontPanel+
  '<text x="180" y="'+(y+h+24)+'" text-anchor="middle">Передний край · '+spec.feet.front+' мм</text></svg>';
 }

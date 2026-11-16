@@ -69,6 +69,7 @@ PLINTH_FEET = {row['article']: row for row in json.loads(
 )}
 
 class WardrobeFeet(StrictModel):
+    layout: Literal['width'] | None = Field(default=None,exclude_if=lambda v:v is None)
     article: str
     left: Literal['side'] | None = Field(default=None,exclude_if=lambda v:v is None)
     right: Literal['side'] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -84,6 +85,12 @@ class WardrobeFeet(StrictModel):
         return PLINTH_FEET[self.article]['height'] if self.article in PLINTH_FEET else 10
     front: int = Field(ge=10,le=1200,strict=True)
     rear: int = Field(ge=10,le=1200,strict=True)
+
+def inner_foot_pairs(width, sections, layout):
+    if layout == 'width':
+        return int(width > 800)
+    return sections - 1 or int(width > 900)
+
 
 class CarcassDesign(CarcassSpec):
     topFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -108,7 +115,7 @@ class CarcassDesign(CarcassSpec):
                 if (self.feet.front<30+self.thickness or self.feet.rear<30 or self.depth-self.feet.front-self.feet.rear<60 or
                     (self.bottomFit and (self.feet.left or self.feet.right))):
                     raise ValueError('Проверьте отступы, дно и примыкания цоколя.')
-            elif (self.bottomFit or self.sections>1 or self.width>900) and self.thickness<=16:
+            elif (self.bottomFit or inner_foot_pairs(self.width,self.sections,self.feet.layout)) and self.thickness<=16:
                 raise ValueError('Дно должно быть толще 16 мм для выбранной муфты.')
         if self.joints:
             if self.thickness != 18 or self.recipe not in ('shelves','divided'):

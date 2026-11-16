@@ -13,7 +13,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
-from .assistant_model import PLINTH_FEET
+from .assistant_model import PLINTH_FEET, inner_foot_pairs
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_cargo import cargo_variant, cargo_hardware, cargo_contents, cargo_adjustment
@@ -102,14 +102,15 @@ def hardware_for(it):
     spec=meta.get('spec') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     leg=PLINTH_FEET.get((spec.get('feet') or {}).get('article'))
+    feet=spec.get('feet')
+    inner=inner_foot_pairs(spec['width'],spec['sections'],feet.get('layout')) if feet else 0
     if leg and key=='bottom':
-        count=2*(2+(spec['sections']-1 or int(spec['width']>900)))
+        count=2*(2+inner)
         screw=leg['screw']
         rows=[*rows,_row('Опора '+leg['name']+' '+str(leg['height'])+' мм',count,'pcs',leg['article']),
               _row('Саморез '+('3,5×16' if screw=='20646' else '4×20'),count*leg['screws'],'pcs',screw)]
     elif not leg and spec.get('feet') and key in ('left','right','bottom'):
         overlay=spec.get('bottomFit')=='overlay'
-        inner=spec['sections']-1 or int(spec['width']>900)
         count=2*(inner+2*int(overlay)) if key=='bottom' else (0 if overlay else 2)
         if count:
             rows=[*rows,_row('Регулятор уровня М6 чёрный',count,'pcs','118779'),_row('Муфта регулятора М6 вбиваемая',count,'pcs','106466')]

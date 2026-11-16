@@ -14,15 +14,15 @@ test('wardrobe top and bottom construction, front and rear feet follow panels an
   assert.equal(items.find(p=>p.item_id==='q:bottom').width,bottomFit==='overlay'?800:764);
   assert.equal(nativeCarcassJoints(items).length,16);
   const feet=nativeFeet(items);
-  assert.equal(feet.length,6);
+  assert.equal(feet.length,4);
   assert.ok(feet.every(p=>p.position.y===10));
-  assert.equal(feet.filter(p=>p.host_blank_id==='q:bottom').length,bottomFit==='overlay'?6:2);
+  assert.equal(feet.filter(p=>p.host_blank_id==='q:bottom').length,bottomFit==='overlay'?4:0);
   const plan=footPlan(spec);
-  assert.deepEqual([...new Set(plan.map(p=>p.x))],[-391,-73,391]);
+  assert.deepEqual([...new Set(plan.map(p=>p.x))],[-391,391]);
   assert.deepEqual([...new Set(plan.map(p=>p.z))],[200,-210]);
  }
- assert.equal(footPlan(wardrobeSpec({...base,width:900})).length,4);
- assert.equal(footPlan(wardrobeSpec({...base,width:901})).length,6);
+ assert.equal(footPlan(wardrobeSpec({...base,width:800})).length,4);
+ assert.equal(footPlan(wardrobeSpec({...base,width:801})).length,6);
  assert.throws(()=>wardrobeSpec({...base,feet:{...base.feet,front:70}}),/присадкой/);
  assert.throws(()=>wardrobeSpec({...base,joints:undefined,bottomFit:'overlay',thickness:16}),/толще/);
 });
@@ -47,5 +47,17 @@ test('every supplied kitchen foot raises the body and exports a four-edge plinth
   assert.equal(items[0].height,base.height+leg.height);
   const feet=nativeFeet(items);assert.equal(feet.length,4);
   assert.ok(feet.every(f=>f.host_blank_id===bottom.item_id&&f.position.y===leg.height&&f.source_sha256===leg.sha));
+ }
+});
+
+test('foot count follows individual width even with shifted dividers; legacy projects keep their drilling',()=>{
+ for(const article of ['118779','86505'])for(const width of [799,800,801,1200]){
+  const spec=wardrobeSpec({...base,width,sections:3,sectionShelves:[0,0,0],dividerPositions:[160,430],feet:{article,front:80,rear:50}});
+  const plan=footPlan(spec),xs=plan.map(p=>p.x);
+  assert.equal(plan.length,width>800?6:4);
+  assert.deepEqual(plan.filter(p=>p.x===0).map(p=>p.z),width>800?[170,-200]:[]);
+  assert.equal(Math.min(...xs),-Math.max(...xs));
+  const legacy=structuredClone(spec);delete legacy.feet.layout;
+  assert.equal(footPlan(legacy).length,8);
  }
 });
