@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {openingCheck,checkProject,polygonsOverlap} from '../../backend/v2/cabinet_assets/planner/project-checks.mjs';
 import {PRODUCTION_MODELS,VITRINE_VARIANTS} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {blankItem} from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
 const room={width:4200,depth:3600,height:3000,setup_complete:true,survey:'none',features:[]};
 const item=(extra={})=>({item_id:'a',name:'Шкаф',module_type:'base_cabinet',x:0,z:0,rotation:0,width:600,height:820,depth:510,base:'legs',base_height:100,layout:'doors',...extra});
 const door=(side='left',angle=90)=>({facade:{kind:'door'},size:{x:596,y:716,z:18},position:{x:0,y:460,z:266},pivot:{x:side==='left'?-298:298,z:266},hinge_side:side,open_angle:angle});
@@ -35,6 +36,13 @@ test('vitrine fixed glass/profile never generates missing LDSP warning',()=>{
 test('material and missing prices are actionable and source absence is flagged',()=>{
   const a=item(),r=checkProject({room,items:[a]},{template:()=>null});
   for(const code of ['material','price','native-source'])assert.ok(r.issues.some(i=>i.code===code&&i.itemId==='a'));
+});
+test('AI panels use their assigned sheet and native blank source in project checks',()=>{
+  const panel=blankItem({item_id:'side',name:'Стойка',axis:'side',body_variant_id:'board'});
+  const report=(it,thickness=18)=>checkProject({room,items:[it]},{template:()=>null,material:id=>id==='board'?{name:'ЛДСП',thickness}:null});
+  assert.ok(!report(panel).issues.some(i=>['material','native-source','opening-unknown'].includes(i.code)));
+  assert.ok(report({...panel,body_variant_id:null}).issues.some(i=>i.code==='material'&&i.message.includes('Стойка')));
+  assert.ok(report(panel,16).issues.some(i=>i.code==='native-source'));
 });
 test('polygon touching is not an intersection',()=>{
   const a=[{x:0,z:0},{x:10,z:0},{x:10,z:10},{x:0,z:10}],b=a.map(p=>({x:p.x+10,z:p.z}));assert.equal(polygonsOverlap(a,b),false);

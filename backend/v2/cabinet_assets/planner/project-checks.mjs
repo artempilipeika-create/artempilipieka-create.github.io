@@ -2,6 +2,7 @@ import {productionParts,productionHardware,bounds,overlaps,elevation,rotateXZ,pl
 import {finishError,resolvedPanels,resolvedFinishError} from './wall-finishes.mjs';
 import {modulePriceBreakdown,kitchenPriceBreakdown} from './pricing.mjs';
 import {roomError,featureBox,FEATURES} from './room-plan.mjs';
+import {blankNativeItem} from './blanks-native.mjs';
 
 const rectangle=b=>[{x:b.minX,z:b.minZ},{x:b.maxX,z:b.minZ},{x:b.maxX,z:b.maxZ},{x:b.minX,z:b.maxZ}];
 const extent=points=>({minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z))});
@@ -77,8 +78,12 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
     if(dim)add('dimensions','error',dim,it);
     if(placement)add('placement','error',placement,it);
     for(const b of solidFeatures(room))if(overlaps(bounds(it,room),b))add('room-object','error','Модуль пересекает объект: '+b.name,it);
-    const needed=parts?parts.filter(p=>p.type==='panel'&&!p.optical_material):[
-      {name:'Корпус',material:{variant_id:it.body_variant_id}},...(it.layout==='niche'?[]:[{name:'Фасад',material:{variant_id:it.front_variant_id}}])];
+    const blank=it.module_type==='blank';
+    const glass=blank&&it.blank_shelf&&!it.blank_shelf.startsWith('board/');
+    let needed;
+    if(blank)needed=glass?[]:[{name:it.name,material:{variant_id:it.body_variant_id}}];
+    else if(parts)needed=parts.filter(p=>p.type==='panel'&&!p.optical_material);
+    else needed=[{name:'Корпус',material:{variant_id:it.body_variant_id}},...(it.layout==='niche'?[]:[{name:'Фасад',material:{variant_id:it.front_variant_id}}])];
     const missing=needed.filter(p=>!p.material?.variant_id),unresolved=needed.filter(p=>p.material?.variant_id&&!material(p.material.variant_id));
     const backForReview=missing.filter(p=>p.role==='back'&&(t?.production?.modern||t?.production?.wall_special));
     for(const part of backForReview)missing.splice(missing.indexOf(part),1);
@@ -91,12 +96,17 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
       .map(([label,rows])=>[label,rows.filter(r=>r.status!=='PRICED').length]).filter(([,n])=>n).map(([label,n])=>label+' ('+n+')');
     if(price.totals.saleMinor===null)add('price','warning',price.totals.status==='CUSTOM'?'Нестандартный размер: требуется индивидуальная цена.':'Цена модуля не рассчитана полностью.',it,
       missingPrices.length?'Не заполнены цены или правила расчёта: '+missingPrices.join(', ')+'.':'Проверьте наценку и правила расчёта.');
-    if(!it.bazis_id||!it.bazis_file||!it.bazis_sha256)add('native-source','warning','Нет исходного фрагмента: модуль не попадёт в автоматическую сборку БАЗИС.',it);
+    if(blank){
+      if(!missing.length&&!unresolved.length){
+        try{blankNativeItem(it,material(it.body_variant_id));}catch(error){add('native-source','warning',error.message,it);}
+      }
+    }else if(!it.bazis_id||!it.bazis_file||!it.bazis_sha256)add('native-source','warning','Нет исходного фрагмента: модуль не попадёт в автоматическую сборку БАЗИС.',it);
     else if(t?.id!==it.bazis_id||t.source_sha256!==it.bazis_sha256)add('native-identity','warning','Исходный фрагмент отличается от текущего каталога. Проверьте файл перед передачей в БАЗИС.',it);
     const adjustment=t?.production?.vitrine?globalThis.MF_VITRINE.adjustment(it):tallShelfAdjustment(it,t?.production);
     if(adjustment?.requires_manual_native_adjustment)add('native-adjustment','warning',adjustment.note||'Полки нужно уточнить в БАЗИС.',it);
     const k=kitchenSettings(it);
     if(k&&t?.production&&k.legHeightMm!==t.production.base_height)add('native-legs','warning','Высота ножек изменена: проверить опоры и положение корпуса в БАЗИС.',it);
+    if(blank&&it.blank_axis!=='front')continue;
     const opening=openingCheck(it,t,items,room,parts||[]);mechanisms+=opening.checked;
     for(const hit of opening.collisions)add('opening','warning',(hit.kind==='drawer'?'Зона выдвижения ящика':'Траектория двери')+' пересекает: '+hit.target+'.',it,
       hit.kind==='drawer'?'Запас пространства рассчитан по длине направляющей; уточните фактический ход.':'Проверено движение от закрытого положения до заданного угла.');
