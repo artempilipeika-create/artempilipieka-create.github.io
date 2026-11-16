@@ -30,7 +30,7 @@
 #planner-assistant-dialog .shelf-options select{font-size:12px;padding:3px}
 #planner-assistant-dialog .shelf-schedule{font-size:12px;margin-bottom:0}
 #planner-assistant{display:inline-flex!important}
-#planner-assistant-dialog.assistant-wizard{width:min(960px,calc(100vw - 32px));max-width:none;box-sizing:border-box}
+#planner-assistant-dialog.assistant-wizard{width:min(960px,calc(100vw - 32px));max-width:none;height:min(85vh,860px);scrollbar-gutter:stable;box-sizing:border-box}
 .assistant-steps{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}
 #planner-assistant-dialog .assistant-steps button{margin:0;font-size:13px;padding:8px 12px}
 #planner-assistant-dialog .assistant-steps [aria-current="step"]{background:#236144;color:#fff}
