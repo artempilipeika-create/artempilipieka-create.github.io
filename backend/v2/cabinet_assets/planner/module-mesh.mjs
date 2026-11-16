@@ -2,6 +2,8 @@ import {fixedShelfScheme} from './shelf-choices.mjs';
 import {jointRows,dividerEnds} from './carcass-joints.mjs';
 import meshes from './plinth-foot-meshes.json' with {type:'json'};
 import {plinthFoot} from './plinth-options.mjs';
+import decorMeshes from './decor-meshes.json' with {type:'json'};
+import {decorFoot,centralFoot} from './decor-feet.mjs';
 import {panelFeet} from './wardrobe-feet.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
 import {vertices as mystiVertices,indices as mystiIndices} from './mysti-mesh.mjs';
@@ -23,6 +25,9 @@ export const VISUAL_FINISHES=Object.freeze({
   glass:{color:'#f4faf7',roughness:.075,metalness:0},
   frame:{color:'#202321',roughness:.3,metalness:.72},
   hinge:{color:'#b9bdc1',roughness:.32,metalness:.72},
+  goldFoot:{color:'#b79755',roughness:.38,metalness:.65},
+  chromeFoot:{color:'#c4c7ca',roughness:.43,metalness:.72},
+  darkChromeFoot:{color:'#62666a',roughness:.30,metalness:.75},
   whiteFoot:{color:'#f7f6f1',roughness:.68,metalness:0},
   regulator:{color:'#292c2d',roughness:.68,metalness:0},
   shelfSupport:{color:'#656766',roughness:.24,metalness:.78},
@@ -305,19 +310,23 @@ export class MeshFactory{
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
     }
     for(const foot of panelFeet(it)){
-      const leg=plinthFoot(it.assistant_carcass.spec);
+      const decor=decorFoot(it.assistant_carcass.spec);
+      const leg=foot.centre?centralFoot(decor.height):decor??plinthFoot(it.assistant_carcass.spec);
       if(leg){
-       const key='plinth-foot:'+leg.article;
+       const asset=leg.mesh??(leg.socket?leg.file.slice(0,-5):leg.article);
+       const key='plinth-foot:'+asset;
        const geometry=this.acquire(key,()=>{
         const bytes=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0)).buffer;
-        const [positions,indices]=meshes[leg.article];
+        const [positions,indices]=decorMeshes[asset]??meshes[asset];
         const v=Float32Array.from(new Int16Array(bytes(positions)),n=>n*S/10);
         const shape=new THREE.BufferGeometry();
         shape.setAttribute('position',new THREE.BufferAttribute(v,3));
         shape.setIndex(new THREE.BufferAttribute(new Uint16Array(bytes(indices)),1));
         shape.rotateX(Math.PI/2);shape.computeVertexNormals();return shape;
        });
-       this.mesh(group,leg.white?'whiteFoot':'regulator',geometry,key,foot.x,0,foot.z,null,ghost).userData.article=leg.article;
+       const role=({'брашированное золото':'goldFoot','матовый хром':'chromeFoot','чёрный хром':'darkChromeFoot'})[leg.finish]??(leg.white?'whiteFoot':'regulator');
+       const model=this.mesh(group,role,geometry,key,foot.x,0,foot.z,null,ghost);
+       model.rotation.y=-(foot.yaw||0)*Math.PI/180;model.userData.article=leg.article;
        continue;
       }
       const key='regulator:118779';

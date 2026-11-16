@@ -68,6 +68,10 @@ PLINTH_FEET = {row['article']: row for row in json.loads(
     (Path(__file__).parent/'cabinet_assets/planner/plinth-feet.json').read_text()
 )}
 
+ASSETS=Path(__file__).parent/'cabinet_assets/planner'
+DECOR_FEET={row['article']:row for row in json.loads((ASSETS/'decor-feet.json').read_text()) if not row.get('issue')}
+DECOR_CENTRES=json.loads((ASSETS/'decor-centres.json').read_text())
+
 class WardrobeFeet(StrictModel):
     layout: Literal['width'] | None = Field(default=None,exclude_if=lambda v:v is None)
     article: str
@@ -76,13 +80,13 @@ class WardrobeFeet(StrictModel):
 
     @model_validator(mode='after')
     def supported(self):
-        if self.article not in PLINTH_FEET and (self.article!='118779' or self.left or self.right):
+        if self.article not in PLINTH_FEET and ((self.article!='118779' and self.article not in DECOR_FEET) or self.left or self.right):
             raise ValueError('Неизвестная опора или тип цоколя.')
         return self
 
     @property
     def height(self):
-        return PLINTH_FEET[self.article]['height'] if self.article in PLINTH_FEET else 10
+        return (PLINTH_FEET.get(self.article) or DECOR_FEET.get(self.article) or {'height':10})['height']
     front: int = Field(ge=10,le=1200,strict=True)
     rear: int = Field(ge=10,le=1200,strict=True)
 
@@ -115,7 +119,7 @@ class CarcassDesign(CarcassSpec):
                 if (self.feet.front<30+self.thickness or self.feet.rear<30 or self.depth-self.feet.front-self.feet.rear<60 or
                     (self.bottomFit and (self.feet.left or self.feet.right))):
                     raise ValueError('Проверьте отступы, дно и примыкания цоколя.')
-            elif (self.bottomFit or inner_foot_pairs(self.width,self.sections,self.feet.layout)) and self.thickness<=16:
+            elif self.feet.article=='118779' and (self.bottomFit or inner_foot_pairs(self.width,self.sections,self.feet.layout)) and self.thickness<=16:
                 raise ValueError('Дно должно быть толще 16 мм для выбранной муфты.')
         if self.joints:
             if self.thickness != 18 or self.recipe not in ('shelves','divided'):

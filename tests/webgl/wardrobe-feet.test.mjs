@@ -61,3 +61,27 @@ test('foot count follows individual width even with shifted dividers; legacy pro
   assert.equal(footPlan(legacy).length,8);
  }
 });
+
+test('decorative feet use the chosen finish at each corner and a straight central foot above 800 mm',async()=>{
+ const {decorativeFeet,centralFoot,turn}=await import('../../backend/v2/cabinet_assets/planner/decor-feet.mjs');
+ for(const leg of decorativeFeet.filter(f=>!f.issue))for(const width of [800,801]){
+  const spec=wardrobeSpec({...base,width,feet:{article:leg.article,front:10,rear:16}});
+  const built=buildCarcass(spec,{idPrefix:'q'}),plan=footPlan(spec);
+  assert.ok(!built.items.some(i=>i.item_id==='q:plinth'));
+  assert.equal(plan.length,width===800?4:5);
+  const corners=plan.slice(0,4);
+  for(const f of corners){
+   const [x,z]=turn(leg.sole,f.yaw),[dx,dz]=turn(leg.toe,f.yaw);
+   assert.ok((f.x+x)*dx+(f.z+z)*dz>0,leg.name);
+  }
+  for(const rotation of [0,90,180,270]){
+   const items=placeCarcass(built,{rotation,x:400,z:500,elevation_mm:0}).map(i=>({...i,assistant_carcass:{group_id:'q',spec}}));
+   const feet=nativeFeet(items);assert.equal(feet.filter(f=>f.source_sha256===leg.sha).length,4);
+   assert.ok(feet.every(f=>f.position.y===leg.height));
+   if(width===801){
+    const c=feet[4],b=items.find(i=>i.item_id==='q:bottom');
+    assert.equal(c.article,centralFoot(leg.height).article);assert.deepEqual(c.position,{x:b.x,y:leg.height,z:b.z});
+   }
+  }
+ }
+});

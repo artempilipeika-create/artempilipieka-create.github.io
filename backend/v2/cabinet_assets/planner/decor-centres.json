@@ -1,0 +1,62 @@
+{
+ "110": {
+  "article": "70152",
+  "name": "Hettich Korrekt",
+  "height": 110,
+  "file": "MF_Korrekt_70152_H110.fr3d",
+  "sha": "f25e24d3936df7c2f2dce81153f41782ab107c16565c0a39b82300c4113955bb",
+  "socket": "79693"
+ },
+ "130": {
+  "article": "61852",
+  "name": "Hettich Korrekt",
+  "height": 130,
+  "file": "MF_Korrekt_61852_H130.fr3d",
+  "sha": "9987d84fa215787c5557173eb6b7ac69f373dbb6165e69053fded38a28085544",
+  "socket": "79693"
+ },
+ "140": {
+  "article": "61852",
+  "name": "Hettich Korrekt",
+  "height": 140,
+  "file": "MF_Korrekt_61852_H140.fr3d",
+  "sha": "712977c33a001596db76de7253c8b7cded2805c8064e5eb4a423531b381b4240",
+  "socket": "79693"
+ },
+ "100": {
+  "article": "78517",
+  "name": "Трёхсоставная",
+  "height": 100,
+  "plinth": true,
+  "white": false,
+  "file": "Опора кухонная пласт. h100 трехсоставная, черный AKS (78517).fr3d",
+  "sha": "cb7d9bd05315ea0cb9bea26e4302f0b5ca62e563b4fb0510a3a54496b089126e",
+  "screw": "29164",
+  "screws": 4,
+  "radius": 29
+ },
+ "120": {
+  "article": "107270",
+  "name": "Трёхсоставная",
+  "height": 120,
+  "plinth": true,
+  "white": false,
+  "file": "Опора кухонная пласт. h120 трехсоставная, черный AKS (107270).fr3d",
+  "sha": "22bff0468a0c2cfeb2a0acf117d92bb0074b9cbe00c1e17c43dd75e162465a80",
+  "screw": "29164",
+  "screws": 4,
+  "radius": 29
+ },
+ "150": {
+  "article": "86503",
+  "name": "Трёхсоставная",
+  "height": 150,
+  "plinth": true,
+  "white": false,
+  "file": "Опора кухонная пласт. h150 трехсоставная, черный AKS (86503).fr3d",
+  "sha": "4361ae54c01d70112ac344aa69c3cef378016445816c9f8310379eb4c3c2a14f",
+  "screw": "29164",
+  "screws": 4,
+  "radius": 29
+ }
+}

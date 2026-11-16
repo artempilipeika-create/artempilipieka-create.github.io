@@ -13,7 +13,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
-from .assistant_model import PLINTH_FEET, inner_foot_pairs
+from .assistant_model import PLINTH_FEET, DECOR_FEET, DECOR_CENTRES, inner_foot_pairs
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_cargo import cargo_variant, cargo_hardware, cargo_contents, cargo_adjustment
@@ -104,7 +104,20 @@ def hardware_for(it):
     leg=PLINTH_FEET.get((spec.get('feet') or {}).get('article'))
     feet=spec.get('feet')
     inner=inner_foot_pairs(spec['width'],spec['sections'],feet.get('layout')) if feet else 0
-    if leg and key=='bottom':
+    decor=DECOR_FEET.get((feet or {}).get('article'))
+    if decor:
+        if key=='bottom':
+            rows=[*rows,_row('Опора '+decor['name']+' · '+decor['finish']+' · '+str(decor['height'])+' мм',4,'pcs',decor['article'])]
+            for screw in decor['screws']:
+                rows.append(_row(screw['name'],4*screw['quantity'],'pcs',screw['article']))
+            if spec['width']>800:
+                centre=DECOR_CENTRES[str(decor['height'])]
+                rows.append(_row('Центральная опора · '+centre['name']+' · '+str(decor['height'])+' мм',1,'pcs',centre['article']))
+                if centre.get('socket'):
+                    rows.append(_row('Подпятник Hettich Planform под прикручивание',1,'pcs',centre['socket']))
+                else:
+                    rows.append(_row('Саморез 4×20',centre['screws'],'pcs',centre['screw']))
+    elif leg and key=='bottom':
         count=2*(2+inner)
         screw=leg['screw']
         rows=[*rows,_row('Опора '+leg['name']+' '+str(leg['height'])+' мм',count,'pcs',leg['article']),

@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.24 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.25 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,7 +135,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -1220,8 +1220,10 @@ function placeMystiBelow(obj,item,shelfPanel,log){
 
 const LEVEL_FOOT_HASH='9d939e3cbf71b17dad69eacce37b305d323b6dc2e7898e3861e6772f81c87090';
 const PLINTH_FOOT_HASHES=new Set(["748f7dfc9c5e9f6795cf2af7a84e261b02a56917f7d83ddb61bc1640a88965ea", "208e694dcad2eb55bd56d725d85d95351df2ca8fb3e841127ddd19b357632860", "ae4cf4ff04e7da78b75e4cc7e800d8c52d7eae0afdc4ed09d5155332840b3865", "ec84ce11e6a2e25315a994fb2b76230e4ccb988c7fc82de2f9b742d95d7a1081", "98382596ab2a3344276158b199f9d18b107759d2b1b8e86362bfeb207439e18b", "cb7d9bd05315ea0cb9bea26e4302f0b5ca62e563b4fb0510a3a54496b089126e", "6c710edd9a5d650b67459062cdd1a09877aaf123e17cb5007e12e768529cbcc1", "766fb6eff1d5eb4d04af73dd4b8ed5512b73a85a671a9f7e8691ce513854993e", "22bff0468a0c2cfeb2a0acf117d92bb0074b9cbe00c1e17c43dd75e162465a80", "4febd80d47e28b27f566c45672eff2e98f706f1a34eafadfabdde6cb667caea8", "ab31999962007aec93d8dc26de164ab74b504c3c5f255f539ba4ebb735fe94ce", "c95ec7be2657c40c8d5cfad290f16f2820ce468086fa1f2327b4cac22c5246d2", "4361ae54c01d70112ac344aa69c3cef378016445816c9f8310379eb4c3c2a14f"]);
+const DECOR_FOOT_HASHES=new Set(["8e5a16d9956d6cc3fe83bb956efa6f2fbbcf154021dae24ef12d27f937148482", "8943473375e27728456acb4fd207b4c1a43547d56bfb7d1599cfca4df0a5d014", "14be137918290b75811c40e4a1ad25ebf24e317ea29f8e977f7bbfceb19dad7b", "bb3c2155063cffd65548bc48ed0a6de75efd23413ecc1aff35ab5a4656ddfb3f", "021d18272cbe1b6b2bbed8b05e5cbfe087139c0996440309d318fa9c962e8198", "be9dbb7582a032df86b3b30cfc6e1834d8fd4cbbccf51a202d721185d68e753c", "88cb3a5035461b8d36c92a1cd644a27f4f2f0803da64ef76a51fc5b590eb65e4", "0b837bd675835ef7f7d0d9d13190bb99249577bd29c6bc6956c6809d33ee7221", "5c329c7e5f4442b236f1b666f81ab3f316b75f202191edc2de5456c97e1987de", "5fd7daf70006271c13c76f6c73207c86a89eedc31ccca4baada738febef42d77", "30994de3bc4e65c7657a9965e0c0f0062548c11a4f0935037d33b08c87fe1658", "b6ead9fd0a5f35194e99384216c1647d388257d4d9b99d98fe3c3a2dcea1bace", "c8b44cfc0fc101cbde4a12b59792a34d1f9b052e0e85e1d5328a33eb7e6591e5", "3331e8a7f437e2ffd2912e2bc2c6fa6e857842cf8d824eacf18e5f046bb3e958", "967b9020e7a9dbd1e143d11d5e522796304503588978bfe93a04bc4bba9a437d", "195cfe594ec2baede2716e647e7bceffac2e213f266d8b61407b52d63f245eb1", "b274b3752f1290bdb2a65337db6ace1af457bf0205812d341aea3a5c0173b2df", "a1adc402790028bf18ebacdbf169766afcc6d8c9609ad77e90a1c36430874e87", "e4ac7f127c69516012fdf829c970f05baff21ba9a7e9b76b96d1059be9030a62", "3e110c4214712fe59ffbe72403ad0ea5d04ed195ed5d144b7f7de5349449bbb8", "1e082afcc978b4b51b62c0e41cf2006950f8cb2e4c910e5e5b6e316e190cd8be", "ac692afbca8b10a875a541d57e2e23b908538bfa1a42dc2a0b8ebd6b880b0de9", "264b1626df9fba0c47b8d7d869fca499af30e42d25c5589ccd6242749eac81de", "3875508a8152782114efa69cc3566cccfc69bc1622cc2bda30afb72e6e698f70", "e68b9f0ad8fb28c48229fa0329611e34a2b1ce2c20ff727d3264c0b2306979fd", "3b036db1f903a3611d6f39fd1c64bfc2f8b1cec9ee3eed73aaf00dff6cbed572", "851e518b720f3e9fe9ce0bd1939250e1175e3ecae5e6161a87a74e897d46719d", "51eb071e8e734de6ca91f37e8420b8367018ab5e613f4f8b84b962dddac8ea4c", "899deba122e016286e3e7e7fd34be4eda1c03f3961f7afe350c164ff92caffe9", "f25e24d3936df7c2f2dce81153f41782ab107c16565c0a39b82300c4113955bb", "9987d84fa215787c5557173eb6b7ac69f373dbb6165e69053fded38a28085544", "712977c33a001596db76de7253c8b7cded2805c8064e5eb4a423531b381b4240"]);
+function isWardrobeFoot(item){return item.source_sha256===LEVEL_FOOT_HASH||PLINTH_FOOT_HASHES.has(item.source_sha256)||DECOR_FOOT_HASHES.has(item.source_sha256);}
 function resizeAndPlace(obj, item, log, shelfPanel) {
-  if(item.source_sha256===LEVEL_FOOT_HASH||PLINTH_FOOT_HASHES.has(item.source_sha256)){
+  if(isWardrobeFoot(item)){
     const desired=vector(item.position,'foot.position');
     obj.SetDefaultTransform();
     objectTransformation.RotateObject(obj,{x:1,y:0,z:0},90,true);
@@ -1375,7 +1377,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.24 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.25 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1502,7 +1504,7 @@ function importProject(prepared, root, payload) {
     try {
       if(JOINT_HASHES.has(item.source_sha256)&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.joined_panel_id)))throw Error('Не импортирована деталь стыка.');
       if(isShelfSupport(item)&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.shelf_blank_id)))throw Error('Не импортирована полка или её опорная стойка.');
-      if(item.source_sha256===LEVEL_FOOT_HASH&&!loadedBlanks.has(item.host_blank_id))throw Error('Не импортирована деталь для опоры.');
+      if(isWardrobeFoot(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Не импортирована деталь для опоры.');
       if(isBlankHook(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Опорная заготовка не импортирована.');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
       obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
@@ -1531,7 +1533,7 @@ function importProject(prepared, root, payload) {
       }
       importedObjects.push(obj);
       if ((item.blank||item.glass_shelf) && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
-      if (item.source_sha256!==LEVEL_FOOT_HASH && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
+      if (!isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;

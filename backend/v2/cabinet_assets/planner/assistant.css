@@ -68,3 +68,11 @@
 .foot-row span,.foot-row strong,.foot-row small{display:block;min-width:0;overflow-wrap:anywhere}
 #planner-assistant-dialog .foot-row[aria-pressed=true]{border-color:#236144;background:#e5f0e3}
 #planner-assistant-dialog .foot-clear{margin-top:10px}
+
+.decor-family{min-width:0;margin-top:7px}
+#planner-assistant-dialog .decor-family label{margin:8px 4px}
+.decor-finishes{display:flex;flex-direction:column;gap:4px;margin:6px 0 10px 12px}
+#planner-assistant-dialog .decor-finishes button{display:flex;align-items:center;gap:8px;margin:0;text-align:left;font-size:13px;padding:7px;white-space:normal}
+.decor-finishes i{flex:0 0 16px;height:16px;border:1px solid #89948f;border-radius:50%}
+#planner-assistant-dialog .decor-finishes [aria-pressed=true]{border-color:#236144;background:#edf5ec}
+#planner-assistant-dialog [data-unavailable=true]{cursor:default}

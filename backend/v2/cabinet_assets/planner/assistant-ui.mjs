@@ -119,7 +119,7 @@ export class AssistantUI{
   box.ontoggle=()=>{if(box.isConnected)this.footOpen=box.open;};
   const selected=feetCatalogue.find(leg=>leg.article===this.fields.feet?.article);
   const current=plinthFoot(this.fields);
-  const summary=el('summary','Опоры'),caption=el('small',selected?selected.name.split(' · ')[0]+(selected.plinth?(selected.white?', белая':', чёрная'):'')+' · '+selected.height+' мм · арт. '+selected.article:'Без опор');
+  const summary=el('summary','Опоры'),caption=el('small',selected?selected.name.split(' · ')[0]+(selected.finish?' · '+selected.finish:'')+(selected.plinth?(selected.white?', белая':', чёрная'):'')+' · '+selected.height+' мм · арт. '+selected.article:'Без опор');
   summary.append(caption);box.append(summary);this.form.append(box);
   const refresh=focus=>{
    this.footOpen=true;this.render();this.form.querySelector(focus)?.focus({preventScroll:true});
@@ -136,6 +136,10 @@ export class AssistantUI{
    };
    group.append(el('summary',title));box.append(group);
    const models=feetCatalogue.filter(leg=>leg.category===id);
+   if(id==='decor'){
+    this.decorChoices(group,models,selected,refresh);
+    continue;
+   }
    if(!models.length){group.append(el('p','Модели пока не добавлены.'));continue;}
    if(id==='plinth'){
     const heights=[...new Set(models.map(leg=>leg.height))].sort((a,b)=>a-b);
@@ -159,7 +163,8 @@ export class AssistantUI{
   const none=button('Без опор',()=>{delete this.fields.feet;this.invalidate();refresh('.foot-clear');});
   none.className='foot-clear';none.setAttribute('aria-pressed',String(!selected));box.append(none);
   if(this.fields.feet){
-   for(const [key,title] of [['front','От переднего края до оси, мм'],['rear','От заднего края до оси, мм']]){
+   const decorative=selected?.category==='decor';
+   for(const [key,title] of [['front',decorative?'Отступ опор от переднего края, мм':'От переднего края до оси, мм'],['rear',decorative?'Отступ опор от заднего края, мм':'От заднего края до оси, мм']]){
     const wrap=el('label',title),input=el('input');input.type='number';input.min=10;input.step=1;input.value=this.fields.feet[key];input.setAttribute('aria-label',title);
     input.oninput=()=>{this.fields.feet[key]=input.valueAsNumber;this.changed();};wrap.append(input);box.append(wrap);
    }
@@ -169,7 +174,44 @@ export class AssistantUI{
       if(value==='side')this.fields.feet[key]='side';else delete this.fields.feet[key];this.changed();this.render();
      });
     box.append(el('small','Опора '+current.height+' мм · цоколь с кромкой '+plinthPanel(this.fields).height+' мм · зазор сверху '+plinthClearanceMm+' мм · ПВХ по четырём торцам · '+current.screws+' самореза на опору'));
-   }else box.append(el('small','Пятка Ø20 мм · муфта М6 (106466) · присадка Ø8 × 16 мм'));
+   }else if(!decorative)box.append(el('small','Пятка Ø20 мм · муфта М6 (106466) · присадка Ø8 × 16 мм'));
+  }
+ }
+ decorChoices(group,models,selected,refresh){
+  const choose=(leg,focus)=>{
+   const old=selected?.category==='decor'?this.fields.feet:null;
+   this.fields.feet={article:leg.article,front:old?.front??10,rear:old?.rear??10};
+   this.footGroup='decor';this.invalidate();refresh(focus);
+  };
+  for(const family of new Set(models.map(f=>f.name))){
+   const variants=models.filter(f=>f.name===family);
+   const active=selected?.name===family?selected:null;
+   const shown=active??variants.find(f=>!f.issue)??variants[0];
+   const section=el('div');section.className='decor-family';
+   const focus='[data-series="'+family+'"]';
+   const card=button('',()=>choose(shown,focus));card.dataset.series=family;card.className='foot-row';
+   card.setAttribute('aria-pressed',String(!!active));
+   const photo=el('img');photo.alt='';photo.src='/account/planner/shelf-images/'+shown.article+'.webp';
+   const text=el('span');text.append(el('strong',family));
+   const heights=[...new Set(variants.map(f=>f.height))].sort((a,b)=>a-b);
+   text.append(el('small',shown.issue?'Проверяется высота фрагмента':active?active.height+' мм · '+active.finish+' · арт. '+active.article:heights.join(' / ')+' мм'));
+   card.append(photo,text);section.append(card);group.append(section);
+   if(shown.issue){card.dataset.unavailable='true';card.disabled=true;continue;}
+   if(!active)continue;
+   if(heights.length>1)this.select(section,'Высота '+family+', мм',heights.map(h=>[h,h+' мм']),active.height,value=>{
+    const candidates=variants.filter(f=>!f.issue&&f.height===Number(value));
+    choose(candidates.find(f=>f.finish===active.finish)??candidates[0],'.decor-family select');
+   });
+   const finishes=el('div');finishes.className='decor-finishes';finishes.setAttribute('aria-label','Цвет '+family);
+   for(const variant of variants.filter(f=>f.height===active.height)){
+    const b=button('',()=>choose(variant,'[data-finish="'+variant.article+'"]'));
+    b.dataset.finish=variant.article;b.setAttribute('aria-pressed',String(variant===active));
+    const chip=el('i');chip.style.background=({'брашированное золото':'#b79a60','матовый хром':'#bdc2c4','чёрный хром':'#55595d','чёрный муар':'#383837'})[variant.finish]??'#292a29';
+    b.append(chip,document.createTextNode(variant.finish+(variant.issue?' · проверяется артикул':'')));
+    if(variant.issue){b.dataset.unavailable='true';b.disabled=true;}
+    finishes.append(b);
+   }
+   section.append(finishes);
   }
  }
  sectionPositions(){
@@ -254,7 +296,7 @@ export class AssistantUI{
  controls(){
   this.previous.hidden=this.step===0;this.next.hidden=this.step===4;this.send.hidden=this.step!==4||Boolean(this.pending);this.send.disabled=this.busy||!this.available||this.remainingCount<=0;
   this.next.disabled=this.busy;this.previous.disabled=this.busy;this.mode.disabled=this.busy;this.steps.forEach(b=>b.disabled=this.busy);
-  this.form.querySelectorAll('input,select,button').forEach(b=>b.disabled=this.busy);
+  this.form.querySelectorAll('input,select,button').forEach(b=>b.disabled=this.busy||b.dataset.unavailable==='true');
   this.apply.hidden=!this.pending;this.apply.textContent=this.mode.value==='update'?'Применить изменения':'Добавить в проект';
   this.remaining.textContent='Проверка ИИ запускается только по кнопке. Пробных обращений на сайте осталось: '+this.remainingCount+'.';
  }

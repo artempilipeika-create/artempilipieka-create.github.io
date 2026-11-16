@@ -3,7 +3,7 @@ import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
 
 // Exact master.u2 catalogue identity: ЛХДФ 3ММ Белый, 2800х2070 мм.
 // Used only when adding new carcasses; saved/manual assignments stay unchanged.
-import {plinthFoot,plinthPanel,floorSide} from './plinth-options.mjs';
+import {footHeight,plinthPanel,floorSide} from './plinth-options.mjs';
 import {choice,defaultShelf,fittingGap} from './shelf-choices.mjs';
 export const CARCASS_BACK_MATERIAL_ID='fb7b270e-66ad-5411-affc-5717b1adf0d6';
 
@@ -55,7 +55,7 @@ export function sectionWidths(s){
 export function buildCarcass(input={},options={}){
   const s=carcassSpec(input),{width:W,height:H,depth:D,thickness:t}=s;
   const prefix=options.idPrefix||crypto.randomUUID(),parts=[];
-  const plinth=plinthPanel(s),legHeight=plinthFoot(s)?.height??0;
+  const plinth=plinthPanel(s),legHeight=s.feet?.article==='118779'?0:footHeight(s);
   const sideY=s.bottom==='overlay'?t:0,sideH=H-sideY-(s.top==='overlay'?t:0);
   const bottomTop=t,topBottom=['inset','overlay','rails'].includes(s.top)?H-t:H-80;
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{

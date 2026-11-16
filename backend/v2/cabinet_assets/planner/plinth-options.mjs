@@ -1,8 +1,9 @@
 import models from './plinth-feet.json' with {type:'json'};
 
+import {decorFoot} from './decor-feet.mjs';
 export const plinthFeet=models;
 export const plinthFoot=spec=>models.find(row=>row.article===spec?.feet?.article);
-export const footHeight=spec=>plinthFoot(spec)?.height??(spec?.feet?10:0);
+export const footHeight=spec=>decorFoot(spec)?.height??plinthFoot(spec)?.height??(spec?.feet?10:0);
 export const floorSide=(spec,key)=>Boolean(plinthFoot(spec)&&spec.feet[key]==='side');
 export const plinthClearanceMm=3;
 export function plinthPanel(spec){
