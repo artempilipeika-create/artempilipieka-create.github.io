@@ -1,3 +1,6 @@
+import {cabinetId,cabinetEnvelope,viewKey,isInterior} from './cabinet-actions.mjs';
+import {nativeFeet} from './wardrobe-feet.mjs';
+import {doorHinges} from './wardrobe-hinges.mjs';
 import {isEquipment} from './equipment-placement.mjs';
 import {bounds,elevation,tier,scopeMatches,MM_TO_WORLD as S} from './furniture-core.mjs';
 import {FEATURES,featureBox,floorOutline} from './room-plan.mjs';
@@ -29,10 +32,21 @@ export class FallbackPlan {
     for(let z=500;z<r.depth;z+=500){c.beginPath();c.moveTo(left,top+z*m.scale);c.lineTo(left+r.width*m.scale,top+z*m.scale);c.stroke();}
     for(const it of this.adapter.items){
       if(this.layer!=='all'&&tier(it)!==this.layer)continue;if(this.preview?.items?.some(p=>p.item_id===it.item_id)||this.preview?.item.item_id===it.item_id)continue;
-      const b=this.rectangle(it),on=this.selectionScope&&this.selectionScope!=='module'?scopeMatches(it,this.selectionScope):it.item_id===this.adapter.selected?.item_id;
-      c.fillStyle=on?'#d5e8ff':tier(it)==='wall'?'#e4ece2':'#dce0d1';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle=on?'#1677ff':'#8d9d86';c.lineWidth=on?3:1;
+      const b=this.rectangle(it),on=this.heightHighlights?.has(it.item_id)||(this.selectionScope&&this.selectionScope!=='module'?scopeMatches(it,this.selectionScope):it.item_id===this.adapter.selected?.item_id&&!this.cabinetSelection);
+      c.fillStyle=on?'#d5e8ff':tier(it)==='wall'?'#e4ece2':'#dce0d1';c.globalAlpha=this.xrayKey&&viewKey(it)===this.xrayKey?0.12:1;c.fillRect(b.x,b.y,b.w,b.h);c.globalAlpha=1;c.strokeStyle=on?'#1677ff':'#8d9d86';c.lineWidth=on?3:1;
       if(tier(it)==='wall')c.setLineDash([5,3]);c.strokeRect(b.x,b.y,b.w,b.h);c.setLineDash([]);
       c.save();c.beginPath();c.rect(b.x+3,b.y+3,Math.max(0,b.w-6),Math.max(0,b.h-6));c.clip();c.font='10px Arial';c.fillStyle='#47603e';c.textAlign='center';c.fillText(it.name,b.x+b.w/2,b.y+b.h/2+3);c.restore();
+    }
+    const selected=this.adapter.selected;
+    if(this.cabinetSelection&&cabinetId(selected)===this.cabinetSelection){
+      const b=this.rectangle(cabinetEnvelope(selected.assistant_carcass));c.strokeStyle='#1677ff';c.lineWidth=3;c.strokeRect(b.x,b.y,b.w,b.h);
+    }
+    if(this.xrayKey&&selected?.assistant_carcass){
+      const members=this.adapter.items.filter(it=>viewKey(it)===this.xrayKey),fittings=nativeFeet(members);
+      for(const door of members.filter(it=>it.blank_axis==='front')){
+        try{fittings.push(...doorHinges(door,members));}catch{/* Manually moved panels can no longer host their hinges. */}
+      }
+      c.fillStyle='#34565c';for(const {position:p} of fittings){c.beginPath();c.arc(m.ox+(p.x-m.cx)*m.scale,m.oy+(p.z-m.cz)*m.scale,3,0,2*Math.PI);c.fill();}
     }
     for(const f of fixturePlans(this.adapter.items,r)){
       if(f.error||this.layer!=='all'&&this.layer!=='base')continue;
@@ -57,10 +71,14 @@ export class FallbackPlan {
   zoom(delta){this.zoomLevel=Math.max(.3,Math.min(8,this.zoomLevel*(delta>0?1.2:1/1.2)));this.invalidate();}
   hover(){}
   highlight(){this.invalidate();}
-  pick(x,y){const r=this.canvas.getBoundingClientRect();for(const it of [...this.adapter.items].reverse()){
+  pick(x,y){const r=this.canvas.getBoundingClientRect();let shell=null;for(const it of [...this.adapter.items].reverse()){
     if(this.layer!=='all'&&tier(it)!==this.layer)continue;const b=this.rectangle(it);
-    if(x-r.left>=b.x&&x-r.left<=b.x+b.w&&y-r.top>=b.y&&y-r.top<=b.y+b.h)return{id:it.item_id,point:this.planePoint(x,y,{y:elevation(it,this.adapter.room)*S})};
-  }const point=this.planePoint(x,y);for(const f of (this.adapter.room.features||[]).filter(isEquipment).reverse()){const b=featureBox(f,this.adapter.room);if(Math.abs(point.x/S-b.x)<=b.w/2&&Math.abs(point.z/S-b.z)<=b.d/2)return {featureId:f.id,point};}return null;}
+    if(x-r.left>=b.x&&x-r.left<=b.x+b.w&&y-r.top>=b.y&&y-r.top<=b.y+b.h){
+      const hit={id:it.item_id,point:this.planePoint(x,y,{y:elevation(it,this.adapter.room)*S})};
+      if(!this.xrayKey||viewKey(it)!==this.xrayKey)return shell||hit;
+      if(isInterior(it))return hit;shell??=hit;
+    }
+  }if(shell)return shell;const point=this.planePoint(x,y);for(const f of (this.adapter.room.features||[]).filter(isEquipment).reverse()){const b=featureBox(f,this.adapter.room);if(Math.abs(point.x/S-b.x)<=b.w/2&&Math.abs(point.z/S-b.z)<=b.d/2)return {featureId:f.id,point};}return null;}
   equipmentPlane(f){return {y:(f.elevation+f.height/2)*S};}
   highlightEquipment(f){this.equipmentSelected=f;this.invalidate();}
   previewEquipment(feature,error){this.equipmentPreview={feature,error};this.invalidate();}

@@ -99,6 +99,7 @@ class FurnitureItem(StrictModel):
     name: str=Field(min_length=1,max_length=160)
     x: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.25)
     z: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.25)
+    upper_mount_offset_mm: int|None=Field(default=None,ge=-5000,le=5000,strict=True,exclude_if=lambda v:v is None)
     elevation_mm: Annotated[int,Field(strict=True)]|Annotated[float,Field(strict=True)]|None=Field(default=None,ge=0,le=5000,multiple_of=0.5)
     rotation: Literal[0,90,180,270]=0
     width: int|float=Field(ge=1,le=3000,multiple_of=0.5)
@@ -146,6 +147,8 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
+            raise ValueError('Отметка навески относится к верхнему шкафу.')
         if self.blank_axis=='front':
             if self.module_type!='blank' or self.blank_edge_code!='1111' or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
                 raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм в круг.')

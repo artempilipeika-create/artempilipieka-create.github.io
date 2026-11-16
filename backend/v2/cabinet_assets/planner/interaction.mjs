@@ -1,3 +1,4 @@
+import {cabinetId,cabinetEnvelope,cabinetChange,commitCabinet} from './cabinet-actions.mjs';
 import {anchoredDimensions,resizeConnectedLayout} from './corner-layout.mjs';
 import {clone,MM_TO_WORLD,elevation,placementError,rightAnchoredWidth,dimensionPatch,kitchenSettings,isTallModule,tallRearExtension,tallWallPlacement,rotateXZ} from './furniture-core.mjs';
 import {snapItem,findSpace} from './placement.mjs';
@@ -67,7 +68,17 @@ export class Interaction {
     if(hit?.featureId&&this.equipment?.down(e,hit))return;
     if(!hit?.id){this.scene.hover(null);return;}
     const it=this.adapter.items.find(x=>x.item_id===hit.id);if(!it)return;
-    this.consume(e);this.adapter.select(it.item_id);
+    this.consume(e);
+    if(this.scene.cabinetSelection!==cabinetId(it)||this.scene.xrayKey)this.scene.cabinetSelection=null;
+    this.scene.pickedInterior=hit.part||null;
+    this.adapter.select(it.item_id);
+    if(this.scene.cabinetSelection){
+      const plane=this.scene.makePlane(it,hit.point),start=this.scene.planePoint(e.clientX,e.clientY,plane);
+      if(!start)return;
+      this.history.begin('Перемещение шкафа');
+      this.gesture={pointerId:e.pointerId,cabinet:this.scene.cabinetSelection,item:cabinetEnvelope(it.assistant_carcass),plane,start,x:e.clientX,y:e.clientY};
+      this.scene.controls.enabled=false;this.canvas.setPointerCapture(e.pointerId);this.canvas.style.cursor='grabbing';return;
+    }
     if(it.blank_binding&&this.targets(it).length===1){this.adapter.status('Полка привязана к стойкам. Измените стойки или снимите привязку в разделе «Привязки и размеры».');return;}
     const plane=this.scene.makePlane(it,hit.point),start=this.scene.planePoint(e.clientX,e.clientY,plane);
     if(!start)return;
@@ -89,6 +100,14 @@ export class Interaction {
     g.moved=true;
     // First release keeps the existing v2 elevation rule. No unsavable Y field.
     const raw={...g.item,x:g.item.x+(point.x-g.start.x)/MM_TO_WORLD,z:g.item.z+(point.z-g.start.z)/MM_TO_WORLD};
+    if(g.cabinet){
+      const dx=Math.round((raw.x-g.item.x)*2)/2,dz=Math.round((raw.z-g.item.z)*2)/2;
+      try{
+        const {moved}=cabinetChange(this.adapter,g.cabinet,{dx,dz});
+        g.result={item:moved[0],items:moved,error:'',guides:[],dx,dz};this.preview(g.result);
+      }catch(error){g.result={error:error.message,guides:[]};this.scene.clearPreview();}
+      this.feedback(g.result);return;
+    }
     const grouped=g.items.length>1,ids=new Set(g.items.map(it=>it.item_id));
     const opts={...this.options(),threshold:this.scene.pixelThreshold(raw),allowElevation:false,...(grouped?{autoRotate:false,fitTallFront:false}:{})};
     const candidate=snapItem(raw,grouped?this.adapter.items.filter(it=>!ids.has(it.item_id)):this.adapter.items,this.adapter.room,opts,g.anchors);g.anchors=candidate.anchors;
@@ -111,7 +130,9 @@ export class Interaction {
     const g=this.gesture;if(!g||e.pointerId!==g.pointerId)return;
     this.consume(e);this.gesture=null;
     try{
-      if(g.moved&&g.result&&!g.result.error){applyChanges(this.adapter,g.result.items||[g.result.item]);this.history.commit();this.adapter.status(g.items.length>1?'Группа установлена.':'Модуль установлен.');}
+      if(g.cabinet&&g.moved&&g.result&&!g.result.error){
+        commitCabinet(this.adapter,g.cabinet,g.result);this.history.commit();this.adapter.status('Шкаф перемещён.');
+      }else if(g.moved&&g.result&&!g.result.error){applyChanges(this.adapter,g.result.items||[g.result.item]);this.history.commit();this.adapter.status(g.items.length>1?'Группа установлена.':'Модуль установлен.');}
       else {this.history.cancel();if(g.result?.error)this.adapter.status(g.result.error+' — положение не изменено.');}
     }catch(error){this.history.cancel();this.adapter.status(error.message);}
     finally{this.finishPointer(e.pointerId);}
@@ -131,7 +152,14 @@ export class Interaction {
     if(!roomReady(this.adapter.room)){this.adapter.status('Сначала задайте размеры и заполните замер в разделе «Комната».');document.dispatchEvent(new Event('mf:room-required'));return false;}
     if(!this.editable())return false;
     this.cancel();
-    try {this.history.run(label,fn);return true;}catch(error){this.adapter.status(error.message);return false;}
+    const before=this.adapter.selected,oldHeight=before?.height;
+    try {
+      this.history.run(label,fn);
+      const after=this.adapter.selected;
+      if(before&&after?.item_id===before.item_id&&after.height!==oldHeight){
+        this.scene.heightOffer={id:after.item_id,height:after.height};this.adapter.notify();
+      }
+      return true;}catch(error){this.adapter.status(error.message);return false;}
   }
   add(opt){return this.change('Добавление модуля',()=>{
     const draft=this.adapter.createDraft(opt),it=findSpace(draft,this.adapter.items,this.adapter.room,this.adapter.selected,this.options());
@@ -169,18 +197,21 @@ export class Interaction {
       this.adapter.status('Модуль заменён. Материалы, положение и заметка сохранены.');
     });
   }
-  remove(){if(this.equipment?.selected){this.equipment.remove();return;}const id=this.adapter.selected?.item_id;if(id)this.change('Удаление модуля',()=>this.adapter.remove(id));}
+  remove(){if(this.scene.cabinetSelection){this.change('Удаление шкафа',()=>commitCabinet(this.adapter,this.scene.cabinetSelection,null));return;}if(this.equipment?.selected){this.equipment.remove();return;}const id=this.adapter.selected?.item_id;if(id)this.change('Удаление модуля',()=>this.adapter.remove(id));}
   duplicate(){
     const source=this.adapter.selected;if(!source)return;
     this.change('Копирование модуля',()=>{
       const draft={...clone(source),...(source.blank_binding?{blank_binding:null}:{}),item_id:crypto.randomUUID(),name:(source.name+' — копия').slice(0,160)};
+      delete draft.assistant_carcass;delete draft.blank_plinth_run;
       const it=findSpace(draft,this.adapter.items,this.adapter.room,source,this.options());
       if(!it)throw new Error('Нет свободного места для копии.');
       this.adapter.insert(it);
     });
   }
   rotate(){const it=this.adapter.selected;if(it)this.modify({rotation:(it.rotation+90)%360},'Поворот модуля');}
-  nudge(dx,dz){const targets=this.targets();if(targets.length===1&&targets[0].blank_binding){this.adapter.status('Сначала снимите привязку полки к стойкам.');return;}if(targets.length)this.change(targets.length>1?'Перемещение группы':'Точное перемещение',()=>applyChanges(this.adapter,translateItems(targets,dx,dz)));}
+  nudge(dx,dz){
+    if(this.scene.cabinetSelection)return this.change('Перемещение шкафа',()=>commitCabinet(this.adapter,this.scene.cabinetSelection,{dx,dz}));
+    const targets=this.targets();if(targets.length===1&&targets[0].blank_binding){this.adapter.status('Сначала снимите привязку полки к стойкам.');return;}if(targets.length)this.change(targets.length>1?'Перемещение группы':'Точное перемещение',()=>applyChanges(this.adapter,translateItems(targets,dx,dz)));}
   key(e){
     if(e.key==='Escape'&&(this.gesture||this.catalogueDraft||this.equipment?.gesture||this.equipment?.catalogueDraft)){this.consume(e);this.cancel();return;}
     if(!this.editable()||document.querySelector('dialog[open]')||e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;

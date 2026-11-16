@@ -242,7 +242,7 @@ export class BlanksUI{
     const item=this.app.adapter.selected,isBlank=item?.module_type==='blank';
     this.inspector.hidden=!isBlank;
     document.body.classList.toggle('mf-blank-selected',Boolean(isBlank));
-    const allow=el=>el===this.inspector||el.classList.contains('mf3d-section-head')||
+    const allow=el=>el===this.inspector||el.id==='cabinet-actions'||el.classList.contains('mf3d-section-head')||
       el.classList.contains('studio-rename')||el.id==='item-brief-details'||el.classList.contains('mf3d-item-head-actions')||
       Boolean(el.querySelector('#body-search'));
     for(const child of this.itemControls.children)child.classList.toggle('mf-blank-hidden',Boolean(isBlank)&&!allow(child));

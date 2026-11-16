@@ -130,14 +130,23 @@ export class MeshFactory{
       if(m.userData.role==='door-pivot'){const visible=mode!=='facadesHidden';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(m.userData.role==='appliance-slot'){const visible=mode==='normal';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(!m.isMesh)return;
-      if(m.userData.blankEdge||m.userData.blankHook)return; // Edge tint belongs to the selected real panel edge, not a cabinet material.
+      if(m.userData.blankEdge){m.visible=mode!=='xray';return;}
+      if(m.userData.blankHook)return; // Edge tint belongs to the selected real panel edge, not a cabinet material.
       const role=m.userData.role,part=byKey.get(m.userData.part?.key);
       if(part)m.userData.part=part;
       const visible=m.userData.appliance?mode==='normal':role==='reveal'?mode==='normal'&&!it.doors_open:(role==='front'||m.userData.frontAccessory)?mode!=='facadesHidden':true;
       if(m.userData.appliance||role==='front'||role==='reveal'||m.userData.frontAccessory){if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(m.userData.sharedApplianceAsset)return;
       const shell=part?part.role==='front'||part.key.startsWith('side-'):role==='front';
-      const inspection=mode==='inspection'&&shell;
+      const panel=['body','back','front','shelf','glass','plinth'].includes(role)&&!m.userData.joint&&!m.userData.article;
+      const xray=mode==='xray'&&panel,inspection=xray||mode==='inspection'&&shell;
+      if(xray&&!m.userData.xrayOutline){
+        const edges=new THREE.EdgesGeometry(m.geometry,32);
+        const lineMaterial=new THREE.LineBasicMaterial({color:'#34565c',transparent:true,opacity:.78,depthWrite:false});
+        const line=new THREE.LineSegments(edges,lineMaterial);line.raycast=()=>{};line.renderOrder=6;
+        line.userData={ownGeometry:true,ownedMaterials:[lineMaterial]};m.add(line);m.userData.xrayOutline=line;
+      }
+      if(m.userData.xrayOutline)m.userData.xrayOutline.visible=xray;
       const id=part?(part.visual_variant_id??part.material.variant_id):role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
       let material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
       if(m.userData.wasteColor){const key='waste:'+m.userData.wasteColor+':'+Boolean(group.userData.ghost);if(!this.materials.has(key)){const plastic=material.clone();plastic.color.set(m.userData.wasteColor);plastic.roughness=.65;plastic.metalness=.1;this.materials.set(key,plastic);}material=this.materials.get(key);}

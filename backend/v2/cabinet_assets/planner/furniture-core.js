@@ -892,6 +892,9 @@
     const result=items.map(it=>({...it})),uppers=result.filter(it=>it.module_type==='wall_cabinet').sort((a,b)=>elevation(a)-elevation(b));
     const old=new Map(uppers.map(it=>[it,elevation(it)])),placed=[];
     for(const it of uppers){
+      if(Number.isFinite(it.upper_mount_offset_mm)){
+        it.elevation_mm=Math.round(upperWorktopTop(it,result)+600+it.upper_mount_offset_mm);placed.push(it);continue;
+      }
       const q=rotateXZ(it.x||0,it.z||0,-(it.rotation||0));let parent=null,gap=0;
       for(const other of placed){
         if((other.rotation||0)!==(it.rotation||0))continue;

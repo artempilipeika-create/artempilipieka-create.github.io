@@ -46,6 +46,10 @@ def mounted_items(items):
     old = {id(it): it.get('elevation_mm') if it.get('elevation_mm') is not None else 1458 for it in uppers}
     placed = []
     for it in uppers:
+        if it.get('upper_mount_offset_mm') is not None:
+            it['elevation_mm'] = round(upper_worktop_top(it, result) + 600 + it['upper_mount_offset_mm'])
+            placed.append(it)
+            continue
         x, z = local(it); parent = None; gap = 0
         for other in placed:
             if other.get('rotation', 0) != it.get('rotation', 0): continue

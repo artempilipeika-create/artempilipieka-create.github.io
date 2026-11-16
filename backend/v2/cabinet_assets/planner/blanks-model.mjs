@@ -94,5 +94,6 @@ export function cuttingSize(input){
 export function blankCopies(source,count,step,axis){
   if(!Number.isInteger(count)||count<1||count>30)throw Error('Количество копий: от 1 до 30.');
   if(!Number.isFinite(step)||!Number.isInteger(step*2)||step===0||!['x','z','elevation_mm'].includes(axis))throw Error('Укажите ненулевой шаг с точностью 0,5 мм и направление.');
-  return Array.from({length:count},(_,i)=>({...structuredClone(source),...(axis!=='elevation_mm'?{blank_binding:null}:{}),item_id:crypto.randomUUID(),[axis]:(source[axis]||0)+step*(i+1)}));
+  const {assistant_carcass,blank_plinth_run,...detail}=source;
+  return Array.from({length:count},(_,i)=>({...structuredClone(detail),...(axis!=='elevation_mm'?{blank_binding:null}:{}),item_id:crypto.randomUUID(),[axis]:(source[axis]||0)+step*(i+1)}));
 }

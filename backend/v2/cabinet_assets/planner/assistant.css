@@ -76,3 +76,17 @@
 .decor-finishes i{flex:0 0 16px;height:16px;border:1px solid #89948f;border-radius:50%}
 #planner-assistant-dialog .decor-finishes [aria-pressed=true]{border-color:#236144;background:#edf5ec}
 #planner-assistant-dialog [data-unavailable=true]{cursor:default}
+
+#planner-assistant-dialog .wardrobe-subsections{display:flex;gap:5px;flex-wrap:wrap}
+#planner-assistant-dialog .wardrobe-subsections button{margin:0;padding:7px 10px;font-size:13px}
+#planner-assistant-dialog .wardrobe-subsections [aria-pressed=true]{background:#e3eee7;border-color:#54836c;color:#184c35}
+#planner-assistant-dialog .assistant-drawing{box-sizing:border-box;display:grid;grid-template-rows:24px minmax(0,1fr) 22px 40px;gap:5px;height:410px;padding:14px;background:#f7f7f2;border:1px solid #c9d2c8;overflow:hidden}
+#planner-assistant-dialog .assistant-drawing h3,#planner-assistant-dialog .assistant-drawing p{margin:0}
+#planner-assistant-dialog .assistant-drawing h3{text-align:left;font-size:16px}
+#planner-assistant-dialog .wardrobe-figure{min-height:0;min-width:0;background:#fdfcf8;border-radius:7px}
+#planner-assistant-dialog .wardrobe-figure svg{display:block;width:100%;height:100%;font-family:inherit}
+#planner-assistant-dialog .assistant-drawing p:last-child{font-size:13px;color:#476051}
+#planner-assistant-dialog .wardrobe-hinge figure{margin:0;display:grid;justify-items:center;gap:6px}
+#planner-assistant-dialog .wardrobe-hinge img{width:180px;height:128px;object-fit:contain;background:#fafbf9}
+#planner-assistant-dialog .wardrobe-hinge figcaption{font-size:13px;font-weight:600}
+@media(max-width:640px){#planner-assistant-dialog .assistant-drawing{height:238px;padding:7px;gap:2px;grid-template-rows:18px minmax(0,1fr) 18px 21px}#planner-assistant-dialog .assistant-drawing p:last-child{font-size:11px}}

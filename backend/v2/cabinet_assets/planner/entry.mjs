@@ -33,6 +33,7 @@ import {roomError} from './room-plan.mjs';
 import {ProjectSafety} from './project-safety.mjs';
 import {SceneDimensions} from './dimensions.mjs';
 import {BlanksUI} from './blanks-ui.mjs';
+import {CabinetControls} from './cabinet-controls.mjs';
 import {AssistantUI} from './assistant-ui.mjs';
 
 class PlannerApplication {
@@ -48,7 +49,7 @@ class PlannerApplication {
     this.presentation=new PresentationUI(this);this.executions=new ExecutionUI(this);
     this.dimensions=new SceneDimensions(this);
     this.roomSetup=new RoomSetup(this);
-    this.blanks=new BlanksUI(this);
+    this.blanks=new BlanksUI(this);this.cabinets=new CabinetControls(this);
     this.previousCount=this.adapter.items.length;
     this.unsubscribe=this.bridge.subscribe(reason=>{
       if(reason==='before-project'){
@@ -303,7 +304,7 @@ class PlannerApplication {
       this.listen(get(id),'click',e=>{if(e.target.closest('button'))this.history.commit();});
     }
     this.listen(get('material-scope'),'change',()=>{
-      const scope=get('material-scope').value;this.scene.selectionScope=scope;this.scene.sync();this.scene.invalidate();
+      const scope=get('material-scope').value;this.scene.cabinetSelection=null;this.scene.selectionScope=scope;this.scene.sync();this.scene.invalidate();
       const count=scope==='module'?(this.adapter.selected?1:0):this.adapter.items.filter(it=>globalThis.MF_FURNITURE_CORE.scopeMatches(it,scope)).length;
       const label={module:'модуль',kitchen:'вся кухня',lower:'низ',upper:'верх'}[scope]||scope;
       this.adapter.status('Выделение: '+label+(scope==='module'?'':' · '+count+' модулей'));
@@ -476,7 +477,7 @@ class PlannerApplication {
     const selectedId=this.adapter.state?.selected_item_id;
     if(selectedId&&!this.adapter.items.some(it=>it.item_id===selectedId)){this.adapter.select(null);return;}
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.wallFinishes?.sync();this.mobility?.sync();this.materialAppearance?.sync();this.blanks?.sync();
+    this.cabinets?.sync();this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.wallFinishes?.sync();this.mobility?.sync();this.materialAppearance?.sync();this.blanks?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;
