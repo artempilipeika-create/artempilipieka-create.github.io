@@ -8,7 +8,19 @@ function millimetres(parent,title,value,commit,{min=0,max=5000,step=1}={}){
  const label=el('label',title),input=el('input');
  input.type='number';input.step=String(step);input.min=String(min);input.max=String(max);
  input.value=value??'';input.setAttribute('aria-label',title);
- input.onchange=()=>{if(input.reportValidity())commit(input.value===''?null:input.valueAsNumber);};
+ let editing=false;
+ const valueNow=()=>input.value===''?null:input.valueAsNumber;
+ input.oninput=()=>{
+   editing=true;
+   if(input.validity.valid)commit(valueNow(),false);
+ };
+ const finish=()=>{
+   if(!editing||!input.reportValidity())return;
+   editing=false;commit(valueNow(),true);
+ };
+ input.onchange=()=>{editing=true;finish();};
+ input.onblur=finish;
+ input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();finish();}};
  label.append(input);parent.append(label);return input;
 }
 export function selectShelf(ui,section,index){
@@ -68,36 +80,39 @@ export function drawerControls(ui,parent,section){
  const fields=ui.fields;
  const box=el('fieldset');box.append(el('legend','Шуфляды'));parent.append(box);
  const banks=Array.from({length:fields.sections},(_,i)=>fields.drawerBanks?.[i]??null);
- const bank=banks[section];
- function update(value){banks[section]=value;fields.drawerBanks=banks;ui.changed();ui.render();}
+ let bank=banks[section];
+ function update(value,finished=true){
+   bank=value;banks[section]=value;fields.drawerBanks=banks;ui.changed();
+   if(finished)ui.render();
+ }
  if(!bank){box.append(action('Добавить шуфляды',()=>update({kind:fields.front?'internal':'external',faces:[{height:197}]})));return;}
  ui.select(box,'Исполнение шуфляд',[['internal','Внутренние за дверью'],['external','Наружные фасады']],bank.kind,value=>update({...bank,kind:value}));
- millimetres(box,bank.kind==='internal'?'От верха дна шкафа до низа блока, мм':'Подъём блока от низа корпуса, мм',bank.bottomOffset??0,n=>{
-   if(n!=null)update({...bank,bottomOffset:n});
+ millimetres(box,bank.kind==='internal'?'От верха дна шкафа до низа блока, мм':'Подъём блока от низа корпуса, мм',bank.bottomOffset??0,(n,finished)=>{
+   if(n!=null)update({...bank,bottomOffset:n},finished);
  },{max:3000});
  if((bank.bottomOffset||bank.shelvesBelow)&&fields.sectionShelves[section]){
    ui.select(box,'Полок под блоком',Array.from({length:fields.sectionShelves[section]+1},(_,i)=>[i,String(i)]),bank.shelvesBelow??0,
      value=>update({...bank,shelvesBelow:Number(value)}));
  }
- function count(n){
+ function count(n,finished=true){
    if(!Number.isInteger(n)||n<1||n>24)return;
-   update({...bank,faces:Array.from({length:n},(_,i)=>bank.faces[i]??{height:bank.faces.at(-1)?.height??197})});
+   update({...bank,faces:Array.from({length:n},(_,i)=>bank.faces[i]??{height:bank.faces.at(-1)?.height??197})},finished);
  }
  millimetres(box,'Количество шуфляд',bank.faces.length,count,{min:1,max:24});
  box.append(action('− Шуфляда',()=>count(bank.faces.length-1)),action('+ Шуфляда',()=>count(bank.faces.length+1)));
  const equal=bank.faces.every(f=>f.height!=null&&f.height===bank.faces[0].height);
- const every=millimetres(box,'Одинаковая высота всех фасадов, мм',equal?bank.faces[0].height:null,n=>{
-  if(n!=null)update({...bank,height:undefined,faces:bank.faces.map(f=>({...f,height:n}))});
+ const every=millimetres(box,'Одинаковая высота всех фасадов, мм',equal?bank.faces[0].height:null,(n,finished)=>{
+  if(n!=null)update({...bank,height:undefined,faces:bank.faces.map(f=>({...f,height:n}))},finished);
  },{min:100,max:3000});every.placeholder='Задать всем';
  box.append(el('p','Фасады пронумерованы снизу вверх. Между фасадами 3 мм.'));
- if(bank.faces.some(f=>f.height==null))millimetres(box,'Общая высота блока с зазорами, мм',bank.height,n=>{if(n!=null)update({...bank,height:n});},{min:103,max:3000});
+ if(bank.faces.some(f=>f.height==null))millimetres(box,'Общая высота блока с зазорами, мм',bank.height,(n,finished)=>{if(n!=null)update({...bank,height:n},finished);},{min:103,max:3000});
  bank.faces.forEach((face,j)=>{
    const row=el('fieldset');row.append(el('legend','Фасад '+(j+1)));box.append(row);
-   function replace(changes){update({...bank,faces:bank.faces.map((f,k)=>k===j?{...f,...changes}:f)});}
-   millimetres(row,'Высота фасада '+(j+1)+', мм',face.height,n=>{if(n!=null)replace({height:n});},{min:100,max:3000});
-   const width=millimetres(row,'Ширина фасада '+(j+1)+', мм',face.width,n=>{
-    const next={...face};if(n==null)delete next.width;else next.width=n;
-    update({...bank,faces:bank.faces.map((f,k)=>k===j?next:f)});
+   function replace(changes,finished){update({...bank,faces:bank.faces.map((f,k)=>k===j?{...f,...changes}:f)},finished);}
+   millimetres(row,'Высота фасада '+(j+1)+', мм',face.height,(n,finished)=>{if(n!=null)replace({height:n},finished);},{min:100,max:3000});
+   const width=millimetres(row,'Ширина фасада '+(j+1)+', мм',face.width,(n,finished)=>{
+    const next={...bank.faces[j]};if(n==null)delete next.width;else next.width=n;
+    update({...bank,faces:bank.faces.map((f,k)=>k===j?next:f)},finished);
    },{min:40,max:1200,step:.5});width.placeholder='По проёму';
    if(face.height!=null)row.append(action('Этот фасад по остатку',()=>{
      const heights=ui.previewBuilt?.drawerBanks?.[section]?.faces;

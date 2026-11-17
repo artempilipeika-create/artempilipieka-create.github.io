@@ -95,3 +95,21 @@ test('shelves below and above a raised bank use the actual free opening',()=>{
  assert.deepEqual(b.drawerIssues,[]);
  assert.throws(()=>buildCarcass({...spec,drawerBanks:[{...row,bottomOffset:80}]}),/полка|полок/);
 });
+
+import {drawerControls} from '../../backend/v2/cabinet_assets/planner/wardrobe-interior-ui.mjs';
+test('typing numeric fields updates the bank before moving to another step or saving',()=>{
+ const fieldsByLabel=new Map();
+ const node=()=>({append(){},setAttribute(key,label){if(key==='aria-label')fieldsByLabel.set(label,this);},
+  validity:{valid:true},reportValidity(){return true;},get valueAsNumber(){return Number(this.value);}});
+ const original=globalThis.document;globalThis.document={createElement:node};
+ try{
+  const fields={sections:1,sectionShelves:[0],drawerBanks:[{kind:'internal',faces:[{height:197},{height:197}]}]};
+  let rendered=0;drawerControls({fields,select(){},changed(){},render(){rendered++;}},node(),0);
+  for(const [label,value] of [['Высота фасада 2, мм','147'],['Ширина фасада 2, мм','420'],['От верха дна шкафа до низа блока, мм','250']]){
+   const input=fieldsByLabel.get(label);input.value=value;input.oninput();
+  }
+  assert.deepEqual(fields.drawerBanks[0].faces,[{height:197},{height:147,width:420}]);
+  assert.equal(fields.drawerBanks[0].bottomOffset,250);assert.equal(rendered,0);
+  fieldsByLabel.get('От верха дна шкафа до низа блока, мм').onblur();assert.equal(rendered,1);
+ }finally{globalThis.document=original;}
+});
