@@ -1,3 +1,4 @@
+import {outerFront,drawerSections,buildDrawerBoards,doorZones} from './wardrobe-drawers.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
 import {overlayFronts,hingeLoad} from './wardrobe-fronts.mjs';
 import {blankItem,validateBlank,edgeMeters} from './blanks-model.mjs';
@@ -66,7 +67,7 @@ export function buildCarcass(input={},options={}){
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
       x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:axis==='front'?2:s.edgeThickness,
-      blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
+      blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:/^drawer-\d+-\d+-bottom$/.test(key)?CARCASS_BACK_MATERIAL_ID:key.startsWith('drawer-')?(options.drawerMaterialId??(t===18?options.bodyMaterialId:null)):options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
     const error=validateBlank(item);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
   };
@@ -90,9 +91,11 @@ export function buildCarcass(input={},options={}){
     x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D-rear-dividerSetback,t,x+t/2,t,(rear-dividerSetback)/2,edge()));x+=t;
   }
   supports.push(right);
+  const banks=drawerSections(s,widths);
+  buildDrawerBoards(s,banks,add);
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
-  const shelfYs=counts.map((count,section)=>shelfUndersides(s,section,bottomTop,topBottom,
-    Array.from({length:count},(_,i)=>choice(s.shelfChoices?.[section]?.[i]??defaultShelf,t).thickness),s.elevation+footHeight(s)));
+  const shelfYs=counts.map((count,section)=>shelfUndersides(s,section,banks[section]?.top??bottomTop,topBottom,
+    Array.from({length:count},(_,i)=>choice(s.shelfChoices?.[section]?.[i]??defaultShelf,t).thickness),s.elevation+footHeight(s),Boolean(banks[section])));
   for(let section=0;section<s.sections;section++)for(let i=0;i<counts[section];i++){
     const y=shelfYs[section][i];
     const a=supports[section],b=supports[section+1];
@@ -107,7 +110,8 @@ export function buildCarcass(input={},options={}){
   if(s.front){
     if(!['left','right','pair'].includes(s.front.swing)||![90,130].includes(s.front.offset))throw Error('Выберите сторону открывания и отступ петель.');
     const sides=s.front.swing==='pair'?['left','right']:[s.front.swing];
-    for(const [i,door] of overlayFronts(s,sides.length).entries()){
+    for(const [i,door] of doorZones(s,overlayFronts(s,sides.length),banks).entries()){
+      if(door.height<=0)continue;
       hingeLoad(door.width,door.height,s.front.massKg);
       add('door-'+sides[i],'Фасад · петли '+(sides[i]==='left'?'слева':'справа'),'front',door.height,door.width,18,
         door.left+door.width/2-W/2,door.bottom,D/2+9,'1111');
@@ -118,13 +122,13 @@ export function buildCarcass(input={},options={}){
   if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-2*t,rear,0,t,(rear-D)/2,'0000');
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   const items=resolveBlankBindings(parts.map(p=>p.item));
-  return {spec:s,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
-    width:W,height:H,depth:D+(s.back&&!rear?3:0)+(s.front?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
+  return {spec:s,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+    width:W,height:H,depth:D+(s.back&&!rear?3:0)+(outerFront(s)?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 
 export function placeCarcass(built,position){
   // Placement envelope includes the overlay back; recipe origin remains at the carcass centre.
-  const shift=(built.spec.back&&!built.spec.backThickness?1.5:0)-(built.spec.front?9:0);
+  const shift=(built.spec.back&&!built.spec.backThickness?1.5:0)-(outerFront(built.spec)?9:0);
   return built.items.map(it=>({...it,...worldPoint({x:it.x,z:it.z+shift},position.rotation||0),rotation:position.rotation||0}))
     .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?.article==='118779'?10:0)}));
 }

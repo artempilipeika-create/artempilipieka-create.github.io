@@ -228,3 +228,22 @@ def test_back_hardware_uses_panel_height_and_each_horizontal_length():
         for height, per_side in [(120, 2), (600, 2), (601, 3), (1500, 5), (2200, 6), (2201, 7), (2980, 8)]:
             hardware, _ = hardware_for({**back, 'height': height})
             assert [r['qty'] for r in hardware] == [2 * per_side + 3] * 2
+
+def test_aks_drawer_control_spec_roundtrip_and_hardware():
+    from backend.v2.assistant_model import CarcassDesign
+    from backend.v2.three_d_document import hardware_for
+    spec={**SPEC,'width':600,'height':1600,'depth':600,'shelves':0,'sectionShelves':[0],
+          'front':{'swing':'left','offset':90},'drawerBanks':[{'kind':'internal','height':400,
+          'faces':[{'height':197},{'height':None,'width':450}]}]}
+    design=CarcassDesign.model_validate(spec)
+    assert design.drawerBanks[0].span()==400
+    assert CarcassDesign.model_validate_json(design.model_dump_json())==design
+    group=str(uuid4())
+    meta={'group_id':group,'spec':spec,'position':{'x':300,'z':310,'rotation':0,'elevation_mm':0}}
+    rows,_=hardware_for({'module_type':'blank','item_id':group+':drawer-0-0-face','blank_axis':'front',
+                         'width':543,'height':197,'assistant_carcass':meta})
+    assert [(r['article'],r['qty']) for r in rows if r['article'] in ('114798','81320','112595')]==[('114798',1),('81320',18)]
+    for bank in ({'kind':'internal','faces':[{'height':197,'width':580}]},
+                 {'kind':'internal','height':250,'faces':[{'height':197},{'height':None}]}):
+        with pytest.raises(ValidationError):
+            CarcassDesign.model_validate({**spec,'drawerBanks':[bank]})

@@ -1,3 +1,4 @@
+import {outerFront,drawerBottom,drawerMember} from './wardrobe-drawers.mjs';
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
@@ -9,7 +10,7 @@ import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -31,19 +32,19 @@ export function selectedCarcass(adapter){
  return {metadata,items};
 }
 
-export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,bodyMaterialId,backMaterialId,frontMaterialId,resetSideEdges=false}={}){
+export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,bodyMaterialId,backMaterialId,frontMaterialId,drawerMaterialId,resetSideEdges=false}={}){
  if(!['create','update'].includes(plan.action)||!plan.spec)throw Error('Нет предложения для применения.');
  const current=plan.action==='update'?selectedCarcass(adapter):null;
  if(plan.action==='update'&&!current)throw Error('Выберите деталь корпуса, созданного помощником.');
  const spec=cleanSpec(plan.spec),prefix=current?.metadata.group_id||id;
  const first=current?.items.find(i=>i.item_id.endsWith(':left'));
  const built=buildCarcass(spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]||'Корпус ИИ',
-  bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),frontMaterialId,backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
+  drawerMaterialId,bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),frontMaterialId,backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
  if(current){
   // Resize from the right and front, keeping the left edge and rear envelope.
   const previous=current.metadata.spec;
-  const delta=worldPoint({x:(spec.width-previous.width)/2,z:(built.depth-previous.depth-(previous.back&&!previous.backThickness?3:0)-(previous.front?18:0))/2},position.rotation);
+  const delta=worldPoint({x:(spec.width-previous.width)/2,z:(built.depth-previous.depth-(previous.back&&!previous.backThickness?3:0)-(outerFront(previous)?18:0))/2},position.rotation);
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
@@ -74,6 +75,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   if(generated.blank_axis==='front'){item.blank_edge_code='1111';item.blank_edge_thickness_mm=2;if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
   else if(generated.item_id.endsWith(':back')){item.blank_edge_code='0000';if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
   else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
+  else if(drawerBottom(item.item_id))item.body_variant_id=CARCASS_BACK_MATERIAL_ID;
+  else if(drawerMember(item.item_id,'.+')){if(drawerMaterialId!==undefined)item.body_variant_id=drawerMaterialId;else if(spec.thickness===18&&bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;}
   else if(bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;
   if(item.item_id===prefix+':plinth')item.blank_edge_code='1111';
   return item;

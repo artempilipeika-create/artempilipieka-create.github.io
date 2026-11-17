@@ -21,7 +21,7 @@ function openCabinet(built){
  const scale=Math.min(326/(W+.46*D),270/(H+.2*D));
  const point=(x,y,z)=>[200+(x-.46*z)*scale,160+((H/2-y)+.20*z)*scale];
  const order=({key,item})=>key==='back'?-1e5:key==='right'?1e5:key==='top'?2e5:key==='left'?-1e4:item.elevation_mm;
- const panels=built.parts.filter(p=>p.item.blank_axis!=='front').sort((a,b)=>order(a)-order(b));
+ const panels=built.parts.filter(p=>p.item.blank_axis!=='front'||p.key.startsWith('drawer-')).sort((a,b)=>order(a)-order(b));
  return panels.map(({key,item:i})=>{
    const x=i.x-i.width/2,X=x+i.width,y=i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),Y=y+i.height;
    const z=i.z-i.depth/2,Z=z+i.depth,glass=i.blank_shelf&&!i.blank_shelf.startsWith('board/');
@@ -38,14 +38,17 @@ function elevationView(built,view,section,front,selectedShelf){
  const X=x=>200+x*k,Y=y=>bottom-y*k;
  const panel=i=>({x:i.x-i.width/2,y:i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),w:i.width,h:i.height});
  let drawing='';
- const ordered=built.parts.filter(p=>p.item.blank_axis!=='front').sort((a,b)=>panelOrder(a)-panelOrder(b));
- function panelOrder(p){return p.key==='back'?-3:p.key==='plinth'?2:0;}
+ const ordered=built.parts.filter(p=>p.item.blank_axis!=='front'||p.key.startsWith('drawer-')).sort((a,b)=>panelOrder(a)-panelOrder(b));
+ function panelOrder(p){return p.key==='back'?-3:p.key.endsWith('-face')?3:p.key==='plinth'?2:0;}
  for(const {key,item} of ordered){
    const q=panel(item);if(q.y>=height)continue;
    const grey=key==='back'?'#edece5':wood;
    drawing+=rect(X(q.x),Y(Math.min(height,q.y+q.h)),q.w*k,(Math.min(height,q.y+q.h)-q.y)*k,key==='plinth'&&zoom?'#bed9cd':grey);
  }
- if(facade&&front)drawing+=doorLeaves(s,front.swing,X(-W/2),Y(footHeight(s)),k,40)+label(200,312,swingNames[front.swing]);
+ if(facade&&front){
+   const leaves=built.drawerBanks?.some(b=>b&&!b.internal)?built.parts.filter(p=>p.key.startsWith('door-')).map(p=>({side:p.key.slice(5),left:p.item.x-p.item.width/2+W/2,width:p.item.width,height:p.item.height,bottom:p.item.elevation_mm-s.elevation-(s.feet?.article==='118779'?0:footHeight(s))})):null;
+   drawing+=doorLeaves(s,front.swing,X(-W/2),Y(footHeight(s)),k,40,leaves)+label(200,312,swingNames[front.swing]);
+ }
  if(view==='sections'){
    const widths=sectionWidths(s);section=Math.max(0,Math.min(widths.length-1,section));
    const left=-W/2+s.thickness+widths.slice(0,section).reduce((sum,w)=>sum+w+s.thickness,0);

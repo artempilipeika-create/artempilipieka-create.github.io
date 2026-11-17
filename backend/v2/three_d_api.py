@@ -1,7 +1,7 @@
 """Authenticated user-owned 3D furniture projects. No production side effects."""
 from typing import Literal,Annotated
 from uuid import UUID,uuid4
-import base64,binascii,hashlib,secrets,json,logging
+import base64,binascii,hashlib,secrets,json,logging,re
 from fastapi.encoders import jsonable_encoder
 from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
@@ -125,7 +125,7 @@ class FurnitureItem(StrictModel):
     front_variant_id: UUID|None=None
     back_variant_id: UUID|None=None
     # Individual rectangular board; no inferred cabinet or fabricated BAZIS geometry.
-    blank_length_mm: int|None=Field(default=None,ge=100,le=3000)
+    blank_length_mm: int|None=Field(default=None,ge=40,le=3000)
     blank_width_mm: int|float|None=Field(default=None,ge=40,le=3000,multiple_of=0.5)
     blank_thickness_mm: int|None=Field(default=None,ge=3,le=40)
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
@@ -185,12 +185,24 @@ class FurnitureItem(StrictModel):
             )):
                 raise ValueError('У заготовки должны быть длина, ширина, толщина, ориентация и код ПВХ')
             l,w,t=self.blank_length_mm,self.blank_width_mm,self.blank_thickness_mm
+            drawer=None
+            if self.assistant_carcass and self.assistant_carcass.spec.drawerBanks:
+                group=str(self.assistant_carcass.group_id)+':'
+                drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-(side-left|side-right|bottom)',self.item_id[len(group):]) if self.item_id.startswith(group) else None
+                if drawer:
+                    section,index=map(int,drawer.group(1,2))
+                    banks=self.assistant_carcass.spec.drawerBanks
+                    if section>=len(banks) or not banks[section] or index>=len(banks[section].faces):
+                        raise ValueError('Деталь шуфляды отсутствует в анкете шкафа.')
+            if l<100 and not (drawer and drawer[3].startswith('side-') and self.blank_axis=='side' and t==18):
+                raise ValueError('Длина заготовки от 100 мм.')
+            thin_bottom=drawer and drawer[3]=='bottom' and self.blank_axis=='horizontal' and self.blank_edge_code=='0000' and t==3
             if w>1200 and self.blank_axis!='back':
                 raise ValueError('Ширина заготовки больше 1200 мм допустима только для задней панели')
             glass=bool(self.blank_shelf and not self.blank_shelf.startswith('board/'))
             if glass and (self.blank_edge_code!='0000' or self.body_variant_id or int(self.blank_shelf.split('/')[0])!=t):
                 raise ValueError('Неверная толщина или материал стеклянной полки.')
-            if t<10 and not glass and not (t in (3,4) and self.blank_axis=='back' and self.blank_edge_code=='0000'):
+            if t<10 and not glass and not thin_bottom and not (t in (3,4) and self.blank_axis=='back' and self.blank_edge_code=='0000'):
                 raise ValueError('ХДФ 3/4 мм допустим только для задней панели без ПВХ')
             expected={'horizontal':(l,t,w),'side':(t,l,w),'back':(l,w,t),'front':(w,l,t)}[self.blank_axis]
             if (self.width,self.height,self.depth)!=expected:

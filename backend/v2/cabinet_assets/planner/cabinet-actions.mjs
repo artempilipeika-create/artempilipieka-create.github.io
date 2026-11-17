@@ -1,15 +1,16 @@
+import {outerFront} from './wardrobe-drawers.mjs';
 import {splitPlinths,joinPlinths} from './wardrobe-plinth-runs.mjs';
 import {resolveBlankBindings} from './blank-bindings.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {placementError,kitchenGroup,dimensionPatch,heights,elevation,mountedItems,upperWorktopTop} from './furniture-core.mjs';
 
 export const cabinetId=item=>item?.assistant_carcass?.group_id;
-export const isInterior=item=>Boolean(cabinetId(item)&&/^(shelf-|divider-)/.test(item.item_id.slice(cabinetId(item).length+1)));
+export const isInterior=item=>Boolean(cabinetId(item)&&/^(shelf-|divider-|drawer-)/.test(item.item_id.slice(cabinetId(item).length+1)));
 
 export function cabinetEnvelope(meta){
  const {spec:s,position:p}=meta;
  return {...p,item_id:meta.group_id,module_type:'blank',name:'Шкаф',base:'wall',
-   width:s.width,height:s.height+footHeight(s),depth:s.depth+(s.back&&!s.backThickness?3:0)+(s.front?18:0)};
+   width:s.width,height:s.height+footHeight(s),depth:s.depth+(s.back&&!s.backThickness?3:0)+(outerFront(s)?18:0)};
 }
 
 export function cabinetChange(adapter,id,offset){

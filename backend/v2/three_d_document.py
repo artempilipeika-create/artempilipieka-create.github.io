@@ -102,6 +102,19 @@ def hardware_for(it):
     meta=it.get('assistant_carcass') or {}
     spec=meta.get('spec') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
+    drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-face',key)
+    if drawer:
+        banks=spec.get('drawerBanks') or []
+        section,number=map(int,drawer.groups())
+        if section<len(banks) and banks[section] and number<len(banks[section]['faces']):
+            depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[section]['kind']=='internal' else 0)
+            length=min(600,(ceil(depth/50)-1)*50)
+            articles={250:'63020',300:'114793',350:'114794',400:'114795',450:'114796',500:'114797',550:'114798',600:'115632'}
+            rows=[*rows,_row(f'Направляющие PRIME by AKS Soft Close {length} × 45 мм',1,'set',articles[length])]
+            if length in (400,450,500,550):
+                rows.append(_row('Шуруп 3,5×16 мм, Zn',16 if length==400 else 18,'pcs','81320'))
+            if length==550:
+                rows.extend([_row('Конфирмат 7×50',8),_row('Саморез 5×30 AKS',3,'pcs','12867'),_row('Шуруп 3,5×16 д5',3)])
     leg=PLINTH_FEET.get((spec.get('feet') or {}).get('article'))
     feet=spec.get('feet')
     inner=inner_foot_pairs(spec['width'],spec['sections'],feet.get('layout')) if feet else 0
@@ -133,7 +146,7 @@ def hardware_for(it):
 def _panel_hardware(it):
     meta = it.get('assistant_carcass') or {}
     spec = meta.get('spec') or {}
-    if it.get('blank_axis')=='front' and spec.get('front'):
+    if it.get('blank_axis')=='front' and spec.get('front') and it.get('item_id') in {str(meta.get('group_id'))+':door-left',str(meta.get('group_id'))+':door-right'}:
         w,h=it['width'],it['height']
         mass=spec['front'].get('massKg') or w*h*18*700/1e9
         for n,(limit,kg) in enumerate([(900,8),(1600,13),(2000,17),(2400,22)],2):

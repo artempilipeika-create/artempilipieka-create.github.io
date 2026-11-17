@@ -4,10 +4,10 @@ export const swingNames={left:'Петли слева',right:'Петли спра
 const n=value=>Number(value.toFixed(2));
 
 // Front elevation with an outward opening arc at the lower edge of each leaf.
-export function doorLeaves(spec,swing,left,bottom,scale,maxDrop){
+export function doorLeaves(spec,swing,left,bottom,scale,maxDrop,leaves=null){
   const sides=swing==='pair'?['left','right']:[swing];
-  return overlayFronts(spec,sides.length).map((leaf,i)=>{
-    const side=sides[i],w=leaf.width*scale,h=leaf.height*scale;
+  return (leaves??overlayFronts(spec,sides.length)).map((leaf,i)=>{
+    const side=leaf.side??sides[i],w=leaf.width*scale,h=leaf.height*scale;
     const pivot=left+(leaf.left+(side==='right'?leaf.width:0))*scale;
     const drop=Math.min(maxDrop,w*.65),tipX=w*.26,tipY=drop*.966;
     const head=Math.min(5,drop*.28),y=bottom-leaf.bottom*scale;

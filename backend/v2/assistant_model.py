@@ -107,7 +107,28 @@ class ShelfLevel(StrictModel):
     mm: int = Field(ge=0, le=5000, strict=True)
 
 
+class DrawerFace(StrictModel):
+    height: int | None = Field(ge=100,le=3000,strict=True)
+    width: float | None = Field(default=None,ge=40,le=1200,multiple_of=.5,exclude_if=lambda v:v is None)
+
+
+class DrawerBank(StrictModel):
+    kind: Literal['internal','external']
+    faces: list[DrawerFace] = Field(min_length=1,max_length=24)
+    height: int | None = Field(default=None,ge=103,le=3000,strict=True,exclude_if=lambda v:v is None)
+
+    def span(self):
+        fixed = sum(f.height or 0 for f in self.faces) + 3*len(self.faces)
+        count = sum(f.height is None for f in self.faces)
+        if count:
+            if count != 1 or self.height is None or not 100 <= self.height-fixed <= 3000:
+                raise ValueError('Проверьте общую высоту и фасад по остатку.')
+            return self.height
+        return fixed
+
+
 class CarcassDesign(CarcassSpec):
+    drawerBanks: list[DrawerBank | None] | None = Field(default=None,min_length=1,max_length=3,exclude_if=lambda v:v is None)
     shelfLevels: list[Annotated[list[ShelfLevel | None], Field(max_length=10)]] | None = Field(default=None, max_length=3, exclude_if=lambda v:v is None)
     front: OverlayFront | None = Field(default=None,exclude_if=lambda v:v is None)
     backThickness: Literal[16,18] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -124,7 +145,52 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
-        if self.front:
+        if self.drawerBanks:
+            if self.recipe not in ('shelves','divided') or len(self.drawerBanks)!=self.sections:
+                raise ValueError('Проверьте секции с шуфлядами.')
+            inner=self.width-2*self.thickness
+            if self.dividerPositions:
+                start=0
+                widths=[]
+                for end in [*self.dividerPositions,inner]:
+                    widths.append(end-start)
+                    start=end+self.thickness
+            else:
+                width,extra=divmod(inner-self.thickness*(self.sections-1),self.sections)
+                widths=[width+(i<extra) for i in range(self.sections)]
+            zones=[]
+            start=float(self.thickness)
+            for i,(bank,w) in enumerate(zip(self.drawerBanks,widths)):
+                end=start+w
+                if bank:
+                    inside=bank.kind=='internal'
+                    if inside and not self.front:
+                        raise ValueError(f'Секция {i+1}: выберите распашную дверь.')
+                    swing=self.front.swing if self.front else None
+                    left=18 if inside and i==0 and swing in ('left','pair') else 0
+                    right=18 if inside and i==self.sections-1 and swing in ('right','pair') else 0
+                    max_width=(w-left-right if inside else w+self.thickness*(1+(i==0)/2+(i==self.sections-1)/2))-3
+                    depth=self.depth-(self.backThickness or 0)-(21 if inside else 0)
+                    top=bank.span()+(self.thickness if inside else 0)
+                    if top>self.height-(self.thickness if inside else 0) or w-left-right<163 or not 250<depth<=1000:
+                        raise ValueError(f'Секция {i+1}: блоку AKS недостаточно места.')
+                    if any(f.width is not None and f.width>max_width for f in bank.faces):
+                        raise ValueError(f'Секция {i+1}: фасад шире проёма.')
+                    zones.append((start,end,inside,top))
+                start=end+self.thickness
+            if self.front and any(not z[2] for z in zones):
+                pair=self.front.swing=='pair'
+                seam=(self.thickness*1.5+widths[0] if pair and self.sections==2 else self.width/2)
+                spans=[(1.5,seam-1.5),(seam+1.5,self.width-1.5)] if pair else [(1.5,self.width-1.5)]
+                for left,right in spans:
+                    covered=[z for z in zones if min(right,z[1])>max(left,z[0])]
+                    bottom=max((z[3] for z in covered if not z[2]),default=0)
+                    height=self.height-3-bottom
+                    if bottom and any(z[2] for z in covered):
+                        raise ValueError('Разделите створки по секциям шуфляд.')
+                    if height>0 and (right-left>600 or not 2*self.front.offset+64<=height<=2400):
+                        raise ValueError('Проверьте размеры створки над блоком шуфляд.')
+        if self.front and not any(b and b.kind=='external' for b in self.drawerBanks or []):
             count = 2 if self.front.swing=='pair' else 1
             width = (self.width-3*count)/count
             if self.recipe not in ('shelves','divided') or width>600 or self.height-3>2400 or self.height-3<2*self.front.offset+64:

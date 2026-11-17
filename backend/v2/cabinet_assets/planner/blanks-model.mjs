@@ -1,4 +1,5 @@
 /** Universal rectangular board. Dimensions in mm, never inferred from a cabinet. */
+import {drawerBottom,drawerSide} from './wardrobe-drawers.mjs';
 import {hookError} from './blank-hook.mjs';
 import {choice} from './shelf-choices.mjs';
 export const SOURCE_EDGE_CODES=Object.freeze(['0000','1000','1010','1110','1011','1111']);
@@ -26,7 +27,8 @@ export function normalizeBlank(input={}){
 }
 export function validateBlank(input,room){
   const b=normalizeBlank(input);
-  if(!Number.isInteger(b.length)||b.length<100||b.length>3000)return 'Длина заготовки: от 100 до 3000 мм.';
+  const minLength=drawerSide(input.item_id)?40:100;
+  if(!Number.isInteger(b.length)||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
   if(!Number.isInteger(b.width*(b.axis==='front'?2:1))||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
@@ -40,7 +42,8 @@ export function validateBlank(input,room){
       if(b.axis!=='horizontal'||(glass&&(b.code!=='0000'||b.thickness!==c.thickness||input.body_variant_id)))return 'Стеклянная полка должна сохранять толщину стекла и быть без ПВХ.';
     }catch(e){return e.message;}
   }
-  if(!glass&&!thinBack&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
+  const thinBottom=drawerBottom(input.item_id)&&b.axis==='horizontal'&&b.thickness===3&&b.code==='0000';
+  if(!glass&&!thinBack&&!thinBottom&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
   if(!Number.isInteger(b.elevation*(b.axis==='front'?2:1))||b.elevation<0||b.elevation>5000)return 'Высота низа детали должна быть целым числом в мм.';

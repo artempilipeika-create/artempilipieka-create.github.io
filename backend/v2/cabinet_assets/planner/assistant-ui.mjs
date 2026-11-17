@@ -6,14 +6,14 @@ import {primeHinge} from './wardrobe-fronts.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
-import {shelfLevelControls,selectShelf} from './wardrobe-interior-ui.mjs';
+import {shelfLevelControls,selectShelf,drawerControls} from './wardrobe-interior-ui.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {WARDROBE_STEPS,resizeDividerChoices,wardrobeSpec,sectionWidths,questionnaireMaterialError} from './wardrobe-questionnaire.mjs';
 const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x;};
 const button=(text,fn)=>{const b=el('button',text);b.type='button';b.onclick=fn;return b;};
 export class AssistantUI{
- constructor(app){this.app=app;this.disposed=false;this.materials={};this.serial={body:0,back:0,front:0};this.start().catch(()=>{});}
+ constructor(app){this.app=app;this.disposed=false;this.materials={};this.serial={body:0,back:0,front:0,drawer:0};this.start().catch(()=>{});}
  async start(){
   if(!this.app.bridge.assistantAccess?.())return;
   const status=await this.app.bridge.request('/3d-assistant/status');if(this.disposed)return;
@@ -42,7 +42,7 @@ export class AssistantUI{
   this.mode.value=mode==='update'&&this.current?'update':'create';this.reset();this.dialog.showModal();this.steps[0].focus();
  }
  reset(){
-  this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;this.serial.front++;
+  this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;this.serial.front++;this.serial.drawer++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
   if(s?.thickness===18&&s.sections>1)this.fields.dividerJoints=Array.from({length:s.sections-1},(_,i)=>dividerScheme(s,i));
@@ -52,6 +52,7 @@ export class AssistantUI{
   this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
   this.loadMaterial('front',c?.items.find(i=>i.blank_axis==='front')?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.front_variant_id);
+  this.loadMaterial('drawer',c?.items.find(i=>/:drawer-\d+-\d+-side-left$/.test(i.item_id))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
   this.loadMaterial('back',c?.items.find(i=>i.item_id.endsWith(':back'))?.body_variant_id||(s?.backThickness?null:CARCASS_BACK_MATERIAL_ID));
  }
  async loadMaterial(role,id){
@@ -77,11 +78,11 @@ export class AssistantUI{
  }
  error(step=this.step){
   try{const s=this.spec();if(s.height+s.elevation+footHeight(s)>this.app.adapter.room.height)throw Error('Шкаф выше помещения. Уменьшите высоту.');
-   if(step>=4)for(const role of ['body',...(s.back?['back']:[]),...(s.front?['front']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?(s.backThickness??3):role==='front'?18:s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':role==='front'?'Фасад: ':'Корпус: ')+e);}
+   if(step>=4)for(const role of ['body',...(s.back?['back']:[]),...(s.front||s.drawerBanks?.some(Boolean)?['front']:[]),...(s.thickness!==18&&s.drawerBanks?.some(Boolean)?['drawer']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?(s.backThickness??3):role==='front'||role==='drawer'?18:s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':role==='front'?'Фасад: ':role==='drawer'?'Короб шуфляды: ':'Корпус: ')+e);}
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===3&&this.fields.front) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices||this.fields.shelfLevels))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;if(index>this.step && !(index===3&&(this.fields.front||this.fields.drawerBanks?.some(Boolean))) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices||this.fields.shelfLevels||this.fields.drawerBanks))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
  groupTabs(){
   const nav=el('nav');nav.className='wardrobe-subsections';nav.setAttribute('aria-label','Подразделы корпуса');
   for(const key of ['body','feet','plinth','back']){
@@ -129,15 +130,15 @@ export class AssistantUI{
       if(n===1)delete this.fields.dividerPositions;
       else if(n===2)this.fields.dividerPositions=positions.slice(0,1);
       else positions.push(positions[0]+this.fields.thickness+Math.ceil((this.fields.width-4*this.fields.thickness-positions[0])/2));
-    }this.fields.sections=n;resizeDividerChoices(this.fields);this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
+    }this.fields.sections=n;if(this.fields.drawerBanks)this.fields.drawerBanks=Array.from({length:n},(_,i)=>this.fields.drawerBanks[i]??null);resizeDividerChoices(this.fields);this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
     const pict=el('span');pict.className='assistant-section-icon';for(let i=0;i<n;i++)pict.append(el('i'));b.append(pict,el('strong',n===1?'Одна секция':n===2?'Две секции':'Три секции'));b.setAttribute('aria-pressed',String(this.fields.sections===n));choices.append(b);}
    this.form.append(choices);this.sectionTabs();this.sectionPositions();
    this.form.append(el('p','Передние кромки полок и внутренних стоек утоплены на 1 мм от переднего края боковин.'));
   }else if(this.step===2){
    this.sectionTabs();this.jointQuestionnaire();
    this.fields.sectionShelves.forEach((count,i)=>{const group=el('fieldset');group.append(el('legend','Секция '+(i+1)));if(i!==this.activeSection)return;
-    this.select(group,'Наполнение секции '+(i+1),[['shelves','Полки'],['empty','Пустая ниша'],['drawers','Ящики — комплект для шкафа ещё не подключён',true],['rod','Штанга — заготовка ещё не подключена',true]],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});
-    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count){shelfLevelControls(this,group,i);shelfQuestionnaire(this,group,i);}this.form.append(group);
+    this.select(group,'Полки в секции '+(i+1),[['shelves','С полками'],['empty','Без полок']],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});
+    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count){shelfLevelControls(this,group,i);shelfQuestionnaire(this,group,i);}drawerControls(this,group,i);this.form.append(group);
    });this.form.append(el('p','Полки пронумерованы снизу вверх. Базовый зазор по бокам — '+(this.fields.shelfGap??0)+' мм.'));
   }else if(this.step===3){
    this.select(this.form,'Исполнение фасада',[['none','Открытый шкаф'],['left','Одна створка · петли слева'],['right','Одна створка · петли справа'],['pair','Две равные створки']],this.fields.front?.swing??'none',value=>{
@@ -161,7 +162,7 @@ export class AssistantUI{
     input.onchange=()=>{this.resetSideEdges=input.checked;this.changed();};
     label.append(input,document.createTextNode('Пересчитать кромку обеих стоек по конструкции'));this.form.append(label);
    }
-   this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.front)this.materialPicker('front','Материал фасадов',18);if(this.fields.back)this.materialPicker('back','Задняя стенка',this.fields.backThickness??3);
+   this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.drawerBanks?.some(Boolean)&&this.fields.thickness!==18)this.materialPicker('drawer','Короба и проставки шуфляд',18);if(this.fields.front||this.fields.drawerBanks?.some(Boolean))this.materialPicker('front','Материал фасадов',18);if(this.fields.back)this.materialPicker('back','Задняя стенка',this.fields.backThickness??3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
  }
@@ -332,7 +333,7 @@ export class AssistantUI{
   }
  }
  materialPicker(role,title,thickness){
-  const card=el('fieldset');const activate=()=>{const view={body:'body',back:'back',front:'fronts'}[role];if(this.view!==view){this.view=view;this.draw();}};
+  const card=el('fieldset');const activate=()=>{const view={body:'body',back:'back',front:'fronts',drawer:'sections'}[role];if(this.view!==view){this.view=view;this.draw();}};
   card.addEventListener('focusin',activate);card.addEventListener('click',activate);card.append(el('legend',title));const m=this.materials[role];card.append(el('p',m?m.name+' · '+m.thickness+' мм':'Материал не выбран'));
   const label=el('label','Поиск: '+title),input=el('input');input.type='search';input.placeholder='Название или артикул';input.setAttribute('aria-label','Поиск: '+title);label.append(input);card.append(label);
   const results=el('div');results.className='assistant-material-results';
@@ -365,7 +366,8 @@ export class AssistantUI{
    if(issue&&warning){warning.textContent=issue;warning.hidden=false;}
    else if(issue)this.description.textContent=issue;
   }catch(e){
-   this.drawing.replaceChildren();
+   this.previewBuilt=null;
+   if(this.drawing.querySelector('svg')?.dataset.view!==this.view)this.drawing.replaceChildren();
    this.dimensions.textContent='Проверьте параметры';this.description.textContent=e.message;
   }
  }
@@ -379,6 +381,7 @@ export class AssistantUI{
  materialOptions(){
   const options={frontMaterialId:this.materials.front?.variant_id,resetSideEdges:this.resetSideEdges,defaultMaterial:this.materials.body?.variant_id||null};
   if(this.mode.value==='create'||this.materialChanged.body)options.bodyMaterialId=this.materials.body?.variant_id||null;
+  if(this.fields.thickness!==18&&(this.mode.value==='create'||this.materialChanged.drawer))options.drawerMaterialId=this.materials.drawer?.variant_id;
   if(this.mode.value==='create'||this.materialChanged.back)options.backMaterialId=this.materials.back?.variant_id||null;return options;
  }
  async ask(){
@@ -389,7 +392,7 @@ export class AssistantUI{
    const spec=this.spec(),action=this.mode.value,options=this.materialOptions();
    const pending=prepareAssistantPlan(this.app.adapter,{action,spec},options);
    this.busy=true;this.controls();this.output.textContent='Проверяю выбранные параметры…';
-   const response=await this.app.bridge.request('/3d-assistant/questionnaire','POST',{request_id:crypto.randomUUID(),action,spec,fronts:spec.front?'overlay':'none',...(spec.front?{front_material_id:this.materials.front.variant_id}:{}),body_material_id:this.materials.body.variant_id,back_material_id:spec.back?this.materials.back.variant_id:null,room_height:this.app.adapter.room.height});
+   const response=await this.app.bridge.request('/3d-assistant/questionnaire','POST',{request_id:crypto.randomUUID(),action,spec,fronts:spec.front?'overlay':'none',...(spec.front||spec.drawerBanks?.some(Boolean)?{front_material_id:this.materials.front.variant_id}:{}),body_material_id:this.materials.body.variant_id,...(spec.drawerBanks?.some(Boolean)&&spec.thickness!==18?{drawer_material_id:this.materials.drawer.variant_id}:{}),back_material_id:spec.back?this.materials.back.variant_id:null,room_height:this.app.adapter.room.height});
    if(this.disposed||epoch!==this.epoch)return;if(response.remaining!=null)this.remainingCount=response.remaining;
    if(response.state!=='ready')throw Error(response.message||'Проверка пока не завершена.');
    if(assistantStamp(this.app.adapter)!==stamp)throw Error('Проект изменился. Проверьте анкету заново.');

@@ -324,6 +324,12 @@ export class MeshFactory{
       if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
       if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
     }
+    const drawerSide=/:drawer-\d+-\d+-side-(left|right)$/.exec(it.item_id);
+    if(it.assistant_carcass?.spec?.drawerBanks&&drawerSide){
+      const sign=drawerSide[1]==='left'?-1:1;
+      const rail=this.box(group,'handle',12.7,45,D,sign*(W/2+6.75),Math.min(H/2,30),0,null,ghost,.4);
+      if(rail)Object.assign(rail.userData,{visualOnly:true,visualApproximation:true,drawerRail:true});
+    }
     for(const hinge of this.visibleDoorHinges(it)){
       const side=hinge.door_side==='left'?1:-1,key='prime:112595:'+side;
       const geometry=this.acquire(key,()=>{

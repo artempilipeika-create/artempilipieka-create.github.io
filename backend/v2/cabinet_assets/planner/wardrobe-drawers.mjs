@@ -91,5 +91,5 @@ export function doorZones(s,leaves,banks){
   const top=Math.max(0,...covered.filter(b=>!b.internal).map(b=>b.top));
   if(top&&covered.some(b=>b.internal))throw Error('Разделите створки для внутренних и наружных шуфляд по секциям.');
   return {...l,left,width,bottom:l.bottom+top,height:l.height-top};
- }).filter(l=>l.height>0);
+ });
 }

@@ -147,3 +147,27 @@ test('compatible wardrobe plinths form one edged board and split when the middle
  assert.deepEqual(panels().map(it=>it.height).sort((a,b)=>a-b),[97,97,147]);
  assert.ok(panels().every(it=>it.blank_edge_code==='1111'&&it.width===800));
 });
+
+test('wardrobe drawer banks survive save, reopen, material changes and one undo with shelves above',()=>{
+ const {a,h}=setup();
+ const form={...spec,width:600,height:2000,depth:600,sections:1,sectionShelves:[1],
+  front:{swing:'left',offset:90},shelfLevels:[[{mode:'gap',mm:250}]],
+  drawerBanks:[{kind:'internal',faces:[{height:197},{height:147}]}]};
+ const create=prepareAssistantPlan(a,{action:'create',spec:wardrobeSpec(form)},{bodyMaterialId:'body',frontMaterialId:'front'});
+ h.run('drawers',()=>applyAssistantPlan(a,create));
+ a.restore(JSON.parse(JSON.stringify(a.snapshot())));
+ assert.deepEqual(selectedCarcass(a).metadata.spec.drawerBanks,form.drawerBanks);
+ const get=key=>a.items.find(it=>it.item_id.endsWith(':'+key));
+ assert.equal(get('shelf-0-0').elevation_mm,18+197+147+6+250);
+ assert.equal(get('drawer-0-0-face').body_variant_id,'front');
+ assert.equal(get('drawer-0-0-bottom').blank_thickness_mm,3);
+ assert.equal(get('drawer-0-spacer-left').width,18);
+ assert.equal(get('drawer-0-spacer-right'),undefined);
+ const edited={...form,front:{swing:'right',offset:90}};
+ const update=prepareAssistantPlan(a,{action:'update',spec:wardrobeSpec(edited)});
+ h.run('change hinge side',()=>applyAssistantPlan(a,update));
+ assert.ok(get('drawer-0-spacer-right'));assert.equal(get('drawer-0-spacer-left'),undefined);
+ h.undo();assert.ok(get('drawer-0-spacer-left'));
+ assert.throws(()=>wardrobeSpec({...form,drawerBanks:[{kind:'internal',faces:[{height:2400}]}]}));
+ assert.ok(get('drawer-0-spacer-left'));
+});
