@@ -1,4 +1,5 @@
-import {outerFront,drawerSections,buildDrawerBoards,doorZones} from './wardrobe-drawers.mjs';
+import {outerFront,drawerSections,buildDrawerBoards,doorZones,drawerFit} from './wardrobe-drawers.mjs';
+import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
 import {overlayFronts,hingeLoad} from './wardrobe-fronts.mjs';
 import {blankItem,validateBlank,edgeMeters} from './blanks-model.mjs';
@@ -91,11 +92,19 @@ export function buildCarcass(input={},options={}){
     x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D-rear-dividerSetback,t,x+t/2,t,(rear-dividerSetback)/2,edge()));x+=t;
   }
   supports.push(right);
-  const banks=drawerSections(s,widths);
-  buildDrawerBoards(s,banks,add);
+  const banks=drawerSections(s,widths,Boolean(options.legacyDrawers));
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
-  const shelfYs=counts.map((count,section)=>shelfUndersides(s,section,banks[section]?.top??bottomTop,topBottom,
-    Array.from({length:count},(_,i)=>choice(s.shelfChoices?.[section]?.[i]??defaultShelf,t).thickness),s.elevation+footHeight(s),Boolean(banks[section])));
+  const shelfYs=counts.map((count,section)=>{
+    const bank=banks[section],below=s.drawerBanks?.[section]?.shelvesBelow??0;
+    if(!Number.isInteger(below)||below<0||below>count)throw Error('Секция '+(section+1)+': проверьте число полок под блоком.');
+    const thicknesses=Array.from({length:count},(_,i)=>choice(s.shelfChoices?.[section]?.[i]??defaultShelf,t).thickness);
+    const floor=s.elevation+footHeight(s);
+    if(!below)return shelfUndersides(s,section,bank?.top??bottomTop,topBottom,thicknesses,floor,Boolean(bank));
+    const levels=s.shelfLevels?.[section]??Array(count).fill(null);
+    const levelsIn=(start,end)=>({...s,shelfLevels:{[section]:levels.slice(start,end)}});
+    return [...shelfUndersides(levelsIn(0,below),section,bottomTop,bank.base,thicknesses.slice(0,below),floor,true),
+      ...shelfUndersides(levelsIn(below,count),section,bank.top,topBottom,thicknesses.slice(below),floor,true)];
+  });
   for(let section=0;section<s.sections;section++)for(let i=0;i<counts[section];i++){
     const y=shelfYs[section][i];
     const a=supports[section],b=supports[section+1];
@@ -117,12 +126,30 @@ export function buildCarcass(input={},options={}){
         door.left+door.width/2-W/2,door.bottom,D/2+9,'1111');
     }
   }
+  const drawerIssues=[];
+  if(banks.some(Boolean)){
+    if(!options.legacyDrawers){
+      const axes={left:[],right:[]};
+      const panels=parts.map(p=>p.item);
+      for(const side of ['left','right']){
+        const door=panels.find(it=>it.item_id===prefix+':door-'+side);
+        if(door){
+          const tagged={...door,assistant_carcass:{spec:s,group_id:prefix}};
+          axes[side]=doorHinges(tagged,panels).map(h=>h.position.y-s.elevation-legHeight);
+        }
+      }
+      for(const b of banks.filter(Boolean)){
+        const fit=drawerFit(b,axes,s.drawerBanks[b.section]);b.cuts=fit.cuts;drawerIssues.push(...fit.issues);
+      }
+    }
+    buildDrawerBoards(s,banks,add);
+  }
   if(plinth)add('plinth','Цоколь','back',plinth.width,plinth.height,t,plinth.x,0,plinth.z,'1111');
   // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
   if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-2*t,rear,0,t,(rear-D)/2,'0000');
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   const items=resolveBlankBindings(parts.map(p=>p.item));
-  return {spec:s,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  return {spec:s,drawerIssues,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:W,height:H,depth:D+(s.back&&!rear?3:0)+(outerFront(s)?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

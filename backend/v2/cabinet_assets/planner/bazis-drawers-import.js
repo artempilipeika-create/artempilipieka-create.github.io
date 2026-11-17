@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.27 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.28 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,7 +135,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -1070,12 +1070,34 @@ function blankVector(v, axis) {
   if(axis==='back')return {x:v.y,y:-v.z,z:-v.x};
   return {x:v.x,y:v.y,z:v.z};
 }
+function blankOutline(W,L,cuts){
+ const points=[[0,0]];
+ let end=0;
+ for(const slice of cuts){
+  if(!Array.isArray(slice)||slice.length!==2)throw Error('Неверный вырез в проставке.');
+  const [lo,hi]=slice;
+  if(!Number.isFinite(lo)||!Number.isFinite(hi)||lo<end||lo<0||hi<=lo||hi>L||W<=60)throw Error('Вырез выходит за проставку.');
+  if(lo>end)points.push([W,end],[W,lo]);
+  points.push([W-60,lo],[W-60,hi]);end=hi;
+ }
+ if(end<L)points.push([W,end],[W,L]);
+ points.push([0,L]);
+ return points.map(([x,y],i)=>{
+  const [a,b]=points[(i+1)%points.length];
+  const edge=x===W&&a===W?0:x===0&&a===0?1:y===0&&b===0?2:y===L&&b===L?3:-1;
+  return {line:[x,y,a,b],edge};
+ });
+}
 function resizeAndPlaceBlank(obj,item,log){
  const b=item.blank,source=BLANK_DONORS[String(item.source_sha256||'').toLowerCase()];
  if(!source||b?.schema!==1||b.finished_dimensions!==true)throw Error('Неизвестный исходник или формат заготовки.');
  const L=Number(b.length),W=Number(b.width),T=Number(b.thickness),E=Number(b.edge_thickness);
+ const drawerBottom=/:drawer-\d+-\d+-bottom$/.test(item.blank_item_id)&&b.axis==='horizontal'&&T===3&&b.edge_code==='0000';
+ const drawerSide=/:drawer-\d+-\d+-side-(?:left|right)$/.test(item.blank_item_id)&&b.axis==='side'&&T===18;
+ const cuts=b.spacer_cuts??[];
+ if(!Array.isArray(cuts)||cuts.length&&(!/:drawer-\d+-spacer-(left|right)$/.test(item.blank_item_id)||b.axis!=='side'||T!==18))throw Error('Неизвестный контур проставки.');
  const thinBack=b.axis==='back'&&(T===3||T===4)&&b.edge_code==='0000';
- if(!Number.isInteger(L)||L<100||L>3000||!Number.isInteger(W*(b.axis==='front'?2:1))||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back','front'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
+ if(!Number.isInteger(L)||L<(drawerSide?40:100)||L>3000||!Number.isInteger(W*(b.axis==='front'?2:1))||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&!drawerBottom&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back','front'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
  const expected=b.axis==='front'?{width:W,height:L,depth:T}:b.axis==='side'?{width:T,height:L,depth:W}:b.axis==='back'?{width:L,height:W,depth:T}:{width:L,height:T,depth:W};
  if(['width','height','depth'].some(k=>Number(item.target?.[k])!==expected[k]))throw Error('Габариты заготовки не совпали с её ориентацией.');
  if(!item.material_assignments?.body?.name||Number(item.material_assignments.body.thickness)!==T)throw Error('Не задан подходящий материал заготовки.');
@@ -1089,11 +1111,12 @@ function resizeAndPlaceBlank(obj,item,log){
  obj.SetDefaultTransform();
  historyOperations.RegisterObjectChanging(panel);
  panel.Contour.Clear();
- for(const line of [[0,0,W,0],[W,0,W,L],[W,L,0,L],[0,L,0,0]])panel.Contour.AddLine(...line);
+ const outline=blankOutline(W,L,cuts);
+ for(const segment of outline)panel.Contour.AddLine(...segment.line);
  panel.Thickness=T;panel.PositionX=T;
  panel.Butts.Clear();
- for(let i=0;i<4;i++)if(b.edge_code[i]==='1'){
-  const edge=panel.Butts.Add();edge.ElemIndex=elements[i];edge.Material='ПВХ В цвет корпуса\rЦвет корпуса';
+ for(const [i,segment] of outline.entries())if(b.edge_code[segment.edge]==='1'){
+  const edge=panel.Butts.Add();edge.ElemIndex=i;edge.Material=b.axis==='front'?'ПВХ В цвет фасада\rВ цвет фасада':'ПВХ В цвет корпуса\rЦвет корпуса';
   edge.Thickness=E;edge.Width=T+4;edge.Sign='в цвет корпуса';edge.ClipPanel=true;edge.Allowance=0;edge.Overhung=0;edge.CutIndex=-1;
  }
  panel.Build();
@@ -1106,9 +1129,9 @@ function resizeAndPlaceBlank(obj,item,log){
  if(typeof obj.Build==='function')obj.Build();
  const materialChecks=applyProjectMaterials(obj,item,log);
  if(materialChecks.length!==1)throw Error('Материал заготовки не подтверждён.');
- if(Number(panel.Butts.Count)!==b.edge_code.split('1').length-1)throw Error('Не сохранилась оклейка заготовки.');
+ if(Number(panel.Butts.Count)!==outline.filter(s=>b.edge_code[s.edge]==='1').length)throw Error('Не сохранилась оклейка заготовки.');
  for(let i=0;i<Number(panel.Butts.Count);i++){
-  const edge=panel.Butts.Butts[i],index=elements.indexOf(Number(edge.ElemIndex));
+  const edge=panel.Butts.Butts[i],index=outline[Number(edge.ElemIndex)]?.edge;
   if(index<0||b.edge_code[index]!=='1'||Math.abs(Number(edge.Thickness)-E)>.001||edge.ClipPanel!==true)throw Error('Не совпали параметры ПВХ.');
  }
  const anchor=['side','front'].includes(b.axis)?{x:T/2,y:0,z:W/2}:b.axis==='horizontal'?{x:T,y:L/2,z:W/2}:{x:T/2,y:L/2,z:W};
@@ -1237,7 +1260,35 @@ const PLINTH_FOOT_HASHES=new Set(["748f7dfc9c5e9f6795cf2af7a84e261b02a56917f7d83
 const DECOR_FOOT_HASHES=new Set(["8e5a16d9956d6cc3fe83bb956efa6f2fbbcf154021dae24ef12d27f937148482", "8943473375e27728456acb4fd207b4c1a43547d56bfb7d1599cfca4df0a5d014", "14be137918290b75811c40e4a1ad25ebf24e317ea29f8e977f7bbfceb19dad7b", "bb3c2155063cffd65548bc48ed0a6de75efd23413ecc1aff35ab5a4656ddfb3f", "021d18272cbe1b6b2bbed8b05e5cbfe087139c0996440309d318fa9c962e8198", "be9dbb7582a032df86b3b30cfc6e1834d8fd4cbbccf51a202d721185d68e753c", "88cb3a5035461b8d36c92a1cd644a27f4f2f0803da64ef76a51fc5b590eb65e4", "0b837bd675835ef7f7d0d9d13190bb99249577bd29c6bc6956c6809d33ee7221", "5c329c7e5f4442b236f1b666f81ab3f316b75f202191edc2de5456c97e1987de", "5fd7daf70006271c13c76f6c73207c86a89eedc31ccca4baada738febef42d77", "30994de3bc4e65c7657a9965e0c0f0062548c11a4f0935037d33b08c87fe1658", "b6ead9fd0a5f35194e99384216c1647d388257d4d9b99d98fe3c3a2dcea1bace", "c8b44cfc0fc101cbde4a12b59792a34d1f9b052e0e85e1d5328a33eb7e6591e5", "3331e8a7f437e2ffd2912e2bc2c6fa6e857842cf8d824eacf18e5f046bb3e958", "967b9020e7a9dbd1e143d11d5e522796304503588978bfe93a04bc4bba9a437d", "195cfe594ec2baede2716e647e7bceffac2e213f266d8b61407b52d63f245eb1", "b274b3752f1290bdb2a65337db6ace1af457bf0205812d341aea3a5c0173b2df", "a1adc402790028bf18ebacdbf169766afcc6d8c9609ad77e90a1c36430874e87", "e4ac7f127c69516012fdf829c970f05baff21ba9a7e9b76b96d1059be9030a62", "3e110c4214712fe59ffbe72403ad0ea5d04ed195ed5d144b7f7de5349449bbb8", "1e082afcc978b4b51b62c0e41cf2006950f8cb2e4c910e5e5b6e316e190cd8be", "ac692afbca8b10a875a541d57e2e23b908538bfa1a42dc2a0b8ebd6b880b0de9", "264b1626df9fba0c47b8d7d869fca499af30e42d25c5589ccd6242749eac81de", "3875508a8152782114efa69cc3566cccfc69bc1622cc2bda30afb72e6e698f70", "e68b9f0ad8fb28c48229fa0329611e34a2b1ce2c20ff727d3264c0b2306979fd", "3b036db1f903a3611d6f39fd1c64bfc2f8b1cec9ee3eed73aaf00dff6cbed572", "851e518b720f3e9fe9ce0bd1939250e1175e3ecae5e6161a87a74e897d46719d", "51eb071e8e734de6ca91f37e8420b8367018ab5e613f4f8b84b962dddac8ea4c", "899deba122e016286e3e7e7fd34be4eda1c03f3961f7afe350c164ff92caffe9", "f25e24d3936df7c2f2dce81153f41782ab107c16565c0a39b82300c4113955bb", "9987d84fa215787c5557173eb6b7ac69f373dbb6165e69053fded38a28085544", "712977c33a001596db76de7253c8b7cded2805c8064e5eb4a423531b381b4240"]);
 function isPrimeHinge(item){return item.source_sha256==='fa4fb4dfa6310cdec87d25d683a7d5e1d5923470bed7ae25c3f35923cf7166a8';}
 function isWardrobeFoot(item){return item.source_sha256===LEVEL_FOOT_HASH||PLINTH_FOOT_HASHES.has(item.source_sha256)||DECOR_FOOT_HASHES.has(item.source_sha256);}
+const AKS_SOURCES={
+ "a63aae16061fea2d9ce8898cc800bbb35a9987a70c6bdc457c76d4c3305405d5": "rail",
+ "e3ab0fc700993432ebb433764daf52b7b836bbd510d6c80595b988ed18fc9c5c": "rail",
+ "441291a4733800894460447b3286bb20a2f71114619d118e303955605ae50b75": "rail",
+ "2b8f0e9b50a3e536e325c5745d3bb92bf0f75f2fd3b73f6d12b4f6dc1b7cd0f9": "rail",
+ "4762add7529f5d859cab5ce2ab77cd7e8fc9a2718f5629639271ddf30d095165": "rail",
+ "4a535eac7055cdc45344ef00de193d7c239930d0ab67c59cd814ddadd36f9ebf": "rail",
+ "e17551193717cae412e3dad5ded123bd63874add7a4bf124159c38eb9e7cfd74": "rail",
+ "7d0c3b476acff01c110dc7ca269636093c86f6066052f223249a98098f6645fd": "rail",
+ "ce5f6a80b0f51f23565a1fd5a60773104c36ea8389aa327e842175528cc00d25": "rail",
+ "345c31e266772fc8c66117dc388d6f24be59a72e2d0e30845c358862fc3f4e9b": "rail",
+ "22c57f699fb61f643979a11bdb25af93de18774621786a33a6ed3b9eaaf58511": "rail",
+ "67f28f309b41fbdeffb968e4305a63dfecc9e276ec269adcdfbb1b59a5cb3e4b": "rail",
+ "591e7063312b95f3f32eadedfe4da5bd7615c2230fb594c27dcf61fa9e56a5c6": "rail",
+ "693713cd98b732f5139bf8863afff9e2a86c2381f47a89be4e105b3a09b4e0b3": "rail",
+ "71edc68d2033e0c550ebbeea82dee9a93a0ad2ee20ab64c94db27c73fdba7829": "rail",
+ "f6e88128b0440ad6c979328267f539657cdf1f1c89b9f84c82e6dc7144329548": "rail",
+ "ade5006fb60529b2c5364fe82e4817167217a2f7ff85eddae436c832d3e2e653": "spacer",
+ "04b15b2d8cce72b49cebfd4006e27bbe5ed0635e7292bca84decac0168cd0192": "spacer",
+ "3c9027a2bae09c6287c2188cde88d41d71c422b1b855599cf5be755b8dea1362": "face",
+ "6f80c2c11c492d75c4d86f7da575df33faa9628d21ed320149349e6044e7ab78": "bolt",
+ "ee9421a6e0e6ad8b5c7ba5e16fe42aa71904d2b940f4a28a641d127ec3a54710": "bolt"
+};
 function resizeAndPlace(obj, item, log, shelfPanel) {
+  if(item.aks_kind||AKS_SOURCES[item.source_sha256]){
+    if(AKS_SOURCES[item.source_sha256]!==item.aks_kind||![0,90,180,270].includes(item.rotation))throw Error('Неизвестное крепление AKS или неверный поворот.');
+    placeByFrame(obj,null,item,log,{x:0,y:0,z:0});
+    return {materialChecks:[],profileChecks:[]};
+  }
   if(isWardrobeFoot(item)){
     const desired=vector(item.position,'foot.position');
     obj.SetDefaultTransform();
@@ -1392,7 +1443,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.27 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.28 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1517,7 +1568,7 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
-      if((isPrimeHinge(item)||JOINT_HASHES.has(item.source_sha256))&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.joined_panel_id)))throw Error('Не импортирована деталь стыка.');
+      if((item.aks_kind||isPrimeHinge(item)||JOINT_HASHES.has(item.source_sha256))&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.joined_panel_id)))throw Error('Не импортирована деталь стыка.');
       if(isShelfSupport(item)&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.shelf_blank_id)))throw Error('Не импортирована полка или её опорная стойка.');
       if(isWardrobeFoot(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Не импортирована деталь для опоры.');
       if(isBlankHook(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Опорная заготовка не импортирована.');
@@ -1548,7 +1599,7 @@ function importProject(prepared, root, payload) {
       }
       importedObjects.push(obj);
       if ((item.blank||item.glass_shelf) && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
-      if (!isPrimeHinge(item) && !isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
+      if (!item.aks_kind && !isPrimeHinge(item) && !isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;

@@ -113,6 +113,8 @@ class DrawerFace(StrictModel):
 
 
 class DrawerBank(StrictModel):
+    shelvesBelow: int | None = Field(default=None,ge=0,le=10,strict=True,exclude_if=lambda v:v is None)
+    bottomOffset: int | None = Field(default=None,ge=0,le=3000,strict=True,exclude_if=lambda v:v is None)
     kind: Literal['internal','external']
     faces: list[DrawerFace] = Field(min_length=1,max_length=24)
     height: int | None = Field(default=None,ge=103,le=3000,strict=True,exclude_if=lambda v:v is None)
@@ -163,6 +165,8 @@ class CarcassDesign(CarcassSpec):
             for i,(bank,w) in enumerate(zip(self.drawerBanks,widths)):
                 end=start+w
                 if bank:
+                    if (bank.shelvesBelow or 0)>(self.sectionShelves[i] if self.sectionShelves and i<len(self.sectionShelves) else self.shelves):
+                        raise ValueError('Полок под блоком больше, чем полок в секции.')
                     inside=bank.kind=='internal'
                     if inside and not self.front:
                         raise ValueError(f'Секция {i+1}: выберите распашную дверь.')
@@ -171,8 +175,8 @@ class CarcassDesign(CarcassSpec):
                     right=18 if inside and i==self.sections-1 and swing in ('right','pair') else 0
                     max_width=(w-left-right if inside else w+self.thickness*(1+(i==0)/2+(i==self.sections-1)/2))-3
                     depth=self.depth-(self.backThickness or 0)-(21 if inside else 0)
-                    top=bank.span()+(self.thickness if inside else 0)
-                    if top>self.height-(self.thickness if inside else 0) or w-left-right<163 or not 250<depth<=1000:
+                    top=(bank.bottomOffset or 0)+bank.span()+(self.thickness if inside else 0)
+                    if top>self.height-(self.thickness if inside else 0) or w-left-right<163 or depth<255:
                         raise ValueError(f'Секция {i+1}: блоку AKS недостаточно места.')
                     if any(f.width is not None and f.width>max_width for f in bank.faces):
                         raise ValueError(f'Секция {i+1}: фасад шире проёма.')

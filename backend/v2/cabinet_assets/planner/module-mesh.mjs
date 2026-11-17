@@ -1,3 +1,4 @@
+import {installedCuts} from './wardrobe-aks-native.mjs';
 import primeMesh from './prime-hinge-mesh.json' with {type:'json'};
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {localPoint} from './blank-bindings.mjs';
@@ -295,7 +296,16 @@ export class MeshFactory{
     const group=new THREE.Group();
     group.userData={itemId:it.item_id,ghost,visualApproximation:false};
     const W=it.width,H=it.height,D=it.depth,ax=it.blank_axis,code=it.blank_edge_code||'0000';
-    this.box(group,it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'glass':'body',W,H,D,0,H/2,0,it.body_variant_id,ghost);
+    const cuts=this.spacerCuts(it);
+    const spans=[];
+    let low=0;
+    for(const [a,b] of cuts){
+      if(a>low)spans.push([low,a,D]);
+      spans.push([a,b,D-60]);low=b;
+    }
+    if(low<H)spans.push([low,H,D]);
+    const material=it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'glass':'body';
+    for(const [lo,hi,depth] of spans)this.box(group,material,W,hi-lo,depth,0,(hi+lo)/2,(depth-D)/2,it.body_variant_id,ghost);
     const t=Math.min(0.8,(it.blank_thickness_mm||18)/4);
     const addEdge=(w,h,d,x,y,z)=>{
       const m=this.box(group,'blank-edge',w,h,d,x,y,z,it.body_variant_id,ghost,.05);
@@ -309,10 +319,10 @@ export class MeshFactory{
     };
     // Codes follow the unrotated board: long side 1 / long side 2 / short side 1 / short side 2.
     if(ax==='side'){
-      if(code[0]==='1')addEdge(W,H,t,0,H/2,D/2-t/2);
+      if(code[0]==='1')for(const [lo,hi,depth] of spans)if(depth===D)addEdge(W,hi-lo,t,0,(lo+hi)/2,D/2-t/2);
       if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
-      if(code[2]==='1')addEdge(W,t,D,0,t/2,0);
-      if(code[3]==='1')addEdge(W,t,D,0,H-t/2,0);
+      if(code[2]==='1'){const depth=spans[0][2];addEdge(W,t,depth,0,t/2,(depth-D)/2);}
+      if(code[3]==='1'){const depth=spans.at(-1)[2];addEdge(W,t,depth,0,H-t/2,(depth-D)/2);}
     }else if(ax==='back'||ax==='front'){
       if(code[0]==='1')addEdge(W,t,D,0,t/2,0);
       if(code[1]==='1')addEdge(W,t,D,0,H-t/2,0);
@@ -327,7 +337,7 @@ export class MeshFactory{
     const drawerSide=/:drawer-\d+-\d+-side-(left|right)$/.exec(it.item_id);
     if(it.assistant_carcass?.spec?.drawerBanks&&drawerSide){
       const sign=drawerSide[1]==='left'?-1:1;
-      const rail=this.box(group,'handle',12.7,45,D,sign*(W/2+6.75),Math.min(H/2,30),0,null,ghost,.4);
+      const rail=this.box(group,'handle',12.7,45,D,sign*(W/2+6.75),40,0,null,ghost,.4);
       if(rail)Object.assign(rail.userData,{visualOnly:true,visualApproximation:true,drawerRail:true});
     }
     for(const hinge of this.visibleDoorHinges(it)){
@@ -792,11 +802,14 @@ export class MeshFactory{
     // Bounded cache keeps drag/resize reuse while not retaining every historical size.
     if(this.pool.size>192)for(const [key,value]of this.pool){if(!value.refs){value.geometry.dispose();this.pool.delete(key);}if(this.pool.size<=128)break;}
   }
+  spacerCuts(it){
+    try{return installedCuts(it,this.adapter.items||[]);}catch{return [];}
+  }
   visibleDoorHinges(it){
     if(it.blank_axis!=='front')return [];
     try{return doorHinges(it,this.adapter.items||[]);}catch{return [];}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,this.visibleDoorHinges(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,this.spacerCuts(it),this.visibleDoorHinges(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

@@ -22,11 +22,11 @@ export function selectedCarcass(adapter){
  const metadata=adapter.selected?.assistant_carcass;
  if(!metadata)return null;
  const items=splitPlinths(adapter.items).filter(i=>i.assistant_carcass?.group_id===metadata.group_id);
- const matches=(legacyGlassGap=false)=>{
-  const expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id,legacyGlassGap}),metadata.position);
+ const matches=(legacyGlassGap=false,legacyDrawers=false)=>{
+  const expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id,legacyGlassGap,legacyDrawers}),metadata.position);
   return items.length===expected.length&&expected.every(i=>geometry(items.find(p=>p.item_id===i.item_id)||{})===geometry(i));
  };
- if(!matches()&&!(items.some(i=>/^[468]\//.test(i.blank_shelf))&&matches(true)))
+ if(!matches()&&!(metadata.spec.drawerBanks&&matches(false,true))&&!(items.some(i=>/^[468]\//.test(i.blank_shelf))&&matches(true)))
   throw Error('Геометрия этого корпуса изменена вручную. Продолжите редактировать детали в параметрах или создайте новый корпус.');
  if(items.some(i=>signature(i.assistant_carcass)!==signature(metadata)))throw Error('Параметры деталей корпуса различаются. Продолжите ручное редактирование.');
  return {metadata,items};
@@ -40,6 +40,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  const first=current?.items.find(i=>i.item_id.endsWith(':left'));
  const built=buildCarcass(spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]||'Корпус ИИ',
   drawerMaterialId:drawerMaterialId??current?.items.find(i=>drawerMember(i.item_id,'\\d+-side-left'))?.body_variant_id,bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),frontMaterialId:frontMaterialId??current?.items.find(i=>i.blank_axis==='front')?.body_variant_id,backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
+ if(built.drawerIssues.length)throw Error(built.drawerIssues.join(' '));
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
  if(current){
   // Resize from the right and front, keeping the left edge and rear envelope.

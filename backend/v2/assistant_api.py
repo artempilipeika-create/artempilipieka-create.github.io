@@ -7,6 +7,7 @@ from pathlib import Path
 from uuid import UUID
 import httpx
 from fastapi import APIRouter, Request
+from fastapi.responses import FileResponse
 from pydantic import Field, ValidationError
 from .auth_api import StrictModel
 from .assistant_model import AssistantPlan, CarcassSpec, CarcassDesign
@@ -186,6 +187,17 @@ def once(root, owner, body, call=generate):
 
 def router(settings):
     api = APIRouter(prefix='/api/v2/3d-assistant')
+
+    @api.get('/wardrobe-aks-kit')
+    def wardrobe_aks_kit(request: Request):
+        with transaction(settings) as conn:
+            user = identity(conn, request)
+            require(conn, user, 'orders.draft.write')
+            verified(user)
+            if user['roles'] not in ({'admin'}, {'manager'}):
+                error(403, 'STAFF_REQUIRED')
+        return FileResponse(Path(__file__).parent/'wardrobe-aks'/'MF_AKS_wardrobe.zip',
+                            filename='MF_AKS_wardrobe.zip',headers={'Cache-Control':'private, no-store'})
 
     @api.get('/status')
     def status(request: Request):

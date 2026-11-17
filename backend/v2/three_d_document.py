@@ -14,7 +14,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
-from .assistant_model import PLINTH_FEET, DECOR_FEET, DECOR_CENTRES, inner_foot_pairs
+import json
+from .assistant_model import ASSETS, PLINTH_FEET, DECOR_FEET, DECOR_CENTRES, inner_foot_pairs
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_cargo import cargo_variant, cargo_hardware, cargo_contents, cargo_adjustment
@@ -97,6 +98,8 @@ def drawer_hardware(count,depth):
     rows.append(_row('Шуруп 3.5x16 мм, Zn',count*18))
     return rows
 
+AKS_GUIDES=json.loads((ASSETS/'aks-wardrobe.json').read_text())['rails']
+
 def hardware_for(it):
     rows,description=_panel_hardware(it)
     meta=it.get('assistant_carcass') or {}
@@ -108,13 +111,16 @@ def hardware_for(it):
         section,number=map(int,drawer.groups())
         if section<len(banks) and banks[section] and number<len(banks[section]['faces']):
             depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[section]['kind']=='internal' else 0)
-            length=min(600,(ceil(depth/50)-1)*50)
-            articles={250:'63020',300:'114793',350:'114794',400:'114795',450:'114796',500:'114797',550:'114798',600:'115632'}
-            rows=[*rows,_row(f'Направляющие PRIME by AKS Soft Close {length} × 45 мм',1,'set',articles[length])]
-            if length in (400,450,500,550):
-                rows.append(_row('Шуруп 3,5×16 мм, Zn',16 if length==400 else 18,'pcs','81320'))
-            if length==550:
-                rows.extend([_row('Конфирмат 7×50',8),_row('Саморез 5×30 AKS',3,'pcs','12867'),_row('Шуруп 3,5×16 д5',3)])
+            length=min(600,((depth-5)//50)*50)
+            rail=AKS_GUIDES.get(str(length))
+            if rail:
+                rows=[*rows,_row(f'Направляющие PRIME by AKS Soft Close {length} × 45 мм',1,'set',rail['article']),
+                      _row('Шуруп 3,5×16 мм, Zn',2*(len(rail['fixed'])+len(rail['moving'])),'pcs','20646'),
+                      _row('Конфирмат 7×50',8),_row('Саморез 5×30 AKS',3,'pcs','12867')]
+    spacer=re.fullmatch(r'drawer-(\d+)-spacer-(left|right)',key)
+    if spacer and it.get('height'):
+        count=2*max(2,ceil((it['height']-50)/320)+1)
+        rows=[*rows,_row('Саморез 5×30 AKS · проставка',count,'pcs','12867')]
     leg=PLINTH_FEET.get((spec.get('feet') or {}).get('article'))
     feet=spec.get('feet')
     inner=inner_foot_pairs(spec['width'],spec['sections'],feet.get('layout')) if feet else 0

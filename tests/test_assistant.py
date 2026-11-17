@@ -233,7 +233,7 @@ def test_aks_drawer_control_spec_roundtrip_and_hardware():
     from backend.v2.assistant_model import CarcassDesign
     from backend.v2.three_d_document import hardware_for
     spec={**SPEC,'width':600,'height':1600,'depth':600,'shelves':0,'sectionShelves':[0],
-          'front':{'swing':'left','offset':90},'drawerBanks':[{'kind':'internal','height':400,
+          'front':{'swing':'left','offset':130},'drawerBanks':[{'kind':'internal','height':400,
           'faces':[{'height':197},{'height':None,'width':450}]}]}
     design=CarcassDesign.model_validate(spec)
     assert design.drawerBanks[0].span()==400
@@ -242,7 +242,7 @@ def test_aks_drawer_control_spec_roundtrip_and_hardware():
     meta={'group_id':group,'spec':spec,'position':{'x':300,'z':310,'rotation':0,'elevation_mm':0}}
     rows,_=hardware_for({'module_type':'blank','item_id':group+':drawer-0-0-face','blank_axis':'front',
                          'width':543,'height':197,'assistant_carcass':meta})
-    assert [(r['article'],r['qty']) for r in rows if r['article'] in ('114798','81320','112595')]==[('114798',1),('81320',18)]
+    assert [(r['article'],r['qty']) for r in rows if r['article'] in ('114798','20646','112595')]==[('114798',1),('20646',18)]
     for bank in ({'kind':'internal','faces':[{'height':197,'width':580}]},
                  {'kind':'internal','height':250,'faces':[{'height':197},{'height':None}]}):
         with pytest.raises(ValidationError):
@@ -250,7 +250,7 @@ def test_aks_drawer_control_spec_roundtrip_and_hardware():
 
 def test_saved_wardrobe_drawers_reopen_with_exact_board_identity(api,admin_user):
     spec={**SPEC,'width':600,'depth':600,'height':1800,'shelves':1,'sectionShelves':[1],
-          'shelfLevels':[[{'mode':'gap','mm':250}]],'front':{'swing':'left','offset':90},
+          'shelfLevels':[[{'mode':'gap','mm':250}]],'front':{'swing':'left','offset':130},
           'drawerBanks':[{'kind':'internal','faces':[{'height':197},{'height':147}]}]}
     scene=generated_scene(spec)
     made=api.post('/api/v2/3d-projects',json={'name':'QA AKS 550','scene':scene})
@@ -266,7 +266,31 @@ def test_saved_wardrobe_drawers_reopen_with_exact_board_identity(api,admin_user)
             assert after[key][prop]==item.get(prop)
     assert sum(k.endswith('spacer-left') for k in after)==1
     assert not any(k.endswith('spacer-right') for k in after)
+    # Change a real construction parameter on the reopened group and save the rebuilt scene.
+    spec['drawerBanks'][0]['bottomOffset']=280
+    rebuilt=generated_scene(spec)
+    moved={i['item_id'].split(':')[-1]:i for i in rebuilt['items']}
+    previous={k.split(':')[-1]:v for k,v in after.items()}
+    assert moved['drawer-0-spacer-left']['elevation_mm']-previous['drawer-0-spacer-left']['elevation_mm']==280
+    for item in rebuilt['items']:
+        original=previous[item['item_id'].split(':')[-1]]
+        item['item_id']=original['item_id']
+        item['assistant_carcass']['group_id']=original['assistant_carcass']['group_id']
+        if item.get('blank_binding'):
+            for field in ('left_id','right_id'):
+                item['blank_binding'][field]=previous[item['blank_binding'][field].split(':')[-1]]['item_id']
+    saved['scene']=rebuilt
     saved['scene']['items'][0]['production_note']='Контроль проёма 564 мм'
     change=api.patch(url,json={'name':saved['name'],'version':saved['version'],'scene':saved['scene']})
     assert change.status_code==200,change.text
     assert api.get(url).json()['scene']['items'][0]['production_note']=='Контроль проёма 564 мм'
+
+def test_wardrobe_native_kit_is_staff_only(api,admin_user):
+    import io, zipfile
+    url='/api/v2/3d-assistant/wardrobe-aks-kit'
+    response=api.get(url)
+    assert response.status_code==200
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        assert 'Martin Forest AKS/MF_AKS_spacerLeft.fr3d' in archive.namelist()
+    api.cookies.clear()
+    assert api.get(url).status_code in (401,403)

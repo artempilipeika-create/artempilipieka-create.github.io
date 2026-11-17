@@ -135,3 +135,16 @@ test('PRIME 112595 native blank, cup and two plate holes on each side after all 
   }
  }
 });
+
+test('wardrobe spacer through cut, split PVC, clipped corners and real thin drawer blanks',()=>{
+ for(const [cuts,edges,segments] of [[[[74,144]],2,8],[[[0,35]],1,6],[[[180,200]],1,6],[[],1,4]]){
+  const {c,obj,panel}=setup('1000'),out=blankNativeItem(blankItem({item_id:'g:drawer-0-spacer-left',length:200,partWidth:550,axis:'side',edges:'1000'}),material);
+  out.blank.spacer_cuts=cuts;c.resizeAndPlace(obj,out,[]);
+  assert.equal(panel.Contour.lines.length,segments);assert.equal(panel.Butts.Count,edges);
+  for(const e of panel.Butts.Butts){const [x,,a]=panel.Contour.lines[e.ElemIndex];assert.equal(x,550);assert.equal(a,550);}
+ }
+ for(const [key,axis,L,T] of [['0-bottom','horizontal',463,3],['0-side-left','side',77,18]]){
+  const out=blankNativeItem(blankItem({item_id:'g:drawer-0-'+key,length:L,partWidth:500,thickness:T,axis,edges:'0000'}),{name:'board',thickness:T});
+  const {c,obj}=setup('0000');assert.doesNotThrow(()=>c.resizeAndPlace(obj,out,[]));
+ }
+});

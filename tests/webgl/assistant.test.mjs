@@ -151,7 +151,7 @@ test('compatible wardrobe plinths form one edged board and split when the middle
 test('wardrobe drawer banks survive save, reopen, material changes and one undo with shelves above',()=>{
  const {a,h}=setup();
  const form={...spec,width:600,height:2000,depth:600,sections:1,sectionShelves:[1],
-  front:{swing:'left',offset:90},shelfLevels:[[{mode:'gap',mm:250}]],
+  front:{swing:'left',offset:130},shelfLevels:[[{mode:'gap',mm:250}]],
   drawerBanks:[{kind:'internal',faces:[{height:197},{height:147}]}]};
  const create=prepareAssistantPlan(a,{action:'create',spec:wardrobeSpec(form)},{bodyMaterialId:'body',frontMaterialId:'front'});
  h.run('drawers',()=>applyAssistantPlan(a,create));
@@ -163,7 +163,7 @@ test('wardrobe drawer banks survive save, reopen, material changes and one undo 
  assert.equal(get('drawer-0-0-bottom').blank_thickness_mm,3);
  assert.equal(get('drawer-0-spacer-left').width,18);
  assert.equal(get('drawer-0-spacer-right'),undefined);
- const edited={...form,front:{swing:'right',offset:90}};
+ const edited={...form,front:{swing:'right',offset:130}};
  const update=prepareAssistantPlan(a,{action:'update',spec:wardrobeSpec(edited)});
  h.run('change hinge side',()=>applyAssistantPlan(a,update));
  assert.ok(get('drawer-0-spacer-right'));assert.equal(get('drawer-0-spacer-left'),undefined);

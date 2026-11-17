@@ -16,10 +16,10 @@ export class AssistantUI{
  constructor(app){this.app=app;this.disposed=false;this.materials={};this.serial={body:0,back:0,front:0,drawer:0};this.start().catch(()=>{});}
  async start(){
   if(!this.app.bridge.assistantAccess?.())return;
-  const status=await this.app.bridge.request('/3d-assistant/status');if(this.disposed)return;
+  const status=await this.app.bridge.request('/3d-assistant/status').catch(()=>({available:false,remaining:0}));if(this.disposed)return;
   this.available=status.available;this.remainingCount=status.remaining;
   this.style=el('link');this.style.rel='stylesheet';this.style.href='/account/planner/assistant.css';document.head.append(this.style);
-  this.button=button('Собрать с ИИ',()=>this.open());this.button.id='planner-assistant';this.button.className='secondary';document.getElementById('planner-tools').append(this.button);
+  this.button=button('Собрать шкаф',()=>this.open());this.button.id='planner-assistant';this.button.className='secondary';document.getElementById('planner-tools').append(this.button);
   this.dialog=el('dialog');this.dialog.id='planner-assistant-dialog';this.dialog.className='assistant-wizard';this.dialog.setAttribute('aria-labelledby','assistant-title');
   const head=el('div');head.className='assistant-head';const title=el('h2','Собрать шкаф');title.id='assistant-title';head.append(title,button('Закрыть',()=>this.dialog.close()));
   this.mode=el('select');this.mode.setAttribute('aria-label','Действие со шкафом');this.mode.onchange=()=>this.reset();
@@ -30,8 +30,9 @@ export class AssistantUI{
   this.drawing.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.pickShelf(e);}};this.dimensions=el('p');this.description=el('p');aside.append(this.figureTitle,this.drawing,this.dimensions,this.description);grid.append(this.form,aside);
   this.output=el('p');this.output.setAttribute('role','status');this.output.setAttribute('aria-live','polite');this.summary=el('ul');this.summary.hidden=true;
   const footer=el('div');footer.className='assistant-footer';this.previous=button('Назад',()=>this.go(this.step-1));this.next=button('Далее',()=>this.go(this.step+1));
-  this.send=button('Проверить и собрать с ИИ',()=>this.ask());this.send.className='assistant-primary';this.apply=button('Добавить в проект',()=>this.commit());this.apply.className='assistant-primary';this.apply.hidden=true;
-  footer.append(this.previous,this.next,this.send,this.apply);this.remaining=el('p');this.remaining.className='assistant-hint';
+  this.manual=button('Проверить по размерам',()=>this.ask(false));this.manual.className='assistant-primary';
+  this.send=button('Проверить с ИИ',()=>this.ask());this.send.className='assistant-primary';this.apply=button('Добавить в проект',()=>this.commit());this.apply.className='assistant-primary';this.apply.hidden=true;
+  footer.append(this.previous,this.next,this.manual,this.send,this.apply);this.remaining=el('p');this.remaining.className='assistant-hint';
   this.dialog.append(head,el('p','Заполните пять шагов. Размеры и материалы сохраняются точно по анкете.'),this.mode,this.nav,grid,this.output,this.summary,footer,this.remaining);document.body.append(this.dialog);
   this.unsubscribe=this.app.bridge.subscribe(reason=>{if(reason==='before-project'||reason==='project'){this.epoch=(this.epoch||0)+1;this.pending=null;this.dialog.close();}});
  }
@@ -49,7 +50,7 @@ export class AssistantUI{
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
   this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.previewBuilt=null;this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
-  this.output.textContent=this.available?'':'Помощник временно недоступен. Можно заполнить анкету и посмотреть схему.';this.render();
+  this.output.textContent='';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
   this.loadMaterial('front',c?.items.find(i=>i.blank_axis==='front')?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.front_variant_id);
   this.loadMaterial('drawer',c?.items.find(i=>/:drawer-\d+-\d+-side-left$/.test(i.item_id))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -137,12 +138,12 @@ export class AssistantUI{
   }else if(this.step===2){
    this.sectionTabs();this.jointQuestionnaire();
    this.fields.sectionShelves.forEach((count,i)=>{const group=el('fieldset');group.append(el('legend','Секция '+(i+1)));if(i!==this.activeSection)return;
-    this.select(group,'Полки в секции '+(i+1),[['shelves','С полками'],['empty','Без полок']],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});
-    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count){shelfLevelControls(this,group,i);shelfQuestionnaire(this,group,i);}drawerControls(this,group,i);this.form.append(group);
+    this.select(group,'Полки в секции '+(i+1),[['shelves','С полками'],['empty','Без полок']],count?'shelves':'empty',v=>{this.fields.sectionShelves[i]=v==='empty'?0:4;const bank=this.fields.drawerBanks?.[i];if(bank?.shelvesBelow>this.fields.sectionShelves[i])bank.shelvesBelow=this.fields.sectionShelves[i];this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});
+    if(count)this.select(group,'Полок в секции '+(i+1),Array.from({length:10},(_,n)=>[n+1,String(n+1)]),count,v=>{this.fields.sectionShelves[i]=Number(v);const bank=this.fields.drawerBanks?.[i];if(bank?.shelvesBelow>this.fields.sectionShelves[i])bank.shelvesBelow=this.fields.sectionShelves[i];this.fields.shelfChoices=shelfRows(this.fields);delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();});if(count){shelfLevelControls(this,group,i);shelfQuestionnaire(this,group,i);}drawerControls(this,group,i);this.form.append(group);
    });this.form.append(el('p','Полки пронумерованы снизу вверх. Базовый зазор по бокам — '+(this.fields.shelfGap??0)+' мм.'));
   }else if(this.step===3){
    this.select(this.form,'Исполнение фасада',[['none','Открытый шкаф'],['left','Одна створка · петли слева'],['right','Одна створка · петли справа'],['pair','Две равные створки']],this.fields.front?.swing??'none',value=>{
-    if(value==='none')delete this.fields.front;else this.fields.front={...this.fields.front,swing:value,offset:this.fields.front?.offset??90};
+    if(value==='none')delete this.fields.front;else this.fields.front={...this.fields.front,swing:value,offset:this.fields.front?.offset??(this.fields.drawerBanks?.some(Boolean)?130:90)};
     this.changed();this.render();
    });
    if(this.fields.front){
@@ -362,16 +363,17 @@ export class AssistantUI{
    const {svg,caption}=wardrobeDrawing(built,this.view,this.activeSection,this.fields.front,this.step===2?(this.levelIndex??0):null);
    this.drawing.innerHTML=svg;
    this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';
-   this.description.textContent=caption;
+   this.description.textContent=built.drawerIssues.length?built.drawerIssues.join(' '):caption;
    if(issue&&warning){warning.textContent=issue;warning.hidden=false;}
    else if(issue)this.description.textContent=issue;
   }catch(e){
    this.previewBuilt=null;
-   if(this.drawing.querySelector('svg')?.dataset.view!==this.view)this.drawing.replaceChildren();
+   this.drawing.replaceChildren();
    this.dimensions.textContent='Проверьте параметры';this.description.textContent=e.message;
   }
  }
  controls(){
+  this.manual.hidden=this.step!==4||Boolean(this.pending);this.manual.disabled=this.busy;
   this.previous.hidden=this.step===0;this.next.hidden=this.step===4;this.send.hidden=this.step!==4||Boolean(this.pending);this.send.disabled=this.busy||!this.available||this.remainingCount<=0;
   this.next.disabled=this.busy;this.previous.disabled=this.busy;this.mode.disabled=this.busy;this.steps.forEach(b=>b.disabled=this.busy);
   this.form.querySelectorAll('input,select,button').forEach(b=>b.disabled=this.busy||b.dataset.unavailable==='true');
@@ -385,15 +387,15 @@ export class AssistantUI{
   if(this.fields.thickness!==18&&(this.mode.value==='create'||this.materialChanged.drawer))options.drawerMaterialId=this.materials.drawer?.variant_id;
   if(this.mode.value==='create'||this.materialChanged.back)options.backMaterialId=this.materials.back?.variant_id||null;return options;
  }
- async ask(){
-  if(this.busy||!this.available||this.remainingCount<=0)return;const error=this.error(4);if(error){this.output.textContent=error;return;}
+ async ask(withAI=true){
+  if(this.busy||(withAI&&(!this.available||this.remainingCount<=0)))return;const error=this.error(4);if(error){this.output.textContent=error;return;}
   if(!this.app.interaction.editable()){this.output.textContent='Сначала задайте размеры помещения.';return;}
   this.invalidate();const epoch=this.epoch,stamp=assistantStamp(this.app.adapter);
   try{
    const spec=this.spec(),action=this.mode.value,options=this.materialOptions();
    const pending=prepareAssistantPlan(this.app.adapter,{action,spec},options);
    this.busy=true;this.controls();this.output.textContent='Проверяю выбранные параметры…';
-   const response=await this.app.bridge.request('/3d-assistant/questionnaire','POST',{request_id:crypto.randomUUID(),action,spec,fronts:spec.front?'overlay':'none',...(spec.front||spec.drawerBanks?.some(Boolean)?{front_material_id:this.materials.front.variant_id}:{}),body_material_id:this.materials.body.variant_id,...(spec.drawerBanks?.some(Boolean)&&spec.thickness!==18?{drawer_material_id:this.materials.drawer.variant_id}:{}),back_material_id:spec.back?this.materials.back.variant_id:null,room_height:this.app.adapter.room.height});
+   const response=withAI?await this.app.bridge.request('/3d-assistant/questionnaire','POST',{request_id:crypto.randomUUID(),action,spec,fronts:spec.front?'overlay':'none',...(spec.front||spec.drawerBanks?.some(Boolean)?{front_material_id:this.materials.front.variant_id}:{}),body_material_id:this.materials.body.variant_id,...(spec.drawerBanks?.some(Boolean)&&spec.thickness!==18?{drawer_material_id:this.materials.drawer.variant_id}:{}),back_material_id:spec.back?this.materials.back.variant_id:null,room_height:this.app.adapter.room.height}):{state:'ready',plan:{action,spec}};
    if(this.disposed||epoch!==this.epoch)return;if(response.remaining!=null)this.remainingCount=response.remaining;
    if(response.state!=='ready')throw Error(response.message||'Проверка пока не завершена.');
    if(assistantStamp(this.app.adapter)!==stamp)throw Error('Проект изменился. Проверьте анкету заново.');

@@ -28,8 +28,9 @@ export function shelfLevelControls(ui,parent,section){
  const offset=fields.feet?.article==='118779'?10:0;
  const current=parts[index]?.item;
  const mode=ui.levelUnits?.[section+':'+index]??existing?.mode??'floor';
- const datum=index?parts[index-1]?.item.elevation_mm+parts[index-1]?.item.height+offset:
-   (drawing?.drawerBanks?.[section]?.top??fields.thickness)+(fields.elevation??0)+footHeight(fields);
+ const below=fields.drawerBanks?.[section]?.shelvesBelow??0;
+ const datum=index>0&&index!==below?parts[index-1]?.item.elevation_mm+parts[index-1]?.item.height+offset:
+   (index<below?fields.thickness:drawing?.drawerBanks?.[section]?.top??fields.thickness)+(fields.elevation??0)+footHeight(fields);
  const target=current?current.elevation_mm+offset:null;
  const measured=target==null?null:mode==='floor'?target:target-datum;
  ui.select(box,'Как задать высоту',[['floor','От пола до низа полки'],['gap','Чистый проём под полкой']],mode,value=>{
@@ -51,6 +52,18 @@ export function shelfLevelControls(ui,parent,section){
  }));parent.append(box);
 }
 
+function spacerDrawing(parent,bank,side){
+ const depth=bank.rail.length,height=bank.span,scale=Math.min(232/depth,118/height);
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ const points=[[0,0],[depth,0]];
+ for(const [lo,hi] of bank.cuts?.[side]??[])points.push([depth,lo],[depth-60,lo],[depth-60,hi],[depth,hi]);
+ points.push([depth,height],[0,height]);
+ const polygon=document.createElementNS(svg.namespaceURI,'polygon');
+ polygon.setAttribute('points',points.map(([z,y])=>[4+z*scale,4+(height-y)*scale].join(',')).join(' '));
+ polygon.setAttribute('fill','#e6dcc9');polygon.setAttribute('stroke','#495b54');
+ svg.setAttribute('viewBox','0 0 '+(8+depth*scale)+' '+(8+height*scale));svg.setAttribute('width',String(Math.ceil(8+scale*depth)));
+ svg.setAttribute('role','img');svg.setAttribute('aria-label','Проставка, вид сбоку. Передний торец справа.');svg.append(polygon);parent.append(svg);
+}
 export function drawerControls(ui,parent,section){
  const fields=ui.fields;
  const box=el('fieldset');box.append(el('legend','Шуфляды'));parent.append(box);
@@ -59,6 +72,13 @@ export function drawerControls(ui,parent,section){
  function update(value){banks[section]=value;fields.drawerBanks=banks;ui.changed();ui.render();}
  if(!bank){box.append(action('Добавить шуфляды',()=>update({kind:fields.front?'internal':'external',faces:[{height:197}]})));return;}
  ui.select(box,'Исполнение шуфляд',[['internal','Внутренние за дверью'],['external','Наружные фасады']],bank.kind,value=>update({...bank,kind:value}));
+ millimetres(box,bank.kind==='internal'?'От верха дна шкафа до низа блока, мм':'Подъём блока от низа корпуса, мм',bank.bottomOffset??0,n=>{
+   if(n!=null)update({...bank,bottomOffset:n});
+ },{max:3000});
+ if((bank.bottomOffset||bank.shelvesBelow)&&fields.sectionShelves[section]){
+   ui.select(box,'Полок под блоком',Array.from({length:fields.sectionShelves[section]+1},(_,i)=>[i,String(i)]),bank.shelvesBelow??0,
+     value=>update({...bank,shelvesBelow:Number(value)}));
+ }
  function count(n){
    if(!Number.isInteger(n)||n<1||n>24)return;
    update({...bank,faces:Array.from({length:n},(_,i)=>bank.faces[i]??{height:bank.faces.at(-1)?.height??197})});
@@ -89,7 +109,17 @@ export function drawerControls(ui,parent,section){
  if(current){
    const photo=el('figure'),img=el('img');img.src='/account/planner/hardware-photos/114797.webp';img.alt='Фото направляющей PRIME by AKS Soft Close, 500 мм, арт. 114797';img.width=160;img.height=94;img.style.objectFit='contain';
    photo.append(img,el('figcaption','PRIME by AKS Soft Close · '+current.rail.length+' мм · арт. '+current.rail.article+(current.rail.length===500?'':' (фото серии: 500 мм, арт. 114797)')));box.append(photo);
-   if(current.internal)box.append(el('p',current.spacerL||current.spacerR?'Проставка 18 мм '+(current.spacerL&&current.spacerR?'слева и справа':current.spacerL?'слева':'справа'):'Направляющие крепятся прямо к стойкам.'));
+   box.append(el('p','Короб '+(current.mountWidth-27)+' мм · зазор по 13,5 мм на сторону.'));
+   for(const [side,has] of [['left',current.spacerL],['right',current.spacerR]]){
+     if(!has)continue;
+     spacerDrawing(box,current,side);
+     const slots=current.cuts?.[side]?.length??0;
+     box.append(el('p','Проставка '+(side==='left'?'слева':'справа')+' · 18 мм · '+(slots?'вырезов под петли: '+slots:'прямая')+'. Шуруп 5×30, наметка в стойке Ø3,5 × 5 мм.'));
+   }
+   if(current.internal&&fields.front?.offset===90&&ui.previewBuilt.drawerIssues.some(s=>s.startsWith('Секция '+(section+1)+','))){
+     box.append(action('Поставить петли с отступом 130 мм',()=>{fields.front={...fields.front,offset:130};ui.changed();ui.render();}));
+   }
+   if(current.internal&&!current.spacerL&&!current.spacerR)box.append(el('p','Направляющие крепятся прямо к стойкам.'));
  }
  box.append(action('Убрать блок шуфляд',()=>update(null)));
 }
