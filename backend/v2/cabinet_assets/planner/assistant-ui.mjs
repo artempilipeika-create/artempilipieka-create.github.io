@@ -379,7 +379,8 @@ export class AssistantUI{
   this.remaining.textContent='Проверка ИИ запускается только по кнопке. Пробных обращений на сайте осталось: '+this.remainingCount+'.';
  }
  materialOptions(){
-  const options={frontMaterialId:this.materials.front?.variant_id,resetSideEdges:this.resetSideEdges,defaultMaterial:this.materials.body?.variant_id||null};
+  const options={resetSideEdges:this.resetSideEdges,defaultMaterial:this.materials.body?.variant_id||null};
+  if(this.mode.value==='create'||this.materialChanged.front)options.frontMaterialId=this.materials.front?.variant_id;
   if(this.mode.value==='create'||this.materialChanged.body)options.bodyMaterialId=this.materials.body?.variant_id||null;
   if(this.fields.thickness!==18&&(this.mode.value==='create'||this.materialChanged.drawer))options.drawerMaterialId=this.materials.drawer?.variant_id;
   if(this.mode.value==='create'||this.materialChanged.back)options.backMaterialId=this.materials.back?.variant_id||null;return options;

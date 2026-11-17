@@ -70,14 +70,14 @@ def test_invalid_model_plans_are_rejected(patch):
     with pytest.raises(ValidationError):
         AssistantPlan.model_validate(dict(action='create',message='x',spec={**SPEC,**patch}))
 
-def generated_scene():
+def generated_scene(spec=None):
     script="""import {prepareAssistantPlan} from './backend/v2/cabinet_assets/planner/assistant-model.mjs';
     import {StateAdapter} from './backend/v2/cabinet_assets/planner/state-adapter.mjs';
     const scene={room:{width:6000,depth:5000,height:2700,setup_complete:true},items:[]};
     const a=new StateAdapter({state:()=>scene,projectId:()=>null,selected:()=>null,material:()=>null});
     scene.items=prepareAssistantPlan(a,{action:'create',spec:JSON.parse(process.argv[1])}).items;
     console.log(JSON.stringify(scene));"""
-    return json.loads(subprocess.check_output(['node','--input-type=module','-e',script,json.dumps(SPEC)],cwd=Path(__file__).resolve().parents[1]))
+    return json.loads(subprocess.check_output(['node','--input-type=module','-e',script,json.dumps(spec or SPEC)],cwd=Path(__file__).resolve().parents[1]))
 
 def test_generated_scene_metadata_survives_validation_and_assets_are_served():
     before=generated_scene()
@@ -247,3 +247,26 @@ def test_aks_drawer_control_spec_roundtrip_and_hardware():
                  {'kind':'internal','height':250,'faces':[{'height':197},{'height':None}]}):
         with pytest.raises(ValidationError):
             CarcassDesign.model_validate({**spec,'drawerBanks':[bank]})
+
+def test_saved_wardrobe_drawers_reopen_with_exact_board_identity(api,admin_user):
+    spec={**SPEC,'width':600,'depth':600,'height':1800,'shelves':1,'sectionShelves':[1],
+          'shelfLevels':[[{'mode':'gap','mm':250}]],'front':{'swing':'left','offset':90},
+          'drawerBanks':[{'kind':'internal','faces':[{'height':197},{'height':147}]}]}
+    scene=generated_scene(spec)
+    made=api.post('/api/v2/3d-projects',json={'name':'QA AKS 550','scene':scene})
+    assert made.status_code==201,made.text
+    url='/api/v2/3d-projects/'+made.json()['project_id']
+    saved=api.get(url).json()
+    before={i['item_id']:i for i in scene['items']}
+    after={i['item_id']:i for i in saved['scene']['items']}
+    assert set(before)==set(after)
+    for key,item in before.items():
+        assert after[key]['assistant_carcass']['spec']['drawerBanks']==spec['drawerBanks']
+        for prop in ('width','height','depth','x','z','elevation_mm','body_variant_id'):
+            assert after[key][prop]==item.get(prop)
+    assert sum(k.endswith('spacer-left') for k in after)==1
+    assert not any(k.endswith('spacer-right') for k in after)
+    saved['scene']['items'][0]['production_note']='Контроль проёма 564 мм'
+    change=api.patch(url,json={'name':saved['name'],'version':saved['version'],'scene':saved['scene']})
+    assert change.status_code==200,change.text
+    assert api.get(url).json()['scene']['items'][0]['production_note']=='Контроль проёма 564 мм'

@@ -59,7 +59,7 @@ export function drawerSections(s,widths){
 
 // Names and local axes match the board axes used by the planner.
 export function buildDrawerBoards(spec,banks,add){
- const t=spec.thickness,D=spec.depth;
+ const t=spec.thickness;
  for(const b of banks){
   if(!b)continue;
   const prefix='drawer-'+b.section+'-',section=' · секция '+(b.section+1);

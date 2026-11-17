@@ -39,7 +39,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  const spec=cleanSpec(plan.spec),prefix=current?.metadata.group_id||id;
  const first=current?.items.find(i=>i.item_id.endsWith(':left'));
  const built=buildCarcass(spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]||'Корпус ИИ',
-  drawerMaterialId,bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),frontMaterialId,backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
+  drawerMaterialId:drawerMaterialId??current?.items.find(i=>drawerMember(i.item_id,'\\d+-side-left'))?.body_variant_id,bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),frontMaterialId:frontMaterialId??current?.items.find(i=>i.blank_axis==='front')?.body_variant_id,backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
  if(current){
   // Resize from the right and front, keeping the left edge and rear envelope.
