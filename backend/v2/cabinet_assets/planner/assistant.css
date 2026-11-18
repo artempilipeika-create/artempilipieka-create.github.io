@@ -111,3 +111,17 @@
  #planner-assistant-dialog[data-interior] .assistant-drawing h3,#planner-assistant-dialog[data-interior] .assistant-drawing p:last-child{display:none}
  #planner-assistant-dialog[data-interior] .assistant-fields :is(input,select,summary,button){scroll-margin-top:calc(19dvh + 44px)}
 }
+
+.assistant-visuals{display:grid;align-self:start;gap:10px;min-width:0}
+.wardrobe-live{min-width:0;overflow:hidden;border:1px solid #c2cfc5;border-radius:12px;background:#e6ece5}
+.wardrobe-live[hidden]{display:none}
+.wardrobe-live>div{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px}
+.wardrobe-live h3{margin:0;font-size:15px}
+#planner-assistant-dialog .wardrobe-live select{max-width:60%;margin:0;padding:3px 6px}
+.wardrobe-live canvas{display:block;width:100%;height:clamp(180px,27vh,290px);transform:scaleY(-1);cursor:pointer}
+.assistant-visuals>.assistant-drawing{position:static}
+@media(min-width:641px){.assistant-visuals{position:sticky;top:0}.assistant-visuals:has(.wardrobe-live:not([hidden])) .assistant-drawing{min-height:215px;grid-template-rows:auto minmax(120px,18vh) auto auto}}
+@media(max-width:640px){.assistant-visuals{order:-1}.assistant-visuals:has(.wardrobe-live:not([hidden])){grid-template-columns:1fr 1fr;align-items:start;gap:4px}.wardrobe-live canvas{height:148px}.wardrobe-live>div{display:grid;padding:4px}.wardrobe-live h3{font-size:13px}#planner-assistant-dialog .wardrobe-live select{max-width:100%;font-size:12px}#planner-assistant-dialog .assistant-visuals:has(.wardrobe-live:not([hidden])) .assistant-drawing{min-height:0;grid-template-rows:145px auto;position:static;order:0}}
+
+#cabinet-drawers[hidden],#planner-assistant-dialog .wardrobe-live select[hidden]{display:none}
+@media(max-width:640px) and (min-height:480px){#planner-assistant-dialog[data-interior] .assistant-visuals{position:sticky;top:0;z-index:2;background:var(--mf-paper,#fff)}}

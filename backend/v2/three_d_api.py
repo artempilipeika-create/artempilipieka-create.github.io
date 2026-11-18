@@ -395,8 +395,8 @@ class MaterialAppearance(StrictModel):
 
 class DisplaySettings(StrictModel):
     environmentPreset: Literal['studio','warm','showroom']='showroom'
-    wallColor: str=Field(default='#eeeae2',pattern=r'^#[0-9a-fA-F]{6}$')
-    floorMaterial: Literal['light-stone','oak','concrete']='concrete'
+    wallColor: str=Field(default='#d3ddd4',pattern=r'^#[0-9a-fA-F]{6}$')
+    floorMaterial: Literal['light-stone','oak','concrete']='oak'
     lightingPreset: Literal['daylight','warm','neutral']='neutral'
     materialAppearance: dict[UUID,MaterialAppearance]=Field(default_factory=dict,max_length=500)
 

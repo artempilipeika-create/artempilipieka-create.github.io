@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from uuid import uuid4
 import argparse
 import json
+from time import monotonic
 import hashlib
 from io import BytesIO
 from zipfile import ZipFile
@@ -216,6 +217,54 @@ def exercise(live=False):
             assert any(i.get('blank_item_id','').endswith(':rear-brace') for i in result['items'])
             assert not any(i.get('blank_item_id','').endswith(':bottom') for i in result['items'])
             print('PASS bottomless split wardrobe created, saved, reopened, edited to 1050 mm and exported',len(result['items']),'items',flush=True)
+            # The same real parts are pickable in both cameras; viewing must never edit the order.
+            page.emulate_media(reduced_motion='reduce')
+            def wait_state(expression):
+                expires=monotonic()+15
+                while not page.evaluate(expression):
+                    if monotonic()>=expires:
+                        detail=page.evaluate("""()=>{const p=MF_PLANNER.assistant.livePreview;return {motion:p.motion,active:p.owner!=null,
+                            pending:p.reading,queued:p.frame,hidden:p.root.hidden,width:p.canvas.clientWidth,height:p.canvas.clientHeight,selected:p.select.value}}""")
+                        raise AssertionError((expression,detail))
+                    page.wait_for_timeout(80)
+            original=page.evaluate("JSON.stringify(MF_PLANNER.adapter.items)")
+            page.evaluate("""()=>{const a=MF_PLANNER.adapter;a.select(a.items.find(i=>i.item_id.endsWith(':left')).item_id);MF_PLANNER.sync()}""")
+            drawers=page.locator('#cabinet-drawers')
+            expect(drawers).to_have_text('Шуфляды')
+            drawers.click()
+            wait_state("MF_PLANNER.scene.wardrobeMotion.door===1")
+            def click_face(view,suffix):
+                point=page.evaluate("""([name,suffix])=>{
+                  const view=name==='scene'?MF_PLANNER.scene:MF_PLANNER.assistant.livePreview;
+                  const it=view.adapter.items.find(it=>it.item_id.endsWith(suffix)),g=view.entries.get(it.item_id).group;
+                  const point=view.camera.position.clone().set(0,it.height/2000,it.depth/2000).applyMatrix4(g.matrixWorld).project(view.camera);
+                  const r=view.canvas.getBoundingClientRect();
+                  return [r.left+(1+point.x)*r.width/2,r.top+(1-point.y)*r.height/2];
+                }""",[view,suffix])
+                element=page.evaluate("([x,y])=>document.elementFromPoint(x,y)?.tagName",point)
+                assert element=='CANVAS',(view,suffix,point,element)
+                if view=='scene':
+                    picked=page.evaluate("([x,y])=>MF_PLANNER.scene.pick(x,y)?.id",point)
+                    assert picked and picked.endswith(suffix),(picked,suffix)
+                page.mouse.click(*point)
+            if page.viewport_size['width']<761:page.evaluate("MF_PLANNER.workspace.closePanels();MF_PLANNER.scene.fit('wardrobe')")
+            click_face('scene',':drawer-33-0-face')
+            wait_state("MF_PLANNER.scene.wardrobeMotion.shown==='33-0'&&MF_PLANNER.scene.wardrobeMotion.extension===1")
+            drawers.click()
+            wait_state("!MF_PLANNER.scene.wardrobeMotion.id")
+            assert page.evaluate("JSON.stringify(MF_PLANNER.adapter.items)")==original
+            edit.click();step(3);button('Шуфляды').click()
+            preview_card=form.locator('.wardrobe-live')
+            expect(preview_card).to_be_visible()
+            chooser=preview_card.get_by_label('Шуфляда для просмотра')
+            chooser.select_option('0-1')
+            wait_state("MF_PLANNER.assistant.livePreview.motion.extension===1")
+            preview_card.locator('canvas').scroll_into_view_if_needed()
+            click_face('preview',':drawer-0-1-face')
+            wait_state("MF_PLANNER.assistant.livePreview.motion.extension===0")
+            assert chooser.input_value()==''
+            assert page.evaluate("JSON.stringify(MF_PLANNER.adapter.items)")==original
+            print('PASS main scene and form: open both doors, pick one drawer in either camera, close, order intact',flush=True)
             assert not errors,errors
             print('PASS published assets' if live else 'PASS checkout assets','· pick, size, copy, edit, save, reopen ·',len(groups),'panels')
         except Exception:

@@ -32,9 +32,28 @@ export function attachRoomEquipment(scene,group,f,fallback){
 
 /** Analytic window frame and sill; opening dimensions remain exact. */
 export function windowEquipment(f,geometry){
-  const group=new THREE.Group(),box=(w,h,d,x,y,z,color)=>{const m=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,roughness:.6}));m.scale.set(w*.001,h*.001,d*.001);m.position.set(x*.001,y*.001,z*.001);m.userData.ownMaterial=true;group.add(m);};
-  const t=Math.min(45,f.width/6,f.height/6);
-  box(f.width,f.height,6,0,0,0,'#b9d4dd');
+  const group=new THREE.Group();
+  const box=(w,h,d,x,y,z,color)=>{
+    const m=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,roughness:.47}));
+    m.scale.set(w*.001,h*.001,d*.001);m.position.set(x*.001,y*.001,z*.001);
+    m.userData.ownMaterial=true;m.receiveShadow=true;group.add(m);return m;
+  };
+  const t=Math.min(45,f.width/6,f.height/6),glass=box(f.width,f.height,6,0,0,0,'#ecf2f3');
+  // A sky gradient in the glazing remains luminous with a backlit frame.
+  // Local pane coordinates keep the horizon level on all four measured walls.
+  glass.material.roughness=.19;glass.material.envMapIntensity=.75;
+  glass.material.onBeforeCompile=shader=>{
+    shader.vertexShader='varying vec2 windowPoint;\n'+shader.vertexShader.replace('#include <project_vertex>',
+      '#include <project_vertex>\nwindowPoint=position.xy+0.5;');
+    shader.fragmentShader='varying vec2 windowPoint;\n'+shader.fragmentShader.replace('#include <emissivemap_fragment>',`
+      #include <emissivemap_fragment>
+      float sky=smoothstep(.04,1.,windowPoint.y);
+      vec3 viewColor=mix(vec3(.81,.84,.76),vec3(.43,.67,.83),sky);
+      float reflection=1.-smoothstep(.03,.15,abs(windowPoint.x-.42*windowPoint.y-.19));
+      totalEmissiveRadiance+=viewColor*(.55+.16*reflection);
+      diffuseColor.rgb*=.45;
+    `);
+  };
   for(const x of[-(f.width-t)/2,(f.width-t)/2,0])box(t,f.height,70,x,0,0,'#f5f4ec');
   for(const y of[-(f.height-t)/2,(f.height-t)/2])box(f.width,t,70,0,y,0,'#f5f4ec');
   if(f.projection)box(f.width,20,f.projection,0,-f.height/2,f.projection/2,'#e6e4d8');

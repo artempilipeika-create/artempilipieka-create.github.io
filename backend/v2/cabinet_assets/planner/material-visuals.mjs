@@ -29,14 +29,14 @@ export function surfaceFinish(visual,role,hasMaterial){
   return {roughness,clearcoat:glossy?.55:satin?.1:!hasMaterial&&role==='counter'?.16:0,
     clearcoatRoughness:glossy?.14:.38,ior:1.48};
 }
-export function physicalPanelUV(geometry,size,grainAxis){
+export function physicalPanelUV(geometry,size,grainAxis,offset={}){
   const p=geometry.attributes.position,n=geometry.attributes.normal,uv=geometry.attributes.uv,axes=['x','y','z'];
   const read=(a,i,axis)=>a.getComponent(i,axes.indexOf(axis));
   for(let i=0;i<p.count;i++){
     // Keep the original box face through its bevel: averaged corner normals must not flip UV planes.
     const face=geometry.userData.uvFaceAxes?.[i]||axes.reduce((a,b)=>Math.abs(read(n,i,a))>=Math.abs(read(n,i,b))?a:b);
     const plane=axes.filter(a=>a!==face),v=plane.includes(grainAxis)?grainAxis:plane[1],u=plane.find(a=>a!==v);
-    uv.setXY(i,read(p,i,u)+size[u]/2000,read(p,i,v)+size[v]/2000);
+    uv.setXY(i,read(p,i,u)+(size[u]/2+(offset[u]||0))/1000,read(p,i,v)+(size[v]/2+(offset[v]||0))/1000);
   }
   uv.needsUpdate=true;
 }

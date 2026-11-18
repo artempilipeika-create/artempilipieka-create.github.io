@@ -1,3 +1,4 @@
+import aksCatalogue from './aks-wardrobe.json' with {type:'json'};
 import {installedCuts} from './wardrobe-aks-native.mjs';
 import primeMesh from './prime-hinge-mesh.json' with {type:'json'};
 import {doorHinges} from './wardrobe-hinges.mjs';
@@ -25,6 +26,8 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,prod
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
+  railSteel:{color:'#b5bfc2',roughness:.32,metalness:.75},
+  slideSteel:{color:'#828e94',roughness:.36,metalness:.67},
   drawerMetal:{color:'#f4f4f1',roughness:.4,metalness:.3},
   glass:{color:'#f4faf7',roughness:.075,metalness:0},
   frame:{color:'#202321',roughness:.3,metalness:.72},
@@ -77,6 +80,20 @@ function combine(parts){
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
   g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));g.computeBoundingBox();g.computeBoundingSphere();return g;
 }
+function railProfile(length,height,stage){
+  const catalogue=aksCatalogue.rails[length],span=length-(stage==='fixed'?0:stage==='middle'?8:16);
+  const web=new THREE.Shape(),x=span*S/2,y=height*S/2;
+  web.moveTo(-x,-y);web.lineTo(x,-y);web.lineTo(x,y);web.lineTo(-x,y);web.closePath();
+  for(const [fromFront,offset] of catalogue[stage]||[]){
+    const hole=new THREE.Path();
+    hole.absellipse((fromFront-length/2)*S,offset*S,4*S,2.4*S,0,2*Math.PI,true);
+    web.holes.push(hole);
+  }
+  const plate=new THREE.ExtrudeGeometry(web,{depth:1.05*S,bevelEnabled:false,curveSegments:5});
+  plate.rotateY(Math.PI/2);
+  const lip=stage==='fixed'?3.0:stage==='middle'?2.65:2.2;
+  return combine([plate,...[-1,1].map(side=>panelGeometry(lip,1.45,span,.24).translate((1-lip/2)*S,side*(height/2-.72)*S,0))]);
+}
 export class MeshFactory{
   constructor(adapter,invalidate){
     this.adapter=adapter;this.invalidate=invalidate;this.geometry=new THREE.BoxGeometry(1,1,1);
@@ -101,7 +118,7 @@ export class MeshFactory{
       const sheet=['body','front','back','shelf','plinth','counter'].includes(role),optics=surfaceFinish(visual,role,Boolean(id));
       const Material=glass||counter||sheet&&!ghost&&!inspection&&optics.clearcoat>0?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:['handle','frame','hinge','shelfSupport','lightProfile','drawerMetal'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
+        metalness:['handle','frame','hinge','shelfSupport','lightProfile','drawerMetal','railSteel','slideSteel'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
@@ -140,7 +157,7 @@ export class MeshFactory{
       if(m.userData.role==='door-pivot'){const visible=mode!=='facadesHidden';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(m.userData.role==='appliance-slot'){const visible=mode==='normal'||mode==='xray';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(!m.isMesh)return;
-      if(m.userData.blankEdge){m.visible=mode!=='xray';return;}
+      if(m.userData.blankEdge){m.visible=mode!=='xray';m.material=this.material('body',it.body_variant_id,Boolean(group.userData.ghost));return;}
       if(m.userData.blankHook)return; // Edge tint belongs to the selected real panel edge, not a cabinet material.
       const role=m.userData.role,part=byKey.get(m.userData.part?.key);
       if(part)m.userData.part=part;
@@ -183,15 +200,15 @@ export class MeshFactory{
     const m=new THREE.Mesh(geometry,this.material(role,id,ghost));m.position.set(x*S,y*S,z*S);
     m.castShadow=!ghost&&role!=='reveal';m.receiveShadow=!ghost;m.userData={itemId:group.userData.itemId,role,geometryKey:key};group.add(m);return m;
   }
-  box(group,role,w,h,d,x,y,z,id,ghost=false,bevel){
+  box(group,role,w,h,d,x,y,z,id,ghost=false,bevel,uv=null){
     if(w<=0||h<=0||d<=0)return;
     const r=bevel??(role==='front'?.85:role==='counter'?1.2:role==='body'?.45:.25);
-    const key=['panel',role,w,h,d,r].join(':');
+    const key=['panel',role,w,h,d,r,uv?JSON.stringify(uv):''].join(':');
     const geometry=this.acquire(key,()=>{
       if(role==='counter'&&Math.abs(h-38)<.001)return countertopGeometry({points:[[-w/2,-d/2],[w/2,-d/2],[w/2,d/2],[-w/2,d/2]],radii:[.35,.65,4,.65]},h).translate(0,-h*S/2,0);
       const g=panelGeometry(w,h,d,r);
       const grainAxis=role==='front'||role==='back'||w<h&&w<d?'y':'x';
-      physicalPanelUV(g,{x:w,y:h,z:d},grainAxis);
+      physicalPanelUV(g,uv?.size??{x:w,y:h,z:d},uv?.axis??grainAxis,uv?.offset);
       if(role==='glass')glassVertices(g,[w,h,d]);
       // Edge occlusion lives on the actual panel sides, not lines painted over fronts.
       // It costs no extra draw calls and never enlarges the 1.5 mm production gaps.
@@ -305,40 +322,38 @@ export class MeshFactory{
     }
     if(low<H)spans.push([low,H,D]);
     const material=it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'glass':'body';
-    for(const [lo,hi,depth] of spans)this.box(group,material,W,hi-lo,depth,0,(hi+lo)/2,(depth-D)/2,it.body_variant_id,ghost);
-    const t=Math.min(0.8,(it.blank_thickness_mm||18)/4);
-    const addEdge=(w,h,d,x,y,z)=>{
-      const m=this.box(group,'blank-edge',w,h,d,x,y,z,it.body_variant_id,ghost,.05);
-      if(!m)return;
-      const material=this.material('body',it.body_variant_id,ghost).clone();
-      material.color.multiplyScalar(.77);
-      m.material=material;
-      m.userData.blankEdge=true;
-      m.userData.ownedMaterials=[material];
-      m.userData.visualOnly=true;
+    const t=Math.min(it.blank_edge_thickness_mm??1,(it.blank_thickness_mm||18)/3);
+    const tapeAxes=ax==='side'?[[2,1],[2,0],[1,0],[1,1]]:ax==='horizontal'?[[2,1],[2,0],[0,0],[0,1]]:[[1,0],[1,1],[0,0],[0,1]];
+    const grain=ax==='side'||ax==='front'&&!/:drawer-\d+-\d+-face$/.test(it.item_id)?'y':'x';
+    const widthOffset=it.item_id.endsWith(':door-right')&&it.assistant_carcass?.spec?.front?.swing==='pair'?W+3:0;
+    const partBox=(lo,hi,taped)=>{
+      const [w,h,d]=hi.map((v,i)=>v-lo[i]),[x,y,z]=hi.map((v,i)=>(v+lo[i])/2);
+      const uv={axis:grain,size:{x:W,y:H,z:D},offset:{x:x+widthOffset,y:y-H/2,z}};
+      const m=this.box(group,material,w,h,d,x,y,z,it.body_variant_id,ghost,taped?Math.min(.27,t/3):code==='0000'?.45:.10,uv);
+      if(m&&taped)Object.assign(m.userData,{blankEdge:true,visualOnly:true,edgeThicknessMm:t});
     };
-    // Codes follow the unrotated board: long side 1 / long side 2 / short side 1 / short side 2.
-    if(ax==='side'){
-      if(code[0]==='1')for(const [lo,hi,depth] of spans)if(depth===D)addEdge(W,hi-lo,t,0,(lo+hi)/2,D/2-t/2);
-      if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
-      if(code[2]==='1'){const depth=spans[0][2];addEdge(W,t,depth,0,t/2,(depth-D)/2);}
-      if(code[3]==='1'){const depth=spans.at(-1)[2];addEdge(W,t,depth,0,H-t/2,(depth-D)/2);}
-    }else if(ax==='back'||ax==='front'){
-      if(code[0]==='1')addEdge(W,t,D,0,t/2,0);
-      if(code[1]==='1')addEdge(W,t,D,0,H-t/2,0);
-      if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
-      if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
-    }else{
-      if(code[0]==='1')addEdge(W,H,t,0,H/2,D/2-t/2);
-      if(code[1]==='1')addEdge(W,H,t,0,H/2,-D/2+t/2);
-      if(code[2]==='1')addEdge(t,H,D,-W/2+t/2,H/2,0);
-      if(code[3]==='1')addEdge(t,H,D,W/2-t/2,H/2,0);
+    // Cut the display core back under its four PVC strips. Coplanar overlays
+    // used to shimmer when orbiting and incorrectly darkened light-coloured PVC.
+    for(const [loY,hiY,depth] of spans){
+      const lo=[-W/2,loY,-D/2],hi=[W/2,hiY,depth-D/2];
+      tapeAxes.forEach(([axis,high],index)=>{
+        if(code[index]!=='1'||(ax==='side'&&(index===0&&depth!==D||index===2&&loY!==0||index===3&&hiY!==H)))return;
+        const start=lo.slice(),end=hi.slice(),thick=Math.min(t,hi[axis]-lo[axis]);
+        if(high){hi[axis]-=thick;start[axis]=hi[axis];}
+        else{lo[axis]+=thick;end[axis]=lo[axis];}
+        partBox(start,end,true);
+      });
+      partBox(lo,hi,false);
     }
     const drawerSide=/:drawer-\d+-\d+-side-(left|right)$/.exec(it.item_id);
-    if(it.assistant_carcass?.spec?.drawerBanks&&drawerSide){
+    if(it.assistant_carcass?.spec?.drawerBanks&&drawerSide&&aksCatalogue.rails[D]){
       const sign=drawerSide[1]==='left'?-1:1;
-      const rail=this.box(group,'handle',12.7,45,D,sign*(W/2+6.75),40,0,null,ghost,.4);
-      if(rail)Object.assign(rail.userData,{visualOnly:true,visualApproximation:true,drawerRail:true});
+      for(const [stage,height,inset,travel,role] of [['fixed',45,11.9,0,'railSteel'],['middle',32,7.2,.5,'slideSteel'],['moving',19,2.6,1,'railSteel']]){
+        const key='aks-profile:'+D+':'+stage;
+        const geometry=this.acquire(key,()=>railProfile(D,height,stage));
+        const m=this.mesh(group,role,geometry,key,sign*(W/2+inset),40,0,null,ghost);
+        m.scale.x=sign;Object.assign(m.userData,{drawerRail:true,railTravel:travel,visualOnly:true});
+      }
     }
     for(const hinge of this.visibleDoorHinges(it)){
       const side=hinge.door_side==='left'?1:-1,key='prime:112595:'+side;
@@ -809,7 +824,7 @@ export class MeshFactory{
     if(it.blank_axis!=='front')return [];
     try{return doorHinges(it,this.adapter.items||[]);}catch{return [];}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,this.spacerCuts(it),this.visibleDoorHinges(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?it.blank_edge_code:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,this.spacerCuts(it),this.visibleDoorHinges(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?[it.blank_edge_code,it.blank_edge_thickness_mm,it.item_id.endsWith(':door-right')&&it.assistant_carcass?.spec?.front?.swing==='pair']:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

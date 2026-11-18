@@ -11,7 +11,7 @@ export class CabinetControls{
    const title=document.getElementById('item-title');
    this.choose=button('Выбрать шкаф целиком',()=>{
      app.scene.selectionScope='module';app.scene.cabinetSelection=cabinetId(app.adapter.selected);
-     app.scene.pickedInterior=null;app.sync();
+     app.scene.pickedInterior=null;app.sync();app.scene.fit('selected');
    });
    this.choose.id='cabinet-select';title.after(this.choose);
    this.panel=node('section');this.panel.id='cabinet-actions';this.panel.className='mf3d-control-card';
@@ -26,6 +26,8 @@ export class CabinetControls{
    }));
    this.edit=button('Редактировать в конструкторе',()=>app.assistant?.open('update'));
    this.edit.id='cabinet-edit';this.edit.hidden=true;document.getElementById('planner-tools').append(this.edit);
+   this.drawers=button('Шуфляды',()=>{app.scene.inspectWardrobe?.(app.adapter.selected);this.sync();});
+   this.drawers.id='cabinet-drawers';this.drawers.hidden=true;document.getElementById('planner-tools').append(this.drawers);
    this.panelEdit=button('Редактировать шкаф',()=>app.assistant?.open('update'));
    this.panel.append(this.panelEdit);
    this.panel.append(button('Удалить шкаф',()=>app.interaction.remove()),button('Выбрать деталь',()=>{
@@ -60,6 +62,10 @@ export class CabinetControls{
    this.part.hidden=!scene.xrayEnabled||!scene.pickedInterior;this.part.textContent=scene.pickedInterior?.name||'';
    this.edit.hidden=!this.app.assistant?.button||!id||!['shelves','divided'].includes(it.assistant_carcass.spec.recipe);
    this.panelEdit.hidden=this.edit.hidden;
+   this.drawers.hidden=!id||!it.assistant_carcass.spec.drawerBanks?.some(Boolean)||!scene.inspectWardrobe||scene.mode!=='3d';
+   const open=Boolean(id&&scene.wardrobeMotion?.id===id&&scene.wardrobeMotion.open);
+   this.drawers.setAttribute('aria-pressed',String(open));this.drawers.textContent=open?'Закрыть шкаф':'Шуфляды';
+   this.drawers.title=open?'Закрыть шуфляду и двери':'Открыть двери и осмотреть шуфляды';
    document.getElementById('item-controls').classList.toggle('whole-cabinet',!this.panel.hidden);
    if(!this.panel.hidden){
      const s=it.assistant_carcass.spec;this.size.textContent='Шкаф целиком · '+s.width+' × '+s.height+' × '+s.depth+' мм';

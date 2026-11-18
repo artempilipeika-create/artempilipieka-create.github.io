@@ -68,6 +68,10 @@ export class Interaction {
     if(hit?.featureId&&this.equipment?.down(e,hit))return;
     if(!hit?.id){this.scene.hover(null);return;}
     const it=this.adapter.items.find(x=>x.item_id===hit.id);if(!it)return;
+    if(this.scene.wardrobeMotion?.open&&this.scene.wardrobeMotion.id===cabinetId(it)&&it.item_id.endsWith('-face')){
+      this.consume(e);this.gesture={pointerId:e.pointerId,drawer:it,x:e.clientX,y:e.clientY};
+      this.canvas.setPointerCapture(e.pointerId);return;
+    }
     this.consume(e);
     if(this.scene.cabinetSelection!==cabinetId(it)||this.scene.xrayEnabled)this.scene.cabinetSelection=null;
     this.scene.pickedInterior=hit.part||null;
@@ -95,6 +99,7 @@ export class Interaction {
     const g=this.gesture;
     if(!g){if(!e.buttons&&e.pointerType!=='touch'){const hit=this.scene.pick(e.clientX,e.clientY);this.scene.hover(hit?.id);this.canvas.style.cursor=hit?'grab':'';}return;}
     if(e.pointerId!==g.pointerId)return;this.consume(e);
+    if(g.drawer){if(Math.hypot(e.clientX-g.x,e.clientY-g.y)>8)g.moved=true;return;}
     if(!g.moved&&Math.hypot(e.clientX-g.x,e.clientY-g.y)<(e.pointerType==='touch'?9:4))return;
     const point=this.scene.planePoint(e.clientX,e.clientY,g.plane);if(!point)return;
     g.moved=true;
@@ -129,6 +134,10 @@ export class Interaction {
     if(this.equipment?.up(e))return;
     const g=this.gesture;if(!g||e.pointerId!==g.pointerId)return;
     this.consume(e);this.gesture=null;
+    if(g.drawer){
+      if(this.canvas.hasPointerCapture?.(e.pointerId))this.canvas.releasePointerCapture(e.pointerId);
+      if(!g.moved)this.scene.clickDrawer(g.drawer);return;
+    }
     try{
       if(g.cabinet&&g.moved&&g.result&&!g.result.error){
         commitCabinet(this.adapter,g.cabinet,g.result);this.history.commit();this.adapter.status('Шкаф перемещён.');
@@ -145,7 +154,8 @@ export class Interaction {
   cancel(){
     this.equipment?.cancel();
     const g=this.gesture;this.gesture=null;
-    if(g){this.history.cancel();this.finishPointer(g.pointerId);}
+    if(g?.drawer){if(this.canvas.hasPointerCapture?.(g.pointerId))this.canvas.releasePointerCapture(g.pointerId);}
+    else if(g){this.history.cancel();this.finishPointer(g.pointerId);}
     if(this.catalogueDraft)this.catalogueEnd();
   }
   change(label,fn){

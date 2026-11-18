@@ -50,7 +50,7 @@ export class StudioRender{
     this.material=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,
       uniforms:{colour:{value:this.target.texture},depth:{value:this.target.depthTexture},
         inverseProjection:{value:new THREE.Matrix4()},projection:{value:new THREE.Matrix4()},
-        texel:{value:new THREE.Vector2()},radius:{value:.16},strength:{value:1.45}},
+        texel:{value:new THREE.Vector2()},radius:{value:.09},strength:{value:1.32},sampleCount:{value:16}},
       vertexShader:`varying vec2 vUv;
         void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}`,
       fragmentShader:`
@@ -58,6 +58,7 @@ export class StudioRender{
         uniform mat4 inverseProjection,projection;
         uniform vec2 texel;
         uniform float radius,strength;
+        uniform int sampleCount;
         varying vec2 vUv;
         vec3 positionAt(vec2 uv){
           vec4 p=inverseProjection*vec4(uv*2.0-1.0,texture2D(depth,uv).x*2.0-1.0,1.0);
@@ -78,8 +79,9 @@ export class StudioRender{
             vec2 reach=vec2(projection[0][0],projection[1][1])*radius/max(.1,-p.z)*.5;
             float occlusion=0.0;
             for(int i=0;i<16;i++){
+              if(i>=sampleCount)break;
               float a=float(i)*2.39996323;
-              float ring=sqrt((float(i)+.5)/16.0);
+              float ring=sqrt((float(i)+.5)/float(sampleCount));
               vec2 uv=vUv+vec2(cos(a),sin(a))*reach*ring;
               if(uv.x<=0.0||uv.x>=1.0||uv.y<=0.0||uv.y>=1.0)continue;
               if(texture2D(depth,uv).x>=.99999)continue;
@@ -88,7 +90,7 @@ export class StudioRender{
               float horizon=max(0.0,dot(n,delta)/max(distance,.0001)-.08);
               occlusion+=horizon*(1.0-smoothstep(radius*.2,radius*1.6,distance))*smoothstep(.001,.006,distance);
             }
-            float ao=clamp(1.0-occlusion*strength/8.0,.48,1.0);
+            float ao=clamp(1.0-occlusion*strength*2.0/float(sampleCount),.48,1.0);
             rgb*=ao;
           }
           // Very slight optical falloff, applied in linear light before tone mapping.
@@ -101,14 +103,14 @@ export class StudioRender{
     this.scene=new THREE.Scene();this.camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
     this.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),this.material);this.quad.frustumCulled=false;this.scene.add(this.quad);
   }
-  render(scene,camera){
+  render(scene,camera,moving=false){
     const r=this.renderer;
     // Screenshots/catalogue render targets and technical orthographic views retain their own path.
     if(!this.available||r.getRenderTarget()||!camera.isPerspectiveCamera){r.render(scene,camera);return;}
     const size=r.getDrawingBufferSize(new THREE.Vector2()),scale=Math.min(1,this.maxDimension/Math.max(size.x,size.y));
     const w=Math.max(1,Math.round(size.x*scale)),h=Math.max(1,Math.round(size.y*scale));
     if(this.target.width!==w||this.target.height!==h)this.target.setSize(w,h);
-    const u=this.material.uniforms;u.texel.value.set(1/w,1/h);
+    const u=this.material.uniforms;u.sampleCount.value=moving?5:16;u.texel.value.set(1/w,1/h);
     u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.projection.value.copy(camera.projectionMatrix);
     try{
       r.setRenderTarget(this.target);r.render(scene,camera);
