@@ -40,14 +40,14 @@ export class PresentationUI{
   select(parent,text,choices){const label=el('label',text),s=el('select');s.setAttribute('aria-label',text);for(const [value,text]of choices){const o=el('option',text);o.value=value;s.append(o);}label.append(s);parent.append(label);return s;}
   views(){return this.app.adapter.state.presentationViews||[];}
   release(){if(this.url)URL.revokeObjectURL(this.url);this.url=null;this.download.removeAttribute('href');this.download.setAttribute('aria-disabled','true');}
-  open(){
+  open({clean=false}={}){
     const s=this.app.scene;if(s.isFallback||!this.app.adapter.items.length){this.app.adapter.status('Добавьте мебель и дождитесь готовности 3D-сцены.');return;}
-    this.app.interaction.cancel();s.stopOrbitInertia();this.current=s.captureView();this.view.value='threeQuarter';this.quality.value=s.qualityMode||'auto';this.syncViews();
+    this.app.interaction.cancel();s.stopOrbitInertia();this.current=s.captureView();if(clean)this.format.value='clean';this.quality.value=s.qualityMode||'auto';this.syncViews();this.view.value=s.renderRooms?.id?'room':'threeQuarter';
     this.dialog.showModal();this.refresh();
   }
   syncViews(){
     const value=this.view.value;this.view.replaceChildren();
-    for(const [key,text]of [...Object.entries(VIEW_NAMES),...this.views().map(v=>['saved:'+v.id,v.name])]){const o=el('option',text);o.value=key;this.view.append(o);}this.view.value=value||'threeQuarter';
+    for(const [key,text]of [...Object.entries(VIEW_NAMES),...(this.app.scene.renderRooms?.id?[['room','Ракурс комнаты']]:[]),...this.views().map(v=>['saved:'+v.id,v.name])]){const o=el('option',text);o.value=key;this.view.append(o);}this.view.value=value||'threeQuarter';
     this.savedList.replaceChildren();for(const v of this.views()){
       const row=el('div'),use=this.button(v.name,()=>{this.view.value='saved:'+v.id;this.refresh();}),remove=this.button('×',()=>this.removeView(v.id));
       remove.setAttribute('aria-label','Удалить ракурс '+v.name);row.append(use,remove);this.savedList.append(row);
@@ -76,6 +76,8 @@ export class PresentationUI{
     await new Promise(requestAnimationFrame);if(seq!==this.sequence||!this.dialog.open)return;
     try{
       const s=this.app.scene,{width,height}=exportSize(this.size.value,s.renderer.capabilities.maxTextureSize);
+      await s.renderRooms?.waitReady();
+      if(seq!==this.sequence||!this.dialog.open)return;
       const source=capturePresentation(s,{width,height,view:this.view.value,savedView:this.chosenView()});
       const name=document.getElementById('project-name').value.trim()||'Проект кухни',view=this.view.selectedOptions[0].textContent,date=new Date();
       const branded=this.format.value==='brand',output=branded?presentationSheet(source,{name,view,date,room:this.app.adapter.room,modules:this.app.adapter.items.length}):source;

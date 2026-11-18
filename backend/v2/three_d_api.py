@@ -394,6 +394,7 @@ class MaterialAppearance(StrictModel):
     finish: Literal['auto','matte','satin','gloss']='auto'
 
 class DisplaySettings(StrictModel):
+    renderRoomId: int | None=Field(default=None,ge=1,le=15,strict=True)
     environmentPreset: Literal['graphite','warm-oak','classic','studio','warm','showroom']='graphite'
     wallColor: str=Field(default='#878e90',pattern=r'^#[0-9a-fA-F]{6}$')
     floorMaterial: Literal['oak','marble','light-stone','concrete']='oak'

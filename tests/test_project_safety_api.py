@@ -22,6 +22,21 @@ def test_interior_and_floor_persist_independently_after_reopening(api,admin_user
     settings=api.get(url).json()['scene']['displaySettings']
     assert (settings['environmentPreset'],settings['floorMaterial'])==('warm-oak','marble')
 
+def test_render_room_and_floor_follow_project_saves(api,admin_user):
+    body=payload('QA комната для рендера')
+    body['scene']['displaySettings']={'renderRoomId':15,'floorMaterial':'marble'}
+    created=api.post('/api/v2/3d-projects',json=body)
+    assert created.status_code==201,created.text
+    url='/api/v2/3d-projects/'+created.json()['project_id']
+    opened=api.get(url).json()
+    assert opened['scene']['displaySettings']['renderRoomId']==15
+    body['scene']['displaySettings']['renderRoomId']=2
+    change=api.patch(url,json={**body,'version':opened['version'],'request_id':str(uuid4())})
+    assert change.status_code==200,change.text
+    edited=api.get(url).json()['scene']
+    assert edited['items']==opened['scene']['items']
+    assert (edited['displaySettings']['renderRoomId'],edited['displaySettings']['floorMaterial'])==(2,'marble')
+
 def test_idempotent_save_conflict_and_minimal_receipts(api,settings,admin_user):
     body=payload();created=api.post('/api/v2/3d-projects',json=body);assert created.status_code==201,created.text
     p=created.json();url='/api/v2/3d-projects/'+p['project_id']

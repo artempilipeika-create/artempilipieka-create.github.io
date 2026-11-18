@@ -1,3 +1,4 @@
+import {RenderRoomPicker} from './render-room-picker.mjs';
 import {ROOM_PRESETS,FLOOR_OPTIONS,LIGHT_OPTIONS,roomSettings,presetSettings,selectInterior,designedInterior} from './room-state.mjs';
 import {modulePriceBreakdown,kitchenPriceBreakdown} from './pricing.mjs';
 const el=(tag,text,id)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(id)e.id=id;return e;};
@@ -22,6 +23,7 @@ export class RoomPricingUI{
       app.adapter.state.displaySettings={...app.adapter.state.displaySettings,...next};
       app.bridge.refresh();
     });
+    this.roomPicker=new RenderRoomPicker(app,apply);controls.prepend(this.roomPicker.element);
     this.applyPreset.onclick=()=>{
       const current=roomSettings(app.adapter.state.displaySettings),preset=presetSettings(current.environmentPreset);
       apply(designedInterior(current.environmentPreset)?{...current,wallColor:preset.wallColor}:preset);
@@ -42,9 +44,12 @@ export class RoomPricingUI{
     const p=this.app,a=p.adapter,s=roomSettings(a.state.displaySettings);
     this.measureSummary.textContent=`${a.room.width} × ${a.room.depth} × ${a.room.height} мм · `+(a.room.setup_complete===true?'размеры заданы':a.room.setup_complete===false?'требуется замер':'замер не подтверждён');
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']])document.getElementById(id).value=s[key];
+    const photographic=this.roomPicker.sync({...s,renderRoomId:a.state.displaySettings?.renderRoomId});
+    for(const id of ['room-preset','room-wall-color'])document.getElementById(id).closest('label').hidden=photographic;
+    for(const option of document.getElementById('room-floor').options)if(!['oak','marble'].includes(option.value))option.hidden=photographic;
     const preset=presetSettings(s.environmentPreset);
     const designed=designedInterior(s.environmentPreset);
-    this.applyPreset.hidden=(designed?['wallColor']:['wallColor','floorMaterial','lightingPreset']).every(key=>s[key]===preset[key]);
+    this.applyPreset.hidden=photographic||(designed?['wallColor']:['wallColor','floorMaterial','lightingPreset']).every(key=>s[key]===preset[key]);
     this.applyPreset.textContent=(designed?'Вернуть оттенок «':'Применить «')+ROOM_PRESETS[s.environmentPreset].label+'»';
     const it=a.selected;
     this.module.replaceChildren(el('h3','Стоимость'));

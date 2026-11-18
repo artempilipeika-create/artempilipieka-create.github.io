@@ -574,6 +574,7 @@ async function openKitchenAlbumFlow(){
       const scene=globalThis.MF_PLANNER?.scene;
       if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data,geometry};}
       const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261029-album-pagination');
+      await scene.renderRooms?.waitReady();
       return {...captureAlbumViews(scene,{detail:false}),geometry};
     },
     request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:325000})
