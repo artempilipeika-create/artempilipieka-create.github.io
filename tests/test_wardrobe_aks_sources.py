@@ -1,4 +1,5 @@
 """Read the exact BAZIS hardware shipped from the constructor, including drill modes."""
+from io import BytesIO
 import hashlib
 import json
 import zipfile
@@ -7,13 +8,22 @@ from pathlib import Path
 import numpy as np
 
 from scripts import fr3d_reader as fr
+from backend.v2.wardrobe_aks import kit_bytes, IMPORTER_NAME
 
 ROOT = Path(__file__).resolve().parents[1] / 'backend' / 'v2'
 
 
 def test_aks_native_pairs_and_coaxial_spacer_holes(tmp_path):
     catalogue = json.loads((ROOT/'cabinet_assets/planner/aks-wardrobe.json').read_text())
-    with zipfile.ZipFile(ROOT/'wardrobe-aks/MF_AKS_wardrobe.zip') as archive:
+    with zipfile.ZipFile(BytesIO(kit_bytes())) as archive:
+        importer = archive.read(IMPORTER_NAME)
+        assert importer == (ROOT/'cabinet_assets/planner/bazis-drawers-import.js').read_bytes()
+        assert importer == (ROOT.parents[1]/'tools/bazis_import/Martin_Forest_Import_v9_9_8_BLANKS.js').read_bytes()
+        assert len(archive.namelist()) == len(set(archive.namelist()))
+        with zipfile.ZipFile(ROOT/'wardrobe-aks/MF_AKS_wardrobe.zip') as original:
+            for name in original.namelist():
+                assert archive.read(name) == original.read(name)
+
         def fasteners(source):
             data = archive.read('Martin Forest AKS/'+source['file'])
             assert hashlib.sha256(data).hexdigest() == source['sha']
@@ -44,8 +54,22 @@ def test_aks_native_pairs_and_coaxial_spacer_holes(tmp_path):
         for side,sign in [('spacerLeft',-1),('spacerRight',1)]:
             [(name,matrix,holes)] = fasteners(catalogue['joints'][side])
             assert '12867' in name and len(holes) == 2
-            for h,entry,dia,depth,mode in zip(holes,[0,18],[5,3.5],[18,5],[1,2]):
+            for h,entry,dia,depth,mode in zip(holes,[0,18],[5,5],[18,1],[1,2]):
                 point = matrix @ [h['X'],h['Y'],h['Z'],1]
                 axis = matrix @ [h['DirX'],h['DirY'],h['DirZ'],0]
                 assert np.allclose(point,[entry*sign,0,0,1]) and np.allclose(axis,[sign,0,0,0])
                 assert (h['Radius']*2,h['Depth'],h['DrillMode']) == (dia,depth,mode)
+
+            tip = point + axis * holes[-1]['Depth']
+            assert np.allclose(tip, [19*sign,0,0,1])
+            assert catalogue['joints'][side]['sha'].encode() in importer
+
+        for thickness in (16,25):
+            file = f'MF_confirmat_7x50_side_{thickness}.fr3d'
+            digest = hashlib.sha256(archive.read('Martin Forest AKS/'+file)).hexdigest()
+            assert digest.encode() in importer
+            [(_,matrix,holes)] = fasteners({'file':file,'sha':digest})
+            for hole,x,depth,dia,mode in zip(holes,[-thickness,0],[thickness,52-thickness],[8,5],[1,2]):
+                assert np.allclose(matrix @ [hole['X'],hole['Y'],hole['Z'],1],[x,0,0,1])
+                assert np.allclose(matrix @ [hole['DirX'],hole['DirY'],hole['DirZ'],0],[1,0,0,0])
+                assert (hole['Depth'],hole['Radius']*2,hole['DrillMode']) == (depth,dia,mode)

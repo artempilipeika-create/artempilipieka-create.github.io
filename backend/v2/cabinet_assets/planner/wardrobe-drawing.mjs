@@ -1,3 +1,4 @@
+import {mm,mmText,nicheSlot} from './wardrobe-niches.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {backRows} from './carcass-joints.mjs';
 import {footPlan,feetCatalogue} from './wardrobe-feet.mjs';
@@ -37,7 +38,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
  const k=Math.min(328/W,(zoom?200:facade?224:258)/height),bottom=zoom?238:facade?253:289;
  const X=x=>200+x*k,Y=y=>bottom-y*k;
  const panel=i=>({x:i.x-i.width/2,y:i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),w:i.width,h:i.height});
- let drawing='';
+ let drawing='',selectedOutline='';
  const ordered=built.parts.filter(p=>p.item.blank_axis!=='front'||p.key.startsWith('drawer-')).sort((a,b)=>panelOrder(a)-panelOrder(b));
  function panelOrder(p){return p.key==='back'?-3:p.key.endsWith('-face')?3:p.key==='plinth'?2:0;}
  for(const {key,item} of ordered){
@@ -61,8 +62,26 @@ function elevationView(built,view,section,front,selectedShelf,selection){
      for(let level=0;level<=shelves.length;level++){
        const top=shelves[level]?.y??(H-s.thickness),active=selection?.level===level&&sec===section;
        const title='Секция '+(sec+1)+', ниша '+(level+1);
+       if(active){
+         selectedOutline='<rect data-selected-niche="'+sec+'-'+level+'" x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="none" stroke="#1769b5" stroke-width="2.4" pointer-events="none"/>';
+         const bank=built.drawerBanks?.[nicheSlot(sec,level)];
+         if(bank){
+           const faces=bank.faces,at=footHeight(s),last=faces.at(-1);
+           function dimension(type,low,high,x,side,show){
+             const a=Y(high),b=Y(low),px=X(x),value=mm(high-low),ink='#1d5284';
+             const tick=(y)=>'M'+num(px-3)+' '+num(y+1.5)+'l6 -3';
+             const title=(type==='cover'?'До полки':'Между фасадами')+' '+mmText(value)+' мм';
+             return '<g data-drawer-dimension="'+type+'" data-mm="'+value+'" aria-label="'+title+'" pointer-events="none"><title>'+title+'</title>'+
+               '<path d="M'+num(px)+' '+num(a)+'V'+num(b)+' '+tick(a)+' '+tick(b)+'" fill="none" stroke="'+ink+'" stroke-width="1"/>'+
+               (show?'<text x="'+num(px+side*6)+'" y="'+num((a+b)/2+3)+'" text-anchor="'+(side<0?'end':'start')+'" fill="'+ink+'" stroke="#fbfcf7" stroke-width="3" paint-order="stroke" font-size="11">'+mmText(value)+' мм</text>':'')+'</g>';
+           }
+           const centre=start+width/2,leftSide=X(centre)<200?-1:1;
+           if(bank.internal&&shelves[level])drawing+=dimension('cover',at+last.y+last.height,top,centre+leftSide*width*.37,leftSide,true);
+           for(let j=1;j<faces.length;j++)drawing+=dimension('between',at+faces[j-1].y+faces[j-1].height,at+faces[j].y,centre-leftSide*width*.37,-leftSide,j===1);
+         }
+       }
        drawing+='<g class="niche-target" role="button" tabindex="0" data-section="'+sec+'" data-niche="'+level+'" aria-label="'+title+'"><title>'+title+'</title>'+
-         '<rect x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="'+(active?'#2672bd':'transparent')+'" fill-opacity="'+(active?'.17':'1')+'" stroke="'+(active?'#2672bd':'none')+'" stroke-width="1.8"/></g>';
+         '<rect x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="'+(active?'#2672bd':'transparent')+'" fill-opacity="'+(active?'.09':'1')+'" stroke="'+(active?'#2672bd':'none')+'" stroke-width="1.8"/></g>';
        if(shelves[level])base=top+shelves[level].h;
      }
      start+=width+s.thickness;
@@ -91,7 +110,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
      drawing+=line(x,Y(0)+2,x,257)+line(x,257,200+sign*98,257)+label(200+sign*98,279,plinthPanel(s)?floorSide(s,key)?'Стойка в пол':'До края / стены':'Без цоколя');
    }
  }
- return drawing;
+ return view==='sections'?'<g data-cabinet-art=>'+drawing+'</g>'+selectedOutline:drawing;
 }
 function underside(s){
  const k=Math.min(318/s.width,222/s.depth),L=200-s.width*k/2,T=162-s.depth*k/2;

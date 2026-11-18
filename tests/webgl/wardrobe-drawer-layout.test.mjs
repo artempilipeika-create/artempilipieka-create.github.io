@@ -124,16 +124,16 @@ test('each opening owns its gap, equal fronts, manual remainder and unchanged sh
  const rows=[equal(3),equal(3),null,{...equal(2,11),layout:'manual',faces:[{height:200},{height:null}]}];
  const s=wardrobeSpec({...fields,drawerBanks:rows}),built=buildCarcass(s,{idPrefix:'niche'});
  assert.deepEqual(built.drawerIssues,[]);
- assert.deepEqual(built.drawerBanks[0].faces.map(f=>f.height),[180,180,180]);
- assert.deepEqual(built.drawerBanks[1].faces.map(f=>f.height),[220,220,220]);
- assert.deepEqual(built.drawerBanks[3].faces.map(f=>f.height),[200,347]);
+ assert.deepEqual(built.drawerBanks[0].faces.map(f=>f.height),[170.5,170.5,170.5]);
+ assert.deepEqual(built.drawerBanks[1].faces.map(f=>f.height),[210.5,210.5,210.5]);
+ assert.deepEqual(built.drawerBanks[3].faces.map(f=>f.height),[200,318.5]);
  for(const b of built.drawerBanks.filter(Boolean))for(let i=1;i<b.faces.length;i++)
    assert.ok(Math.abs(b.faces[i].y-b.faces[i-1].y-b.faces[i-1].height-rows[b.slot].gap)<.00001);
  assert.deepEqual(built.parts.filter(p=>p.key.startsWith('shelf-')).map(p=>p.item.elevation_mm),[621,1200,741]);
  const one=buildCarcass(wardrobeSpec({...fields,drawerBanks:[equal(1,246),null]}));
- assert.equal(one.drawerBanks[0].faces[0].height,600);
+ assert.equal(one.drawerBanks[0].faces[0].height,571.5);
  const fractions=buildCarcass(wardrobeSpec({...fields,drawerBanks:[equal(4),null]}));
- assert.deepEqual(fractions.drawerBanks[0].faces.map(f=>f.height),[127.5,127.5,127.5,127.5]);
+ assert.deepEqual(fractions.drawerBanks[0].faces.map(f=>f.height),[120.375,120.375,120.375,120.375]);
  assert.throws(()=>wardrobeSpec({...fields,drawerBanks:[equal(5,100),null]}),/фасад/);
  assert.deepEqual(rows[0].faces,[{height:null},{height:null},{height:null}]);
 });
@@ -165,4 +165,38 @@ test('impossible hinge layout identifies the outer door and leaves all fronts in
  assert.match(b.drawerIssues[0],/левая дверь/);
  assert.match(wardrobeDrawing(b,'sections').svg,/Конфликт петель/);
  assert.equal(b.drawerBanks[0].faces.length,3);
+});
+
+import {nativeCarcassJoints} from '../../backend/v2/cabinet_assets/planner/carcass-joints.mjs';
+
+test('structural drawer covers keep the actual shelf underside, face clearance and native fixing on both edges',()=>{
+ for(const thickness of [16,18,25])for(const fixing of ['cam_dowel','confirmat']){
+  const f={...fields,thickness,sectionShelves:[1,1],shelfLevels:[[{mode:'floor',mm:700}],[{mode:'floor',mm:700}]],
+   shelfChoices:[['6/48846'],['board/95388']],drawerBanks:[{...equal(3,12.5),coverFixing:fixing},equal(2,27)]};
+  const design=wardrobeSpec(f),group_id='cover',b=buildCarcass(design,{idPrefix:group_id});
+  const panels=b.items.map(i=>({...i,assistant_carcass:{group_id,spec:design}}));
+  const joints=nativeCarcassJoints(panels);
+  assert.deepEqual(design.shelfChoices,[['board/'+fixing],['board/cam_dowel']]);
+  for(const [section,bank] of b.drawerBanks.entries()){
+   const top=bank.faces.at(-1),shelf=panels.find(p=>p.item_id===group_id+':shelf-'+section+'-0');
+   assert.equal(shelf.elevation_mm,700);
+   assert.ok(Math.abs(shelf.elevation_mm-top.y-top.height-30)<1e-6);
+   assert.equal(top.width,bank.mountWidth-3);
+   const fittings=joints.filter(j=>j.joined_panel_id===shelf.item_id);
+   assert.equal(fittings.length,section===0&&fixing==='confirmat'?4:8);
+   if(section===0&&fixing==='confirmat'&&thickness!==18)assert.ok(fittings.every(j=>j.source_file==='MF_confirmat_7x50_side_'+thickness+'.fr3d'));
+  }
+  const common=joints.filter(j=>j.host_blank_id==='cover:divider-0');
+  for(const left of common.filter(j=>j.rotation===180))for(const right of common.filter(j=>j.rotation===0))assert.ok(Math.abs(left.position.z-right.position.z)>=8);
+  assert.deepEqual(f.shelfChoices,[['6/48846'],['board/95388']]);
+ }
+});
+
+test('reopening an earlier fitted wardrobe keeps the stored reveal until applying new questionnaire settings',()=>{
+ const orig={...fields,recipe:'divided',shelves:2,drawerBanks:[{...equal(3,30),height:603,bottomOffset:0},null]};
+ const before=buildCarcass(orig).drawerBanks[0].faces;
+ assert.equal(before[0].height,180);
+ const next=buildCarcass(wardrobeSpec(orig)).drawerBanks[0].faces;
+ assert.equal(next[0].height,170.5);
+ assert.equal(orig.drawerBanks[0].coverFixing,undefined);
 });

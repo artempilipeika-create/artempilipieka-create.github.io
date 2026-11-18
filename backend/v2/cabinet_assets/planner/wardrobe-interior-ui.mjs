@@ -1,4 +1,4 @@
-import {nicheOpenings,nicheSlot,trimBanks,mmText,mm} from './wardrobe-niches.mjs';
+import {nicheOpenings,nicheSlot,trimBanks,mmText,coverClearance,frontEdgeGap,prepareDrawerCovers} from './wardrobe-niches.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {footHeight} from './plinth-options.mjs';
 
@@ -137,7 +137,7 @@ function hardwareDetails(box,current){
      if(!has)continue;
      spacerDrawing(box,current,side);
      const slots=current.cuts?.[side]?.length??0;
-     box.append(el('p','Проставка '+(side==='left'?'слева':'справа')+' · 18 мм · '+(slots?'вырезов под петли: '+slots:'прямая')+'. Шуруп 5×30, наметка в стойке Ø3,5 × 5 мм.'));
+     box.append(el('p','Проставка '+(side==='left'?'слева':'справа')+' · 18 мм · '+(slots?'вырезов под петли: '+slots:'прямая')+'. Шуруп 5×30, сквозное Ø5 мм в проставке и намётка Ø5 × 1 мм в боковине. Общая глубина 19 мм.'));
    }
    if(current.internal&&!current.spacerL&&!current.spacerR)box.append(el('p','Направляющие крепятся прямо к стойкам.'));
  }
@@ -175,13 +175,15 @@ function installBank(ui,section,level,template,convert=false){
      if(f.shelfChoices){f.shelfChoices[section]??=[];f.shelfChoices[section].push('board/95388');}
    }
    const opening=nicheOpenings(f,section)[level],kind=f.front?'internal':'external';
-   const usable=(kind==='internal'?opening.top-opening.bottom:opening.overlayTop-opening.overlayBottom)-3;
-   const count=Math.max(1,Math.min(3,Math.floor((usable+3)/103)));
-   banks[slot]=template?structuredClone(template):{kind,layout:'equal',gap:3,faces:Array.from({length:count},()=>({height:null}))};
+   const inside=kind==='internal',gap=inside?30:3;
+   const usable=(inside?opening.top-opening.bottom-coverClearance-frontEdgeGap:opening.overlayTop-opening.overlayBottom-3);
+   const count=Math.max(1,Math.min(3,Math.floor((usable+gap)/(100+gap))));
+   banks[slot]=template?structuredClone(template):{kind,layout:'equal',gap,faces:Array.from({length:count},()=>({height:null}))};
    delete banks[slot].height;delete banks[slot].bottomOffset;delete banks[slot].shelvesBelow;
    f.drawerBanks=trimBanks(banks,f.sections);
-   wardrobeSpec(f);
-   ui.fields=f;ui.activeSection=section;ui.nicheIndex=level;ui.interior='drawer';ui.changed();ui.render();
+   const prepared=wardrobeSpec(f);
+   f.shelfChoices=prepared.shelfChoices;f.shelfLevels=prepared.shelfLevels;f.drawerBanks=prepared.drawerBanks;
+   ui.fields=f;ui.activeSection=section;ui.nicheIndex=level;ui.interior='drawer';ui.changed(true);
  }catch(e){ui.output.textContent=e.message;}
 }
 
@@ -212,10 +214,30 @@ export function drawerControls(ui,parent,section){
    const add=action('Добавить шуфляды',()=>installBank(ui,section,level));add.dataset.addBank='';box.append(add);return;
  }
  function set(next,finished=true){
+   if(bank?.kind==='internal'&&next?.kind!=='internal'&&f.thickness!==18&&f.shelfChoices?.[section]){
+     f.shelfChoices[section][level]='board/95388';
+   }
+   const updateCover=next?.kind==='internal'&&(bank?.kind!==next.kind||next.coverFixing!==bank?.coverFixing);
    const banks=trimBanks(f.drawerBanks,f.sections);banks[slot]=next;f.drawerBanks=trimBanks(banks,f.sections);bank=next;
-   ui.changed();if(finished)ui.render();
+   if(updateCover){
+     try{prepareDrawerCovers(f);}catch(e){ui.changed(finished);ui.output.textContent=e.message;return;}
+   }
+   ui.changed(finished);
  }
  const built=ui.previewBuilt?.drawerBanks?.[slot];
+ const execution=ui.select(box,'Исполнение шуфляд',[['internal','Внутренние за дверью'],['external','Наружные фасады']],bank.kind,value=>{
+   const next={...bank,kind:value};
+   if(value==='external')delete next.coverFixing;
+   set(next);
+ });
+ if(execution)execution.dataset.drawerKind='';
+ if(bank.kind==='internal'){
+   const existing=f.shelfChoices?.[section]?.[level];
+   const fixing=bank.coverFixing??(existing==='board/confirmat'?'confirmat':'cam_dowel');
+   ui.select(box,'Крепление полки над шуфлядами',[['cam_dowel','Эксцентрик + шкант'],['confirmat','Конфирматы 7×50']],fixing,value=>set({...bank,coverFixing:value}));
+   box.append(el('small','От верха верхнего фасада до низа полки — 30 мм.'));
+   if(!f.front)box.append(action('Выбрать распашные двери',()=>ui.go(3)));
+ }
  const mode=el('div');mode.className='wardrobe-subsections';
  for(const [key,label] of [['equal','Одинаковые'],['manual','Разные']]){
    const b=action(label,()=>{
@@ -244,15 +266,14 @@ export function drawerControls(ui,parent,section){
    });
  }
  const result=el('p');result.className='niche-result';result.dataset.bankResult=String(slot);result.setAttribute('role','status');box.append(result);
- const settings=el('details');settings.append(el('summary','Исполнение и ширина фасадов'));box.append(settings);
- ui.select(settings,'Исполнение шуфляд',[['internal','Внутренние за дверью'],['external','Наружные фасады']],bank.kind,v=>set({...bank,kind:v}));
+ const settings=el('details');settings.append(el('summary','Ширина фасадов'));box.append(settings);
  bank.faces.forEach((face,i)=>{
    const input=millimetres(settings,'Ширина фасада '+(i+1)+', мм',face.width,(n,done)=>{
      const faces=bank.faces.map((p,j)=>{const item={...p};if(i===j){if(n==null)delete item.width;else item.width=n;}return item;});
      set({...bank,faces},done);
    },{min:40,max:1200,step:.5});input.placeholder='По проёму';
  });
- hardwareDetails(box,built);
+ const hardware=el('div');hardware.dataset.nicheHardware='';box.append(hardware);
  copyControls(ui,box,section,level);
  box.append(action('Убрать блок шуфляд',()=>set(null)));
 }
@@ -262,6 +283,15 @@ export function updateNicheResult(ui,built,error=''){
  const node=ui.form.querySelector('[data-bank-result]');if(!node)return;
  const slot=Number(node.dataset.bankResult),b=built?.drawerBanks?.[slot],bank=ui.fields.drawerBanks?.[slot];
  if(!b||!bank){node.textContent=error;return;}
+ const hardware=ui.form.querySelector('[data-niche-hardware]');
+ if(hardware){
+   const signature=JSON.stringify([b.rail.article,b.mountWidth,b.span,b.internal,b.spacerL,b.spacerR,b.cuts]);
+   if(hardware.dataset.signature!==signature){
+     const open=hardware.querySelector('details')?.open;
+     hardware.replaceChildren();hardwareDetails(hardware,b);hardware.dataset.signature=signature;
+     if(open)hardware.querySelector('details').open=true;
+   }
+ }
  const height=bank.layout==='equal'?b.faces[0].height:b.faces.at(-1).height;
- node.textContent='Под фасады '+mmText(mm(b.span-3))+' мм · '+(bank.layout==='equal'?'Высота каждого фасада':'Верхний фасад по остатку')+' '+mmText(height)+' мм';
+ node.textContent='Ниша '+mmText(b.span)+' мм · '+(bank.layout==='equal'?'Высота каждого фасада':'Верхний фасад по остатку')+' '+mmText(height)+' мм';
 }

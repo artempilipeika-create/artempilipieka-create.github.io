@@ -12,6 +12,10 @@ const fittings = {
   cam: ['Эксцентриковая Стяжка.fr3d','0f16c55b1530f9e49d3208b7e5b17d58076c491658bd01d5a3110850da36291c'],
   dowel: ['Шкант.fr3d','9b2679f72e617fd3eb989d95f65b5c2f5ac979380e2963d8cb272228597f6589']
 };
+const shelfConfirmats = {
+  16: ['MF_confirmat_7x50_side_16.fr3d','fcb9117249ea0270cdb9bf4e9fb0a7a1396a4d567fe66413743b1d3ae174551c'],
+  25: ['MF_confirmat_7x50_side_25.fr3d','4a150593daa0c051c43999785038ee084a2f38cbdde758fede483902e4933b72']
+};
 export function validateJoints(spec) {
   if (!spec.joints) return;
   if (spec.thickness !== 18 || !['shelves','divided'].includes(spec.recipe)) throw Error('Крепёж рассчитан на вкладные детали корпуса 18 мм.');
@@ -128,6 +132,11 @@ function nativeBackJoints(panel,byId){
  });
 }
 
+function isDrawerCover(part){
+  const key=/:shelf-(\d+)-(\d+)$/.exec(part.item_id);
+  return Boolean(key&&part.assistant_carcass?.spec.drawerBanks?.[Number(key[1])+3*Number(key[2])]?.coverFixing);
+}
+
 export function nativeCarcassJoints(items) {
   const byId=new Map(items.map(it=>[it.item_id,it])),out=[];
   for (const panel of items) {
@@ -139,14 +148,14 @@ export function nativeCarcassJoints(items) {
     const scheme=shelfScheme || meta.spec.joints[level];
     if (scheme==='none') continue;
     if(shelfScheme){
-      if(panel.height!==18 || panel.depth<(scheme==='cam_dowel'?216:152))throw Error(panel.name+' · проверьте толщину и глубину полки.');
+      if(![16,18,25].includes(panel.height) || panel.depth<(scheme==='cam_dowel'?216:152))throw Error(panel.name+' · проверьте толщину и глубину полки.');
     }else validateJoints({...meta.spec,depth:panel.depth,thickness:panel.height});
     const binding=panel.blank_binding, angle=panel.rotation||0;
     const centre=localPoint(panel,angle);
     for (const side of ['left','right']) {
       const host=byId.get(binding?.[side+'_id']), sign=side==='left'?-1:1;
       const face=centre.x+sign*panel.width/2;
-      if (!host || host.blank_axis!=='side' || host.width!==18 || host.rotation!==panel.rotation ||
+      if (!host || host.blank_axis!=='side' || (shelfScheme?![16,18,25].includes(host.width):host.width!==18) || host.rotation!==panel.rotation ||
           (binding['gap_'+side+'_mm']||0)!==0 ||
           Math.abs(localPoint(host,angle).x-sign*host.width/2-face)>0.01 ||
           Math.abs(centre.z-localPoint(host,angle).z)+panel.depth/2>host.depth/2+.01 ||
@@ -154,12 +163,19 @@ export function nativeCarcassJoints(items) {
         throw Error(panel.name+' · проверьте толщину и привязку боковин.');
       function place(kind,z) {
         const point=worldPoint({x:face,z},angle);
-        const [source_file,source_sha256]=fittings[kind];
+        const [source_file,source_sha256]=(shelfScheme&&kind==='confirmat'&&shelfConfirmats[host.width])||fittings[kind];
         out.push({name:source_file.slice(0,-5)+' · '+panel.name,joint_part:kind,joined_panel_id:panel.item_id,
           host_blank_id:host.item_id,source_file,source_sha256,rotation:(angle+(side==='left'?0:180))%360,
-          position:{x:point.x,y:panel.elevation_mm+9,z:point.z},elastic_resize:false});
+          position:{x:point.x,y:panel.elevation_mm+(kind==='confirmat'?panel.height/2:9),z:point.z},elastic_resize:false});
       }
-      for(const row of jointRows(scheme,panel.depth,Boolean(shelfScheme)))place(row.kind,centre.z+row.z);
+      const opposite=Boolean(shelfScheme&&isDrawerCover(panel)&&items.some(other=>
+        fixedShelfScheme(other)&&other.blank_binding?.[side==='left'?'right_id':'left_id']===host.item_id&&
+        Math.abs(other.elevation_mm-panel.elevation_mm)<10&&(side==='left'||!isDrawerCover(other))));
+      for(const row of jointRows(scheme,panel.depth,Boolean(shelfScheme))){
+        // On a shared upright stagger facing fasteners without moving either shelf.
+        const inset=opposite?16*Math.sign(row.z):0;
+        place(row.kind,centre.z+row.z-inset);
+      }
     }
   }
   // On a shared divider the two drilling patterns enter from opposite faces.

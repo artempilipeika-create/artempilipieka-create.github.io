@@ -1,10 +1,12 @@
 import {choice,defaultShelf,fittings,shelfRows,shelfDescription} from './shelf-choices.mjs';
+import {isInternalNiche,nicheSlot} from './wardrobe-niches.mjs';
 import {fittingImage,jointPhotos} from './hardware-photos.mjs';
 const element=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=text;return node;};
 export function shelfQuestionnaire(ui,parent,section){
  const f=ui.fields,count=f.sectionShelves[section],rows=shelfRows(f),row=rows[section];
  const scope=ui.shelfScopes[section]??'all';
- const indexes=row.map((_,i)=>i).filter(i=>scope==='all'||(scope==='top2'?i>=count-2:i===Number(scope)));
+ const protectedCover=i=>isInternalNiche(f.drawerBanks?.[nicheSlot(section,i)]);
+ const indexes=row.map((_,i)=>i).filter(i=>!protectedCover(i)&&(scope==='all'||(scope==='top2'?i>=count-2:i===Number(scope))));
  const values=indexes.map(i=>row[i]),sample=choice(values[0]||defaultShelf,f.thickness);
  const mixed=values.some(value=>value!==values[0]);
  const draft=ui.shelfDrafts[section]??(sample.kind==='board'?'board':String(sample.thickness));
@@ -12,6 +14,14 @@ export function shelfQuestionnaire(ui,parent,section){
    ...row.map((_,i)=>[i,'Полка '+(i+1)+(i===0?' · нижняя':i===count-1?' · верхняя':'')])],scope,v=>{
     ui.shelfScopes[section]=v;delete ui.shelfDrafts[section];ui.render();
  });
+ if(row.some((_,i)=>protectedCover(i))){
+   const note=element('p','Крепление полки над шуфлядами задаётся в выбранной нише.');parent.append(note);
+   if(!indexes.length){
+     const target=scope==='all'||scope==='top2'?row.findIndex((_,i)=>protectedCover(i)):Number(scope);
+     const edit=element('button','Крепление полки над шуфлядами');edit.type='button';
+     edit.onclick=()=>{ui.nicheIndex=target;ui.interior='drawer';ui.render();};parent.append(edit);return;
+   }
+ }
  ui.select(parent,'Материал и толщина полки',[['board','ЛДСП · '+f.thickness+' мм'],...[4,6,8].map(n=>[n,'Стекло · '+n+' мм'])],draft,v=>{
    ui.shelfDrafts[section]=v;
    const first=v==='board'?'95388':'48846';
@@ -20,7 +30,7 @@ export function shelfQuestionnaire(ui,parent,section){
  function set(value){
    const next=shelfRows(f);
    for(const index of indexes)next[section][index]=value;
-   f.shelfChoices=next;ui.changed();ui.render();
+   f.shelfChoices=next;ui.changed(true);
  }
  const kind=draft==='board'?'board':'glass',thickness=kind==='board'?f.thickness:Number(draft);
  if(kind==='board' && thickness===18){

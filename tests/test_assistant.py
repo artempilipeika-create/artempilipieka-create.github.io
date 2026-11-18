@@ -325,3 +325,17 @@ def test_fitted_drawer_niches_save_reopen_edit_and_validate_geometric_bounds(api
     invalid['drawerBanks'][0]['height']+=1
     with pytest.raises(ValidationError,match='геометрией ниши'):
         CarcassDesign.model_validate(invalid)
+
+
+def test_aks_cover_gap_and_fixing_match_received_scene():
+    from backend.v2.assistant_model import CarcassDesign
+    for thickness in (16,18,25):
+        for scheme in ('cam_dowel','confirmat'):
+            spec={**SPEC,'thickness':thickness,'width':800,'height':2200,'shelves':1,'sectionShelves':[1],
+                  'front':{'swing':'pair','offset':90,'autoHinges':True},
+                  'shelfLevels':[[{'mode':'floor','mm':650}]],'shelfChoices':[['board/'+scheme]],
+                  'drawerBanks':[{'kind':'internal','layout':'equal','coverFixing':scheme,'gap':30,'height':650-thickness,
+                                  'bottomOffset':0,'faces':[{'height':None},{'height':None}]}]}
+            assert CarcassDesign.model_validate(spec).drawerBanks[0].coverFixing==scheme
+            with pytest.raises(ValidationError,match='закреплённая полка'):
+                CarcassDesign.model_validate({**spec,'shelfChoices':[['board/95388']]})

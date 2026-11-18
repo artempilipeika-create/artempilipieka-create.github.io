@@ -379,12 +379,12 @@
   },
   "joints": {
     "spacerLeft": {
-      "file": "MF_AKS_spacerLeft.fr3d",
-      "sha": "ade5006fb60529b2c5364fe82e4817167217a2f7ff85eddae436c832d3e2e653"
+      "file": "MF_AKS_spacerLeft_19.fr3d",
+      "sha": "53e6710b8ab2866f3e261c89967b57e87a90e1e1e9a32240638b0d97078f1932"
     },
     "spacerRight": {
-      "file": "MF_AKS_spacerRight.fr3d",
-      "sha": "04b15b2d8cce72b49cebfd4006e27bbe5ed0635e7292bca84decac0168cd0192"
+      "file": "MF_AKS_spacerRight_19.fr3d",
+      "sha": "ab8d8e5fe9323d80fa2a2e31f290d6457888a25173418786e110f11edbd7b2cd"
     },
     "face": {
       "file": "MF_AKS_face.fr3d",

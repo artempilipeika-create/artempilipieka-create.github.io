@@ -105,3 +105,9 @@
 #planner-assistant-dialog .wardrobe-figure [role=button]:focus-visible{outline:2px solid #2468a6}
 #planner-assistant-dialog .assistant-drawing{height:auto;min-height:340px;grid-template-rows:auto minmax(235px,1fr) auto auto;overflow:visible}
 @media(max-width:640px){#planner-assistant-dialog .assistant-drawing{min-height:0;grid-template-rows:auto minmax(145px,180px) auto auto}}
+
+@media(max-width:640px) and (min-height:480px){
+ #planner-assistant-dialog[data-interior] .assistant-drawing{position:sticky;top:0;z-index:2;grid-template-rows:minmax(112px,19dvh) auto;box-shadow:0 2px 5px #25382d1a}
+ #planner-assistant-dialog[data-interior] .assistant-drawing h3,#planner-assistant-dialog[data-interior] .assistant-drawing p:last-child{display:none}
+ #planner-assistant-dialog[data-interior] .assistant-fields :is(input,select,summary,button){scroll-margin-top:calc(19dvh + 44px)}
+}

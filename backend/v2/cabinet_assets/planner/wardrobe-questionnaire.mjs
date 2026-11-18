@@ -2,7 +2,7 @@ import {footPlan} from './wardrobe-feet.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
 import {buildCarcass} from './carcass-model.mjs';
 import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
-import {fitNicheBanks} from './wardrobe-niches.mjs';
+import {fitNicheBanks,prepareDrawerCovers} from './wardrobe-niches.mjs';
 export {sectionWidths} from './carcass-model.mjs';
 export const WARDROBE_STEPS=['Корпус','Секции','Наполнение','Фасады','Материалы'];
 export function resizeDividerChoices(fields){
@@ -35,12 +35,18 @@ export function wardrobeSpec(f){
    });
  }
  validateJoints(spec);footPlan(spec);
- const rows=shelfRows(f);
- for(const row of rows)for(const value of row)choice(value,spec.thickness);
- if(rows.some(row=>row.some(value=>value!==defaultShelf)))spec.shelfChoices=rows;
- if(f.drawerBanks?.some(Boolean))spec.drawerBanks=fitNicheBanks(spec,structuredClone(f.drawerBanks));
- const built=buildCarcass(spec);
- if(rows.some(row=>row.includes('board/confirmat')||row.includes('board/cam_dowel')))nativeCarcassJoints(built.items);
+ if(f.shelfChoices)spec.shelfChoices=shelfRows(f);
+ if(f.drawerBanks?.some(Boolean))spec.drawerBanks=structuredClone(f.drawerBanks);
+ const rows=prepareDrawerCovers(spec);
+ for(const [section,row] of rows.entries())for(const [level,value] of row.entries()){
+   const c=choice(value,spec.thickness);
+   if(c.scheme&&spec.thickness!==18&&!spec.drawerBanks?.[section+3*level]?.coverFixing)throw Error('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.');
+ }
+ if(!rows.some(row=>row.some(value=>value!==defaultShelf)))delete spec.shelfChoices;
+ if(spec.drawerBanks)spec.drawerBanks=fitNicheBanks(spec,spec.drawerBanks);
+ const group_id='questionnaire';
+ const built=buildCarcass(spec,{idPrefix:group_id});
+ if(rows.some(row=>row.includes('board/confirmat')||row.includes('board/cam_dowel')))nativeCarcassJoints(built.items.map(i=>({...i,assistant_carcass:{spec,group_id}})));
  return spec;
 }
 export function questionnaireMaterialError(m,thickness){return !m?.variant_id?'Выберите материал из каталога.':Number(m.thickness)!==thickness?'Нужен материал толщиной '+thickness+' мм.':'';}

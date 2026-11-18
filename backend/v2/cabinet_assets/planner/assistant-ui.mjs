@@ -6,7 +6,7 @@ import {primeHinge} from './wardrobe-fronts.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
-import {trimBanks} from './wardrobe-niches.mjs';
+import {trimBanks,prepareDrawerCovers} from './wardrobe-niches.mjs';
 import {shelfLevelControls,selectShelf,selectNiche,drawerControls,updateNicheResult} from './wardrobe-interior-ui.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
@@ -53,9 +53,13 @@ export class AssistantUI{
     if(old&&face.width==null)face.width=old.width;
    }));
   }
+  if(s?.drawerBanks?.some(b=>b?.kind==='internal'&&b.layout)){
+   const editable=structuredClone(this.fields);
+   try{prepareDrawerCovers(editable);this.fields=editable;}catch{/* Keep all fields editable when the old opening needs adjustment. */}
+  }
   if(s?.thickness===18&&s.sections>1)this.fields.dividerJoints=Array.from({length:s.sections-1},(_,i)=>dividerScheme(s,i));
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
-  this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='drawer';this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
+  this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='drawer';this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent='';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -84,7 +88,7 @@ export class AssistantUI{
  }
  spec(){return wardrobeSpec(this.fields);}
  invalidate(){this.pending=null;this.apply.hidden=true;this.summary.hidden=true;this.output.textContent='';}
- changed(){this.invalidate();this.draw();this.controls();}
+ changed(rebuild=false){this.invalidate();if(rebuild)this.render();else{this.draw();this.controls();}}
  number(key,label,min,max){
   const wrap=el('label',label),input=el('input');input.type='number';input.min=min;input.max=max;input.step='1';input.value=this.fields[key];input.setAttribute('aria-label',label);
   input.oninput=()=>{this.fields[key]=input.value===''?NaN:Number(input.value);this.changed();};wrap.append(input);this.form.append(wrap);
@@ -95,6 +99,7 @@ export class AssistantUI{
  }
  error(step=this.step){
   try{const s=this.spec();if(s.height+s.elevation+footHeight(s)>this.app.adapter.room.height)throw Error('Шкаф выше помещения. Уменьшите высоту.');
+   if(step>=4&&this.fields.drawerBanks?.some(b=>b?.kind==='internal'&&!b.layout))throw Error('В «Наполнении» откройте старый блок шуфляд и нажмите «Рассчитать по выбранной нише», чтобы задать полку и верхний зазор 30 мм.');
    if(step>=4&&this.previewBuilt?.drawerIssues?.length)throw Error(this.previewBuilt.drawerIssues.join(' '));
    if(step>=4)for(const role of ['body',...(s.back?['back']:[]),...(s.front||s.drawerBanks?.some(Boolean)?['front']:[]),...(s.thickness!==18&&s.drawerBanks?.some(Boolean)?['drawer']:[])]){const e=questionnaireMaterialError(this.materials[role],role==='back'?(s.backThickness??3):role==='front'||role==='drawer'?18:s.thickness);if(e)throw Error((role==='back'?'Задняя стенка: ':role==='front'?'Фасад: ':role==='drawer'?'Короб шуфляды: ':'Корпус: ')+e);}
    return '';
@@ -119,6 +124,13 @@ export class AssistantUI{
   }this.form.append(nav);
  }
  render(){
+  const editorKey=this.step===2?[this.activeSection,this.interior,this.nicheIndex].join('/'):'';
+  const keep=editorKey&&editorKey===this.editorKey;
+  this.editorKey=editorKey;
+  this.dialog.toggleAttribute('data-interior',Boolean(editorKey));
+  const scroll=this.dialog.scrollTop,focused=document.activeElement;
+  const focus=keep&&this.form.contains(focused)?{tag:focused.localName,label:focused.getAttribute('aria-label')||focused.textContent}:null;
+  const expanded=keep?[...this.form.querySelectorAll('details[open]')].map(d=>d.firstElementChild.textContent):[];
   this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
    this.groupTabs();
@@ -206,6 +218,14 @@ export class AssistantUI{
    this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.drawerBanks?.some(Boolean)&&this.fields.thickness!==18)this.materialPicker('drawer','Короба и проставки шуфляд',18);if(this.fields.front||this.fields.drawerBanks?.some(Boolean))this.materialPicker('front','Материал фасадов',18);if(this.fields.back)this.materialPicker('back','Задняя стенка',this.fields.backThickness??3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
   }this.draw();this.controls();
+  if(keep){
+   for(const d of this.form.querySelectorAll('details'))if(expanded.includes(d.firstElementChild.textContent))d.open=true;
+   if(focus){
+     const target=[...this.form.querySelectorAll(focus.tag)].find(n=>(n.getAttribute('aria-label')||n.textContent)===focus.label);
+     target?.focus({preventScroll:true});
+   }
+   this.dialog.scrollTop=scroll;
+  }
  }
  footControls(){
   const box=el('section');box.className='foot-picker';
@@ -401,6 +421,17 @@ export class AssistantUI{
    }catch{results.textContent='Поиск не выполнен. Попробуйте ещё раз.';}finally{search.disabled=false;}
   });input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();search.click();}};card.append(search,results);this.form.append(card);
  }
+ paintDrawing(svg){
+  const fragment=document.createElement('template');fragment.innerHTML=svg;
+  const next=fragment.content.firstElementChild,old=this.drawing.firstElementChild;
+  if(next.dataset.view!=='sections'||old?.dataset.view!=='sections'){this.drawing.replaceChildren(next);return;}
+  const art=next.firstElementChild,sel=next.querySelector('[data-selected-niche]');
+  if(!old.firstElementChild.isEqualNode(art))old.firstElementChild.replaceWith(art);
+  const outline=old.querySelector('[data-selected-niche]');
+  if(!sel){outline?.remove();return;}
+  if(!outline){old.append(sel);return;}
+  for(const a of sel.attributes)if(outline.getAttribute(a.name)!==a.value)outline.setAttribute(a.name,a.value);
+ }
  draw(){
   this.figureTitle.textContent=drawingTitles[this.view];
   const warning=this.form.querySelector('.front-choice-warning');
@@ -416,7 +447,7 @@ export class AssistantUI{
    }
    this.previewBuilt=built;
    const {svg,caption}=wardrobeDrawing(built,this.view,this.activeSection,this.fields.front,this.step===2&&this.interior==='shelf'?(this.levelIndex??0):null,{level:this.step===2&&this.interior==='drawer'?this.nicheIndex:null,door:this.selectedDoor});
-   this.drawing.innerHTML=svg;
+   this.paintDrawing(svg);
    this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';
    this.description.textContent=built.drawerIssues.length?built.drawerIssues.join(' '):this.step===2?'Нажмите на полку или нишу, чтобы изменить её.':this.step===1?'Нажмите на секцию, чтобы задать её ширину.':caption;
    updateNicheResult(this,built);
@@ -428,8 +459,8 @@ export class AssistantUI{
    try{
     const fields={...this.fields,drawerBanks:undefined,front:null};
     const guide=buildCarcass(wardrobeSpec(fields),{idPrefix:'questionnaire-guide'});
-    this.drawing.innerHTML=wardrobeDrawing(guide,this.view,this.activeSection,null,null,{level:this.nicheIndex}).svg;
-   }catch{this.drawing.replaceChildren();}
+    this.paintDrawing(wardrobeDrawing(guide,this.view,this.activeSection,null,this.interior==='shelf'?this.levelIndex:null,{level:this.step===2&&this.interior==='drawer'?this.nicheIndex:null}).svg);
+   }catch{if(this.drawing.firstElementChild?.dataset.view!==this.view)this.drawing.replaceChildren();}
    this.dimensions.textContent='Проверьте параметры';this.description.textContent=e.message;
   }
  }

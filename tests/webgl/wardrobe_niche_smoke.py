@@ -3,6 +3,10 @@ from pathlib import Path
 from urllib.parse import urlparse
 from uuid import uuid4
 import argparse
+import json
+import hashlib
+from io import BytesIO
+from zipfile import ZipFile
 import os
 import sys
 
@@ -50,7 +54,7 @@ def exercise(live=False):
         browser=p.chromium.launch(executable_path=os.getenv('MF_QA_CHROME') or None,
             args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
         try:
-            context=browser.new_context(viewport={'width':1440,'height':1000})
+            context=browser.new_context(viewport={'width':int(os.getenv('MF_QA_WIDTH','1440')),'height':int(os.getenv('MF_QA_HEIGHT','1000'))})
             context.route('**/*',request)
             page=context.new_page()
             page.set_default_timeout(7000)
@@ -86,7 +90,7 @@ def exercise(live=False):
             choose(0,0,'data-niche');assert gap.input_value()=='30'
             button('Разные').click()
             bottom=form.get_by_label('Высота фасада 1 снизу, мм',exact=True)
-            bottom.fill('125');bottom.press('Enter')
+            bottom.fill('112');bottom.press('Enter')
             expect(form.locator('[data-bank-result]')).to_contain_text('по остатку')
             step(5);button('Проверить по размерам').click();button('Добавить в проект').click()
             page.evaluate('()=>MF_PLANNER.bridge.save()')
@@ -95,7 +99,7 @@ def exercise(live=False):
             page.locator('#planner-assistant').click()
             form.get_by_label('Действие со шкафом').select_option('update')
             step(3);choose(0,0,'data-niche')
-            assert gap.input_value()=='30' and bottom.input_value()=='125'
+            assert gap.input_value()=='30' and bottom.input_value()=='112'
             gap.fill('25');gap.press('Enter');step(5)
             button('Проверить по размерам').click();button('Применить изменения').click()
             page.evaluate('()=>MF_PLANNER.bridge.save()')
@@ -103,6 +107,61 @@ def exercise(live=False):
             spec=groups[0]['assistant_carcass']['spec']
             assert [b['gap'] for b in spec['drawerBanks']]==[25,20]
             assert spec['front']['autoHinges'] is True
+            # Reproduce the reported 800 × 2200 wardrobe using the manager's entry points.
+            case=str(uuid4())
+            projects.projects[case]={'project_id':case,'name':'QA AKS 19 mm','version':1,
+                'scene':{'schema_version':2,'room':{'width':5000,'height':2700,'depth':3600,'setup_complete':True},'items':[]}}
+            page.evaluate('id=>MF_PLANNER.bridge.open(id)',case)
+            page.locator('#planner-assistant').click()
+            step(4);form.get_by_label('Исполнение фасада',exact=True).select_option('pair')
+            step(3);choose(0,0,'data-niche');button('Добавить шуфляды').click()
+            assert gap.input_value()=='30'
+            count=form.get_by_label('Количество шуфляд',exact=True)
+            count.fill('2')
+            outline=form.locator('[data-selected-niche="0-0"]')
+            outline.evaluate('n=>{window.qaOutline=n}')
+            def stable():
+                assert outline.evaluate('n=>n===window.qaOutline && getComputedStyle(n).stroke!=="none"')
+            summary=form.get_by_text('Ширина фасадов',exact=True)
+            settings=summary.locator('..')
+            summary.click()
+            kind=form.get_by_label('Исполнение шуфляд',exact=True)
+            kind.focus();kind.select_option('external');stable()
+            kind.select_option('internal');stable()
+            assert settings.evaluate('n=>n.open') and kind.evaluate('n=>n===document.activeElement')
+            gap.fill('400');stable()
+            expect(form.locator('[data-bank-result]')).to_contain_text('100 до 3000')
+            gap.fill('30');stable()
+            fixing=form.get_by_label('Крепление полки над шуфлядами',exact=True)
+            assert fixing.input_value()=='cam_dowel'
+            fixing.select_option('confirmat');stable();fixing.select_option('cam_dowel')
+            expect(form.locator('[data-bank-result]')).to_contain_text('178,25')
+            for key in ['cover','between']:
+                assert form.locator(f'[data-drawer-dimension="{key}"]').get_attribute('data-mm')=='30'
+            step(5);button('Проверить по размерам').click();button('Добавить в проект').click()
+            page.evaluate('()=>MF_PLANNER.bridge.save()')
+            page.evaluate('id=>MF_PLANNER.bridge.open(id)',case)
+            with page.expect_download(timeout=30000) as event:
+                page.locator('#export-bazis').click()
+            payload=json.loads(Path(event.value.path()).read_text())
+            assert payload['minimum_importer']=='9.9.30'
+            panels={it['blank_item_id'].split(':')[-1]:it for it in payload['items'] if 'blank_item_id' in it}
+            low,high=(panels[f'drawer-0-{n}-face'] for n in range(2))
+            for face in (low,high):
+                assert face['target']['height']==178.25 and face['target']['width']==725
+                assert sum(it.get('aks_kind')=='face' and it['joined_panel_id']==face['blank_item_id'] for it in payload['items'])==3
+            assert high['position']['y']-low['position']['y']-low['target']['height']==30
+            shelf=panels['shelf-0-0']
+            assert shelf['position']['y']-high['position']['y']-high['target']['height']==30
+            assert sorted(it['joint_part'] for it in payload['items'] if it.get('joined_panel_id')==shelf['blank_item_id'])==['cam']*4+['dowel']*4
+            for side in ('left','right'):
+                screws=[it for it in payload['items'] if it.get('aks_kind')=='spacer' and it['joined_panel_id']==panels[side]['blank_item_id']]
+                assert screws and all(it['source_file']==f'MF_AKS_spacer{side.title()}_19.fr3d' for it in screws)
+            from backend.v2.wardrobe_aks import kit_bytes
+            with ZipFile(BytesIO(kit_bytes())) as kit:
+                for name,digest in {(it['source_file'],it['source_sha256']) for it in payload['items']}:
+                    assert hashlib.sha256(kit.read('Martin Forest AKS/'+name)).hexdigest()==digest,name
+            print('PASS 800 × 2200, niche 418, two 725 × 178.25 fronts, 30 mm gaps, six front screws, both 19 mm spacer donors; download',len(payload['items']),'items',flush=True)
             assert not errors,errors
             print('PASS published assets' if live else 'PASS checkout assets','· pick, size, copy, edit, save, reopen ·',len(groups),'panels')
         except Exception:

@@ -75,7 +75,7 @@ test('individual panel view selects exactly one SVG with stable coordinates and 
 
 test('switching paired, left and right fronts immediately replaces the drawing, including an over-width single door',()=>{
  const fields=structuredClone(spec),warning={},drawing={replaceChildren(){this.innerHTML='';}};
- const ui={fields,view:'fronts',figureTitle:{},form:{querySelector:()=>warning},drawing,dimensions:{},description:{},spec(){return wardrobeSpec(this.fields);}};
+ const ui={fields,view:'fronts',paintDrawing(svg){drawing.innerHTML=svg;},figureTitle:{},form:{querySelector:()=>warning},drawing,dimensions:{},description:{},spec(){return wardrobeSpec(this.fields);}};
  for(const width of [900,550]){
    fields.width=width;fields.dividerPositions=[230];
    for(const swing of ['pair','left','right','pair',null]){

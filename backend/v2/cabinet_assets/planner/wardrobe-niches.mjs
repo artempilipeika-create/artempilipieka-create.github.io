@@ -1,5 +1,5 @@
 import {shelfUndersides} from './shelf-levels.mjs';
-import {choice,defaultShelf} from './shelf-choices.mjs';
+import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
 import {footHeight} from './plinth-options.mjs';
 
 // Three stable section slots per shelf level. Old, free-positioned blocks occupy the first row.
@@ -45,11 +45,44 @@ export function fitNicheBanks(spec,banks){
   });
 }
 
+export const frontEdgeGap=1.5, coverClearance=30;
+export const topReveal=bank=>bank.coverFixing?coverClearance:frontEdgeGap;
+export const isInternalNiche=bank=>bank?.kind==='internal'&&Boolean(bank.layout);
+
+// Called on questionnaire data only. Previously saved assemblies keep their original
+// geometry until the manager applies the recalculated wardrobe.
+export function prepareDrawerCovers(spec){
+  const rows=shelfRows(spec);
+  for(const [slot,bank] of (spec.drawerBanks??[]).entries()){
+    if(!isInternalNiche(bank))continue;
+    const section=slot%3,level=Math.floor(slot/3),row=rows[section];
+    if(!row||level>row.length)throw Error('Для выбранной ниши не хватает полок.');
+    const previous=row[level];
+    bank.coverFixing??=previous==='board/confirmat'?'confirmat':'cam_dowel';
+    if(!['cam_dowel','confirmat'].includes(bank.coverFixing))throw Error('Выберите крепление полки над шуфлядами.');
+    if(previous===undefined||!previous.startsWith('board/')){
+      const openings=nicheOpenings({...spec,shelfChoices:rows},section);
+      const floor=(spec.elevation??0)+footHeight(spec);
+      spec.shelfLevels??=spec.sectionShelves.map(n=>Array(n).fill(null));
+      spec.shelfLevels[section]=openings.slice(0,-1).map(room=>({mode:'floor',mm:room.top+floor}));
+      if(previous===undefined){
+        if(row.length>=10)throw Error('Выберите нишу под существующей полкой.');
+        spec.shelfLevels[section].push({mode:'floor',mm:openings[level].top-60-spec.thickness+floor});
+        spec.sectionShelves[section]++;
+        spec.shelves=Math.max(...spec.sectionShelves);
+      }
+    }
+    row[level]='board/'+bank.coverFixing;
+  }
+  if(rows.some(row=>row.some(value=>value!==defaultShelf)))spec.shelfChoices=rows;
+  return rows;
+}
+
 export function fittedFaceHeights(bank,section){
   const count=bank.faces.length,gap=bank.gap;
   if(!Number.isFinite(gap)||gap<0||gap>3000||mm(gap)!==gap)throw Error('Секция '+section+': введите зазор от 0 до 3000 мм.');
   // Perimeter reveals remain independent of the gap between adjacent fronts.
-  const available=mm(bank.height-3-gap*(count-1));
+  const available=mm(bank.height-frontEdgeGap-topReveal(bank)-gap*(count-1));
   const fixed=bank.faces.reduce((sum,face)=>sum+(face.height??0),0);
   const remaining=mm(available-fixed);
   if(bank.layout==='manual'&&bank.faces.filter(f=>f.height==null).length!==1)throw Error('Укажите один фасад по остатку.');

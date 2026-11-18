@@ -52,7 +52,7 @@ GLASS_SUPPORTS = {
 def shelf_valid(value, thickness):
     size, sep, article = value.partition('/')
     if size == 'board':
-        if article in ('cam_dowel','confirmat'): return thickness == 18
+        if article in ('cam_dowel','confirmat'): return thickness in (16,18,25)
         if article == '95388': return True
         if article == '134286': return thickness in (16,18)
         return article in ('60714','70245','134762','134763') and thickness in (16,18,25)
@@ -118,6 +118,7 @@ class DrawerFace(StrictModel):
 class DrawerBank(StrictModel):
     layout: Literal['equal','manual'] | None = Field(default=None,exclude_if=lambda v:v is None)
     gap: DrawerMillimetres | None = Field(default=None,ge=0,le=3000,exclude_if=lambda v:v is None)
+    coverFixing: Literal['cam_dowel','confirmat'] | None = Field(default=None,exclude_if=lambda v:v is None)
     shelvesBelow: int | None = Field(default=None,ge=0,le=10,strict=True,exclude_if=lambda v:v is None)
     bottomOffset: int | None = Field(default=None,ge=0,le=3000,strict=True,exclude_if=lambda v:v is None)
     kind: Literal['internal','external']
@@ -126,12 +127,14 @@ class DrawerBank(StrictModel):
 
     def span(self):
         count = sum(f.height is None for f in self.faces)
+        if self.coverFixing and (self.kind != 'internal' or not self.layout):
+            raise ValueError('Крепление верхней полки относится к внутренней нише шуфляд.')
         if self.layout:
             if self.height is None or self.gap is None or self.shelvesBelow is not None:
                 raise ValueError('Проверьте границы ниши и зазор шуфляд.')
             if any(abs(v-round(v,3))>1e-8 for v in [self.gap,*[f.height for f in self.faces if f.height is not None]]):
                 raise ValueError('Допустима точность до 0,001 мм.')
-            available = round(self.height-3-self.gap*(len(self.faces)-1),3)
+            available = round(self.height-1.5-(30 if self.coverFixing else 1.5)-self.gap*(len(self.faces)-1),3)
             if self.layout=='equal':
                 valid=count==len(self.faces) and available>=100*count
             else:
@@ -238,6 +241,10 @@ class CarcassDesign(CarcassSpec):
                         bounds=self.niche_bounds(i,bank.kind=='internal')
                         if level>=len(bounds):
                             raise ValueError('Выбранная ниша отсутствует.')
+                        if bank.coverFixing:
+                            row=self.shelfChoices[i] if self.shelfChoices and i<len(self.shelfChoices) else []
+                            if level>=len(row) or row[level]!='board/'+bank.coverFixing:
+                                raise ValueError('Над шуфлядами нужна закреплённая полка с выбранной присадкой.')
                         low,high=bounds[level]
                         if bank.height!=high-low or (bank.bottomOffset or 0)!=low-(self.thickness if bank.kind=='internal' else 0):
                             raise ValueError('Размеры блока не совпадают с геометрией ниши.')
@@ -318,6 +325,13 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Проверьте выбор полок по секциям.')
             if any(not shelf_valid(value,self.thickness) for row in self.shelfChoices for value in row):
                 raise ValueError('Держатель не подходит к полке.')
+            if self.thickness != 18:
+                for section,row in enumerate(self.shelfChoices):
+                    for level,value in enumerate(row):
+                        slot=3*level+section
+                        bank=(self.drawerBanks or [])[slot] if slot<len(self.drawerBanks or []) else None
+                        if value in ('board/cam_dowel','board/confirmat') and not (bank and bank.coverFixing):
+                            raise ValueError('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.')
             depth = self.depth - self.shelfSetback - (self.backThickness or 0)
             for row in self.shelfChoices:
                 if ('board/cam_dowel' in row and depth < 216) or ('board/confirmat' in row and depth < 152):

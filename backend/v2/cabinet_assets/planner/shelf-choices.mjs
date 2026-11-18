@@ -31,9 +31,9 @@ export const defaultShelf='board/95388';
 export function choice(value,boardThickness){
  const [size,article]=String(value).split('/');
  const scheme=size==='board' && ['confirmat','cam_dowel'].includes(article) ? article : null;
- if(scheme && boardThickness===18 && value==='board/'+scheme){
+ if(scheme && board.includes(boardThickness) && value==='board/'+scheme){
    const name=scheme==='confirmat'?'Конфирмат 7×50':'Эксцентрик + шкант';
-   return {kind:'board',thickness:18,scheme,hardware:{name,article:scheme}};
+   return {kind:'board',thickness:boardThickness,scheme,hardware:{name,article:scheme}};
  }
  const hardware=fittings.find(f=>f.article===article);
  const kind=size==='board'?'board':'glass';

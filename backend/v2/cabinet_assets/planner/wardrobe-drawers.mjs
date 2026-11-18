@@ -1,5 +1,5 @@
 import aks from './aks-wardrobe.json' with {type:'json'};
-import {fittedFaceHeights,mm} from './wardrobe-niches.mjs';
+import {fittedFaceHeights,frontEdgeGap,coverClearance,mm} from './wardrobe-niches.mjs';
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
 
 export const outerFront=s=>Boolean(s.front||s.drawerBanks?.some(b=>b?.kind==='external'));
@@ -84,7 +84,9 @@ export function drawerSections(s,widths,legacy=false){
   const offset=bank.bottomOffset??0;
   if(!Number.isInteger(offset)||offset<0||offset>3000)throw Error('Положение блока задаётся в целых мм от 0 до 3000.');
   const base=(internal?s.thickness:0)+offset;
-  let bottom=base;
+  // Equal cuts round down to 0.001 mm. Keep the specified shelf clearance exact.
+  const rounding=bank.coverFixing?mm(bank.height-frontEdgeGap-coverClearance-bank.gap*(heights.length-1)-heights.reduce((sum,h)=>sum+h,0)):0;
+  let bottom=mm(base+rounding);
   const faceFront=s.depth/2+(internal?-3:18);
   const bodyFront=faceFront-18;
   const clearDepth=bodyFront+s.depth/2-(s.backThickness??0);
@@ -93,7 +95,7 @@ export function drawerSections(s,widths,legacy=false){
    const width=bank.faces[j].width??maxWidth;
    if(!Number.isInteger(width*2)||width<40||width>maxWidth)throw Error('Секция '+n+', фасад '+(j+1)+': допустимая ширина 40–'+maxWidth+' мм.');
    const boxY=Math.round(Math.max(s.thickness,bottom))+13;
-   const f={width,height,x:(lo+hi)/2,y:mm(bottom+1.5),z:faceFront-9,boxY,railY:boxY+40};
+   const f={width,height,x:(lo+hi)/2,y:mm(bottom+frontEdgeGap),z:faceFront-9,boxY,railY:boxY+40};
    bottom=mm(bottom+height+(bank.layout?bank.gap:3));return f;
   });
   if(bank.layout)bottom=base+bank.height;

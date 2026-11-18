@@ -7,7 +7,8 @@ from pathlib import Path
 from uuid import UUID
 import httpx
 from fastapi import APIRouter, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
+from .wardrobe_aks import KIT_NAME, kit_bytes
 from pydantic import Field, ValidationError
 from .auth_api import StrictModel
 from .assistant_model import AssistantPlan, CarcassSpec, CarcassDesign
@@ -196,8 +197,10 @@ def router(settings):
             verified(user)
             if user['roles'] not in ({'admin'}, {'manager'}):
                 error(403, 'STAFF_REQUIRED')
-        return FileResponse(Path(__file__).parent/'wardrobe-aks'/'MF_AKS_wardrobe.zip',
-                            filename='MF_AKS_wardrobe.zip',headers={'Cache-Control':'private, no-store'})
+        return Response(kit_bytes(), media_type='application/zip', headers={
+            'Content-Disposition': f'attachment; filename="{KIT_NAME}"',
+            'Cache-Control': 'private, no-store',
+        })
 
     @api.get('/status')
     def status(request: Request):
