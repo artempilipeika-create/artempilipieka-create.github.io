@@ -11,7 +11,10 @@ export class RoomPricingUI{
     this.measureSummary=el('p',undefined,'room-measure-summary');controls.append(this.measureSummary);
     controls.append(select('room-preset','Обстановка',Object.fromEntries(Object.entries(ROOM_PRESETS).map(([k,v])=>[k,v.label]))));
     const wall=el('label','Стены'),input=el('input',undefined,'room-wall-color');input.type='color';input.setAttribute('aria-label','Цвет стен');wall.append(input);controls.append(wall);
-    controls.append(select('room-floor','Пол',FLOOR_OPTIONS),select('room-lighting','Свет',LIGHT_OPTIONS));d.append(controls);document.querySelector('.mf3d-canvas-wrap').append(d);
+    controls.append(select('room-floor','Пол',FLOOR_OPTIONS),select('room-lighting','Свет',LIGHT_OPTIONS));
+    this.applyPreset=el('button','','room-preset-apply');this.applyPreset.type='button';this.applyPreset.hidden=true;
+    this.applyPreset.onclick=()=>document.getElementById('room-preset').dispatchEvent(new Event('change'));
+    controls.append(this.applyPreset);d.append(controls);document.querySelector('.mf3d-canvas-wrap').append(d);
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']]){
       document.getElementById(id).onchange=e=>{
         const value=e.target.value;
@@ -28,6 +31,9 @@ export class RoomPricingUI{
     const p=this.app,a=p.adapter,s=roomSettings(a.state.displaySettings);
     this.measureSummary.textContent=`${a.room.width} × ${a.room.depth} × ${a.room.height} мм · `+(a.room.setup_complete===true?'размеры заданы':a.room.setup_complete===false?'требуется замер':'замер не подтверждён');
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']])document.getElementById(id).value=s[key];
+    const preset=presetSettings(s.environmentPreset);
+    this.applyPreset.hidden=['wallColor','floorMaterial','lightingPreset'].every(key=>s[key]===preset[key]);
+    this.applyPreset.textContent='Применить «'+ROOM_PRESETS[s.environmentPreset].label+'»';
     const it=a.selected;
     this.module.replaceChildren(el('h3','Стоимость'));
     if(it){

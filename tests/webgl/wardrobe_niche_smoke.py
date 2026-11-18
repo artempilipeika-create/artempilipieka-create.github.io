@@ -31,6 +31,7 @@ def exercise(live=False):
     pid=str(uuid4())
     projects.projects[pid]={'project_id':pid,'name':'QA · ниши шкафа','version':1,
         'scene':{'schema_version':2,'room':{'width':5000,'height':2700,'depth':3600,'setup_complete':True},'items':[]}}
+    projects.projects[pid]['scene']['displaySettings']={'environmentPreset':'showroom','wallColor':'#eeeae2','floorMaterial':'concrete','lightingPreset':'neutral'}
     account={'user_id':str(uuid4()),'account_status':'active','roles':['manager'],'email_verified':True,'capabilities':{'draft_create':True}}
     errors=[]
     def request(route):
@@ -63,6 +64,13 @@ def exercise(live=False):
             page.goto(ORIGIN+'/constructor',wait_until='domcontentloaded')
             page.locator('#planner-assistant').wait_for(state='attached',timeout=45000)
             page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+            room=page.locator('#planner-room-settings')
+            room.locator('summary').click()
+            expect(room.locator('#room-floor')).to_have_value('concrete')
+            room.get_by_role('button',name='Применить «Дневной шоурум»').click()
+            expect(room.locator('#room-floor')).to_have_value('oak')
+            expect(room.locator('#room-preset-apply')).to_be_hidden()
+            room.locator('summary').click()
             page.locator('#planner-assistant').click()
             form=page.locator('#planner-assistant-dialog')
             def button(label):return form.get_by_role('button',name=label,exact=True)
