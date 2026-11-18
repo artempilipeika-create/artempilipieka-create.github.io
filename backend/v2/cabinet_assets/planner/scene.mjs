@@ -12,6 +12,7 @@ import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
 import {roomDaylight,daylightSurface,studioBackdrop,studioGround,wallShell} from './room-daylight.mjs';
+import {interiorPalette,addWallInterior,interiorCeiling,marbleFloor} from './room-interiors.mjs';
 import {WardrobeMotion,drawerKey} from './wardrobe-motion.mjs';
 import {StudioRender} from './studio-render.mjs';
 import {allSegments} from './wall-finishes.mjs';
@@ -85,8 +86,9 @@ export class PlannerScene{
     if(this.floorOutline)this.floorOutline.visible=this.mode==='top'&&!this.client;
     for(const line of this.countertopOutlines||[])line.visible=this.mode==='top'&&!this.client;
     if(this.grid){this.grid.visible=!this.client&&(this.mode==='top'||Boolean(this.preview));this.grid.material.opacity=this.mode==='top'?.14:.055;}
-    if(this.clientFloor)this.clientFloor.visible=this.mode==='3d';
-    if(this.floorJoints)this.floorJoints.visible=this.mode!=='3d'||!this.clientFloor;
+    if(this.clientFloor)this.clientFloor.visible=this.mode==='3d'||Boolean(this.clientFloor.userData.tileSizeMm);
+    if(this.floorJoints)this.floorJoints.visible=!this.clientFloor?.visible;
+    if(this.ceiling)this.ceiling.visible=this.mode==='3d';
     if(this.studioGround)this.studioGround.visible=this.mode==='3d';
     if(this.mode==='3d')this.studioRender.render(this.scene,this.camera,!this.exportSize&&(this.motionQuality||moving||Boolean(this.preview)));else this.renderer.render(this.scene,this.camera);this.placeLabel();
     if(!this.exportSize&&this.qualityMode==='auto'&&this.quality.name==='high'&&!document.hidden&&this.renderBudget.record(performance.now()-started))this.applyQuality('auto',true);
@@ -123,12 +125,18 @@ export class PlannerScene{
   selectionColor(box,color){box.material.color.set(color);for(const child of box.children)child.material.color.set(color);}
   roomMesh(){
     this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.surfaceTexture=null;this.floorTexture=null;this.clientFloor=null;this.floorJoints=null;this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room,settings=roomSettings(this.adapter.state?.displaySettings);
-    const daylight=roomDaylight(r,settings);
+    const daylight=roomDaylight(r,settings),palette=this.roomPalette=interiorPalette(settings);
+    const anisotropy=Math.min(10,this.renderer.capabilities.getMaxAnisotropy());
+    this.ceiling=null;
     // Flush overlay backs share the wall plane. Bias only the visual room surface, never cabinet geometry.
     const make=(w,h,d,x,y,z,color)=>{const material=new THREE.MeshStandardMaterial({color,roughness:.82});const m=new THREE.Mesh(this.factory.geometry,material);m.userData.ownMaterial=true;m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.receiveShadow=true;this.roomRoot.add(m);return m;};
     const floor=make(r.width,20,r.depth,0,-12,0,settings.floorMaterial==='oak'?'#ffffff':settings.floorMaterial==='concrete'?'#b8b7b3':'#d9d8d1');this.walls=[];
     floor.material.roughness=settings.floorMaterial==='oak'?.78:.84;daylightSurface(floor.material,daylight,'floor');
-    if(settings.floorMaterial!=='oak'){
+    if(settings.floorMaterial==='marble'){
+      floor.material.color.set('#bab9b3');
+      this.clientFloor=marbleFloor(r,daylight,anisotropy,()=>this.invalidate());
+      this.roomRoot.add(this.clientFloor);
+    }else if(settings.floorMaterial!=='oak'){
       this.surfaceTexture=roomSurfaceTexture(r.width*S,r.depth*S);
       floor.material.bumpMap=this.surfaceTexture;floor.material.bumpScale=.0012;
       floor.material.color.set(settings.floorMaterial==='concrete'?'#c7c4bd':'#ddd8cd');
@@ -161,12 +169,16 @@ export class PlannerScene{
       surface.rotation.y={a:0,b:-Math.PI/2,c:Math.PI,d:Math.PI/2}[wall];
       surface.scale.x=['c','d'].includes(wall)?-1:1;surface.position[axis]=edge*S;
       surface.userData={axis,sign,ownMaterial:true};surface.receiveShadow=true;this.roomRoot.add(surface);this.walls.push(surface);
+      if(palette)addWallInterior(surface,{style:settings.environmentPreset,wall,length,height:r.height,panels,
+        openings:(r.features||[]).filter(f=>f.wall===wall&&['window','door'].includes(f.kind))},palette,daylight,anisotropy,()=>this.invalidate());
       for(const p of panels.filter(p=>p.elevation===0)){
         const along=-length/2+p.offset+p.width/2;
         const trim=horizontal?make(p.width,65,9,along,32.5,edge-sign*4,'#edece7'):make(9,65,p.width,edge-sign*4,32.5,along,'#edece7');
+        if(palette)trim.material.color.copy(palette.trim);
         Object.assign(trim.userData,{axis,sign});this.walls.push(trim);
       }
     }
+    if(palette){this.ceiling=interiorCeiling(r,palette.ceiling);this.roomRoot.add(this.ceiling);}
     // A seamless presentation ground continues beyond the measured room footprint.
     // It has no raycast, collision, dimensions or export representation.
     this.studioGround=studioGround(r.width*S,r.depth*S);this.roomRoot.add(this.studioGround);
@@ -175,7 +187,7 @@ export class PlannerScene{
     const outlineGeometry=new THREE.BufferGeometry();outlineGeometry.setAttribute('position',new THREE.Float32BufferAttribute(outlinePoints,3));
     this.floorOutline=new THREE.LineSegments(outlineGeometry,new THREE.LineBasicMaterial({color:'#536958'}));this.floorOutline.userData.ownMaterial=true;this.roomRoot.add(this.floorOutline);
     const joints=[],plank=settings.floorMaterial==='oak',step=plank?190:600;
-    if(settings.floorMaterial!=='concrete'){
+    if(settings.floorMaterial!=='concrete'&&settings.floorMaterial!=='marble'){
       for(let x=-r.width/2+step;x<r.width/2;x+=step)joints.push(x*S,-.0015,-r.depth*S/2,x*S,-.0015,r.depth*S/2);
       for(let col=0,x=-r.width/2;x<r.width/2;col++,x+=step)for(let z=-r.depth/2+(plank?(col%3)*400:0);z<r.depth/2;z+=1200)joints.push(x*S,-.0015,z*S,Math.min(x+step,r.width/2)*S,-.0015,z*S);
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(joints,3));
@@ -256,6 +268,7 @@ export class PlannerScene{
     this.displayItemId=this.adapter.selected.item_id;this.displayMode=mode;this.sync();
   }
   setPresentation(client){
+    const viewChanged=this.client!==client;
     this.client=client;const p=LIGHTS[roomSettings(this.adapter.state?.displaySettings).lightingPreset];
     this.sun.color.set(p.key);this.sun.intensity=p.sun;
     this.fill.color.set(p.fill);this.fill.intensity=p.fillPower;
@@ -263,7 +276,7 @@ export class PlannerScene{
     this.planBackground.set(roomSettings(this.adapter.state?.displaySettings).wallColor);
     this.scene.fog=null;this.scene.environmentIntensity=p.environment;this.renderer.toneMappingExposure=p.exposure;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.perspective.fov=client?32:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();
+    if(viewChanged){this.perspective.fov=client?32:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();}
     // Cached key shadow plus depth-based ambient occlusion in the presentation pass.
     this.sun.shadow.intensity=.51;this.sun.shadow.radius=client?46:38;
     this.sun.shadow.normalBias=.0025;this.sun.shadow.bias=-.00015;this.renderer.shadowMap.type=THREE.PCFShadowMap;
@@ -483,7 +496,7 @@ export class PlannerScene{
   previewEquipment(f,error=''){
     if(this.equipmentPreview?.id!==f.id){
       this.clearEquipmentPreview();let entry=(this.roomFeatures||[]).find(e=>e.group.userData.roomFeatureId===f.id),created=false;
-      if(!entry){created=true;const group=new THREE.Group();this.roomRoot.add(group);if(f.kind==='window')group.add(windowEquipment(f,this.factory.geometry));else{const fallback=equipmentFallback(f.kind,this.factory.geometry);fallback.scale.set(f.width*S,f.height*S,f.projection*S);group.add(fallback);attachRoomEquipment(this,group,f,fallback);}entry={group};}
+      if(!entry){created=true;const group=new THREE.Group();this.roomRoot.add(group);if(f.kind==='window')group.add(windowEquipment(f,this.factory.geometry,this.roomPalette));else{const fallback=equipmentFallback(f.kind,this.factory.geometry);fallback.scale.set(f.width*S,f.height*S,f.projection*S);group.add(fallback);attachRoomEquipment(this,group,f,fallback);}entry={group};}
       this.equipmentPreview={id:f.id,entry,created};
     }
     const {entry}=this.equipmentPreview,b=featureBox(f.kind==='window'?{...f,projection:0}:f,this.adapter.room,0);entry.group.position.set(b.x*S,b.y*S,b.z*S);entry.group.rotation.y=socketRotation(f.wall);entry.group.visible=this.mode!=='top';

@@ -46,7 +46,7 @@ test('a rotated pair opens about its original hinge axes, extending only the req
 
 test('the environment follows the primary measured window and respects saved room finishes',()=>{
   const room={width:4200,depth:3600,height:2700,features:[]};
-  const settings=roomSettings();assert.equal(settings.environmentPreset,'showroom');
+  const settings=roomSettings();assert.equal(settings.environmentPreset,'graphite');
   assert.equal(roomDaylight(room,settings).measured,false);
   room.features=[{kind:'window',wall:'a',width:400,height:500,offset:0,elevation:1000,projection:0},
                  {kind:'window',wall:'b',width:1200,height:1300,offset:800,elevation:900,projection:0}];

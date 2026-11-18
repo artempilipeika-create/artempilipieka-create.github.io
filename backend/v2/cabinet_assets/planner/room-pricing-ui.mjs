@@ -1,26 +1,37 @@
-import {ROOM_PRESETS,FLOOR_OPTIONS,LIGHT_OPTIONS,roomSettings,presetSettings} from './room-state.mjs';
+import {ROOM_PRESETS,FLOOR_OPTIONS,LIGHT_OPTIONS,roomSettings,presetSettings,selectInterior,designedInterior} from './room-state.mjs';
 import {modulePriceBreakdown,kitchenPriceBreakdown} from './pricing.mjs';
 const el=(tag,text,id)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(id)e.id=id;return e;};
 const select=(id,title,options)=>{const label=el('label',title),s=el('select',undefined,id);s.setAttribute('aria-label',title);for(const [value,text]of Object.entries(options)){const o=el('option',text);o.value=value;s.append(o);}label.append(s);return label;};
 export class RoomPricingUI{
   constructor(app){
     this.app=app;
-    const d=el('details',undefined,'planner-room-settings');d.append(el('summary','Комната'));
+    const d=el('details',undefined,'planner-room-settings');d.append(el('summary','Интерьер'));
     const controls=el('div');controls.className='room-controls';
     const measure=el('button','Размеры комнаты','room-open-measure');measure.type='button';measure.onclick=()=>app.roomSetup.open();controls.append(measure);
     this.measureSummary=el('p',undefined,'room-measure-summary');controls.append(this.measureSummary);
-    controls.append(select('room-preset','Обстановка',Object.fromEntries(Object.entries(ROOM_PRESETS).map(([k,v])=>[k,v.label]))));
-    const wall=el('label','Стены'),input=el('input',undefined,'room-wall-color');input.type='color';input.setAttribute('aria-label','Цвет стен');wall.append(input);controls.append(wall);
-    controls.append(select('room-floor','Пол',FLOOR_OPTIONS),select('room-lighting','Свет',LIGHT_OPTIONS));
+    const interiors=select('room-preset','Оформление стен',Object.fromEntries(Object.entries(ROOM_PRESETS).map(([k,v])=>[k,v.label])));
+    const previous=el('optgroup');previous.label='Прежние обстановки';
+    const choices=interiors.querySelector('select');
+    for(const name of ['studio','warm','showroom'])previous.append(choices.querySelector('option[value="'+name+'"]'));
+    choices.append(previous);
+    const wall=el('label','Оттенок стен'),input=el('input',undefined,'room-wall-color');input.type='color';input.setAttribute('aria-label','Цвет стен');wall.append(input);
+    controls.prepend(interiors,select('room-floor','Пол',FLOOR_OPTIONS));
+    controls.append(wall,select('room-lighting','Свет',LIGHT_OPTIONS));
     this.applyPreset=el('button','','room-preset-apply');this.applyPreset.type='button';this.applyPreset.hidden=true;
-    this.applyPreset.onclick=()=>document.getElementById('room-preset').dispatchEvent(new Event('change'));
+    const apply=next=>app.history.run('Интерьер комнаты',()=>{
+      app.adapter.state.displaySettings={...app.adapter.state.displaySettings,...next};
+      app.bridge.refresh();
+    });
+    this.applyPreset.onclick=()=>{
+      const current=roomSettings(app.adapter.state.displaySettings),preset=presetSettings(current.environmentPreset);
+      apply(designedInterior(current.environmentPreset)?{...current,wallColor:preset.wallColor}:preset);
+    };
     controls.append(this.applyPreset);d.append(controls);document.querySelector('.mf3d-canvas-wrap').append(d);
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']]){
       document.getElementById(id).onchange=e=>{
         const value=e.target.value;
-        app.history.begin('Комната');
-        app.adapter.state.displaySettings={...app.adapter.state.displaySettings,...(key==='environmentPreset'?presetSettings(value):roomSettings({...roomSettings(app.adapter.state.displaySettings),[key]:value}))};
-        app.bridge.refresh();app.history.commit();
+        const current=roomSettings(app.adapter.state.displaySettings);
+        apply(key==='environmentPreset'?selectInterior(current,value):roomSettings({...current,[key]:value}));
       };
     }
     this.module=el('section',undefined,'module-cost');this.module.className='mf3d-control-card cost-card';document.getElementById('item-controls').append(this.module);
@@ -32,8 +43,9 @@ export class RoomPricingUI{
     this.measureSummary.textContent=`${a.room.width} × ${a.room.depth} × ${a.room.height} мм · `+(a.room.setup_complete===true?'размеры заданы':a.room.setup_complete===false?'требуется замер':'замер не подтверждён');
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']])document.getElementById(id).value=s[key];
     const preset=presetSettings(s.environmentPreset);
-    this.applyPreset.hidden=['wallColor','floorMaterial','lightingPreset'].every(key=>s[key]===preset[key]);
-    this.applyPreset.textContent='Применить «'+ROOM_PRESETS[s.environmentPreset].label+'»';
+    const designed=designedInterior(s.environmentPreset);
+    this.applyPreset.hidden=(designed?['wallColor']:['wallColor','floorMaterial','lightingPreset']).every(key=>s[key]===preset[key]);
+    this.applyPreset.textContent=(designed?'Вернуть оттенок «':'Применить «')+ROOM_PRESETS[s.environmentPreset].label+'»';
     const it=a.selected;
     this.module.replaceChildren(el('h3','Стоимость'));
     if(it){

@@ -7,6 +7,21 @@ from backend.v2.security import password_hash,grant
 def payload(name='Первоначальный'):
     return {'name':name,'request_id':str(uuid4()),'scene':{'module_type':'chest','width':1200,'height':900,'depth':450,'layout':'combo','drawers':3,'base':'plinth','handles':'handles'}}
 
+def test_interior_and_floor_persist_independently_after_reopening(api,admin_user):
+    body=payload('QA отделка помещения')
+    body['scene']['displaySettings']={'environmentPreset':'classic','floorMaterial':'marble'}
+    created=api.post('/api/v2/3d-projects',json=body)
+    assert created.status_code==201,created.text
+    url='/api/v2/3d-projects/'+created.json()['project_id']
+    opened=api.get(url).json()
+    settings=opened['scene']['displaySettings']
+    assert (settings['environmentPreset'],settings['floorMaterial'])==('classic','marble')
+    body['scene']['displaySettings']={**settings,'environmentPreset':'warm-oak','wallColor':'#c9c1b1'}
+    edited=api.patch(url,json={**body,'request_id':str(uuid4()),'version':opened['version']})
+    assert edited.status_code==200,edited.text
+    settings=api.get(url).json()['scene']['displaySettings']
+    assert (settings['environmentPreset'],settings['floorMaterial'])==('warm-oak','marble')
+
 def test_idempotent_save_conflict_and_minimal_receipts(api,settings,admin_user):
     body=payload();created=api.post('/api/v2/3d-projects',json=body);assert created.status_code==201,created.text
     p=created.json();url='/api/v2/3d-projects/'+p['project_id']

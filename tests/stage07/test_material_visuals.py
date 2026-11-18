@@ -65,5 +65,9 @@ def test_scene_display_and_identity_roundtrip_are_separate_from_production_items
     assert saved['items'][0]['width']==320 and 'pricingWidthMm' not in saved['items'][0]
     assert saved['materialIdentities'][uid]['article']=='W1000 ST9'
     assert 'displaySettings' not in saved['items'][0]
-    assert Scene().displaySettings.environmentPreset=='showroom'
+    assert Scene().displaySettings.environmentPreset=='graphite'
+    for name,color in [('graphite','#878e90'),('classic','#bbc1bb'),('warm-oak','#c9c1b1'),('showroom','#d3ddd4')]:
+        draft=Scene.model_validate({'displaySettings':{'environmentPreset':name,'floorMaterial':'marble'}})
+        assert draft.displaySettings.wallColor==color
+        assert Scene.model_validate(draft.model_dump()).displaySettings.floorMaterial=='marble'
     with pytest.raises(ValidationError):Scene.model_validate({'displaySettings':{'floorMaterial':'https://other.test/image'}})

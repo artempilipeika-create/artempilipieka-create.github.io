@@ -18,7 +18,7 @@ export function measuredFeatures(scene){
     const wall=featureWall(f,r),horizontal=['a','c'].includes(wall),axis=horizontal?'z':'x',sign=['a','d'].includes(wall)?-1:1;
     const b=featureBox(f.kind==='window'?{...f,projection:0}:f,r,['shaft','column','window'].includes(f.kind)?0:8),extras=[];group.position.set(b.x*S,b.y*S,b.z*S);group.rotation.y=horizontal?0:Math.PI/2;
     if(f.kind==='window'){
-      group.position.copy(new THREE.Vector3(b.x*S,b.y*S,b.z*S));group.rotation.y=socketRotation(f.wall);group.add(windowEquipment(f,scene.factory.geometry));
+      group.position.copy(new THREE.Vector3(b.x*S,b.y*S,b.z*S));group.rotation.y=socketRotation(f.wall);group.add(windowEquipment(f,scene.factory.geometry,scene.roomPalette));
     }else if(['radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)){
       const fallback=equipmentFallback(f.kind,scene.factory.geometry);fallback.scale.set(f.width*S,f.height*S,Math.max(1,f.projection)*S);group.add(fallback);attachRoomEquipment(scene,group,f,fallback);
     }else if(f.kind==='shaft'||f.kind==='column'){

@@ -31,7 +31,7 @@ export function attachRoomEquipment(scene,group,f,fallback){
 }
 
 /** Analytic window frame and sill; opening dimensions remain exact. */
-export function windowEquipment(f,geometry){
+export function windowEquipment(f,geometry,palette){
   const group=new THREE.Group();
   const box=(w,h,d,x,y,z,color)=>{
     const m=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,roughness:.47}));
@@ -54,8 +54,9 @@ export function windowEquipment(f,geometry){
       diffuseColor.rgb*=.45;
     `);
   };
-  for(const x of[-(f.width-t)/2,(f.width-t)/2,0])box(t,f.height,70,x,0,0,'#f5f4ec');
-  for(const y of[-(f.height-t)/2,(f.height-t)/2])box(f.width,t,70,0,y,0,'#f5f4ec');
-  if(f.projection)box(f.width,20,f.projection,0,-f.height/2,f.projection/2,'#e6e4d8');
+  const frame=palette?.frame??'#f5f4ec';
+  for(const x of[-(f.width-t)/2,(f.width-t)/2,0])box(t,f.height,70,x,0,0,frame);
+  for(const y of[-(f.height-t)/2,(f.height-t)/2])box(f.width,t,70,0,y,0,frame);
+  if(f.projection)box(f.width,20,f.projection,0,-f.height/2,f.projection/2,palette?.sill??'#e6e4d8');
   return group;
 }

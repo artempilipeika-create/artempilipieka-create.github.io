@@ -394,11 +394,25 @@ class MaterialAppearance(StrictModel):
     finish: Literal['auto','matte','satin','gloss']='auto'
 
 class DisplaySettings(StrictModel):
-    environmentPreset: Literal['studio','warm','showroom']='showroom'
-    wallColor: str=Field(default='#d3ddd4',pattern=r'^#[0-9a-fA-F]{6}$')
-    floorMaterial: Literal['light-stone','oak','concrete']='oak'
+    environmentPreset: Literal['graphite','warm-oak','classic','studio','warm','showroom']='graphite'
+    wallColor: str=Field(default='#878e90',pattern=r'^#[0-9a-fA-F]{6}$')
+    floorMaterial: Literal['oak','marble','light-stone','concrete']='oak'
     lightingPreset: Literal['daylight','warm','neutral']='neutral'
     materialAppearance: dict[UUID,MaterialAppearance]=Field(default_factory=dict,max_length=500)
+
+    @model_validator(mode='before')
+    @classmethod
+    def complete_room_preset(cls,value):
+        if not isinstance(value,dict) or not isinstance(value.get('environmentPreset'),str):
+            return value
+        defaults={
+            'graphite':('#878e90','oak','neutral'),'warm-oak':('#c9c1b1','oak','neutral'),
+            'classic':('#bbc1bb','oak','neutral'),'studio':('#f0ede6','light-stone','daylight'),
+            'warm':('#e5dccf','oak','warm'),'showroom':('#d3ddd4','oak','neutral'),
+        }
+        preset=defaults.get(value['environmentPreset'])
+        if preset is None:return value
+        return dict(zip(('wallColor','floorMaterial','lightingPreset'),preset))|value
 
 class MaterialIdentity(StrictModel):
     materialId: UUID|None=None

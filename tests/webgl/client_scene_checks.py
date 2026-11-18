@@ -51,7 +51,7 @@ def test_client_kitchen_composition_presets_selection_and_persistence(page,api,s
     shot=lambda name:capture_viewport(page,OUT/('client-v2-'+name+'.png'))
     shot('01-technical-3d');technical=page.evaluate('MF_PLANNER.scene.captureView()')
     page.locator('#planner-client').click();expect(page.locator('#reset-view')).to_have_text('Показать всю кухню')
-    page.locator('#planner-room-settings summary').click();expect(page.locator('#room-preset')).to_have_value('showroom')
+    page.locator('#planner-room-settings summary').click();expect(page.locator('#room-preset')).to_have_value('graphite')
     for preset,label in [('showroom','02-neutral-showroom'),('studio','03-light-studio'),('warm','04-warm-interior')]:
         page.locator('#room-preset').select_option(preset)
         page.locator('#planner-room-settings summary').click();page.locator('#reset-view').click()
