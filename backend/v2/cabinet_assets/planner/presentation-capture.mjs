@@ -1,10 +1,13 @@
+import {viewForAspect} from './presentation.mjs';
+
 // Synchronous capture: no RAF can observe an intermediate export camera/size.
 // The actual WebGL scene is rendered with its existing studio lighting and AO.
-export function captureAlbumViews(scene,{detail=true}={}){
+export function captureAlbumViews(scene,{detail=true,savedView=null}={}){
+  const shot=savedView||(scene.renderRooms?.room&&scene.mode==='3d'?scene.captureView():null);
   // Album references use the same full-size render, independent of the editor
   // viewport. render() also updates cutaway walls after moving the camera.
   return {
-    hero:capturePresentation(scene,{width:2048,height:1440,view:scene.renderRooms?.room?'room':'threeQuarter'}).toDataURL('image/png'),
+    hero:capturePresentation(scene,{width:2048,height:1440,view:scene.renderRooms?.room?'room':'threeQuarter',savedView:shot}).toDataURL('image/png'),
     ...(detail?{detail:capturePresentation(scene,{width:1536,height:1024,view:'front'}).toDataURL('image/png')}:{})
   };
 }
@@ -20,7 +23,7 @@ export function capturePresentation(scene,{width,height,view='threeQuarter',save
     r.setPixelRatio(1);r.setSize(width,height,false);scene.studioRender.maxDimension=width;
     scene.perspective.aspect=width/height;scene.perspective.updateProjectionMatrix();
     scene.setPresentation(true);
-    if(savedView)scene.restoreView(savedView);
+    if(savedView||view==='current')scene.restoreView(viewForAspect(savedView||previous.view,width/height));
     else if(view==='top'){scene.setView('top');}
     else scene.fitKitchenForClient(view);
     scene.selectedBox.visible=false;scene.hoverBox.visible=false;scene.guides.visible=false;

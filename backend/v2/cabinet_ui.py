@@ -53,7 +53,7 @@ def router():
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-daylight.mjs','room-interiors.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
-    planner_files.update({'render-rooms.mjs','render-room-picker.mjs','vendor/room-loaders.mjs',
+    planner_files.update({'render-rooms.mjs','render-room-picker.mjs','render-framing.mjs','vendor/room-loaders.mjs',
         'render-rooms/catalogue.mjs','render-rooms/city.exr','render-rooms/forest.exr','render-rooms/skies.txt',
         'render-rooms/kitchen.glb','render-rooms/wardrobe.glb','render-rooms/file-studio.mjs','render-rooms/file-studio.css'})
     planner_files.update(f'render-rooms/{n:02d}.{ext}' for n in range(1,16) for ext in ('glb','webp'))

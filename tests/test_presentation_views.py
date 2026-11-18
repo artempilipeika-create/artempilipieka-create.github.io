@@ -7,7 +7,9 @@ def view(**patch):
 
 def test_presentation_views_round_trip_and_legacy_default():
     assert Scene().presentationViews==[]
-    saved=Scene(presentationViews=[view()]).model_dump(mode='json')
+    assert Scene(presentationViews=[view()]).presentationViews[0].aspect is None
+    saved=Scene(presentationViews=[view(aspect=16/9)]).model_dump(mode='json')
+    assert saved['presentationViews'][0]['aspect']==16/9
     assert Scene(**saved).model_dump(mode='json')==saved
     assert saved['presentationViews'][0]['name']=='Вид от входа'
 
@@ -15,7 +17,7 @@ def test_presentation_views_round_trip_and_legacy_default():
     dict(position=[float('nan'),1,3]),dict(position=[float('inf'),1,3]),
     dict(position=[0,1,0]),dict(up=[0,0,0]),dict(up=[0,2,0]),
     dict(position=[1,2]),dict(target=[1001,0,0]),dict(zoom=0),dict(fov=180),
-    dict(orthoSpan=-1),dict(viewOffset=[3,0]),dict(mode='arbitrary'),dict(name=''),dict(name='x'*61),
+    dict(aspect=0),dict(aspect=float('inf')),dict(orthoSpan=-1),dict(viewOffset=[3,0]),dict(mode='arbitrary'),dict(name=''),dict(name='x'*61),
 ])
 def test_invalid_camera_cannot_enter_saved_scene(patch):
     data=view();data.update(patch)
@@ -30,6 +32,6 @@ def test_presentation_assets_served_under_existing_csp():
     from fastapi.testclient import TestClient
     from backend.v2.cabinet_ui import router,CSP
     app=FastAPI();app.include_router(router());client=TestClient(app)
-    for name in ['presentation.mjs','presentation-capture.mjs','presentation-ui.mjs','presentation.css']:
+    for name in ['presentation.mjs','presentation-capture.mjs','presentation-ui.mjs','render-framing.mjs','presentation.css']:
         assert client.get('/account/planner/'+name).status_code==200
     assert client.get('/constructor.html').headers['Content-Security-Policy']==CSP

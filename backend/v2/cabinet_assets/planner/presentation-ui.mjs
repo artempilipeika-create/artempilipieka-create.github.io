@@ -1,4 +1,5 @@
 import {VIEW_NAMES,VIEW_LIMIT,exportSize,fileName,presentationSheet} from './presentation.mjs';
+import {frameRenderView} from './render-framing.mjs';
 import {capturePresentation} from './presentation-capture.mjs';
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 export class PresentationUI{
@@ -40,9 +41,18 @@ export class PresentationUI{
   select(parent,text,choices){const label=el('label',text),s=el('select');s.setAttribute('aria-label',text);for(const [value,text]of choices){const o=el('option',text);o.value=value;s.append(o);}label.append(s);parent.append(label);return s;}
   views(){return this.app.adapter.state.presentationViews||[];}
   release(){if(this.url)URL.revokeObjectURL(this.url);this.url=null;this.download.removeAttribute('href');this.download.setAttribute('aria-disabled','true');}
-  open({clean=false}={}){
+  async frameRoom(){
+    const s=this.app.scene,id=s.renderRooms?.id;
+    if(!id||!this.app.adapter.items.length)return;
+    this.app.interaction.cancel();
+    try{
+      await s.renderRooms.waitReady();
+      if(this.app.scene===s&&s.renderRooms.id===id)frameRenderView(this.app,view=>this.open({clean:true,view}));
+    }catch(error){this.app.adapter.status(error.message);}
+  }
+  open({clean=false,view=null}={}){
     const s=this.app.scene;if(s.isFallback||!this.app.adapter.items.length){this.app.adapter.status('Добавьте мебель и дождитесь готовности 3D-сцены.');return;}
-    this.app.interaction.cancel();s.stopOrbitInertia();this.current=s.captureView();if(clean)this.format.value='clean';this.quality.value=s.qualityMode||'auto';this.syncViews();this.view.value=s.renderRooms?.id?'room':'threeQuarter';
+    this.app.interaction.cancel();this.current=view||s.captureView();s.stopOrbitInertia();if(clean)this.format.value='clean';this.quality.value=s.qualityMode||'auto';this.syncViews();this.view.value=s.renderRooms?.id?'current':'threeQuarter';
     this.dialog.showModal();this.refresh();
   }
   syncViews(){

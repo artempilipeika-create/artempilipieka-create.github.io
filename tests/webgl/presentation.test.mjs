@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fileName,exportSize,qualityProfile,RenderBudget} from '../../backend/v2/cabinet_assets/planner/presentation.mjs';
+import {fileName,exportSize,qualityProfile,RenderBudget,viewForAspect} from '../../backend/v2/cabinet_assets/planner/presentation.mjs';
 import {capturePresentation,captureAlbumViews} from '../../backend/v2/cabinet_assets/planner/presentation-capture.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {fingerprint} from '../../backend/v2/cabinet_assets/planner/project-autosave.mjs';
@@ -78,5 +78,37 @@ test('client album captures only its original hero when the second image is disa
   try{
     assert.deepEqual(captureAlbumViews(s,{detail:false}),{hero:'original hero'});
     assert.deepEqual(views,['threeQuarter']);assert.equal(s.width,1000);assert.equal(s.client,false);
+  }finally{globalThis.document=old;}
+});
+
+test('switching from the editor to PNG or an album keeps the visible frame and its optical centre',()=>{
+  const pose={position:[-1,2,5],target:[.1,1,0],up:[0,1,0],fov:34,zoom:1.3,viewOffset:[.16,-.08]};
+  for(const [source,target] of [[2.4,16/9],[.65,16/9],[16/9,2048/1440],[16/9,16/9]]){
+    const original={...pose,aspect:source},shot=viewForAspect(original,target);
+    assert.deepEqual(shot.position,pose.position);
+    assert.deepEqual(shot.target,pose.target);
+    assert.equal(shot.fov,pose.fov);
+    const scale=[source*shot.zoom/(target*pose.zoom),shot.zoom/pose.zoom];
+    for(const axis of [0,1]){
+      assert.ok(scale[axis] <= 1+1e-12);
+      assert.ok(Math.abs(shot.viewOffset[axis]-pose.viewOffset[axis]*scale[axis])<1e-12);
+    }
+    assert.ok(Math.abs(Math.max(...scale)-1)<1e-12);
+  }
+  assert.equal(viewForAspect(pose,1.5),pose);
+});
+
+test('the client PNG and room album use the manual camera and preserve the editor after capture',()=>{
+  const s=mockScene(),old=globalThis.document,poses=[];
+  const manual={mode:'3d',aspect:16/9,zoom:1,fov:41,position:[-3,1.8,2.1],target:[.5,1,-.4],viewOffset:[.1,-.02]};
+  s.mode='3d';s.renderRooms={room:{}};s.cameraState=manual;
+  s.fitKitchenForClient=()=>assert.fail('The chosen shot was replaced by an automatic fit');
+  s.render=()=>{if(s.exportSize)poses.push(s.captureView());};
+  globalThis.document={createElement:()=>({getContext:()=>({drawImage(){},getImageData(){}}),toDataURL:()=> 'render'})};
+  try{
+    capturePresentation(s,{width:1920,height:1080,view:'current'});
+    captureAlbumViews(s,{detail:false});
+    assert.deepEqual(poses,[manual,viewForAspect(manual,2048/1440)]);
+    assert.deepEqual(s.captureView(),manual);
   }finally{globalThis.document=old;}
 });

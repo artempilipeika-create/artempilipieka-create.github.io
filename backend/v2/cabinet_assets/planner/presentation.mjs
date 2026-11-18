@@ -1,6 +1,13 @@
 // Presentation metadata never enters dimensions, pricing or production geometry.
 export const VIEW_LIMIT=6;
 export const VIEW_NAMES={current:'Текущий ракурс',threeQuarter:'Общий вид',left:'Слева',right:'Справа',front:'Фасадный',top:'Сверху'};
+// Preserve the four original frame edges when a monitor and an export use different proportions.
+export function viewForAspect(view, aspect){
+  if(!view?.aspect || !Number.isFinite(aspect) || aspect<=0 || view.aspect===aspect)return view;
+  const expand=Math.max(1,view.aspect/aspect);
+  const [x,y]=view.viewOffset||[0,0];
+  return {...view,aspect,zoom:view.zoom/expand,viewOffset:[x*view.aspect/(aspect*expand),y/expand]};
+}
 export function exportSize(choice,maxSize=4096){
   const width=Math.min(choice==='large'?2560:1920,Math.max(960,maxSize));
   return {width:Math.round(width),height:Math.round(width*9/16)};

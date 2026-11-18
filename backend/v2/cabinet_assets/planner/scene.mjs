@@ -78,7 +78,7 @@ export class PlannerScene{
     this.frame=0;if(this.dead)return;const started=performance.now();
     this.controls.update();this.camera.updateMatrixWorld();
     const photo=this.renderRooms.show(this.mode==='3d',this.camera);
-    this.scene.background=photo?this.renderRooms.room.sky:(this.mode==='3d'?this.backdrop:this.planBackground);
+    this.scene.background=this.mode==='3d'?(this.renderRooms.id?this.renderRooms.background:this.backdrop):this.planBackground;
     this.scene.environment=photo?this.renderRooms.room.sky:this.studioEnvironment.texture;
     this.roomBounce.visible=photo;
     if(this.roomFloorBase)this.roomFloorBase.visible=!photo;
@@ -498,7 +498,7 @@ export class PlannerScene{
     this.controls.update();this.camera.updateMatrixWorld();this.invalidate();
     this.clientFit={...frame,viewport,view,fov:this.camera.fov};return this.clientFit;
   }
-  captureView(){const v=this.perspective.view;return {mode:this.mode,position:this.camera.position.toArray(),target:this.controls.target.toArray(),up:this.camera.up.toArray(),zoom:this.camera.zoom,orthoSpan:this.orthoSpan||3,fov:this.perspective.fov,viewOffset:v?.enabled?[v.offsetX/v.fullWidth,v.offsetY/v.fullHeight]:[0,0]};}
+  captureView(){const v=this.perspective.view;return {mode:this.mode,aspect:this.width/this.height,position:this.camera.position.toArray(),target:this.controls.target.toArray(),up:this.camera.up.toArray(),zoom:this.camera.zoom,orthoSpan:this.orthoSpan||3,fov:this.perspective.fov,viewOffset:v?.enabled?[v.offsetX/v.fullWidth,v.offsetY/v.fullHeight]:[0,0]};}
   stopOrbitInertia(){const damping=this.controls.enableDamping;this.controls.enableDamping=false;this.controls.update();this.controls.enableDamping=damping;}
   restoreView(view){
     if(!view)return;this.stopOrbitInertia();this.mode=view.mode;this.camera=this.mode==='3d'?this.perspective:this.ortho;this.controls.object=this.camera;this.controls.enableRotate=this.mode==='3d';

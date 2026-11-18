@@ -38,7 +38,13 @@ function cutaway(root, item) {
   const sides = {left: [], right: [], rear: [], roof: []};
   const box = new THREE.Box3();
   root.updateMatrixWorld(true);
-  root.getObjectByName('MF_ARCHITECTURE').traverse(mesh => {
+  const architecture = root.getObjectByName('MF_ARCHITECTURE');
+  // These are the exterior scenery nodes in the room files. Balcony and window joinery stay visible.
+  root.traverse(node => {
+    const name = node.userData.name || node.name;
+    if (/^(?:Neighbour(?:[ _](?:frame|glass))?|Garden[ _]lawn|Path[ _]stone)(?:[._]?\d+)?$/i.test(name)) node.visible = false;
+  });
+  architecture.traverseVisible(mesh => {
     if (!mesh.isMesh) return;
     box.setFromObject(mesh);
     if (box.max.x < -item.w / 2 + .48) sides.left.push(mesh);
@@ -54,6 +60,7 @@ export class RenderRooms {
     this.scene = scene;
     this.renderer = renderer;
     this.changed = changed;
+    this.background = new THREE.Color('#d8d8d8');
     this.skies = new Map();
     this.sequence = 0;
     this.floor = 'oak';

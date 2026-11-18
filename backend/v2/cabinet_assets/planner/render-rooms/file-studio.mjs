@@ -38,8 +38,11 @@ function start() {
   sun.shadow.radius = 4;
   scene.add(hemi, sun, sun.target, fill, fill.target, bounce, bounce.target);
   const viewer = new RenderRooms(scene, renderer, () => {});
+  scene.background = viewer.background;
   const cache = new Map();
   let current = null, custom = null, rotation = 0, revision = 0, roomRevision = 0, fileRevision = 0;
+  let manualView = false;
+  controls.addEventListener('start', () => { manualView = true; });
   let modelBusy = false, fileBusy = false, exporting = false, modelMessage = '';
   function draw() {
     viewer.show(true, camera);
@@ -75,7 +78,7 @@ function start() {
     try {
       await viewer.waitReady();
       if (token !== roomRevision) return;
-      scene.environment = scene.background = viewer.room.sky;
+      scene.environment = viewer.room.sky;
       scene.environmentIntensity = .45;
       const side = item.side === 'L' ? -1 : 1;
       const low = ['morning','afternoon'].includes(item.light);
@@ -85,7 +88,7 @@ function start() {
       sun.target.position.set(0,.2,-.45);
       fill.position.set(-side*.65,3.2,4);
       viewer.room.root.getObjectByName('MF_DRESSING').visible = el('dress').checked;
-      fit();
+      if (manualView) draw(); else fit();
       status(modelMessage);
     } catch (error) { if (token === roomRevision) status(error.message); }
     ready();
@@ -205,7 +208,7 @@ function start() {
   roomChoice.onchange=openRoom;modelChoice.onchange=showModel;
   el('floor').onchange=()=>{viewer.setFloor(el('floor').value);draw();};
   el('dress').onchange=()=>{if(viewer.room){viewer.room.root.getObjectByName('MF_DRESSING').visible=el('dress').checked;draw();}};
-  el('reset').onclick=fit;el('save').onclick=download;
+  el('reset').onclick=()=>{manualView=false;fit();};el('save').onclick=download;
   el('file').onchange=e=>openFile(e.target.files[0]);
   el('upload').onclick=()=>el('file').click();
   el('unit').onchange=el('axis').onchange=showModel;

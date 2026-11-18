@@ -13,7 +13,11 @@ export class RenderRoomPicker {
     this.apply = apply;
     this.element = element('section');
     this.element.id = 'render-room-picker';
-    this.summary = element('button', 'Комнаты для рендера');
+    this.summary = element('button');
+    const caption = element('span', 'Комнаты для рендера');
+    this.roomName = element('small');
+    caption.append(this.roomName);
+    this.summary.append(caption);
     this.summary.type = 'button';
     this.summary.className = 'render-room-toggle';
     this.summary.setAttribute('aria-expanded', 'false');
@@ -55,13 +59,21 @@ export class RenderRoomPicker {
     this.reset = element('button', 'Вернуться в комнату проекта');
     this.reset.type = 'button';
     app.listen(this.reset, 'click', () => apply({renderRoomId: null}));
+    this.actions = element('div');
+    this.actions.id = 'render-room-actions';
+    const frame = element('button', 'Задать ракурс');
+    frame.id = 'render-room-frame';
+    frame.type = 'button';
+    app.listen(frame, 'click', () => app.presentation?.frameRoom());
     this.png = element('button', 'Картинка для клиента');
     this.png.type = 'button';
     app.listen(this.png, 'click', () => app.presentation?.open({clean: true}));
     this.studio = element('a', 'Открыть студию GLB / OBJ');
     this.studio.target = '_blank';
     this.studio.rel = 'noopener';
-    options.append(label, this.cards, this.status, this.png, this.reset, this.studio);
+    options.append(label, this.cards, this.reset, this.studio);
+    this.actions.append(frame, this.png);
+    this.element.append(this.status, this.actions);
     app.listen(this.category, 'change', () => this.showCategory());
     app.listen(document, 'mf-render-room', () => this.syncStatus());
   }
@@ -73,6 +85,7 @@ export class RenderRoomPicker {
   async choose(item) {
     const {app} = this;
     const current = app.adapter.state.displaySettings || {};
+    const initialView = !app.scene?.renderRooms?.room || app.scene.mode !== '3d';
     if (current.renderRoomId !== item.n) {
       const previousFloor = roomSettings(current).floorMaterial;
       const floorMaterial = ['marble', 'oak'].includes(previousFloor) ? previousFloor : item.floor;
@@ -85,7 +98,7 @@ export class RenderRoomPicker {
       await app.scene.renderRooms.waitReady();
       if (app.adapter.state.displaySettings?.renderRoomId !== item.n || !app.scene.renderRooms.room) return;
       if (matchMedia('(max-width:760px)').matches) this.element.closest('#planner-room-settings').open = false;
-      app.scene.fitRenderRoom();
+      if (initialView) app.scene.fitRenderRoom();
       app.paintMode();
     } catch { this.syncStatus(); }
   }
@@ -98,7 +111,8 @@ export class RenderRoomPicker {
   }
   sync(settings) {
     const room = roomById(settings.renderRoomId);
-    this.summary.textContent = room ? 'Комнаты для рендера · ' + room.name : 'Комнаты для рендера';
+    this.roomName.textContent = room?.name || '';
+    this.roomName.hidden = !room;
     if (room && room.n !== this.selected) {
       this.category.value = String(Math.floor((room.n - 1) / 5));
       this.showCategory();
@@ -106,7 +120,7 @@ export class RenderRoomPicker {
     this.selected = room?.n || null;
     this.buttons.forEach((button, index) => button.setAttribute('aria-pressed', String(index + 1 === this.selected)));
     this.reset.hidden = !room;
-    this.png.hidden = !room || !this.app.adapter.items.length || this.app.scene?.isFallback;
+    this.actions.hidden = !room || !this.app.adapter.items.length || Boolean(this.app.scene?.isFallback);
     const query = new URLSearchParams({room: String(this.selected || 1), floor: settings.floorMaterial === 'marble' ? 'marble' : 'oak'});
     this.studio.href = '/render-rooms?' + query;
     this.syncStatus();

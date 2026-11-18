@@ -482,6 +482,7 @@ class WallLight(StrictModel):
 
 CameraNumber=Annotated[float,Field(ge=-1000,le=1000,allow_inf_nan=False)]
 class PresentationView(StrictModel):
+    aspect: float | None=Field(default=None,gt=0,allow_inf_nan=False)
     id: str=Field(min_length=1,max_length=80)
     name: str=Field(min_length=1,max_length=60)
     mode: Literal['3d','top','front','left','right']='3d'
