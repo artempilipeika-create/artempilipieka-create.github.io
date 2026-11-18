@@ -8,6 +8,7 @@ import {doorLeaves,swingNames} from './door-swing.mjs';
 
 export const drawingTitles={body:'Корпус',sections:'Секции и полки',feet:'Опоры',plinth:'Цоколь',back:'Задняя стенка',fronts:'Фасады'};
 const edge='#495b54',accent='#19664f',wood='#e6dcc9',end='#c4b8a2';
+import {openingBase,splitAt,columnWidths,columnOpenings} from './wardrobe-layout.mjs';
 const num=n=>Number(n.toFixed(2));
 const points=p=>p.map(([x,y])=>num(x)+','+num(y)).join(' ');
 const polygon=(p,fill)=>'<polygon points="'+points(p)+'" fill="'+fill+'" stroke="'+edge+'" stroke-width=".9" stroke-linejoin="round"/>';
@@ -38,7 +39,16 @@ function elevationView(built,view,section,front,selectedShelf,selection){
  const k=Math.min(328/W,(zoom?200:facade?224:258)/height),bottom=zoom?238:facade?253:289;
  const X=x=>200+x*k,Y=y=>bottom-y*k;
  const panel=i=>({x:i.x-i.width/2,y:i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),w:i.width,h:i.height});
- let drawing='',selectedOutline='';
+ let drawing='',selectedOutline='',dimensions='';
+ function measure(section,level,low,high,x,column=null,zone=null){
+   const a=Y(high),b=Y(low),px=X(x),value=mm(high-low);
+   const extra=zone==null?'':' data-split-section="'+zone+'" data-column="'+column+'"';
+   const desc='Чистая высота '+mmText(value)+' мм';
+   return '<g role="button" tabindex="0" data-section="'+section+'" data-clear-level="'+level+'"'+extra+' aria-label="'+desc+'"><title>'+desc+'</title>'+
+    '<path d="M'+num(px)+' '+num(a)+'V'+num(b)+'m-2 -3l2 3 2 -3M'+num(px-2)+' '+num(a+3)+'l2 -3 2 3" fill="none" stroke="#275d87"/>'+
+    '<rect x="'+num(px-18)+'" y="'+num((a+b)/2-6)+'" width="36" height="12" rx="2" fill="#fff" fill-opacity=".9"/>'+
+    '<text x="'+num(px)+'" y="'+num((a+b)/2+3)+'" text-anchor="middle" fill="#204f77" font-size="9">'+mmText(value)+'</text></g>';
+ }
  const ordered=built.parts.filter(p=>p.item.blank_axis!=='front'||p.key.startsWith('drawer-')).sort((a,b)=>panelOrder(a)-panelOrder(b));
  function panelOrder(p){return p.key==='back'?-3:p.key.endsWith('-face')?3:p.key==='plinth'?2:0;}
  for(const {key,item} of ordered){
@@ -53,12 +63,12 @@ function elevationView(built,view,section,front,selectedShelf,selection){
  if(view==='sections'){
    const widths=sectionWidths(s);section=Math.max(0,Math.min(widths.length-1,section));
    const left=-W/2+s.thickness+widths.slice(0,section).reduce((sum,w)=>sum+w+s.thickness,0);
-   const y=footHeight(s)+s.thickness;
+   const y=footHeight(s)+(s.bottomFit==='none'?0:s.thickness);
    if(selection?.level==null&&selectedShelf==null)drawing+='<rect x="'+num(X(left))+'" y="'+num(Y(H-s.thickness))+'" width="'+num(widths[section]*k)+'" height="'+num((H-s.thickness-y)*k)+'" fill="#316bb0" fill-opacity=".07" stroke="#316bb0" stroke-width="1.8"/>';
    let start=-W/2+s.thickness;
    for(const [sec,width] of widths.entries()){
      const shelves=built.parts.filter(p=>p.key.startsWith('shelf-'+sec+'-')).map(p=>panel(p.item));
-     let base=y;
+     let base=footHeight(s)+openingBase(s,sec);
      for(let level=0;level<=shelves.length;level++){
        const top=shelves[level]?.y??(H-s.thickness),active=selection?.level===level&&sec===section;
        const title='Секция '+(sec+1)+', ниша '+(level+1);
@@ -82,6 +92,19 @@ function elevationView(built,view,section,front,selectedShelf,selection){
        }
        drawing+='<g class="niche-target" role="button" tabindex="0" data-section="'+sec+'" data-niche="'+level+'" aria-label="'+title+'"><title>'+title+'</title>'+
          '<rect x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="'+(active?'#2672bd':'transparent')+'" fill-opacity="'+(active?'.09':'1')+'" stroke="'+(active?'#2672bd':'none')+'" stroke-width="1.8"/></g>';
+       const zone=splitAt(s,sec,level);
+       if(sec===section&&selection?.dimensions)dimensions+=measure(sec,level,base,top,start+width*.55);
+       if(zone&&sec===section&&selection?.splitLevel===level){
+         const halves=columnWidths(zone,width);
+         const first=start+halves[0];
+         for(const [c,w] of halves.entries()){
+           const l=c?first+18:start,cx=l+w/2,attrs='data-split-section="'+level+'" data-section="'+sec+'" data-column="'+c+'"';
+           dimensions+='<g '+attrs+' role="button" tabindex="0" aria-label="Чистая ширина '+w+' мм">'+
+             '<path d="M'+num(X(l))+' '+num(Y(top)+7)+'h'+num(w*k)+'m-3 -2l3 2 -3 2M'+num(X(l)+3)+' '+num(Y(top)+5)+'l-3 2 3 2" fill="none" stroke="#275d87"/>'+
+             '<text x="'+num(X(cx))+'" y="'+num(Y(top)+6)+'" text-anchor="middle" fill="#204f77" stroke="white" stroke-width="2" paint-order="stroke" font-size="9">'+w+'</text></g>';
+           if(zone.columns&&c===(selection.column??0))for(const [j,r] of columnOpenings(base,top,zone.columns[c],s.thickness).entries())dimensions+=measure(sec,j,r.bottom,r.top,cx,c,level);
+         }
+       }
        if(shelves[level])base=top+shelves[level].h;
      }
      start+=width+s.thickness;
@@ -110,7 +133,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
      drawing+=line(x,Y(0)+2,x,257)+line(x,257,200+sign*98,257)+label(200+sign*98,279,plinthPanel(s)?floorSide(s,key)?'Стойка в пол':'До края / стены':'Без цоколя');
    }
  }
- return view==='sections'?'<g data-cabinet-art=>'+drawing+'</g>'+selectedOutline:drawing;
+ return view==='sections'?'<g data-cabinet-art="">'+drawing+dimensions+'</g>'+selectedOutline:drawing;
 }
 function underside(s){
  const k=Math.min(318/s.width,222/s.depth),L=200-s.width*k/2,T=162-s.depth*k/2;

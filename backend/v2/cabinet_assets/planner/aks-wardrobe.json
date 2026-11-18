@@ -37,6 +37,66 @@
       "right": {
         "file": "MF_AKS_250_right.fr3d",
         "sha": "e3ab0fc700993432ebb433764daf52b7b836bbd510d6c80595b988ed18fc9c5c"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_250_left_shared18.fr3d",
+          "sha": "e6c686380e647bfe297466c550ef5bc2d56d9aa59116858e9e0c84d3c36543fe",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              209.5,
+              -9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_250_right_shared18.fr3d",
+          "sha": "cf02a6859028145ac0d324794648d2f0d0123fca178422f1d7c94f320001ca98",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              209.5,
+              9.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_250_left_sharedAlt18.fr3d",
+          "sha": "4f95ecacf81747fcf943799afcd60ab766c86b6f01cddd7507202380676a726f",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              209.5,
+              9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_250_right_sharedAlt18.fr3d",
+          "sha": "f0b05b07dc4f1791e642f64783cd5fe2be5a7391f73e6c81486b37757faa3251",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              209.5,
+              -9.0
+            ]
+          ]
+        }
       }
     },
     "300": {
@@ -80,6 +140,66 @@
       "right": {
         "file": "MF_AKS_300_right.fr3d",
         "sha": "2b8f0e9b50a3e536e325c5745d3bb92bf0f75f2fd3b73f6d12b4f6dc1b7cd0f9"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_300_left_shared18.fr3d",
+          "sha": "f8c55d6c6d625fb8254f1edb62eb0a3ff27251d56c903d7bc979da813a66b5f6",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              261.5,
+              -9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_300_right_shared18.fr3d",
+          "sha": "82565ddbe900aaea32f4458e4f4539614fc2991d4d2f04a9bfbaa3b0fec27fc9",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              261.5,
+              9.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_300_left_sharedAlt18.fr3d",
+          "sha": "b7fb80d4c0c4dc81cfa1e108251150344603de3a93b656d1d88ead58ce3e473b",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              261.5,
+              9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_300_right_sharedAlt18.fr3d",
+          "sha": "8b1b878cc3a2c1fb0930e924a335fe49e122838fd8c834410ed1c35c99d034e6",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              261.5,
+              -9.0
+            ]
+          ]
+        }
       }
     },
     "350": {
@@ -123,6 +243,66 @@
       "right": {
         "file": "MF_AKS_350_right.fr3d",
         "sha": "4a535eac7055cdc45344ef00de193d7c239930d0ab67c59cd814ddadd36f9ebf"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_350_left_shared18.fr3d",
+          "sha": "43f919e32772b358b9ce8007bfcc689c1cf4f4f2174cbded32ac0fe981a692fb",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              289.5,
+              -9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_350_right_shared18.fr3d",
+          "sha": "af157a94b9d1bf028a10125e4083a756a57380f9a25dd5e5829fbcac5e131263",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              289.5,
+              9.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_350_left_sharedAlt18.fr3d",
+          "sha": "b2dcde97ae74c4caf7b7eb1b1f3b7eda45de287a1507033c6b4084042074a45d",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              289.5,
+              9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_350_right_sharedAlt18.fr3d",
+          "sha": "a42763872eb2b11abf70197070b13ef80c6d3316d2244dc4ba9122c35e7ed756",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              289.5,
+              -9.0
+            ]
+          ]
+        }
       }
     },
     "400": {
@@ -170,6 +350,74 @@
       "right": {
         "file": "MF_AKS_400_right.fr3d",
         "sha": "7d0c3b476acff01c110dc7ca269636093c86f6066052f223249a98098f6645fd"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_400_left_shared18.fr3d",
+          "sha": "2007597f2e07c019f11b08c9fec979e02e032669d9a6f9353728ba6c923083a2",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              229.0,
+              0.0
+            ],
+            [
+              339.0,
+              -11.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_400_right_shared18.fr3d",
+          "sha": "5a2e2df9d9988fff9b82123951d0c3e369d3d1975df3eb64de55f3370d5a6c88",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              339.0,
+              7.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_400_left_sharedAlt18.fr3d",
+          "sha": "01805feeb72c7d85b4ffcd8a1307710d37722547dea489f3679fce431476528c",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              229.0,
+              0.0
+            ],
+            [
+              339.0,
+              7.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_400_right_sharedAlt18.fr3d",
+          "sha": "30d7646c2cc627331eab35522a91e1699241f32fc7ef95ddcc1c9e10e000b5e8",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              339.0,
+              -11.0
+            ]
+          ]
+        }
       }
     },
     "450": {
@@ -221,6 +469,82 @@
       "right": {
         "file": "MF_AKS_450_right.fr3d",
         "sha": "345c31e266772fc8c66117dc388d6f24be59a72e2d0e30845c358862fc3f4e9b"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_450_left_shared18.fr3d",
+          "sha": "50873562cb03888f232ed1808387b65dd1c447830503031056419ab5a78b9629",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              197.0,
+              0.0
+            ],
+            [
+              390.0,
+              -9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_450_right_shared18.fr3d",
+          "sha": "ad03fa8e6556205bb283969d6171020ba919b37c89d9b9bf43fb34e2419a02ca",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              261.0,
+              0.0
+            ],
+            [
+              390.0,
+              9.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_450_left_sharedAlt18.fr3d",
+          "sha": "6b0d309c0025ee3d83df92db645f068cc00b01d01ac6791eef2e75f84b8aa77a",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              197.0,
+              0.0
+            ],
+            [
+              390.0,
+              9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_450_right_sharedAlt18.fr3d",
+          "sha": "7bc88c40f02fa2584244b9a22bb3ce982f0b6df61aee22991876c3a4ecf37625",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              261.0,
+              0.0
+            ],
+            [
+              390.0,
+              -9.0
+            ]
+          ]
+        }
       }
     },
     "500": {
@@ -272,6 +596,82 @@
       "right": {
         "file": "MF_AKS_500_right.fr3d",
         "sha": "67f28f309b41fbdeffb968e4305a63dfecc9e276ec269adcdfbb1b59a5cb3e4b"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_500_left_shared18.fr3d",
+          "sha": "982d8a7b8bf8e777c055e4518555ff5a1add3ab8bc80a21b0b63519434220a90",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              229.0,
+              0.0
+            ],
+            [
+              440.0,
+              -9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_500_right_shared18.fr3d",
+          "sha": "a54d5767aaaded59b21eccbde404f39afbc3e3501112bc0744a44d40a78c3426",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              293.0,
+              0.0
+            ],
+            [
+              440.0,
+              9.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_500_left_sharedAlt18.fr3d",
+          "sha": "5982c5e76289382dfcdbae6cf23ab772da2f68c3660c4d22f9e3b89e48094d51",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              229.0,
+              0.0
+            ],
+            [
+              440.0,
+              9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_500_right_sharedAlt18.fr3d",
+          "sha": "56a544029687c40a67e149383e0eb280ea83bf534949134685eaa26fdf736f44",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              293.0,
+              0.0
+            ],
+            [
+              440.0,
+              -9.0
+            ]
+          ]
+        }
       }
     },
     "550": {
@@ -323,6 +723,82 @@
       "right": {
         "file": "MF_AKS_550_right.fr3d",
         "sha": "693713cd98b732f5139bf8863afff9e2a86c2381f47a89be4e105b3a09b4e0b3"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_550_left_shared18.fr3d",
+          "sha": "edb5234531b6bcf8273c4fa5e2b31ce53d080d978547d7fe760b46e5f2de94ac",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              293.0,
+              0.0
+            ],
+            [
+              489.5,
+              -9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_550_right_shared18.fr3d",
+          "sha": "921f0b702c123ee74b643aa22a8750c7e62ad90469b1eac2627419d2394acef3",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              357.0,
+              0.0
+            ],
+            [
+              489.5,
+              9.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_550_left_sharedAlt18.fr3d",
+          "sha": "422f7b567c98e17c0a324a05f13cbe1d8566cc81f55b3d32dcf66a74664472d0",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              293.0,
+              0.0
+            ],
+            [
+              489.5,
+              9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_550_right_sharedAlt18.fr3d",
+          "sha": "514f9517da6cb8101c858aaf68e45659715f5681bbe29736215c3c61466708e8",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              357.0,
+              0.0
+            ],
+            [
+              489.5,
+              -9.0
+            ]
+          ]
+        }
       }
     },
     "600": {
@@ -374,6 +850,82 @@
       "right": {
         "file": "MF_AKS_600_right.fr3d",
         "sha": "f6e88128b0440ad6c979328267f539657cdf1f1c89b9f84c82e6dc7144329548"
+      },
+      "shared": {
+        "left": {
+          "file": "MF_AKS_600_left_shared18.fr3d",
+          "sha": "121393a02187764ab3b640e04ce98f86fa1c1b4e5a884f097b6056d62c831611",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              325.0,
+              0.0
+            ],
+            [
+              539.0,
+              -9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_600_right_shared18.fr3d",
+          "sha": "20e8faffb01ea83f185f695112598e1f379088e376c554e4d03d368af9b1ed4c",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              389.0,
+              0.0
+            ],
+            [
+              539.0,
+              9.0
+            ]
+          ]
+        }
+      },
+      "sharedAlt": {
+        "left": {
+          "file": "MF_AKS_600_left_sharedAlt18.fr3d",
+          "sha": "2199cb36308f545a944b0b68828d3f8662b2b3cacf4d604a319efcc609047e50",
+          "fixed": [
+            [
+              37.0,
+              0.0
+            ],
+            [
+              325.0,
+              0.0
+            ],
+            [
+              539.0,
+              9.0
+            ]
+          ]
+        },
+        "right": {
+          "file": "MF_AKS_600_right_sharedAlt18.fr3d",
+          "sha": "c09e349260d2da0a7d2799843894dd64ca4a0ec3daacb11127150c95fcd91ce3",
+          "fixed": [
+            [
+              101.0,
+              0.0
+            ],
+            [
+              389.0,
+              0.0
+            ],
+            [
+              539.0,
+              -9.0
+            ]
+          ]
+        }
       }
     }
   },

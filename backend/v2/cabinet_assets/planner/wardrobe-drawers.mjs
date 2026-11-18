@@ -1,3 +1,4 @@
+import {rightBankOffset,levelOf,splitAt,columnWidths} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {fittedFaceHeights,frontEdgeGap,coverClearance,mm} from './wardrobe-niches.mjs';
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
@@ -63,23 +64,31 @@ function frontHeights(bank,n){
 
 export function drawerSections(s,widths,legacy=false){
  const banks=s.drawerBanks??Array(widths.length).fill(null);
- if(banks.length<widths.length||banks.length>33)throw Error('Проверьте количество ниш с шуфлядами.');
+ if(banks.length<widths.length||banks.length>66)throw Error('Проверьте количество ниш с шуфлядами.');
  return banks.map((bank,slot)=>{
   if(!bank)return null;
-  const i=slot%3,clear=widths[i];
-  if(clear==null)throw Error('Проверьте секцию шуфляд.');
-  const left=-s.width/2+s.thickness+widths.slice(0,i).reduce((sum,w)=>sum+w+s.thickness,0),right=left+clear;
+  const i=slot%3,sectionWidth=widths[i];
+  if(sectionWidth==null)throw Error('Проверьте секцию шуфляд.');
+  const split=splitAt(s,i,levelOf(slot)),shared=split?.kind==='drawers',rightBank=slot>=rightBankOffset;
+  if(rightBank&&!shared)throw Error('Для правого блока нужна общая перегородка.');
+  const halves=shared?columnWidths(split,sectionWidth):null;
+  const clear=shared?halves[Number(rightBank)]:sectionWidth;
+  const left=-s.width/2+s.thickness+widths.slice(0,i).reduce((sum,w)=>sum+w+s.thickness,0)+(rightBank?halves[0]+18:0),right=left+clear;
   const internal=bank.kind==='internal';
   if(!internal&&bank.kind!=='external')throw Error('Выберите исполнение шуфляд.');
   const swing=s.front?.swing,n=i+1;
   if(internal&&!swing)throw Error('Секция '+n+': для внутренних шуфляд выберите распашную дверь.');
-  const spacerL=internal&&i===0&&['left','pair'].includes(swing)?18:0;
-  const spacerR=internal&&i===widths.length-1&&['right','pair'].includes(swing)?18:0;
+  const spacerL=internal&&!rightBank&&i===0&&['left','pair'].includes(swing)?18:0;
+  const spacerR=internal&&(!shared||rightBank)&&i===widths.length-1&&['right','pair'].includes(swing)?18:0;
   const mountWidth=clear-spacerL-spacerR;
   if(mountWidth<163)throw Error('Секция '+n+': монтажный проём AKS должен быть от 163 мм.');
   const center=(left+spacerL+right-spacerR)/2;
-  const lo=internal?left+spacerL:left-(i===0?s.thickness:s.thickness/2);
-  const hi=internal?right-spacerR:right+(i===widths.length-1?s.thickness:s.thickness/2);
+  let lo=internal?left+spacerL:left-(i===0?s.thickness:s.thickness/2);
+  let hi=internal?right-spacerR:right+(i===widths.length-1?s.thickness:s.thickness/2);
+  if(shared){
+   const overlap=split.edge==='overlay'?9:0;
+   if(rightBank)lo=left-overlap;else hi=right+overlap;
+  }
   const maxWidth=hi-lo-3,heights=frontHeights(bank,n);
   const offset=bank.bottomOffset??0;
   if(!Number.isInteger(offset)||offset<0||offset>3000)throw Error('Положение блока задаётся в целых мм от 0 до 3000.');
@@ -130,7 +139,9 @@ export function buildDrawerBoards(spec,banks,add){
 export function doorZones(s,leaves,banks){
  if(!banks.some(b=>b&&!b.internal))return leaves;
  const reference=banks.find(Boolean);
- const seam=s.sections===2&&leaves.length===2?(reference.section===0?reference.right+s.thickness/2:reference.left-s.thickness/2)+s.width/2:null;
+ const seam=s.sections===2&&leaves.length===2?(s.nicheSplits?.some(z=>z.kind==='drawers')?
+   (s.dividerPositions?.[0]??Math.ceil((s.width-3*s.thickness)/2))+1.5*s.thickness:
+   (reference.section===0?reference.right+s.thickness/2:reference.left-s.thickness/2)+s.width/2):null;
  return leaves.map((l,i)=>{
   const left=seam!==null&&i===1?seam+1.5:l.left;
   const width=seam===null?l.width:i?s.width-seam-3:seam-3;

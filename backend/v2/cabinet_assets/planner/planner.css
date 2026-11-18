@@ -155,7 +155,7 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 .mf-webgl #planner-feedback:not([data-error=true]){border-color:#8cbcff;background:#edf5fff2;color:#145cc4}
 
 #item-controls.whole-cabinet > :not(#cabinet-actions):not(.mf3d-section-head){display:none!important}
-#cabinet-actions[hidden],#cabinet-select[hidden],#cabinet-row-height[hidden]{display:none!important}
+#cabinet-edit[hidden],#cabinet-actions[hidden],#cabinet-select[hidden],#cabinet-row-height[hidden]{display:none!important}
 #cabinet-actions{display:grid;gap:8px}
 #cabinet-select,#cabinet-row-height{margin-top:8px}
 #cabinet-xray[aria-pressed=true],#cabinet-row-height{background:#e8f3ff;color:#184978;border-color:#76a7d5}

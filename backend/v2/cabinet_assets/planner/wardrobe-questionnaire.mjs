@@ -14,6 +14,13 @@ export function wardrobeSpec(f){
  if(!Number.isInteger(sections)||sections<1||sections>3||!Array.isArray(counts)||counts.length!==sections)throw Error('Выберите от одной до трёх секций.');
  if(counts.some(n=>!Number.isInteger(n)||n<0||n>10))throw Error('В секции может быть от 0 до 10 полок.');
  const spec={recipe:sections===1?'shelves':'divided',width:Number(f.width),height:Number(f.height),depth:Number(f.depth),thickness:Number(f.thickness),shelves:Math.max(...counts),sections,sectionShelves:[...counts],back:f.back,elevation:f.elevation??0,shelfSetback:1,dividerSetback:1,shelfGap:f.shelfGap??0,edgeThickness:f.edgeThickness??1,edgePolicy:f.edgePolicy??'front'};
+ if(f.clearLayout)spec.clearLayout=true;
+ if(f.drawerFixing||f.bottomFit==='none'||f.nicheSplits?.length)spec.drawerFixing=f.drawerFixing??'cam_dowel';
+ if(spec.drawerFixing&&!['cam_dowel','confirmat'].includes(spec.drawerFixing))throw Error('Выберите крепёж полок у шуфляд.');
+ if(f.gapLocks?.some(row=>row?.length))spec.gapLocks=counts.map((n,i)=>(f.gapLocks[i]??[]).filter(k=>k<=n));
+ if(f.topGaps?.some(n=>n!=null))spec.topGaps=Array.from({length:sections},(_,i)=>f.topGaps[i]??null);
+ if(f.nicheSplits?.length)spec.nicheSplits=structuredClone(f.nicheSplits);
+ if(f.bottomFit==='none'){spec.bottomFit='none';if(f.braceOffset)spec.braceOffset=f.braceOffset;}
  if(f.shelfLevels){
    const levels=counts.map((count,section)=>Array.from({length:count},(_,i)=>f.shelfLevels[section]?.[i]??null));
    if(levels.some(row=>row.some(Boolean)))spec.shelfLevels=levels;
@@ -23,7 +30,7 @@ export function wardrobeSpec(f){
  for(const key of ['topFit','bottomFit'])if(f[key]==='overlay')spec[key]='overlay';
  if(f.feet)spec.feet={layout:'width',article:f.feet.article,front:f.feet.front,rear:f.feet.rear,...(f.feet.left==='side'?{left:'side'}:{}),...(f.feet.right==='side'?{right:'side'}:{})};
  if(f.dividerPositions!=null&&sections>1)spec.dividerPositions=[...f.dividerPositions];
- if(f.joints && (f.joints.top!=='none'||f.joints.bottom!=='none'))spec.joints={...f.joints};
+ if(f.joints && (f.joints.top!=='none'||f.joints.bottom!=='none'))spec.joints={...f.joints,...(spec.bottomFit==='none'?{bottom:'none'}:{})};
  if(sections>1&&spec.thickness===18){
    const settings={...f};resizeDividerChoices(settings);
    spec.dividerJoints=settings.dividerJoints.map((row,i)=>{
@@ -40,7 +47,7 @@ export function wardrobeSpec(f){
  const rows=prepareDrawerCovers(spec);
  for(const [section,row] of rows.entries())for(const [level,value] of row.entries()){
    const c=choice(value,spec.thickness);
-   if(c.scheme&&spec.thickness!==18&&!spec.drawerBanks?.[section+3*level]?.coverFixing)throw Error('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.');
+   if(c.scheme&&spec.thickness!==18&&![section+3*level,section+3*(level+1)].some(slot=>spec.drawerBanks?.[slot]?.layout))throw Error('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.');
  }
  if(!rows.some(row=>row.some(value=>value!==defaultShelf)))delete spec.shelfChoices;
  if(spec.drawerBanks)spec.drawerBanks=fitNicheBanks(spec,spec.drawerBanks);

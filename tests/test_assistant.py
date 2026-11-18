@@ -339,3 +339,29 @@ def test_aks_cover_gap_and_fixing_match_received_scene():
             assert CarcassDesign.model_validate(spec).drawerBanks[0].coverFixing==scheme
             with pytest.raises(ValidationError,match='закреплённая полка'):
                 CarcassDesign.model_validate({**spec,'shelfChoices':[['board/95388']]})
+
+
+def test_reopen_and_update_split_bottomless_wardrobe(api,admin_user):
+    from backend.v2.three_d_document import hardware_for
+    bank=dict(kind='internal',layout='equal',gap=12,coverFixing='confirmat',bottomOffset=100,height=646,faces=[{'height':None}]*2)
+    drawers=[None]*34
+    drawers[0]=drawers[33]=bank
+    spec={**SPEC,'width':1000,'height':2400,'shelves':1,'sectionShelves':[1],'shelfSetback':1,'dividerSetback':1,
+          'bottomFit':'none','clearLayout':True,'drawerFixing':'confirmat','drawerBanks':drawers,
+          'front':{'swing':'pair','offset':90,'autoHinges':True},'shelfChoices':[['board/confirmat']],
+          'shelfLevels':[[{'mode':'floor','mm':764}]],'nicheSplits':[
+              {'section':0,'level':0,'kind':'drawers','edge':'overlay'},
+              {'section':0,'level':1,'kind':'shelves','leftWidth':425,'columns':[{'gaps':[500,None,None],'locks':[0]},{'gaps':[500,600,None]}]}]}
+    scene=generated_scene(spec)
+    made=api.post('/api/v2/3d-projects',json={'name':'QA · деление ниши','scene':scene})
+    assert made.status_code==201,made.text
+    url='/api/v2/3d-projects/'+made.json()['project_id']
+    saved=api.get(url).json()
+    group=saved['scene']['items'][0]['assistant_carcass']['group_id']
+    assert all(i['assistant_carcass']['spec']==spec for i in saved['scene']['items'])
+    face=next(i for i in saved['scene']['items'] if i['item_id'].endswith(':drawer-33-0-face'))
+    assert any('3,5×18' in r['name'] for r in hardware_for(face)[0])
+    face['production_note']='Проверено после открытия'
+    update=api.patch(url,json={'name':saved['name'],'version':saved['version'],'scene':saved['scene']})
+    assert update.status_code==200,update.text
+    assert {i['assistant_carcass']['group_id'] for i in api.get(url).json()['scene']['items']}=={group}

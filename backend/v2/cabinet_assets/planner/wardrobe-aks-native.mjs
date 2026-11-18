@@ -1,3 +1,4 @@
+import {splitAt,levelOf,splitKey,rightBankOffset} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
@@ -48,10 +49,13 @@ export function wardrobeHardware(items){
     host_blank_id:hosts[0].item_id,joined_panel_id:hosts[1].item_id,
     position:{...worldPoint({x,z},rotation),y},rotation,elastic_resize:false});
   };
+  const sharedSeats=new Map();
   spec.drawerBanks.forEach((bank,slot)=>{
    if(!bank)return;
    const section=slot%3,prefix='drawer-'+slot+'-',railAxes=[],sides=['left','right'];
    const panels=sides.map((side,k)=>get(k===0?(section===0?'left':'divider-'+(section-1)):(section===spec.sections-1?'right':'divider-'+section)));
+   const split=splitAt(spec,section,levelOf(slot)),shared=split?.kind==='drawers',innerSide=slot>=rightBankOffset?0:1;
+   if(shared)panels[innerSide]=get(splitKey(split)+'-divider');
    const spacers=sides.map(side=>parts.get(prefix+'spacer-'+side));
    const axes=sides.map((side,k)=>spacers[k]?doorHinges(get('door-'+side),items).map(h=>h.position.y):[]);
    const cuts=spacers.map(p=>p?installedCuts(p,items):[]);
@@ -69,7 +73,15 @@ export function wardrobeHardware(items){
      const faceClear=sign*(at(face).x-(at(panels[k]).x+sign*panels[k].width/2))-face.width/2;
      if(faceClear<23.6&&axes[k].some(y=>frontAtHinge(face.elevation_mm,face.height,y,side)))throw Error('Фасад шуфляды '+(index+1)+' пересекает петлю. Пересчитайте ширину фасада в анкете шкафа.');
      const label='PRIME by AKS '+cat.article+' · '+L+' мм · '+(k?'правая':'левая')+' · '+face.name;
-     add('rail',cat[side],label,[host,sideParts[k]],mount,ax,front);
+     let source=cat[side];
+     if(shared&&k===innerSide){
+       const used=sharedSeats.get(host.item_id)??[];
+       source=[cat.shared[side],cat.sharedAlt[side]].find(pattern=>pattern.fixed.every(([z,dy])=>used.every(p=>Math.hypot(p.y-ax-dy,p.z-front+z)>=4)));
+       if(!source)throw Error('Встречные шурупы 18 мм на общей стойке. Проверьте уровни направляющих.');
+       for(const [z,dy] of source.fixed)used.push({z:front-z,y:ax+dy});
+       sharedSeats.set(host.item_id,used);
+     }
+     add('rail',source,label,[host,sideParts[k]],mount,ax,front);
      const inset=Math.min(50,left.height/3);
      for(const end of [fore,rear])for(const level of [y+inset,y+left.height-inset]){
       add('bolt',aks.joints[k?'boltRight':'boltLeft'],'Конфирмат 7×50 · '+end.name,[sideParts[k],end],box,level,at(end).z);

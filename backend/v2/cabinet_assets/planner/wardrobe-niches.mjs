@@ -1,5 +1,6 @@
 import {shelfUndersides} from './shelf-levels.mjs';
 import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
+import {levelOf,openingBase} from './wardrobe-layout.mjs';
 import {footHeight} from './plinth-options.mjs';
 
 // Three stable section slots per shelf level. Old, free-positioned blocks occupy the first row.
@@ -11,10 +12,10 @@ export function nicheOpenings(spec,section){
   const count=spec.sectionShelves?.[section]??spec.shelves;
   const thick=Array.from({length:count},(_,i)=>choice(spec.shelfChoices?.[section]?.[i]??defaultShelf,spec.thickness).thickness);
   const ceiling=spec.height-spec.thickness;
-  const levels=shelfUndersides(spec,section,spec.thickness,ceiling,thick,(spec.elevation??0)+footHeight(spec));
+  const levels=shelfUndersides(spec,section,openingBase(spec,section),ceiling,thick,(spec.elevation??0)+footHeight(spec));
   return [...levels,ceiling].map((top,i)=>({
-    bottom:i?levels[i-1]+thick[i-1]:spec.thickness,top,
-    overlayBottom:i?Math.round(levels[i-1]+thick[i-1]/2):0,
+    bottom:i?levels[i-1]+thick[i-1]:openingBase(spec,section),top,
+    overlayBottom:i?Math.round(levels[i-1]+thick[i-1]/2):Math.max(0,openingBase(spec,section)-spec.thickness),
     overlayTop:i<count?Math.round(top+thick[i]/2):spec.height
   }));
 }
@@ -30,7 +31,7 @@ export function fitNicheBanks(spec,banks){
   const result=trimBanks(banks,spec.sections),openings=new Map();
   return result.map((bank,slot)=>{
     if(!bank)return null;
-    const section=slot%3,level=Math.floor(slot/3);
+    const section=slot%3,level=levelOf(slot);
     if(section>=spec.sections)throw Error('Проверьте секцию блока шуфляд.');
     if(!bank.layout){
       if(level)throw Error('Свободный блок шуфляд должен быть привязан к своей секции.');
@@ -54,13 +55,14 @@ export const isInternalNiche=bank=>bank?.kind==='internal'&&Boolean(bank.layout)
 export function prepareDrawerCovers(spec){
   const rows=shelfRows(spec);
   for(const [slot,bank] of (spec.drawerBanks??[]).entries()){
-    if(!isInternalNiche(bank))continue;
-    const section=slot%3,level=Math.floor(slot/3),row=rows[section];
+    if(!bank?.layout||!isInternalNiche(bank)&&!spec.drawerFixing)continue;
+    const section=slot%3,level=levelOf(slot),row=rows[section];
     if(!row||level>row.length)throw Error('Для выбранной ниши не хватает полок.');
     const previous=row[level];
-    bank.coverFixing??=previous==='board/confirmat'?'confirmat':'cam_dowel';
-    if(!['cam_dowel','confirmat'].includes(bank.coverFixing))throw Error('Выберите крепление полки над шуфлядами.');
-    if(previous===undefined||!previous.startsWith('board/')){
+    const fixing=spec.drawerFixing??bank.coverFixing??(previous==='board/confirmat'?'confirmat':'cam_dowel');
+    if(bank.kind==='internal')bank.coverFixing=fixing;
+    if(!['cam_dowel','confirmat'].includes(fixing))throw Error('Выберите крепление полки над шуфлядами.');
+    if(previous===undefined||!previous.startsWith('board/')||spec.drawerFixing&&level>0&&!row[level-1].startsWith('board/')){
       const openings=nicheOpenings({...spec,shelfChoices:rows},section);
       const floor=(spec.elevation??0)+footHeight(spec);
       spec.shelfLevels??=spec.sectionShelves.map(n=>Array(n).fill(null));
@@ -72,7 +74,8 @@ export function prepareDrawerCovers(spec){
         spec.shelves=Math.max(...spec.sectionShelves);
       }
     }
-    row[level]='board/'+bank.coverFixing;
+    row[level]='board/'+fixing;
+    if(spec.drawerFixing&&level>0)row[level-1]='board/'+fixing;
   }
   if(rows.some(row=>row.some(value=>value!==defaultShelf)))spec.shelfChoices=rows;
   return rows;

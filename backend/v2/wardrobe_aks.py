@@ -5,8 +5,8 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).parent
-KIT_NAME = 'Martin_Forest_AKS_19mm_v9_9_30.zip'
-IMPORTER_NAME = 'Martin_Forest_Import_v9_9_30.js'
+KIT_NAME = 'Martin_Forest_AKS_19mm_v9_9_31.zip'
+IMPORTER_NAME = 'Martin_Forest_Import_v9_9_31.js'
 
 
 @lru_cache(maxsize=1)

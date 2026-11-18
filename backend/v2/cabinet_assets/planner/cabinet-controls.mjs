@@ -24,8 +24,11 @@ export class CabinetControls{
      const [dx,dz]=this.offsets.map(i=>i.valueAsNumber);
      if(app.interaction.nudge(dx,dz))this.offsets.forEach(i=>i.value='0');
    }));
-   this.edit=button('Редактировать шкаф',()=>app.assistant?.open('update'));
-   this.panel.append(this.edit,button('Удалить шкаф',()=>app.interaction.remove()),button('Выбрать деталь',()=>{
+   this.edit=button('Редактировать в конструкторе',()=>app.assistant?.open('update'));
+   this.edit.id='cabinet-edit';this.edit.hidden=true;document.getElementById('planner-tools').append(this.edit);
+   this.panelEdit=button('Редактировать шкаф',()=>app.assistant?.open('update'));
+   this.panel.append(this.panelEdit);
+   this.panel.append(button('Удалить шкаф',()=>app.interaction.remove()),button('Выбрать деталь',()=>{
      app.scene.cabinetSelection=null;app.sync();
    }));
    title.closest('.mf3d-section-head').after(this.panel);
@@ -55,7 +58,8 @@ export class CabinetControls{
    this.xray.setAttribute('aria-pressed',String(this.xrayEnabled));
    this.panel.hidden=!scene.cabinetSelection;this.choose.hidden=!id||!this.panel.hidden;
    this.part.hidden=!scene.xrayEnabled||!scene.pickedInterior;this.part.textContent=scene.pickedInterior?.name||'';
-   this.edit.hidden=!this.app.assistant?.button;
+   this.edit.hidden=!this.app.assistant?.button||!id||!['shelves','divided'].includes(it.assistant_carcass.spec.recipe);
+   this.panelEdit.hidden=this.edit.hidden;
    document.getElementById('item-controls').classList.toggle('whole-cabinet',!this.panel.hidden);
    if(!this.panel.hidden){
      const s=it.assistant_carcass.spec;this.size.textContent='Шкаф целиком · '+s.width+' × '+s.height+' × '+s.depth+' мм';

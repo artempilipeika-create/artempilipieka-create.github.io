@@ -4,7 +4,7 @@ export function shelfUndersides(spec, section, base, ceiling, thicknesses, floor
  const limits=spec.shelfLevels?.[section];
  const count=thicknesses.length;
  if(!count)return [];
- if(!limits?.some(Boolean)&&!hasDrawers){
+ if(!limits?.some(Boolean)&&!hasDrawers&&!spec.clearLayout){
    const free=ceiling-base-count*spec.thickness;
    if(free<(count+1)*60)throw Error('Для полок недостаточно высоты.');
    return thicknesses.map((t,i)=>base+Math.round((i+1)*free/(count+1))+(i+1)*spec.thickness-t);
@@ -30,7 +30,10 @@ export function shelfUndersides(spec, section, base, ceiling, thicknesses, floor
      end++;
    }
    const boundary=end<count?levels[end].mm-floor:ceiling;
+   const tail=end===count?spec.topGaps?.[section]:null;
+   if(tail!=null){used+=tail;spaces--;}
    const free=boundary-top-used;
+   if(!spaces&&free!==0)throw Error('Освободите один проём для остатка.');
    if(free<60*spaces)throw Error('Секция '+(section+1)+': для заданных полок не хватает '+Math.ceil(60*spaces-free)+' мм.');
    let distributed=0;
    for(;i<end;i++){
@@ -39,5 +42,7 @@ export function shelfUndersides(spec, section, base, ceiling, thicknesses, floor
      place(i,top+gap);
    }
  }
+ const tail=spec.topGaps?.[section];
+ if(tail!=null&&ceiling-top!==tail)throw Error('Проверьте закреплённый верхний проём.');
  return out;
 }

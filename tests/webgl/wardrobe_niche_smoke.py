@@ -57,7 +57,7 @@ def exercise(live=False):
             context=browser.new_context(viewport={'width':int(os.getenv('MF_QA_WIDTH','1440')),'height':int(os.getenv('MF_QA_HEIGHT','1000'))})
             context.route('**/*',request)
             page=context.new_page()
-            page.set_default_timeout(7000)
+            page.set_default_timeout(20000)
             page.on('pageerror',lambda exc:errors.append(str(exc)))
             page.goto(ORIGIN+'/constructor',wait_until='domcontentloaded')
             page.locator('#planner-assistant').wait_for(state='attached',timeout=45000)
@@ -76,6 +76,7 @@ def exercise(live=False):
             step(4);form.get_by_label('Исполнение фасада',exact=True).select_option('pair')
             step(3)
             choose(1,0,'data-shelf-index')
+            form.get_by_text('Монтажная отметка от пола',exact=True).click()
             form.get_by_label('От пола до низа полки, мм',exact=True).fill('650')
             choose(0,0,'data-niche');button('Добавить шуфляды').click()
             gap=form.get_by_label('Зазор между фасадами, мм',exact=True)
@@ -132,7 +133,7 @@ def exercise(live=False):
             gap.fill('400');stable()
             expect(form.locator('[data-bank-result]')).to_contain_text('100 до 3000')
             gap.fill('30');stable()
-            fixing=form.get_by_label('Крепление полки над шуфлядами',exact=True)
+            fixing=form.get_by_label('Крепёж полок у шуфляд и заднего ребра',exact=True)
             assert fixing.input_value()=='cam_dowel'
             fixing.select_option('confirmat');stable();fixing.select_option('cam_dowel')
             expect(form.locator('[data-bank-result]')).to_contain_text('178,25')
@@ -162,6 +163,59 @@ def exercise(live=False):
                 for name,digest in {(it['source_file'],it['source_sha256']) for it in payload['items']}:
                     assert hashlib.sha256(kit.read('Martin Forest AKS/'+name)).hexdigest()==digest,name
             print('PASS 800 × 2200, niche 418, two 725 × 178.25 fronts, 30 mm gaps, six front screws, both 19 mm spacer donors; download',len(payload['items']),'items',flush=True)
+            layout_id=str(uuid4())
+            projects.projects[layout_id]={'project_id':layout_id,'name':'QA · повторное редактирование','version':1,
+                'scene':{'schema_version':2,'room':{'width':5000,'height':2700,'depth':3600,'setup_complete':True},'items':[]}}
+            page.evaluate('id=>MF_PLANNER.bridge.open(id)',layout_id)
+            page.locator('#planner-assistant').click()
+            form.get_by_label('Ширина, мм',exact=True).fill('1000')
+            form.get_by_label('Высота корпуса, мм',exact=True).fill('2400')
+            form.get_by_label('Конструкция дна').select_option('none')
+            step(4);form.get_by_label('Исполнение фасада',exact=True).select_option('pair')
+            step(3);button('Полки').click()
+            form.get_by_label('Полок в секции 1').select_option('1')
+            form.get_by_text('Монтажная отметка от пола',exact=True).click()
+            form.get_by_label('От пола до низа полки, мм').fill('764')
+            button('Шуфляды').click();button('Добавить шуфляды').click()
+            form.get_by_label('Количество шуфляд',exact=True).fill('2')
+            form.get_by_label('Крепёж полок у шуфляд и заднего ребра').select_option('confirmat')
+            button('Перегородка').click();button('Разделить шуфляды на левый и правый блок').click()
+            form.get_by_label('Передний торец общей стойки').select_option('overlay')
+            form.get_by_label('Ниша для перегородки').select_option('1')
+            button('Добавить перегородку для полок').click()
+            form.get_by_label('Полок в выбранной колонке').select_option('2')
+            form.get_by_label('Нижний проём, мм',exact=True).fill('500')
+            button('Зафиксировать размер').click();button('Расставить полки равномерно').click()
+            expect(form.get_by_text('Проёмы снизу вверх · 500 / 532 / 532 мм')).to_be_visible()
+            button('Правая').click()
+            form.get_by_label('Полок в выбранной колонке').select_option('2')
+            form.get_by_label('Нижний проём, мм',exact=True).fill('500')
+            form.locator('.wardrobe-figure [data-split-section="1"][data-column="1"][data-clear-level="1"]').click()
+            form.get_by_label('Между полками 1 и 2, мм').fill('600')
+            expect(form.get_by_text('Проёмы снизу вверх · 500 / 600 / 464 мм')).to_be_visible()
+            step(5);button('Проверить по размерам').click();button('Добавить в проект').click()
+            page.evaluate('()=>MF_PLANNER.bridge.save()')
+            page.evaluate('id=>MF_PLANNER.bridge.open(id)',layout_id)
+            group=page.evaluate("""()=>{const it=MF_PLANNER.adapter.items.find(i=>i.item_id.endsWith(':drawer-33-0-face'));MF_PLANNER.adapter.select(it.item_id);MF_PLANNER.sync();return it.assistant_carcass.group_id;}""")
+            edit=page.locator('#cabinet-edit')
+            expect(edit).to_be_visible();edit.click()
+            assert form.get_by_label('Действие со шкафом').input_value()=='update'
+            assert form.get_by_label('Конструкция дна').input_value()=='none'
+            form.get_by_label('Ширина, мм',exact=True).fill('1050')
+            step(5);button('Проверить по размерам').click();button('Применить изменения').click()
+            page.evaluate('()=>MF_PLANNER.bridge.save()');page.evaluate('id=>MF_PLANNER.bridge.open(id)',layout_id)
+            items=projects.projects[layout_id]['scene']['items']
+            assert {i['assistant_carcass']['group_id'] for i in items}=={group}
+            assert items[0]['assistant_carcass']['spec']['width']==1050
+            from backend.v2.three_d_api import Scene
+            Scene.model_validate(projects.projects[layout_id]['scene'])
+            with page.expect_download(timeout=30000) as event:page.locator('#export-bazis').click()
+            result=json.loads(Path(event.value.path()).read_text())
+            assert result['minimum_importer']=='9.9.31'
+            assert any(i.get('source_file','').endswith('_shared18.fr3d') for i in result['items'])
+            assert any(i.get('blank_item_id','').endswith(':rear-brace') for i in result['items'])
+            assert not any(i.get('blank_item_id','').endswith(':bottom') for i in result['items'])
+            print('PASS bottomless split wardrobe created, saved, reopened, edited to 1050 mm and exported',len(result['items']),'items',flush=True)
             assert not errors,errors
             print('PASS published assets' if live else 'PASS checkout assets','· pick, size, copy, edit, save, reopen ·',len(groups),'panels')
         except Exception:

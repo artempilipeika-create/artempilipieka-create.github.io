@@ -24,6 +24,7 @@ function innerAxes(spec){
 
 export function footPlan(spec){
  if(!spec?.feet)return [];
+ if(spec.bottomFit==='none'&&(spec.feet.article!=='118779'||innerAxes(spec).some(axis=>axis.index==null)))throw Error('Для этих опор требуется дно. Выберите корпус на стойках или торцевые опоры с опорной стойкой по центру.');
  const fitting=feetCatalogue.find(f=>f.article===spec.feet.article);
  if(!fitting)throw Error('Неизвестная модель опоры.');
  const {width,depth,thickness:t}=spec,{front,rear}=spec.feet;
@@ -49,7 +50,7 @@ export function footPlan(spec){
  axes.push({x:width-t/2,key:'right',scheme:specs});
  const rows=[];
  for(const axis of axes){
-   const host=spec.bottomFit==='overlay'?'bottom':axis.key;
+   const host=spec.bottomFit==='none'&&axis.divider?'divider-'+innerAxes(spec).find(a=>a.x===axis.x).index:spec.bottomFit==='overlay'?'bottom':axis.key;
    if(host==='bottom'&&t<=fitting.drillDepth)throw Error('Для глухой присадки опоры Ø8 × 16 мм в пласть нужно дно толще 16 мм.');
    for(const z of [depth/2-front,-depth/2+rear]){
      if(axis.scheme&&axis.scheme!=='none'){
@@ -67,7 +68,7 @@ export function panelFeet(item){
  const meta=item.assistant_carcass;
  if(!meta?.spec.feet||item.module_type!=='blank')return [];
  const key=item.item_id.slice(meta.group_id.length+1);
- if(!['bottom','left','right'].includes(key))return [];
+ if(!['bottom','left','right'].includes(key)&&!key.startsWith('divider-'))return [];
  return footPlan(meta.spec).filter(f=>f.host===key).map(f=>({...f,x:key==='bottom'?f.x:0}));
 }
 export function nativeFeet(items){

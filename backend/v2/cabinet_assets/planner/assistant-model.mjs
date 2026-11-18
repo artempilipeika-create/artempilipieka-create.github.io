@@ -10,7 +10,7 @@ import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -80,6 +80,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   else if(drawerBottom(item.item_id))item.body_variant_id=CARCASS_BACK_MATERIAL_ID;
   else if(drawerMember(item.item_id,'.+')){if(drawerMaterialId!==undefined)item.body_variant_id=drawerMaterialId;else if(spec.thickness===18&&bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;}
   else if(bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;
+  if(item.item_id===prefix+':rear-brace'){item.blank_edge_code='1100';item.blank_edge_thickness_mm=1;}
   if(item.item_id===prefix+':plinth')item.blank_edge_code='1111';
   return item;
  });
@@ -103,7 +104,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    const ends=dividerScheme(spec,i);
    return 'Стойка '+(i+1)+' · сверху: '+jointOptions[ends.top]+' · снизу: '+jointOptions[ends.bottom];
   }),
-  ...(spec.joints?['Крыша · '+jointQuantity(spec.joints.top),'Дно · '+jointQuantity(spec.joints.bottom)]:[]),
+  ...(spec.joints?['Крыша · '+jointQuantity(spec.joints.top),...(spec.bottomFit==='none'?[]:['Дно · '+jointQuantity(spec.joints.bottom)])]:[]),
+  ...(spec.bottomFit==='none'?['Без дна · заднее ребро 100 мм · кромка 1 мм по двум длинным торцам']:[]),
   ...(spec.shelfChoices?spec.shelfChoices.flatMap((row,i)=>{
    const quantities=new Map();
    for(const value of row)quantities.set(value,(quantities.get(value)||0)+1);

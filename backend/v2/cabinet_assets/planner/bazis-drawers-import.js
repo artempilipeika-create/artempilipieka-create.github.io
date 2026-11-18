@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.30 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.31 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -492,7 +492,7 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
   }
   const roll=item.joint_roll_deg??0;
   if(item.joint_back_face){
-    if(!JOINT_HASHES.has(item.source_sha256)||!['cam','dowel'].includes(item.joint_part)||![0,90,-90,180].includes(roll))throw Error('Некорректный крепёж задней стенки.');
+    if(!JOINT_HASHES.has(item.source_sha256)||!['cam','dowel','confirmat'].includes(item.joint_part)||![0,90,-90,180].includes(roll))throw Error('Некорректный крепёж задней стенки.');
     objectTransformation.RotateObject(obj,{x:1,y:0,z:0},90,true);
   }
   if(roll){
@@ -1265,6 +1265,38 @@ const DECOR_FOOT_HASHES=new Set(["8e5a16d9956d6cc3fe83bb956efa6f2fbbcf154021dae2
 function isPrimeHinge(item){return item.source_sha256==='fa4fb4dfa6310cdec87d25d683a7d5e1d5923470bed7ae25c3f35923cf7166a8';}
 function isWardrobeFoot(item){return item.source_sha256===LEVEL_FOOT_HASH||PLINTH_FOOT_HASHES.has(item.source_sha256)||DECOR_FOOT_HASHES.has(item.source_sha256);}
 const AKS_SOURCES={
+ "e6c686380e647bfe297466c550ef5bc2d56d9aa59116858e9e0c84d3c36543fe": "rail",
+ "4f95ecacf81747fcf943799afcd60ab766c86b6f01cddd7507202380676a726f": "rail",
+ "cf02a6859028145ac0d324794648d2f0d0123fca178422f1d7c94f320001ca98": "rail",
+ "f0b05b07dc4f1791e642f64783cd5fe2be5a7391f73e6c81486b37757faa3251": "rail",
+ "f8c55d6c6d625fb8254f1edb62eb0a3ff27251d56c903d7bc979da813a66b5f6": "rail",
+ "b7fb80d4c0c4dc81cfa1e108251150344603de3a93b656d1d88ead58ce3e473b": "rail",
+ "82565ddbe900aaea32f4458e4f4539614fc2991d4d2f04a9bfbaa3b0fec27fc9": "rail",
+ "8b1b878cc3a2c1fb0930e924a335fe49e122838fd8c834410ed1c35c99d034e6": "rail",
+ "43f919e32772b358b9ce8007bfcc689c1cf4f4f2174cbded32ac0fe981a692fb": "rail",
+ "b2dcde97ae74c4caf7b7eb1b1f3b7eda45de287a1507033c6b4084042074a45d": "rail",
+ "af157a94b9d1bf028a10125e4083a756a57380f9a25dd5e5829fbcac5e131263": "rail",
+ "a42763872eb2b11abf70197070b13ef80c6d3316d2244dc4ba9122c35e7ed756": "rail",
+ "2007597f2e07c019f11b08c9fec979e02e032669d9a6f9353728ba6c923083a2": "rail",
+ "01805feeb72c7d85b4ffcd8a1307710d37722547dea489f3679fce431476528c": "rail",
+ "5a2e2df9d9988fff9b82123951d0c3e369d3d1975df3eb64de55f3370d5a6c88": "rail",
+ "30d7646c2cc627331eab35522a91e1699241f32fc7ef95ddcc1c9e10e000b5e8": "rail",
+ "50873562cb03888f232ed1808387b65dd1c447830503031056419ab5a78b9629": "rail",
+ "6b0d309c0025ee3d83df92db645f068cc00b01d01ac6791eef2e75f84b8aa77a": "rail",
+ "ad03fa8e6556205bb283969d6171020ba919b37c89d9b9bf43fb34e2419a02ca": "rail",
+ "7bc88c40f02fa2584244b9a22bb3ce982f0b6df61aee22991876c3a4ecf37625": "rail",
+ "982d8a7b8bf8e777c055e4518555ff5a1add3ab8bc80a21b0b63519434220a90": "rail",
+ "5982c5e76289382dfcdbae6cf23ab772da2f68c3660c4d22f9e3b89e48094d51": "rail",
+ "a54d5767aaaded59b21eccbde404f39afbc3e3501112bc0744a44d40a78c3426": "rail",
+ "56a544029687c40a67e149383e0eb280ea83bf534949134685eaa26fdf736f44": "rail",
+ "edb5234531b6bcf8273c4fa5e2b31ce53d080d978547d7fe760b46e5f2de94ac": "rail",
+ "422f7b567c98e17c0a324a05f13cbe1d8566cc81f55b3d32dcf66a74664472d0": "rail",
+ "921f0b702c123ee74b643aa22a8750c7e62ad90469b1eac2627419d2394acef3": "rail",
+ "514f9517da6cb8101c858aaf68e45659715f5681bbe29736215c3c61466708e8": "rail",
+ "121393a02187764ab3b640e04ce98f86fa1c1b4e5a884f097b6056d62c831611": "rail",
+ "2199cb36308f545a944b0b68828d3f8662b2b3cacf4d604a319efcc609047e50": "rail",
+ "20e8faffb01ea83f185f695112598e1f379088e376c554e4d03d368af9b1ed4c": "rail",
+ "c09e349260d2da0a7d2799843894dd64ca4a0ec3daacb11127150c95fcd91ce3": "rail",
  "53e6710b8ab2866f3e261c89967b57e87a90e1e1e9a32240638b0d97078f1932": "spacer",
  "ab8d8e5fe9323d80fa2a2e31f290d6457888a25173418786e110f11edbd7b2cd": "spacer",
  "a63aae16061fea2d9ce8898cc800bbb35a9987a70c6bdc457c76d4c3305405d5": "rail",
@@ -1449,7 +1481,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.30 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.31 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

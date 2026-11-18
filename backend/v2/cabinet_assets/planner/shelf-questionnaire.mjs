@@ -1,11 +1,11 @@
 import {choice,defaultShelf,fittings,shelfRows,shelfDescription} from './shelf-choices.mjs';
-import {isInternalNiche,nicheSlot} from './wardrobe-niches.mjs';
+import {nicheSlot} from './wardrobe-niches.mjs';
 import {fittingImage,jointPhotos} from './hardware-photos.mjs';
 const element=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=text;return node;};
 export function shelfQuestionnaire(ui,parent,section){
  const f=ui.fields,count=f.sectionShelves[section],rows=shelfRows(f),row=rows[section];
  const scope=ui.shelfScopes[section]??'all';
- const protectedCover=i=>isInternalNiche(f.drawerBanks?.[nicheSlot(section,i)]);
+ const protectedCover=i=>[i,i+1].some(level=>f.drawerBanks?.[nicheSlot(section,level)]?.layout);
  const indexes=row.map((_,i)=>i).filter(i=>!protectedCover(i)&&(scope==='all'||(scope==='top2'?i>=count-2:i===Number(scope))));
  const values=indexes.map(i=>row[i]),sample=choice(values[0]||defaultShelf,f.thickness);
  const mixed=values.some(value=>value!==values[0]);
@@ -15,11 +15,10 @@ export function shelfQuestionnaire(ui,parent,section){
     ui.shelfScopes[section]=v;delete ui.shelfDrafts[section];ui.render();
  });
  if(row.some((_,i)=>protectedCover(i))){
-   const note=element('p','Крепление полки над шуфлядами задаётся в выбранной нише.');parent.append(note);
+   const note=element('p','Крепёж ограничивающих полок задаётся один раз для шкафа.');parent.append(note);
    if(!indexes.length){
-     const target=scope==='all'||scope==='top2'?row.findIndex((_,i)=>protectedCover(i)):Number(scope);
      const edit=element('button','Крепление полки над шуфлядами');edit.type='button';
-     edit.onclick=()=>{ui.nicheIndex=target;ui.interior='drawer';ui.render();};parent.append(edit);return;
+     edit.onclick=()=>{ui.form.querySelector('[aria-label="Крепёж полок у шуфляд и заднего ребра"]')?.focus();};parent.append(edit);return;
    }
  }
  ui.select(parent,'Материал и толщина полки',[['board','ЛДСП · '+f.thickness+' мм'],...[4,6,8].map(n=>[n,'Стекло · '+n+' мм'])],draft,v=>{

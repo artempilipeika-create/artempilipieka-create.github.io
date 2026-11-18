@@ -1476,6 +1476,7 @@ function exportBazisProject(){
     payload.minimum_importer=updatedFittings?'9.9.30':
       blankItems.some(it=>it.blank?.axis==='front'&&!Number.isInteger(it.blank.length))?'9.9.29':'9.9.28';
   }
+  if(wardrobeDrawerItems.some(it=>it.source_file.includes('_shared'))||jointItems.some(it=>it.joint_back_face&&it.joint_part==='confirmat'))payload.minimum_importer='9.9.31';
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');

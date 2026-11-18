@@ -114,9 +114,14 @@ def hardware_for(it):
             length=min(600,((depth-5)//50)*50)
             rail=AKS_GUIDES.get(str(length))
             if rail:
+                shared=any(z['kind']=='drawers' and z['section']==section%3 and z['level']==section%33//3 for z in spec.get('nicheSplits') or [])
+                small=2*len(rail['moving'])+len(rail['fixed'])*(1 if shared else 2)
                 rows=[*rows,_row(f'Направляющие PRIME by AKS Soft Close {length} × 45 мм',1,'set',rail['article']),
-                      _row('Шуруп 3,5×16 мм, Zn',2*(len(rail['fixed'])+len(rail['moving'])),'pcs','20646'),
+                      _row('Шуруп 3,5×16 мм, Zn',small,'pcs','20646'),
                       _row('Конфирмат 7×50',8),_row('Саморез 5×30 AKS',3,'pcs','12867')]
+                if shared:
+                    side='left' if section>=33 else 'right'
+                    rows.append(_row('Саморез 3,5×18 мм · общая стойка',len(rail['shared'][side]['fixed'])))
     spacer=re.fullmatch(r'drawer-(\d+)-spacer-(left|right)',key)
     if spacer and it.get('height'):
         count=2*max(2,ceil((it['height']-50)/320)+1)
@@ -151,6 +156,7 @@ def hardware_for(it):
 
 def _panel_hardware(it):
     meta = it.get('assistant_carcass') or {}
+    key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     spec = meta.get('spec') or {}
     if it.get('blank_axis')=='front' and spec.get('front') and it.get('item_id') in {str(meta.get('group_id'))+':door-left',str(meta.get('group_id'))+':door-right'}:
         w,h=it['width'],it['height']
@@ -159,11 +165,17 @@ def _panel_hardware(it):
             if w<=600 and h<=limit and mass<=kg:
                 return [_row('Петля PRIME 3D накладная с планкой H0 · саморезы',n,'pcs','112595')],None
         raise ValueError('Створка выходит за пределы таблицы AKS Ø35.')
+    if key=='rear-brace':
+        return ([_row('Конфирмат 7×50',4)] if spec.get('drawerFixing')=='confirmat' else [_row('Эксцентриковая стяжка',2),_row('Шкант деревянный 8×35',2,'pcs','39319')]),None
+    if key.startswith('niche-') and key.endswith('-divider'):
+        _,section,level,_=key.split('-')
+        ends=1+int(int(level)>0 or spec.get('bottomFit')!='none' or bool((dict(enumerate(spec.get('drawerBanks') or [])).get(int(section)))))
+        return ([_row('Конфирмат 7×50',2*ends)] if spec.get('drawerFixing')=='confirmat' else [_row('Эксцентриковая стяжка',2*ends),_row('Шкант деревянный 8×35',2*ends,'pcs','39319')]),None
     if spec.get('backThickness') and it.get('item_id') == str(meta['group_id'])+':back':
         # Two end cams, plus intermediate cams wherever a span exceeds 400 mm.
         per_side = max(2, 1 + ceil((it['height'] - 200) / 400))
         pairs = 2 * per_side + sum(1 + int((spec['width'] if spec.get(edge+'Fit')=='overlay' else it['width']) > 800)
-                        for edge in ('bottom','top'))
+                        for edge in (('top',) if spec.get('bottomFit')=='none' else ('bottom','top')))
         return [_row('Эксцентриковая стяжка · задняя стенка',pairs),_row('Шкант деревянный 8×35',pairs,'pcs','39319')],None
     if (it.get('module_type')=='blank' and it.get('blank_axis')=='side' and it.get('width')==18
             and re.search(r':divider-\d+$',it.get('item_id',''))):

@@ -1,3 +1,4 @@
+import {localBaseShelf} from './wardrobe-layout.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 
 import {fixedShelfScheme} from './shelf-choices.mjs';
@@ -56,10 +57,17 @@ export function dividerEnds(it){
    return ['bottom','top'].filter(level=>spec[level+'Fit']==='overlay'&&spec.joints?.[level]&&spec.joints[level]!=='none')
      .map(level=>({level,hostId:it.assistant_carcass.group_id+':'+level,scheme:spec.joints[level],outer:true,roll:level==='bottom'?90:-90}));
  }
+ const partial=/^(.*):niche-(\d+)-(\d+)-divider$/.exec(it.item_id);
+ if(partial&&spec){
+   const section=Number(partial[2]),level=Number(partial[3]),count=spec.sectionShelves[section];
+   const first=level?'shelf-'+section+'-'+(level-1):spec.bottomFit==='none'?(localBaseShelf(spec,section)?'shelf-base-'+section:null):'bottom';
+   const last=level<count?'shelf-'+section+'-'+level:'top';
+   return [[first,'bottom',90],[last,'top',-90]].filter(([host])=>host).map(([host,level,roll])=>({hostId:partial[1]+':'+host,level,roll,scheme:spec.drawerFixing??'cam_dowel'}));
+ }
  const match=/^(.*):divider-(\d+)$/.exec(it.item_id);
  if(!match)return [];
  const joints=dividerScheme(it.assistant_carcass?.spec,Number(match[2]));
- return ['bottom','top'].filter(level=>joints[level]!=='none').map(level=>({
+ return ['bottom','top'].filter(level=>joints[level]!=='none'&&(level!=='bottom'||spec?.bottomFit!=='none')).map(level=>({
    level,hostId:match[1]+':'+level,scheme:joints[level],roll:level==='bottom'?90:-90
  }));
 }
@@ -69,9 +77,9 @@ function dividerJoints(it,byId){
  for(const {level,hostId,scheme,roll,outer} of dividerEnds(it)){
    const host=byId.get(hostId),bottom=level==='bottom',y=it.elevation_mm+(bottom?0:it.height);
    const at=host&&localPoint(host,rotation);
-   if(!host||host.blank_axis!=='horizontal'||host.height!==18||rotation!==(host.rotation||0)||
+   if(!host||host.blank_axis!=='horizontal'||host.blank_shelf&&!host.blank_shelf.startsWith('board/')||![16,18,25].includes(host.height)||rotation!==(host.rotation||0)||
        y!==host.elevation_mm+(bottom?host.height:0)||Math.abs(centre.x-at.x)+9>host.width/2+.01||
-       Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01||it.depth<(scheme==='cam_dowel'?216:152))
+       (it.item_id.includes(':niche-')?jointRows(scheme,it.depth,true).some(r=>Math.abs(centre.z+r.z-at.z)+8>host.depth/2):Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01)||it.depth<(scheme==='cam_dowel'?216:152))
      throw Error(it.name+' · проверьте контакт с '+(bottom?'дном':'крышей')+' и глубину для крепежа.');
    for(const {kind,z} of jointRows(scheme,it.depth,!outer)){
      const point=worldPoint({x:centre.x,z:centre.z+z},rotation);
@@ -88,6 +96,14 @@ function dividerJoints(it,byId){
 // and from its lower edge in Y. The cam and dowel of each pair are 32 mm apart.
 export function backRows(panel){
  const meta=panel.assistant_carcass,s=meta?.spec;
+ if(panel.item_id===meta?.group_id+':rear-brace'){
+   const rows=[],cam=s.drawerFixing!=='confirmat';
+   for(const [edge,sign] of [['left',1],['right',-1]]){
+     for(const [kind,y] of (cam?[['cam',34],['dowel',66]]:[['confirmat',25],['confirmat',75]]))
+       rows.push({edge,kind,x:-sign*panel.width/2,y,dx:sign,dy:0,roll:sign>0?0:180});
+   }
+   return rows;
+ }
  if(!s?.backThickness||panel.item_id!==meta.group_id+':back')return [];
  const w=panel.width,h=panel.height,rows=[];
  function pair(edge,x,y,dx,dy,roll,alongX,alongY){
@@ -103,7 +119,7 @@ export function backRows(panel){
    pair('left',-w/2,y,1,0,0,0,alongY);
    pair('right',w/2,y,-1,0,180,0,alongY);
  }
- for(const edge of ['bottom','top']){
+ for(const edge of (s.bottomFit==='none'?['top']:['bottom','top'])){
    const length=s[edge+'Fit']==='overlay'?s.width:w;
    for(const x of length>800?[-w/4,w/4]:[0]){
      const bottom=edge==='bottom';
@@ -117,15 +133,15 @@ function nativeBackJoints(panel,byId){
  const angle=panel.rotation||0,centre=localPoint(panel,angle);
  return backRows(panel).map(({edge,kind,x,y,dx,dy,roll})=>{
    const hostId=panel.assistant_carcass.group_id+':'+edge,host=byId.get(hostId);
-   const mount={x:centre.x+x,z:centre.z-panel.depth/2+9},height=panel.elevation_mm+y;
+   const mount={x:centre.x+x,z:centre.z-panel.depth/2+(kind==='confirmat'?panel.depth/2:9)},height=panel.elevation_mm+y;
    const at=host&&localPoint(host,angle),side=dx!==0;
    if(!host||host.rotation!==panel.rotation||host.blank_axis!==(side?'side':'horizontal')||
-       (side?host.width:host.height)<16||panel.depth!==panel.assistant_carcass.spec.backThickness||
+       (side?host.width:host.height)<16||(panel.item_id.endsWith(':rear-brace')?panel.depth!==panel.assistant_carcass.spec.thickness:panel.depth!==panel.assistant_carcass.spec.backThickness)||
        Math.abs(mount.z-at.z)+4>host.depth/2+.01||
        (side?(Math.abs(at.x+dx*host.width/2-mount.x)>.01||height-4<host.elevation_mm||height+4>host.elevation_mm+host.height):
        (Math.abs(host.elevation_mm+(dy>0?host.height:0)-height)>.01||Math.abs(mount.x-at.x)+4>host.width/2+.01)))
      throw Error(panel.name+' · проверьте прилегание к детали «'+(host?.name||edge)+'».');
-   const [source_file,source_sha256]=fittings[kind];
+   const [source_file,source_sha256]=(kind==='confirmat'&&shelfConfirmats[host.width])||fittings[kind];
    return {name:source_file.slice(0,-5)+' · '+panel.name,joint_part:kind,joint_back_face:true,
      joint_roll_deg:roll,joined_panel_id:panel.item_id,host_blank_id:hostId,source_file,source_sha256,
      rotation:angle,position:{...worldPoint(mount,angle),y:height},elastic_resize:false};
@@ -134,7 +150,8 @@ function nativeBackJoints(panel,byId){
 
 function isDrawerCover(part){
   const key=/:shelf-(\d+)-(\d+)$/.exec(part.item_id);
-  return Boolean(key&&part.assistant_carcass?.spec.drawerBanks?.[Number(key[1])+3*Number(key[2])]?.coverFixing);
+  const s=part.assistant_carcass?.spec,slot=key?Number(key[1])+3*Number(key[2]):-1;
+  return Boolean(key&&(s?.drawerBanks?.[slot]?.coverFixing||s?.drawerFixing&&s?.drawerBanks?.[slot+3]?.layout)||s&&part.item_id.includes(':shelf-base-'));
 }
 
 export function nativeCarcassJoints(items) {

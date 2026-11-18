@@ -1,3 +1,4 @@
+import {splitAt,rightBankOffset} from './wardrobe-layout.mjs';
 import {nicheOpenings,nicheSlot,trimBanks,mmText,coverClearance,frontEdgeGap,prepareDrawerCovers} from './wardrobe-niches.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {footHeight} from './plinth-options.mjs';
@@ -25,47 +26,9 @@ function millimetres(parent,title,value,commit,{min=0,max=5000,step=1,refreshFie
  label.append(input);parent.append(label);return input;
 }
 export function selectShelf(ui,section,index){
- ui.activeSection=section;ui.levelIndex=index;ui.interior='shelf';ui.shelfScopes[section]=String(index);ui.step=2;ui.view='sections';ui.render();
- ui.form.querySelector('[data-shelf-height]')?.focus({preventScroll:true});
+ ui.activeSection=section;ui.gapIndex=index;ui.levelIndex=index;ui.interior='shelf';ui.shelfScopes[section]=String(index);ui.step=2;ui.view='sections';ui.render();
+ ui.form.querySelector('[data-clear-gap]')?.focus({preventScroll:true});
 }
-export function shelfLevelControls(ui,parent,section){
- const fields=ui.fields,count=fields.sectionShelves[section];
- if(!count)return;
- const index=Math.min(ui.levelIndex??0,count-1),box=el('fieldset');
- box.append(el('legend','Высота полки'));
- ui.select(box,'Положение полки',Array.from({length:count},(_,i)=>[i,'Полка '+(i+1)]),index,
-   value=>selectShelf(ui,section,Number(value)));
- const existing=fields.shelfLevels?.[section]?.[index];
- const drawing=ui.previewBuilt;
- const parts=drawing?.parts?.filter(p=>p.key.startsWith('shelf-'+section+'-'))??[];
- const offset=fields.feet?.article==='118779'?10:0;
- const current=parts[index]?.item;
- const mode=ui.levelUnits?.[section+':'+index]??existing?.mode??'floor';
- const legacy=fields.drawerBanks?.[section]&&!fields.drawerBanks[section].layout;
- const below=legacy?(fields.drawerBanks[section].shelvesBelow??0):-1;
- const datum=index>0&&index!==below?parts[index-1]?.item.elevation_mm+parts[index-1]?.item.height+offset:
-   (legacy&&index>=below?(drawing?.drawerBanks?.[section]?.top??fields.thickness):fields.thickness)+(fields.elevation??0)+footHeight(fields);
- const target=current?current.elevation_mm+offset:null;
- const measured=target==null?null:mode==='floor'?target:target-datum;
- ui.select(box,'Как задать высоту',[['floor','От пола до низа полки'],['gap','Чистый проём под полкой']],mode,value=>{
-   ui.levelUnits??={};ui.levelUnits[section+':'+index]=value;ui.render();
- });
- const title=mode==='floor'?'От пола до низа полки, мм':'Чистый проём под полкой, мм';
- const input=millimetres(box,title,existing?.mode===mode?existing.mm:measured,value=>{
-   if(value==null)return;
-   const rows=fields.sectionShelves.map((n,s)=>Array.from({length:n},(_,i)=>fields.shelfLevels?.[s]?.[i]??null));
-   // Keep the manager's other shelves in place when editing a single dimension.
-   for(let i=0;i<count;i++)if(i!==index&&!rows[section][i]&&parts[i])
-     rows[section][i]={mode:'floor',mm:parts[i].item.elevation_mm+offset};
-   rows[section][index]={mode,mm:value};fields.shelfLevels=rows;ui.changed();
- },{min:mode==='gap'?60:0});
- input.dataset.shelfHeight='true';
- box.append(action('Расставить полки равномерно',()=>{
-   if(fields.shelfLevels)fields.shelfLevels[section]=Array(count).fill(null);
-   ui.changed();ui.render();
- }));parent.append(box);
-}
-
 function spacerDrawing(parent,bank,side){
  const depth=bank.rail.length,height=bank.span,scale=Math.min(232/depth,118/height);
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -182,7 +145,7 @@ function installBank(ui,section,level,template,convert=false){
    delete banks[slot].height;delete banks[slot].bottomOffset;delete banks[slot].shelvesBelow;
    f.drawerBanks=trimBanks(banks,f.sections);
    const prepared=wardrobeSpec(f);
-   f.shelfChoices=prepared.shelfChoices;f.shelfLevels=prepared.shelfLevels;f.drawerBanks=prepared.drawerBanks;
+   f.sectionShelves=prepared.sectionShelves;f.shelfChoices=prepared.shelfChoices;f.shelfLevels=prepared.shelfLevels;f.drawerBanks=prepared.drawerBanks;
    ui.fields=f;ui.activeSection=section;ui.nicheIndex=level;ui.interior='drawer';ui.changed(true);
  }catch(e){ui.output.textContent=e.message;}
 }
@@ -191,6 +154,7 @@ function copyControls(ui,box,section,level){
  const f=ui.fields,options=[];
  for(let i=0;i<f.sections;i++)if(i!==section)for(let n=0;n<=f.sectionShelves[i];n++){
    const slot=nicheSlot(i,n);
+   if(splitAt(f,i,n))continue;
    options.push([slot,'Секция '+(i+1)+' · ниша '+(n+1)+(f.drawerBanks?.[slot]?' · занята':'')]);
  }
  if(!options.length)return;
@@ -203,12 +167,15 @@ function copyControls(ui,box,section,level){
 }
 
 export function drawerControls(ui,parent,section){
- const f=ui.fields,level=Math.min(ui.nicheIndex??0,f.sectionShelves[section]),slot=nicheSlot(section,level);
+ const f=ui.fields,level=Math.min(ui.nicheIndex??0,f.sectionShelves[section]),zone=splitAt(f,section,level),shared=zone?.kind==='drawers';
+ const slot=nicheSlot(section,level)+(shared&&ui.column===1?rightBankOffset:0);
  const legacy=f.drawerBanks?.[section];
  if(legacy&&!legacy.layout){legacyControls(ui,parent,section);return;}
  const box=el('fieldset');box.className='niche-editor';box.append(el('legend','Шуфляды · ниша '+(level+1)));parent.append(box);
  const levels=Array.from({length:f.sectionShelves[section]+1},(_,i)=>[i,'Ниша '+(i+1)+(i===0?' · нижняя':'')]);
  if(levels.length>1)ui.select(box,'Ниша снизу вверх',levels,level,v=>selectNiche(ui,section,Number(v)));
+ if(zone?.kind==='shelves'){box.append(action('Настроить перегородку и полки',()=>{ui.interior='split';ui.render();}));return;}
+ if(shared)ui.select(box,'Блок шуфляд',[['0','Левый блок'],['1','Правый блок']],ui.column??0,v=>{ui.column=Number(v);ui.render();});
  let bank=f.drawerBanks?.[slot];
  if(!bank){
    const add=action('Добавить шуфляды',()=>installBank(ui,section,level));add.dataset.addBank='';box.append(add);return;
@@ -219,6 +186,10 @@ export function drawerControls(ui,parent,section){
    }
    const updateCover=next?.kind==='internal'&&(bank?.kind!==next.kind||next.coverFixing!==bank?.coverFixing);
    const banks=trimBanks(f.drawerBanks,f.sections);banks[slot]=next;f.drawerBanks=trimBanks(banks,f.sections);bank=next;
+   if(shared&&next&&f.drawerBanks[slot>=rightBankOffset?slot-rightBankOffset:slot+rightBankOffset]){
+     const other=f.drawerBanks[slot>=rightBankOffset?slot-rightBankOffset:slot+rightBankOffset];
+     other.kind=next.kind;if(next.kind==='external')delete other.coverFixing;
+   }
    if(updateCover){
      try{prepareDrawerCovers(f);}catch(e){ui.changed(finished);ui.output.textContent=e.message;return;}
    }
@@ -232,9 +203,7 @@ export function drawerControls(ui,parent,section){
  });
  if(execution)execution.dataset.drawerKind='';
  if(bank.kind==='internal'){
-   const existing=f.shelfChoices?.[section]?.[level];
-   const fixing=bank.coverFixing??(existing==='board/confirmat'?'confirmat':'cam_dowel');
-   ui.select(box,'Крепление полки над шуфлядами',[['cam_dowel','Эксцентрик + шкант'],['confirmat','Конфирматы 7×50']],fixing,value=>set({...bank,coverFixing:value}));
+   box.append(el('small','Полки у шуфляд · '+(f.drawerFixing==='confirmat'?'конфирматы':'эксцентрик + шкант')));
    box.append(el('small','От верха верхнего фасада до низа полки — 30 мм.'));
    if(!f.front)box.append(action('Выбрать распашные двери',()=>ui.go(3)));
  }
@@ -274,8 +243,7 @@ export function drawerControls(ui,parent,section){
    },{min:40,max:1200,step:.5});input.placeholder='По проёму';
  });
  const hardware=el('div');hardware.dataset.nicheHardware='';box.append(hardware);
- copyControls(ui,box,section,level);
- box.append(action('Убрать блок шуфляд',()=>set(null)));
+ if(!shared){copyControls(ui,box,section,level);box.append(action('Убрать блок шуфляд',()=>set(null)));}
 }
 
 export function updateNicheResult(ui,built,error=''){
