@@ -294,3 +294,34 @@ def test_wardrobe_native_kit_is_staff_only(api,admin_user):
         assert 'Martin Forest AKS/MF_AKS_spacerLeft.fr3d' in archive.namelist()
     api.cookies.clear()
     assert api.get(url).status_code in (401,403)
+
+def test_fitted_drawer_niches_save_reopen_edit_and_validate_geometric_bounds(api,admin_user):
+    from backend.v2.assistant_model import CarcassDesign
+    def bank(count,gap):
+        return dict(kind='internal',layout='equal',gap=gap,faces=[{'height':None} for _ in range(count)])
+    spec={**SPEC,'recipe':'divided','width':1000,'height':2000,'depth':600,'sections':2,'shelves':2,
+          'sectionShelves':[2,1],'front':dict(swing='pair',offset=90,autoHinges=True),
+          'shelfLevels':[[dict(mode='floor',mm=621),dict(mode='floor',mm=1200)],[dict(mode='floor',mm=740)]],
+          'drawerBanks':[bank(4,30),bank(3,30),None,bank(2,10)]}
+    scene=generated_scene(spec)
+    response=api.post('/api/v2/3d-projects',json={'name':'QA · ниши шкафа','scene':scene})
+    assert response.status_code==201,response.text
+    url='/api/v2/3d-projects/'+response.json()['project_id']
+    saved=api.get(url).json()
+    def face(data,index):
+        return next(i for i in data['items'] if i['item_id'].endswith(':drawer-'+str(index)+'-0-face'))
+    assert face(saved['scene'],0)['height']==127.5
+    assert face(saved['scene'],1)['height']==219.666
+    assert face(saved['scene'],3)['height']==274
+    old=face(saved['scene'],0)['assistant_carcass']['spec']
+    assert old['drawerBanks'][0]['gap']==30
+    spec['drawerBanks'][0]['gap']=20
+    revised=generated_scene(spec)
+    assert api.patch(url,json={'name':saved['name'],'version':saved['version'],'scene':revised}).status_code==200
+    reopened=api.get(url).json()['scene']
+    assert face(reopened,0)['height']==135
+    assert face(reopened,1)['height']==219.666
+    invalid=face(reopened,0)['assistant_carcass']['spec']
+    invalid['drawerBanks'][0]['height']+=1
+    with pytest.raises(ValidationError,match='геометрией ниши'):
+        CarcassDesign.model_validate(invalid)

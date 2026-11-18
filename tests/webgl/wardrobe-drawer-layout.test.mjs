@@ -99,7 +99,7 @@ test('shelves below and above a raised bank use the actual free opening',()=>{
 import {drawerControls} from '../../backend/v2/cabinet_assets/planner/wardrobe-interior-ui.mjs';
 test('typing numeric fields updates the bank before moving to another step or saving',()=>{
  const fieldsByLabel=new Map();
- const node=()=>({append(){},setAttribute(key,label){if(key==='aria-label')fieldsByLabel.set(label,this);},
+ const node=()=>({append(){},closest(){return null;},setAttribute(key,label){if(key==='aria-label')fieldsByLabel.set(label,this);},
   validity:{valid:true},reportValidity(){return true;},get valueAsNumber(){return Number(this.value);}});
  const original=globalThis.document;globalThis.document={createElement:node};
  try{
@@ -107,9 +107,62 @@ test('typing numeric fields updates the bank before moving to another step or sa
   let rendered=0;drawerControls({fields,select(){},changed(){},render(){rendered++;}},node(),0);
   for(const [label,value] of [['Высота фасада 2, мм','147'],['Ширина фасада 2, мм','420'],['От верха дна шкафа до низа блока, мм','250']]){
    const input=fieldsByLabel.get(label);input.value=value;input.oninput();
+   if(label.includes('фасада'))assert.equal(rendered,0);
   }
   assert.deepEqual(fields.drawerBanks[0].faces,[{height:197},{height:147,width:420}]);
-  assert.equal(fields.drawerBanks[0].bottomOffset,250);assert.equal(rendered,0);
-  fieldsByLabel.get('От верха дна шкафа до низа блока, мм').onblur();assert.equal(rendered,1);
+  assert.equal(fields.drawerBanks[0].bottomOffset,250);assert.equal(rendered,1);
  }finally{globalThis.document=original;}
+});
+
+import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
+import {doorHinges} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinges.mjs';
+import {wardrobeDrawing} from '../../backend/v2/cabinet_assets/planner/wardrobe-drawing.mjs';
+const equal=(count,gap=30)=>({kind:'internal',layout:'equal',gap,faces:Array.from({length:count},()=>({height:null}))});
+const fields={width:1000,depth:600,height:2000,thickness:18,sections:2,sectionShelves:[2,1],back:true,
+  front:{swing:'pair',offset:90},shelfLevels:[[{mode:'floor',mm:621},{mode:'floor',mm:1200}],[{mode:'floor',mm:741}]]};
+test('each opening owns its gap, equal fronts, manual remainder and unchanged shelf datums',()=>{
+ const rows=[equal(3),equal(3),null,{...equal(2,11),layout:'manual',faces:[{height:200},{height:null}]}];
+ const s=wardrobeSpec({...fields,drawerBanks:rows}),built=buildCarcass(s,{idPrefix:'niche'});
+ assert.deepEqual(built.drawerIssues,[]);
+ assert.deepEqual(built.drawerBanks[0].faces.map(f=>f.height),[180,180,180]);
+ assert.deepEqual(built.drawerBanks[1].faces.map(f=>f.height),[220,220,220]);
+ assert.deepEqual(built.drawerBanks[3].faces.map(f=>f.height),[200,347]);
+ for(const b of built.drawerBanks.filter(Boolean))for(let i=1;i<b.faces.length;i++)
+   assert.ok(Math.abs(b.faces[i].y-b.faces[i-1].y-b.faces[i-1].height-rows[b.slot].gap)<.00001);
+ assert.deepEqual(built.parts.filter(p=>p.key.startsWith('shelf-')).map(p=>p.item.elevation_mm),[621,1200,741]);
+ const one=buildCarcass(wardrobeSpec({...fields,drawerBanks:[equal(1,246),null]}));
+ assert.equal(one.drawerBanks[0].faces[0].height,600);
+ const fractions=buildCarcass(wardrobeSpec({...fields,drawerBanks:[equal(4),null]}));
+ assert.deepEqual(fractions.drawerBanks[0].faces.map(f=>f.height),[127.5,127.5,127.5,127.5]);
+ assert.throws(()=>wardrobeSpec({...fields,drawerBanks:[equal(5,100),null]}),/фасад/);
+ assert.deepEqual(rows[0].faces,[{height:null},{height:null},{height:null}]);
+});
+test('automatic hinges clear existing shelves, full drawer fronts and rails in drawing and rotated export',()=>{
+ const s=wardrobeSpec({...fields,drawerBanks:[equal(3),equal(3)]}),prefix='qa';
+ const built=buildCarcass(s,{idPrefix:prefix});
+ assert.deepEqual(built.drawerIssues,[]);
+ for(const rotation of [0,90,180,270]){
+   const position={x:1000,z:1200,elevation_mm:140,rotation};
+   const items=placeCarcass(built,position).map(i=>({...i,assistant_carcass:{group_id:prefix,spec:s,position}}));
+   for(const [section,side] of ['left','right'].entries()){
+     const door=items.find(i=>i.item_id==='qa:door-'+side),hinges=doorHinges(door,items),bank=built.drawerBanks[section];
+     assert.equal(hinges.length,4);assert.ok(hinges[0].position.y>position.elevation_mm+bank.top);
+     assert.ok(hinges.every((h,i)=>h.host_blank_id==='qa:'+side&&h.joined_panel_id===door.item_id&&(!i||h.position.y-hinges[i-1].position.y>=64)));
+     assert.ok(bank.faces.every(f=>f.width===bank.mountWidth-3));
+   }
+   assert.equal(wardrobeHardware(items).filter(h=>h.aks_kind==='rail').length,12);
+ }
+ const shelfHit=wardrobeSpec({...fields,shelfLevels:[[{mode:'floor',mm:92},{mode:'floor',mm:600}],[{mode:'floor',mm:1450}]]});
+ const b=buildCarcass(shelfHit,{idPrefix:prefix}),door=b.items.find(i=>i.item_id==='qa:door-left');
+ const [h]=doorHinges({...door,assistant_carcass:{group_id:prefix,spec:shelfHit}},b.items);
+ assert.ok(Math.abs(h.position.y-91.5)>1);
+ assert.equal(b.parts.find(p=>p.key==='shelf-0-0').item.elevation_mm,92);
+});
+test('impossible hinge layout identifies the outer door and leaves all fronts intact',()=>{
+ const f={...fields,width:600,height:800,sections:1,sectionShelves:[0],shelfLevels:undefined,front:{swing:'left',offset:90},drawerBanks:[equal(3)]};
+ const b=buildCarcass(wardrobeSpec(f));
+ assert.equal(b.hingeConflicts[0].side,'left');assert.equal(b.hingeConflicts[0].section,0);
+ assert.match(b.drawerIssues[0],/левая дверь/);
+ assert.match(wardrobeDrawing(b,'sections').svg,/Конфликт петель/);
+ assert.equal(b.drawerBanks[0].faces.length,3);
 });

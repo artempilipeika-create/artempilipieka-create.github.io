@@ -40,6 +40,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  const first=current?.items.find(i=>i.item_id.endsWith(':left'));
  const built=buildCarcass(spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]||'Корпус ИИ',
   drawerMaterialId:drawerMaterialId??current?.items.find(i=>drawerMember(i.item_id,'\\d+-side-left'))?.body_variant_id,bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),frontMaterialId:frontMaterialId??current?.items.find(i=>i.blank_axis==='front')?.body_variant_id,backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
+ if(spec.drawerBanks?.some(bank=>bank?.layout))spec.drawerBanks=built.spec.drawerBanks;
  if(built.drawerIssues.length)throw Error(built.drawerIssues.join(' '));
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
  if(current){

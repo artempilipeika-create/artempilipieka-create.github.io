@@ -1,4 +1,5 @@
-import {outerFront,drawerSections,buildDrawerBoards,doorZones,drawerFit} from './wardrobe-drawers.mjs';
+import {outerFront,drawerSections,buildDrawerBoards,doorZones,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
+import {fitNicheBanks} from './wardrobe-niches.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
 import {overlayFronts,hingeLoad} from './wardrobe-fronts.mjs';
@@ -92,10 +93,11 @@ export function buildCarcass(input={},options={}){
     x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-2*t,D-rear-dividerSetback,t,x+t/2,t,(rear-dividerSetback)/2,edge()));x+=t;
   }
   supports.push(right);
+  if(s.drawerBanks?.some(b=>b?.layout))s.drawerBanks=fitNicheBanks(s,s.drawerBanks);
   const banks=drawerSections(s,widths,Boolean(options.legacyDrawers));
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
   const shelfYs=counts.map((count,section)=>{
-    const bank=banks[section],below=s.drawerBanks?.[section]?.shelvesBelow??0;
+    const bank=s.drawerBanks?.[section]?.layout?null:banks[section],below=s.drawerBanks?.[section]?.shelvesBelow??0;
     if(!Number.isInteger(below)||below<0||below>count)throw Error('Секция '+(section+1)+': проверьте число полок под блоком.');
     const thicknesses=Array.from({length:count},(_,i)=>choice(s.shelfChoices?.[section]?.[i]??defaultShelf,t).thickness);
     const floor=s.elevation+footHeight(s);
@@ -126,8 +128,24 @@ export function buildCarcass(input={},options={}){
         door.left+door.width/2-W/2,door.bottom,D/2+9,'1111');
     }
   }
-  const drawerIssues=[];
-  if(banks.some(Boolean)){
+  const drawerIssues=[],hingeConflicts=[];
+  if(s.front?.autoHinges){
+    buildDrawerBoards(s,banks,add);
+    const panels=parts.map(p=>p.item);
+    for(const side of ['left','right']){
+      const door=panels.find(it=>it.item_id===prefix+':door-'+side);
+      if(!door)continue;
+      try{
+        const axes=doorHinges({...door,assistant_carcass:{spec:s,group_id:prefix}},panels).map(h=>h.position.y-s.elevation-legHeight);
+        for(const b of banks)if(b&&(side==='left'?b.spacerL:b.spacerR)){
+          b.cuts??={};b.cuts[side]=spacerCuts(b.base,b.span,axes,side);
+        }
+      }catch(error){
+        if(!error.hingeConflict)throw error;
+        drawerIssues.push(error.message);hingeConflicts.push(error.hingeConflict);
+      }
+    }
+  }else if(banks.some(Boolean)){
     if(!options.legacyDrawers){
       const axes={left:[],right:[]};
       const panels=parts.map(p=>p.item);
@@ -139,7 +157,7 @@ export function buildCarcass(input={},options={}){
         }
       }
       for(const b of banks.filter(Boolean)){
-        const fit=drawerFit(b,axes,s.drawerBanks[b.section]);b.cuts=fit.cuts;drawerIssues.push(...fit.issues);
+        const fit=drawerFit(b,axes,s.drawerBanks[b.slot]);b.cuts=fit.cuts;drawerIssues.push(...fit.issues);
       }
     }
     buildDrawerBoards(s,banks,add);
@@ -149,7 +167,7 @@ export function buildCarcass(input={},options={}){
   if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-2*t,rear,0,t,(rear-D)/2,'0000');
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   const items=resolveBlankBindings(parts.map(p=>p.item));
-  return {spec:s,drawerIssues,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  return {spec:s,drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:W,height:H,depth:D+(s.back&&!rear?3:0)+(outerFront(s)?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

@@ -100,11 +100,11 @@ class FurnitureItem(StrictModel):
     x: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.25)
     z: float=Field(default=0,ge=-12000,le=12000,multiple_of=0.25)
     upper_mount_offset_mm: int|None=Field(default=None,ge=-5000,le=5000,strict=True,exclude_if=lambda v:v is None)
-    elevation_mm: Annotated[int,Field(strict=True)]|Annotated[float,Field(strict=True)]|None=Field(default=None,ge=0,le=5000,multiple_of=0.5)
+    elevation_mm: Annotated[int,Field(strict=True)]|Annotated[float,Field(strict=True)]|None=Field(default=None,ge=0,le=5000)
     rotation: Literal[0,90,180,270]=0
     width: int|float=Field(ge=1,le=3000,multiple_of=0.5)
-    height: int=Field(ge=1,le=3000)
-    body_height: int|None=Field(default=None,ge=1,le=3000)
+    height: int|float=Field(ge=1,le=3000)
+    body_height: int|float|None=Field(default=None,ge=1,le=3000)
     base_height: int|None=Field(default=None,ge=0,le=300)
     worktop_thickness: int|None=Field(default=None,ge=0,le=100)
     legHeightMm: Literal[80,100,150]|None=None
@@ -125,7 +125,7 @@ class FurnitureItem(StrictModel):
     front_variant_id: UUID|None=None
     back_variant_id: UUID|None=None
     # Individual rectangular board; no inferred cabinet or fabricated BAZIS geometry.
-    blank_length_mm: int|None=Field(default=None,ge=40,le=3000)
+    blank_length_mm: int|float|None=Field(default=None,ge=40,le=3000)
     blank_width_mm: int|float|None=Field(default=None,ge=40,le=3000,multiple_of=0.5)
     blank_thickness_mm: int|None=Field(default=None,ge=3,le=40)
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
@@ -147,6 +147,17 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        group=self.assistant_carcass
+        key=self.item_id.removeprefix(str(group.group_id)+':') if group else ''
+        face=re.fullmatch(r'drawer-(\d+)-(\d+)-face',key)
+        banks=group.spec.drawerBanks if group and face else None
+        slot,index=map(int,face.groups()) if face else (-1,-1)
+        fitted=bool(self.blank_axis=='front' and banks and slot<len(banks) and banks[slot] and banks[slot].layout and index<len(banks[slot].faces))
+        vertical=[self.height,self.body_height or 0,self.blank_length_mm or 0,self.elevation_mm or 0]
+        if fitted and any(abs(v-round(v,3))>1e-8 for v in vertical):
+            raise ValueError('Для фасада шуфляды допустима точность до 0,001 мм.')
+        if not fitted and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
+            raise ValueError('Проверьте точность размеров детали.')
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')
         if self.blank_axis=='front':

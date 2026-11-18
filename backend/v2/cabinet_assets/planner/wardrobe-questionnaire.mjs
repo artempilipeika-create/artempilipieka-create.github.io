@@ -2,6 +2,7 @@ import {footPlan} from './wardrobe-feet.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
 import {buildCarcass} from './carcass-model.mjs';
 import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
+import {fitNicheBanks} from './wardrobe-niches.mjs';
 export {sectionWidths} from './carcass-model.mjs';
 export const WARDROBE_STEPS=['Корпус','Секции','Наполнение','Фасады','Материалы'];
 export function resizeDividerChoices(fields){
@@ -17,8 +18,7 @@ export function wardrobeSpec(f){
    const levels=counts.map((count,section)=>Array.from({length:count},(_,i)=>f.shelfLevels[section]?.[i]??null));
    if(levels.some(row=>row.some(Boolean)))spec.shelfLevels=levels;
  }
- if(f.drawerBanks?.some(Boolean))spec.drawerBanks=Array.from({length:sections},(_,i)=>structuredClone(f.drawerBanks[i]??null));
- if(f.front)spec.front={...f.front};
+ if(f.front)spec.front={...f.front,autoHinges:true};
  if(f.back&&f.backThickness)spec.backThickness=f.backThickness;
  for(const key of ['topFit','bottomFit'])if(f[key]==='overlay')spec[key]='overlay';
  if(f.feet)spec.feet={layout:'width',article:f.feet.article,front:f.feet.front,rear:f.feet.rear,...(f.feet.left==='side'?{left:'side'}:{}),...(f.feet.right==='side'?{right:'side'}:{})};
@@ -38,6 +38,7 @@ export function wardrobeSpec(f){
  const rows=shelfRows(f);
  for(const row of rows)for(const value of row)choice(value,spec.thickness);
  if(rows.some(row=>row.some(value=>value!==defaultShelf)))spec.shelfChoices=rows;
+ if(f.drawerBanks?.some(Boolean))spec.drawerBanks=fitNicheBanks(spec,structuredClone(f.drawerBanks));
  const built=buildCarcass(spec);
  if(rows.some(row=>row.includes('board/confirmat')||row.includes('board/cam_dowel')))nativeCarcassJoints(built.items);
  return spec;

@@ -14,7 +14,7 @@ const label=(x,y,s)=>'<text x="'+num(x)+'" y="'+num(y)+'" text-anchor="middle" f
 const line=(x,y,a,b,style='')=>'<path d="M'+num(x)+' '+num(y)+' L'+num(a)+' '+num(b)+'" fill="none" stroke="'+edge+'" '+style+'/>';
 const rect=(x,y,w,h,color,stroke=edge)=>'<rect x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'" fill="'+color+'" stroke="'+stroke+'" stroke-width=".9"/>';
 const circle=(x,y,r,fill,stroke=accent)=>'<circle cx="'+num(x)+'" cy="'+num(y)+'" r="'+num(r)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1"/>';
-const sheet=(view,body)=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 324" role="img" aria-label="'+drawingTitles[view]+'" data-view="'+view+'">'+body+'</svg>';
+const sheet=(view,body)=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 324" role="'+(['sections','fronts'].includes(view)?'group':'img')+'" aria-label="'+drawingTitles[view]+'" data-view="'+view+'">'+body+'</svg>';
 
 function openCabinet(built){
  const s=built.spec,H=built.height+footHeight(s),D=s.depth,W=s.width;
@@ -30,7 +30,7 @@ function openCabinet(built){
      polygon([point(x,y,Z),point(X,y,Z),point(X,Y,Z),point(x,Y,Z)],glass?'#d6e7e0':key==='back'?'#dedbcc':wood)+'</g>';
  }).join('');
 }
-function elevationView(built,view,section,front,selectedShelf){
+function elevationView(built,view,section,front,selectedShelf,selection){
  const s=built.spec,H=built.height+footHeight(s),W=s.width;
  const zoom=view==='plinth',height=zoom?Math.min(H,Math.max(240,footHeight(s)+W*.22)):H;
  const facade=view==='fronts';
@@ -47,22 +47,42 @@ function elevationView(built,view,section,front,selectedShelf){
  }
  if(facade&&front){
    const leaves=built.drawerBanks?.some(b=>b&&!b.internal)?built.parts.filter(p=>p.key.startsWith('door-')).map(p=>({side:p.key.slice(5),left:p.item.x-p.item.width/2+W/2,width:p.item.width,height:p.item.height,bottom:p.item.elevation_mm-s.elevation-(s.feet?.article==='118779'?0:footHeight(s))})):null;
-   drawing+=doorLeaves(s,front.swing,X(-W/2),Y(footHeight(s)),k,40,leaves)+label(200,312,swingNames[front.swing]);
+   drawing+=doorLeaves(s,front.swing,X(-W/2),Y(footHeight(s)),k,40,leaves,selection)+label(200,312,swingNames[front.swing]);
  }
  if(view==='sections'){
    const widths=sectionWidths(s);section=Math.max(0,Math.min(widths.length-1,section));
    const left=-W/2+s.thickness+widths.slice(0,section).reduce((sum,w)=>sum+w+s.thickness,0);
    const y=footHeight(s)+s.thickness;
-   drawing+='<rect x="'+num(X(left))+'" y="'+num(Y(H-s.thickness))+'" width="'+num(widths[section]*k)+'" height="'+num((H-s.thickness-y)*k)+'" fill="'+accent+'" fill-opacity=".07" stroke="'+accent+'" stroke-width="1.8"/>';
+   if(selection?.level==null&&selectedShelf==null)drawing+='<rect x="'+num(X(left))+'" y="'+num(Y(H-s.thickness))+'" width="'+num(widths[section]*k)+'" height="'+num((H-s.thickness-y)*k)+'" fill="#316bb0" fill-opacity=".07" stroke="#316bb0" stroke-width="1.8"/>';
+   let start=-W/2+s.thickness;
+   for(const [sec,width] of widths.entries()){
+     const shelves=built.parts.filter(p=>p.key.startsWith('shelf-'+sec+'-')).map(p=>panel(p.item));
+     let base=y;
+     for(let level=0;level<=shelves.length;level++){
+       const top=shelves[level]?.y??(H-s.thickness),active=selection?.level===level&&sec===section;
+       const title='Секция '+(sec+1)+', ниша '+(level+1);
+       drawing+='<g class="niche-target" role="button" tabindex="0" data-section="'+sec+'" data-niche="'+level+'" aria-label="'+title+'"><title>'+title+'</title>'+
+         '<rect x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="'+(active?'#2672bd':'transparent')+'" fill-opacity="'+(active?'.17':'1')+'" stroke="'+(active?'#2672bd':'none')+'" stroke-width="1.8"/></g>';
+       if(shelves[level])base=top+shelves[level].h;
+     }
+     start+=width+s.thickness;
+   }
    for(const {key,item} of built.parts){
      const match=/^shelf-(\d+)-(\d+)$/.exec(key);if(!match)continue;
      const q=panel(item),sec=Number(match[1]),index=Number(match[2]),cy=Y(q.y+q.h/2);
      const selected=section===sec&&selectedShelf===index;
      drawing+='<g class="shelf-target" role="button" tabindex="0" data-section="'+sec+'" data-shelf-index="'+index+'" aria-label="Секция '+(sec+1)+', полка '+(index+1)+'"><title>Полка '+(index+1)+'</title>'+
-       (selected?rect(X(q.x),Y(q.y+q.h),q.w*k,Math.max(2,q.h*k),'#8cba9f',accent):'')+
+       (selected?rect(X(q.x),Y(q.y+q.h),q.w*k,Math.max(2,q.h*k),'#9bc7f1','#2468a6'):'')+
        '<rect x="'+num(X(q.x))+'" y="'+num(cy-5)+'" width="'+num(q.w*k)+'" height="10" fill="transparent"/></g>';
    }
    drawing+=label(200,313,'Секция '+(section+1)+' · '+widths[section]+' мм');
+ }
+ if(view==='fronts'||view==='sections'){
+   for(const conflict of built.hingeConflicts??[]){
+     const px=X((conflict.side==='left'?-1:1)*(W/2-s.thickness/2)),py=Y(conflict.y-s.elevation+(s.feet?.article==='118779'?10:0));
+     drawing+='<g role="img" aria-label="Конфликт петель · секция '+(conflict.section+1)+'">'+circle(px,py,7,'#fff0eb','#b53d2a')+
+       '<text x="'+num(px)+'" y="'+num(py+4)+'" text-anchor="middle" fill="#8b2515" font-size="12">!</text></g>';
+   }
  }
  if(zoom){
    drawing+=line(X(-W/2)-10,Y(0)+1,X(W/2)+10,Y(0)+1);
@@ -109,9 +129,9 @@ function rear(built){
    }).join('');
  }
 }
-export function wardrobeDrawing(built,view='body',section=0,front=built.spec.front,selectedShelf=null){
+export function wardrobeDrawing(built,view='body',section=0,front=built.spec.front,selectedShelf=null,selection=null){
  const s=built.spec,feet=footPlan(s),shelves=(s.sectionShelves??Array(s.sections).fill(s.shelves)).reduce((a,b)=>a+b,0);
- const art=view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front,selectedShelf);
+ const art=view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front,selectedShelf,selection);
  const notes={body:s.sections+' секц. · полок '+shelves+' · плита '+s.thickness+' мм',sections:'Вид спереди · чистая ширина выделенной секции',
    feet:feet.length?'Установлено опор: '+feet.length+' · арт. '+s.feet.article:'Опоры не выбраны',
    plinth:plinthPanel(s)?'Планка '+plinthPanel(s).height+' мм · верхний зазор 3 мм':'Цоколь для этого исполнения отсутствует',

@@ -99,6 +99,7 @@ def inner_foot_pairs(width, sections, layout):
 class OverlayFront(StrictModel):
     swing: Literal['left','right','pair']
     offset: Literal[90,130]
+    autoHinges: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     massKg: float | None = Field(default=None,gt=0,le=22,exclude_if=lambda v:v is None)
 
 
@@ -107,12 +108,16 @@ class ShelfLevel(StrictModel):
     mm: int = Field(ge=0, le=5000, strict=True)
 
 
+DrawerMillimetres = Annotated[int, Field(strict=True)] | Annotated[float, Field(strict=True)]
+
 class DrawerFace(StrictModel):
-    height: int | None = Field(ge=100,le=3000,strict=True)
+    height: DrawerMillimetres | None = Field(ge=100,le=3000)
     width: float | None = Field(default=None,ge=40,le=1200,multiple_of=.5,exclude_if=lambda v:v is None)
 
 
 class DrawerBank(StrictModel):
+    layout: Literal['equal','manual'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    gap: DrawerMillimetres | None = Field(default=None,ge=0,le=3000,exclude_if=lambda v:v is None)
     shelvesBelow: int | None = Field(default=None,ge=0,le=10,strict=True,exclude_if=lambda v:v is None)
     bottomOffset: int | None = Field(default=None,ge=0,le=3000,strict=True,exclude_if=lambda v:v is None)
     kind: Literal['internal','external']
@@ -120,8 +125,23 @@ class DrawerBank(StrictModel):
     height: int | None = Field(default=None,ge=103,le=3000,strict=True,exclude_if=lambda v:v is None)
 
     def span(self):
-        fixed = sum(f.height or 0 for f in self.faces) + 3*len(self.faces)
         count = sum(f.height is None for f in self.faces)
+        if self.layout:
+            if self.height is None or self.gap is None or self.shelvesBelow is not None:
+                raise ValueError('Проверьте границы ниши и зазор шуфляд.')
+            if any(abs(v-round(v,3))>1e-8 for v in [self.gap,*[f.height for f in self.faces if f.height is not None]]):
+                raise ValueError('Допустима точность до 0,001 мм.')
+            available = round(self.height-3-self.gap*(len(self.faces)-1),3)
+            if self.layout=='equal':
+                valid=count==len(self.faces) and available>=100*count
+            else:
+                valid=count==1 and 100<=round(available-sum(f.height or 0 for f in self.faces),3)<=3000
+            if not valid:
+                raise ValueError('Высоты фасадов с заданными зазорами не помещаются в нише.')
+            return self.height
+        if self.gap is not None or any(f.height is not None and f.height%1 for f in self.faces):
+            raise ValueError('Проверьте размеры свободного блока шуфляд.')
+        fixed = sum(f.height or 0 for f in self.faces) + 3*len(self.faces)
         if count:
             if count != 1 or self.height is None or not 100 <= self.height-fixed <= 3000:
                 raise ValueError('Проверьте общую высоту и фасад по остатку.')
@@ -130,7 +150,7 @@ class DrawerBank(StrictModel):
 
 
 class CarcassDesign(CarcassSpec):
-    drawerBanks: list[DrawerBank | None] | None = Field(default=None,min_length=1,max_length=3,exclude_if=lambda v:v is None)
+    drawerBanks: list[DrawerBank | None] | None = Field(default=None,min_length=1,max_length=33,exclude_if=lambda v:v is None)
     shelfLevels: list[Annotated[list[ShelfLevel | None], Field(max_length=10)]] | None = Field(default=None, max_length=3, exclude_if=lambda v:v is None)
     front: OverlayFront | None = Field(default=None,exclude_if=lambda v:v is None)
     backThickness: Literal[16,18] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -145,10 +165,51 @@ class CarcassDesign(CarcassSpec):
 
     sectionShelves: list[Annotated[int, Field(ge=0, le=10, strict=True)]] | None = Field(default=None, min_length=1, max_length=3)
 
+    def niche_bounds(self, section, inside):
+        count=self.sectionShelves[section] if self.sectionShelves and section<len(self.sectionShelves) else self.shelves
+        t=self.thickness
+        choices=self.shelfChoices[section] if self.shelfChoices and section<len(self.shelfChoices) else ['board/95388']*count
+        levels=self.shelfLevels[section] if self.shelfLevels and section<len(self.shelfLevels) else [None]*count
+        if len(choices)!=count or len(levels)!=count or any(not shelf_valid(c,t) for c in choices):
+            raise ValueError('Проверьте настройки полок выбранной секции.')
+        sizes=[t if c.startswith('board/') else int(c.split('/')[0]) for c in choices]
+        floor=self.elevation+(self.feet.height if self.feet else 0)
+        ceiling=self.height-t
+        # Match the positive-position rounding and anchored runs in shelf-levels.mjs.
+        nearest=lambda value: int(value+.5)
+        if not any(levels):
+            free=ceiling-t-count*t
+            if free<(count+1)*60: raise ValueError('Для полок недостаточно высоты.')
+            ys=[t+nearest((i+1)*free/(count+1))+(i+1)*t-sizes[i] for i in range(count)]
+        else:
+            ys=[]; top=t; i=0
+            while i<count:
+                if levels[i] and levels[i].mode=='floor':
+                    y=levels[i].mm-floor
+                    if y-top<60 or y+sizes[i]>ceiling-60: raise ValueError('Проверьте высоту полки.')
+                    ys.append(y); top=y+sizes[i]; i+=1
+                    continue
+                end=i
+                while end<count and (not levels[end] or levels[end].mode!='floor'): end+=1
+                boundary=levels[end].mm-floor if end<count else ceiling
+                free=boundary-top-sum(sizes[i:end])-sum(v.mm for v in levels[i:end] if v)
+                slots=1+sum(v is None for v in levels[i:end])
+                if free<60*slots: raise ValueError('Для заданных полок недостаточно высоты.')
+                used=0
+                while i<end:
+                    gap=levels[i].mm if levels[i] else nearest((used+1)*free/slots)-nearest(used*free/slots)
+                    if levels[i] is None: used+=1
+                    if gap<60: raise ValueError('Проверьте проём под полкой.')
+                    y=top+gap; ys.append(y); top=y+sizes[i]; i+=1
+        if inside:
+            return list(zip([t,*[y+h for y,h in zip(ys,sizes)]],[*ys,ceiling]))
+        centres=[nearest(y+h/2) for y,h in zip(ys,sizes)]
+        return list(zip([0,*centres],[*centres,self.height]))
+
     @model_validator(mode='after')
     def section_layout(self):
         if self.drawerBanks:
-            if self.recipe not in ('shelves','divided') or len(self.drawerBanks)!=self.sections:
+            if self.recipe not in ('shelves','divided') or len(self.drawerBanks)<self.sections:
                 raise ValueError('Проверьте секции с шуфлядами.')
             inner=self.width-2*self.thickness
             if self.dividerPositions:
@@ -161,10 +222,25 @@ class CarcassDesign(CarcassSpec):
                 width,extra=divmod(inner-self.thickness*(self.sections-1),self.sections)
                 widths=[width+(i<extra) for i in range(self.sections)]
             zones=[]
-            start=float(self.thickness)
-            for i,(bank,w) in enumerate(zip(self.drawerBanks,widths)):
+            for slot,bank in enumerate(self.drawerBanks):
+                if bank is None: continue
+                i=slot%3
+                if i>=self.sections or i>=len(widths):
+                    raise ValueError('Ниша с шуфлядами выходит за секции шкафа.')
+                w=widths[i]
+                start=sum(widths[:i])+(i+1)*self.thickness
                 end=start+w
                 if bank:
+                    level=slot//3
+                    if level and (not bank.layout or self.drawerBanks[i] and not self.drawerBanks[i].layout):
+                        raise ValueError('Свободное положение блока несовместимо с дополнительной нишей.')
+                    if bank.layout:
+                        bounds=self.niche_bounds(i,bank.kind=='internal')
+                        if level>=len(bounds):
+                            raise ValueError('Выбранная ниша отсутствует.')
+                        low,high=bounds[level]
+                        if bank.height!=high-low or (bank.bottomOffset or 0)!=low-(self.thickness if bank.kind=='internal' else 0):
+                            raise ValueError('Размеры блока не совпадают с геометрией ниши.')
                     if (bank.shelvesBelow or 0)>(self.sectionShelves[i] if self.sectionShelves and i<len(self.sectionShelves) else self.shelves):
                         raise ValueError('Полок под блоком больше, чем полок в секции.')
                     inside=bank.kind=='internal'
@@ -180,8 +256,7 @@ class CarcassDesign(CarcassSpec):
                         raise ValueError(f'Секция {i+1}: блоку AKS недостаточно места.')
                     if any(f.width is not None and f.width>max_width for f in bank.faces):
                         raise ValueError(f'Секция {i+1}: фасад шире проёма.')
-                    zones.append((start,end,inside,top))
-                start=end+self.thickness
+                    zones.append((start,end,inside,top,top-bank.span()))
             if self.front and any(not z[2] for z in zones):
                 pair=self.front.swing=='pair'
                 seam=(self.thickness*1.5+widths[0] if pair and self.sections==2 else self.width/2)
@@ -190,14 +265,14 @@ class CarcassDesign(CarcassSpec):
                     covered=[z for z in zones if min(right,z[1])>max(left,z[0])]
                     bottom=max((z[3] for z in covered if not z[2]),default=0)
                     height=self.height-3-bottom
-                    if bottom and any(z[2] for z in covered):
+                    if bottom and any(z[2] and z[4]<bottom for z in covered):
                         raise ValueError('Разделите створки по секциям шуфляд.')
-                    if height>0 and (right-left>600 or not 2*self.front.offset+64<=height<=2400):
+                    if height>0 and (right-left>600 or not (126 if self.front.autoHinges else 2*self.front.offset+64)<=height<=2400):
                         raise ValueError('Проверьте размеры створки над блоком шуфляд.')
         if self.front and not any(b and b.kind=='external' for b in self.drawerBanks or []):
             count = 2 if self.front.swing=='pair' else 1
             width = (self.width-3*count)/count
-            if self.recipe not in ('shelves','divided') or width>600 or self.height-3>2400 or self.height-3<2*self.front.offset+64:
+            if self.recipe not in ('shelves','divided') or width>600 or self.height-3>2400 or self.height-3<(126 if self.front.autoHinges else 2*self.front.offset+64):
                 raise ValueError('Проверьте габариты створки и отступ петель.')
         if self.backThickness and (not self.back or self.recipe not in ('shelves','divided') or (self.backThickness>=16 and self.thickness<16)):
             raise ValueError('Проверьте конструкцию и толщины панелей вкладной задней стенки.')

@@ -48,9 +48,9 @@ export function wardrobeHardware(items){
     host_blank_id:hosts[0].item_id,joined_panel_id:hosts[1].item_id,
     position:{...worldPoint({x,z},rotation),y},rotation,elastic_resize:false});
   };
-  spec.drawerBanks.forEach((bank,section)=>{
+  spec.drawerBanks.forEach((bank,slot)=>{
    if(!bank)return;
-   const prefix='drawer-'+section+'-',railAxes=[],sides=['left','right'];
+   const section=slot%3,prefix='drawer-'+slot+'-',railAxes=[],sides=['left','right'];
    const panels=sides.map((side,k)=>get(k===0?(section===0?'left':'divider-'+(section-1)):(section===spec.sections-1?'right':'divider-'+section)));
    const spacers=sides.map(side=>parts.get(prefix+'spacer-'+side));
    const axes=sides.map((side,k)=>spacers[k]?doorHinges(get('door-'+side),items).map(h=>h.position.y):[]);

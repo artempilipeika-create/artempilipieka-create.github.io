@@ -1,4 +1,5 @@
 import aks from './aks-wardrobe.json' with {type:'json'};
+import {fittedFaceHeights,mm} from './wardrobe-niches.mjs';
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
 
 export const outerFront=s=>Boolean(s.front||s.drawerBanks?.some(b=>b?.kind==='external'));
@@ -49,6 +50,7 @@ export function drawerFit(b,axes,bank){
 function frontHeights(bank,n){
  const rows=bank.faces;
  if(!Array.isArray(rows)||!rows.length||rows.length>24)throw Error('Секция '+n+': проверьте количество шуфляд.');
+ if(bank.layout)return fittedFaceHeights(bank,n);
  const autos=rows.filter(f=>f?.height==null).length;
  if(autos>1||autos&&(!Number.isInteger(bank.height)||bank.height<100))throw Error('Секция '+n+': для остатка задайте высоту блока.');
  const remaining=bank.height-rows.reduce((sum,f)=>sum+(f?.height??0),0)-3*rows.length;
@@ -60,11 +62,13 @@ function frontHeights(bank,n){
 }
 
 export function drawerSections(s,widths,legacy=false){
- if(s.drawerBanks&&s.drawerBanks.length!==widths.length)throw Error('Проверьте количество секций с шуфлядами.');
- let x=-s.width/2+s.thickness;
- return widths.map((clear,i)=>{
-  const left=x,right=x+clear,bank=s.drawerBanks?.[i];x=right+s.thickness;
+ const banks=s.drawerBanks??Array(widths.length).fill(null);
+ if(banks.length<widths.length||banks.length>33)throw Error('Проверьте количество ниш с шуфлядами.');
+ return banks.map((bank,slot)=>{
   if(!bank)return null;
+  const i=slot%3,clear=widths[i];
+  if(clear==null)throw Error('Проверьте секцию шуфляд.');
+  const left=-s.width/2+s.thickness+widths.slice(0,i).reduce((sum,w)=>sum+w+s.thickness,0),right=left+clear;
   const internal=bank.kind==='internal';
   if(!internal&&bank.kind!=='external')throw Error('Выберите исполнение шуфляд.');
   const swing=s.front?.swing,n=i+1;
@@ -88,11 +92,13 @@ export function drawerSections(s,widths,legacy=false){
   const faces=heights.map((height,j)=>{
    const width=bank.faces[j].width??maxWidth;
    if(!Number.isInteger(width*2)||width<40||width>maxWidth)throw Error('Секция '+n+', фасад '+(j+1)+': допустимая ширина 40–'+maxWidth+' мм.');
-   const boxY=Math.max(s.thickness,bottom)+13;
-   const f={width,height,x:(lo+hi)/2,y:bottom+1.5,z:faceFront-9,boxY,railY:boxY+40};bottom+=height+3;return f;
+   const boxY=Math.round(Math.max(s.thickness,bottom))+13;
+   const f={width,height,x:(lo+hi)/2,y:mm(bottom+1.5),z:faceFront-9,boxY,railY:boxY+40};
+   bottom=mm(bottom+height+(bank.layout?bank.gap:3));return f;
   });
+  if(bank.layout)bottom=base+bank.height;
   if(bottom>s.height-(internal?s.thickness:0))throw Error('Секция '+n+': блоку шуфляд не хватает '+(bottom-s.height+(internal?s.thickness:0))+' мм.');
-  return {section:i,legacy,base,internal,spacerL,spacerR,left,right,mountWidth,center,bodyFront,rail,clearDepth,faces,top:bottom,span:bottom-base};
+  return {section:i,slot,legacy,base,internal,spacerL,spacerR,left,right,mountWidth,center,bodyFront,rail,clearDepth,faces,top:bottom,span:bottom-base};
  });
 }
 
@@ -100,7 +106,7 @@ export function drawerSections(s,widths,legacy=false){
 export function buildDrawerBoards(spec,banks,add){
  for(const b of banks){
   if(!b)continue;
-  const prefix='drawer-'+b.section+'-',section=' · секция '+(b.section+1);
+  const prefix='drawer-'+b.slot+'-',section=' · секция '+(b.section+1);
   const spacerDepth=b.legacy?Math.floor(b.clearDepth):b.rail.length,spacerZ=b.bodyFront-spacerDepth/2;
   for(const [side,width,x] of [['left',b.spacerL,b.left+9],['right',b.spacerR,b.right-9]]){
    if(width)add(prefix+'spacer-'+side,'Проставка 18 мм '+(side==='left'?'слева':'справа')+section,'side',b.span,spacerDepth,18,x,b.base,spacerZ,'1000');
@@ -121,13 +127,14 @@ export function buildDrawerBoards(spec,banks,add){
 
 export function doorZones(s,leaves,banks){
  if(!banks.some(b=>b&&!b.internal))return leaves;
- const seam=s.sections===2&&leaves.length===2?(banks[0]?banks[0].right+s.thickness/2:banks[1].left-s.thickness/2)+s.width/2:null;
+ const reference=banks.find(Boolean);
+ const seam=s.sections===2&&leaves.length===2?(reference.section===0?reference.right+s.thickness/2:reference.left-s.thickness/2)+s.width/2:null;
  return leaves.map((l,i)=>{
   const left=seam!==null&&i===1?seam+1.5:l.left;
   const width=seam===null?l.width:i?s.width-seam-3:seam-3;
   const a=left-s.width/2,covered=banks.filter(b=>b&&Math.min(a+width,b.right)>Math.max(a,b.left));
   const top=Math.max(0,...covered.filter(b=>!b.internal).map(b=>b.top));
-  if(top&&covered.some(b=>b.internal))throw Error('Разделите створки для внутренних и наружных шуфляд по секциям.');
+  if(top&&covered.some(b=>b.internal&&b.base<top))throw Error('Разделите створки для внутренних и наружных шуфляд по секциям.');
   return {...l,left,width,bottom:l.bottom+top,height:l.height-top};
  });
 }
