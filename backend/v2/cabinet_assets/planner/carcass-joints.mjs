@@ -2,7 +2,7 @@ import {horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
 import {anchoredShelf,hasFacadeProfiles} from './wardrobe-door-layout.mjs';
 import {nicheSlot} from './wardrobe-layout.mjs';
 import {localBaseShelf} from './wardrobe-layout.mjs';
-import {localPoint,worldPoint} from './blank-bindings.mjs';
+import {localPoint,worldPoint,shelfBearing} from './blank-bindings.mjs';
 
 import {fixedShelfScheme} from './shelf-choices.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
@@ -42,6 +42,13 @@ export function jointRows(scheme,depth,isShelf){
    else rows.push({kind:'cam',z},{kind:'dowel',z:z-direction*32});
  }
  return rows;
+}
+
+export function shelfJointRows(panel,host,scheme){
+ if(!panel.blank_binding?.gola_flush||!host)return jointRows(scheme,panel.depth,true);
+ const bearing=shelfBearing(panel,host);
+ if(bearing.depth<(scheme==='cam_dowel'?216:152))throw Error(panel.name+' · недостаточная глубина стойки для выбранного крепежа.');
+ return jointRows(scheme,bearing.depth,true).map(row=>({...row,z:row.z+bearing.mid}));
 }
 
 export function dividerScheme(spec,index){
@@ -182,7 +189,7 @@ export function nativeCarcassJoints(items) {
       if (!host || host.blank_axis!=='side' || (shelfScheme?![16,18,25].includes(host.width):host.width!==18) || host.rotation!==panel.rotation ||
           (binding['gap_'+side+'_mm']||0)!==0 ||
           Math.abs(localPoint(host,angle).x-sign*host.width/2-face)>0.01 ||
-          Math.abs(centre.z-localPoint(host,angle).z)+panel.depth/2>host.depth/2+.01 ||
+          (binding.gola_flush?shelfBearing(panel,host).rear>-panel.depth/2+.01:Math.abs(centre.z-localPoint(host,angle).z)+panel.depth/2>host.depth/2+.01) ||
           panel.elevation_mm<host.elevation_mm || panel.elevation_mm+panel.height>host.elevation_mm+host.height)
         throw Error(panel.name+' · проверьте толщину и привязку боковин.');
       function place(kind,z) {
@@ -195,7 +202,7 @@ export function nativeCarcassJoints(items) {
       const opposite=Boolean(shelfScheme&&isDrawerCover(panel)&&items.some(other=>
         fixedShelfScheme(other)&&other.blank_binding?.[side==='left'?'right_id':'left_id']===host.item_id&&
         Math.abs(other.elevation_mm-panel.elevation_mm)<10&&(side==='left'||!isDrawerCover(other))));
-      for(const row of jointRows(scheme,panel.depth,Boolean(shelfScheme))){
+      for(const row of shelfScheme?shelfJointRows(panel,host,scheme):jointRows(scheme,panel.depth,false)){
         // On a shared upright stagger facing fasteners without moving either shelf.
         const inset=opposite?16*Math.sign(row.z):0;
         place(row.kind,centre.z+row.z-inset);

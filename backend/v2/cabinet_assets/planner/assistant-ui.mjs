@@ -1,3 +1,4 @@
+import {measuredRooms} from './wardrobe-gola-shelves.mjs';
 import {doorControls,setDoorShelf,wireHandleDrag} from './wardrobe-door-ui.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
@@ -20,6 +21,23 @@ import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {WARDROBE_STEPS,resizeDividerChoices,wardrobeSpec,sectionWidths,questionnaireMaterialError} from './wardrobe-questionnaire.mjs';
 const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x;};
 const button=(text,fn)=>{const b=el('button',text);b.type='button';b.onclick=fn;return b;};
+function buildPreview(ui){
+  try{
+   const options={idPrefix:'questionnaire-preview',bodyMaterialId:ui.materials?.body?.variant_id,frontMaterialId:ui.materials?.front?.variant_id,
+     backMaterialId:ui.materials?.back?.variant_id,drawerMaterialId:ui.fields.thickness===18?undefined:ui.materials?.drawer?.variant_id};
+   let built,issue='';
+   try{built=buildCarcass(ui.spec(),options);}
+   catch(error){
+    if(ui.view!=='fronts')throw error;
+    const guide=structuredClone(ui.fields);delete guide.front;
+    for(const bank of guide.drawerBanks??[])for(const face of bank?.faces??[])delete face.handle;
+    built=buildCarcass(wardrobeSpec(guide),options);
+    issue=error.message;
+   }
+   return {built,issue};
+  }catch(error){return {error};}
+ }
+
 export class AssistantUI{
  constructor(app){this.app=app;this.disposed=false;this.materials={};this.serial={body:0,back:0,front:0,drawer:0};this.start().catch(()=>{});}
  async start(){
@@ -181,6 +199,7 @@ export class AssistantUI{
   }this.form.append(nav);
  }
  render(){
+  const preview=buildPreview(this);this.previewBuilt=preview.built??null;
   const editorKey=this.step===2?[this.activeSection,this.interior,this.nicheIndex,this.column,this.gapIndex].join('/'):this.step===1?'shelves/'+this.activeSection:'';
   const keep=editorKey&&editorKey===this.editorKey;
   this.editorKey=editorKey;
@@ -274,7 +293,7 @@ export class AssistantUI{
   if(this.step<=2&&this.layoutUndo.length){
    const undo=button('Отменить изменение',()=>this.undoLayout());undo.className='cell-undo';this.form.append(undo);
   }
-  this.layoutAnchor=this.rememberLayout();this.draw();this.controls();
+  this.layoutAnchor=this.rememberLayout();this.draw(preview);this.controls();
   if(keep){
    for(const d of this.form.querySelectorAll('details'))if(expanded.includes(d.firstElementChild.textContent))d.open=true;
    if(focus){
@@ -428,7 +447,7 @@ export class AssistantUI{
   const openings=el('fieldset');openings.className='shelf-openings';openings.append(el('legend','Куда поставить наполнение'));
   const list=el('div');list.className='shelf-opening-list';
   try{
-   const rooms=nicheOpenings(f,section);
+   const rooms=measuredRooms(f,section,0,null,this.previewBuilt?.installedLevels);
    for(let level=rooms.length-1;level>=0;level--){
     const b=button('',()=>selectCell(this,{section,level}));b.dataset.openingLevel=level;
     b.append(el('span',openingLabel(level,count)),el('strong',(rooms[level].top-rooms[level].bottom)+' мм'));list.append(b);
@@ -533,23 +552,14 @@ export class AssistantUI{
   if(!outline){old.append(sel);return;}
   for(const a of sel.attributes)if(outline.getAttribute(a.name)!==a.value)outline.setAttribute(a.name,a.value);
  }
- draw(){
+ draw(preview=buildPreview(this)){
   const view=this.step===0&&this.view==='body'?'sections':this.view;
   this.figureTitle.textContent=view==='sections'?'Вид спереди · размеры в свету':drawingTitles[view];
   const warning=this.form.querySelector('.front-choice-warning');
   if(warning)warning.hidden=true;
   try{
-   const options={idPrefix:'questionnaire-preview',bodyMaterialId:this.materials?.body?.variant_id,frontMaterialId:this.materials?.front?.variant_id,
-     backMaterialId:this.materials?.back?.variant_id,drawerMaterialId:this.fields.thickness===18?undefined:this.materials?.drawer?.variant_id};
-   let built,issue='';
-   try{built=buildCarcass(this.spec(),options);}
-   catch(error){
-    if(this.view!=='fronts')throw error;
-    const guide=structuredClone(this.fields);delete guide.front;
-    for(const bank of guide.drawerBanks??[])for(const face of bank?.faces??[])delete face.handle;
-    built=buildCarcass(wardrobeSpec(guide),options);
-    issue=error.message;
-   }
+   if(preview.error)throw preview.error;
+   const {built,issue}=preview;
    this.previewBuilt=built;
    const cell=activeCell(this),slot=nicheSlot(cell.section,cell.level,splitAt(built.spec,cell.section,cell.level)?.kind==='drawers'?cell.column??0:0);
    const selected=this.step===2;

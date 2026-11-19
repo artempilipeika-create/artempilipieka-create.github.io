@@ -1,3 +1,4 @@
+import {aboveGola,installedOpenings} from './wardrobe-gola-shelves.mjs';
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
 export {sectionWidths} from './wardrobe-layout.mjs';
 import {outerFront,drawerSections,buildDrawerBoards,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
@@ -59,7 +60,18 @@ export function buildCarcass(input={},options={}){
   const plinth=plinthPanel(s),legHeight=s.feet?.article==='118779'?0:footHeight(s);
   const sideY=s.bottom==='overlay'?t:0,sideH=H-sideY-(s.top==='overlay'?t:0);
   const bottomTop=t,topBottom=['inset','overlay','rails'].includes(s.top)?H-t:H-80;
+  let shelfRuns=[];
+  const installedLevels=new Map();
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
+    if(shelfRuns.length&&/^shelf-(?:\d+-\d+|niche-\d+-\d+-[01]-\d+)$/.test(key)&&(!shelf||shelf.startsWith('board/'))){
+      const datum=aboveGola(shelfRuns,x+(W-L)/2,L,y,T);
+      if(datum!=null){
+        const extension=D/2-(z+B/2);
+        y=datum;B+=extension;z+=extension/2;
+        binding={...binding,depth_offset_mm:binding.depth_offset_mm+extension/2,gola_flush:true};
+        installedLevels.set(key,{bottom:y,top:y+T});
+      }
+    }
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
       x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:key==='rear-brace'?1:axis==='front'?2:s.edgeThickness,
       blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:/^drawer-\d+-\d+-bottom$/.test(key)?CARCASS_BACK_MATERIAL_ID:key.startsWith('drawer-')?(options.drawerMaterialId??(t===18?options.bodyMaterialId:null)):options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
@@ -89,6 +101,7 @@ export function buildCarcass(input={},options={}){
   supports.push(right);
   if(s.drawerBanks?.some(b=>b?.layout))s.drawerBanks=fitNicheBanks(s,s.drawerBanks);
   const {doors:leaves,banks,runs}=facadeLayout(s,drawerSections(s,widths,Boolean(options.legacyDrawers)));
+  if(!options.legacyGolaShelves)shelfRuns=runs;
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
   const shelfYs=counts.map((count,section)=>{
     const baseSlot=nicheSlot(section,0),bank=s.drawerBanks?.[baseSlot]?.layout?null:banks[baseSlot],below=s.drawerBanks?.[baseSlot]?.shelvesBelow??0;
@@ -117,10 +130,21 @@ export function buildCarcass(input={},options={}){
     add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
       widths[section]-2*gap,D-innerRear-s.shelfSetback,thickness,(a.x+b.x)/2,y,shelfCentre,kind==='glass'?'0000':edge(),binding(a,b,gap,shelfCentre-a.z),value===defaultShelf?null:value);
   }
+  function checkOpenings(rooms){
+    if(rooms.some(r=>r.top-r.bottom<60))throw Error('Над полкой с Gola не хватает места. Увеличьте высоту ниши до 60 мм.');
+    return rooms;
+  }
+  if(installedLevels.size)for(let sec=0;sec<s.sections;sec++){
+    const thicknesses=shelfYs[sec].map((_,i)=>choice(s.shelfChoices?.[sec]?.[i]??defaultShelf,t).thickness);
+    const nominal=[...shelfYs[sec],topBottom].map((top,i)=>({bottom:i?shelfYs[sec][i-1]+thicknesses[i-1]:openingBase(s,sec),top}));
+    checkOpenings(installedOpenings(nominal,installedLevels,i=>'shelf-'+sec+'-'+i));
+  }
   const occupied=new Set();
   for(const zone of s.nicheSplits??[]){
     const sec=zone.section,id=splitKey(zone),slot=nicheSlot(sec,zone.level);
-    const room=sec>=0&&sec<s.sections?nicheOpenings(s,sec)[zone.level]:null;
+    const rooms=sec>=0&&sec<s.sections?nicheOpenings(s,sec):[];
+    const nominalRoom=rooms[zone.level];
+    const room=installedOpenings(rooms,installedLevels,i=>'shelf-'+sec+'-'+i)[zone.level];
     if(!room||occupied.has(id)||s.drawerBanks?.[nicheSlot(sec,0)]&&!s.drawerBanks[nicheSlot(sec,0)].layout)throw Error('Проверьте границы выбранной перегородки.');
     occupied.add(id);
     const halves=columnWidths(zone,widths[sec]),a=supports[sec],b=supports[sec+1];
@@ -134,7 +158,7 @@ export function buildCarcass(input={},options={}){
     if(!isDrawers){
       if(zone.columns?.length!==2)throw Error('Укажите полки левой и правой части.');
       for(const [i,col] of zone.columns.entries()){
-        const bounds=columnOpenings(room.bottom,room.top,col,t),sides=i?[divider,b]:[a,divider];
+        const bounds=columnOpenings(nominalRoom.bottom,nominalRoom.top,col,t),sides=i?[divider,b]:[a,divider];
         for(const [j,gap] of bounds.slice(0,-1).entries()){
           const value=col.choices?.[j]??defaultShelf,c=choice(value,t),glass=c.kind==='glass';
           const clearance=c.scheme?0:Math.max(s.shelfGap,glass?1:0,fittingGap(c.hardware.article));
@@ -142,6 +166,7 @@ export function buildCarcass(input={},options={}){
             halves[i]-2*clearance,depth,c.thickness,leftEdge+(i?halves[0]+18:0)+halves[i]/2,gap.top,z,glass?'0000':edge(),
             binding(...sides,clearance,z-sides[0].z),value===defaultShelf?null:value);
         }
+        if(installedLevels.size)checkOpenings(installedOpenings(bounds,installedLevels,k=>'shelf-'+id+'-'+i+'-'+k,room.bottom,room.top));
       }
     }
   }
@@ -204,8 +229,16 @@ export function buildCarcass(input={},options={}){
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   verifyProfileSupports(s,parts,runs,s.elevation+legHeight);
   const items=resolveBlankBindings(parts.map(p=>p.item));
-  const rods=planRods(s);
-  return {spec:s,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  if(installedLevels.size){
+    const drawers=parts.filter(p=>/^drawer-\d+-\d+-(?:face|side-left|side-right|front|rear|bottom)$/.test(p.key));
+    for(const {label,item} of parts.filter(p=>p.item.blank_binding?.gola_flush))for(const {item:d} of drawers){
+      if(item.elevation_mm<d.elevation_mm+d.height&&item.elevation_mm+item.height>d.elevation_mm&&
+         Math.abs(d.x-item.x)<(d.width+item.width)/2&&Math.abs(d.z-item.z)<(d.depth+item.depth)/2)
+        throw Error(label+' над профилем Gola пересекает шуфляду. Выберите другой стык или увеличьте проём.');
+    }
+  }
+  const rods=planRods(s,installedLevels);
+  return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:W,height:H,depth:D+(s.back&&!rear?3:0)+(outerFront(s)?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

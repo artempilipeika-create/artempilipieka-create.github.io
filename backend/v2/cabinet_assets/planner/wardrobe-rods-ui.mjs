@@ -16,7 +16,7 @@ export function rodControls(ui,parent,cell){
  const box=el('fieldset');box.className='rod-editor';
  box.append(el('legend','Штанги · секция '+(cell.section+1)+' · ниша '+(cell.level+1)+(cell.column!=null?' · '+(cell.column?'справа':'слева')+' · проём '+(cell.opening+1):'')));parent.append(box);
  let room;
- try{room=rodRoom(f,cell);}catch(e){box.append(el('p',e.message));return;}
+ try{room=rodRoom(f,cell,ui.previewBuilt?.installedLevels);}catch(e){box.append(el('p',e.message));return;}
  const list=(f.rods??[]).filter(r=>sameRodCell(r,cell));
  const saved=list.find(r=>r.id===ui.rodId)??list[0];
  if(!ui.rodDraft||!sameRodCell(ui.rodDraft,cell))ui.rodDraft=newRod(cell,room);
@@ -28,7 +28,7 @@ export function rodControls(ui,parent,cell){
  const message=el('p');message.className='rod-message';message.setAttribute('role','status');
  const edit=(delta)=>{
    const candidate={...rod,...delta};if(candidate.fromBack==null)delete candidate.fromBack;
-   try{planRods({...f,rods:[candidate]});}
+   try{planRods({...f,rods:[candidate]},ui.previewBuilt?.installedLevels);}
    catch(e){message.textContent=e.message;return;}
    if(saved){f.rods=f.rods.map(r=>r.id===candidate.id?candidate:r);ui.changed(true);}
    else{ui.rodDraft=candidate;ui.render();}
@@ -77,7 +77,7 @@ export function rodControls(ui,parent,cell){
      for(let i=1;i<edges.length;i++)if(edges[i]-edges[i-1]>widest){widest=edges[i]-edges[i-1];axis=(edges[i]+edges[i-1])/2;}
      next.offset=Math.round(next.anchor==='top'?room.high-axis:axis-room.low);
    }
-   try{planRods({...f,rods:[next]});}catch(e){message.textContent=e.message;return;}
+   try{planRods({...f,rods:[next]},ui.previewBuilt?.installedLevels);}catch(e){message.textContent=e.message;return;}
    (f.rods??=[]).push(next);ui.rodId=next.id;ui.changed(true);
  }));
  if(saved)actions.append(button('Убрать штангу',()=>{
@@ -99,7 +99,7 @@ export function wireRodDrag(ui){
    const target=e.target.closest('[data-rod-id]');if(!target||ui.busy||e.button!==0)return;
    const rod=ui.fields.rods?.find(r=>r.id===target.dataset.rodId),matrix=target.ownerSVGElement?.getScreenCTM();
    if(!rod||!matrix)return;
-   const k=Number(target.dataset.scale),room=rodRoom(ui.fields,rod);
+   const k=Number(target.dataset.scale),room=rodRoom(ui.fields,rod,ui.previewBuilt?.installedLevels);
    drag={id:e.pointerId,rod,target,start:e.clientY,k,scale:k*matrix.d,offset:rod.offset,limit:rodLimits(room,rod.article,rod.anchor),moved:false};
    target.setPointerCapture(e.pointerId);
  });

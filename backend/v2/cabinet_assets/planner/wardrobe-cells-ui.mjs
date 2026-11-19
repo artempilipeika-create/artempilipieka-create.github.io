@@ -46,7 +46,7 @@ export function sectionChoices(ui,parent){
  parent.append(choices,warning);
 }
 
-function sizeField(ui,parent,{axis,cell,value,min,max,reason,near}){
+function sizeField(ui,parent,{axis,cell,value,min,max,reason,near,adjustment=0,neighbor=null}){
  const width=axis==='width',label=width?'Ширина в свету, мм':'Высота в свету, мм';
  const box=el('div');box.className='cell-dimension';
  const wrap=el('label',label),input=el('input');
@@ -54,8 +54,16 @@ function sizeField(ui,parent,{axis,cell,value,min,max,reason,near}){
  wrap.append(input);box.append(wrap);
  const note=el('small',reason||near||'');note.id='cell-size-'+axis+'-hint';input.setAttribute('aria-describedby',note.id);
  if(!reason){
+   const allowed=()=>{
+     if(adjustment&&input.validity.stepMismatch){
+       const lo=min+Math.floor(input.valueAsNumber-min);
+       if(lo>=min&&lo+1<=max)return 'Для этого стыка Gola ближайшие размеры — '+lo.toLocaleString('ru-RU')+' и '+(lo+1).toLocaleString('ru-RU')+' мм.';
+     }
+     return 'Допустимо от '+min.toLocaleString('ru-RU')+' до '+max.toLocaleString('ru-RU')+' мм с шагом 1 мм.';
+   };
    const save=()=>{
-     if(!change(ui,f=>(width?setClearWidth:setClearHeight)(f,cell,input.valueAsNumber))){
+     if(!Number.isFinite(input.valueAsNumber)||!input.validity.valid){note.textContent=allowed();return;}
+     if(!change(ui,f=>(width?setClearWidth:setClearHeight)(f,cell,input.valueAsNumber-adjustment))){
        note.textContent=ui.output.textContent;input.setAttribute('aria-invalid','true');
      }
    };
@@ -63,8 +71,8 @@ function sizeField(ui,parent,{axis,cell,value,min,max,reason,near}){
    input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();save();}};
    input.oninput=()=>{
      input.removeAttribute('aria-invalid');
-     if(!input.value||!input.validity.valid){note.textContent='Допустимо от '+min+' до '+max+' мм';return;}
-     note.textContent=near.replace(/\d+ мм$/,String(max+min-input.valueAsNumber)+' мм');
+     if(!input.value||!input.validity.valid){note.textContent=allowed();return;}
+     note.textContent=near.replace(/[\d.]+ мм$/,String((neighbor??max+min-value)+value-input.valueAsNumber)+' мм');
    };
    box.append(apply);
  }
@@ -76,18 +84,22 @@ export function cellControls(ui,parent){
  let h,w;
  const widthCell=ui.wholeWidth?{...cell,column:null}:cell;
  try{h=heightLimits(f,cell);w=cellGeometry(f,widthCell);}catch(e){parent.append(el('p',e.message));return;}
- const {index,sizes,zone,column}=h;
+ const {index,zone,column}=h,levels=ui.previewBuilt?.installedLevels;
+ const sizes=levels?.size?cellGeometry(f,cell,levels).sizes:h.sizes;
+ const adjustment=sizes[index]-h.sizes[index],neighbor=sizes[h.other];
+ const min=h.min+Math.max(0,Math.ceil(-adjustment))+adjustment;
+ const max=h.max+Math.min(0,Math.floor((neighbor??0)-(h.sizes[h.other]??0)))+adjustment;
  const box=el('fieldset');box.className='cell-editor';
  box.append(el('legend','Секция '+(section+1)+' · ниша '+(level+1)+(zone?(ui.column===1?' · справа':' · слева'):'')+(column&&sizes.length>1?' · проём '+(index+1):'')));
- sizeField(ui,box,{axis:'height',cell,value:sizes[index],min:h.min,max:h.max,reason:h.reason,
+ sizeField(ui,box,{axis:'height',cell,value:sizes[index],min,max,adjustment,neighbor,reason:h.reason,
    near:h.other>=0?'Соседний проём '+sizes[h.other]+' мм':''});
  if(sizes.length>1){
    const locked=h.locks.includes(index);
    const lock=button(locked?'Снять фиксацию высоты':'Зафиксировать высоту',()=>change(ui,next=>toggleHeightLock(next,cell)));
    lock.className='cell-lock';lock.setAttribute('aria-pressed',String(locked));box.append(lock);
  }
- const widths=w.widths,i=w.widthIndex,other=i<widths.length-1?i+1:i-1,min=w.local?100:100+2*(f.shelfGap??0);
- sizeField(ui,box,{axis:'width',cell:widthCell,value:widths[i],min,max:other<0?widths[i]:widths[i]+widths[other]-min,
+ const widths=w.widths,i=w.widthIndex,other=i<widths.length-1?i+1:i-1,minWidth=w.local?100:100+2*(f.shelfGap??0);
+ sizeField(ui,box,{axis:'width',cell:widthCell,value:widths[i],min:minWidth,max:other<0?widths[i]:widths[i]+widths[other]-minWidth,
    reason:other<0?'Ширину задают боковины корпуса.':'',near:other<0?'':'Соседняя ширина '+widths[other]+' мм'});
  if(!f.drawerBanks?.[nicheSlot(section,level)]&&(!zone||column)){
    const row=el('div');row.className='cell-insert';let count=1;
@@ -137,7 +149,8 @@ export function wireCellDrag(ui){
      const value=width?g.widths[g.widthIndex]:g.sizes[g.index];
      const scale=Number(d.scale)*(width?matrix.a:matrix.d);
      target.setPointerCapture(event.pointerId);
-     drag={cell,width,value,scale,start:width?event.clientX:event.clientY,id:event.pointerId,target,moved:false,delta:0};
+     const shown=width?value:cellGeometry(ui.fields,cell,ui.previewBuilt?.installedLevels).sizes[g.index];
+     drag={cell,width,value,shown,scale,start:width?event.clientX:event.clientY,id:event.pointerId,target,moved:false,delta:0};
    }catch{return;}
  });
  root.addEventListener('pointermove',event=>{
@@ -148,7 +161,7 @@ export function wireCellDrag(ui){
    drag.delta=Math.round((drag.width?delta:-delta)/drag.scale);
    drag.target.setAttribute('transform','translate('+(drag.width?drag.delta*Number(drag.target.dataset.scale):0)+' '+(drag.width?0:-drag.delta*Number(drag.target.dataset.scale))+')');
    drag.target.classList.add('moving');
-   ui.description.textContent=(drag.width?'Ширина':'Высота')+' в свету · '+(drag.value+drag.delta)+' мм';
+   ui.description.textContent=(drag.width?'Ширина':'Высота')+' в свету · '+(drag.shown+drag.delta)+' мм';
  });
  function finish(event,cancel){
    if(!drag||event.pointerId!==drag.id)return;

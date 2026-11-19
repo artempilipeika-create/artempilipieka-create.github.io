@@ -1,5 +1,6 @@
 import {doorAnchorIndex} from './wardrobe-door-layout.mjs';
-import {columnOpenings,splitAt} from './wardrobe-layout.mjs';
+import {measuredRooms} from './wardrobe-gola-shelves.mjs';
+import {splitAt} from './wardrobe-layout.mjs';
 import {nicheOpenings,nicheSlot,trimBanks} from './wardrobe-niches.mjs';
 import {setClearHeight} from './wardrobe-cells.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
@@ -27,13 +28,12 @@ function sizes(parent,name,count,current,fn){
 
 export function gapEditor(ui,parent,section,zone=null){
  const f=ui.fields,col=zone?.columns[ui.column??0];
- function activeBounds(){
-   const all=nicheOpenings(f,section),room=zone&&all[zone.level];
-   return col?columnOpenings(room.bottom,room.top,col,f.thickness):all;
+ function activeBounds(levels){
+   return measuredRooms(f,section,zone?.level??0,col?ui.column??0:null,levels);
  }
  const count=col?col.gaps.length-1:f.sectionShelves[section],index=Math.min(ui.gapIndex??0,count);
- let bounds;
- try{bounds=activeBounds();}catch(error){parent.append(element('p',error.message));}
+ let bounds,installed;
+ try{bounds=activeBounds();installed=activeBounds(ui.previewBuilt?.installedLevels);}catch(error){parent.append(element('p',error.message));}
  const title=i=>i===count?'Верхний проём':i===0?'Нижний проём':'Между полками '+i+' и '+(i+1);
  const locks=col?(col.locks??=[]):((f.gapLocks??=Array.from({length:f.sections},()=>[]))[section]??=[]);
  const current=i=>col?col.gaps[i]:i===count?f.topGaps?.[section]:f.shelfLevels?.[section]?.[i];
@@ -48,8 +48,9 @@ export function gapEditor(ui,parent,section,zone=null){
  }
  const box=element('fieldset');box.append(element('legend','Чистая высота проёмов'));parent.append(box);
  ui.select(box,'Выберите проём',Array.from({length:count+1},(_,i)=>[i,title(i)]),index,v=>{ui.gapIndex=Number(v);ui.render();});
- const size=number(box,title(index)+', мм',measured(index),60,3000,v=>{
-   change(ui,next=>setClearHeight(next,{section,level:zone?zone.level:index,column:zone?ui.column??0:null,opening:index},v));
+ const actual=installed?installed[index].top-installed[index].bottom:measured(index),adjustment=actual-measured(index);
+ const size=number(box,title(index)+', мм',actual,60+Math.ceil(-adjustment)+adjustment,3000+adjustment,v=>{
+   change(ui,next=>setClearHeight(next,{section,level:zone?zone.level:index,column:zone?ui.column??0:null,opening:index},v-adjustment));
  },true);size.dataset.clearGap=String(index);
  const lock=action('',()=>{
    if(locks.includes(index))locks.splice(locks.indexOf(index),1);
@@ -59,7 +60,7 @@ export function gapEditor(ui,parent,section,zone=null){
  const remaining=element('output');remaining.className='niche-result';
  function refresh(){
    const locked=locks.includes(index);lock.textContent=locked?'Снять фиксацию':'Зафиксировать размер';lock.setAttribute('aria-pressed',String(locked));
-   try{remaining.textContent='Проёмы снизу вверх · '+activeBounds().map(b=>b.top-b.bottom).join(' / ')+' мм';}catch(error){remaining.textContent=error.message;}
+   try{remaining.textContent='Проёмы снизу вверх · '+activeBounds(ui.previewBuilt?.installedLevels).map(b=>b.top-b.bottom).join(' / ')+' мм';}catch(error){remaining.textContent=error.message;}
  }
  box.append(lock,action('Расставить полки равномерно',()=>{
    Array.from({length:count+1},(_,i)=>i).forEach(i=>{

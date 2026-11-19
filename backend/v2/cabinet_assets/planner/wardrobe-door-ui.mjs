@@ -63,7 +63,7 @@ function selectPreset(ui,value){
 function doorSettings(ui,f,box){
  const d=f.division;if(!d)return;
  const opts=shelves(ui,d.scope),floor=(ui.fields.elevation??0)+footHeight(ui.fields);
- const label=(row)=>{const p=row.matches[0];return 'Полка '+(p.shelf+1)+' · '+(row.y+floor)+' мм от пола до низа';};
+ const label=(row)=>{const p=row.matches[0],bottom=ui.previewBuilt?.installedLevels?.get('shelf-'+p.section+'-'+p.shelf)?.bottom??row.y;return 'Полка '+(p.shelf+1)+' · '+(bottom+floor)+' мм от пола до низа';};
  const select=ui.select(box,'Перегородка на стыке',opts.map(r=>[r.matches[0].section+':'+r.matches[0].shelf,label(r)]),d.section+':'+d.shelf,value=>setDoorShelf(ui,value));select.dataset.doorShelf='';
  for(const [key,title] of [['below','Под перегородкой'],['above','Над перегородкой']]){
   ui.select(box,title,swings.filter(([v])=>d.scope==='all'||[d.scope,'open'].includes(v)),d[key],value=>{

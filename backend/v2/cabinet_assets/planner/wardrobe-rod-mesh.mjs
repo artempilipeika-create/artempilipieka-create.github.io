@@ -1,10 +1,11 @@
+import {installedShelfLevels} from './wardrobe-gola-shelves.mjs';
 import * as THREE from './vendor/three.module.js';
 import holders from './wardrobe-rod-meshes.json' with {type:'json'};
 import {planRods} from './wardrobe-rods.mjs';
 
-export function panelRods(it){
+export function panelRods(it,items=[]){
  const meta=it.assistant_carcass;
- return meta?.spec.rods?.length&&it.item_id===meta.group_id+':top'?planRods(meta.spec):[];
+ return meta?.spec.rods?.length&&it.item_id===meta.group_id+':top'?planRods(meta.spec,installedShelfLevels(items,meta.group_id)):[];
 }
 function holderGeometry(family){
  const [xyz,indices,normals]=holders[family].map(data=>Uint8Array.from(atob(data),s=>s.charCodeAt(0)).buffer);
@@ -30,7 +31,7 @@ function tubeGeometry(r){
  return new THREE.ExtrudeGeometry(section,{depth:r.cut*.001,bevelEnabled:false,curveSegments:20}).rotateY(Math.PI/2);
 }
 export function buildRodMeshes(factory,group,it,ghost){
- for(const r of panelRods(it)){
+ for(const r of panelRods(it,factory.adapter?.items)){
    const s=it.assistant_carcass.spec,y=r.y-(s.height-s.thickness);
    const role={chrome:'chromeFoot',black:'frame',white:'whiteFoot'}[r.product.finish];
    const tubeKey='wardrobe-tube:'+r.article+':'+r.cut,holderKey='rod-holder:'+r.product.family;

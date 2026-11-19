@@ -40,11 +40,12 @@ export function retainedBlankMaterial(item,previous,lookup){
 }
 export function validateBlank(input,room){
   const b=normalizeBlank(input);
+  const post=b.axis==='side'&&/:niche-\d+-\d+-divider$/.test(input.item_id);
   const minLength=drawerSide(input.item_id)?40:100;
   const drawerFace=b.axis==='front'&&drawerMember(input.item_id,'\\d+-face');
   const precise=value=>Number.isFinite(value)&&Math.abs(value*1000-Math.round(value*1000))<.000001;
   const door=b.axis==='front'&&/:door-(?:(?:lower|upper)-)?(?:left|right)$/.test(input.item_id??'');
-  if(!(drawerFace?precise(b.length):Number.isInteger(b.length*(door?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
+  if(!(drawerFace?precise(b.length):Number.isInteger(b.length*(door||post?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
   if(!Number.isInteger(b.width*(b.axis==='front'?2:1))||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
@@ -62,7 +63,7 @@ export function validateBlank(input,room){
   if(!glass&&!thinBack&&!thinBottom&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
-  if(!(drawerFace?precise(b.elevation):Number.isInteger(b.elevation*(b.axis==='front'?2:1)))||b.elevation<0||b.elevation>5000)return 'Проверьте высоту низа детали в мм.';
+  if(!(drawerFace?precise(b.elevation):Number.isInteger(b.elevation*(b.axis==='front'||post||input.blank_binding?.gola_flush?2:1)))||b.elevation<0||b.elevation>5000)return 'Проверьте высоту низа детали в мм.';
   if(!Number.isFinite(b.edgeThickness)||b.edgeThickness<0.4||b.edgeThickness>3)return 'Толщина ПВХ: от 0,4 до 3 мм.';
   const d=geometryFromBlank(b.length,b.width,b.thickness,b.axis);
   const hardwareError=hookError({...input,...d,blank_axis:b.axis});

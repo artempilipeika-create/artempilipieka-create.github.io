@@ -2,7 +2,8 @@ import {footHeight} from './plinth-options.mjs';
 import {anchoredShelf,doorAnchorIndex,sectionSpans} from './wardrobe-door-layout.mjs';
 import {rodCatalogue} from './wardrobe-rods.mjs';
 import {sectionWidths} from './carcass-model.mjs';
-import {clearGaps,columnOpenings,columnWidths,isRightBank,levelOf,nicheSlot,sectionOf,splitAt} from './wardrobe-layout.mjs';
+import {measuredRooms} from './wardrobe-gola-shelves.mjs';
+import {clearGaps,columnWidths,isRightBank,levelOf,nicheSlot,sectionOf,splitAt} from './wardrobe-layout.mjs';
 import {nicheOpenings,trimBanks} from './wardrobe-niches.mjs';
 import {defaultShelf,shelfRows} from './shelf-choices.mjs';
 import {resizeDividerChoices} from './wardrobe-questionnaire.mjs';
@@ -121,11 +122,11 @@ export function setSectionShelfCount(f,section,count){
  return remove.map(level=>({level,delta:-1}));
 }
 
-export function cellGeometry(f,cell){
- const {section,level}=cell,widths=sectionWidths(f),bounds=nicheOpenings(f,section);
+export function cellGeometry(f,cell,levels){
+ const {section,level}=cell,widths=sectionWidths(f);
  const zone=splitAt(f,section,level),local=zone!=null&&cell.column!=null;
  const column=local?zone.columns?.[cell.column]:null;
- const rooms=column?columnOpenings(bounds[level].bottom,bounds[level].top,column,f.thickness):bounds;
+ const rooms=measuredRooms(f,section,level,cell.column,levels);
  const index=column?cell.opening:level;
  const sizes=rooms.map(room=>room.top-room.bottom);
  const locks=column?column.locks??[]:f.gapLocks?.[section]??[];

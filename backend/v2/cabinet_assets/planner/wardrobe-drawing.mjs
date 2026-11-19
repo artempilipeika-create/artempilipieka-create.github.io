@@ -9,7 +9,8 @@ import {doorLeaves,swingNames} from './door-swing.mjs';
 
 export const drawingTitles={body:'Корпус',sections:'Секции и полки',feet:'Опоры',plinth:'Цоколь',back:'Задняя стенка',fronts:'Фасады'};
 const edge='#495b54',accent='#19664f',wood='#e6dcc9',end='#c4b8a2';
-import {openingBase,splitAt,columnWidths,columnOpenings} from './wardrobe-layout.mjs';
+import {measuredRooms} from './wardrobe-gola-shelves.mjs';
+import {openingBase,splitAt,columnWidths} from './wardrobe-layout.mjs';
 const num=n=>Number(n.toFixed(2));
 const points=p=>p.map(([x,y])=>num(x)+','+num(y)).join(' ');
 const polygon=(p,fill)=>'<polygon points="'+points(p)+'" fill="'+fill+'" stroke="'+edge+'" stroke-width=".9" stroke-linejoin="round"/>';
@@ -106,9 +107,9 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    const d=front.division;
    if(d){
     for(const opt of doorShelfOptions(s,d.scope)){
-     const selected=opt.matches.some(a=>a.section===d.section&&a.shelf===d.shelf),p=opt.matches[0],y=Y(footHeight(s)+opt.y+s.thickness/2);
+     const selected=opt.matches.some(a=>a.section===d.section&&a.shelf===d.shelf),p=opt.matches[0],bottom=built.installedLevels?.get('shelf-'+p.section+'-'+p.shelf)?.bottom??opt.y,y=Y(footHeight(s)+bottom+s.thickness/2);
      const ax=X(opt.right-W/2),ink=selected?'#22604c':'#597182';
-     drawing+='<g data-door-shelf-pick="'+p.section+':'+p.shelf+'" role="button" tabindex="0" aria-label="Стык на высоте '+(opt.y+footHeight(s)+s.elevation)+' мм от пола"><title>До низа перегородки от пола</title><path d="M'+num(ax)+' '+num(y)+'h7" stroke="'+ink+'"/><rect x="'+num(ax+6)+'" y="'+num(y-8)+'" width="34" height="15" rx="3" fill="'+(selected?'#deece5':'#f6f8f7')+'"/><text x="'+num(ax+23)+'" y="'+num(y+3)+'" fill="'+ink+'" text-anchor="middle" font-size="9">'+(opt.y+footHeight(s)+s.elevation)+'</text></g>';
+     drawing+='<g data-door-shelf-pick="'+p.section+':'+p.shelf+'" role="button" tabindex="0" aria-label="Стык на высоте '+(bottom+footHeight(s)+s.elevation)+' мм от пола"><title>До низа перегородки от пола</title><path d="M'+num(ax)+' '+num(y)+'h7" stroke="'+ink+'"/><rect x="'+num(ax+6)+'" y="'+num(y-8)+'" width="34" height="15" rx="3" fill="'+(selected?'#deece5':'#f6f8f7')+'"/><text x="'+num(ax+23)+'" y="'+num(y+3)+'" fill="'+ink+'" text-anchor="middle" font-size="9">'+(bottom+footHeight(s)+s.elevation)+'</text></g>';
     }
    }
    drawing+=label(200,312,legal?(d?leaves.length+' ств. · стык по перегородке':swingNames[front.swing]):'Проверьте параметры створки');
@@ -129,6 +130,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
      for(let level=0;level<=shelves.length;level++){
        const top=shelves[level]?.y??(H-s.thickness),active=selection?.level===level&&sec===section;
        const zone=splitAt(s,sec,level);
+       const columnRooms=c=>measuredRooms(s,sec,level,c,built.installedLevels).map(r=>({bottom:r.bottom+footHeight(s),top:r.top+footHeight(s)}));
        const title='Секция '+(sec+1)+', ниша '+(level+1);
        if(active){
          selectedOutline=highlight(start,base,width,top,sec+'-'+level);
@@ -155,7 +157,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
        if(editor&&zone){
          let l=start;
          for(const [c,w] of columnWidths(zone,width).entries()){
-           const col=zone.columns?.[c],rooms=col?columnOpenings(base,top,col,s.thickness):[{bottom:base,top}];
+           const col=zone.columns?.[c],rooms=col?columnRooms(c):[{bottom:base,top}];
            for(const [j,r] of rooms.entries()){
              const attrs=' data-section="'+sec+'" data-niche="'+level+'" data-split-section="'+level+'" data-column="'+c+'" data-opening="'+j+'"';
              const selected=active&&selection.column===c&&(selection.opening??0)===j;
@@ -182,7 +184,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
            dimensions+='<g '+attrs+' role="button" tabindex="0" aria-label="Чистая ширина '+w+' мм">'+
              '<path d="M'+num(X(l))+' '+num(Y(top)+7)+'h'+num(w*k)+'m-3 -2l3 2 -3 2M'+num(X(l)+3)+' '+num(Y(top)+5)+'l-3 2 3 2" fill="none" stroke="#275d87"/>'+
              '<text x="'+num(X(cx))+'" y="'+num(Y(top)+6)+'" text-anchor="middle" fill="#204f77" stroke="white" stroke-width="2" paint-order="stroke" font-size="9">'+w+'</text></g>';
-           if(zone.columns&&c===(selection.column??0))for(const [j,r] of columnOpenings(base,top,zone.columns[c],s.thickness).entries())dimensions+=measure(sec,j,r.bottom,r.top,cx,c,level);
+           if(zone.columns&&c===(selection.column??0))for(const [j,r] of columnRooms(c).entries())dimensions+=measure(sec,j,r.bottom,r.top,cx,c,level);
          }
        }
        if(shelves[level])base=top+shelves[level].h;

@@ -1,5 +1,5 @@
 // The fragment origin is the intersection of the bearing surface and the inner panel face.
-import {localPoint,worldPoint} from './blank-bindings.mjs';
+import {localPoint,worldPoint,shelfBearing} from './blank-bindings.mjs';
 import {holders} from './shelf-donors.mjs';
 import {choice,fixedShelfScheme} from './shelf-choices.mjs';
 export const SEKURA='sekura-95388';
@@ -11,9 +11,10 @@ export function shelfMounting(it){
   // Older carcass recipes bound fixed parts in the same way as loose shelves.
   return /:(bottom|top|rail-[^:]+)$/.test(it.item_id)?'none':SEKURA;
 }
-function rows(it){
-  const inset=Math.min(37,it.depth/4);
-  return [-it.depth/2+inset,it.depth/2-inset];
+function rows(it,host){
+  const bearing=it.blank_binding?.gola_flush?shelfBearing(it,host):{rear:-it.depth/2,front:it.depth/2,depth:it.depth};
+  const inset=Math.min(37,bearing.depth/4);
+  return [bearing.rear+inset,bearing.front-inset];
 }
 export function shelfSupportPlan(it,items){
   const mounting=shelfMounting(it);
@@ -29,21 +30,22 @@ export function shelfSupportPlan(it,items){
     const center=localPoint(host,it.rotation);
     const face=center.x+(side==='left'?host.width:-host.width)/2;
     const gap=b['gap_'+side+'_mm'],sign=side==='left'?-1:1;
-    if(Math.abs(local.x+sign*(it.width/2+gap)-face)>.01 || Math.abs(local.z-center.z)+it.depth/2>host.depth/2+.01)
+    const bearing=shelfBearing(it,host);
+    if(Math.abs(local.x+sign*(it.width/2+gap)-face)>.01 || (bearing.rear>-it.depth/2+.01||bearing.depth<16||!b.gola_flush&&bearing.front<it.depth/2-.01))
       return {parts:[],error:'Полка не совпадает с положением опорных стоек.'};
     if(h.name.startsWith('SEKURA')&&host.width<=12)return {parts:[],error:'Глубина отверстия SEKURA 2 — 12 мм. Проверьте толщину стойки.'};
     if(hidden&&gap!==0)return {parts:[],error:'Для скрытого крепления нужен нулевой боковой зазор.'};
     if(gap>=(h.name==='SEKURA 6'?13.5:14.5))return {parts:[],error:'Боковой зазор выходит за опорную площадку '+h.name+'.'};
     if(h.name.startsWith('SEKURA')&&(it.elevation_mm||0)-(host.elevation_mm||0)<14.5)return {parts:[],error:'Под полкой не хватает высоты для SEKURA 2.'};
-    const centers=rows(it);
+    const centers=rows(it,host);
     if(side==='left'&&host.width<=24){
       // The other section bears on the opposite face. Keep its reference row unchanged.
       const opposite=items.filter(p=>shelfMounting(p)!=='none'&&p.blank_binding?.right_id===host.item_id&&Math.abs((p.elevation_mm||0)-(it.elevation_mm||0))<(p.blank_shelf||it.blank_shelf?32:5))
-        .flatMap(p=>rows(p).map(z=>localPoint(p,p.rotation).z-local.z+z));
+        .flatMap(p=>rows(p,host).map(z=>localPoint(p,p.rotation).z-local.z+z));
       if(opposite.length){
         for(let i=0;i<2;i++){
           const direction=i===0?1:-1;
-          const fits=z=>Math.abs(z)<=it.depth/2-3.95 && (i===0?z<=-3.95:z>=3.95) && opposite.every(v=>Math.abs(v-z)>(it.blank_shelf||items.some(p=>p.blank_shelf&&p.blank_binding?.right_id===host.item_id)?25:5));
+          const fits=z=>z>=bearing.rear+3.95&&z<=bearing.front-3.95 && (i===0?z<=-3.95:z>=3.95) && opposite.every(v=>Math.abs(v-z)>(it.blank_shelf||items.some(p=>p.blank_shelf&&p.blank_binding?.right_id===host.item_id)?25:5));
           if(!fits(centers[i])){
             const candidates=[32,8,16,24,-8,-16,-24,-32].map(d=>centers[i]+d*direction);
             const found=candidates.find(fits);if(found===undefined)return {parts:[],error:'Недостаточно места для встречных отверстий в перегородке.'};

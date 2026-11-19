@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {buildCarcass,placeCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-model.mjs';
 import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
 import {anchoredShelf,wardrobeDoors} from '../../backend/v2/cabinet_assets/planner/wardrobe-door-layout.mjs';
-import {boardProfileCuts,golaOutline,nativeDoorHardware} from '../../backend/v2/cabinet_assets/planner/wardrobe-door-hardware.mjs';
+import {boardProfileCuts,horizontalProfileCuts,golaOutline,nativeDoorHardware} from '../../backend/v2/cabinet_assets/planner/wardrobe-door-hardware.mjs';
+import {nativeCarcassJoints} from '../../backend/v2/cabinet_assets/planner/carcass-joints.mjs';
+import {measuredRooms} from '../../backend/v2/cabinet_assets/planner/wardrobe-gola-shelves.mjs';
 import {insertShelves,resizeSections,setSectionShelfCount} from '../../backend/v2/cabinet_assets/planner/wardrobe-cells.mjs';
 
 const fields=()=>({width:1000,height:2200,depth:577,thickness:18,back:true,sections:1,sectionShelves:[1],clearLayout:true,elevation:0,
@@ -38,7 +40,9 @@ test('Gola S stays at 30 for both side machining heights and all rotations',()=>
   assert.equal(path.filter(s=>s.arc).length,3);
   const leaves=wardrobeDoors(f);assert.equal(opening(leaves[0],leaves[2]),30);
   assert.equal(f.height-leaves[2].bottom-leaves[2].height,30);
-  assert.equal(board(panels,'shelf-0-0').depth,f.depth-74);
+  const shelf=board(panels,'shelf-0-0');
+  assert.equal(shelf.elevation_mm,anchoredShelf(f).y+f.thickness/2+36.5);
+  assert.equal(shelf.depth,f.depth);assert.deepEqual(horizontalProfileCuts(shelf,panels),[]);
   assert.equal(board(panels,'top').depth,f.depth-27);
   const native=nativeDoorHardware(panels),mounts=native.filter(p=>p.wardrobe_gola_mount);
   assert.equal(mounts.length,2);assert.ok(mounts.every(p=>p.span_mm===f.width-2*f.thickness&&p.rotation===yaw&&p.article==='118236'));
@@ -51,6 +55,11 @@ test('a partial S uses the centre support and only the selected outer upright',(
  const items=assembled(f),profiles=nativeDoorHardware(items);
  assert.equal(wardrobeDoors(f).length,3);
  for(const p of profiles)assert.deepEqual([p.host_blank_id,p.joined_panel_id],['cab:left','cab:divider-0']);
+ const left=board(items,'shelf-0-0'),right=board(items,'shelf-1-0');
+ assert.equal(left.depth,f.depth);assert.equal(right.depth,f.depth-1);
+ assert.equal(left.elevation_mm-right.elevation_mm,45.5);
+ const mounts=nativeCarcassJoints(items).filter(it=>it.joined_panel_id===left.item_id);
+ assert.equal(mounts.length,8);assert.ok(mounts.every(p=>p.position.y===left.elevation_mm+9));
  assert.equal(boardProfileCuts(board(items,'right'),items).length,0);
  assert.equal(boardProfileCuts(board(items,'divider-0'),items)[0].depth,26);
 });
@@ -117,4 +126,28 @@ test('an upper L on one door cuts only its bay and leaves the other door at 1.5 
   assert.equal(roof.depth,f.depth);assert.deepEqual(notch,{a:582,b:1164,depth:27});
   const contour=gripShelfOutline(roof.depth,roof.width,[notch]);assert.ok(contour.some(s=>s.line.includes(roof.depth-27)));
  }
+});
+
+
+test('the L shelf meets the aluminium and the divider above it fits between actual bearing faces',()=>{
+ const f=drawerFields();Object.assign(f,{width:1000,depth:577,elevation:100,sectionShelves:[2],
+  shelfLevels:[[{mode:'floor',mm:646},{mode:'floor',mm:1737}]],
+  nicheSplits:[{section:0,level:1,kind:'shelves',columns:[{gaps:[null]},{gaps:[null,null,null]}]}],
+  drawerBanks:[{kind:'external',layout:'manual',gap:3,faces:[{height:227,handle:profile('118129','top')},{height:null,handle:profile('118124','top')}]}]});
+ f.front.offset=130;
+ const spec=wardrobeSpec(f),built=buildCarcass(spec,{idPrefix:'cab'}),legacy=buildCarcass(spec,{idPrefix:'cab',legacyGolaShelves:true});
+ const shelf=board(built.items,'shelf-0-0'),divider=board(built.items,'niche-0-1-divider');
+ assert.deepEqual([shelf.width,shelf.depth,shelf.height,shelf.elevation_mm],[964,577,18,656.5]);
+ assert.equal(shelf.z+shelf.depth/2,board(built.items,'left').z+spec.depth/2);
+ assert.deepEqual([divider.elevation_mm,divider.height,divider.elevation_mm+divider.height],[674.5,1062.5,1737]);
+ assert.deepEqual([...built.installedLevels.keys()],['shelf-0-0']);
+ for(const key of ['shelf-0-1','shelf-niche-0-1-1-0','shelf-niche-0-1-1-1','door-left','door-right','drawer-0-0-face','drawer-0-1-face']){
+  assert.deepEqual(board(built.items,key),board(legacy.items,key));
+ }
+ assert.deepEqual(built.drawerBanks,legacy.drawerBanks);
+ const [lower,upper]=measuredRooms(spec,0,1,null,built.installedLevels);
+ assert.equal(lower.top-lower.bottom,538.5);assert.equal(upper.top-upper.bottom,1062.5);
+ const rooms=measuredRooms(spec,0,1,1,built.installedLevels),rightShelf=board(built.items,'shelf-niche-0-1-1-0');
+ assert.equal(rooms[0].bottom+spec.elevation,divider.elevation_mm);
+ assert.equal(rooms[0].top+spec.elevation,rightShelf.elevation_mm);
 });

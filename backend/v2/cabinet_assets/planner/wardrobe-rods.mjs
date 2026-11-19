@@ -1,6 +1,6 @@
 import catalogue from './wardrobe-rods.json' with {type:'json'};
-import {columnOpenings,columnWidths,nicheSlot,sectionWidths,splitAt,splitKey} from './wardrobe-layout.mjs';
-import {nicheOpenings} from './wardrobe-niches.mjs';
+import {columnWidths,nicheSlot,sectionWidths,splitAt,splitKey} from './wardrobe-layout.mjs';
+import {measuredRooms,installedShelfLevels} from './wardrobe-gola-shelves.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 
 export {catalogue as rodCatalogue};
@@ -12,10 +12,10 @@ export function rodLabel(article){
 export function sameRodCell(a,b){
  return a.section===b.section&&a.level===b.level&&(a.column??null)===(b.column??null)&&(a.column==null||a.opening===(b.opening??0));
 }
-export function rodRoom(s,cell){
+export function rodRoom(s,cell,levels){
  const {section,level}=cell,widths=sectionWidths(s);
  if(!Number.isInteger(section)||section<0||section>=s.sections)throw Error('Выберите секцию для штанги.');
- const base=nicheOpenings(s,section)[level],zone=splitAt(s,section,level);
+ const base=measuredRooms(s,section,level,null,levels)[level],zone=splitAt(s,section,level);
  if(!base)throw Error('Выберите существующую нишу для штанги.');
  const old=s.drawerBanks?.[nicheSlot(section,0)];
  if(old&&!old.layout)throw Error('Сначала привяжите блок шуфляд этой секции к нише.');
@@ -26,7 +26,7 @@ export function rodRoom(s,cell){
  if(zone){
    const column=zone.columns?.[cell.column];
    if(!column)throw Error('Выберите проём слева или справа от перегородки.');
-   const room=columnOpenings(low,high,column,s.thickness)[cell.opening??0];
+   const room=measuredRooms(s,section,level,cell.column,levels)[cell.opening??0];
    if(!room)throw Error('Выберите существующий проём колонки.');
    const halves=columnWidths(zone,width);width=halves[cell.column];low=room.bottom;high=room.top;
    const divider=splitKey(zone)+'-divider';
@@ -43,13 +43,13 @@ export function rodLimits(room,article,anchor){
  return {min:Math.ceil(fromTop?maxY:-minY),max:Math.floor(span-(fromTop?-minY:maxY)),
    near:Math.ceil(-minZ),far:Math.floor(room.usableDepth-maxZ)};
 }
-export function planRods(spec){
+export function planRods(spec,levels){
  const ids=new Set();
  return (spec.rods??[]).map(rod=>{
    const product=catalogue[rod.article];
    if(!product||!['top','bottom'].includes(rod.anchor)||typeof rod.id!=='string'||!/^[a-zA-Z0-9_-]{1,64}$/.test(rod.id)||ids.has(rod.id))throw Error('Проверьте модель и обозначение штанги.');
    ids.add(rod.id);
-   const room=rodRoom(spec,rod),limit=rodLimits(room,rod.article,rod.anchor);
+   const room=rodRoom(spec,rod,levels),limit=rodLimits(room,rod.article,rod.anchor);
    if(!Number.isInteger(rod.offset)||rod.offset<limit.min||rod.offset>limit.max)throw Error('Штанга в секции '+(rod.section+1)+': до оси допустимо '+limit.min+'–'+limit.max+' мм.');
    const at=rod.fromBack??room.usableDepth/2;
    if(!Number.isFinite(at)||at<limit.near||at>limit.far)throw Error('Штанга выходит за глубину стойки. Проверьте отступ от заднего края.');
@@ -77,7 +77,7 @@ export function nativeRods(items){
    const top=byId.get(id+':top');
    if(!top?.assistant_carcass?.spec.rods?.length)throw Error('Не найдена крыша шкафа со штангой. Пересоберите шкаф в конструкторе.');
    const meta=top.assistant_carcass;
-   const s=meta.spec,rods=planRods(s),issues=rodWarnings(rods,s.thickness);if(issues.length)throw Error(issues.join(' '));
+   const s=meta.spec,rods=planRods(s,installedShelfLevels(items,id)),issues=rodWarnings(rods,s.thickness);if(issues.length)throw Error(issues.join(' '));
    const rotation=top.rotation??0,center=localPoint(top,rotation);
    for(const r of rods){
      const left=byId.get(meta.group_id+':'+r.lhs),right=byId.get(meta.group_id+':'+r.rhs);

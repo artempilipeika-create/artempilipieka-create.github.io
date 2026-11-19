@@ -422,6 +422,12 @@ class CarcassDesign(CarcassSpec):
             if any(a<right and b>left and lo<top and hi>bottom for a,b,lo,hi in drawer_pulls):
                 raise ValueError('Ручка внутренней шуфляды упирается в закрытую дверь.')
 
+    def has_grip_at_shelf(self):
+        front=self.front
+        return bool(front and (front.edgeProfiles or front.division and front.division.gola or
+                               any(isinstance(h,FacadeProfile) for h in (front.handles or {}).values())) or
+                    any(isinstance(f.handle,FacadeProfile) for b in self.drawerBanks or [] if b for f in b.faces))
+
     def validate_rods(self,zones):
         if not self.rods:
             return
@@ -457,6 +463,10 @@ class CarcassDesign(CarcassSpec):
                 if r.column is not None or r.opening is not None:
                     raise ValueError('Для штанги указан отсутствующий проём.')
                 height=high-low
+            # A grip can raise the upper boundary by at most one extrusion height.
+            # The saved scene below checks the actual room between the installed panels.
+            if self.has_grip_at_shelf():
+                height+=73
             y=height-r.offset if r.anchor=='top' else r.offset
             min_y,max_y,min_z,max_z=profile['bounds']
             back=(self.backThickness or 0)+(self.thickness if self.bottomFit=='none' and self.sections>1 else 0)

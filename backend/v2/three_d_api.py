@@ -80,6 +80,7 @@ class BlankHook(StrictModel):
     height_mm: float|None=Field(default=None,ge=0,le=3000,multiple_of=0.5,allow_inf_nan=False)
 
 class BlankBinding(StrictModel):
+    gola_flush: Literal[True]|None=Field(default=None,exclude_if=lambda v:v is None)
     mounting: Literal['sekura-95388','none']|None=None
     left_id: str=Field(min_length=1,max_length=80)
     right_id: str=Field(min_length=1,max_length=80)
@@ -169,14 +170,19 @@ class FurnitureItem(StrictModel):
             raise ValueError('Для фасада шуфляды допустима точность до 0,001 мм.')
         door=bool(self.blank_axis=='front' and group and group.spec.front and re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key))
         if door and any(v*2%1 for v in vertical):raise ValueError('Шаг размеров створки 0,5 мм.')
-        if not fitted and not door and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
+        post=bool(self.blank_axis=='side' and group and re.fullmatch(r'niche-\d+-\d+-divider',key))
+        flush=bool(self.blank_binding and self.blank_binding.gola_flush)
+        if flush and (not key.startswith('shelf-') or not (individual or group.spec.front and (group.spec.front.topProfile or group.spec.front.division and group.spec.front.division.gola))):
+            raise ValueError('Вынос полки относится к выбранному профилю Gola.')
+        if post and any(v*2%1 for v in vertical):raise ValueError('Шаг размеров стойки 0,5 мм.')
+        if not fitted and not door and not post and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
             raise ValueError('Проверьте точность размеров детали.')
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')
         if self.blank_axis=='front':
             if self.module_type!='blank' or self.blank_edge_code!='1111' or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
                 raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм в круг.')
-        elif self.width%1 or (self.blank_width_mm or 0)%1 or (self.elevation_mm or 0)%1:
+        elif self.width%1 or (self.blank_width_mm or 0)%1 or (self.elevation_mm or 0)*(2 if post or flush else 1)%1:
             raise ValueError('Для этой детали требуются целые размеры.')
         if self.assistant_carcass and self.assistant_carcass.spec.backThickness and self.item_id==str(self.assistant_carcass.group_id)+':back':
             if self.blank_axis!='back' or self.blank_edge_code!='0000' or self.blank_thickness_mm!=self.assistant_carcass.spec.backThickness:

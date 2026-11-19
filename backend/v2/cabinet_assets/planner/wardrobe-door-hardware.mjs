@@ -111,7 +111,7 @@ function shelfGripCuts(runs,left,width,depth,front,low,height){
 }
 export function horizontalProfileCuts(item,items){
  const g=item.assistant_carcass;
- if(item.blank_axis!=='horizontal'||!g||! /^(?:top|bottom|shelf-.+)$/.test(item.item_id.slice(g.group_id.length+1)))return [];
+ if(item.blank_binding?.gola_flush||item.blank_axis!=='horizontal'||!g||! /^(?:top|bottom|shelf-.+)$/.test(item.item_id.slice(g.group_id.length+1)))return [];
  const frame=cabinetFrame(item,items);if(!frame)return [];
  const at=localPoint(item,item.rotation);
  return shelfGripCuts(physicalProfiles(frame.s),at.x-frame.x-item.width/2,item.width,item.depth,
@@ -135,7 +135,7 @@ export function gripShelfOutline(depth,width,cuts){
 export function clearProfileShelves(s,parts,legHeight){
  const runs=physicalProfiles(s);if(!runs.length)return;
  for(const {item} of parts){
-  if(item.blank_axis!=='horizontal')continue;
+  if(item.blank_axis!=='horizontal'||item.blank_binding?.gola_flush)continue;
   const y=item.elevation_mm-s.elevation-legHeight,x=item.x+s.width/2;
   const front=item.z+item.depth/2,back=item.z-item.depth/2;
   const cuts=shelfGripCuts(runs,x-item.width/2,item.width,item.depth,front-s.depth/2,y,item.height);

@@ -25,11 +25,14 @@ export function selectedCarcass(adapter){
  const metadata=adapter.selected?.assistant_carcass;
  if(!metadata)return null;
  const items=splitPlinths(adapter.items).filter(i=>i.assistant_carcass?.group_id===metadata.group_id);
- const matches=(legacyGlassGap=false,legacyDrawers=false)=>{
-  const expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id,legacyGlassGap,legacyDrawers}),metadata.position);
+ const matches=(legacyGlassGap=false,legacyDrawers=false,legacyGolaShelves=false)=>{
+  let expected;
+  try{expected=placeCarcass(buildCarcass(metadata.spec,{idPrefix:metadata.group_id,legacyGlassGap,legacyDrawers,legacyGolaShelves}),metadata.position);}catch{return false;}
   return items.length===expected.length&&expected.every(i=>geometry(items.find(p=>p.item_id===i.item_id)||{})===geometry(i));
  };
- if(!matches()&&!(metadata.spec.drawerBanks&&matches(false,true))&&!(items.some(i=>/^[468]\//.test(i.blank_shelf))&&matches(true)))
+ if(!matches()&&!(metadata.spec.drawerBanks&&matches(false,true))&&!(items.some(i=>/^[468]\//.test(i.blank_shelf))&&matches(true))&&
+    !((metadata.spec.front?.topProfile||metadata.spec.front?.division?.gola||items.some(i=>i.blank_gola_runs?.length))&&
+       !items.some(i=>i.blank_binding?.gola_flush)&&matches(false,false,true)))
   throw Error('Геометрия этого корпуса изменена вручную. Продолжите редактировать детали в параметрах или создайте новый корпус.');
  if(items.some(i=>signature(i.assistant_carcass)!==signature(metadata)))throw Error('Параметры деталей корпуса различаются. Продолжите ручное редактирование.');
  return {metadata,items};
@@ -80,7 +83,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   const nextId=prefix+':'+key;if(original!==nextId)movedIds.set(original,nextId);
  }
  const shapeChanged=current&&(spec.back!==current.metadata.spec.back||spec.backThickness!==current.metadata.spec.backThickness||spec.topFit!==current.metadata.spec.topFit||spec.bottomFit!==current.metadata.spec.bottomFit);
- const originalItems=(shapeChanged||movedIds.size)?buildCarcass(current.metadata.spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]}).items:[];
+ const originalItems=(shapeChanged||movedIds.size)?buildCarcass(current.metadata.spec,{idPrefix:prefix,name:first?.name.split(' · ')[0],legacyGolaShelves:!current.items.some(i=>i.blank_binding?.gola_flush)}).items:[];
  const previousSides=shapeChanged?originalItems.filter(i=>['left','right','top','bottom'].includes(i.item_id.slice(prefix.length+1))):[];
  const retained=new Set();
  const items=placeCarcass(built,position).map(generated=>{
