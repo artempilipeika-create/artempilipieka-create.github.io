@@ -15,6 +15,8 @@ import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment} from './studio-environment.mjs';
 import {roomDaylight,daylightKey} from './room-daylight.mjs';
 import {buildRoomSurfaces,wallVisible} from './room-surfaces.mjs';
+import {clearanceSession,drawerStroke,leafKey,maxOpening} from './wardrobe-clearance.mjs';
+import {doorSide} from './wardrobe-door-layout.mjs';
 import {WardrobeMotion,drawerKey} from './wardrobe-motion.mjs';
 import {StudioRender} from './studio-render.mjs';
 import {allSegments} from './wall-finishes.mjs';
@@ -34,6 +36,9 @@ export class PlannerScene{
     this.studioRender=new StudioRender(this.renderer);
     this.studioRender.maxDimension=this.quality.limit;
     this.scene=new THREE.Scene();this.planBackground=new THREE.Color();
+    this.wardrobeContact=new THREE.Mesh(new THREE.SphereGeometry(.016,16,10),new THREE.MeshBasicMaterial({color:'#db482d',depthTest:false,depthWrite:false}));
+    this.wardrobeContact.visible=false;this.wardrobeContact.renderOrder=90;this.wardrobeContact.userData.ownMaterial=true;
+    this.scene.add(this.wardrobeContact);
     this.wardrobeMotion=new WardrobeMotion();this.reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
     this.hemi=new THREE.HemisphereLight('#fffdf8','#b9ab94',1.0);this.scene.add(this.hemi);
     this.roomBounce=new THREE.DirectionalLight(0xfffcf3,.38);
@@ -78,6 +83,9 @@ export class PlannerScene{
     const paletteView=Boolean(this.renderRooms.id)&&this.mode==='3d';
     this.scene.background=this.mode==='3d'?this.renderRooms.background:this.planBackground;
     this.roomBounce.visible=paletteView;
+    const contact=this.wardrobeMotion.contact;
+    this.wardrobeContact.visible=Boolean(!this.exportSize&&!this.client&&this.mode==='3d'&&this.wardrobeMotion.open&&contact);
+    if(this.wardrobeContact.visible)this.wardrobeContact.position.fromArray(contact.point).multiplyScalar(S);
     const moving=!this.exportSize&&this.wardrobeMotion.step(started,this.reducedMotion?.matches);
     if(!this.exportSize&&this.wardrobeMotion.dirty){
       this.wardrobeMotion.pose(this.entries,this.adapter.items);
@@ -305,14 +313,54 @@ export class PlannerScene{
   }
   inspectWardrobe(item){
     const id=cabinetId(item);if(!id)return;
-    if(this.wardrobeMotion.id===id&&this.wardrobeMotion.open){this.wardrobeMotion.close();this.invalidate();return;}
+    const m=this.wardrobeMotion;
+    if(m.id===id&&m.open){m.close();this.onWardrobeChanged?.();this.invalidate();return;}
     if(this.mode!=='3d')this.setView('3d');
-    this.wardrobeMotion.show(id);this.cabinetSelection=id;this.fit('wardrobe');this.invalidate();
+    m.reset();m.show(id);
+    const members=this.adapter.items.filter(it=>cabinetId(it)===id);
+    const leaves=members.filter(it=>doorSide(leafKey(it))),picked=leaves.find(it=>it===item);
+    m.defaultDegrees=0;m.leaf=(picked||leaves[0])?.item_id??null;
+    m.drawer=members.map(drawerKey).find(Boolean)??null;
+    const session=this.wardrobeChecks();
+    for(const leaf of picked?[picked]:leaves){
+      const result=session.swing(leaf,0,90);m.angles.set(leaf.item_id,result.degrees);
+      if(result.contact&&!m.contact)this.reportDoorContact(result);
+    }
+    this.cabinetSelection=id;this.fit('wardrobe');this.onWardrobeChanged?.();this.invalidate();
+  }
+  wardrobeChecks(){return clearanceSession(this.adapter.items,this.entries,this.adapter.room,this.wardrobeMotion);}
+  reportDoorContact(result){
+    const m=this.wardrobeMotion;m.contact=result.contact;
+    m.message='При '+result.degrees.toLocaleString('ru-RU')+'° соприкасаются '+result.contact.moving+' и '+result.contact.obstacle+'.';
+  }
+  selectWardrobeDoor(id){
+    const m=this.wardrobeMotion;
+    if(!m.open||!this.adapter.items.some(it=>it.item_id===id&&cabinetId(it)===m.id&&doorSide(leafKey(it))))return false;
+    m.leaf=id;this.onWardrobeChanged?.();return true;
+  }
+  setWardrobeAngle(value){
+    const m=this.wardrobeMotion,item=this.adapter.items.find(it=>it.item_id===m.leaf);
+    if(!m.open||!item||!Number.isFinite(value))return;
+    const session=this.wardrobeChecks();
+    const result=session.swing(item,m.degrees(m.leaf),Math.max(0,Math.min(maxOpening,value)));
+    m.setDegrees(m.leaf,result.degrees);m.contact=null;m.message='';
+    if(result.contact)this.reportDoorContact(result);
+    else if(m.requested)this.checkDrawerTravel(session,m.requested);
+    this.onWardrobeChanged?.();this.invalidate();
+  }
+  checkDrawerTravel(session,key){
+    const m=this.wardrobeMotion,hit=session.drawer(key);
+    m.limit=hit?.time??1;m.contact=hit;
+    const travel=Math.round(drawerStroke(this.adapter.items,m.id,key)*m.limit);
+    const reach='Ход в просмотре '+travel+' мм.';
+    m.message=hit?reach+' Препятствие — '+hit.obstacle+'.':reach;
   }
   clickDrawer(item){
-    if(!this.wardrobeMotion?.open||this.wardrobeMotion.id!==cabinetId(item)||!item.item_id.endsWith('-face'))return false;
-    const key=drawerKey(item);if(!key)return false;
-    this.wardrobeMotion.toggleDrawer(key);this.invalidate();return true;
+    const m=this.wardrobeMotion,key=drawerKey(item);
+    if(!m.open||cabinetId(item)!==m.id||!item.item_id.endsWith('-face')||!key)return false;
+    m.toggleDrawer(key);m.contact=null;m.message='';
+    if(m.requested)this.checkDrawerTravel(this.wardrobeChecks(),key);
+    this.onWardrobeChanged?.();this.invalidate();return true;
   }
   setLayer(value){this.layer=value;this.renderer.shadowMap.needsUpdate=true;this.sync();}
   highlight(error=''){
@@ -557,5 +605,5 @@ export class PlannerScene{
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;clearTimeout(this.settleTimer);this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.surfaces?.disposeMaps();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;clearTimeout(this.settleTimer);this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.surfaces?.disposeMaps();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);this.disposeTree(this.wardrobeContact);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

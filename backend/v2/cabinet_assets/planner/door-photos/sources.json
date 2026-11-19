@@ -191,5 +191,37 @@
     "source_url": "https://aks.by/122210-145909-p?OFFER_ID=145922",
     "image_url": "https://aks.by/upload/iblock/117/9xwl7q49kkmz5fs65b3ot83fhwot57yp.jpg",
     "length_mm": 5500
+  },
+  "edge-inset-l-67698": {
+    "file": "edge-inset-l-67698.webp",
+    "model": "Врезная L-образная",
+    "pictured_article": "67698",
+    "pictured_size": "хлыст 4000 мм, полезная длина 3950 мм",
+    "finish": "Чёрный анодированный",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/72438-104121-p?OFFER_ID=104123",
+    "image_url": "https://aks.by/upload/iblock/21e/2s40hdrq2zd8fbc4htt5q6a0bxq1ktev.jpg",
+    "length_mm": 4000,
+    "usable_stock_mm": 3950,
+    "facade_thickness_mm": 18,
+    "section_file": "edge-inset-l-67698-section.webp",
+    "section_image_url": "https://aks.by/upload/iblock/75e/tr5emz2bhcf0isfvylfybgbglms321so.jpg",
+    "installation_file": "edge-inset-l-67698-installed.webp"
+  },
+  "edge-inset-c-75975": {
+    "file": "edge-inset-c-75975.webp",
+    "model": "Врезная C-образная",
+    "pictured_article": "75975",
+    "pictured_size": "хлыст 4000 мм, полезная длина 3950 мм",
+    "finish": "Чёрный матовый анодированный",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/47974-90199-p?OFFER_ID=111581",
+    "image_url": "https://aks.by/upload/iblock/961/34ivehx02i22126kzy20l4aqfue1cyvv.jpg",
+    "length_mm": 4000,
+    "usable_stock_mm": 3950,
+    "facade_thickness_mm": 18,
+    "section_file": "edge-inset-c-75975-section.webp",
+    "section_image_url": "https://aks.by/upload/iblock/bcd/08f0vva22brpcpdxpne4qj3capn4e6k7.jpg",
+    "installation_file": "edge-inset-c-75975-installed.webp"
   }
 }

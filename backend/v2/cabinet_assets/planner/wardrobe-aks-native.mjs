@@ -1,3 +1,4 @@
+import pullCatalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {splitAt,levelOf,splitKey,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {localPoint,worldPoint} from './blank-bindings.mjs';
@@ -91,9 +92,21 @@ export function wardrobeHardware(items){
       add('bolt',aks.joints[k?'boltRight':'boltLeft'],'Конфирмат 7×50 · '+end.name,[sideParts[k],end],box,level,at(end).z);
      }
     }
-    const x=at(face).x,usable=Math.min(fore.width,face.width),inset=Math.min(100,usable/4);
+    const grip=face.blank_edge_pull;
+    let screwX=at(face).x,usable=Math.min(fore.width,face.width),screwY=y+left.height/2;
+    if(grip){
+     // Fix the two boards only where their wood overlaps, clear of the profile shank.
+     const clearance=grip.grooveDepth??pullCatalogue[grip.article].shankDepth,margin=3;
+     const lowX=Math.max(at(fore).x-fore.width/2,at(face).x-face.width/2+(grip.edge==='left'?clearance:0));
+     const highX=Math.min(at(fore).x+fore.width/2,at(face).x+face.width/2-(grip.edge==='right'?clearance:0));
+     const lowY=Math.max(fore.elevation_mm,face.elevation_mm+(grip.edge==='bottom'?clearance:0))+margin;
+     const highY=Math.min(fore.elevation_mm+fore.height,face.elevation_mm+face.height-(grip.edge==='top'?clearance:0))-margin;
+     if(highX-lowX<=4*margin||lowY>highY)throw Error('Для шурупов фасада шуфляды '+(index+1)+' не хватает места рядом с врезной ручкой.');
+     screwX=(lowX+highX)/2;usable=highX-lowX;screwY=Math.max(lowY,Math.min(highY,screwY));
+    }
+    const inset=Math.min(100,usable/4);
     for(const dx of [-usable/2+inset,0,usable/2-inset]){
-     add('face',aks.joints.face,'Шуруп AKS 5×30 · '+face.name,[fore,face],x+dx,y+left.height/2,front-18);
+     add('face',aks.joints.face,'Шуруп AKS 5×30 · '+face.name,[fore,face],screwX+dx,screwY,front-18);
     }
    });
    for(const [k,p] of spacers.entries()){

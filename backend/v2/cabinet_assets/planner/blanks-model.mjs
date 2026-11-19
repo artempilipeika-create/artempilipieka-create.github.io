@@ -1,3 +1,4 @@
+import {isEdgePull,pullEdgeCode,validateEdgePull} from './wardrobe-edge-pulls.mjs';
 /** Universal rectangular board. Dimensions in mm, never inferred from a cabinet. */
 import {drawerBottom,drawerSide,drawerMember} from './wardrobe-drawers.mjs';
 import {hookError} from './blank-hook.mjs';
@@ -41,8 +42,8 @@ export function retainedBlankMaterial(item,previous,lookup){
 export function validateBlank(input,room){
   const b=normalizeBlank(input);
   const post=b.axis==='side'&&/:niche-\d+-\d+-divider$/.test(input.item_id);
-  const minLength=drawerSide(input.item_id)?40:100;
-  const drawerFace=b.axis==='front'&&drawerMember(input.item_id,'\\d+-face');
+  const minLength=drawerSide(input.item_id)||input.blank_edge_pull?40:100;
+  const drawerFace=b.axis==='front'&&(input.blank_edge_pull||drawerMember(input.item_id,'\\d+-face'));
   const precise=value=>Number.isFinite(value)&&Math.abs(value*1000-Math.round(value*1000))<.000001;
   const door=b.axis==='front'&&/:door-(?:(?:lower|upper)-)?(?:left|right)$/.test(input.item_id??'');
   if(!(drawerFace?precise(b.length):Number.isInteger(b.length*(door||post?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
@@ -50,7 +51,13 @@ export function validateBlank(input,room){
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
   if(input.assistant_carcass?.spec?.backThickness&&input.item_id===input.assistant_carcass.group_id+':back'&&(b.axis!=='back'||b.code!=='0000'||b.thickness!==input.assistant_carcass.spec.backThickness))return 'Вкладная задняя стенка должна соответствовать выбранной толщине и быть без кромки.';
-  if(b.axis==='front'&&(b.code!=='1111'||b.edgeThickness!==2||b.thickness!==18))return 'Для фасада нужна плита 18 мм и ПВХ 2 мм в круг.';
+  if(input.blank_edge_pull){
+    const h=input.blank_edge_pull;
+    if(b.axis!=='front'||!isEdgePull(h)||b.code!==pullEdgeCode(h.edge))return 'Проверьте открытый торец под врезной профиль фасада.';
+    const issue=validateEdgePull(h,b.width,b.length,b.thickness);
+    if(issue)return issue;
+  }
+  if(b.axis==='front'&&((!input.blank_edge_pull&&b.code!=='1111')||b.edgeThickness!==2||b.thickness!==18))return 'Для фасада нужна плита 18 мм и ПВХ 2 мм в круг.';
   const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
   let glass=false;
   if(input.blank_shelf){
@@ -76,6 +83,7 @@ export function blankItem(input={}){
   return {
     ...dims,
     module_type:'blank',template_id:null,bazis_id:null,
+    ...(input.blank_edge_pull?{blank_edge_pull:{...input.blank_edge_pull}}:{}),
     ...(input.blank_shelf?{blank_shelf:input.blank_shelf}:{}),
     ...(input.blank_hook?{blank_hook:{...input.blank_hook}}:{}),
     ...(input.blank_binding?{blank_binding:structuredClone(input.blank_binding)}:{}),

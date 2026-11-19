@@ -104,6 +104,8 @@ AKS_GUIDES=json.loads((ASSETS/'aks-wardrobe.json').read_text())['rails']
 def hardware_for(it):
     rows,description=_panel_hardware(it)
     meta=it.get('assistant_carcass') or {}
+    if not meta and it.get('blank_edge_pull'):
+        rows=[*rows,_facade_handle_row(it['blank_edge_pull'],it)]
     spec=meta.get('spec') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     front=spec.get('front') or {}
@@ -133,7 +135,7 @@ def hardware_for(it):
         slot,number=map(int,drawer.groups())
         if slot<len(banks) and banks[slot] and number<len(banks[slot]['faces']):
             handle=banks[slot]['faces'][number].get('handle')
-            if handle and handle['article'] not in ('118124','118129'):rows=[*rows,_facade_handle_row(handle)]
+            if handle and handle['article'] not in ('118124','118129'):rows=[*rows,_facade_handle_row(handle,it)]
             depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[slot]['kind']=='internal' else 0)
             length=min(600,((depth-5)//50)*50)
             rail=AKS_GUIDES.get(str(length))
@@ -179,9 +181,13 @@ def hardware_for(it):
             rows=[*rows,_row('Регулятор уровня М6 чёрный',count,'pcs','118779'),_row('Муфта регулятора М6 вбиваемая',count,'pcs','106466')]
     return rows,description
 
-def _facade_handle_row(handle):
+def _facade_handle_row(handle,it):
     from .assistant_model import DOOR_HARDWARE
     article=handle['article'];product=DOOR_HARDWARE[article]
+    if product['family'] in ('insetL','insetC'):
+        shape='L-образная' if product['family']=='insetL' else 'C-образная'
+        span=it['height'] if handle['edge'] in ('left','right') else it['width']
+        return _row('Ручка-профиль врезная AKS '+shape,span/1000,'m',article)
     name=('Ручка-скоба AK700' if product['family']=='ak700' else 'Ручка торцевая MONBLAN')+' · '+str(product['pitch'])+' мм с крепежом'
     return _row(name,1,'set',article)
 
@@ -191,12 +197,17 @@ def _panel_hardware(it):
     spec = meta.get('spec') or {}
     if it.get('blank_axis')=='front' and spec.get('front') and re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key):
         w,h=it['width'],it['height']
+        if grip:=it.get('blank_edge_pull'):
+            from .assistant_model import DOOR_HARDWARE
+            rise=DOOR_HARDWARE[grip['article']]['edgeRise']
+            if grip['edge'] in ('left','right'):w+=rise
+            else:h+=rise
         mass=spec['front'].get('massKg') or w*h*18*700/1e9
         for n,(limit,kg) in enumerate([(900,8),(1600,13),(2000,17),(2400,22)],2):
             if w<=600 and h<=limit and mass<=kg:
                 rows=[_row('Петля PRIME 3D накладная с планкой H0 · саморезы',n,'pcs','112595')]
                 handle=(spec['front'].get('handles') or {}).get(key)
-                if handle and handle['article'] not in ('118124','118129'):rows.append(_facade_handle_row(handle))
+                if handle and handle['article'] not in ('118124','118129'):rows.append(_facade_handle_row(handle,it))
                 return rows,None
         raise ValueError('Створка выходит за пределы таблицы AKS Ø35.')
     if key=='rear-brace':
@@ -314,6 +325,14 @@ def _panel_hardware(it):
     return [],None
 
 def module_contents(it):
+    grip=it.get('blank_edge_pull')
+    if grip:
+        row=_facade_handle_row(grip,it)
+        edge={'left':'Левый','right':'Правый','top':'Верхний','bottom':'Нижний'}[grip['edge']]
+        length=row['qty']*1000
+        kerf=(f"Паз {grip['grooveWidth']:g} × {grip['grooveDepth']:g} мм (ширина × глубина), ось 9 мм от лицевой пласти."
+              if grip.get('grooveWidth') is not None else 'Ширину и глубину паза требуется задать по рабочей фрезе.')
+        return f"{edge} торец фасада без ПВХ. Длина отрезка ручки AKS {grip['article']} — {length:g} мм. {kerf}"
     it=refresh_dryer_source(it)
     v=gola_variant(it) or dryer_variant(it) or cargo_variant(it);dish=dishwasher(it)
     gola_front=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')
@@ -378,6 +397,9 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front,materials=None):
+    if grip:=it.get('blank_edge_pull'):
+        row=_facade_handle_row(grip,it)
+        return [('Заготовка фасада 18 мм',body or 'Не выбран'),('Алюминиевый профиль',f"{row['name']} · {grip['article']}")]
     it=refresh_dryer_source(it)
     if dishwasher(it):
         profiles=dishwasher(it)['profiles']

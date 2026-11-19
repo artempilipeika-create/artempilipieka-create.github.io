@@ -1,8 +1,9 @@
+import {isEdgePull,validateEdgePull,verticalEdge} from './wardrobe-edge-pulls.mjs';
 import {fitNicheBanks} from './wardrobe-niches.mjs';
 import {profileEdges} from './wardrobe-facade-profiles.mjs';
 import {drawerSections} from './wardrobe-drawers.mjs';
 import {sectionWidths} from './wardrobe-layout.mjs';
-import {doorHardware,doorLabel,baseWardrobeDoors,doorShelfOptions,isFacadeProfile,usesProfileEdge,wardrobeDoors,drawerFacadeKey,drawerFacades,mirrorHandle,handlePlacement} from './wardrobe-door-layout.mjs';
+import {doorHardware,doorLabel,baseWardrobeDoors,doorShelfOptions,isFacadeProfile,usesProfileEdge,wardrobeDoors,drawerFacadeKey,drawerFacades,orientHandle,mirrorHandle,handlePlacement} from './wardrobe-door-layout.mjs';
 import {footHeight} from './plinth-options.mjs';
 import photos from './door-photos/sources.json' with {type:'json'};
 
@@ -14,6 +15,7 @@ function formSpec(ui){return {...ui.fields,shelves:Math.max(...ui.fields.section
 function shelves(ui,scope){try{return doorShelfOptions(formSpec(ui),scope);}catch{return [];}}
 const families=[
  ['ak700','Скоба AK700','116550'],['monblan','Торцевая MONBLAN','92253'],
+ ['insetL','Врезная L','67698'],['insetC','Врезная C','75975'],
  ['golaL','Gola L','118124'],['golaC','Gola S (C)','118129']
 ];
 const photosByArticle=Object.fromEntries(Object.values(photos).map(p=>[p.pictured_article,p]));
@@ -176,6 +178,7 @@ export function doorControls(ui){
   else if(family==='golaC'){
    const edge=edges.find(e=>sharedProfile(leaf.key,e))??edges[0];value={article,edge,cutHeight:commonCut(edge)};
   }
+  else if(isEdgePull({article}))value={article,edge:drawer?'top':leaf.side==='left'?'right':'left'};
   else if(family!=='none')value=defaultHandle(leaf,article);
   apply(value);
  }
@@ -189,11 +192,23 @@ export function doorControls(ui){
     if(h.article==='118129')ui.select(panel,'Вырез в стойках под S',[[74,'27 × 74 мм · АКС'],[73,'27 × 73 мм · по кухонному модулю']],h.cutHeight??74,v=>changeCut(Number(v)));
    }
    panel.append(el('small',h.article==='118124'?'От верхней кромки фасада до верха профиля — 30 мм.':'Между кромками фасадов — 30 мм. На общем стыке устанавливается один профиль.'));
+  }else if(isEdgePull(h)){
+   const allowed=[['top','Верхняя'],['bottom','Нижняя'],['left','Левая'],['right','Правая']].filter(([v])=>drawer||v!==leaf.side);
+   ui.select(panel,'Кромка фасада',allowed,h.edge,v=>apply({...h,edge:v})).dataset.handleEdge='';
+   insetDetails(panel,h,leaf,apply);
   }else{
    const ak=doorHardware[h.article].family==='ak700';
    const products=Object.entries(doorHardware).filter(([,p])=>p.family===familyOf(h)).sort(([,a],[,b])=>a.pitch-b.pitch);
    ui.select(panel,'Размер ручки',products.map(([article,p])=>[article,(ak?p.pitch:p.pitch+' / '+p.length)+' мм · '+article]),h.article,article=>apply({...h,article})).dataset.handleArticle='';
    ui.select(panel,'Кромка фасада',[['left','Левая'],['right','Правая'],['top','Верхняя'],['bottom','Нижняя']].filter(([e])=>drawer||ak||!usesProfileEdge(f,leaf.key,e)),h.edge,v=>apply({...h,edge:v})).dataset.handleEdge='';
+   if(ak){
+    const controls=el('div');controls.className='wardrobe-handle-axes';controls.setAttribute('role','group');controls.setAttribute('aria-label','Поворот скобы');
+    for(const [axis,label] of [['vertical','Вертикально'],['horizontal','Горизонтально']]){
+     const button=btn(label,()=>{try{apply(orientHandle(leaf,h,axis));}catch(error){ui.output.textContent=error.message;}});
+     button.dataset.handleAxis=axis;button.setAttribute('aria-pressed',String(verticalEdge(h.edge)===(axis==='vertical')));controls.append(button);
+    }
+    panel.append(controls);
+   }
    const upright=['left','right'].includes(h.edge);
    ui.select(panel,'Положение вдоль кромки',[['center','По центру'],['start',upright?'От низа':'От левого края'],['end',upright?'От верха':'От правого края']],h.from,v=>apply({...h,from:v}));
    if(h.from!=='center')num(ui,panel,ak?'До ближайшего отверстия, мм':'До торца ручки, мм',h.offset??0,v=>{h.offset=v;});
@@ -231,4 +246,30 @@ export function wireHandleDrag(ui){
   const done=e=>{if(e.pointerId!==event.pointerId)return;host.removeEventListener('pointermove',move);host.removeEventListener('pointerup',done);host.removeEventListener('pointercancel',done);ui.selectedDoor=key;ui.suppressDiagramClick=true;ui.changed(true);setTimeout(()=>ui.suppressDiagramClick=false,0);};
   host.addEventListener('pointermove',move);host.addEventListener('pointerup',done);host.addEventListener('pointercancel',done);
  });
+}
+
+
+function insetDetails(panel,h,leaf,apply){
+ const product=doorHardware[h.article],photo=photosByArticle[h.article],edgeLength=verticalEdge(h.edge)?leaf.height:leaf.width;
+ panel.append(el('small','Длина ручки '+edgeLength+' мм · фасад 18 мм · профиль занимает '+product.edgeRise+' мм от готового габарита.'));
+ const install=el('details');install.className='wardrobe-handle-details';install.append(el('summary','Схема установки'));
+ for(const [file,label] of [[photo.installation_file,'Посадка в фасад 18 мм'],[photo.section_file,'Чертёж профиля АКС']]){
+  const fig=el('figure'),img=el('img');img.src='/account/planner/door-photos/'+file;img.alt=label+' · AKS '+h.article;img.loading='lazy';
+  fig.append(img,el('figcaption',label));install.append(fig);
+ }
+ panel.append(install);
+ const box=el('details');box.className='wardrobe-handle-details';box.append(el('summary','Паз под профиль'));
+ panel.append(box);
+ box.append(el('p',h.grooveWidth?'Паз '+h.grooveWidth+' × '+h.grooveDepth+' мм · по центру торца.':'Параметры фрезы не заданы. Для выгрузки паза укажите размеры по пробной посадке.'));
+ const field=(label,value)=>{const wrap=el('label',label),input=el('input');input.type='number';input.step='any';input.min='0';input.value=value??'';input.setAttribute('aria-label',label);wrap.append(input);box.append(wrap);return input;};
+ const width=field('Ширина паза, мм',h.grooveWidth),depth=field('Глубина паза, мм',h.grooveDepth);
+ const feedback=el('small');feedback.setAttribute('role','status');
+ box.append(btn('Задать паз',()=>{
+   const value={...h,grooveWidth:width.valueAsNumber,grooveDepth:depth.valueAsNumber};
+   const vertical=verticalEdge(h.edge);
+   const error=validateEdgePull(value,leaf.width-(vertical?product.edgeRise:0),leaf.height-(vertical?0:product.edgeRise),18,leaf.side);
+   if(error){feedback.textContent=error;return;}
+   apply(value);
+ }),feedback);
+ if(h.grooveWidth)box.append(btn('Сбросить размеры паза',()=>apply({article:h.article,edge:h.edge})));
 }

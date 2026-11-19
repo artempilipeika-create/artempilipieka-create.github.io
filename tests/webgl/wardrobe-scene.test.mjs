@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
+import {clearanceSession,drawerStroke,maxOpening} from '../../backend/v2/cabinet_assets/planner/wardrobe-clearance.mjs';
 import {WardrobeMotion,drawerKey} from '../../backend/v2/cabinet_assets/planner/wardrobe-motion.mjs';
 import {roomDaylight,wallShell} from '../../backend/v2/cabinet_assets/planner/room-daylight.mjs';
 import {wallPanels} from '../../backend/v2/cabinet_assets/planner/room-plan.mjs';
@@ -67,4 +68,75 @@ test('the wall mesh has returns around a measured opening only',()=>{
     assert.ok(height>.8&&height<2.2);
   }
   wall.geometry.dispose();wall.material.dispose();
+});
+
+const testCabinet={group_id:'cab',spec:{drawerBanks:[{kind:'internal'}]}};
+function blank(key,x,z,width,height,depth,y=0){
+ return {item_id:'cab:'+key,assistant_carcass:testCabinet,blank_axis:'front',rotation:0,x,z,width,height,depth,elevation_mm:y};
+}
+
+test('independent doors stop a drawer anywhere along its full rail on every cabinet rotation',()=>{
+ for(const rotation of [0,90,180,270]){
+  const items=[blank('door-left',-250,250,497,1950,18),blank('door-right',250,250,497,1950,18),
+   blank('drawer-0-0-face',-235,229,400,240,18,40),blank('drawer-0-0-side-left',-430,-30,18,190,500,59)];
+  const yaw=-rotation*Math.PI/180;
+  for(const it of items){
+   const x=it.x,z=it.z;
+   Object.assign(it,{rotation,x:x*Math.cos(yaw)+z*Math.sin(yaw),z:z*Math.cos(yaw)-x*Math.sin(yaw)});
+  }
+  const saved=JSON.stringify(items),m=new WardrobeMotion();m.show('cab');m.defaultDegrees=0;
+  const view=clearanceSession(items,null,null,m);
+  assert.equal(drawerStroke(items,m.id,'0-0'),500);
+  const shut=view.drawer('0-0');
+  assert.match(shut.obstacle,/левая дверь/);assert.ok(Math.abs(shut.time*500-3)<.001);
+  assert.ok(shut.point.every(Number.isFinite));assert.ok(Math.abs(shut.point[1]-160)<.001);
+  m.setDegrees(items[0].item_id,55);
+  const partial=view.drawer('0-0');assert.ok(partial.time>shut.time&&partial.time<1);
+  m.setDegrees(items[0].item_id,100);
+  assert.equal(m.degrees(items[1].item_id),0);assert.equal(view.drawer('0-0'),null);
+  m.shown='0-0';m.extension=1;
+  const closing=view.swing(items[0],100,0);
+  assert.ok(closing.degrees>0&&closing.degrees<100);assert.match(closing.contact.obstacle,/Шуфляда 1/);
+  assert.equal(JSON.stringify(items),saved);
+ }
+});
+
+test('a rail checks the metal shape, including clear space within its rectangular bounds',()=>{
+ const door=blank('door-left',500,60,20,10,18);
+ const items=[door,blank('drawer-0-0-face',0,0,20,12,10,410),blank('drawer-0-0-side-left',200,-200,18,10,250,10)];
+ const group=new THREE.Group(),g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([-.600,.400,0,-.400,.600,0,-.600,.600,0],3));
+ const metal=new THREE.Mesh(g);metal.userData={frontAccessory:true,article:'116550'};group.add(metal);
+ const m=new WardrobeMotion();m.show('cab');m.defaultDegrees=0;
+ const view=clearanceSession(items,new Map([[door.item_id,{group}]]),null,m);
+ assert.equal(view.drawer('0-0'),null);
+ items[1].elevation_mm=530;
+ const hit=view.drawer('0-0');assert.equal(hit.obstacle,'Ручка 116550');
+ assert.ok(Math.abs(hit.time*250-55)<.001);assert.ok(Math.abs(hit.point[2]-60)<.001);
+ assert.ok(hit.point[1]>=530&&hit.point[1]<=542);
+ g.dispose();metal.material.dispose();
+});
+
+test('the wall limits the swing first at the real handle, and a measured wall opening lets it pass',()=>{
+ const a=blank('door-left',-800,0,397,900,18,500),m=new WardrobeMotion();m.show('cab');m.defaultDegrees=0;
+ const room={width:2000,height:2500,depth:4000,features:[]},entries=new Map();
+ const bare=clearanceSession([a],entries,room,m).swing(a,0,maxOpening);
+ assert.ok(bare.degrees>90&&bare.degrees<91);assert.match(bare.contact.obstacle,/Стена D/);
+ const group=new THREE.Group(),handle=new THREE.Mesh(new THREE.BoxGeometry(.015,.35,.045));
+ handle.position.set(-.155,.5,.0315);handle.userData={frontAccessory:true,article:'116550'};group.add(handle);entries.set(a.item_id,{group});
+ const metal=clearanceSession([a],entries,room,m).swing(a,0,maxOpening);
+ assert.ok(metal.degrees>40&&metal.degrees<41);assert.match(metal.contact.moving,/116550/);
+ assert.ok(Math.abs(metal.contact.point[0]+1000)<.02);
+ room.features=[{kind:'door',wall:'d',offset:1500,width:1200,height:2000,elevation:0}];
+ assert.deepEqual(clearanceSession([a],entries,room,m).swing(a,0,maxOpening),{degrees:105,contact:null});
+ handle.geometry.dispose();handle.material.dispose();
+});
+
+test('a rotated neighboring leaf blocks the sweep even when the final pose would have cleared it',()=>{
+ const a=blank('door-left',-200,0,397,900,18,500);
+ const b={...blank('door-right',-340,300,150,900,18,500),item_id:'other:door-right',rotation:90,assistant_carcass:{group_id:'other'}};
+ const m=new WardrobeMotion();m.show('cab');m.defaultDegrees=0;
+ const v=clearanceSession([a,b],null,null,m),blocked=v.swing(a,0,105);
+ assert.equal(v.swing(a,105,105).contact,null);assert.ok(blocked.degrees>70&&blocked.degrees<75);
+ assert.match(blocked.contact.obstacle,/правая дверь/);
 });

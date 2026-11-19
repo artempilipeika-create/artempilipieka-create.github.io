@@ -1,13 +1,16 @@
+import {isEdgePull,installedEdgePull} from './wardrobe-edge-pulls.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 import {doorHardware,doorSide,drawerFacadeKey,handlePlacement,hasFacadeProfiles,physicalProfiles,sectionSpans} from './wardrobe-door-layout.mjs';
 
 export function doorHandle(item){
  const group=item.assistant_carcass;
- if(item.blank_axis!=='front'||!group)return null;
+ if(item.blank_axis!=='front')return null;
+ if(isEdgePull(item.blank_edge_pull))return installedEdgePull(item,item.blank_edge_pull);
+ if(!group)return null;
  const key=item.item_id.slice(group.group_id.length+1);
  const face=drawerFacadeKey(key);
  const setting=face?group.spec.drawerBanks?.[face.slot]?.faces[face.index]?.handle:doorSide(key)&&group.spec.front?.handles?.[key];
- return handlePlacement(item,setting);
+ return isEdgePull(setting)?installedEdgePull(item,setting):handlePlacement(item,setting);
 }
 function cabinetFrame(item,items){
  const g=item.assistant_carcass,s=g?.spec;
@@ -169,12 +172,12 @@ export function verifyProfileSupports(s,parts,runs,floor){
 export function nativeDoorHardware(items){
  const result=[];
  for(const item of items){
-  const g=item.assistant_carcass;if(!g?.spec)continue;
+  const g=item.assistant_carcass;if(!g?.spec&&!item.blank_edge_pull)continue;
   const rotation=item.rotation||0,p=localPoint(item,rotation);
   const hardware=doorHandle(item);
   if(hardware){
    const h=hardware,at={x:p.x-item.width/2+h.x,z:p.z+(h.back?-1:1)*item.depth/2};
-   result.push({name:(h.back?'Торцевая ручка MONBLAN':'Ручка-скоба AK700')+' · '+item.name,wardrobe_handle:true,article:h.article,source_file:h.part.file,source_sha256:h.part.sha,
+   result.push({name:(h.edgePull?'Врезная ручка-профиль AKS '+h.article:h.back?'Торцевая ручка MONBLAN':'Ручка-скоба AK700')+' · '+item.name,wardrobe_handle:true,...(h.edgePull?{wardrobe_edge_pull:true,span_mm:h.span}:{}),article:h.article,source_file:h.part.file,source_sha256:h.part.sha,
     host_blank_id:item.item_id,joined_panel_id:item.item_id,rotation,handle_roll_deg:h.angle,edge:h.edge,position:{...worldPoint(at,rotation),y:item.elevation_mm+h.y},elastic_resize:false});
   }
   for(const run of panelProfiles(item,items)){

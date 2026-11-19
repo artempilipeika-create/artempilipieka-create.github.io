@@ -157,7 +157,36 @@ class FacadeProfile(StrictModel):
             raise ValueError('У верхнего профиля Gola L один монтажный вырез 27 × 57 мм.')
         return self
 
-FacadeFitting = FacadeHandle | FacadeProfile
+class InsetEdgeGrip(StrictModel):
+    article: Literal['67698','75975']
+    edge: Literal['left','right','top','bottom']
+    grooveWidth: float | None = Field(default=None,gt=0,lt=18,strict=True,allow_inf_nan=False,exclude_if=lambda v:v is None)
+    grooveDepth: float | None = Field(default=None,gt=0,strict=True,allow_inf_nan=False,exclude_if=lambda v:v is None)
+
+    @model_validator(mode='after')
+    def groove(self):
+        if (self.grooveWidth is None) != (self.grooveDepth is None):
+            raise ValueError('Для фрезеровки укажите и ширину, и глубину паза.')
+        if self.grooveDepth is not None and self.grooveDepth < DOOR_HARDWARE[self.article]['shankDepth']:
+            raise ValueError('Глубина паза меньше длины шипа выбранной ручки.')
+        return self
+
+    @property
+    def edge_code(self):
+        return {'right':'0111','left':'1011','bottom':'1101','top':'1110'}[self.edge]
+
+    def check_size(self,width,height,hinge_side=None,*,finished=False):
+        product=DOOR_HARDWARE[self.article]
+        if self.edge==hinge_side:
+            raise ValueError('На этом торце установлены петли. Выберите свободный торец фасада.')
+        span,across=(height,width) if self.edge in ('left','right') else (width,height)
+        if finished:
+            across-=product['edgeRise']
+        # The opposite edge retains its 2 mm PVC. The groove must end inside the board.
+        if across<40 or span>product['usableLength'] or self.grooveDepth is not None and self.grooveDepth>=across-2:
+            raise ValueError('Проверьте длину врезной ручки и глубину паза в плите фасада.')
+
+FacadeFitting = InsetEdgeGrip | FacadeProfile | FacadeHandle
 
 class FacadeDivision(StrictModel):
     section: int = Field(ge=0,le=3,strict=True)
@@ -415,6 +444,14 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Проверьте размеры выбранной створки и отступ петель.')
             if key in handles:
                 handle=handles[key]
+                if isinstance(handle,InsetEdgeGrip):
+                    handle.check_size(right-left,h,key.rsplit('-',1)[1],finished=True)
+                    profiles=(f.edgeProfiles or {}).get(key) or []
+                    shared=any(p.edge==handle.edge for p in profiles)
+                    if (shared or f.topProfile and not key.startswith('door-lower-') and handle.edge=='top' or
+                            d and d.gola and (key.startswith('door-lower-') and handle.edge=='top' or
+                                              key.startswith('door-upper-') and handle.edge=='bottom')):
+                        raise ValueError('Врезную ручку и профиль Gola на одном торце совместить нельзя.')
                 if (f.topProfile and not key.startswith('door-lower-') and torc(key,'top') or
                         d and d.gola and (key.startswith('door-lower-') and torc(key,'top') or key.startswith('door-upper-') and torc(key,'bottom'))):
                     raise ValueError('Кромку с профилем Gola оставьте свободной от торцевой ручки.')
@@ -590,6 +627,8 @@ class CarcassDesign(CarcassSpec):
                         rounding=round(remaining-sum(heights),3) if bank.coverFixing else 0
                         y=top-total+1.5+rounding
                         for face,height in zip(bank.faces,heights):
+                            if isinstance(face.handle,InsetEdgeGrip):
+                                face.handle.check_size(face.width or max_width,height,finished=True)
                             if isinstance(face.handle,FacadeHandle):
                                 face_width=face.width or max_width
                                 face.handle.check_size(face_width,height)
@@ -680,6 +719,7 @@ class CarcassDesign(CarcassSpec):
 
 
 class AssistantCarcass(StrictModel):
+    name: str | None = Field(default=None,min_length=1,max_length=120,exclude_if=lambda v:v is None)
     group_id: UUID
     spec: CarcassDesign
     position: CarcassPosition

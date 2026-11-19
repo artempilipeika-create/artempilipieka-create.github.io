@@ -215,3 +215,10 @@
 
 .wardrobe-handle-cards button[aria-disabled="true"]{color:#566059;background:#f4f5f2}
 .wardrobe-handle-cards button small{font-weight:400;font-size:.72rem}
+
+.wardrobe-handle-axes{display:flex;gap:6px;flex-wrap:wrap}
+.wardrobe-handle-axes [aria-pressed=true]{background:#245b47;color:#fff}
+.wardrobe-handle-details summary{cursor:pointer;font-weight:600;padding:.4rem 0}
+.wardrobe-handle-details figure{margin:.75rem 0}
+.wardrobe-handle-details img{width:100%;height:auto;display:block;border-radius:6px}
+.wardrobe-handle-details figcaption,.wardrobe-handle-details p{font-size:.84rem;color:#465b52}

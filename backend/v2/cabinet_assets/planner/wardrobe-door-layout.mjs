@@ -1,3 +1,4 @@
+import {isEdgePull} from './wardrobe-edge-pulls.mjs';
 import {sectionWidths,levelOf,isRightBank} from './wardrobe-layout.mjs';
 import {nicheOpenings} from './wardrobe-niches.mjs';
 import {overlayFronts} from './wardrobe-fronts.mjs';
@@ -180,7 +181,7 @@ export function checkDrawerHandle(face,h,leaves){
 }
 
 export function handlePlacement(door,setting){
- if(!setting||isFacadeProfile(setting))return null;
+ if(!setting||isFacadeProfile(setting)||isEdgePull(setting))return null;
  const part=catalogue[setting.article];
  if(!part||!['ak700','monblan'].includes(part.family)||!edges.includes(setting.edge)||!['center','start','end'].includes(setting.from))throw Error('Проверьте артикул и положение ручки.');
  const edge=setting.edge,vertical=isVertical(edge),ak=part.family==='ak700';
@@ -198,6 +199,32 @@ export function handlePlacement(door,setting){
 }
 export function mirrorHandle(setting){
  const flip={left:'right',right:'left',top:'top',bottom:'bottom'};
+ if(isEdgePull(setting))return {...setting,edge:flip[setting.edge]};
  const from=!isVertical(setting.edge)?({start:'end',end:'start',center:'center'})[setting.from]:setting.from;
  return {...setting,edge:flip[setting.edge],from};
+}
+
+
+export function orientHandle(leaf,setting,axis){
+ const current=handlePlacement(leaf,setting),vertical=axis==='vertical';
+ if(!current||current.part.family!=='ak700'||current.vertical===vertical)return setting;
+ const {width:w,height:h}=leaf,pitch=current.part.pitch;
+ let {x,y}=current;
+ const centered=leaf.slot!=null;
+ const high=!leaf.key?.includes('upper-');
+ // A door turns the handle around the fixing nearest its opening corner.
+ if(!centered){
+  if(current.vertical)y+=(setting.from==='center'?high:setting.from==='end')?pitch/2:-pitch/2;
+  else x+=(setting.from==='center'?leaf.side==='left':setting.from==='end')?pitch/2:-pitch/2;
+ }
+ const edge=vertical?(x<=w/2?'left':'right'):(y<=h/2?'bottom':'top');
+ const span=vertical?h:w,along=vertical?y:x;
+ const inset=edge==='left'?x:edge==='right'?w-x:edge==='top'?h-y:y;
+ const from=along<=span/2?'start':'end';
+ const distance=from==='start'?along:span-along;
+ const candidate={...setting,edge,inset,from,offset:distance-(centered?pitch/2:0)};
+ if(centered&&Math.abs(along-span/2)<.001){candidate.from='center';candidate.offset=0;}
+ if(candidate.offset<0)throw Error('Для этого поворота не хватает места на фасаде. Выберите меньшую скобу или измените её положение.');
+ handlePlacement(leaf,candidate);
+ return candidate;
 }

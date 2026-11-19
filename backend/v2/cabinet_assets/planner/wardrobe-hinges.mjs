@@ -1,3 +1,4 @@
+import {finishedFaceSize} from './wardrobe-edge-pulls.mjs';
 import {doorSide,physicalProfiles} from './wardrobe-door-layout.mjs';
 import {splitAt,levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import {primeHinge,hingeLoad,hingeAxes} from './wardrobe-fronts.mjs';
@@ -84,7 +85,7 @@ export function doorHinges(door,items){
    const top=roof.elevation_mm-group.spec.height+group.spec.thickness+run.top-door.elevation_mm;
    obstacles.push([top+(run.cutBottom-run.top),top+(run.cutTop-run.top)]);
  }
- const {count}=hingeLoad(door.width,door.height,front.massKg);
+ const finished=finishedFaceSize(door),{count}=hingeLoad(finished.width,finished.height,front.massKg);
  const axes=front.autoHinges?automaticAxes(door,host,items,side,obstacles,count):hingeAxes(door.height,count,front.offset,obstacles);
  if(axes.some(y=>door.elevation_mm+y-26<host.elevation_mm||door.elevation_mm+y+26>host.elevation_mm+host.height))
    throw Error('Ответная планка выходит за боковину. Проверьте высоту фасада.');

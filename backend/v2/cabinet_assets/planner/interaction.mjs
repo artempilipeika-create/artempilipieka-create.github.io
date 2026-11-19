@@ -68,7 +68,8 @@ export class Interaction {
     if(hit?.featureId&&this.equipment?.down(e,hit))return;
     if(!hit?.id){this.scene.hover(null);return;}
     const it=this.adapter.items.find(x=>x.item_id===hit.id);if(!it)return;
-    if(this.scene.wardrobeMotion?.open&&this.scene.wardrobeMotion.id===cabinetId(it)&&it.item_id.endsWith('-face')){
+    if(this.scene.wardrobeMotion?.open&&this.scene.wardrobeMotion.id===cabinetId(it)&&
+       (it.item_id.endsWith('-face')||/:door-(?:(?:upper|lower)-)?(?:left|right)$/.test(it.item_id))){
       this.consume(e);this.gesture={pointerId:e.pointerId,drawer:it,x:e.clientX,y:e.clientY};
       this.canvas.setPointerCapture(e.pointerId);return;
     }
@@ -136,7 +137,7 @@ export class Interaction {
     this.consume(e);this.gesture=null;
     if(g.drawer){
       if(this.canvas.hasPointerCapture?.(e.pointerId))this.canvas.releasePointerCapture(e.pointerId);
-      if(!g.moved)this.scene.clickDrawer(g.drawer);return;
+      if(!g.moved&&!this.scene.selectWardrobeDoor?.(g.drawer.item_id))this.scene.clickDrawer(g.drawer);return;
     }
     try{
       if(g.cabinet&&g.moved&&g.result&&!g.result.error){

@@ -1,3 +1,5 @@
+import {isEdgePull,verticalEdge} from './wardrobe-edge-pulls.mjs';
+import hardware from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {doorLabel,doorShelfOptions,baseWardrobeDoors,drawerFacades,handlePlacement,isFacadeProfile} from './wardrobe-door-layout.mjs';
 import {mm,mmText,nicheSlot} from './wardrobe-niches.mjs';
 import {sectionWidths} from './carcass-model.mjs';
@@ -72,6 +74,12 @@ function elevationView(built,view,section,front,selectedShelf,selection){
  }
  function handleDrawing(leaf,setting,title){
    if(!setting)return '';
+   if(isEdgePull(setting)){
+     const rise=hardware[setting.article].edgeRise,e=setting.edge,vertical=verticalEdge(e);
+     const x=X(leaf.left-W/2+(e==='right'?leaf.width-rise:0));
+     const y=Y(footHeight(s)+leaf.bottom+(e==='bottom'?rise:leaf.height));
+     return '<rect data-inset-handle="'+leaf.key+'" data-door-id="'+leaf.key+'" x="'+num(x)+'" y="'+num(y)+'" width="'+num(k*(vertical?rise:leaf.width))+'" height="'+num(k*(vertical?leaf.height:rise))+'" fill="#363a39"><title>Врезная ручка AKS '+setting.article+'</title></rect>';
+   }
    if(isFacadeProfile(setting)){
      const y=Y(footHeight(s)+leaf.bottom+(setting.edge==='top'?leaf.height:0)),x=X(leaf.left-W/2);
      return '<path data-profile-edge="'+leaf.key+'" pointer-events="none" d="M'+num(x)+' '+num(y)+'h'+num(leaf.width*k)+'" stroke="#293630" stroke-width="3"/>';

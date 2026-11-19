@@ -7,7 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
-from .assistant_model import AssistantCarcass, ShelfValue, shelf_valid
+from .assistant_model import AssistantCarcass, InsetEdgeGrip, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
 from .domain_api import require
@@ -136,6 +136,7 @@ class FurnitureItem(StrictModel):
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back','front']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
+    blank_edge_pull: InsetEdgeGrip|None=Field(default=None,exclude_if=lambda v:v is None)
     blank_binding: BlankBinding|None=None
     blank_hook: BlankHook|None=None
     blank_shelf: ShelfValue|None=None
@@ -164,7 +165,15 @@ class FurnitureItem(StrictModel):
         if self.blank_gola_runs and (key!='top' or not individual or self.blank_axis!='horizontal' or any(r.length_mm>group.spec.width for r in self.blank_gola_runs)):
             raise ValueError('Проверьте длины профилей Gola этого шкафа.')
         if individual and key=='top' and not self.blank_gola_runs:raise ValueError('В раскрое шкафа отсутствует выбранный профиль Gola.')
-        fitted=bool(self.blank_axis=='front' and banks and slot<len(banks) and banks[slot] and (banks[slot].layout or individual) and index<len(banks[slot].faces))
+        grip=self.blank_edge_pull
+        drawer_face=banks[slot].faces[index] if banks and slot<len(banks) and banks[slot] and index<len(banks[slot].faces) else None
+        saved_handle=drawer_face.handle if drawer_face else (group.spec.front.handles or {}).get(key) if group and group.spec.front else None
+        if group and (grip is not None or isinstance(saved_handle,InsetEdgeGrip)) and (
+                not self.item_id.startswith(str(group.group_id)+':') or grip!=saved_handle):
+            raise ValueError('Врезная ручка детали должна совпадать с ручкой этого фасада в анкете.')
+        if grip and self.blank_axis!='front':
+            raise ValueError('Врезная ручка устанавливается в торец фасада.')
+        fitted=bool(self.blank_axis=='front' and drawer_face and (banks[slot].layout or individual or grip) or grip and not group)
         vertical=[self.height,self.body_height or 0,self.blank_length_mm or 0,self.elevation_mm or 0]
         if fitted and any(abs(v-round(v,3))>1e-8 for v in vertical):
             raise ValueError('Для фасада шуфляды допустима точность до 0,001 мм.')
@@ -180,8 +189,10 @@ class FurnitureItem(StrictModel):
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')
         if self.blank_axis=='front':
-            if self.module_type!='blank' or self.blank_edge_code!='1111' or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
-                raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм в круг.')
+            if self.module_type!='blank' or self.blank_edge_code!=(grip.edge_code if grip else '1111') or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
+                raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм. Торец под врезную ручку оставьте без кромки.')
+            if grip:
+                grip.check_size(self.width,self.height,key.rsplit('-',1)[1] if door else None)
         elif self.width%1 or (self.blank_width_mm or 0)%1 or (self.elevation_mm or 0)*(2 if post or flush else 1)%1:
             raise ValueError('Для этой детали требуются целые размеры.')
         if self.assistant_carcass and self.assistant_carcass.spec.backThickness and self.item_id==str(self.assistant_carcass.group_id)+':back':
@@ -224,7 +235,7 @@ class FurnitureItem(StrictModel):
                     banks=self.assistant_carcass.spec.drawerBanks
                     if section>=len(banks) or not banks[section] or index>=len(banks[section].faces):
                         raise ValueError('Деталь шуфляды отсутствует в анкете шкафа.')
-            if l<100 and not (drawer and drawer[3].startswith('side-') and self.blank_axis=='side' and t==18):
+            if l<100 and not grip and not (drawer and drawer[3].startswith('side-') and self.blank_axis=='side' and t==18):
                 raise ValueError('Длина заготовки от 100 мм.')
             thin_bottom=drawer and drawer[3]=='bottom' and self.blank_axis=='horizontal' and self.blank_edge_code=='0000' and t==3
             if w>1200 and self.blank_axis!='back':

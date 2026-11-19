@@ -1,63 +1,64 @@
 // Runtime viewing poses in millimetres. The project items are read-only here.
+import {drawerStroke,hingePose,slidingKey} from './wardrobe-clearance.mjs';
+export {slidingKey as drawerKey};
 const rad=Math.PI/180,unit=.001;
 const advance=(value,target,amount)=>value<target?Math.min(target,value+amount):Math.max(target,value-amount);
 const smooth=v=>v*v*(3-2*v);
-export function drawerKey(item){
-  return item?.item_id?.match(/:drawer-(\d+-\d+)-(?:face|front|rear|bottom|side-left|side-right)$/)?.[1]??null;
-}
-
 export class WardrobeMotion{
   constructor(){this.reset();}
   reset(){
     this.id=null;this.open=false;this.door=0;this.extension=0;
+    this.angles=new Map();this.defaultDegrees=90;this.leaf=null;this.drawer=null;
+    this.contact=null;this.message='';this.limit=1;
     this.requested=null;this.shown=null;this.lastTime=null;this.changed=true;
   }
   show(id){
     if(this.id!==id)this.reset();
     this.id=id;this.open=true;this.changed=true;
   }
-  close(){this.open=false;this.requested=null;this.changed=true;}
-  toggleDrawer(key){
+  degrees(id){return this.angles.get(id)??this.defaultDegrees;}
+  setDegrees(id,degrees){
+    this.angles.set(id,degrees);this.leaf=id;this.door=1;this.changed=true;
+  }
+  close(){this.open=false;this.requested=null;this.contact=null;this.message='';this.changed=true;}
+  toggleDrawer(key,limit=1){
     if(!this.open||!key)return;
-    this.requested=this.requested===key?null:key;this.changed=true;
+    this.requested=this.requested===key?null:key;
+    this.limit=Math.max(0,Math.min(1,limit));this.drawer=key;this.changed=true;
   }
   step(time,reduced=false){
     const dt=this.lastTime==null?0:Math.min(80,Math.max(0,time-this.lastTime));
     const oldDoor=this.door,oldExtension=this.extension,oldShown=this.shown;
     if(reduced){
-      this.door=Number(this.open);this.shown=this.requested;this.extension=Number(Boolean(this.shown));
+      this.door=Number(this.open);this.shown=this.requested;this.extension=this.shown?this.limit:0;
     }else{
       if(this.open||!this.extension)this.door=advance(this.door,Number(this.open),dt/380);
       if(this.shown!==this.requested){
         this.extension=advance(this.extension,0,dt/300);
         if(!this.extension)this.shown=this.requested;
       }
-      if(this.shown&&this.shown===this.requested&&this.door===1)this.extension=advance(this.extension,1,dt/300);
+      if(this.shown&&this.shown===this.requested&&this.door===1)this.extension=advance(this.extension,this.limit,dt/300);
     }
     if(!this.open&&!this.door&&!this.extension)this.id=null;
     this.dirty=this.changed||oldDoor!==this.door||oldExtension!==this.extension||oldShown!==this.shown;
     this.changed=false;
-    const moving=this.door!==Number(this.open)||this.shown!==this.requested||this.extension!==Number(Boolean(this.requested));
+    const moving=this.door!==Number(this.open)||this.shown!==this.requested||this.extension!==(this.requested?this.limit:0);
     this.lastTime=moving?time:null;
     return moving;
   }
   pose(entries,items){
-    const side=this.shown&&items.find(it=>it.assistant_carcass?.group_id===this.id&&it.item_id.endsWith(':drawer-'+this.shown+'-side-left'));
-    const travel=(side?.depth||0)*unit*.82*smooth(this.extension);
+    const travel=this.shown?drawerStroke(items,this.id,this.shown)*unit*this.extension:0;
     for(const it of items){
       const g=entries.get(it.item_id)?.group;
       if(!g)continue;
       const active=Boolean(this.id)&&it.assistant_carcass?.group_id===this.id;
       if(!active&&!g.userData.wardrobePosed)continue;
-      const leaf=it.item_id.match(/:door-(?:(?:lower|upper)-)?(left|right)$/),key=drawerKey(it);
+      const leaf=it.item_id.match(/:door-(?:(?:lower|upper)-)?(left|right)$/),key=slidingKey(it);
       if(!leaf&&!key)continue;
       let angle=0,dx=0,dz=0;
       if(leaf&&active){
-        const sign=leaf[1]==='left'?-1:1;
-        const pivotX=sign*(it.width/2-1.5)*unit,pivotZ=it.depth*.5*unit;
-        angle=sign*Math.PI*.5*smooth(this.door);
-        dx=pivotX*(1-Math.cos(angle))-pivotZ*Math.sin(angle);
-        dz=pivotZ*(1-Math.cos(angle))+pivotX*Math.sin(angle);
+        const p=hingePose(it,this.degrees(it.item_id)*smooth(this.door));
+        angle=p.a;dx=p.dx*unit;dz=p.dz*unit;
       }
       const slide=active&&key&&key===this.shown?travel:0;
       if(key){

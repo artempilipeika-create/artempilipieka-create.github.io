@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.35 WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.36 WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,7 +135,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -1146,6 +1146,60 @@ function golaOutline(width,height,cuts){
  line(end[end.length-2],end[end.length-1],0,height,3);line(0,height,0,0,1);
  return outline;
 }
+// The verified front-panel donor becomes an ordinary front-facing XY board after
+// installation: local X points right, local Y up and Z=18 is the outer face.
+function edgeGripGroovePlan(blank) {
+ const grip=blank.edge_grip;
+ if(!grip)return null;
+ const boardWidth=Number(blank.width),boardHeight=Number(blank.length),thickness=Number(blank.thickness);
+ const toothDepth={'67698':10,'75975':13}[grip.article];
+ const {edge,groove_depth_mm:depth,groove_width_mm:width}=grip;
+ const side={right:0,left:1,bottom:2,top:3}[edge];
+ if(toothDepth&&blank.axis==='front'&&thickness===18&&side!=null&&blank.edge_code[side]==='0'&&depth==null&&width==null)return null;
+ if(!toothDepth||blank.axis!=='front'||thickness!==18||side==null||
+    typeof depth!=='number'||!Number.isFinite(depth)||depth<toothDepth||
+    typeof width!=='number'||!Number.isFinite(width)||width<=0||width>=thickness||
+    depth>=(side<2?boardWidth:boardHeight)-2)
+   throw Error('Проверьте паз в торце фасада для врезной ручки AKS '+grip.article+'.');
+ if(blank.edge_code[side]!=='0')throw Error('Торец фасада под врезную ручку должен быть без ПВХ.');
+ // Using a symmetric cross section makes its extent independent of the direction
+ // in which the trajectory is traversed. Its outer edge coincides with the LDSP end.
+ const vertical=side<2;
+ const center=(edge==='right'?boardWidth:edge==='top'?boardHeight:0)+((edge==='left'||edge==='bottom')?1:-1)*depth/2;
+ const line=vertical?[center,0,center,boardHeight]:[0,center,boardWidth,center];
+ const box=[-depth/2,(thickness-width)/2,depth/2,(thickness+width)/2];
+ return {article:grip.article,name:'Паз под врезную ручку AKS '+grip.article,line,box};
+}
+
+function addEdgeGripGroove(panel,plan) {
+ if(!plan)return null;
+ const index=Number(panel.Cuts.Count);
+ if(!Number.isInteger(index)||index<0)throw Error('Не прочитан список пазов фасада.');
+ const cut=panelOperations.AddCut(panel,panelOperations.cutType.freeForm,plan.name);
+ cut.Trajectory.AddLine(...plan.line);
+ cut.Contour.AddRectangle(...plan.box);
+ return {edgeGrip:true,panel,index,plan};
+}
+
+function verifyEdgeGripGroove(check) {
+ const {panel,index,plan}=check;
+ const cut=panel.Cuts.Cuts[index],tolerance=.001;
+ if(!cut||cut.Name!==plan.name||cut.CutType!==panelOperations.cutType.freeForm||
+    cut.Trajectory.Count!==1||cut.Contour.Count!==4)
+   throw Error('После построения у фасада отсутствует заданный паз AKS '+plan.article+'.');
+ const element=c=>[c.Pos1.x,c.Pos1.y,c.Pos2.x,c.Pos2.y];
+ const same=(a,b)=>a.every((value,i)=>Number.isFinite(value)&&Math.abs(value-b[i])<tolerance);
+ const reversed=([x,y,a,b])=>[a,b,x,y];
+ const matches=(line,target)=>same(line,target)||same(line,reversed(target));
+ if(!matches(element(cut.Trajectory.Objects[0]),plan.line))
+   throw Error('Не совпало положение паза AKS '+plan.article+' на фасаде.');
+ const [x,y,a,b]=plan.box,required=[[x,y,a,y],[a,y,a,b],[a,b,x,b],[x,b,x,y]];
+ const edges=[0,1,2,3].map(i=>element(cut.Contour.Objects[i]));
+ if(required.some(side=>!edges.some(line=>matches(line,side))))
+   throw Error('Не совпало сечение паза AKS '+plan.article+' в торце фасада.');
+ return {moduleName:panel.Name,kind:'edge-grip-groove',article:plan.article,verified:true};
+}
+
 function resizeAndPlaceBlank(obj,item,log){
  const b=item.blank,source=BLANK_DONORS[String(item.source_sha256||'').toLowerCase()];
  if(!source||b?.schema!==1||b.finished_dimensions!==true)throw Error('Неизвестный исходник или формат заготовки.');
@@ -1155,17 +1209,18 @@ function resizeAndPlaceBlank(obj,item,log){
  const cuts=b.spacer_cuts??[];
  if(!Array.isArray(cuts)||cuts.length&&(!/:drawer-\d+-spacer-(left|right)$/.test(item.blank_item_id)||b.axis!=='side'||T!==18))throw Error('Неизвестный контур проставки.');
  const thinBack=b.axis==='back'&&(T===3||T===4)&&b.edge_code==='0000';
- const drawerFace=/:drawer-\d+-\d+-face$/.test(item.blank_item_id)&&b.axis==='front';
+ const drawerFace=!!b.edge_grip||/:drawer-\d+-\d+-face$/.test(item.blank_item_id)&&b.axis==='front';
  const wardrobeDoor=b.axis==='front'&&/:door-(?:(?:upper|lower)-)?(?:right|left)$/.test(item.blank_item_id);
  const nichePost=b.axis==='side'&&/:niche-\d+-\d+-divider$/.test(item.blank_item_id);
  const validLength=wardrobeDoor||nichePost?Number.isInteger(L*2):drawerFace?Number.isFinite(L)&&Math.abs(L*1000-Math.round(L*1000))<.000001:Number.isInteger(L);
- if(!validLength||L<(drawerSide?40:100)||L>3000||!Number.isInteger(W*(b.axis==='front'?2:1))||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&!drawerBottom&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back','front'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
+ if(!validLength||L<(drawerSide||b.edge_grip?40:100)||L>3000||!Number.isInteger(W*(b.axis==='front'?2:1))||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&!drawerBottom&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back','front'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
  const expected=b.axis==='front'?{width:W,height:L,depth:T}:b.axis==='side'?{width:T,height:L,depth:W}:b.axis==='back'?{width:L,height:W,depth:T}:{width:L,height:T,depth:W};
  if(['width','height','depth'].some(k=>Number(item.target?.[k])!==expected[k]))throw Error('Габариты заготовки не совпали с её ориентацией.');
  if(!item.material_assignments?.body?.name||Number(item.material_assignments.body.thickness)!==T)throw Error('Не задан подходящий материал заготовки.');
  const panels=[];walkPanels(obj,p=>panels.push(p));
  if(panels.length!==1)throw Error('В исходнике заготовки должна быть ровно одна панель.');
  const panel=panels[0],elements=[1,3,0,2];
+ const groove=edgeGripGroovePlan(b);
  const original=[];
  for(let i=0;i<Number(panel.Butts.Count);i++)original.push(Number(panel.Butts.Butts[i].ElemIndex));
  const required=elements.filter((_,i)=>source[i]==='1');
@@ -1188,7 +1243,9 @@ function resizeAndPlaceBlank(obj,item,log){
   const edge=panel.Butts.Add();edge.ElemIndex=i;edge.Material=b.axis==='front'?'ПВХ В цвет фасада\rВ цвет фасада':'ПВХ В цвет корпуса\rЦвет корпуса';
   edge.Thickness=E;edge.Width=T+4;edge.Sign='в цвет корпуса';edge.ClipPanel=true;edge.Allowance=0;edge.Overhung=0;edge.CutIndex=-1;
  }
+ const grooveCheck=addEdgeGripGroove(panel,groove);
  panel.Build();
+ if(grooveCheck)verifyEdgeGripGroove(grooveCheck);
  const list=asList(obj);
  for(let i=0;i<list.Count;i++){
   const child=childAt(list,i);if(isServiceFrame(child)){
@@ -1219,7 +1276,7 @@ function resizeAndPlaceBlank(obj,item,log){
   if(distance({x:actual.x-finalOrigin.x,y:actual.y-finalOrigin.y,z:actual.z-finalOrigin.z},expected)>PLACEMENT_TOLERANCE_MM)throw Error('Не совпала ориентация заготовки.');
  }
  log.push('ЗАГОТОВКА OK: '+item.name+'; '+L+' × '+W+' × '+T+' мм; ПВХ '+b.edge_code+' / '+E+' мм; подрезка включена; '+b.axis);
- return {materialChecks,profileChecks:[]};
+ return {materialChecks,profileChecks:grooveCheck?[grooveCheck]:[]};
 }
 
 const GLASS_SHELVES = {"a3ba7315723500c0cda62751195a2917511e0738924adc0ea76f9416af3aa0d8": 4, "e62793eec974a6ffcc385e5d92d5fb42ad25aa393d4f900569c5fc97288cdade": 8, "acec3cbac6262b250f1abbf901c4804da07748fbf2926948645e0b48eff12bb7": 6};
@@ -1591,7 +1648,88 @@ function placeFixedWardrobeHandle(root, source, item, yaw, roll, log) {
   return {materialChecks: [], profileChecks: []};
 }
 
+// An FR3D edge pull is an extruded body and an optional document limits frame.
+// Each origin refers to the manufacturer's top-edge pose on an 18 mm facade.
+// The visible plane is Z=0, and the unbanded cut edge is Y=0.
+const EDGE_PULL_SOURCE = {
+  '14d44ea542ce9dd351770b5477d61c623c738afdebc275903c8c907131ad3af6':
+    {article:'67698',origin:{x:2.5,y:-39.528125763,z:-47.118537903},length:95},
+  '1206b3dbce5cbbfaf413ee9c64091f4488060d2120774fd857533bd21900e2e9':
+    {article:'75975',origin:{x:0,y:-39.528125763,z:-46.418534851},length:100}
+};
+
+function placeWardrobeEdgePull(root,item,log){
+  const src=EDGE_PULL_SOURCE[item.source_sha256],span=Number(item.span_mm);
+  const yaw=Number(item.rotation??0),roll=Number(item.handle_roll_deg);
+  const rollForEdge={top:0,bottom:180,left:90,right:-90};
+  if(!src||src.article!==String(item.article)||item.wardrobe_handle!==true||item.wardrobe_edge_pull!==true||
+      item.wardrobe_profile||!item.host_blank_id||item.host_blank_id!==item.joined_panel_id||
+      !Number.isFinite(span)||span<=0||span>3950||![0,90,180,270].includes(yaw)||
+      !Object.prototype.hasOwnProperty.call(rollForEdge,item.edge)||roll!==rollForEdge[item.edge]){
+    throw Error('Проверьте артикул, кромку и длину врезной ручки фасада.');
+  }
+  const position=vector(item.position,'edgePull.position'),zero={x:0,y:0,z:0};
+  root.SetDefaultTransform();
+  const bodies=[],frames=[];
+  function scan(node,path,names){
+    const list=asList(node);
+    for(let i=0;i<Number(list?.Count||0);i++){
+      const part=childAt(list,i);
+      if(!part)throw Error('Не прочитан исходный фрагмент врезной ручки AKS.');
+      const p=path.concat(i),n=names.concat(String(part.Name||''));
+      if(isServiceFrame(part))frames.push(part);
+      else if(objectTypeChecker.ObjectIsExtrusionBody(part))bodies.push({part,path:p,names:n});
+      else scan(part,p,n);
+    }
+  }
+  scan(root,[],[]);
+  if(bodies.length!==1||frames.length>1)throw Error('Не подтверждён состав врезной ручки AKS '+src.article+'.');
+  const body=bodies[0],pose=profilePose(root,body.part);
+  const axes=[{x:0,y:0,z:-1},{x:0,y:1,z:0},{x:1,y:0,z:0}];
+  if(Math.abs(pose.length-src.length)>.05||pose.basis.some((axis,i)=>distance(axis,axes[i])>.00001)){
+    throw Error('Не подтверждены исходная длина или ось врезной ручки AKS '+src.article+'.');
+  }
+  // The loader can use a different origin with the same native axes.
+  const datum={x:pose.origin.x-src.origin.x,y:pose.origin.y-src.origin.y,z:pose.origin.z-src.origin.z};
+  const f=frames[0];
+  if(f){
+    if(Math.abs(f.Width-100)>.05||Math.abs(f.Height)>.05||Math.abs(f.Depth)>.05||
+        distance(profilePoint(root,f,zero),datum)>.05)throw Error('Не подтверждена рамка врезной ручки AKS '+src.article+'.');
+    historyOperations.RegisterObjectChanging(f);
+    f.Width=span;
+    if(typeof f.Build==='function')f.Build();
+  }
+  // The L donor leaves 2.5 mm at each end for separate optional caps.
+  // A bare bar occupies the whole specified cut length, including when resized to 100.
+  const anchor={x:datum.x,y:pose.origin.y,z:pose.origin.z};
+  const check={root,indices:body.path,names:body.names,kind:'edgePull',pose,anchor,
+    before:{min:zero},length:span,moduleName:item.name};
+  repairNativeProfiles([check],{min:zero},log);
+  if(typeof root.Build==='function')root.Build();
+  verifyNativeProfile(check);
+  if(f&&Math.abs(f.Width-span)>.05)throw Error('БАЗИС не подтвердил длину рамки врезной ручки.');
+  if(roll)objectTransformation.RotateObject(root,{x:0,y:0,z:1},roll,true);
+  if(yaw)objectTransformation.RotateObject(root,{x:0,y:1,z:0},-yaw,true);
+  const centre={x:datum.x+span/2,y:datum.y,z:datum.z};
+  const at=root.ToGlobal(centre);
+  root.TranslateGCS({x:position.x-at.x,y:position.y-at.y,z:position.z-at.z});
+  const a=roll*Math.PI/180;
+  function expected(x,y,z){
+    const q=rotateScene({x:x*Math.cos(a)-y*Math.sin(a),y:x*Math.sin(a)+y*Math.cos(a),z},yaw);
+    return {x:position.x+q.x,y:position.y+q.y,z:position.z+q.z};
+  }
+  const resized=profileAt(root,body.path,body.names);
+  for(const t of [0,span]){
+    if(distance(resized.ToGlobal({x:0,y:0,z:t}),expected(t-span/2,src.origin.y,src.origin.z))>.05){
+      throw Error('Торец врезной ручки AKS не совпадает с выбранной кромкой.');
+    }
+  }
+  log.push('ВРЕЗНАЯ РУЧКА AKS '+src.article+' · кромка '+item.edge+' · металл '+span+' мм.');
+  return {materialChecks:[],profileChecks:[check]};
+}
+
 function placeWardrobeDoorHardware(obj,item,log){
+  if(item.wardrobe_edge_pull||EDGE_PULL_SOURCE[item.source_sha256])return placeWardrobeEdgePull(obj,item,log);
   const source=WARDROBE_DOOR_SOURCES[item.source_sha256];
   const profile=source?.family==='golaL'||source?.family==='golaC';
   if(!source||String(item.article)!==source.article||
@@ -1754,7 +1892,7 @@ function placeWardrobeRod(obj,item,log){
 
 function resizeAndPlace(obj, item, log, shelfPanel) {
   if(item.wardrobe_gola_mount||item.source_sha256===WARDROBE_GOLA_MOUNT_SHA)return placeWardrobeGolaMount(obj,item,log);
-  if(item.wardrobe_handle||item.wardrobe_profile||WARDROBE_DOOR_SOURCES[item.source_sha256])return placeWardrobeDoorHardware(obj,item,log);
+  if(item.wardrobe_handle||item.wardrobe_profile||WARDROBE_DOOR_SOURCES[item.source_sha256]||EDGE_PULL_SOURCE[item.source_sha256])return placeWardrobeDoorHardware(obj,item,log);
   if(item.wardrobe_rod||ROD_SOURCES[item.source_sha256])return placeWardrobeRod(obj,item,log);
   if(item.aks_kind||AKS_SOURCES[item.source_sha256]){
     if(AKS_SOURCES[item.source_sha256]!==item.aks_kind||![0,90,180,270].includes(item.rotation))throw Error('Неизвестное крепление AKS или неверный поворот.');
@@ -1916,7 +2054,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.35 WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.36 WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -2025,6 +2163,117 @@ function assertEmptyTestModel() {
     reasons.join('\n') + '\nДиагностика: имя=' + (model ? String(model.Name || '') : 'нет') +
     '; filename=' + String(currentFileData.filename || '(пусто)') + '; Count=' + (list ? String(list.Count) : 'нет'));
 }
+// A wardrobe is a movable native block. Templates of individual fittings keep
+// their original nested objects, working planes and drilling operations.
+function wardrobeBlockPlan(items) {
+  const cabinets = new Map();
+  for (const item of items) {
+    const meta = item.cabinet_block;
+    if (meta == null) continue;
+    const text = value => typeof value === 'string' && value.trim().length > 0;
+    if (!text(meta.id) || !text(meta.name) || !text(meta.part_name) ||
+        (meta.drawer_key != null || meta.drawer_name != null) && (!text(meta.drawer_key) || !text(meta.drawer_name)))
+      throw Error('Проверьте название шкафа, детали и шуфляды в выгрузке.');
+    let cabinet = cabinets.get(meta.id);
+    if (!cabinet) {
+      cabinet = {name:meta.name, drawers:new Map()};
+      cabinets.set(meta.id, cabinet);
+    }
+    if (cabinet.name !== meta.name) throw Error('Для одного шкафа указаны разные названия.');
+    if (meta.drawer_key != null) {
+      const drawer = cabinet.drawers.get(meta.drawer_key);
+      if (drawer && drawer.name !== meta.drawer_name) throw Error('Для одной шуфляды указаны разные названия.');
+      if (!drawer) cabinet.drawers.set(meta.drawer_key, {name:meta.drawer_name});
+    }
+  }
+  if (cabinets.size && (typeof objects3d === 'undefined' || typeof objects3d.NewBlock !== 'function'))
+    throw Error('Этот импорт шкафов требует команды БАЗИС objects3d.NewBlock.');
+  return cabinets;
+}
+
+function wardrobeOwners(cabinets, meta, model) {
+  if (!meta) return [];
+  const cabinet = cabinets.get(meta.id);
+  if (!cabinet.obj) cabinet.obj = objects3d.NewBlock(cabinet.name, model);
+  if (!cabinet.obj) throw Error('Не удалось создать блок шкафа «'+cabinet.name+'».');
+  if (meta.drawer_key == null) return [cabinet.obj];
+  const drawer = cabinet.drawers.get(meta.drawer_key);
+  if (!drawer.obj) drawer.obj = objects3d.NewBlock(drawer.name, cabinet.obj);
+  if (!drawer.obj) throw Error('Не удалось создать вложенный блок «'+drawer.name+'».');
+  return [cabinet.obj, drawer.obj];
+}
+
+function cabinetObjectPath(model, objects) {
+  let owner = model;
+  return objects.map(obj => {
+    const index = asList(owner).IndexOf(obj);
+    if (!Number.isInteger(index) || index < 0) throw Error('Объект отсутствует в своём блоке.');
+    owner = obj;
+    return index;
+  });
+}
+
+function finishWardrobeBlocks(cabinets, model) {
+  function prune(record) {
+    if (!record.obj) return;
+    const list = asList(record.obj);
+    for (let i=0; i<list.Count; ++i) if (!isServiceFrame(childAt(list,i))) return;
+    objects3d.DeleteObject(record.obj);
+    record.obj = null;
+  }
+  for (const cabinet of cabinets.values()) {
+    for (const drawer of cabinet.drawers.values()) prune(drawer);
+    prune(cabinet);
+  }
+  const paths = [];
+  for (const cabinet of cabinets.values()) if (cabinet.obj) {
+    paths.push(cabinetObjectPath(model, [cabinet.obj]));
+    for (const drawer of cabinet.drawers.values()) if (drawer.obj)
+      paths.push(cabinetObjectPath(model, [cabinet.obj, drawer.obj]));
+  }
+  return paths;
+}
+
+function labelWardrobePanel(item, obj, owner) {
+  const meta=item.cabinet_block;
+  if (!meta || !item.blank && !item.glass_shelf) return obj;
+  const panels=[];
+  walkPanels(obj,p=>panels.push(p));
+  if (panels.length!==1) throw Error('Для бирки детали должна быть найдена одна панель.');
+  const panel=panels[0], property='Узел для бирки';
+  const value=meta.drawer_key==null?meta.name:meta.name+' · '+meta.drawer_name;
+  historyOperations.RegisterObjectChanging(panel,false);
+  panel.Name=meta.part_name;
+  const properties=objectData.GetObjectUserProperties(panel);
+  properties.set(property, value);
+  objectData.SetObjectUserProperties(panel, properties);
+  if (String(panel.Name)!==meta.part_name || objectData.GetObjectUserProperties(panel).get(property)!==value)
+    throw Error('БАЗИС не подтвердил наименование или принадлежность панели для бирки.');
+  if (objectTypeChecker.ObjectIsPanel(obj)) return obj;
+
+  // Unwrap only a verified plain sheet fragment. Any machining, fasteners or
+  // notes at the root of a more complex donor stay together with the panel.
+  const old=asList(obj), index=old.IndexOf(panel);
+  if (index<0 || hasNote(existingObjectNotes(obj)) || objectData.GetObjectUserProperties(obj).size ||
+      objectData.GetObjectAdditionalMaterials?.(obj)?.length) return obj;
+  for (let i=0; i<old.Count; ++i)
+    if (i!==index && !isServiceFrame(childAt(old,i))) return obj;
+  const probes=[{x:0,y:0,z:0},{x:100,y:0,z:0},{x:0,y:100,z:0},{x:0,y:0,z:100}];
+  const expected=probes.map(p=>vector(panel.ToGlobal(p),'panel.before'));
+  try {
+    panel.Owner=owner;
+    panel.ReTransform(old,owner);
+    if (asList(owner).IndexOf(panel)<0 || probes.some((p,i)=>
+        distance(expected[i],vector(panel.ToGlobal(p),'panel.after'))>PLACEMENT_TOLERANCE_MM))
+      throw Error('Положение панели при переносе в блок изменилось.');
+    objects3d.DeleteObject(obj);
+  } catch (error) {
+    if (asList(owner).IndexOf(panel)>=0) objects3d.DeleteObject(panel);
+    throw error;
+  }
+  return panel;
+}
+
 function importProject(prepared, root, payload) {
   const brief = projectBrief(payload);
   const log = ['ИМПОРТЁР: Martin Forest ' + IMPORT_VERSION, 'СКРИПТ: ' + IMPORT_SCRIPT_PATH,
@@ -2032,6 +2281,7 @@ function importProject(prepared, root, payload) {
     'ПРОСМОТРЕНО ПАПОК: ' + (prepared.scan?.directories ?? 'нет данных') + '; FR3D: ' + (prepared.scan?.files?.length ?? 'нет данных')];
   for (const entry of prepared.scan?.unreadable || []) log.push('ВНИМАНИЕ: недоступен путь ' + entry.path + ' (' + entry.code + ')');
   const noteChecks = [], liveChecks = [], importedObjects = [], furnitureObjects = [], liveMaterials = [], liveProfiles = [], liveGolaMounts = [];
+  const cabinets=wardrobeBlockPlan(payload.items);
   const loadedBlanks=new Set(),mystiShelves=new Map();
   const requiredShelves=new Set(payload.items.filter(i=>i.source_sha256===MYSTI_12_22_HASH).map(i=>i.shelf_blank_id));
   let loaded = 0, failed = 0;
@@ -2046,10 +2296,14 @@ function importProject(prepared, root, payload) {
       if(isWardrobeFoot(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Не импортирована деталь для опоры.');
       if(isBlankHook(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Опорная заготовка не импортирована.');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
-      obj = modelIOOperations.LoadFastenerOrFragment(entry.source, currentFileData.model);
+      const owners=wardrobeOwners(cabinets,item.cabinet_block,currentFileData.model);
+      const owner=owners.length?owners[owners.length-1]:currentFileData.model;
+      obj = modelIOOperations.LoadFastenerOrFragment(entry.source, owner);
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');
-      obj.Name = item.name || item.source_file;
+      if (owners.length && asList(owner).IndexOf(obj)<0) throw Error('Фрагмент не попал в блок шкафа.');
+      obj.Name = item.cabinet_block?.part_name || item.name || item.source_file;
       const placement = resizeAndPlace(obj, item, log, mystiShelves.get(item.shelf_blank_id));
+      obj = labelWardrobePanel(item,obj,owner);
       if(item.blank?.axis==='horizontal'&&requiredShelves.has(item.blank_item_id)){
         walkPanels(obj,panel=>mystiShelves.set(item.blank_item_id,panel));
       }
@@ -2060,15 +2314,8 @@ function importProject(prepared, root, payload) {
         result.sourceFile = item.source_file;
         result.sourceSha256 = item.source_sha256 || '';
         result.objectName = String(obj.Name);
-        try {
-          result.objectIndex = asList(currentFileData.model).IndexOf(obj);
-          if (!Number.isInteger(result.objectIndex) || result.objectIndex < 0) throw new Error('Нет однозначного индекса объекта');
-        } catch (locatorError) {
-          result.locatorError = String(locatorError.message || locatorError);
-          log.push('ВНИМАНИЕ: автоматическая проверка после открытия недоступна для ' + label + ': ' + result.locatorError);
-        }
         noteChecks.push(result);
-        liveChecks.push({ obj, result });
+        liveChecks.push({obj,result,owners});
       }
       importedObjects.push(obj);
       if ((item.blank||item.glass_shelf) && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
@@ -2086,6 +2333,18 @@ function importProject(prepared, root, payload) {
         try { objects3d.DeleteObject(obj); }
         catch (cleanupError) { throw new Error('Не удалось удалить ошибочный тестовый модуль: ' + cleanupError.message); }
       }
+    }
+  }
+  const blockPaths=finishWardrobeBlocks(cabinets,currentFileData.model);
+  // Indices are stable after removal of failed fragments and their empty blocks.
+  for (const {obj,result,owners} of liveChecks) {
+    try {
+      result.objectPath=cabinetObjectPath(currentFileData.model,[...owners,obj]);
+      if (result.objectPath.length===1) result.objectIndex=result.objectPath[0];
+      result.objectPathNames=[...owners,obj].map(node=>String(node.Name));
+    } catch (error) {
+      result.locatorError=String(error.message||error);
+      log.push('ВНИМАНИЕ: не удалось определить путь детали «'+result.objectName+'» для повторного открытия.');
     }
   }
   let assemblyPlacement;
@@ -2118,7 +2377,7 @@ function importProject(prepared, root, payload) {
     return result;
   });
   const profileChecks = liveProfiles.map(check => {
-    try { return verifyNativeProfile(check); }
+    try { return check.edgeGrip?verifyEdgeGripGroove(check):verifyNativeProfile(check); }
     catch (error) {
       const message = String(error.message || error);
       log.push("ОШИБКА ПРОФИЛЯ ПОСЛЕ COMMIT: " + check.moduleName + " — " + message);
@@ -2148,7 +2407,7 @@ function importProject(prepared, root, payload) {
       log.push('ЗАМЕТКИ ОШИБКА: ' + check.result.label + ' — ' + check.result.error);
     }
   }
-  return { loaded, failed, log, brief, notesRequested, noteChecks, assemblyPlacement, materialChecks, profileChecks,
+  return { loaded, failed, log, brief, notesRequested, noteChecks, blockPaths, assemblyPlacement, materialChecks, profileChecks,
     profileErrors: profileChecks.filter(c=>!c.verified).length,
     modelObjectCount: Number(asList(currentFileData.model).Count),
     notesVerified: noteChecks.filter(c => c.verified).length,
@@ -2194,16 +2453,34 @@ function readNotesForDisplay(result) {
   };
   const checks = result.noteChecks || [];
   append(currentFileData.model, 'ОБЩАЯ МОДЕЛЬ', checks.find(c => c.itemIndex == null));
-  const list = asList(currentFileData.model), count = Number(list.Count);
-  let visibleModuleIndex = 0;
-  if (!Number.isInteger(count) || count < 0) errors.push('Не удалось прочитать список модулей.');
-  else for (let i = 0; i < count; i++) {
-    const obj = childAt(list, i);
-    if (isServiceFrame(obj)) continue;
-    visibleModuleIndex++;
-    const check = checks.find(c => c.itemIndex != null && c.objectIndex === i);
-    append(obj, 'МОДУЛЬ ' + (check ? check.itemIndex + 1 : visibleModuleIndex) + ': ' + (obj ? String(obj.Name || 'Без названия') : 'Объект недоступен'), check);
+  const blocks=new Set((result.blockPaths||[]).map(path=>path.join('/')));
+  const expected=new Map();
+  for (const c of checks) {
+    const p=c.objectPath || (Number.isInteger(c.objectIndex)?[c.objectIndex]:null);
+    if (p && c.itemIndex!=null) expected.set(p.join('/'),c);
   }
+  let visibleModuleIndex=0;
+  function readLevel(owner, prefix, names) {
+    const list=asList(owner), count=Number(list.Count);
+    if (!Number.isInteger(count) || count<0) {errors.push('Не удалось прочитать состав блока.');return;}
+    for (let i=0;i<count;i++) {
+      const obj=childAt(list,i);
+      if (isServiceFrame(obj)) continue;
+      const path=prefix.concat(i), key=path.join('/');
+      const branch=names.concat(obj?String(obj.Name||'Без названия'):'Объект недоступен');
+      if (obj && blocks.has(key)) {readLevel(obj,path,branch);continue;}
+      visibleModuleIndex++;
+      const check=expected.get(key);
+      expected.delete(key);
+      if (check && check.objectPathNames?.some((name,j)=>name!==branch[j])) {
+        errors.push('Название или путь детали изменились: '+branch.join(' / '));
+        continue;
+      }
+      append(obj,'МОДУЛЬ '+(check?check.itemIndex+1:visibleModuleIndex)+': '+branch.join(' / '),check);
+    }
+  }
+  readLevel(currentFileData.model,[],[]);
+  for (const check of expected.values()) errors.push('Не найдена деталь с заметкой: '+check.objectName);
   if (!lines.length) lines.push('В импортированной модели нет заметок.');
   return { lines, errors };
 }

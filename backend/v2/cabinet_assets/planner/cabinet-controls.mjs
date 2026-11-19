@@ -1,9 +1,64 @@
 import {cabinetId,heightTargets,matchCabinetHeight} from './cabinet-actions.mjs';
 import {kitchenGroup,heights} from './furniture-core.mjs';
+import {leafKey,maxOpening,slidingKey} from './wardrobe-clearance.mjs';
+import {doorLabel,doorSide,drawerFacadeKey} from './wardrobe-door-layout.mjs';
+import {sectionOf,levelOf,isRightBank,splitAt} from './wardrobe-layout.mjs';
 
 const node=(tag,text)=>Object.assign(document.createElement(tag),text?{textContent:text}:{});
 function button(label,action){const b=node('button',label);b.type='button';b.className='secondary';b.onclick=action;return b;}
 function countLabel(n){return n+' '+(n%10===1&&n%100!==11?'шкаф':n%10>=2&&n%10<=4&&!(n%100>=12&&n%100<=14)?'шкафа':'шкафов');}
+
+function selectOptions(select,rows,value){
+ const stamp=JSON.stringify(rows);
+ if(stamp!==select.dataset.options){
+  select.replaceChildren(...rows.map(([id,text])=>new Option(text,id)));
+  select.dataset.options=stamp;
+ }
+ if(value!=null)select.value=value;
+}
+
+class OpeningControls{
+ constructor(app){
+  this.root=node('section');this.root.id='wardrobe-opening';this.root.hidden=true;
+  this.root.setAttribute('aria-label','Открывание шкафа');
+  const label=(text,id,el)=>{
+   const row=node('label',text);row.htmlFor=id;el.id=id;row.append(el);this.root.append(row);return row;
+  };
+  this.leaf=node('select');this.leafRow=label('Дверь','wardrobe-opening-leaf',this.leaf);
+  this.leaf.onchange=()=>app.scene.selectWardrobeDoor(this.leaf.value);
+  this.range=node('input');this.range.type='range';this.range.min=0;this.range.max=maxOpening;this.range.step=.1;
+  this.angleRow=label('Угол открывания','wardrobe-opening-angle',this.range);
+  this.angle=node('output');this.angle.setAttribute('for',this.range.id);this.angleRow.append(this.angle);
+  this.range.oninput=()=>app.scene.setWardrobeAngle(this.range.valueAsNumber);
+  this.drawer=node('select');this.drawerRow=label('Шуфляда','wardrobe-opening-drawer',this.drawer);
+  this.drawer.onchange=()=>{app.scene.wardrobeMotion.drawer=this.drawer.value;app.cabinets?.sync();};
+  this.extend=button('Выдвинуть шуфляду',()=>{
+   const id=app.scene.wardrobeMotion.id+':drawer-'+this.drawer.value+'-face';
+   const face=app.adapter.items.find(it=>it.item_id===id);
+   if(face)app.scene.clickDrawer(face);
+  });
+  this.extend.id='wardrobe-opening-slide';this.root.append(this.extend);
+  this.result=node('p');this.result.id='wardrobe-opening-result';this.result.setAttribute('role','status');this.root.append(this.result);
+  document.getElementById('scene').parentElement.append(this.root);
+ }
+ sync(m,members,s){
+  const leaves=members.filter(it=>doorSide(leafKey(it))),drawers=members.filter(it=>drawerFacadeKey(leafKey(it)));
+  this.leafRow.hidden=this.angleRow.hidden=!leaves.length;
+  this.drawerRow.hidden=this.extend.hidden=!drawers.length;
+  selectOptions(this.leaf,leaves.map(it=>[it.item_id,doorLabel(leafKey(it))]),m.leaf);
+  if(m.leaf){
+   const degrees=m.degrees(m.leaf),text=degrees.toLocaleString('ru-RU')+'°';
+   this.range.value=degrees;this.angle.value=text;this.range.setAttribute('aria-valuetext',text);
+  }
+  selectOptions(this.drawer,drawers.map(it=>{
+   const {slot,index}=drawerFacadeKey(leafKey(it)),section=sectionOf(slot),level=levelOf(slot);
+   const side=splitAt(s,section,level)?.kind==='drawers'?(isRightBank(slot)?' справа':' слева'):'';
+   return [slidingKey(it),'№ '+(index+1)+' · секция '+(section+1)+' · ниша '+(level+1)+side];
+  }),m.drawer);
+  this.extend.textContent=m.drawer&&m.drawer===m.requested?'Задвинуть шуфляду':'Выдвинуть шуфляду';
+  this.result.textContent=m.message;this.result.hidden=!m.message;this.result.dataset.contact=String(Boolean(m.contact));
+ }
+}
 
 export class CabinetControls{
  constructor(app){
@@ -28,6 +83,7 @@ export class CabinetControls{
    this.edit.id='cabinet-edit';this.edit.hidden=true;document.getElementById('planner-tools').append(this.edit);
    this.drawers=button('Шуфляды',()=>{app.scene.inspectWardrobe?.(app.adapter.selected);this.sync();});
    this.drawers.id='cabinet-drawers';this.drawers.hidden=true;document.getElementById('planner-tools').append(this.drawers);
+   this.opening=new OpeningControls(app);this.openingChanged=()=>this.sync();
    this.panelEdit=button('Редактировать шкаф',()=>app.assistant?.open('update'));
    this.panel.append(this.panelEdit);
    this.panel.append(button('Удалить шкаф',()=>app.interaction.remove()),button('Выбрать деталь',()=>{
@@ -62,10 +118,15 @@ export class CabinetControls{
    this.part.hidden=!scene.xrayEnabled||!scene.pickedInterior;this.part.textContent=scene.pickedInterior?.name||'';
    this.edit.hidden=!this.app.assistant?.button||!id||!['shelves','divided'].includes(it.assistant_carcass.spec.recipe);
    this.panelEdit.hidden=this.edit.hidden;
-   this.drawers.hidden=!id||!it.assistant_carcass.spec.drawerBanks?.some(Boolean)||!scene.inspectWardrobe||scene.mode!=='3d';
+   scene.onWardrobeChanged=this.openingChanged;
+   const members=id?adapter.items.filter(part=>cabinetId(part)===id):[];
+   const hasDrawer=members.some(part=>drawerFacadeKey(leafKey(part)));
+   this.drawers.hidden=!(hasDrawer||members.some(part=>doorSide(leafKey(part))))||!scene.inspectWardrobe||scene.mode!=='3d';
    const open=Boolean(id&&scene.wardrobeMotion?.id===id&&scene.wardrobeMotion.open);
-   this.drawers.setAttribute('aria-pressed',String(open));this.drawers.textContent=open?'Закрыть шкаф':'Шуфляды';
-   this.drawers.title=open?'Закрыть шуфляду и двери':'Открыть двери и осмотреть шуфляды';
+   this.drawers.setAttribute('aria-pressed',String(open));this.drawers.textContent=open?'Закрыть шкаф':hasDrawer?'Шуфляды':'Открывание';
+   this.drawers.title=open?'Закрыть шкаф':'Изменить угол открывания дверей'+(hasDrawer?' и проверить ход шуфляды':'');
+   this.opening.root.hidden=!open||this.drawers.hidden;
+   if(!this.opening.root.hidden)this.opening.sync(scene.wardrobeMotion,members,it.assistant_carcass.spec);
    document.getElementById('item-controls').classList.toggle('whole-cabinet',!this.panel.hidden);
    if(!this.panel.hidden){
      const s=it.assistant_carcass.spec;this.size.textContent='Шкаф целиком · '+s.width+' × '+s.height+' × '+s.depth+' мм';

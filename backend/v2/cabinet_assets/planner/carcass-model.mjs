@@ -6,6 +6,7 @@ import {sectionWidths,nicheSlot,columnWidths,columnOpenings,localBaseShelf,openi
 import {fitNicheBanks,nicheOpenings} from './wardrobe-niches.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
+import {fittedPull,pullEdgeCode,trimFace,validateEdgePull} from './wardrobe-edge-pulls.mjs';
 import {facadeLayout,hasFacadeProfiles,doorSide,usesProfileEdge,handlePlacement,drawerFacades,checkDrawerHandle} from './wardrobe-door-layout.mjs';
 import {clearProfileShelves,verifyProfileSupports} from './wardrobe-door-hardware.mjs';
 import {hingeLoad} from './wardrobe-fronts.mjs';
@@ -63,6 +64,15 @@ export function buildCarcass(input={},options={}){
   let shelfRuns=[];
   const installedLevels=new Map();
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
+    const grip=axis==='front'?fittedPull(s,key):null;
+    if(grip){
+      const board=trimFace(grip,L,B,x,y);
+      if(doorSide(key)&&(usesProfileEdge(s.front,key,grip.edge)||s.front?.edgeProfiles?.[key]?.some(h=>h.edge===grip.edge)))
+        throw Error('Торец с профилем Gola уже занят. Выберите другой торец для врезной ручки.');
+      const problem=validateEdgePull(grip,board.width,board.height,T,doorSide(key));
+      if(problem)throw Error(name+' · '+problem);
+      L=board.height;B=board.width;x=board.x;y=board.y;code=pullEdgeCode(grip.edge);
+    }
     if(shelfRuns.length&&/^shelf-(?:\d+-\d+|niche-\d+-\d+-[01]-\d+)$/.test(key)&&(!shelf||shelf.startsWith('board/'))){
       const datum=aboveGola(shelfRuns,x+(W-L)/2,L,y,T);
       if(datum!=null){
@@ -73,8 +83,8 @@ export function buildCarcass(input={},options={}){
       }
     }
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
-      x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:key==='rear-brace'?1:axis==='front'?2:s.edgeThickness,
-      blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:/^drawer-\d+-\d+-bottom$/.test(key)?CARCASS_BACK_MATERIAL_ID:key.startsWith('drawer-')?(options.drawerMaterialId??(t===18?options.bodyMaterialId:null)):options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
+      x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:grip?code:key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:key==='rear-brace'?1:axis==='front'?2:s.edgeThickness,
+      ...(grip?{blank_edge_pull:{...grip}}:{}),blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:/^drawer-\d+-\d+-bottom$/.test(key)?CARCASS_BACK_MATERIAL_ID:key.startsWith('drawer-')?(options.drawerMaterialId??(t===18?options.bodyMaterialId:null)):options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
     const error=validateBlank(item);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
   };

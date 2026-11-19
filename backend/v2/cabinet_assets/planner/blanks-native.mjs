@@ -1,3 +1,5 @@
+import {nativeGrip} from './wardrobe-edge-pulls.mjs';
+import {assignCabinetBlocks} from './wardrobe-blocks.mjs';
 import {nativeDoorHardware,boardProfileCuts,horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
 import {nativeRods} from './wardrobe-rods.mjs';
 import {installedCuts,wardrobeHardware} from './wardrobe-aks-native.mjs';
@@ -13,7 +15,7 @@ export const BLANK_SOURCES={"0000": {"file": "Заготовка_1.Без ПВХ
 export function blankNativeItem(it,material,items=[]){
  const error=validateBlank(it);if(error)throw Error(error);
  const golaCuts=boardProfileCuts(it,items),shelfCuts=horizontalProfileCuts(it,items);
- const b=normalizeBlank(it),source=BLANK_SOURCES[b.code]||BLANK_SOURCES['1111'];
+ const b=normalizeBlank(it),source=it.blank_edge_pull?BLANK_SOURCES['1111']:BLANK_SOURCES[b.code]||BLANK_SOURCES['1111'];
  if(it.blank_shelf&&!it.blank_shelf.startsWith('board/')){
   const donor=glassShelves[b.thickness];
   return {name:it.name,glass_shelf:true,blank_item_id:it.item_id,source_file:donor.file,source_sha256:donor.sha,
@@ -25,9 +27,9 @@ export function blankNativeItem(it,material,items=[]){
  source_default:{width:18,height:600,depth:510},elastic_resize:false,
  target:{width:it.width,height:it.height,depth:it.depth},
  position:{x:it.x,y:b.elevation,z:it.z},rotation:it.rotation||0,
- material_assignments:{body:material},production_note:it.production_note||'',
+ material_assignments:{body:material},production_note:[it.production_note,it.blank_edge_pull&&!it.blank_edge_pull.grooveWidth?'Врезная ручка AKS '+it.blank_edge_pull.article+' · размеры паза под фрезу не заданы.':''].filter(Boolean).join('\n'),
  blank:{schema:1,length:b.length,width:b.width,thickness:b.thickness,axis:b.axis,
- edge_code:b.code,edge_thickness:b.edgeThickness,finished_dimensions:true,...(shelfCuts.length?{gola_shelf_cuts:shelfCuts}:{}),...(golaCuts.length?{gola_cuts:golaCuts}:{}),
+ ...(it.blank_edge_pull?{edge_grip:nativeGrip(it.blank_edge_pull)}:{}),edge_code:b.code,edge_thickness:b.edgeThickness,finished_dimensions:true,...(shelfCuts.length?{gola_shelf_cuts:shelfCuts}:{}),...(golaCuts.length?{gola_cuts:golaCuts}:{}),
  ...(/:drawer-\d+-spacer-(left|right)$/.test(it.item_id)?{spacer_cuts:installedCuts(it,items)}:{}),cut:cuttingSize(it),edge_elements:[1,3,0,2]}};
 }
-globalThis.MF_BLANKS_NATIVE={doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>doorHinges(it,items)),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id),items))};
+globalThis.MF_BLANKS_NATIVE={assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>doorHinges(it,items)),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id),items))};

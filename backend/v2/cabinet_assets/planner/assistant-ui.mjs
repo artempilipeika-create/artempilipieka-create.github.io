@@ -1,3 +1,4 @@
+import {wardrobeNames,nextCabinetName} from './wardrobe-blocks.mjs';
 import {measuredRooms} from './wardrobe-gola-shelves.mjs';
 import {doorControls,setDoorShelf,wireHandleDrag} from './wardrobe-door-ui.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
@@ -78,6 +79,7 @@ export class AssistantUI{
  reset(){
   this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;this.serial.front++;this.serial.drawer++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
+  this.cabinetName=c?wardrobeNames(this.app.adapter.items).get(c.metadata.group_id):nextCabinetName(this.app.adapter.items);
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[0],back:true};
   this.sourceKeys=c?new Map(c.items.map(it=>[it.item_id.slice(c.metadata.group_id.length+1),it.item_id])):null;
   this.rodId=null;this.rodDraft=null;this.wholeWidth=false;this.layoutUndo=[];this.layoutAnchor=null;this.zoomDiagram(false);
@@ -213,6 +215,9 @@ export class AssistantUI{
   if(this.step===0){
    this.groupTabs();
    if(this.view==='body'){
+   const label=el('label','Название шкафа'),name=el('input');name.type='text';name.maxLength=120;
+   name.value=this.cabinetName;name.setAttribute('aria-label','Название шкафа');
+   name.oninput=()=>{this.cabinetName=name.value;this.invalidate();};label.append(name);this.form.append(label);
    this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
    this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);resizeDividerChoices(this.fields);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
    const division=el('fieldset');division.append(el('legend','Деление корпуса'));sectionChoices(this,division);this.form.append(division);
@@ -600,7 +605,7 @@ export class AssistantUI{
  }
  materialOptions(){
   const selectedMaterials=Object.fromEntries(Object.entries(this.materials||{}).map(([role,m])=>[role,m?.variant_id]));
-  const options={resetSideEdges:this.resetSideEdges,selectedMaterials,previousPartKeys:this.sourceKeys};
+  const options={cabinetName:this.cabinetName,resetSideEdges:this.resetSideEdges,selectedMaterials,previousPartKeys:this.sourceKeys};
   if(this.mode.value==='create'||this.materialChanged.front||!this.current?.items.some(i=>i.blank_axis==='front'))options.frontMaterialId=this.materials?.front?.variant_id;
   if(this.mode.value==='create'||this.materialChanged.body)options.bodyMaterialId=this.materials?.body?.variant_id||null;
   if(this.fields.thickness!==18&&(this.mode.value==='create'||this.materialChanged.drawer||!this.current?.items.some(i=>/:drawer-\d+-\d+-side-left$/.test(i.item_id))))options.drawerMaterialId=this.materials?.drawer?.variant_id;

@@ -1,3 +1,4 @@
+import {isEdgePull} from './wardrobe-edge-pulls.mjs';
 import {levelOf,isRightBank,splitAt} from './wardrobe-layout.mjs';
 import catalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {nicheOpenings,mm} from './wardrobe-niches.mjs';
@@ -81,7 +82,7 @@ export function planFacadeProfiles(s,doors,drawerRows,banks,bays,legacy){
   const ownEdge=top?end(r):r.bottom,other=next.length?(top?next[0].bottom:end(next[0])):null;
   let datum;
   if(L){
-   if(next.some(q=>{const h=setting(s,q);return h?.edge==='bottom'&&catalogue[h.article]?.family==='monblan';}))throw Error('На нижней кромке встречного фасада стоит MONBLAN. Перенесите ручку или выберите другой стык.');
+   if(next.some(q=>{const h=setting(s,q);return h?.edge==='bottom'&&(catalogue[h.article]?.family==='monblan'||isEdgePull(h));}))throw Error('На нижней кромке встречного фасада стоит торцевая ручка. Перенесите ручку или выберите другой стык.');
    if(other!=null)datum=other;
    else if(r.slot!=null&&r.index===banks[r.slot].faces.length-1){
     const b=banks[r.slot],opening=nicheOpenings(s,b.section)[levelOf(b.slot)];
@@ -112,9 +113,9 @@ export function planFacadeProfiles(s,doors,drawerRows,banks,bays,legacy){
  }
  for(const r of rows){
   const b=bounds.get(r.key),h=setting(s,r);
-  if(b&&h&&b[h.edge]!=null&&catalogue[h.article]?.family==='monblan'){
+  if(b&&h&&b[h.edge]!=null&&(catalogue[h.article]?.family==='monblan'||isEdgePull(h))){
    // Edge pulls wrap behind the front and cannot occupy the exposed Gola grip.
-   throw Error('На выбранном стыке уже стоит торцевая ручка MONBLAN. Перенесите её на другую кромку.');
+   throw Error('На выбранном стыке уже стоит торцевая ручка '+(isEdgePull(h)?'AKS '+h.article:'MONBLAN')+'. Перенесите её на другую кромку.');
   }
   if(!b)continue;
   const low=b.bottom??r.bottom,high=b.top??end(r);
