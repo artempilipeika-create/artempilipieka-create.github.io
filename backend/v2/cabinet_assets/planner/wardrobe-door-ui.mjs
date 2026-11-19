@@ -1,4 +1,8 @@
-import {doorHardware,doorLabel,doorShelfOptions,usesProfileEdge,wardrobeDoors,drawerFacadeKey,drawerFacades,mirrorHandle,handlePlacement} from './wardrobe-door-layout.mjs';
+import {fitNicheBanks} from './wardrobe-niches.mjs';
+import {profileEdges} from './wardrobe-facade-profiles.mjs';
+import {drawerSections} from './wardrobe-drawers.mjs';
+import {sectionWidths} from './wardrobe-layout.mjs';
+import {doorHardware,doorLabel,baseWardrobeDoors,doorShelfOptions,isFacadeProfile,usesProfileEdge,wardrobeDoors,drawerFacadeKey,drawerFacades,mirrorHandle,handlePlacement} from './wardrobe-door-layout.mjs';
 import {footHeight} from './plinth-options.mjs';
 import photos from './door-photos/sources.json' with {type:'json'};
 
@@ -8,13 +12,26 @@ const presets=[['none','Открытый шкаф'],['left','Одна дверь
 const swings=[['left','Одна · петли слева'],['right','Одна · петли справа'],['pair','Две двери рядом'],['open','Открытая ниша']];
 function formSpec(ui){return {...ui.fields,shelves:Math.max(...ui.fields.sectionShelves)};}
 function shelves(ui,scope){try{return doorShelfOptions(formSpec(ui),scope);}catch{return [];}}
-function photo(id){
- const p=photos[id],figure=el('figure'),img=el('img');img.src='/account/planner/door-photos/'+p.file;img.alt=p.model+' · '+p.pictured_size;img.width=128;img.height=74;
- const source=el('a','Фото '+p.model+' · '+p.pictured_size+' · арт. '+p.pictured_article);
- source.href=p.source_url;source.target='_blank';source.rel='noopener noreferrer';figure.className='door-product-photo';figure.append(img,source);return figure;
+const families=[
+ ['ak700','Скоба AK700','116550'],['monblan','Торцевая MONBLAN','92253'],
+ ['golaL','Gola L','118124'],['golaC','Gola S (C)','118129']
+];
+const photosByArticle=Object.fromEntries(Object.values(photos).map(p=>[p.pictured_article,p]));
+const familyOf=h=>h?.article==='118124'?'golaL':h?.article==='118129'?'golaC':doorHardware[h?.article]?.family??'none';
+function productImage(p){
+ const img=el('img');img.src='/account/planner/door-photos/'+p.file;img.alt=p.model;img.width=225;img.height=130;return img;
 }
-function check(parent,label,checked,attr,change){
- const l=el('label'),input=el('input');l.className='door-option-check';input.type='checkbox';input.checked=checked;input.setAttribute(attr,'');input.onchange=()=>change(input.checked);l.append(input,document.createTextNode(label));parent.append(l);
+function familyCards(panel,h,set,edges){
+ const grid=el('div');grid.className='wardrobe-handle-cards';grid.setAttribute('role','group');grid.setAttribute('aria-label','Тип ручки');
+ const selected=familyOf(h);
+ for(const [family,label,article] of families){
+  const chosen=family===selected,product=photosByArticle[chosen?h.article:article];
+  const card=btn('',()=>set(family,article));card.dataset.handleFamily=family;card.setAttribute('aria-pressed',String(chosen));
+  card.append(productImage(product),el('span',label));
+  if(family==='golaC'&&!edges.length){card.setAttribute('aria-disabled','true');card.append(el('small','Нужен стык фасадов'));}
+  grid.append(card);
+ }
+ panel.append(grid);
 }
 function num(ui,box,label,value,change){const l=el('label',label),i=el('input');i.type='number';i.min='0';i.max='3000';i.step='0.5';i.value=value;i.setAttribute('aria-label',label);i.onchange=()=>{if(i.value!==''&&i.checkValidity()){change(Number(i.value));ui.changed(true);}};l.append(i);box.append(l);}
 function defaultHandle(leaf,article){
@@ -56,67 +73,138 @@ function doorSettings(ui,f,box){
  }
 }
 function cleanHandles(f,leaves){
- if(!f.handles)return;
- const ids=new Set(leaves.map(d=>d.key));for(const key of Object.keys(f.handles))if(!ids.has(key))delete f.handles[key];
- if(!Object.keys(f.handles).length)delete f.handles;
+ const ids=new Set(leaves.map(d=>d.key));
+ for(const field of ['handles','edgeProfiles'])if(f[field]){
+  for(const key of Object.keys(f[field]))if(!ids.has(key))delete f[field][key];
+  if(!Object.keys(f[field]).length)delete f[field];
+ }
+}
+function storedProfiles(f,key){
+ const result=[];
+ if(f.division?.gola&&/^door-(upper|lower)-/.test(key))result.push({article:'118129',edge:key.includes('upper-')?'bottom':'top',cutHeight:f.division.cutHeight??74});
+ if(f.topProfile&&!key.startsWith('door-lower-'))result.push({article:'118124',edge:'top'});
+ return result;
+}
+function localizeProfiles(f,doors,edited){
+ // Historic assignments applied to a complete line. Keep every other door's grip,
+ // including original projects that had a pull and two independent profile edges.
+ for(const other of doors.filter(p=>p.slot==null&&p.key!==edited))for(const h of storedProfiles(f,other.key)){
+  const handles=f.handles??={};
+  if(!handles[other.key])handles[other.key]=h;
+  else if(handles[other.key].article!==h.article||handles[other.key].edge!==h.edge){
+   const extra=f.edgeProfiles??={};(extra[other.key]??=[]).push(h);
+  }
+ }
+ delete f.topProfile;
+ if(f.division){delete f.division.gola;delete f.division.cutHeight;}
 }
 export function doorControls(ui){
  const f=ui.fields.front,d=f?.division,box=ui.form;
  const preset=!f?'none':!d?f.swing:d.below==='pair'&&d.above==='pair'?'quad':'stack';
  ui.select(box,'Исполнение фасада',presets,preset,value=>selectPreset(ui,value));
  if(d)doorSettings(ui,f,box);
- let leaves=[];
- try{leaves=wardrobeDoors(formSpec(ui),ui.previewBuilt?.drawerBanks??[]);if(f)cleanHandles(f,leaves);}catch{/* The anchor selector remains available to repair a removed shelf. */}
- const choices=[...leaves,...drawerFacades(formSpec(ui),ui.previewBuilt?.drawerBanks??[])];
- const leaf=choices.find(p=>p.key===ui.selectedDoor)||leaves.find(p=>p.side===ui.selectedDoor)||choices[0];
- if(leaf){
-  ui.selectedDoor=leaf.key;
-  const panel=el('fieldset');panel.className='wardrobe-door-editor';panel.append(el('legend','Ручка на фасаде'));box.append(panel);
-  const doorSelect=ui.select(panel,'Выбранный фасад',choices.map(p=>[p.key,p.label??doorLabel(p.key)]),leaf.key,v=>{ui.selectedDoor=v;ui.render();});doorSelect.dataset.doorPicker='';
-  const drawer=leaf.slot==null?null:ui.fields.drawerBanks[leaf.slot].faces[leaf.index];
-  const h=drawer?drawer.handle:f?.handles?.[leaf.key];
-  const products=Object.entries(doorHardware).filter(([,p])=>p.pitch).sort(([,a],[,b])=>a.family.localeCompare(b.family)||a.pitch-b.pitch);
-  const opts=[['','Без отдельной ручки'],...products.map(([article,p])=>[article,(p.family==='ak700'?'Скоба AK700 · '+p.pitch:'Торцевая MONBLAN · '+p.pitch+'/'+p.length)+' мм · '+article])];
-  ui.select(panel,'Ручка и размер',opts,h?.article??'',v=>{
-   const target=drawer??(f.handles??={}),key=drawer?'handle':leaf.key;
-   if(v)target[key]=h&&doorHardware[h.article].family===doorHardware[v].family?{...h,article:v}:defaultHandle(leaf,v);
-   else delete target[key];ui.changed(true);
-  }).dataset.handleArticle='';
-  if(h){
-   const ak=doorHardware[h.article].family==='ak700';
-   panel.append(photo(ak?'ak700-160':'monblan-128'));
-   ui.select(panel,'Кромка фасада',[['left','Левая'],['right','Правая'],['top','Верхняя'],['bottom','Нижняя']].filter(([edge])=>drawer||ak||!usesProfileEdge(f,leaf.key,edge)),h.edge,v=>{h.edge=v;ui.changed(true);}).dataset.handleEdge='';
-   const upright=['left','right'].includes(h.edge);
-   ui.select(panel,'Положение вдоль кромки',[['center','По центру'],['start',upright?'От низа':'От левого края'],['end',upright?'От верха':'От правого края']],h.from,v=>{h.from=v;ui.changed(true);});
-   if(h.from!=='center')num(ui,panel,ak?'До ближайшего отверстия, мм':'До торца ручки, мм',h.offset??0,v=>h.offset=v);
-   if(ak)num(ui,panel,'От кромки до оси отверстий, мм',h.inset??50,v=>h.inset=v);
-   const pair=leaves.find(p=>p.key!==leaf.key&&p.side!==leaf.side&&p.key.replace(/(left|right)$/,'')===leaf.key.replace(/(left|right)$/,''));
-   if(pair){const mirror=btn('Зеркально на парную дверь',()=>{f.handles[pair.key]=mirrorHandle(h);ui.changed(true);});mirror.dataset.handleMirror='';panel.append(mirror);}
-  }
-  if(!drawer&&!d&&f?.swing==='pair'){
-   panel.append(btn('Разделить выбранную дверь по полке',()=>{if(startDivision(ui,leaf.side,leaf.side,leaf.side))ui.changed(true);}));
-  }
+ const spec=formSpec(ui);
+ let raw=[],rawBanks=[],choices=[];
+ try{
+  // Use uncut rectangles for picking an edge even while a previous choice is invalid.
+  if(spec.drawerBanks?.some(b=>b?.layout))spec.drawerBanks=fitNicheBanks(spec,spec.drawerBanks);
+  rawBanks=drawerSections(spec,sectionWidths(spec));
+  const leaves=baseWardrobeDoors(spec,rawBanks);
+  raw=[...leaves,...drawerFacades(spec,rawBanks)];
+  if(f)cleanHandles(f,leaves);
+  choices=raw;
+ }catch{choices=drawerFacades(spec,ui.previewBuilt?.drawerBanks??[]);}
+ const leaf=choices.find(p=>p.key===ui.selectedDoor)||choices.find(p=>p.side===ui.selectedDoor)||choices[0];
+ if(!leaf)return;
+ ui.selectedDoor=leaf.key;
+ const panel=el('fieldset');panel.className='wardrobe-door-editor';panel.append(el('legend','Ручка на фасаде'));box.append(panel);
+ const doorSelect=ui.select(panel,'Выбранный фасад',choices.map(p=>[p.key,p.label??doorLabel(p.key)]),leaf.key,v=>{ui.selectedDoor=v;ui.inspectInternalFronts=!!choices.find(q=>q.key===v)?.internal;ui.render();});doorSelect.dataset.doorPicker='';
+ if(f&&choices.some(q=>q.internal)){
+  const inside=btn(ui.inspectInternalFronts?'Показать двери':'Показать внутренние шуфляды',()=>{ui.inspectInternalFronts=!ui.inspectInternalFronts;ui.selectedDoor=choices.find(q=>ui.inspectInternalFronts?q.internal:q.slot==null)?.key;ui.render();});
+  inside.setAttribute('aria-pressed',String(!!ui.inspectInternalFronts));panel.append(inside);
  }
- if(!f)return;
- const profiles=el('details');profiles.className='wardrobe-door-profiles';profiles.open=ui.golaDetails??!!(d?.gola||f.topProfile);
- profiles.ontoggle=()=>{if(profiles.isConnected)ui.golaDetails=profiles.open;};profiles.append(el('summary','Профиль Gola'));box.append(profiles);
- const updateProfiles=()=>{
-  for(const [key,h] of Object.entries(f.handles??{}))if(doorHardware[h.article]?.family==='monblan'&&usesProfileEdge(f,key,h.edge))delete f.handles[key];
-  ui.golaDetails=true;ui.changed(true);
+ const drawer=leaf.slot==null?null:ui.fields.drawerBanks[leaf.slot].faces[leaf.index];
+ const own=drawer?drawer.handle:f?.handles?.[leaf.key];
+ const stored=!drawer?storedProfiles(f,leaf.key):[],inherited=stored[0];
+ const supplemental=f?.edgeProfiles?.[leaf.key]??[],h=own??inherited??supplemental[0],edges=profileEdges(leaf,raw);
+ const built=ui.previewBuilt,drawn=built?[...(built.doors??[]),...drawerFacades(spec,built.drawerBanks??[])]:[];
+ function sharedProfile(key,edge){
+  const r=drawn.find(p=>p.key===key);if(!r)return null;
+  const y=r.bottom+(edge==='top'?r.height:0);
+  return built.profiles?.find(p=>p.kind==='S'&&(p.inset??0)===(r.internal?21:0)&&p.left<r.left+r.width&&p.right>r.left&&
+   Math.abs(y-(p.top-36.5+(edge==='top'?-15:15)))<.001);
+ }
+ function commonCut(edge,fallback=74){
+  const run=sharedProfile(leaf.key,edge);
+  return run?run.cutTop-run.cutBottom:fallback;
+ }
+ function changeCut(height){
+  const run=sharedProfile(leaf.key,h.edge);
+  if(run)for(const row of raw){
+   const individual=row.slot==null?f?.handles?.[row.key]:ui.fields.drawerBanks[row.slot].faces[row.index].handle;
+   for(const value of [individual,...(f?.edgeProfiles?.[row.key]??[])])if(value?.article==='118129'&&sharedProfile(row.key,value.edge)===run)value.cutHeight=height;
+   if(row.slot==null&&f.division?.gola&&storedProfiles(f,row.key).some(v=>v.article==='118129'&&sharedProfile(row.key,v.edge)===run))f.division.cutHeight=height;
+  }
+  apply({...h,cutHeight:height});
+ }
+ const apply=value=>{
+  if(!drawer&&(f.topProfile||f.division?.gola))localizeProfiles(f,raw,leaf.key);
+  if(!drawer&&f.edgeProfiles){delete f.edgeProfiles[leaf.key];if(!Object.keys(f.edgeProfiles).length)delete f.edgeProfiles;}
+  const target=drawer??(f.handles??={}),key=drawer?'handle':leaf.key;
+  if(value)target[key]=value;else delete target[key];
+  if(f?.handles&&!Object.keys(f.handles).length)delete f.handles;
+  ui.changed(true);
  };
- if(Object.values(f.handles??{}).some(h=>doorHardware[h.article]?.family==='monblan'))profiles.append(el('small','Профиль заменяет торцевую ручку на выбранной кромке.'));
- check(profiles,'Верхний Gola L · 30 мм до верха',!!f.topProfile,'data-gola-top',v=>{if(v)f.topProfile=true;else delete f.topProfile;updateProfiles();});
- if(f.topProfile)profiles.append(photo('gola-l-118124'));
- if(d&&d.above!=='open'&&d.below!=='open'){
-  check(profiles,'Средний Gola S (C) · 30 мм между фасадами',!!d.gola,'data-gola-middle',v=>{if(v)d.gola=true;else delete d.gola;updateProfiles();});
-  if(d.gola){
-   profiles.append(photo('gola-c-118129'));
-   ui.select(profiles,'Вырез в стойках под S',[[74,'27 × 74 мм · по схеме AKS'],[73,'27 × 73 мм · по кухонному модулю']],d.cutHeight??74,v=>{d.cutHeight=Number(v);ui.changed(true);});
+ function clearLine(line){
+  if(line?.article==='118124')delete f.topProfile;
+  if(line?.article==='118129'){delete f.division.gola;delete f.division.cutHeight;}
+ }
+ for(const line of stored){
+  const old=el('div');old.className='wardrobe-stored-profile';
+  old.append(el('span','Сохранённый общий профиль '+(line.article==='118124'?'Gola L':'Gola S')+' на этой линии.'),btn('Убрать общий профиль',()=>{clearLine(line);ui.changed(true);}));panel.append(old);
+ }
+ for(const line of supplemental){
+  const old=el('div');old.className='wardrobe-stored-profile';
+  old.append(el('span','Профиль '+(line.article==='118124'?'L':'S')+' · '+(line.edge==='top'?'сверху':'снизу')),
+   btn('Снять с этой кромки',()=>{const extra=f.edgeProfiles;extra[leaf.key]=supplemental.filter(v=>v!==line);if(!extra[leaf.key].length)delete extra[leaf.key];if(!Object.keys(extra).length)delete f.edgeProfiles;ui.changed(true);}));panel.append(old);
+ }
+ function choose(family,article){
+  if(own&&familyOf(own)===family)return;
+  if(family==='golaC'&&!edges.length){ui.output.textContent='Gola S устанавливается между двумя фасадами. Выберите шуфляду или дверь на общем стыке.';return;}
+  let value=null;
+  if(family==='golaL')value={article,edge:'top'};
+  else if(family==='golaC'){
+   const edge=edges.find(e=>sharedProfile(leaf.key,e))??edges[0];value={article,edge,cutHeight:commonCut(edge)};
   }
+  else if(family!=='none')value=defaultHandle(leaf,article);
+  apply(value);
  }
- if(d?.gola||f.topProfile){
-  const guide=el('a','Монтажная схема AKS · стр. 2');guide.href='https://aks.by/upload/iblock/bba/iqgtnadk4pypc00bpzmee9jncedkngjd.pdf';guide.target='_blank';guide.rel='noopener noreferrer';profiles.append(guide);
+ familyCards(panel,h,choose,edges);
+ const none=btn('Без отдельной ручки',()=>choose('none'));none.dataset.handleFamily='none';none.setAttribute('aria-pressed',String(!h));none.className='wardrobe-handle-none';panel.append(none);
+ if(h){
+  if(isFacadeProfile(h)){
+   if(own){
+    const positions=h.article==='118124'?['top']:[...new Set([...edges,h.edge])];
+    ui.select(panel,'Кромка фасада',positions.map(e=>[e,e==='top'?'Верхняя':'Нижняя']),h.edge,v=>apply(h.article==='118129'?{...h,edge:v,cutHeight:commonCut(v,h.cutHeight)}:{...h,edge:v})).dataset.handleEdge='';
+    if(h.article==='118129')ui.select(panel,'Вырез в стойках под S',[[74,'27 × 74 мм · АКС'],[73,'27 × 73 мм · по кухонному модулю']],h.cutHeight??74,v=>changeCut(Number(v)));
+   }
+   panel.append(el('small',h.article==='118124'?'От верхней кромки фасада до верха профиля — 30 мм.':'Между кромками фасадов — 30 мм. На общем стыке устанавливается один профиль.'));
+  }else{
+   const ak=doorHardware[h.article].family==='ak700';
+   const products=Object.entries(doorHardware).filter(([,p])=>p.family===familyOf(h)).sort(([,a],[,b])=>a.pitch-b.pitch);
+   ui.select(panel,'Размер ручки',products.map(([article,p])=>[article,(ak?p.pitch:p.pitch+' / '+p.length)+' мм · '+article]),h.article,article=>apply({...h,article})).dataset.handleArticle='';
+   ui.select(panel,'Кромка фасада',[['left','Левая'],['right','Правая'],['top','Верхняя'],['bottom','Нижняя']].filter(([e])=>drawer||ak||!usesProfileEdge(f,leaf.key,e)),h.edge,v=>apply({...h,edge:v})).dataset.handleEdge='';
+   const upright=['left','right'].includes(h.edge);
+   ui.select(panel,'Положение вдоль кромки',[['center','По центру'],['start',upright?'От низа':'От левого края'],['end',upright?'От верха':'От правого края']],h.from,v=>apply({...h,from:v}));
+   if(h.from!=='center')num(ui,panel,ak?'До ближайшего отверстия, мм':'До торца ручки, мм',h.offset??0,v=>{h.offset=v;});
+   if(ak)num(ui,panel,'От кромки до оси отверстий, мм',h.inset??50,v=>{h.inset=v;});
+  }
+  const p=photosByArticle[h.article],source=el('a','АКС · арт. '+h.article);
+  source.href=p.source_url;source.target='_blank';source.rel='noopener noreferrer';source.className='wardrobe-handle-source';panel.append(source);
+  const pair=!drawer&&own&&raw.find(q=>q.slot==null&&q.side!==leaf.side&&q.key.replace(/(left|right)$/,'')===leaf.key.replace(/(left|right)$/,''));
+  if(pair){const mirror=btn('Зеркально на парную дверь',()=>{f.handles[pair.key]=isFacadeProfile(h)?{...h}:mirrorHandle(h);ui.changed(true);});mirror.dataset.handleMirror='';panel.append(mirror);}
  }
+ if(!drawer&&!d&&f?.swing==='pair')panel.append(btn('Разделить выбранную дверь по полке',()=>{if(startDivision(ui,leaf.side,leaf.side,leaf.side))ui.changed(true);}));
 }
 // Dragging writes the same edge offsets used by the numeric controls and the native export.
 export function wireHandleDrag(ui){

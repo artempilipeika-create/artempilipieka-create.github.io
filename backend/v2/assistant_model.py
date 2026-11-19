@@ -146,6 +146,19 @@ class FacadeHandle(StrictModel):
         dx,dy=(cross,half) if vertical else (half,cross)
         return x-dx,x+dx,y-dy,y+dy
 
+class FacadeProfile(StrictModel):
+    article: Literal['118124','118129']
+    edge: Literal['top','bottom']
+    cutHeight: Literal[73,74] | None = Field(default=None,exclude_if=lambda v:v is None)
+
+    @model_validator(mode='after')
+    def mounting_edge(self):
+        if self.article=='118124' and (self.edge!='top' or self.cutHeight is not None):
+            raise ValueError('У верхнего профиля Gola L один монтажный вырез 27 × 57 мм.')
+        return self
+
+FacadeFitting = FacadeHandle | FacadeProfile
+
 class FacadeDivision(StrictModel):
     section: int = Field(ge=0,le=3,strict=True)
     shelf: int = Field(ge=0,le=9,strict=True)
@@ -157,7 +170,8 @@ class FacadeDivision(StrictModel):
 
 class OverlayFront(StrictModel):
     division: FacadeDivision | None = Field(default=None,exclude_if=lambda v:v is None)
-    handles: dict[LeafKey,FacadeHandle] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
+    edgeProfiles: dict[LeafKey,Annotated[list[FacadeProfile],Field(min_length=1,max_length=2)]] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
+    handles: dict[LeafKey,FacadeFitting] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
     topProfile: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     swing: Literal['left','right','pair']
     offset: Literal[90,130]
@@ -173,7 +187,7 @@ class ShelfLevel(StrictModel):
 DrawerMillimetres = Annotated[int, Field(strict=True)] | Annotated[float, Field(strict=True)]
 
 class DrawerFace(StrictModel):
-    handle: FacadeHandle | None = Field(default=None,exclude_if=lambda v:v is None)
+    handle: FacadeFitting | None = Field(default=None,exclude_if=lambda v:v is None)
     height: DrawerMillimetres | None = Field(ge=100,le=3000)
     width: float | None = Field(default=None,ge=40,le=1200,multiple_of=.5,exclude_if=lambda v:v is None)
 
@@ -404,7 +418,7 @@ class CarcassDesign(CarcassSpec):
                 if (f.topProfile and not key.startswith('door-lower-') and torc(key,'top') or
                         d and d.gola and (key.startswith('door-lower-') and torc(key,'top') or key.startswith('door-upper-') and torc(key,'bottom'))):
                     raise ValueError('Кромку с профилем Gola оставьте свободной от торцевой ручки.')
-                handle.check_size(right-left,h)
+                if isinstance(handle,FacadeHandle):handle.check_size(right-left,h)
             if any(a<right and b>left and lo<top and hi>bottom for a,b,lo,hi in drawer_pulls):
                 raise ValueError('Ручка внутренней шуфляды упирается в закрытую дверь.')
 
@@ -566,7 +580,7 @@ class CarcassDesign(CarcassSpec):
                         rounding=round(remaining-sum(heights),3) if bank.coverFixing else 0
                         y=top-total+1.5+rounding
                         for face,height in zip(bank.faces,heights):
-                            if face.handle:
+                            if isinstance(face.handle,FacadeHandle):
                                 face_width=face.width or max_width
                                 face.handle.check_size(face_width,height)
                                 if inside and self.front:

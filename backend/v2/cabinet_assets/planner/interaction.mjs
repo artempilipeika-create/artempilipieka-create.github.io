@@ -212,7 +212,7 @@ export class Interaction {
     const source=this.adapter.selected;if(!source)return;
     this.change('Копирование модуля',()=>{
       const draft={...clone(source),...(source.blank_binding?{blank_binding:null}:{}),item_id:crypto.randomUUID(),name:(source.name+' — копия').slice(0,160)};
-      delete draft.assistant_carcass;delete draft.blank_plinth_run;
+      delete draft.assistant_carcass;delete draft.blank_plinth_run;delete draft.blank_gola_runs;
       const it=findSpace(draft,this.adapter.items,this.adapter.room,source,this.options());
       if(!it)throw new Error('Нет свободного места для копии.');
       this.adapter.insert(it);

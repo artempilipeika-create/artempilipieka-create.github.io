@@ -71,3 +71,50 @@ test('a drawer handle follows its face into native export and checks the closed-
  f.front={swing:'pair',offset:130};
  assert.throws(()=>wardrobeSpec(f),/упирается в закрытую дверь/);
 });
+
+const drawerStack=(kind,count)=>({kind,layout:'equal',gap:3,faces:Array.from({length:count},()=>({height:null}))});
+const profile=(article,edge)=>({article,edge});
+function drawerFields(kind='external',sections=1){
+ return {width:sections===1?800:1200,height:2200,depth:600,thickness:18,back:true,sections,sectionShelves:Array(sections).fill(1),
+  elevation:0,clearLayout:true,shelfLevels:Array.from({length:sections},()=>[{mode:'floor',mm:600}]),drawerFixing:'cam_dowel',
+  front:{swing:'pair',offset:90},drawerBanks:Array.from({length:sections},()=>drawerStack(kind,2))};
+}
+for(const kind of ['internal','external'])test('assigning Gola from either '+kind+' drawer keeps the runners and counts a shared grip once',()=>{
+ const f=drawerFields(kind),original=buildCarcass(wardrobeSpec(f));
+ f.drawerBanks[0].faces[0].handle=profile('118129','top');
+ f.drawerBanks[0].faces[1].handle=profile('118129','bottom');
+ const spec=wardrobeSpec(f),built=buildCarcass(spec),[low,high]=built.drawerBanks[0].faces;
+ assert.equal(high.y-low.y-low.height,30);
+ assert.deepEqual(built.drawerBanks[0].faces.map(v=>v.railY),original.drawerBanks[0].faces.map(v=>v.railY));
+ assert.equal(built.profiles.length,1);
+ const r=built.profiles[0];assert.equal(r.top,kind==='internal'?304:314);
+ assert.ok(high.boxY-3>=r.top+1);assert.ok(low.boxTop<=r.top-74);
+ const panels=assembled(f,270),native=nativeDoorHardware(panels);
+ assert.equal(native.filter(v=>v.wardrobe_profile).length,1);
+ assert.equal(native.filter(v=>v.wardrobe_gola_mount).length,1);
+ assert.deepEqual(board(panels,'top').blank_gola_runs,[{article:'118129',length_mm:kind==='internal'?728:800}]);
+ if(kind==='internal')assert.equal(boardProfileCuts(board(panels,'left'),panels).length,0);
+});
+
+test('a drawer and two doors share a 30 mm grip at the fixed shelf, independently of door hardware',()=>{
+ const f=drawerFields();f.drawerBanks[0].faces[1].handle=profile('118129','top');
+ f.front.handles={'door-left':handle('116550','right'),'door-right':handle('92255','left')};
+ const built=buildCarcass(wardrobeSpec(f)),upper=built.drawerBanks[0].faces[1];
+ assert.equal(upper.y+upper.height,594);
+ assert.deepEqual(built.doors.map(p=>p.bottom),[624,624]);
+ const hw=nativeDoorHardware(assembled(f));assert.deepEqual(hw.filter(p=>p.wardrobe_handle).map(p=>p.article).sort(),['116550','92255']);
+});
+
+test('an upper L on one door cuts only its bay and leaves the other door at 1.5 mm',async()=>{
+ const {horizontalProfileCuts,gripShelfOutline}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-door-hardware.mjs');
+ const f=drawerFields('external',2);f.shelfLevels[1][0].mm=740;
+ f.front.handles={'door-right':profile('118124','top')};
+ f.drawerBanks[0].faces[0].handle=profile('118129','top');
+ for(const yaw of [0,90,180,270]){
+  const panels=assembled(f,yaw),roof=board(panels,'top'),left=board(panels,'door-left'),right=board(panels,'door-right');
+  assert.equal(f.height-left.height-left.elevation_mm,1.5);assert.equal(f.height-right.height-right.elevation_mm,30);
+  const [notch]=horizontalProfileCuts(roof,panels);
+  assert.equal(roof.depth,f.depth);assert.deepEqual(notch,{a:582,b:1164,depth:27});
+  const contour=gripShelfOutline(roof.depth,roof.width,[notch]);assert.ok(contour.some(s=>s.line.includes(roof.depth-27)));
+ }
+});

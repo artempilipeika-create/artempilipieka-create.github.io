@@ -107,12 +107,14 @@ def hardware_for(it):
     spec=meta.get('spec') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     front=spec.get('front') or {}
-    if key=='top' and (front.get('topProfile') or (front.get('division') or {}).get('gola')):
+    if key=='top' and (it.get('blank_gola_runs') or front.get('topProfile') or (front.get('division') or {}).get('gola')):
         width=spec['width']; split=front.get('division') or {};scope=split.get('scope','all')
         widths=spec.get('dividerPositions') or [(width-3*spec['thickness']+1)//2]
         half=widths[0]+1.5*spec['thickness'] if spec.get('sections')==2 else width/2
         spans=[('118124','L',width)] if front.get('topProfile') else []
         if split.get('gola'):spans.append(('118129','S (C)',width if scope=='all' else half if scope=='left' else width-half))
+        if it.get('blank_gola_runs'):
+            spans=[(r['article'],'L' if r['article']=='118124' else 'S (C)',r['length_mm']) for r in it['blank_gola_runs']]
         rows=list(rows)
         for article,label,span in spans:
             rows.extend([_row('Профиль Gola '+label+' · '+format(span,'g')+' мм',span/1000,'m',article),_row('Крепление профиля Gola · уголок с винтами',2,'pcs','118236'),_row('Саморез универсальный 4×16 мм для уголка Gola',4,'pcs','36936')])
@@ -131,7 +133,7 @@ def hardware_for(it):
         slot,number=map(int,drawer.groups())
         if slot<len(banks) and banks[slot] and number<len(banks[slot]['faces']):
             handle=banks[slot]['faces'][number].get('handle')
-            if handle:rows=[*rows,_facade_handle_row(handle)]
+            if handle and handle['article'] not in ('118124','118129'):rows=[*rows,_facade_handle_row(handle)]
             depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[slot]['kind']=='internal' else 0)
             length=min(600,((depth-5)//50)*50)
             rail=AKS_GUIDES.get(str(length))
@@ -194,7 +196,7 @@ def _panel_hardware(it):
             if w<=600 and h<=limit and mass<=kg:
                 rows=[_row('Петля PRIME 3D накладная с планкой H0 · саморезы',n,'pcs','112595')]
                 handle=(spec['front'].get('handles') or {}).get(key)
-                if handle:rows.append(_facade_handle_row(handle))
+                if handle and handle['article'] not in ('118124','118129'):rows.append(_facade_handle_row(handle))
                 return rows,None
         raise ValueError('Створка выходит за пределы таблицы AKS Ø35.')
     if key=='rear-brace':

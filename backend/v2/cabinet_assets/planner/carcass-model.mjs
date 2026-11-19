@@ -5,8 +5,8 @@ import {sectionWidths,nicheSlot,columnWidths,columnOpenings,localBaseShelf,openi
 import {fitNicheBanks,nicheOpenings} from './wardrobe-niches.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
-import {wardrobeDoors,doorSide,usesProfileEdge,handlePlacement,drawerFacades,checkDrawerHandle} from './wardrobe-door-layout.mjs';
-import {clearProfileShelves} from './wardrobe-door-hardware.mjs';
+import {facadeLayout,hasFacadeProfiles,doorSide,usesProfileEdge,handlePlacement,drawerFacades,checkDrawerHandle} from './wardrobe-door-layout.mjs';
+import {clearProfileShelves,verifyProfileSupports} from './wardrobe-door-hardware.mjs';
 import {hingeLoad} from './wardrobe-fronts.mjs';
 import {blankItem,validateBlank,edgeMeters} from './blanks-model.mjs';
 import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
@@ -88,7 +88,7 @@ export function buildCarcass(input={},options={}){
   }
   supports.push(right);
   if(s.drawerBanks?.some(b=>b?.layout))s.drawerBanks=fitNicheBanks(s,s.drawerBanks);
-  const banks=drawerSections(s,widths,Boolean(options.legacyDrawers));
+  const {doors:leaves,banks,runs}=facadeLayout(s,drawerSections(s,widths,Boolean(options.legacyDrawers)));
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
   const shelfYs=counts.map((count,section)=>{
     const baseSlot=nicheSlot(section,0),bank=s.drawerBanks?.[baseSlot]?.layout?null:banks[baseSlot],below=s.drawerBanks?.[baseSlot]?.shelvesBelow??0;
@@ -145,7 +145,11 @@ export function buildCarcass(input={},options={}){
       }
     }
   }
-  const leaves=wardrobeDoors(s,banks);
+  if(hasFacadeProfiles(s)){
+    const roof=parts.find(p=>p.key==='top');
+    if(!roof)throw Error('Для установки профиля Gola нужна крыша шкафа.');
+    roof.item.blank_gola_runs=runs.map(r=>({article:r.article,length_mm:r.right-r.left}));
+  }
   for(const face of drawerFacades(s,banks))checkDrawerHandle(face,s.drawerBanks[face.slot].faces[face.index].handle,leaves);
   if(s.front){
     if(!['left','right','pair'].includes(s.front.swing)||![90,130].includes(s.front.offset))throw Error('Выберите сторону открывания и отступ петель.');
@@ -157,8 +161,8 @@ export function buildCarcass(input={},options={}){
       add(door.key,'Фасад'+row+' · петли '+(door.side==='left'?'слева':'справа'),'front',door.height,door.width,18,
         door.left+door.width/2-W/2,door.bottom,D/2+9,'1111');
     }
-    clearProfileShelves(s,parts,legHeight);
   }
+  clearProfileShelves(s,parts,legHeight);
   const drawerIssues=[],hingeConflicts=[];
   if(s.front?.autoHinges){
     buildDrawerBoards(s,banks,add);
@@ -198,9 +202,10 @@ export function buildCarcass(input={},options={}){
   // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
   if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-(noBottom?1:2)*t,rear,0,noBottom?0:t,(rear-D)/2,'0000');
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
+  verifyProfileSupports(s,parts,runs,s.elevation+legHeight);
   const items=resolveBlankBindings(parts.map(p=>p.item));
   const rods=planRods(s);
-  return {spec:s,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  return {spec:s,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:W,height:H,depth:D+(s.back&&!rear?3:0)+(outerFront(s)?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

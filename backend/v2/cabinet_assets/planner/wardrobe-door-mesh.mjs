@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import meshes from './wardrobe-handle-meshes.json' with {type:'json'};
 import {doorHardware} from './wardrobe-door-layout.mjs';
-import {doorHandle,panelProfiles,boardProfileCuts,golaOutline} from './wardrobe-door-hardware.mjs';
+import {doorHandle,panelProfiles,boardProfileCuts,golaOutline,horizontalProfileCuts,gripShelfOutline} from './wardrobe-door-hardware.mjs';
 
 function handleMesh(sku){
  const [xyz,idx,normals]=meshes[sku].map(v=>Uint8Array.from(atob(v),c=>c.charCodeAt(0)).buffer);
@@ -37,6 +37,16 @@ export function buildDoorHardware(factory,group,item,ghost){
  }
 }
 export function shapedProfilePanel(factory,group,item,ghost){
+ const shelves=horizontalProfileCuts(item,factory.adapter.items||[]);
+ if(shelves.length){
+  const w=item.width,d=item.depth,h=item.height,key='wardrobe-shelf-grip:'+JSON.stringify([w,d,h,shelves]);
+  const geometry=factory.acquire(key,()=>{
+   const path=gripShelfOutline(d,w,shelves);
+   const shape=new THREE.Shape(path.map(({line})=>new THREE.Vector2((line[0]-d/2)*.001,(line[1]-w/2)*.001)));
+   return new THREE.ExtrudeGeometry(shape,{depth:h*.001,bevelEnabled:false}).rotateY(-Math.PI/2).rotateZ(-Math.PI/2);
+  });
+  factory.mesh(group,'body',geometry,key,0,0,0,item.body_variant_id,ghost);return true;
+ }
  const cuts=boardProfileCuts(item,factory.adapter.items||[]);if(!cuts.length)return false;
  const {width:w,height:h,depth:d}=item,key='wardrobe-cut:'+JSON.stringify([w,h,d,cuts]);
  const shape=new THREE.Shape(),path=golaOutline(d,h,cuts);

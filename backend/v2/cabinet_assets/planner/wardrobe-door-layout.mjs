@@ -1,7 +1,9 @@
 import {sectionWidths,levelOf,isRightBank} from './wardrobe-layout.mjs';
 import {nicheOpenings} from './wardrobe-niches.mjs';
 import {overlayFronts} from './wardrobe-fronts.mjs';
-import {doorZones} from './wardrobe-drawers.mjs';
+import {doorZones,drawerSections} from './wardrobe-drawers.mjs';
+import {isFacadeProfile,hasFacadeProfiles,planFacadeProfiles} from './wardrobe-facade-profiles.mjs';
+export {isFacadeProfile,hasFacadeProfiles};
 import catalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 
 export const doorHardware=catalogue;
@@ -61,7 +63,7 @@ export function secureDoorShelf(s){
  for(const {section,shelf} of selected.matches)if(!['board/confirmat','board/cam_dowel'].includes(rows[section][shelf]))rows[section][shelf]='board/'+(s.drawerFixing??'cam_dowel');
  s.shelfChoices=rows;
 }
-export function physicalProfiles(s){
+function legacyProfiles(s){
  const f=s.front;if(!f)return [];
  const profiles=[];
  if(f.topProfile)profiles.push({article:'118124',left:0,right:s.width,top:s.height,cutTop:s.height,cutBottom:s.height-57,kind:'L'});
@@ -88,7 +90,7 @@ function bandLeaves(f,row,swing,a,b,low,high,center){
  return [{key:key('left'),side:'left',left:a,right:center-gap/2,low,high,row},
          {key:key('right'),side:'right',left:center+gap/2,right:b,low,high,row}];
 }
-export function wardrobeDoors(s,banks=[]){
+export function baseWardrobeDoors(s,banks=[]){
  const f=s.front;if(!f)return [];
  const divisions=f.division;
  const roof=f.topProfile?s.height-30:s.height-1.5;
@@ -127,6 +129,35 @@ export function wardrobeDoors(s,banks=[]){
  }).filter(p=>p.height>0);
 }
 
+// A saved assembly and its blanks share the same spec. Cache only the installation runs;
+// the questionnaire computes a fresh layout whenever an input changes.
+const installedRuns=new WeakMap();
+export function facadeLayout(s,banks){
+ const doors=baseWardrobeDoors(s,banks),legacy=legacyProfiles(s);
+ if(!hasFacadeProfiles(s))return {doors,banks,runs:legacy};
+ const {runs,bounds,boxLimits}=planFacadeProfiles(s,doors,drawerFacades(s,banks),banks,sectionSpans(s),legacy);
+ const adjusted=doors.map(d=>{
+  const b=bounds.get(d.key);if(!b)return d;
+  const bottom=b.bottom??d.bottom;return {...d,bottom,height:(b.top??(d.bottom+d.height))-bottom};
+ });
+ const fitted=banks.map(bank=>bank&&({...bank,faces:bank.faces.map((f,i)=>{
+  const key='drawer-'+bank.slot+'-'+i+'-face',b=bounds.get(key),box=boxLimits.get(key);
+  if(!b&&!box)return f;
+  const y=b?.bottom??f.y;
+  return {...f,y,height:Math.round(((b?.top??(f.y+f.height))-y)*1000)/1000,
+   ...(box!=null?{boxTop:box}:{})};
+ })}));
+ installedRuns.set(s,{stamp:JSON.stringify(s),runs});return {doors:adjusted,banks:fitted,runs};
+}
+export function physicalProfiles(s){
+ if(!hasFacadeProfiles(s))return legacyProfiles(s);
+ const cached=installedRuns.get(s);
+ return cached?.stamp===JSON.stringify(s)?cached.runs:facadeLayout(s,drawerSections(s,sectionWidths(s))).runs;
+}
+export function wardrobeDoors(s,banks=[]){
+ return hasFacadeProfiles(s)?facadeLayout(s,drawerSections(s,sectionWidths(s))).doors:baseWardrobeDoors(s,banks);
+}
+
 export function drawerFacadeKey(key){
  const m=/^drawer-(\d+)-(\d+)-face$/.exec(key);
  return m?{slot:Number(m[1]),index:Number(m[2])}:null;
@@ -149,7 +180,7 @@ export function checkDrawerHandle(face,h,leaves){
 }
 
 export function handlePlacement(door,setting){
- if(!setting)return null;
+ if(!setting||isFacadeProfile(setting))return null;
  const part=catalogue[setting.article];
  if(!part||!['ak700','monblan'].includes(part.family)||!edges.includes(setting.edge)||!['center','start','end'].includes(setting.from))throw Error('Проверьте артикул и положение ручки.');
  const edge=setting.edge,vertical=isVertical(edge),ak=part.family==='ak700';

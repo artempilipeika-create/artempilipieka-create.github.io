@@ -1,4 +1,4 @@
-import {doorLabel,doorShelfOptions,drawerFacades,handlePlacement,wardrobeDoors} from './wardrobe-door-layout.mjs';
+import {doorLabel,doorShelfOptions,baseWardrobeDoors,drawerFacades,handlePlacement,isFacadeProfile} from './wardrobe-door-layout.mjs';
 import {mm,mmText,nicheSlot} from './wardrobe-niches.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {backRows} from './carcass-joints.mjs';
@@ -71,6 +71,10 @@ function elevationView(built,view,section,front,selectedShelf,selection){
  }
  function handleDrawing(leaf,setting,title){
    if(!setting)return '';
+   if(isFacadeProfile(setting)){
+     const y=Y(footHeight(s)+leaf.bottom+(setting.edge==='top'?leaf.height:0)),x=X(leaf.left-W/2);
+     return '<path data-profile-edge="'+leaf.key+'" pointer-events="none" d="M'+num(x)+' '+num(y)+'h'+num(leaf.width*k)+'" stroke="#293630" stroke-width="3"/>';
+   }
    let h;try{h=handlePlacement(leaf,setting);}catch{return '';}
    const cx=X(leaf.left-W/2+h.x),cy=Y(footHeight(s)+leaf.bottom+h.y);
    const half=h.part.length*k/2,dx=h.vertical?0:half,dy=h.vertical?half:0;
@@ -89,10 +93,10 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    drawing+='<g data-door-id="'+face.key+'" role="button" tabindex="0" aria-label="'+title+'">'+rect(x,y,face.width*k,face.height*k,selection?.door===face.key?'#c2dcf4':wood)+'</g>';
    drawing+=handleDrawing(face,s.drawerBanks?.[face.slot]?.faces[face.index]?.handle,title);
  }
- if(facade&&front){
+ if(facade&&front&&!selection?.internalFronts){
    const legal=built.spec.front;
    let leaves=[];
-   try{leaves=wardrobeDoors({...s,front},built.drawerBanks);}
+   try{leaves=legal?built.doors??baseWardrobeDoors({...s,front},built.drawerBanks):baseWardrobeDoors({...s,front},built.drawerBanks);}
    catch{ /* An invalidated anchor can be chosen again on this drawing. */ }
    const y0=Y(footHeight(s)),x0=X(-W/2);
    drawing+=doorLeaves(s,front.swing,x0,y0,k,front.division?11:40,leaves,selection);

@@ -92,6 +92,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    const customName=previousId!==generated.item_id&&originalItems.find(i=>i.item_id===previousId)?.name!==old.name;
    if((previousId===generated.item_id||customName)&&old.blank_shelf===generated.blank_shelf&&(!item.item_id.endsWith(':back')||old.depth===generated.depth))item.name=old.name;
    if(!generated.blank_shelf)delete item.blank_shelf;
+   if(!generated.blank_gola_runs)delete item.blank_gola_runs;
    if(!old.blank_shelf&&!generated.blank_shelf&&old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
    item.body_variant_id=retainedBlankMaterial(generated,old,id=>adapter.material?.(id));
    if(!old.blank_shelf?.match(/^[468]\//)&&!generated.blank_shelf?.match(/^[468]\//)&&spec.edgePolicy===current.metadata.spec.edgePolicy){

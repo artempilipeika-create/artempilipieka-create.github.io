@@ -1,14 +1,79 @@
 {
+  "ak700-96": {
+    "file": "ak700-96.webp",
+    "model": "AK700",
+    "pictured_article": "127170",
+    "pictured_size": "96 мм между креплениями, 106 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/124732-147084-p?OFFER_ID=158627",
+    "image_url": "https://aks.by/upload/iblock/4dc/b4qlw2wjbfczjh4n4fkchn74q8c447e8.jpg",
+    "pitch_mm": 96,
+    "length_mm": 106,
+    "shared_image_articles": [
+      "127170",
+      "116548"
+    ]
+  },
+  "ak700-128": {
+    "file": "ak700-128.webp",
+    "model": "AK700",
+    "pictured_article": "116548",
+    "pictured_size": "128 мм между креплениями, 138 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/124732-147084-p?OFFER_ID=147085",
+    "image_url": "https://aks.by/upload/iblock/a12/xomie7j88tyaaoig8yhu8pc9vz46bk0i.jpg",
+    "pitch_mm": 128,
+    "length_mm": 138,
+    "shared_image_articles": [
+      "127170",
+      "116548"
+    ]
+  },
   "ak700-160": {
     "file": "ak700-160.webp",
     "model": "AK700",
     "pictured_article": "116550",
     "pictured_size": "160 мм между креплениями, 170 мм общая длина",
     "finish": "Чёрный матовый",
-    "supplier": "AKS Home",
-    "source_url": "https://akshome.by/catalog/ruchka-meb-skoba-met-ak700-160-chernyy-matovyy-1-upak-4-sht-aks/",
-    "image_url": "https://akshome.by/upload/iblock/c28/7ljcii32jxrjhfe30isbozwc9093ep3h.jpg",
-    "supplier_pack_article": "116834"
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/124732-147084-p?OFFER_ID=147086",
+    "image_url": "https://aks.by/upload/iblock/2db/pj8khc6qnir2oirsfzvhbmv21r76jtq5.jpg",
+    "pitch_mm": 160,
+    "length_mm": 170
+  },
+  "ak700-192": {
+    "file": "ak700-192.webp",
+    "model": "AK700",
+    "pictured_article": "116551",
+    "pictured_size": "192 мм между креплениями, 202 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/124732-147084-p?OFFER_ID=147087",
+    "image_url": "https://aks.by/upload/iblock/2c0/tpokjpf9fnfgq375cyk0e5v93avjwa7o.jpg",
+    "pitch_mm": 192,
+    "length_mm": 202,
+    "shared_image_articles": [
+      "116551",
+      "116552"
+    ]
+  },
+  "ak700-320": {
+    "file": "ak700-320.webp",
+    "model": "AK700",
+    "pictured_article": "116552",
+    "pictured_size": "320 мм между креплениями, 330 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/124732-147084-p?OFFER_ID=147088",
+    "image_url": "https://aks.by/upload/iblock/ae2/2o12oi2hc3jjxrcbht31m626mt82qy5x.jpg",
+    "pitch_mm": 320,
+    "length_mm": 330,
+    "shared_image_articles": [
+      "116551",
+      "116552"
+    ]
   },
   "monblan-128": {
     "file": "monblan-128.webp",
@@ -16,9 +81,94 @@
     "pictured_article": "92253",
     "pictured_size": "128 мм между креплениями, 150 мм общая длина",
     "finish": "Чёрный матовый",
-    "supplier": "Furnitura-Shop",
-    "source_url": "https://furnitura-shop.by/product/ruchka-meb-nakladnaya-alyum-monblan-128-150-chernyj-ma/",
-    "image_url": "https://furnitura-shop.by/wp-content/uploads/2026/05/sko84edg5j46vn3fxy9wp5e5679q0lt6-1024x1024.webp"
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/95759-120889-p?OFFER_ID=120893",
+    "image_url": "https://aks.by/upload/iblock/1e1/4wg8jndtqzr7rvpj0b560kpqvo3rvnjb.jpg",
+    "pitch_mm": 128,
+    "length_mm": 150,
+    "shared_image_articles": [
+      "92253",
+      "92255",
+      "92256",
+      "92257",
+      "111214"
+    ]
+  },
+  "monblan-160": {
+    "file": "monblan-160.webp",
+    "model": "MONBLAN",
+    "pictured_article": "92255",
+    "pictured_size": "160 мм между креплениями, 200 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/95759-120889-p?OFFER_ID=120894",
+    "image_url": "https://aks.by/upload/iblock/d19/n9f5ln87sw9m97vsgkf7q2yheb63gca2.jpg",
+    "pitch_mm": 160,
+    "length_mm": 200,
+    "shared_image_articles": [
+      "92253",
+      "92255",
+      "92256",
+      "92257",
+      "111214"
+    ]
+  },
+  "monblan-320": {
+    "file": "monblan-320.webp",
+    "model": "MONBLAN",
+    "pictured_article": "92256",
+    "pictured_size": "320 мм между креплениями, 400 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/95759-120889-p?OFFER_ID=120895",
+    "image_url": "https://aks.by/upload/iblock/c23/l9p3puyy64nrl24sak3a55l9p1cm7aco.jpg",
+    "pitch_mm": 320,
+    "length_mm": 400,
+    "shared_image_articles": [
+      "92253",
+      "92255",
+      "92256",
+      "92257",
+      "111214"
+    ]
+  },
+  "monblan-740": {
+    "file": "monblan-740.webp",
+    "model": "MONBLAN",
+    "pictured_article": "92257",
+    "pictured_size": "740 мм между креплениями, 800 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/95759-120889-p?OFFER_ID=120896",
+    "image_url": "https://aks.by/upload/iblock/f58/04cya91l3pjmhymuzliuxssqsk04cjpq.jpg",
+    "pitch_mm": 740,
+    "length_mm": 800,
+    "shared_image_articles": [
+      "92253",
+      "92255",
+      "92256",
+      "92257",
+      "111214"
+    ]
+  },
+  "monblan-1056": {
+    "file": "monblan-1056.webp",
+    "model": "MONBLAN",
+    "pictured_article": "111214",
+    "pictured_size": "1056 мм между креплениями, 1200 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/95759-120889-p?OFFER_ID=141694",
+    "image_url": "https://aks.by/upload/iblock/304/q64ncr24r7303zcxc7dy2f7it516v2qr.jpg",
+    "pitch_mm": 1056,
+    "length_mm": 1200,
+    "shared_image_articles": [
+      "92253",
+      "92255",
+      "92256",
+      "92257",
+      "111214"
+    ]
   },
   "gola-l-118124": {
     "file": "gola-l-118124.webp",
@@ -26,9 +176,10 @@
     "pictured_article": "118124",
     "pictured_size": "5500 мм",
     "finish": "Чёрный",
-    "supplier": "AKS Georgia",
-    "source_url": "https://aksgeorgia.ge/ru/product/профиль-алюм-gola-l-образный-5-5м-черный-aks/",
-    "image_url": "https://aksgeorgia.ge/wp-content/uploads/2026/08/aidckhx9map78uvp8yxvcxx4eawpdifi-1024x1024.jpg"
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/122209-145908-p?OFFER_ID=145920",
+    "image_url": "https://aks.by/upload/iblock/edf/8kpmg5qwsj4wqlkzagqeor76intrqo3e.jpg",
+    "length_mm": 5500
   },
   "gola-c-118129": {
     "file": "gola-c-118129.webp",
@@ -36,8 +187,9 @@
     "pictured_article": "118129",
     "pictured_size": "5500 мм",
     "finish": "Чёрный",
-    "supplier": "AKS Georgia",
-    "source_url": "https://aksgeorgia.ge/ru/product/профиль-алюм-gola-c-образный-5-5м-черный-aks/",
-    "image_url": "https://aksgeorgia.ge/wp-content/uploads/2026/08/ldy36ypzxlu98dj3m3s7iopqs90qeaij-1024x1024.jpg"
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/122210-145909-p?OFFER_ID=145922",
+    "image_url": "https://aks.by/upload/iblock/117/9xwl7q49kkmz5fs65b3ot83fhwot57yp.jpg",
+    "length_mm": 5500
   }
 }

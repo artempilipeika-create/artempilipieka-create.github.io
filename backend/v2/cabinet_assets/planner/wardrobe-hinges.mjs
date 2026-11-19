@@ -80,7 +80,7 @@ export function doorHinges(door,items){
    .map(i=>[i.elevation_mm-door.elevation_mm,i.elevation_mm+i.height-door.elevation_mm]);
  const roof=items.find(p=>p.item_id===group.group_id+':top');
  if(roof)for(const run of physicalProfiles(group.spec)){
-   if(side==='left'?run.left!==0:run.right!==group.spec.width)continue;
+   if(side==='left'?run.left!==0&&run.leftKey!=='left'&&!run.leftKey?.endsWith('spacer-left'):run.right!==group.spec.width&&run.rightKey!=='right'&&!run.rightKey?.endsWith('spacer-right'))continue;
    const top=roof.elevation_mm-group.spec.height+group.spec.thickness+run.top-door.elevation_mm;
    obstacles.push([top+(run.cutBottom-run.top),top+(run.cutTop-run.top)]);
  }

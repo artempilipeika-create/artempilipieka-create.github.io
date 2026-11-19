@@ -1,4 +1,5 @@
-import {anchoredShelf} from './wardrobe-door-layout.mjs';
+import {horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
+import {anchoredShelf,hasFacadeProfiles} from './wardrobe-door-layout.mjs';
 import {nicheSlot} from './wardrobe-layout.mjs';
 import {localBaseShelf} from './wardrobe-layout.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
@@ -81,9 +82,12 @@ function dividerJoints(it,byId){
    const at=host&&localPoint(host,rotation);
    if(!host||host.blank_axis!=='horizontal'||host.blank_shelf&&!host.blank_shelf.startsWith('board/')||![16,18,25].includes(host.height)||rotation!==(host.rotation||0)||
        y!==host.elevation_mm+(bottom?host.height:0)||Math.abs(centre.x-at.x)+9>host.width/2+.01||
-       ((it.item_id.includes(':niche-')||!bottom&&it.assistant_carcass?.spec.front?.topProfile)?jointRows(scheme,it.depth,!outer).some(r=>Math.abs(centre.z+r.z-at.z)+8>host.depth/2):Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01)||it.depth<(scheme==='cam_dowel'?216:152))
+       ((it.item_id.includes(':niche-')||!bottom&&(it.assistant_carcass?.spec.front?.topProfile||it.assistant_carcass&&hasFacadeProfiles(it.assistant_carcass.spec)))?jointRows(scheme,it.depth,!outer).some(r=>Math.abs(centre.z+r.z-at.z)+8>host.depth/2):Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01)||it.depth<(scheme==='cam_dowel'?216:152))
      throw Error(it.name+' · проверьте контакт с '+(bottom?'дном':'крышей')+' и глубину для крепежа.');
+   const cuts=horizontalProfileCuts(host,[...byId.values()]);
    for(const {kind,z} of jointRows(scheme,it.depth,!outer)){
+     const x=centre.x-at.x+host.width/2,fromFront=at.z+host.depth/2-centre.z-z;
+     if(cuts.some(c=>x+8>c.a&&x-8<c.b&&fromFront-8<c.depth))throw Error('Крепёж стойки попадает в вырез Gola. Измените положение профиля.');
      const point=worldPoint({x:centre.x,z:centre.z+z},rotation);
      const [source_file,source_sha256]=fittings[kind];
      result.push({name:source_file.slice(0,-5)+' · '+it.name+' · '+(bottom?'снизу':'сверху'),

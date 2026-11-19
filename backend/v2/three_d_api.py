@@ -88,6 +88,10 @@ class BlankBinding(StrictModel):
     depth_offset_mm: float=Field(default=0,ge=-1200,le=1200,multiple_of=0.5,allow_inf_nan=False)
 
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
+class GolaCutLength(StrictModel):
+    article: Literal['118124','118129']
+    length_mm: float = Field(ge=94,le=2400,multiple_of=0.5,allow_inf_nan=False)
+
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity','blank']='chest'
@@ -134,6 +138,7 @@ class FurnitureItem(StrictModel):
     blank_binding: BlankBinding|None=None
     blank_hook: BlankHook|None=None
     blank_shelf: ShelfValue|None=None
+    blank_gola_runs: list[GolaCutLength]|None=Field(default=None,min_length=1,max_length=4096,exclude_if=lambda v:v is None)
     blank_plinth_run: list[UUID]|None=Field(default=None,min_length=2,max_length=100,exclude_if=lambda v:v is None)
     assistant_carcass: AssistantCarcass|None=None
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
@@ -152,7 +157,13 @@ class FurnitureItem(StrictModel):
         face=re.fullmatch(r'drawer-(\d+)-(\d+)-face',key)
         banks=group.spec.drawerBanks if group and face else None
         slot,index=map(int,face.groups()) if face else (-1,-1)
-        fitted=bool(self.blank_axis=='front' and banks and slot<len(banks) and banks[slot] and banks[slot].layout and index<len(banks[slot].faces))
+        handles = (group.spec.front.handles or {}).values() if group and group.spec.front else ()
+        individual = bool(group) and (bool(group.spec.front and group.spec.front.edgeProfiles) or any(h.article in ('118124','118129') for h in handles) or
+                    any(f.handle and f.handle.article in ('118124','118129') for b in group.spec.drawerBanks or [] if b for f in b.faces))
+        if self.blank_gola_runs and (key!='top' or not individual or self.blank_axis!='horizontal' or any(r.length_mm>group.spec.width for r in self.blank_gola_runs)):
+            raise ValueError('Проверьте длины профилей Gola этого шкафа.')
+        if individual and key=='top' and not self.blank_gola_runs:raise ValueError('В раскрое шкафа отсутствует выбранный профиль Gola.')
+        fitted=bool(self.blank_axis=='front' and banks and slot<len(banks) and banks[slot] and (banks[slot].layout or individual) and index<len(banks[slot].faces))
         vertical=[self.height,self.body_height or 0,self.blank_length_mm or 0,self.elevation_mm or 0]
         if fitted and any(abs(v-round(v,3))>1e-8 for v in vertical):
             raise ValueError('Для фасада шуфляды допустима точность до 0,001 мм.')

@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.33 WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.34 WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -1088,6 +1088,21 @@ function blankOutline(W,L,cuts){
   return {line:[x,y,a,b],edge};
  });
 }
+function gripShelfOutline(depth,width,cuts){
+ const points=[[0,0]];
+ let end=0;
+ for(const c of cuts){
+  if(![c.a,c.b,c.depth].every(Number.isFinite)||c.a<end||c.b<=c.a||c.b>width||c.depth<=0||c.depth>=depth)throw Error('Вырез Gola выходит за границы полки.');
+  if(c.a>end){points.push([depth,end],[depth,c.a]);}
+  points.push([depth-c.depth,c.a],[depth-c.depth,c.b]);end=c.b;
+ }
+ if(end<width)points.push([depth,end],[depth,width]);
+ points.push([0,width]);
+ return points.flatMap(([x,y],i)=>{
+  const [a,b]=points[(i+1)%points.length];if(x===a&&y===b)return [];
+  return [{line:[x,y,a,b],edge:x===depth&&a===depth?0:x===0&&a===0?1:y===0&&b===0?2:y===width&&b===width?3:-1}];
+ });
+}
 function golaOutline(width,height,cuts){
  const outline=[],radius=5;
  const line=(x,y,a,b,edge=-1)=>{
@@ -1159,7 +1174,9 @@ function resizeAndPlaceBlank(obj,item,log){
  panel.Contour.Clear();
  const gola=b.gola_cuts??[];
  if(!Array.isArray(gola)||gola.length&&(!/:(left|right|divider-\d+|niche-\d+-\d+-divider)$/.test(item.blank_item_id)||b.axis!=='side'||cuts.length))throw Error('Неизвестная стойка для выреза Gola.');
- const outline=gola.length?golaOutline(W,L,gola):blankOutline(W,L,cuts);
+ const shelfCuts=b.gola_shelf_cuts??[];
+ if(!Array.isArray(shelfCuts)||shelfCuts.length&&(b.axis!=='horizontal'||! /:(?:top|bottom|shelf-.+)$/.test(item.blank_item_id)||cuts.length||gola.length))throw Error('Неизвестная полка для выреза Gola.');
+ const outline=shelfCuts.length?gripShelfOutline(W,L,shelfCuts):gola.length?golaOutline(W,L,gola):blankOutline(W,L,cuts);
  for(const segment of outline){
   if(segment.line)panel.Contour.AddLine(...segment.line);
   else{const [x,y,m,n,a,b]=segment.arc;panel.Contour.AddArc3({x,y,z:0},{x:m,y:n,z:0},{x:a,y:b,z:0});}
@@ -1487,6 +1504,92 @@ const WARDROBE_DOOR_SOURCES=Object.freeze({
   "fe1dd411e6a9a85f6877a50c830d81af69817e3e407344c69133cebbc4c64100":{"article":"116550","family":"ak700","fixings":[-80,80]}
 });
 
+function wardrobeHandleDrilling(root, source) {
+  const holes = [], frames = [];
+  const edge = source.family === 'monblan', depth = edge ? 3 : 18, diameter = edge ? 3 : 5;
+  const mode = typeof fastenerOperations !== 'undefined' && fastenerOperations.holeDrillMode;
+  const drillMode = edge ? (mode?.blind ?? 2) : (mode?.through ?? 1);
+  function visit(part, readHoles) {
+    if (isServiceFrame(part)) {
+      frames.push(part);
+      return;
+    }
+    // An inserted fastener can expose the aggregate Holes on the root, or the
+    // individual screw holes on children of a compound block. Both are native features.
+    const list = readHoles ? part.Holes : null;
+    const count = Number(list?.Count || 0);
+    for (let i = 0; i < count; i++) {
+      const h = list[i] || list.Items?.[i];
+      if (!h || !(Math.abs(Number(h.Diameter) - diameter) < .05) ||
+          !(Math.abs(Number(h.Depth) - depth) < .05) || h.DrillMode !== drillMode) {
+        throw Error('AKS ' + source.article + ': не подтверждена родная присадка Ø' + diameter + ' × ' + depth + ' мм.');
+      }
+      const start = vector(h.Position, 'handle.hole'), dir = vector(h.Direction, 'handle.direction');
+      const end = {x: start.x + dir.x * h.Depth, y: start.y + dir.y * h.Depth, z: start.z + dir.z * h.Depth};
+      holes.push({owner: part, start, end, local: profilePoint(root, part, start)});
+    }
+    const children = asList(part);
+    for (let i = 0; i < Number(children?.Count || 0); i++) {
+      const child = childAt(children, i);
+      if (!child) throw Error('Не прочитана деталь фрагмента ручки AKS ' + source.article + '.');
+      visit(child, readHoles && !count);
+    }
+  }
+  visit(root, true);
+  holes.sort((a, b) => a.local.x - b.local.x);
+  if (holes.length !== source.fixings.length) {
+    throw Error('AKS ' + source.article + ': ожидается присадок ' + source.fixings.length + ', прочитано ' + holes.length + '.');
+  }
+  const rowY = edge ? -7.9 : 0, first = holes[0].local;
+  // LoadFastenerOrFragment may choose the inserted fastener's origin rather
+  // than the FR3D document's origin. The drill row locates the mounting datum.
+  const datum = {x: first.x - source.fixings[0], y: first.y - rowY, z: first.z};
+  for (let i = 0; i < holes.length; i++) {
+    const hole = holes[i], expected = {x: datum.x + source.fixings[i], y: datum.y + rowY, z: datum.z};
+    if (distance(hole.local, expected) > .05 ||
+        distance(profilePoint(root, hole.owner, hole.end), {...expected, z: datum.z - depth}) > .05) {
+      throw Error('AKS ' + source.article + ': не совпали межосевые расстояния или направление присадки.');
+    }
+  }
+  return {holes, frames, datum, rowY, depth};
+}
+
+function placeFixedWardrobeHandle(root, source, item, yaw, roll, log) {
+  root.SetDefaultTransform();
+  let drilling = wardrobeHandleDrilling(root, source);
+  // Fixed handles have no elastic dimension. Some BAZIS loads include the
+  // document's standalone helper frame, others return only the actual fitting.
+  if (drilling.frames.length) {
+    historyOperations.RegisterObjectChanging(root);
+    drilling.frames.forEach(frame => objects3d.DeleteObject(frame));
+    if (typeof root.Build === 'function') root.Build();
+    drilling = wardrobeHandleDrilling(root, source);
+  }
+  const edge = source.family === 'monblan';
+  if (edge) objectTransformation.RotateObject(root, {x: 0, y: 1, z: 0}, 180, true);
+  if (roll) objectTransformation.RotateObject(root, {x: 0, y: 0, z: 1}, roll, true);
+  if (yaw) objectTransformation.RotateObject(root, {x: 0, y: 1, z: 0}, -yaw, true);
+  const position = vector(item.position, 'handle.position');
+  const at = vector(root.ToGlobal(drilling.datum), 'handle.datum');
+  const origin = vector(root.ToGlobal({x: 0, y: 0, z: 0}), 'handle.origin');
+  setObjectPosition(root, {x: origin.x + position.x - at.x, y: origin.y + position.y - at.y, z: origin.z + position.z - at.z});
+  const angle = roll * Math.PI / 180, c = Math.cos(angle), s = Math.sin(angle);
+  function expected(x, z) {
+    if (edge) { x = -x; z = -z; }
+    const p = rotateScene({x: x * c - drilling.rowY * s, y: x * s + drilling.rowY * c, z}, yaw);
+    return {x: position.x + p.x, y: position.y + p.y, z: position.z + p.z};
+  }
+  drilling.holes.forEach((h, i) => {
+    const x = source.fixings[i];
+    if (distance(vector(h.owner.ToGlobal(h.start), 'handle.start'), expected(x, 0)) > .05 ||
+        distance(vector(h.owner.ToGlobal(h.end), 'handle.end'), expected(x, -drilling.depth)) > .05) {
+      throw Error('AKS ' + source.article + ': родная присадка не совпала с монтажной плоскостью фасада.');
+    }
+  });
+  log.push('РУЧКА AKS ' + item.article + ' — присадок ' + drilling.holes.length + ', положение подтверждено.');
+  return {materialChecks: [], profileChecks: []};
+}
+
 function placeWardrobeDoorHardware(obj,item,log){
   const source=WARDROBE_DOOR_SOURCES[item.source_sha256];
   const profile=source?.family==='golaL'||source?.family==='golaC';
@@ -1498,7 +1601,8 @@ function placeWardrobeDoorHardware(obj,item,log){
   if(![0,90,180,270].includes(yaw)||![0,90,-90,180].includes(roll)||(profile&&roll!==0)){
     throw Error('Некорректное направление ручки или профиля.');
   }
-  const zero={x:0,y:0,z:0},frames=[],fixings=[],profiles=[],checks=[];
+  if(!profile)return placeFixedWardrobeHandle(obj,source,item,yaw,roll,log);
+  const zero={x:0,y:0,z:0},frames=[],profiles=[],checks=[];
   const close=(a,b)=>Math.abs(a-b)<.05;
   function inspect(parent,indices,names){
     const list=asList(parent);
@@ -1507,66 +1611,42 @@ function placeWardrobeDoorHardware(obj,item,log){
       if(!part)throw Error('Не прочитана деталь фрагмента ручки.');
       const name=String(part.Name||''),path=[...indices,i],trail=[...names,name];
       if(isServiceFrame(part))frames.push(part);
-      else if(profile&&objectTypeChecker.ObjectIsExtrusionBody(part))profiles.push({part,path,trail});
-      else if(/^(Саморез 4[хx×]14|Винт [МM]4[хx×]20)/i.test(name))fixings.push(part);
+      else if(objectTypeChecker.ObjectIsExtrusionBody(part))profiles.push({part,path,trail});
       else inspect(part,path,trail);
     }
   }
   obj.SetDefaultTransform();
   inspect(obj,[],[]);
-  if(frames.length!==1||!close(frames[0].Width,100))throw Error('Не подтверждена исходная рамка ручки.');
-  const f=frames[0],edge=source.family==='monblan';
-  if(profile){
-    const span=Number(item.span_mm);
-    if(!Number.isFinite(span)||span<=0||span>5500||profiles.length!==1||!close(f.Height,0)||!close(f.Depth,0)){
-      throw Error('Некорректная длина или состав профиля Gola.');
-    }
-    const {part,path,trail}=profiles[0],pose=profilePose(obj,part);
-    const right=source.family==='golaL';
-    if(!close(pose.length,100)||!close(pose.basis[2].x,right?-1:1)||!close(pose.origin.x,right?100:0)){
-      throw Error('Не совпали исходные торцы Gola.');
-    }
-    const expected={...pose.origin,x:right?span:0},before={min:zero};
-    checks.push({root:obj,indices:path,names:trail,kind:'gola',pose,anchor:expected,expected,length:span,before,moduleName:item.name});
-    historyOperations.RegisterObjectChanging(f);
-    f.Width=span;
-    if(typeof f.Build==='function')f.Build();
-    repairNativeProfiles(checks,before,log);
-    if(typeof obj.Build==='function')obj.Build();
-    verifyNativeProfile(checks[0]);
-    if(!close(f.Width,span))throw Error('БАЗИС не подтвердил длину рамки профиля.');
-  }else{
-    const positions=fixings.map(part=>({part,at:profilePoint(obj,part,zero)})).sort((a,b)=>a.at.x-b.at.x);
-    const offsetY=edge?-7.9:0,depth=edge?3:18;
-    if(positions.length!==source.fixings.length||!close(f.Height,100)||!close(f.Depth,100)||
-        positions.some(({part,at},i)=>{
-          const expected={x:source.fixings[i],y:offsetY,z:0};
-          return distance(at,expected)>.05||distance(profilePoint(obj,part,{x:0,y:0,z:-depth}),{...expected,z:-depth})>.05;
-        })){
-      throw Error('Не подтверждены центры и направление родной присадки ручки.');
-    }
-    // The fixed-size catalogue handle has a 100 mm demonstration frame extending behind its mounting plane.
-    historyOperations.RegisterObjectChanging(obj);
-    objects3d.DeleteObject(f);
-    if(typeof obj.Build==='function')obj.Build();
-    for(const {part,at} of positions){
-      if(distance(profilePoint(obj,part,zero),at)>.05)throw Error('Сместился крепёж ручки.');
-    }
+  if(frames.length!==1||!close(frames[0].Width,100))throw Error('Не подтверждена исходная рамка профиля Gola.');
+  const f=frames[0];
+  const span=Number(item.span_mm);
+  if(!Number.isFinite(span)||span<=0||span>5500||profiles.length!==1||!close(f.Height,0)||!close(f.Depth,0)){
+    throw Error('Некорректная длина или состав профиля Gola.');
   }
-  if(edge)objectTransformation.RotateObject(obj,{x:0,y:1,z:0},180,true);
-  if(roll)objectTransformation.RotateObject(obj,{x:0,y:0,z:1},roll,true);
+  const {part,path,trail}=profiles[0],pose=profilePose(obj,part);
+  const right=source.family==='golaL';
+  if(!close(pose.length,100)||!close(pose.basis[2].x,right?-1:1)||!close(pose.origin.x,right?100:0)){
+    throw Error('Не совпали исходные торцы Gola.');
+  }
+  const expected={...pose.origin,x:right?span:0},before={min:zero};
+  checks.push({root:obj,indices:path,names:trail,kind:'gola',pose,anchor:expected,expected,length:span,before,moduleName:item.name});
+  historyOperations.RegisterObjectChanging(f);
+  f.Width=span;
+  if(typeof f.Build==='function')f.Build();
+  repairNativeProfiles(checks,before,log);
+  if(typeof obj.Build==='function')obj.Build();
+  verifyNativeProfile(checks[0]);
+  if(!close(f.Width,span))throw Error('БАЗИС не подтвердил длину рамки профиля.');
   if(yaw)objectTransformation.RotateObject(obj,{x:0,y:1,z:0},-yaw,true);
   const position=vector(item.position,'handle.position');
   setObjectPosition(obj,position);
-  const angle=roll*Math.PI/180,co=Math.cos(angle),si=Math.sin(angle);
   for(const point of [zero,{x:100,y:0,z:0},{x:0,y:100,z:0},{x:0,y:0,z:100}]){
-    const x=edge?-point.x:point.x,z=edge?-point.z:point.z;
-    const relative=rotateScene({x:x*co-point.y*si,y:x*si+point.y*co,z},yaw);
+    const relative=rotateScene(point,yaw);
     if(distance(obj.ToGlobal(point),{x:position.x+relative.x,y:position.y+relative.y,z:position.z+relative.z})>PLACEMENT_TOLERANCE_MM){
       throw Error('Не совпала привязка ручки или профиля к фасаду.');
     }
   }
-  log.push((profile?'ПРОФИЛЬ':'РУЧКА')+' AKS '+item.article+' — положение подтверждено; '+(profile?'длина '+item.span_mm+' мм':'присадок '+fixings.length));
+  log.push('ПРОФИЛЬ AKS '+item.article+' — положение подтверждено; длина '+item.span_mm+' мм');
   return {materialChecks:[],profileChecks:checks};
 }
 
@@ -1835,7 +1915,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.33 WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.34 WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

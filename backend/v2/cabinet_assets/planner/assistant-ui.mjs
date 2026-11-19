@@ -82,7 +82,7 @@ export class AssistantUI{
   }
   this.fields.clearLayout=true;this.column=0;this.gapIndex=0;
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
-  this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='cell';this.golaDetails=null;this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
+  this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='cell';this.inspectInternalFronts=false;this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent='';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -554,7 +554,7 @@ export class AssistantUI{
    const cell=activeCell(this),slot=nicheSlot(cell.section,cell.level,splitAt(built.spec,cell.section,cell.level)?.kind==='drawers'?cell.column??0:0);
    const selected=this.step===2;
    const {svg,caption}=wardrobeDrawing(built,view,this.activeSection,this.fields.front,selected&&this.interior==='shelf'?this.levelIndex:null,
-     {rodId:this.interior==='rod'?this.rodId:null,editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,
+     {rodId:this.interior==='rod'?this.rodId:null,editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,internalFronts:!!this.inspectInternalFronts,
        dimensions:view==='sections',splitLevel:selected?cell.level:null,drawerDetail:selected&&this.interior==='drawer'});
    this.paintDrawing(svg);
    this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';

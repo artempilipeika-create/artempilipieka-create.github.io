@@ -1489,7 +1489,7 @@ function exportBazisProject(){
   const dividedDoors=state.items.some(i=>i.assistant_carcass?.spec?.front?.division);
   if(doorHardware.length||dividedDoors){
     for(const item of doorHardware){item.index=payload.items.length+1;payload.items.push(item);}
-    payload.format='martin-forest-bazis-native-v13';payload.minimum_importer='9.9.33';
+    payload.format='martin-forest-bazis-native-v13';payload.minimum_importer='9.9.34';
   }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
@@ -1499,7 +1499,7 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status((doorHardware.length?'Ручки и профили: '+doorHardware.length+' шт. Используйте импортёр 9.9.33. ':'')+'Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, полкодержателей: '+supportItems.length+', крючков: '+hookItems.length+', блоков розеток: '+socketItems.length+', деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(rodItems.length?' Штанг с держателями: '+rodItems.length+'. Нужен комплект AKS с импортёром 9.9.32.':'')+(wardrobeDrawerItems.length?' Шуфляды AKS с родным крепежом. Используйте импортёр '+payload.minimum_importer+' и комплект AKS из инструментов производства.':jointItems.length?' Крепёж корпуса: '+jointItems.length+' шт. Используйте импортёр '+payload.minimum_importer+'.':customShelves?' Для выбранных полок используйте импортёр 9.9.18.':supportItems.length?' Для полкодержателей используйте импортёр 9.9.17.':hookItems.length?' Для крючков используйте импортёр 9.9.16.':blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
+  status((doorHardware.length?'Ручки и профили: '+doorHardware.length+' шт. Используйте импортёр 9.9.34. ':'')+'Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, полкодержателей: '+supportItems.length+', крючков: '+hookItems.length+', блоков розеток: '+socketItems.length+', деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(rodItems.length?' Штанг с держателями: '+rodItems.length+'. Нужен комплект AKS с импортёром 9.9.32.':'')+(wardrobeDrawerItems.length?' Шуфляды AKS с родным крепежом. Используйте импортёр '+payload.minimum_importer+' и комплект AKS из инструментов производства.':jointItems.length?' Крепёж корпуса: '+jointItems.length+' шт. Используйте импортёр '+payload.minimum_importer+'.':customShelves?' Для выбранных полок используйте импортёр 9.9.18.':supportItems.length?' Для полкодержателей используйте импортёр 9.9.17.':hookItems.length?' Для крючков используйте импортёр 9.9.16.':blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
 }
 
 async function toOrder(){

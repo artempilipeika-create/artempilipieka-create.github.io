@@ -126,7 +126,7 @@ export function buildDrawerBoards(spec,banks,add){
   }
   b.faces.forEach((f,j)=>{
    const id=prefix+j+'-',name=' · шуфляда '+(j+1)+section,L=b.rail.length,W=b.mountWidth-27;
-   const y=f.boxY,h=Math.floor(f.y+f.height-10-y),z=b.bodyFront-L/2;
+   const y=f.boxY,h=Math.floor(Math.min(f.y+f.height-10,f.boxTop??Infinity)-y),z=b.bodyFront-L/2;
    if(h<(b.legacy?40:63))throw Error('Шуфляда '+(j+1)+section+': увеличьте высоту фасада.');
    add(id+'face','Фасад'+name,'front',f.height,f.width,18,f.x,f.y,f.z,'1111');
    for(const [side,sign] of [['left',-1],['right',1]])

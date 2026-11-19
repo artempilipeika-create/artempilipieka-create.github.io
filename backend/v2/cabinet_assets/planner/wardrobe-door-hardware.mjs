@@ -1,5 +1,5 @@
 import {localPoint,worldPoint} from './blank-bindings.mjs';
-import {doorHardware,doorSide,drawerFacadeKey,handlePlacement,physicalProfiles,sectionSpans} from './wardrobe-door-layout.mjs';
+import {doorHardware,doorSide,drawerFacadeKey,handlePlacement,hasFacadeProfiles,physicalProfiles,sectionSpans} from './wardrobe-door-layout.mjs';
 
 export function doorHandle(item){
  const group=item.assistant_carcass;
@@ -11,7 +11,7 @@ export function doorHandle(item){
 }
 function cabinetFrame(item,items){
  const g=item.assistant_carcass,s=g?.spec;
- if(!s?.front?.topProfile&&!s?.front?.division?.gola)return null;
+ if(!s||!s.front?.topProfile&&!s.front?.division?.gola&&!hasFacadeProfiles(s))return null;
  const left=items.find(p=>p.item_id===g.group_id+':left'),top=items.find(p=>p.item_id===g.group_id+':top');
  if(!left||!top)return null;
  const at=localPoint(left,item.rotation);
@@ -24,8 +24,8 @@ export function panelProfiles(item,items){
  const roof=localPoint(item,item.rotation);
  return physicalProfiles(frame.s).map(run=>{
   const x=frame.x+run.left-roof.x,span=run.right-run.left,t=frame.s.thickness;
-  const left=run.left===0?t:t/2,right=run.right===frame.s.width?t:t/2;
-  return {...run,x,y:frame.y+run.top-item.elevation_mm,z:frame.z-roof.z,span,
+  const left=run.leftMargin??(run.left===0?t:t/2),right=run.rightMargin??(run.right===frame.s.width?t:t/2);
+  return {...run,x,y:frame.y+run.top-item.elevation_mm,z:frame.z-roof.z-(run.inset??0),span,
    mountX:x+left,mountSpan:span-left-right,mountDepth:run.kind==='L'?26.8:26.899};
  });
 }
@@ -33,11 +33,11 @@ export function boardProfileCuts(item,items){
  const g=item.assistant_carcass;
  if(item.blank_axis!=='side'||!g||! /^(?:left|right|divider-\d+|niche-\d+-\d+-divider)$/.test(item.item_id.slice(g.group_id.length+1)))return [];
  const frame=cabinetFrame(item,items);if(!frame)return [];
- const p=localPoint(item,item.rotation),x=p.x-frame.x,depth=27-(frame.z-p.z-item.depth/2);
- if(depth<=0)return [];
+ const p=localPoint(item,item.rotation),x=p.x-frame.x;
  const cuts=[];
  for(const run of physicalProfiles(frame.s)){
-  if(x+item.width/2<=run.left||x-item.width/2>=run.right)continue;
+  const depth=27+(run.inset??0)-(frame.z-p.z-item.depth/2);
+  if(depth<=0||x+item.width/2<=run.left||x-item.width/2>=run.right)continue;
   const rawHigh=frame.y+run.cutTop-item.elevation_mm,rawLow=frame.y+run.cutBottom-item.elevation_mm;
   if(rawHigh<=0||rawLow>=item.height)continue;
   const low=Math.max(0,rawLow),high=Math.min(item.height,rawHigh);
@@ -89,16 +89,60 @@ export function golaOutline(width,height,cuts){
  line(end[end.length-2],end[end.length-1],0,height,3);line(0,height,0,0,1);
  return outline;
 }
+function shelfGripCuts(runs,left,width,depth,front,low,height){
+ const areas=[];
+ for(const r of runs){
+  if(low>=r.cutTop||low+height<=r.cutBottom)continue;
+  const a=Math.max(0,r.left-left),b=Math.min(width,r.right-left);
+  if(b<=a)continue;
+  const mount=(r.faces||r.kind==='S')&&low<r.top-31&&low+height>r.top-43;
+  const recess=front+(r.inset??0)+(mount?74:27);
+  if(recess>0)areas.push({a,b,depth:recess});
+ }
+ const stops=[...new Set(areas.flatMap(p=>[p.a,p.b]))].sort((a,b)=>a-b),result=[];
+ for(let i=1;i<stops.length;i++){
+  const a=stops[i-1],b=stops[i],recess=Math.max(0,...areas.filter(p=>p.a<b&&p.b>a).map(p=>p.depth));
+  if(!recess)continue;
+  if(recess>=depth)throw Error('Полке не хватает глубины за профилем Gola.');
+  const previous=result.at(-1);
+  if(previous?.depth===recess&&previous.b===a)previous.b=b;else result.push({a,b,depth:recess});
+ }
+ return result;
+}
+export function horizontalProfileCuts(item,items){
+ const g=item.assistant_carcass;
+ if(item.blank_axis!=='horizontal'||!g||! /^(?:top|bottom|shelf-.+)$/.test(item.item_id.slice(g.group_id.length+1)))return [];
+ const frame=cabinetFrame(item,items);if(!frame)return [];
+ const at=localPoint(item,item.rotation);
+ return shelfGripCuts(physicalProfiles(frame.s),at.x-frame.x-item.width/2,item.width,item.depth,
+  at.z+item.depth/2-frame.z,item.elevation_mm-frame.y,item.height);
+}
+export function gripShelfOutline(depth,width,cuts){
+ const points=[[0,0]];
+ let end=0;
+ for(const c of cuts){
+  if(![c.a,c.b,c.depth].every(Number.isFinite)||c.a<end||c.b<=c.a||c.b>width||c.depth<=0||c.depth>=depth)throw Error('Вырез Gola выходит за границы полки.');
+  if(c.a>end){points.push([depth,end],[depth,c.a]);}
+  points.push([depth-c.depth,c.a],[depth-c.depth,c.b]);end=c.b;
+ }
+ if(end<width)points.push([depth,end],[depth,width]);
+ points.push([0,width]);
+ return points.flatMap(([x,y],i)=>{
+  const [a,b]=points[(i+1)%points.length];if(x===a&&y===b)return [];
+  return [{line:[x,y,a,b],edge:x===depth&&a===depth?0:x===0&&a===0?1:y===0&&b===0?2:y===width&&b===width?3:-1}];
+ });
+}
 export function clearProfileShelves(s,parts,legHeight){
  const runs=physicalProfiles(s);if(!runs.length)return;
  for(const {item} of parts){
   if(item.blank_axis!=='horizontal')continue;
   const y=item.elevation_mm-s.elevation-legHeight,x=item.x+s.width/2;
   const front=item.z+item.depth/2,back=item.z-item.depth/2;
-  const active=runs.filter(r=>x+item.width/2>r.left&&x-item.width/2<r.right&&y<r.cutTop&&y+item.height>r.cutBottom);
-  if(!active.length)continue;
-  const recess=active.some(r=>r.kind==='S'&&y<r.top-31&&y+item.height>r.top-43)?74:27;
-  const limit=s.depth/2-recess;
+  const cuts=shelfGripCuts(runs,x-item.width/2,item.width,item.depth,front-s.depth/2,y,item.height);
+  if(!cuts.length)continue;
+  const rectangular=cuts.length===1&&cuts[0].a===0&&cuts[0].b===item.width;
+  if(!rectangular&&(!item.blank_shelf||item.blank_shelf.startsWith('board/')))continue;
+  const limit=front-Math.max(...cuts.map(c=>c.depth));
   if(front<=limit)continue;
   if(item.blank_shelf&&/board\/(cam_dowel|confirmat)/.test(item.blank_shelf)){
    const minimum=item.blank_shelf==='board/cam_dowel'?216:152;
@@ -107,6 +151,19 @@ export function clearProfileShelves(s,parts,legHeight){
   item.depth=item.blank_width_mm=limit-back;
   item.z=(limit+back)/2;
   if(item.blank_binding)item.blank_binding.depth_offset_mm+=(limit-front)/2;
+ }
+}
+// Inspect the actual support blanks, including short posts and 18 mm spacers.
+export function verifyProfileSupports(s,parts,runs,floor){
+ for(const r of runs){
+  if(!r.leftKey)continue;
+  const y=floor+r.top-31,z=s.depth/2-(r.inset??0)-(r.kind==='L'?26.8:26.899);
+  for(const key of [r.leftKey,r.rightKey]){
+   const host=parts.find(p=>p.key===key)?.item;
+   if(!host||host.elevation_mm>y-12||host.elevation_mm+host.height<y||
+      host.z-host.depth/2>z-47||host.z+host.depth/2<z-9)
+    throw Error('Уголок Gola выходит за опорную стойку. Выберите другую кромку или продолжите стойку до линии профиля.');
+  }
  }
 }
 export function nativeDoorHardware(items){
@@ -124,7 +181,8 @@ export function nativeDoorHardware(items){
    const product=doorHardware[run.article],bracket=doorHardware['118236'];
    const supports=sectionSpans(g.spec).slice(0,-1);
    const divider=x=>':divider-'+supports.findIndex(s=>Math.abs(s.right-x)<.001);
-   const host_blank_id=g.group_id+(run.left===0?':left':divider(run.left)),joined_panel_id=g.group_id+(run.right===g.spec.width?':right':divider(run.right));
+   const host_blank_id=g.group_id+(run.leftKey?':'+run.leftKey:run.left===0?':left':divider(run.left));
+   const joined_panel_id=g.group_id+(run.rightKey?':'+run.rightKey:run.right===g.spec.width?':right':divider(run.right));
    result.push({name:'Профиль Gola '+run.kind+' · '+run.span+' мм',wardrobe_profile:true,article:run.article,source_file:product.file,source_sha256:product.sha,
     host_blank_id,joined_panel_id,rotation,span_mm:run.span,position:{...worldPoint({x:p.x+run.x,z:p.z+run.z},rotation),y:item.elevation_mm+run.y},elastic_resize:false});
    result.push({name:'Два уголка крепления профиля Gola '+run.kind+' · AKS 118236',wardrobe_gola_mount:true,article:'118236',source_file:bracket.file,source_sha256:bracket.sha,
