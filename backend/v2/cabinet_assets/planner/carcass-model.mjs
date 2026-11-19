@@ -1,11 +1,13 @@
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
 export {sectionWidths} from './wardrobe-layout.mjs';
-import {outerFront,drawerSections,buildDrawerBoards,doorZones,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
+import {outerFront,drawerSections,buildDrawerBoards,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
 import {sectionWidths,nicheSlot,columnWidths,columnOpenings,localBaseShelf,openingBase,splitKey} from './wardrobe-layout.mjs';
 import {fitNicheBanks,nicheOpenings} from './wardrobe-niches.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
-import {overlayFronts,hingeLoad} from './wardrobe-fronts.mjs';
+import {wardrobeDoors,doorSide,usesProfileEdge,handlePlacement,drawerFacades,checkDrawerHandle} from './wardrobe-door-layout.mjs';
+import {clearProfileShelves} from './wardrobe-door-hardware.mjs';
+import {hingeLoad} from './wardrobe-fronts.mjs';
 import {blankItem,validateBlank,edgeMeters} from './blanks-model.mjs';
 import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
 
@@ -143,32 +145,37 @@ export function buildCarcass(input={},options={}){
       }
     }
   }
+  const leaves=wardrobeDoors(s,banks);
+  for(const face of drawerFacades(s,banks))checkDrawerHandle(face,s.drawerBanks[face.slot].faces[face.index].handle,leaves);
   if(s.front){
     if(!['left','right','pair'].includes(s.front.swing)||![90,130].includes(s.front.offset))throw Error('Выберите сторону открывания и отступ петель.');
-    const sides=s.front.swing==='pair'?['left','right']:[s.front.swing];
-    for(const [i,door] of doorZones(s,overlayFronts(s,sides.length),banks).entries()){
-      if(door.height<=0)continue;
+    for(const door of leaves){
       hingeLoad(door.width,door.height,s.front.massKg);
-      add('door-'+sides[i],'Фасад · петли '+(sides[i]==='left'?'слева':'справа'),'front',door.height,door.width,18,
+      const pull=handlePlacement(door,s.front.handles?.[door.key]);
+      if(pull?.back&&usesProfileEdge(s.front,door.key,pull.edge))throw Error('Кромку с профилем Gola оставьте свободной от торцевой ручки.');
+      const row=door.key.includes('upper-')?' верхний':door.key.includes('lower-')?' нижний':'';
+      add(door.key,'Фасад'+row+' · петли '+(door.side==='left'?'слева':'справа'),'front',door.height,door.width,18,
         door.left+door.width/2-W/2,door.bottom,D/2+9,'1111');
     }
+    clearProfileShelves(s,parts,legHeight);
   }
   const drawerIssues=[],hingeConflicts=[];
   if(s.front?.autoHinges){
     buildDrawerBoards(s,banks,add);
     const panels=parts.map(p=>p.item);
-    for(const side of ['left','right']){
-      const door=panels.find(it=>it.item_id===prefix+':door-'+side);
-      if(!door)continue;
+    const bySide={left:[],right:[]};
+    for(const {key,item:door} of parts){
+      const side=doorSide(key);if(!side)continue;
       try{
-        const axes=doorHinges({...door,assistant_carcass:{spec:s,group_id:prefix}},panels).map(h=>h.position.y-s.elevation-legHeight);
-        for(const b of banks)if(b&&(side==='left'?b.spacerL:b.spacerR)){
-          b.cuts??={};b.cuts[side]=spacerCuts(b.base,b.span,axes,side);
-        }
+        const axes=doorHinges({...door,assistant_carcass:{spec:s,group_id:prefix}},panels);
+        bySide[side].push(...axes.map(h=>h.position.y-s.elevation-legHeight));
       }catch(error){
         if(!error.hingeConflict)throw error;
         drawerIssues.push(error.message);hingeConflicts.push(error.hingeConflict);
       }
+    }
+    for(const b of banks.filter(Boolean))for(const side of ['left','right'])if(side==='left'?b.spacerL:b.spacerR){
+      b.cuts??={};b.cuts[side]=spacerCuts(b.base,b.span,bySide[side].sort((a,b)=>a-b),side);
     }
   }else if(banks.some(Boolean)){
     if(!options.legacyDrawers){

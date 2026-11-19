@@ -1,3 +1,4 @@
+import {doorAnchorIndex} from './wardrobe-door-layout.mjs';
 import {columnOpenings,splitAt} from './wardrobe-layout.mjs';
 import {nicheOpenings,nicheSlot,trimBanks} from './wardrobe-niches.mjs';
 import {setClearHeight} from './wardrobe-cells.mjs';
@@ -86,6 +87,12 @@ function divideShelves(f,section,start,end){
  if(f.rods?.some(r=>r.section===section&&r.level>=start&&r.level<=end))throw Error('В этом проёме установлена штанга. Уберите её перед установкой перегородки.');
  if(f.nicheSplits?.some(z=>z.section===section&&z.level>=start&&z.level<=end))throw Error('В этом промежутке уже есть перегородка.');
  if(Array.from({length:remove+1},(_,j)=>f.drawerBanks?.[nicheSlot(section,start+j)]).some(Boolean))throw Error('Выберите промежуток для полок выше шуфляд.');
+ const d=f.front?.division;
+ if(d&&remove){
+   const index=doorAnchorIndex(f,section);
+   if(index>=start&&index<end)throw Error('Эта полка держит стык фасадов. Сначала выберите другую на шаге «Фасады».');
+   if(d.section===section&&d.shelf>=end)d.shelf-=remove;
+ }
  const rows=shelfRows(f),floor=(f.elevation??0)+footHeight(f);
  const levels=f.sectionShelves.map((n,s)=>Array.from({length:n},(_,i)=>f.shelfLevels?.[s]?.[i]??null));
  const choices=rows[section].slice(start,end);

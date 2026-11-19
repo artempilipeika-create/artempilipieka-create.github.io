@@ -1,5 +1,6 @@
 import {sectionOf,isRightBank,levelOf,splitAt,columnWidths} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
+import {anchoredShelf} from './wardrobe-door-layout.mjs';
 import {fittedFaceHeights,frontEdgeGap,coverClearance,mm} from './wardrobe-niches.mjs';
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
 
@@ -76,9 +77,11 @@ export function drawerSections(s,widths,legacy=false){
   const left=-s.width/2+s.thickness+widths.slice(0,i).reduce((sum,w)=>sum+w+s.thickness,0)+(rightBank?halves[0]+18:0),right=left+clear;
   const internal=bank.kind==='internal';
   if(!internal&&bank.kind!=='external')throw Error('Выберите исполнение шуфляд.');
-  const swing=s.front?.swing,n=i+1;
-  const spacerL=internal&&!rightBank&&i===0&&['left','pair'].includes(swing)?18:0;
-  const spacerR=internal&&(!shared||rightBank)&&i===widths.length-1&&['right','pair'].includes(swing)?18:0;
+  const divide=s.front?.division,cut=divide?anchoredShelf(s):null,n=i+1;
+  const above=cut&&(internal?s.thickness:0)+(bank.bottomOffset??0)>=cut.y;
+  const onSide=side=>divide&&(divide.scope==='all'||divide.scope===side)?(above?divide.above:divide.below):s.front?.swing;
+  const spacerL=internal&&!rightBank&&i===0&&['left','pair'].includes(onSide('left'))?18:0;
+  const spacerR=internal&&(!shared||rightBank)&&i===widths.length-1&&['right','pair'].includes(onSide('right'))?18:0;
   const mountWidth=clear-spacerL-spacerR;
   if(mountWidth<163)throw Error('Секция '+n+': монтажный проём AKS должен быть от 163 мм.');
   const center=(left+spacerL+right-spacerR)/2;

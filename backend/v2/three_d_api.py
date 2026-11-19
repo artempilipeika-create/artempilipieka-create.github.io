@@ -156,7 +156,9 @@ class FurnitureItem(StrictModel):
         vertical=[self.height,self.body_height or 0,self.blank_length_mm or 0,self.elevation_mm or 0]
         if fitted and any(abs(v-round(v,3))>1e-8 for v in vertical):
             raise ValueError('Для фасада шуфляды допустима точность до 0,001 мм.')
-        if not fitted and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
+        door=bool(self.blank_axis=='front' and group and group.spec.front and re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key))
+        if door and any(v*2%1 for v in vertical):raise ValueError('Шаг размеров створки 0,5 мм.')
+        if not fitted and not door and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
             raise ValueError('Проверьте точность размеров детали.')
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')

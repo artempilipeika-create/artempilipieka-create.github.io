@@ -1,0 +1,43 @@
+{
+  "ak700-160": {
+    "file": "ak700-160.webp",
+    "model": "AK700",
+    "pictured_article": "116550",
+    "pictured_size": "160 мм между креплениями, 170 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "AKS Home",
+    "source_url": "https://akshome.by/catalog/ruchka-meb-skoba-met-ak700-160-chernyy-matovyy-1-upak-4-sht-aks/",
+    "image_url": "https://akshome.by/upload/iblock/c28/7ljcii32jxrjhfe30isbozwc9093ep3h.jpg",
+    "supplier_pack_article": "116834"
+  },
+  "monblan-128": {
+    "file": "monblan-128.webp",
+    "model": "MONBLAN",
+    "pictured_article": "92253",
+    "pictured_size": "128 мм между креплениями, 150 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "Furnitura-Shop",
+    "source_url": "https://furnitura-shop.by/product/ruchka-meb-nakladnaya-alyum-monblan-128-150-chernyj-ma/",
+    "image_url": "https://furnitura-shop.by/wp-content/uploads/2026/05/sko84edg5j46vn3fxy9wp5e5679q0lt6-1024x1024.webp"
+  },
+  "gola-l-118124": {
+    "file": "gola-l-118124.webp",
+    "model": "Gola L",
+    "pictured_article": "118124",
+    "pictured_size": "5500 мм",
+    "finish": "Чёрный",
+    "supplier": "AKS Georgia",
+    "source_url": "https://aksgeorgia.ge/ru/product/профиль-алюм-gola-l-образный-5-5м-черный-aks/",
+    "image_url": "https://aksgeorgia.ge/wp-content/uploads/2026/08/aidckhx9map78uvp8yxvcxx4eawpdifi-1024x1024.jpg"
+  },
+  "gola-c-118129": {
+    "file": "gola-c-118129.webp",
+    "model": "Gola C (S)",
+    "pictured_article": "118129",
+    "pictured_size": "5500 мм",
+    "finish": "Чёрный",
+    "supplier": "AKS Georgia",
+    "source_url": "https://aksgeorgia.ge/ru/product/профиль-алюм-gola-c-образный-5-5м-черный-aks/",
+    "image_url": "https://aksgeorgia.ge/wp-content/uploads/2026/08/ldy36ypzxlu98dj3m3s7iopqs90qeaij-1024x1024.jpg"
+  }
+}

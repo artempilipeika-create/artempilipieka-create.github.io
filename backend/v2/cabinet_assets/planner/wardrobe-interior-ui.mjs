@@ -47,7 +47,7 @@ function legacyControls(ui,parent,section){
  const box=el('fieldset');box.append(el('legend','Шуфляды'));parent.append(box);
  const banks=trimBanks(fields.drawerBanks??[],fields.sections);
  let bank=banks[nicheSlot(section,0)];
- box.append(action('Рассчитать по выбранной нише',()=>installBank(ui,section,bank.shelvesBelow??0,{kind:bank.kind,layout:'equal',gap:3,faces:bank.faces.map(()=>({height:null}))},true)));
+ box.append(action('Рассчитать по выбранной нише',()=>installBank(ui,section,bank.shelvesBelow??0,{kind:bank.kind,layout:'equal',gap:3,faces:bank.faces.map(face=>({...face,height:null}))},true)));
  function update(value,finished=true){
    bank=value;banks[nicheSlot(section,0)]=value;fields.drawerBanks=banks;ui.changed();
    if(finished)ui.render();

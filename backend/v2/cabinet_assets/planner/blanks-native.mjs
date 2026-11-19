@@ -1,3 +1,4 @@
+import {nativeDoorHardware,boardProfileCuts} from './wardrobe-door-hardware.mjs';
 import {nativeRods} from './wardrobe-rods.mjs';
 import {installedCuts,wardrobeHardware} from './wardrobe-aks-native.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
@@ -11,6 +12,7 @@ export const BLANK_SOURCES={"0000": {"file": "Заготовка_1.Без ПВХ
 
 export function blankNativeItem(it,material,items=[]){
  const error=validateBlank(it);if(error)throw Error(error);
+ const golaCuts=boardProfileCuts(it,items);
  const b=normalizeBlank(it),source=BLANK_SOURCES[b.code]||BLANK_SOURCES['1111'];
  if(it.blank_shelf&&!it.blank_shelf.startsWith('board/')){
   const donor=glassShelves[b.thickness];
@@ -25,7 +27,7 @@ export function blankNativeItem(it,material,items=[]){
  position:{x:it.x,y:b.elevation,z:it.z},rotation:it.rotation||0,
  material_assignments:{body:material},production_note:it.production_note||'',
  blank:{schema:1,length:b.length,width:b.width,thickness:b.thickness,axis:b.axis,
- edge_code:b.code,edge_thickness:b.edgeThickness,finished_dimensions:true,
+ edge_code:b.code,edge_thickness:b.edgeThickness,finished_dimensions:true,...(golaCuts.length?{gola_cuts:golaCuts}:{}),
  ...(/:drawer-\d+-spacer-(left|right)$/.test(it.item_id)?{spacer_cuts:installedCuts(it,items)}:{}),cut:cuttingSize(it),edge_elements:[1,3,0,2]}};
 }
-globalThis.MF_BLANKS_NATIVE={rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>doorHinges(it,items)),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id),items))};
+globalThis.MF_BLANKS_NATIVE={doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>doorHinges(it,items)),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id),items))};

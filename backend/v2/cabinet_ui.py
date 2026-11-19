@@ -64,6 +64,8 @@ def router():
         return Response((root/'planner/render-rooms/file-studio.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':local_images})
     from .assistant_model import ASSETS
     import json
+    planner_files.update({'wardrobe-door-layout.mjs','wardrobe-door-hardware.mjs','wardrobe-door-ui.mjs','wardrobe-door-mesh.mjs','wardrobe-handle-catalogue.json','wardrobe-handle-meshes.json','door-photos/sources.json'})
+    planner_files.update('door-photos/'+key+'.webp' for key in ('ak700-160','monblan-128','gola-l-118124','gola-c-118129'))
     planner_files.update({'wardrobe-rods.mjs','wardrobe-rods-ui.mjs','wardrobe-rod-mesh.mjs',
                           'wardrobe-rods.json','wardrobe-rod-meshes.json','rod-photos/sources.json'})
     planner_files.update('rod-photos/'+sku+'.webp' for sku in json.loads((ASSETS/'wardrobe-rods.json').read_text()))

@@ -49,7 +49,7 @@ export class WardrobeMotion{
       if(!g)continue;
       const active=Boolean(this.id)&&it.assistant_carcass?.group_id===this.id;
       if(!active&&!g.userData.wardrobePosed)continue;
-      const leaf=it.item_id.match(/:door-(left|right)$/),key=drawerKey(it);
+      const leaf=it.item_id.match(/:door-(?:(?:lower|upper)-)?(left|right)$/),key=drawerKey(it);
       if(!leaf&&!key)continue;
       let angle=0,dx=0,dz=0;
       if(leaf&&active){

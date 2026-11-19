@@ -1,3 +1,4 @@
+import {anchoredShelf} from './wardrobe-door-layout.mjs';
 import {nicheSlot} from './wardrobe-layout.mjs';
 import {localBaseShelf} from './wardrobe-layout.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
@@ -80,7 +81,7 @@ function dividerJoints(it,byId){
    const at=host&&localPoint(host,rotation);
    if(!host||host.blank_axis!=='horizontal'||host.blank_shelf&&!host.blank_shelf.startsWith('board/')||![16,18,25].includes(host.height)||rotation!==(host.rotation||0)||
        y!==host.elevation_mm+(bottom?host.height:0)||Math.abs(centre.x-at.x)+9>host.width/2+.01||
-       (it.item_id.includes(':niche-')?jointRows(scheme,it.depth,true).some(r=>Math.abs(centre.z+r.z-at.z)+8>host.depth/2):Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01)||it.depth<(scheme==='cam_dowel'?216:152))
+       ((it.item_id.includes(':niche-')||!bottom&&it.assistant_carcass?.spec.front?.topProfile)?jointRows(scheme,it.depth,!outer).some(r=>Math.abs(centre.z+r.z-at.z)+8>host.depth/2):Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01)||it.depth<(scheme==='cam_dowel'?216:152))
      throw Error(it.name+' · проверьте контакт с '+(bottom?'дном':'крышей')+' и глубину для крепежа.');
    for(const {kind,z} of jointRows(scheme,it.depth,!outer)){
      const point=worldPoint({x:centre.x,z:centre.z+z},rotation);
@@ -152,6 +153,7 @@ function nativeBackJoints(panel,byId){
 function isDrawerCover(part){
   const key=/:shelf-(\d+)-(\d+)$/.exec(part.item_id);
   const s=part.assistant_carcass?.spec,slot=key?nicheSlot(Number(key[1]),Number(key[2])):-1;
+  if(key&&s?.front?.division&&anchoredShelf(s)?.matches.some(b=>b.section===Number(key[1])&&b.shelf===Number(key[2])))return true;
   return Boolean(key&&(s?.drawerBanks?.[slot]?.coverFixing||s?.drawerFixing&&s?.drawerBanks?.[nicheSlot(Number(key[1]),Number(key[2])+1)]?.layout)||s&&part.item_id.includes(':shelf-base-'));
 }
 

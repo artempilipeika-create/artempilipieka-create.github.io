@@ -1,3 +1,4 @@
+import {doorLabel,doorShelfOptions,drawerFacades,handlePlacement,wardrobeDoors} from './wardrobe-door-layout.mjs';
 import {mm,mmText,nicheSlot} from './wardrobe-niches.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {backRows} from './carcass-joints.mjs';
@@ -68,6 +69,14 @@ function elevationView(built,view,section,front,selectedShelf,selection){
     '<rect x="'+num(px-18)+'" y="'+num((a+b)/2-6)+'" width="36" height="12" rx="2" fill="#fff" fill-opacity=".9"/>'+
     '<text x="'+num(px)+'" y="'+num((a+b)/2+3)+'" text-anchor="middle" fill="#204f77" font-size="9">'+mmText(value)+'</text></g>';
  }
+ function handleDrawing(leaf,setting,title){
+   if(!setting)return '';
+   let h;try{h=handlePlacement(leaf,setting);}catch{return '';}
+   const cx=X(leaf.left-W/2+h.x),cy=Y(footHeight(s)+leaf.bottom+h.y);
+   const half=h.part.length*k/2,dx=h.vertical?0:half,dy=h.vertical?half:0;
+   const path='M'+num(cx-dx)+' '+num(cy-dy)+'L'+num(cx+dx)+' '+num(cy+dy);
+   return '<g data-drag-handle="'+leaf.key+'" data-door-id="'+leaf.key+'" data-scale="'+k+'" role="button" tabindex="0" aria-label="Переместить ручку · '+title+'"><path d="'+path+'" stroke="#282b29" stroke-width="'+Math.max(2,(h.back?4:12)*k)+'" stroke-linecap="round"/><path d="'+path+'" stroke="transparent" stroke-width="12"/></g>';
+ }
  const ordered=built.parts.filter(p=>p.item.blank_axis!=='front'||p.key.startsWith('drawer-')).sort((a,b)=>panelOrder(a)-panelOrder(b));
  function panelOrder(p){return p.key==='back'?-3:p.key.endsWith('-face')?3:p.key==='plinth'?2:0;}
  for(const {key,item} of ordered){
@@ -75,9 +84,30 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    const grey=key==='back'?'#edece5':wood;
    drawing+=rect(X(q.x),Y(Math.min(height,q.y+q.h)),q.w*k,(Math.min(height,q.y+q.h)-q.y)*k,key==='plinth'&&zoom?'#bed9cd':grey);
  }
+ if(facade)for(const face of drawerFacades(s,built.drawerBanks??[])){
+   const title=face.label,x=X(face.left-W/2),y=Y(footHeight(s)+face.bottom+face.height);
+   drawing+='<g data-door-id="'+face.key+'" role="button" tabindex="0" aria-label="'+title+'">'+rect(x,y,face.width*k,face.height*k,selection?.door===face.key?'#c2dcf4':wood)+'</g>';
+   drawing+=handleDrawing(face,s.drawerBanks?.[face.slot]?.faces[face.index]?.handle,title);
+ }
  if(facade&&front){
-   const leaves=built.drawerBanks?.some(b=>b&&!b.internal)?built.parts.filter(p=>p.key.startsWith('door-')).map(p=>({side:p.key.slice(5),left:p.item.x-p.item.width/2+W/2,width:p.item.width,height:p.item.height,bottom:p.item.elevation_mm-s.elevation-(s.feet?.article==='118779'?0:footHeight(s))})):null;
-   drawing+=doorLeaves(s,front.swing,X(-W/2),Y(footHeight(s)),k,40,leaves,selection)+label(200,312,swingNames[front.swing]);
+   const legal=built.spec.front;
+   let leaves=[];
+   try{leaves=wardrobeDoors({...s,front},built.drawerBanks);}
+   catch{ /* An invalidated anchor can be chosen again on this drawing. */ }
+   const y0=Y(footHeight(s)),x0=X(-W/2);
+   drawing+=doorLeaves(s,front.swing,x0,y0,k,front.division?11:40,leaves,selection);
+   for(const leaf of leaves){
+    drawing+=handleDrawing(leaf,front.handles?.[leaf.key],doorLabel(leaf.key));
+   }
+   const d=front.division;
+   if(d){
+    for(const opt of doorShelfOptions(s,d.scope)){
+     const selected=opt.matches.some(a=>a.section===d.section&&a.shelf===d.shelf),p=opt.matches[0],y=Y(footHeight(s)+opt.y+s.thickness/2);
+     const ax=X(opt.right-W/2),ink=selected?'#22604c':'#597182';
+     drawing+='<g data-door-shelf-pick="'+p.section+':'+p.shelf+'" role="button" tabindex="0" aria-label="Стык на высоте '+(opt.y+footHeight(s)+s.elevation)+' мм от пола"><title>До низа перегородки от пола</title><path d="M'+num(ax)+' '+num(y)+'h7" stroke="'+ink+'"/><rect x="'+num(ax+6)+'" y="'+num(y-8)+'" width="34" height="15" rx="3" fill="'+(selected?'#deece5':'#f6f8f7')+'"/><text x="'+num(ax+23)+'" y="'+num(y+3)+'" fill="'+ink+'" text-anchor="middle" font-size="9">'+(opt.y+footHeight(s)+s.elevation)+'</text></g>';
+    }
+   }
+   drawing+=label(200,312,legal?(d?leaves.length+' ств. · стык по перегородке':swingNames[front.swing]):'Проверьте параметры створки');
  }
  if(view==='sections'){
    const widths=sectionWidths(s);section=Math.max(0,Math.min(widths.length-1,section));
@@ -238,7 +268,7 @@ export function wardrobeDrawing(built,view='body',section=0,front=built.spec.fro
    feet:feet.length?'Установлено опор: '+feet.length+' · арт. '+s.feet.article:'Опоры не выбраны',
    plinth:plinthPanel(s)?'Планка '+plinthPanel(s).height+' мм · верхний зазор 3 мм':'Цоколь для этого исполнения отсутствует',
    back:s.backThickness?'ЛДСП '+s.backThickness+' мм · ● эксцентрик   ○ шкант':s.back?'Накладная ЛХДФ 3 мм':'Открытый корпус без задней стенки',
-   fronts:front?'Зазор по периметру 1,5 мм'+(front.swing==='pair'?' · между створками 3 мм':''):'Открытый шкаф'};
+   fronts:front?(front.division?.gola?'Профиль S · между фасадами 30 мм. ':front.topProfile?'Верхний профиль L · 30 мм. ':'')+'Выберите дверь на схеме. Ручку можно перетащить.':'Открытый шкаф'};
  let box;
  if(view==='sections'&&selection?.editor){
    const scale=Math.min(328/s.width,258/(built.height+footHeight(s)));

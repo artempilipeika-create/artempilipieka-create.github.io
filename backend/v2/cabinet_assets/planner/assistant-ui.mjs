@@ -1,3 +1,4 @@
+import {doorControls,setDoorShelf,wireHandleDrag} from './wardrobe-door-ui.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
 import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
@@ -33,7 +34,7 @@ export class AssistantUI{
   this.nav=el('nav');this.nav.setAttribute('aria-label','Шаги анкеты');this.nav.className='assistant-steps';
   this.steps=WARDROBE_STEPS.map((name,i)=>{const b=button((i+1)+'. '+name,()=>this.go(i));this.nav.append(b);return b;});
   const grid=el('div');grid.className='assistant-grid';this.form=el('div');this.form.className='assistant-fields';
-  const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.drawing.onclick=e=>this.pickShelf(e);wireCellDrag(this);wireRodDrag(this);
+  const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.drawing.onclick=e=>this.pickShelf(e);wireCellDrag(this);wireRodDrag(this);wireHandleDrag(this);
   this.drawing.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.pickShelf(e);}};this.dimensions=el('p');this.description=el('p');const figureHead=el('div');figureHead.className='cell-figure-head';
   this.zoom=button('Увеличить схему',()=>this.zoomDiagram(!this.diagramExpanded));this.zoom.className='cell-zoom';
   figureHead.append(this.figureTitle,this.zoom);aside.append(figureHead,this.drawing,this.dimensions,this.description);const visuals=el('div');visuals.className='assistant-visuals';
@@ -81,7 +82,7 @@ export class AssistantUI{
   }
   this.fields.clearLayout=true;this.column=0;this.gapIndex=0;
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
-  this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='cell';this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
+  this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='cell';this.golaDetails=null;this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent='';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -101,10 +102,12 @@ export class AssistantUI{
  }
  pickShelf(event){
   if(this.busy||this.suppressDiagramClick)return;
-  const hit=event.target.closest?.('[data-clear-width],[data-clear-level],[data-split-section],[data-shelf-index],[data-niche],[data-hinge]');
+  const hit=event.target.closest?.('[data-clear-width],[data-clear-level],[data-split-section],[data-shelf-index],[data-niche],[data-hinge],[data-door-shelf-pick],[data-door-id]');
   if(!hit)return;
   const d=hit.dataset,section=Number(d.section);
   if(d.rodId){selectRod(this,d.rodId);return;}
+  if(d.doorShelfPick){setDoorShelf(this,d.doorShelfPick);return;}
+  if(d.doorId){this.selectedDoor=d.doorId;this.step=3;this.view='fronts';this.render();this.form.querySelector('[data-handle-article]')?.focus({preventScroll:true});return;}
   if(d.hinge){
    this.selectedDoor=d.hinge;this.step=3;this.view='fronts';this.render();
    this.form.querySelector('[aria-label="Исполнение фасада"]')?.focus({preventScroll:true});return;
@@ -247,10 +250,7 @@ export class AssistantUI{
    });
    this.jointQuestionnaire(fittings);this.form.append(fittings);
   }else if(this.step===3){
-   this.select(this.form,'Исполнение фасада',[['none','Открытый шкаф'],['left','Одна створка · петли слева'],['right','Одна створка · петли справа'],['pair','Две равные створки']],this.fields.front?.swing??'none',value=>{
-    if(value==='none')delete this.fields.front;else this.fields.front={...this.fields.front,swing:value,offset:this.fields.front?.offset??(this.fields.drawerBanks?.some(Boolean)?130:90)};
-    this.changed();this.render();
-   });
+   doorControls(this);
    if(this.fields.front){
     const warning=el('p');warning.className='front-choice-warning';warning.setAttribute('role','status');warning.hidden=true;this.form.append(warning);
     const box=el('details');box.className='wardrobe-hinge';box.append(el('summary','Петли и присадка'));
@@ -544,8 +544,10 @@ export class AssistantUI{
    let built,issue='';
    try{built=buildCarcass(this.spec(),options);}
    catch(error){
-    if(this.view!=='fronts'||!this.fields.front)throw error;
-    built=buildCarcass(wardrobeSpec({...this.fields,front:null}),options);
+    if(this.view!=='fronts')throw error;
+    const guide=structuredClone(this.fields);delete guide.front;
+    for(const bank of guide.drawerBanks??[])for(const face of bank?.faces??[])delete face.handle;
+    built=buildCarcass(wardrobeSpec(guide),options);
     issue=error.message;
    }
    this.previewBuilt=built;

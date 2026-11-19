@@ -1,3 +1,4 @@
+import {doorSide,physicalProfiles} from './wardrobe-door-layout.mjs';
 import {splitAt,levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import {primeHinge,hingeLoad,hingeAxes} from './wardrobe-fronts.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
@@ -67,7 +68,7 @@ export function doorHinges(door,items){
  if(door.blank_axis!=='front')return [];
  const group=door.assistant_carcass,front=group?.spec?.front;
  if(!front)return [];
- const side=['left','right'].find(s=>door.item_id===group.group_id+':door-'+s);
+ const side=doorSide(door.item_id.slice(group.group_id.length+1));
  if(!side)return [];
  const host=items.find(i=>i.item_id===group.group_id+':'+side);
  if(!host||host.blank_axis!=='side'||host.rotation!==door.rotation)throw Error('Проверьте привязку фасада к боковине.');
@@ -77,6 +78,12 @@ export function doorHinges(door,items){
    throw Error('Проверьте положение фасада относительно боковины.');
  const obstacles=items.filter(i=>i.blank_binding?.[side+'_id']===host.item_id&&i.item_id.startsWith(group.group_id+':shelf-')&&localPoint(i,angle).z+i.depth/2>=z-76)
    .map(i=>[i.elevation_mm-door.elevation_mm,i.elevation_mm+i.height-door.elevation_mm]);
+ const roof=items.find(p=>p.item_id===group.group_id+':top');
+ if(roof)for(const run of physicalProfiles(group.spec)){
+   if(side==='left'?run.left!==0:run.right!==group.spec.width)continue;
+   const top=roof.elevation_mm-group.spec.height+group.spec.thickness+run.top-door.elevation_mm;
+   obstacles.push([top+(run.cutBottom-run.top),top+(run.cutTop-run.top)]);
+ }
  const {count}=hingeLoad(door.width,door.height,front.massKg);
  const axes=front.autoHinges?automaticAxes(door,host,items,side,obstacles,count):hingeAxes(door.height,count,front.offset,obstacles);
  if(axes.some(y=>door.elevation_mm+y-26<host.elevation_mm||door.elevation_mm+y+26>host.elevation_mm+host.height))

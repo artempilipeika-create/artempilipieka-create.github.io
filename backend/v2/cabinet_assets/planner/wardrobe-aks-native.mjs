@@ -1,15 +1,19 @@
 import {splitAt,levelOf,splitKey,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {localPoint,worldPoint} from './blank-bindings.mjs';
+import {doorSide} from './wardrobe-door-layout.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {spacerCuts,frontAtHinge} from './wardrobe-drawers.mjs';
 
 const close=(a,b)=>Math.abs(a-b)<.01;
+function sideAxes(group,side,items){
+ return items.filter(i=>i.item_id.startsWith(group+':')&&doorSide(i.item_id.slice(group.length+1))===side)
+   .flatMap(i=>doorHinges(i,items).map(h=>h.position.y)).sort((a,b)=>a-b);
+}
 export function installedCuts(panel,items){
  const meta=panel.assistant_carcass,match=/:drawer-(\d+)-spacer-(left|right)$/.exec(panel.item_id??'');
  if(!meta||!match)return [];
- const door=items.find(i=>i.item_id===meta.group_id+':door-'+match[2]);
- return door?spacerCuts(panel.elevation_mm,panel.height,doorHinges(door,items).map(h=>h.position.y),match[2]):[];
+ return spacerCuts(panel.elevation_mm,panel.height,sideAxes(meta.group_id,match[2],items),match[2]);
 }
 
 export function screwRows(bottom,height,rails){
@@ -57,7 +61,7 @@ export function wardrobeHardware(items){
    const split=splitAt(spec,section,levelOf(slot)),shared=split?.kind==='drawers',innerSide=isRightBank(slot)?0:1;
    if(shared)panels[innerSide]=get(splitKey(split)+'-divider');
    const spacers=sides.map(side=>parts.get(prefix+'spacer-'+side));
-   const axes=sides.map((side,k)=>spacers[k]?doorHinges(get('door-'+side),items).map(h=>h.position.y):[]);
+   const axes=sides.map((side,k)=>spacers[k]?sideAxes(origin.assistant_carcass.group_id,side,items):[]);
    const cuts=spacers.map(p=>p?installedCuts(p,items):[]);
    let railFront,railLength;
    bank.faces.forEach((_,index)=>{

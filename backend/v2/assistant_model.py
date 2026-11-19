@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Literal, Annotated
 from uuid import UUID
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 from .auth_api import StrictModel
 
 
@@ -107,7 +107,58 @@ def inner_foot_pairs(width, sections, layout):
     return sections - 1 or int(width > 900)
 
 
+DOOR_HARDWARE = json.loads((ASSETS/'wardrobe-handle-catalogue.json').read_text())
+LeafKey = Annotated[str, Field(pattern=r'^door-(?:(?:lower|upper)-)?(?:left|right)$')]
+Swing = Literal['left','right','pair','open']
+
+class FacadeHandle(StrictModel):
+    model_config = ConfigDict(serialize_by_alias=True)
+    article: str = Field(min_length=5,max_length=6,pattern=r'^[0-9]+$')
+    edge: Literal['left','right','top','bottom']
+    along: Literal['center','start','end'] = Field(alias='from')
+    offset: float = Field(ge=0,le=3000)
+    inset: float = Field(ge=0,le=3000)
+
+    def check_size(self,width,height):
+        product=DOOR_HARDWARE.get(self.article,{})
+        if product.get('family') not in ('ak700','monblan'):
+            raise ValueError('Проверьте артикул ручки фасада.')
+        vertical=self.edge in ('left','right')
+        span,other=(height,width) if vertical else (width,height)
+        pull=product['family']=='ak700'
+        half=(product['pitch'] if pull else product['length'])/2
+        center=span/2 if self.along=='center' else self.offset+half
+        if center<product['length']/2 or center+product['length']/2>span or pull and not 6<=self.inset<=other-6:
+            raise ValueError('Ручка выходит за край фасада.')
+
+    def bounds(self,left,bottom,width,height):
+        product=DOOR_HARDWARE[self.article]
+        vertical=self.edge in ('left','right')
+        pull=product['family']=='ak700'
+        span=height if vertical else width
+        along=span/2 if self.along=='center' else self.offset+(product['pitch'] if pull else product['length'])/2
+        if self.along=='end':along=span-along
+        inset=self.inset if pull else 0
+        x=left+(inset if self.edge=='left' else width-inset) if vertical else left+along
+        y=bottom+along if vertical else bottom+(inset if self.edge=='bottom' else height-inset)
+        half=product['length']/2
+        cross=6 if pull else 16.9
+        dx,dy=(cross,half) if vertical else (half,cross)
+        return x-dx,x+dx,y-dy,y+dy
+
+class FacadeDivision(StrictModel):
+    section: int = Field(ge=0,le=3,strict=True)
+    shelf: int = Field(ge=0,le=9,strict=True)
+    scope: Literal['all','left','right']
+    above: Swing
+    below: Swing
+    cutHeight: Literal[73,74] | None = Field(default=None,exclude_if=lambda v:v is None)
+    gola: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
+
 class OverlayFront(StrictModel):
+    division: FacadeDivision | None = Field(default=None,exclude_if=lambda v:v is None)
+    handles: dict[LeafKey,FacadeHandle] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
+    topProfile: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     swing: Literal['left','right','pair']
     offset: Literal[90,130]
     autoHinges: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -122,6 +173,7 @@ class ShelfLevel(StrictModel):
 DrawerMillimetres = Annotated[int, Field(strict=True)] | Annotated[float, Field(strict=True)]
 
 class DrawerFace(StrictModel):
+    handle: FacadeHandle | None = Field(default=None,exclude_if=lambda v:v is None)
     height: DrawerMillimetres | None = Field(ge=100,le=3000)
     width: float | None = Field(default=None,ge=40,le=1200,multiple_of=.5,exclude_if=lambda v:v is None)
 
@@ -274,6 +326,88 @@ class CarcassDesign(CarcassSpec):
         centres=[nearest(y+h/2) for y,h in zip(ys,sizes)]
         return list(zip([max(0,base-t),*centres],[*centres,self.height]))
 
+    def facade_anchor(self):
+        d=self.front.division
+        if d.section>=self.sections:
+            raise ValueError('Перегородка для фасадов отсутствует.')
+        widths=self.clear_widths()
+        middle=widths[0]+1.5*self.thickness if self.sections==2 else self.width/2
+        left=middle if d.scope=='right' else 0
+        right=middle if d.scope=='left' else self.width
+        rooms=self.niche_bounds(d.section,True)
+        if d.shelf>=len(rooms)-1: raise ValueError('Выберите перегородку для фасадов.')
+        y=rooms[d.shelf][1]
+        x=0
+        divider_axes=[]
+        for sec,w in enumerate(widths):
+            start=x
+            x+=w+self.thickness*(1+.5*(sec==0)+.5*(sec==self.sections-1))
+            if sec<self.sections-1:divider_axes.append(x)
+            if sec==d.section and (start>=right or x<=left):raise ValueError('Перегородка находится за границей выбранных дверей.')
+            if start>=right or x<=left:continue
+            row=self.shelfChoices[sec] if self.shelfChoices and sec<len(self.shelfChoices) else []
+            if not any(high==y and i<len(row) and row[i] in ('board/confirmat','board/cam_dowel') for i,(_,high) in enumerate(self.niche_bounds(sec,True)[:-1])):
+                raise ValueError('Закрепите перегородку на стыке фасадов в каждой секции.')
+        if d.above==d.below=='open' and d.scope=='all' or d.scope!='all' and any(m not in (d.scope,'open') for m in (d.below,d.above)):
+            raise ValueError('Проверьте створки по обе стороны перегородки.')
+        if d.gola and ('open' in (d.below,d.above) or d.scope!='all' and middle not in divider_axes):
+            raise ValueError('Для среднего профиля S нужны фасады и две опоры.')
+        return left,right,y
+
+    def validate_door_layout(self,zones,drawer_pulls):
+        f=self.front;d=f.division;handles=f.handles or {}
+        if self.recipe not in ('shelves','divided'):raise ValueError('Фасады задаются для шкафа.')
+        def torc(key,edge):
+            h=handles.get(key)
+            return h and h.edge==edge and DOOR_HARDWARE.get(h.article,{}).get('family')=='monblan'
+        middle=self.width/2
+        if self.sections==2 and (d or any(not z[2] for z in zones)):middle=self.clear_widths()[0]+1.5*self.thickness
+        def band(row,mode,a,b,low,high):
+            if mode=='open':return []
+            prefix='door-'+(row+'-' if row else '')
+            if mode!='pair':return [[prefix+mode,a,b,low,high]]
+            gap=4 if torc(prefix+'left','right') and torc(prefix+'right','left') else 3
+            return [[prefix+'left',a,middle-gap/2,low,high],[prefix+'right',middle+gap/2,b,low,high]]
+        roof=self.height-(30 if f.topProfile else 1.5)
+        if d:
+            left,right,y=self.facade_anchor();mid=y+self.thickness/2
+            lo=band('lower',d.below,left+1.5,right-1.5,1.5,mid)
+            hi=band('upper',d.above,left+1.5,right-1.5,mid,roof)
+            for group,other,edge,opposite in ((lo,hi,'top','bottom'),(hi,lo,'bottom','top')):
+                for leaf in group:
+                    matches=[q for q in other if leaf[1]<q[2] and q[1]<leaf[2]]
+                    both=torc(leaf[0],edge) and any(torc(q[0],opposite) for q in matches)
+                    gap=15 if d.gola else (2 if both else 1.5) if matches else 1.5-self.thickness/2
+                    if edge=='top':leaf[4]=mid-gap
+                    else:leaf[3]=mid+gap
+            leaves=lo+hi
+            if d.scope!='all':
+                side='right' if d.scope=='left' else 'left'
+                tall=band('',side,1.5 if side=='left' else middle+1.5,middle-1.5 if side=='left' else self.width-1.5,1.5,roof)[0]
+                if torc(tall[0],d.scope) and any(torc(p[0],side) for p in leaves):
+                    if side=='left':tall[2]-=.5
+                    else:tall[1]+=.5
+                    for leaf in leaves:
+                        if side=='left':leaf[1]+=.5
+                        else:leaf[2]-=.5
+                leaves.append(tall)
+        else:leaves=band('',f.swing,1.5,self.width-1.5,1.5,roof)
+        for key,left,right,bottom,top in leaves:
+            for a,b,inside,end,start in zones:
+                if not inside and a<right and b>left and start<top and end>bottom:bottom=max(bottom,end+1.5)
+            h=top-bottom
+            if h<=0:continue
+            if right-left>600 or not (126 if f.autoHinges else 2*f.offset+64)<=h<=2400:
+                raise ValueError('Проверьте размеры выбранной створки и отступ петель.')
+            if key in handles:
+                handle=handles[key]
+                if (f.topProfile and not key.startswith('door-lower-') and torc(key,'top') or
+                        d and d.gola and (key.startswith('door-lower-') and torc(key,'top') or key.startswith('door-upper-') and torc(key,'bottom'))):
+                    raise ValueError('Кромку с профилем Gola оставьте свободной от торцевой ручки.')
+                handle.check_size(right-left,h)
+            if any(a<right and b>left and lo<top and hi>bottom for a,b,lo,hi in drawer_pulls):
+                raise ValueError('Ручка внутренней шуфляды упирается в закрытую дверь.')
+
     def validate_rods(self,zones):
         if not self.rods:
             return
@@ -359,10 +493,11 @@ class CarcassDesign(CarcassSpec):
         if self.clearLayout:
             for section in range(self.sections):self.niche_bounds(section,True)
         self.validate_rods(zones_by_slot)
+        zones=[]
+        drawer_pulls=[]
         if self.drawerBanks:
             if self.recipe not in ('shelves','divided') or len(self.drawerBanks)<self.sections:
                 raise ValueError('Проверьте секции с шуфлядами.')
-            zones=[]
             for slot,bank in enumerate(self.drawerBanks):
                 if bank is None: continue
                 i,level,right_bank=niche_address(slot)
@@ -397,8 +532,15 @@ class CarcassDesign(CarcassSpec):
                         raise ValueError('Полок под блоком больше, чем полок в секции.')
                     inside=bank.kind=='internal'
                     swing=self.front.swing if self.front else None
-                    left=18 if inside and not right_bank and i==0 and swing in ('left','pair') else 0
-                    right=18 if inside and (not shared or right_bank) and i==self.sections-1 and swing in ('right','pair') else 0
+                    left_swing=right_swing=swing
+                    if self.front and self.front.division:
+                        d=self.front.division
+                        y=self.facade_anchor()[2]
+                        mode=d.above if (self.thickness if inside else 0)+(bank.bottomOffset or 0)>=y else d.below
+                        if d.scope in ('all','left'):left_swing=mode
+                        if d.scope in ('all','right'):right_swing=mode
+                    left=18 if inside and not right_bank and i==0 and left_swing in ('left','pair') else 0
+                    right=18 if inside and (not shared or right_bank) and i==self.sections-1 and right_swing in ('right','pair') else 0
                     max_width=(w-left-right if inside else w+self.thickness*(1+(i==0)/2+(i==self.sections-1)/2))-3
                     if shared:
                         outer=0 if inside else self.thickness*(1 if (not right_bank and i==0 or right_bank and i==self.sections-1) else .5)
@@ -413,8 +555,27 @@ class CarcassDesign(CarcassSpec):
                         raise ValueError(f'Секция {i+1}: блоку AKS недостаточно места.')
                     if any(f.width is not None and f.width>max_width for f in bank.faces):
                         raise ValueError(f'Секция {i+1}: фасад шире проёма.')
+                    if any(face.handle for face in bank.faces):
+                        total=bank.span()
+                        if bank.layout:
+                            remaining=round(total-1.5-(30 if bank.coverFixing else 1.5)-(bank.gap or 0)*(len(bank.faces)-1),3)
+                            automatic=(int(remaining*1000/len(bank.faces)+1e-6)/1000 if bank.layout=='equal' else round(remaining-sum(face.height or 0 for face in bank.faces),3))
+                        else:
+                            automatic=total-3*len(bank.faces)-sum(face.height or 0 for face in bank.faces)
+                        heights=[face.height if face.height is not None else automatic for face in bank.faces]
+                        rounding=round(remaining-sum(heights),3) if bank.coverFixing else 0
+                        y=top-total+1.5+rounding
+                        for face,height in zip(bank.faces,heights):
+                            if face.handle:
+                                face_width=face.width or max_width
+                                face.handle.check_size(face_width,height)
+                                if inside and self.front:
+                                    cx=(start+left+end-right)/2
+                                    if shared:cx+=(9 if zone.edge=='overlay' else 0)*(-.5 if right_bank else .5)
+                                    drawer_pulls.append(face.handle.bounds(cx-face_width/2,y,face_width,height))
+                            y+=height+(bank.gap if bank.layout else 3)
                     zones.append((start,end,inside,top,top-bank.span()))
-            if self.front and any(not z[2] for z in zones):
+            if self.front and not self.front.division and any(not z[2] for z in zones):
                 pair=self.front.swing=='pair'
                 seam=(self.thickness*1.5+widths[0] if pair and self.sections==2 else self.width/2)
                 spans=[(1.5,seam-1.5),(seam+1.5,self.width-1.5)] if pair else [(1.5,self.width-1.5)]
@@ -426,7 +587,9 @@ class CarcassDesign(CarcassSpec):
                         raise ValueError('Разделите створки по секциям шуфляд.')
                     if height>0 and (right-left>600 or not (126 if self.front.autoHinges else 2*self.front.offset+64)<=height<=2400):
                         raise ValueError('Проверьте размеры створки над блоком шуфляд.')
-        if self.front and not any(b and b.kind=='external' for b in self.drawerBanks or []):
+        if self.front and (self.front.division or self.front.topProfile or self.front.handles or drawer_pulls):
+            self.validate_door_layout(zones,drawer_pulls)
+        elif self.front and not any(b and b.kind=='external' for b in self.drawerBanks or []):
             count = 2 if self.front.swing=='pair' else 1
             width = (self.width-3*count)/count
             if self.recipe not in ('shelves','divided') or width>600 or self.height-3>2400 or self.height-3<(126 if self.front.autoHinges else 2*self.front.offset+64):

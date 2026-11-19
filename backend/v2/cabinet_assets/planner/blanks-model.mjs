@@ -43,7 +43,8 @@ export function validateBlank(input,room){
   const minLength=drawerSide(input.item_id)?40:100;
   const drawerFace=b.axis==='front'&&drawerMember(input.item_id,'\\d+-face');
   const precise=value=>Number.isFinite(value)&&Math.abs(value*1000-Math.round(value*1000))<.000001;
-  if(!(drawerFace?precise(b.length):Number.isInteger(b.length))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
+  const door=b.axis==='front'&&/:door-(?:(?:lower|upper)-)?(?:left|right)$/.test(input.item_id??'');
+  if(!(drawerFace?precise(b.length):Number.isInteger(b.length*(door?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
   if(!Number.isInteger(b.width*(b.axis==='front'?2:1))||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';

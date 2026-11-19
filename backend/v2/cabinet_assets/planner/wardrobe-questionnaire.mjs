@@ -1,3 +1,4 @@
+import {secureDoorShelf} from './wardrobe-door-layout.mjs';
 import {footPlan} from './wardrobe-feet.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
 import {buildCarcass} from './carcass-model.mjs';
@@ -45,10 +46,12 @@ export function wardrobeSpec(f){
  validateJoints(spec);footPlan(spec);
  if(f.shelfChoices)spec.shelfChoices=shelfRows(f);
  if(f.drawerBanks?.some(Boolean))spec.drawerBanks=structuredClone(f.drawerBanks);
- const rows=prepareDrawerCovers(spec);
+ prepareDrawerCovers(spec);
+ secureDoorShelf(spec);
+ const rows=shelfRows(spec);
  for(const [section,row] of rows.entries())for(const [level,value] of row.entries()){
    const c=choice(value,spec.thickness);
-   if(c.scheme&&spec.thickness!==18&&![nicheSlot(section,level),nicheSlot(section,level+1)].some(slot=>spec.drawerBanks?.[slot]?.layout))throw Error('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.');
+   if(c.scheme&&spec.thickness!==18&&!spec.front?.division&&![nicheSlot(section,level),nicheSlot(section,level+1)].some(slot=>spec.drawerBanks?.[slot]?.layout))throw Error('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.');
  }
  if(!rows.some(row=>row.some(value=>value!==defaultShelf)))delete spec.shelfChoices;
  if(spec.drawerBanks)spec.drawerBanks=fitNicheBanks(spec,spec.drawerBanks);

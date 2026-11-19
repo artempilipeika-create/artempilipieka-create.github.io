@@ -199,3 +199,12 @@
 #planner-assistant-dialog .shelf-division .section-count{margin-block:12px}
 #planner-assistant-dialog .assistant-fields .opening-context{color:#205c85;font-size:15px;font-weight:600}
 #planner-assistant-dialog [data-count-feedback]{color:#8a4029}
+
+.wardrobe-door-editor,.wardrobe-door-profiles{display:grid;gap:.55rem;min-width:0}
+.door-product-photo{display:flex;align-items:center;gap:.65rem;margin:.35rem 0;max-width:100%}
+.door-product-photo img{object-fit:contain;background:white;border-radius:.4rem;max-width:40%;height:auto}
+.door-product-photo a{font-size:.8rem;color:#345b4c}
+.assistant-fields label.door-option-check{display:flex;align-items:center;gap:.5rem;margin:.65rem 0}
+.door-option-check input{width:auto}
+.wardrobe-figure [data-drag-handle]{cursor:grab;touch-action:none}
+.wardrobe-figure [data-door-shelf-pick],.wardrobe-figure [data-door-id]{cursor:pointer}

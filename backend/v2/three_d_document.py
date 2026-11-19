@@ -106,6 +106,16 @@ def hardware_for(it):
     meta=it.get('assistant_carcass') or {}
     spec=meta.get('spec') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
+    front=spec.get('front') or {}
+    if key=='top' and (front.get('topProfile') or (front.get('division') or {}).get('gola')):
+        width=spec['width']; split=front.get('division') or {};scope=split.get('scope','all')
+        widths=spec.get('dividerPositions') or [(width-3*spec['thickness']+1)//2]
+        half=widths[0]+1.5*spec['thickness'] if spec.get('sections')==2 else width/2
+        spans=[('118124','L',width)] if front.get('topProfile') else []
+        if split.get('gola'):spans.append(('118129','S (C)',width if scope=='all' else half if scope=='left' else width-half))
+        rows=list(rows)
+        for article,label,span in spans:
+            rows.extend([_row('Профиль Gola '+label+' · '+format(span,'g')+' мм',span/1000,'m',article),_row('Крепление профиля Gola · уголок с винтами',2,'pcs','118236'),_row('Саморез универсальный 4×16 мм для уголка Gola',4,'pcs','36936')])
     if key=='top' and spec.get('rods'):
         # Each fitted rail is one purchased set, even though the native model contains both holders.
         rows=list(rows)
@@ -120,6 +130,8 @@ def hardware_for(it):
         banks=spec.get('drawerBanks') or []
         slot,number=map(int,drawer.groups())
         if slot<len(banks) and banks[slot] and number<len(banks[slot]['faces']):
+            handle=banks[slot]['faces'][number].get('handle')
+            if handle:rows=[*rows,_facade_handle_row(handle)]
             depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[slot]['kind']=='internal' else 0)
             length=min(600,((depth-5)//50)*50)
             rail=AKS_GUIDES.get(str(length))
@@ -165,16 +177,25 @@ def hardware_for(it):
             rows=[*rows,_row('Регулятор уровня М6 чёрный',count,'pcs','118779'),_row('Муфта регулятора М6 вбиваемая',count,'pcs','106466')]
     return rows,description
 
+def _facade_handle_row(handle):
+    from .assistant_model import DOOR_HARDWARE
+    article=handle['article'];product=DOOR_HARDWARE[article]
+    name=('Ручка-скоба AK700' if product['family']=='ak700' else 'Ручка торцевая MONBLAN')+' · '+str(product['pitch'])+' мм с крепежом'
+    return _row(name,1,'set',article)
+
 def _panel_hardware(it):
     meta = it.get('assistant_carcass') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     spec = meta.get('spec') or {}
-    if it.get('blank_axis')=='front' and spec.get('front') and it.get('item_id') in {str(meta.get('group_id'))+':door-left',str(meta.get('group_id'))+':door-right'}:
+    if it.get('blank_axis')=='front' and spec.get('front') and re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key):
         w,h=it['width'],it['height']
         mass=spec['front'].get('massKg') or w*h*18*700/1e9
         for n,(limit,kg) in enumerate([(900,8),(1600,13),(2000,17),(2400,22)],2):
             if w<=600 and h<=limit and mass<=kg:
-                return [_row('Петля PRIME 3D накладная с планкой H0 · саморезы',n,'pcs','112595')],None
+                rows=[_row('Петля PRIME 3D накладная с планкой H0 · саморезы',n,'pcs','112595')]
+                handle=(spec['front'].get('handles') or {}).get(key)
+                if handle:rows.append(_facade_handle_row(handle))
+                return rows,None
         raise ValueError('Створка выходит за пределы таблицы AKS Ø35.')
     if key=='rear-brace':
         return ([_row('Конфирмат 7×50',4)] if spec.get('drawerFixing')=='confirmat' else [_row('Эксцентриковая стяжка',2),_row('Шкант деревянный 8×35',2,'pcs','39319')]),None

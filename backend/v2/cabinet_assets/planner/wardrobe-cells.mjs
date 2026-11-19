@@ -1,3 +1,5 @@
+import {footHeight} from './plinth-options.mjs';
+import {anchoredShelf,doorAnchorIndex,sectionSpans} from './wardrobe-door-layout.mjs';
 import {rodCatalogue} from './wardrobe-rods.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {clearGaps,columnOpenings,columnWidths,isRightBank,levelOf,nicheSlot,sectionOf,splitAt} from './wardrobe-layout.mjs';
@@ -9,6 +11,13 @@ export function resizeSections(f,n){
  if(!Number.isInteger(n)||n<1||n>4)throw Error('Выберите от одной до четырёх секций.');
  const oldCount=f.sections;
  if(n===oldCount)return;
+ const d=f.front?.division;
+ const joined=d&&n>oldCount?anchoredShelf(f):null;
+ if(d&&d.section>=n){
+   const match=anchoredShelf(f).matches.find(a=>a.section<n);
+   if(!match)throw Error('Сначала выберите другую перегородку на шаге «Фасады».');
+   Object.assign(d,{section:match.section,shelf:match.shelf});
+ }
  if(f.dividerPositions){
    const positions=f.dividerPositions.slice(0,n-1);
    if(n>oldCount){
@@ -23,6 +32,16 @@ export function resizeSections(f,n){
  f.sectionShelves=Array.from({length:n},(_,i)=>f.sectionShelves[i]??0);
  for(const key of ['shelfLevels','gapLocks','topGaps']){
    if(f[key])f[key]=Array.from({length:n},(_,i)=>f[key][i]??(key==='topGaps'?null:[]));
+ }
+ if(joined){
+   const spans=sectionSpans(f),middle=n===2?spans[0].right:f.width/2;
+   for(let section=oldCount;section<n;section++){
+     const bay=spans[section];
+     if(d.scope==='left'&&bay.left>=middle||d.scope==='right'&&bay.right<=middle)continue;
+     f.sectionShelves[section]=1;
+     f.shelfLevels??=f.sectionShelves.map(k=>Array(k).fill(null));
+     f.shelfLevels[section]=[{mode:'floor',mm:joined.y+(f.elevation??0)+footHeight(f)}];
+   }
  }
  if(f.shelfChoices)f.shelfChoices=shelfRows(f);
  if(f.rods){f.rods=f.rods.filter(r=>r.section<n);if(!f.rods.length)delete f.rods;}
@@ -39,12 +58,14 @@ export function setSectionShelfCount(f,section,count){
  if(count===previous)return [];
  const locks=f.gapLocks?.[section]??[];
  const occupied=new Set(locks);
+ const d=f.front?.division;
+ const anchor=doorAnchorIndex(f,section);
  for(const rod of f.rods??[])if(rod.section===section)occupied.add(rod.level);
  for(const zone of f.nicheSplits??[])if(zone.section===section)occupied.add(zone.level);
  for(const [slot,bank] of (f.drawerBanks??[]).entries())if(bank&&sectionOf(slot)===section)occupied.add(levelOf(slot));
  const legacy=f.drawerBanks?.[nicheSlot(section,0)];
  if(legacy&&!legacy.layout&&occupied.size>1)throw Error('Сначала привяжите старый блок шуфляд к выбранной нише.');
- if(!occupied.size||legacy&&!legacy.layout){
+ if(anchor===-1&&(!occupied.size||legacy&&!legacy.layout)){
    const changes=[];
    for(let level=previous-1;level>=count;level--)changes.push({level,delta:-1});
    f.sectionShelves[section]=count;
@@ -72,10 +93,11 @@ export function setSectionShelfCount(f,section,count){
  }
  const remove=[];
  for(let level=previous-1;level>=0&&remove.length<previous-count;level--){
-   if(!occupied.has(level)&&!occupied.has(level+1))remove.push(level);
+   if(level!==anchor&&!occupied.has(level)&&!occupied.has(level+1))remove.push(level);
  }
  if(remove.length!==previous-count)throw Error('Минимум полок в этой секции — '+(previous-remove.length)+'. Они ограничивают установленное наполнение или закреплённый проём.');
  const shifted=level=>level-remove.filter(index=>index<level).length;
+ if(d?.section===section)d.shelf=shifted(d.shelf);
  const newLocks=locks.map(shifted),sizes=[];
  let bottom=rooms[0].bottom;
  for(let i=0;i<previous;i++){
@@ -192,6 +214,8 @@ export function insertShelves(f,cell,count){
  }else{
    const rows=shelfRows(f);
    rows[section].splice(level,0,...Array(count).fill(defaultShelf));
+   const d=f.front?.division;
+   if(d?.section===section&&d.shelf>=level)d.shelf+=count;
    if(f.shelfChoices)f.shelfChoices=rows;
    if(f.gapLocks)f.gapLocks[section]=newLocks;
    if(f.drawerBanks){
