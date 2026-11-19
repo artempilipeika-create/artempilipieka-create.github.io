@@ -25,11 +25,11 @@ export function interiorPalette(settings){
 }
 
 // The material owns the scan. A room rebuild may dispose it before the image arrives.
-function loadScan(material,url,fallback,anisotropy,invalidate){
+function loadScan(material,url,fallback,anisotropy,invalidate,manager){
   const finish=material.color.clone();
   material.color.set(fallback);
   let live=true;
-  const texture=new THREE.TextureLoader().load(url,()=>{
+  const texture=new THREE.TextureLoader(manager).load(url,()=>{
     if(!live)return;
     material.map=texture;material.color.copy(finish);material.needsUpdate=true;invalidate();
   },undefined,()=>{if(live)invalidate();});
@@ -158,7 +158,7 @@ function meshGeometry(positions,uvs){
   geometry.computeVertexNormals();return geometry;
 }
 
-export function addWallInterior(surface,wallInput,palette,daylight,anisotropy,invalidate){
+export function addWallInterior(surface,wallInput,palette,daylight,anisotropy,invalidate,manager){
   const style=wallInput.style;
   // The room shell has jambs. Recess its paint behind the raised profiles.
   surface.geometry.translate(0,0,-.026);
@@ -166,7 +166,7 @@ export function addWallInterior(surface,wallInput,palette,daylight,anisotropy,in
   for(const [key,batch] of interiorWall(wallInput)){
     const wood=key==='wood';
     const material=new THREE.MeshStandardMaterial({color:wood?'#e9e0d3':palette[key],roughness:wood?.64:.78});
-    if(wood)loadScan(material,'/account/planner/materials/egger-h1180-st37.jpg','#ad9270',anisotropy,invalidate);
+    if(wood)loadScan(material,'/account/planner/materials/egger-h1180-st37.jpg','#ad9270',anisotropy,invalidate,manager);
     daylightSurface(material,daylight,'wall');
     const mesh=new THREE.Mesh(meshGeometry(batch.point,batch.uv),material);
     mesh.userData={ownMaterial:true,visualOnly:true};mesh.castShadow=true;mesh.receiveShadow=true;mesh.raycast=noPick;
@@ -180,7 +180,7 @@ export function interiorCeiling(room,color){
   mesh.receiveShadow=true;mesh.userData={ownMaterial:true,visualOnly:true};mesh.raycast=noPick;return mesh;
 }
 
-export function marbleFloor(room,daylight,anisotropy,invalidate){
+export function marbleFloor(room,daylight,anisotropy,invalidate,manager){
   const left=-room.width/2,right=-left,near=-room.depth/2,far=-near,positions=[],uv=[];
   const width=1200,depth=600,joint=2.4;
   for(let col=0,x=left-280;x<right;col++,x+=width){
@@ -197,7 +197,7 @@ export function marbleFloor(room,daylight,anisotropy,invalidate){
     }
   }
   const material=new THREE.MeshPhysicalMaterial({color:'#eeede9',roughness:.48,clearcoat:.09,clearcoatRoughness:.36,envMapIntensity:.48});
-  loadScan(material,'/account/planner/materials/egger-f800-st9.jpg','#ddd9d1',anisotropy,invalidate);
+  loadScan(material,'/account/planner/materials/egger-f800-st9.jpg','#ddd9d1',anisotropy,invalidate,manager);
   daylightSurface(material,daylight,'floor');
   const mesh=new THREE.Mesh(meshGeometry(positions,uv),material);
   mesh.receiveShadow=true;mesh.raycast=noPick;mesh.userData={ownMaterial:true,visualOnly:true,tileSizeMm:[width,depth]};return mesh;

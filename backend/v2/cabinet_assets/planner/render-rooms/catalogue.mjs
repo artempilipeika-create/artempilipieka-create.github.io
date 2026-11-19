@@ -1,21 +1,50 @@
-export const roomCategories = ["Городская квартира", "Открытая студия", "Загородный дом"];
+// IDs are stored in project display settings. All dimensions and openings belong to the project.
+export const roomCategories = ['Светлые интерьеры', 'Тёплые интерьеры', 'Контрастные интерьеры'];
+
+export const wallCoatings = {
+  porcelain: {name:'Фарфор', color:'#e5e3dc', surface:'paint'},
+  chalk: {name:'Мел', color:'#d8d9d2', surface:'paint'},
+  pearl: {name:'Серый жемчуг', color:'#c3c8c6', surface:'paint'},
+  linen: {name:'Лён', color:'#d6c8b6', surface:'plaster'},
+  limestone: {name:'Известняк', color:'#cbc7b9', surface:'plaster'},
+  sand: {name:'Песок', color:'#c6ad90', surface:'plaster'},
+  mushroom: {name:'Серо-бежевый', color:'#a99a88', surface:'paint'},
+  sage: {name:'Шалфей', color:'#a8b09e', surface:'paint'},
+  clay: {name:'Глина', color:'#b28e79', surface:'plaster'},
+  sageDark: {name:'Олива', color:'#727c64', surface:'plaster'},
+  slate: {name:'Сланец', color:'#67737b', surface:'plaster'},
+  graphite: {name:'Графит', color:'#535a5d', surface:'paint'},
+  basalt: {name:'Базальт', color:'#545658', surface:'plaster'}
+};
+
+function finish(n,name,back,sides,floor,lighting,side) {
+  const note = [wallCoatings[back].name,wallCoatings[sides].name,
+    floor === 'oak' ? 'дубовая доска' : 'плитка под мрамор'].join(' · ');
+  return {n,name,back,sides,floor,lighting,side,note};
+}
 
 export const rooms = [
-  {"n": 1, "name": "Светлая однушка", "w": 4.25, "h": 2.62, "side": "L", "light": "day", "outside": "town", "floor": "oak", "note": "Обычное двустворчатое окно с белой рамой, тонкая штора и светлые окрашенные стены."},
-  {"n": 2, "name": "Комната с балконом", "w": 4.55, "h": 2.69, "side": "R", "light": "morning", "outside": "town", "floor": "marble", "note": "Справа окно и стеклянная балконная дверь. Из кухни и от шкафа видно ограждение балкона."},
-  {"n": 3, "name": "Квартира с паркетом", "w": 4.45, "h": 2.88, "side": "L", "light": "soft", "outside": "town", "floor": "oak", "note": "Высокое окно, простые льняные портьеры, узкий карниз и дубовая ёлочка."},
-  {"n": 4, "name": "Серо-белая квартира", "w": 4.32, "h": 2.72, "side": "R", "light": "soft", "outside": "town", "floor": "marble", "note": "Серо-белые стены, трёхстворчатое окно и тонкая графитовая рама."},
-  {"n": 5, "name": "Квартира с лоджией", "w": 4.62, "h": 2.72, "side": "L", "light": "day", "outside": "town", "floor": "oak", "note": "За широким проёмом видна застеклённая лоджия. Второй ряд рам добавляет комнате глубины."},
-  {"n": 6, "name": "Студия с французским окном", "w": 4.72, "h": 2.83, "side": "L", "light": "day", "outside": "town", "floor": "oak", "note": "У окна в пол лёгкая штора. Мягкий свет проходит вдоль всей рабочей стены."},
-  {"n": 7, "name": "Студия на высоком этаже", "w": 5.05, "h": 2.86, "side": "R", "light": "soft", "outside": "high", "floor": "marble", "note": "Панорамное окно с тонкими тёмными рамами и светло-серые стены."},
-  {"n": 8, "name": "Студия с двумя окнами", "w": 4.86, "h": 2.86, "side": "L", "light": "morning", "outside": "town", "floor": "oak", "note": "Между двумя окнами оставлен обычный простенок. У каждого окна своя римская штора."},
-  {"n": 9, "name": "Студия в бывшей мастерской", "w": 5.03, "h": 3.05, "side": "R", "light": "day", "outside": "town", "floor": "marble", "note": "Высокий потолок и стальной переплёт большого окна. Белые стены дают ровный фон для фасадов."},
-  {"n": 10, "name": "Тёплая студия", "w": 4.74, "h": 2.8, "side": "R", "light": "afternoon", "outside": "town", "floor": "oak", "note": "Тёплые серо-бежевые стены и льняная портьера у окна в пол. Дневной свет падает справа."},
-  {"n": 11, "name": "Дом с видом в сад", "w": 4.68, "h": 2.78, "side": "L", "light": "day", "outside": "garden", "floor": "oak", "note": "Низкий деревянный подоконник и римская штора."},
-  {"n": 12, "name": "Комната с выходом на террасу", "w": 5.02, "h": 2.82, "side": "R", "light": "morning", "outside": "garden", "floor": "marble", "note": "Широкая раздвижная дверь выходит на деревянный настил. На полу читается свет от проёма."},
-  {"n": 13, "name": "Дом с деревянным потолком", "w": 4.68, "h": 2.91, "side": "L", "light": "soft", "outside": "garden", "floor": "oak", "note": "Светлые матовые стены, деревянная обшивка потолка и окно с глубоким откосом."},
-  {"n": 14, "name": "Дом с высокими окнами", "w": 4.9, "h": 3.08, "side": "R", "light": "day", "outside": "garden", "floor": "oak", "note": "Два высоких окна, открытые потолочные балки и стены с лёгким серо-зелёным оттенком."},
-  {"n": 15, "name": "Комната у веранды", "w": 4.94, "h": 2.76, "side": "L", "light": "afternoon", "outside": "garden", "floor": "oak", "note": "За стеклянной дверью видны стойки крытой веранды. Свет падает сбоку."}
+  finish(1,'Молочный и дуб','porcelain','chalk','oak','neutral','L'),
+  finish(2,'Жемчуг и мрамор','pearl','porcelain','marble','daylight','R'),
+  finish(3,'Светлый известняк','limestone','porcelain','oak','daylight','L'),
+  finish(4,'Льняная штукатурка','linen','chalk','marble','neutral','L'),
+  finish(5,'Светлый шалфей','sage','chalk','oak','neutral','R'),
+  finish(6,'Песок и дуб','sand','linen','oak','warm','L'),
+  finish(7,'Тёплый камень','mushroom','limestone','marble','neutral','R'),
+  finish(8,'Глина и лён','clay','linen','oak','neutral','L'),
+  finish(9,'Песочный мрамор','sand','porcelain','marble','warm','R'),
+  finish(10,'Олива и дуб','sageDark','limestone','oak','warm','L'),
+  finish(11,'Графит и дуб','graphite','pearl','oak','neutral','L'),
+  finish(12,'Сланец и мрамор','slate','chalk','marble','daylight','R'),
+  finish(13,'Тёмный базальт','basalt','graphite','oak','neutral','R'),
+  finish(14,'Олива и камень','sageDark','pearl','marble','daylight','L'),
+  finish(15,'Графит и песок','graphite','sand','marble','warm','L')
 ];
 
 export const roomById = id => rooms.find(room => room.n === id);
+
+export function wallCoating(settings,wall) {
+  const scheme=roomById(settings.renderRoomId);
+  const value=wallCoatings[settings.wallFinishes?.[wall]];
+  return value || (scheme && wallCoatings[wall==='a' ? scheme.back : scheme.sides]);
+}

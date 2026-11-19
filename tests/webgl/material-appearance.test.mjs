@@ -59,3 +59,23 @@ test('Appearance undo/redo and JSON restore do not edit production item or mater
   const changed=JSON.parse(JSON.stringify(doc));h.undo();assert.deepEqual(doc,before);h.redo();assert.deepEqual(doc,changed);
   assert.deepEqual(doc.scene.items,before.scene.items);assert.deepEqual(doc.scene.materialIdentities,before.scene.materialIdentities);
 });
+
+test('wardrobe fronts shade the actual edge and retain their blank material across display modes',()=>{
+  const item={module_type:'blank',item_id:'qa:door-left',blank_axis:'front',blank_edge_code:'1111',
+    width:397,height:2140,depth:18,x:0,z:0,rotation:0,body_variant_id:'board',front_variant_id:null};
+  const factory=new MeshFactory({state:{},room:{width:4200,depth:3200,height:2700},items:[item],
+    material:()=>({visual:{render_color:'#e5e5e5'}}),template:()=>null},()=>{});
+  try{
+    const group=factory.build(item);
+    const faces=group.children.filter(m=>m.userData.role==='front');
+    assert.ok(faces.some(m=>m.userData.blankEdge)&&faces.some(m=>!m.userData.blankEdge));
+    for(const mode of ['normal','facadesHidden','inspection','normal']){
+      factory.updateAppearance(group,item,mode);
+      for(const m of faces){
+        assert.equal(m.visible,mode!=='facadesHidden');assert.equal(m.material.userData.variantId,'board');
+        assert.ok(m.geometry.attributes.color);
+      }
+    }
+    factory.release(group);
+  }finally{factory.dispose();}
+});

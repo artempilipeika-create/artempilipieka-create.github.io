@@ -75,7 +75,10 @@ export function frameRenderView(app, onRender) {
   app.uiAbort.signal.addEventListener('abort',cancelFrame,{once:true});
   canvas.addEventListener('webglcontextlost',cancelFrame,{once:true});
   try {
-    if (scene.mode !== '3d') scene.fitRenderRoom();
+    if (scene.mode !== '3d') {
+      if(scene.renderRooms?.room)scene.fitRenderRoom();
+      else scene.fitKitchenForClient('threeQuarter');
+    }
     initial = scene.captureView();
     dialog.showModal();
     frame.prepend(canvas);

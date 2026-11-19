@@ -1,12 +1,13 @@
 import * as THREE from './vendor/three.module.js';
 import {FEATURES,featureBox,featureWall,socketCount,socketSurface} from './room-plan.mjs';
 import {SocketAssets,socketRotation,socketLayout} from './socket-asset.mjs';
-import {roomSettings} from './room-state.mjs';
+import {finishSettings} from './room-state.mjs';
+import {wallCoating} from './render-rooms/catalogue.mjs';
 import {allSegments,surfaceOffset,normals} from './wall-finishes.mjs';
 import {equipmentFallback,attachRoomEquipment,windowEquipment} from './room-equipment-mesh.mjs';
 const S=.001;
 export function measuredFeatures(scene){
-  const r=scene.adapter.room,entries=[];
+  const r=scene.adapter.room,entries=[],settings=finishSettings(scene.adapter.state?.displaySettings);
   const box=(parent,w,h,d,x,y,z,color)=>{const material=new THREE.MeshStandardMaterial({color,roughness:.8}),m=new THREE.Mesh(scene.factory.geometry,material);m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.userData.ownMaterial=true;parent.add(m);return m;};
   const badge=(parent,text,color,x,y,z)=>{
     const c=document.createElement('canvas');c.width=64;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='#fcfcf6';ctx.beginPath();ctx.arc(32,32,28,0,Math.PI*2);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#263b30';ctx.font='bold 29px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,32,33);
@@ -19,10 +20,16 @@ export function measuredFeatures(scene){
     const b=featureBox(f.kind==='window'?{...f,projection:0}:f,r,['shaft','column','window'].includes(f.kind)?0:8),extras=[];group.position.set(b.x*S,b.y*S,b.z*S);group.rotation.y=horizontal?0:Math.PI/2;
     if(f.kind==='window'){
       group.position.copy(new THREE.Vector3(b.x*S,b.y*S,b.z*S));group.rotation.y=socketRotation(f.wall);group.add(windowEquipment(f,scene.factory.geometry,scene.roomPalette));
+    }else if(f.kind==='door'){
+      // Keep the measured doorway clear. Its casing sits outside the opening.
+      const trim=30;
+      group.rotation.y=socketRotation(f.wall);
+      for(const x of [-(f.width+trim)/2,(f.width+trim)/2])box(group,trim,f.height,14,x,0,1,'#dfded7');
+      box(group,f.width+2*trim,trim,14,0,(f.height+trim)/2,1,'#dfded7');
     }else if(['radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)){
       const fallback=equipmentFallback(f.kind,scene.factory.geometry);fallback.scale.set(f.width*S,f.height*S,Math.max(1,f.projection)*S);group.add(fallback);attachRoomEquipment(scene,group,f,fallback);
     }else if(f.kind==='shaft'||f.kind==='column'){
-      const solid=box(group,f.width,f.height,f.projection,0,0,0,roomSettings(scene.adapter.state?.displaySettings).wallColor);solid.castShadow=true;solid.receiveShadow=true;solid.material.roughness=.92;
+      const solid=box(group,f.width,f.height,f.projection,0,0,0,wallCoating(settings,wall)?.color||settings.wallColor);solid.castShadow=true;solid.receiveShadow=true;solid.material.roughness=.92;
       if(f.elevation===0){const depth=f.projection,trimHeight=Math.min(65,f.height),y=-f.height/2+trimHeight/2;
         box(group,f.width,trimHeight,9,0,y,-sign*(depth/2+4),'#edece7');
         for(const x of[-f.width/2-4,f.width/2+4])box(group,9,trimHeight,depth,x,y,0,'#edece7');}

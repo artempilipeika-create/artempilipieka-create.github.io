@@ -1,3 +1,5 @@
+import {roomById} from './render-rooms/catalogue.mjs';
+
 // Project display settings only. Never import this into the production core.
 export const ROOM_PRESETS=Object.freeze({
   graphite:{label:'Графит',wallColor:'#878e90',floorMaterial:'oak',lightingPreset:'neutral'},
@@ -15,6 +17,14 @@ export function roomSettings(value={}){
   return {environmentPreset,wallColor:/^#[\da-f]{6}$/i.test(value.wallColor||'')?value.wallColor:base.wallColor,
     floorMaterial:Object.hasOwn(FLOOR_OPTIONS,value.floorMaterial)?value.floorMaterial:base.floorMaterial,
     lightingPreset:Object.hasOwn(LIGHT_OPTIONS,value.lightingPreset)?value.lightingPreset:base.lightingPreset};
+}
+// Old projects carry explicit floor/light choices. A new project follows its palette
+// until the manager chooses a specific surface or light.
+export function finishSettings(display={}){
+  const settings=roomSettings(display),scheme=roomById(display.renderRoomId);
+  return {...settings,renderRoomId:scheme?.n??null,wallFinishes:display.wallFinishes||{},
+    floorMaterial:scheme&&display.usePaletteFloor?scheme.floor:settings.floorMaterial,
+    lightingPreset:scheme&&display.usePaletteLight?scheme.lighting:settings.lightingPreset};
 }
 export const presetSettings=name=>roomSettings({environmentPreset:name});
 export const designedInterior=name=>['graphite','warm-oak','classic'].includes(name);

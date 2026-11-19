@@ -9,7 +9,7 @@ import {ApplianceAssets} from '../../backend/v2/cabinet_assets/planner/appliance
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 const room=()=>({width:4200,depth:3200,height:2700,setup_complete:true,survey:null,features:[]});
 const cabinet={item_id:'cabinet',module_type:'chest',name:'Шкаф',width:600,height:820,depth:510,x:0,z:0,rotation:0,base:'plinth',layout:'doors',drawers:0};
-test('all five measured objects fit every wall, survive serialization and reject out-of-room dimensions',()=>{
+test('all measured objects fit every wall, survive serialization and reject out-of-room dimensions',()=>{
   for(const kind of Object.keys(EQUIPMENT))for(const wall of 'abcd'){
     const r=room(),f={...newEquipment(r,kind,kind),wall};r.features=[f];assert.equal(roomError(r),'');
     assert.deepEqual(JSON.parse(JSON.stringify(r)).features,[f]);
@@ -20,12 +20,12 @@ test('all five measured objects fit every wall, survive serialization and reject
   const f=newEquipment(room(),'gas_cooker','c');assert.match(roomError({...room(),features:[{...f,elevation:1}]}),/на полу/);
   assert.match(roomError({...room(),features:[{...f,projection:0}]}),/глубину/);
 });
-test('window cuts only its selected wall; movable equipment never changes a wall opening',()=>{
-  for(const wall of 'abcd'){
-    const r=room(),f={...newEquipment(r,'window','w'),wall};r.features=[f];
+test('doors and windows cut only their measured walls; movable equipment preserves openings',()=>{
+  for(const opening of ['window','door'])for(const wall of 'abcd'){
+    const r=room(),f={...newEquipment(r,opening,'opening'),wall};r.features=[f];
     const length=['a','c'].includes(wall)?r.width:r.depth;
     assert.equal(wallPanels(r,wall).reduce((s,p)=>s+p.width*p.height,0),length*r.height-f.width*f.height);
-    const before=wallPanels(r,wall);for(const kind of Object.keys(EQUIPMENT).filter(k=>k!=='window'))r.features.push({...newEquipment(r,kind,kind),wall});
+    const before=wallPanels(r,wall);for(const kind of Object.keys(EQUIPMENT).filter(k=>!['window','door'].includes(k)))r.features.push({...newEquipment(r,kind,kind),wall});
     assert.deepEqual(wallPanels(r,wall),before);
   }
 });
@@ -52,5 +52,5 @@ test('Tripo placement faces into all four walls, keeps shared resources and reje
 test('room equipment is one undo step and does not modify furniture or native sources',()=>{
   let state={scene:{room:room(),items:[{...cabinet,bazis_file:'original.fr3d'}]}};const before=structuredClone(state),h=new History({snapshot:()=>structuredClone(state),restore:s=>state=structuredClone(s)});
   h.run('Equipment',()=>{for(const kind of Object.keys(EQUIPMENT))state.scene.room.features.push(newEquipment(state.scene.room,kind,kind));});const after=JSON.parse(JSON.stringify(state));assert.deepEqual(after.scene.items,before.scene.items);h.undo();assert.deepEqual(state,before);h.redo();assert.deepEqual(state,after);
-  const geometry=new THREE.BoxGeometry();for(const kind of Object.keys(EQUIPMENT).filter(k=>k!=='window')){const g=equipmentFallback(kind,geometry);assert.ok(g.children.length>0);g.traverse(o=>{if(o.material)o.material.dispose();if(o.geometry&&o.geometry!==geometry)o.geometry.dispose();});}geometry.dispose();
+  const geometry=new THREE.BoxGeometry();for(const kind of Object.keys(EQUIPMENT).filter(k=>!['window','door'].includes(k))){const g=equipmentFallback(kind,geometry);assert.ok(g.children.length>0);g.traverse(o=>{if(o.material)o.material.dispose();if(o.geometry&&o.geometry!==geometry)o.geometry.dispose();});}geometry.dispose();
 });

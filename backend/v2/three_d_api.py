@@ -399,6 +399,9 @@ class DisplaySettings(StrictModel):
     wallColor: str=Field(default='#878e90',pattern=r'^#[0-9a-fA-F]{6}$')
     floorMaterial: Literal['oak','marble','light-stone','concrete']='oak'
     lightingPreset: Literal['daylight','warm','neutral']='neutral'
+    usePaletteFloor: bool=False
+    usePaletteLight: bool=False
+    wallFinishes: dict[Literal['a','b','c','d'],Literal['porcelain','chalk','pearl','linen','limestone','sand','mushroom','sage','clay','sageDark','slate','graphite','basalt']]=Field(default_factory=dict,max_length=4)
     materialAppearance: dict[UUID,MaterialAppearance]=Field(default_factory=dict,max_length=500)
 
     @model_validator(mode='before')

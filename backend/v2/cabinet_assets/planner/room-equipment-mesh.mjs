@@ -39,21 +39,8 @@ export function windowEquipment(f,geometry,palette){
     m.userData.ownMaterial=true;m.receiveShadow=true;group.add(m);return m;
   };
   const t=Math.min(45,f.width/6,f.height/6),glass=box(f.width,f.height,6,0,0,0,'#ecf2f3');
-  // A sky gradient in the glazing remains luminous with a backlit frame.
-  // Local pane coordinates keep the horizon level on all four measured walls.
-  glass.material.roughness=.19;glass.material.envMapIntensity=.75;
-  glass.material.onBeforeCompile=shader=>{
-    shader.vertexShader='varying vec2 windowPoint;\n'+shader.vertexShader.replace('#include <project_vertex>',
-      '#include <project_vertex>\nwindowPoint=position.xy+0.5;');
-    shader.fragmentShader='varying vec2 windowPoint;\n'+shader.fragmentShader.replace('#include <emissivemap_fragment>',`
-      #include <emissivemap_fragment>
-      float sky=smoothstep(.04,1.,windowPoint.y);
-      vec3 viewColor=mix(vec3(.81,.84,.76),vec3(.43,.67,.83),sky);
-      float reflection=1.-smoothstep(.03,.15,abs(windowPoint.x-.42*windowPoint.y-.19));
-      totalEmissiveRadiance+=viewColor*(.55+.16*reflection);
-      diffuseColor.rgb*=.45;
-    `);
-  };
+  Object.assign(glass.material,{roughness:.14,envMapIntensity:.65,transparent:true,opacity:.19,depthWrite:false});
+  glass.material.color.set('#e9edec');
   const frame=palette?.frame??'#f5f4ec';
   for(const x of[-(f.width-t)/2,(f.width-t)/2,0])box(t,f.height,70,x,0,0,frame);
   for(const y of[-(f.height-t)/2,(f.height-t)/2])box(f.width,t,70,0,y,0,frame);

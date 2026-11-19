@@ -1,5 +1,7 @@
+import {WALLS} from './room-plan.mjs';
+import {wallCoatings,roomById,wallCoating} from './render-rooms/catalogue.mjs';
 import {RenderRoomPicker} from './render-room-picker.mjs';
-import {ROOM_PRESETS,FLOOR_OPTIONS,LIGHT_OPTIONS,roomSettings,presetSettings,selectInterior,designedInterior} from './room-state.mjs';
+import {ROOM_PRESETS,FLOOR_OPTIONS,LIGHT_OPTIONS,roomSettings,finishSettings,presetSettings,selectInterior,designedInterior} from './room-state.mjs';
 import {modulePriceBreakdown,kitchenPriceBreakdown} from './pricing.mjs';
 const el=(tag,text,id)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(id)e.id=id;return e;};
 const select=(id,title,options)=>{const label=el('label',title),s=el('select',undefined,id);s.setAttribute('aria-label',title);for(const [value,text]of Object.entries(options)){const o=el('option',text);o.value=value;s.append(o);}label.append(s);return label;};
@@ -16,13 +18,33 @@ export class RoomPricingUI{
     for(const name of ['studio','warm','showroom'])previous.append(choices.querySelector('option[value="'+name+'"]'));
     choices.append(previous);
     const wall=el('label','Оттенок стен'),input=el('input',undefined,'room-wall-color');input.type='color';input.setAttribute('aria-label','Цвет стен');wall.append(input);
-    controls.prepend(interiors,select('room-floor','Пол',FLOOR_OPTIONS));
-    controls.append(wall,select('room-lighting','Свет',LIGHT_OPTIONS));
+    controls.prepend(interiors,select('room-floor','Пол',{palette:'По варианту отделки',...FLOOR_OPTIONS}));
+    controls.append(wall,select('room-lighting','Свет',{palette:'По варианту отделки',...LIGHT_OPTIONS}));
     this.applyPreset=el('button','','room-preset-apply');this.applyPreset.type='button';this.applyPreset.hidden=true;
     const apply=next=>app.history.run('Интерьер комнаты',()=>{
       app.adapter.state.displaySettings={...app.adapter.state.displaySettings,...next};
       app.bridge.refresh();
     });
+    this.wallEditor=el('section',undefined,'room-wall-finishes');
+    const toggle=el('button','Отделка отдельных стен');
+    toggle.type='button';toggle.setAttribute('aria-controls','room-wall-options');
+    toggle.setAttribute('aria-expanded','false');
+    const options=el('div',undefined,'room-wall-options');options.hidden=true;
+    toggle.onclick=()=>{options.hidden=!options.hidden;toggle.setAttribute('aria-expanded',String(!options.hidden));};
+    this.wallEditor.append(toggle,options);
+    const face=select('room-wall-face','Стена',WALLS);
+    const coating=select('room-wall-coating','Покрытие',{palette:'По варианту отделки',
+      ...Object.fromEntries(Object.entries(wallCoatings).map(([id,f])=>[id,f.name+' · '+(f.surface==='paint'?'матовая краска':'штукатурка')]))});
+    this.face=face.querySelector('select');this.coating=coating.querySelector('select');
+    this.swatch=el('span');this.swatch.className='room-wall-swatch';this.swatch.ariaHidden='true';
+    options.append(face,coating,this.swatch);controls.insertBefore(this.wallEditor,measure);
+    this.face.onchange=()=>this.syncCoating();
+    this.coating.onchange=()=>{
+      const wallFinishes={...app.adapter.state.displaySettings?.wallFinishes};
+      if(this.coating.value==='palette')delete wallFinishes[this.face.value];
+      else wallFinishes[this.face.value]=this.coating.value;
+      apply({wallFinishes});
+    };
     this.roomPicker=new RenderRoomPicker(app,apply);controls.prepend(this.roomPicker.element);
     this.applyPreset.onclick=()=>{
       const current=roomSettings(app.adapter.state.displaySettings),preset=presetSettings(current.environmentPreset);
@@ -33,20 +55,41 @@ export class RoomPricingUI{
       document.getElementById(id).onchange=e=>{
         const value=e.target.value;
         const current=roomSettings(app.adapter.state.displaySettings);
-        apply(key==='environmentPreset'?selectInterior(current,value):roomSettings({...current,[key]:value}));
+        if(key==='environmentPreset')apply(selectInterior(current,value));
+        else if(app.adapter.state.displaySettings?.renderRoomId&&['floorMaterial','lightingPreset'].includes(key)){
+          const use=key==='floorMaterial'?'usePaletteFloor':'usePaletteLight';
+          apply(value==='palette'?{[use]:true}:{[use]:false,[key]:value});
+        }else apply({[key]:value});
       };
     }
     this.module=el('section',undefined,'module-cost');this.module.className='mf3d-control-card cost-card';document.getElementById('item-controls').append(this.module);
     this.kitchen=el('section',undefined,'kitchen-cost');this.kitchen.className='cost-card';document.getElementById('pane-items').append(this.kitchen);
     this.visualNotice=el('div',undefined,'room-visual-notice');this.visualNotice.setAttribute('role','status');document.querySelector('.mf3d-canvas-wrap').append(this.visualNotice);
   }
+  syncCoating(){
+    const display=this.app.adapter.state.displaySettings||{};
+    const finish=wallCoating(display,this.face.value);
+    this.coating.value=display.wallFinishes?.[this.face.value]||'palette';
+    const schemeFinish=wallCoating({...display,wallFinishes:{}},this.face.value);
+    this.coating.options[0].textContent=schemeFinish?'По варианту · '+schemeFinish.name:'По варианту отделки';
+    this.swatch.style.backgroundColor=finish?.color||roomSettings(display).wallColor;
+  }
   sync(){
-    const p=this.app,a=p.adapter,s=roomSettings(a.state.displaySettings);
+    const p=this.app,a=p.adapter,display=a.state.displaySettings||{},s=finishSettings(display);
     this.measureSummary.textContent=`${a.room.width} × ${a.room.depth} × ${a.room.height} мм · `+(a.room.setup_complete===true?'размеры заданы':a.room.setup_complete===false?'требуется замер':'замер не подтверждён');
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']])document.getElementById(id).value=s[key];
     const photographic=this.roomPicker.sync({...s,renderRoomId:a.state.displaySettings?.renderRoomId});
     for(const id of ['room-preset','room-wall-color'])document.getElementById(id).closest('label').hidden=photographic;
-    for(const option of document.getElementById('room-floor').options)if(!['oak','marble'].includes(option.value))option.hidden=photographic;
+    const scheme=roomById(s.renderRoomId);
+    for(const [id,follow,key,options] of [['room-floor','usePaletteFloor','floor',FLOOR_OPTIONS],['room-lighting','usePaletteLight','lighting',LIGHT_OPTIONS]]){
+      const field=document.getElementById(id);
+      field.options[0].hidden=!photographic;
+      if(scheme){
+        field.options[0].textContent='По варианту · '+options[scheme[key]];
+        if(display[follow])field.value='palette';
+      }
+    }
+    this.syncCoating();
     const preset=presetSettings(s.environmentPreset);
     const designed=designedInterior(s.environmentPreset);
     this.applyPreset.hidden=photographic||(designed?['wallColor']:['wallColor','floorMaterial','lightingPreset']).every(key=>s[key]===preset[key]);

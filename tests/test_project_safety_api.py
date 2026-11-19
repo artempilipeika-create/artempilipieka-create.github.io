@@ -24,7 +24,11 @@ def test_interior_and_floor_persist_independently_after_reopening(api,admin_user
 
 def test_render_room_and_floor_follow_project_saves(api,admin_user):
     body=payload('QA комната для рендера')
-    body['scene']['displaySettings']={'renderRoomId':15,'floorMaterial':'marble'}
+    body['scene']['room']={'width':4800,'depth':3600,'height':2670,'setup_complete':True,'features':[
+        {'id':'own-window','kind':'window','wall':'d','offset':480,'width':1100,'height':1350,'elevation':920},
+        {'id':'own-door','kind':'door','wall':'c','offset':150,'width':860,'height':2100,'elevation':0},
+    ]}
+    body['scene']['displaySettings']={'renderRoomId':15,'floorMaterial':'marble','wallFinishes':{'d':'graphite'},'usePaletteLight':True}
     created=api.post('/api/v2/3d-projects',json=body)
     assert created.status_code==201,created.text
     url='/api/v2/3d-projects/'+created.json()['project_id']
@@ -34,7 +38,10 @@ def test_render_room_and_floor_follow_project_saves(api,admin_user):
     change=api.patch(url,json={**body,'version':opened['version'],'request_id':str(uuid4())})
     assert change.status_code==200,change.text
     edited=api.get(url).json()['scene']
+    assert edited['room']==opened['scene']['room']
     assert edited['items']==opened['scene']['items']
+    assert edited['displaySettings']['wallFinishes']=={'d':'graphite'}
+    assert edited['displaySettings']['usePaletteLight'] is True
     assert (edited['displaySettings']['renderRoomId'],edited['displaySettings']['floorMaterial'])==(2,'marble')
 
 def test_idempotent_save_conflict_and_minimal_receipts(api,settings,admin_user):

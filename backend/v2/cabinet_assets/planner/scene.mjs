@@ -5,16 +5,16 @@ import {MeshFactory,CataloguePreviews} from './module-mesh.mjs';
 import {MM_TO_WORLD as S,bounds,elevation,tier,kitchenSettings,scopeMatches} from './furniture-core.mjs';
 import {RenderRooms} from './render-rooms.mjs';
 import {roomById} from './render-rooms/catalogue.mjs';
-import {roomSettings,LIGHTS} from './room-state.mjs';
-import {wallPanels,floorOutline,featureBox} from './room-plan.mjs';
+import {finishSettings,LIGHTS} from './room-state.mjs';
+import {floorOutline,featureBox} from './room-plan.mjs';
 import {isEquipment} from './equipment-placement.mjs';
 import {equipmentFallback,attachRoomEquipment,windowEquipment} from './room-equipment-mesh.mjs';
 import {socketRotation} from './socket-asset.mjs';
 import {measuredFeatures} from './room-mesh.mjs';
 import {clientFrame} from './client-camera.mjs';
-import {studioEnvironment,roomSurfaceTexture} from './studio-environment.mjs';
-import {roomDaylight,daylightSurface,studioBackdrop,studioGround,wallShell} from './room-daylight.mjs';
-import {interiorPalette,addWallInterior,interiorCeiling,marbleFloor} from './room-interiors.mjs';
+import {studioEnvironment} from './studio-environment.mjs';
+import {roomDaylight,daylightKey} from './room-daylight.mjs';
+import {buildRoomSurfaces,wallVisible} from './room-surfaces.mjs';
 import {WardrobeMotion,drawerKey} from './wardrobe-motion.mjs';
 import {StudioRender} from './studio-render.mjs';
 import {allSegments} from './wall-finishes.mjs';
@@ -33,10 +33,10 @@ export class PlannerScene{
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
     this.studioRender=new StudioRender(this.renderer);
     this.studioRender.maxDimension=this.quality.limit;
-    this.scene=new THREE.Scene();this.backdrop=studioBackdrop();this.planBackground=new THREE.Color();this.scene.background=this.backdrop;
+    this.scene=new THREE.Scene();this.planBackground=new THREE.Color();
     this.wardrobeMotion=new WardrobeMotion();this.reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
     this.hemi=new THREE.HemisphereLight('#fffdf8','#b9ab94',1.0);this.scene.add(this.hemi);
-    this.roomBounce=new THREE.DirectionalLight(0xfffcf3,.74);
+    this.roomBounce=new THREE.DirectionalLight(0xfffcf3,.38);
     this.roomBounce.position.set(0,-2.5,1.4);this.roomBounce.target.position.set(0,2.2,0);
     this.roomBounce.visible=false;this.scene.add(this.roomBounce,this.roomBounce.target);
     this.studioEnvironment=studioEnvironment(this.renderer);
@@ -59,6 +59,7 @@ export class PlannerScene{
     this.controls.addEventListener('start',()=>{this.orbitInput=true;});
     this.controls.addEventListener('end',()=>{if(!this.motionQuality)this.orbitInput=false;});
     this.factory=new MeshFactory(adapter,()=>{this.invalidate();this.onVisualChanged?.();});this.root=new THREE.Group();this.scene.add(this.root);
+    this.factory.maxAnisotropy=Math.min(12,this.renderer.capabilities.getMaxAnisotropy());
     this.guides=new THREE.Group();this.scene.add(this.guides);
     this.selectedBox=this.selectionBox();this.scene.add(this.selectedBox);
     this.hoverBox=this.selectionBox(true);this.scene.add(this.hoverBox);
@@ -66,10 +67,7 @@ export class PlannerScene{
     this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(canvas.parentElement);
     this.lost=e=>{e.preventDefault();if(!this.dead)this.onLost();};canvas.addEventListener('webglcontextlost',this.lost);
     this.wallFinishes=new WallFinishMesh(this);
-    this.renderRooms=new RenderRooms(this.scene,this.renderer,()=>{
-      this.renderer.shadowMap.needsUpdate=true;
-      this.canvas.dispatchEvent(new Event('mf-render-room',{bubbles:true}));this.invalidate();
-    });
+    this.renderRooms=new RenderRooms();
     this.resize();this.sync();this.fit('room');this.previews=new CataloguePreviews(this);
     this.factory.onAssetsReady=()=>{this.renderer.shadowMap.needsUpdate=true;this.previews?.refreshAppliances();};
   }
@@ -77,11 +75,9 @@ export class PlannerScene{
   render(){
     this.frame=0;if(this.dead)return;const started=performance.now();
     this.controls.update();this.camera.updateMatrixWorld();
-    const photo=this.renderRooms.show(this.mode==='3d',this.camera);
-    this.scene.background=this.mode==='3d'?(this.renderRooms.id?this.renderRooms.background:this.backdrop):this.planBackground;
-    this.scene.environment=photo?this.renderRooms.room.sky:this.studioEnvironment.texture;
-    this.roomBounce.visible=photo;
-    if(this.roomFloorBase)this.roomFloorBase.visible=!photo;
+    const paletteView=Boolean(this.renderRooms.id)&&this.mode==='3d';
+    this.scene.background=this.mode==='3d'?this.renderRooms.background:this.planBackground;
+    this.roomBounce.visible=paletteView;
     const moving=!this.exportSize&&this.wardrobeMotion.step(started,this.reducedMotion?.matches);
     if(!this.exportSize&&this.wardrobeMotion.dirty){
       this.wardrobeMotion.pose(this.entries,this.adapter.items);
@@ -91,19 +87,17 @@ export class PlannerScene{
     if(moving)this.invalidate();
     const r=this.adapter.room;
     this.wallFinishes?.visibility();
-    if(this.walls)this.walls.forEach(w=>{w.visible=!photo&&this.mode!=='top'&&(w.userData.axis==='x'?this.camera.position.x*w.userData.sign<r.width*S/2-.02:this.camera.position.z*w.userData.sign<r.depth*S/2-.02);});
-    for(const f of this.roomFeatures||[]){f.marker.visible=!this.client;for(const marker of f.plan.children)if(marker.isSprite)marker.visible=!this.client;f.group.visible=this.mode!=='top'&&(isEquipment(f.group.userData.kind)||this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02);
-      if(photo&&['window','door'].includes(f.group.userData.kind))f.group.visible=false;
+    if(this.walls)for(const wall of this.walls)wall.visible=this.mode!=='top'&&wallVisible(wall,r,this.camera.position);
+    for(const f of this.roomFeatures||[]){f.marker.visible=!this.client;for(const marker of f.plan.children)if(marker.isSprite)marker.visible=!this.client;f.group.visible=this.mode!=='top'&&((isEquipment(f.group.userData.kind)&&f.group.userData.kind!=='window')||this.camera.position[f.axis]*f.sign<(f.axis==='x'?r.width:r.depth)*S/2-.02);
       const host=f.group.userData.hostWall;if(host){const axis=['a','c'].includes(host)?'z':'x',sign=['a','d'].includes(host)?-1:1;f.group.visible&&=this.camera.position[axis]*sign<(axis==='x'?r.width:r.depth)*S/2-.02;}
       for(const m of f.extras)m.visible=f.group.visible;f.plan.visible=this.mode==='top'&&this.equipmentPreview?.id!==f.group.userData.roomFeatureId;}
     if(this.contacts)for(const m of this.contacts.children){const wall=m.userData.wall;const tierVisible=this.layer==='all'||m.userData.tier===this.layer;m.visible=tierVisible&&m.userData.contactItem!==this.preview?.userData.itemId&&(!wall||this.mode!=='top'&&this.camera.position[wall.axis]*wall.sign<(wall.axis==='x'?r.width:r.depth)*S/2-.02);}
     if(this.floorOutline)this.floorOutline.visible=this.mode==='top'&&!this.client;
     for(const line of this.countertopOutlines||[])line.visible=this.mode==='top'&&!this.client;
     if(this.grid){this.grid.visible=!this.client&&(this.mode==='top'||Boolean(this.preview));this.grid.material.opacity=this.mode==='top'?.14:.055;}
-    if(this.clientFloor)this.clientFloor.visible=!photo&&(this.mode==='3d'||Boolean(this.clientFloor.userData.tileSizeMm));
-    if(this.floorJoints)this.floorJoints.visible=!photo&&!this.clientFloor?.visible;
-    if(this.ceiling)this.ceiling.visible=!photo&&this.mode==='3d';
-    if(this.studioGround)this.studioGround.visible=!photo&&this.mode==='3d';
+    if(this.clientFloor)this.clientFloor.visible=(this.mode==='3d'||Boolean(this.clientFloor.userData.tileSizeMm));
+    if(this.floorJoints)this.floorJoints.visible=!this.clientFloor?.visible;
+    if(this.ceiling)this.ceiling.visible=this.mode==='3d'&&this.camera.position.y<r.height*S;
     if(this.mode==='3d')this.studioRender.render(this.scene,this.camera,!this.exportSize&&(this.motionQuality||moving||Boolean(this.preview)));else this.renderer.render(this.scene,this.camera);this.placeLabel();
     if(!this.exportSize&&this.qualityMode==='auto'&&this.quality.name==='high'&&!document.hidden&&this.renderBudget.record(performance.now()-started))this.applyQuality('auto',true);
   }
@@ -138,65 +132,22 @@ export class PlannerScene{
   }
   selectionColor(box,color){box.material.color.set(color);for(const child of box.children)child.material.color.set(color);}
   roomMesh(){
-    this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.surfaceTexture=null;this.floorTexture=null;this.clientFloor=null;this.floorJoints=null;this.roomRoot=new THREE.Group();this.scene.add(this.roomRoot);const r=this.adapter.room,settings=roomSettings(this.adapter.state?.displaySettings);
-    const daylight=roomDaylight(r,settings),palette=this.roomPalette=interiorPalette(settings);
-    const anisotropy=Math.min(10,this.renderer.capabilities.getMaxAnisotropy());
-    this.ceiling=null;
-    // Flush overlay backs share the wall plane. Bias only the visual room surface, never cabinet geometry.
-    const make=(w,h,d,x,y,z,color)=>{const material=new THREE.MeshStandardMaterial({color,roughness:.82});const m=new THREE.Mesh(this.factory.geometry,material);m.userData.ownMaterial=true;m.scale.set(w*S,h*S,d*S);m.position.set(x*S,y*S,z*S);m.receiveShadow=true;this.roomRoot.add(m);return m;};
-    const floor=make(r.width,20,r.depth,0,-12,0,settings.floorMaterial==='oak'?'#ffffff':settings.floorMaterial==='concrete'?'#b8b7b3':'#d9d8d1');this.walls=[];
-    this.roomFloorBase=floor;
-    floor.material.roughness=settings.floorMaterial==='oak'?.78:.84;daylightSurface(floor.material,daylight,'floor');
-    if(settings.floorMaterial==='marble'){
-      floor.material.color.set('#bab9b3');
-      this.clientFloor=marbleFloor(r,daylight,anisotropy,()=>this.invalidate());
-      this.roomRoot.add(this.clientFloor);
-    }else if(settings.floorMaterial!=='oak'){
-      this.surfaceTexture=roomSurfaceTexture(r.width*S,r.depth*S);
-      floor.material.bumpMap=this.surfaceTexture;floor.material.bumpScale=.0012;
-      floor.material.color.set(settings.floorMaterial==='concrete'?'#c7c4bd':'#ddd8cd');
-    }
-    if(settings.floorMaterial==='oak'){
-      const texture=new THREE.TextureLoader().load('/account/planner/materials/egger-h1180-st37.jpg',()=>this.invalidate(),undefined,()=>{if(this.floorTexture===texture){for(const m of [floor,this.clientFloor].filter(Boolean)){m.material.map=null;m.material.color.set('#bca585');m.material.needsUpdate=true;}this.invalidate();}});
-      texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(r.width/1300,r.depth/2800);texture.anisotropy=4;floor.material.map=texture;this.floorTexture=texture;
-      // Environment floor only: 190 x 1200 mm staggered boards, UVs in physical
-      // millimetres of the existing scan. One draw call, no new decor assets.
-      const positions=[],uvs=[],colors=[],width=190,length=1200;
-      for(let col=0,x=-r.width/2;x<r.width/2;col++,x+=width){
-        let row=0;for(let z=-r.depth/2-(col%3)*400;z<r.depth/2;row++,z+=length){
-          const x0=x+.5,x1=Math.min(x+width,r.width/2)-.5,z0=Math.max(z,-r.depth/2)+.5,z1=Math.min(z+length,r.depth/2)-.5;
-          const u=(col*431+row*193)%1100,v=(col*733+row*557)%1500,tint=.965+((col*7+row*3)%5)*.007;
-          for(const [px,pz]of [[x0,z0],[x0,z1],[x1,z1],[x0,z0],[x1,z1],[x1,z0]]){
-            positions.push(px*S,-.001,pz*S);uvs.push((px-x+u)/r.width,(pz-z+v)/r.depth);colors.push(tint,tint,tint);
-          }
-        }
-      }
-      const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.computeVertexNormals();
-      const material=new THREE.MeshStandardMaterial({color:'#e2dcd1',map:texture,roughness:.80,metalness:0,vertexColors:true});
-      daylightSurface(material,daylight,'floor');this.clientFloor=new THREE.Mesh(geometry,material);this.clientFloor.userData={ownMaterial:true,visualOnly:true,plankSizeMm:[width,length],scanSizeMm:[1300,2800]};this.clientFloor.receiveShadow=true;this.clientFloor.raycast=()=>{};this.roomRoot.add(this.clientFloor);
-    }
-    for(const wall of ['a','b','c','d']){
-      const horizontal=['a','c'].includes(wall),axis=horizontal?'z':'x',sign=['a','d'].includes(wall)?-1:1;
-      const length=horizontal?r.width:r.depth,edge=sign*(horizontal?r.depth:r.width)/2;
-      const panels=wallPanels(r,wall),material=new THREE.MeshStandardMaterial({color:settings.wallColor,roughness:.92,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:4});
-      daylightSurface(material,daylight,'wall');
-      const surface=new THREE.Mesh(wallShell(length,panels),material);
-      surface.rotation.y={a:0,b:-Math.PI/2,c:Math.PI,d:Math.PI/2}[wall];
-      surface.scale.x=['c','d'].includes(wall)?-1:1;surface.position[axis]=edge*S;
-      surface.userData={axis,sign,ownMaterial:true};surface.receiveShadow=true;this.roomRoot.add(surface);this.walls.push(surface);
-      if(palette)addWallInterior(surface,{style:settings.environmentPreset,wall,length,height:r.height,panels,
-        openings:(r.features||[]).filter(f=>f.wall===wall&&['window','door'].includes(f.kind))},palette,daylight,anisotropy,()=>this.invalidate());
-      for(const p of panels.filter(p=>p.elevation===0)){
-        const along=-length/2+p.offset+p.width/2;
-        const trim=horizontal?make(p.width,65,9,along,32.5,edge-sign*4,'#edece7'):make(9,65,p.width,edge-sign*4,32.5,along,'#edece7');
-        if(palette)trim.material.color.copy(palette.trim);
-        Object.assign(trim.userData,{axis,sign});this.walls.push(trim);
-      }
-    }
-    if(palette){this.ceiling=interiorCeiling(r,palette.ceiling);this.roomRoot.add(this.ceiling);}
-    // A seamless presentation ground continues beyond the measured room footprint.
-    // It has no raycast, collision, dimensions or export representation.
-    this.studioGround=studioGround(r.width*S,r.depth*S);this.roomRoot.add(this.studioGround);
+    this.disposeTree(this.roomRoot);
+    this.surfaces?.disposeMaps();
+    this.floorJoints=null;
+    const r=this.adapter.room,settings=finishSettings(this.adapter.state?.displaySettings);
+    const anisotropy=Math.min(12,this.renderer.capabilities.getMaxAnisotropy());
+    const surfaces=buildRoomSurfaces(r,settings,this.factory.geometry,anisotropy,()=>this.invalidate());
+    this.surfaces=surfaces;
+    this.roomRoot=surfaces.root;
+    this.scene.add(this.roomRoot);
+    this.renderRooms.surfacesReady=surfaces.ready;
+    this.walls=surfaces.walls;
+    this.roomFloorBase=surfaces.roomFloorBase;
+    this.clientFloor=surfaces.clientFloor;
+    this.floorTexture=surfaces.floorTexture;
+    this.roomPalette=surfaces.palette;
+    this.ceiling=surfaces.ceiling;
     this.roomFeatures=measuredFeatures(this);
     const outlinePoints=floorOutline(r).flatMap(e=>[e.x1*S,.016,e.z1*S,e.x2*S,.016,e.z2*S]);
     const outlineGeometry=new THREE.BufferGeometry();outlineGeometry.setAttribute('position',new THREE.Float32BufferAttribute(outlinePoints,3));
@@ -246,9 +197,8 @@ export class PlannerScene{
     if(this.selectionScope!=='kitchen'&&this.displayItemId!==this.adapter.selected?.item_id){this.displayMode='normal';this.displayItemId=this.adapter.selected?.item_id||null;}
     const display=this.adapter.state?.displaySettings||{};
     this.renderRooms.select(display.renderRoomId);
-    this.renderRooms.setFloor(display.floorMaterial);
     if(this.renderRooms.id)this.renderRooms.place(this.adapter.room,this.renderRotation());
-    const roomKey=JSON.stringify([this.adapter.room,this.adapter.state?.wallPanels,allSegments(this.adapter.state),roomSettings(display),this.renderRooms.id]);if(this.roomKey!==roomKey){this.roomKey=roomKey;this.roomMesh();this.setPresentation(document.body.classList.contains('planner-client'));}
+    const roomKey=JSON.stringify([this.adapter.room,this.adapter.state?.wallPanels,allSegments(this.adapter.state),finishSettings(display)]);if(this.roomKey!==roomKey){this.roomKey=roomKey;this.roomMesh();this.setPresentation(document.body.classList.contains('planner-client'));}
     for(const it of this.adapter.items){
       const signature=this.factory.signature(it);let entry=this.entries.get(it.item_id);
       if(!entry||entry.group.parent!==this.root||entry.signature!==signature){if(entry)this.factory.release(entry.group);entry={group:this.factory.build(it),signature};this.entries.set(it.item_id,entry);this.root.add(entry.group);this.renderer.shadowMap.needsUpdate=true;}
@@ -288,21 +238,21 @@ export class PlannerScene{
   }
   setPresentation(client){
     const viewChanged=this.client!==client;
-    this.client=client;const p=LIGHTS[roomSettings(this.adapter.state?.displaySettings).lightingPreset];
+    this.client=client;const p=LIGHTS[finishSettings(this.adapter.state?.displaySettings).lightingPreset];
     this.sun.color.set(p.key);this.sun.intensity=p.sun;
     const gallery=Boolean(this.renderRooms?.id);
-    this.fill.color.set(p.fill);this.fill.intensity=p.fillPower+(gallery?.28:0);
-    this.hemi.color.set(p.sky);this.hemi.groundColor.set(p.ground);this.hemi.intensity=p.hemi+(gallery?.36:0);
-    this.planBackground.set(roomSettings(this.adapter.state?.displaySettings).wallColor);
+    this.fill.color.set(p.fill);this.fill.intensity=p.fillPower+(gallery?.12:0);
+    this.hemi.color.set(p.sky);this.hemi.groundColor.set(p.ground);this.hemi.intensity=p.hemi+(gallery?.22:0);
+    this.planBackground.set(finishSettings(this.adapter.state?.displaySettings).wallColor);
     this.scene.fog=null;this.scene.environmentIntensity=p.environment;this.renderer.toneMappingExposure=p.exposure;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     if(viewChanged){this.perspective.fov=client?32:34;if(!client)this.perspective.clearViewOffset();this.perspective.updateProjectionMatrix();}
     // Cached key shadow plus depth-based ambient occlusion in the presentation pass.
-    this.sun.shadow.intensity=gallery?.40:.51;this.sun.shadow.radius=client?46:38;
+    this.sun.shadow.intensity=gallery?.53:.51;this.sun.shadow.radius=client?46:38;
     this.sun.shadow.normalBias=.0025;this.sun.shadow.bias=-.00015;this.renderer.shadowMap.type=THREE.PCFShadowMap;
-    this.factory.contactMaterials.floor.opacity=.14;this.factory.contactMaterials.wall.opacity=.09;
+    this.factory.contactMaterials.floor.opacity=gallery?.20:.14;this.factory.contactMaterials.wall.opacity=gallery?.13:.09;
     for(const m of Object.values(this.factory.contactMaterials))m.color.set(client?'#292b29':'#35443b');
-    if(this.floorTexture){this.floorTexture.anisotropy=client?Math.min(8,this.renderer.capabilities.getMaxAnisotropy()):4;if(this.floorTexture.image)this.floorTexture.needsUpdate=true;}
+    if(this.floorTexture){this.floorTexture.anisotropy=Math.min(12,this.renderer.capabilities.getMaxAnisotropy());if(this.floorTexture.image)this.floorTexture.needsUpdate=true;}
     this.fitShadow();this.highlight();this.renderer.shadowMap.needsUpdate=true;this.invalidate();
   }
   kitchenRotation(){
@@ -343,14 +293,8 @@ export class PlannerScene{
   fitShadow(){
     const box=this.cameraBox('kitchen'),center=box.getCenter(new THREE.Vector3());
     const rotation=-this.kitchenRotation()*Math.PI/180;
-    this.sun.target.position.copy(center);const daylight=roomDaylight(this.adapter.room,roomSettings(this.adapter.state?.displaySettings));
-    const key=daylight.measured?new THREE.Vector3(-4*daylight.direction.x+daylight.direction.y,5,-4*daylight.direction.y-daylight.direction.x)
-      :new THREE.Vector3(-4.2,5.4,4.1).applyAxisAngle(new THREE.Vector3(0,1,0),rotation);
-    const room=roomById(this.renderRooms?.id);
-    if(room){
-      const side=room.side==='L'?-1:1,low=['morning','afternoon'].includes(room.light);
-      key.set(side*7.3,low?4.4:6,3.4).applyAxisAngle(new THREE.Vector3(0,1,0),-this.renderRotation()*Math.PI/180);
-    }
+    this.sun.target.position.copy(center);const daylight=roomDaylight(this.adapter.room,finishSettings(this.adapter.state?.displaySettings));
+    const key=daylightKey(daylight,roomById(this.renderRooms?.id),rotation);
     this.sun.position.copy(center).add(key);
     this.fill.position.copy(center).add(new THREE.Vector3(3.1,2.5,4.8).applyAxisAngle(new THREE.Vector3(0,1,0),rotation));this.fill.target.position.copy(center);this.fill.target.updateMatrixWorld();
     const c=this.sun.shadow.camera;c.position.copy(this.sun.position);c.lookAt(center);c.updateMatrixWorld();
@@ -613,5 +557,5 @@ export class PlannerScene{
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;this.renderRooms?.dispose();clearTimeout(this.settleTimer);this.backdrop.dispose();this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.floorTexture?.dispose();this.surfaceTexture?.dispose();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;clearTimeout(this.settleTimer);this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.surfaces?.disposeMaps();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

@@ -187,3 +187,10 @@ body.mf3d-studio.mf-webgl{position:fixed;inset:0;display:flex;flex-direction:col
 #render-room-options>button{margin-top:8px}
 #render-room-picker [role=status]{margin:6px 0;font-size:12px}
 #planner-room-settings [hidden]{display:none}
+
+#planner-room-settings #room-wall-finishes {position:relative;border-block:1px solid #dce4dd;padding:7px 0}
+#planner-room-settings #room-wall-finishes>button {width:100%;padding:6px 9px;text-align:left;background:#f4f6f2;color:#344e41}
+#room-wall-finishes label {display:grid;gap:3px;margin-top:6px;min-width:0}
+#room-wall-finishes select {width:100%;min-width:0}
+#room-wall-finishes .room-wall-swatch {position:absolute;right:5px;top:10px;width:13px;height:13px;border:1px solid #92998f;border-radius:50%}
+#room-wall-options[hidden] {display:none}

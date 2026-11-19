@@ -1,4 +1,3 @@
-import {roomSettings} from './room-state.mjs';
 import {rooms, roomCategories, roomById} from './render-rooms/catalogue.mjs';
 
 function element(tag, text) {
@@ -14,7 +13,7 @@ export class RenderRoomPicker {
     this.element = element('section');
     this.element.id = 'render-room-picker';
     this.summary = element('button');
-    const caption = element('span', 'Комнаты для рендера');
+    const caption = element('span', 'Варианты отделки');
     this.roomName = element('small');
     caption.append(this.roomName);
     this.summary.append(caption);
@@ -31,7 +30,7 @@ export class RenderRoomPicker {
       this.summary.setAttribute('aria-expanded', String(!options.hidden));
     });
     this.element.append(this.summary, options);
-    const label = element('label', 'Категория комнаты');
+    const label = element('label', 'Группа отделок');
     this.category = element('select');
     roomCategories.forEach((group, index) => this.category.add(new Option(group, String(index))));
     label.append(this.category);
@@ -47,7 +46,7 @@ export class RenderRoomPicker {
       image.width = 380;
       image.height = 224;
       image.alt = '';
-      image.src = '/account/planner/render-rooms/' + String(item.n).padStart(2, '0') + '.webp';
+      image.src = '/account/planner/render-rooms/' + String(item.n).padStart(2, '0') + '.webp?v=measured-1';
       button.append(image, element('span', item.name));
       button.hidden = index >= 5;
       app.listen(button, 'click', () => this.choose(item));
@@ -56,7 +55,7 @@ export class RenderRoomPicker {
     });
     this.status = element('p');
     this.status.setAttribute('role', 'status');
-    this.reset = element('button', 'Вернуться в комнату проекта');
+    this.reset = element('button', 'Прежнее оформление проекта');
     this.reset.type = 'button';
     app.listen(this.reset, 'click', () => apply({renderRoomId: null}));
     this.actions = element('div');
@@ -85,13 +84,9 @@ export class RenderRoomPicker {
   async choose(item) {
     const {app} = this;
     const current = app.adapter.state.displaySettings || {};
-    const initialView = !app.scene?.renderRooms?.room || app.scene.mode !== '3d';
+    const initialView = app.scene?.mode !== '3d';
     if (current.renderRoomId !== item.n) {
-      const previousFloor = roomSettings(current).floorMaterial;
-      const floorMaterial = ['marble', 'oak'].includes(previousFloor) ? previousFloor : item.floor;
-      this.apply({renderRoomId: item.n, floorMaterial});
-    } else if (app.scene.renderRooms?.error) {
-      app.scene.renderRooms.select(item.n, true);
+      this.apply({renderRoomId:item.n});
     }
     if (!app.scene.renderRooms) return;
     try {
@@ -104,9 +99,7 @@ export class RenderRoomPicker {
   }
   syncStatus() {
     const room = roomById(this.app.adapter.state.displaySettings?.renderRoomId);
-    const viewer = this.app.scene?.renderRooms;
-    this.status.textContent = !room ? '' : viewer?.error ||
-      (this.app.scene?.isFallback ? 'Для просмотра комнаты нужен режим 3D.' : viewer?.room?.item.n === room.n ? '' : 'Загрузка комнаты…');
+    this.status.textContent = !room ? '' : (this.app.scene?.isFallback ? 'Для просмотра отделки нужен режим 3D.' : '');
     this.status.hidden = !this.status.textContent;
   }
   sync(settings) {
@@ -120,8 +113,8 @@ export class RenderRoomPicker {
     this.selected = room?.n || null;
     this.buttons.forEach((button, index) => button.setAttribute('aria-pressed', String(index + 1 === this.selected)));
     this.reset.hidden = !room;
-    this.actions.hidden = !room || !this.app.adapter.items.length || Boolean(this.app.scene?.isFallback);
-    const query = new URLSearchParams({room: String(this.selected || 1), floor: settings.floorMaterial === 'marble' ? 'marble' : 'oak'});
+    this.actions.hidden = !this.app.adapter.items.length || Boolean(this.app.scene?.isFallback);
+    const query = new URLSearchParams({room: String(this.selected || 1), floor: settings.floorMaterial});
     this.studio.href = '/render-rooms?' + query;
     this.syncStatus();
     return Boolean(room);

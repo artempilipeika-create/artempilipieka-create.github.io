@@ -9,7 +9,7 @@ export function viewForAspect(view, aspect){
   return {...view,aspect,zoom:view.zoom/expand,viewOffset:[x*view.aspect/(aspect*expand),y/expand]};
 }
 export function exportSize(choice,maxSize=4096){
-  const width=Math.min(choice==='large'?2560:1920,Math.max(960,maxSize));
+  const width=Math.min(choice==='4k'?3840:choice==='large'?2560:1920,Math.max(960,maxSize));
   return {width:Math.round(width),height:Math.round(width*9/16)};
 }
 export function fileName(name,view,branded,date=new Date()){

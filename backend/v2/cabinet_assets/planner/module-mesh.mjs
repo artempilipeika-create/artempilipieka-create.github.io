@@ -116,11 +116,13 @@ export class MeshFactory{
       const color=visual.color||(id?'#aeb2b0':finish.color);
       const glass=role==='glass'&&!ghost&&!inspection,counter=role==='counter'&&!ghost&&!inspection;
       const sheet=['body','front','back','shelf','plinth','counter'].includes(role),optics=surfaceFinish(visual,role,Boolean(id));
-      const Material=glass||counter||sheet&&!ghost&&!inspection&&optics.clearcoat>0?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
+      const brushed=['hinge','railSteel','slideSteel','lightProfile'].includes(role)&&!ghost&&!inspection;
+      const Material=glass||counter||brushed||sheet&&!ghost&&!inspection&&optics.clearcoat>0?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
         metalness:['handle','frame','hinge','shelfSupport','lightProfile','drawerMetal','railSteel','slideSteel'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
+      if(brushed){m.anisotropy=.4;m.anisotropyRotation=Math.PI/2;m.envMapIntensity=.94;}
       if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
       if(sheet&&!ghost&&!inspection){if(optics.roughness!==null)m.roughness=optics.roughness;if(m.isMeshPhysicalMaterial){m.clearcoat=optics.clearcoat;m.clearcoatRoughness=optics.clearcoatRoughness;m.ior=optics.ior;}m.envMapIntensity=.9;}
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color,surfaceFinish:visual.finish};
@@ -133,7 +135,7 @@ export class MeshFactory{
             if(!this.dead)this.invalidate();
           });
           tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=tx.wrapT=THREE.RepeatWrapping;tx.repeat.set(1000/visual.size[0],1000/visual.size[1]);
-          tx.rotation=rotation*Math.PI/180;tx.anisotropy=4;this.textures.set(txKey,tx);
+          tx.rotation=rotation*Math.PI/180;tx.anisotropy=this.maxAnisotropy||4;this.textures.set(txKey,tx);
         }
         const tx=this.textures.get(txKey);if(!tx.userData.failed){m.map=tx;m.color.set('#ffffff');}
         else {m.userData.visualSource=visual.color?'color':'fallback';m.userData.visualStatus=visual.color?'COLOR_ONLY':'MISSING_VISUAL';}
@@ -157,7 +159,12 @@ export class MeshFactory{
       if(m.userData.role==='door-pivot'){const visible=mode!=='facadesHidden';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(m.userData.role==='appliance-slot'){const visible=mode==='normal'||mode==='xray';if(m.visible!==visible){m.visible=visible;changed=true;}}
       if(!m.isMesh)return;
-      if(m.userData.blankEdge){m.visible=mode!=='xray';m.material=this.material('body',it.body_variant_id,Boolean(group.userData.ghost));return;}
+      if(m.userData.blankEdge){
+        const face=m.userData.role==='front';
+        m.visible=mode!=='xray'&&!(face&&mode==='facadesHidden');
+        m.material=this.material(m.userData.role,it.body_variant_id,Boolean(group.userData.ghost),face&&mode==='inspection');
+        return;
+      }
       if(m.userData.blankHook)return; // Edge tint belongs to the selected real panel edge, not a cabinet material.
       const role=m.userData.role,part=byKey.get(m.userData.part?.key);
       if(part)m.userData.part=part;
@@ -168,7 +175,7 @@ export class MeshFactory{
       const panel=(part?.type==='panel'||['body','back','front','shelf','glass','plinth','counter'].includes(role))&&!m.userData.joint&&!m.userData.article&&!m.userData.frontAccessory;
       const xray=mode==='xray'&&panel,inspection=xray||mode==='inspection'&&shell;
       this.xrayOutline(m,xray);
-      const id=part?(part.visual_variant_id??part.material.variant_id):role==='front'?it.front_variant_id:role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
+      const id=part?(part.visual_variant_id??part.material.variant_id):role==='front'?(it.module_type==='blank'?it.body_variant_id:it.front_variant_id):role==='shelf'?it.shelves?.find(s=>s.shelf_id===m.userData.shelfId)?.material_variant_id||it.body_variant_id:['body','back'].includes(role)?it.body_variant_id:null;
       let material=this.material(role==='leg'?'handle':role,id,Boolean(group.userData.ghost),inspection);
       if(m.userData.wasteColor){const key='waste:'+m.userData.wasteColor+':'+Boolean(group.userData.ghost);if(!this.materials.has(key)){const plastic=material.clone();plastic.color.set(m.userData.wasteColor);plastic.roughness=.65;plastic.metalness=.1;this.materials.set(key,plastic);}material=this.materials.get(key);}
       const light=!group.userData.ghost&&!inspection&&vitrineLightSpec(it,part);
@@ -321,7 +328,8 @@ export class MeshFactory{
       spans.push([a,b,D-60]);low=b;
     }
     if(low<H)spans.push([low,H,D]);
-    const material=it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'glass':'body';
+    const glass=it.blank_shelf&&!it.blank_shelf.startsWith('board/');
+    const material=glass?'glass':ax==='front'?'front':'body';
     const t=Math.min(it.blank_edge_thickness_mm??1,(it.blank_thickness_mm||18)/3);
     const tapeAxes=ax==='side'?[[2,1],[2,0],[1,0],[1,1]]:ax==='horizontal'?[[2,1],[2,0],[0,0],[0,1]]:[[1,0],[1,1],[0,0],[0,1]];
     const grain=ax==='side'||ax==='front'&&!/:drawer-\d+-\d+-face$/.test(it.item_id)?'y':'x';
@@ -329,7 +337,8 @@ export class MeshFactory{
     const partBox=(lo,hi,taped)=>{
       const [w,h,d]=hi.map((v,i)=>v-lo[i]),[x,y,z]=hi.map((v,i)=>(v+lo[i])/2);
       const uv={axis:grain,size:{x:W,y:H,z:D},offset:{x:x+widthOffset,y:y-H/2,z}};
-      const m=this.box(group,material,w,h,d,x,y,z,it.body_variant_id,ghost,taped?Math.min(.27,t/3):code==='0000'?.45:.10,uv);
+      const radius=taped?Math.min(.35,t/3):code==='0000'?(ax==='front'?.8:.45):.10;
+      const m=this.box(group,material,w,h,d,x,y,z,it.body_variant_id,ghost,radius,uv);
       if(m&&taped)Object.assign(m.userData,{blankEdge:true,visualOnly:true,edgeThicknessMm:t});
     };
     // Cut the display core back under its four PVC strips. Coplanar overlays

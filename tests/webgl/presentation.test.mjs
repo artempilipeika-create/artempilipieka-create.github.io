@@ -10,6 +10,8 @@ test('export size respects GPU limit and has 16:9 aspect',()=>{
   assert.equal(exportSize('large',2048).width,2048);
 });
 test('download filenames preserve Cyrillic without filesystem controls',()=>{
+  assert.deepEqual(exportSize('4k',8192),{width:3840,height:2160});
+  assert.deepEqual(exportSize('4k',2048),{width:2048,height:1152});
   const name=fileName('Кухня / <Анна>\n','Фасадный',true,new Date('2026-10-24T10:00:00Z'));
   assert.match(name,/Кухня Анна/);assert.match(name,/2026-10-24\.png$/);assert.doesNotMatch(name,/[<>:"/\\|?*\n]/);
   assert.match(fileName('Кухня','Общий',true,new Date('2026-10-23T22:30:00Z')),/2026-10-24\.png$/);

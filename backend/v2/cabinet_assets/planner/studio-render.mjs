@@ -95,7 +95,7 @@ export class StudioRender{
           }
           // Very slight optical falloff, applied in linear light before tone mapping.
           vec2 edge=vUv-.5;
-          rgb*=1.0-.075*dot(edge,edge);
+          if(d<.99999)rgb*=1.0-.075*dot(edge,edge);
           gl_FragColor=vec4(rgb,1.0);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -109,6 +109,9 @@ export class StudioRender{
     if(!this.available||r.getRenderTarget()||!camera.isPerspectiveCamera){r.render(scene,camera);return;}
     const size=r.getDrawingBufferSize(new THREE.Vector2()),scale=Math.min(1,this.maxDimension/Math.max(size.x,size.y));
     const w=Math.max(1,Math.round(size.x*scale)),h=Math.max(1,Math.round(size.y*scale));
+    // Keep the full-resolution target at 4K. Limit transient multisample storage on laptop GPUs.
+    const samples=Math.min(w*h>6000000?2:4,r.capabilities.maxSamples);
+    if(this.target.samples!==samples){this.target.dispose();this.target.samples=samples;}
     if(this.target.width!==w||this.target.height!==h)this.target.setSize(w,h);
     const u=this.material.uniforms;u.sampleCount.value=moving?5:16;u.texel.value.set(1/w,1/h);
     u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.projection.value.copy(camera.projectionMatrix);

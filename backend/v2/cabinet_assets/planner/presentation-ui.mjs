@@ -18,7 +18,7 @@ export class PresentationUI{
     this.format=this.select(controls,'Вид изображения',[['brand','Фирменный лист'],['clean','Чистая сцена']]);
     this.format.id='presentation-format';this.app.listen(this.format,'change',()=>this.refresh());
     this.view=this.select(controls,'Ракурс',Object.entries(VIEW_NAMES));this.view.id='presentation-view';this.app.listen(this.view,'change',()=>this.refresh());
-    this.size=this.select(controls,'Разрешение сцены',[['standard','1920 × 1080'],['large','2560 × 1440']]);this.app.listen(this.size,'change',()=>this.refresh());
+    this.size=this.select(controls,'Разрешение сцены',[['standard','1920 × 1080'],['large','2560 × 1440'],['4k','3840 × 2160 · 4К']]);this.app.listen(this.size,'change',()=>this.refresh());
     this.apply=this.button('Открыть этот ракурс на сцене',()=>this.applyView());controls.append(this.apply);
     const details=el('details',null,'presentation-saved');details.append(el('summary','Сохранённые ракурсы'));
     details.append(el('p','Сначала поверните сцену, затем запомните вид. До 6 ракурсов сохраняются вместе с проектом.'));
@@ -43,7 +43,7 @@ export class PresentationUI{
   release(){if(this.url)URL.revokeObjectURL(this.url);this.url=null;this.download.removeAttribute('href');this.download.setAttribute('aria-disabled','true');}
   async frameRoom(){
     const s=this.app.scene,id=s.renderRooms?.id;
-    if(!id||!this.app.adapter.items.length)return;
+    if(!s.renderRooms||!this.app.adapter.items.length)return;
     this.app.interaction.cancel();
     try{
       await s.renderRooms.waitReady();
@@ -52,7 +52,7 @@ export class PresentationUI{
   }
   open({clean=false,view=null}={}){
     const s=this.app.scene;if(s.isFallback||!this.app.adapter.items.length){this.app.adapter.status('Добавьте мебель и дождитесь готовности 3D-сцены.');return;}
-    this.app.interaction.cancel();this.current=view||s.captureView();s.stopOrbitInertia();if(clean)this.format.value='clean';this.quality.value=s.qualityMode||'auto';this.syncViews();this.view.value=s.renderRooms?.id?'current':'threeQuarter';
+    this.app.interaction.cancel();this.current=view||s.captureView();s.stopOrbitInertia();if(clean)this.format.value='clean';this.quality.value=s.qualityMode||'auto';this.syncViews();this.view.value=clean||s.renderRooms?.id?'current':'threeQuarter';
     this.dialog.showModal();this.refresh();
   }
   syncViews(){

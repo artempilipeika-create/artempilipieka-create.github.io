@@ -1,18 +1,25 @@
 import * as THREE from './vendor/three.module.js';
 import {featureBox} from './room-plan.mjs';
+import {roomById} from './render-rooms/catalogue.mjs';
 
 // Projected fill on the measured room surfaces only. Window openings, furniture
 // colours and shadow maps still come from the scene itself.
 export function roomDaylight(room,settings){
   const width=room.width/1000,depth=room.depth/1000;
   const window=(room.features||[]).filter(f=>f.kind==='window').sort((a,b)=>b.width*b.height-a.width*a.height)[0];
-  const wall=window?.wall??'d';
+  const wall=window?.wall??(roomById(settings.renderRoomId)?.side==='R'?'b':'d');
   const inward={a:[0,1],b:[-1,0],c:[0,-1],d:[1,0]}[wall]||[1,0];
   const b=window?featureBox({...window,projection:0},room):null;
-  const source=b?new THREE.Vector2(b.x/1000,b.z/1000):new THREE.Vector2(-width/2,depth*.37);
+  const source=b?new THREE.Vector2(b.x/1000,b.z/1000):new THREE.Vector2((wall==='b'?1:-1)*width/2,depth*.37);
   const lightWidth=window?Math.max(.55,window.width/1000):Math.max(1.9,depth*.74);
   return {source,direction:new THREE.Vector2(...inward),width:lightWidth,measured:Boolean(window),
     strength:settings.lightingPreset==='warm'?.40:settings.lightingPreset==='daylight'?.58:.47};
+}
+
+export function daylightKey(light,scheme,rotation=0){
+  if(light.measured)return new THREE.Vector3(-4*light.direction.x+light.direction.y,5,-4*light.direction.y-light.direction.x);
+  if(scheme)return new THREE.Vector3(scheme.side==='R'?4.4:-4.4,4.3,3.4);
+  return new THREE.Vector3(-4.2,5.4,4.1).applyAxisAngle(THREE.Object3D.DEFAULT_UP,rotation);
 }
 
 export function daylightSurface(material,light,kind){
@@ -42,7 +49,7 @@ export function daylightSurface(material,light,kind){
       vec3 shade=vec3(.85,.91,.96);
       vec3 lightTint=vec3(1.25,1.115,.98);
       vec3 surface=mix(shade,lightTint,daylight*mfLightPower*1.55);
-      surface*=mix(vec3(.91,.94,.98),vec3(1.28,1.18,1.075),beam*bounce);
+      surface*=mix(vec3(.91,.94,.98),vec3(1.28,1.18,1.075),beam*bounce*mix(.28,1.,mfWindow));
       diffuseColor.rgb*=surface * ${floor?'1.0':'contact'};
     `);
   };
@@ -73,35 +80,9 @@ export function wallShell(length,panels){
     if(!filled[x][y+1])quad(point(l,t,front),point(r,t,front),point(r,t,back),point(l,t,back));
   }
   const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.computeVertexNormals();return geometry;
-}
-
-export function studioBackdrop(){
-  const width=8,height=192,data=new Uint8Array(width*height*4);
-  const zenith=new THREE.Color('#afc4c5'),horizon=new THREE.Color('#edf0e8'),base=new THREE.Color('#d2d7cf'),c=new THREE.Color();
-  for(let y=0;y<height;y++){
-    const t=y/(height-1);
-    if(t<.45)c.copy(base).lerp(horizon,THREE.MathUtils.smoothstep(t,0,.45));
-    else c.copy(horizon).lerp(zenith,THREE.MathUtils.smoothstep(t,.45,1));
-    c.convertLinearToSRGB();
-    for(let x=0;x<width;x++)data.set([c.r*255,c.g*255,c.b*255,255],(y*width+x)*4);
-  }
-  const map=new THREE.DataTexture(data,width,height,THREE.RGBAFormat);
-  map.colorSpace=THREE.SRGBColorSpace;map.magFilter=map.minFilter=THREE.LinearFilter;map.needsUpdate=true;return map;
-}
-
-// Broad grounding under the cutaway. Nothing outside the room is pickable.
-export function studioGround(width,depth){
-  const material=new THREE.ShaderMaterial({
-    uniforms:{halfRoom:{value:new THREE.Vector2(width/2,depth/2)},nearTone:{value:new THREE.Color('#b0b9b1')},farTone:{value:new THREE.Color('#e7ece5')}},
-    vertexShader:'varying vec2 groundXZ; void main(){vec4 world=modelMatrix*vec4(position,1.);groundXZ=world.xz;gl_Position=projectionMatrix*viewMatrix*world;}',
-    fragmentShader:`varying vec2 groundXZ;uniform vec2 halfRoom;uniform vec3 nearTone,farTone;
-      void main(){vec2 edge=max(abs(groundXZ)-halfRoom,vec2(0.));float d=length(edge);
-        vec3 col=mix(nearTone,farTone,smoothstep(0.,2.65,d));
-        gl_FragColor=vec4(col*(.72+.28*smoothstep(0.,.28,d)),1.);
-        #include <colorspace_fragment>
-      }`
-  });
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(150,150),material);
-  m.rotation.x=-Math.PI/2;m.position.y=-.025;m.raycast=()=>{};m.userData={ownMaterial:true,visualOnly:true};return m;
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  const uv=[];
+  for(let i=0;i<vertices.length;i+=3)uv.push(vertices[i]+vertices[i+2],vertices[i+1]);
+  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  geometry.computeVertexNormals();return geometry;
 }
