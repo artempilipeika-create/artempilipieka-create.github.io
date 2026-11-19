@@ -42,7 +42,7 @@ test('AI panels use their assigned sheet and native blank source in project chec
   const report=(it,thickness=18)=>checkProject({room,items:[it]},{template:()=>null,material:id=>id==='board'?{name:'ЛДСП',thickness}:null});
   assert.ok(!report(panel).issues.some(i=>['material','native-source','opening-unknown'].includes(i.code)));
   assert.ok(report({...panel,body_variant_id:null}).issues.some(i=>i.code==='material'&&i.message.includes('Стойка')));
-  assert.ok(report(panel,16).issues.some(i=>i.code==='native-source'));
+  assert.ok(report(panel,16).issues.some(i=>i.code==='material-thickness'&&i.severity==='error'&&/16 мм.*18 мм/.test(i.message)));
 });
 test('polygon touching is not an intersection',()=>{
   const a=[{x:0,z:0},{x:10,z:0},{x:10,z:10},{x:0,z:10}],b=a.map(p=>({x:p.x+10,z:p.z}));assert.equal(polygonsOverlap(a,b),false);

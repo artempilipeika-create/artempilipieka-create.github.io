@@ -8,13 +8,16 @@ import {joinPlinths,splitPlinths} from './wardrobe-plinth-runs.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
+import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
 const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
-const geometry=i=>signature(['item_id','x','z','rotation','elevation_mm','width','height','depth','blank_axis','blank_length_mm','blank_width_mm','blank_thickness_mm','blank_binding'].map(k=>k==='blank_binding'&&i[k]?Object.fromEntries(Object.entries(i[k]).filter(([key])=>key!=='mounting')):i[k]??null));
+const geometry=i=>signature([i.item_id,i.blank_axis,
+ ...['x','z','rotation','elevation_mm','width','height','depth','blank_length_mm','blank_width_mm','blank_thickness_mm'].map(k=>i[k]==null?null:Number(i[k])),
+ i.blank_binding?Object.fromEntries(Object.entries(i.blank_binding).filter(([key])=>key!=='mounting')):null]);
 export const sameAssistantSpec=(a,b)=>signature(a)===signature(b);
 export const assistantStamp=adapter=>JSON.stringify([adapter.projectId,adapter.room,adapter.items]);
 
@@ -32,14 +35,29 @@ export function selectedCarcass(adapter){
  return {metadata,items};
 }
 
-export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,bodyMaterialId,backMaterialId,frontMaterialId,drawerMaterialId,resetSideEdges=false}={}){
+function validateWardrobePlan(adapter,next,items){
+ const owned=new Set(items.map(item=>item.item_id)),group=items[0].assistant_carcass.group_id;
+ const previous=new Map(adapter.items.map(item=>[item.item_id,item]));
+ for(const item of next){
+  const old=previous.get(item.item_id);
+  const checkMaterial=owned.has(item.item_id)||item.blank_plinth_run?.includes(group)||!old||
+   item.body_variant_id!==old.body_variant_id||item.blank_thickness_mm!==old.blank_thickness_mm;
+  const error=adapter.validate(item,next,{checkMaterial});
+  if(error)throw Error(item.name+': '+error);
+ }
+}
+
+export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,selectedMaterials={},bodyMaterialId,backMaterialId,frontMaterialId,drawerMaterialId,resetSideEdges=false}={}){
  if(!['create','update'].includes(plan.action)||!plan.spec)throw Error('Нет предложения для применения.');
  const current=plan.action==='update'?selectedCarcass(adapter):null;
  if(plan.action==='update'&&!current)throw Error('Выберите деталь корпуса, созданного помощником.');
  const spec=cleanSpec(plan.spec),prefix=current?.metadata.group_id||id;
  const first=current?.items.find(i=>i.item_id.endsWith(':left'));
  const built=buildCarcass(spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]||'Корпус ИИ',
-  drawerMaterialId:drawerMaterialId??current?.items.find(i=>drawerMember(i.item_id,'\\d+-side-left'))?.body_variant_id,bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:(first?.blank_thickness_mm===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),frontMaterialId:frontMaterialId??current?.items.find(i=>i.blank_axis==='front')?.body_variant_id,backMaterialId:backMaterialId??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
+  bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:selectedMaterials.body??(Number(first?.blank_thickness_mm)===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),
+  frontMaterialId:frontMaterialId??selectedMaterials.front??current?.items.find(i=>i.blank_axis==='front')?.body_variant_id,
+  drawerMaterialId:drawerMaterialId??(spec.thickness===18?bodyMaterialId??selectedMaterials.body:selectedMaterials.drawer)??current?.items.find(i=>drawerMember(i.item_id,'\\d+-side-left'))?.body_variant_id,
+  backMaterialId:backMaterialId??selectedMaterials.back??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
  if(spec.drawerBanks?.some(bank=>bank?.layout))spec.drawerBanks=built.spec.drawerBanks;
  if(built.drawerIssues.length)throw Error(built.drawerIssues.join(' '));
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
@@ -66,7 +84,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    if(old.blank_shelf===generated.blank_shelf&&(!item.item_id.endsWith(':back')||old.depth===generated.depth))item.name=old.name;
    if(!generated.blank_shelf)delete item.blank_shelf;
    if(!old.blank_shelf&&!generated.blank_shelf&&old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
-   if(old.blank_thickness_mm===generated.blank_thickness_mm)item.body_variant_id=old.body_variant_id;
+   item.body_variant_id=retainedBlankMaterial(generated,old,id=>adapter.material?.(id));
    if(!old.blank_shelf?.match(/^[468]\//)&&!generated.blank_shelf?.match(/^[468]\//)&&spec.edgePolicy===current.metadata.spec.edgePolicy){
     const oldSide=previousSides.find(i=>i.item_id===old.item_id);
     const recalculate=resetSideEdges&&[prefix+':left',prefix+':right'].includes(item.item_id);
@@ -88,7 +106,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  const oldIds=new Set(current?.items.map(i=>i.item_id)||[]);
  const next=resolveBlankBindings(joinPlinths([...splitPlinths(adapter.items).filter(i=>!oldIds.has(i.item_id)),...items]));
  if(next.length>100)throw Error('В проекте поддерживается до 100 деталей и модулей.');
- for(const i of next){const error=adapter.validate(i,next);if(error)throw Error(i.name+': '+error);}
+ validateWardrobePlan(adapter,next,items);
  for(const shelf of next.filter(i=>i.blank_shelf)){
   const mount=shelfSupportPlan(shelf,next);if(mount.error)throw Error(shelf.name+' · '+mount.error);
  }
@@ -118,7 +136,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
 
 export function applyAssistantPlan(adapter,pending){
  if(assistantStamp(adapter)!==pending.stamp)throw Error('Проект изменился после подготовки. Подготовьте предложение заново.');
- for(const i of pending.next){const error=adapter.validate(i,pending.next);if(error)throw Error(i.name+': '+error);}
+ validateWardrobePlan(adapter,pending.next,pending.items);
  adapter.state.items=structuredClone(pending.next);
  adapter.select(pending.items[0].item_id);adapter.notify();
 }

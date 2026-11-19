@@ -3,6 +3,7 @@ import {finishError,resolvedPanels,resolvedFinishError} from './wall-finishes.mj
 import {modulePriceBreakdown,kitchenPriceBreakdown} from './pricing.mjs';
 import {roomError,featureBox,FEATURES} from './room-plan.mjs';
 import {blankNativeItem} from './blanks-native.mjs';
+import {blankMaterialError} from './blanks-model.mjs';
 
 const rectangle=b=>[{x:b.minX,z:b.minZ},{x:b.maxX,z:b.minZ},{x:b.maxX,z:b.maxZ},{x:b.minX,z:b.maxZ}];
 const extent=points=>({minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z))});
@@ -98,7 +99,9 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
       missingPrices.length?'Не заполнены цены или правила расчёта: '+missingPrices.join(', ')+'.':'Проверьте наценку и правила расчёта.');
     if(blank){
       if(!missing.length&&!unresolved.length){
-        try{blankNativeItem(it,material(it.body_variant_id));}catch(error){add('native-source','warning',error.message,it);}
+        const stock=material(it.body_variant_id),mismatch=blankMaterialError(it,stock);
+        if(mismatch)add('material-thickness','error',mismatch,it);
+        else try{blankNativeItem(it,stock);}catch(error){add('native-source','warning',error.message,it);}
       }
     }else if(!it.bazis_id||!it.bazis_file||!it.bazis_sha256)add('native-source','warning','Нет исходного фрагмента: модуль не попадёт в автоматическую сборку БАЗИС.',it);
     else if(t?.id!==it.bazis_id||t.source_sha256!==it.bazis_sha256)add('native-identity','warning','Исходный фрагмент отличается от текущего каталога. Проверьте файл перед передачей в БАЗИС.',it);

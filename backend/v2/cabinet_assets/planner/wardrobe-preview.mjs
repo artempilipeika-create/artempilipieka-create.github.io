@@ -5,6 +5,8 @@ import {placeCarcass} from './carcass-model.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {nicheOpenings} from './wardrobe-niches.mjs';
 import {levelOf,rightBankOffset} from './wardrobe-layout.mjs';
+import {retainedBlankMaterial} from './blanks-model.mjs';
+import {drawerBottom} from './wardrobe-drawers.mjs';
 
 const element=(tag,text='')=>Object.assign(document.createElement(tag),{textContent:text});
 const groupId='questionnaire-preview';
@@ -50,8 +52,8 @@ export class WardrobePreview{
     const materials=new Map(built.parts.map(({key,item})=>{
       const old=prior.get(key);
       const role=item.blank_axis==='front'?'front':key==='back'?'back':key.startsWith('drawer-')&&built.spec.thickness!==18?'drawer':'body';
-      const preserve=old&&old.blank_thickness_mm===item.blank_thickness_mm&&!changed[role];
-      return [item.item_id,preserve?old.body_variant_id:item.body_variant_id];
+      const preserve=!changed[role]&&!drawerBottom(item.item_id)&&(!item.blank_shelf||item.blank_shelf.startsWith('board/'));
+      return [item.item_id,preserve?retainedBlankMaterial(item,old,id=>this.app.adapter.material(id)):item.body_variant_id];
     }));
     const stamp=JSON.stringify([built.spec,[...materials.values()]]);
     if(this.stamp!==stamp){

@@ -78,7 +78,10 @@ export class AssistantUI{
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent='';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
-  this.loadMaterial('front',c?.items.find(i=>i.blank_axis==='front')?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.front_variant_id);
+  const fronts=c?.items.filter(i=>i.blank_axis==='front'&&i.body_variant_id)||[];
+  const savedFront=fronts.find(i=>Number(this.app.bridge.material(i.body_variant_id)?.thickness)===18)
+    ??fronts.find(i=>!this.app.bridge.material(i.body_variant_id));
+  this.loadMaterial('front',savedFront?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.front_variant_id);
   this.loadMaterial('drawer',c?.items.find(i=>/:drawer-\d+-\d+-side-left$/.test(i.item_id))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
   this.loadMaterial('back',c?.items.find(i=>i.item_id.endsWith(':back'))?.body_variant_id||(s?.backThickness?null:CARCASS_BACK_MATERIAL_ID));
  }
@@ -471,7 +474,7 @@ export class AssistantUI{
   if(warning)warning.hidden=true;
   try{
    const options={idPrefix:'questionnaire-preview',bodyMaterialId:this.materials?.body?.variant_id,frontMaterialId:this.materials?.front?.variant_id,
-     backMaterialId:this.materials?.back?.variant_id,drawerMaterialId:this.materials?.drawer?.variant_id};
+     backMaterialId:this.materials?.back?.variant_id,drawerMaterialId:this.fields.thickness===18?undefined:this.materials?.drawer?.variant_id};
    let built,issue='';
    try{built=buildCarcass(this.spec(),options);}
    catch(error){
@@ -513,7 +516,8 @@ export class AssistantUI{
   this.remaining.textContent='Проверка ИИ запускается только по кнопке. Пробных обращений на сайте осталось: '+this.remainingCount+'.';
  }
  materialOptions(){
-  const options={resetSideEdges:this.resetSideEdges,defaultMaterial:this.materials?.body?.variant_id||null};
+  const selectedMaterials=Object.fromEntries(Object.entries(this.materials||{}).map(([role,m])=>[role,m?.variant_id]));
+  const options={resetSideEdges:this.resetSideEdges,selectedMaterials};
   if(this.mode.value==='create'||this.materialChanged.front||!this.current?.items.some(i=>i.blank_axis==='front'))options.frontMaterialId=this.materials?.front?.variant_id;
   if(this.mode.value==='create'||this.materialChanged.body)options.bodyMaterialId=this.materials?.body?.variant_id||null;
   if(this.fields.thickness!==18&&(this.mode.value==='create'||this.materialChanged.drawer||!this.current?.items.some(i=>/:drawer-\d+-\d+-side-left$/.test(i.item_id))))options.drawerMaterialId=this.materials?.drawer?.variant_id;

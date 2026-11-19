@@ -5,13 +5,70 @@ import {AssistantUI} from '../../backend/v2/cabinet_assets/planner/assistant-ui.
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {prepareAssistantPlan,applyAssistantPlan,selectedCarcass} from '../../backend/v2/cabinet_assets/planner/assistant-model.mjs';
 import {wardrobeSpec,sectionWidths,questionnaireMaterialError} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
+import {blankNativeItem} from '../../backend/v2/cabinet_assets/planner/blanks-native.mjs';
 const spec={recipe:'shelves',width:800,height:2200,depth:577,thickness:18,shelves:4,sections:1,back:true,elevation:0,shelfSetback:20,shelfGap:0,edgeThickness:1,edgePolicy:'front'};
-function setup(){
+function setup(catalogue={}){
  let state={room:{width:6000,depth:5000,height:2700,setup_complete:true},items:[]};
  const a=new StateAdapter({supportsElevation:true,state:()=>state,projectId:()=>null,selected:()=>state.items.find(i=>i.item_id===state.selected_item_id),
- select:id=>{state.selected_item_id=id;},refresh(){},material:()=>null,snapshot:()=>({scene:structuredClone(state)}),restore:s=>{state=structuredClone(s.scene);}});
+ select:id=>{state.selected_item_id=id;},refresh(){},material:id=>catalogue[id]??null,snapshot:()=>({scene:structuredClone(state)}),restore:s=>{state=structuredClone(s.scene);}});
  return {a,h:new History(a)};
 }
+const selectedStock={body:'71118e45-0ce3-534b-ad68-db1238304f18',front:'389a2abc-c6e2-5214-a41b-60054320d0ff',back:'fb7b270e-66ad-5411-affc-5717b1adf0d6'};
+const wardrobeCatalogue={
+ [selectedStock.body]:{name:'Белый 605 PO',thickness:18},
+ [selectedStock.front]:{name:'Персидский жемчуг 890 PO',thickness:'18.0'},
+ [selectedStock.back]:{name:'ЛХДФ белый',thickness:3},custom:{name:'Дуб',thickness:18}
+};
+const panelSpec=wardrobeSpec({...spec,sectionShelves:[1],clearLayout:true,shelfLevels:[[{mode:'floor',mm:720}]],front:{swing:'pair',offset:90,autoHinges:true},
+ drawerBanks:[{kind:'internal',layout:'equal',gap:15,faces:[{height:null},{height:null},{height:null}]}],
+ nicheSplits:[{section:0,level:1,kind:'shelves',columns:[{gaps:[null,null]},{gaps:[null,null]}]}]});
+test('an old door in a neighbouring wardrobe cannot veto a new wardrobe or silently change during apply',()=>{
+ const {a}=setup(wardrobeCatalogue),create={action:'create',spec:panelSpec};
+ applyAssistantPlan(a,prepareAssistantPlan(a,create,{id:'first',selectedMaterials:selectedStock}));
+ const old=a.items.find(i=>i.item_id==='first:door-right');old.body_variant_id=selectedStock.back;
+ const previous=structuredClone(a.items);
+ const p=prepareAssistantPlan(a,create,{id:'second',selectedMaterials:selectedStock});
+ applyAssistantPlan(a,p);
+ assert.deepEqual(a.items.filter(i=>i.assistant_carcass.group_id==='first'),previous);
+ assert.match(a.validate(old),/ЛХДФ белый.*3 мм.*18 мм/);
+ assert.throws(()=>blankNativeItem(old,wardrobeCatalogue[old.body_variant_id]),/18 мм/);
+ const fronts=a.items.filter(i=>i.assistant_carcass.group_id==='second'&&i.blank_axis==='front');
+ assert.equal(fronts.length,5);
+ for(const i of fronts)assert.equal(i.body_variant_id,selectedStock.front);
+});
+test('reopening repairs incompatible and missing assignments from the displayed role while retaining compatible manual decors',()=>{
+ const {a}=setup(wardrobeCatalogue);
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec:panelSpec},{id:'wardrobe',selectedMaterials:selectedStock}));
+ const part=key=>a.items.find(i=>i.item_id==='wardrobe:'+key);
+ part('door-right').body_variant_id=selectedStock.back;
+ part('door-left').body_variant_id='custom';
+ part('door-left').blank_thickness_mm='18';part('door-left').depth='18';
+ part('drawer-0-0-face').body_variant_id=null;
+ part('drawer-0-1-face').body_variant_id='custom';
+ part('drawer-0-0-side-left').body_variant_id=selectedStock.back;
+ part('back').body_variant_id=selectedStock.front;
+ a.restore(JSON.parse(JSON.stringify(a.snapshot())));
+ const p=prepareAssistantPlan(a,{action:'update',spec:panelSpec},{selectedMaterials:selectedStock});
+ assert.equal(part('door-right').body_variant_id,selectedStock.back);
+ applyAssistantPlan(a,p);
+ assert.equal(part('door-right').body_variant_id,selectedStock.front);
+ assert.equal(part('door-left').body_variant_id,'custom');
+ assert.equal(part('drawer-0-0-face').body_variant_id,selectedStock.front);
+ assert.equal(part('drawer-0-1-face').body_variant_id,'custom');
+ assert.equal(part('drawer-0-0-side-left').body_variant_id,selectedStock.body);
+ for(const key of ['back','drawer-0-0-bottom'])assert.equal(part(key).body_variant_id,selectedStock.back);
+ for(const i of a.items)assert.equal(Number(blankNativeItem(i,a.material(i.body_variant_id),a.items).material_assignments.body.thickness),i.blank_thickness_mm);
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:panelSpec},{selectedMaterials:selectedStock,frontMaterialId:selectedStock.front}));
+ assert.ok(a.items.filter(i=>i.blank_axis==='front').every(i=>i.body_variant_id===selectedStock.front));
+});
+test('a genuinely incompatible front fails by name and thickness both before and after preview',()=>{
+ const catalogue=structuredClone(wardrobeCatalogue),{a}=setup(catalogue),create={action:'create',spec:panelSpec};
+ assert.throws(()=>prepareAssistantPlan(a,create,{selectedMaterials:selectedStock,frontMaterialId:selectedStock.back}),/Фасад.*ЛХДФ белый.*3 мм.*18 мм/);
+ const pending=prepareAssistantPlan(a,create,{selectedMaterials:selectedStock});
+ catalogue[selectedStock.front].thickness=16;
+ assert.throws(()=>applyAssistantPlan(a,pending),/Фасад.*890 PO.*16 мм.*18 мм/);
+ assert.equal(a.items.length,0);
+});
 test('AI create, reload and edit use bound shelves and a single undo; retain materials, PVC and notes',()=>{
  const {a,h}=setup();let p=prepareAssistantPlan(a,{action:'create',spec});
  h.run('create',()=>applyAssistantPlan(a,p));assert.equal(a.items.length,9);assert.equal(selectedCarcass(a).metadata.spec.width,800);

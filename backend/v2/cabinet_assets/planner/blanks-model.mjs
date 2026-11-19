@@ -25,6 +25,19 @@ export function normalizeBlank(input={}){
   const elevation=Number(input.elevation_mm??input.elevation??0);
   return {length,width,thickness,axis,code,elevation,edgeThickness:Number(input.blank_edge_thickness_mm??1)};
 }
+export function blankMaterialError(item,material){
+  const actual=Number(material?.thickness),required=Number(item.blank_thickness_mm);
+  if(!(actual>0)||actual===required)return '';
+  const name=material.name||material.article;
+  return (name?'Материал «'+name+'»':'Назначенный материал')+' имеет толщину '+actual+' мм. Для детали требуется '+required+' мм.';
+}
+export function retainedBlankMaterial(item,previous,lookup){
+  const saved=previous?.body_variant_id,selected=item.body_variant_id;
+  if(!saved||saved===selected||Number(previous.blank_thickness_mm)!==Number(item.blank_thickness_mm))return selected;
+  // A compatible manual decor wins. Repair a known mismatch only with a verified replacement.
+  if(blankMaterialError(item,lookup(saved))&&selected&&Number(lookup(selected)?.thickness)===Number(item.blank_thickness_mm))return selected;
+  return saved;
+}
 export function validateBlank(input,room){
   const b=normalizeBlank(input);
   const minLength=drawerSide(input.item_id)?40:100;
