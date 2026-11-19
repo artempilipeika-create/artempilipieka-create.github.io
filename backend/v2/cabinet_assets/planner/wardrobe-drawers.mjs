@@ -77,7 +77,6 @@ export function drawerSections(s,widths,legacy=false){
   const internal=bank.kind==='internal';
   if(!internal&&bank.kind!=='external')throw Error('Выберите исполнение шуфляд.');
   const swing=s.front?.swing,n=i+1;
-  if(internal&&!swing)throw Error('Секция '+n+': для внутренних шуфляд выберите распашную дверь.');
   const spacerL=internal&&!rightBank&&i===0&&['left','pair'].includes(swing)?18:0;
   const spacerR=internal&&(!shared||rightBank)&&i===widths.length-1&&['right','pair'].includes(swing)?18:0;
   const mountWidth=clear-spacerL-spacerR;

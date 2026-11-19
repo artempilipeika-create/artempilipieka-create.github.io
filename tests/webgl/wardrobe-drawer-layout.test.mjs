@@ -19,7 +19,8 @@ test('both sides calculated independently for pairs, right swing, outer fronts a
  }
  const s=spec(null,[bank('external')]);
  assert.equal(drawerSections(s,[564])[0].faces[0].width,597);
- assert.throws(()=>drawerSections(spec(null,[bank()]),[564]),/дверь/);
+ const open=drawerSections(spec(null,[bank()]),[564])[0];
+ assert.deepEqual([open.spacerL,open.spacerR,open.mountWidth,open.faces[0].width],[0,0,564,561]);
 });
 test('range boundaries, fitted remainder, multiple unequal drawer faces and clear shelf area',()=>{
  for(const [d,l] of [[255,250],[450,400],[450.5,400],[455,450],[600,550],[601,550],[605,600]])assert.equal(railForOpening(d).length,l);
@@ -96,7 +97,7 @@ test('shelves below and above a raised bank use the actual free opening',()=>{
  assert.throws(()=>buildCarcass({...spec,drawerBanks:[{...row,bottomOffset:80}]}),/полка|полок/);
 });
 
-import {drawerControls} from '../../backend/v2/cabinet_assets/planner/wardrobe-interior-ui.mjs';
+import {drawerControls,installBank} from '../../backend/v2/cabinet_assets/planner/wardrobe-interior-ui.mjs';
 test('typing numeric fields updates the bank before moving to another step or saving',()=>{
  const fieldsByLabel=new Map();
  const node=()=>({append(){},closest(){return null;},setAttribute(key,label){if(key==='aria-label')fieldsByLabel.set(label,this);},
@@ -199,4 +200,33 @@ test('reopening an earlier fitted wardrobe keeps the stored reveal until applyin
  const next=buildCarcass(wardrobeSpec(orig)).drawerBanks[0].faces;
  assert.equal(next[0].height,170.5);
  assert.equal(orig.drawerBanks[0].coverFixing,undefined);
+});
+
+
+test('install inset drawers in the selected upper 1073 mm opening before choosing any doors',()=>{
+ const f={width:1000,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[1],back:true,clearLayout:true,drawerFixing:'cam_dowel'};
+ const ui={fields:f,output:{},previewBuilt:buildCarcass(wardrobeSpec(f)),changed(){}};
+ installBank(ui,0,1);
+ assert.equal(ui.output.textContent,undefined);
+ const spec=wardrobeSpec(ui.fields);
+ assert.equal(spec.front,undefined);assert.deepEqual(spec.sectionShelves,[2]);
+ assert.deepEqual(spec.shelfChoices,[['board/cam_dowel','board/cam_dowel']]);
+ const build=buildCarcass(spec),bank=build.drawerBanks[3];
+ assert.equal(bank.internal,true);assert.deepEqual([bank.spacerL,bank.spacerR],[0,0]);
+ assert.equal(build.parts.find(p=>p.key==='shelf-0-0').item.elevation_mm,1091);
+ assert.equal(bank.base,1109);assert.equal(bank.faces.length,3);
+ assert.equal(bank.faces[0].width,961);
+ const top=bank.faces.at(-1),cover=build.parts.find(p=>p.key==='shelf-0-1').item.elevation_mm;
+ assert.ok(Math.abs(cover-top.y-top.height-30)<.001);
+});
+
+
+test('overlay fronts can be chosen before adding a bank that fits only at overlay depth',()=>{
+ const fields={width:600,height:1800,depth:260,thickness:18,sections:1,sectionShelves:[1],back:true,clearLayout:true,drawerFixing:'cam_dowel'};
+ const ui={fields,output:{},changed(){}};
+ installBank(ui,0,0);
+ assert.match(ui.output.textContent,/255 мм/);assert.equal(ui.fields.drawerBanks,undefined);
+ installBank(ui,0,0,null,false,'external');
+ const bank=buildCarcass(wardrobeSpec(ui.fields)).drawerBanks[0];
+ assert.equal(bank.internal,false);assert.equal(bank.rail.length,250);
 });

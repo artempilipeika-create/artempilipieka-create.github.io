@@ -189,3 +189,13 @@
 #planner-assistant-dialog .rod-warning{padding:8px 10px;border-left:3px solid #ac731d;background:#fff3d9;color:#604219}
 #planner-assistant-dialog .rod-message:empty{display:none}
 #planner-assistant-dialog .wardrobe-figure [data-rod-id]{cursor:ns-resize;touch-action:none}
+
+#planner-assistant-dialog .shelf-count-options{display:grid;grid-template-columns:repeat(5,minmax(30px,1fr)) minmax(58px,1.3fr);gap:6px}
+#planner-assistant-dialog .shelf-count-options :is(button,select){width:100%;min-width:0;min-height:40px;padding:6px;margin:0;text-align:center;font-variant-numeric:tabular-nums}
+#planner-assistant-dialog .shelf-count-options button[aria-pressed=true],#planner-assistant-dialog .shelf-count-options select:has(option:checked:not([value=""])){background:#236144;color:white;border-color:#236144}
+#planner-assistant-dialog .shelf-opening-list{display:grid;gap:5px}
+#planner-assistant-dialog .shelf-opening-list button{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:8px 12px;margin:0;text-align:left}
+#planner-assistant-dialog .shelf-opening-list strong{white-space:nowrap;font-variant-numeric:tabular-nums;color:#23543f}
+#planner-assistant-dialog .shelf-division .section-count{margin-block:12px}
+#planner-assistant-dialog .assistant-fields .opening-context{color:#205c85;font-size:15px;font-weight:600}
+#planner-assistant-dialog [data-count-feedback]{color:#8a4029}

@@ -3,6 +3,7 @@ import {nicheOpenings,nicheSlot,trimBanks,mmText,coverClearance,frontEdgeGap,pre
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {footHeight} from './plinth-options.mjs';
 
+const drawerExecutions=[['internal','Внутренние · вкладные фасады'],['external','Наружные фасады']];
 const el=(tag,text)=>{const node=document.createElement(tag);if(text!=null)node.textContent=text;return node;};
 function action(text,fn){
  const b=el('button',text);b.type='button';b.onclick=fn;return b;
@@ -51,8 +52,8 @@ function legacyControls(ui,parent,section){
    bank=value;banks[nicheSlot(section,0)]=value;fields.drawerBanks=banks;ui.changed();
    if(finished)ui.render();
  }
- if(!bank){box.append(action('Добавить шуфляды',()=>update({kind:fields.front?'internal':'external',faces:[{height:197}]})));return;}
- ui.select(box,'Исполнение шуфляд',[['internal','Внутренние за дверью'],['external','Наружные фасады']],bank.kind,value=>update({...bank,kind:value}));
+ if(!bank){box.append(action('Добавить шуфляды',()=>update({kind:'internal',faces:[{height:197}]})));return;}
+ ui.select(box,'Исполнение шуфляд',drawerExecutions,bank.kind,value=>update({...bank,kind:value}));
  millimetres(box,bank.kind==='internal'?'От верха дна шкафа до низа блока, мм':'Подъём блока от низа корпуса, мм',bank.bottomOffset??0,(n,finished)=>{
    if(n!=null)update({...bank,bottomOffset:n},finished);
  },{max:3000,refreshFields:true});
@@ -122,7 +123,7 @@ function freezeShelves(fields,section,built){
  }));
 }
 
-export function installBank(ui,section,level,template,convert=false){
+export function installBank(ui,section,level,template,convert=false,kind=template?.kind??'internal'){
  try{
    const f=structuredClone(ui.fields),banks=trimBanks(f.drawerBanks??[],f.sections),slot=nicheSlot(section,level);
    const legacy=banks[nicheSlot(section,0)]&&!banks[nicheSlot(section,0)].layout;
@@ -138,7 +139,7 @@ export function installBank(ui,section,level,template,convert=false){
      f.shelfLevels[section].push({mode:'floor',mm:y+floor});
      if(f.shelfChoices){f.shelfChoices[section]??=[];f.shelfChoices[section].push('board/95388');}
    }
-   const opening=nicheOpenings(f,section)[level],kind=f.front?'internal':'external';
+   const opening=nicheOpenings(f,section)[level];
    const inside=kind==='internal',gap=inside?30:3;
    const usable=(inside?opening.top-opening.bottom-coverClearance-frontEdgeGap:opening.overlayTop-opening.overlayBottom-3);
    const count=Math.max(1,Math.min(3,Math.floor((usable+gap)/(100+gap))));
@@ -148,7 +149,10 @@ export function installBank(ui,section,level,template,convert=false){
    const prepared=wardrobeSpec(f);
    f.sectionShelves=prepared.sectionShelves;f.shelfChoices=prepared.shelfChoices;f.shelfLevels=prepared.shelfLevels;f.drawerBanks=prepared.drawerBanks;
    ui.fields=f;ui.activeSection=section;ui.nicheIndex=level;ui.interior='drawer';ui.changed(true);
- }catch(e){ui.output.textContent=e.message;}
+ }catch(e){
+   if(ui.interior==='cell'){ui.interior='drawer';ui.render();}
+   ui.output.textContent=e.message;
+ }
 }
 
 function copyControls(ui,box,section,level){
@@ -179,7 +183,9 @@ export function drawerControls(ui,parent,section){
  if(shared)ui.select(box,'Блок шуфляд',[['0','Левый блок'],['1','Правый блок']],ui.column??0,v=>{ui.column=Number(v);ui.render();});
  let bank=f.drawerBanks?.[slot];
  if(!bank){
-   const add=action('Добавить шуфляды',()=>installBank(ui,section,level));add.dataset.addBank='';box.append(add);return;
+   let kind='internal';
+   ui.select(box,'Исполнение шуфляд',drawerExecutions,kind,value=>{kind=value;});
+   const add=action('Добавить шуфляды',()=>installBank(ui,section,level,null,false,kind));add.dataset.addBank='';box.append(add);return;
  }
  function set(next,finished=true){
    if(bank?.kind==='internal'&&next?.kind!=='internal'&&f.thickness!==18&&f.shelfChoices?.[section]){
@@ -197,7 +203,7 @@ export function drawerControls(ui,parent,section){
    ui.changed(finished);
  }
  const built=ui.previewBuilt?.drawerBanks?.[slot];
- const execution=ui.select(box,'Исполнение шуфляд',[['internal','Внутренние за дверью'],['external','Наружные фасады']],bank.kind,value=>{
+ const execution=ui.select(box,'Исполнение шуфляд',drawerExecutions,bank.kind,value=>{
    const next={...bank,kind:value};
    if(value==='external')delete next.coverFixing;
    set(next);
@@ -206,7 +212,7 @@ export function drawerControls(ui,parent,section){
  if(bank.kind==='internal'){
    box.append(el('small','Полки у шуфляд · '+(f.drawerFixing==='confirmat'?'конфирматы':'эксцентрик + шкант')));
    box.append(el('small','От верха верхнего фасада до низа полки — 30 мм.'));
-   if(!f.front)box.append(action('Выбрать распашные двери',()=>ui.go(3)));
+   if(!f.front)box.append(el('small','В открытом шкафу направляющие крепятся к стойкам. При выборе двери проставка появится со стороны петель.'));
  }
  const mode=el('div');mode.className='wardrobe-subsections';
  for(const [key,label] of [['equal','Одинаковые'],['manual','Разные']]){

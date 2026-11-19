@@ -248,6 +248,25 @@ def test_aks_drawer_control_spec_roundtrip_and_hardware():
         with pytest.raises(ValidationError):
             CarcassDesign.model_validate({**spec,'drawerBanks':[bank]})
 
+def test_inset_drawers_in_an_open_cabinet_keep_faces_clearances_and_direct_rail_mounting(api, admin_user):
+    from backend.v2.assistant_model import CarcassDesign
+    spec = {**SPEC, 'width': 1000, 'height': 2200, 'sectionShelves': [1], 'shelves': 1,
+            'clearLayout': True, 'drawerFixing': 'cam_dowel',
+            'shelfChoices': [['board/cam_dowel']], 'drawerBanks': [
+                {'kind': 'internal', 'layout': 'equal', 'height': 1073, 'bottomOffset': 0,
+                 'coverFixing': 'cam_dowel', 'gap': 12, 'faces': [{'height': None}] * 3}]}
+    assert CarcassDesign.model_validate(spec).front is None
+    scene = generated_scene(spec)
+    created = api.post('/api/v2/3d-projects', json={'name': 'QA · вкладные шуфляды', 'scene': scene})
+    assert created.status_code == 201, created.text
+    saved = api.get('/api/v2/3d-projects/' + created.json()['project_id']).json()['scene']
+    parts = {p['item_id'].split(':')[-1]: p for p in saved['items']}
+    assert not any(k.startswith('door-') or 'spacer-' in k for k in parts)
+    assert all(parts[f'drawer-0-{i}-face']['width'] == 961 for i in range(3))
+    upper = parts['drawer-0-2-face']
+    assert parts['shelf-0-0']['elevation_mm'] - upper['elevation_mm'] - upper['height'] == pytest.approx(30)
+
+
 def test_saved_wardrobe_drawers_reopen_with_exact_board_identity(api,admin_user):
     spec={**SPEC,'width':600,'depth':600,'height':1800,'shelves':1,'sectionShelves':[1],
           'shelfLevels':[[{'mode':'gap','mm':250}]],'front':{'swing':'left','offset':130},

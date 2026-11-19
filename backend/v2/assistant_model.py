@@ -396,8 +396,6 @@ class CarcassDesign(CarcassSpec):
                     if (bank.shelvesBelow or 0)>(self.sectionShelves[i] if self.sectionShelves and i<len(self.sectionShelves) else self.shelves):
                         raise ValueError('Полок под блоком больше, чем полок в секции.')
                     inside=bank.kind=='internal'
-                    if inside and not self.front:
-                        raise ValueError(f'Секция {i+1}: выберите распашную дверь.')
                     swing=self.front.swing if self.front else None
                     left=18 if inside and not right_bank and i==0 and swing in ('left','pair') else 0
                     right=18 if inside and (not shared or right_bank) and i==self.sections-1 and swing in ('right','pair') else 0

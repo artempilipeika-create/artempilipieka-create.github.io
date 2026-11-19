@@ -7,6 +7,13 @@ export {nicheSlot};
 export const mm=value=>Math.round(value*1000)/1000;
 export const mmText=value=>value.toLocaleString('ru-RU',{maximumFractionDigits:3});
 
+export function openingLabel(level,count){
+  if(!count)return 'Весь проём';
+  if(level===0)return 'Под полкой 1';
+  if(level===count)return 'Над полкой '+count;
+  return 'Между полками '+level+' и '+(level+1);
+}
+
 export function nicheOpenings(spec,section){
   const count=spec.sectionShelves?.[section]??spec.shelves;
   const thick=Array.from({length:count},(_,i)=>choice(spec.shelfChoices?.[section]?.[i]??defaultShelf,spec.thickness).thickness);

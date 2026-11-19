@@ -1,8 +1,8 @@
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
 import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
-import {setClearWidth} from './wardrobe-cells.mjs';
-import {nicheSlot,sectionOf,levelOf,splitAt} from './wardrobe-layout.mjs';
+import {keysAfterInsertion,setClearWidth,setSectionShelfCount} from './wardrobe-cells.mjs';
+import {nicheSlot,splitAt} from './wardrobe-layout.mjs';
 import {gapEditor,splitControls} from './wardrobe-zones-ui.mjs';
 import {wardrobeDrawing,drawingTitles} from './wardrobe-drawing.mjs';
 import {footHeight,plinthFoot,plinthPanel,plinthClearanceMm} from './plinth-options.mjs';
@@ -12,7 +12,7 @@ import {primeHinge} from './wardrobe-fronts.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
-import {prepareDrawerCovers,nicheOpenings} from './wardrobe-niches.mjs';
+import {prepareDrawerCovers,nicheOpenings,openingLabel} from './wardrobe-niches.mjs';
 import {drawerControls,updateNicheResult} from './wardrobe-interior-ui.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
@@ -178,10 +178,10 @@ export class AssistantUI{
   }this.form.append(nav);
  }
  render(){
-  const editorKey=this.step===2?[this.activeSection,this.interior,this.nicheIndex,this.column,this.gapIndex].join('/'):'';
+  const editorKey=this.step===2?[this.activeSection,this.interior,this.nicheIndex,this.column,this.gapIndex].join('/'):this.step===1?'shelves/'+this.activeSection:'';
   const keep=editorKey&&editorKey===this.editorKey;
   this.editorKey=editorKey;
-  this.dialog.toggleAttribute('data-interior',Boolean(editorKey));
+  this.dialog.toggleAttribute('data-interior',this.step===2);
   this.zoom.hidden=!(this.step<=2&&(this.step>0||this.view==='body'));
   this.dialog.toggleAttribute('data-cell-view',!this.zoom.hidden);
   const scroll=this.dialog.scrollTop,focused=document.activeElement;
@@ -215,12 +215,15 @@ export class AssistantUI{
    if(this.fields.backThickness)this.form.append(jointPhotos('cam_dowel'));
    }
   }else if(this.step===1){
-   sectionChoices(this,this.form);this.sectionTabs();this.sectionPositions();
-   this.form.append(el('p','Передние кромки полок и внутренних стоек утоплены на 1 мм от переднего края боковин.'));
+   this.sectionTabs();this.shelfOverview();
+   const division=el('details');division.className='shelf-division';division.append(el('summary','Деление и ширина секций'));
+   sectionChoices(this,division);if(this.fields.sections>1)this.sectionPositions(division);
+   this.form.append(division);
   }else if(this.step===2){
    this.sectionTabs();
    const i=this.activeSection,count=this.fields.sectionShelves[i];
    this.nicheIndex=Math.min(this.nicheIndex??0,count);
+   const context=el('p',openingLabel(this.nicheIndex,count));context.className='opening-context';this.form.append(context);
    const tabs=el('div');tabs.className='wardrobe-subsections';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Элемент наполнения');
    for(const [key,label] of [['cell','Ниша'],['shelf','Полки'],['rod','Штанги'],['drawer','Шуфляды'],['split','Перегородка']]){
     const b=button(label,()=>{this.interior=key;this.wholeWidth=false;this.render();});b.setAttribute('aria-pressed',String(this.interior===key));tabs.append(b);
@@ -232,21 +235,7 @@ export class AssistantUI{
    else if(this.interior==='split'||this.interior==='shelf'&&splitAt(this.fields,i,this.nicheIndex)?.kind==='shelves')splitControls(this,this.form,i);
    else{
     const group=el('fieldset');group.append(el('legend','Полки · секция '+(i+1)));this.form.append(group);
-    this.select(group,'Полок в секции '+(i+1),Array.from({length:11},(_,n)=>[n,n?String(n):'Без полок']),count,value=>{
-     const n=Number(value),f=this.fields;
-     if(n<count&&f.rods?.some(r=>r.section===i&&r.level>=n)){this.render();this.output.textContent='Удаляемая полка ограничивает нишу со штангой. Сначала уберите штангу.';return;}
-     if(f.nicheSplits?.some(z=>z.section===i&&z.level>n)){this.render();this.output.textContent='Сначала измените перегородку в удаляемой нише.';return;}
-     if(f.drawerBanks?.some((bank,slot)=>bank?.layout&&sectionOf(slot)===i&&levelOf(slot)>=n&&levelOf(slot)<=count&&n<count)){
-       this.render();this.output.textContent='Сначала уберите блок шуфляд под удаляемой полкой.';return;
-     }
-     f.sectionShelves[i]=n;
-     if(f.gapLocks)f.gapLocks[i]=(f.gapLocks[i]??[]).filter(k=>k<=n);
-     if(f.topGaps&&n!==count)f.topGaps[i]=null;
-     if(f.shelfLevels)f.shelfLevels[i]=Array.from({length:n},(_,j)=>f.shelfLevels[i]?.[j]??null);
-     const bank=f.drawerBanks?.[nicheSlot(i,0)];if(bank?.shelvesBelow>n)bank.shelvesBelow=n;
-     this.levelIndex=Math.max(0,Math.min(this.levelIndex,n-1));f.shelfChoices=shelfRows(f);
-     delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();
-    });
+    this.select(group,'Полок в секции '+(i+1),Array.from({length:11},(_,n)=>[n,n?String(n):'Без полок']),count,v=>this.changeShelfCount(Number(v)));
     if(count){
      gapEditor(this,group,i);
      const hardware=el('details');hardware.append(el('summary','Материал и крепление полок'));shelfQuestionnaire(this,hardware,i);group.append(hardware);
@@ -401,9 +390,55 @@ export class AssistantUI{
    section.append(finishes);
   }
  }
- sectionPositions(){
+ changeShelfCount(count){
+  const section=this.activeSection;
+  if(count===this.fields.sectionShelves[section])return;
+  try{
+   const draft=structuredClone(this.fields),changes=setSectionShelfCount(draft,section,count);
+   wardrobeSpec(draft);
+   let keys=this.sourceKeys,level=this.nicheIndex??0;
+   for(const edit of changes){
+    if(edit.delta<0&&keys){keys=new Map(keys);keys.delete('shelf-'+section+'-'+edit.level);}
+    keys=keysAfterInsertion(keys,{section,level:edit.level},edit.delta);
+    if(level>edit.level)level+=edit.delta;
+   }
+   this.sourceKeys=keys;this.fields=draft;this.nicheIndex=Math.max(0,Math.min(level,count));
+   this.gapIndex=this.nicheIndex;this.levelIndex=Math.min(this.nicheIndex,Math.max(0,count-1));
+   delete this.shelfScopes[section];delete this.shelfDrafts[section];this.changed(true);
+  }catch(error){
+   this.render();this.output.textContent=error.message;
+   const feedback=this.form.querySelector('[data-count-feedback]');
+   if(feedback){feedback.hidden=false;feedback.textContent=error.message;}
+  }
+ }
+ shelfOverview(){
+  const f=this.fields,section=this.activeSection,count=f.sectionShelves[section];
+  const group=el('fieldset');group.className='shelf-overview';
+  group.append(el('legend',f.sections===1?'Количество полок':'Количество полок в секции '+(section+1)));
+  const choices=el('div');choices.className='shelf-count-options';choices.setAttribute('role','group');choices.setAttribute('aria-label','Количество полок');
+  for(let n=0;n<=4;n++){
+   const b=button(String(n),()=>this.changeShelfCount(n));b.dataset.shelfCount=String(n);b.setAttribute('aria-pressed',String(count===n));choices.append(b);
+  }
+  const more=el('select');more.setAttribute('aria-label','От пяти до десяти полок');
+  const option=el('option','5–10');option.value='';option.disabled=true;more.append(option);
+  for(let n=5;n<=10;n++){const o=el('option',String(n));o.value=n;more.append(o);}
+  more.value=count>4?String(count):'';more.onchange=()=>this.changeShelfCount(Number(more.value));choices.append(more);
+  const feedback=el('p');feedback.dataset.countFeedback='';feedback.setAttribute('role','status');feedback.hidden=true;
+  group.append(choices,feedback);this.form.append(group);
+  const openings=el('fieldset');openings.className='shelf-openings';openings.append(el('legend','Куда поставить наполнение'));
+  const list=el('div');list.className='shelf-opening-list';
+  try{
+   const rooms=nicheOpenings(f,section);
+   for(let level=rooms.length-1;level>=0;level--){
+    const b=button('',()=>selectCell(this,{section,level}));b.dataset.openingLevel=level;
+    b.append(el('span',openingLabel(level,count)),el('strong',(rooms[level].top-rooms[level].bottom)+' мм'));list.append(b);
+   }
+  }catch(error){list.append(el('p',error.message));}
+  openings.append(list);this.form.append(openings);
+ }
+ sectionPositions(parent){
   const f=this.fields;
-  if(f.sections>1)this.select(this.form,'Положение внутренних стоек',[['center','Равные секции'],['manual','Вручную, мм']],f.dividerPositions?'manual':'center',mode=>{
+  if(f.sections>1)this.select(parent,'Положение внутренних стоек',[['center','Равные секции'],['manual','Вручную, мм']],f.dividerPositions?'manual':'center',mode=>{
    if(mode==='manual'){
     let start=0;
     f.dividerPositions=sectionWidths(f).slice(0,-1).map(width=>{const end=start+width;start=end+f.thickness;return end;});
@@ -420,23 +455,22 @@ export class AssistantUI{
     }catch(e){this.output.textContent=e.message;input.value=sectionWidths(f)[i];}
    };
    input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();input.blur();}};
-   wrap.append(input);this.form.append(wrap);
+   wrap.append(input);parent.append(wrap);
   }
   const sizes=el('p');
   const update=()=>{if(f.dividerPositions?.some(n=>!Number.isInteger(n))){sizes.textContent='';return;}const widths=sectionWidths(f);sizes.textContent=widths.every(n=>Number.isInteger(n)&&n>0)?'Чистая ширина секций слева направо: '+widths.join(' / ')+' мм.':'';};
   if(f.dividerPositions){
-   const advanced=el('details');advanced.append(el('summary','Положения стоек'));this.form.append(advanced);
+   const advanced=el('details');advanced.append(el('summary','Положения стоек'));parent.append(advanced);
    advanced.append(el('p','От внутренней плоскости левой боковины до левой плоскости каждой стойки.'));
    f.dividerPositions.forEach((position,i)=>{
     const label='Положение стойки '+(i+1)+', мм',wrap=el('label',label),input=el('input');
     input.type='number';input.step='1';input.min='0';input.max=String(f.width-2*f.thickness);
     input.setAttribute('aria-label',label);input.value=Number.isFinite(position)?position:'';
-    input.onfocus=()=>{this.activeSection=i;this.form.querySelectorAll('[data-section]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.section)===i)));this.draw();};
     input.oninput=()=>{f.dividerPositions[i]=input.valueAsNumber;update();this.changed();};
     wrap.append(input);advanced.append(wrap);
    });
   }
-  update();this.form.append(sizes);
+  update();parent.append(sizes);
  }
  jointQuestionnaire(parent=this.form){
   const box=el('fieldset');box.append(el('legend','Крепёж корпуса'));parent.append(box);

@@ -83,7 +83,7 @@ def exercise(live=False):
                 choose(section,0,'data-niche')
                 form.get_by_label('Добавить полок в нишу').select_option('4')
                 button('Добавить полки').click()
-            step(2);button('Две секции').click()
+            step(2);form.get_by_text('Деление и ширина секций',exact=True).click();button('Две секции').click()
             choose(0,0,'data-niche')
             form.get_by_label('Ширина в свету, мм',exact=True).fill('360')
             button('Применить ширину').click()

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cellGeometry,heightLimits,insertShelves,keysAfterInsertion,resizeSections,setClearHeight,setClearWidth} from '../../backend/v2/cabinet_assets/planner/wardrobe-cells.mjs';
+import {cellGeometry,heightLimits,insertShelves,keysAfterInsertion,resizeSections,setSectionShelfCount,setClearHeight,setClearWidth} from '../../backend/v2/cabinet_assets/planner/wardrobe-cells.mjs';
 import {columnOpenings,isRightBank,levelOf,nicheSlot,sectionOf} from '../../backend/v2/cabinet_assets/planner/wardrobe-layout.mjs';
 import {nicheOpenings} from '../../backend/v2/cabinet_assets/planner/wardrobe-niches.mjs';
 import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
@@ -71,4 +71,33 @@ test('inserting below an occupied niche preserves its height, partners, material
  const keys=keysAfterInsertion(oldKeys,cell(0,0),1);
  assert.equal(keys.get('shelf-0-1'),'noted shelf');assert.equal(keys.get('drawer-6-0-face'),'custom front');
  assert.ok(!keys.has('shelf-0-0'));assert.doesNotThrow(()=>wardrobeSpec(f));
+});
+
+
+test('shelf count lays out just the chosen section evenly and keeps the occupied opening and its hardware at the same height',()=>{
+ const f=blank();resizeSections(f,2);setSectionShelfCount(f,0,3);setSectionShelfCount(f,1,4);
+ const other=heights(f,1);
+ assert.deepEqual(f.sectionShelves,[3,4]);
+ assert.ok(Math.max(...heights(f,0))-Math.min(...heights(f,0))<=1);
+ const bank={kind:'internal',layout:'equal',gap:12,faces:[{height:null},{height:null}]};
+ f.drawerBanks=[...Array(nicheSlot(0,1)).fill(null),bank];f.drawerBanks=wardrobeSpec(f).drawerBanks;
+ const original=nicheOpenings(f,0)[1];
+ setSectionShelfCount(f,0,4);assert.deepEqual(heights(f,1),other);
+ let slot=f.drawerBanks.findIndex(Boolean);assert.deepEqual(nicheOpenings(f,0)[levelOf(slot)],original);
+ setSectionShelfCount(f,0,2);slot=f.drawerBanks.findIndex(Boolean);
+ assert.deepEqual(nicheOpenings(f,0)[levelOf(slot)],original);
+ assert.deepEqual(heights(f,1),other);
+ const before=structuredClone(f);
+ assert.throws(()=>setSectionShelfCount(f,0,0),/ограничивают/);assert.deepEqual(f,before);
+ assert.doesNotThrow(()=>wardrobeSpec(f));
+});
+
+test('removing free shelves below a rod preserves the upper opening, fixed height and material',()=>{
+ const f=blank();setSectionShelfCount(f,0,4);
+ f.rods=[{id:'upper',section:0,level:4,anchor:'top',offset:100,article:'22109'}];
+ f.gapLocks=[[4]];f.shelfChoices=[['board/95388','board/95388','board/95388','6/48846']];
+ const top=nicheOpenings(f,0)[4];setSectionShelfCount(f,0,1);
+ assert.equal(f.rods[0].level,1);assert.deepEqual(f.gapLocks,[[1]]);
+ assert.deepEqual(f.shelfChoices,[['6/48846']]);assert.deepEqual(nicheOpenings(f,0)[1],top);
+ assert.doesNotThrow(()=>wardrobeSpec(f));
 });

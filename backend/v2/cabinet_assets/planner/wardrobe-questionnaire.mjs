@@ -4,7 +4,7 @@ import {buildCarcass} from './carcass-model.mjs';
 import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
 import {fitNicheBanks,prepareDrawerCovers,nicheSlot} from './wardrobe-niches.mjs';
 export {sectionWidths} from './carcass-model.mjs';
-export const WARDROBE_STEPS=['Корпус','Секции','Наполнение','Фасады','Материалы'];
+export const WARDROBE_STEPS=['Корпус','Полки','Наполнение','Фасады','Материалы'];
 export function resizeDividerChoices(fields){
  if(fields.thickness!==18||fields.sections<=1){delete fields.dividerJoints;return;}
  fields.dividerJoints=Array.from({length:fields.sections-1},(_,i)=>fields.dividerJoints?.[i]??{top:'confirmat',bottom:'confirmat'});

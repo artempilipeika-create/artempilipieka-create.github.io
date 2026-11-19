@@ -109,6 +109,7 @@ export function cellControls(ui,parent){
 }
 
 export function selectCell(ui,{section,level,column=0,opening=0},axis,wholeWidth=false){
+ if(ui.step===1)ui.interior='cell';
  ui.zoomDiagram(false);ui.activeSection=section;ui.nicheIndex=level;ui.column=column;ui.gapIndex=splitAt(ui.fields,section,level)?.columns?opening:level;
  ui.levelIndex=level;ui.shelfScopes[section]=String(level);ui.step=2;ui.view='sections';ui.wholeWidth=wholeWidth;
  if(!ui.pending)ui.output.textContent='';

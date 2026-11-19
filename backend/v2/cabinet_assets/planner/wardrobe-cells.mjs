@@ -31,6 +31,74 @@ export function resizeSections(f,n){
  resizeDividerChoices(f);
 }
 
+// A plain section redistributes evenly. Once it contains fittings or locked
+// openings, change the count in free space and retain their physical datums.
+export function setSectionShelfCount(f,section,count){
+ const previous=f.sectionShelves[section];
+ if(!Number.isInteger(count)||count<0||count>10)throw Error('Выберите от 0 до 10 полок.');
+ if(count===previous)return [];
+ const locks=f.gapLocks?.[section]??[];
+ const occupied=new Set(locks);
+ for(const rod of f.rods??[])if(rod.section===section)occupied.add(rod.level);
+ for(const zone of f.nicheSplits??[])if(zone.section===section)occupied.add(zone.level);
+ for(const [slot,bank] of (f.drawerBanks??[]).entries())if(bank&&sectionOf(slot)===section)occupied.add(levelOf(slot));
+ const legacy=f.drawerBanks?.[nicheSlot(section,0)];
+ if(legacy&&!legacy.layout&&occupied.size>1)throw Error('Сначала привяжите старый блок шуфляд к выбранной нише.');
+ if(!occupied.size||legacy&&!legacy.layout){
+   const changes=[];
+   for(let level=previous-1;level>=count;level--)changes.push({level,delta:-1});
+   f.sectionShelves[section]=count;
+   if(f.shelfLevels)f.shelfLevels[section]=Array.from({length:count},(_,j)=>f.shelfLevels[section]?.[j]??null);
+   if(f.shelfChoices)f.shelfChoices=shelfRows(f);
+   if(f.topGaps)f.topGaps[section]=null;
+   if(legacy?.shelvesBelow>count)legacy.shelvesBelow=count;
+   return changes;
+ }
+ const rooms=nicheOpenings(f,section);
+ if(count>previous){
+   let needed=count-previous;
+   const free=rooms.map(({top,bottom},level)=>({level,height:top-bottom}))
+     .filter(r=>!occupied.has(r.level)).sort((a,b)=>b.height-a.height||b.level-a.level);
+   const changes=[];
+   for(const room of free){
+     const delta=Math.min(needed,Math.floor((room.height-60)/(60+f.thickness)));
+     if(delta>0){changes.push({level:room.level,delta});needed-=delta;}
+     if(!needed)break;
+   }
+   if(needed)throw Error('Для такого количества полок мало места в свободных проёмах.');
+   changes.sort((a,b)=>b.level-a.level);
+   for(const {level,delta} of changes)insertShelves(f,{section,level,column:null},delta);
+   return changes;
+ }
+ const remove=[];
+ for(let level=previous-1;level>=0&&remove.length<previous-count;level--){
+   if(!occupied.has(level)&&!occupied.has(level+1))remove.push(level);
+ }
+ if(remove.length!==previous-count)throw Error('Минимум полок в этой секции — '+(previous-remove.length)+'. Они ограничивают установленное наполнение или закреплённый проём.');
+ const shifted=level=>level-remove.filter(index=>index<level).length;
+ const newLocks=locks.map(shifted),sizes=[];
+ let bottom=rooms[0].bottom;
+ for(let i=0;i<previous;i++){
+   if(remove.includes(i))continue;
+   sizes.push(rooms[i].top-bottom);bottom=rooms[i+1].bottom;
+ }
+ sizes.push(rooms.at(-1).top-bottom);
+ if(f.shelfChoices)f.shelfChoices[section]=shelfRows(f)[section].filter((_,i)=>!remove.includes(i));
+ if(f.gapLocks)f.gapLocks[section]=newLocks;
+ if(f.drawerBanks){
+   const banks=[];
+   f.drawerBanks.forEach((bank,slot)=>{
+     if(bank)banks[sectionOf(slot)===section?nicheSlot(section,shifted(levelOf(slot)),Number(isRightBank(slot))):slot]=bank;
+   });
+   f.drawerBanks=trimBanks(banks,f.sections);
+ }
+ for(const rod of f.rods??[])if(rod.section===section)rod.level=shifted(rod.level);
+ for(const zone of f.nicheSplits??[])if(zone.section===section)zone.level=shifted(zone.level);
+ f.sectionShelves[section]=count;
+ writeHeights(f,section,null,sizes,newLocks);
+ return remove.map(level=>({level,delta:-1}));
+}
+
 export function cellGeometry(f,cell){
  const {section,level}=cell,widths=sectionWidths(f),bounds=nicheOpenings(f,section);
  const zone=splitAt(f,section,level),local=zone!=null&&cell.column!=null;
