@@ -1,5 +1,7 @@
+import {planRods,rodWarnings} from './wardrobe-rods.mjs';
+export {sectionWidths} from './wardrobe-layout.mjs';
 import {outerFront,drawerSections,buildDrawerBoards,doorZones,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
-import {nicheSlot,columnWidths,columnOpenings,localBaseShelf,openingBase,splitKey} from './wardrobe-layout.mjs';
+import {sectionWidths,nicheSlot,columnWidths,columnOpenings,localBaseShelf,openingBase,splitKey} from './wardrobe-layout.mjs';
 import {fitNicheBanks,nicheOpenings} from './wardrobe-niches.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
@@ -46,20 +48,6 @@ export function carcassSpec(input={}){
 
 // Positions are measured from the inside face of the left side to the
 // left face of each divider. The last clear opening takes the remainder.
-export function sectionWidths(s){
-  const inner=s.width-2*s.thickness;
-  if(s.dividerPositions!=null){
-    if(!Array.isArray(s.dividerPositions)||s.dividerPositions.length!==s.sections-1||
-       !s.dividerPositions.every(Number.isInteger))throw Error('Задайте положение каждой внутренней стойки в целых мм.');
-    let start=0;
-    return [...s.dividerPositions,inner].map(end=>{
-      const width=end-start;start=end+s.thickness;return width;
-    });
-  }
-  const clear=inner-(s.sections-1)*s.thickness;
-  return Array.from({length:s.sections},(_,i)=>Math.floor(clear/s.sections)+(i<clear%s.sections?1:0));
-}
-
 export function buildCarcass(input={},options={}){
   const s=carcassSpec(input),{width:W,height:H,depth:D,thickness:t}=s;
   const rear=s.backThickness??0,noBottom=s.bottom==='none',braceY=s.braceOffset??0;
@@ -204,7 +192,8 @@ export function buildCarcass(input={},options={}){
   if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-(noBottom?1:2)*t,rear,0,noBottom?0:t,(rear-D)/2,'0000');
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   const items=resolveBlankBindings(parts.map(p=>p.item));
-  return {spec:s,drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  const rods=planRods(s);
+  return {spec:s,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:W,height:H,depth:D+(s.back&&!rear?3:0)+(outerFront(s)?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

@@ -98,6 +98,7 @@ def drawer_hardware(count,depth):
     rows.append(_row('Шуруп 3.5x16 мм, Zn',count*18))
     return rows
 
+WARDROBE_RODS=json.loads((ASSETS/'wardrobe-rods.json').read_text())
 AKS_GUIDES=json.loads((ASSETS/'aks-wardrobe.json').read_text())['rails']
 
 def hardware_for(it):
@@ -105,6 +106,15 @@ def hardware_for(it):
     meta=it.get('assistant_carcass') or {}
     spec=meta.get('spec') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
+    if key=='top' and spec.get('rods'):
+        # Each fitted rail is one purchased set, even though the native model contains both holders.
+        rows=list(rows)
+        for rod in spec['rods']:
+            article=rod['article']
+            product=WARDROBE_RODS[article]
+            profile='Ø25' if product['family']=='round' else '30×15'
+            finish={'chrome':'хром','black':'чёрная','white':'белая'}[product['finish']]
+            rows.append(_row(f'Штанга AKS {profile}, {finish}, с двумя держателями',1,'set',article))
     drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-face',key)
     if drawer:
         banks=spec.get('drawerBanks') or []

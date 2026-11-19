@@ -181,7 +181,23 @@ class NicheSplit(StrictModel):
     columns: list[ShelfColumn] | None = Field(default=None,min_length=2,max_length=2,exclude_if=lambda v:v is None)
 
 
+ROD_CATALOGUE = json.loads((ASSETS/'wardrobe-rods.json').read_text())
+
+
+class WardrobeRod(StrictModel):
+    id: str = Field(pattern=r'^[A-Za-z0-9_-]{1,64}$')
+    article: str = Field(min_length=1,max_length=12)
+    section: int = Field(ge=0,le=3,strict=True)
+    level: LockIndex
+    column: Literal[0,1] | None = Field(default=None,exclude_if=lambda v:v is None)
+    opening: LockIndex | None = Field(default=None,exclude_if=lambda v:v is None)
+    anchor: Literal['top','bottom']
+    offset: int = Field(ge=0,le=3000,strict=True)
+    fromBack: int | None = Field(default=None,ge=0,le=1200,strict=True,exclude_if=lambda v:v is None)
+
+
 class CarcassDesign(CarcassSpec):
+    rods: list[WardrobeRod] | None = Field(default=None,min_length=1,max_length=128,exclude_if=lambda v:v is None)
     gapLocks: list[Annotated[list[LockIndex],Field(max_length=11)]] | None = Field(default=None,max_length=4,exclude_if=lambda v:v is None)
     clearLayout: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     drawerFixing: Literal['cam_dowel','confirmat'] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -258,6 +274,50 @@ class CarcassDesign(CarcassSpec):
         centres=[nearest(y+h/2) for y,h in zip(ys,sizes)]
         return list(zip([max(0,base-t),*centres],[*centres,self.height]))
 
+    def validate_rods(self,zones):
+        if not self.rods:
+            return
+        if self.recipe not in ('shelves','divided') or len({r.id for r in self.rods})!=len(self.rods):
+            raise ValueError('Проверьте штанги в шкафу.')
+        banks=self.drawerBanks or []
+        for r in self.rods:
+            profile=ROD_CATALOGUE.get(r.article)
+            if not profile or r.section>=self.sections:
+                raise ValueError('Проверьте артикул и секцию штанги.')
+            rooms=self.niche_bounds(r.section,True)
+            slot=niche_slot(r.section,r.level)
+            old=banks[niche_slot(r.section,0)] if len(banks)>niche_slot(r.section,0) else None
+            if r.level>=len(rooms) or (slot<len(banks) and banks[slot]) or (old and not old.layout):
+                raise ValueError('Для штанги нужна свободная ниша.')
+            low,high=rooms[r.level]
+            zone=zones.get(slot)
+            if zone:
+                if zone.kind!='shelves' or r.column is None or r.opening is None:
+                    raise ValueError('Укажите проём перегородки для штанги.')
+                col=zone.columns[r.column]
+                if r.opening>=len(col.gaps):
+                    raise ValueError('Проверьте проём штанги.')
+                choices=col.choices or ['board/95388']*(len(col.gaps)-1)
+                boards=sum(self.thickness if c.startswith('board/') else int(c.split('/')[0]) for c in choices)
+                remaining=high-low-boards-sum(v or 0 for v in col.gaps)
+                free=col.gaps.count(None)
+                height=col.gaps[r.opening]
+                if height is None:
+                    i=col.gaps[:r.opening].count(None)
+                    height=int((i+1)*remaining/free+.5)-int(i*remaining/free+.5)
+            else:
+                if r.column is not None or r.opening is not None:
+                    raise ValueError('Для штанги указан отсутствующий проём.')
+                height=high-low
+            y=height-r.offset if r.anchor=='top' else r.offset
+            min_y,max_y,min_z,max_z=profile['bounds']
+            back=(self.backThickness or 0)+(self.thickness if self.bottomFit=='none' and self.sections>1 else 0)
+            front=self.shelfSetback if zone else (self.dividerSetback or 1) if self.sections>1 else 0
+            usable=self.depth-back-front
+            z=usable/2 if r.fromBack is None else r.fromBack
+            if y+min_y<0 or y+max_y>height or z+min_z<0 or z+max_z>usable:
+                raise ValueError('Держатель штанги выходит за внутренние границы ниши.')
+
     @model_validator(mode='after')
     def section_layout(self):
         if self.braceOffset is not None and (self.bottomFit!='none' or self.braceOffset+100>self.height-self.thickness):
@@ -298,6 +358,7 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Для общей стойки нужны два блока шуфляд.')
         if self.clearLayout:
             for section in range(self.sections):self.niche_bounds(section,True)
+        self.validate_rods(zones_by_slot)
         if self.drawerBanks:
             if self.recipe not in ('shelves','divided') or len(self.drawerBanks)<self.sections:
                 raise ValueError('Проверьте секции с шуфлядами.')

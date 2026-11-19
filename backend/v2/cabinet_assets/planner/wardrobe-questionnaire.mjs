@@ -14,6 +14,7 @@ export function wardrobeSpec(f){
  if(!Number.isInteger(sections)||sections<1||sections>4||!Array.isArray(counts)||counts.length!==sections)throw Error('Выберите от одной до четырёх секций.');
  if(counts.some(n=>!Number.isInteger(n)||n<0||n>10))throw Error('В секции может быть от 0 до 10 полок.');
  const spec={recipe:sections===1?'shelves':'divided',width:Number(f.width),height:Number(f.height),depth:Number(f.depth),thickness:Number(f.thickness),shelves:Math.max(...counts),sections,sectionShelves:[...counts],back:f.back,elevation:f.elevation??0,shelfSetback:1,dividerSetback:1,shelfGap:f.shelfGap??0,edgeThickness:f.edgeThickness??1,edgePolicy:f.edgePolicy??'front'};
+ if(f.rods?.length)spec.rods=structuredClone(f.rods);
  if(f.clearLayout)spec.clearLayout=true;
  if(f.drawerFixing||f.bottomFit==='none'||f.nicheSplits?.length)spec.drawerFixing=f.drawerFixing??'cam_dowel';
  if(spec.drawerFixing&&!['cam_dowel','confirmat'].includes(spec.drawerFixing))throw Error('Выберите крепёж полок у шуфляд.');

@@ -36,3 +36,17 @@ export function columnOpenings(bottom,top,column,t){
  const gaps=clearGaps(top-bottom,ts,locks);
  return gaps.map((gap,i)=>{const start=bottom;bottom+=gap+(ts[i]??0);return {bottom:start,top:start+gap};});
 }
+
+export function sectionWidths(s){
+  const inner=s.width-2*s.thickness;
+  if(s.dividerPositions!=null){
+    if(!Array.isArray(s.dividerPositions)||s.dividerPositions.length!==s.sections-1||
+       !s.dividerPositions.every(Number.isInteger))throw Error('Задайте положение каждой внутренней стойки в целых мм.');
+    let start=0;
+    return [...s.dividerPositions,inner].map(end=>{
+      const width=end-start;start=end+s.thickness;return width;
+    });
+  }
+  const clear=inner-(s.sections-1)*s.thickness;
+  return Array.from({length:s.sections},(_,i)=>Math.floor(clear/s.sections)+(i<clear%s.sections?1:0));
+}

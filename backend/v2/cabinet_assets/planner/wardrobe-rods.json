@@ -1,0 +1,207 @@
+{
+  "72536": {
+    "file": "Труба d25 L-3000 (0,6 мм), хром AKS (72536).fr3d",
+    "sha": "e30b6c6655b100d68ef7b58f3c59f5c8b0fb047cb66eafdc6d40c36bc69d65da",
+    "family": "round",
+    "finish": "chrome",
+    "wallMm": 0.6,
+    "axisY": 0,
+    "axisZ": 0,
+    "cutAllowance": 1,
+    "holderArticle": "22631",
+    "holes": [
+      [
+        -10.125,
+        -17.53701
+      ],
+      [
+        -10.125,
+        17.53701
+      ],
+      [
+        20.25,
+        0
+      ]
+    ],
+    "bounds": [
+      -27,
+      27,
+      -27,
+      27
+    ]
+  },
+  "113181": {
+    "file": "Труба d25 L-3000 (0,6 мм), черный AKS (113181).fr3d",
+    "sha": "40672e2acf94907e3ad2623b1487674b4ac70092a69f8d7f50b985497615e083",
+    "family": "round",
+    "finish": "black",
+    "wallMm": 0.6,
+    "axisY": 0,
+    "axisZ": 0,
+    "cutAllowance": 1,
+    "holderArticle": "59737",
+    "holes": [
+      [
+        -10.125,
+        -17.53701
+      ],
+      [
+        -10.125,
+        17.53701
+      ],
+      [
+        20.25,
+        0
+      ]
+    ],
+    "bounds": [
+      -27,
+      27,
+      -27,
+      27
+    ]
+  },
+  "22109": {
+    "file": "Труба d25 L-3000 (0,8 мм), хром AKS (22109).fr3d",
+    "sha": "1f857fdfe6b194c3c186157a1da8da91f8e946029d8a80a82a3ace06bbcfc1bc",
+    "family": "round",
+    "finish": "chrome",
+    "wallMm": 0.8,
+    "axisY": 0,
+    "axisZ": 0,
+    "cutAllowance": 1,
+    "holderArticle": "22631",
+    "holes": [
+      [
+        -10.125,
+        -17.53701
+      ],
+      [
+        -10.125,
+        17.53701
+      ],
+      [
+        20.25,
+        0
+      ]
+    ],
+    "bounds": [
+      -27,
+      27,
+      -27,
+      27
+    ]
+  },
+  "22111": {
+    "file": "Труба d25 L-3000 (1 мм), хром AKS (22111).fr3d",
+    "sha": "b7086bf3e1b54b98e535ac90f66502f928e0a542e1fadadb68944c54a522ff5d",
+    "family": "round",
+    "finish": "chrome",
+    "wallMm": 1.0,
+    "axisY": 0,
+    "axisZ": 0,
+    "cutAllowance": 1,
+    "holderArticle": "22631",
+    "holes": [
+      [
+        -10.125,
+        -17.53701
+      ],
+      [
+        -10.125,
+        17.53701
+      ],
+      [
+        20.25,
+        0
+      ]
+    ],
+    "bounds": [
+      -27,
+      27,
+      -27,
+      27
+    ]
+  },
+  "14066": {
+    "file": "Труба овальная L-3000 30_15, белый (14066).fr3d",
+    "sha": "6c068ea5571bdd899349dca42eb26b5d7ab1d4a6f3518c11807b6604c33b2c09",
+    "family": "oval",
+    "finish": "white",
+    "wallMm": 0.7,
+    "axisY": -22.46402,
+    "axisZ": 0,
+    "cutAllowance": 5,
+    "holderArticle": "112486",
+    "holes": [
+      [
+        -9.53598,
+        0
+      ],
+      [
+        22.46402,
+        0
+      ]
+    ],
+    "bounds": [
+      -16.46854,
+      29.39657,
+      -9.25,
+      9.25
+    ]
+  },
+  "23007": {
+    "file": "Труба овальная L-3000 30_15, хром (23007).fr3d",
+    "sha": "6aeaa6aa31adfb2578ec68ca89cafba5a843600121f909acb3336c6b7e922a9f",
+    "family": "oval",
+    "finish": "chrome",
+    "wallMm": 0.7,
+    "axisY": -22.46402,
+    "axisZ": 0,
+    "cutAllowance": 5,
+    "holderArticle": "112490",
+    "holes": [
+      [
+        -9.53598,
+        0
+      ],
+      [
+        22.46402,
+        0
+      ]
+    ],
+    "bounds": [
+      -16.46854,
+      29.39657,
+      -9.25,
+      9.25
+    ]
+  },
+  "57975": {
+    "file": "Труба овальная L-3000 30_15, черный (57975).fr3d",
+    "sha": "e53831e2c4fabae1bb26de52852534c1692aa519b35839ff5b0b996a2a0eb8fc",
+    "family": "oval",
+    "finish": "black",
+    "wallMm": 0.7,
+    "axisY": -22.46402,
+    "axisZ": 0,
+    "cutAllowance": 5,
+    "holderArticle": "57974",
+    "holes": [
+      [
+        -9.53598,
+        0
+      ],
+      [
+        22.46402,
+        0
+      ]
+    ],
+    "bounds": [
+      -16.46854,
+      29.39657,
+      -9.25,
+      9.25
+    ]
+  }
+}

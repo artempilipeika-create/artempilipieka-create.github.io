@@ -1318,9 +1318,10 @@ function exportBazisProject(){
   }catch(error){status('Экспорт не создан: '+error.message);return;}
   const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
   if(invalid){status(invalid);return;}
-  let wardrobeDrawerItems=[],hingeItems=[],blankItems=[],hookItems=[],supportItems=[],jointItems=[],footItems=[];
+  let rodItems=[],wardrobeDrawerItems=[],hingeItems=[],blankItems=[],hookItems=[],supportItems=[],jointItems=[],footItems=[];
   try{
     if(state.items.some(it=>it.module_type==='blank')&&!globalThis.MF_BLANKS_NATIVE)throw Error('Обновите страницу: модуль заготовок не загружен.');
+    rodItems=globalThis.MF_BLANKS_NATIVE?.rodItems?.(state.items)||[];
     wardrobeDrawerItems=globalThis.MF_BLANKS_NATIVE?.drawerItems?.(state.items)||[];
     hingeItems=globalThis.MF_BLANKS_NATIVE?.hingeItems?.(state.items)||[];
     footItems=globalThis.MF_BLANKS_NATIVE?.footItems?.(state.items)||[];
@@ -1480,6 +1481,10 @@ function exportBazisProject(){
       blankItems.some(it=>it.blank?.axis==='front'&&!Number.isInteger(it.blank.length))?'9.9.29':'9.9.28';
   }
   if(wardrobeDrawerItems.some(it=>it.source_file.includes('_shared'))||jointItems.some(it=>it.joint_back_face&&it.joint_part==='confirmat'))payload.minimum_importer='9.9.31';
+  if(rodItems.length){
+    for(const rod of rodItems){rod.index=payload.items.length+1;payload.items.push(rod);}
+    payload.format='martin-forest-bazis-native-v12';payload.minimum_importer='9.9.32';
+  }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1488,7 +1493,7 @@ function exportBazisProject(){
   a.style.display='none';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(href),3000);
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
-  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, полкодержателей: '+supportItems.length+', крючков: '+hookItems.length+', блоков розеток: '+socketItems.length+', деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(wardrobeDrawerItems.length?' Шуфляды AKS с родным крепежом. Используйте импортёр 9.9.30 и комплект AKS из инструментов производства.':jointItems.length?' Крепёж корпуса: '+jointItems.length+' шт. Используйте импортёр '+payload.minimum_importer+'.':customShelves?' Для выбранных полок используйте импортёр 9.9.18.':supportItems.length?' Для полкодержателей используйте импортёр 9.9.17.':hookItems.length?' Для крючков используйте импортёр 9.9.16.':blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
+  status('Родной экспорт БАЗИС подготовлен: '+bazisItems.length+' модулей, полкодержателей: '+supportItems.length+', крючков: '+hookItems.length+', блоков розеток: '+socketItems.length+', деталей корпуса: '+blankItems.length+', столешниц: '+countertops.length+', цоколей: '+plinthItems.length+', участков скинали: '+wallPanelItems.length+'.'+(rodItems.length?' Штанг с держателями: '+rodItems.length+'. Нужен комплект AKS с импортёром 9.9.32.':'')+(wardrobeDrawerItems.length?' Шуфляды AKS с родным крепежом. Используйте импортёр '+payload.minimum_importer+' и комплект AKS из инструментов производства.':jointItems.length?' Крепёж корпуса: '+jointItems.length+' шт. Используйте импортёр '+payload.minimum_importer+'.':customShelves?' Для выбранных полок используйте импортёр 9.9.18.':supportItems.length?' Для полкодержателей используйте импортёр 9.9.17.':hookItems.length?' Для крючков используйте импортёр 9.9.16.':blankItems.length?' Для деталей корпуса используйте импортёр 9.9.9 и исходные заготовки.':'')+(pendingCountertops.length?' Столешницы для доработки в БАЗИС: '+pendingCountertops.length+'; размеры и указания в файле.':'')+(adjusted.length?' Настройки '+adjusted.length+' модулей нужно скорректировать в БАЗИС по указаниям файла.':''));
 }
 
 async function toOrder(){

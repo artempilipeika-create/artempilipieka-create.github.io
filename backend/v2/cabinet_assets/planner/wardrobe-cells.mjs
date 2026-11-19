@@ -1,3 +1,4 @@
+import {rodCatalogue} from './wardrobe-rods.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {clearGaps,columnOpenings,columnWidths,isRightBank,levelOf,nicheSlot,sectionOf,splitAt} from './wardrobe-layout.mjs';
 import {nicheOpenings,trimBanks} from './wardrobe-niches.mjs';
@@ -24,6 +25,7 @@ export function resizeSections(f,n){
    if(f[key])f[key]=Array.from({length:n},(_,i)=>f[key][i]??(key==='topGaps'?null:[]));
  }
  if(f.shelfChoices)f.shelfChoices=shelfRows(f);
+ if(f.rods){f.rods=f.rods.filter(r=>r.section<n);if(!f.rods.length)delete f.rods;}
  if(f.nicheSplits)f.nicheSplits=f.nicheSplits.filter(z=>z.section<n);
  if(f.drawerBanks)f.drawerBanks=trimBanks(f.drawerBanks.map((bank,i)=>sectionOf(i)<n?bank:null),n);
  resizeDividerChoices(f);
@@ -97,7 +99,23 @@ export function insertShelves(f,cell,count){
  if(locks.includes(index))throw Error('Снимите фиксацию высоты выбранной ниши.');
  const legacy=f.drawerBanks?.[nicheSlot(section,0)];
  if(!column&&(zone||f.drawerBanks?.[nicheSlot(section,level)]||legacy&&!legacy.layout))throw Error('Для полок выберите свободную нишу.');
+ const affected=(f.rods??[]).filter(r=>r.section===section&&(column?r.level===level&&r.column===cell.column:true));
+ const hits=affected.filter(r=>column?r.opening===index:r.level===level);
  const gaps=clearGaps(sizes[index],Array(count).fill(f.thickness),Array(count+1).fill(null));
+ // Reassign a rail in the divided opening to the new opening containing its original axis.
+ const changes=hits.map(rod=>{
+   const axis=rod.anchor==='top'?sizes[index]-rod.offset:rod.offset;
+   const bounds=rodCatalogue[rod.article].bounds;
+   let base=0;
+   for(const [i,gap] of gaps.entries()){
+     if(axis+bounds[0]>=base&&axis+bounds[1]<=base+gap)return [rod,i,rod.anchor==='top'?base+gap-axis:axis-base];
+     base+=gap+f.thickness;
+   }
+   throw Error('Новая полка пересекает держатель штанги. Сначала переместите штангу внутри ниши.');
+ });
+ const field=column?'opening':'level';
+ for(const rod of affected)if(rod[field]>index)rod[field]+=count;
+ for(const [rod,i,offset] of changes){rod[field]=index+i;rod.offset=offset;}
  const newLocks=locks.map(i=>i>index?i+count:i);
  sizes.splice(index,1,...gaps);
  if(column){

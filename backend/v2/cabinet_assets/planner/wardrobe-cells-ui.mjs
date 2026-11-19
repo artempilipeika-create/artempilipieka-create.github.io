@@ -1,3 +1,4 @@
+import {sameRodCell} from './wardrobe-rods.mjs';
 import {cellGeometry,heightLimits,insertShelves,keysAfterInsertion,resizeSections,setClearHeight,setClearWidth,toggleHeightLock} from './wardrobe-cells.mjs';
 import {nicheSlot,sectionOf,splitAt} from './wardrobe-layout.mjs';
 import {installBank} from './wardrobe-interior-ui.mjs';
@@ -34,7 +35,7 @@ export function sectionChoices(ui,parent){
    };
    const pick=button('',()=>{
      if(n===ui.fields.sections)return;
-     if(ui.fields.sectionShelves.slice(n).some(Boolean)||ui.fields.nicheSplits?.some(z=>z.section>=n)||ui.fields.drawerBanks?.some((b,slot)=>b&&sectionOf(slot)>=n)){
+     if(ui.fields.rods?.some(r=>r.section>=n)||ui.fields.sectionShelves.slice(n).some(Boolean)||ui.fields.nicheSplits?.some(z=>z.section>=n)||ui.fields.drawerBanks?.some((b,slot)=>b&&sectionOf(slot)>=n)){
        warning.hidden=false;warning.replaceChildren(el('p','В удаляемых секциях есть наполнение.'),button('Убрать секции с наполнением',apply),button('Оставить',()=>{warning.hidden=true;}));
      }else apply();
    });
@@ -99,6 +100,7 @@ export function cellControls(ui,parent){
      box.append(row);
    }
  }
+ if((!zone||column)&&!f.drawerBanks?.[nicheSlot(section,level)])box.append(button('Выбрать штангу',()=>{ui.interior='rod';ui.render();}));
  if(!zone&&!f.drawerBanks?.[nicheSlot(section,level)]){
    box.append(button('Добавить шуфляды',()=>installBank(ui,section,level)));
  }
@@ -110,7 +112,8 @@ export function selectCell(ui,{section,level,column=0,opening=0},axis,wholeWidth
  ui.zoomDiagram(false);ui.activeSection=section;ui.nicheIndex=level;ui.column=column;ui.gapIndex=splitAt(ui.fields,section,level)?.columns?opening:level;
  ui.levelIndex=level;ui.shelfScopes[section]=String(level);ui.step=2;ui.view='sections';ui.wholeWidth=wholeWidth;
  if(!ui.pending)ui.output.textContent='';
- ui.interior=!axis&&ui.fields.drawerBanks?.[nicheSlot(section,level,column)]?'drawer':'cell';
+ const rods=ui.fields.rods?.filter(r=>sameRodCell(r,activeCell(ui)))??[];
+ ui.interior=axis?'cell':ui.fields.drawerBanks?.[nicheSlot(section,level,column)]?'drawer':rods.length||ui.interior==='rod'?'rod':'cell';
  ui.render();
  const field=ui.form.querySelector(axis?'[data-cell-size="'+axis+'"]':'.cell-editor legend, .niche-editor legend');
  if(axis){field?.focus({preventScroll:true});if(field&&!field.readOnly)field.select();}

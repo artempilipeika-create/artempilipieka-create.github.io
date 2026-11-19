@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from uuid import UUID
 import httpx
-from fastapi import APIRouter, Request
+from fastapi import HTTPException, APIRouter, Request
 from fastapi.responses import Response
 from .wardrobe_aks import KIT_NAME, kit_bytes
 from pydantic import Field, ValidationError
@@ -190,14 +190,18 @@ def router(settings):
     api = APIRouter(prefix='/api/v2/3d-assistant')
 
     @api.get('/wardrobe-aks-kit')
-    def wardrobe_aks_kit(request: Request):
+    def wardrobe_aks_kit(request: Request, rods: bool = False):
         with transaction(settings) as conn:
             user = identity(conn, request)
             require(conn, user, 'orders.draft.write')
             verified(user)
             if user['roles'] not in ({'admin'}, {'manager'}):
                 error(403, 'STAFF_REQUIRED')
-        return Response(kit_bytes(), media_type='application/zip', headers={
+        try:
+            native = kit_bytes(rods_required=rods)
+        except ValueError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return Response(native, media_type='application/zip', headers={
             'Content-Disposition': f'attachment; filename="{KIT_NAME}"',
             'Cache-Control': 'private, no-store',
         })

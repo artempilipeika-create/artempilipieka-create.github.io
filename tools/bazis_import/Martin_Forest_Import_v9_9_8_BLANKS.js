@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.31 MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.32 WARDROBE RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,7 +135,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -1321,7 +1321,109 @@ const AKS_SOURCES={
  "6f80c2c11c492d75c4d86f7da575df33faa9628d21ed320149349e6044e7ab78": "bolt",
  "ee9421a6e0e6ad8b5c7ba5e16fe42aa71904d2b940f4a28a641d127ec3a54710": "bolt"
 };
+const ROD_SOURCES = {
+  "e30b6c6655b100d68ef7b58f3c59f5c8b0fb047cb66eafdc6d40c36bc69d65da": {
+    "article": "72536",
+    "cutAllowance": 1,
+    "axisY": 0,
+    "axisZ": 0,
+    "screws": 3
+  },
+  "40672e2acf94907e3ad2623b1487674b4ac70092a69f8d7f50b985497615e083": {
+    "article": "113181",
+    "cutAllowance": 1,
+    "axisY": 0,
+    "axisZ": 0,
+    "screws": 3
+  },
+  "1f857fdfe6b194c3c186157a1da8da91f8e946029d8a80a82a3ace06bbcfc1bc": {
+    "article": "22109",
+    "cutAllowance": 1,
+    "axisY": 0,
+    "axisZ": 0,
+    "screws": 3
+  },
+  "b7086bf3e1b54b98e535ac90f66502f928e0a542e1fadadb68944c54a522ff5d": {
+    "article": "22111",
+    "cutAllowance": 1,
+    "axisY": 0,
+    "axisZ": 0,
+    "screws": 3
+  },
+  "6c068ea5571bdd899349dca42eb26b5d7ab1d4a6f3518c11807b6604c33b2c09": {
+    "article": "14066",
+    "cutAllowance": 5,
+    "axisY": -22.46402,
+    "axisZ": 0,
+    "screws": 2
+  },
+  "6aeaa6aa31adfb2578ec68ca89cafba5a843600121f909acb3336c6b7e922a9f": {
+    "article": "23007",
+    "cutAllowance": 5,
+    "axisY": -22.46402,
+    "axisZ": 0,
+    "screws": 2
+  },
+  "e53831e2c4fabae1bb26de52852534c1692aa519b35839ff5b0b996a2a0eb8fc": {
+    "article": "57975",
+    "cutAllowance": 5,
+    "axisY": -22.46402,
+    "axisZ": 0,
+    "screws": 2
+  }
+};
+function placeWardrobeRod(obj,item,log){
+  const model=ROD_SOURCES[item.source_sha256],span=item.span_mm;
+  if(!model||!item.wardrobe_rod||model.article!==item.article||!Number.isInteger(span)||span<100||span>2400||
+      item.cut_mm!==span-model.cutAllowance||item.holders_included!==2||![0,90,180,270].includes(item.rotation)){
+    throw Error('Проверьте исходник, чистую ширину и комплектность штанги.');
+  }
+  obj.SetDefaultTransform();
+  const frames=[],fixings=[],profiles=[],zero={x:0,y:0,z:0};
+  function inspect(parent){
+    const list=asList(parent);
+    for(let i=0;i<Number(list?.Count||0);i++){
+      const child=childAt(list,i);
+      if(!child)throw Error('Не прочитана деталь штанги.');
+      const name=String(child.Name||'').split('\r')[0].trim();
+      if(isServiceFrame(child))frames.push(child);
+      else if(name==='Штанга гардеробная'&&objectTypeChecker.ObjectIsExtrusionBody(child))profiles.push(child);
+      else if(name==='Держатель штанги'||/^Саморез универсальный/i.test(name)){
+        const at=profilePoint(obj,child,zero),right=Math.abs(at.x-300)<.05;
+        if(!right&&Math.abs(at.x)>.05)throw Error('Крепление не совпало с торцом исходной штанги.');
+        fixings.push({child,right,at,holder:name==='Держатель штанги'});
+      }else inspect(child);
+    }
+  }
+  inspect(obj);
+  const tube=profiles[0],close=(a,b)=>Math.abs(a-b)<.05;
+  if(frames.length!==2||frames.some(f=>!close(f.Width,300))||profiles.length!==1||
+      !close(tube.Thickness,-(300-model.cutAllowance))||
+      [false,true].some(right=>fixings.filter(p=>p.right===right&&p.holder).length!==1||
+        fixings.filter(p=>p.right===right&&!p.holder).length!==model.screws)){
+    throw Error('Не подтверждены геометрия трубы и крепления на обоих торцах FR3D.');
+  }
+  const delta=span-300;
+  if(delta){
+    for(const f of frames){historyOperations.RegisterObjectChanging(f);f.Width=span;if(typeof f.Build==='function')f.Build();}
+    historyOperations.RegisterObjectChanging(tube);tube.Thickness=-item.cut_mm;if(typeof tube.Build==='function')tube.Build();
+    const a=obj.ToGlobal(zero),b=obj.ToGlobal({x:delta,y:0,z:0});
+    for(const p of fixings)if(p.right){
+      historyOperations.RegisterObjectChanging(p.child);
+      p.child.TranslateGCS({x:b.x-a.x,y:b.y-a.y,z:b.z-a.z});
+    }
+    if(typeof obj.Build==='function')obj.Build();
+  }
+  if(!close(tube.Thickness,-item.cut_mm)||frames.some(f=>!close(f.Width,span))||fixings.some(p=>{
+    const target={x:p.right?span:0,y:p.at.y,z:p.at.z};
+    return distance(profilePoint(obj,p.child,zero),target)>.05;
+  }))throw Error('БАЗИС не подтвердил длину штанги или положение родных держателей.');
+  placeByFrame(obj,null,item,log,{x:0,y:model.axisY,z:model.axisZ});
+  return {materialChecks:[],profileChecks:[]};
+}
+
 function resizeAndPlace(obj, item, log, shelfPanel) {
+  if(item.wardrobe_rod||ROD_SOURCES[item.source_sha256])return placeWardrobeRod(obj,item,log);
   if(item.aks_kind||AKS_SOURCES[item.source_sha256]){
     if(AKS_SOURCES[item.source_sha256]!==item.aks_kind||![0,90,180,270].includes(item.rotation))throw Error('Неизвестное крепление AKS или неверный поворот.');
     placeByFrame(obj,null,item,log,{x:0,y:0,z:0});
@@ -1456,7 +1558,8 @@ function prepareProjectWithLibrary(payload) {
   let root = libraryRoot();
   if (!root) return null;
   const bundled = typeof __filename === 'string' ? path.join(path.dirname(__filename), 'Модули Martin Forest') : '';
-  let roots = uniqueLibraryRoots([root, ...savedLibraryRoots(), bundled]).filter(readableLibraryDirectory);
+  const kits = typeof __filename === 'string' ? path.join(path.dirname(__filename), 'Martin Forest AKS') : '';
+  let roots = uniqueLibraryRoots([root, ...savedLibraryRoots(), bundled, kits]).filter(readableLibraryDirectory);
   const attempted = new Set();
   let added = false;
   while (true) {
@@ -1481,7 +1584,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.31 SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.32 WARDROBE RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -1606,7 +1709,7 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
-      if((item.aks_kind||isPrimeHinge(item)||JOINT_HASHES.has(item.source_sha256))&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.joined_panel_id)))throw Error('Не импортирована деталь стыка.');
+      if((item.wardrobe_rod||item.aks_kind||isPrimeHinge(item)||JOINT_HASHES.has(item.source_sha256))&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.joined_panel_id)))throw Error('Не импортирована деталь стыка.');
       if(isShelfSupport(item)&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.shelf_blank_id)))throw Error('Не импортирована полка или её опорная стойка.');
       if(isWardrobeFoot(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Не импортирована деталь для опоры.');
       if(isBlankHook(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Опорная заготовка не импортирована.');
@@ -1637,7 +1740,7 @@ function importProject(prepared, root, payload) {
       }
       importedObjects.push(obj);
       if ((item.blank||item.glass_shelf) && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
-      if (!item.aks_kind && !isPrimeHinge(item) && !isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
+      if (!item.wardrobe_rod && !item.aks_kind && !isPrimeHinge(item) && !isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });
       loaded++;

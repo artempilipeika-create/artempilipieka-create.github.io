@@ -176,3 +176,16 @@
  #planner-assistant-dialog[data-cell-view][data-zoom] .wardrobe-live{display:none}
  #planner-assistant-dialog[data-interior] .assistant-fields :is(legend,input,button,select){scroll-margin-top:calc(27dvh + 83px)}
 }
+#planner-assistant-dialog .rod-editor{display:grid;gap:10px;min-width:0}
+#planner-assistant-dialog .rod-editor p,#planner-assistant-dialog .rod-editor small{margin:0}
+#planner-assistant-dialog .rod-families,#planner-assistant-dialog .rod-position{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#planner-assistant-dialog .rod-families button{padding:6px;min-width:0;display:grid;gap:3px;align-content:start;text-align:left;background:#fff}
+#planner-assistant-dialog .rod-families img{background:#fff;border-radius:5px;width:100%;height:clamp(65px,10vw,100px);object-fit:contain}
+#planner-assistant-dialog .rod-families button[aria-pressed=true]{outline:2px solid #236a51;outline-offset:-2px;color:#174738;background:#f5faf5}
+#planner-assistant-dialog .rod-families small{font-size:12px}
+#planner-assistant-dialog .rod-source{font-size:12px;color:#25624a}
+#planner-assistant-dialog .rod-actions{display:flex;gap:6px;flex-wrap:wrap}
+#planner-assistant-dialog .rod-actions button{width:auto}
+#planner-assistant-dialog .rod-warning{padding:8px 10px;border-left:3px solid #ac731d;background:#fff3d9;color:#604219}
+#planner-assistant-dialog .rod-message:empty{display:none}
+#planner-assistant-dialog .wardrobe-figure [data-rod-id]{cursor:ns-resize;touch-action:none}

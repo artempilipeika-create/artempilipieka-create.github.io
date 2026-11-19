@@ -163,6 +163,20 @@ function elevationView(built,view,section,front,selectedShelf,selection){
        (selected?rect(X(q.x),Y(q.y+q.h),q.w*k,Math.max(2,q.h*k),'#9bc7f1','#2468a6'):'')+
        '<rect x="'+num(X(q.x))+'" y="'+num(cy-5)+'" width="'+num(q.w*k)+'" height="10" fill="transparent"/></g>';
    }
+   for(const r of built.rods??[]){
+     const y=Y(footHeight(s)+r.y),l=X(r.left),right=X(r.left+r.width),h=Math.max(2.6,k*(r.product.family==='round'?25:30));
+     const active=selection?.rodId===r.id,fill={chrome:'#aebbbd',black:'#42484a',white:'#f2f1eb'}[r.product.finish];
+     if(active){
+       const edgeY=Y(footHeight(s)+(r.anchor==='top'?r.high:r.low)),px=l+(right-l)*.24,mid=(y+edgeY)/2;
+       dimensions+='<g pointer-events="none" data-rod-dimension="'+r.id+'"><path d="M'+num(px)+' '+num(edgeY)+'V'+num(y)+'m-3 0h6 M'+num(px-3)+' '+num(edgeY)+'h6" stroke="#1769b5" fill="none"/>'+
+        '<text x="'+num(px-4)+'" y="'+num(mid+3)+'" text-anchor="end" font-size="10" fill="#174c80" stroke="#fff" stroke-width="3" paint-order="stroke">'+r.offset+'</text></g>';
+     }
+     const local=r.column!=null?' data-column="'+r.column+'" data-opening="'+r.opening+'"':'';
+     handles+='<g class="rod-target" role="button" tabindex="0" data-section="'+r.section+'" data-niche="'+r.level+'"'+local+' data-rod-id="'+r.id+'" data-scale="'+k+'" aria-label="Штанга AKS '+r.article+', секция '+(r.section+1)+'"><title>Штанга '+r.article+' · '+r.offset+' мм '+(r.anchor==='top'?'от верха':'от низа')+' ниши</title>'+
+        '<rect x="'+num(l)+'" y="'+num(y-7)+'" width="'+num(right-l)+'" height="14" fill="transparent"/>'+
+        rect(l,y-h/2,right-l,h,fill,active?'#1769b5':edge)+line(l+2,y-h*.2,right-2,y-h*.2,'opacity=".35"')+
+        rect(l,y-h/2-1.4,2.5,h+2.8,fill)+rect(right-2.5,y-h/2-1.4,2.5,h+2.8,fill)+'</g>';
+   }
    if(!editor)drawing+=label(200,313,'Секция '+(section+1)+' · '+widths[section]+' мм');
  }
  if(view==='fronts'||view==='sections'){
