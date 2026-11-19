@@ -1,4 +1,4 @@
-import {splitAt,rightBankOffset} from './wardrobe-layout.mjs';
+import {splitAt,sectionOf,levelOf} from './wardrobe-layout.mjs';
 import {nicheOpenings,nicheSlot,trimBanks,mmText,coverClearance,frontEdgeGap,prepareDrawerCovers} from './wardrobe-niches.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {footHeight} from './plinth-options.mjs';
@@ -45,10 +45,10 @@ function legacyControls(ui,parent,section){
  const fields=ui.fields;
  const box=el('fieldset');box.append(el('legend','Шуфляды'));parent.append(box);
  const banks=trimBanks(fields.drawerBanks??[],fields.sections);
- let bank=banks[section];
+ let bank=banks[nicheSlot(section,0)];
  box.append(action('Рассчитать по выбранной нише',()=>installBank(ui,section,bank.shelvesBelow??0,{kind:bank.kind,layout:'equal',gap:3,faces:bank.faces.map(()=>({height:null}))},true)));
  function update(value,finished=true){
-   bank=value;banks[section]=value;fields.drawerBanks=banks;ui.changed();
+   bank=value;banks[nicheSlot(section,0)]=value;fields.drawerBanks=banks;ui.changed();
    if(finished)ui.render();
  }
  if(!bank){box.append(action('Добавить шуфляды',()=>update({kind:fields.front?'internal':'external',faces:[{height:197}]})));return;}
@@ -81,12 +81,12 @@ function legacyControls(ui,parent,section){
     update({...bank,faces:bank.faces.map((f,k)=>k===j?next:f)},finished);
    },{min:40,max:1200,step:.5});width.placeholder='По проёму';
    if(face.height!=null)row.append(action('Этот фасад по остатку',()=>{
-     const heights=ui.previewBuilt?.drawerBanks?.[section]?.faces;
+     const heights=ui.previewBuilt?.drawerBanks?.[nicheSlot(section,0)]?.faces;
      const total=bank.height??bank.faces.reduce((sum,f)=>sum+(f.height??197)+3,0);
      update({...bank,height:total,faces:bank.faces.map((f,k)=>({...f,height:k===j?null:f.height??heights?.[k]?.height??197}))});
    }));
  });
- hardwareDetails(box,ui.previewBuilt?.drawerBanks?.[section]);
+ hardwareDetails(box,ui.previewBuilt?.drawerBanks?.[nicheSlot(section,0)]);
  box.append(action('Убрать блок шуфляд',()=>update(null)));
 }
 
@@ -122,13 +122,14 @@ function freezeShelves(fields,section,built){
  }));
 }
 
-function installBank(ui,section,level,template,convert=false){
+export function installBank(ui,section,level,template,convert=false){
  try{
    const f=structuredClone(ui.fields),banks=trimBanks(f.drawerBanks??[],f.sections),slot=nicheSlot(section,level);
-   const legacy=banks[section]&&!banks[section].layout;
+   const legacy=banks[nicheSlot(section,0)]&&!banks[nicheSlot(section,0)].layout;
    if(legacy&&!convert)throw Error('Привяжите существующий блок целевой секции к нише перед копированием.');
-   if(convert){freezeShelves(f,section,ui.previewBuilt);banks[section]=null;}
+   if(convert){freezeShelves(f,section,ui.previewBuilt);banks[nicheSlot(section,0)]=null;}
    if(level===f.sectionShelves[section]){
+     if(f.gapLocks?.[section]?.includes(level))throw Error('Снимите фиксацию высоты ниши для установки полки над шуфлядами.');
      if(level>=10)throw Error('В секции уже десять полок. Выберите нишу под существующей полкой.');
      freezeShelves(f,section,ui.previewBuilt);
      const room=nicheOpenings(f,section)[level],floor=(f.elevation??0)+footHeight(f);
@@ -159,8 +160,8 @@ function copyControls(ui,box,section,level){
  }
  if(!options.length)return;
  const group=el('details');group.append(el('summary','Скопировать в другую секцию'));
- let target=options.find(([slot])=>Math.floor(slot/3)===level)?.[0]??options[0][0];
- const go=action('',()=>installBank(ui,target%3,Math.floor(target/3),f.drawerBanks[nicheSlot(section,level)]));
+ let target=options.find(([slot])=>levelOf(slot)===level)?.[0]??options[0][0];
+ const go=action('',()=>installBank(ui,sectionOf(target),levelOf(target),f.drawerBanks[nicheSlot(section,level)]));
  const caption=()=>{go.textContent=f.drawerBanks?.[target]?'Заменить шуфляды в выбранной нише':'Скопировать шуфляды';};
  ui.select(group,'Куда скопировать',options,target,v=>{target=Number(v);caption();});
  caption();group.append(go);box.append(group);
@@ -168,8 +169,8 @@ function copyControls(ui,box,section,level){
 
 export function drawerControls(ui,parent,section){
  const f=ui.fields,level=Math.min(ui.nicheIndex??0,f.sectionShelves[section]),zone=splitAt(f,section,level),shared=zone?.kind==='drawers';
- const slot=nicheSlot(section,level)+(shared&&ui.column===1?rightBankOffset:0);
- const legacy=f.drawerBanks?.[section];
+ const slot=nicheSlot(section,level,shared?ui.column:0);
+ const legacy=f.drawerBanks?.[nicheSlot(section,0)];
  if(legacy&&!legacy.layout){legacyControls(ui,parent,section);return;}
  const box=el('fieldset');box.className='niche-editor';box.append(el('legend','Шуфляды · ниша '+(level+1)));parent.append(box);
  const levels=Array.from({length:f.sectionShelves[section]+1},(_,i)=>[i,'Ниша '+(i+1)+(i===0?' · нижняя':'')]);
@@ -186,8 +187,8 @@ export function drawerControls(ui,parent,section){
    }
    const updateCover=next?.kind==='internal'&&(bank?.kind!==next.kind||next.coverFixing!==bank?.coverFixing);
    const banks=trimBanks(f.drawerBanks,f.sections);banks[slot]=next;f.drawerBanks=trimBanks(banks,f.sections);bank=next;
-   if(shared&&next&&f.drawerBanks[slot>=rightBankOffset?slot-rightBankOffset:slot+rightBankOffset]){
-     const other=f.drawerBanks[slot>=rightBankOffset?slot-rightBankOffset:slot+rightBankOffset];
+   if(shared&&next&&f.drawerBanks[nicheSlot(section,level,ui.column===1?0:1)]){
+     const other=f.drawerBanks[nicheSlot(section,level,ui.column===1?0:1)];
      other.kind=next.kind;if(next.kind==='external')delete other.coverFixing;
    }
    if(updateCover){

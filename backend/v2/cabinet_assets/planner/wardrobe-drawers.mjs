@@ -1,4 +1,4 @@
-import {rightBankOffset,levelOf,splitAt,columnWidths} from './wardrobe-layout.mjs';
+import {sectionOf,isRightBank,levelOf,splitAt,columnWidths} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {fittedFaceHeights,frontEdgeGap,coverClearance,mm} from './wardrobe-niches.mjs';
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
@@ -64,12 +64,12 @@ function frontHeights(bank,n){
 
 export function drawerSections(s,widths,legacy=false){
  const banks=s.drawerBanks??Array(widths.length).fill(null);
- if(banks.length<widths.length||banks.length>66)throw Error('Проверьте количество ниш с шуфлядами.');
+ if(banks.length<widths.length||banks.length>88)throw Error('Проверьте количество ниш с шуфлядами.');
  return banks.map((bank,slot)=>{
   if(!bank)return null;
-  const i=slot%3,sectionWidth=widths[i];
+  const i=sectionOf(slot),sectionWidth=widths[i];
   if(sectionWidth==null)throw Error('Проверьте секцию шуфляд.');
-  const split=splitAt(s,i,levelOf(slot)),shared=split?.kind==='drawers',rightBank=slot>=rightBankOffset;
+  const split=splitAt(s,i,levelOf(slot)),shared=split?.kind==='drawers',rightBank=isRightBank(slot);
   if(rightBank&&!shared)throw Error('Для правого блока нужна общая перегородка.');
   const halves=shared?columnWidths(split,sectionWidth):null;
   const clear=shared?halves[Number(rightBank)]:sectionWidth;

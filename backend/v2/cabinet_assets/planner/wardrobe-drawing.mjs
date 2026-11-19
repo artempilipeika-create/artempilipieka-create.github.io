@@ -16,7 +16,7 @@ const label=(x,y,s)=>'<text x="'+num(x)+'" y="'+num(y)+'" text-anchor="middle" f
 const line=(x,y,a,b,style='')=>'<path d="M'+num(x)+' '+num(y)+' L'+num(a)+' '+num(b)+'" fill="none" stroke="'+edge+'" '+style+'/>';
 const rect=(x,y,w,h,color,stroke=edge)=>'<rect x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'" fill="'+color+'" stroke="'+stroke+'" stroke-width=".9"/>';
 const circle=(x,y,r,fill,stroke=accent)=>'<circle cx="'+num(x)+'" cy="'+num(y)+'" r="'+num(r)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1"/>';
-const sheet=(view,body)=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 324" role="'+(['sections','fronts'].includes(view)?'group':'img')+'" aria-label="'+drawingTitles[view]+'" data-view="'+view+'">'+body+'</svg>';
+const sheet=(view,body,box='0 0 400 324')=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+box+'" role="'+(['sections','fronts'].includes(view)?'group':'img')+'" aria-label="'+drawingTitles[view]+'" data-view="'+view+'">'+body+'</svg>';
 
 function openCabinet(built){
  const s=built.spec,H=built.height+footHeight(s),D=s.depth,W=s.width;
@@ -39,7 +39,26 @@ function elevationView(built,view,section,front,selectedShelf,selection){
  const k=Math.min(328/W,(zoom?200:facade?224:258)/height),bottom=zoom?238:facade?253:289;
  const X=x=>200+x*k,Y=y=>bottom-y*k;
  const panel=i=>({x:i.x-i.width/2,y:i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),w:i.width,h:i.height});
- let drawing='',selectedOutline='',dimensions='';
+ let drawing='',selectedOutline='',dimensions='',handles='';
+ const editor=view==='sections'&&selection?.editor;
+ function highlight(left,low,width,high,id){
+   return '<rect data-selected-niche="'+id+'" x="'+num(X(left))+'" y="'+num(Y(high))+'" width="'+num(width*k)+'" height="'+num((high-low)*k)+'" fill="none" stroke="#1769b5" stroke-width="1.65" pointer-events="none"/>';
+ }
+ function widthDimension(sec,x,w,y,zone=null,column=null){
+   const center=X(x+w/2),a=X(x),b=X(x+w);
+   const more=zone==null?'':' data-split-section="'+zone+'" data-column="'+column+'"';
+   const ty=y-4;
+   return '<g role="button" tabindex="0" data-section="'+sec+'" data-clear-width=""'+more+' aria-label="Ширина в свету '+w+' мм">'+
+     '<title>Ширина в свету '+w+' мм</title><path d="M'+num(a)+' '+num(y)+'H'+num(b)+'m-3 -2l3 2 -3 2M'+num(a+3)+' '+num(y-2)+'l-3 2 3 2" fill="none" stroke="#52758a"/>'+
+     '<rect x="'+num(center-10)+'" y="'+num(ty-8)+'" width="20" height="12" rx="2" fill="#f9faf6"/>'+
+     '<text x="'+num(center)+'" y="'+num(ty)+'" text-anchor="middle" fill="#254e66" font-size="8">'+w+'</text></g>';
+ }
+ function dividerHandle(sec,level,x,low,high,local){
+   const attrs=local?' data-split-section="'+level+'" data-column="0"':'';
+   return '<g class="divider-handle" role="button" tabindex="0" data-section="'+sec+'" data-niche="'+level+'" data-clear-width="" data-drag-mm="width" data-scale="'+k+'"'+attrs+' aria-label="Переместить перегородку">'+
+     '<rect x="'+num(X(x)-3)+'" y="'+num(Y(high))+'" width="6" height="'+num((high-low)*k)+'" fill="transparent"/></g>';
+ }
+
  function measure(section,level,low,high,x,column=null,zone=null){
    const a=Y(high),b=Y(low),px=X(x),value=mm(high-low);
    const extra=zone==null?'':' data-split-section="'+zone+'" data-column="'+column+'"';
@@ -69,12 +88,18 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    for(const [sec,width] of widths.entries()){
      const shelves=built.parts.filter(p=>p.key.startsWith('shelf-'+sec+'-')).map(p=>panel(p.item));
      let base=footHeight(s)+openingBase(s,sec);
+     if(editor){
+       dimensions+=widthDimension(sec,start,width,Y(H)-5-(sec%2&&width*k<38?13:0));
+       if(sec<widths.length-1)handles+=dividerHandle(sec,0,start+width+s.thickness/2,base,H-s.thickness,false);
+     }
      for(let level=0;level<=shelves.length;level++){
        const top=shelves[level]?.y??(H-s.thickness),active=selection?.level===level&&sec===section;
+       const zone=splitAt(s,sec,level);
        const title='Секция '+(sec+1)+', ниша '+(level+1);
        if(active){
-         selectedOutline='<rect data-selected-niche="'+sec+'-'+level+'" x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="none" stroke="#1769b5" stroke-width="2.4" pointer-events="none"/>';
-         const bank=built.drawerBanks?.[nicheSlot(sec,level)];
+         selectedOutline=highlight(start,base,width,top,sec+'-'+level);
+         const side=zone?.kind==='drawers'?selection.column??0:0;
+         const bank=built.drawerBanks?.[nicheSlot(sec,level,side)];
          if(bank){
            const faces=bank.faces,at=footHeight(s),last=faces.at(-1);
            function dimension(type,low,high,x,side,show){
@@ -91,10 +116,31 @@ function elevationView(built,view,section,front,selectedShelf,selection){
          }
        }
        drawing+='<g class="niche-target" role="button" tabindex="0" data-section="'+sec+'" data-niche="'+level+'" aria-label="'+title+'"><title>'+title+'</title>'+
-         '<rect x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="'+(active?'#2672bd':'transparent')+'" fill-opacity="'+(active?'.09':'1')+'" stroke="'+(active?'#2672bd':'none')+'" stroke-width="1.8"/></g>';
-       const zone=splitAt(s,sec,level);
-       if(sec===section&&selection?.dimensions)dimensions+=measure(sec,level,base,top,start+width*.55);
-       if(zone&&sec===section&&selection?.splitLevel===level){
+         '<rect x="'+num(X(start))+'" y="'+num(Y(top))+'" width="'+num(width*k)+'" height="'+num(Math.max(0,top-base)*k)+'" fill="'+(active&&!(editor&&zone)?'#2672bd':'transparent')+'" fill-opacity="'+(active?'.09':'1')+'" stroke="'+(active&&!(editor&&zone)?'#2672bd':'none')+'" stroke-width="1.8"/></g>';
+       if(!zone&&selection?.dimensions&&(sec===section||editor&&widths.length<=2))dimensions+=measure(sec,level,base,top,start+width*.62);
+       if(editor&&zone){
+         let l=start;
+         for(const [c,w] of columnWidths(zone,width).entries()){
+           const col=zone.columns?.[c],rooms=col?columnOpenings(base,top,col,s.thickness):[{bottom:base,top}];
+           for(const [j,r] of rooms.entries()){
+             const attrs=' data-section="'+sec+'" data-niche="'+level+'" data-split-section="'+level+'" data-column="'+c+'" data-opening="'+j+'"';
+             const selected=active&&selection.column===c&&(selection.opening??0)===j;
+             const caption=title+(c?' справа':' слева')+', проём '+(j+1);
+             drawing+='<g class="niche-target" role="button" tabindex="0"'+attrs+' aria-label="'+caption+'"><title>'+caption+'</title>'+
+               rect(X(l),Y(r.top),w*k,(r.top-r.bottom)*k,selected?'rgba(38,114,189,.12)':'transparent','none')+'</g>';
+             if(selected)selectedOutline=highlight(l,r.bottom,w,r.top,sec+'-'+level+'-'+c+'-'+j);
+             if(col&&active&&selection.column===c)dimensions+=measure(sec,j,r.bottom,r.top,l+w*.63,c,level);
+             if(col&&j<rooms.length-1){
+               const cy=Y((r.top+rooms[j+1].bottom)/2);
+               handles+='<g class="shelf-target" role="button" tabindex="0"'+attrs+' data-shelf-index="'+j+'" data-drag-mm="height" data-scale="'+k+'" aria-label="Переместить полку колонки"><rect x="'+num(X(l))+'" y="'+num(cy-3)+'" width="'+num(w*k)+'" height="6" fill="transparent"/></g>';
+             }
+           }
+           if(active)dimensions+=widthDimension(sec,l,w,Y(top)+12,level,c);
+           if(c===0)handles+=dividerHandle(sec,level,l+w+9,base,top,true);
+           l+=w+18;
+         }
+       }
+       if(!editor&&zone&&sec===section&&selection?.splitLevel===level){
          const halves=columnWidths(zone,width);
          const first=start+halves[0];
          for(const [c,w] of halves.entries()){
@@ -113,11 +159,11 @@ function elevationView(built,view,section,front,selectedShelf,selection){
      const match=/^shelf-(\d+)-(\d+)$/.exec(key);if(!match)continue;
      const q=panel(item),sec=Number(match[1]),index=Number(match[2]),cy=Y(q.y+q.h/2);
      const selected=section===sec&&selectedShelf===index;
-     drawing+='<g class="shelf-target" role="button" tabindex="0" data-section="'+sec+'" data-shelf-index="'+index+'" aria-label="Секция '+(sec+1)+', полка '+(index+1)+'"><title>Полка '+(index+1)+'</title>'+
+     drawing+='<g class="shelf-target" role="button" tabindex="0" data-section="'+sec+'" data-shelf-index="'+index+'"'+(editor?' data-drag-mm="height" data-scale="'+k+'"':'')+' aria-label="Секция '+(sec+1)+', полка '+(index+1)+'"><title>Полка '+(index+1)+'</title>'+
        (selected?rect(X(q.x),Y(q.y+q.h),q.w*k,Math.max(2,q.h*k),'#9bc7f1','#2468a6'):'')+
        '<rect x="'+num(X(q.x))+'" y="'+num(cy-5)+'" width="'+num(q.w*k)+'" height="10" fill="transparent"/></g>';
    }
-   drawing+=label(200,313,'Секция '+(section+1)+' · '+widths[section]+' мм');
+   if(!editor)drawing+=label(200,313,'Секция '+(section+1)+' · '+widths[section]+' мм');
  }
  if(view==='fronts'||view==='sections'){
    for(const conflict of built.hingeConflicts??[]){
@@ -133,7 +179,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
      drawing+=line(x,Y(0)+2,x,257)+line(x,257,200+sign*98,257)+label(200+sign*98,279,plinthPanel(s)?floorSide(s,key)?'Стойка в пол':'До края / стены':'Без цоколя');
    }
  }
- return view==='sections'?'<g data-cabinet-art="">'+drawing+dimensions+'</g>'+selectedOutline:drawing;
+ return view==='sections'?'<g data-cabinet-art="">'+drawing+dimensions+handles+'</g>'+selectedOutline:drawing;
 }
 function underside(s){
  const k=Math.min(318/s.width,222/s.depth),L=200-s.width*k/2,T=162-s.depth*k/2;
@@ -179,5 +225,11 @@ export function wardrobeDrawing(built,view='body',section=0,front=built.spec.fro
    plinth:plinthPanel(s)?'Планка '+plinthPanel(s).height+' мм · верхний зазор 3 мм':'Цоколь для этого исполнения отсутствует',
    back:s.backThickness?'ЛДСП '+s.backThickness+' мм · ● эксцентрик   ○ шкант':s.back?'Накладная ЛХДФ 3 мм':'Открытый корпус без задней стенки',
    fronts:front?'Зазор по периметру 1,5 мм'+(front.swing==='pair'?' · между створками 3 мм':''):'Открытый шкаф'};
- return {svg:sheet(view,art),caption:notes[view]};
+ let box;
+ if(view==='sections'&&selection?.editor){
+   const scale=Math.min(328/s.width,258/(built.height+footHeight(s)));
+   const span=Math.max(146,s.width*scale+66);
+   box=[num(200-span/2),-8,num(span),311].join(' ');
+ }
+ return {svg:sheet(view,art,box),caption:notes[view]};
 }

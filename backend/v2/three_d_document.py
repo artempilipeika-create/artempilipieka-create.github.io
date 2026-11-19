@@ -15,7 +15,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Table,TableStyle,Spacer,PageBreak,KeepTogether,Image as RLImage
 import json
-from .assistant_model import ASSETS, PLINTH_FEET, DECOR_FEET, DECOR_CENTRES, inner_foot_pairs
+from .assistant_model import ASSETS, PLINTH_FEET, DECOR_FEET, DECOR_CENTRES, inner_foot_pairs, niche_address
 from .document_renderer import FONTS
 from .three_d_corner import corner_variant
 from .three_d_cargo import cargo_variant, cargo_hardware, cargo_contents, cargo_adjustment
@@ -108,19 +108,20 @@ def hardware_for(it):
     drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-face',key)
     if drawer:
         banks=spec.get('drawerBanks') or []
-        section,number=map(int,drawer.groups())
-        if section<len(banks) and banks[section] and number<len(banks[section]['faces']):
-            depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[section]['kind']=='internal' else 0)
+        slot,number=map(int,drawer.groups())
+        if slot<len(banks) and banks[slot] and number<len(banks[slot]['faces']):
+            depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[slot]['kind']=='internal' else 0)
             length=min(600,((depth-5)//50)*50)
             rail=AKS_GUIDES.get(str(length))
             if rail:
-                shared=any(z['kind']=='drawers' and z['section']==section%3 and z['level']==section%33//3 for z in spec.get('nicheSplits') or [])
+                section,level,right_bank=niche_address(slot)
+                shared=any(z['kind']=='drawers' and z['section']==section and z['level']==level for z in spec.get('nicheSplits') or [])
                 small=2*len(rail['moving'])+len(rail['fixed'])*(1 if shared else 2)
                 rows=[*rows,_row(f'Направляющие PRIME by AKS Soft Close {length} × 45 мм',1,'set',rail['article']),
                       _row('Шуруп 3,5×16 мм, Zn',small,'pcs','20646'),
                       _row('Конфирмат 7×50',8),_row('Саморез 5×30 AKS',3,'pcs','12867')]
                 if shared:
-                    side='left' if section>=33 else 'right'
+                    side='left' if right_bank else 'right'
                     rows.append(_row('Саморез 3,5×18 мм · общая стойка',len(rail['shared'][side]['fixed'])))
     spacer=re.fullmatch(r'drawer-(\d+)-spacer-(left|right)',key)
     if spacer and it.get('height'):

@@ -47,7 +47,7 @@ function validateWardrobePlan(adapter,next,items){
  }
 }
 
-export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,selectedMaterials={},bodyMaterialId,backMaterialId,frontMaterialId,drawerMaterialId,resetSideEdges=false}={}){
+export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaultMaterial=null,selectedMaterials={},bodyMaterialId,backMaterialId,frontMaterialId,drawerMaterialId,previousPartKeys,resetSideEdges=false}={}){
  if(!['create','update'].includes(plan.action)||!plan.spec)throw Error('Нет предложения для применения.');
  const current=plan.action==='update'?selectedCarcass(adapter):null;
  if(plan.action==='update'&&!current)throw Error('Выберите деталь корпуса, созданного помощником.');
@@ -75,13 +75,22 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  }
  position=Object.fromEntries(['x','z','elevation_mm','rotation'].map(k=>[k,position[k]??0]));
  const metadata={group_id:prefix,spec,position};
- const previousSides=current && (spec.back!==current.metadata.spec.back||spec.backThickness!==current.metadata.spec.backThickness||spec.topFit!==current.metadata.spec.topFit||spec.bottomFit!==current.metadata.spec.bottomFit)
-   ?buildCarcass(current.metadata.spec,{idPrefix:prefix}).items.filter(i=>i.item_id===prefix+':left'||i.item_id===prefix+':right'||i.item_id===prefix+':top'||i.item_id===prefix+':bottom'):[];
+ const movedIds=new Map();
+ for(const [key,original] of previousPartKeys??[]){
+  const nextId=prefix+':'+key;if(original!==nextId)movedIds.set(original,nextId);
+ }
+ const shapeChanged=current&&(spec.back!==current.metadata.spec.back||spec.backThickness!==current.metadata.spec.backThickness||spec.topFit!==current.metadata.spec.topFit||spec.bottomFit!==current.metadata.spec.bottomFit);
+ const originalItems=(shapeChanged||movedIds.size)?buildCarcass(current.metadata.spec,{idPrefix:prefix,name:first?.name.split(' · ')[0]}).items:[];
+ const previousSides=shapeChanged?originalItems.filter(i=>['left','right','top','bottom'].includes(i.item_id.slice(prefix.length+1))):[];
+ const retained=new Set();
  const items=placeCarcass(built,position).map(generated=>{
-  const old=current?.items.find(i=>i.item_id===generated.item_id);
+  const previousId=previousPartKeys?previousPartKeys.get(generated.item_id.slice(prefix.length+1)):generated.item_id;
+  const old=current?.items.find(i=>i.item_id===previousId);
   const item={...old,...generated,blank_binding:generated.blank_binding??null,assistant_carcass:metadata};
   if(old){
-   if(old.blank_shelf===generated.blank_shelf&&(!item.item_id.endsWith(':back')||old.depth===generated.depth))item.name=old.name;
+   retained.add(previousId);
+   const customName=previousId!==generated.item_id&&originalItems.find(i=>i.item_id===previousId)?.name!==old.name;
+   if((previousId===generated.item_id||customName)&&old.blank_shelf===generated.blank_shelf&&(!item.item_id.endsWith(':back')||old.depth===generated.depth))item.name=old.name;
    if(!generated.blank_shelf)delete item.blank_shelf;
    if(!old.blank_shelf&&!generated.blank_shelf&&old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
    item.body_variant_id=retainedBlankMaterial(generated,old,id=>adapter.material?.(id));
@@ -102,9 +111,14 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   if(item.item_id===prefix+':plinth')item.blank_edge_code='1111';
   return item;
  });
- const removed=current?.items.filter(i=>!items.some(p=>p.item_id===i.item_id))||[];
+ const removed=current?.items.filter(i=>!retained.has(i.item_id))||[];
  const oldIds=new Set(current?.items.map(i=>i.item_id)||[]);
- const next=resolveBlankBindings(joinPlinths([...splitPlinths(adapter.items).filter(i=>!oldIds.has(i.item_id)),...items]));
+ const outside=splitPlinths(adapter.items).filter(i=>!oldIds.has(i.item_id)).map(it=>{
+  const b=it.blank_binding;
+  if(!b||!movedIds.size)return it;
+  return {...it,blank_binding:{...b,left_id:movedIds.get(b.left_id)??b.left_id,right_id:movedIds.get(b.right_id)??b.right_id}};
+ });
+ const next=resolveBlankBindings(joinPlinths([...outside,...items]));
  if(next.length>100)throw Error('В проекте поддерживается до 100 деталей и модулей.');
  validateWardrobePlan(adapter,next,items);
  for(const shelf of next.filter(i=>i.blank_shelf)){

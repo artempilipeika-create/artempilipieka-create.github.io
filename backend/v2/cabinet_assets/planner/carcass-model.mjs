@@ -1,5 +1,5 @@
 import {outerFront,drawerSections,buildDrawerBoards,doorZones,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
-import {columnWidths,columnOpenings,localBaseShelf,openingBase,splitKey} from './wardrobe-layout.mjs';
+import {nicheSlot,columnWidths,columnOpenings,localBaseShelf,openingBase,splitKey} from './wardrobe-layout.mjs';
 import {fitNicheBanks,nicheOpenings} from './wardrobe-niches.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
@@ -31,7 +31,7 @@ export function carcassSpec(input={}){
     shelves:recipe.shelves,sections:recipe.sections,back:recipe.back,elevation:0,
     shelfSetback:20,shelfGap:0,edgeThickness:1,edgePolicy:recipe.id==='sink'?'none':'front',...input};
   for(const [key,min,max,label] of [['width',200,2400,'Ширина'],['height',200,3000,'Высота'],['depth',200,1200,'Глубина'],
-    ['thickness',10,40,'Толщина'],['shelves',0,10,'Количество полок'],['sections',1,3,'Количество секций'],
+    ['thickness',10,40,'Толщина'],['shelves',0,10,'Количество полок'],['sections',1,4,'Количество секций'],
     ['elevation',0,5000,'Низ от пола'],['shelfSetback',0,100,'Отступ полки'],['shelfGap',0,10,'Зазор полки']])
     if(!Number.isInteger(s[key])||s[key]<min||s[key]>max)throw Error(label+': '+min+'–'+max+'.');
   if(![.4,.8,1,2,3].includes(s.edgeThickness)||!['front','all','none'].includes(s.edgePolicy))throw Error('Проверьте схему и толщину ПВХ.');
@@ -101,7 +101,7 @@ export function buildCarcass(input={},options={}){
   const banks=drawerSections(s,widths,Boolean(options.legacyDrawers));
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
   const shelfYs=counts.map((count,section)=>{
-    const bank=s.drawerBanks?.[section]?.layout?null:banks[section],below=s.drawerBanks?.[section]?.shelvesBelow??0;
+    const baseSlot=nicheSlot(section,0),bank=s.drawerBanks?.[baseSlot]?.layout?null:banks[baseSlot],below=s.drawerBanks?.[baseSlot]?.shelvesBelow??0;
     if(!Number.isInteger(below)||below<0||below>count)throw Error('Секция '+(section+1)+': проверьте число полок под блоком.');
     const thicknesses=Array.from({length:count},(_,i)=>choice(s.shelfChoices?.[section]?.[i]??defaultShelf,t).thickness);
     const floor=s.elevation+footHeight(s);
@@ -129,14 +129,14 @@ export function buildCarcass(input={},options={}){
   }
   const occupied=new Set();
   for(const zone of s.nicheSplits??[]){
-    const sec=zone.section,id=splitKey(zone),slot=sec+3*zone.level;
+    const sec=zone.section,id=splitKey(zone),slot=nicheSlot(sec,zone.level);
     const room=sec>=0&&sec<s.sections?nicheOpenings(s,sec)[zone.level]:null;
-    if(!room||occupied.has(id)||s.drawerBanks?.[sec]&&!s.drawerBanks[sec].layout)throw Error('Проверьте границы выбранной перегородки.');
+    if(!room||occupied.has(id)||s.drawerBanks?.[nicheSlot(sec,0)]&&!s.drawerBanks[nicheSlot(sec,0)].layout)throw Error('Проверьте границы выбранной перегородки.');
     occupied.add(id);
     const halves=columnWidths(zone,widths[sec]),a=supports[sec],b=supports[sec+1];
     const leftEdge=a.x+a.width/2,mid=leftEdge+halves[0]+9,isDrawers=zone.kind==='drawers';
     if(!isDrawers&&banks[slot])throw Error('Полки и шуфляды занимают одну нишу.');
-    const bank=banks[slot]??banks[slot+33];
+    const bank=banks[slot]??banks[nicheSlot(sec,zone.level,1)];
     if(isDrawers&&!bank)throw Error('Для общей стойки добавьте шуфляды в нишу.');
     const depth=isDrawers?bank.rail.length:D-innerRear-s.shelfSetback;
     const z=isDrawers?bank.bodyFront-depth/2:shelfCentre;

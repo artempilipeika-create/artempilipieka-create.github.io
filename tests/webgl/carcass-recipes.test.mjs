@@ -58,7 +58,7 @@ test('manual PVC survives size changes, native export and cutting calculation',(
  assert.equal(updated.find(i=>i.item_id===shelf.item_id).blank_length_mm,shelf.blank_length_mm+100);
 });
 test('invalid sizes and overfilled layouts fail before placement',()=>{
- for(const patch of [{width:0},{height:NaN},{depth:Infinity},{sections:4},{shelves:1.5},{height:200,shelves:10},{width:200,sections:3},{recipe:'sink',back:true},{recipe:'sink',shelves:1},{recipe:'cap',sections:2}])assert.throws(()=>buildCarcass(patch));
+ for(const patch of [{width:0},{height:NaN},{depth:Infinity},{sections:5},{shelves:1.5},{height:200,shelves:10},{width:200,sections:3},{recipe:'sink',back:true},{recipe:'sink',shelves:1},{recipe:'cap',sections:2}])assert.throws(()=>buildCarcass(patch));
  const {adapter}=setup(buildCarcass({recipe:'shelves'}).items),before=structuredClone(adapter.items);
  assert.throws(()=>insertCarcass(adapter,buildCarcass({recipe:'wall'}).items),/Пересечение/);assert.deepEqual(adapter.items,before);
  const crowded=setup(Array.from({length:99},(_,i)=>({...before[0],item_id:String(i)}))).adapter;

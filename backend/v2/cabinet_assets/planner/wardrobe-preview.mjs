@@ -4,7 +4,7 @@ import {WardrobeMotion,drawerKey} from './wardrobe-motion.mjs';
 import {placeCarcass} from './carcass-model.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {nicheOpenings} from './wardrobe-niches.mjs';
-import {levelOf,rightBankOffset} from './wardrobe-layout.mjs';
+import {levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 import {drawerBottom} from './wardrobe-drawers.mjs';
 
@@ -103,7 +103,7 @@ export class WardrobePreview{
     const item=this.adapter.items.find(it=>it.item_id===hit?.object.userData.itemId);
     const key=drawerKey(item);if(!key||!item.item_id.endsWith('-face'))return;
     const slot=Number(key.split('-')[0]);
-    this.motion.toggleDrawer(key);this.onPick(slot%3,levelOf(slot),Number(slot>=rightBankOffset));
+    this.motion.toggleDrawer(key);this.onPick(sectionOf(slot),levelOf(slot),Number(isRightBank(slot)));
     this.select.value=this.motion.requested||'';this.invalidate();
   }
   invalidate(){

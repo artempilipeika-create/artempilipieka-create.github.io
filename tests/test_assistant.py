@@ -365,3 +365,24 @@ def test_reopen_and_update_split_bottomless_wardrobe(api,admin_user):
     update=api.patch(url,json={'name':saved['name'],'version':saved['version'],'scene':saved['scene']})
     assert update.status_code==200,update.text
     assert {i['assistant_carcass']['group_id'] for i in api.get(url).json()['scene']['items']}=={group}
+
+
+def test_fourth_section_preserves_legacy_slots_and_accepts_both_sides_of_a_local_divider():
+    from backend.v2.assistant_model import CarcassDesign
+    from backend.v2.three_d_document import hardware_for
+    drawers=[None]*78
+    drawers[66]=drawers[77]=dict(kind='internal',layout='equal',gap=12,coverFixing='confirmat',
+                                 bottomOffset=0,height=540,faces=[{'height':None}]*2)
+    spec={**SPEC,'recipe':'divided','width':1200,'height':2000,'shelves':1,'sections':4,'sectionShelves':[0,0,0,1],
+          'dividerPositions':[220,458,736],'shelfSetback':1,'dividerSetback':1,'shelfChoices':[[],[],[],['board/confirmat']],
+          'shelfLevels':[[],[],[],[{'mode':'gap','mm':540}]],'drawerFixing':'confirmat','clearLayout':True,'drawerBanks':drawers,
+          'front':{'swing':'pair','offset':90,'autoHinges':True},'nicheSplits':[{'section':3,'level':0,'kind':'drawers','edge':'open'}]}
+    design=CarcassDesign.model_validate(spec)
+    assert design.clear_widths()==[220,220,260,410]
+    scene=generated_scene(spec)
+    for slot in (66,77):
+        face=next(it for it in scene['items'] if it['item_id'].endswith(f':drawer-{slot}-0-face'))
+        rows,_=hardware_for(face)
+        assert any('общая стойка' in r['name'] for r in rows)
+    with pytest.raises(ValidationError,match='перегородка'):
+        CarcassDesign.model_validate({**spec,'nicheSplits':None})

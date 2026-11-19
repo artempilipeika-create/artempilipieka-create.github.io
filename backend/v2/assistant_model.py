@@ -7,6 +7,17 @@ from pydantic import Field, model_validator
 from .auth_api import StrictModel
 
 
+def niche_slot(section, level, column=0):
+    # Preserve the part IDs of all wardrobes saved with up to three sections.
+    return 66 + level + 11 * column if section == 3 else section + 3 * level + 33 * column
+
+
+def niche_address(slot):
+    if slot < 66:
+        return slot % 3, (slot % 33) // 3, slot >= 33
+    return 3, (slot - 66) % 11, slot >= 77
+
+
 class CarcassSpec(StrictModel):
     recipe: Literal['shelves', 'divided', 'wall', 'base', 'sink', 'cap']
     width: int = Field(ge=200, le=2400, strict=True)
@@ -14,7 +25,7 @@ class CarcassSpec(StrictModel):
     depth: int = Field(ge=200, le=1200, strict=True)
     thickness: int = Field(ge=10, le=40, strict=True)
     shelves: int = Field(ge=0, le=10, strict=True)
-    sections: int = Field(ge=1, le=3, strict=True)
+    sections: int = Field(ge=1, le=4, strict=True)
     back: bool
     elevation: int = Field(ge=0, le=5000, strict=True)
     shelfSetback: int = Field(ge=0, le=100, strict=True)
@@ -162,7 +173,7 @@ class ShelfColumn(StrictModel):
     gaps: list[Gap | None] = Field(min_length=1,max_length=11)
 
 class NicheSplit(StrictModel):
-    section: int = Field(ge=0,le=2,strict=True)
+    section: int = Field(ge=0,le=3,strict=True)
     level: int = Field(ge=0,le=10,strict=True)
     kind: Literal['drawers','shelves']
     leftWidth: int | None = Field(default=None,ge=100,le=2200,strict=True,exclude_if=lambda v:v is None)
@@ -171,14 +182,14 @@ class NicheSplit(StrictModel):
 
 
 class CarcassDesign(CarcassSpec):
-    gapLocks: list[Annotated[list[LockIndex],Field(max_length=11)]] | None = Field(default=None,max_length=3,exclude_if=lambda v:v is None)
+    gapLocks: list[Annotated[list[LockIndex],Field(max_length=11)]] | None = Field(default=None,max_length=4,exclude_if=lambda v:v is None)
     clearLayout: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     drawerFixing: Literal['cam_dowel','confirmat'] | None = Field(default=None,exclude_if=lambda v:v is None)
     braceOffset: int | None = Field(default=None,ge=0,le=2900,strict=True,exclude_if=lambda v:v is None)
-    topGaps: list[Gap | None] | None = Field(default=None,min_length=1,max_length=3,exclude_if=lambda v:v is None)
-    nicheSplits: list[NicheSplit] | None = Field(default=None,min_length=1,max_length=33,exclude_if=lambda v:v is None)
-    drawerBanks: list[DrawerBank | None] | None = Field(default=None,min_length=1,max_length=66,exclude_if=lambda v:v is None)
-    shelfLevels: list[Annotated[list[ShelfLevel | None], Field(max_length=10)]] | None = Field(default=None, max_length=3, exclude_if=lambda v:v is None)
+    topGaps: list[Gap | None] | None = Field(default=None,min_length=1,max_length=4,exclude_if=lambda v:v is None)
+    nicheSplits: list[NicheSplit] | None = Field(default=None,min_length=1,max_length=44,exclude_if=lambda v:v is None)
+    drawerBanks: list[DrawerBank | None] | None = Field(default=None,min_length=1,max_length=88,exclude_if=lambda v:v is None)
+    shelfLevels: list[Annotated[list[ShelfLevel | None], Field(max_length=10)]] | None = Field(default=None, max_length=4, exclude_if=lambda v:v is None)
     front: OverlayFront | None = Field(default=None,exclude_if=lambda v:v is None)
     backThickness: Literal[16,18] | None = Field(default=None,exclude_if=lambda v:v is None)
     topFit: Literal['overlay'] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -186,11 +197,11 @@ class CarcassDesign(CarcassSpec):
     feet: WardrobeFeet | None = Field(default=None,exclude_if=lambda v:v is None)
     joints: CarcassJoints | None = Field(default=None,exclude_if=lambda v:v is None)
     dividerSetback: Literal[1] | None = Field(default=None,exclude_if=lambda v:v is None)
-    dividerPositions: list[Annotated[int, Field(ge=0,le=2400,strict=True)]] | None = Field(default=None,min_length=1,max_length=2,exclude_if=lambda v:v is None)
-    dividerJoints: list[CarcassJoints] | None = Field(default=None,min_length=1,max_length=2,exclude_if=lambda v:v is None)
-    shelfChoices: list[Annotated[list[ShelfValue], Field(max_length=10)]] | None = Field(default=None,max_length=3,exclude_if=lambda v:v is None)
+    dividerPositions: list[Annotated[int, Field(ge=0,le=2400,strict=True)]] | None = Field(default=None,min_length=1,max_length=3,exclude_if=lambda v:v is None)
+    dividerJoints: list[CarcassJoints] | None = Field(default=None,min_length=1,max_length=3,exclude_if=lambda v:v is None)
+    shelfChoices: list[Annotated[list[ShelfValue], Field(max_length=10)]] | None = Field(default=None,max_length=4,exclude_if=lambda v:v is None)
 
-    sectionShelves: list[Annotated[int, Field(ge=0, le=10, strict=True)]] | None = Field(default=None, min_length=1, max_length=3)
+    sectionShelves: list[Annotated[int, Field(ge=0, le=10, strict=True)]] | None = Field(default=None, min_length=1, max_length=4)
 
     def clear_widths(self):
         inner=self.width-2*self.thickness
@@ -212,7 +223,7 @@ class CarcassDesign(CarcassSpec):
         ceiling=self.height-t
         # Match the positive-position rounding and anchored runs in shelf-levels.mjs.
         nearest=lambda value: int(value+.5)
-        base=(100+(self.braceOffset or 0)+t if self.drawerBanks and section<len(self.drawerBanks) and self.drawerBanks[section] else 0) if self.bottomFit=='none' else t
+        base=(100+(self.braceOffset or 0)+t if self.drawerBanks and niche_slot(section,0)<len(self.drawerBanks) and self.drawerBanks[niche_slot(section,0)] else 0) if self.bottomFit=='none' else t
         if not any(levels) and not self.clearLayout:
             free=ceiling-t-count*t
             if free<(count+1)*60: raise ValueError('Для полок недостаточно высоты.')
@@ -263,7 +274,8 @@ class CarcassDesign(CarcassSpec):
         zones_by_slot={}
         widths=self.clear_widths()
         for zone in self.nicheSplits or []:
-            slot=zone.section+zone.level*3
+            slot=niche_slot(zone.section,zone.level)
+            right_slot=niche_slot(zone.section,zone.level,1)
             if slot in zones_by_slot or zone.section>=self.sections or not self.sectionShelves or zone.level>self.sectionShelves[zone.section]:
                 raise ValueError('Неверная или повторяющаяся перегородка.')
             zones_by_slot[slot]=zone
@@ -282,7 +294,7 @@ class CarcassDesign(CarcassSpec):
                     free=high-low-total-sum(g or 0 for g in col.gaps)
                     n=col.gaps.count(None)
                     if free<60*n or not n and free!=0:raise ValueError('Проверьте чистую высоту полок в колонке.')
-            elif zone.columns or not self.drawerBanks or len(self.drawerBanks)<=slot+33 or not self.drawerBanks[slot] or not self.drawerBanks[slot+33]:
+            elif zone.columns or not self.drawerBanks or len(self.drawerBanks)<=right_slot or not self.drawerBanks[slot] or not self.drawerBanks[right_slot]:
                 raise ValueError('Для общей стойки нужны два блока шуфляд.')
         if self.clearLayout:
             for section in range(self.sections):self.niche_bounds(section,True)
@@ -292,23 +304,22 @@ class CarcassDesign(CarcassSpec):
             zones=[]
             for slot,bank in enumerate(self.drawerBanks):
                 if bank is None: continue
-                i=slot%3
+                i,level,right_bank=niche_address(slot)
                 if i>=self.sections or i>=len(widths):
                     raise ValueError('Ниша с шуфлядами выходит за секции шкафа.')
                 w=widths[i]
                 start=sum(widths[:i])+(i+1)*self.thickness
                 end=start+w
                 if bank:
-                    level=(slot%33)//3
-                    zone=zones_by_slot.get(slot%33)
+                    zone=zones_by_slot.get(niche_slot(i,level))
                     shared=zone is not None and zone.kind=='drawers'
-                    if slot>=33 and not shared:raise ValueError('Для правого блока нужна перегородка.')
+                    if right_bank and not shared:raise ValueError('Для правого блока нужна перегородка.')
                     if shared:
                         left_width=zone.leftWidth or (w-18+1)//2
-                        if slot>=33:start+=left_width+18
+                        if right_bank:start+=left_width+18
                         else:end=start+left_width
                         w=end-start
-                    if level and (not bank.layout or self.drawerBanks[i] and not self.drawerBanks[i].layout):
+                    if level and (not bank.layout or self.drawerBanks[niche_slot(i,0)] and not self.drawerBanks[niche_slot(i,0)].layout):
                         raise ValueError('Свободное положение блока несовместимо с дополнительной нишей.')
                     if bank.layout:
                         bounds=self.niche_bounds(i,bank.kind=='internal')
@@ -327,11 +338,11 @@ class CarcassDesign(CarcassSpec):
                     if inside and not self.front:
                         raise ValueError(f'Секция {i+1}: выберите распашную дверь.')
                     swing=self.front.swing if self.front else None
-                    left=18 if inside and slot<33 and i==0 and swing in ('left','pair') else 0
-                    right=18 if inside and (not shared or slot>=33) and i==self.sections-1 and swing in ('right','pair') else 0
+                    left=18 if inside and not right_bank and i==0 and swing in ('left','pair') else 0
+                    right=18 if inside and (not shared or right_bank) and i==self.sections-1 and swing in ('right','pair') else 0
                     max_width=(w-left-right if inside else w+self.thickness*(1+(i==0)/2+(i==self.sections-1)/2))-3
                     if shared:
-                        outer=0 if inside else self.thickness*(1 if (slot<33 and i==0 or slot>=33 and i==self.sections-1) else .5)
+                        outer=0 if inside else self.thickness*(1 if (not right_bank and i==0 or right_bank and i==self.sections-1) else .5)
                         max_width=w-left-right+outer+(9 if zone.edge=='overlay' else 0)-3
                     if self.drawerFixing and bank.layout:
                         row=self.shelfChoices[i] if self.shelfChoices and i<len(self.shelfChoices) else []
@@ -408,9 +419,9 @@ class CarcassDesign(CarcassSpec):
             if self.thickness != 18:
                 for section,row in enumerate(self.shelfChoices):
                     for level,value in enumerate(row):
-                        slot=3*level+section
+                        slot=niche_slot(section,level)
                         bank=(self.drawerBanks or [])[slot] if slot<len(self.drawerBanks or []) else None
-                        if value in ('board/cam_dowel','board/confirmat') and not (bank and bank.coverFixing or self.drawerFixing and any(b and b.layout for b in (self.drawerBanks or [])[slot:slot+4:3])):
+                        if value in ('board/cam_dowel','board/confirmat') and not (bank and bank.coverFixing or self.drawerFixing and any(k<len(self.drawerBanks or []) and self.drawerBanks[k] and self.drawerBanks[k].layout for k in (slot,niche_slot(section,level+1)))):
                             raise ValueError('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.')
             depth = self.depth - self.shelfSetback - (self.backThickness or 0)
             for row in self.shelfChoices:

@@ -1,3 +1,4 @@
+import {nicheSlot} from './wardrobe-layout.mjs';
 import {localBaseShelf} from './wardrobe-layout.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 
@@ -150,8 +151,8 @@ function nativeBackJoints(panel,byId){
 
 function isDrawerCover(part){
   const key=/:shelf-(\d+)-(\d+)$/.exec(part.item_id);
-  const s=part.assistant_carcass?.spec,slot=key?Number(key[1])+3*Number(key[2]):-1;
-  return Boolean(key&&(s?.drawerBanks?.[slot]?.coverFixing||s?.drawerFixing&&s?.drawerBanks?.[slot+3]?.layout)||s&&part.item_id.includes(':shelf-base-'));
+  const s=part.assistant_carcass?.spec,slot=key?nicheSlot(Number(key[1]),Number(key[2])):-1;
+  return Boolean(key&&(s?.drawerBanks?.[slot]?.coverFixing||s?.drawerFixing&&s?.drawerBanks?.[nicheSlot(Number(key[1]),Number(key[2])+1)]?.layout)||s&&part.item_id.includes(':shelf-base-'));
 }
 
 export function nativeCarcassJoints(items) {

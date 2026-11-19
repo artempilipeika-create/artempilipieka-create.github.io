@@ -1,5 +1,7 @@
 import {WardrobePreview} from './wardrobe-preview.mjs';
-import {rightBankOffset,splitAt} from './wardrobe-layout.mjs';
+import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
+import {setClearWidth} from './wardrobe-cells.mjs';
+import {nicheSlot,sectionOf,levelOf,splitAt} from './wardrobe-layout.mjs';
 import {gapEditor,splitControls} from './wardrobe-zones-ui.mjs';
 import {wardrobeDrawing,drawingTitles} from './wardrobe-drawing.mjs';
 import {footHeight,plinthFoot,plinthPanel,plinthClearanceMm} from './plinth-options.mjs';
@@ -9,8 +11,8 @@ import {primeHinge} from './wardrobe-fronts.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
-import {trimBanks,prepareDrawerCovers,nicheOpenings} from './wardrobe-niches.mjs';
-import {selectShelf,selectNiche,drawerControls,updateNicheResult} from './wardrobe-interior-ui.mjs';
+import {prepareDrawerCovers,nicheOpenings} from './wardrobe-niches.mjs';
+import {drawerControls,updateNicheResult} from './wardrobe-interior-ui.mjs';
 import {shelfQuestionnaire} from './shelf-questionnaire.mjs';
 import {shelfRows,choice,defaultShelf} from './shelf-choices.mjs';
 import {WARDROBE_STEPS,resizeDividerChoices,wardrobeSpec,sectionWidths,questionnaireMaterialError} from './wardrobe-questionnaire.mjs';
@@ -30,8 +32,10 @@ export class AssistantUI{
   this.nav=el('nav');this.nav.setAttribute('aria-label','Шаги анкеты');this.nav.className='assistant-steps';
   this.steps=WARDROBE_STEPS.map((name,i)=>{const b=button((i+1)+'. '+name,()=>this.go(i));this.nav.append(b);return b;});
   const grid=el('div');grid.className='assistant-grid';this.form=el('div');this.form.className='assistant-fields';
-  const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.drawing.onclick=e=>this.pickShelf(e);
-  this.drawing.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.pickShelf(e);}};this.dimensions=el('p');this.description=el('p');aside.append(this.figureTitle,this.drawing,this.dimensions,this.description);const visuals=el('div');visuals.className='assistant-visuals';
+  const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.drawing.onclick=e=>this.pickShelf(e);wireCellDrag(this);
+  this.drawing.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.pickShelf(e);}};this.dimensions=el('p');this.description=el('p');const figureHead=el('div');figureHead.className='cell-figure-head';
+  this.zoom=button('Увеличить схему',()=>this.zoomDiagram(!this.diagramExpanded));this.zoom.className='cell-zoom';
+  figureHead.append(this.figureTitle,this.zoom);aside.append(figureHead,this.drawing,this.dimensions,this.description);const visuals=el('div');visuals.className='assistant-visuals';
   this.livePreview=new WardrobePreview(this.app,(section,level,column)=>{this.activeSection=section;this.nicheIndex=level;this.column=column;this.render();});
   visuals.append(this.livePreview.root,aside);grid.append(this.form,visuals);
   this.dialog.addEventListener('close',()=>this.livePreview.release());
@@ -54,7 +58,9 @@ export class AssistantUI{
  reset(){
   this.epoch=(this.epoch||0)+1;this.serial.body++;this.serial.back++;this.serial.front++;this.serial.drawer++;
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
-  this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[4],back:true};
+  this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[0],back:true};
+  this.sourceKeys=c?new Map(c.items.map(it=>[it.item_id.slice(c.metadata.group_id.length+1),it.item_id])):null;
+  this.wholeWidth=false;this.layoutUndo=[];this.layoutAnchor=null;this.zoomDiagram(false);
   if(c&&s.front&&!s.front.autoHinges&&s.drawerBanks){
    this.fields.drawerBanks.forEach((bank,slot)=>bank?.faces.forEach((face,i)=>{
     const old=c.items.find(it=>it.item_id===c.metadata.group_id+':drawer-'+slot+'-'+i+'-face');
@@ -74,7 +80,7 @@ export class AssistantUI{
   }
   this.fields.clearLayout=true;this.column=0;this.gapIndex=0;
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
-  this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='drawer';this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
+  this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='cell';this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
   this.materials={};this.materialChanged={body:false,back:false};this.step=0;this.pending=null;this.busy=false;this.summary.hidden=true;
   this.output.textContent='';this.render();
   this.loadMaterial('body',c?.items.find(i=>i.item_id.endsWith(':left'))?.body_variant_id||globalThis.MF_FURNITURE_CORE?.DEFAULT_MATERIALS?.body_variant_id);
@@ -93,27 +99,47 @@ export class AssistantUI{
   }catch{if(epoch===this.epoch&&serial===this.serial[role]&&this.step===4)this.render();}
  }
  pickShelf(event){
-  if(this.busy)return;
-  const hit=event.target.closest?.('[data-clear-level],[data-split-section],[data-shelf-index],[data-niche],[data-hinge]');if(!hit)return;
-  const sec=Number(hit.dataset.section);
-  if(hit.dataset.clearLevel!=null||hit.dataset.splitSection!=null){
-   this.activeSection=sec;this.step=2;this.view='sections';this.gapIndex=Number(hit.dataset.clearLevel??0);
-   this.interior=hit.dataset.splitSection!=null?'split':'shelf';
-   if(this.interior==='split'){this.nicheIndex=Number(hit.dataset.splitSection);this.column=Number(hit.dataset.column??0);}
-   this.render();this.form.querySelector(hit.dataset.clearLevel!=null?'[data-clear-gap]':'[aria-label="Ширина ниш"]')?.focus({preventScroll:true});return;
-  }
-  if(hit.dataset.hinge){
-   this.selectedDoor=hit.dataset.hinge;this.step=3;this.view='fronts';this.render();
+  if(this.busy||this.suppressDiagramClick)return;
+  const hit=event.target.closest?.('[data-clear-width],[data-clear-level],[data-split-section],[data-shelf-index],[data-niche],[data-hinge]');
+  if(!hit)return;
+  const d=hit.dataset,section=Number(d.section);
+  if(d.hinge){
+   this.selectedDoor=d.hinge;this.step=3;this.view='fronts';this.render();
    this.form.querySelector('[aria-label="Исполнение фасада"]')?.focus({preventScroll:true});return;
   }
-  if(this.step===1){this.activeSection=sec;this.render();this.form.querySelector('[data-clear-width]')?.focus({preventScroll:true});return;}
-  if(hit.dataset.shelfIndex!=null)selectShelf(this,sec,Number(hit.dataset.shelfIndex));
-  else if(this.interior==='split'&&this.step===2){this.activeSection=sec;this.nicheIndex=Number(hit.dataset.niche);this.column=0;this.gapIndex=0;this.render();}
-  else selectNiche(this,sec,Number(hit.dataset.niche));
+  const local=d.splitSection!=null||d.column!=null;
+  const level=Number(d.splitSection??d.niche??d.shelfIndex??d.clearLevel??0);
+  const axis=d.clearWidth!=null?'width':d.clearLevel!=null||d.shelfIndex!=null?'height':null;
+  selectCell(this,{section,level,column:Number(d.column??0),opening:Number(d.opening??(local?d.clearLevel??0:0))},axis,axis==='width'&&!local);
  }
  spec(){return wardrobeSpec(this.fields);}
  invalidate(){this.pending=null;this.apply.hidden=true;this.summary.hidden=true;this.output.textContent='';}
- changed(rebuild=false){this.invalidate();if(rebuild)this.render();else{this.draw();this.controls();}}
+ zoomDiagram(expanded){
+  this.diagramExpanded=expanded;this.dialog.toggleAttribute('data-zoom',expanded);
+  this.zoom.textContent=expanded?'Свернуть схему':'Увеличить схему';this.zoom.setAttribute('aria-expanded',String(expanded));
+ }
+ rememberLayout(){
+  return {fields:structuredClone(this.fields),keys:this.sourceKeys,section:this.activeSection,level:this.nicheIndex,column:this.column,gap:this.gapIndex,interior:this.interior};
+ }
+ undoLayout(){
+  const old=this.layoutUndo.pop();if(!old)return;
+  this.fields=old.fields;this.sourceKeys=old.keys;this.activeSection=old.section;this.nicheIndex=old.level;
+  this.gapIndex=old.gap;this.column=old.column;this.interior=old.interior;this.shelfScopes={};this.shelfDrafts={};
+  this.invalidate();this.render();
+ }
+ changed(rebuild=false){
+  const old=this.layoutAnchor;
+  if(old){
+    const changed=Object.keys({...old.fields,...this.fields}).filter(k=>!sameAssistantSpec(old.fields[k],this.fields[k]));
+    const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing'];
+    if(changed.length&&this.step<=2&&changed.every(k=>layout.includes(k))){
+      this.layoutUndo.push(old);if(this.layoutUndo.length>20)this.layoutUndo.shift();
+    }else if(changed.length)this.layoutUndo=[];
+  }
+  this.invalidate();
+  if(rebuild)this.render();
+  else{this.layoutAnchor=this.rememberLayout();this.draw();this.controls();}
+ }
  number(key,label,min,max){
   const wrap=el('label',label),input=el('input');input.type='number';input.min=min;input.max=max;input.step='1';input.value=this.fields[key];input.setAttribute('aria-label',label);
   input.oninput=()=>{this.fields[key]=input.value===''?NaN:Number(input.value);this.changed();};wrap.append(input);this.form.append(wrap);
@@ -144,15 +170,17 @@ export class AssistantUI{
   if(n===1)return;
   const nav=el('div');nav.className='wardrobe-subsections';nav.setAttribute('role','group');nav.setAttribute('aria-label','Выбранная секция');
   for(let i=0;i<n;i++){
-   const b=button('Секция '+(i+1),()=>{this.activeSection=i;this.render();this.form.querySelector('[data-section="'+i+'"]').focus({preventScroll:true});});
+   const b=button('Секция '+(i+1),()=>{this.activeSection=i;this.nicheIndex=0;this.gapIndex=0;this.column=0;this.wholeWidth=false;this.render();this.form.querySelector('[data-section="'+i+'"]').focus({preventScroll:true});});
    b.dataset.section=i;b.setAttribute('aria-pressed',String(i===this.activeSection));nav.append(b);
   }this.form.append(nav);
  }
  render(){
-  const editorKey=this.step===2?[this.activeSection,this.interior,this.nicheIndex].join('/'):'';
+  const editorKey=this.step===2?[this.activeSection,this.interior,this.nicheIndex,this.column,this.gapIndex].join('/'):'';
   const keep=editorKey&&editorKey===this.editorKey;
   this.editorKey=editorKey;
   this.dialog.toggleAttribute('data-interior',Boolean(editorKey));
+  this.zoom.hidden=!(this.step<=2&&(this.step>0||this.view==='body'));
+  this.dialog.toggleAttribute('data-cell-view',!this.zoom.hidden);
   const scroll=this.dialog.scrollTop,focused=document.activeElement;
   const focus=keep&&this.form.contains(focused)?{tag:focused.localName,label:focused.getAttribute('aria-label')||focused.textContent}:null;
   const expanded=keep?[...this.form.querySelectorAll('details[open]')].map(d=>d.firstElementChild.textContent):[];
@@ -162,6 +190,7 @@ export class AssistantUI{
    if(this.view==='body'){
    this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
    this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);resizeDividerChoices(this.fields);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
+   const division=el('fieldset');division.append(el('legend','Деление корпуса'));sectionChoices(this,division);this.form.append(division);
    for(const [key,title,overlay] of [['bottomFit','Конструкция дна','Накладное дно'],['topFit','Конструкция крыши','Накладная крыша']])
     this.select(this.form,title,[['inset','Между боковинами'],['overlay',overlay],...(key==='bottomFit'?[['none','Без дна · заднее ребро 100 мм']]:[])],this.fields[key]??'inset',v=>{this.fields[key]=v;this.changed();this.render();});
    if(this.fields.bottomFit==='none'){
@@ -183,40 +212,33 @@ export class AssistantUI{
    if(this.fields.backThickness)this.form.append(jointPhotos('cam_dowel'));
    }
   }else if(this.step===1){
-   const choices=el('div');choices.className='assistant-cards';
-   for(const n of [1,2,3]){const b=button('',()=>{this.shelfScopes={};this.shelfDrafts={};this.activeSection=Math.min(this.activeSection,n-1);if(this.fields.dividerPositions&&n!==this.fields.sections){
-      const positions=this.fields.dividerPositions;
-      if(n===1)delete this.fields.dividerPositions;
-      else if(n===2)this.fields.dividerPositions=positions.slice(0,1);
-      else positions.push(positions[0]+this.fields.thickness+Math.ceil((this.fields.width-4*this.fields.thickness-positions[0])/2));
-    }this.fields.sections=n;if(this.fields.nicheSplits)this.fields.nicheSplits=this.fields.nicheSplits.filter(z=>z.section<n);if(this.fields.topGaps)this.fields.topGaps=Array.from({length:n},(_,i)=>this.fields.topGaps[i]??null);if(this.fields.drawerBanks)this.fields.drawerBanks=trimBanks(this.fields.drawerBanks.map((b,slot)=>slot%3<n?b:null),n);resizeDividerChoices(this.fields);this.fields.sectionShelves=Array.from({length:n},(_,i)=>this.fields.sectionShelves[i]??4);this.fields.shelfChoices=shelfRows(this.fields);this.changed();this.render();});
-    const pict=el('span');pict.className='assistant-section-icon';for(let i=0;i<n;i++)pict.append(el('i'));b.append(pict,el('strong',n===1?'Одна секция':n===2?'Две секции':'Три секции'));b.setAttribute('aria-pressed',String(this.fields.sections===n));choices.append(b);}
-   this.form.append(choices);this.sectionTabs();this.sectionPositions();
+   sectionChoices(this,this.form);this.sectionTabs();this.sectionPositions();
    this.form.append(el('p','Передние кромки полок и внутренних стоек утоплены на 1 мм от переднего края боковин.'));
   }else if(this.step===2){
    this.sectionTabs();
    const i=this.activeSection,count=this.fields.sectionShelves[i];
    this.nicheIndex=Math.min(this.nicheIndex??0,count);
    const tabs=el('div');tabs.className='wardrobe-subsections';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Элемент наполнения');
-   for(const [key,label] of [['drawer','Шуфляды'],['shelf','Полки'],['split','Перегородка']]){
-    const b=button(label,()=>{this.interior=key;this.render();});b.setAttribute('aria-pressed',String(this.interior===key));tabs.append(b);
+   for(const [key,label] of [['cell','Ниша'],['drawer','Шуфляды'],['shelf','Полки'],['split','Перегородка']]){
+    const b=button(label,()=>{this.interior=key;this.wholeWidth=false;this.render();});b.setAttribute('aria-pressed',String(this.interior===key));tabs.append(b);
    }
    this.form.append(tabs);
-   if(this.interior==='drawer')drawerControls(this,this.form,i);
-   else if(this.interior==='split')splitControls(this,this.form,i);
+   if(this.interior==='cell')cellControls(this,this.form);
+   else if(this.interior==='drawer')drawerControls(this,this.form,i);
+   else if(this.interior==='split'||this.interior==='shelf'&&splitAt(this.fields,i,this.nicheIndex)?.kind==='shelves')splitControls(this,this.form,i);
    else{
     const group=el('fieldset');group.append(el('legend','Полки · секция '+(i+1)));this.form.append(group);
     this.select(group,'Полок в секции '+(i+1),Array.from({length:11},(_,n)=>[n,n?String(n):'Без полок']),count,value=>{
      const n=Number(value),f=this.fields;
      if(f.nicheSplits?.some(z=>z.section===i&&z.level>n)){this.render();this.output.textContent='Сначала измените перегородку в удаляемой нише.';return;}
-     if(f.drawerBanks?.some((bank,slot)=>bank?.layout&&slot%3===i&&Math.floor(slot/3)>=n&&Math.floor(slot/3)<count)){
+     if(f.drawerBanks?.some((bank,slot)=>bank?.layout&&sectionOf(slot)===i&&levelOf(slot)>=n&&levelOf(slot)<=count&&n<count)){
        this.render();this.output.textContent='Сначала уберите блок шуфляд под удаляемой полкой.';return;
      }
      f.sectionShelves[i]=n;
      if(f.gapLocks)f.gapLocks[i]=(f.gapLocks[i]??[]).filter(k=>k<=n);
      if(f.topGaps&&n!==count)f.topGaps[i]=null;
      if(f.shelfLevels)f.shelfLevels[i]=Array.from({length:n},(_,j)=>f.shelfLevels[i]?.[j]??null);
-     const bank=f.drawerBanks?.[i];if(bank?.shelvesBelow>n)bank.shelvesBelow=n;
+     const bank=f.drawerBanks?.[nicheSlot(i,0)];if(bank?.shelvesBelow>n)bank.shelvesBelow=n;
      this.levelIndex=Math.max(0,Math.min(this.levelIndex,n-1));f.shelfChoices=shelfRows(f);
      delete this.shelfScopes[i];delete this.shelfDrafts[i];this.changed();this.render();
     });
@@ -225,10 +247,11 @@ export class AssistantUI{
      const hardware=el('details');hardware.append(el('summary','Материал и крепление полок'));shelfQuestionnaire(this,hardware,i);group.append(hardware);
     }
    }
-   this.select(this.form,'Крепёж полок у шуфляд и заднего ребра',[['cam_dowel','Эксцентрик + шкант'],['confirmat','Конфирматы 7×50']],this.fields.drawerFixing,value=>{
+   const fittings=el('details');fittings.append(el('summary','Крепёж полок, корпуса и стоек'));
+   this.select(fittings,'Крепёж полок у шуфляд и заднего ребра',[['cam_dowel','Эксцентрик + шкант'],['confirmat','Конфирматы 7×50']],this.fields.drawerFixing,value=>{
     this.fields.drawerFixing=value;prepareDrawerCovers(this.fields);this.changed(true);
    });
-   const fittings=el('details');fittings.append(el('summary','Крепёж корпуса и стоек'));this.jointQuestionnaire(fittings);this.form.append(fittings);
+   this.jointQuestionnaire(fittings);this.form.append(fittings);
   }else if(this.step===3){
    this.select(this.form,'Исполнение фасада',[['none','Открытый шкаф'],['left','Одна створка · петли слева'],['right','Одна створка · петли справа'],['pair','Две равные створки']],this.fields.front?.swing??'none',value=>{
     if(value==='none')delete this.fields.front;else this.fields.front={...this.fields.front,swing:value,offset:this.fields.front?.offset??(this.fields.drawerBanks?.some(Boolean)?130:90)};
@@ -253,7 +276,11 @@ export class AssistantUI{
    }
    this.materialPicker('body','Материал корпуса',Number(this.fields.thickness));if(this.fields.drawerBanks?.some(Boolean)&&this.fields.thickness!==18)this.materialPicker('drawer','Короба и проставки шуфляд',18);if(this.fields.front||this.fields.drawerBanks?.some(Boolean))this.materialPicker('front','Материал фасадов',18);if(this.fields.back)this.materialPicker('back','Задняя стенка',this.fields.backThickness??3);
    this.form.append(el('p','Материалы из вашего каталога. Толщина должна совпадать с деталями. Ручные назначения отдельных деталей сохранятся, если здесь не выбирать другой материал.'));
-  }this.draw();this.controls();
+  }
+  if(this.step<=2&&this.layoutUndo.length){
+   const undo=button('Отменить изменение',()=>this.undoLayout());undo.className='cell-undo';this.form.append(undo);
+  }
+  this.layoutAnchor=this.rememberLayout();this.draw();this.controls();
   if(keep){
    for(const d of this.form.querySelectorAll('details'))if(expanded.includes(d.firstElementChild.textContent))d.open=true;
    if(focus){
@@ -382,14 +409,12 @@ export class AssistantUI{
    const i=this.activeSection,wrap=el('label','Чистая ширина секции '+(i+1)+', мм'),input=el('input');
    input.type='number';input.min=100;input.max=f.width-2*f.thickness;input.step=1;input.dataset.clearWidth='';input.value=sectionWidths(f)[i];
    input.setAttribute('aria-label','Чистая ширина секции '+(i+1)+', мм');
-   input.oninput=()=>{
-    if(input.value===''||!input.validity.valid)return;
-    const widths=sectionWidths(f),positions=[];let edge=0;
-    for(const width of widths.slice(0,-1)){edge+=width;positions.push(edge);edge+=f.thickness;}
-    if(i<positions.length)positions[i]+=input.valueAsNumber-widths[i];else positions[i-1]-=input.valueAsNumber-widths[i];
-    f.dividerPositions=positions;this.changed();this.render();
-    const next=this.form.querySelector('[data-clear-width]');next?.focus({preventScroll:true});
+   input.onchange=()=>{
+    try{const draft=structuredClone(f);setClearWidth(draft,{section:i,level:0},input.valueAsNumber);wardrobeSpec(draft);
+      this.fields=draft;this.changed(true);
+    }catch(e){this.output.textContent=e.message;input.value=sectionWidths(f)[i];}
    };
+   input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();input.blur();}};
    wrap.append(input);this.form.append(wrap);
   }
   const sizes=el('p');
@@ -461,6 +486,7 @@ export class AssistantUI{
   const fragment=document.createElement('template');fragment.innerHTML=svg;
   const next=fragment.content.firstElementChild,old=this.drawing.firstElementChild;
   if(next.dataset.view!=='sections'||old?.dataset.view!=='sections'){this.drawing.replaceChildren(next);return;}
+  if(old.getAttribute('viewBox')!==next.getAttribute('viewBox'))old.setAttribute('viewBox',next.getAttribute('viewBox'));
   const art=next.firstElementChild,sel=next.querySelector('[data-selected-niche]');
   if(!old.firstElementChild.isEqualNode(art))old.firstElementChild.replaceWith(art);
   const outline=old.querySelector('[data-selected-niche]');
@@ -469,7 +495,8 @@ export class AssistantUI{
   for(const a of sel.attributes)if(outline.getAttribute(a.name)!==a.value)outline.setAttribute(a.name,a.value);
  }
  draw(){
-  this.figureTitle.textContent=drawingTitles[this.view];
+  const view=this.step===0&&this.view==='body'?'sections':this.view;
+  this.figureTitle.textContent=view==='sections'?'Вид спереди · размеры в свету':drawingTitles[view];
   const warning=this.form.querySelector('.front-choice-warning');
   if(warning)warning.hidden=true;
   try{
@@ -483,11 +510,14 @@ export class AssistantUI{
     issue=error.message;
    }
    this.previewBuilt=built;
-   const slot=this.activeSection+3*(this.nicheIndex||0)+(this.column===1&&splitAt(built.spec,this.activeSection,this.nicheIndex)?.kind==='drawers'?rightBankOffset:0);
-   const {svg,caption}=wardrobeDrawing(built,this.view,this.activeSection,this.fields.front,this.step===2&&this.interior==='shelf'?(this.levelIndex??0):null,{level:this.step===2&&this.interior!=='shelf'?this.nicheIndex:null,door:this.selectedDoor,dimensions:this.step===2&&this.interior==='shelf',splitLevel:this.step===2&&this.interior==='split'?this.nicheIndex:null,column:this.column});
+   const cell=activeCell(this),slot=nicheSlot(cell.section,cell.level,splitAt(built.spec,cell.section,cell.level)?.kind==='drawers'?cell.column??0:0);
+   const selected=this.step===2;
+   const {svg,caption}=wardrobeDrawing(built,view,this.activeSection,this.fields.front,selected&&this.interior==='shelf'?this.levelIndex:null,
+     {editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,
+       dimensions:view==='sections',splitLevel:selected?cell.level:null,drawerDetail:selected&&this.interior==='drawer'});
    this.paintDrawing(svg);
    this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';
-   this.description.textContent=built.drawerIssues.length?built.drawerIssues.join(' '):this.step===2?'Нажмите на полку или нишу, чтобы изменить её.':this.step===1?'Нажмите на секцию, чтобы задать её ширину.':caption;
+   this.description.textContent=built.drawerIssues.length?built.drawerIssues.join(' '):view==='sections'?'Нажмите на нишу или размер. Полку и перегородку можно перетащить.':caption;
    updateNicheResult(this,built);
    if(issue&&warning){warning.textContent=issue;warning.hidden=false;}
    else if(issue)this.description.textContent=issue;
@@ -502,8 +532,8 @@ export class AssistantUI{
    try{
     const fields={...this.fields,drawerBanks:undefined,front:null};
     const guide=buildCarcass(wardrobeSpec(fields),{idPrefix:'questionnaire-guide'});
-    this.paintDrawing(wardrobeDrawing(guide,this.view,this.activeSection,null,this.interior==='shelf'?this.levelIndex:null,{level:this.step===2&&this.interior!=='shelf'?this.nicheIndex:null}).svg);
-   }catch{if(this.drawing.firstElementChild?.dataset.view!==this.view)this.drawing.replaceChildren();}
+    this.paintDrawing(wardrobeDrawing(guide,view,this.activeSection,null,null,{editor:view==='sections',dimensions:true,level:this.step===2?this.nicheIndex:null,column:this.column,opening:this.gapIndex}).svg);
+   }catch{if(this.drawing.firstElementChild?.dataset.view!==view)this.drawing.replaceChildren();}
    this.dimensions.textContent='Проверьте параметры';this.description.textContent=e.message;
   }
  }
@@ -517,7 +547,7 @@ export class AssistantUI{
  }
  materialOptions(){
   const selectedMaterials=Object.fromEntries(Object.entries(this.materials||{}).map(([role,m])=>[role,m?.variant_id]));
-  const options={resetSideEdges:this.resetSideEdges,selectedMaterials};
+  const options={resetSideEdges:this.resetSideEdges,selectedMaterials,previousPartKeys:this.sourceKeys};
   if(this.mode.value==='create'||this.materialChanged.front||!this.current?.items.some(i=>i.blank_axis==='front'))options.frontMaterialId=this.materials?.front?.variant_id;
   if(this.mode.value==='create'||this.materialChanged.body)options.bodyMaterialId=this.materials?.body?.variant_id||null;
   if(this.fields.thickness!==18&&(this.mode.value==='create'||this.materialChanged.drawer||!this.current?.items.some(i=>/:drawer-\d+-\d+-side-left$/.test(i.item_id))))options.drawerMaterialId=this.materials?.drawer?.variant_id;

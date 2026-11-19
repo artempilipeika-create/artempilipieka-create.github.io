@@ -1,5 +1,7 @@
-import {columnOpenings,splitAt,rightBankOffset} from './wardrobe-layout.mjs';
+import {columnOpenings,splitAt} from './wardrobe-layout.mjs';
 import {nicheOpenings,nicheSlot,trimBanks} from './wardrobe-niches.mjs';
+import {setClearHeight} from './wardrobe-cells.mjs';
+import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {shelfRows} from './shelf-choices.mjs';
@@ -8,10 +10,10 @@ const element=(tag,text)=>Object.assign(document.createElement(tag),{textContent
 function action(text,onclick){
  const button=element('button',text);button.type='button';button.onclick=onclick;return button;
 }
-function number(parent,title,value,min,max,fn){
+function number(parent,title,value,min,max,fn,commitOnChange=false){
  const label=element('label',title),input=element('input');
  Object.assign(input,{type:'number',min,max,step:1,value:value??''});input.setAttribute('aria-label',title);
- input.oninput=()=>{if(input.value&&input.validity.valid)fn(input.valueAsNumber);};
+ input[commitOnChange?'onchange':'oninput']=()=>{if(input.value&&input.validity.valid)fn(input.valueAsNumber);};
  label.append(input);parent.append(label);return input;
 }
 function sizes(parent,name,count,current,fn){
@@ -46,8 +48,8 @@ export function gapEditor(ui,parent,section,zone=null){
  const box=element('fieldset');box.append(element('legend','Чистая высота проёмов'));parent.append(box);
  ui.select(box,'Выберите проём',Array.from({length:count+1},(_,i)=>[i,title(i)]),index,v=>{ui.gapIndex=Number(v);ui.render();});
  const size=number(box,title(index)+', мм',measured(index),60,3000,v=>{
-   write(index,v);ui.changed();refresh();
- });size.dataset.clearGap=String(index);
+   change(ui,next=>setClearHeight(next,{section,level:zone?zone.level:index,column:zone?ui.column??0:null,opening:index},v));
+ },true);size.dataset.clearGap=String(index);
  const lock=action('',()=>{
    if(locks.includes(index))locks.splice(locks.indexOf(index),1);
    else{if(current(index)==null){if(measured(index)==null)return;write(index,measured(index));}locks.push(index);}
@@ -75,7 +77,7 @@ export function gapEditor(ui,parent,section,zone=null){
  }
 }
 function change(ui,fn){
- try{const f=structuredClone(ui.fields);fn(f);ui.fields=f;ui.changed(true);}catch(error){ui.output.textContent=error.message;}
+ try{const f=structuredClone(ui.fields);fn(f);wardrobeSpec(f);ui.fields=f;ui.changed(true);}catch(error){ui.output.textContent=error.message;}
 }
 // Turn the intervening full shelves into pairs while retaining their actual
 // elevations in each column. Higher openings and their banks keep their anchors.
@@ -94,9 +96,9 @@ function divideShelves(f,section,start,end){
  if(remove){
    levels[section].splice(start,remove);rows[section].splice(start,remove);f.sectionShelves[section]-=remove;
    const banks=f.drawerBanks??[];
-   for(let i=end+1;i<=count;i++)for(const group of [0,rightBankOffset]){
-     const old=nicheSlot(section,i)+group;
-     if(banks[old]){banks[nicheSlot(section,i-remove)+group]=banks[old];banks[old]=null;}
+   for(let i=end+1;i<=count;i++)for(const column of [0,1]){
+     const old=nicheSlot(section,i,column);
+     if(banks[old]){banks[nicheSlot(section,i-remove,column)]=banks[old];banks[old]=null;}
    }
    f.drawerBanks=trimBanks(banks,f.sections);
    for(const z of f.nicheSplits??[])if(z.section===section&&z.level>end)z.level-=remove;
@@ -113,8 +115,8 @@ export function splitControls(ui,parent,section){
    if(f.drawerBanks?.[slot]?.layout){
      box.append(action('Разделить шуфляды на левый и правый блок',()=>change(ui,next=>{
        (next.nicheSplits??=[]).push({kind:'drawers',section,level,edge:'open'});
-       const bank=next.drawerBanks[slot];next.drawerBanks[slot+rightBankOffset]=structuredClone(bank);
-       for(const b of [bank,next.drawerBanks[slot+rightBankOffset]])b.faces.forEach(face=>delete face.width);
+       const bank=next.drawerBanks[slot];next.drawerBanks[nicheSlot(section,level,1)]=structuredClone(bank);
+       for(const b of [bank,next.drawerBanks[nicheSlot(section,level,1)]])b.faces.forEach(face=>delete face.width);
        next.drawerBanks=trimBanks(next.drawerBanks,next.sections);ui.column=0;
      })));
    }else{
@@ -145,7 +147,7 @@ export function splitControls(ui,parent,section){
  }
  box.append(action(zone.kind==='drawers'?'Убрать правый блок и перегородку':'Убрать перегородку и полки колонок',()=>change(ui,next=>{
    next.nicheSplits=next.nicheSplits.filter(z=>z.section!==section||z.level!==level);
-   if(zone.kind==='drawers'){next.drawerBanks[slot+rightBankOffset]=null;next.drawerBanks=trimBanks(next.drawerBanks,next.sections);}
+   if(zone.kind==='drawers'){next.drawerBanks[nicheSlot(section,level,1)]=null;next.drawerBanks=trimBanks(next.drawerBanks,next.sections);}
    ui.column=0;
  })));
 }

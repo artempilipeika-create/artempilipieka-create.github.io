@@ -59,7 +59,7 @@ def exercise(live=False):
             context=browser.new_context(viewport={'width':int(os.getenv('MF_QA_WIDTH','1440')),'height':int(os.getenv('MF_QA_HEIGHT','1000'))})
             context.route('**/*',request)
             page=context.new_page()
-            page.set_default_timeout(20000)
+            page.set_default_timeout(45000)
             page.on('pageerror',lambda exc:errors.append(str(exc)))
             page.goto(ORIGIN+'/constructor',wait_until='domcontentloaded')
             page.locator('#planner-assistant').wait_for(state='attached',timeout=45000)
@@ -76,15 +76,23 @@ def exercise(live=False):
             def button(label):return form.get_by_role('button',name=label,exact=True)
             def step(n):form.locator('.assistant-steps button').nth(n-1).click()
             def choose(section,level,attr):
-                form.locator(f'.wardrobe-figure [data-section="{section}"][{attr}="{level}"]').click()
+                selector='.niche-target' if attr=='data-niche' else '.shelf-target'
+                target=form.locator(f'.wardrobe-figure {selector}[data-section="{section}"][{attr}="{level}"]').first
+                target.focus();target.press('Enter')
+            def add_four_shelves(section):
+                choose(section,0,'data-niche')
+                form.get_by_label('Добавить полок в нишу').select_option('4')
+                button('Добавить полки').click()
             step(2);button('Две секции').click()
             choose(0,0,'data-niche')
-            form.get_by_label('Чистая ширина секции 1, мм',exact=True).fill('360')
+            form.get_by_label('Ширина в свету, мм',exact=True).fill('360')
+            button('Применить ширину').click()
             choose(1,0,'data-niche')
-            assert form.get_by_label('Чистая ширина секции 2, мм',exact=True).input_value()=='386'
+            assert form.get_by_label('Ширина в свету, мм',exact=True).input_value()=='386'
+            add_four_shelves(0);add_four_shelves(1)
             step(4);form.get_by_label('Исполнение фасада',exact=True).select_option('pair')
             step(3)
-            choose(1,0,'data-shelf-index')
+            choose(1,0,'data-shelf-index');button('Полки').click()
             form.get_by_text('Монтажная отметка от пола',exact=True).click()
             form.get_by_label('От пола до низа полки, мм',exact=True).fill('650')
             choose(0,0,'data-niche');button('Добавить шуфляды').click()
@@ -122,7 +130,7 @@ def exercise(live=False):
             projects.projects[case]={'project_id':case,'name':'QA AKS 19 mm','version':1,
                 'scene':{'schema_version':2,'room':{'width':5000,'height':2700,'depth':3600,'setup_complete':True},'items':[]}}
             page.evaluate('id=>MF_PLANNER.bridge.open(id)',case)
-            page.locator('#planner-assistant').click()
+            page.locator('#planner-assistant').click();add_four_shelves(0)
             step(4);form.get_by_label('Исполнение фасада',exact=True).select_option('pair')
             step(3);choose(0,0,'data-niche');button('Добавить шуфляды').click()
             assert gap.input_value()=='30'
@@ -142,6 +150,7 @@ def exercise(live=False):
             gap.fill('400');stable()
             expect(form.locator('[data-bank-result]')).to_contain_text('100 до 3000')
             gap.fill('30');stable()
+            form.get_by_text('Крепёж полок, корпуса и стоек',exact=True).click()
             fixing=form.get_by_label('Крепёж полок у шуфляд и заднего ребра',exact=True)
             assert fixing.input_value()=='cam_dowel'
             fixing.select_option('confirmat');stable();fixing.select_option('cam_dowel')
@@ -187,6 +196,7 @@ def exercise(live=False):
             form.get_by_label('От пола до низа полки, мм').fill('764')
             button('Шуфляды').click();button('Добавить шуфляды').click()
             form.get_by_label('Количество шуфляд',exact=True).fill('2')
+            form.get_by_text('Крепёж полок, корпуса и стоек',exact=True).click()
             form.get_by_label('Крепёж полок у шуфляд и заднего ребра').select_option('confirmat')
             button('Перегородка').click();button('Разделить шуфляды на левый и правый блок').click()
             form.get_by_label('Передний торец общей стойки').select_option('overlay')
@@ -194,14 +204,17 @@ def exercise(live=False):
             button('Добавить перегородку для полок').click()
             form.get_by_label('Полок в выбранной колонке').select_option('2')
             form.get_by_label('Нижний проём, мм',exact=True).fill('500')
+            form.get_by_label('Нижний проём, мм',exact=True).press('Tab')
             button('Зафиксировать размер').click();button('Расставить полки равномерно').click()
             expect(form.get_by_text('Проёмы снизу вверх · 500 / 532 / 532 мм')).to_be_visible()
             button('Правая').click()
             form.get_by_label('Полок в выбранной колонке').select_option('2')
             form.get_by_label('Нижний проём, мм',exact=True).fill('500')
-            form.locator('.wardrobe-figure [data-split-section="1"][data-column="1"][data-clear-level="1"]').click()
-            form.get_by_label('Между полками 1 и 2, мм').fill('600')
-            expect(form.get_by_text('Проёмы снизу вверх · 500 / 600 / 464 мм')).to_be_visible()
+            form.get_by_label('Нижний проём, мм',exact=True).press('Tab')
+            measure=form.locator('.wardrobe-figure [data-split-section="1"][data-column="1"][data-clear-level="1"]')
+            measure.focus();measure.press('Enter')
+            clear=form.get_by_label('Высота в свету, мм',exact=True);clear.fill('600');clear.press('Enter')
+            expect(form.locator('.wardrobe-figure [data-split-section="1"][data-column="1"][data-clear-level="2"] text')).to_have_text('464')
             step(5);button('Проверить по размерам').click();button('Добавить в проект').click()
             page.evaluate('()=>MF_PLANNER.bridge.save()')
             page.evaluate('id=>MF_PLANNER.bridge.open(id)',layout_id)

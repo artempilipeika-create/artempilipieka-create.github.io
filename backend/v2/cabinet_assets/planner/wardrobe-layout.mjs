@@ -1,11 +1,16 @@
 import {choice,defaultShelf} from './shelf-choices.mjs';
 
-// A primary opening keeps its existing drawer slot. The right-hand bank has the
-// same section/level indices in the second half of the slot table.
+// The first three sections keep their historical item IDs. A fourth section
+// appends eleven levels per column after the two original blocks of 33.
 export const rightBankOffset=33;
-export const levelOf=slot=>Math.floor((slot%rightBankOffset)/3);
+export function nicheSlot(section,level,column=0){
+ return section===3?66+level+11*column:section+3*level+rightBankOffset*column;
+}
+export const sectionOf=slot=>slot<66?slot%3:3;
+export const levelOf=slot=>slot<66?Math.floor((slot%rightBankOffset)/3):(slot-66)%11;
+export const isRightBank=slot=>slot<66?slot>=rightBankOffset:slot>=77;
 export const splitAt=(s,section,level)=>s.nicheSplits?.find(z=>z.section===section&&z.level===level);
-export const localBaseShelf=(s,section)=>s.bottomFit==='none'&&Boolean(s.drawerBanks?.[section]);
+export const localBaseShelf=(s,section)=>s.bottomFit==='none'&&Boolean(s.drawerBanks?.[nicheSlot(section,0)]);
 export const openingBase=(s,section)=>s.bottomFit==='none'?(localBaseShelf(s,section)?(s.braceOffset??0)+100+s.thickness:0):s.thickness;
 export const splitKey=z=>'niche-'+z.section+'-'+z.level;
 export function columnWidths(split,width){

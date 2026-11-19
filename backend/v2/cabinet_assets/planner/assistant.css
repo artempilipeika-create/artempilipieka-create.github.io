@@ -125,3 +125,54 @@
 
 #cabinet-drawers[hidden],#planner-assistant-dialog .wardrobe-live select[hidden]{display:none}
 @media(max-width:640px) and (min-height:480px){#planner-assistant-dialog[data-interior] .assistant-visuals{position:sticky;top:0;z-index:2;background:var(--mf-paper,#fff)}}
+
+#planner-assistant-dialog[data-cell-view]{width:min(1080px,calc(100vw - 24px))}
+#planner-assistant-dialog .section-count{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#planner-assistant-dialog .section-count button{display:grid;justify-items:center;gap:6px;align-content:start;line-height:1.2;padding:8px 3px;border-width:1px}
+#planner-assistant-dialog .section-count .assistant-section-icon{width:28px;height:30px;margin:0;border-width:2px;background:#eae4d7}
+#planner-assistant-dialog .section-warning{background:#fff4dd;padding:10px;border-radius:8px}
+#planner-assistant-dialog .cell-editor{padding:14px 16px;gap:15px;background:white}
+#planner-assistant-dialog .cell-editor legend{color:#205c85}
+#planner-assistant-dialog .cell-dimension,#planner-assistant-dialog .cell-insert{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:end}
+#planner-assistant-dialog .cell-dimension small{grid-column:1/-1;color:#58665d;font-variant-numeric:tabular-nums}
+#planner-assistant-dialog .cell-editor button{margin:0}
+#planner-assistant-dialog .cell-dimension input[readonly]{background:#f1f3ee;color:#515f55}
+#planner-assistant-dialog .cell-dimension input:focus-visible{outline:2px solid #2672ab;outline-offset:1px}
+#planner-assistant-dialog .wardrobe-figure [data-drag-mm]{touch-action:none;cursor:ns-resize}
+#planner-assistant-dialog .wardrobe-figure [data-drag-mm=width]{cursor:ew-resize}
+#planner-assistant-dialog .wardrobe-figure [data-drag-mm]:hover rect:last-child,
+#planner-assistant-dialog .wardrobe-figure [data-drag-mm].moving rect:last-child{fill:#3d83b7;fill-opacity:.55}
+#planner-assistant-dialog .wardrobe-figure .niche-target:hover rect{stroke:#6896b7;stroke-width:.9}
+#planner-assistant-dialog[data-cell-view] .wardrobe-figure{background:linear-gradient(145deg,#fafbf8,#f3f4ee)}
+@media(min-width:641px){
+ #planner-assistant-dialog[data-cell-view] .assistant-grid{grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:22px}
+ #planner-assistant-dialog[data-cell-view] .assistant-visuals{order:-1}
+ #planner-assistant-dialog[data-cell-view] .assistant-drawing{grid-template-rows:auto minmax(240px,min(49vh,455px)) auto auto}
+ #planner-assistant-dialog[data-cell-view] .assistant-visuals:has(.wardrobe-live:not([hidden])) .assistant-drawing{grid-template-rows:auto minmax(165px,23vh) auto auto}
+}
+@media(max-width:640px){
+ #planner-assistant-dialog[data-cell-view]{width:calc(100vw - 12px);padding:12px}
+ #planner-assistant-dialog[data-cell-view] .assistant-grid{gap:14px}
+ #planner-assistant-dialog[data-cell-view] .assistant-drawing{grid-template-rows:auto minmax(175px,25dvh) auto;gap:2px}
+ #planner-assistant-dialog[data-cell-view] .assistant-drawing p:last-child{display:none}
+ #planner-assistant-dialog[data-interior] .assistant-drawing{grid-template-rows:minmax(175px,25dvh) auto}
+ #planner-assistant-dialog[data-interior] .assistant-fields :is(input,button,select){scroll-margin-top:calc(25dvh + 54px)}
+}
+#planner-assistant-dialog .cell-figure-head{display:flex;gap:8px;align-items:center;justify-content:space-between;min-width:0}
+#planner-assistant-dialog .cell-figure-head .cell-zoom,#planner-assistant-dialog .cell-lock,#planner-assistant-dialog .cell-undo{width:auto;justify-self:start;padding:4px 8px;font-size:12px;margin:0}
+#planner-assistant-dialog .cell-lock{margin-top:-9px}
+#planner-assistant-dialog .cell-editor :is(input,select){margin-bottom:0}
+#planner-assistant-dialog .cell-dimension [aria-invalid=true]{border-color:#a64a36}
+#planner-assistant-dialog .cell-dimension:has([aria-invalid=true]) small{color:#913d2b}
+#planner-assistant-dialog[data-cell-view][data-zoom] .assistant-drawing{grid-template-rows:auto minmax(260px,min(63dvh,640px)) auto auto}
+@media(max-width:640px){
+ #planner-assistant-dialog[data-cell-view] .assistant-drawing,#planner-assistant-dialog[data-interior] .assistant-drawing{grid-template-rows:auto minmax(185px,27dvh) auto}
+ #planner-assistant-dialog[data-cell-view] .assistant-drawing h3{display:block;font-size:12px}
+ #planner-assistant-dialog[data-cell-view] .cell-figure-head .cell-zoom{margin-left:auto}
+ #planner-assistant-dialog[data-cell-view] .wardrobe-figure [data-clear-width] text{font-size:11px}
+ #planner-assistant-dialog[data-cell-view] .wardrobe-figure [data-clear-level] text{font-size:12px}
+ #planner-assistant-dialog[data-cell-view][data-zoom] .assistant-drawing{grid-template-rows:auto minmax(250px,56dvh) auto}
+ #planner-assistant-dialog[data-cell-view][data-zoom] .assistant-visuals{grid-template-columns:1fr}
+ #planner-assistant-dialog[data-cell-view][data-zoom] .wardrobe-live{display:none}
+ #planner-assistant-dialog[data-interior] .assistant-fields :is(legend,input,button,select){scroll-margin-top:calc(27dvh + 83px)}
+}

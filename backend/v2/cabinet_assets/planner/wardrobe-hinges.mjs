@@ -1,4 +1,4 @@
-import {splitAt,levelOf,rightBankOffset} from './wardrobe-layout.mjs';
+import {splitAt,levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import {primeHinge,hingeLoad,hingeAxes} from './wardrobe-fronts.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 
@@ -37,8 +37,8 @@ function automaticAxes(door,host,items,side,shelves,count){
  const blocked=shelves.map(([lo,hi])=>[lo-31,hi+31]);
  const parts=new Map(items.map(item=>[item.item_id,item]));
  (spec.drawerBanks??[]).forEach((bank,slot)=>{
-   if(bank?.kind!=='internal'||slot%3!==section)return;
-   if(splitAt(spec,section,levelOf(slot))?.kind==='drawers'&&(slot>=rightBankOffset)!==(side==='right'))return;
+   if(bank?.kind!=='internal'||sectionOf(slot)!==section)return;
+   if(splitAt(spec,section,levelOf(slot))?.kind==='drawers'&&isRightBank(slot)!==(side==='right'))return;
    const key=group_id+':drawer-'+slot+'-';
    const spacer=parts.get(key+'spacer-'+side);
    for(let i=0;i<bank.faces.length;i++){

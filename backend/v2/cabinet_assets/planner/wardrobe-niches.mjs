@@ -1,10 +1,9 @@
 import {shelfUndersides} from './shelf-levels.mjs';
 import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
-import {levelOf,openingBase} from './wardrobe-layout.mjs';
+import {levelOf,openingBase,nicheSlot,sectionOf} from './wardrobe-layout.mjs';
 import {footHeight} from './plinth-options.mjs';
 
-// Three stable section slots per shelf level. Old, free-positioned blocks occupy the first row.
-export const nicheSlot=(section,level)=>section+3*level;
+export {nicheSlot};
 export const mm=value=>Math.round(value*1000)/1000;
 export const mmText=value=>value.toLocaleString('ru-RU',{maximumFractionDigits:3});
 
@@ -31,13 +30,13 @@ export function fitNicheBanks(spec,banks){
   const result=trimBanks(banks,spec.sections),openings=new Map();
   return result.map((bank,slot)=>{
     if(!bank)return null;
-    const section=slot%3,level=levelOf(slot);
+    const section=sectionOf(slot),level=levelOf(slot);
     if(section>=spec.sections)throw Error('Проверьте секцию блока шуфляд.');
     if(!bank.layout){
       if(level)throw Error('Свободный блок шуфляд должен быть привязан к своей секции.');
       return bank;
     }
-    if(level&&result[section]&&!result[section].layout)throw Error('Сначала привяжите существующий блок этой секции к нише.');
+    if(level&&result[nicheSlot(section,0)]&&!result[nicheSlot(section,0)].layout)throw Error('Сначала привяжите существующий блок этой секции к нише.');
     if(!openings.has(section))openings.set(section,nicheOpenings(spec,section));
     const opening=openings.get(section)[level];
     if(!opening)throw Error('Секция '+(section+1)+': для выбранной ниши не хватает полок.');
@@ -56,7 +55,7 @@ export function prepareDrawerCovers(spec){
   const rows=shelfRows(spec);
   for(const [slot,bank] of (spec.drawerBanks??[]).entries()){
     if(!bank?.layout||!isInternalNiche(bank)&&!spec.drawerFixing)continue;
-    const section=slot%3,level=levelOf(slot),row=rows[section];
+    const section=sectionOf(slot),level=levelOf(slot),row=rows[section];
     if(!row||level>row.length)throw Error('Для выбранной ниши не хватает полок.');
     const previous=row[level];
     const fixing=spec.drawerFixing??bank.coverFixing??(previous==='board/confirmat'?'confirmat':'cam_dowel');

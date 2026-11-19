@@ -1,4 +1,4 @@
-import {splitAt,levelOf,splitKey,rightBankOffset} from './wardrobe-layout.mjs';
+import {splitAt,levelOf,splitKey,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
@@ -52,9 +52,9 @@ export function wardrobeHardware(items){
   const sharedSeats=new Map();
   spec.drawerBanks.forEach((bank,slot)=>{
    if(!bank)return;
-   const section=slot%3,prefix='drawer-'+slot+'-',railAxes=[],sides=['left','right'];
+   const section=sectionOf(slot),prefix='drawer-'+slot+'-',railAxes=[],sides=['left','right'];
    const panels=sides.map((side,k)=>get(k===0?(section===0?'left':'divider-'+(section-1)):(section===spec.sections-1?'right':'divider-'+section)));
-   const split=splitAt(spec,section,levelOf(slot)),shared=split?.kind==='drawers',innerSide=slot>=rightBankOffset?0:1;
+   const split=splitAt(spec,section,levelOf(slot)),shared=split?.kind==='drawers',innerSide=isRightBank(slot)?0:1;
    if(shared)panels[innerSide]=get(splitKey(split)+'-divider');
    const spacers=sides.map(side=>parts.get(prefix+'spacer-'+side));
    const axes=sides.map((side,k)=>spacers[k]?doorHinges(get('door-'+side),items).map(h=>h.position.y):[]);
