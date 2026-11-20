@@ -1,4 +1,5 @@
 import {horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
+import {backTrim} from './panel-machining.mjs';
 import {anchoredShelf,hasFacadeProfiles} from './wardrobe-door-layout.mjs';
 import {nicheSlot} from './wardrobe-layout.mjs';
 import {localBaseShelf} from './wardrobe-layout.mjs';
@@ -20,12 +21,12 @@ const shelfConfirmats = {
   16: ['MF_confirmat_7x50_side_16.fr3d','fcb9117249ea0270cdb9bf4e9fb0a7a1396a4d567fe66413743b1d3ae174551c'],
   25: ['MF_confirmat_7x50_side_25.fr3d','4a150593daa0c051c43999785038ee084a2f38cbdde758fede483902e4933b72']
 };
-export function validateJoints(spec) {
+export function validateJoints(spec,depth=spec.depth-backTrim(spec.backMount)) {
   if (!spec.joints) return;
   if (spec.thickness !== 18 || !['shelves','divided'].includes(spec.recipe)) throw Error('Крепёж рассчитан на вкладные детали корпуса 18 мм.');
   for (const scheme of [spec.joints.top,spec.joints.bottom]) {
     if (!Object.hasOwn(jointOptions,scheme)) throw Error('Выберите схему крепежа крыши и дна.');
-    if (scheme==='cam_dowel' && spec.depth < 276) throw Error('Для двух пар эксцентрик + шкант нужна глубина от 276 мм.');
+    if (scheme==='cam_dowel' && depth < 276) throw Error('Для двух пар эксцентрик + шкант нужна глубина детали от 276 мм.');
   }
 }
 export function jointQuantity(scheme) {
@@ -87,12 +88,15 @@ function dividerJoints(it,byId){
  for(const {level,hostId,scheme,roll,outer} of dividerEnds(it)){
    const host=byId.get(hostId),bottom=level==='bottom',y=it.elevation_mm+(bottom?0:it.height);
    const at=host&&localPoint(host,rotation);
+   const shortenedCap=outer&&backTrim(it.assistant_carcass?.spec.backMount)>0;
+   const bearing=shortenedCap&&host?shelfBearing(it,host):{depth:it.depth,mid:0};
+   const rows=jointRows(scheme,bearing.depth,!outer).map(row=>({...row,z:row.z+bearing.mid}));
    if(!host||host.blank_axis!=='horizontal'||host.blank_shelf&&!host.blank_shelf.startsWith('board/')||![16,18,25].includes(host.height)||rotation!==(host.rotation||0)||
        y!==host.elevation_mm+(bottom?host.height:0)||Math.abs(centre.x-at.x)+9>host.width/2+.01||
-       ((it.item_id.includes(':niche-')||!bottom&&(it.assistant_carcass?.spec.front?.topProfile||it.assistant_carcass&&hasFacadeProfiles(it.assistant_carcass.spec)))?jointRows(scheme,it.depth,!outer).some(r=>Math.abs(centre.z+r.z-at.z)+8>host.depth/2):Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01)||it.depth<(scheme==='cam_dowel'?216:152))
+       ((shortenedCap||it.item_id.includes(':niche-')||!bottom&&(it.assistant_carcass?.spec.front?.topProfile||it.assistant_carcass&&hasFacadeProfiles(it.assistant_carcass.spec)))?rows.some(r=>Math.abs(centre.z+r.z-at.z)+8>host.depth/2):Math.abs(centre.z-at.z)+it.depth/2>host.depth/2+.01)||bearing.depth<(scheme==='cam_dowel'?216:152))
      throw Error(it.name+' · проверьте контакт с '+(bottom?'дном':'крышей')+' и глубину для крепежа.');
    const cuts=horizontalProfileCuts(host,[...byId.values()]);
-   for(const {kind,z} of jointRows(scheme,it.depth,!outer)){
+   for(const {kind,z} of rows){
      const x=centre.x-at.x+host.width/2,fromFront=at.z+host.depth/2-centre.z-z;
      if(cuts.some(c=>x+8>c.a&&x-8<c.b&&fromFront-8<c.depth))throw Error('Крепёж стойки попадает в вырез Gola. Измените положение профиля.');
      const point=worldPoint({x:centre.x,z:centre.z+z},rotation);
@@ -180,7 +184,7 @@ export function nativeCarcassJoints(items) {
     if (scheme==='none') continue;
     if(shelfScheme){
       if(![16,18,25].includes(panel.height) || panel.depth<(scheme==='cam_dowel'?216:152))throw Error(panel.name+' · проверьте толщину и глубину полки.');
-    }else validateJoints({...meta.spec,depth:panel.depth,thickness:panel.height});
+    }else validateJoints({...meta.spec,thickness:panel.height},panel.depth);
     const binding=panel.blank_binding, angle=panel.rotation||0;
     const centre=localPoint(panel,angle);
     for (const side of ['left','right']) {

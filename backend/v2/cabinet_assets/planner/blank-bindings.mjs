@@ -13,7 +13,7 @@ export function shelfBearing(panel,host){
   const front=Math.min(panel.depth/2,offset+host.depth/2);
   return {rear,front,depth:front-rear,mid:(front+rear)/2};
 }
-export function resolveBlankBindings(items){
+export function resolveBlankBindings(items,backMount){
   const byId=new Map(items.map(it=>[it.item_id,it]));
   return items.map(item=>{
     const b=item.blank_binding;if(!b)return item;
@@ -23,7 +23,8 @@ export function resolveBlankBindings(items){
     if(!left||!right||left===right||[left,right].some(it=>it.module_type!=='blank'||it.blank_axis!=='side'||it.blank_binding))
       fail('Выберите две разные боковые стойки.');
     if(left.rotation!==right.rotation||item.rotation!==left.rotation)fail('Полка и обе стойки должны иметь одинаковый поворот.');
-    if(![b.gap_left_mm,b.gap_right_mm].every(v=>Number.isInteger(v)&&v>=0&&v<=100)||!Number.isFinite(b.depth_offset_mm)||!Number.isInteger(b.depth_offset_mm*2)||Math.abs(b.depth_offset_mm)>1200)
+    const mount=item.assistant_carcass?.spec.backMount??backMount;
+    if(![b.gap_left_mm,b.gap_right_mm].every(v=>Number.isInteger(v)&&v>=0&&v<=100)||!Number.isFinite(b.depth_offset_mm)||!Number.isInteger(b.depth_offset_mm*(mount?.layout?4:2))||Math.abs(b.depth_offset_mm)>1200)
       fail('Зазоры: целые мм от 0 до 100; смещение по глубине: шаг 0,5 мм.');
     const l=localPoint(left,left.rotation),r=localPoint(right,left.rotation);
     const start=l.x+left.width/2+b.gap_left_mm,end=r.x-right.width/2-b.gap_right_mm;
@@ -42,7 +43,7 @@ export function resolveBlankBindings(items){
         fail('Полка выходит за глубину или высоту опорной стойки.');
     }
     const position=worldPoint({x:(start+end)/2,z},left.rotation);
-    const grid=item.assistant_carcass?.spec.backMount?4:2;
+    const grid=mount?4:2;
     if(!Number.isInteger(position.x*grid)||!Number.isInteger(position.z*grid))fail('Положение полки должно иметь шаг 0,5 мм.');
     return updateBlank(item,{blank_length_mm:length,...position});
   });

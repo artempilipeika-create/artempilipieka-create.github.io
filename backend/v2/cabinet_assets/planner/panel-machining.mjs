@@ -56,31 +56,60 @@ export function machiningError(item){
  return '';
 }
 
-export const defaultBackMount=kind=>kind==='groove'?{kind,width:4,depth:5,offset:18}:{kind,width:4,depth:8};
+export function defaultBackMount(option){
+ if(option==='sides')return {kind:'groove',layout:'sides',width:4,depth:5,offset:6};
+ if(option==='perimeter')return {kind:'groove',layout:'perimeter',width:4,depth:5,offset:10};
+ if(option==='left'||option==='right')return {kind:'rabbet',layout:option,width:4,depth:8};
+ return option==='groove'?{kind:'groove',width:4,depth:5,offset:18}:{kind:'rabbet',width:4,depth:8};
+}
+export function backMountLabel(b){
+ if(b.layout==='sides')return 'ХДФ в пазах боковин · под гвозди';
+ if(b.layout==='perimeter')return 'ХДФ в пазу по кругу';
+ if(b.kind==='groove')return 'ХДФ в пазу';
+ return b.layout==='left'?'ХДФ в левой четверти':'ХДФ в правой четверти';
+}
+// All machining offsets are measured to the start of the cut. The nailed
+// panels meet the inner face of the HDF at the far edge of that cut.
+export function backTrim(b){
+ if(!b?.layout||b.layout==='perimeter')return 0;
+ return (b.offset??0)+b.width;
+}
+export function backSideTrim(b,side){
+ if(b?.kind!=='rabbet')return 0;
+ if(!b.layout)return side==='right'?-b.width:0;
+ return side===b.layout?0:b.width;
+}
 export function checkBackMount(s){
  const b=s.backMount;if(!b)return;
+ const layouts=b.kind==='groove'?['sides','perimeter']:['left','right'];
  if(!s.back||s.backThickness||!['groove','rabbet'].includes(b.kind)||
+   (b.layout!=null&&!layouts.includes(b.layout))||
    ![b.width,b.depth,b.offset??0].every(v=>Number.isFinite(v)&&Number.isInteger(v*2))||
    b.width<3||b.depth<=1||b.depth>=s.thickness||(b.offset??0)<0||
    b.kind==='groove'&&b.offset==null||(b.offset??0)+b.width>=s.depth||b.kind==='rabbet'&&(b.offset??0)!==0)
   throw Error('Проверьте посадку ХДФ 3 мм, глубину выборки и отступ от заднего торца.');
 }
 export function rearClearance(s){
- return s.backMount?.kind==='groove'?Math.ceil(s.backMount.offset+s.backMount.width):s.backThickness??0;
+ const b=s.backMount;
+ return b?Math.ceil(b.kind==='groove'?b.offset+b.width:backTrim(b)):s.backThickness??0;
 }
 export function rearProjection(s){
- if(s.backMount)return s.backMount.kind==='rabbet'?s.backMount.width:0;
+ if(s.backMount)return s.backMount.kind==='rabbet'&&!s.backMount.layout?s.backMount.width:0;
  return s.back&&!s.backThickness?3:0;
 }
-export function backCut(s,key,base){
+export function backCut(s,key,legExtension){
  const b=s.backMount;
- if(!b||!['left','right','bottom','top'].includes(key)||b.kind==='rabbet'&&key!=='right')return null;
  const side=key==='left'||key==='right';
+ if(!b||!side&&key!=='bottom'&&key!=='top'||b.layout==='sides'&&!side||
+    b.kind==='rabbet'&&key!==(b.layout??'right'))return null;
  const face=key==='right'||key==='bottom'?1:0;
- const op={...b,edge:'x0',face};
+ const op={kind:b.kind,width:b.width,depth:b.depth,edge:'x0',face};
+ if(b.offset!=null)op.offset=b.offset;
  if(side&&b.kind==='groove'){
-  // Terminate at the bearing pieces. An overlay bottom/roof is already outside this side.
-  const start=Math.max(0,base),end=s.top==='overlay'?0:Math.max(0,s.thickness-b.depth);
+  const base=s.bottom==='inset'?s.thickness-b.depth:0;
+  const stop=b.layout==='perimeter'?Math.min(s.thickness/2,base):base;
+  const start=legExtension+(b.layout==='sides'?0:Math.max(0,stop));
+  const end=b.layout||s.top==='overlay'?0:Math.max(0,s.thickness-b.depth);
   if(start)op.start=start;if(end)op.end=end;
  }
  return op;

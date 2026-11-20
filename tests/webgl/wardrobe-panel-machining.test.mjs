@@ -6,6 +6,9 @@ import {buildCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-mode
 import {blankItem} from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
 import {blankNativeItem} from '../../backend/v2/cabinet_assets/planner/blanks-native.mjs';
 import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
+import {footPlan,nativeFeet} from '../../backend/v2/cabinet_assets/planner/wardrobe-feet.mjs';
+import {plinthFeet} from '../../backend/v2/cabinet_assets/planner/plinth-options.mjs';
+import {nativeCarcassJoints} from '../../backend/v2/cabinet_assets/planner/carcass-joints.mjs';
 import {defaultBackMount,defaultCut,panelEdges,panelMachiningPlan} from '../../backend/v2/cabinet_assets/planner/panel-machining.mjs';
 import {machineBoardMeshes} from '../../backend/v2/cabinet_assets/planner/panel-machining-mesh.mjs';
 import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
@@ -14,6 +17,57 @@ const fields={width:600,height:2200,depth:510,thickness:18,sections:1,sectionShe
 const board={name:'ЛДСП',thickness:18};
 function project(f){const spec=wardrobeSpec({...fields,...f});return buildCarcass(spec,{idPrefix:'qa'});}
 function part(x,key){return x.parts.find(p=>p.key===key).item;}
+
+test('five workshop-tested HDF backs keep the front datum, the adjustment and the drilling face',()=>{
+ for(const [option,inset,capDepth,cutKeys] of [
+  ['perimeter',14,320,['left','right','bottom','top']],
+  ['sides',10,310,['left','right']],['sides',50,270,['left','right']],
+  ['right',4,316,['right']],['left',4,316,['left']],
+ ]){
+  const mount=defaultBackMount(option);
+  if(option==='sides')mount.offset=inset-mount.width;
+  const b=project({depth:320,height:720,sectionShelves:[0],backMount:mount});
+  assert.equal(b.depth,320);
+  for(const key of ['left','right','bottom','top']){
+   const panel=part(b,key);assert.equal(panel.z+panel.depth/2,160);
+   if(key==='bottom'||key==='top')assert.equal(panel.depth,capDepth);
+   const [op]=panel.blank_machining??[];
+   assert.equal(Boolean(op),cutKeys.includes(key));
+   if(op)assert.equal(op.face,Number(key==='right'||key==='bottom'));
+  }
+  const h=part(b,'back');assert.equal(h.z+h.depth/2,-160+inset);
+  if(option!=='perimeter'){
+   assert.equal(h.z+h.depth/2,part(b,'top').z-capDepth/2);
+   assert.deepEqual([h.elevation_mm,h.height],[1,718]);
+  }
+  if(option==='left'||option==='right'){
+   assert.equal(part(b,option).depth,320);assert.equal(part(b,option==='left'?'right':'left').depth,316);
+   assert.equal(h.x,option==='left'?5:-5);
+  }
+ }
+});
+
+test('fractional recesses retain centred bindings, and feet and overlay joints fit the finished end panels',()=>{
+ for(const option of ['sides','left','right']){
+  const mount=defaultBackMount(option);
+  if(option==='sides')mount.offset=46.5;else mount.width=4.5;
+  const base={depth:510,backMount:mount,feet:{article:plinthFeet[0].article,front:80,rear:50}};
+  const b=project(base),cap=part(b,'bottom'),trim=510-cap.depth;
+  assert.ok([4.5,50.5].includes(trim));
+  const points=footPlan(b.spec);
+  assert.equal(Math.min(...points.map(p=>p.z)),-255+trim+50);
+  assert.equal(Math.max(...points.map(p=>p.z)),255-80);
+  const tagged=b.items.map(it=>({...it,assistant_carcass:{group_id:'qa',spec:b.spec}}));
+  assert.deepEqual(nativeFeet(tagged).map(p=>p.position.z),points.map(p=>p.z));
+  const overlay=project({...base,topFit:'overlay',bottomFit:'overlay',joints:{bottom:'confirmat',top:'cam_dowel'}});
+  const joints=nativeCarcassJoints(overlay.items.map(it=>({...it,assistant_carcass:{group_id:'qa',spec:overlay.spec}})));
+  assert.ok(joints.length>0);
+  assert.ok(joints.every(j=>j.position.z>-255+trim&&j.position.z<255));
+ }
+ const open=project({bottomFit:'none',sections:2,sectionShelves:[1,1],backMount:defaultBackMount('sides')});
+ assert.ok(!open.parts.some(p=>p.key==='bottom'));assert.equal(part(open,'top').depth,500);
+ assert.equal(part(open,'rear-brace').z-part(open,'rear-brace').depth/2,part(open,'back').z+1.5);
+});
 
 test('workshop back samples drive the board size, its installed position and its native cuts',()=>{
  const b=project({backMount:defaultBackMount('groove')});

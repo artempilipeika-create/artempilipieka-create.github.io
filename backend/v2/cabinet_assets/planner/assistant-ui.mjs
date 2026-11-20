@@ -242,14 +242,18 @@ export class AssistantUI{
    else if(this.view==='machining')machiningControls(this);
    else if(this.view==='plinth')this.plinthControls();
    else{
-   this.select(this.form,'Задняя стенка',[['yes','Накладная ЛХДФ 3 мм'],['groove','ХДФ 3 мм в пазу'],['rabbet','ХДФ 3 мм в четверти справа'],...[16,18].map(n=>[String(n),'Вкладная ЛДСП '+n+' мм']),['no','Без задней стенки']],this.fields.back?(this.fields.backMount?.kind??this.fields.backThickness??'yes'):'no',v=>{
+   const mount=this.fields.backMount;
+   const previous=mount&&!mount.layout?[[mount.kind,mount.kind==='groove'?'ХДФ в пазу · сохранённая посадка':'Правая четверть · сохранённая посадка']]:[];
+   const method=mount?.kind==='rabbet'&&mount.layout?'quarter':mount?.layout??mount?.kind;
+   this.select(this.form,'Задняя стенка',[['yes','Накладная ЛХДФ 3 мм'],['sides','Паз в боковинах · ХДФ под гвозди'],['quarter','Четверть в одной боковине'],['perimeter','Паз по кругу · как в ВМД1'],...previous,...[16,18].map(n=>[String(n),'Вкладная ЛДСП '+n+' мм']),['no','Без задней стенки']],this.fields.back?(method??this.fields.backThickness??'yes'):'no',v=>{
+    if(v===method)return;
     const previousMaterial=this.materials.back;
     this.fields.back=v!=='no';delete this.fields.backThickness;delete this.fields.backMount;
-    if(['groove','rabbet'].includes(v))this.fields.backMount=defaultBackMount(v);
+    if(['sides','perimeter','quarter'].includes(v))this.fields.backMount=defaultBackMount(v==='quarter'?'right':v);
     if(['16','18'].includes(v))this.fields.backThickness=Number(v);
     this.serial.back++;this.materialChanged.back=true;this.materials.back=null;
     if(this.fields.back&&Number(previousMaterial?.thickness)===(this.fields.backThickness??3))this.materials.back=previousMaterial;
-    else if(['yes','groove','rabbet'].includes(v))this.loadMaterial('back',CARCASS_BACK_MATERIAL_ID);
+    else if(this.fields.back&&!this.fields.backThickness)this.loadMaterial('back',CARCASS_BACK_MATERIAL_ID);
     else if(Number(this.materials.body?.thickness)===Number(v))this.materials.back=this.materials.body;
     this.changed();this.render();
    });

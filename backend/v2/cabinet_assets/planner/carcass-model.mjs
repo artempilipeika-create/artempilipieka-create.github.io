@@ -1,4 +1,4 @@
-import {canMachine,checkBackMount,backCut,rearClearance,rearProjection} from './panel-machining.mjs';
+import {canMachine,checkBackMount,backCut,backTrim,backSideTrim,rearClearance,rearProjection} from './panel-machining.mjs';
 import {aboveGola,installedOpenings} from './wardrobe-gola-shelves.mjs';
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
 export {sectionWidths} from './wardrobe-layout.mjs';
@@ -58,6 +58,7 @@ export function buildCarcass(input={},options={}){
   const rear=s.backThickness??0,noBottom=s.bottom==='none',braceY=s.braceOffset??0;
   if(noBottom&&(!Number.isInteger(braceY)||braceY<0||braceY+100>H-t))throw Error('Проверьте высоту заднего ребра.');
   checkBackMount(s);
+  const mount=s.backMount,trim=backTrim(mount);
   const innerRear=rearClearance(s)+(noBottom&&s.sections>1?t:0),shelfCentre=(innerRear-s.shelfSetback)/2;
   const prefix=options.idPrefix||crypto.randomUUID(),parts=[];
   const plinth=plinthPanel(s),legHeight=s.feet?.article==='118779'?0:footHeight(s);
@@ -66,10 +67,7 @@ export function buildCarcass(input={},options={}){
   let shelfRuns=[];
   const installedLevels=new Map();
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
-    const mount=s.backMount;
-    if(key==='right'&&mount?.kind==='rabbet'){B+=mount.width;z-=mount.width/2;}
-    const base=s.bottom==='none'||s.bottom==='overlay'?0:t-(mount?.depth??0);
-    const mountCut=mount?backCut(s,key,(floorSide(s,key)?legHeight:0)+base):null;
+    const mountCut=mount?backCut(s,key,floorSide(s,key)?legHeight:0):null;
     const machining=[...(mountCut?[mountCut]:[]),...(s.machining?.[key]??[])];
     const grip=axis==='front'?fittedPull(s,key):null;
     if(grip){
@@ -93,19 +91,25 @@ export function buildCarcass(input={},options={}){
       x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:axis==='front'?'1111':key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:key==='rear-brace'?1:axis==='front'?2:s.edgeThickness,
       ...(machining.length&&canMachine({blank_thickness_mm:T,blank_shelf:shelf})?{blank_machining:machining}:{}),
       ...(grip?{blank_edge_pull:{...grip}}:{}),blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:/^drawer-\d+-\d+-bottom$/.test(key)?CARCASS_BACK_MATERIAL_ID:key.startsWith('drawer-')?(options.drawerMaterialId??(t===18?options.bodyMaterialId:null)):options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
-    const error=validateBlank(item);if(error)throw Error(name+': '+error);
+    const error=validateBlank(item,null,mount);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
   };
   const edge=(special='1000')=>s.edgePolicy==='all'?'1111':s.edgePolicy==='none'?'0000':special;
   // Side panel edge order: front, rear, bottom, top.
   const sideEdges=edge('1'+(s.back&&!rear?'0':'1')+(s.bottom==='overlay'?'0':'1')+(s.top==='overlay'?'0':'1'));
-  const left=add('left','Боковина левая','side',sideH+(floorSide(s,'left')?legHeight:0),D,t,-(W-t)/2,sideY,0,sideEdges);
-  const right=add('right','Боковина правая','side',sideH+(floorSide(s,'right')?legHeight:0),D,t,(W-t)/2,sideY,0,sideEdges);
+  function addSide(key){
+    const cutback=backSideTrim(mount,key);
+    const left=key==='left';
+    return add(key,left?'Боковина левая':'Боковина правая','side',sideH+(floorSide(s,key)?legHeight:0),D-cutback,t,
+      (left?-1:1)*(W-t)/2,sideY,cutback/2,sideEdges);
+  }
+  const left=addSide('left'),right=addSide('right');
   const binding=(a,b,gap=0,z=0)=>({left_id:a.item_id,right_id:b.item_id,gap_left_mm:gap,gap_right_mm:gap,depth_offset_mm:z});
+  const capBinding=binding(left,right,0,trim/2-left.z);
   if(noBottom)add('rear-brace','Заднее ребро жёсткости','back',W-2*t,100,t,0,braceY,(-D+t)/2+rearClearance(s),'1100');
-  else add('bottom','Дно','horizontal',s.bottom==='overlay'?W:W-2*t,D,t,0,0,0,edge(s.bottomFit==='overlay'?'1011':'1000'),s.bottom==='inset'?binding(left,right):null);
-  if(['inset','overlay'].includes(s.top))add('top','Крыша','horizontal',s.top==='overlay'?W:W-2*t,D,t,0,H-t,0,
-    edge(s.top==='overlay'?'1111':'1000'),s.top==='inset'?binding(left,right):null);
+  else add('bottom','Дно','horizontal',s.bottom==='overlay'?W:W-2*t,D-trim,t,0,0,trim/2,edge(s.bottomFit==='overlay'?'1011':'1000'),s.bottom==='inset'?capBinding:null);
+  if(['inset','overlay'].includes(s.top))add('top','Крыша','horizontal',s.top==='overlay'?W:W-2*t,D-trim,t,0,H-t,trim/2,
+    edge(s.top==='overlay'?'1111':'1000'),s.top==='inset'?capBinding:null);
   if(s.top==='rails')for(const [key,z] of [['front',(D-80)/2],['rear',-(D-80)/2]])
     add('rail-'+key,'Царга '+(key==='front'?'передняя':'задняя'),'horizontal',W-2*t,80,t,0,H-t,z,edge(key==='front'?'1000':'0100'),binding(left,right,0,z));
   if(s.top==='sink')for(const [key,name,y,z] of [['front','передняя',H-80,(D-t)/2],['rear','задняя',H-80,-(D-t)/2],['rear-lower','задняя нижняя',t,-(D-t)/2]])
@@ -244,18 +248,19 @@ export function buildCarcass(input={},options={}){
   if(plinth)add('plinth','Цоколь','back',plinth.width,plinth.height,t,plinth.x,0,plinth.z,'1111');
   // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
   if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-(noBottom?1:2)*t,rear,0,noBottom?0:t,(rear-D)/2,'0000');
-  else if(s.backMount){
-    const b=s.backMount,grooved=b.kind==='groove';
-    // One millimetre to the bottom of each recess, as in the workshop examples.
-    const bite=Math.floor(b.depth-1),lower=noBottom?1:grooved?t-bite:1;
-    const upper=grooved?H-t+bite:H-1;
-    const leftEdge=grooved?-W/2+t-bite:-W/2+1,rightEdge=W/2-t+bite;
-    const z=grooved?-D/2+b.offset+b.width/2:-(D+3)/2;
+  else if(mount){
+    const b=mount,grooved=b.kind==='groove',perimeter=grooved&&b.layout!=='sides';
+    const bite=b.layout?b.depth-1:Math.floor(b.depth-1);
+    const lower=perimeter&&!noBottom?t-bite:1,upper=perimeter?H-t+bite:H-1;
+    const leftEdge=-W/2+(grooved||b.layout==='left'?t-bite:1);
+    const rightEdge=W/2-(b.layout==='left'?1:t-bite);
+    const innerFace=b.layout?(b.offset??0)+b.width:grooved?b.offset+(b.width+3)/2:0;
+    const z=-D/2+innerFace-1.5;
     add('back','Задняя стенка ХДФ 3 мм','back',rightEdge-leftEdge,upper-lower,3,(rightEdge+leftEdge)/2,lower,z,'0000');
   }
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
   verifyProfileSupports(s,parts,runs,s.elevation+legHeight);
-  const items=resolveBlankBindings(parts.map(p=>p.item));
+  const items=resolveBlankBindings(parts.map(p=>p.item),mount);
   if(installedLevels.size){
     const drawers=parts.filter(p=>/^drawer-\d+-\d+-(?:face|side-left|side-right|front|rear|bottom)$/.test(p.key));
     for(const {label,item} of parts.filter(p=>p.item.blank_binding?.gola_flush))for(const {item:d} of drawers){

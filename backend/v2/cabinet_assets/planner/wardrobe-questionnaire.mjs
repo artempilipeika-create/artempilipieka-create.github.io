@@ -1,4 +1,4 @@
-import {canMachine} from './panel-machining.mjs';
+import {canMachine,rearClearance} from './panel-machining.mjs';
 import {secureDoorShelf} from './wardrobe-door-layout.mjs';
 import {footPlan} from './wardrobe-feet.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
@@ -41,7 +41,7 @@ export function wardrobeSpec(f){
    spec.dividerJoints=settings.dividerJoints.map((row,i)=>{
      for(const scheme of [row.top,row.bottom]){
        if(!Object.hasOwn(jointOptions,scheme))throw Error('Выберите крепёж внутренней стойки '+(i+1)+'.');
-       if(scheme==='cam_dowel'&&spec.depth-(spec.backThickness??0)-spec.dividerSetback<216)throw Error('Стойка '+(i+1)+': для эксцентрика со шкантом нужна глубина самой стойки от 216 мм.');
+       if(scheme==='cam_dowel'&&spec.depth-rearClearance(spec)-spec.dividerSetback<216)throw Error('Стойка '+(i+1)+': для эксцентрика со шкантом нужна глубина самой стойки от 216 мм.');
      }
      return {...row};
    });

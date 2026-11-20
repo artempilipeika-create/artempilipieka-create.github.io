@@ -1,4 +1,5 @@
 import {worldPoint} from './blank-bindings.mjs';
+import {backTrim,backSideTrim,rearClearance} from './panel-machining.mjs';
 import {jointRows,dividerScheme} from './carcass-joints.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 
@@ -24,12 +25,17 @@ function innerAxes(spec){
 
 export function footPlan(spec){
  if(!spec?.feet)return [];
+ const trim=backTrim(spec.backMount);
+ const rows=planAtDepth(spec, spec.depth-trim);
+ return trim?rows.map(row=>({...row,z:row.z+trim/2})):rows;
+}
+function planAtDepth(spec,depth){
  if(spec.bottomFit==='none'&&(spec.feet.article!=='118779'||innerAxes(spec).some(axis=>axis.index==null)))throw Error('Для этих опор требуется дно. Выберите корпус на стойках или торцевые опоры с опорной стойкой по центру.');
  const fitting=feetCatalogue.find(f=>f.article===spec.feet.article);
  if(!fitting)throw Error('Неизвестная модель опоры.');
- const {width,depth,thickness:t}=spec,{front,rear}=spec.feet;
+ const {width,thickness:t}=spec,{front,rear}=spec.feet;
  if(![front,rear].every(n=>Number.isInteger(n)&&n>=10)||depth-front-rear<20)throw Error('Проверьте отступы опор: от края минимум 10 мм, между осями минимум 20 мм.');
- if(fitting.category==='decor')return decorativePlan(spec,fitting);
+ if(fitting.category==='decor')return decorativePlan({...spec,depth},fitting);
  if(fitting.plinth){
    const bottomInset=spec.bottomFit==='overlay'?0:t;
    const margin=bottomInset+fitting.radius;
@@ -69,7 +75,14 @@ export function panelFeet(item){
  if(!meta?.spec.feet||item.module_type!=='blank')return [];
  const key=item.item_id.slice(meta.group_id.length+1);
  if(!['bottom','left','right'].includes(key)&&!key.startsWith('divider-'))return [];
- return footPlan(meta.spec).filter(f=>f.host===key).map(f=>({...f,x:key==='bottom'?f.x:0}));
+ const s=meta.spec,trim=backTrim(s.backMount);
+ let hostZ=0;
+ if(trim){
+   if(key==='bottom')hostZ=trim/2;
+   else if(key.startsWith('divider-'))hostZ=(rearClearance(s)+(s.bottomFit==='none'?s.thickness:0)-(s.dividerSetback??0))/2;
+   else hostZ=backSideTrim(s.backMount,key)/2;
+ }
+ return footPlan(s).filter(f=>f.host===key).map(f=>({...f,z:f.z-hostZ,x:key==='bottom'?f.x:0}));
 }
 export function nativeFeet(items){
  const out=[];

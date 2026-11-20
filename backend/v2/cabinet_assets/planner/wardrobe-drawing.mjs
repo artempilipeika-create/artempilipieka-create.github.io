@@ -1,4 +1,4 @@
-import {canMachine} from './panel-machining.mjs';
+import {backMountLabel,canMachine} from './panel-machining.mjs';
 import {isEdgePull,verticalEdge} from './wardrobe-edge-pulls.mjs';
 import hardware from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {doorLabel,doorShelfOptions,baseWardrobeDoors,drawerFacades,handlePlacement,isFacadeProfile} from './wardrobe-door-layout.mjs';
@@ -283,7 +283,7 @@ export function wardrobeDrawing(built,view='body',section=0,front=built.spec.fro
  const notes={machining:'Нажмите на деталь шкафа или выберите её в списке.',body:s.sections+' секц. · полок '+shelves+' · плита '+s.thickness+' мм',sections:'Вид спереди · чистая ширина выделенной секции',
    feet:feet.length?'Установлено опор: '+feet.length+' · арт. '+s.feet.article:'Опоры не выбраны',
    plinth:plinthPanel(s)?'Планка '+plinthPanel(s).height+' мм · верхний зазор 3 мм':'Цоколь для этого исполнения отсутствует',
-   back:s.backThickness?'ЛДСП '+s.backThickness+' мм · ● эксцентрик   ○ шкант':s.backMount?(s.backMount.kind==='groove'?'ХДФ 3 мм в пазу':'ХДФ 3 мм в правой четверти'):s.back?'Накладная ЛХДФ 3 мм':'Открытый корпус без задней стенки',
+   back:s.backThickness?'ЛДСП '+s.backThickness+' мм · ● эксцентрик   ○ шкант':s.backMount?backMountLabel(s.backMount):s.back?'Накладная ЛХДФ 3 мм':'Открытый корпус без задней стенки',
    fronts:front?(front.division?.gola?'Профиль S · между фасадами 30 мм. ':front.topProfile?'Верхний профиль L · 30 мм. ':'')+'Выберите дверь на схеме. Ручку можно перетащить.':'Открытый шкаф'};
  let box;
  if(view==='sections'&&selection?.editor){

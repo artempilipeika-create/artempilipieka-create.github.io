@@ -321,9 +321,14 @@ class PanelCut(StrictModel):
 
 class RearMount(StrictModel):
     kind: Literal['groove','rabbet']
+    layout: Literal['sides','perimeter','left','right'] | None=Field(default=None,exclude_if=lambda v:v is None)
     width: float=Field(ge=3,lt=1200,multiple_of=.5,strict=True,allow_inf_nan=False)
     depth: float=Field(gt=1,lt=40,multiple_of=.5,strict=True,allow_inf_nan=False)
     offset: float | None=Field(default=None,ge=0,lt=1200,multiple_of=.5,strict=True,allow_inf_nan=False,exclude_if=lambda v:v is None)
+
+    @property
+    def board_trim(self):
+        return (self.offset or 0)+self.width if self.layout in ('sides','left','right') else 0
 
 PanelCutList=Annotated[list[PanelCut],Field(min_length=1,max_length=32)]
 PanelCutKey=Annotated[str,Field(pattern=r'^[a-z][a-z0-9-]{0,64}$')]
@@ -334,6 +339,8 @@ class CarcassDesign(CarcassSpec):
     @property
     def rear_clearance(self):
         b=self.backMount
+        if b and b.layout in ('left','right'):
+            return ceil(b.width)
         return ceil((b.offset or 0)+b.width) if b and b.kind=='groove' else self.backThickness or 0
 
     rods: list[WardrobeRod] | None = Field(default=None,min_length=1,max_length=128,exclude_if=lambda v:v is None)
@@ -703,17 +710,20 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Проверьте габариты створки и отступ петель.')
         if self.backMount:
             b=self.backMount
+            if b.layout and (b.kind=='groove')!=(b.layout in ('sides','perimeter')):
+                raise ValueError('Выбранная обработка не соответствует посадке задней стенки.')
             if not self.back or self.backThickness or self.recipe not in ('shelves','divided') or b.depth>=self.thickness or (b.offset or 0)+b.width>=self.depth or (b.kind=='rabbet' and b.offset) or (b.kind=='groove' and b.offset is None):
                 raise ValueError('Проверьте параметры посадки ХДФ 3 мм.')
         if self.backThickness and (not self.back or self.recipe not in ('shelves','divided') or (self.backThickness>=16 and self.thickness<16)):
             raise ValueError('Проверьте конструкцию и толщины панелей вкладной задней стенки.')
         if (self.feet or self.topFit or self.bottomFit) and self.recipe not in ('shelves','divided'):
             raise ValueError('Опоры и конструкция панелей задаются для шкафа.')
+        cap_depth=self.depth-(self.backMount.board_trim if self.backMount else 0)
         if self.feet:
-            if self.depth-self.feet.front-self.feet.rear<20:
+            if cap_depth-self.feet.front-self.feet.rear<20:
                 raise ValueError('Не помещаются два ряда опор.')
             if self.feet.article in PLINTH_FEET:
-                if (self.feet.front<30+self.thickness or self.feet.rear<30 or self.depth-self.feet.front-self.feet.rear<60 or
+                if (self.feet.front<30+self.thickness or self.feet.rear<30 or cap_depth-self.feet.front-self.feet.rear<60 or
                     (self.bottomFit and (self.feet.left or self.feet.right))):
                     raise ValueError('Проверьте отступы, дно и примыкания цоколя.')
             elif self.feet.article=='118779' and (self.bottomFit or inner_foot_pairs(self.width,self.sections,self.feet.layout)) and self.thickness<=16:
@@ -721,7 +731,7 @@ class CarcassDesign(CarcassSpec):
         if self.joints:
             if self.thickness != 18 or self.recipe not in ('shelves','divided'):
                 raise ValueError('Для крепежа нужны вкладные детали 18 мм.')
-            if 'cam_dowel' in (self.joints.top,self.joints.bottom) and self.depth < 276:
+            if 'cam_dowel' in (self.joints.top,self.joints.bottom) and cap_depth < 276:
                 raise ValueError('Глубина для эксцентриков со шкантами от 276 мм.')
         if self.dividerSetback is not None and (self.shelfSetback!=1 or self.recipe not in ('shelves','divided')):
             raise ValueError('Отступ полки и внутренней стойки шкафа равен 1 мм.')

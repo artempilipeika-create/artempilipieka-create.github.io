@@ -1,4 +1,4 @@
-import {rearProjection} from './panel-machining.mjs';
+import {backMountLabel,rearProjection} from './panel-machining.mjs';
 import {wardrobeNames,nextCabinetName} from './wardrobe-blocks.mjs';
 import {outerFront,drawerBottom,drawerMember} from './wardrobe-drawers.mjs';
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
@@ -153,7 +153,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
   ...(hinges.length?['Накладные фасады · PRIME 3D 112595 · '+hinges.length+' петель на шкаф']:[]),
-  spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм · полки короче на '+spec.backThickness+' мм':spec.backMount?'ХДФ 3 мм '+(spec.backMount.kind==='groove'?'в пазу':'в правой четверти')+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
+  spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм · полки короче на '+spec.backThickness+' мм':spec.backMount?backMountLabel(spec.backMount)+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{
    const ends=dividerScheme(spec,i);
    return 'Стойка '+(i+1)+' · сверху: '+jointOptions[ends.top]+' · снизу: '+jointOptions[ends.bottom];

@@ -1,4 +1,4 @@
-import {canMachine,cutTitles,defaultCut,edgeLabels,faceLabels,panelEdges,panelMachiningPlan,machiningError} from './panel-machining.mjs';
+import {backTrim,canMachine,cutTitles,defaultCut,edgeLabels,faceLabels,panelEdges,panelMachiningPlan,machiningError,checkBackMount} from './panel-machining.mjs';
 
 function el(tag,text){const node=document.createElement(tag);if(text)node.textContent=text;return node;}
 function button(label,click){const node=el('button',label);node.type='button';node.onclick=click;return node;}
@@ -6,6 +6,7 @@ const mm=v=>Number(v).toLocaleString('ru-RU',{maximumFractionDigits:3});
 function measurement(parent,label,value,change,step='any'){
  const wrap=el('label',label),input=el('input');input.type='number';input.min='0';input.step=step;input.required=true;
  input.value=value;input.setAttribute('aria-label',label);input.oninput=()=>change(input.valueAsNumber);wrap.append(input);parent.append(wrap);
+ return input;
 }
 function section(parent,op,item){
  parent.replaceChildren();
@@ -28,11 +29,51 @@ function section(parent,op,item){
  parent.append(el('figcaption',op.kind==='miter'?description:description+' · ПВХ '+mm(item.blank_edge_thickness_mm)+' мм'));
 }
 
+function rearAssembly(figure,fields,b){
+ figure.replaceChildren();
+ try{checkBackMount(fields);}catch(e){figure.append(el('small',e.message));return;}
+ const t=fields.thickness,trim=backTrim(b),inner=(b.offset??0)+b.width;
+ const scale=Math.min(2.3,70/(inner+t)),rear=35,y=z=>rear+z*scale;
+ const left=18,right=292,leftEnd=left+t*scale,rightEnd=right-t*scale;
+ const leftCut=b.kind==='groove'||b.layout==='left',rightCut=b.kind==='groove'||b.layout==='right';
+ const hdfLeft=leftCut?leftEnd-(b.depth-1)*scale:left+scale;
+ const hdfRight=rightCut?rightEnd+(b.depth-1)*scale:right-scale;
+ const rect=(x,top,w,h,fill)=>'<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+h+'" fill="'+fill+'" stroke="#47594f" stroke-width="0.85"/>';
+ const side=(x,cut,isLeft)=>{
+  const start=b.kind==='rabbet'&&!cut?trim:0;
+  let shape=rect(x,y(start),t*scale,120-y(start),'#dbc8aa');
+  if(cut)shape+=rect(isLeft?leftEnd-b.depth*scale:rightEnd,y(b.offset??0),b.depth*scale,b.width*scale,'#fafaf6');
+  return shape;
+ };
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ svg.setAttribute('viewBox','0 0 310 134');svg.setAttribute('role','img');svg.setAttribute('aria-label','Посадка ХДФ между боковинами, вид сверху со стороны заднего торца');
+ svg.innerHTML='<text x="155" y="18" text-anchor="middle" font-size="12" fill="#35483e">Задний торец · вид сверху</text>'+
+  rect(leftEnd,y(trim),rightEnd-leftEnd,120-y(trim),'#ede5d7')+side(left,leftCut,true)+side(rightEnd,rightCut,false)+
+  rect(hdfLeft,y(inner-3),hdfRight-hdfLeft,3*scale,'#6daba2')+
+  '<text x="155" y="114" text-anchor="middle" font-size="12" fill="#35483e">'+(fields.bottomFit==='none'?'Крыша':'Дно и крыша')+'</text>';
+ const label=fields.bottomFit==='none'?'Глубина крыши':'Глубина дна и крыши';
+ figure.append(svg,el('figcaption',label+' '+mm(fields.depth-trim)+' мм · ХДФ 3 мм'));
+}
+
 export function backMountControls(ui){
  const b=ui.fields.backMount;if(!b)return;
  const group=el('fieldset');group.append(el('legend','Посадка задней стенки'));
  const figure=el('figure');figure.className='cut-section';
  const board={blank_axis:'side',blank_edge_thickness_mm:ui.fields.edgeThickness??1,blank_thickness_mm:ui.fields.thickness,blank_length_mm:ui.fields.height,blank_width_mm:ui.fields.depth};
+ if(b.layout){
+  const redraw=()=>{ui.changed();rearAssembly(figure,ui.fields,b);};
+  if(b.kind==='rabbet')ui.select(group,'Боковина с четвертью',[['left','Левая'],['right','Правая']],b.layout,v=>{b.layout=v;redraw();});
+  let inset;
+  if(b.layout==='sides'){
+   inset=measurement(group,'Утопление задней стенки, мм',backTrim(b),v=>{b.offset=v-b.width;redraw();},'.5');
+   group.append(el('small','От заднего торца боковины до плоскости ХДФ, к которой прилегают дно и крыша.'));
+  }
+  const settings=el('details');settings.append(el('summary','Размеры выборки'));
+  measurement(settings,'Ширина выборки, мм',b.width,v=>{b.width=v;if(inset)b.offset=inset.valueAsNumber-v;redraw();},'.5');
+  measurement(settings,'Глубина в плиту, мм',b.depth,v=>{b.depth=v;redraw();},'.5');
+  if(b.layout==='perimeter')measurement(settings,'От заднего торца до начала паза, мм',b.offset,v=>{b.offset=v;redraw();},'.5');
+  rearAssembly(figure,ui.fields,b);group.append(figure,settings);ui.form.append(group);return;
+ }
  const preview=()=>section(figure,{...b,edge:'x0',face:1},board);
  for(const [key,label] of [['width','Ширина выборки, мм'],['depth','Глубина в плиту, мм'],...(b.kind==='groove'?[['offset','От заднего торца до начала паза, мм']]:[])]){
   measurement(group,label,b[key],v=>{b[key]=v;ui.changed();preview();},'.5');

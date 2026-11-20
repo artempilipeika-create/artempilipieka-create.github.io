@@ -86,7 +86,7 @@ class BlankBinding(StrictModel):
     right_id: str=Field(min_length=1,max_length=80)
     gap_left_mm: int=Field(default=0,ge=0,le=100,strict=True)
     gap_right_mm: int=Field(default=0,ge=0,le=100,strict=True)
-    depth_offset_mm: float=Field(default=0,ge=-1200,le=1200,multiple_of=0.5,allow_inf_nan=False)
+    depth_offset_mm: float=Field(default=0,ge=-1200,le=1200,multiple_of=0.25,allow_inf_nan=False)
 
 # Bounds include the existing cargo-150 and horizontal-250 catalogue templates.
 class GolaCutLength(StrictModel):
@@ -157,6 +157,11 @@ class FurnitureItem(StrictModel):
     def separated_heights(self):
         group=self.assistant_carcass
         key=self.item_id.removeprefix(str(group.group_id)+':') if group else ''
+        mount=group.spec.backMount if group else None
+        preset=bool(mount and mount.layout)
+        hdf=bool(preset and key=='back' and self.blank_axis=='back')
+        if self.blank_binding and not preset and self.blank_binding.depth_offset_mm%0.5:
+            raise ValueError('Для этой привязки допустим шаг 0,5 мм.')
         face=re.fullmatch(r'drawer-(\d+)-(\d+)-face',key)
         banks=group.spec.drawerBanks if group and face else None
         slot,index=map(int,face.groups()) if face else (-1,-1)
@@ -204,7 +209,9 @@ class FurnitureItem(StrictModel):
         if flush and (not key.startswith('shelf-') or not (individual or group.spec.front and (group.spec.front.topProfile or group.spec.front.division and group.spec.front.division.gola))):
             raise ValueError('Вынос полки относится к выбранному профилю Gola.')
         if post and any(v*2%1 for v in vertical):raise ValueError('Шаг размеров стойки 0,5 мм.')
-        if not fitted and not door and not post and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
+        if hdf and any(v*2%1 for v in vertical):
+            raise ValueError('Шаг размеров задней стенки 0,5 мм.')
+        if not fitted and not door and not post and not hdf and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
             raise ValueError('Проверьте точность размеров детали.')
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')
@@ -213,8 +220,10 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм по всем четырём торцам.')
             if grip:
                 grip.check_size(self.width,self.height,key.rsplit('-',1)[1] if door else None)
-        elif self.width%1 or ((self.blank_width_mm or 0)*(2 if key=='right' and group.spec.backMount and group.spec.backMount.kind=='rabbet' else 1))%1 or (self.elevation_mm or 0)*(2 if post or flush else 1)%1:
-            raise ValueError('Для этой детали требуются целые размеры.')
+        else:
+            fitted_width=(preset and key in ('left','right','bottom','top','back')) or (key=='right' and mount and mount.kind=='rabbet')
+            if self.width*(2 if hdf else 1)%1 or (self.blank_width_mm or 0)*(2 if fitted_width else 1)%1 or (self.elevation_mm or 0)*(2 if post or flush or hdf else 1)%1:
+                raise ValueError('Проверьте точность размеров детали корпуса.')
         if self.assistant_carcass and self.assistant_carcass.spec.backThickness and self.item_id==str(self.assistant_carcass.group_id)+':back':
             expected_edges=''.join('1' if i in required_edges else '0' for i in range(4))
             if self.blank_axis!='back' or self.blank_edge_code!=expected_edges or self.blank_thickness_mm!=self.assistant_carcass.spec.backThickness:

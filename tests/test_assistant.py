@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 from backend.v2 import assistant_api as assistant
-from backend.v2.assistant_model import AssistantPlan
+from backend.v2.assistant_model import AssistantPlan, CarcassDesign
 from backend.v2.three_d_api import Scene
 from backend.v2.db import transaction
 from backend.v2.security import grant
@@ -14,6 +14,20 @@ from tests.stage03.test_api import settings, api, admin_user
 SPEC = dict(recipe='shelves', width=800, height=2200, depth=577, thickness=18,
             shelves=4, sections=1, back=True, elevation=0, shelfSetback=20,
             shelfGap=0, edgeThickness=1, edgePolicy='front')
+
+@pytest.mark.parametrize('layout,kind,offset,trim',[
+    ('sides','groove',46,50), ('perimeter','groove',10,0),
+    ('left','rabbet',None,4), ('right','rabbet',None,4),
+])
+def test_hdf_preset_survives_project_roundtrip(layout,kind,offset,trim):
+    mount={'kind':kind,'layout':layout,'width':4,'depth':5 if kind=='groove' else 8}
+    if offset is not None:
+        mount['offset']=offset
+    design=CarcassDesign.model_validate({**SPEC,'backMount':mount})
+    assert design.backMount.board_trim==trim
+    assert CarcassDesign.model_validate_json(design.model_dump_json()).backMount==design.backMount
+    with pytest.raises(ValidationError):
+        CarcassDesign.model_validate({**SPEC,'backMount':{**mount,'kind':'rabbet' if kind=='groove' else 'groove'}})
 
 def request(**patch):
     return assistant.PlanRequest(request_id=uuid4(), message='Шкаф 800 2200 577', room_height=2700, **patch)

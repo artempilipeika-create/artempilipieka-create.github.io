@@ -1499,7 +1499,8 @@ function exportBazisProject(){
     payload.format='martin-forest-bazis-native-v15';payload.minimum_importer='9.9.36';
   }
   if(payload.items.some(it=>it.blank?.machining?.length)){
-    payload.format='martin-forest-bazis-native-v16';payload.minimum_importer='9.9.37';
+    payload.format='martin-forest-bazis-native-v16';
+    payload.minimum_importer=state.items.some(it=>it.assistant_carcass?.spec.backMount?.layout)?'9.9.38':'9.9.37';
   }
   if(blankItems.some(it=>it.blank?.edge_grip)){
     payload.format='martin-forest-bazis-native-v17';payload.minimum_importer='9.9.38';
