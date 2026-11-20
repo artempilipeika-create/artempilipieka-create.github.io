@@ -3,6 +3,7 @@ from collections import OrderedDict
 from copy import deepcopy
 import json
 from pathlib import Path
+from .wardrobe_lighting_kit import project_lighting_kits
 from .three_d_document import hardware_for, drawer_slide_length
 from .three_d_pullout_dryers import refresh_dryer_source
 from .three_d_base import refresh_base_source
@@ -91,8 +92,13 @@ def ledger(scene):
     result = OrderedDict(); warnings = []
     items = scene.get('items') or []
     if not items: raise ValueError('Добавьте шкафчики в проект')
+    lighting = project_lighting_kits(items)
     for i, item in enumerate(items, 1):
         rows, notes = module_hardware(item)
+        if kit := lighting.get(item.get('item_id')):
+            rows = [*rows, *({k:r[k] for k in ('name','article','unit','qty')} for r in kit['rows'])]
+            notes = [n for n in notes if n != 'Нет проверенной ведомости фурнитуры']
+            notes.extend(kit['notes'])
         rows, purchase_notes = purchasing_rows(refresh_base_source(item), rows)
         notes += purchase_notes
         warnings.extend(f'М{i}: {note}' for note in notes)

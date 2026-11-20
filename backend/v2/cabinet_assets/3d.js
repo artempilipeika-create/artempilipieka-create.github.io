@@ -563,7 +563,7 @@ function capturePdfPreviews(){
 async function openKitchenAlbumFlow(){
   const plannerScene=globalThis.MF_PLANNER?.scene;
   const albumView=plannerScene?.renderRooms?.id&&plannerScene.mode==='3d'?plannerScene.captureView():null;
-  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261029-album-pagination');
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261120-hardware');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
   return openKitchenAlbum({
@@ -582,6 +582,21 @@ async function openKitchenAlbumFlow(){
     request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:325000})
   });
 }
+async function downloadHardwareReport(){
+  if(!state.items.length)throw new Error('Добавьте мебель в проект.');
+  await saveProject();
+  const r=await fetch('/api/v2/3d-projects/'+project.project_id+'/hardware.pdf?version='+project.version,
+    {credentials:'same-origin',cache:'no-store'});
+  if(!r.ok){
+    const error=await r.json().catch(()=>({}));
+    throw new Error(error.detail?.code||'Не удалось скачать комплектацию заказа.');
+  }
+  const url=URL.createObjectURL(await r.blob()),a=document.createElement('a');
+  a.href=url;a.download='Martin_Forest_Komplektaciya.pdf';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+  status('Комплектация заказа готова.');
+}
+
 async function downloadSpec(){
   await saveProject();
   const previews=capturePdfPreviews();
@@ -1518,11 +1533,15 @@ function exportBazisProject(){
 
 async function toOrder(){
   if(globalThis.MF_PROJECT_SAFETY&&!globalThis.MF_PROJECT_SAFETY.orderReady())return;
-  if(state.items.some(it=>it.module_type==='blank'))throw new Error(
-    'Проект содержит заготовки. Перенос в заказ с поклейкой ПВХ пока не подключён: сохраните проект и выгрузите CSV в категории «Заготовки».'
-  );
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError)throw new Error(briefError);
+  if(state.items.some(it=>it.module_type==='blank')){
+    await saveProject();
+    const draft=await api('/3d-projects/'+project.project_id+'/hardware-draft','POST',{
+      version:project.version,comment:globalThis.MF_PRODUCTION_NOTES?.userProjectText?.(state)||''
+    });
+    location.assign('/editor?order='+encodeURIComponent(draft.order_id));return;
+  }
   for(const it of state.items)if(!it.body_variant_id||(!templateFor(it)?.production?.vitrine&&!templateFor(it)?.production?.open_tall&&!it.front_variant_id))throw new Error('Выберите материалы корпуса и фасадов для всех модулей.');
   for(const it of state.items)if(templateFor(it)?.production?.metal_drawers){
     for(const part of globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it))){
@@ -1534,8 +1553,8 @@ async function toOrder(){
   const projectBrief=globalThis.MF_PRODUCTION_NOTES?.userProjectText?.(state)||'';
   const orderComment=projectBrief;
   if(orderComment.length>4000)throw new Error('Задание превышает 4000 символов для комментария заказа. Сократите заметки перед передачей.');
-  const o=await api('/orders','POST',{business_name:$('project-name').value.trim()||'3D-проект',preparation_mode:'self_prepared'});
-  const rel=await api('/catalogue/releases'),rows=allCutlist().filter(r=>r[7]?.optical_material!=='glass');
+  const source={project_id:project.project_id,version:project.version};
+  const rows=allCutlist().filter(r=>r[7]?.optical_material!=='glass');
   const details=rows.map(r=>({
     detail_id:uid(),name:r[0],comments:'Из 3D-проекта '+$('project-name').value+
       (r[7]&&!r[7].material?.variant_id?' · Материал уточнить у менеджера'+(r[7].thickness?' · толщина '+r[7].thickness+' мм':''):''),
@@ -1543,8 +1562,10 @@ async function toOrder(){
     variant_id:r[7]?(r[7].material?.variant_id??null):(r[4]==='front'?r[5].front_variant_id:r[5].body_variant_id),
     supply_source:'company',rotation:false,grain:'unknown',route:'solid',packaging:false,edges:{}
   }));
+  const rel=await api('/catalogue/releases');
+  const o=await api('/orders','POST',{business_name:$('project-name').value.trim()||'3D-проект',preparation_mode:'self_prepared'});
   await api('/orders/'+o.order_id+'/revisions','POST',{
-    parent_revision_id:null,catalogue_release_id:rel.active_release,reason:'Перенос из 3D-проекта',
+    constructor_source:source,parent_revision_id:null,catalogue_release_id:rel.active_release,reason:'Перенос из 3D-проекта',
     comment:orderComment,details
   },{'If-Match':String(o.optimistic_lock_version)});
   location.assign('/editor?order='+encodeURIComponent(o.order_id));
@@ -1658,6 +1679,7 @@ $('delete-project').onclick=()=>deleteProject().catch(e=>status(e.message));
 $('to-order').onclick=()=>toOrder().catch(e=>status(e.message));
 $('share-project').onclick=()=>shareProject().catch(e=>status(e.message));
 $('copy-share').onclick=()=>copyShare();
+$('download-hardware').onclick=()=>downloadHardwareReport().catch(e=>status(e.message));
 $('download-spec').onclick=()=>openKitchenAlbumFlow().catch(e=>status(e.message));
 $('export-bazis').onclick=exportBazisProjectReady;
 window.addEventListener('keydown',e=>{

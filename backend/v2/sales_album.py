@@ -70,7 +70,7 @@ def visualization_notes(scene, materials):
              and it.get('countertopEnabled', True)]
     if any(not it.get('countertopMaterialId') or str(it['countertopMaterialId']) not in materials for it in bases):
         notes.append('Столешница не согласована: материал и окончательный вид рабочей поверхности требуют выбора.')
-    if not scene.get('wallLights'):
+    if not scene.get('wallLights') and not any(op.get('lightSystem') for it in scene.get('items', []) for op in it.get('blank_machining') or []):
         notes.append('Подсветка на визуализации, если показана, является предложением и в комплектацию не включена.')
     notes.append('Декор и интерьерное окружение показаны для иллюстрации. Состав поставки определяется спецификацией.')
     return ' '.join(notes)

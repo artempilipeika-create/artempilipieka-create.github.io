@@ -296,6 +296,13 @@ class WardrobeRod(StrictModel):
 MachiningSize = Annotated[float, Field(strict=True,ge=0,le=3000,allow_inf_nan=False)]
 LightSystem = Literal['aq-4x8','lira-17.5x6.5']
 LIGHTING = json.loads((ASSETS/'vitrine-lighting.json').read_text())
+class LightingKit(StrictModel):
+    control: Literal['touch', 'wave', 'motion', 'door', 'external'] = 'touch'
+    holders: int | None = Field(default=None, ge=0, le=32000, strict=True, exclude_if=lambda v: v is None)
+    prices: dict[Annotated[str, Field(pattern=r'^[0-9.]{1,12}$')],
+                 Annotated[float, Field(strict=True, ge=0, le=100000, multiple_of=.01, allow_inf_nan=False)]] = Field(default_factory=dict, max_length=32, exclude_if=lambda v: not v)
+
+
 class LightingLine(StrictModel):
     pairId: UUID | None = Field(default=None,exclude_if=lambda v:v is None)
     system: LightSystem
@@ -361,6 +368,7 @@ class RearMount(StrictModel):
 PanelCutList=Annotated[list[PanelCut],Field(min_length=1,max_length=32)]
 PanelCutKey=Annotated[str,Field(pattern=r'^[a-z][a-z0-9-]{0,64}$')]
 class CarcassDesign(CarcassSpec):
+    lightKit: LightingKit | None = Field(default=None, exclude_if=lambda v: v is None)
     lighting: dict[PanelCutKey,Annotated[list[LightingLine],Field(min_length=1,max_length=32)]] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
     machining: dict[PanelCutKey,PanelCutList] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
     backMount: RearMount | None=Field(default=None,exclude_if=lambda v:v is None)

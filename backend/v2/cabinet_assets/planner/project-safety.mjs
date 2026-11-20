@@ -116,7 +116,14 @@ export class ProjectSafety {
       const next=this.orderNext;if(!next||!this.orderReady())return;
       this.checksDialog.close();this.orderNext=null;next();
     });
-    this.orderContinue.id='project-checks-continue';this.orderActions.append(this.orderHint,this.orderContinue);this.checksDialog.append(this.orderActions);
+    this.hardwareButton=button('Фурнитура по модулям · PDF',async()=>{
+      this.hardwareButton.disabled=true;
+      try{await this.bridge.downloadHardware();}
+      catch(error){this.orderHint.textContent=error.message;}
+      finally{this.hardwareButton.disabled=false;}
+    });
+    this.hardwareButton.id='order-hardware-pdf';
+    this.orderContinue.id='project-checks-continue';this.orderActions.append(this.orderHint,this.hardwareButton,this.orderContinue);this.checksDialog.append(this.orderActions);
   }
   async saveCopy(){
     this.capture(false);const previous=this.engine;
@@ -234,7 +241,7 @@ export class ProjectSafety {
       report.counts=Object.fromEntries(['error','warning','info'].map(s=>[s,report.issues.filter(i=>i.severity===s).length]));
     }
     this.checkSummary.textContent=`Ошибки: ${report.counts.error} · Проверить: ${report.counts.warning} · Примечания: ${report.counts.info}.`;
-    this.orderActions.hidden=!this.orderNext;this.orderContinue.disabled=Boolean(report.counts.error||!this.bridge.state().items.length);
+    this.orderActions.hidden=!this.orderNext;this.hardwareButton.disabled=!this.bridge.state().items.length;this.orderContinue.disabled=Boolean(report.counts.error||!this.bridge.state().items.length);
     this.orderHint.textContent=this.orderContinue.disabled?'Исправьте ошибки перед подготовкой заказа. Кнопка «Показать шкаф» откроет нужный модуль.':
       report.counts.warning?'Ознакомьтесь с замечаниями. Стоимость и конструкцию проверит менеджер.':'Можно перейти к подготовке заказа.';
     this.checkList.replaceChildren();

@@ -43,6 +43,7 @@ def router(settings,policy):
             if not user['roles'] & {'client','manager','admin'}: error(403,'PERMISSION_DENIED')
             r=revisions.get(c,order_id,revision_id)
             return plain({**{k:r[k] for k in ('revision_id','order_id','revision_number','parent_revision_id','content_hash','lifecycle','catalogue_release_id','production_profile_id','created_at','submitted_at')},
+                **({'hardware_pdf_url':f'/api/v2/orders/{order_id}/revisions/{revision_id}/hardware.pdf'} if 'module_hardware' in r['content'] else {}),
                 'details':r['content'].get('details',[]),'issues':r['content'].get('issues',[]),
                 'comment':r['content'].get('comment','')})
 

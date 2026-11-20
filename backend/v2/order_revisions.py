@@ -121,6 +121,23 @@ def create(conn,settings,actor,order,body,manager=False):
     if len(pinned)>1 and body.details is None: issues.append({'category':'materials','code':'MIXED_PINNED_RELEASES','state':'needs_confirmation'})
     content=plain({'schema_version':4,'catalogue_release_id':release,'production_profile_id':profile_id,
         'details':details,'issues':issues,'source_evidence':ev,'draft_evidence_hash':hash_value(ev),'comment':body.comment})
+    # Freeze customer quantities in the same transaction as the order's cut list.
+    if body.constructor_source:
+        from .customer_hardware import build
+        source=body.constructor_source
+        project=conn.execute('''SELECT name,scene,version FROM mf_3d_projects
+            WHERE project_id=%s AND owner_user_id=%s AND archived_at IS NULL''',(source.project_id,actor)).fetchone()
+        if not project: error(404,'PROJECT_3D_NOT_FOUND')
+        if project['version']!=source.version: error(409,'Проект изменился. Повторите подготовку заказа.')
+        try:
+            content['module_hardware']=build(project['name'],project['scene'])
+        except ValueError as exc:
+            error(422,str(exc))
+    elif body.parent_revision_id:
+        previous=conn.execute("SELECT content->'module_hardware' AS report FROM mf_order_revisions WHERE revision_id=%s AND order_id=%s",
+                              (body.parent_revision_id,order['order_id'])).fetchone()
+        if previous and previous['report']:
+            content['module_hardware']=previous['report']
     ident=uuid4();number=conn.execute('SELECT coalesce(max(revision_number),0)+1 AS n FROM mf_order_revisions WHERE order_id=%s',(order['order_id'],)).fetchone()['n']
     conn.execute('''INSERT INTO mf_order_revisions(revision_id,order_id,revision_number,parent_revision_id,created_by,reason,lifecycle,content_hash,content,schema_version,
       submitted_at,immutable_at,catalogue_release_id,production_profile_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,4,%s,%s,%s,%s)''',

@@ -56,7 +56,7 @@
 <script defer src="/account/planner/catalogue-artwork.js?v=20261027-full-oak"></script>
 <script defer src="/account/planner/constructor-access.js?v=20261112"></script>
 <script type="module" src="/account/planner/socket-native.mjs"></script>
-<script defer src="/account/3d.js?v=20261114-shelf-choices"></script><script defer src="/account/3d-studio.js?v=20261106-blanks"></script>
+<script defer src="/account/3d.js?v=20261120-hardware-report"></script><script defer src="/account/3d-studio.js?v=20261106-blanks"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
 <link rel="stylesheet" href="/account/planner/blanks.css?v=20261106">
 <link rel="stylesheet" href="/account/planner/workspace.css">
@@ -67,8 +67,8 @@
 <link rel="stylesheet" href="/account/planner/showroom.css?v=20261025-lively-cards">
 <link rel="stylesheet" href="/account/planner/surface-cards.css?v=20261025-lively-cards">
 <link rel="stylesheet" href="/account/planner/presentation.css">
-<script defer src="/account/planner/bridge.js?v=20261029-album-pagination"></script>
-<script type="module" src="/account/planner/entry.mjs?v=20261112-client-workspace"></script>
+<script defer src="/account/planner/bridge.js?v=20261120-hardware"></script>
+<script type="module" src="/account/planner/entry.mjs?v=20261120-hardware"></script>
 <link rel="stylesheet" href="/account/planner/client-workspace.css?v=20261112">
 </head>
 <body class="mf-3d-page mf3d-studio" data-planner-requested="webgl">
@@ -83,7 +83,7 @@
   <button id="production-brief-button" class="secondary" type="button" title="Заметки дизайнера и техническое задание">Задание</button>
   <button id="export-bazis" class="secondary" data-production-only hidden>Экспорт БАЗИС</button>
   <button id="to-order">Подготовить заказ <span aria-hidden="true">↗</span></button>
-  <details class="studio-menu"><summary aria-label="Другие действия">•••</summary><div class="studio-menu-panel"><button id="download-spec" class="secondary">Альбом кухни · PDF</button><button id="studio-help" class="secondary">Как пользоваться</button><a href="/account">Личный кабинет</a></div></details>
+  <details class="studio-menu"><summary aria-label="Другие действия">•••</summary><div class="studio-menu-panel"><button id="download-hardware" class="secondary">Фурнитура по модулям · PDF</button><button id="download-spec" class="secondary">Альбом кухни · PDF</button><button id="studio-help" class="secondary">Как пользоваться</button><a href="/account">Личный кабинет</a></div></details>
  </div>
 </header>
 <main class="mf3d-shell">
@@ -417,6 +417,7 @@
   <pre id="production-brief-summary" aria-live="polite" hidden></pre>
   <p class="studio-hint">Стандартная ниша не означает согласование конкретной техники. Перед запуском в производство монтажные схемы нужно проверить.</p>
   <p id="production-brief-error" class="production-brief-error" role="alert" hidden></p>
+  <p id="production-brief-hardware-hint" hidden>В документах черновика сохранится фурнитура по модулям. Для распила заготовок приложите деталировку отдельно.</p>
   <button id="production-brief-to-order" type="button" hidden>Подтвердить и перейти в заказ</button>
 </dialog>
 <dialog id="studio-help-dialog"><button id="studio-help-close" class="secondary" aria-label="Закрыть помощь">✕</button><span class="mf3d-kicker">ОТ ИДЕИ ДО ПРОЕКТА</span><h2>Всё начинается с одного модуля</h2><p><strong>1. Выберите.</strong> В каталоге есть нижние, верхние, пеналы и ваши шаблоны БАЗИС. Нажмите карточку, чтобы добавить модуль.</p><p><strong>2. Настройте.</strong> Выберите шкаф на сцене или в списке «В проекте». Справа доступны размеры, положение, фасады и материалы.</p><p><strong>3. Расставьте.</strong> Перетаскивайте модуль мышью. Стрелки клавиатуры сдвигают его на 10 мм, Shift + стрелки — на 100 мм. В 3D фон вращает комнату, колесо меняет масштаб.</p><p><strong>4. Сохраните.</strong> Сохранение выполняется кнопкой сверху. Затем можно подготовить родной экспорт БАЗИС или перенести деталировку в заказ.</p><p class="studio-hint">Геометрия на сцене — визуальное представление шаблона, не точная копия внутренней конструкции .fr3d. Технологический зазор накладного фасада: 1,5 мм по каждой стороне.</p></dialog>

@@ -1,7 +1,6 @@
 """Client album with the approved cover and automatic material/list continuations.
 
-Only the saved project's public materials, their samples and module count enter the album.
-No procurement ledger, internal source IDs or invented quote is published.
+Optional hardware sheets contain each module’s customer-visible fittings and installed quantities.
 """
 from io import BytesIO
 from html import escape
@@ -15,7 +14,7 @@ from .sales_album import fonts, client_title, material_name
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
 from .album_elevation import draw as draw_elevation, validate_geometry
-from . import album_wardrobe
+from . import album_wardrobe, customer_hardware, customer_hardware_pdf
 from .album_layout import schedule
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -101,7 +100,7 @@ def schedule_pages(items):
     return pages
 
 
-def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None):
+def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None, include_hardware=False):
     fonts()
     if not hero or not scene.get('items'):
         raise ValueError('Добавьте мебель и вид кухни.')
@@ -111,7 +110,10 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
     schedule_sheets=schedule_pages(scene['items'])
     drawings=album_wardrobe.drawing_sets(scene['items'])
     details=validate_geometry(scene['items'],elevation_geometry)
-    material_start=2+len(drawings)
+    report = customer_hardware.build(name, scene) if include_hardware else None
+    hardware_sheets = customer_hardware_pdf.pages(report) if report else []
+    hardware_start = 2 + len(drawings)
+    material_start = hardware_start + len(hardware_sheets)
     schedule_start=material_start+len(material_sheets)
     page_count=schedule_start-1+len(schedule_sheets)
     out = BytesIO()
@@ -183,6 +185,9 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         c.setStrokeColor(HexColor('#d7ddd5'));c.line(32,48,W-32,48)
         text(name,32,36,W-115,8,color=MUTED);text(f'{sheet_number:02d} / {page_count:02d}',W-80,36,48,8,color=MUTED)
         c.showPage()
+
+    for i, sheet in enumerate(hardware_sheets, hardware_start):
+        customer_hardware_pdf.draw(c, report, sheet, i, page_count, (W, H))
 
     gap = 24
     width = (W-2*M-gap)/2

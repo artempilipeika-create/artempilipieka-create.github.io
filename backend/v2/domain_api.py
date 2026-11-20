@@ -81,6 +81,14 @@ def projection(conn,user,order):
     return result
 
 
+def create_draft(conn,settings,owner,name,mode):
+    order_id = str(uuid4())
+    order = conn.execute('''INSERT INTO mf_orders(order_id,business_name,owner_user_id,preparation_mode)
+        VALUES (%s,%s,%s,%s) RETURNING *''',(order_id,name,owner,mode)).fetchone()
+    record_event(conn,settings,actor=owner,action='order.draft.created',object_type='order',object_id=order_id,reason='Draft created')
+    return order
+
+
 def router(settings, policy):
     api = APIRouter(prefix='/api/v2')
 
@@ -89,10 +97,7 @@ def router(settings, policy):
         with transaction(settings) as conn:
             user = identity(conn,request)
             require(conn,user,'orders.draft.write')
-            order_id = str(uuid4())
-            order = conn.execute('''INSERT INTO mf_orders(order_id,business_name,owner_user_id,preparation_mode)
-                VALUES (%s,%s,%s,%s) RETURNING *''',(order_id,body.business_name,user['user_id'],body.preparation_mode)).fetchone()
-            record_event(conn,settings,actor=user['user_id'],action='order.draft.created',object_type='order',object_id=order_id,reason='Draft security foundation')
+            order = create_draft(conn,settings,user['user_id'],body.business_name,body.preparation_mode)
             return projection(conn,user,order)
 
     @api.get('/orders')

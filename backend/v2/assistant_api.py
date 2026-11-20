@@ -11,7 +11,8 @@ from fastapi.responses import Response
 from .wardrobe_aks import KIT_NAME, kit_bytes
 from pydantic import Field, ValidationError
 from .auth_api import StrictModel
-from .assistant_model import AssistantPlan, CarcassSpec, CarcassDesign
+from .assistant_model import AssistantPlan, CarcassSpec, CarcassDesign, LightingKit, LightSystem
+from .wardrobe_lighting_kit import lighting_quote
 from . import catalogue
 from typing import Literal
 from .db import transaction
@@ -57,6 +58,17 @@ class QuestionnaireRequest(StrictModel):
     body_material_id: UUID
     back_material_id: UUID | None
     room_height: int = Field(ge=200, le=8000)
+
+
+class LightingRun(StrictModel):
+    label: str = Field(min_length=1, max_length=240)
+    system: LightSystem
+    length: float = Field(gt=0, le=3000, strict=True, allow_inf_nan=False)
+
+
+class LightingEstimate(StrictModel):
+    runs: list[LightingRun] = Field(max_length=3200)
+    settings: LightingKit = Field(default_factory=LightingKit)
 
 
 class QuestionnaireReview(StrictModel):
@@ -205,6 +217,11 @@ def router(settings):
             'Content-Disposition': f'attachment; filename="{KIT_NAME}"',
             'Cache-Control': 'private, no-store',
         })
+
+    @api.post('/lighting-estimate')
+    def lighting_estimate(body: LightingEstimate, request: Request):
+        authorize(settings, request)
+        return lighting_quote([run.model_dump() for run in body.runs], body.settings.model_dump())
 
     @api.get('/status')
     def status(request: Request):

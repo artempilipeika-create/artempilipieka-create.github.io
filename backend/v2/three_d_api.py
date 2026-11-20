@@ -1,6 +1,6 @@
 """Authenticated user-owned 3D furniture projects. No production side effects."""
 from typing import Literal,Annotated
-from uuid import UUID,uuid4
+from uuid import UUID,uuid4,uuid5
 import base64,binascii,hashlib,secrets,json,logging,re
 from fastapi.encoders import jsonable_encoder
 from pydantic import Field,model_validator
@@ -10,12 +10,12 @@ from .auth_api import StrictModel
 from .assistant_model import AssistantCarcass, InsetEdgeGrip, PanelCutList, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
-from .domain_api import require
+from .domain_api import require,create_draft
 from .events import record_event
 from . import catalogue
 from .three_d_document import render as render_spec
 from .sales_album import render as render_sales, image_bytes as sales_image
-from . import sales_render, sales_render_store, kitchen_album
+from . import sales_render, sales_render_store, kitchen_album, customer_hardware, customer_hardware_pdf
 from .material_visuals import visual_metadata
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant, GOLA_VARIANTS as TALL_GOLA_VARIANTS
@@ -651,6 +651,10 @@ class Checkpoint(StrictModel):
     version: int=Field(ge=1)
     request_id: UUID
 
+class HardwareDraft(StrictModel):
+    version: int=Field(ge=1)
+    comment: str=Field(default='',max_length=4000)
+
 class RestoreCheckpoint(StrictModel):
     version: int=Field(ge=1)
     request_id: UUID
@@ -697,6 +701,7 @@ class AlbumModuleGeometry(StrictModel):
     shapes: list[AlbumShape]=Field(max_length=600)
 
 class SalesAlbumPreflight(StrictModel):
+    include_hardware: bool=False
     version: int=Field(ge=1)
     elevation_geometry: list[AlbumModuleGeometry]|None=Field(default=None,max_length=100)
 
@@ -883,6 +888,38 @@ def router(settings):
             module_previews=_module_previews(row['scene'],body.module_preview_data_urls)
             return specification_response(specification_bytes(conn,row,preview,module_previews))
 
+    @api.get('/3d-projects/{project_id}/hardware.pdf')
+    def project_hardware(project_id:UUID,version:int,request:Request):
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            if row['version']!=version:error(409,'Проект изменился. Откройте комплектацию ещё раз.')
+        try:
+            data=customer_hardware_pdf.render(customer_hardware.build(row['name'],row['scene']))
+        except ValueError as exc:
+            error(422,str(exc))
+        return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Komplektaciya.pdf','Cache-Control':'no-store'})
+
+    @api.post('/3d-projects/{project_id}/hardware-draft',status_code=201)
+    def hardware_draft(project_id:UUID,body:HardwareDraft,request:Request):
+        from .calculation_models import ConstructorSource,RevisionRequest
+        from .order_revisions import create as create_revision
+        with transaction(settings) as conn:
+            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            receipt=RestoreCheckpoint(version=body.version,request_id=uuid5(project_id,f'hardware-draft:{body.version}'))
+            digest,found=request_receipt(conn,user,receipt,'hardware-draft:'+str(project_id)+':'+body.comment)
+            row=own(conn,user,project_id,True)
+            if found:
+                require(conn,user,'orders.read',order_id=found['order_id'])
+                return found
+            if row['version']!=body.version:error(409,'Проект изменился. Откройте подготовку заказа заново.')
+            if not row['scene'].get('items'):error(422,'Добавьте мебель в проект.')
+            order=create_draft(conn,settings,user['user_id'],row['name'],'manager_assisted')
+            require(conn,user,'orders.revision.create',order_id=order['order_id'])
+            revision=RevisionRequest(reason='Комплектация из конструктора',comment=body.comment,details=[],
+                                     constructor_source=ConstructorSource(project_id=project_id,version=body.version))
+            result=create_revision(conn,settings,user['user_id'],order,revision)
+            return save_receipt(conn,user,receipt,digest,{'order_id':order['order_id'],'revision_id':result['revision_id']})
+
     @api.get('/3d-sales-capabilities')
     def sales_capabilities(request:Request):
         with transaction(settings) as conn:
@@ -902,7 +939,7 @@ def router(settings):
             materials=project_materials(conn,row['scene'],visuals)
         probe=BytesIO();Image.new('RGB',(8,6),'#f6f3ed').save(probe,'JPEG')
         try:
-            kitchen_album.render(row['name'],row['scene'],materials,probe.getvalue(),photo=False,
+            kitchen_album.render(row['name'],row['scene'],materials,probe.getvalue(),photo=False,include_hardware=body.include_hardware,
                 material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
         except ValueError as exc:
             logging.getLogger(__name__).warning('Client album preflight rejected: %s',str(exc))
@@ -920,7 +957,7 @@ def router(settings):
             hero=sales_image(body.hero_data_url);detail=sales_image(body.detail_data_url)
             previews=_module_previews(row['scene'],body.module_preview_data_urls)
             previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
-            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo,material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
+            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo,include_hardware=body.include_hardware,material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
                   if body.layout=='client' else render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version))
         except ValueError as exc:
             logging.getLogger(__name__).warning('Client album PDF rejected: %s',str(exc))

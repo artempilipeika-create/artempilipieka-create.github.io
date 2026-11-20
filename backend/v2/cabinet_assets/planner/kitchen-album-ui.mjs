@@ -4,10 +4,10 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
   const d=document.createElement('dialog');d.id='kitchen-album-dialog';d.className='mf-sales-dialog mf-kitchen-album';
   d.setAttribute('aria-labelledby','kitchen-album-title');
   d.innerHTML=`<div class="mf-sales-heading"><div><small>MARTIN FOREST / КЛИЕНТСКАЯ ПРЕЗЕНТАЦИЯ</small><h2 id="kitchen-album-title">Альбом вашей кухни</h2></div><button type="button" data-close aria-label="Закрыть">×</button></div>
-    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: обложка на весь лист, чертёж спереди с размерами, материалы с образцами и комплект. При необходимости материалы и комплект продолжаются на дополнительных листах.</p>
+    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: обложка на весь лист, чертёж спереди с размерами, фурнитура по модулям с фотографиями и количеством, материалы с образцами и состав заказа.</p>
     <label>Номер заказа для обложки<input data-order maxlength="60" autocomplete="off" placeholder="Например, МФ-2026-125"></label>
     <canvas data-preview width="1200" height="800" aria-label="Главный вид кухни"></canvas>
-    <div class="mf-album-pages"><span>Обложка</span><span>Чертёж и размеры</span><span>Материалы</span><span>Комплект</span></div>
+    <div class="mf-album-pages"><span>Обложка</span><span>Чертёж и размеры</span><span>Фурнитура</span><span>Материалы</span><span>Комплект</span></div>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера повышенного качества. Он автоматически попадёт в PDF. Открытие готового альбома и скачивание не запускают новую генерацию.</label>
     <p data-message role="status" aria-live="polite">Сохраняем кухню и проверяем готовый фоторендер…</p>
     <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Проверить готовность · бесплатно</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>
@@ -48,12 +48,12 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
   };
   const build=async()=>{
     assertSame();if(!orderNumber()){say('Укажите номер заказа для обложки. Готовый рендер сохранён.');return;}say('Фоторендер готов. Автоматически помещаем его в PDF-альбом…');
-    const r=await fetch(`/api/v2/3d-projects/${frozen.id}/sales-album.pdf`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:frozen.version,layout:'client',hero_data_url:hero,photo:true,elevation_geometry:views.geometry})});
+    const r=await fetch(`/api/v2/3d-projects/${frozen.id}/sales-album.pdf`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:frozen.version,layout:'client',include_hardware:true,hero_data_url:hero,photo:true,elevation_geometry:views.geometry})});
     if(!r.ok){const b=await r.json().catch(()=>({}));throw Error(b.detail?.code||'Не удалось собрать PDF. Фоторендер сохранён; повторная сборка PDF бесплатна.');}
     const blob=await r.blob();assertSame();if(closed)return;
     if(pdfURL)URL.revokeObjectURL(pdfURL);pdfURL=URL.createObjectURL(blob);
     q('[data-pdf]').href=pdfURL;q('[data-pdf]').download='Martin_Forest_Kitchen_Album.pdf';
-    say('Альбом готов. Этот фоторендер уже внутри PDF, а на странице 3 — материалы с образцами. Можно скачать файл.');
+    say('Альбом готов. Этот фоторендер уже внутри PDF, а после чертежей — фурнитура по модулям. Можно скачать файл.');
   };
   const consume=async result=>{
     if(closed)return;assertSame();
@@ -97,7 +97,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     // A missing provider/key must not prevent retrieval of an already paid image.
     if(result.state==='none'){
       say('Проверяем сборку PDF до платной генерации…');
-      await request(`/3d-projects/${frozen.id}/sales-album/preflight`,'POST',{version:frozen.version,elevation_geometry:views.geometry});
+      await request(`/3d-projects/${frozen.id}/sales-album/preflight`,'POST',{version:frozen.version,include_hardware:true,elevation_geometry:views.geometry});
       const capabilities=await request('/3d-sales-capabilities');automatic=capabilities.automatic_render;
     }
     await consume(result);

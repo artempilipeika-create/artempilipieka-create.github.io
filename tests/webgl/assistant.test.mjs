@@ -247,3 +247,20 @@ test('editing a saved wardrobe moves the required PVC with the machining and the
  applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:{...edited,machining:{}}}));
  assert.equal(part('top').blank_edge_code,'1001');
 });
+
+test('wardrobe lighting estimate survives applying and editing the cabinet without machining the controller',()=>{
+ const {a}=setup(wardrobeCatalogue);
+ const line={system:'lira-17.5x6.5',anchor:'front',offset:50,face:0};
+ const fields={...spec,sectionShelves:[1],lighting:{'shelf-0-0':[line]},lightKit:{control:'wave',holders:0,prices:{81771:17.25}}};
+ const apply=(action,settings)=>applyAssistantPlan(a,prepareAssistantPlan(a,{action,spec:wardrobeSpec(settings)},{id:'lamp',selectedMaterials:selectedStock}));
+ apply('create',fields);
+ const group=selectedCarcass(a);
+ assert.deepEqual(group.metadata.spec.lightKit,fields.lightKit);
+ assert.equal(a.items.filter(it=>it.blank_machining?.length).length,1);
+ const cuts=structuredClone(a.items.find(it=>it.blank_machining?.length).blank_machining);
+ apply('update',{...fields,lightKit:{control:'motion'}});
+ assert.deepEqual(selectedCarcass(a).metadata.spec.lightKit,{control:'motion'});
+ assert.deepEqual(a.items.find(it=>it.blank_machining?.length).blank_machining,cuts);
+ apply('update',{...fields,lighting:{}});
+ assert.equal(selectedCarcass(a).metadata.spec.lightKit,undefined);
+});

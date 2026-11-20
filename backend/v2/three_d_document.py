@@ -28,6 +28,7 @@ from .three_d_gola import gola_variant, gola_contents, gola_hardware, gola_note
 from .three_d_drawers import drawer_variant, drawer_contents, drawer_hardware as metal_drawer_hardware
 from .three_d_modern import modern_variant, modern_hardware, modern_contents
 from .three_d_upper import upper_variant, upper_contents, upper_hardware, upper_adjustment_note
+from .wardrobe_lighting_kit import project_lighting_kits
 from .three_d_vitrine import vitrine_variant,vitrine_hardware,vitrine_contents
 
 FOREST=colors.HexColor('#153d2d');INK=colors.HexColor('#20382c');MUTED=colors.HexColor('#68736b');RULE=colors.HexColor('#d9ddd2');MINT=colors.HexColor('#e8efe9');PALE=colors.HexColor('#f7f9f5')
@@ -103,6 +104,9 @@ AKS_GUIDES=json.loads((ASSETS/'aks-wardrobe.json').read_text())['rails']
 
 def hardware_for(it):
     rows,description=_panel_hardware(it)
+    hook=it.get('blank_hook')
+    if hook and hook['article']=='68416':
+        rows=[*rows,_row('Крючок AKKORD двухрожковый, античная латунь',hook.get('count',1),'pcs','68416')]
     meta=it.get('assistant_carcass') or {}
     if not meta and it.get('blank_edge_pull'):
         rows=[*rows,_facade_handle_row(it['blank_edge_pull'],it)]
@@ -496,17 +500,27 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
       ('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
     story.extend([table,Spacer(1,3*mm),p('Предварительная 3D-спецификация. Далее каждый модуль расположен на отдельном листе, затем идёт сводная закупка. Цены заполняются по фактическому прайсу.','small'),PageBreak()])
     aggregate=OrderedDict()
+    kits = project_lighting_kits(items)
+    lighting_prices = {}
+    def money(value):
+        return 'Уточнить' if value is None else f'{value:.2f}'.replace('.', ',')
     for i,it in enumerate(items,1):
         if i>1: story.append(PageBreak())
         story.append(p('Комплектация по модулям','title'))
         title=f"{i}. {it.get('name') or MODULES.get(it.get('module_type'),'Модуль')} · {it.get('width')} x {it.get('height')} x {it.get('depth')} мм"
         body=materials.get(str(it.get('body_variant_id')),'Не выбран');front='Стекло 4 мм / Z1' if wall_special_variant(it) and wall_special_variant(it)['family']!='corner' else 'Без фасада' if open_tall_variant(it) else 'Стекло 4 мм / Z1 чёрный' if vitrine_variant(it) else materials.get(str(it.get('front_variant_id')),'Не выбран')
         hardware,note=hardware_for(it)
+        if kit := kits.get(it.get('item_id')):
+            hardware = [*hardware, *kit['rows']]
+            mounting = [f"Группа {i}: {g['watts']:g} Вт, блок {g['rated']} Вт" for i, g in enumerate(kit['groups'], 1)]
+            note = ' '.join(filter(None, [note, *mounting, *kit['notes']]))
         rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Кол-во','Ед.','Цена BYN','Сумма BYN','Компл.']]]
         for n,r in enumerate(hardware,1):
             qty=r.get('qty');unit={'pcs':'шт.','set':'компл.','m':'м'}.get(r.get('unit'),r.get('unit',''))
-            rows.append([p(n),p(r['name']),p(r.get('article') or '', 'small'),p(qty if qty is not None else ''),p(unit),p(''),p(''),p('[ ]')])
+            rows.append([p(n),p(r['name']),p(r.get('article') or '', 'small'),p(qty if qty is not None else ''),p(unit),p(money(r['price']) if 'price' in r else ''),p(money(r['amount']) if 'amount' in r else ''),p('[ ]')])
             k=(r['name'],r.get('article') or '',unit)
+            if 'price' in r:
+                lighting_prices.setdefault(k, []).append((r['price'],r['amount']))
             if k not in aggregate: aggregate[k]=0
             aggregate[k]=round(aggregate[k]+qty,6) if isinstance(qty,(int,float)) and aggregate[k] is not None else None
         if not hardware:
@@ -546,15 +560,24 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
         for i,entry in enumerate(scene['plinths'],1):
             material_id=entry.get('material_id') or next((it.get('plinthMaterialId') for it in items if it['item_id'] in entry['members']),None)
             story.extend([p(f'Цоколь ряда {i}','module'),p(plinth_summary(scene,entry),'body'),p('Материал: '+str('по модулям; см. экспорт БАЗИС' if entry.get('automatic') and not material_id else materials.get(str(material_id),'Evagloss P004 · из исходного FR3D')),'small'),Spacer(1,3*mm)])
-    story.extend([PageBreak(),p('Сводная закупка фурнитуры','title'),p('Количество суммируется по модулям. Цена и сумма оставлены пустыми до подключения/ввода актуального прайса.','small')])
+    story.extend([PageBreak(),p('Сводная закупка фурнитуры','title'),p('Количество суммируется по модулям. Для комплектов подсветки указаны цены из сметы шкафа.' if kits else 'Количество суммируется по модулям. Цена и сумма оставлены пустыми до подключения/ввода актуального прайса.','small')])
     rows=[[p(x,'head') for x in ['№','Наименование','Артикул / тип','Всего','Ед.','Цена BYN','Сумма BYN','Компл.']]]
     for n,((label,article,unit),qty) in enumerate(aggregate.items(),1):
-        rows.append([p(n),p(label),p(article,'small'),p(qty if qty is not None else 'Уточнить'),p(unit),p(''),p(''),p('[ ]')])
+        entries = lighting_prices.get((label,article,unit),[])
+        price = total_price = ''
+        if entries:
+            prices = {v for v,_ in entries}
+            price = money(entries[0][0]) if len(prices)==1 else 'По шкафам'
+            total_price = money(sum(a for _,a in entries)) if all(a is not None for _,a in entries) else 'Уточнить'
+        rows.append([p(n),p(label),p(article,'small'),p(qty if qty is not None else 'Уточнить'),p(unit),p(price),p(total_price),p('[ ]')])
     if len(rows)==1: rows.append([p(''),p('Нет подтверждённых строк фурнитуры для суммирования.'),p(''),p(''),p(''),p(''),p(''),p('')])
     total=Table(rows,colWidths=[WIDTH*.035,WIDTH*.35,WIDTH*.15,WIDTH*.075,WIDTH*.07,WIDTH*.10,WIDTH*.11,WIDTH*.07],repeatRows=1)
     total.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),MINT),('GRID',(0,0),(-1,-1),.3,RULE),('VALIGN',(0,0),(-1,-1),'TOP'),
       ('LEFTPADDING',(0,0),(-1,-1),3),('RIGHTPADDING',(0,0),(-1,-1),3),('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2)]))
     story.append(total)
+    if kits:
+        label = 'Итого подсветка' if all(k['complete'] for k in kits.values()) else 'Подсветка по известным ценам'
+        story.append(p(label + ' · ' + money(sum(k['subtotal'] for k in kits.values())) + ' BYN','section'))
     story.extend([Spacer(1,3*mm),p('Производственная деталировка, кромка, склейка и окончательная стоимость подтверждаются в редакторе заказа. Фурнитура без подтверждённой спецификации не додумывается.','small')])
     buf=BytesIO();doc=SimpleDocTemplate(buf,pagesize=PAGE,leftMargin=8*mm,rightMargin=8*mm,topMargin=8*mm,bottomMargin=8*mm)
     doc.build(story)

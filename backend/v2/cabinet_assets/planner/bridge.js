@@ -64,6 +64,7 @@
     payload:()=>scenePayload(),
     save:()=>saveProject(),
     openAlbum:()=>openKitchenAlbumFlow(),
+    downloadHardware:()=>downloadHardwareReport(),
     open:id=>openProject(id),
     newProject:()=>newProject(),
     duplicateProject:()=>duplicateProject(),

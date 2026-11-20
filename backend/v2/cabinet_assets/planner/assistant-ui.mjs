@@ -1,3 +1,4 @@
+import {lightKitControls,updateLightQuote} from './wardrobe-light-kit-ui.mjs';
 import {lightControls,pickLightPart} from './wardrobe-lighting-ui.mjs';
 import {defaultBackMount,rearClearance} from './panel-machining.mjs';
 import {backMountControls,machiningControls,pickMachiningPart} from './panel-machining-ui.mjs';
@@ -111,6 +112,7 @@ export class AssistantUI{
    const original=this.fields.shelfLevels;
    this.fields.shelfLevels=this.fields.sectionShelves.map((n,i)=>nicheOpenings(this.fields,i).slice(0,n).map((r,j)=>original?.[i]?.[j]??{mode:'floor',mm:base+r.top}));
   }
+  this.kitOpen=false;this.lightKitResult=null;
   this.partKey=c?this.app.adapter.selected?.item_id?.slice(c.metadata.group_id.length+1):null;
   this.cutIndex=null;this.cutDraft=null;this.showMachiningFronts=false;this.handleCategoryKey=null;this.lightIndex=0;
   this.fields.clearLayout=true;this.column=0;this.gapIndex=0;
@@ -175,7 +177,7 @@ export class AssistantUI{
   const old=this.layoutAnchor;
   if(old){
     const changed=Object.keys({...old.fields,...this.fields}).filter(k=>!sameAssistantSpec(old.fields[k],this.fields[k]));
-    const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing','rods','lighting'];
+    const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing','rods','lighting','lightKit'];
     if(changed.length&&this.step<=2&&changed.every(k=>layout.includes(k))){
       this.layoutUndo.push(old);if(this.layoutUndo.length>20)this.layoutUndo.shift();
     }else if(changed.length)this.layoutUndo=[];
@@ -247,7 +249,7 @@ export class AssistantUI{
     this.form.append(el('small','Заднее ребро между боковинами · 100 мм · кромка 1 мм по обеим длинным сторонам.'));
    }
    }else if(this.view==='feet')this.footControls();
-   else if(this.view==='lighting')lightControls(this);
+   else if(this.view==='lighting'){lightControls(this);lightKitControls(this);}
    else if(this.view==='machining')machiningControls(this);
    else if(this.view==='plinth')this.plinthControls();
    else{
@@ -598,6 +600,7 @@ export class AssistantUI{
    if(preview.error)throw preview.error;
    const {built,issue}=preview;
    this.previewBuilt=built;
+   if(view==='lighting')updateLightQuote(this,built,issue);
    const cell=activeCell(this),slot=nicheSlot(cell.section,cell.level,splitAt(built.spec,cell.section,cell.level)?.kind==='drawers'?cell.column??0:0);
    const selected=this.step===2;
    const {svg,caption}=wardrobeDrawing(built,view,this.activeSection,this.fields.front,selected&&this.interior==='shelf'?this.levelIndex:null,
@@ -618,6 +621,7 @@ export class AssistantUI{
    }
   }catch(e){
    this.previewBuilt=null;this.livePreview?.hide();
+   if(view==='lighting')updateLightQuote(this,null,e.message);
    updateNicheResult(this,null,e.message);
    try{
     const fields={...this.fields,rods:undefined,drawerBanks:undefined,front:null};

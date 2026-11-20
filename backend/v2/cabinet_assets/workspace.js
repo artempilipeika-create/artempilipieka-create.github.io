@@ -61,7 +61,7 @@ async function openEditor(id){
  editorOrder=await api('/orders/'+encodeURIComponent(id));
  if(!currentUser.roles.some(r=>['client','manager','admin'].includes(r))){heading('Доступ ограничен');return;}
  manualRows=[];catalogueRelease=null;revisionComment='';dirty=false;managerEditing=false;
- if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.map(fromRevision);revisionComment=r.comment||'';}
+ if(editorOrder.active_revision_id){const r=await api('/orders/'+id+'/revisions/'+editorOrder.active_revision_id);catalogueRelease=r.catalogue_release_id;manualRows=r.details.map(fromRevision);revisionComment=r.comment||'';editorOrder.hardware_pdf_url=r.hardware_pdf_url;}
  const draft=await api('/orders/'+id+'/draft/rows');editorOrder.optimistic_lock_version=draft.optimistic_lock_version;
  for(const r of draft.rows){if(!r.excluded_reason&&!manualRows.some(d=>d.draft_row_id===r.draft_row_id||d.glue_backing?.draft_row_id===r.draft_row_id))manualRows.push(fromImported(r));}
  if(editorOrder.preparation_mode==='self_prepared'||!currentUser.roles.includes('client')){
@@ -92,6 +92,7 @@ async function managerPreparation(){
 }
 async function editorView(){
  heading(editorOrder.business_name||'Деталировка');content.append(node('p',statusLabels[editorOrder.workflow_status]||'В обработке','badge'));
+ if(editorOrder.hardware_pdf_url)content.append(link('Фурнитура по модулям · PDF',editorOrder.hardware_pdf_url,'button secondary'));
  const bar=node('div',undefined,'toolbar');bar.append(link(currentUser.roles.includes('client')?'Мои заказы':'Рабочая очередь',currentUser.roles.includes('client')?'/account':'/staff','button secondary'));content.append(bar);
  const client=currentUser.roles.includes('client');
  // Surface the immutable designer handoff immediately on opening the order,

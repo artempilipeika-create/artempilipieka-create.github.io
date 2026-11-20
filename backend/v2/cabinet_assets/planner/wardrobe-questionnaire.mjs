@@ -66,6 +66,11 @@ export function wardrobeSpec(f){
    const eligible=new Set(built.parts.filter(canLight).map(p=>p.key));
    spec.lighting=Object.fromEntries(Object.entries(spec.lighting).filter(([key])=>eligible.has(key)));
    if(!Object.keys(spec.lighting).length)delete spec.lighting;
+   else if(f.lightKit){
+     spec.lightKit={control:f.lightKit.control??'touch'};
+     if(Object.keys(f.lightKit.prices??{}).length)spec.lightKit.prices={...f.lightKit.prices};
+     if(f.lightKit.holders!=null&&Object.values(spec.lighting).some(rows=>rows.some(row=>row.system==='lira-17.5x6.5')))spec.lightKit.holders=f.lightKit.holders;
+   }
  }
  if(spec.machining){
    const panels=new Set(built.parts.filter(p=>canMachine(p.item)).map(p=>p.key));

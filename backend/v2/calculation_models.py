@@ -70,7 +70,12 @@ class Detail(StrictModel):
         if self.glue_backing and self.route!='glued_18_18': raise ValueError('Backing requires glued route')
         return self
 
+class ConstructorSource(StrictModel):
+    project_id: UUID
+    version: int=Field(ge=1)
+
 class RevisionRequest(StrictModel):
+    constructor_source: ConstructorSource | None=None
     parent_revision_id: UUID | None=None
     catalogue_release_id: UUID | None=None
     production_profile_id: UUID | None=None

@@ -59,6 +59,12 @@ def file_list(conn,user,order_id):
         else:
             d=conn.execute('SELECT * FROM mf_documents WHERE file_id=%s',(f['file_id'],)).fetchone()
             if d: items.append({**documents.dto(d),'kind':'preliminary_pdf','name':'Предварительный расчёт','download_url':'/api/v2/documents/'+str(f['file_id'])})
+    revision=conn.execute("""SELECT r.revision_id,r.revision_number,r.created_at FROM mf_orders o
+        JOIN mf_order_revisions r ON r.revision_id=o.active_revision_id AND r.order_id=o.order_id
+        WHERE o.order_id=%s AND r.content ? 'module_hardware'""",(order_id,)).fetchone()
+    if revision:
+        items.append(dict(kind='module_hardware',name='Фурнитура по модулям',created_at=revision['created_at'],
+                          download_url=f"/api/v2/orders/{order_id}/revisions/{revision['revision_id']}/hardware.pdf"))
     return plain(items)
 
 

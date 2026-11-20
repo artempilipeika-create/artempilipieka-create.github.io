@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter,Request
+from fastapi import APIRouter,Request,Response
 from pydantic import Field
 from .auth_api import StrictModel
 from .db import transaction
@@ -59,6 +59,20 @@ def router(settings,policy):
     def detail(order_id:str,request:Request):
         with transaction(settings) as c:
             u=identity(c,request);return cs.order_view(c,u,cs.own(c,u,order_id),True)
+    @api.get('/orders/{order_id}/revisions/{revision_id}/hardware.pdf')
+    def order_hardware(order_id:str,revision_id:UUID,request:Request):
+        from .customer_hardware_pdf import render
+        with transaction(settings) as c:
+            u=identity(c,request)
+            if 'client' in u['roles']:
+                cs.own(c,u,order_id)
+            else:
+                if not u['roles'] & {'admin','manager'}:error(403,'PERMISSION_DENIED')
+                cs.require(c,u,'orders.read',order_id=order_id)
+            row=c.execute("SELECT content->'module_hardware' AS report FROM mf_order_revisions WHERE order_id=%s AND revision_id=%s",(order_id,revision_id)).fetchone()
+            if not row or not row['report']: error(404,'Комплектация для этой редакции отсутствует.')
+        return Response(render(row['report']),media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Komplektaciya.pdf','Cache-Control':'no-store'})
+
     @api.get('/account/orders/{order_id}/timeline')
     def timeline(order_id:str,request:Request):
         with transaction(settings) as c:
