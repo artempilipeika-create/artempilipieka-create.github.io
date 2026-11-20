@@ -234,7 +234,7 @@ export function buildCarcass(input={},options={}){
     }
   }
   clearProfileShelves(s,parts,legHeight);
-  const drawerIssues=[],hingeConflicts=[];
+  const drawerIssues=[],hingeConflicts=[],hingeLocations=[];
   if(s.front?.autoHinges||s.front?.hinges){
     buildDrawerBoards(s,banks,add);
     const panels=parts.map(p=>p.item);
@@ -245,14 +245,16 @@ export function buildCarcass(input={},options={}){
         const tagged={...door,assistant_carcass:{spec:s,group_id:prefix}};
         const axes=doorHinges(tagged,panels);
         doorPush(tagged,panels);
-        if(mountKey(s,key)===side)bySide[side].push(...axes.map(h=>h.position.y-s.elevation-legHeight));
+        hingeLocations.push(...axes.map(h=>({x:h.position.x,y:h.position.y,side:h.door_side,article:h.article})));
+        if(mountKey(s,key)===side)bySide[side].push(...axes.map(h=>({y:h.position.y-s.elevation-legHeight,z:h.position.z,article:h.article})));
       }catch(error){
         if(!error.hingeConflict)throw error;
         drawerIssues.push(error.message);hingeConflicts.push(error.hingeConflict);
       }
     }
     for(const b of banks.filter(Boolean))for(const side of ['left','right'])if(side==='left'?b.spacerL:b.spacerR){
-      b.cuts??={};b.cuts[side]=spacerCuts(b.base,b.span,bySide[side].sort((a,b)=>a-b),side);
+      b.cuts??={};b.cuts[side]=spacerCuts(b.base,b.span,bySide[side],side,b.mountFront);
+      b.hingeAxes??={};b.hingeAxes[side]=bySide[side].map(h=>h.y-b.base).filter(y=>y>=0&&y<=b.span).sort((a,b)=>a-b);
     }
   }else if(banks.some(Boolean)){
     if(!options.legacyDrawers){
@@ -297,7 +299,7 @@ export function buildCarcass(input={},options={}){
     }
   }
   const rods=planRods(s,installedLevels);
-  return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,hingeLocations,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:W,height:H,depth:D+rearProjection(s)+frontProjection(s),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

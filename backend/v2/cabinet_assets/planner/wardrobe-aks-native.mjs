@@ -15,13 +15,14 @@ function hostHinges(group,host,items){
  return items.filter(i=>i.item_id.startsWith(group+':')&&doorSide(i.item_id.slice(group.length+1)))
    .flatMap(i=>doorHinges(i,items)).filter(h=>h.host_blank_id===host.item_id);
 }
-function sideAxes(group,side,items){
- return hostHinges(group,{item_id:group+':'+side},items).map(h=>h.position.y).sort((a,b)=>a-b);
+function sideAxes(group,side,items,rotation){
+ const front=items.find(i=>i.assistant_carcass?.group_id===group)?.assistant_carcass.spec.front;
+ return hostHinges(group,{item_id:group+':'+side},items).map(h=>front?.autoHinges||front?.hinges?{y:h.position.y,z:localPoint(h.position,rotation).z,article:h.article}:h.position.y);
 }
 export function installedCuts(panel,items){
  const meta=panel.assistant_carcass,match=/:drawer-(\d+)-spacer-(left|right)$/.exec(panel.item_id??'');
  if(!meta||!match)return [];
- return spacerCuts(panel.elevation_mm,panel.height,sideAxes(meta.group_id,match[2],items),match[2]);
+ return spacerCuts(panel.elevation_mm,panel.height,sideAxes(meta.group_id,match[2],items,panel.rotation),match[2],localPoint(panel,panel.rotation).z+panel.depth/2);
 }
 
 export function screwRows(bottom,height,rails){
@@ -69,6 +70,18 @@ function verticalPairs(panel,low=panel.elevation_mm,high=panel.elevation_mm+pane
  return [[low+margin,low+margin+pitch],[high-margin,high-margin-pitch]];
 }
 
+// The medium rear wall shares a dowel exactly between the two cam studs.
+function rearFixings(panel){
+ const low=panel.elevation_mm,high=low+panel.height;
+ if(panel.height<joinery.twoVerticalPairsFrom){
+  const [[cam,dowel]]=checkedPairs(verticalPairs(panel),panel);
+  return {cams:[cam],dowels:[dowel]};
+ }
+ const cams=[low+joinery.rearEdgeMargin,high-joinery.rearEdgeMargin];
+ const dowels=panel.height<joinery.secondRearDowelFrom?[(low+high)/2]:[cams[0]+joinery.pitch,cams[1]-joinery.pitch];
+ return {cams,dowels};
+}
+
 function floorFacePairs(floor,face,at,push,gripDepth){
  const left=at(floor).x-floor.width/2,right=left+floor.width,faceLeft=at(face).x-face.width/2;
  const low=Math.max(left+8,faceLeft+8+(face.blank_edge_pull?.edge==='left'?gripDepth:0));
@@ -114,7 +127,7 @@ export function drawerCamSeats(panel,items){
  const bank=match&&panel.assistant_carcass?.spec?.drawerBanks?.[Number(match[1])];
  if(bank?.railFamily!=='concealed')return [];
  const role=match[3],w=panel.width,d=panel.depth,base=panel.elevation_mm;
- if(role==='rear')return verticalPairs(panel).flatMap(([y])=>[-1,1].map(sign=>['z',sign*(w/2-34),y-base,d/2-6.4]));
+ if(role==='rear')return rearFixings(panel).cams.flatMap(y=>[-1,1].map(sign=>['z',sign*(w/2-34),y-base,-d/2+6.4]));
  const face=items.find(it=>it.item_id===panel.item_id.slice(0,-role.length)+'face');
  if(!face)return [];
  const gripDepth=gripDepthOf(face);
@@ -164,16 +177,16 @@ function concealedDrawer(bank,parts,hosts,at,add,joint){
   joint('cam',host,panel,...cam,yaw,roll,back);
   joint('dowel',host,panel,...dowel,yaw,roll,back);
  };
+ const rearRows=rearFixings(rear);
  for(const [k,side] of [left,right].entries()){
   const sign=k?-1:1,inner=sideX[k]+sign*9,outer=sideX[k]-sign*9;
   for(const signZ of [-1,1]){
    const axis=at(floor).z+signZ*(depth/2-100);
    pair(side,floor,[inner,floorY,axis],[inner,floorY,axis-signZ*joinery.pitch],k?180:0);
   }
-  // Studs enter the sides. Both cups open onto the front (inside) face of the rear wall.
-  for(const [cam,dowel] of checkedPairs(verticalPairs(rear),rear)){
-   pair(side,rear,[inner,cam,at(rear).z],[inner,dowel,at(rear).z],180,k?0:180,true);
-  }
+  // The stud enters the side. The cup is drilled from the rear (-Z) face.
+  for(const y of rearRows.cams)joint('cam',side,rear,inner,y,at(rear).z,0,k?180:0,true);
+  for(const y of rearRows.dowels)joint('dowel',side,rear,inner,y,at(rear).z,0,k?180:0,true);
   if(fore){
    const margin=Math.min(50,fore.height/4);
    for(const h of [margin,fore.height-margin])
@@ -227,6 +240,7 @@ export function wardrobeHardware(items){
     host_blank_id:host.item_id,joined_panel_id:joined.item_id,position:{...worldPoint({x,z},rotation),y},
     rotation:(rotation+yaw)%360,joint_roll_deg:roll,...(back?{joint_back_face:true}:{}),elastic_resize:false});
   };
+  const automatic=Boolean(spec.front?.autoHinges||spec.front?.hinges);
   const sharedSeats=new Map();
   spec.drawerBanks.forEach((bank,slot)=>{
    if(!bank)return;
@@ -245,7 +259,7 @@ export function wardrobeHardware(items){
      const {axis,front,length}=concealedDrawer(bank,{left:sideParts[0],right:sideParts[1],face,fore,rear,floor:get(key+'bottom')},hosts,at,add,joint);
      for(const [k,host] of hosts.entries()){
       const r=bank.opening==='push'?23.5:23;
-      if(cuts[k].some(([lo,hi])=>axis+r>host.elevation_mm+lo&&axis-r<host.elevation_mm+hi))throw Error('Направляющая PRIME попадает в вырез под петлю.');
+      if(!automatic&&cuts[k].some(([lo,hi])=>axis+r>host.elevation_mm+lo&&axis-r<host.elevation_mm+hi))throw Error('Направляющая PRIME попадает в вырез под петлю.');
      }
      railAxes.push(axis);railFront=front;railLength=length;
      return;
@@ -258,9 +272,9 @@ export function wardrobeHardware(items){
     for(const [k,side] of sides.entries()){
      const sign=k?-1:1,host=spacers[k]??panels[k],mount=at(host).x+sign*host.width/2,box=k?xr:xl;
      if(!close((box-mount)*sign,13.5))throw Error('Секция '+(section+1)+': направляющей нужно 13,5 мм с каждой стороны.');
-     if(cuts[k].some(([lo,hi])=>ax+22.5>host.elevation_mm+lo&&ax-22.5<host.elevation_mm+hi))throw Error('Шуфляда '+(index+1)+': направляющая попадает в вырез под петлю. Измените положение блока.');
+     if(!automatic&&cuts[k].some(([lo,hi])=>ax+22.5>host.elevation_mm+lo&&ax-22.5<host.elevation_mm+hi))throw Error('Шуфляда '+(index+1)+': направляющая попадает в вырез под петлю. Измените положение блока.');
      const faceClear=sign*(at(face).x-(at(panels[k]).x+sign*panels[k].width/2))-face.width/2;
-     if(hinges[k].some(h=>faceClear<{overlay:23.6,half:33.6,inset:41.1}[hingeCatalogue[h.article].kind]&&frontAtHinge(face.elevation_mm,face.height,h.position.y,side)))throw Error('Фасад шуфляды '+(index+1)+' пересекает петлю. Пересчитайте ширину фасада в анкете шкафа.');
+     if(!automatic&&hinges[k].some(h=>faceClear<{overlay:23.6,half:33.6,inset:41.1}[hingeCatalogue[h.article].kind]&&frontAtHinge(face.elevation_mm,face.height,h.position.y,side)))throw Error('Фасад шуфляды '+(index+1)+' пересекает петлю. Пересчитайте ширину фасада в анкете шкафа.');
      const label='PRIME by AKS '+cat.article+' · '+L+' мм · '+(k?'правая':'левая')+' · '+face.name;
      let source=cat[side];
      if(shared&&k===innerSide){

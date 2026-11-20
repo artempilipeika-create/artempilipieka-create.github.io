@@ -3,6 +3,8 @@ import {nicheOpenings,nicheSlot,trimBanks,mmText,coverClearance,frontEdgeGap,pre
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {footHeight} from './plinth-options.mjs';
 
+import joinery from './prime-drawer-joinery.json' with {type:'json'};
+
 const drawerExecutions=[['internal','Внутренние · вкладные фасады'],['external','Наружные фасады']];
 const el=(tag,text)=>{const node=document.createElement(tag);if(text!=null)node.textContent=text;return node;};
 function action(text,fn){
@@ -117,10 +119,13 @@ function hardwareDetails(box,current){
    }
    photo.append(...(img.parentElement?[]:[img]),el('figcaption',title+' · '+rail.length+' мм · арт. '+rail.article+(rail.length===size?'':' (на фото '+size+' мм, арт. '+sample+')')));box.append(photo);
    box.append(el('p',hidden?'Короб '+(current.mountWidth-13)+' мм · боковины и дно ЛДСП 18 мм · боковой зазор 6,5 мм.':'Короб '+(current.mountWidth-27)+' мм · зазор по 13,5 мм на сторону.'));
-   if(hidden)box.append(el('p','Задняя стенка крепится к обеим боковинам на эксцентрик со шкантом. Дно соединяется с фасадом такой парой и при установке передней планки.'));
+   if(current.hingeSetback)box.append(el('p','Зазор от закрытой двери до фасадов шуфляд — 5 мм для прохода чашки петли.'));
+   if(hidden)box.append(el('p','Задние эксцентрики затягиваются с тыльной стороны. На каждый задний угол ставится один эксцентрик со шкантом, с высоты стенки '+joinery.twoVerticalPairsFrom+' мм — два эксцентрика со шкантом посередине, с '+joinery.secondRearDowelFrom+' мм — два эксцентрика и два шканта. Дно крепится к фасаду на эксцентрик со шкантом в обоих исполнениях.'));
    for(const [side,has] of [['left',current.spacerL],['right',current.spacerR]]){
      if(!has)continue;
      spacerDrawing(box,current,side);
+     const axes=current.hingeAxes?.[side]??[];
+     if(axes.length)box.append(el('p','Оси петель от низа '+(side==='left'?'левой':'правой')+' проставки, мм — '+axes.map(mmText).join(', ')+'.'));
      const slots=current.cuts?.[side]?.length??0;
      box.append(el('p','Проставка '+(side==='left'?'слева':'справа')+' · 18 мм · '+(slots?'вырезов под петли: '+slots:'прямая')+'. Шуруп 5×30, сквозное Ø5 мм в проставке и намётка Ø5 × 1 мм в боковине. Общая глубина 19 мм.'));
    }

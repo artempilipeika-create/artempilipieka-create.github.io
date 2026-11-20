@@ -2,5 +2,7 @@
   "pitch": 32,
   "compactPitch": 16,
   "twoVerticalPairsFrom": 104,
+  "secondRearDowelFrom": 168,
+  "rearEdgeMargin": 20,
   "twoFloorPairsFrom": 240
 }

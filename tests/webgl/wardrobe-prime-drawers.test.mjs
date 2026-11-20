@@ -31,7 +31,7 @@ for(const [opening,skus] of Object.entries(articles))for(const [i,length] of len
    assert.deepEqual([rails[0].article,rails[0].span_mm,rails[0].length_mm],[String(skus[i]),600,length]);
    if(opening==='push')assert.equal(rails[0].cut_mm,394);
    assert.equal(hardware.filter(h=>h.joint_part==='cam').length,fixing==='cam'?14:10);
-   assert.equal(hardware.filter(h=>h.joint_part==='dowel').length,fixing==='cam'?14:10);
+   assert.equal(hardware.filter(h=>h.joint_part==='dowel').length,fixing==='cam'?12:8);
    assert.equal(hardware.filter(h=>h.aks_kind==='face').length,fixing==='cam'?0:3);
    assert.equal(hardware.filter(h=>h.aks_kind==='bolt'||h.joint_part==='confirmat').length,fixing==='cam'?2:8);
   }
@@ -55,7 +55,7 @@ function nativePoint(row,x,y,z){
 }
 const near=(a,b)=>Math.abs(a-b)<.001;
 
-test('every PRIME cam has its own coaxially oriented dowel and a cup on the accessible panel face',()=>{
+test('PRIME rear studs enter the sides, cups open outwards and the facade and floor keep complete cam/dowel pairs',()=>{
  for(const opening of ['soft','push'])for(const fixing of ['cam','plank'])for(const rotation of [0,90,180,270]){
   for(const [height,width,manual] of [[125,opening==='soft'?200:226,null],[210,600,null],[210,600,fixing==='plank'?60:null]]){
    const b=bank(opening,fixing);b.faces=[{height,...(manual?{width:manual}:{})}];
@@ -68,24 +68,51 @@ test('every PRIME cam has its own coaxially oriented dowel and a cup on the acce
    assert.equal(bottomFront.length,width===600&&!manual?2:1);
    for(const [idx,cam] of hardware.entries()){
     if(cam.joint_part!=='cam')continue;
-    const dowel=hardware[idx+1];
-    assert.equal(dowel.joint_part,'dowel');
-    for(const field of ['host_blank_id','joined_panel_id','rotation','joint_roll_deg','joint_back_face'])assert.equal(cam[field],dowel[field]);
-    const d=Math.hypot(...['x','y','z'].map(k=>cam.position[k]-dowel.position[k]));
-    assert.ok(near(d,32)||height===125&&near(d,16));
+    if(name(cam)!=='rear'){
+     const dowel=hardware[idx+1];
+     assert.equal(dowel.joint_part,'dowel');
+     for(const field of ['host_blank_id','joined_panel_id','rotation','joint_roll_deg','joint_back_face'])assert.equal(cam[field],dowel[field]);
+     const d=Math.hypot(...['x','y','z'].map(k=>cam.position[k]-dowel.position[k]));
+     assert.ok(near(d,32)||height===125&&near(d,16));
+    }
     const panel=byId.get(cam.joined_panel_id),seats=drawerCamSeats(panel,items);
     const centre=nativePoint(cam,34,-2.6,0),p=localPoint({x:centre.x-panel.x,z:centre.z-panel.z},rotation);
     assert.ok(seats.some(([,x,y,z])=>near(x,p.x)&&near(y,centre.y-panel.elevation_mm)&&near(z,p.z)),panel.item_id);
     if(name(cam)==='rear'){
      const mouth=nativePoint(cam,34,-9,0),tip=nativePoint(cam,34,4,0);
-     assert.ok(near(localPoint(mouth,rotation).z-localPoint(panel,rotation).z,panel.depth/2));
-     assert.ok(near(localPoint(mouth,rotation).z-localPoint(tip,rotation).z,13));
+     assert.ok(near(localPoint(mouth,rotation).z-localPoint(panel,rotation).z,-panel.depth/2));
+     assert.ok(near(localPoint(tip,rotation).z-localPoint(mouth,rotation).z,13));
     }
    }
    const vertical=hardware.filter(r=>r.joint_part==='confirmat'&&name(r)==='front');
    assert.equal(vertical.length,fixing==='plank'?2:0);
    for(const screw of vertical)for(const row of hardware.filter(r=>r.host_blank_id.endsWith('-face')&&name(r)==='bottom'))
     assert.ok(Math.abs(localPoint(screw.position,rotation).x-localPoint(row.position,rotation).x)>=10-.001);
+  }
+ }
+});
+
+test('rear-wall fixing changes at the actual cut heights 104 and 168 mm on each handed edge',()=>{
+ for(const h of [40,55,56,103,104,105,167,168,169,300])for(const rotation of [0,90,180,270]){
+  // External drawer bottom is clamped to carcass datum 18, soft lift is 17.
+  const b=bank('soft');b.faces=[{height:h+74}];
+  const {items,hardware}=cabinet(455,[b],rotation),rear=items.find(p=>p.item_id.endsWith('-rear'));
+  assert.equal(rear.height,h);
+  for(const side of ['left','right']){
+   const host=items.find(p=>p.item_id.endsWith('-side-'+side));
+   const rows=hardware.filter(r=>r.host_blank_id===host.item_id&&r.joined_panel_id===rear.item_id);
+   const heights=type=>rows.filter(r=>r.joint_part===type).map(r=>r.position.y-rear.elevation_mm);
+   const cams=heights('cam'),dowels=heights('dowel');
+   assert.equal(cams.length,h<104?1:2);assert.equal(dowels.length,h<168?1:2);
+   if(h>=104)assert.deepEqual(cams,[20,h-20]);
+   if(h>=168)assert.deepEqual(dowels,[52,h-52]);
+   else if(h>=104)assert.deepEqual(dowels,[h/2]);
+   else assert.equal(dowels[0]-cams[0],h>=56?32:16);
+   for(const row of rows){
+    const sign=side==='left'?1:-1,stud=nativePoint(row,-13,0,0),tip=nativePoint(row,row.joint_part==='cam'?34:25,0,0);
+    assert.ok(near(sign*(localPoint(stud,rotation).x-localPoint(host,rotation).x),-4));
+    assert.ok(sign*(localPoint(tip,rotation).x-localPoint(host,rotation).x)>9);
+   }
   }
  }
 });

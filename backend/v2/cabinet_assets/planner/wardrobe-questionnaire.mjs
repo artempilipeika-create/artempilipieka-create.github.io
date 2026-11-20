@@ -3,6 +3,7 @@ import {canLight} from './wardrobe-lighting.mjs';
 import {canMachine,rearClearance} from './panel-machining.mjs';
 import {secureDoorShelf} from './wardrobe-door-layout.mjs';
 import {footPlan} from './wardrobe-feet.mjs';
+import {footHeight} from './plinth-options.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
 import {buildCarcass} from './carcass-model.mjs';
 import {choice,defaultShelf,shelfRows} from './shelf-choices.mjs';
@@ -13,6 +14,46 @@ export function resizeDividerChoices(fields){
  if(fields.thickness!==18||fields.sections<=1){delete fields.dividerJoints;return;}
  fields.dividerJoints=Array.from({length:fields.sections-1},(_,i)=>fields.dividerJoints?.[i]??{top:'confirmat',bottom:'confirmat'});
 }
+function hingesInGaps(built,bank){
+ const zero=built.spec.elevation+(built.spec.feet?.article==='118779'?0:footHeight(built.spec));
+ return built.hingeLocations.filter(h=>{
+  const edge=h.side==='left'?bank.left:bank.right;
+  return Math.abs(h.x-edge)<.01&&bank.faces.some((f,i)=>i&&h.y-zero>bank.faces[i-1].y+bank.faces[i-1].height&&h.y-zero<f.y);
+ }).length;
+}
+
+// Trial the 5 mm clearance only when preparing the questionnaire. Old saved
+// panels keep their actual depth until their owner applies the rebuilt wardrobe.
+function fitDrawerHingeDepths(spec,group_id){
+ const build=()=>buildCarcass(spec,{idPrefix:group_id});
+ const candidates=[];
+ for(const [i,bank] of (spec.drawerBanks??[]).entries()){
+  if(!bank)continue;
+  delete bank.hingeClearanceMm;
+  if(spec.front&&bank.kind==='internal'&&bank.gap>=18&&bank.faces.length>1)candidates.push(i);
+ }
+ const original=build();
+ if(!candidates.length)return original;
+ for(const i of candidates)spec.drawerBanks[i].hingeClearanceMm=5;
+ try{
+  const trial=build();
+  let retained=0;
+  for(const i of candidates){
+   const bank=trial.drawerBanks[i];
+   if(bank.hingeSetback&&hingesInGaps(trial,bank)>hingesInGaps(original,original.drawerBanks[i]))retained++;
+   else delete spec.drawerBanks[i].hingeClearanceMm;
+  }
+  if(!retained)return original;
+  const fitted=retained===candidates.length?trial:build();
+  if(fitted.hingeConflicts.length<=original.hingeConflicts.length)return fitted;
+ }catch{
+  // Only the trial depth failed (e.g. adjacent fitted hardware). The original
+  // assembly above was already built and checked with its full guide length.
+ }
+ for(const i of candidates)delete spec.drawerBanks[i].hingeClearanceMm;
+ return original;
+}
+
 export function wardrobeSpec(f){
  const sections=Number(f.sections),counts=f.sectionShelves;
  if(!Number.isInteger(sections)||sections<1||sections>4||!Array.isArray(counts)||counts.length!==sections)throw Error('Выберите от одной до четырёх секций.');
@@ -62,7 +103,7 @@ export function wardrobeSpec(f){
  if(!rows.some(row=>row.some(value=>value!==defaultShelf)))delete spec.shelfChoices;
  if(spec.drawerBanks)spec.drawerBanks=fitNicheBanks(spec,spec.drawerBanks);
  const group_id='questionnaire';
- const built=buildCarcass(spec,{idPrefix:group_id});
+ const built=fitDrawerHingeDepths(spec,group_id);
  if(spec.lighting){
    const eligible=new Set(built.parts.filter(canLight).map(p=>p.key));
    spec.lighting=Object.fromEntries(Object.entries(spec.lighting).filter(([key])=>eligible.has(key)));

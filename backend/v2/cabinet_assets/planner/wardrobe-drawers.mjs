@@ -1,4 +1,5 @@
-import {activeLeafKeys,hingeProduct,settingFor,bandKey,onDivider,depthBehindDoor,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
+import {plateSpan,spacerReachesHinge} from './wardrobe-hinge-fit.mjs';
+import {hingeCatalogue,activeLeafKeys,hingeProduct,settingFor,bandKey,onDivider,insetDepth,depthBehindDoor,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
 import {rearClearance} from './panel-machining.mjs';
 import {sectionOf,isRightBank,levelOf,splitAt,columnWidths,nicheSlot} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
@@ -29,11 +30,14 @@ export function railForOpening(depth,legacy=false){
 // PRIME 112595, installed H0: Y extents measured on its mesh inside the
 // spacer (X 0..18, Z behind -21) and the internal front (Z -21..-3).
 const overlaps=(lo,hi,a,b)=>lo<b&&a<hi;
-export function spacerCuts(bottom,height,axes,side='left'){
+export function spacerCuts(bottom,height,axes,side='left',front=Infinity){
  const slots=[];
- for(const axis of [...axes].sort((a,b)=>a-b)){
-  if(!overlaps(bottom,bottom+height,axis-(side==='left'?25:26),axis+(side==='left'?26:25)))continue;
-  const low=Math.max(0,axis-35-bottom),high=Math.min(height,axis+35-bottom);
+ for(const entry of [...axes].sort((a,b)=>(a.y??a)-(b.y??b))){
+  const axis=entry.y??entry,fit=hingeCatalogue[entry.article];
+  if(fit&&!spacerReachesHinge(fit,entry.z,front))continue;
+  const [a,b]=fit?plateSpan(fit,side):side==='left'?[-25,26]:[-26,25];
+  if(!overlaps(bottom,bottom+height,axis+a-(fit?2:0),axis+b+(fit?2:0)))continue;
+  const low=Math.max(0,axis+(fit?a-2:-35)-bottom),high=Math.min(height,axis+(fit?b+2:35)-bottom);
   if(slots.length&&slots.at(-1)[1]>=low)slots.at(-1)[1]=Math.max(slots.at(-1)[1],high);
   else slots.push([low,high]);
  }
@@ -121,10 +125,20 @@ export function drawerSections(s,widths,legacy=false){
   const insetSetback=Math.max(0,...rowKeys.map(key=>depthBehindDoor(s,key)));
   const concealed=bank.railFamily==='concealed',push=concealed&&bank.opening==='push';
   if(concealed&&(mountWidth<(push?226:200)||(push&&mountWidth>1206)))throw Error('Проверьте монтажную ширину PRIME: '+(push?'226–1206 мм с синхронизатором.':'от 200 мм.'));
-  const faceFront=s.depth/2+(internal?-Math.max(3,insetSetback):18+(push?4:0));
-  const bodyFront=faceFront-18;
-  const clearDepth=bodyFront+s.depth/2-rearClearance(s);
+  const setback=Math.max(3,insetSetback);
+  let faceFront=s.depth/2+(internal?-setback:18+(push?4:0));
+  let bodyFront=faceFront-18,clearDepth=bodyFront+s.depth/2-rearClearance(s);
   const rail=concealed?concealedRail(clearDepth-(push?4:0),bank.opening):railForOpening(clearDepth,legacy);
+  let hingeSetback=0;
+  if(internal&&bank.hingeClearanceMm&&rowKeys.length){
+   const deepestDoor=Math.max(...rowKeys.map(key=>hingeProduct(s.front,key).kind==='inset'?
+    18+insetDepth(s.front,key):settingFor(s.front,key).push?-3:0));
+   const shift=deepestDoor+bank.hingeClearanceMm-setback;
+   // Retain the selected guide and its specified rear installation allowance.
+   if(shift>0&&clearDepth-shift-(push?4:0)>=rail.length+(concealed?3:5)){
+    hingeSetback=shift;faceFront-=shift;bodyFront-=shift;clearDepth-=shift;
+   }
+  }
   const mountFront=bodyFront-(push?4:0),railLift=push?20:17,railRadius=concealed?(push?23.5:23):22.5;
   // Separate opposing screw axes on an 18 mm partition while keeping facade heights fixed.
   let stagger=0;
@@ -144,7 +158,7 @@ export function drawerSections(s,widths,legacy=false){
   });
   if(bank.layout)bottom=base+bank.height;
   if(bottom>s.height-(internal?s.thickness:0))throw Error('Секция '+n+': блоку шуфляд не хватает '+(bottom-s.height+(internal?s.thickness:0))+' мм.');
-  return {section:i,slot,legacy,base,internal,spacerL,spacerR,left,right,mountWidth,center,bodyFront,mountFront,rail,railRadius,faceFixing:bank.faceFixing??'cam',clearDepth,faces,top:bottom,span:bottom-base};
+  return {section:i,slot,legacy,base,internal,spacerL,spacerR,left,right,mountWidth,center,bodyFront,mountFront,rail,railRadius,hingeSetback,faceFixing:bank.faceFixing??'cam',clearDepth,faces,top:bottom,span:bottom-base};
  });
 }
 

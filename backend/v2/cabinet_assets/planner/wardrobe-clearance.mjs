@@ -61,16 +61,18 @@ function triangle(a,b,c){
  const edges=[sub(b,a),sub(c,b),sub(a,c)],n=cross(edges[0],edges[1]);
  return Math.hypot(...n)>epsilon?{p:[a,b,c],edges,normals:[n]}:null;
 }
-const meshCache=new WeakMap();
-function fronts(group){
+const frontMeshes=new WeakMap(),mountedMeshes=new WeakMap();
+function fronts(group,mounted=false){
+ const meshCache=mounted?mountedMeshes:frontMeshes;
  if(!group)return [];
  if(meshCache.has(group))return meshCache.get(group);
  group.updateWorldMatrix(true,true);
  const inverse=group.matrixWorld.clone().invert(),wood=new THREE.Box3(),solids=[];
  group.traverse(m=>{
   if(!m.isMesh)return;
-  const metal=m.userData.frontAccessory&&m.userData.article;
-  if(!metal&&m.userData.role!=='front')return;
+  const hinge=m.userData.hingePart===(mounted?'body':'cup');
+  const metal=hinge||!mounted&&m.userData.frontAccessory&&m.userData.article;
+  if(!metal&&(mounted||m.userData.role!=='front'))return;
   const transform=inverse.clone().multiply(m.matrixWorld),g=m.geometry;
   if(!g?.attributes?.position)return;
   if(!g.boundingBox)g.computeBoundingBox();
@@ -79,7 +81,7 @@ function fronts(group){
   const v=new THREE.Vector3(),attr=g.attributes.position,pts=[];
   for(let i=0;i<attr.count;i++)pts.push(v.fromBufferAttribute(attr,i).applyMatrix4(transform).multiplyScalar(1000).toArray());
   solids.push({lo:rect.min.multiplyScalar(1000).toArray(),hi:rect.max.multiplyScalar(1000).toArray(),
-   label:'Ручка '+m.userData.article,vertices:pts,indices:g.index?.array});
+   label:(hinge?'Петля ':'Ручка ')+m.userData.article,vertices:pts,indices:g.index?.array});
  });
  if(!wood.isEmpty())solids.unshift({lo:wood.min.multiplyScalar(1000).toArray(),hi:wood.max.multiplyScalar(1000).toArray()});
  meshCache.set(group,solids);return solids;
@@ -223,7 +225,9 @@ export function clearanceSession(items,entries,room,motion){
   const face=items.find(it=>own(it)&&it.item_id.endsWith(':drawer-'+key+'-face'));
   if(!face)return null;
   const travel=drawerStroke(items,motion.id,key),yaw=-(face.rotation||0)*rad;
-  return first(drawerPieces(key,0),[...doors(),...walls],rotate([0,0,travel],Math.cos(yaw),Math.sin(yaw)));
+  const fixed=items.filter(it=>own(it)&&it.blank_axis==='side').flatMap(it=>fronts(group(it),true)
+   .map(p=>placed(p.label,p,-(it.rotation||0)*rad,[it.x,it.elevation_mm,it.z])));
+  return first(drawerPieces(key,0),[...doors(),...fixed,...walls],rotate([0,0,travel],Math.cos(yaw),Math.sin(yaw)));
  }
  function swing(leaf,from,to){
   const movingDrawer=motion.shown&&motion.extension>0?drawerPieces(motion.shown,motion.extension*drawerStroke(items,motion.id,motion.shown)):[];

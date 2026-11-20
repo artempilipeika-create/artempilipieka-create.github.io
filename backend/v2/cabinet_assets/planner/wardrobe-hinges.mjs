@@ -3,19 +3,38 @@ import {hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,
 import {finishedFaceSize} from './wardrobe-edge-pulls.mjs';
 import {doorSide,physicalProfiles} from './wardrobe-door-layout.mjs';
 import {splitAt,levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
+import {drawerHingeSpan,gapAxisRange,plateSpan,railSeat,spacerReachesHinge} from './wardrobe-hinge-fit.mjs';
 import {hingeLoad,hingeAxes} from './wardrobe-fronts.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 
-// Minimise squared displacement from the original drilling axes. Prefix minima
-// enforce 64 mm between neighbours without losing a solution to a greedy move.
-function fitAxes(ideal,lo,hi,blocked){
- const positions=[];
- for(let y=Math.ceil(lo);y<=hi;y++)if(blocked.every(([a,b])=>y<a||y>b))positions.push(y);
+// Prefer a usable inter-front gap for each nominal axis inside a drawer bank.
+// Joint optimisation keeps all hinge centres at least 64 mm apart.
+function fitAxes(ideal,lo,hi,blocked,banks){
+ const allowed=y=>y>=lo&&y<=hi&&blocked.every(([a,z])=>y<=a||y>=z);
+ if(!banks.some(b=>ideal.some(y=>y>=b.low&&y<=b.high))&&
+    ideal.every((y,i)=>allowed(y)&&(!i||y-ideal[i-1]>=64)))return ideal;
+ const candidates=new Set(ideal);
+ for(let y=Math.ceil(lo);y<=hi;y++)candidates.add(y);
+ for(const b of banks)for(const g of b.gaps){candidates.add(g.center);candidates.add(g.low);candidates.add(g.high);}
+ // Fractional gap centres and narrow free intervals are valid BAZIS drilling axes.
+ for(const [a,z] of blocked){candidates.add(Math.floor(a*1000)/1000);candidates.add(Math.ceil(z*1000)/1000);}
+ const positions=[...candidates].filter(allowed).sort((a,b)=>a-b);
  if(!positions.length)return null;
- if(ideal.every((y,i)=>positions.includes(y)&&(!i||y-ideal[i-1]>=64)))return ideal;
- let costs=positions.map(y=>(y-ideal[0])**2);
+ const outside=(hi-lo+1)**2*(ideal.length+1)*3;
+ const cost=ideal.map(target=>{
+  const bank=banks.find(b=>target>=b.low&&target<=b.high);
+  const gaps=bank?.gaps.filter(g=>positions.some(y=>y>=g.low&&y<=g.high))??[];
+  return y=>{
+   if(!gaps.length)return (y-target)**2;
+   const gap=gaps.find(g=>y>=g.low&&y<=g.high);
+   if(!gap)return outside+(y-target)**2;
+   const mid=gap.center;
+   return (target-mid)**2+(y-mid)**2;
+  };
+ });
+ let costs=positions.map(cost[0]);
  const parents=[];
- for(const target of ideal.slice(1)){
+ for(const score of cost.slice(1)){
    let edge=0,best=-1;
    const back=[],next=[];
    for(const y of positions){
@@ -23,7 +42,7 @@ function fitAxes(ideal,lo,hi,blocked){
        if(Number.isFinite(costs[edge])&&(best<0||costs[edge]<costs[best]))best=edge;
        edge++;
      }
-     back.push(best);next.push(best<0?Infinity:costs[best]+(y-target)**2);
+     back.push(best);next.push(best<0?Infinity:costs[best]+score(y));
    }
    parents.push(back);costs=next;
  }
@@ -34,35 +53,55 @@ function fitAxes(ideal,lo,hi,blocked){
  return axes;
 }
 
-function automaticAxes(door,host,items,side,shelves,count,section,opposing,reach){
+function automaticAxes(door,host,items,side,shelves,count,section,opposing,fit){
  const {group_id,spec}=door.assistant_carcass;
- const sign=side==='left'?1:-1;
- const zero=door.elevation_mm,wall=localPoint(host,door.rotation).x+sign*host.width/2;
- const blocked=[...shelves.map(([lo,hi])=>[lo-31,hi+31]),...opposing];
- const parts=new Map(items.map(item=>[item.item_id,item]));
+ const sign=side==='left'?1:-1,at=p=>localPoint(p,door.rotation);
+ const zero=door.elevation_mm,wall=at(host).x+sign*host.width/2,back=at(door).z-door.depth/2;
+ const pivot=sign*(at(door).x-wall)-door.width/2+1.5;
+ const blocked=[...shelves.map(([lo,hi])=>[lo-32,hi+32]),...opposing.map(([a,b])=>[a-1,b+1])];
+ const parts=new Map(items.map(item=>[item.item_id,item])),banks=[];
+ function block(low,high,span){
+  if(span)blocked.push([low-zero-span[1],high-zero-span[0]]);
+ }
+ function movingPanel(p){
+  const edge=p.blank_edge_pull?.edge,finished=finishedFaceSize(p);
+  const extra=finished.width-p.width,low=p.elevation_mm-(edge==='bottom'?finished.height-p.height:0);
+  const x=at(p).x+(edge==='right'?extra/2:edge==='left'?-extra/2:0);
+  const clear=sign*(x-wall)-finished.width/2,setback=back-at(p).z-p.depth/2;
+  block(low,low+finished.height,drawerHingeSpan(fit,side,clear,setback,pivot,door.depth,true));
+  return [low,low+finished.height];
+ }
  (spec.drawerBanks??[]).forEach((bank,slot)=>{
    if(bank?.kind!=='internal'||sectionOf(slot)!==section)return;
    if(splitAt(spec,section,levelOf(slot))?.kind==='drawers'&&isRightBank(slot)!==(side==='right'))return;
-   const key=group_id+':drawer-'+slot+'-';
-   const spacer=parts.get(key+'spacer-'+side);
+   const key=group_id+':drawer-'+slot+'-',spacer=parts.get(key+'spacer-'+side);
+   const gaps=[];let first,last;
    for(let i=0;i<bank.faces.length;i++){
      const face=parts.get(key+i+'-face'),box=parts.get(key+i+'-side-'+side);
      if(!face||!box)throw Error('Не найдены детали шуфляды для проверки петель.');
-     if(sign*(localPoint(face,door.rotation).x-wall)-face.width/2<reach)
-       blocked.push([face.elevation_mm-zero-31,face.elevation_mm+face.height-zero+31]);
-     if(spacer){
-       const concealed=bank.railFamily==='concealed',push=bank.opening==='push';
-       const bottom=box.elevation_mm+(concealed?(push?-20:-17):17.5);
-       const top=bottom+(concealed?(push?47:46):45);
-       blocked.push([Math.max(bottom-35,spacer.elevation_mm-26)-zero,
-         Math.min(top+35,spacer.elevation_mm+spacer.height+26)-zero]);
+     const [bottom,top]=movingPanel(face);movingPanel(box);
+     if(last!==undefined){
+      const gap=gapAxisRange(fit,side,last-zero,bottom-zero);
+      if(gap.low<=gap.high)gaps.push(gap);
+     }
+     first??=bottom;last=top;
+     const seat=railSeat(bank,box),mount=spacer??host;
+     const clear=sign*(at(mount).x-wall)+mount.width/2;
+     const setback=back-at(box).z-box.depth/2;
+     block(seat.bottom,seat.top,drawerHingeSpan(fit,side,clear,setback,pivot,door.depth,false));
+     if(spacer&&spacerReachesHinge(fit,back,at(spacer).z+spacer.depth/2)){
+       // The rail may bridge the mouth of a spacer cut. Its first fixing,
+       // 37 mm behind the leading edge, still needs solid board around it.
+       const [low,high]=plateSpan(fit,side);
+       block(seat.screw-5,seat.screw+5,[low-2,high+2]);
      }
    }
+   if(gaps.length)banks.push({low:first-zero,high:last-zero,gaps});
  });
  const offset=spec.front.offset,step=(door.height-2*offset)/(count-1);
  const ideal=Array.from({length:count},(_,i)=>Math.round(offset+i*step));
  const low=Math.max(31,host.elevation_mm-zero+26),high=Math.min(door.height-31,host.elevation_mm+host.height-zero-26);
- const axes=fitAxes(ideal,low,high,blocked);
+ const axes=fitAxes(ideal,low,high,blocked,banks);
  if(axes)return axes;
  const index=Math.max(0,ideal.findIndex(y=>blocked.some(([a,b])=>y>=a&&y<=b)));
  const error=Error('Секция '+(section+1)+', '+(side==='left'?'левая':'правая')+' дверь: нет свободного положения для комплекта из '+count+' петель.');
@@ -111,8 +150,7 @@ export function doorHinges(door,items){
    obstacles.push([top+(run.cutBottom-run.top),top+(run.cutTop-run.top)]);
  }
  const finished=finishedFaceSize(door),{count}=hingeLoad(finished.width,finished.height,front.massKg);
- const reach={overlay:23.6,half:33.6,inset:41.1}[fit.kind];
- const axes=front.autoHinges||front.hinges?automaticAxes(door,host,items,side,obstacles,count,section,opposing,reach):hingeAxes(door.height,count,front.offset,obstacles);
+ const axes=front.autoHinges||front.hinges?automaticAxes(door,host,items,side,obstacles,count,section,opposing,fit):hingeAxes(door.height,count,front.offset,obstacles);
  if(axes.some(y=>door.elevation_mm+y-26<host.elevation_mm||door.elevation_mm+y+26>host.elevation_mm+host.height))
    throw Error('Ответная планка выходит за боковину. Проверьте высоту фасада.');
  return axes.map(y=>({

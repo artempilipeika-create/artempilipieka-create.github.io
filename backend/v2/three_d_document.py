@@ -107,9 +107,9 @@ PRIME_DRAWERS=json.loads((ASSETS/'wardrobe-prime.json').read_text())
 PRIME_JOINERY=json.loads((ASSETS/'prime-drawer-joinery.json').read_text())
 
 
-def _prime_pairs(count):
-    return [_row('Эксцентриковая стяжка для плиты 18 мм',count),
-            _row('Шкант деревянный 8×35',count,'pcs','39319')]
+def _prime_fixings(cams, dowels=None):
+    return [_row('Эксцентриковая стяжка для плиты 18 мм',cams),
+            _row('Шкант деревянный 8×35',cams if dowels is None else dowels,'pcs','39319')]
 
 
 def hardware_for(it):
@@ -180,7 +180,7 @@ def hardware_for(it):
                 face_width=bank['faces'][number].get('width') or it['width']
                 bottom_pairs=1+int(min(it['width'],face_width)>=PRIME_JOINERY['twoFloorPairsFrom'])
                 rows=[*rows,_row(f'Направляющие скрытого монтажа PRIME by AKS {length} мм · '+('Push to open' if mode=='push' else 'с доводчиком'),1,'set',product['article']),
-                      _row('Шуруп 3,5×16 мм, Zn',4,'pcs','20646'),*_prime_pairs(4+bottom_pairs),
+                      _row('Шуруп 3,5×16 мм, Zn',4,'pcs','20646'),*_prime_fixings(4+bottom_pairs),
                       _row('Конфирмат 7×50',2 if direct else 8)]
                 if not direct:rows.append(_row('Саморез 5×30 AKS',3,'pcs','12867'))
                 if mode=='push':
@@ -188,7 +188,11 @@ def hardware_for(it):
                     rows.append(_row(f'Штанга синхронизации PRIME 1000 мм · отрезок {cut:g} мм',1,'pcs','114679'))
             elif role=='rear' or direct:
                 per_edge=1+int(it['height']>=PRIME_JOINERY['twoVerticalPairsFrom'])
-                rows=[*rows,*_prime_pairs(per_edge*(2 if role=='rear' else 1))]
+                if role=='rear':
+                    dowels_per_edge=1+int(it['height']>=PRIME_JOINERY['secondRearDowelFrom'])
+                    rows=[*rows,*_prime_fixings(2*per_edge,2*dowels_per_edge)]
+                else:
+                    rows=[*rows,*_prime_fixings(per_edge)]
     spacer=re.fullmatch(r'drawer-(\d+)-spacer-(left|right)',key)
     if spacer and it.get('height'):
         count=2*max(2,ceil((it['height']-50)/320)+1)

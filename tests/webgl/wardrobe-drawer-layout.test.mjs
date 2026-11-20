@@ -147,7 +147,12 @@ test('automatic hinges clear existing shelves, full drawer fronts and rails in d
    const items=placeCarcass(built,position).map(i=>({...i,assistant_carcass:{group_id:prefix,spec:s,position}}));
    for(const [section,side] of ['left','right'].entries()){
      const door=items.find(i=>i.item_id==='qa:door-'+side),hinges=doorHinges(door,items),bank=built.drawerBanks[section];
-     assert.equal(hinges.length,4);assert.ok(hinges[0].position.y>position.elevation_mm+bank.top);
+     assert.equal(hinges.length,4);
+     const mid=bank.faces[1].y-15;
+     assert.ok(Math.abs(hinges[0].position.y-position.elevation_mm-mid)<.001);
+     assert.equal(bank.hingeSetback,2);
+     const host=items.find(p=>p.item_id==='qa:drawer-'+section+'-spacer-'+side);
+     assert.deepEqual(installedCuts(host,items).map(row=>row.map(n=>Math.round(n*1000))),bank.cuts[side].map(row=>row.map(n=>Math.round(n*1000))));
      assert.ok(hinges.every((h,i)=>h.host_blank_id==='qa:'+side&&h.joined_panel_id===door.item_id&&(!i||h.position.y-hinges[i-1].position.y>=64)));
      assert.ok(bank.faces.every(f=>f.width===bank.mountWidth-3));
    }
@@ -160,7 +165,7 @@ test('automatic hinges clear existing shelves, full drawer fronts and rails in d
  assert.equal(b.parts.find(p=>p.key==='shelf-0-0').item.elevation_mm,92);
 });
 test('impossible hinge layout identifies the outer door and leaves all fronts intact',()=>{
- const f={...fields,width:600,height:800,sections:1,sectionShelves:[0],shelfLevels:undefined,front:{swing:'left',offset:90},drawerBanks:[equal(3)]};
+ const f={...fields,width:600,height:800,sections:1,sectionShelves:[0],shelfLevels:undefined,front:{swing:'left',offset:90},drawerBanks:[equal(3,3)]};
  const b=buildCarcass(wardrobeSpec(f));
  assert.equal(b.hingeConflicts[0].side,'left');assert.equal(b.hingeConflicts[0].section,0);
  assert.match(b.drawerIssues[0],/левая дверь/);
@@ -229,4 +234,73 @@ test('overlay fronts can be chosen before adding a bank that fits only at overla
  installBank(ui,0,0,null,false,'external');
  const bank=buildCarcass(wardrobeSpec(ui.fields)).drawerBanks[0];
  assert.equal(bank.internal,false);assert.equal(bank.rail.length,250);
+});
+
+import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
+import {WardrobeMotion} from '../../backend/v2/cabinet_assets/planner/wardrobe-motion.mjs';
+import {clearanceSession} from '../../backend/v2/cabinet_assets/planner/wardrobe-clearance.mjs';
+
+function gapWardrobe(side='left',opening='soft',depth=600,gap=30,width=null){
+ const b={...equal(3,gap),railFamily:'concealed',opening};
+ b.faces.forEach(f=>f.width=width);
+ return wardrobeSpec({width:600,height:1800,depth,thickness:18,sections:1,back:true,sectionShelves:[1],
+  shelfLevels:[[{mode:'floor',mm:680}]],front:{swing:side,offset:90},drawerBanks:[b]});
+}
+test('30 mm gap, milled spacer, plate and cup agree during swing and full slide on both hands',()=>{
+ for(const [side,opening,rotation] of [['left','soft',0],['right','soft',90],['left','push',180],['right','push',270]]){
+  const spec=gapWardrobe(side,opening),group_id='qa',built=buildCarcass(spec,{idPrefix:group_id});
+  const position={x:100,z:350,elevation_mm:140,rotation},bank=built.drawerBanks[0];
+  const items=placeCarcass(built,position).map(it=>({...it,assistant_carcass:{group_id,spec,position}}));
+  const part=key=>items.find(p=>p.item_id==='qa:'+key),door=part('door-'+side),spacer=part('drawer-0-spacer-'+side);
+  const face=part('drawer-0-0-face'),axes=doorHinges(door,items);
+  assert.equal(localPoint(door,rotation).z-door.depth/2-localPoint(face,rotation).z-face.depth/2,5);
+  assert.equal(spec.drawerBanks[0].hingeClearanceMm,5);assert.deepEqual(built.hingeConflicts,[]);
+  assert.ok(wardrobeDrawing(built,'sections').svg.includes('data-hinge-article="112595"'));
+  for(const [i,g] of bank.faces.slice(1).entries())assert.ok(Math.abs(axes[i].position.y-position.elevation_mm-(g.y-15))<.001);
+  const cuts=blankNativeItem(spacer,{name:'board',thickness:18},items).blank.spacer_cuts;
+  assert.equal(cuts.length,2);
+  for(const [i,[lo,hi]] of cuts.entries()){
+   const y=axes[i].position.y-spacer.elevation_mm;
+   assert.ok(Math.abs(lo-y+(side==='left'?27:28))<.001&&Math.abs(hi-y-(side==='left'?28:27))<.001);
+   for(const f of bank.faces){
+    const screw=f.boxY+(opening==='push'?21:20.5)-bank.base;
+    assert.ok(screw<=lo-5||screw>=hi+5);
+   }
+  }
+  const factory=new MeshFactory({items,material:()=>null,room:{height:3000}},()=>{});
+  const entries=new Map(items.map(p=>[p.item_id,{group:factory.buildBlank(p)}]));
+  assert.equal(entries.get(part(side).item_id).group.children.filter(m=>m.userData.hingePart==='body').length,axes.length);
+  assert.equal(entries.get(door.item_id).group.children.filter(m=>m.userData.hingePart==='cup').length,axes.length);
+  const motion=new WardrobeMotion();motion.show(group_id);
+  const session=clearanceSession(items,entries,null,motion);
+  assert.deepEqual(session.swing(door,0,105),{degrees:105,contact:null});
+  motion.setDegrees(door.item_id,90);
+  for(const i of [0,1,2])assert.equal(session.drawer('0-'+i),null);
+  for(const {group} of entries.values())factory.release(group);
+  factory.dispose();
+ }
+});
+test('a short mounting depth retains the same guide, and an already clear front keeps its original depth',()=>{
+ for(const [depth,gap,width,change] of [[474,30,null,0],[475,30,null,0],[476,30,null,2],[600,65,null,0],[600,30,528,0]]){
+  const spec=gapWardrobe('left','soft',depth,gap,width),built=buildCarcass(spec,{idPrefix:'qa'}),bank=built.drawerBanks[0];
+  assert.equal(bank.hingeSetback,change);assert.equal(spec.drawerBanks[0].hingeClearanceMm,change?5:undefined);
+  if(depth<500)assert.equal(bank.rail.article,'113647');
+  const old=structuredClone(spec);delete old.drawerBanks[0].hingeClearanceMm;
+  const previous=buildCarcass(old,{idPrefix:'qa'}),before=previous.drawerBanks[0];
+  assert.equal(before.hingeSetback,0);assert.equal(before.rail.article,bank.rail.article);
+  assert.deepEqual(before.faces.map(f=>[f.y,f.height,f.width]),bank.faces.map(f=>[f.y,f.height,f.width]));
+  assert.equal(before.bodyFront-bank.bodyFront,change);
+  if(depth<476)assert.ok(built.hingeLocations[0].y>bank.top);
+ }
+});
+
+test('an offset upper guide displaces the hinge inside the same gap before another gap is considered',()=>{
+ const spec=gapWardrobe(),group_id='qa',built=buildCarcass(spec,{idPrefix:group_id});
+ const items=built.items.map(it=>({...it,assistant_carcass:{group_id,spec}})),part=k=>items.find(p=>p.item_id==='qa:'+k);
+ const door=part('door-left'),mid=doorHinges(door,items)[0].position.y;
+ for(const side of ['left','right'])part('drawer-0-1-side-'+side).elevation_mm-=10;
+ const y=doorHinges(door,items)[0].position.y;
+ assert.ok(y<mid&&y>=mid-6);
+ const guideBottom=part('drawer-0-1-side-left').elevation_mm-17;
+ assert.ok(guideBottom-y>=9);
 });

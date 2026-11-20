@@ -237,6 +237,11 @@ function elevationView(built,view,section,front,selectedShelf,selection){
         rect(l,y-h/2,right-l,h,fill,active?'#1769b5':edge)+line(l+2,y-h*.2,right-2,y-h*.2,'opacity=".35"')+
         rect(l,y-h/2-1.4,2.5,h+2.8,fill)+rect(right-2.5,y-h/2-1.4,2.5,h+2.8,fill)+'</g>';
    }
+   if(built.drawerBanks.some(b=>b?.internal))for(const hinge of built.hingeLocations??[]){
+     const px=X(hinge.x),py=Y(hinge.y-s.elevation+(s.feet?.article==='118779'?10:0)),dx=hinge.side==='left'?5:-5;
+     drawing+='<g data-hinge-article="'+hinge.article+'" role="img"><title>Петля '+hinge.article+' · ось '+num(hinge.y-s.elevation)+' мм от низа шкафа</title>'+
+      '<path d="M'+num(px)+' '+num(py-3)+'v6m0 -3h'+dx+'" stroke="#276783" stroke-width="1.5" fill="none"/></g>';
+   }
    if(!editor)drawing+=label(200,313,'Секция '+(section+1)+' · '+widths[section]+' мм');
  }
  if(view==='fronts'||view==='sections'){

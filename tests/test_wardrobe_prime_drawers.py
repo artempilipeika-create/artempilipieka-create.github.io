@@ -43,7 +43,8 @@ def test_one_exact_purchase_item_per_installed_pair(mode,articles,tmp_path):
 
 @pytest.mark.parametrize('fixing',['cam','plank'])
 @pytest.mark.parametrize('floor_width,face_width,side_height,expected_floor,expected_side,expected_rear',[
-    (551,None,166,2,2,2),(551,60,166,1,2,2),(177,None,70,1,1,1),(240,240,104,2,2,1),
+    (551,None,166,2,2,2),(551,60,166,1,2,2),(177,None,70,1,1,1),(240,240,104,2,2,1),(551,None,133,2,2,1),(551,None,134,2,2,2),
+    (551,None,197,2,2,2),(551,None,198,2,2,2),
 ])
 def test_drawer_purchasing_counts_each_physical_pair(fixing,floor_width,face_width,side_height,expected_floor,expected_side,expected_rear):
     bank={'kind':'external','railFamily':'concealed','faceFixing':fixing,'faces':[{'height':210,'width':face_width}]}
@@ -56,6 +57,7 @@ def test_drawer_purchasing_counts_each_physical_pair(fixing,floor_width,face_wid
                'item_id':'qa:drawer-0-0-'+key,'width':floor_width,'height':height,'depth':440}
         rows,_=hardware_for(panel)
         assert sum(r['qty'] for r in rows if r['name'].startswith('Эксцентрик'))==expected
-        assert sum(r['qty'] for r in rows if r['article']=='39319')==expected
+        dowels=2*(1+int(height>=168)) if key=='rear' else expected
+        assert sum(r['qty'] for r in rows if r['article']=='39319')==dowels
         totals.extend(rows)
     assert sum(r['qty'] for r in totals if r['name'].startswith('Конфирмат'))==(2 if direct else 8)

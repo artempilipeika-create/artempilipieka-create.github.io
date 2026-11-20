@@ -253,6 +253,7 @@ class DrawerFace(StrictModel):
 
 
 class DrawerBank(StrictModel):
+    hingeClearanceMm: Literal[5] | None = Field(default=None,exclude_if=lambda v:v is None)
     railFamily: Literal['ball','concealed'] | None = Field(default=None,exclude_if=lambda v:v is None)
     opening: Literal['soft','push'] | None = Field(default=None,exclude_if=lambda v:v is None)
     faceFixing: Literal['cam','plank'] | None = Field(default=None,exclude_if=lambda v:v is None)

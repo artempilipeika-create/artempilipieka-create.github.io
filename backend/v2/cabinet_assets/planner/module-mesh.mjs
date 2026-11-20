@@ -15,8 +15,7 @@ function primeBank(it){
 import aksCatalogue from './aks-wardrobe.json' with {type:'json'};
 import {drawerCamSeats,installedCuts} from './wardrobe-aks-native.mjs';
 import {hingeCatalogue} from './wardrobe-hinge-layout.mjs';
-import primeMeshes from './wardrobe-prime-meshes.json' with {type:'json'};
-import primeMesh from './prime-hinge-mesh.json' with {type:'json'};
+import {hingeGeometry} from './wardrobe-hinge-mesh.mjs';
 import {doorHinges,doorPush} from './wardrobe-hinges.mjs';
 import {localPoint} from './blank-bindings.mjs';
 import {fixedShelfScheme} from './shelf-choices.mjs';
@@ -408,17 +407,11 @@ export class MeshFactory{
     }
     for(const hinge of this.visibleDoorHinges(it)){
       const side=hinge.door_side==='left'?1:-1,asset=hingeCatalogue[hinge.article].mesh;
-      const data=asset==='112595'?primeMesh:primeMeshes[asset],key='prime:'+asset+':'+side;
-      const geometry=this.acquire(key,()=>{
-        const decode=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0)).buffer;
-        const vertices=Float32Array.from(new Int16Array(decode(data[0])),v=>v*S/10);
-        const g=new THREE.BufferGeometry();
-        g.setAttribute('position',new THREE.BufferAttribute(vertices,3));
-        g.setIndex(new THREE.BufferAttribute(new Uint16Array(decode(data[1])),1));
-        g.rotateY(Math.PI/2);g.rotateZ(-side*Math.PI/2);g.computeVertexNormals();return g;
-      });
+      const part=hinge.host_blank_id===it.item_id?'body':'cup',key='prime:'+asset+':'+side+':'+part;
+      const geometry=this.acquire(key,()=>hingeGeometry(asset,side,part));
       const at=localPoint({x:hinge.position.x-it.x,z:hinge.position.z-it.z},it.rotation);
-      this.mesh(group,'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost).userData.article=hinge.article;
+      const mesh=this.mesh(group,'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost);
+      Object.assign(mesh.userData,{article:hinge.article,hingePart:part});
     }
     for(const push of this.visiblePushes(it)){
       const at=localPoint({x:push.position.x-it.x,z:push.position.z-it.z},it.rotation);
@@ -904,8 +897,13 @@ export class MeshFactory{
     try{return installedCuts(it,this.adapter.items||[]);}catch{return [];}
   }
   visibleDoorHinges(it){
-    if(it.blank_axis!=='front')return [];
-    try{return doorHinges(it,this.adapter.items||[]);}catch{return [];}
+    const meta=it.assistant_carcass,items=this.adapter.items||[];
+    if(!meta?.spec.front)return [];
+    if(it.blank_axis==='front'){try{return doorHinges(it,items);}catch{return [];}}
+    if(it.blank_axis!=='side'||!/^((left|right)$|divider-\d+$)/.test(it.item_id.slice(meta.group_id.length+1)))return [];
+    return items.filter(p=>p.blank_axis==='front'&&p.assistant_carcass?.group_id===meta.group_id&&p.item_id.startsWith(meta.group_id+':door-')).flatMap(door=>{
+      try{return doorHinges(door,items).filter(h=>h.host_blank_id===it.item_id);}catch{return [];}
+    });
   }
   visiblePushes(it){
     const meta=it.assistant_carcass;
