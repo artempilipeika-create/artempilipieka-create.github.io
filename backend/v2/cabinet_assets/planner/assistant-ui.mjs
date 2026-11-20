@@ -1,3 +1,4 @@
+import {lightControls,pickLightPart} from './wardrobe-lighting-ui.mjs';
 import {defaultBackMount,rearClearance} from './panel-machining.mjs';
 import {backMountControls,machiningControls,pickMachiningPart} from './panel-machining-ui.mjs';
 import {wardrobeNames,nextCabinetName} from './wardrobe-blocks.mjs';
@@ -31,6 +32,10 @@ function buildPreview(ui){
    let built,issue='';
    try{built=buildCarcass(ui.spec(),options);}
    catch(error){
+    if(ui.view==='lighting'&&ui.fields.lighting){
+     const fields={...ui.fields};delete fields.lighting;
+     return {built:buildCarcass(wardrobeSpec(fields),options),issue:error.message};
+    }
     if(ui.view==='machining'&&ui.fields.machining){
      const fields={...ui.fields};delete fields.machining;
      return {built:buildCarcass(wardrobeSpec(fields),options),issue:error.message};
@@ -107,7 +112,7 @@ export class AssistantUI{
    this.fields.shelfLevels=this.fields.sectionShelves.map((n,i)=>nicheOpenings(this.fields,i).slice(0,n).map((r,j)=>original?.[i]?.[j]??{mode:'floor',mm:base+r.top}));
   }
   this.partKey=c?this.app.adapter.selected?.item_id?.slice(c.metadata.group_id.length+1):null;
-  this.cutIndex=null;this.cutDraft=null;this.showMachiningFronts=false;
+  this.cutIndex=null;this.cutDraft=null;this.showMachiningFronts=false;this.handleCategoryKey=null;this.lightIndex=0;
   this.fields.clearLayout=true;this.column=0;this.gapIndex=0;
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
   this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='cell';this.inspectInternalFronts=false;this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
@@ -130,6 +135,9 @@ export class AssistantUI{
  }
  pickShelf(event){
   if(this.busy||this.suppressDiagramClick)return;
+  if(this.view==='lighting'){
+   const hit=event.target.closest?.('[data-cut-part]');if(hit)pickLightPart(this,hit.dataset.cutPart);return;
+  }
   if(this.view==='machining'){
    const hit=event.target.closest?.('[data-cut-part]');if(hit)pickMachiningPart(this,hit.dataset.cutPart);return;
   }
@@ -167,7 +175,7 @@ export class AssistantUI{
   const old=this.layoutAnchor;
   if(old){
     const changed=Object.keys({...old.fields,...this.fields}).filter(k=>!sameAssistantSpec(old.fields[k],this.fields[k]));
-    const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing','rods'];
+    const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing','rods','lighting'];
     if(changed.length&&this.step<=2&&changed.every(k=>layout.includes(k))){
       this.layoutUndo.push(old);if(this.layoutUndo.length>20)this.layoutUndo.shift();
     }else if(changed.length)this.layoutUndo=[];
@@ -196,7 +204,7 @@ export class AssistantUI{
  go(index){if(this.busy||index<0||index>4)return;const invalid=this.form?.querySelector?.('input:invalid');if(invalid){invalid.reportValidity();return;}if(index>this.step && !(index===3&&(this.fields.front||this.fields.drawerBanks?.some(Boolean))) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices||this.fields.shelfLevels||this.fields.drawerBanks||this.fields.rods?.length))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
  groupTabs(){
   const nav=el('nav');nav.className='wardrobe-subsections';nav.setAttribute('aria-label','Подразделы корпуса');
-  for(const key of ['body','feet','plinth','back','machining']){
+  for(const key of ['body','feet','plinth','back','lighting','machining']){
    const b=button(key==='machining'?'Обработка детали':drawingTitles[key],()=>{this.view=key;this.render();this.form.querySelector('[data-subsection="'+key+'"]').focus({preventScroll:true});});
    b.dataset.subsection=key;b.setAttribute('aria-pressed',String(this.view===key));nav.append(b);
   }
@@ -217,7 +225,7 @@ export class AssistantUI{
   const keep=editorKey&&editorKey===this.editorKey;
   this.editorKey=editorKey;
   this.dialog.toggleAttribute('data-interior',this.step===2);
-  this.zoom.hidden=!(this.step<=2&&(this.step>0||this.view==='body'));
+  this.zoom.hidden=!(this.step<=2&&(this.step>0||(this.view==='body'||this.view==='lighting')));
   this.dialog.toggleAttribute('data-cell-view',!this.zoom.hidden);
   const scroll=this.dialog.scrollTop,focused=document.activeElement;
   const focus=keep&&this.form.contains(focused)?{tag:focused.localName,label:focused.getAttribute('aria-label')||focused.textContent}:null;
@@ -239,13 +247,14 @@ export class AssistantUI{
     this.form.append(el('small','Заднее ребро между боковинами · 100 мм · кромка 1 мм по обеим длинным сторонам.'));
    }
    }else if(this.view==='feet')this.footControls();
+   else if(this.view==='lighting')lightControls(this);
    else if(this.view==='machining')machiningControls(this);
    else if(this.view==='plinth')this.plinthControls();
    else{
    const mount=this.fields.backMount;
    const previous=mount&&!mount.layout?[[mount.kind,mount.kind==='groove'?'ХДФ в пазу · сохранённая посадка':'Правая четверть · сохранённая посадка']]:[];
    const method=mount?.kind==='rabbet'&&mount.layout?'quarter':mount?.layout??mount?.kind;
-   this.select(this.form,'Задняя стенка',[['yes','Накладная ЛХДФ 3 мм'],['sides','Паз в боковинах · ХДФ под гвозди'],['quarter','Четверть в одной боковине'],['perimeter','Паз по кругу · как в ВМД1'],...previous,...[16,18].map(n=>[String(n),'Вкладная ЛДСП '+n+' мм']),['no','Без задней стенки']],this.fields.back?(method??this.fields.backThickness??'yes'):'no',v=>{
+   this.select(this.form,'Задняя стенка',[['yes','Накладная ЛХДФ 3 мм'],['sides','Паз в боковинах · ХДФ под гвозди'],['quarter','Четверть'],['perimeter','Паз по кругу'],...previous,...[16,18].map(n=>[String(n),'Вкладная ЛДСП '+n+' мм']),['no','Без задней стенки']],this.fields.back?(method??this.fields.backThickness??'yes'):'no',v=>{
     if(v===method)return;
     const previousMaterial=this.materials.back;
     this.fields.back=v!=='no';delete this.fields.backThickness;delete this.fields.backMount;
@@ -592,7 +601,7 @@ export class AssistantUI{
    const cell=activeCell(this),slot=nicheSlot(cell.section,cell.level,splitAt(built.spec,cell.section,cell.level)?.kind==='drawers'?cell.column??0:0);
    const selected=this.step===2;
    const {svg,caption}=wardrobeDrawing(built,view,this.activeSection,this.fields.front,selected&&this.interior==='shelf'?this.levelIndex:null,
-     {partKey:this.partKey,showFronts:this.showMachiningFronts,rodId:this.interior==='rod'?this.rodId:null,editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,internalFronts:!!this.inspectInternalFronts,
+     {lighting:view==='lighting',partKey:this.partKey,showFronts:this.showMachiningFronts,rodId:this.interior==='rod'?this.rodId:null,editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,internalFronts:!!this.inspectInternalFronts,
        dimensions:view==='sections',splitLevel:selected?cell.level:null,drawerDetail:selected&&this.interior==='drawer'});
    this.paintDrawing(svg);
    this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';

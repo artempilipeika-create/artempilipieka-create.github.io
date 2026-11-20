@@ -145,3 +145,43 @@ test('groove and rabbet require the matching external edge across faces, rotatio
  const shelved=project({sectionShelves:[4],shelfChoices:[['board/95388','board/134286','board/confirmat','6/48846']]});
  assert.deepEqual(shelved.parts.filter(p=>p.key.startsWith('shelf-')).map(p=>p.item.blank_edge_code),['1111','1111','1000','0000']);
 });
+
+test('two rabbets accept the HDF symmetrically and trim both caps once',()=>{
+ for(const [width,depth] of [[4,8],[4.5,7.5]]){
+  const mount={...defaultBackMount('both'),width,depth};
+  const b=project({depth:320,height:720,backMount:mount});
+  const back=part(b,'back');
+  assert.equal(back.x,0);assert.equal(back.width,600-2*(18-depth+1));
+  for(const [side,face] of [['left',0],['right',1]]){
+   const host=part(b,side);
+   assert.equal(host.depth,320);
+   assert.deepEqual(host.blank_machining,[{kind:'rabbet',width,depth,edge:'x0',face}]);
+   assert.equal(host.blank_edge_code[1],'1');
+  }
+  for(const key of ['top','bottom'])assert.equal(part(b,key).depth,320-width);
+ }
+});
+test('workshop LED grooves follow the near edge of the finished shelf and the inside faces of opposite uprights',()=>{
+ const front={system:'aq-4x8',anchor:'front',face:0,offset:50,niche:'shelf-0-0',start:12,end:6};
+ const shelf={system:'lira-17.5x6.5',anchor:'center',face:0,start:10,end:20};
+ for(const depth of [320,510]){
+  const b=project({depth,backMount:defaultBackMount('both'),lighting:{left:[front],right:[{...front,face:1}], 'shelf-0-0':[shelf]}});
+  for(const [key,face] of [['left',0],['right',1]]){
+   const side=part(b,key),op=side.blank_machining[1],plan=panelMachiningPlan(op,side.depth,side.height,18);
+   assert.deepEqual([op.edge,op.face,op.offset,op.width,op.depth],['x1',face,50,4,8]);
+   assert.equal(op.start,30);assert.equal(side.height-op.end,part(b,'shelf-0-0').elevation_mm-6);
+   assert.deepEqual(plan.profile.slice(0,2),[[50,18*face],[54,18*face]]);
+   assert.equal(blankNativeItem(side,board).blank.machining[1].lightSystem,'aq-4x8');
+  }
+  const sh=part(b,'shelf-0-0'),[op]=sh.blank_machining;
+  assert.deepEqual([op.edge,op.offset,op.width,op.depth,op.face],['x1',(sh.depth-17.5)/2,17.5,6.5,0]);
+  const native=blankNativeItem(sh,board);
+  assert.deepEqual(native.blank.machining,[op]);assert.match(native.production_note,/LIRA-1707/);
+  assert.deepEqual([op.start,op.end],[10,20]);
+ }
+ const b=project({lighting:{'shelf-0-0':[{...shelf,anchor:'back',offset:50}]}});
+ const [op]=part(b,'shelf-0-0').blank_machining;
+ assert.equal(op.edge,'x0');assert.equal(op.offset,50);assert.equal(op.width,17.5);
+ assert.throws(()=>project({lighting:{left:[{...front,offset:509}]}}),/выборка|Выборка/);
+ assert.throws(()=>project({backMount:defaultBackMount('both'),lighting:{left:[{...front,anchor:'back',offset:0}]}}),/пересекает/);
+});

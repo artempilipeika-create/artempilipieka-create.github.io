@@ -59,13 +59,14 @@ export function machiningError(item){
 export function defaultBackMount(option){
  if(option==='sides')return {kind:'groove',layout:'sides',width:4,depth:5,offset:6};
  if(option==='perimeter')return {kind:'groove',layout:'perimeter',width:4,depth:5,offset:10};
- if(option==='left'||option==='right')return {kind:'rabbet',layout:option,width:4,depth:8};
+ if(['left','right','both'].includes(option))return {kind:'rabbet',layout:option,width:4,depth:8};
  return option==='groove'?{kind:'groove',width:4,depth:5,offset:18}:{kind:'rabbet',width:4,depth:8};
 }
 export function backMountLabel(b){
  if(b.layout==='sides')return 'ХДФ в пазах боковин · под гвозди';
  if(b.layout==='perimeter')return 'ХДФ в пазу по кругу';
  if(b.kind==='groove')return 'ХДФ в пазу';
+ if(b.layout==='both')return 'ХДФ в четвертях обеих боковин';
  return b.layout==='left'?'ХДФ в левой четверти':'ХДФ в правой четверти';
 }
 // All machining offsets are measured to the start of the cut. The nailed
@@ -77,11 +78,11 @@ export function backTrim(b){
 export function backSideTrim(b,side){
  if(b?.kind!=='rabbet')return 0;
  if(!b.layout)return side==='right'?-b.width:0;
- return side===b.layout?0:b.width;
+ return side===b.layout||b.layout==='both'?0:b.width;
 }
 export function checkBackMount(s){
  const b=s.backMount;if(!b)return;
- const layouts=b.kind==='groove'?['sides','perimeter']:['left','right'];
+ const layouts=b.kind==='groove'?['sides','perimeter']:['left','right','both'];
  if(!s.back||s.backThickness||!['groove','rabbet'].includes(b.kind)||
    (b.layout!=null&&!layouts.includes(b.layout))||
    ![b.width,b.depth,b.offset??0].every(v=>Number.isFinite(v)&&Number.isInteger(v*2))||
@@ -101,7 +102,7 @@ export function backCut(s,key,legExtension){
  const b=s.backMount;
  const side=key==='left'||key==='right';
  if(!b||!side&&key!=='bottom'&&key!=='top'||b.layout==='sides'&&!side||
-    b.kind==='rabbet'&&key!==(b.layout??'right'))return null;
+    b.kind==='rabbet'&&(!side||b.layout!=='both'&&key!==(b.layout??'right')))return null;
  const face=key==='right'||key==='bottom'?1:0;
  const op={kind:b.kind,width:b.width,depth:b.depth,edge:'x0',face};
  if(b.offset!=null)op.offset=b.offset;

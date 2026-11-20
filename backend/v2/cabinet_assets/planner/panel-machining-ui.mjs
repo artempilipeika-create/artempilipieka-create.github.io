@@ -35,7 +35,7 @@ function rearAssembly(figure,fields,b){
  const t=fields.thickness,trim=backTrim(b),inner=(b.offset??0)+b.width;
  const scale=Math.min(2.3,70/(inner+t)),rear=35,y=z=>rear+z*scale;
  const left=18,right=292,leftEnd=left+t*scale,rightEnd=right-t*scale;
- const leftCut=b.kind==='groove'||b.layout==='left',rightCut=b.kind==='groove'||b.layout==='right';
+ const leftCut=b.kind==='groove'||b.layout==='both'||b.layout==='left',rightCut=b.kind==='groove'||b.layout==='both'||b.layout==='right';
  const hdfLeft=leftCut?leftEnd-(b.depth-1)*scale:left+scale;
  const hdfRight=rightCut?rightEnd+(b.depth-1)*scale:right-scale;
  const rect=(x,top,w,h,fill)=>'<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+h+'" fill="'+fill+'" stroke="#47594f" stroke-width="0.85"/>';
@@ -51,6 +51,10 @@ function rearAssembly(figure,fields,b){
   rect(leftEnd,y(trim),rightEnd-leftEnd,120-y(trim),'#ede5d7')+side(left,leftCut,true)+side(rightEnd,rightCut,false)+
   rect(hdfLeft,y(inner-3),hdfRight-hdfLeft,3*scale,'#6daba2')+
   '<text x="155" y="114" text-anchor="middle" font-size="12" fill="#35483e">'+(fields.bottomFit==='none'?'Крыша':'Дно и крыша')+'</text>';
+ if(b.layout==='perimeter'){
+  const a=y(0),c=y(b.offset);
+  svg.insertAdjacentHTML('beforeend','<path d="M140 '+a+'h16m-8 0v'+(c-a)+'m-8 0h16" fill="none" stroke="#235c83" stroke-width="1.6"/><text x="164" y="'+(a+13)+'" font-size="11" fill="#235c83">'+mm(b.offset)+' мм</text>');
+ }
  const label=fields.bottomFit==='none'?'Глубина крыши':'Глубина дна и крыши';
  figure.append(svg,el('figcaption',label+' '+mm(fields.depth-trim)+' мм · ХДФ 3 мм'));
 }
@@ -62,7 +66,7 @@ export function backMountControls(ui){
  const board={blank_axis:'side',blank_edge_thickness_mm:ui.fields.edgeThickness??1,blank_thickness_mm:ui.fields.thickness,blank_length_mm:ui.fields.height,blank_width_mm:ui.fields.depth};
  if(b.layout){
   const redraw=()=>{ui.changed();rearAssembly(figure,ui.fields,b);};
-  if(b.kind==='rabbet')ui.select(group,'Боковина с четвертью',[['left','Левая'],['right','Правая']],b.layout,v=>{b.layout=v;redraw();});
+  if(b.kind==='rabbet')ui.select(group,'Боковина с четвертью',[['left','Левая'],['right','Правая'],['both','С обеих сторон']],b.layout,v=>{b.layout=v;redraw();});
   let inset;
   if(b.layout==='sides'){
    inset=measurement(group,'Утопление задней стенки, мм',backTrim(b),v=>{b.offset=v-b.width;redraw();},'.5');
@@ -71,7 +75,7 @@ export function backMountControls(ui){
   const settings=el('details');settings.append(el('summary','Размеры выборки'));
   measurement(settings,'Ширина выборки, мм',b.width,v=>{b.width=v;if(inset)b.offset=inset.valueAsNumber-v;redraw();},'.5');
   measurement(settings,'Глубина в плиту, мм',b.depth,v=>{b.depth=v;redraw();},'.5');
-  if(b.layout==='perimeter')measurement(settings,'От заднего торца до начала паза, мм',b.offset,v=>{b.offset=v;redraw();},'.5');
+  if(b.layout==='perimeter')measurement(group,'От заднего торца до начала паза, мм',b.offset,v=>{b.offset=v;redraw();},'.5');
   rearAssembly(figure,ui.fields,b);group.append(figure,settings);ui.form.append(group);return;
  }
  const preview=()=>section(figure,{...b,edge:'x0',face:1},board);
@@ -99,7 +103,9 @@ export function machiningControls(ui){
   const toggle=button(ui.showMachiningFronts?'Показать корпус':'Показать фасады',()=>{ui.showMachiningFronts=!ui.showMachiningFronts;ui.render();});box.append(toggle);
  }
  const saved=ui.fields.machining?.[key]??[];
- const extra=(item.blank_machining?.length??0)-saved.length;
+ const generated=(item.blank_machining??[]).filter(op=>op.lightSystem);
+ const extra=(item.blank_machining?.length??0)-saved.length-generated.length;
+ if(generated.length)box.append(button('Паз подсветки · изменить',()=>{ui.view='lighting';ui.lightIndex=0;ui.render();}));
  if(extra>0)box.append(button('Посадка ХДФ · изменить в задней стенке',()=>{ui.view='back';ui.render();}));
  const index=ui.cutIndex;
  for(const [i,op] of saved.entries()){
@@ -123,7 +129,7 @@ export function machiningControls(ui){
  redraw();box.append(figure,feedback);
  box.append(button(index==null?'Добавить обработку':'Сохранить обработку',()=>{
   const cuts=[...saved];cuts[index??cuts.length]={...op};
-  const error=machiningError({...item,blank_machining:[...(item.blank_machining??[]).slice(0,Math.max(0,extra)),...cuts]});
+  const error=machiningError({...item,blank_machining:[...(item.blank_machining??[]).slice(0,Math.max(0,extra)),...cuts,...generated]});
   if(error){feedback.textContent=error;return;}
   (ui.fields.machining??={})[key]=cuts;ui.cutIndex=null;ui.cutDraft=null;ui.changed(true);
  }));

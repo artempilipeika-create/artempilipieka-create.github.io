@@ -176,6 +176,17 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Обработка требует плиты с заданными размерами.')
             for op in self.blank_machining:
                 op.check_board(self.blank_width_mm,self.blank_length_mm,self.blank_thickness_mm)
+        if group and (group.spec.lighting or any(c.lightSystem for c in self.blank_machining or ())):
+            lines=(group.spec.lighting or {}).get(key,[])
+            lit=[c for c in self.blank_machining or () if c.lightSystem]
+            if len(lines)!=len(lit):
+                raise ValueError('Количество пазов подсветки должно совпадать с анкетой шкафа.')
+            for setting,cut in zip(lines,lit):
+                edge='x0' if setting.anchor=='back' else 'x1'
+                offset=(self.blank_width_mm-cut.width)/2 if setting.anchor=='center' else setting.offset
+                if (setting.system!=cut.lightSystem or setting.face!=cut.face or cut.edge!=edge or
+                    cut.offset is None or abs(cut.offset-offset)>.00001):
+                    raise ValueError('Положение паза подсветки должно совпадать с анкетой шкафа.')
         grip=self.blank_edge_pull
         required_edges=set()
         if self.module_type=='blank' and self.blank_edge_code is not None:

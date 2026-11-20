@@ -1,3 +1,4 @@
+import {panelLightMeshes} from './wardrobe-lighting.mjs';
 import {machineBoardMeshes} from './panel-machining-mesh.mjs';
 import {blankEdgeCode} from './furniture-core.mjs';
 import {groovedBoxes} from './wardrobe-edge-pulls.mjs';
@@ -367,6 +368,7 @@ export class MeshFactory{
       partBox(lo,hi,false);
     }
     if(it.blank_machining?.length)machineBoardMeshes(this,it,group.children.slice(panelStart),grain);
+    panelLightMeshes(this,group,it,ghost);
     const drawerSide=/:drawer-\d+-\d+-side-(left|right)$/.exec(it.item_id);
     if(it.assistant_carcass?.spec?.drawerBanks&&drawerSide&&aksCatalogue.rails[D]){
       const sign=drawerSide[1]==='left'?-1:1;

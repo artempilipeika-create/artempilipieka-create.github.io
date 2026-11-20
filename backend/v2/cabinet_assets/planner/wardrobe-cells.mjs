@@ -236,6 +236,18 @@ export function insertShelves(f,cell,count){
 }
 
 function moveMachining(f,cell,count){
+ if(f.lighting){
+  const shifted=keysAfterInsertion(new Map(Object.entries(f.lighting)),cell,count);
+  for(const [key,rows] of shifted){
+   const updated=rows.flatMap(row=>{
+    if(!row.niche||row.niche==='top')return [row];
+    const mapped=keysAfterInsertion(new Map([[row.niche,true]]),cell,count);
+    return [...mapped.keys()].map(niche=>({...row,niche}));
+   });
+   if(updated.length)shifted.set(key,updated);else shifted.delete(key);
+  }
+  f.lighting=Object.fromEntries(shifted);
+ }
  if(f.machining)f.machining=Object.fromEntries(keysAfterInsertion(new Map(Object.entries(f.machining)),cell,count));
 }
 

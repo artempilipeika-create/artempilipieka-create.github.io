@@ -55,3 +55,21 @@ test('AK700 pivots around a fixing on doors and around its centre on drawers',()
  assert.deepEqual(center(A),center(B));
  assert.deepEqual(mirrorHandle({article:'67698',edge:'right'}),{article:'67698',edge:'left'});
 });
+
+test('surface pulls keep top, bottom and center datums in either orientation across resizing and mirroring',async()=>{
+ const {pullHeight,setPullHeight}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-door-layout.mjs');
+ for(const height of [720,903]){
+  const door={key:'door-left',width:397,height,side:'left'};
+  for(const edge of ['right','bottom']){
+   const base={article:'116550',edge,from:'end',offset:63,inset:42};
+   for(const anchor of ['center','top','bottom']){
+    const setting=setPullHeight(base,anchor),p=handlePlacement(door,setting);
+    assert.equal(pullHeight(setting),anchor);
+    const distance=edge==='right'?63+p.part.pitch/2:42;
+    assert.equal(p.y,anchor==='center'?height/2:anchor==='top'?height-distance:distance);
+    const twin=handlePlacement(door,mirrorHandle(setting));
+    assert.equal(twin.y,p.y);assert.equal(twin.x,door.width-p.x);
+   }
+  }
+ }
+});

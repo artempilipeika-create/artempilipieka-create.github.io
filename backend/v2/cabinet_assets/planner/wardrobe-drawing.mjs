@@ -1,3 +1,4 @@
+import {canLight} from './wardrobe-lighting.mjs';
 import {backMountLabel,canMachine} from './panel-machining.mjs';
 import {isEdgePull,verticalEdge} from './wardrobe-edge-pulls.mjs';
 import hardware from './wardrobe-handle-catalogue.json' with {type:'json'};
@@ -10,7 +11,7 @@ import {footHeight,plinthPanel,floorSide} from './plinth-options.mjs';
 import {turn} from './decor-feet.mjs';
 import {doorLeaves,swingNames} from './door-swing.mjs';
 
-export const drawingTitles={machining:'Выбор детали',body:'Корпус',sections:'Секции и полки',feet:'Опоры',plinth:'Цоколь',back:'Задняя стенка',fronts:'Фасады'};
+export const drawingTitles={lighting:'Подсветка',machining:'Выбор детали',body:'Корпус',sections:'Секции и полки',feet:'Опоры',plinth:'Цоколь',back:'Задняя стенка',fronts:'Фасады'};
 const edge='#495b54',accent='#19664f',wood='#e6dcc9',end='#c4b8a2';
 import {measuredRooms} from './wardrobe-gola-shelves.mjs';
 import {openingBase,splitAt,columnWidths} from './wardrobe-layout.mjs';
@@ -21,21 +22,29 @@ const label=(x,y,s)=>'<text x="'+num(x)+'" y="'+num(y)+'" text-anchor="middle" f
 const line=(x,y,a,b,style='')=>'<path d="M'+num(x)+' '+num(y)+' L'+num(a)+' '+num(b)+'" fill="none" stroke="'+edge+'" '+style+'/>';
 const rect=(x,y,w,h,color,stroke=edge)=>'<rect x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'" fill="'+color+'" stroke="'+stroke+'" stroke-width=".9"/>';
 const circle=(x,y,r,fill,stroke=accent)=>'<circle cx="'+num(x)+'" cy="'+num(y)+'" r="'+num(r)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1"/>';
-const sheet=(view,body,box='0 0 400 324')=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+box+'" role="'+(['sections','fronts','machining'].includes(view)?'group':'img')+'" aria-label="'+drawingTitles[view]+'" data-view="'+view+'">'+body+'</svg>';
+const sheet=(view,body,box='0 0 400 324')=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+box+'" role="'+(['sections','fronts','machining','lighting'].includes(view)?'group':'img')+'" aria-label="'+drawingTitles[view]+'" data-view="'+view+'">'+body+'</svg>';
 
 function openCabinet(built,pick=null){
  const s=built.spec,H=built.height+footHeight(s),D=s.depth,W=s.width;
  const scale=Math.min(326/(W+.46*D),270/(H+.2*D));
  const point=(x,y,z)=>[200+(x-.46*z)*scale,160+((H/2-y)+.20*z)*scale];
  const order=({key,item})=>pick&&item.blank_axis==='front'?3e5:key==='back'?-1e5:key==='right'?1e5:key==='top'?2e5:key==='left'?-1e4:item.elevation_mm;
- const panels=built.parts.filter(p=>p.item.blank_axis!=='front'||(pick?pick.showFronts:p.key.startsWith('drawer-'))).sort((a,b)=>order(a)-order(b));
+ const panels=built.parts.filter(p=>p.item.blank_axis!=='front'||(pick?(!pick.lighting&&pick.showFronts):p.key.startsWith('drawer-'))).sort((a,b)=>order(a)-order(b));
  return panels.map(({key,item:i,label:partName})=>{
    const x=i.x-i.width/2,X=x+i.width,y=i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),Y=y+i.height;
    const z=i.z-i.depth/2,Z=z+i.depth,glass=i.blank_shelf&&!i.blank_shelf.startsWith('board/');
-   const hit=pick&&canMachine(i)?' data-cut-part="'+key+'" role="button" tabindex="0" aria-label="Выбрать деталь '+partName+'"':'';
+   const hit=pick&&(pick.lighting?canLight({key,item:i}):canMachine(i))?' data-cut-part="'+key+'" role="button" tabindex="0" aria-label="Выбрать деталь '+partName+'"':'';
+   let lights='';
+   if(pick?.lighting)for(const op of i.blank_machining??[]){
+    if(!op.lightSystem)continue;
+    const center=op.offset+op.width/2,depth=op.edge==='x0'?z+center:Z-center;
+    const a=op.start??0,b=op.end??0;
+    const points=i.blank_axis==='side'?[point(op.face?x:X,y+a,depth),point(op.face?x:X,Y-b,depth)]:[point(x+a,op.face?Y:y,depth),point(X-b,op.face?Y:y,depth)];
+    lights+='<line x1="'+num(points[0][0])+'" y1="'+num(points[0][1])+'" x2="'+num(points[1][0])+'" y2="'+num(points[1][1])+'" stroke="#d49626" stroke-width="3" pointer-events="none"/>';
+   }
    return '<g data-panel="'+key+'"'+hit+(pick?.partKey===key?' class="cut-selected"':'')+'>'+polygon([point(x,Y,z),point(X,Y,z),point(X,Y,Z),point(x,Y,Z)],glass?'#d2e7e3':'#f3ebdd')+
      polygon([point(X,y,z),point(X,Y,z),point(X,Y,Z),point(X,y,Z)],glass?'#c0d6d0':end)+
-     polygon([point(x,y,Z),point(X,y,Z),point(X,Y,Z),point(x,Y,Z)],glass?'#d6e7e0':key==='back'?'#dedbcc':wood)+'</g>';
+     polygon([point(x,y,Z),point(X,y,Z),point(X,Y,Z),point(x,Y,Z)],glass?'#d6e7e0':key==='back'?'#dedbcc':wood)+lights+'</g>';
  }).join('');
 }
 function elevationView(built,view,section,front,selectedShelf,selection){
@@ -279,8 +288,8 @@ function rear(built){
 }
 export function wardrobeDrawing(built,view='body',section=0,front=built.spec.front,selectedShelf=null,selection=null){
  const s=built.spec,feet=footPlan(s),shelves=(s.sectionShelves??Array(s.sections).fill(s.shelves)).reduce((a,b)=>a+b,0);
- const art=view==='machining'?openCabinet(built,selection??{}):view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front,selectedShelf,selection);
- const notes={machining:'Нажмите на деталь шкафа или выберите её в списке.',body:s.sections+' секц. · полок '+shelves+' · плита '+s.thickness+' мм',sections:'Вид спереди · чистая ширина выделенной секции',
+ const art=view==='machining'||view==='lighting'?openCabinet(built,selection??{}):view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front,selectedShelf,selection);
+ const notes={lighting:'Нажмите на полку или боковину, чтобы выбрать подсветку.',machining:'Нажмите на деталь шкафа или выберите её в списке.',body:s.sections+' секц. · полок '+shelves+' · плита '+s.thickness+' мм',sections:'Вид спереди · чистая ширина выделенной секции',
    feet:feet.length?'Установлено опор: '+feet.length+' · арт. '+s.feet.article:'Опоры не выбраны',
    plinth:plinthPanel(s)?'Планка '+plinthPanel(s).height+' мм · верхний зазор 3 мм':'Цоколь для этого исполнения отсутствует',
    back:s.backThickness?'ЛДСП '+s.backThickness+' мм · ● эксцентрик   ○ шкант':s.backMount?backMountLabel(s.backMount):s.back?'Накладная ЛХДФ 3 мм':'Открытый корпус без задней стенки',

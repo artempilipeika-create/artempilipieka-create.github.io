@@ -1,3 +1,4 @@
+import {applyLighting} from './wardrobe-lighting.mjs';
 import {canMachine,checkBackMount,backCut,backTrim,backSideTrim,rearClearance,rearProjection} from './panel-machining.mjs';
 import {aboveGola,installedOpenings} from './wardrobe-gola-shelves.mjs';
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
@@ -252,13 +253,14 @@ export function buildCarcass(input={},options={}){
     const b=mount,grooved=b.kind==='groove',perimeter=grooved&&b.layout!=='sides';
     const bite=b.layout?b.depth-1:Math.floor(b.depth-1);
     const lower=perimeter&&!noBottom?t-bite:1,upper=perimeter?H-t+bite:H-1;
-    const leftEdge=-W/2+(grooved||b.layout==='left'?t-bite:1);
+    const leftEdge=-W/2+(grooved||b.layout==='left'||b.layout==='both'?t-bite:1);
     const rightEdge=W/2-(b.layout==='left'?1:t-bite);
     const innerFace=b.layout?(b.offset??0)+b.width:grooved?b.offset+(b.width+3)/2:0;
     const z=-D/2+innerFace-1.5;
     add('back','Задняя стенка ХДФ 3 мм','back',rightEdge-leftEdge,upper-lower,3,(rightEdge+leftEdge)/2,lower,z,'0000');
   }
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
+  if(s.lighting)applyLighting(parts,s.lighting);
   verifyProfileSupports(s,parts,runs,s.elevation+legHeight);
   const items=resolveBlankBindings(parts.map(p=>p.item),mount);
   if(installedLevels.size){

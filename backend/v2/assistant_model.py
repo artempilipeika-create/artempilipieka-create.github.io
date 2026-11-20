@@ -120,6 +120,8 @@ class FacadeHandle(StrictModel):
     offset: float = Field(ge=0,le=3000)
     inset: float = Field(ge=0,le=3000)
 
+    centerHeight: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
+
     def check_size(self,width,height):
         product=DOOR_HARDWARE.get(self.article,{})
         if product.get('family') not in ('ak700','monblan'):
@@ -129,7 +131,10 @@ class FacadeHandle(StrictModel):
         pull=product['family']=='ak700'
         half=(product['pitch'] if pull else product['length'])/2
         center=span/2 if self.along=='center' else self.offset+half
-        if center<product['length']/2 or center+product['length']/2>span or pull and not 6<=self.inset<=other-6:
+        if self.centerHeight and (vertical or not pull):
+            raise ValueError('Центр по высоте задан для другой ориентации ручки.')
+        inset=other/2 if self.centerHeight else self.inset
+        if center<product['length']/2 or center+product['length']/2>span or pull and not 6<=inset<=other-6:
             raise ValueError('Ручка выходит за край фасада.')
 
     def bounds(self,left,bottom,width,height):
@@ -139,7 +144,7 @@ class FacadeHandle(StrictModel):
         span=height if vertical else width
         along=span/2 if self.along=='center' else self.offset+(product['pitch'] if pull else product['length'])/2
         if self.along=='end':along=span-along
-        inset=self.inset if pull else 0
+        inset=(height/2 if self.centerHeight else self.inset) if pull else 0
         x=left+(inset if self.edge=='left' else width-inset) if vertical else left+along
         y=bottom+along if vertical else bottom+(inset if self.edge=='bottom' else height-inset)
         half=product['length']/2
@@ -289,7 +294,26 @@ class WardrobeRod(StrictModel):
 
 
 MachiningSize = Annotated[float, Field(strict=True,ge=0,le=3000,allow_inf_nan=False)]
+LightSystem = Literal['aq-4x8','lira-17.5x6.5']
+LIGHTING = json.loads((ASSETS/'vitrine-lighting.json').read_text())
+class LightingLine(StrictModel):
+    pairId: UUID | None = Field(default=None,exclude_if=lambda v:v is None)
+    system: LightSystem
+    anchor: Literal['front','center','back']
+    face: Literal[0,1]
+    offset: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    start: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    end: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    niche: str | None = Field(default=None,pattern=r'^(top|shelf-[a-z0-9-]{1,59})$',exclude_if=lambda v:v is None)
+
+    @model_validator(mode='after')
+    def depth_anchor(self):
+        if self.anchor!='center' and self.offset is None:
+            raise ValueError('Укажите расстояние до ближнего края паза подсветки.')
+        return self
+
 class PanelCut(StrictModel):
+    lightSystem: LightSystem | None = Field(default=None,exclude_if=lambda v:v is None)
     kind: Literal['groove','rabbet','miter']
     edge: Literal['x0','x1','y0','y1']
     face: Literal[0,1]
@@ -302,6 +326,10 @@ class PanelCut(StrictModel):
 
     @model_validator(mode='after')
     def section(self):
+        if self.lightSystem:
+            model=LIGHTING[self.lightSystem]
+            if self.kind!='groove' or self.edge not in ('x0','x1') or self.width!=model['groove_width_mm'] or self.depth!=model['groove_depth_mm']:
+                raise ValueError('Посадка подсветки должна соответствовать выбранной модели.')
         if self.kind=='miter':
             if self.land is None or any(v is not None for v in (self.width,self.depth,self.offset)):
                 raise ValueError('Проверьте остаток у края запила.')
@@ -321,25 +349,26 @@ class PanelCut(StrictModel):
 
 class RearMount(StrictModel):
     kind: Literal['groove','rabbet']
-    layout: Literal['sides','perimeter','left','right'] | None=Field(default=None,exclude_if=lambda v:v is None)
+    layout: Literal['sides','perimeter','left','right','both'] | None=Field(default=None,exclude_if=lambda v:v is None)
     width: float=Field(ge=3,lt=1200,multiple_of=.5,strict=True,allow_inf_nan=False)
     depth: float=Field(gt=1,lt=40,multiple_of=.5,strict=True,allow_inf_nan=False)
     offset: float | None=Field(default=None,ge=0,lt=1200,multiple_of=.5,strict=True,allow_inf_nan=False,exclude_if=lambda v:v is None)
 
     @property
     def board_trim(self):
-        return (self.offset or 0)+self.width if self.layout in ('sides','left','right') else 0
+        return (self.offset or 0)+self.width if self.layout in ('sides','left','right','both') else 0
 
 PanelCutList=Annotated[list[PanelCut],Field(min_length=1,max_length=32)]
 PanelCutKey=Annotated[str,Field(pattern=r'^[a-z][a-z0-9-]{0,64}$')]
 class CarcassDesign(CarcassSpec):
+    lighting: dict[PanelCutKey,Annotated[list[LightingLine],Field(min_length=1,max_length=32)]] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
     machining: dict[PanelCutKey,PanelCutList] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
     backMount: RearMount | None=Field(default=None,exclude_if=lambda v:v is None)
 
     @property
     def rear_clearance(self):
         b=self.backMount
-        if b and b.layout in ('left','right'):
+        if b and b.layout in ('left','right','both'):
             return ceil(b.width)
         return ceil((b.offset or 0)+b.width) if b and b.kind=='groove' else self.backThickness or 0
 

@@ -186,7 +186,8 @@ export function handlePlacement(door,setting){
  if(!part||!['ak700','monblan'].includes(part.family)||!edges.includes(setting.edge)||!['center','start','end'].includes(setting.from))throw Error('Проверьте артикул и положение ручки.');
  const edge=setting.edge,vertical=isVertical(edge),ak=part.family==='ak700';
  const span=vertical?door.height:door.width,other=vertical?door.width:door.height;
- const offset=setting.offset??0,inset=ak?(setting.inset??50):0;
+ if(setting.centerHeight&&(!ak||vertical))throw Error('Центр по высоте задан для другой ориентации ручки.');
+ const offset=setting.offset??0,inset=ak?(setting.centerHeight?other/2:setting.inset??50):0;
  if(![offset,inset].every(v=>Number.isFinite(v)&&v>=0&&v<=3000))throw Error('Проверьте отступы ручки в миллиметрах.');
  const half=(ak?part.pitch:part.length)/2;
  let along=setting.from==='center'?span/2:offset+half;
@@ -196,6 +197,19 @@ export function handlePlacement(door,setting){
  const y=vertical?along:(edge==='bottom'?inset:door.height-inset);
  const angle=ak?(vertical?90:0):({top:0,bottom:180,left:90,right:-90})[edge];
  return {x,y,angle,back:!ak,edge,vertical,part,article:setting.article};
+}
+export function pullHeight(placement){
+ if(isVertical(placement.edge))return {start:'bottom',end:'top',center:'center'}[placement.from];
+ return placement.centerHeight?'center':placement.edge;
+}
+export function setPullHeight(placement,anchor){
+ const next={...placement},vertical=isVertical(next.edge);
+ if(vertical){
+  next.from={bottom:'start',top:'end',center:'center'}[anchor];
+  if(anchor!=='center'&&placement.from==='center')next.offset=50;
+ }else if(anchor==='center')next.centerHeight=true;
+ else{next.edge=anchor;if(placement.centerHeight)next.inset=50;delete next.centerHeight;}
+ return next;
 }
 export function mirrorHandle(setting){
  const flip={left:'right',right:'left',top:'top',bottom:'bottom'};
@@ -223,6 +237,11 @@ export function orientHandle(leaf,setting,axis){
  const from=along<=span/2?'start':'end';
  const distance=from==='start'?along:span-along;
  const candidate={...setting,edge,inset,from,offset:distance-(centered?pitch/2:0)};
+ delete candidate.centerHeight;
+ if(pullHeight(setting)==='center'){
+  if(vertical){candidate.from='center';candidate.offset=0;}
+  else candidate.centerHeight=true;
+ }
  if(centered&&Math.abs(along-span/2)<.001){candidate.from='center';candidate.offset=0;}
  if(candidate.offset<0)throw Error('Для этого поворота не хватает места на фасаде. Выберите меньшую скобу или измените её положение.');
  handlePlacement(leaf,candidate);
