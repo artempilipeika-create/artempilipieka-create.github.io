@@ -63,7 +63,7 @@ export class WardrobeMotion{
       const slide=active&&key&&key===this.shown?travel:0;
       if(key){
         dz+=slide;
-        for(const part of g.children)if(part.userData.drawerRail)part.position.z=(part.userData.railTravel-1)*slide;
+        for(const part of g.children)if(part.userData.drawerRail)part.position.z=(part.userData.railClosedZ??0)+(part.userData.railTravel-1)*slide;
       }
       const base=-(it.rotation||0)*rad;
       g.position.x=it.x*unit+dx*Math.cos(base)+dz*Math.sin(base);

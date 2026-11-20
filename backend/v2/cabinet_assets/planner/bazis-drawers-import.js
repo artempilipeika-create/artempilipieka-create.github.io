@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.39 PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.40 PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,13 +135,13 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17','martin-forest-bazis-native-v18'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
   for (const item of payload.items) {
     if (!item || typeof item !== 'object') throw new Error('Некорректный модуль в JSON.');
-    if(['martin-forest-bazis-native-v17','martin-forest-bazis-native-v18'].includes(payload.format)&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
+    if(['martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19'].includes(payload.format)&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
       throw Error('Для фасада с врезной ручкой требуется ПВХ по четырём торцам.');
   }
   return { filename, payload, automatic };
@@ -2030,6 +2030,111 @@ const ROD_SOURCES = {
     "screws": 2
   }
 };
+const PRIME_DRAWER_SOURCES={
+  "5d1a1e192df8d5d1e21b959aa70f813fe0c69a5f6d859f43d16e30a2e18aa555": {
+    "article": "113641",
+    "length": 300,
+    "opening": "soft"
+  },
+  "01bfaeb648dd5623c821836caa4b38c8872a4bc07817e99b6f9f4788322de298": {
+    "article": "113643",
+    "length": 350,
+    "opening": "soft"
+  },
+  "b4e5a233b15b59948411890d0c928e071f36a5cc46304491a4c5a67369b71659": {
+    "article": "113645",
+    "length": 400,
+    "opening": "soft"
+  },
+  "794d782c43553991b1316e4053a845d6af2a7f4a63d9b4652756ad55d0dc73d1": {
+    "article": "113647",
+    "length": 450,
+    "opening": "soft"
+  },
+  "6a3bbd5a0f0f0f4c719d8d8ca25ef5f9079251aa11b628d2a74b110bbbbf9109": {
+    "article": "113650",
+    "length": 500,
+    "opening": "soft"
+  },
+  "398305861a0c04252ac56b9c7858541bd21e3d8c7cad9e2e3d066eaa19b36beb": {
+    "article": "113652",
+    "length": 550,
+    "opening": "soft"
+  },
+  "6d9d71cc0c27d26ebbc9136dff493cc34ab1e3c5678e6f129645633e8ec647c4": {
+    "article": "113654",
+    "length": 300,
+    "opening": "push"
+  },
+  "66bf6e51be006ac2026012dec595e0e99a934e1010bbca21c81c499cd876dd39": {
+    "article": "113657",
+    "length": 350,
+    "opening": "push"
+  },
+  "64f023c9e65e2e1af7edbf214993d63fc75d6f3b05e7e1c9164b791ec29ce802": {
+    "article": "113661",
+    "length": 400,
+    "opening": "push"
+  },
+  "4524e2531af5613c58cb92c7ca59bb8bf8ac08a6061ad1df94dcc120e1452790": {
+    "article": "113663",
+    "length": 450,
+    "opening": "push"
+  },
+  "860cadae78639026025d60014481aa93e7c6ab792278a8e011505a02277c4f41": {
+    "article": "113665",
+    "length": 500,
+    "opening": "push"
+  },
+  "055d2742fb78c56ac2e94443ff6965c114f459f2ae0a4524187254e3c0db1c68": {
+    "article": "113667",
+    "length": 550,
+    "opening": "push"
+  }
+};
+function placePrimeDrawer(obj,item,log){
+ const src=PRIME_DRAWER_SOURCES[item.source_sha256],span=item.span_mm,push=src?.opening==='push',base=push?300:200;
+ if(!src||item.aks_kind!=='concealed'||src.article!==item.article||src.opening!==item.opening||src.length!==item.length_mm||
+    !Number.isFinite(span)||span<(push?226:200)||span>(push?1206:3000)||(push&&item.cut_mm!==span-206)||
+    ![0,90,180,270].includes(item.rotation))throw Error('Проверьте артикул PRIME и монтажную ширину.');
+ const zero={x:0,y:0,z:0},close=(a,b)=>Math.abs(a-b)<.05,frames=[],parts=[],rods=[];
+ obj.SetDefaultTransform();
+ function inspect(parent){
+  const list=asList(parent);
+  for(let i=0;i<Number(list?.Count||0);i++){
+   const child=childAt(list,i),name=String(child?.Name||'').split('\r')[0].trim();
+   if(!child)throw Error('Не прочитана деталь направляющей PRIME.');
+   if(isServiceFrame(child)){frames.push(child);continue;}
+   if(objectTypeChecker.ObjectIsExtrusionBody(child)&&name.startsWith('Штанга')){rods.push(child);continue;}
+   // The purchase assembly also starts with Направляющая. Traverse containers first.
+   if(Number(asList(child)?.Count||0)){inspect(child);continue;}
+   const pilot=name==='6x10',screw=name==='3x1'||name.startsWith('Саморез'),guide=name.startsWith('Направляющая');
+   if(!pilot&&!screw&&!guide)continue;
+   const at=profilePoint(obj,child,zero),offset=pilot?31.5:0,right=close(at.x,base-offset);
+   if(!right&&!close(at.x,offset))throw Error('Не подтверждена сторона крепления PRIME.');
+   parts.push({child,at,right,kind:pilot?'pilot':screw?'screw':'guide'});
+  }
+ }
+ inspect(obj);
+ if(frames.length<2||frames.some(f=>!close(f.Width,base))||rods.length!==Number(push)||(push&&!close(rods[0].Thickness,94))||
+    [true,false].some(r=>['guide','pilot','screw'].some((k,i)=>parts.filter(p=>p.right===r&&p.kind===k).length!==[1,1,2][i])))
+  throw Error('Проверьте комплект PRIME: две направляющие, задняя присадка и крепёж.');
+ const delta=span-base;
+ if(delta){
+  for(const f of frames){historyOperations.RegisterObjectChanging(f);f.Width=span;if(typeof f.Build==='function')f.Build();}
+  if(push){const rod=rods[0];historyOperations.RegisterObjectChanging(rod);rod.Thickness=item.cut_mm;if(typeof rod.Build==='function')rod.Build();}
+  const a=obj.ToGlobal(zero),b=obj.ToGlobal({x:delta,y:0,z:0});
+  for(const part of parts.filter(p=>p.right)){
+   historyOperations.RegisterObjectChanging(part.child);part.child.TranslateGCS({x:b.x-a.x,y:b.y-a.y,z:b.z-a.z});
+  }
+  if(typeof obj.Build==='function')obj.Build();
+ }
+ if(parts.some(p=>distance(profilePoint(obj,p.child,zero),{...p.at,x:p.at.x+(p.right?delta:0)})>.05)||
+    frames.some(f=>!close(f.Width,span))||(push&&!close(rods[0].Thickness,item.cut_mm)))throw Error('Не подтверждена монтажная ширина комплекта PRIME.');
+ placeByFrame(obj,null,item,log,zero);
+ return {materialChecks:[],profileChecks:[]};
+}
+
 function placeWardrobeRod(obj,item,log){
   const model=ROD_SOURCES[item.source_sha256],span=item.span_mm;
   if(!model||!item.wardrobe_rod||model.article!==item.article||!Number.isInteger(span)||span<100||span>2400||
@@ -2084,6 +2189,7 @@ function resizeAndPlace(obj, item, log, shelfPanel) {
   if(item.wardrobe_gola_mount||item.source_sha256===WARDROBE_GOLA_MOUNT_SHA)return placeWardrobeGolaMount(obj,item,log);
   if(item.wardrobe_handle||item.wardrobe_profile||WARDROBE_DOOR_SOURCES[item.source_sha256]||EDGE_PULL_SOURCE[item.source_sha256])return placeWardrobeDoorHardware(obj,item,log);
   if(item.wardrobe_rod||ROD_SOURCES[item.source_sha256])return placeWardrobeRod(obj,item,log);
+  if(item.aks_kind==='concealed'||PRIME_DRAWER_SOURCES[item.source_sha256])return placePrimeDrawer(obj,item,log);
   if(item.aks_kind||AKS_SOURCES[item.source_sha256]){
     if(AKS_SOURCES[item.source_sha256]!==item.aks_kind||![0,90,180,270].includes(item.rotation))throw Error('Неизвестное крепление AKS или неверный поворот.');
     placeByFrame(obj,null,item,log,{x:0,y:0,z:0});
@@ -2244,7 +2350,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.39 PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.40 PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

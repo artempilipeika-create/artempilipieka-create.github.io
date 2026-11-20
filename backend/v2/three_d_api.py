@@ -270,12 +270,16 @@ class FurnitureItem(StrictModel):
             drawer=None
             if self.assistant_carcass and self.assistant_carcass.spec.drawerBanks:
                 group=str(self.assistant_carcass.group_id)+':'
-                drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-(side-left|side-right|bottom)',self.item_id[len(group):]) if self.item_id.startswith(group) else None
+                drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-(side-left|side-right|front|rear|face|bottom)',self.item_id[len(group):]) if self.item_id.startswith(group) else None
                 if drawer:
                     section,index=map(int,drawer.group(1,2))
                     banks=self.assistant_carcass.spec.drawerBanks
                     if section>=len(banks) or not banks[section] or index>=len(banks[section].faces):
                         raise ValueError('Деталь шуфляды отсутствует в анкете шкафа.')
+                    if banks[section].railFamily=='concealed' and t!=18:
+                        raise ValueError('Для шуфляды PRIME нужна плита 18 мм.')
+                    if banks[section].railFamily=='concealed' and drawer[3] in ('bottom','side-left','side-right') and w not in (290,340,390,440,490,540):
+                        raise ValueError('Глубина детали PRIME должна соответствовать выбранной длине направляющей.')
             if l<100 and not grip and not (drawer and drawer[3].startswith('side-') and self.blank_axis=='side' and t==18):
                 raise ValueError('Длина заготовки от 100 мм.')
             thin_bottom=drawer and drawer[3]=='bottom' and self.blank_axis=='horizontal' and self.blank_edge_code=='0000' and t==3

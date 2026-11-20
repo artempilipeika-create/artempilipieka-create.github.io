@@ -195,6 +195,7 @@ export function drawerStroke(items,id,key){
  if(!side)return 0;
  // The enumerated PRIME rails are full extension. Unspecified old assemblies
  // keep their historical display travel; their hardware cannot be identified.
+ if(side.assistant_carcass.spec?.drawerBanks?.[Number(key.split('-')[0])]?.railFamily==='concealed')return side.depth+10;
  return aks.rails[side.depth]&&side.assistant_carcass.spec?.drawerBanks?.[Number(key.split('-')[0])]?side.depth:side.depth*.82;
 }
 

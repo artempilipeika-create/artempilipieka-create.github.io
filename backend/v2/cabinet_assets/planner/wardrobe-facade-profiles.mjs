@@ -97,8 +97,8 @@ export function planFacadeProfiles(s,doors,drawerRows,banks,bays,legacy){
    if(r.slot!=null&&next.every(q=>q.slot===r.slot)){
     const upper=top?next[0]:r,upperBox=banks[upper.slot].faces[upper.index];
     // The seam between sliding fronts is free. Keep both original runner heights
-    // and put the top lip at least 1 mm below the upper drawer's HDF bottom.
-    datum=Math.min(datum,upperBox.boxY-40.5);
+    // and put the top lip at least 1 mm below the upper drawer and its runner.
+    datum=Math.min(datum,(upperBox.hardwareBottom??upperBox.boxY-3)-37.5);
    }
    // A single unbroken opposing drawer front can meet two side-by-side doors.
    for(const peer of rows)if(!!peer.internal===!!r.internal&&Math.abs((top?end(peer):peer.bottom)-ownEdge)<.001&&
@@ -136,7 +136,7 @@ export function planFacadeProfiles(s,doors,drawerRows,banks,bays,legacy){
    }
    const centre=(bareBottom+bareTop)/2;
    if(centre<(hi+lo)/2)cap=Math.min(cap,Math.floor(lo-1));
-   else if(f.boxY-3<hi+1)throw Error('Профиль Gola пересекает дно шуфляды '+(r.index+1)+' в секции '+(banks[r.slot].section+1)+'. Выберите другую кромку.');
+   else if((f.hardwareBottom??f.boxY-3)<hi+1)throw Error('Профиль Gola пересекает дно шуфляды '+(r.index+1)+' в секции '+(banks[r.slot].section+1)+'. Выберите другую кромку.');
   }
   if(Number.isFinite(cap))boxLimits.set(r.key,cap);
  }

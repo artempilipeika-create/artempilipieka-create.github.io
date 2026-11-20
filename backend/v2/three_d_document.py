@@ -102,6 +102,8 @@ def drawer_hardware(count,depth):
 WARDROBE_RODS=json.loads((ASSETS/'wardrobe-rods.json').read_text())
 AKS_GUIDES=json.loads((ASSETS/'aks-wardrobe.json').read_text())['rails']
 
+PRIME_DRAWERS=json.loads((ASSETS/'wardrobe-prime.json').read_text())
+
 def hardware_for(it):
     rows,description=_panel_hardware(it)
     hook=it.get('blank_hook')
@@ -143,7 +145,7 @@ def hardware_for(it):
             depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[slot]['kind']=='internal' else 0)
             length=min(600,((depth-5)//50)*50)
             rail=AKS_GUIDES.get(str(length))
-            if rail:
+            if rail and banks[slot].get('railFamily')!='concealed':
                 section,level,right_bank=niche_address(slot)
                 shared=any(z['kind']=='drawers' and z['section']==section and z['level']==level for z in spec.get('nicheSplits') or [])
                 small=2*len(rail['moving'])+len(rail['fixed'])*(1 if shared else 2)
@@ -153,6 +155,26 @@ def hardware_for(it):
                 if shared:
                     side='left' if right_bank else 'right'
                     rows.append(_row('Саморез 3,5×18 мм · общая стойка',len(rail['shared'][side]['fixed'])))
+    # The cut bottom captures the installed guide length and actual opening, including door setbacks.
+    bottom=re.fullmatch(r'drawer-(\d+)-(\d+)-bottom',key)
+    if bottom:
+        slot=int(bottom[1])
+        banks=spec.get('drawerBanks') or []
+        bank=banks[slot] if slot<len(banks) else None
+        if bank and bank.get('railFamily')=='concealed':
+            mode=bank.get('opening') or 'soft'
+            length=int(it['depth'])+10
+            product=PRIME_DRAWERS[mode].get(str(length))
+            if not product:return rows,'Пересчитайте длину направляющей PRIME в анкете шкафа.'
+            direct=bank.get('faceFixing','cam')=='cam'
+            rows=[*rows,_row(f"Направляющие скрытого монтажа PRIME by AKS {length} мм · "+('Push to open' if mode=='push' else 'с доводчиком'),1,'set',product['article']),
+                  _row('Шуруп 3,5×16 мм, Zn',4,'pcs','20646'),
+                  _row('Эксцентриковая стяжка для плиты 18 мм',4+(4+(2 if it['width']>=240 else 1) if direct else 0)),
+                  _row('Шкант деревянный 8×35',4,'pcs','39319'),_row('Конфирмат 7×50',6 if direct else 12)]
+            if not direct:rows.append(_row('Саморез 5×30 AKS',3,'pcs','12867'))
+            if mode=='push':
+                cut=it['width']+49-206
+                rows.append(_row(f'Штанга синхронизации PRIME 1000 мм · отрезок {cut:g} мм',1,'pcs','114679'))
     spacer=re.fullmatch(r'drawer-(\d+)-spacer-(left|right)',key)
     if spacer and it.get('height'):
         count=2*max(2,ceil((it['height']-50)/320)+1)

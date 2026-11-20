@@ -1,14 +1,20 @@
 import {activeLeafKeys,hingeProduct,settingFor,bandKey,onDivider,depthBehindDoor,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
 import {rearClearance} from './panel-machining.mjs';
-import {sectionOf,isRightBank,levelOf,splitAt,columnWidths} from './wardrobe-layout.mjs';
+import {sectionOf,isRightBank,levelOf,splitAt,columnWidths,nicheSlot} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {anchoredShelf} from './wardrobe-door-layout.mjs';
 import {fittedFaceHeights,frontEdgeGap,coverClearance,mm} from './wardrobe-niches.mjs';
+import prime from './wardrobe-prime.json' with {type:'json'};
+export function concealedRail(depth,opening='soft'){
+ const length=Math.min(550,Math.floor((depth-3)/50)*50),product=prime[opening]?.[length];
+ if(!product)throw Error('Для скрытых направляющих PRIME нужна монтажная глубина от 303 мм.');
+ return {family:'concealed',opening,length,...product};
+}
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
 
 export function frontProjection(s){
  const faces=activeLeafKeys(s.front).map(key=>hingeProduct(s.front,key).kind==='inset'?0:18+(settingFor(s.front,key).push?3:0));
- return Math.max(0,...faces,s.drawerBanks?.some(b=>b?.kind==='external')?18:0);
+ return Math.max(0,...faces,...(s.drawerBanks??[]).map(b=>b?.kind==='external'?18+(b.railFamily==='concealed'&&b.opening==='push'?4:0):0));
 }
 export const outerFront=s=>frontProjection(s)>0;
 export const drawerMember=(id,role)=>new RegExp(':drawer-\\d+-'+role+'$').test(id??'');
@@ -41,7 +47,7 @@ export function drawerFit(b,axes,bank){
  for(const [side,has] of [['left',b.spacerL],['right',b.spacerR]]){
   cuts[side]=has?spacerCuts(b.base,b.span,axes[side],side):[];
   for(const [i,f] of b.faces.entries()){
-   if(cuts[side].some(([lo,hi])=>overlaps(f.railY-22.5,f.railY+22.5,b.base+lo,b.base+hi)))
+   if(cuts[side].some(([lo,hi])=>overlaps(f.railY-(b.railRadius??22.5),f.railY+(b.railRadius??22.5),b.base+lo,b.base+hi)))
     issues.push('Секция '+(b.section+1)+', шуфляда '+(i+1)+': направляющая попадает в вырез под петлю '+(side==='left'?'слева':'справа')+'. Измените высоту блока, фасада или отступ петли.');
   }
  }
@@ -113,20 +119,32 @@ export function drawerSections(s,widths,legacy=false){
    return [key];
   });
   const insetSetback=Math.max(0,...rowKeys.map(key=>depthBehindDoor(s,key)));
-  const faceFront=s.depth/2+(internal?-Math.max(3,insetSetback):18);
+  const concealed=bank.railFamily==='concealed',push=concealed&&bank.opening==='push';
+  if(concealed&&(mountWidth<(push?226:200)||(push&&mountWidth>1206)))throw Error('Проверьте монтажную ширину PRIME: '+(push?'226–1206 мм с синхронизатором.':'от 200 мм.'));
+  const faceFront=s.depth/2+(internal?-Math.max(3,insetSetback):18+(push?4:0));
   const bodyFront=faceFront-18;
   const clearDepth=bodyFront+s.depth/2-rearClearance(s);
-  const rail=railForOpening(clearDepth,legacy);
+  const rail=concealed?concealedRail(clearDepth-(push?4:0),bank.opening):railForOpening(clearDepth,legacy);
+  const mountFront=bodyFront-(push?4:0),railLift=push?20:17,railRadius=concealed?(push?23.5:23):22.5;
+  // Separate opposing screw axes on an 18 mm partition while keeping facade heights fixed.
+  let stagger=0;
+  if(concealed){
+   const level=levelOf(slot),columns=widths.flatMap((_,section)=>splitAt(s,section,level)?.kind==='drawers'?[nicheSlot(section,level),nicheSlot(section,level,1)]:[nicheSlot(section,level)]);
+   const at=columns.indexOf(slot);
+   let adjacent=0;
+   for(let k=at-1;k>=0&&banks[columns[k]]?.railFamily==='concealed';k--)adjacent++;
+   stagger=adjacent%2*8;
+  }
   const faces=heights.map((height,j)=>{
    const width=bank.faces[j].width??maxWidth;
    if(!Number.isInteger(width*2)||width<40||width>maxWidth)throw Error('Секция '+n+', фасад '+(j+1)+': допустимая ширина 40–'+maxWidth+' мм.');
-   const boxY=Math.round(Math.max(s.thickness,bottom))+13;
-   const f={width,height,x:(lo+hi)/2,y:mm(bottom+frontEdgeGap),z:faceFront-9,boxY,railY:boxY+40};
+   const boxY=Math.round(Math.max(s.thickness,bottom))+(concealed?railLift+stagger:13);
+   const f={width,height,x:(lo+hi)/2,y:mm(bottom+frontEdgeGap),z:faceFront-9,boxY,hardwareBottom:concealed?boxY-railLift:boxY-3,railY:concealed?boxY-railLift+railRadius:boxY+40};
    bottom=mm(bottom+height+(bank.layout?bank.gap:3));return f;
   });
   if(bank.layout)bottom=base+bank.height;
   if(bottom>s.height-(internal?s.thickness:0))throw Error('Секция '+n+': блоку шуфляд не хватает '+(bottom-s.height+(internal?s.thickness:0))+' мм.');
-  return {section:i,slot,legacy,base,internal,spacerL,spacerR,left,right,mountWidth,center,bodyFront,rail,clearDepth,faces,top:bottom,span:bottom-base};
+  return {section:i,slot,legacy,base,internal,spacerL,spacerR,left,right,mountWidth,center,bodyFront,mountFront,rail,railRadius,faceFixing:bank.faceFixing??'cam',clearDepth,faces,top:bottom,span:bottom-base};
  });
 }
 
@@ -135,13 +153,27 @@ export function buildDrawerBoards(spec,banks,add){
  for(const b of banks){
   if(!b)continue;
   const prefix='drawer-'+b.slot+'-',section=' · секция '+(b.section+1);
-  const spacerDepth=b.legacy?Math.floor(b.clearDepth):b.rail.length,spacerZ=b.bodyFront-spacerDepth/2;
+  const spacerDepth=b.legacy?Math.floor(b.clearDepth):b.rail.length,spacerZ=(b.mountFront??b.bodyFront)-spacerDepth/2;
   for(const [side,width,x] of [['left',b.spacerL,b.left+9],['right',b.spacerR,b.right-9]]){
    if(width)add(prefix+'spacer-'+side,'Проставка 18 мм '+(side==='left'?'слева':'справа')+section,'side',b.span,spacerDepth,18,x,b.base,spacerZ,'1000');
   }
   b.faces.forEach((f,j)=>{
    const id=prefix+j+'-',name=' · шуфляда '+(j+1)+section,L=b.rail.length,W=b.mountWidth-27;
    const y=f.boxY,h=Math.floor(Math.min(f.y+f.height-10,f.boxTop??Infinity)-y),z=b.bodyFront-L/2;
+   if(b.rail.family==='concealed'){
+    const depth=L-10,outer=b.mountWidth-13,inner=outer-36,cz=b.bodyFront-depth/2;
+    if(h<70)throw Error('Шуфляда '+(j+1)+section+': для короба PRIME увеличьте высоту фасада.');
+    if(b.faceFixing!=='plank'&&Math.abs(f.x-b.center)+(outer-18)/2+6>f.width/2)throw Error('Фасад слишком узкий для штоков в боковинах PRIME. Увеличьте ширину или выберите переднюю планку.');
+    add(id+'face','Фасад'+name,'front',f.height,f.width,18,f.x,f.y,f.z,'1111');
+    for(const [side,sign] of [['left',-1],['right',1]])
+     add(id+'side-'+side,(sign<0?'Левая':'Правая')+' боковина'+name,'side',h,depth,18,b.center+sign*(outer-18)/2,y,cz,'0101');
+    for(const [end,sign] of [['front',1],['rear',-1]]){
+     if(sign>0&&b.faceFixing!=='plank')continue;
+     add(id+end,(sign>0?'Передняя':'Задняя')+' стенка'+name,'back',inner,h-30,18,b.center,y+30,cz+sign*(depth-18)/2,'0100');
+    }
+    add(id+'bottom','Дно ЛДСП 18 мм'+name,'horizontal',inner,depth,18,b.center,y+12,cz,'0000');
+    return;
+   }
    if(h<(b.legacy?40:63))throw Error('Шуфляда '+(j+1)+section+': увеличьте высоту фасада.');
    add(id+'face','Фасад'+name,'front',f.height,f.width,18,f.x,f.y,f.z,'1111');
    for(const [side,sign] of [['left',-1],['right',1]])

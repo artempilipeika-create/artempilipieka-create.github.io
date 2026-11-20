@@ -253,6 +253,9 @@ class DrawerFace(StrictModel):
 
 
 class DrawerBank(StrictModel):
+    railFamily: Literal['ball','concealed'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    opening: Literal['soft','push'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    faceFixing: Literal['cam','plank'] | None = Field(default=None,exclude_if=lambda v:v is None)
     layout: Literal['equal','manual'] | None = Field(default=None,exclude_if=lambda v:v is None)
     gap: DrawerMillimetres | None = Field(default=None,ge=0,le=3000,exclude_if=lambda v:v is None)
     coverFixing: Literal['cam_dowel','confirmat'] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -263,6 +266,8 @@ class DrawerBank(StrictModel):
     height: int | None = Field(default=None,ge=103,le=3000,strict=True,exclude_if=lambda v:v is None)
 
     def span(self):
+        if self.railFamily!='concealed' and (self.opening or self.faceFixing):
+            raise ValueError('Выберите скрытый монтаж для этих параметров шуфляд.')
         count = sum(f.height is None for f in self.faces)
         if self.coverFixing and (self.kind != 'internal' or not self.layout):
             raise ValueError('Крепление верхней полки относится к внутренней нише шуфляд.')
@@ -774,6 +779,10 @@ class CarcassDesign(CarcassSpec):
                             if index>=len(row) or row[index]!='board/'+self.drawerFixing:raise ValueError('Закрепите ограничивающие полки шуфляд.')
                     depth=self.depth-self.rear_clearance-(21 if inside else 0)
                     top=(bank.bottomOffset or 0)+bank.span()+(self.thickness if inside else 0)
+                    if bank.railFamily=='concealed':
+                        push=bank.opening=='push'
+                        if depth-(4 if inside and push else 0)<303 or w-left-right<(226 if push else 200) or push and w-left-right>1206:
+                            raise ValueError(f'Секция {i+1}: недостаточно места для выбранной направляющей PRIME.')
                     if top>self.height-(self.thickness if inside else 0) or w-left-right<163 or depth<255:
                         raise ValueError(f'Секция {i+1}: блоку AKS недостаточно места.')
                     if any(f.width is not None and f.width>max_width for f in bank.faces):

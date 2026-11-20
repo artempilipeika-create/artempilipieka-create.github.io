@@ -105,7 +105,7 @@ function panelLabel(item,key,g){
  }
  const drawer=drawerPart.exec(key);
  if(drawer){
-  const [,slot,index,part]=drawer,[oldLabel,label]=drawerLabels.get(part);
+  const [,slot,index,part]=drawer,[oldLabel,label]=part==='bottom'&&item.blank_thickness_mm===18?['Дно ЛДСП 18 мм','Дно ЛДСП 18 мм']:drawerLabels.get(part);
   const original=oldLabel+separator+'шуфляда '+(+index+1)+separator+'секция '+(sectionOf(+slot)+1);
   if(!base||base===original)return label;
  }
@@ -170,7 +170,7 @@ export function assignCabinetBlocks(rows,items) {
   const drawer=drawerOf(ids[0],owner);
   const sameDrawer=drawer&&ids.every(id=>drawerOf(id,owner)===drawer);
   const related=ids.map(id=>itemsById.get(id));
-  if(row.aks_kind==='rail'){
+  if(row.aks_kind==='rail'||row.aks_kind==='concealed'){
    const movingPart=ids.map(id=>drawerOf(id,owner)).find(Boolean);
    const face=movingPart&&owner.parts.get('drawer-'+movingPart+'-face');
    if(face)related.push(face);

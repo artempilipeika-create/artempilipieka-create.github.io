@@ -51,9 +51,11 @@ function automaticAxes(door,host,items,side,shelves,count,section,opposing,reach
      if(sign*(localPoint(face,door.rotation).x-wall)-face.width/2<reach)
        blocked.push([face.elevation_mm-zero-31,face.elevation_mm+face.height-zero+31]);
      if(spacer){
-       const rail=box.elevation_mm+40;
-       blocked.push([Math.max(rail-57.5,spacer.elevation_mm-26)-zero,
-         Math.min(rail+57.5,spacer.elevation_mm+spacer.height+26)-zero]);
+       const concealed=bank.railFamily==='concealed',push=bank.opening==='push';
+       const bottom=box.elevation_mm+(concealed?(push?-20:-17):17.5);
+       const top=bottom+(concealed?(push?47:46):45);
+       blocked.push([Math.max(bottom-35,spacer.elevation_mm-26)-zero,
+         Math.min(top+35,spacer.elevation_mm+spacer.height+26)-zero]);
      }
    }
  });

@@ -1,0 +1,78 @@
+{
+  "soft": {
+    "300": {
+      "article": "113641",
+      "file": "MF_PRIME_113641_L300.fr3d",
+      "sha": "5d1a1e192df8d5d1e21b959aa70f813fe0c69a5f6d859f43d16e30a2e18aa555",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-plavnogo-zakryvaniya-s-3d-regulirovkoy-prime-11696-p/48374/"
+    },
+    "350": {
+      "article": "113643",
+      "file": "MF_PRIME_113643_L350.fr3d",
+      "sha": "01bfaeb648dd5623c821836caa4b38c8872a4bc07817e99b6f9f4788322de298",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-plavnogo-zakryvaniya-s-3d-regulirovkoy-prime-11696-p/48374/"
+    },
+    "400": {
+      "article": "113645",
+      "file": "MF_PRIME_113645_L400.fr3d",
+      "sha": "b4e5a233b15b59948411890d0c928e071f36a5cc46304491a4c5a67369b71659",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-plavnogo-zakryvaniya-s-3d-regulirovkoy-prime-11696-p/48374/"
+    },
+    "450": {
+      "article": "113647",
+      "file": "MF_PRIME_113647_L450.fr3d",
+      "sha": "794d782c43553991b1316e4053a845d6af2a7f4a63d9b4652756ad55d0dc73d1",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-plavnogo-zakryvaniya-s-3d-regulirovkoy-prime-11696-p/48374/"
+    },
+    "500": {
+      "article": "113650",
+      "file": "MF_PRIME_113650_L500.fr3d",
+      "sha": "6a3bbd5a0f0f0f4c719d8d8ca25ef5f9079251aa11b628d2a74b110bbbbf9109",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-plavnogo-zakryvaniya-s-3d-regulirovkoy-prime-11696-p/48374/"
+    },
+    "550": {
+      "article": "113652",
+      "file": "MF_PRIME_113652_L550.fr3d",
+      "sha": "398305861a0c04252ac56b9c7858541bd21e3d8c7cad9e2e3d066eaa19b36beb",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-plavnogo-zakryvaniya-s-3d-regulirovkoy-prime-11696-p/48374/"
+    }
+  },
+  "push": {
+    "300": {
+      "article": "113654",
+      "file": "MF_PRIME_113654_L300.fr3d",
+      "sha": "6d9d71cc0c27d26ebbc9136dff493cc34ab1e3c5678e6f129645633e8ec647c4",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-push-to-open-s-3d-regulirovkoy-prime-11712-p/48450/"
+    },
+    "350": {
+      "article": "113657",
+      "file": "MF_PRIME_113657_L350.fr3d",
+      "sha": "66bf6e51be006ac2026012dec595e0e99a934e1010bbca21c81c499cd876dd39",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-push-to-open-s-3d-regulirovkoy-prime-11712-p/48450/"
+    },
+    "400": {
+      "article": "113661",
+      "file": "MF_PRIME_113661_L400.fr3d",
+      "sha": "64f023c9e65e2e1af7edbf214993d63fc75d6f3b05e7e1c9164b791ec29ce802",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-push-to-open-s-3d-regulirovkoy-prime-11712-p/48450/"
+    },
+    "450": {
+      "article": "113663",
+      "file": "MF_PRIME_113663_L450.fr3d",
+      "sha": "4524e2531af5613c58cb92c7ca59bb8bf8ac08a6061ad1df94dcc120e1452790",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-push-to-open-s-3d-regulirovkoy-prime-11712-p/48450/"
+    },
+    "500": {
+      "article": "113665",
+      "file": "MF_PRIME_113665_L500.fr3d",
+      "sha": "860cadae78639026025d60014481aa93e7c6ab792278a8e011505a02277c4f41",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-push-to-open-s-3d-regulirovkoy-prime-11712-p/48450/"
+    },
+    "550": {
+      "article": "113667",
+      "file": "MF_PRIME_113667_L550.fr3d",
+      "sha": "055d2742fb78c56ac2e94443ff6965c114f459f2ae0a4524187254e3c0db1c68",
+      "photoSource": "https://aksmebel.ru/product/napravlyayushchaya-ckrytogo-montazha-s-sistemoy-push-to-open-s-3d-regulirovkoy-prime-11712-p/48450/"
+    }
+  }
+}

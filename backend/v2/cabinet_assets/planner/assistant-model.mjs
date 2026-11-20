@@ -123,7 +123,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   if(generated.blank_axis==='front'){item.blank_edge_code=generated.blank_edge_code;item.blank_edge_thickness_mm=2;if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
   else if(generated.item_id.endsWith(':back')){item.blank_edge_code='0000';if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
   else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
-  else if(drawerBottom(item.item_id))item.body_variant_id=CARCASS_BACK_MATERIAL_ID;
+  else if(drawerBottom(item.item_id)&&generated.blank_thickness_mm===3)item.body_variant_id=CARCASS_BACK_MATERIAL_ID;
   else if(drawerMember(item.item_id,'.+')){if(drawerMaterialId!==undefined)item.body_variant_id=drawerMaterialId;else if(spec.thickness===18&&bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;}
   else if(bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;
   if(item.item_id===prefix+':rear-brace'){item.blank_edge_code='1100';item.blank_edge_thickness_mm=1;}

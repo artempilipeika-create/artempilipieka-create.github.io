@@ -42,17 +42,30 @@ function spacerDrawing(parent,bank,side){
  svg.setAttribute('viewBox','0 0 '+(8+depth*scale)+' '+(8+height*scale));svg.setAttribute('width',String(Math.ceil(8+scale*depth)));
  svg.setAttribute('role','img');svg.setAttribute('aria-label','Проставка, вид сбоку. Передний торец справа.');svg.append(polygon);parent.append(svg);
 }
+function railControls(ui,box,bank,set){
+ const concealed=bank.railFamily==='concealed';
+ ui.select(box,'Направляющие',[['ball','Шариковые'],['concealed','Скрытый монтаж · PRIME by AKS']],concealed?'concealed':'ball',value=>{
+  const next={...bank,railFamily:value};
+  if(value==='concealed'){next.opening='soft';next.faceFixing='cam';}
+  else{delete next.opening;delete next.faceFixing;}
+  set(next);
+ });
+ if(!concealed)return;
+ ui.select(box,'Открывание шуфляд',[['soft','Рукой · с доводчиком'],['push','Нажатием · Push to open']],bank.opening??'soft',value=>set({...bank,opening:value}));
+ ui.select(box,'Крепление фасада',[['cam','Эксцентрики в боковинах и дне'],['plank','Передняя планка и три шурупа']],bank.faceFixing??'cam',value=>set({...bank,faceFixing:value}));
+}
 function legacyControls(ui,parent,section){
  const fields=ui.fields;
  const box=el('fieldset');box.append(el('legend','Шуфляды'));parent.append(box);
  const banks=trimBanks(fields.drawerBanks??[],fields.sections);
  let bank=banks[nicheSlot(section,0)];
- box.append(action('Рассчитать по выбранной нише',()=>installBank(ui,section,bank.shelvesBelow??0,{kind:bank.kind,layout:'equal',gap:3,faces:bank.faces.map(face=>({...face,height:null}))},true)));
+ box.append(action('Рассчитать по выбранной нише',()=>installBank(ui,section,bank.shelvesBelow??0,{...bank,shelvesBelow:undefined,kind:bank.kind,layout:'equal',gap:3,faces:bank.faces.map(face=>({...face,height:null}))},true)));
  function update(value,finished=true){
    bank=value;banks[nicheSlot(section,0)]=value;fields.drawerBanks=banks;ui.changed();
    if(finished)ui.render();
  }
  if(!bank){box.append(action('Добавить шуфляды',()=>update({kind:'internal',faces:[{height:197}]})));return;}
+ railControls(ui,box,bank,update);
  ui.select(box,'Исполнение шуфляд',drawerExecutions,bank.kind,value=>update({...bank,kind:value}));
  millimetres(box,bank.kind==='internal'?'От верха дна шкафа до низа блока, мм':'Подъём блока от низа корпуса, мм',bank.bottomOffset??0,(n,finished)=>{
    if(n!=null)update({...bank,bottomOffset:n},finished);
@@ -94,9 +107,16 @@ function legacyControls(ui,parent,section){
 function hardwareDetails(box,current){
  if(current){
    const panel=el('details');panel.append(el('summary','Детали фурнитуры'));box.append(panel);box=panel;
-   const photo=el('figure'),img=el('img');img.src='/account/planner/hardware-photos/114797.webp';img.alt='Фото направляющей PRIME by AKS Soft Close, 500 мм, арт. 114797';img.width=160;img.height=94;img.style.objectFit='contain';
-   photo.append(img,el('figcaption','PRIME by AKS Soft Close · '+current.rail.length+' мм · арт. '+current.rail.article+(current.rail.length===500?'':' (фото серии: 500 мм, арт. 114797)')));box.append(photo);
-   box.append(el('p','Короб '+(current.mountWidth-27)+' мм · зазор по 13,5 мм на сторону.'));
+   const {rail}=current,hidden=rail.family==='concealed',push=rail.opening==='push';
+   const sample=hidden?(push?'113663':'113647'):'114797',size=hidden?450:500;
+   const title=hidden?'PRIME by AKS · скрытый монтаж · '+(push?'Push to open':'с доводчиком'):'PRIME by AKS · шариковые Soft Close';
+   const photo=el('figure'),img=el('img');img.src='/account/planner/hardware-photos/'+sample+'.webp';img.alt=title+' · '+size+' мм · арт. '+sample;img.width=160;img.height=94;img.style.objectFit='contain';
+   if(hidden){
+    const link=el('a');link.href=rail.photoSource??'';link.target='_blank';link.rel='noopener noreferrer';
+    if(link.href&&rail.photoSource){link.append(img);photo.append(link);}
+   }
+   photo.append(...(img.parentElement?[]:[img]),el('figcaption',title+' · '+rail.length+' мм · арт. '+rail.article+(rail.length===size?'':' (на фото '+size+' мм, арт. '+sample+')')));box.append(photo);
+   box.append(el('p',hidden?'Короб '+(current.mountWidth-13)+' мм · боковины и дно ЛДСП 18 мм · боковой зазор 6,5 мм.':'Короб '+(current.mountWidth-27)+' мм · зазор по 13,5 мм на сторону.'));
    for(const [side,has] of [['left',current.spacerL],['right',current.spacerR]]){
      if(!has)continue;
      spacerDrawing(box,current,side);
@@ -209,6 +229,7 @@ export function drawerControls(ui,parent,section){
    set(next);
  });
  if(execution)execution.dataset.drawerKind='';
+ railControls(ui,box,bank,set);
  if(bank.kind==='internal'){
    box.append(el('small','Полки у шуфляд · '+(f.drawerFixing==='confirmat'?'конфирматы':'эксцентрик + шкант')));
    box.append(el('small','От верха верхнего фасада до низа полки — 30 мм.'));
@@ -268,5 +289,5 @@ export function updateNicheResult(ui,built,error=''){
    }
  }
  const height=bank.layout==='equal'?b.faces[0].height:b.faces.at(-1).height;
- node.textContent='Ниша '+mmText(b.span)+' мм · '+(bank.layout==='equal'?'Высота каждого фасада':'Верхний фасад по остатку')+' '+mmText(height)+' мм';
+ node.textContent='Ниша '+mmText(b.span)+' мм · '+(bank.layout==='equal'?'Высота каждого фасада':'Верхний фасад по остатку')+' '+mmText(height)+' мм'+(b.rail.family==='concealed'?' · PRIME '+b.rail.length+' мм · арт. '+b.rail.article:'');
 }

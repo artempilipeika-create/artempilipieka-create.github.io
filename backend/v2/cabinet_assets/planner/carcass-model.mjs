@@ -112,7 +112,7 @@ export function buildCarcass(input={},options={}){
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
       x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:axis==='front'?'1111':key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:key==='rear-brace'?1:axis==='front'?2:s.edgeThickness,
       ...(machining.length&&canMachine({blank_thickness_mm:T,blank_shelf:shelf})?{blank_machining:machining}:{}),
-      ...(grip?{blank_edge_pull:{...grip}}:{}),blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:/^drawer-\d+-\d+-bottom$/.test(key)?CARCASS_BACK_MATERIAL_ID:key.startsWith('drawer-')?(options.drawerMaterialId??(t===18?options.bodyMaterialId:null)):options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
+      ...(grip?{blank_edge_pull:{...grip}}:{}),blank_shelf:shelf,body_variant_id:shelf&&!shelf.startsWith('board/')?null:(axis==='front'?options.frontMaterialId:key==='back'?options.backMaterialId:T===3&&/^drawer-\d+-\d+-bottom$/.test(key)?CARCASS_BACK_MATERIAL_ID:key.startsWith('drawer-')?(options.drawerMaterialId??(t===18?options.bodyMaterialId:null)):options.bodyMaterialId)??null,blank_binding:binding?{...binding,mounting:key.startsWith('shelf-')&&(!shelf||shelf===defaultShelf)?'sekura-95388':'none'}:null});
     const error=validateBlank(item,null,mount);if(error)throw Error(name+': '+error);
     parts.push({key,label:name,item});return item;
   };
@@ -196,8 +196,10 @@ export function buildCarcass(input={},options={}){
     if(!isDrawers&&banks[slot])throw Error('Полки и шуфляды занимают одну нишу.');
     const bank=banks[slot]??banks[nicheSlot(sec,zone.level,1)];
     if(isDrawers&&!bank)throw Error('Для общей стойки добавьте шуфляды в нишу.');
-    const depth=isDrawers?bank.rail.length:D-innerRear-s.shelfSetback;
-    const z=isDrawers?bank.bodyFront-depth/2:shelfCentre;
+    const supported=isDrawers?[banks[slot],banks[nicheSlot(sec,zone.level,1)]].filter(Boolean):[];
+    const front=isDrawers?Math.max(...supported.map(b=>b.mountFront)):0;
+    const depth=isDrawers?front-Math.min(...supported.map(b=>b.mountFront-b.rail.length)):D-innerRear-s.shelfSetback;
+    const z=isDrawers?front-depth/2:shelfCentre;
     const divider=add(id+'-divider','Перегородка '+(isDrawers?'между шуфлядами':'для полок')+' · секция '+(sec+1),'side',room.top-room.bottom,depth,18,mid,room.bottom,z,edge());
     if(!isDrawers){
       if(zone.columns?.length!==2)throw Error('Укажите полки левой и правой части.');

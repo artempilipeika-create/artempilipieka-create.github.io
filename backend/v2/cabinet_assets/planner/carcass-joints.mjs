@@ -12,7 +12,7 @@ export const jointOptions = {
   confirmat: 'Конфирмат 7×50',
   cam_dowel: 'Эксцентрик + шкант 8×35'
 };
-const fittings = {
+export const fittings = {
   confirmat: ['Конфермат.fr3d','af876819d041ee19ab0217cc9d266210c70480206a1de1652847c12d7af65783'],
   cam: ['Эксцентриковая Стяжка.fr3d','0f16c55b1530f9e49d3208b7e5b17d58076c491658bd01d5a3110850da36291c'],
   dowel: ['Шкант.fr3d','9b2679f72e617fd3eb989d95f65b5c2f5ac979380e2963d8cb272228597f6589']
