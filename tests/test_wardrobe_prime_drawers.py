@@ -38,4 +38,24 @@ def test_one_exact_purchase_item_per_installed_pair(mode,articles,tmp_path):
                 assert [r['article'] for r in [*floor,*face] if r['unit']=='set']==[article]
                 assert sum(r['qty'] for r in floor if r['article']=='12867')==(3 if fixing=='plank' else 0)
                 assert sum(r['qty'] for r in floor if r['article']=='114679')==int(mode=='push')
-                assert next(r['qty'] for r in floor if r['name'].startswith('Эксцентрик'))==(10 if fixing=='cam' else 4)
+                assert next(r['qty'] for r in floor if r['name'].startswith('Эксцентрик'))==6
+
+
+@pytest.mark.parametrize('fixing',['cam','plank'])
+@pytest.mark.parametrize('floor_width,face_width,side_height,expected_floor,expected_side,expected_rear',[
+    (551,None,166,2,2,2),(551,60,166,1,2,2),(177,None,70,1,1,1),(240,240,104,2,2,1),
+])
+def test_drawer_purchasing_counts_each_physical_pair(fixing,floor_width,face_width,side_height,expected_floor,expected_side,expected_rear):
+    bank={'kind':'external','railFamily':'concealed','faceFixing':fixing,'faces':[{'height':210,'width':face_width}]}
+    spec={'depth':460,'drawerBanks':[bank]}
+    direct=fixing=='cam'
+    totals=[]
+    for key,height,expected in [('bottom',18,4+expected_floor),('rear',side_height-30,2*expected_rear),
+                                ('side-left',side_height,expected_side*direct),('side-right',side_height,expected_side*direct)]:
+        panel={'module_type':'blank','assistant_carcass':{'group_id':'qa','spec':spec},
+               'item_id':'qa:drawer-0-0-'+key,'width':floor_width,'height':height,'depth':440}
+        rows,_=hardware_for(panel)
+        assert sum(r['qty'] for r in rows if r['name'].startswith('Эксцентрик'))==expected
+        assert sum(r['qty'] for r in rows if r['article']=='39319')==expected
+        totals.extend(rows)
+    assert sum(r['qty'] for r in totals if r['name'].startswith('Конфирмат'))==(2 if direct else 8)

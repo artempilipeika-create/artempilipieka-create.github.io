@@ -1,3 +1,4 @@
+import {wardrobeHardware} from './wardrobe-aks-native.mjs';
 import {canLight} from './wardrobe-lighting.mjs';
 import {canMachine,rearClearance} from './panel-machining.mjs';
 import {secureDoorShelf} from './wardrobe-door-layout.mjs';
@@ -77,7 +78,13 @@ export function wardrobeSpec(f){
    spec.machining=Object.fromEntries(Object.entries(spec.machining).filter(([key])=>panels.has(key)));
    if(!Object.keys(spec.machining).length)delete spec.machining;
  }
- if(rows.some(row=>row.includes('board/confirmat')||row.includes('board/cam_dowel')))nativeCarcassJoints(built.items.map(i=>({...i,assistant_carcass:{spec,group_id}})));
+ const fixedShelves=rows.some(row=>row.includes('board/confirmat')||row.includes('board/cam_dowel'));
+ const primeDrawers=spec.drawerBanks?.some(b=>b?.railFamily==='concealed');
+ if(fixedShelves||primeDrawers){
+  const panels=built.items.map(i=>({...i,assistant_carcass:{spec,group_id}}));
+  if(fixedShelves)nativeCarcassJoints(panels);
+  if(primeDrawers&&!built.drawerIssues.length)wardrobeHardware(panels);
+ }
  return spec;
 }
 export function questionnaireMaterialError(m,thickness){return !m?.variant_id?'Выберите материал из каталога.':Number(m.thickness)!==thickness?'Нужен материал толщиной '+thickness+' мм.':'';}

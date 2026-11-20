@@ -3,6 +3,7 @@ import pullCatalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {splitAt,levelOf,splitKey,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import prime from './wardrobe-prime.json' with {type:'json'};
+import joinery from './prime-drawer-joinery.json' with {type:'json'};
 import {fittings} from './carcass-joints.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 import {doorSide} from './wardrobe-door-layout.mjs';
@@ -52,9 +53,93 @@ function faceScrews(face,fore,at,add,front,height){
   screwX=(lowX+highX)/2;usable=highX-lowX;screwY=Math.max(lowY,Math.min(highY,screwY));
  }
  const inset=Math.min(100,usable/4);
- for(const dx of [-usable/2+inset,0,usable/2-inset]){
-  add('face',aks.joints.face,'Шуруп AKS 5×30 · '+face.name,[fore,face],screwX+dx,screwY,front-18);
+ const positions=[screwX-usable/2+inset,screwX,screwX+usable/2-inset];
+ for(const x of positions)add('face',aks.joints.face,'Шуруп AKS 5×30 · '+face.name,[fore,face],x,screwY,front-18);
+ return {positions,y:screwY};
+}
+
+// Keep complete pairs inside the mating edges. Short rear walls can be only 40 mm high.
+function verticalPairs(panel,low=panel.elevation_mm,high=panel.elevation_mm+panel.height){
+ const two=panel.height>=joinery.twoVerticalPairsFrom,span=high-low;
+ const pitch=span>=(two?joinery.twoVerticalPairsFrom:joinery.pitch+24)?joinery.pitch:joinery.compactPitch;
+ const minimum=(two?2*pitch+16:pitch)+24;
+ if(span<minimum-.001)return [];
+ if(!two){const cam=(low+high-pitch)/2;return [[cam,cam+pitch]];}
+ const margin=Math.min(50,(span-2*pitch-16)/2);
+ return [[low+margin,low+margin+pitch],[high-margin,high-margin-pitch]];
+}
+
+function floorFacePairs(floor,face,at,push,gripDepth){
+ const left=at(floor).x-floor.width/2,right=left+floor.width,faceLeft=at(face).x-face.width/2;
+ const low=Math.max(left+8,faceLeft+8+(face.blank_edge_pull?.edge==='left'?gripDepth:0));
+ const high=Math.min(right-8,faceLeft+face.width-8-(face.blank_edge_pull?.edge==='right'?gripDepth:0));
+ const mid=(low+high)/2;
+ // The front locks reach 68 / 78.5 mm from the edge of the floor. Leave room for the Ø15 cup.
+ const clip=push?86:75.5;
+ const slots=Math.min(face.width,floor.width)>=joinery.twoFloorPairsFrom?
+   [[low,mid-8,left+100,-1],[mid+8,high,right-100,1]]:[[low,high,mid,1]];
+ const pairs=slots.map(([lo,hi,target,preferred])=>{
+  for(const pitch of [joinery.pitch,joinery.compactPitch]){
+   let best=null;
+   for(const sign of [preferred,-preferred]){
+    const a=Math.max(left+clip,lo,lo-sign*pitch),b=Math.min(right-clip,hi,hi-sign*pitch);
+    if(a>b+.001)continue;
+    const cam=Math.max(a,Math.min(b,target)),offset=Math.abs(cam-target);
+    if(!best||offset<best.offset)best={cam,dowel:cam+sign*pitch,offset};
+   }
+   if(best)return [best.cam,best.dowel];
+  }
+  return null;
+ });
+ return pairs.every(Boolean)?pairs:[];
+}
+
+function gripDepthOf(face){
+ const grip=face.blank_edge_pull;
+ return grip?(grip.grooveDepth??pullCatalogue[grip.article].trialGrooveDepth):0;
+}
+function frontSidePairs(side,face,gripDepth){
+ const edge=face.blank_edge_pull?.edge;
+ return verticalPairs(side,Math.max(side.elevation_mm,face.elevation_mm+(edge==='bottom'?gripDepth:0)),
+  Math.min(side.elevation_mm+side.height,face.elevation_mm+face.height-(edge==='top'?gripDepth:0)));
+}
+function checkedPairs(rows,panel){
+ if(!rows.length)throw Error(panel.name+' · недостаточно места для пары эксцентрик + шкант. Проверьте размеры соединения и паз ручки.');
+ return rows;
+}
+
+// Cup centres in the local axes of the panel. The wooden dowels are buried in the mating edges.
+export function drawerCamSeats(panel,items){
+ const match=/:drawer-(\d+)-(\d+)-(rear|side-left|side-right|bottom)$/.exec(panel.item_id??'');
+ const bank=match&&panel.assistant_carcass?.spec?.drawerBanks?.[Number(match[1])];
+ if(bank?.railFamily!=='concealed')return [];
+ const role=match[3],w=panel.width,d=panel.depth,base=panel.elevation_mm;
+ if(role==='rear')return verticalPairs(panel).flatMap(([y])=>[-1,1].map(sign=>['z',sign*(w/2-34),y-base,d/2-6.4]));
+ const face=items.find(it=>it.item_id===panel.item_id.slice(0,-role.length)+'face');
+ if(!face)return [];
+ const gripDepth=gripDepthOf(face);
+ if(role!=='bottom'){
+  if(bank.faceFixing==='plank')return [];
+  const sign=role==='side-left'?1:-1;
+  return frontSidePairs(panel,face,gripDepth).map(([y])=>['x',sign*(w/2-6.4),y-base,d/2-34]);
  }
+ const at=p=>localPoint(p,panel.rotation||0);
+ const front=floorFacePairs(panel,face,at,bank.opening==='push',gripDepth);
+ return [...front.map(([x])=>['y',x-at(panel).x,6.4,d/2-34]),
+  ...[-1,1].flatMap(side=>[-1,1].map(end=>['y',side*(w/2-34),6.4,end*(d/2-100)]))];
+}
+
+function plankFloorScrews(left,width,occupied){
+ // Keep these vertical holes clear of the horizontal dowels, cam studs and facing screws.
+ const clear=[],right=left+width;
+ for(let x=left+43;x<=right-43;x+=.5){
+  if(occupied.every(h=>Math.abs(x-h)>=10))clear.push(x);
+ }
+ const inset=Math.max(52,Math.min(100,width/4));
+ const nearest=(xs,target)=>xs.reduce((a,b)=>Math.abs(b-target)<Math.abs(a-target)?b:a);
+ if(!clear.length||clear.at(-1)-clear[0]<16)throw Error('Мало места для крепления передней планки к дну. Проверьте ширину фасада и положение ручки.');
+ const first=nearest(clear.filter(x=>x<=clear.at(-1)-16),left+inset);
+ return [first,nearest(clear.filter(x=>x>=first+16),right-inset)];
 }
 
 function concealedDrawer(bank,parts,hosts,at,add,joint){
@@ -69,41 +154,46 @@ function concealedDrawer(bank,parts,hosts,at,add,joint){
   throw Error('Проверьте посадку короба PRIME на обе направляющие.');
  const rail=add('concealed',source,'PRIME by AKS '+(push?'Push to open':'с доводчиком')+' · '+length+' мм · '+source.article,[hosts[0],left],supportX[0],mountY,mountZ);
  Object.assign(rail,{article:source.article,opening,length_mm:length,span_mm:span,other_host_id:hosts[1].item_id,...(push?{cut_mm:span-206}:{})});
- const stud=(panel,x,level,angle,roll=0,back=false)=>{
-  const grip=face.blank_edge_pull,clear=grip?(grip.grooveDepth??pullCatalogue[grip.article].trialGrooveDepth):0;
-  const dx=x-at(face).x,dy=level-face.elevation_mm;
-  if(dx< -face.width/2+4+(grip?.edge==='left'?clear:0)||dx>face.width/2-4-(grip?.edge==='right'?clear:0)||
-     dy<4+(grip?.edge==='bottom'?clear:0)||dy>face.height-4-(grip?.edge==='top'?clear:0))
-   throw Error(face.name+' · для штока эксцентрика недостаточно места. Проверьте ширину фасада или выберите переднюю планку.');
-  joint('cam',face,panel,x,level,z,angle,roll,back);
+ const grip=face.blank_edge_pull,gripDepth=gripDepthOf(face);
+ const floorY=floor.elevation_mm+9,floorLeft=at(floor).x-floor.width/2;
+ const faceLow=face.elevation_mm+(grip?.edge==='bottom'?gripDepth:0);
+ const faceHigh=face.elevation_mm+face.height-(grip?.edge==='top'?gripDepth:0);
+ const faceLeft=at(face).x-face.width/2+(grip?.edge==='left'?gripDepth:0);
+ const faceRight=at(face).x+face.width/2-(grip?.edge==='right'?gripDepth:0);
+ const pair=(host,panel,cam,dowel,yaw,roll=0,back=false)=>{
+  joint('cam',host,panel,...cam,yaw,roll,back);
+  joint('dowel',host,panel,...dowel,yaw,roll,back);
  };
- const floorY=floor.elevation_mm+9,endPanels=fore?[rear,fore]:[rear];
- const endXs=[-1,1].map(k=>at(floor).x+k*(floor.width/2-Math.min(100,floor.width/4)));
  for(const [k,side] of [left,right].entries()){
-  const sign=k?-1:1,inner=sideX[k]+sign*9,outer=sideX[k]-sign*9,turn=k?180:0;
+  const sign=k?-1:1,inner=sideX[k]+sign*9,outer=sideX[k]-sign*9;
   for(const signZ of [-1,1]){
-   const off=signZ*(depth/2-100);
-   joint('cam',side,floor,inner,floorY,at(floor).z+off,turn);
-   joint('dowel',side,floor,inner,floorY,at(floor).z+off-signZ*32,turn);
+   const axis=at(floor).z+signZ*(depth/2-100);
+   pair(side,floor,[inner,floorY,axis],[inner,floorY,axis-signZ*joinery.pitch],k?180:0);
   }
-  for(const end of endPanels){
-   const margin=Math.min(50,end.height/4);
-   for(const h of [margin,end.height-margin])
-    add('bolt',aks.joints[k?'boltRight':'boltLeft'],'Конфирмат 7×50 · '+end.name,[side,end],outer,end.elevation_mm+h,at(end).z);
+  // Studs enter the sides. Both cups open onto the front (inside) face of the rear wall.
+  for(const [cam,dowel] of checkedPairs(verticalPairs(rear),rear)){
+   pair(side,rear,[inner,cam,at(rear).z],[inner,dowel,at(rear).z],180,k?0:180,true);
   }
-  if(!fore){
-   const bottom=Math.max(y+15,face.elevation_mm+15),top=Math.min(y+side.height-15,face.elevation_mm+face.height-15);
-   const inset=Math.min(40,(top-bottom)/4);
-   for(const level of [bottom+inset,top-inset])
-    stud(side,sideX[k],level,k?270:90,k?0:180,true);
+  if(fore){
+   const margin=Math.min(50,fore.height/4);
+   for(const h of [margin,fore.height-margin])
+    add('bolt',aks.joints[k?'boltRight':'boltLeft'],'Конфирмат 7×50 · '+fore.name,[side,fore],outer,fore.elevation_mm+h,at(fore).z);
+  }else{
+   if(sideX[k]<faceLeft+4||sideX[k]>faceRight-4)throw Error(face.name+' · проверьте ширину фасада и паз ручки у крепления боковины.');
+   for(const [cam,dowel] of checkedPairs(frontSidePairs(side,face,gripDepth),side))
+    pair(face,side,[sideX[k],cam,z],[sideX[k],dowel,z],k?270:90,k?0:180,true);
   }
  }
- for(const end of endPanels)for(const x of endXs)joint('confirmat',floor,end,x,floor.elevation_mm+18,at(end).z,0,90);
- if(!fore){
-  const centers=floor.width>=240?[at(floor).x-floor.width/2+100,at(floor).x+floor.width/2-100]:[at(floor).x];
-  for(const x of centers)stud(floor,x,floorY,270);
- }else{
-  faceScrews(face,fore,at,add,z,fore.elevation_mm+fore.height/2);
+ if(floorY<faceLow+4||floorY>faceHigh-4)throw Error(face.name+' · паз ручки пересекает нижнее крепление фасада.');
+ const bottomPairs=checkedPairs(floorFacePairs(floor,face,at,push,gripDepth),face);
+ for(const [cam,dowel] of bottomPairs)pair(face,floor,[cam,floorY,z],[dowel,floorY,z],270);
+ const inset=Math.max(52,Math.min(100,floor.width/4)),floorTop=floor.elevation_mm+floor.height;
+ for(const x of [floorLeft+inset,floorLeft+floor.width-inset])joint('confirmat',floor,rear,x,floorTop,at(rear).z,0,90);
+ if(fore){
+  const screws=faceScrews(face,fore,at,add,z,fore.elevation_mm+fore.height/2);
+  const occupied=bottomPairs.flat();
+  if(screws.y-floorTop<=39)occupied.push(...screws.positions);
+  for(const x of plankFloorScrews(floorLeft,floor.width,occupied))joint('confirmat',floor,fore,x,floorTop,at(fore).z,0,90);
  }
  return {axis:mountY+(push?23.5:23),front:mountZ,length};
 }

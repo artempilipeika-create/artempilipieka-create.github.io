@@ -52,7 +52,7 @@ function railControls(ui,box,bank,set){
  });
  if(!concealed)return;
  ui.select(box,'Открывание шуфляд',[['soft','Рукой · с доводчиком'],['push','Нажатием · Push to open']],bank.opening??'soft',value=>set({...bank,opening:value}));
- ui.select(box,'Крепление фасада',[['cam','Эксцентрики в боковинах и дне'],['plank','Передняя планка и три шурупа']],bank.faceFixing??'cam',value=>set({...bank,faceFixing:value}));
+ ui.select(box,'Крепление фасада',[['cam','Боковины и дно · эксцентрик + шкант'],['plank','Передняя планка · 3 шурупа, снизу эксцентрик + шкант']],bank.faceFixing??'cam',value=>set({...bank,faceFixing:value}));
 }
 function legacyControls(ui,parent,section){
  const fields=ui.fields;
@@ -117,6 +117,7 @@ function hardwareDetails(box,current){
    }
    photo.append(...(img.parentElement?[]:[img]),el('figcaption',title+' · '+rail.length+' мм · арт. '+rail.article+(rail.length===size?'':' (на фото '+size+' мм, арт. '+sample+')')));box.append(photo);
    box.append(el('p',hidden?'Короб '+(current.mountWidth-13)+' мм · боковины и дно ЛДСП 18 мм · боковой зазор 6,5 мм.':'Короб '+(current.mountWidth-27)+' мм · зазор по 13,5 мм на сторону.'));
+   if(hidden)box.append(el('p','Задняя стенка крепится к обеим боковинам на эксцентрик со шкантом. Дно соединяется с фасадом такой парой и при установке передней планки.'));
    for(const [side,has] of [['left',current.spacerL],['right',current.spacerR]]){
      if(!has)continue;
      spacerDrawing(box,current,side);
