@@ -106,3 +106,66 @@ def test_shared_guides_use_real_staggered_holes_and_18_mm_fixed_screws(tmp_path)
                     assert len(points)>=2 and all(p in rail['fixed'] for p in points)
                     if variant=='shared':native_rows.append(points)
             assert all(np.linalg.norm(np.subtract(a,b))>=4 for a in native_rows[0] for b in native_rows[1])
+
+
+def test_aks_push_kit_has_one_purchased_article_and_real_bores_for_every_installation(tmp_path):
+    from backend.v2.assistant_model import DoorHingeSetting
+    from backend.v2.three_d_document import _panel_hardware
+    from pydantic import ValidationError
+    import pytest
+
+    assets = ROOT / 'cabinet_assets/planner'
+    products = json.loads((assets/'wardrobe-aks-push.json').read_bytes())
+    assert len(products) == 12 and sum(len(p['mounts']) for p in products.values()) == 18
+    with zipfile.ZipFile(BytesIO(kit_bytes())) as archive:
+        importer = archive.read(IMPORTER_NAME)
+        for article, product in products.items():
+            magnetic = product['tip'] == 'magnet'
+            hinge = '112706' if magnetic else '122555'
+            assert (assets/'shelf-images'/f'{article}.webp').is_file()
+            for mount, native in product['mounts'].items():
+                setting = DoorHingeSetting(article=hinge, push={'article':article,'mount':mount})
+                panel = {'item_id':'g:door-left','blank_axis':'front','width':480,'height':1811,
+                         'assistant_carcass':{'group_id':'g','spec':{'front':{'hinges':{'door-left':setting.model_dump(exclude_none=True)}}}}}
+                rows,_ = _panel_hardware(panel)
+                assert {r['article']:r['qty'] for r in rows} == {hinge:4,article:1}
+                assert ('catch' in native) == magnetic
+                for part in ('body','bodyAt3','catch'):
+                    if part not in native:
+                        continue
+                    src=native[part]
+                    data=archive.read('Martin Forest AKS/'+src['file'])
+                    assert hashlib.sha256(data).hexdigest()==src['sha'] and src['sha'].encode() in importer
+                    path=tmp_path/src['file']
+                    path.write_bytes(data)
+                    tree=fr.load(path)
+                    defs={fr.vals(n)['FastID']:n for n in fr.child(tree,'FurnList')['children']}
+                    holes=[]
+                    for obj,mat,_ in fr.walk(fr.child(tree,'Model')):
+                        meta=fr.vals(obj)
+                        if obj['key']!='Obj' or meta.get('Type')!=3001:
+                            continue
+                        defined=fr.child(defs[meta['FastID']],'Holes')
+                        for h in (defined or {}).get('children',[]):
+                            v=fr.vals(h)
+                            point=mat @ [v['X'],v['Y'],v['Z'],1]
+                            axis=mat @ [v['DirX'],v['DirY'],v['DirZ'],0]
+                            holes.append((tuple(point[:3].round(2)),tuple(axis[:3].round(2)),v['Radius']*2,v['Depth']))
+                    if part=='catch':
+                        assert len(holes)==1 and holes[0][1:]==((-1,0,0),3,3)
+                    elif mount=='bored':
+                        assert holes==[((0,-9,0),(1,0,0),10,70)]
+                    else:
+                        assert sorted(holes)==[((x,0,0),(0,-1,0),3,3) for x in sorted(native['pilots'])]
+                        assert max(native['pilots'])-min(native['pilots'])==32
+                    if part!='catch':
+                        assert any(row['article']==article for row in fr.hardware(tree))
+        for hinge in json.loads((assets/'wardrobe-prime-hinges.json').read_bytes()):
+            if hinge['closing'] not in ('reverse','springless'):
+                continue
+            src=hinge.get('pushNative',hinge)
+            data=archive.read('Martin Forest AKS/'+src['file'])
+            assert hashlib.sha256(data).hexdigest()==src['sha'] and src['sha'].encode() in importer
+    for hinge,article,mount in [('112595','72258','bored'),('112706','82723','bored'),('112706','70787','bored')]:
+        with pytest.raises(ValidationError):
+            DoorHingeSetting(article=hinge,push={'article':article,'mount':mount})

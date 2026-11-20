@@ -172,7 +172,7 @@ function isDrawerCover(part){
   return Boolean(key&&(s?.drawerBanks?.[slot]?.coverFixing||s?.drawerFixing&&s?.drawerBanks?.[nicheSlot(Number(key[1]),Number(key[2])+1)]?.layout)||s&&part.item_id.includes(':shelf-base-'));
 }
 
-export function nativeCarcassJoints(items) {
+export function nativeCarcassJoints(items,{checkOpposing=true}={}) {
   const byId=new Map(items.map(it=>[it.item_id,it])),out=[];
   for (const panel of items) {
     const meta=panel.assistant_carcass;
@@ -213,6 +213,11 @@ export function nativeCarcassJoints(items) {
       }
     }
   }
+  if(checkOpposing)checkOpposingJoints(out,items);
+  for(const it of items)out.push(...dividerJoints(it,byId),...nativeBackJoints(it,byId));
+  return out;
+}
+function checkOpposingJoints(out,items){
   // On a shared divider the two drilling patterns enter from opposite faces.
   const seats=new Map();
   for(const part of out){
@@ -235,6 +240,4 @@ export function nativeCarcassJoints(items) {
       for(const a of list)check(a,pt,10);
     }
   }
-  for(const it of items)out.push(...dividerJoints(it,byId),...nativeBackJoints(it,byId));
-  return out;
 }

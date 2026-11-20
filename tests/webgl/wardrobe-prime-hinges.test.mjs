@@ -26,7 +26,7 @@ test('all H0 articles resolve to their own pinned source and the H2 variant is u
   assert.equal(hs.length,4);
   assert.ok(hs.every(h=>h.article===p.article&&h.source_file===p.file&&h.source_sha256===p.sha));
  }
- assert.deepEqual(counts,{overlay:1,half:5,inset:6});
+ assert.deepEqual(counts,{overlay:3,half:6,inset:7});
  assert.equal(hingeCatalogue['113401'],undefined);
  assert.throws(()=>cabinet(both({article:'113401'})),/каталога/);
 });
@@ -67,7 +67,7 @@ test('press to open references the free edge, the back of the door and the real 
   const door=part('door-left'),side=part('left'),h=doorHinges(door,items)[0],p=doorPush(door,items)[0];
   const sign=h.door_side==='left'?1:-1,pos=localPoint(p.position,angle);
   close(pos.x,x(door,angle)+sign*(door.width/2-70));close(pos.z,z(door,angle)-9);
-  close(z(door,angle)+9-z(side,angle)-side.depth/2,kind==='112708'?21:-2);
+  close(z(door,angle)+9-z(side,angle)-side.depth/2,kind==='112708'?20:-2);
   assert.ok(items.some(i=>i.item_id===p.host_blank_id&&i.blank_axis==='horizontal'));
   assert.equal(p.joined_panel_id,door.item_id);assert.equal(p.article,'09.0019');
  }

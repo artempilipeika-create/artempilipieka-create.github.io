@@ -1,5 +1,6 @@
+import {planAksPush,pushProducts} from './wardrobe-push-layout.mjs';
 import pushKit from './wardrobe-push-open.json' with {type:'json'};
-import {hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,meetingGap} from './wardrobe-hinge-layout.mjs';
+import {doorPushGap,hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,meetingGap} from './wardrobe-hinge-layout.mjs';
 import {finishedFaceSize} from './wardrobe-edge-pulls.mjs';
 import {doorSide,physicalProfiles} from './wardrobe-door-layout.mjs';
 import {splitAt,levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
@@ -121,8 +122,10 @@ export function doorHinges(door,items){
  const x=at.x+sign*host.width/2,z=leaf.z-door.depth/2;
  const overlay=fit.kind==='inset'?-1.5:fit.kind==='half'?(host.width-meetingGap(front,key))/2:host.width-1.5;
  const outer=items.find(i=>i.item_id===group.group_id+':left'),outerAt=localPoint(outer,angle);
- const expectedZ=outerAt.z+outer.depth/2+(fit.kind==='inset'?-door.depth-insetDepth(front,key):settingFor(front,key).push?3:0);
- if(Math.abs(z-expectedZ)>.01||Math.abs(leaf.x-sign*door.width/2-(x-sign*overlay))>.01)
+ const expectedZ=outerAt.z+outer.depth/2+(fit.kind==='inset'?-door.depth-insetDepth(front,key):settingFor(front,key).push?doorPushGap:0);
+ // Previously saved AQ overlay doors can carry the original 3 mm seat.
+ const oldAQ=settingFor(front,key).push===true&&fit.kind!=='inset'&&Math.abs(z-expectedZ-1)<.01;
+ if((Math.abs(z-expectedZ)>.01&&!oldAQ)||Math.abs(leaf.x-sign*door.width/2-(x-sign*overlay))>.01)
    throw Error('Проверьте положение фасада относительно выбранной стойки.');
  if(z-37+3>at.z+host.depth/2||z-37-3<at.z-host.depth/2)throw Error('Крепление петли выходит за глубину стойки.');
  const cupMargin=fit.cupFromHostMm+overlay-17.5;
@@ -153,8 +156,10 @@ export function doorHinges(door,items){
  const axes=front.autoHinges||front.hinges?automaticAxes(door,host,items,side,obstacles,count,section,opposing,fit):hingeAxes(door.height,count,front.offset,obstacles);
  if(axes.some(y=>door.elevation_mm+y-26<host.elevation_mm||door.elevation_mm+y+26>host.elevation_mm+host.height))
    throw Error('Ответная планка выходит за боковину. Проверьте высоту фасада.');
+ const opening=settingFor(front,key).push;
+ const native=opening&&opening!==true&&fit.pushNative?fit.pushNative:fit;
  return axes.map(y=>({
-   name:'Петля '+fit.series+' · '+door.name,article:fit.article,source_file:fit.file,source_sha256:fit.sha,
+   name:'Петля '+fit.series+' · '+door.name,article:fit.article,source_file:native.file,source_sha256:native.sha,
    door_side:side,host_blank_id:host.item_id,joined_panel_id:door.item_id,rotation:angle,
    position:{...worldPoint({x,z},angle),y:door.elevation_mm+y},elastic_resize:false
  }));
@@ -167,6 +172,12 @@ export function doorPush(door,items){
  if(!group||door.blank_axis!=='front')return [];
  const key=door.item_id.slice(group.group_id.length+1),front=group.spec.front;
  if(!front||!doorSide(key)||!settingFor(front,key).push)return [];
+ const setup=settingFor(front,key).push;
+ if(setup!==true){
+  const product=pushProducts[setup.article],closing=hingeProduct(front,key).closing;
+  if(!product||(product.tip==='rubber'?closing!=='reverse':!['springless','reverse'].includes(closing)))throw Error('Выберите совместимую петлю для типона.');
+  return planAksPush(door,items,setup,installedSide(front,key),doorHinges);
+ }
  if(hingeProduct(front,key).closing!=='springless')throw Error('Толкателю AQ нужна петля без пружины.');
  const angle=door.rotation,sign=installedSide(front,key)==='left'?1:-1,at=localPoint(door,angle);
  const x=at.x+sign*(door.width/2-pushKit.workshopReference.bodyBoreFromDoorFreeEdgeMm),z=at.z-door.depth/2;

@@ -200,11 +200,26 @@ class FacadeDivision(StrictModel):
     cutHeight: Literal[73,74] | None = Field(default=None,exclude_if=lambda v:v is None)
     gola: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
 
+AKS_PUSH = json.loads((ASSETS / 'wardrobe-aks-push.json').read_text())
+
+class DoorPushSetting(StrictModel):
+    article: str
+    mount: Literal['auto','bored','surface'] = 'auto'
+    support: Literal['auto','side','shelf','bottom'] = 'auto'
+    heightMm: int = Field(default=1050,ge=0,le=5000,strict=True)
+
+    @model_validator(mode='after')
+    def supported_mount(self):
+        product = AKS_PUSH.get(self.article)
+        if not product or self.mount!='auto' and self.mount not in product['mounts']:
+            raise ValueError('Выберите доступное исполнение типона AKS.')
+        return self
+
 class DoorHingeSetting(StrictModel):
     article: str
     recess: int | None = Field(default=None,ge=0,le=1140,strict=True,exclude_if=lambda v:v is None)
     central: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
-    push: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
+    push: DoorPushSetting | Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
 
     @model_validator(mode='after')
     def match_article(self):
@@ -212,7 +227,11 @@ class DoorHingeSetting(StrictModel):
         if not product:raise ValueError('Выберите петлю PRIME из каталога.')
         if (self.recess is not None or self.central) and product['kind']!='inset':
             raise ValueError('Утопление и выбор стойки задаются для вкладной двери.')
-        if self.push and product['closing']!='springless':
+        if isinstance(self.push,DoorPushSetting):
+            allowed = ('reverse',) if AKS_PUSH[self.push.article]['tip']=='rubber' else ('springless','reverse')
+            if product['closing'] not in allowed:
+                raise ValueError('Петля не совместима с наконечником выбранного типона.')
+        elif self.push and product['closing']!='springless':
             raise ValueError('Для открывания нажатием выберите петлю без пружины.')
         return self
 
@@ -579,6 +598,8 @@ class CarcassDesign(CarcassSpec):
         if configured.keys()-{p[0] for p in leaves}:raise ValueError('Петля относится к отсутствующей створке.')
         for key,left,right,bottom,top in leaves:
             setup=configured.get(key)
+            if setup and isinstance(setup.push,DoorPushSetting) and (key in handles or key in (f.edgeProfiles or {}) or f.topProfile and not key.startswith('door-lower-') or d and d.gola and key.startswith(('door-upper-','door-lower-'))):
+                raise ValueError('Для этой створки выбран типон. Уберите ручку или профиль.')
             if setup and setup.on_divider:
                 prefix=key.rsplit('-',1)[0]+'-'
                 reveal=2 if PRIME_HINGES[setup.article]['kind']=='half' and torc(prefix+'left','right') and torc(prefix+'right','left') else 1.5

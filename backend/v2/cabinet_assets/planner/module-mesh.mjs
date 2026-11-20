@@ -1,3 +1,5 @@
+import pushMeshes from './aks-push-meshes.json' with {type:'json'};
+import {pushProducts,pushRoll} from './wardrobe-push-layout.mjs';
 import {panelLightMeshes} from './wardrobe-lighting.mjs';
 import {machineBoardMeshes} from './panel-machining-mesh.mjs';
 import {blankEdgeCode} from './furniture-core.mjs';
@@ -41,6 +43,8 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,prod
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
+  pushGray:{color:'#87898b',roughness:.5,metalness:0},
+  pushBlack:{color:'#27282a',roughness:.5,metalness:0},
   pushPlastic:{color:'#f4f4ed',roughness:.51,metalness:0},
   railSteel:{color:'#b5bfc2',roughness:.32,metalness:.75},
   slideSteel:{color:'#828e94',roughness:.36,metalness:.67},
@@ -416,7 +420,21 @@ export class MeshFactory{
     for(const push of this.visiblePushes(it)){
       const at=localPoint({x:push.position.x-it.x,z:push.position.z-it.z},it.rotation);
       const y=push.position.y-it.elevation_mm,dir=push.wardrobe_push_mount==='top'?1:-1;
-      if(push.joined_panel_id===it.item_id){
+      if(push.push_part){
+        const product=pushProducts[push.article],part=push.push_gap_mm===3?'bodyAt3':push.push_part;
+        const key=['aks-tip',push.article,push.push_install,part,push.wardrobe_push_mount].join(':');
+        const geo=this.acquire(key,()=>{
+          const [vertices,indices]=pushMeshes[push.article+'-'+push.push_install][part];
+          const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
+          const g=new THREE.BufferGeometry();
+          g.setAttribute('position',new THREE.BufferAttribute(Float32Array.from(new Int16Array(bytes(vertices)),v=>v*S/10),3));
+          g.setIndex(new THREE.BufferAttribute(new Uint16Array(bytes(indices)),1));
+          g.rotateY(Math.PI/2);g.rotateZ(pushRoll[push.wardrobe_push_mount]*Math.PI/180);g.computeVertexNormals();return g;
+        });
+        const metal=part==='catch'||product.series==='metal',role=metal?'hinge':({'белый':'pushPlastic','серый':'pushGray','черный':'pushBlack'})[product.color];
+        const mesh=this.mesh(group,role,geo,key,at.x,y,at.z,null,ghost);
+        Object.assign(mesh.userData,{article:push.article,pushPart:push.push_part,frontAccessory:part==='catch'});
+      }else if(push.joined_panel_id===it.item_id){
         const catchPlate=this.box(group,'hinge',20,20,1,at.x,y+dir*11.5,at.z-.5,null,ghost,.4);
         Object.assign(catchPlate.userData,{article:'09.0021',frontAccessory:true});
       }else{
@@ -907,14 +925,14 @@ export class MeshFactory{
   }
   visiblePushes(it){
     const meta=it.assistant_carcass;
-    if(!meta||!['horizontal','front'].includes(it.blank_axis))return [];
+    if(!meta||!['horizontal','front','side'].includes(it.blank_axis))return [];
     const configured=Object.entries(meta.spec.front?.hinges??{}).filter(([,setting])=>setting.push);
     if(!configured.length)return [];
     const items=this.adapter.items??[];
     return configured.flatMap(([key])=>{
       const door=items.find(p=>p.item_id===meta.group_id+':'+key);
       if(!door)return [];
-      try{return doorPush(door,items).filter(p=>p.host_blank_id===it.item_id||p.joined_panel_id===it.item_id);}
+      try{return doorPush(door,items).filter(p=>p.push_part?(p.push_part==='catch'?p.joined_panel_id:p.host_blank_id)===it.item_id:p.host_blank_id===it.item_id||p.joined_panel_id===it.item_id);}
       catch{return [];}
     });
   }

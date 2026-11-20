@@ -1,0 +1,659 @@
+{
+  "115822": {
+    "name": "Механизм push-to-open наконечник резиновый накладной белый AKS",
+    "url": "https://aks.by/121262-145284-p?OFFER_ID=145285",
+    "photoSource": "https://aks.by/upload/iblock/48a/oki98c3wm191mzfg47phgk4xotsl20j2.jpg",
+    "tip": "rubber",
+    "color": "белый",
+    "series": "standard",
+    "mounts": {
+      "surface": {
+        "body": {
+          "file": "MF_AKS_115822_surface_body.fr3d",
+          "sha": "bb2cf9e7796f803c3ece405b306ba3a42679759e2e541c84f5756d7dcaa8a5c8"
+        },
+        "sourceSha": "515e56c5d156129b2b6e37482eb1fc6f2f49d070334b5256fd994a955d606734",
+        "source": "Механизм push-to-open БЕЛЫЙ с резин. након. (накладной) (115822).fr3d",
+        "faceX": -2.098,
+        "bounds": [
+          [
+            -2.0980000495910645,
+            0.0,
+            -5.0
+          ],
+          [
+            84.0,
+            13.782999992370605,
+            5.0
+          ]
+        ],
+        "pilots": [
+          17.0,
+          49.0
+        ],
+        "tipY": 9.091
+      }
+    }
+  },
+  "115823": {
+    "name": "Механизм push-to-open наконечник резиновый накладной серый AKS",
+    "url": "https://aks.by/121262-145284-p?OFFER_ID=145286",
+    "photoSource": "https://aks.by/upload/iblock/50f/sov5vuxh2u7twmmhshx24hjbmavar8qo.jpg",
+    "tip": "rubber",
+    "color": "серый",
+    "series": "standard",
+    "mounts": {
+      "surface": {
+        "body": {
+          "file": "MF_AKS_115823_surface_body.fr3d",
+          "sha": "968dfa25f9c31ba5bd0e1b0621bd2b37faa0cfbcb8f37fb0feba6b263a7d050c"
+        },
+        "sourceSha": "515e56c5d156129b2b6e37482eb1fc6f2f49d070334b5256fd994a955d606734",
+        "source": "Механизм push-to-open СЕРЫЙ с резин. након. (накладной) (115823).fr3d",
+        "faceX": -2.098,
+        "bounds": [
+          [
+            -2.0980000495910645,
+            0.0,
+            -5.0
+          ],
+          [
+            84.0,
+            13.782999992370605,
+            5.0
+          ]
+        ],
+        "pilots": [
+          17.0,
+          49.0
+        ],
+        "tipY": 9.091
+      }
+    }
+  },
+  "70787": {
+    "name": "Механизм push-to-open наконечник магнитный накладной серый AKS",
+    "url": "https://aks.by/78013-109101-p?OFFER_ID=109106",
+    "photoSource": "https://aks.by/upload/iblock/3e9/2p8zvivifktf6hkczvck0ngpysfolpwd.jpg",
+    "tip": "magnet",
+    "color": "серый",
+    "series": "standard",
+    "mounts": {
+      "surface": {
+        "body": {
+          "file": "MF_AKS_70787_surface_body.fr3d",
+          "sha": "3a8e6ec10cd30f1b77e7a3277ec26036ba0c41ab321e90e4fda3c93d7b252043"
+        },
+        "sourceSha": "2004ce8b70d46483e64ef3d7dfa2fac216d39874b31183433b7d97ee63d4058f",
+        "source": "Механизм push-to-open СЕРЫЙ (накладной) (70787).fr3d",
+        "faceX": -3.898,
+        "bounds": [
+          [
+            -2.0980000495910645,
+            0.0,
+            -5.0
+          ],
+          [
+            84.0,
+            13.782999992370605,
+            5.0
+          ]
+        ],
+        "pilots": [
+          17.0,
+          49.0
+        ],
+        "tipY": 9.091,
+        "catch": {
+          "file": "MF_AKS_70787_surface_catch.fr3d",
+          "sha": "26f901558596e55a549d851e8015ba06247144f4e7020646ae7535073e75406c"
+        },
+        "catchY": 10.478,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0
+      }
+    }
+  },
+  "72255": {
+    "name": "Механизм push-to-open наконечник магнитный накладной/врезной белый AKS",
+    "url": "https://aksgeorgia.ge/ru/product/%d0%bc%d0%b5%d1%85%d0%b0%d0%bd%d0%b8%d0%b7%d0%bc-push-to-open-%d0%bd%d0%b0%d0%ba%d0%be%d0%bd%d0%b5%d1%87%d0%bd%d0%b8%d0%ba-%d0%bc%d0%b0%d0%b3%d0%bd%d0%b8%d1%82%d0%bd%d1%8b%d0%b9-%d0%bd%d0%b0%d0%ba-2/",
+    "photoSource": "https://aksgeorgia.ge/wp-content/uploads/2026/08/ec5lr3vofqhvdzqjt6ei93d346ycxrnx.jpg",
+    "tip": "magnet",
+    "color": "белый",
+    "series": "reinforced",
+    "mounts": {
+      "bored": {
+        "body": {
+          "file": "MF_AKS_72255_bored_body.fr3d",
+          "sha": "b3f0c1ca0043ae6c90ba2d98dcf5f42cd647375c14cd09928c1a3c90b5844a5e"
+        },
+        "sourceSha": "63b1ce0ac3c8dd80d242ee9cfb06792fd548b089d11ad5aea10830518abce106",
+        "source": "Механизм push-to-open БЕЛЫЙ  усиленный (врезной) (72255).fr3d",
+        "faceX": -2,
+        "bounds": [
+          [
+            -0.20000000298023224,
+            -12.699999809265137,
+            -3.700000047683716
+          ],
+          [
+            70.0,
+            -5.300000190734863,
+            3.700000047683716
+          ]
+        ],
+        "pilots": [],
+        "tipY": -9.0,
+        "catch": {
+          "file": "MF_AKS_72255_bored_catch.fr3d",
+          "sha": "bab9c11a66317f61ef56c29b33bfb850c0bbd76fff7e149c4afd0f68a5669261"
+        },
+        "catchY": -4.706,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0,
+        "bodyAt3": {
+          "file": "MF_AKS_72255_bored_bodyAt3.fr3d",
+          "sha": "c8e6f93bcee4618fc2d8570dd35f1ecc132e9c045c5f696347324fc773e7a245"
+        }
+      },
+      "surface": {
+        "body": {
+          "file": "MF_AKS_72255_surface_body.fr3d",
+          "sha": "214ac991d3061ba76cc37e455bb9b46b5dcae9bc82e84c7079c46a67ac8d3000"
+        },
+        "sourceSha": "a6e7b4a540553f6d8dcc79dd78de5ff6ec44a828c7e0fb5d84409fb5f03338cc",
+        "source": "Механизм push-to-open БЕЛЫЙ  усиленный (накладной) (72255).fr3d",
+        "faceX": -3.0,
+        "bounds": [
+          [
+            -1.2000000476837158,
+            0.0,
+            -7.25
+          ],
+          [
+            81.80000305175781,
+            15.0,
+            7.25
+          ]
+        ],
+        "pilots": [
+          21.0,
+          53.0
+        ],
+        "tipY": 7.406,
+        "catch": {
+          "file": "MF_AKS_72255_surface_catch.fr3d",
+          "sha": "9508f27c6513c5a6bbfa58b15a2dd8dd9acb069a79705f760ad0069c07976491"
+        },
+        "catchY": 11.699,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0
+      }
+    }
+  },
+  "72257": {
+    "name": "Механизм push-to-open наконечник магнитный накладной/врезной черный AKS",
+    "url": "https://aks.by/75177-106390-p?OFFER_ID=106380",
+    "photoSource": "https://aks.by/upload/iblock/2f2/502o93102d7w6t521p4sykwr1pqcvooz.jpg",
+    "tip": "magnet",
+    "color": "черный",
+    "series": "reinforced",
+    "mounts": {
+      "bored": {
+        "body": {
+          "file": "MF_AKS_72257_bored_body.fr3d",
+          "sha": "d5cccabc210b0b160c74a383ed4b1204f95e8122ea7d01b591d30ffff01b9e46"
+        },
+        "sourceSha": "a3ee6121eb8d1620d22fd2f3adbc810cece1b6fe5833afabc8fdb7502910f9bc",
+        "source": "Механизм push-to-open ЧЕРНЫЙ усиленный (врезной) (72257).fr3d",
+        "faceX": -2,
+        "bounds": [
+          [
+            -0.20000000298023224,
+            -12.699999809265137,
+            -3.700000047683716
+          ],
+          [
+            70.0,
+            -5.300000190734863,
+            3.700000047683716
+          ]
+        ],
+        "pilots": [],
+        "tipY": -9.0,
+        "catch": {
+          "file": "MF_AKS_72257_bored_catch.fr3d",
+          "sha": "1e32d1681deaa15fedb75e60d0c2731fcbfd7dd54f90afefb3b9ac07115f69a0"
+        },
+        "catchY": -4.706,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0,
+        "bodyAt3": {
+          "file": "MF_AKS_72257_bored_bodyAt3.fr3d",
+          "sha": "d327ddec2ceb414bf0ef4010b686b2388b611b37e31ad68577d22f354d6b9cbb"
+        }
+      },
+      "surface": {
+        "body": {
+          "file": "MF_AKS_72257_surface_body.fr3d",
+          "sha": "65e8324caf7c4ad5923595bcaf1fd2b2a5bf4afb9f8549b7203ba1d076350f49"
+        },
+        "sourceSha": "445b83793d23171cfb25bf04ea6af86f73b0c45e2ba8dd426738356023255e24",
+        "source": "Механизм push-to-open ЧЕРНЫЙ усиленный (накладной) (72257).fr3d",
+        "faceX": -3.0,
+        "bounds": [
+          [
+            -1.2000000476837158,
+            0.0,
+            -7.25
+          ],
+          [
+            81.80000305175781,
+            15.0,
+            7.25
+          ]
+        ],
+        "pilots": [
+          21.0,
+          53.0
+        ],
+        "tipY": 7.406,
+        "catch": {
+          "file": "MF_AKS_72257_surface_catch.fr3d",
+          "sha": "0bbfb89e84785b1975869d305e47d474ce2607f7fb7327095c12c62c210fe2de"
+        },
+        "catchY": 11.699,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0
+      }
+    }
+  },
+  "72258": {
+    "name": "Механизм push-to-open наконечник магнитный накладной/врезной серый AKS",
+    "url": "https://aks.by/75177-106390-p?OFFER_ID=106381",
+    "photoSource": "https://aks.by/upload/iblock/002/kvydqj9swvomrayijrh3512n4i05e9nl.jpg",
+    "tip": "magnet",
+    "color": "серый",
+    "series": "reinforced",
+    "mounts": {
+      "bored": {
+        "body": {
+          "file": "MF_AKS_72258_bored_body.fr3d",
+          "sha": "1cbd31de13c83582f2dedf12eb48e0f1d392650a23f87cb09be8ab1fa9cfa991"
+        },
+        "sourceSha": "b105f1d6aac13a55e54958121382f29f5aefe172586715c437be9b7a230495d1",
+        "source": "Механизм push-to-open СЕРЫЙ усиленный (врезной) (72258).fr3d",
+        "faceX": -2,
+        "bounds": [
+          [
+            -0.20000000298023224,
+            -12.699999809265137,
+            -3.700000047683716
+          ],
+          [
+            70.0,
+            -5.300000190734863,
+            3.700000047683716
+          ]
+        ],
+        "pilots": [],
+        "tipY": -9.0,
+        "catch": {
+          "file": "MF_AKS_72258_bored_catch.fr3d",
+          "sha": "e71f1962d3648a4ee7b7dec774b3bbaa3b8949029d5e12fc80be5f1dd199cbaa"
+        },
+        "catchY": -4.706,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0,
+        "bodyAt3": {
+          "file": "MF_AKS_72258_bored_bodyAt3.fr3d",
+          "sha": "4ee7502da0763dbfcd07c6d549f4dcc4b261243aad8e4c66c45746bc5e1112ea"
+        }
+      },
+      "surface": {
+        "body": {
+          "file": "MF_AKS_72258_surface_body.fr3d",
+          "sha": "879200c26fe4cf27c2d6dea7ea6f04fe6a71ff15372a82046f71d5f60cd79722"
+        },
+        "sourceSha": "cfbca36f21c3ad6cee1735f005e0dcd214e82e1d7bec481ccb403e5a69c1fdad",
+        "source": "Механизм push-to-open СЕРЫЙ усиленный (накладной) (72258).fr3d",
+        "faceX": -3.0,
+        "bounds": [
+          [
+            -1.2000000476837158,
+            0.0,
+            -7.25
+          ],
+          [
+            81.80000305175781,
+            15.0,
+            7.25
+          ]
+        ],
+        "pilots": [
+          21.0,
+          53.0
+        ],
+        "tipY": 7.406,
+        "catch": {
+          "file": "MF_AKS_72258_surface_catch.fr3d",
+          "sha": "722aba44241133e8b2ec90b57c15c10c9066125df3722704d7f6739d666227c4"
+        },
+        "catchY": 11.699,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0
+      }
+    }
+  },
+  "73723": {
+    "name": "Механизм push-to-open наконечник магнитный накладной белый AKS",
+    "url": "https://aks.by/78013-109101-p?OFFER_ID=109107",
+    "photoSource": "https://aks.by/upload/iblock/29d/1wss5viwjv6177ti801zoi01hzf2130i.jpg",
+    "tip": "magnet",
+    "color": "белый",
+    "series": "standard",
+    "mounts": {
+      "surface": {
+        "body": {
+          "file": "MF_AKS_73723_surface_body.fr3d",
+          "sha": "c9fefc1c02fac1de7bc94983ab837f29ba556bf26dd526cc6e6867db91b8d9d4"
+        },
+        "sourceSha": "53c43fcecf73d69a02c66d06e9b4990530f3050fa417c6af16d3823765479811",
+        "source": "Механизм push-to-open БЕЛЫЙ (накладной) (73723).fr3d",
+        "faceX": -3.898,
+        "bounds": [
+          [
+            -2.0980000495910645,
+            0.0,
+            -5.0
+          ],
+          [
+            84.0,
+            13.782999992370605,
+            5.0
+          ]
+        ],
+        "pilots": [
+          17.0,
+          49.0
+        ],
+        "tipY": 9.091,
+        "catch": {
+          "file": "MF_AKS_73723_surface_catch.fr3d",
+          "sha": "37241894d71929ca3f0e619bfb7eec92c1dc35230137a994cf9335a36bd63532"
+        },
+        "catchY": 10.478,
+        "catchWidth": 20.0,
+        "catchHeight": 20.0
+      }
+    }
+  },
+  "74055": {
+    "name": "Механизм push-to-open наконечник магнитный накладной серый AKS металлический корпус",
+    "url": "https://aks.by/89939-116471-p?OFFER_ID=116474",
+    "photoSource": "https://aks.by/upload/iblock/ea3/a3glgwx2wmlpomqq0h6u80bv6q53z37b.jpg",
+    "tip": "magnet",
+    "color": "серый",
+    "series": "metal",
+    "mounts": {
+      "surface": {
+        "body": {
+          "file": "MF_AKS_74055_surface_body.fr3d",
+          "sha": "91e0e656f2270153090463d413f0890a4b849bb04ac7c54eb1da13cefbb59244"
+        },
+        "sourceSha": "5671df23ef34c759323d8637592a78e5272ec837b2a4e065ff9b665c3e15a327",
+        "source": "Механизм push-to-open СЕРЫЙ (накладной) металлический корпус (74055).fr3d",
+        "faceX": -2.8,
+        "bounds": [
+          [
+            -2.0,
+            0.0,
+            -10.5
+          ],
+          [
+            84.35399627685547,
+            11.685999870300293,
+            10.5
+          ]
+        ],
+        "pilots": [
+          23.0,
+          55.0
+        ],
+        "tipY": 6.854,
+        "catch": {
+          "file": "MF_AKS_74055_surface_catch.fr3d",
+          "sha": "110a7cafd5c831de29a308885caaa8b83aff7b560fec4a90f0b3cb636aaf1340"
+        },
+        "catchY": 6.854,
+        "catchWidth": 16.0,
+        "catchHeight": 15.22
+      }
+    }
+  },
+  "82722": {
+    "name": "Механизм push-to-open наконечник резиновый накладной/врезной белый AKS",
+    "url": "https://aks.by/87316-113481-p?OFFER_ID=113485",
+    "photoSource": "https://aks.by/upload/iblock/197/4arksfmzts72z8tqfr7tf2ry9mxie4j0.jpg",
+    "tip": "rubber",
+    "color": "белый",
+    "series": "reinforced",
+    "mounts": {
+      "bored": {
+        "body": {
+          "file": "MF_AKS_82722_bored_body.fr3d",
+          "sha": "5e95e0024462e6633eaf29e275fab76134843079b27d29c3b0ea7ad10ce7febb"
+        },
+        "sourceSha": "97a780fa16544afb408d917711672991186c988ba923380ed51f82c9464a864c",
+        "source": "Механизм push-to-open БЕЛЫЙ  с резин. након. усиленный (врезной) (82722).fr3d",
+        "faceX": -2,
+        "bounds": [
+          [
+            -2.0,
+            -12.699999809265137,
+            -3.700000047683716
+          ],
+          [
+            70.0,
+            -5.300000190734863,
+            3.700000047683716
+          ]
+        ],
+        "pilots": [],
+        "tipY": -9.0,
+        "bodyAt3": {
+          "file": "MF_AKS_82722_bored_bodyAt3.fr3d",
+          "sha": "3832625414bdf61e7e1485f8dcb350f578c9e088ea1855cbffaf269b70e6f816"
+        }
+      },
+      "surface": {
+        "body": {
+          "file": "MF_AKS_82722_surface_body.fr3d",
+          "sha": "cabbfea99bbec1bccc1960d5a6f70cb00248c893f042044e5b3e476ba30775d4"
+        },
+        "sourceSha": "051455303cf49aa05c13dbe69d67c8fedb818b4377d88a7eb31c3fcf49dbc1fa",
+        "source": "Механизм push-to-open БЕЛЫЙ  с резин. након. усиленный (накладной) (82722).fr3d",
+        "faceX": -1.2,
+        "bounds": [
+          [
+            -1.2000000476837158,
+            0.0,
+            -7.25
+          ],
+          [
+            81.80000305175781,
+            15.0,
+            7.25
+          ]
+        ],
+        "pilots": [
+          21.0,
+          53.0
+        ],
+        "tipY": 7.406
+      }
+    }
+  },
+  "82723": {
+    "name": "Механизм push-to-open наконечник резиновый накладной/врезной серый AKS",
+    "url": "https://aks.by/87316-113481-p?OFFER_ID=113486",
+    "photoSource": "https://aks.by/upload/iblock/534/vhwn7dupdb3lorlyrv7chiw975fs9dxt.jpg",
+    "tip": "rubber",
+    "color": "серый",
+    "series": "reinforced",
+    "mounts": {
+      "bored": {
+        "body": {
+          "file": "MF_AKS_82723_bored_body.fr3d",
+          "sha": "c10f4270e8f5583ebc4edfe828dced6f5508edc277743cab450aa61b27bafdd1"
+        },
+        "sourceSha": "51a6f25db56fc5f2ee9807589659d79dad1e0adc36eb8aa0f1a2801267a6894f",
+        "source": "Механизм push-to-open СЕРЫЙ с резин. након. усиленный (врезной) (82723).fr3d",
+        "faceX": -2,
+        "bounds": [
+          [
+            -2.0,
+            -12.699999809265137,
+            -3.700000047683716
+          ],
+          [
+            70.0,
+            -5.300000190734863,
+            3.700000047683716
+          ]
+        ],
+        "pilots": [],
+        "tipY": -9.0,
+        "bodyAt3": {
+          "file": "MF_AKS_82723_bored_bodyAt3.fr3d",
+          "sha": "5ada1cb5306bc663e3df03184e7c401fb804b6107b8a2d025f76bae77de97e2f"
+        }
+      },
+      "surface": {
+        "body": {
+          "file": "MF_AKS_82723_surface_body.fr3d",
+          "sha": "ab7b90f0718d839742b4169f8482338bc18b735699e4aa0da9f5de0cf43d09d6"
+        },
+        "sourceSha": "65cfac8880a5c818aabf85d4c791d19e3e7903e4472ada30a7ffbaf1107fddf3",
+        "source": "Механизм push-to-open СЕРЫЙ с резин. након. усиленный (накладной) (82723).fr3d",
+        "faceX": -1.2,
+        "bounds": [
+          [
+            -1.2000000476837158,
+            0.0,
+            -7.25
+          ],
+          [
+            81.80000305175781,
+            15.0,
+            7.25
+          ]
+        ],
+        "pilots": [
+          21.0,
+          53.0
+        ],
+        "tipY": 7.406
+      }
+    }
+  },
+  "82724": {
+    "name": "Механизм push-to-open наконечник резиновый накладной/врезной черный AKS",
+    "url": "https://aks.by/87316-113481-p?OFFER_ID=113487",
+    "photoSource": "https://aks.by/upload/iblock/7bc/6ppkb7mn3znncwpcs0wf2vcsxea6j0il.jpg",
+    "tip": "rubber",
+    "color": "черный",
+    "series": "reinforced",
+    "mounts": {
+      "bored": {
+        "body": {
+          "file": "MF_AKS_82724_bored_body.fr3d",
+          "sha": "e85e88272abcfe30f68415639933039720d30c9ca1eb34426c4b6750c211e293"
+        },
+        "sourceSha": "871f7897b6af398eadddb7b100d0f4a5b2d72b4d4fe2572e72b93a8fb9bccc89",
+        "source": "Механизм push-to-open ЧЕРНЫЙ с резин. након. усиленный (врезной) (82724).fr3d",
+        "faceX": -2,
+        "bounds": [
+          [
+            -2.0,
+            -12.699999809265137,
+            -3.700000047683716
+          ],
+          [
+            70.0,
+            -5.300000190734863,
+            3.700000047683716
+          ]
+        ],
+        "pilots": [],
+        "tipY": -9.0,
+        "bodyAt3": {
+          "file": "MF_AKS_82724_bored_bodyAt3.fr3d",
+          "sha": "8512718d5525cd040fa0c074408d60e800a8bc5e765f2f954964d3da03beaf75"
+        }
+      },
+      "surface": {
+        "body": {
+          "file": "MF_AKS_82724_surface_body.fr3d",
+          "sha": "91598c7067a84080d1a531643c2f70b392708e71cca4f8b4acf7e318dbaa8ba6"
+        },
+        "sourceSha": "5a66e18f8dc525b0a47dbe70a0b534f468f1825e0936963f8376c70009e86b9d",
+        "source": "Механизм push-to-open ЧЕРНЫЙ с резин. након. усиленный (накладной) (82724).fr3d",
+        "faceX": -1.2,
+        "bounds": [
+          [
+            -1.2000000476837158,
+            0.0,
+            -7.25
+          ],
+          [
+            81.80000305175781,
+            15.0,
+            7.25
+          ]
+        ],
+        "pilots": [
+          21.0,
+          53.0
+        ],
+        "tipY": 7.406
+      }
+    }
+  },
+  "92365": {
+    "name": "Механизм push-to-open наконечник резиновый накладной серый AKS металлический корпус",
+    "url": "https://aks.by/106474-135223-p?OFFER_ID=135224",
+    "photoSource": "https://aks.by/upload/iblock/7a9/n14ti1o2klhzwrz7ss3ifiv2o01cdhgd.jpg",
+    "tip": "rubber",
+    "color": "серый",
+    "series": "metal",
+    "mounts": {
+      "surface": {
+        "body": {
+          "file": "MF_AKS_92365_surface_body.fr3d",
+          "sha": "1d21b49bf2a4b83c60cb6608c9e0046431f8a785b9a2f7f48f4f6ea36038bad1"
+        },
+        "sourceSha": "02e1708ec0272486d694e735389d6d84b11ab6731014570cfc75325f5b8fe867",
+        "source": "Механизм push-to-open СЕРЫЙ с резин. након. (накладной) металлический корпус (92365).fr3d",
+        "faceX": -2.0,
+        "bounds": [
+          [
+            -2.0,
+            0.0,
+            -10.5
+          ],
+          [
+            84.35399627685547,
+            11.685999870300293,
+            10.5
+          ]
+        ],
+        "pilots": [
+          20.0,
+          52.0
+        ],
+        "tipY": 6.854
+      }
+    }
+  }
+}

@@ -234,7 +234,7 @@ export function buildCarcass(input={},options={}){
     }
   }
   clearProfileShelves(s,parts,legHeight);
-  const drawerIssues=[],hingeConflicts=[],hingeLocations=[];
+  const drawerIssues=[],hingeConflicts=[],hingeLocations=[],pushLocations={};
   if(s.front?.autoHinges||s.front?.hinges){
     buildDrawerBoards(s,banks,add);
     const panels=parts.map(p=>p.item);
@@ -244,7 +244,11 @@ export function buildCarcass(input={},options={}){
       try{
         const tagged={...door,assistant_carcass:{spec:s,group_id:prefix}};
         const axes=doorHinges(tagged,panels);
-        doorPush(tagged,panels);
+        const push=doorPush(tagged,panels)[0];
+        if(push?.push_install){
+          const host=parts.find(p=>p.item.item_id===push.host_blank_id);
+          pushLocations[key]={host:host.label,style:push.push_install,height:push.push_height_mm};
+        }
         hingeLocations.push(...axes.map(h=>({x:h.position.x,y:h.position.y,side:h.door_side,article:h.article})));
         if(mountKey(s,key)===side)bySide[side].push(...axes.map(h=>({y:h.position.y-s.elevation-legHeight,z:h.position.z,article:h.article})));
       }catch(error){
@@ -299,7 +303,7 @@ export function buildCarcass(input={},options={}){
     }
   }
   const rods=planRods(s,installedLevels);
-  return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,hingeLocations,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,hingeLocations,pushLocations,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:W,height:H,depth:D+rearProjection(s)+frontProjection(s),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

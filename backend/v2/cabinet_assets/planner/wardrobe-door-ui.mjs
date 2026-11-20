@@ -1,3 +1,4 @@
+import {pushControls} from './wardrobe-push-ui.mjs';
 import {hingeControls} from './wardrobe-hinge-ui.mjs';
 import {activeLeafKeys,nominalSide} from './wardrobe-hinge-layout.mjs';
 import {isEdgePull,gripCut,verticalEdge} from './wardrobe-edge-pulls.mjs';
@@ -153,7 +154,15 @@ export function doorControls(ui){
   inside.setAttribute('aria-pressed',String(!!ui.inspectInternalFronts));panel.append(inside);
  }
  const drawer=leaf.slot==null?null:ui.fields.drawerBanks[leaf.slot].faces[leaf.index];
- if(!drawer)hingeControls(ui,box,spec,leaf);
+ if(!drawer){
+  const clearHandle=key=>{
+   if(f.topProfile||f.division?.gola)localizeProfiles(f,choices,key);
+   for(const field of ['handles','edgeProfiles'])if(f[field]){delete f[field][key];if(!Object.keys(f[field]).length)delete f[field];}
+  };
+  pushControls(ui,box,leaf,clearHandle);
+  hingeControls(ui,box,spec,leaf,clearHandle);
+  if(f.hinges?.[leaf.key]?.push){if(panel.querySelector('button'))box.append(panel.querySelector('button'));return;}
+ }
  box.append(panel);
  const own=drawer?drawer.handle:f?.handles?.[leaf.key];
  const stored=!drawer?storedProfiles(f,leaf.key):[],inherited=stored[0];

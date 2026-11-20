@@ -65,6 +65,8 @@ def router():
     from .assistant_model import ASSETS
     import json
     planner_files.update({'wardrobe-prime-hinges.json','wardrobe-prime-meshes.json','wardrobe-push-open.json','wardrobe-hinge-layout.mjs','wardrobe-hinge-fit.mjs','wardrobe-hinge-mesh.mjs','wardrobe-hinge-ui.mjs'})
+    planner_files.update({'wardrobe-aks-push.json','aks-push-meshes.json','wardrobe-push-layout.mjs','wardrobe-push-ui.mjs'})
+    planner_files.update('shelf-images/'+sku+'.webp' for sku in json.loads((ASSETS/'wardrobe-aks-push.json').read_text()))
     planner_files.update(p['photo'] for p in json.loads((ASSETS/'wardrobe-push-open.json').read_text())['products'].values())
     planner_files.update('shelf-images/'+p['article']+'.webp' for p in json.loads((ASSETS/'wardrobe-prime-hinges.json').read_text()))
     planner_files.update({'wardrobe-light-kit.json', 'wardrobe-light-kit-ui.mjs'})

@@ -52,7 +52,11 @@
     "file": "Петля PRIME 3D, полунакладная без пружины, 45 мм, h0 clip-on саморез (112708).fr3d",
     "sha": "73dc99596463a540c5ea5e22a513fb584dc6b3818855bf667ea1c01fe5b62f9e",
     "cupFromHostMm": 14.5,
-    "mesh": "112644"
+    "mesh": "112644",
+    "pushNative": {
+      "file": "MF_AKS_hinge_112708.fr3d",
+      "sha": "b9d9f3adbde21d51ef6dbc849b586efca01974fa32c8f6575daa8fa2b60ae10c"
+    }
   },
   {
     "article": "112703",
@@ -63,7 +67,11 @@
     "file": "Петля PRIME, полунакладная без пружины 45мм h0 clip-on саморез (112703).fr3d",
     "sha": "7ecead3bab9db7074278a7f7828725edab80a71c47b0a90a34d10b9cd4143198",
     "cupFromHostMm": 14.5,
-    "mesh": "112643"
+    "mesh": "112643",
+    "pushNative": {
+      "file": "MF_AKS_hinge_112703.fr3d",
+      "sha": "51f4cc956aae2ac3f755f46c3ef8ff43bc3444933205a93bbbc135b1bbeb5e0b"
+    }
   },
   {
     "article": "112650",
@@ -123,7 +131,11 @@
     "sha": "72d7aaec991ef421ed2f387596e52501c6dbf4ce72bed8826ab08c3155cfe32d",
     "cupFromHostMm": 22,
     "mesh": "112650",
-    "sourceCupFromHostMm": 21.5
+    "sourceCupFromHostMm": 21.5,
+    "pushNative": {
+      "file": "MF_AKS_hinge_112712.fr3d",
+      "sha": "091bc84cfacfe9e2eec584cd82b9815a369da162c49673ca232445fcb5b60918"
+    }
   },
   {
     "article": "112710",
@@ -135,6 +147,82 @@
     "sha": "fa4837cd9dfbe912605ae12be725ee52959ca98a49455ffe734fcd1bddb35775",
     "cupFromHostMm": 22,
     "mesh": "112649",
-    "sourceCupFromHostMm": 21.5
+    "sourceCupFromHostMm": 21.5,
+    "pushNative": {
+      "file": "MF_AKS_hinge_112710.fr3d",
+      "sha": "eb7436d27e201f89cede536295d2439a7c2f63f8cadcec96de70bf31ca892c45"
+    }
+  },
+  {
+    "article": "122557",
+    "kind": "inset",
+    "series": "AKS",
+    "closing": "reverse",
+    "fixing": "screw",
+    "file": "MF_AKS_hinge_122557.fr3d",
+    "sha": "d7666b03a0e3f38b71637997b6004ceb69fa9089ca9d77b3825fb9878154820e",
+    "cupFromHostMm": 23.0,
+    "mesh": "122557",
+    "armSpan": [
+      37.5,
+      8.0,
+      8.0
+    ],
+    "url": "https://aks.by/120619-144660-p?OFFER_ID=147574",
+    "photoSource": "https://aks.by/upload/iblock/bf4/z1dkm30tzmklt0atpjncbsc9v12uwjmr.jpg"
+  },
+  {
+    "article": "122555",
+    "kind": "overlay",
+    "series": "AKS",
+    "closing": "reverse",
+    "fixing": "screw",
+    "file": "MF_AKS_hinge_122555.fr3d",
+    "sha": "0c65b58e2b483d3706437fcf5dee2efc6d0f6b70b5d5c63bb1f4f9fa6a7dc54a",
+    "cupFromHostMm": 4.5,
+    "mesh": "122555",
+    "armSpan": [
+      21.0,
+      8.0,
+      8.0
+    ],
+    "url": "https://aks.by/120619-144660-p?OFFER_ID=147573",
+    "photoSource": "https://aks.by/upload/iblock/225/mx5w1owa7b5ckbkr90tl7l0hfhv3sn2c.jpg"
+  },
+  {
+    "article": "122556",
+    "kind": "half",
+    "series": "AKS",
+    "closing": "reverse",
+    "fixing": "screw",
+    "file": "MF_AKS_hinge_122556.fr3d",
+    "sha": "ce3d78d826fc72b74913bd038307e7bdb5753662b66149c64914b8d43ad67959",
+    "cupFromHostMm": 14.5,
+    "mesh": "122556",
+    "armSpan": [
+      25.9,
+      9.0,
+      9.0
+    ],
+    "url": "https://aks.by/120619-144660-p?OFFER_ID=147523",
+    "photoSource": "https://aks.by/upload/iblock/1b1/ao3ip2zyqit09u3xsmztp5mcsewd5az9.jpg"
+  },
+  {
+    "article": "112706",
+    "kind": "overlay",
+    "series": "PRIME 3D",
+    "closing": "springless",
+    "fixing": "screw",
+    "file": "MF_AKS_hinge_112706.fr3d",
+    "sha": "940ec2945c654b6451b2fd94f5b96e313e2323b531146eff6fb055a571da2d89",
+    "cupFromHostMm": 4.5,
+    "mesh": "112706",
+    "armSpan": [
+      22.8,
+      8.0,
+      8.0
+    ],
+    "url": "https://aks.by/119918-144377-p?OFFER_ID=144387",
+    "photoSource": "https://aks.by/upload/iblock/bec/cbgfra6cj7vhrcrmcfpl4acfzw5wyiqg.jpg"
   }
 ]

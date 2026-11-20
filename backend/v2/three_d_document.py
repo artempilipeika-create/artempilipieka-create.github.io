@@ -255,9 +255,14 @@ def _panel_hardware(it):
                 fitting=PRIME_HINGES[sku]
                 kind={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fitting['kind']]
                 fixing='еврошурупы' if fitting['fixing']=='euro' else 'саморезы'
-                closing='с доводчиком' if fitting['closing']=='soft' else 'без пружины'
+                closing={'soft':'с доводчиком','springless':'без пружины','reverse':'с пружиной обратного действия'}[fitting['closing']]
                 rows=[_row(f"Петля {fitting['series']} {kind} {closing} с планкой H0 · {fixing}",n,'pcs',sku)]
-                if setting.get('push'):
+                push=setting.get('push')
+                if isinstance(push,dict):
+                    from .assistant_model import AKS_PUSH
+                    article=push['article']
+                    rows.append(_row(AKS_PUSH[article]['name'],1,'pcs',article))
+                elif push:
                     rows.extend([_row('Толкатель AQ ONE-PUSH с магнитом, белый',1,'pcs','09.0019'),
                                  _row('Адаптер для толкателя AQ, белый',1,'pcs','09.0020'),
                                  _row('Ответная планка AQ',1,'pcs','09.0021')])

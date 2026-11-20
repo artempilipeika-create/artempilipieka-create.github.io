@@ -3,10 +3,12 @@ import pulls from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {sectionWidths} from './wardrobe-layout.mjs';
 
 export const hingeCatalogue=Object.fromEntries(catalogue.map(p=>[p.article,p]));
+export const closingNames={soft:'с доводчиком',springless:'без пружины',reverse:'с пружиной обратного действия'};
+export const doorPushGap=2;
 export const hingeKinds={overlay:'Накладная',half:'Полунакладная',inset:'Вкладная'};
 export function hingeName(article){
  const p=hingeCatalogue[article];
- return p?'Петля '+p.series+' '+hingeKinds[p.kind].toLowerCase()+' '+(p.closing==='soft'?'с доводчиком':'без пружины')+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
+ return p?'Петля '+p.series+' '+hingeKinds[p.kind].toLowerCase()+' '+closingNames[p.closing]+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
 }
 const defaultSetting={article:'112595'};
 export const nominalSide=key=>/^door-(?:(?:lower|upper)-)?(left|right)$/.exec(key)?.[1];
@@ -69,7 +71,7 @@ export function adjustedHingeDoors(s,rows,anchor){
   }
   if(b<=a||high<=low)throw Error('Недостаточно места для выбранного фасада.');
   return {...p,side,left:a,width:b-a,bottom:low,height:high-low,
-   faceOffset:inset?-insetDepth(f,p.key):18+(settingFor(f,p.key).push?3:0),hostKey:mountKey(s,p.key)};
+   faceOffset:inset?-insetDepth(f,p.key):18+(settingFor(f,p.key).push?doorPushGap:0),hostKey:mountKey(s,p.key)};
  });
 }
 export function bandKey(f,side,above){
@@ -83,5 +85,5 @@ export function bandKey(f,side,above){
 // The back of an inset door needs free space in front of the fittings it covers.
 export function depthBehindDoor(s,key){
  const setting=settingFor(s.front,key);
- return hingeProduct(s.front,key).kind==='inset'?18+insetDepth(s.front,key)+(setting.push?3:1):0;
+ return hingeProduct(s.front,key).kind==='inset'?18+insetDepth(s.front,key)+(setting.push?doorPushGap:1):0;
 }

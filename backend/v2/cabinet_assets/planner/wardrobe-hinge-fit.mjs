@@ -17,12 +17,12 @@ export function spacerReachesHinge(fit,hingeZ,front){
 }
 
 export function gapAxisRange(fit,side,bottom,top){
- const [,below,above]=arms[fit.mesh],[low,high]=mirrored(-below,above,side);
+ const [,below,above]=fit.armSpan??arms[fit.mesh],[low,high]=mirrored(-below,above,side);
  return {low:bottom-low+allowance,high:top-high-allowance,center:(bottom+top)/2};
 }
 
 export function drawerHingeSpan(fit,side,clear,setback,pivot,doorDepth,slides){
- const [reach,below,above]=arms[fit.mesh];
+ const [reach,below,above]=fit.armSpan??arms[fit.mesh];
  let low=0,high=0;
  if(clear<reach+allowance)[low,high]=mirrored(-below,above,side);
  if(clear<8+allowance)[low,high]=plateSpan(fit,side);

@@ -43,6 +43,10 @@ def pictures():
     sources.update({sku:prod['url'] for sku,prod in from_catalogue.items()})
     push = json.loads((ASSETS / 'wardrobe-push-open.json').read_bytes())
     sources.update({sku:product['url'] for sku,product in push['products'].items()})
+    aks_push = json.loads((ASSETS / 'wardrobe-aks-push.json').read_bytes())
+    sources.update({sku:product['url'] for sku,product in aks_push.items()})
+    hinges = json.loads((ASSETS / 'wardrobe-prime-hinges.json').read_bytes())
+    sources.update({p['article']:p['url'] for p in hinges if p.get('url')})
     rods = json.loads((ASSETS / 'rod-photos' / 'sources.json').read_bytes())
     sources.update({sku:r['source'] for sku,r in rods.items() if r.get('source')})
     return images, sources

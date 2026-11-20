@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.40 PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.41 DOOR TIP-ON + PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,13 +135,13 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19','martin-forest-bazis-native-v20'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
   for (const item of payload.items) {
     if (!item || typeof item !== 'object') throw new Error('Некорректный модуль в JSON.');
-    if(['martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19'].includes(payload.format)&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
+    if(['martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19','martin-forest-bazis-native-v20'].includes(payload.format)&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
       throw Error('Для фасада с врезной ручкой требуется ПВХ по четырём торцам.');
   }
   return { filename, payload, automatic };
@@ -486,7 +486,7 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
   };
   obj.SetDefaultTransform();
   const hinge=isPrimeHinge(item),push=isSurfacePush(item);
-  const pushSign=item.wardrobe_push_mount==='top'?1:-1;
+  const pushRoll=PUSH_ROLL[item.wardrobe_push_mount]??0;
   const sign=item.door_side==='left'?1:-1;
   if(hinge){
     if(!['left','right'].includes(item.door_side))throw Error('Не задана сторона петли.');
@@ -495,7 +495,7 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
   }
   if(push){
     objectTransformation.RotateObject(obj,{x:0,y:1,z:0},90,true);
-    if(pushSign<0)objectTransformation.RotateObject(obj,{x:0,y:0,z:1},180,true);
+    if(pushRoll)objectTransformation.RotateObject(obj,{x:0,y:0,z:1},pushRoll,true);
   }
   const roll=item.joint_roll_deg??0;
   if(item.joint_back_face){
@@ -521,8 +521,8 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
   const finalOrigin = vector(obj.ToGlobal({x:0,y:0,z:0}), 'finalOrigin');
   for (const unit of [{x:100,y:0,z:0}, {x:0,y:100,z:0}, {x:0,y:0,z:100}]) {
     const measured = vector(obj.ToGlobal(unit), 'basis');
-    const v=hinge?{x:sign*unit.y,y:-sign*unit.z,z:-unit.x}:push?{x:pushSign*unit.z,y:pushSign*unit.y,z:-unit.x}:item.joint_back_face?{x:unit.x,y:-unit.z,z:unit.y}:unit;
-    const r=roll*Math.PI/180;
+    const v=hinge?{x:sign*unit.y,y:-sign*unit.z,z:-unit.x}:push?{x:unit.z,y:unit.y,z:-unit.x}:item.joint_back_face?{x:unit.x,y:-unit.z,z:unit.y}:unit;
+    const r=(push?pushRoll:roll)*Math.PI/180;
     const tilted={x:v.x*Math.cos(r)-v.y*Math.sin(r),y:v.x*Math.sin(r)+v.y*Math.cos(r),z:v.z};
     const expected = rotateScene(tilted, angle);
     const difference = distance({x:measured.x-finalOrigin.x,y:measured.y-finalOrigin.y,z:measured.z-finalOrigin.z}, expected);
@@ -1449,6 +1449,15 @@ const LEVEL_FOOT_HASH='9d939e3cbf71b17dad69eacce37b305d323b6dc2e7898e3861e6772f8
 const PLINTH_FOOT_HASHES=new Set(["748f7dfc9c5e9f6795cf2af7a84e261b02a56917f7d83ddb61bc1640a88965ea", "208e694dcad2eb55bd56d725d85d95351df2ca8fb3e841127ddd19b357632860", "ae4cf4ff04e7da78b75e4cc7e800d8c52d7eae0afdc4ed09d5155332840b3865", "ec84ce11e6a2e25315a994fb2b76230e4ccb988c7fc82de2f9b742d95d7a1081", "98382596ab2a3344276158b199f9d18b107759d2b1b8e86362bfeb207439e18b", "cb7d9bd05315ea0cb9bea26e4302f0b5ca62e563b4fb0510a3a54496b089126e", "6c710edd9a5d650b67459062cdd1a09877aaf123e17cb5007e12e768529cbcc1", "766fb6eff1d5eb4d04af73dd4b8ed5512b73a85a671a9f7e8691ce513854993e", "22bff0468a0c2cfeb2a0acf117d92bb0074b9cbe00c1e17c43dd75e162465a80", "4febd80d47e28b27f566c45672eff2e98f706f1a34eafadfabdde6cb667caea8", "ab31999962007aec93d8dc26de164ab74b504c3c5f255f539ba4ebb735fe94ce", "c95ec7be2657c40c8d5cfad290f16f2820ce468086fa1f2327b4cac22c5246d2", "4361ae54c01d70112ac344aa69c3cef378016445816c9f8310379eb4c3c2a14f"]);
 const DECOR_FOOT_HASHES=new Set(["8e5a16d9956d6cc3fe83bb956efa6f2fbbcf154021dae24ef12d27f937148482", "8943473375e27728456acb4fd207b4c1a43547d56bfb7d1599cfca4df0a5d014", "14be137918290b75811c40e4a1ad25ebf24e317ea29f8e977f7bbfceb19dad7b", "bb3c2155063cffd65548bc48ed0a6de75efd23413ecc1aff35ab5a4656ddfb3f", "021d18272cbe1b6b2bbed8b05e5cbfe087139c0996440309d318fa9c962e8198", "be9dbb7582a032df86b3b30cfc6e1834d8fd4cbbccf51a202d721185d68e753c", "88cb3a5035461b8d36c92a1cd644a27f4f2f0803da64ef76a51fc5b590eb65e4", "0b837bd675835ef7f7d0d9d13190bb99249577bd29c6bc6956c6809d33ee7221", "5c329c7e5f4442b236f1b666f81ab3f316b75f202191edc2de5456c97e1987de", "5fd7daf70006271c13c76f6c73207c86a89eedc31ccca4baada738febef42d77", "30994de3bc4e65c7657a9965e0c0f0062548c11a4f0935037d33b08c87fe1658", "b6ead9fd0a5f35194e99384216c1647d388257d4d9b99d98fe3c3a2dcea1bace", "c8b44cfc0fc101cbde4a12b59792a34d1f9b052e0e85e1d5328a33eb7e6591e5", "3331e8a7f437e2ffd2912e2bc2c6fa6e857842cf8d824eacf18e5f046bb3e958", "967b9020e7a9dbd1e143d11d5e522796304503588978bfe93a04bc4bba9a437d", "195cfe594ec2baede2716e647e7bceffac2e213f266d8b61407b52d63f245eb1", "b274b3752f1290bdb2a65337db6ace1af457bf0205812d341aea3a5c0173b2df", "a1adc402790028bf18ebacdbf169766afcc6d8c9609ad77e90a1c36430874e87", "e4ac7f127c69516012fdf829c970f05baff21ba9a7e9b76b96d1059be9030a62", "3e110c4214712fe59ffbe72403ad0ea5d04ed195ed5d144b7f7de5349449bbb8", "1e082afcc978b4b51b62c0e41cf2006950f8cb2e4c910e5e5b6e316e190cd8be", "ac692afbca8b10a875a541d57e2e23b908538bfa1a42dc2a0b8ebd6b880b0de9", "264b1626df9fba0c47b8d7d869fca499af30e42d25c5589ccd6242749eac81de", "3875508a8152782114efa69cc3566cccfc69bc1622cc2bda30afb72e6e698f70", "e68b9f0ad8fb28c48229fa0329611e34a2b1ce2c20ff727d3264c0b2306979fd", "3b036db1f903a3611d6f39fd1c64bfc2f8b1cec9ee3eed73aaf00dff6cbed572", "851e518b720f3e9fe9ce0bd1939250e1175e3ecae5e6161a87a74e897d46719d", "51eb071e8e734de6ca91f37e8420b8367018ab5e613f4f8b84b962dddac8ea4c", "899deba122e016286e3e7e7fd34be4eda1c03f3961f7afe350c164ff92caffe9", "f25e24d3936df7c2f2dce81153f41782ab107c16565c0a39b82300c4113955bb", "9987d84fa215787c5557173eb6b7ac69f373dbb6165e69053fded38a28085544", "712977c33a001596db76de7253c8b7cded2805c8064e5eb4a423531b381b4240"]);
 const PRIME_HINGE_ARTICLES = {
+  "eb7436d27e201f89cede536295d2439a7c2f63f8cadcec96de70bf31ca892c45": "112710",
+  "091bc84cfacfe9e2eec584cd82b9815a369da162c49673ca232445fcb5b60918": "112712",
+  "51f4cc956aae2ac3f755f46c3ef8ff43bc3444933205a93bbbc135b1bbeb5e0b": "112703",
+  "b9d9f3adbde21d51ef6dbc849b586efca01974fa32c8f6575daa8fa2b60ae10c": "112708",
+  "d7666b03a0e3f38b71637997b6004ceb69fa9089ca9d77b3825fb9878154820e": "122557",
+  "0c65b58e2b483d3706437fcf5dee2efc6d0f6b70b5d5c63bb1f4f9fa6a7dc54a": "122555",
+  "ce3d78d826fc72b74913bd038307e7bdb5753662b66149c64914b8d43ad67959": "122556",
+  "940ec2945c654b6451b2fd94f5b96e313e2323b531146eff6fb055a571da2d89": "112706",
+
   "fa4fb4dfa6310cdec87d25d683a7d5e1d5923470bed7ae25c3f35923cf7166a8": "112595",
   "6e1ea6201e047c50e3bf6999981032f5c4cdf999857c7bfae60654400bcbf211": "112644",
   "02faf3bacddea51bbca29b096e2cd4335ebddad9cce87e3eee6e272fc8172579": "113403",
@@ -1548,7 +1557,49 @@ function isPrimeHinge(item){
   if(article&&item.article&&item.article!==article)throw Error('Артикул петли не совпадает с исходным фрагментом.');
   return Boolean(article);
 }
+const AKS_PUSH_SOURCES = {
+ "5e95e0024462e6633eaf29e275fab76134843079b27d29c3b0ea7ad10ce7febb": "82722/bored/body",
+ "3832625414bdf61e7e1485f8dcb350f578c9e088ea1855cbffaf269b70e6f816": "82722/bored/body",
+ "cabbfea99bbec1bccc1960d5a6f70cb00248c893f042044e5b3e476ba30775d4": "82722/surface/body",
+ "b3f0c1ca0043ae6c90ba2d98dcf5f42cd647375c14cd09928c1a3c90b5844a5e": "72255/bored/body",
+ "bab9c11a66317f61ef56c29b33bfb850c0bbd76fff7e149c4afd0f68a5669261": "72255/bored/catch",
+ "c8e6f93bcee4618fc2d8570dd35f1ecc132e9c045c5f696347324fc773e7a245": "72255/bored/body",
+ "214ac991d3061ba76cc37e455bb9b46b5dcae9bc82e84c7079c46a67ac8d3000": "72255/surface/body",
+ "9508f27c6513c5a6bbfa58b15a2dd8dd9acb069a79705f760ad0069c07976491": "72255/surface/catch",
+ "c9fefc1c02fac1de7bc94983ab837f29ba556bf26dd526cc6e6867db91b8d9d4": "73723/surface/body",
+ "37241894d71929ca3f0e619bfb7eec92c1dc35230137a994cf9335a36bd63532": "73723/surface/catch",
+ "bb2cf9e7796f803c3ece405b306ba3a42679759e2e541c84f5756d7dcaa8a5c8": "115822/surface/body",
+ "3a8e6ec10cd30f1b77e7a3277ec26036ba0c41ab321e90e4fda3c93d7b252043": "70787/surface/body",
+ "26f901558596e55a549d851e8015ba06247144f4e7020646ae7535073e75406c": "70787/surface/catch",
+ "91e0e656f2270153090463d413f0890a4b849bb04ac7c54eb1da13cefbb59244": "74055/surface/body",
+ "110a7cafd5c831de29a308885caaa8b83aff7b560fec4a90f0b3cb636aaf1340": "74055/surface/catch",
+ "968dfa25f9c31ba5bd0e1b0621bd2b37faa0cfbcb8f37fb0feba6b263a7d050c": "115823/surface/body",
+ "1d21b49bf2a4b83c60cb6608c9e0046431f8a785b9a2f7f48f4f6ea36038bad1": "92365/surface/body",
+ "c10f4270e8f5583ebc4edfe828dced6f5508edc277743cab450aa61b27bafdd1": "82723/bored/body",
+ "5ada1cb5306bc663e3df03184e7c401fb804b6107b8a2d025f76bae77de97e2f": "82723/bored/body",
+ "ab7b90f0718d839742b4169f8482338bc18b735699e4aa0da9f5de0cf43d09d6": "82723/surface/body",
+ "1cbd31de13c83582f2dedf12eb48e0f1d392650a23f87cb09be8ab1fa9cfa991": "72258/bored/body",
+ "e71f1962d3648a4ee7b7dec774b3bbaa3b8949029d5e12fc80be5f1dd199cbaa": "72258/bored/catch",
+ "4ee7502da0763dbfcd07c6d549f4dcc4b261243aad8e4c66c45746bc5e1112ea": "72258/bored/body",
+ "879200c26fe4cf27c2d6dea7ea6f04fe6a71ff15372a82046f71d5f60cd79722": "72258/surface/body",
+ "722aba44241133e8b2ec90b57c15c10c9066125df3722704d7f6739d666227c4": "72258/surface/catch",
+ "e85e88272abcfe30f68415639933039720d30c9ca1eb34426c4b6750c211e293": "82724/bored/body",
+ "8512718d5525cd040fa0c074408d60e800a8bc5e765f2f954964d3da03beaf75": "82724/bored/body",
+ "91598c7067a84080d1a531643c2f70b392708e71cca4f8b4acf7e318dbaa8ba6": "82724/surface/body",
+ "d5cccabc210b0b160c74a383ed4b1204f95e8122ea7d01b591d30ffff01b9e46": "72257/bored/body",
+ "1e32d1681deaa15fedb75e60d0c2731fcbfd7dd54f90afefb3b9ac07115f69a0": "72257/bored/catch",
+ "d327ddec2ceb414bf0ef4010b686b2388b611b37e31ad68577d22f354d6b9cbb": "72257/bored/body",
+ "65e8324caf7c4ad5923595bcaf1fd2b2a5bf4afb9f8549b7203ba1d076350f49": "72257/surface/body",
+ "0bbfb89e84785b1975869d305e47d474ce2607f7fb7327095c12c62c210fe2de": "72257/surface/catch"
+};
+const PUSH_ROLL={top:0,bottom:180,left:-90,right:90};
 function isSurfacePush(item){
+  const expected=AKS_PUSH_SOURCES[item.source_sha256];
+  if(expected||item.push_install||item.push_part){
+    if(expected!==[item.article,item.push_install,item.push_part].join('/')||!Object.prototype.hasOwnProperty.call(PUSH_ROLL,item.wardrobe_push_mount))
+      throw Error('Проверьте артикул, фрагмент и сторону установки типона AKS.');
+    return true;
+  }
   if(!item.wardrobe_push_mount&&item.source_sha256!==AQ_PUSH_SHA)return false;
   if(item.source_sha256!==AQ_PUSH_SHA||!['top','bottom'].includes(item.wardrobe_push_mount)||item.article!=='09.0019')
     throw Error('Проверьте фрагмент и сторону крепления толкателя AQ.');
@@ -2350,7 +2401,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.40 PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.41 DOOR TIP-ON + PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
