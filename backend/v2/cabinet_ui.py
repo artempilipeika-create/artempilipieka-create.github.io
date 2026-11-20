@@ -64,6 +64,9 @@ def router():
         return Response((root/'planner/render-rooms/file-studio.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':local_images})
     from .assistant_model import ASSETS
     import json
+    planner_files.update({'wardrobe-prime-hinges.json','wardrobe-prime-meshes.json','wardrobe-push-open.json','wardrobe-hinge-layout.mjs','wardrobe-hinge-ui.mjs'})
+    planner_files.update(p['photo'] for p in json.loads((ASSETS/'wardrobe-push-open.json').read_text())['products'].values())
+    planner_files.update('shelf-images/'+p['article']+'.webp' for p in json.loads((ASSETS/'wardrobe-prime-hinges.json').read_text()))
     planner_files.update({'wardrobe-light-kit.json', 'wardrobe-light-kit-ui.mjs'})
     planner_files.update('light-kit-photos/'+sku+'.webp' for sku in ('118634','81771','108206','78192'))
     planner_files.update({'wardrobe-door-layout.mjs','wardrobe-facade-profiles.mjs','wardrobe-gola-shelves.mjs','wardrobe-edge-pulls.mjs','wardrobe-blocks.mjs','wardrobe-door-hardware.mjs','wardrobe-door-ui.mjs','wardrobe-door-mesh.mjs','wardrobe-handle-catalogue.json','wardrobe-handle-meshes.json','door-photos/sources.json'})

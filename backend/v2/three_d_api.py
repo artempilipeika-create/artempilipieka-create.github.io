@@ -230,7 +230,7 @@ class FurnitureItem(StrictModel):
             if self.module_type!='blank' or self.blank_edge_code!='1111' or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
                 raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм по всем четырём торцам.')
             if grip:
-                grip.check_size(self.width,self.height,key.rsplit('-',1)[1] if door else None)
+                grip.check_size(self.width,self.height,group.spec.front.hinge_side(key) if door else None)
         else:
             fitted_width=(preset and key in ('left','right','bottom','top','back')) or (key=='right' and mount and mount.kind=='rabbet')
             if self.width*(2 if hdf else 1)%1 or (self.blank_width_mm or 0)*(2 if fitted_width else 1)%1 or (self.elevation_mm or 0)*(2 if post or flush or hdf else 1)%1:

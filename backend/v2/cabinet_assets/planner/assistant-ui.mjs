@@ -14,8 +14,7 @@ import {gapEditor,splitControls} from './wardrobe-zones-ui.mjs';
 import {wardrobeDrawing,drawingTitles} from './wardrobe-drawing.mjs';
 import {footHeight,plinthFoot,plinthPanel,plinthClearanceMm} from './plinth-options.mjs';
 import {feetCatalogue} from './wardrobe-feet.mjs';
-import {fittingImage,hingePhotoCard,jointPhotos} from './hardware-photos.mjs';
-import {primeHinge} from './wardrobe-fronts.mjs';
+import {fittingImage,jointPhotos} from './hardware-photos.mjs';
 import {sameAssistantSpec,selectedCarcass,assistantStamp,prepareAssistantPlan,applyAssistantPlan} from './assistant-model.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {jointOptions,jointQuantity,dividerScheme} from './carcass-joints.mjs';
@@ -148,7 +147,7 @@ export class AssistantUI{
   const d=hit.dataset,section=Number(d.section);
   if(d.rodId){selectRod(this,d.rodId);return;}
   if(d.doorShelfPick){setDoorShelf(this,d.doorShelfPick);return;}
-  if(d.doorId){this.selectedDoor=d.doorId;this.step=3;this.view='fronts';this.render();this.form.querySelector('[data-handle-article]')?.focus({preventScroll:true});return;}
+  if(d.doorId){this.selectedDoor=d.doorId;this.step=3;this.view='fronts';this.render();this.form.querySelector(d.doorId.startsWith('door-')?'[data-hinge-kind][aria-pressed="true"]':'[data-handle-article]')?.focus({preventScroll:true});return;}
   if(d.hinge){
    this.selectedDoor=d.hinge;this.step=3;this.view='fronts';this.render();
    this.form.querySelector('[aria-label="Исполнение фасада"]')?.focus({preventScroll:true});return;
@@ -312,12 +311,11 @@ export class AssistantUI{
    if(this.fields.front){
     const warning=el('p');warning.className='front-choice-warning';warning.setAttribute('role','status');warning.hidden=true;this.form.append(warning);
     const box=el('details');box.className='wardrobe-hinge';box.append(el('summary','Петли и присадка'));
-    box.append(hingePhotoCard(primeHinge.article));
     this.select(box,'Предпочтительный отступ петли',[[90,'90 мм сверху и снизу'],[130,'130 мм сверху и снизу']],this.fields.front.offset,v=>{this.fields.front.offset=Number(v);this.changed();});
     const lbl=el('label','Масса одной готовой створки, кг'),input=el('input');
     input.type='number';input.min='0.01';input.max='22';input.step='0.01';input.placeholder='Авто · ЛДСП 700 кг/м³';input.value=this.fields.front.massKg??'';
     input.oninput=()=>{if(input.value==='')delete this.fields.front.massKg;else this.fields.front.massKg=Number(input.value);this.changed();};lbl.append(input);box.append(lbl);
-    const hint=el('details');hint.append(el('summary','Как рассчитаны петли'),el('p','Петля и планка H0 идут комплектом на саморезах. Таблица AKS для чашки Ø35 учитывает высоту и массу одной двери шириной до 600 мм. Уточните массу, если известен вес готового фасада. Отступ 130 мм — схема мастерской.'));box.append(hint);this.form.append(box);
+    const hint=el('details');hint.append(el('summary','Как рассчитаны петли'),el('p','Таблица AKS для чашки Ø35 учитывает высоту и массу одной двери шириной до 600 мм. Уточните массу, если известен вес готового фасада. Отступ 130 мм — схема мастерской.'));box.append(hint);this.form.append(box);
    }
 
   }else{

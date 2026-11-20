@@ -109,6 +109,7 @@ def inner_foot_pairs(width, sections, layout):
 
 
 DOOR_HARDWARE = json.loads((ASSETS/'wardrobe-handle-catalogue.json').read_text())
+PRIME_HINGES = {p['article']:p for p in json.loads((ASSETS/'wardrobe-prime-hinges.json').read_text())}
 LeafKey = Annotated[str, Field(pattern=r'^door-(?:(?:lower|upper)-)?(?:left|right)$')]
 Swing = Literal['left','right','pair','open']
 
@@ -199,7 +200,35 @@ class FacadeDivision(StrictModel):
     cutHeight: Literal[73,74] | None = Field(default=None,exclude_if=lambda v:v is None)
     gola: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
 
+class DoorHingeSetting(StrictModel):
+    article: str
+    recess: int | None = Field(default=None,ge=0,le=1140,strict=True,exclude_if=lambda v:v is None)
+    central: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
+    push: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
+
+    @model_validator(mode='after')
+    def match_article(self):
+        product=PRIME_HINGES.get(self.article)
+        if not product:raise ValueError('Выберите петлю PRIME из каталога.')
+        if (self.recess is not None or self.central) and product['kind']!='inset':
+            raise ValueError('Утопление и выбор стойки задаются для вкладной двери.')
+        if self.push and product['closing']!='springless':
+            raise ValueError('Для открывания нажатием выберите петлю без пружины.')
+        return self
+
+    @property
+    def on_divider(self):
+        return self.central or PRIME_HINGES[self.article]['kind']=='half'
+
+
 class OverlayFront(StrictModel):
+    hinges: dict[LeafKey,DoorHingeSetting] | None = Field(default=None,max_length=4,exclude_if=lambda v:v is None)
+    hingeDivider: int | None = Field(default=None,ge=0,le=2,strict=True,exclude_if=lambda v:v is None)
+
+    def hinge_side(self,key):
+        side=key.rsplit('-',1)[1]
+        setting=(self.hinges or {}).get(key)
+        return ('right' if side=='left' else 'left') if setting and setting.on_divider else side
     division: FacadeDivision | None = Field(default=None,exclude_if=lambda v:v is None)
     edgeProfiles: dict[LeafKey,Annotated[list[FacadeProfile],Field(min_length=1,max_length=2)]] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
     handles: dict[LeafKey,FacadeFitting] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
@@ -462,7 +491,7 @@ class CarcassDesign(CarcassSpec):
         if d.section>=self.sections:
             raise ValueError('Перегородка для фасадов отсутствует.')
         widths=self.clear_widths()
-        middle=widths[0]+1.5*self.thickness if self.sections==2 else self.width/2
+        middle=self.door_seam()
         left=middle if d.scope=='right' else 0
         right=middle if d.scope=='left' else self.width
         rooms=self.niche_bounds(d.section,True)
@@ -485,6 +514,23 @@ class CarcassDesign(CarcassSpec):
             raise ValueError('Для среднего профиля S нужны фасады и две опоры.')
         return left,right,y
 
+    def door_divider_axes(self):
+        start=self.thickness
+        axes=[]
+        for w in self.clear_widths()[:-1]:
+            start+=w+self.thickness
+            axes.append(start-self.thickness/2)
+        return axes
+
+    def door_seam(self):
+        f=self.front
+        if f and any(h.on_divider for h in (f.hinges or {}).values()):
+            axes=self.door_divider_axes()
+            if not axes or f.hingeDivider is not None and f.hingeDivider>=len(axes):
+                raise ValueError('Для полунакладных петель нужна общая перегородка.')
+            return axes[f.hingeDivider] if f.hingeDivider is not None else min(axes,key=lambda x:abs(x-self.width/2))
+        return self.clear_widths()[0]+1.5*self.thickness if self.sections==2 else self.width/2
+
     def validate_door_layout(self,zones,drawer_pulls):
         f=self.front;d=f.division;handles=f.handles or {}
         if self.recipe not in ('shelves','divided'):raise ValueError('Фасады задаются для шкафа.')
@@ -492,7 +538,7 @@ class CarcassDesign(CarcassSpec):
             h=handles.get(key)
             return h and h.edge==edge and DOOR_HARDWARE.get(h.article,{}).get('family')=='monblan'
         middle=self.width/2
-        if self.sections==2 and (d or any(not z[2] for z in zones)):middle=self.clear_widths()[0]+1.5*self.thickness
+        if f.hinges or self.sections==2 and (d or any(not z[2] for z in zones)):middle=self.door_seam()
         def band(row,mode,a,b,low,high):
             if mode=='open':return []
             prefix='door-'+(row+'-' if row else '')
@@ -523,7 +569,26 @@ class CarcassDesign(CarcassSpec):
                         else:leaf[2]-=.5
                 leaves.append(tall)
         else:leaves=band('',f.swing,1.5,self.width-1.5,1.5,roof)
+        configured=f.hinges or {}
+        if configured.keys()-{p[0] for p in leaves}:raise ValueError('Петля относится к отсутствующей створке.')
         for key,left,right,bottom,top in leaves:
+            setup=configured.get(key)
+            if setup and setup.on_divider:
+                prefix=key.rsplit('-',1)[0]+'-'
+                reveal=2 if PRIME_HINGES[setup.article]['kind']=='half' and torc(prefix+'left','right') and torc(prefix+'right','left') else 1.5
+                if key.endswith('left'):right=middle-reveal
+                else:left=middle+reveal
+            if setup and PRIME_HINGES[setup.article]['kind']=='inset':
+                if (setup.recess or 0)>self.depth-60:raise ValueError('Недостаточно глубины для вкладной петли.')
+                axes=self.door_divider_axes()
+                if left==1.5:left+=self.thickness
+                elif any(left-x in (1.5,2) for x in axes):left=middle+self.thickness/2+1.5
+                if right==self.width-1.5:right-=self.thickness
+                elif any(x-right in (1.5,2) for x in axes):right=middle-self.thickness/2-1.5
+                if bottom==1.5 and self.bottomFit!='none':bottom+=self.thickness
+                if top==self.height-1.5:top-=self.thickness
+                if d and key.startswith('door-upper-'):bottom=max(bottom,y+self.thickness+1.5)
+                if d and key.startswith('door-lower-'):top=min(top,y-1.5)
             for a,b,inside,end,start in zones:
                 if not inside and a<right and b>left and start<top and end>bottom:bottom=max(bottom,end+1.5)
             h=top-bottom
@@ -533,7 +598,7 @@ class CarcassDesign(CarcassSpec):
             if key in handles:
                 handle=handles[key]
                 if isinstance(handle,InsetEdgeGrip):
-                    handle.check_size(right-left,h,key.rsplit('-',1)[1],finished=True)
+                    handle.check_size(right-left,h,f.hinge_side(key),finished=True)
                     profiles=(f.edgeProfiles or {}).get(key) or []
                     shared=any(p.edge==handle.edge for p in profiles)
                     if (shared or f.topProfile and not key.startswith('door-lower-') and handle.edge=='top' or
@@ -690,6 +755,15 @@ class CarcassDesign(CarcassSpec):
                         if d.scope in ('all','right'):right_swing=mode
                     left=18 if inside and not right_bank and i==0 and left_swing in ('left','pair') else 0
                     right=18 if inside and (not shared or right_bank) and i==self.sections-1 and right_swing in ('right','pair') else 0
+                    if self.front and self.front.hinges:
+                        for side in ('left','right'):
+                            band=''
+                            if self.front.division and self.front.division.scope in ('all',side):
+                                band='upper-' if (self.thickness if inside else 0)+(bank.bottomOffset or 0)>=y else 'lower-'
+                            setup=self.front.hinges.get('door-'+band+side)
+                            if setup and setup.on_divider:
+                                if side=='left':left=0
+                                else:right=0
                     max_width=(w-left-right if inside else w+self.thickness*(1+(i==0)/2+(i==self.sections-1)/2))-3
                     if shared:
                         outer=0 if inside else self.thickness*(1 if (not right_bank and i==0 or right_bank and i==self.sections-1) else .5)
@@ -726,7 +800,7 @@ class CarcassDesign(CarcassSpec):
                                     drawer_pulls.append(face.handle.bounds(cx-face_width/2,y,face_width,height))
                             y+=height+(bank.gap if bank.layout else 3)
                     zones.append((start,end,inside,top,top-bank.span()))
-            if self.front and not self.front.division and any(not z[2] for z in zones):
+            if self.front and not self.front.division and not self.front.hinges and any(not z[2] for z in zones):
                 pair=self.front.swing=='pair'
                 seam=(self.thickness*1.5+widths[0] if pair and self.sections==2 else self.width/2)
                 spans=[(1.5,seam-1.5),(seam+1.5,self.width-1.5)] if pair else [(1.5,self.width-1.5)]
@@ -738,7 +812,7 @@ class CarcassDesign(CarcassSpec):
                         raise ValueError('Разделите створки по секциям шуфляд.')
                     if height>0 and (right-left>600 or not (126 if self.front.autoHinges else 2*self.front.offset+64)<=height<=2400):
                         raise ValueError('Проверьте размеры створки над блоком шуфляд.')
-        if self.front and (self.front.division or self.front.topProfile or self.front.handles or drawer_pulls):
+        if self.front and (self.front.division or self.front.topProfile or self.front.handles or self.front.hinges or drawer_pulls):
             self.validate_door_layout(zones,drawer_pulls)
         elif self.front and not any(b and b.kind=='external' for b in self.drawerBanks or []):
             count = 2 if self.front.swing=='pair' else 1

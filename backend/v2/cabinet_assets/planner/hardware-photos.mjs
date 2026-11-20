@@ -1,3 +1,5 @@
+import {hingeCatalogue,hingeName} from './wardrobe-hinge-layout.mjs';
+
 // Supplier photographs, matched to the model articles. Source audit: docs/hardware-photos-20261026.
 const PHOTOS=Object.freeze({
  "114064": {
@@ -164,20 +166,27 @@ export function jointPhotos(scheme){
  return strip;
 }
 const hinges={
- '112595':['112595','AKS PRIME 3D · H0'],
  '112602':['112602','AKS PRIME · H2'],
  'ZM-HCKT90-3DBEO-S':['ZM-HCKT90-3DBEO-S','GTV HCKT · H0'],
  '70T950A.TLMB V50 NI':['70T950A.TLMB-V50-NI','Blum CLIP top · для алюминиевой рамки']
 };
+// AKS uses the same covered-hinge shot for both spring and springless variants.
+const sharedHingePhotos={'112703':'112643','112708':'112644','112710':'112649','112712':'112650'};
 export function hingePhotoCard(article){
- const hinge=hinges[article];if(!hinge)return null;
+ const hinge=Object.hasOwn(hingeCatalogue,article)?[article,hingeName(article)]:hinges[article];
+ if(!hinge)return null;
  const figure=document.createElement('figure'),caption=document.createElement('figcaption');
  figure.className='fitting-card';caption.textContent=hinge[1]+' · арт. '+article;
+ if(sharedHingePhotos[article]){
+   const note=document.createElement('small');
+   note.textContent='Общее фото AKS для '+article+' и '+sharedHingePhotos[article]+' · 45 мм, H0, никель';
+   caption.append(document.createElement('br'),note);
+ }
  figure.append(fittingImage(hinge[0],'Петля '+hinge[1]+' · '+article),caption);return figure;
 }
 export function productionHingeArticles(hw){
  const articles=[hw?.hinge_article,...(hw?.items||[]).map(item=>item.article)];
- return [...new Set(articles.filter(Boolean).map(value=>String(value).replace(/\s+/g,' ').trim()).filter(article=>Object.hasOwn(hinges,article)))];
+ return [...new Set(articles.filter(Boolean).map(value=>String(value).replace(/\s+/g,' ').trim()).filter(article=>Object.hasOwn(hinges,article)||Object.hasOwn(hingeCatalogue,article)))];
 }
 export function hardwareArtwork(it,family,key,value){
  if(family==='modern'&&(key==='dryer'||key==='filling'&&value==='dryer')){const v=globalThis.MF_MODERN_CABINETS.info(it);if(v&&v.dryer!=='none')return photo(v.dryer==='inox'?'38402':'113272',v.dryer.toUpperCase()+' · 600 мм · арт. '+(v.dryer==='inox'?'38402':'113272'));}

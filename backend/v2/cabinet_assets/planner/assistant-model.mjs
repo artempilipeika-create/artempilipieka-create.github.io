@@ -1,6 +1,6 @@
 import {backMountLabel,rearProjection} from './panel-machining.mjs';
 import {wardrobeNames,nextCabinetName} from './wardrobe-blocks.mjs';
-import {outerFront,drawerBottom,drawerMember} from './wardrobe-drawers.mjs';
+import {frontProjection,drawerBottom,drawerMember} from './wardrobe-drawers.mjs';
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
@@ -75,7 +75,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  if(current){
   // Resize from the right and front, keeping the left edge and rear envelope.
   const previous=current.metadata.spec;
-  const delta=worldPoint({x:(spec.width-previous.width)/2,z:(built.depth-previous.depth-rearProjection(previous)-(outerFront(previous)?18:0))/2},position.rotation);
+  const delta=worldPoint({x:(spec.width-previous.width)/2,z:(built.depth-previous.depth-rearProjection(previous)-frontProjection(previous))/2},position.rotation);
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
@@ -152,7 +152,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.width} × ${spec.height} × ${spec.depth} мм · ЛДСП ${spec.thickness} мм`,
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
-  ...(hinges.length?['Накладные фасады · PRIME 3D 112595 · '+hinges.length+' петель на шкаф']:[]),
+  ...(hinges.length?['Петли PRIME · '+[...new Set(hinges.map(h=>h.article))].join(', ')+' · '+hinges.length+' шт.']:[]),
   spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм · полки короче на '+spec.backThickness+' мм':spec.backMount?backMountLabel(spec.backMount)+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{
    const ends=dividerScheme(spec,i);

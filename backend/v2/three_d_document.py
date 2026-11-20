@@ -209,7 +209,18 @@ def _panel_hardware(it):
         mass=spec['front'].get('massKg') or w*h*18*700/1e9
         for n,(limit,kg) in enumerate([(900,8),(1600,13),(2000,17),(2400,22)],2):
             if w<=600 and h<=limit and mass<=kg:
-                rows=[_row('Петля PRIME 3D накладная с планкой H0 · саморезы',n,'pcs','112595')]
+                from .assistant_model import PRIME_HINGES
+                setting=(spec['front'].get('hinges') or {}).get(key) or {}
+                sku=setting.get('article','112595')
+                fitting=PRIME_HINGES[sku]
+                kind={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fitting['kind']]
+                fixing='еврошурупы' if fitting['fixing']=='euro' else 'саморезы'
+                closing='с доводчиком' if fitting['closing']=='soft' else 'без пружины'
+                rows=[_row(f"Петля {fitting['series']} {kind} {closing} с планкой H0 · {fixing}",n,'pcs',sku)]
+                if setting.get('push'):
+                    rows.extend([_row('Толкатель AQ ONE-PUSH с магнитом, белый',1,'pcs','09.0019'),
+                                 _row('Адаптер для толкателя AQ, белый',1,'pcs','09.0020'),
+                                 _row('Ответная планка AQ',1,'pcs','09.0021')])
                 handle=(spec['front'].get('handles') or {}).get(key)
                 if handle and handle['article'] not in ('118124','118129'):rows.append(_facade_handle_row(handle,it))
                 return rows,None

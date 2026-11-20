@@ -100,8 +100,8 @@ function panelLabel(item,key,g){
  const door=/^door-(?:(lower|upper)-)?(left|right)$/.exec(key);
  if(door){
   const tier=door[1]==='upper'?' верхний':door[1]==='lower'?' нижний':'';
-  const original='Фасад'+tier+separator+'петли '+(door[2]==='left'?'слева':'справа');
-  if(!base||base===original)return 'Фасад'+tier+(door[2]==='left'?' левый':' правый');
+  const generated=['слева','справа'].map(side=>'Фасад'+tier+separator+'петли '+side);
+  if(!base||generated.includes(base))return 'Фасад'+tier+(door[2]==='left'?' левый':' правый');
  }
  const drawer=drawerPart.exec(key);
  if(drawer){

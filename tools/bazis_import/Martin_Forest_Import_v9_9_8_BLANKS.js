@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.38 PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.39 PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,13 +135,13 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17','martin-forest-bazis-native-v18'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
   for (const item of payload.items) {
     if (!item || typeof item !== 'object') throw new Error('Некорректный модуль в JSON.');
-    if(payload.format==='martin-forest-bazis-native-v17'&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
+    if(['martin-forest-bazis-native-v17','martin-forest-bazis-native-v18'].includes(payload.format)&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
       throw Error('Для фасада с врезной ручкой требуется ПВХ по четырём торцам.');
   }
   return { filename, payload, automatic };
@@ -485,12 +485,17 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
     z: frame.min.z + frame.size.z/2
   };
   obj.SetDefaultTransform();
-  const hinge=isPrimeHinge(item);
+  const hinge=isPrimeHinge(item),push=isSurfacePush(item);
+  const pushSign=item.wardrobe_push_mount==='top'?1:-1;
   const sign=item.door_side==='left'?1:-1;
   if(hinge){
     if(!['left','right'].includes(item.door_side))throw Error('Не задана сторона петли.');
     objectTransformation.RotateObject(obj,{x:0,y:1,z:0},90,true);
     objectTransformation.RotateObject(obj,{x:0,y:0,z:1},-sign*90,true);
+  }
+  if(push){
+    objectTransformation.RotateObject(obj,{x:0,y:1,z:0},90,true);
+    if(pushSign<0)objectTransformation.RotateObject(obj,{x:0,y:0,z:1},180,true);
   }
   const roll=item.joint_roll_deg??0;
   if(item.joint_back_face){
@@ -516,7 +521,7 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
   const finalOrigin = vector(obj.ToGlobal({x:0,y:0,z:0}), 'finalOrigin');
   for (const unit of [{x:100,y:0,z:0}, {x:0,y:100,z:0}, {x:0,y:0,z:100}]) {
     const measured = vector(obj.ToGlobal(unit), 'basis');
-    const v=hinge?{x:sign*unit.y,y:-sign*unit.z,z:-unit.x}:item.joint_back_face?{x:unit.x,y:-unit.z,z:unit.y}:unit;
+    const v=hinge?{x:sign*unit.y,y:-sign*unit.z,z:-unit.x}:push?{x:pushSign*unit.z,y:pushSign*unit.y,z:-unit.x}:item.joint_back_face?{x:unit.x,y:-unit.z,z:unit.y}:unit;
     const r=roll*Math.PI/180;
     const tilted={x:v.x*Math.cos(r)-v.y*Math.sin(r),y:v.x*Math.sin(r)+v.y*Math.cos(r),z:v.z};
     const expected = rotateScene(tilted, angle);
@@ -1443,7 +1448,135 @@ function placeMystiBelow(obj,item,shelfPanel,log){
 const LEVEL_FOOT_HASH='9d939e3cbf71b17dad69eacce37b305d323b6dc2e7898e3861e6772f81c87090';
 const PLINTH_FOOT_HASHES=new Set(["748f7dfc9c5e9f6795cf2af7a84e261b02a56917f7d83ddb61bc1640a88965ea", "208e694dcad2eb55bd56d725d85d95351df2ca8fb3e841127ddd19b357632860", "ae4cf4ff04e7da78b75e4cc7e800d8c52d7eae0afdc4ed09d5155332840b3865", "ec84ce11e6a2e25315a994fb2b76230e4ccb988c7fc82de2f9b742d95d7a1081", "98382596ab2a3344276158b199f9d18b107759d2b1b8e86362bfeb207439e18b", "cb7d9bd05315ea0cb9bea26e4302f0b5ca62e563b4fb0510a3a54496b089126e", "6c710edd9a5d650b67459062cdd1a09877aaf123e17cb5007e12e768529cbcc1", "766fb6eff1d5eb4d04af73dd4b8ed5512b73a85a671a9f7e8691ce513854993e", "22bff0468a0c2cfeb2a0acf117d92bb0074b9cbe00c1e17c43dd75e162465a80", "4febd80d47e28b27f566c45672eff2e98f706f1a34eafadfabdde6cb667caea8", "ab31999962007aec93d8dc26de164ab74b504c3c5f255f539ba4ebb735fe94ce", "c95ec7be2657c40c8d5cfad290f16f2820ce468086fa1f2327b4cac22c5246d2", "4361ae54c01d70112ac344aa69c3cef378016445816c9f8310379eb4c3c2a14f"]);
 const DECOR_FOOT_HASHES=new Set(["8e5a16d9956d6cc3fe83bb956efa6f2fbbcf154021dae24ef12d27f937148482", "8943473375e27728456acb4fd207b4c1a43547d56bfb7d1599cfca4df0a5d014", "14be137918290b75811c40e4a1ad25ebf24e317ea29f8e977f7bbfceb19dad7b", "bb3c2155063cffd65548bc48ed0a6de75efd23413ecc1aff35ab5a4656ddfb3f", "021d18272cbe1b6b2bbed8b05e5cbfe087139c0996440309d318fa9c962e8198", "be9dbb7582a032df86b3b30cfc6e1834d8fd4cbbccf51a202d721185d68e753c", "88cb3a5035461b8d36c92a1cd644a27f4f2f0803da64ef76a51fc5b590eb65e4", "0b837bd675835ef7f7d0d9d13190bb99249577bd29c6bc6956c6809d33ee7221", "5c329c7e5f4442b236f1b666f81ab3f316b75f202191edc2de5456c97e1987de", "5fd7daf70006271c13c76f6c73207c86a89eedc31ccca4baada738febef42d77", "30994de3bc4e65c7657a9965e0c0f0062548c11a4f0935037d33b08c87fe1658", "b6ead9fd0a5f35194e99384216c1647d388257d4d9b99d98fe3c3a2dcea1bace", "c8b44cfc0fc101cbde4a12b59792a34d1f9b052e0e85e1d5328a33eb7e6591e5", "3331e8a7f437e2ffd2912e2bc2c6fa6e857842cf8d824eacf18e5f046bb3e958", "967b9020e7a9dbd1e143d11d5e522796304503588978bfe93a04bc4bba9a437d", "195cfe594ec2baede2716e647e7bceffac2e213f266d8b61407b52d63f245eb1", "b274b3752f1290bdb2a65337db6ace1af457bf0205812d341aea3a5c0173b2df", "a1adc402790028bf18ebacdbf169766afcc6d8c9609ad77e90a1c36430874e87", "e4ac7f127c69516012fdf829c970f05baff21ba9a7e9b76b96d1059be9030a62", "3e110c4214712fe59ffbe72403ad0ea5d04ed195ed5d144b7f7de5349449bbb8", "1e082afcc978b4b51b62c0e41cf2006950f8cb2e4c910e5e5b6e316e190cd8be", "ac692afbca8b10a875a541d57e2e23b908538bfa1a42dc2a0b8ebd6b880b0de9", "264b1626df9fba0c47b8d7d869fca499af30e42d25c5589ccd6242749eac81de", "3875508a8152782114efa69cc3566cccfc69bc1622cc2bda30afb72e6e698f70", "e68b9f0ad8fb28c48229fa0329611e34a2b1ce2c20ff727d3264c0b2306979fd", "3b036db1f903a3611d6f39fd1c64bfc2f8b1cec9ee3eed73aaf00dff6cbed572", "851e518b720f3e9fe9ce0bd1939250e1175e3ecae5e6161a87a74e897d46719d", "51eb071e8e734de6ca91f37e8420b8367018ab5e613f4f8b84b962dddac8ea4c", "899deba122e016286e3e7e7fd34be4eda1c03f3961f7afe350c164ff92caffe9", "f25e24d3936df7c2f2dce81153f41782ab107c16565c0a39b82300c4113955bb", "9987d84fa215787c5557173eb6b7ac69f373dbb6165e69053fded38a28085544", "712977c33a001596db76de7253c8b7cded2805c8064e5eb4a423531b381b4240"]);
-function isPrimeHinge(item){return item.source_sha256==='fa4fb4dfa6310cdec87d25d683a7d5e1d5923470bed7ae25c3f35923cf7166a8';}
+const PRIME_HINGE_ARTICLES = {
+  "fa4fb4dfa6310cdec87d25d683a7d5e1d5923470bed7ae25c3f35923cf7166a8": "112595",
+  "6e1ea6201e047c50e3bf6999981032f5c4cdf999857c7bfae60654400bcbf211": "112644",
+  "02faf3bacddea51bbca29b096e2cd4335ebddad9cce87e3eee6e272fc8172579": "113403",
+  "e1ca5ff73ee7b68424d1ba6e2126f89edb458c4587583e43c20bc96b5579351d": "112643",
+  "73dc99596463a540c5ea5e22a513fb584dc6b3818855bf667ea1c01fe5b62f9e": "112708",
+  "7ecead3bab9db7074278a7f7828725edab80a71c47b0a90a34d10b9cd4143198": "112703",
+  "ec910e25e81f6cc0d21feb490f8f75aec9ca702b6861e3f32e84fd2cfc5f7786": "112650",
+  "54d0e9115b9f9c64d288b344e3a62e20d16d902c40c7dab6de2b559baa4478b8": "113408",
+  "f489112cca5d1723701632860800a406bddc7d532be77520c16b528e3f8fc71e": "112649",
+  "99fb5e120020a3173a76dbc8b567739d45774700c4d40c9b4ba76551a078849e": "113405",
+  "72d7aaec991ef421ed2f387596e52501c6dbf4ce72bed8826ab08c3155cfe32d": "112712",
+  "fa4837cd9dfbe912605ae12be725ee52959ca98a49455ffe734fcd1bddb35775": "112710"
+};
+const PRIME_INSET_CUP = {
+  "ec910e25e81f6cc0d21feb490f8f75aec9ca702b6861e3f32e84fd2cfc5f7786": {
+    "compressedOffset": 2324,
+    "payloadBytes": 1258340,
+    "sourcePayloadSha": "76c3732d5760e3bcfc0318aaed00509f1d703306e00d6d8f304e6ef65af7f3f1",
+    "targetPayloadSha": "cbca6077ea4817b7dd56d131606653ad0a6ccc358efa780e9dc78c66c208a9cd",
+    "yOffsets": [
+      1256581,
+      1256841,
+      1257047,
+      1257536,
+      1257771
+    ]
+  },
+  "54d0e9115b9f9c64d288b344e3a62e20d16d902c40c7dab6de2b559baa4478b8": {
+    "compressedOffset": 2411,
+    "payloadBytes": 1258367,
+    "sourcePayloadSha": "11c4e9d8d5887a9c9c5033b1ace9ab6ccb98739d19bc0398e805676b8ae7625d",
+    "targetPayloadSha": "ad99d2de51ed7364561848ae4a27ea4e16b00519a7beebb40a62d4a9a46121f6",
+    "yOffsets": [
+      1256297,
+      1256532,
+      1257332,
+      1257592,
+      1257798
+    ]
+  },
+  "f489112cca5d1723701632860800a406bddc7d532be77520c16b528e3f8fc71e": {
+    "compressedOffset": 2239,
+    "payloadBytes": 1219250,
+    "sourcePayloadSha": "6ac52177643d60131d9ec769057975063a8089a6d964259a6144d084657846f8",
+    "targetPayloadSha": "6d667df2e21d9ecda5f24552db93cc32506bd4ed7003a1bc7e0a310182efa2e6",
+    "yOffsets": [
+      1216948,
+      1217426,
+      1218206,
+      1218466,
+      1218675
+    ]
+  },
+  "99fb5e120020a3173a76dbc8b567739d45774700c4d40c9b4ba76551a078849e": {
+    "compressedOffset": 2261,
+    "payloadBytes": 1219293,
+    "sourcePayloadSha": "6aedb0fab8ed625e1a9dc5561ce263ca2acd65eb1aabdf48081bea5a342c447e",
+    "targetPayloadSha": "32f020165e19d1d83c7be4c4909dd3374883ce4d174069c867e0f8866dac6259",
+    "yOffsets": [
+      1216974,
+      1217452,
+      1217712,
+      1217972,
+      1218718
+    ]
+  },
+  "72d7aaec991ef421ed2f387596e52501c6dbf4ce72bed8826ab08c3155cfe32d": {
+    "compressedOffset": 2322,
+    "payloadBytes": 1258314,
+    "sourcePayloadSha": "105b22d1534a2c344b9b33da9e071b8ff9759a0698ca5bd1f75871a9d8f6b518",
+    "targetPayloadSha": "9104460b11285729cc0e2af2d5e731b3c75c7820cf4849b3f145f31df4a35f4e",
+    "yOffsets": [
+      1256564,
+      1256824,
+      1257030,
+      1257519,
+      1257754
+    ]
+  },
+  "fa4837cd9dfbe912605ae12be725ee52959ca98a49455ffe734fcd1bddb35775": {
+    "compressedOffset": 2237,
+    "payloadBytes": 1219244,
+    "sourcePayloadSha": "9ccadd9cab5449dc8322d3d0b016582424d2129cf13dc2ddcc0d60429e436af9",
+    "targetPayloadSha": "0d2b921010f045b627f3575e83b070621cfa49f128e3b6389f0d9623fb8b8907",
+    "yOffsets": [
+      1216942,
+      1217420,
+      1218200,
+      1218460,
+      1218669
+    ]
+  }
+};
+const AQ_PUSH_SHA = '4c2605ea4f491df6d543c89d78680ecddb3021af1e0844ad62933549401806f9';
+function isPrimeHinge(item){
+  const article=PRIME_HINGE_ARTICLES[item.source_sha256];
+  if(article&&item.article&&item.article!==article)throw Error('Артикул петли не совпадает с исходным фрагментом.');
+  return Boolean(article);
+}
+function isSurfacePush(item){
+  if(!item.wardrobe_push_mount&&item.source_sha256!==AQ_PUSH_SHA)return false;
+  if(item.source_sha256!==AQ_PUSH_SHA||!['top','bottom'].includes(item.wardrobe_push_mount)||item.article!=='09.0019')
+    throw Error('Проверьте фрагмент и сторону крепления толкателя AQ.');
+  return true;
+}
+// Keep the supplied mounting plate and pilots fixed. Move the cup, its
+// drill and the door-side fittings together by 0.5 mm for a 1.5 mm reveal.
+function insetCupBuffer(source,pin){
+  const zlib=require('zlib'),digest=data=>crypto.createHash('sha256').update(data).digest('hex');
+  if(digest(source)!==pin)throw Error('Изменился исходный фрагмент вкладной петли.');
+  const recipe=PRIME_INSET_CUP[pin],raw=zlib.inflateSync(source.subarray(recipe.compressedOffset));
+  if(raw.length!==recipe.payloadBytes||digest(raw)!==recipe.sourcePayloadSha)throw Error('Не подтверждена геометрия вкладной петли.');
+  for(const at of recipe.yOffsets)raw.writeDoubleLE(raw.readDoubleLE(at)+0.5,at);
+  if(digest(raw)!==recipe.targetPayloadSha)throw Error('Не подтверждена присадка чашки вкладной петли.');
+  return require('buffer').Buffer.concat([source.subarray(0,recipe.compressedOffset),zlib.deflateSync(raw)]);
+}
+function loadWardrobeFragment(source,owner,item){
+  if(!PRIME_INSET_CUP[item.source_sha256])return modelIOOperations.LoadFastenerOrFragment(source,owner);
+  const built=insetCupBuffer(fs.readFileSync(source),item.source_sha256);
+  const folder=fs.mkdtempSync(path.join(require('os').tmpdir(),'mf-prime-')),temp=path.join(folder,'hinge.fr3d');
+  try {
+    fs.writeFileSync(temp,built);
+    return modelIOOperations.LoadFastenerOrFragment(temp,owner);
+  } finally {
+    if(fs.existsSync(temp))fs.unlinkSync(temp);
+    fs.rmdirSync(folder);
+  }
+}
 function isWardrobeFoot(item){return item.source_sha256===LEVEL_FOOT_HASH||PLINTH_FOOT_HASHES.has(item.source_sha256)||DECOR_FOOT_HASHES.has(item.source_sha256);}
 const AKS_SOURCES={
  "e6c686380e647bfe297466c550ef5bc2d56d9aa59116858e9e0c84d3c36543fe": "rail",
@@ -1970,7 +2103,7 @@ function resizeAndPlace(obj, item, log, shelfPanel) {
   if(item.source_sha256===MYSTI_12_22_HASH)return placeMystiBelow(obj,item,shelfPanel,log);
   if(item.glass_shelf)return placeGlassShelf(obj,item,log);
   if(item.blank)return resizeAndPlaceBlank(obj,item,log);
-  if (isPrimeHinge(item) || isShelfSupport(item) || JOINT_HASHES.has(item.source_sha256)) {
+  if (isPrimeHinge(item) || isSurfacePush(item) || isShelfSupport(item) || JOINT_HASHES.has(item.source_sha256)) {
     placeByFrame(obj,null,item,log,{x:0,y:0,z:0});
     return {materialChecks:[],profileChecks:[]};
   }
@@ -2111,7 +2244,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.38 PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.39 PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -2348,14 +2481,14 @@ function importProject(prepared, root, payload) {
     const label = 'МОДУЛЬ ' + (index + 1) + ': ' + (item.name || item.source_file);
     let obj;
     try {
-      if((item.wardrobe_handle||item.wardrobe_gola_mount||item.wardrobe_profile||item.wardrobe_rod||item.aks_kind||isPrimeHinge(item)||JOINT_HASHES.has(item.source_sha256))&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.joined_panel_id)))throw Error('Не импортирована деталь стыка.');
+      if((item.wardrobe_handle||item.wardrobe_gola_mount||item.wardrobe_profile||item.wardrobe_rod||item.aks_kind||isPrimeHinge(item)||isSurfacePush(item)||JOINT_HASHES.has(item.source_sha256))&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.joined_panel_id)))throw Error('Не импортирована деталь стыка.');
       if(isShelfSupport(item)&&(!loadedBlanks.has(item.host_blank_id)||!loadedBlanks.has(item.shelf_blank_id)))throw Error('Не импортирована полка или её опорная стойка.');
       if(isWardrobeFoot(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Не импортирована деталь для опоры.');
       if(isBlankHook(item)&&!loadedBlanks.has(item.host_blank_id))throw Error('Опорная заготовка не импортирована.');
       log.push('НАЙДЕН: ' + item.source_file + ' -> ' + entry.source);
       const owners=wardrobeOwners(cabinets,item.cabinet_block,currentFileData.model);
       const owner=owners.length?owners[owners.length-1]:currentFileData.model;
-      obj = modelIOOperations.LoadFastenerOrFragment(entry.source, owner);
+      obj = loadWardrobeFragment(entry.source, owner, item);
       if (!obj) throw new Error('БАЗИС не загрузил FR3D');
       if (owners.length && asList(owner).IndexOf(obj)<0) throw Error('Фрагмент не попал в блок шкафа.');
       obj.Name = item.cabinet_block?.part_name || item.name || item.source_file;
@@ -2376,7 +2509,7 @@ function importProject(prepared, root, payload) {
       }
       importedObjects.push(obj);
       if ((item.blank||item.glass_shelf) && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
-      if (!item.wardrobe_gola_mount && !item.wardrobe_handle && !item.wardrobe_profile && !item.wardrobe_rod && !item.aks_kind && !isPrimeHinge(item) && !isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
+      if (!item.wardrobe_gola_mount && !item.wardrobe_handle && !item.wardrobe_profile && !item.wardrobe_rod && !item.aks_kind && !isPrimeHinge(item) && !isSurfacePush(item) && !isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       liveGolaMounts.push(...(placement.golaMountChecks || []));
       for (const check of placement.materialChecks) liveMaterials.push({ ...check, moduleName: item.name });

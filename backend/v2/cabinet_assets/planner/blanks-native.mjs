@@ -4,7 +4,7 @@ import {assignCabinetBlocks} from './wardrobe-blocks.mjs';
 import {nativeDoorHardware,boardProfileCuts,horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
 import {nativeRods} from './wardrobe-rods.mjs';
 import {installedCuts,wardrobeHardware} from './wardrobe-aks-native.mjs';
-import {doorHinges} from './wardrobe-hinges.mjs';
+import {doorHinges,doorPush} from './wardrobe-hinges.mjs';
 import {nativeFeet} from './wardrobe-feet.mjs';
 import {normalizeBlank,validateBlank,cuttingSize} from './blanks-model.mjs';
 import {glassShelves} from './shelf-donors.mjs';
@@ -36,4 +36,4 @@ export function blankNativeItem(it,material,items=[]){
  ...(it.blank_machining?.length?{machining:it.blank_machining}:{}),...(it.blank_edge_pull?{edge_grip:nativeGrip(it.blank_edge_pull)}:{}),edge_code:b.code,edge_thickness:b.edgeThickness,finished_dimensions:true,...(shelfCuts.length?{gola_shelf_cuts:shelfCuts}:{}),...(golaCuts.length?{gola_cuts:golaCuts}:{}),
  ...(/:drawer-\d+-spacer-(left|right)$/.test(it.item_id)?{spacer_cuts:installedCuts(it,items)}:{}),cut:cuttingSize(it),edge_elements:[1,3,0,2]}};
 }
-globalThis.MF_BLANKS_NATIVE={assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>doorHinges(it,items)),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id),items))};
+globalThis.MF_BLANKS_NATIVE={assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>[...doorHinges(it,items),...doorPush(it,items)]),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems:(items,lookup)=>items.filter(it=>it.module_type==='blank').map(it=>blankNativeItem(it,lookup(it.body_variant_id),items))};

@@ -1,0 +1,194 @@
+{
+  "name": "AQ ONE-PUSH",
+  "checked": "2026-11-20",
+  "supplier": "AQ by WestLine",
+  "products": {
+    "09.0019": {
+      "name": "Толкатель AQ ONE-PUSH врезной с магнитным оконч. белый",
+      "url": "https://wline.by/tolkatel_reguliruemyy_vreznoy_s_magnitnym_okonchaniem_aq-215211-p/216198",
+      "photo": "shelf-images/09.0019.webp",
+      "photo_url": "https://wline.by/upload/Sh/imageCache/253/730/7309781299878683.webp",
+      "priceBYN": 6.0098
+    },
+    "09.0020": {
+      "name": "Адаптер к толкателю AQ ONE-PUSH прямой белый",
+      "url": "https://wline.by/adapter_k_tolkatelyu_aq-215217-p/216199",
+      "photo": "shelf-images/09.0020.webp",
+      "photo_url": "https://wline.by/upload/Sh/imageCache/302/733/7336453195010584.webp",
+      "priceBYN": 2.0536
+    },
+    "09.0021": {
+      "name": "Ответная часть к AQ ONE-PUSH 20х20х1 мм под саморез цинк",
+      "url": "https://wline.by/otvetnaya_chast_pod_samorez_aq-216222-p/216223",
+      "photo": "shelf-images/09.0021.webp",
+      "photo_url": "https://wline.by/upload/Sh/imageCache/386/312/312535869669350.webp",
+      "priceBYN": 0.302
+    }
+  },
+  "instruction": "https://wline.by/download/tech/138360/e789998047132f4bbe8b23660aef72cd/",
+  "nativeArchive": "https://wline.by/download/tech/160598/5c7609e5d15ee1f106da10d67fd818e8/",
+  "ejectionTravelMm": 37,
+  "adjustmentMm": {
+    "min": -1,
+    "max": 5
+  },
+  "catchPlateThicknessMm": 1,
+  "surface": {
+    "file": "AQ_ONE_PUSH_09.0020_09.0019.fr3d",
+    "supplierFile": "09.0020+09.0019 Адаптер к толкателю AQ ONE-PUSH прямой белый+Толкатель AQ ONE-PUSH врезной с магнитным оконч. белый.fr3d",
+    "sha256": "4c2605ea4f491df6d543c89d78680ecddb3021af1e0844ad62933549401806f9",
+    "partsPerDoor": {
+      "09.0019": 1,
+      "09.0020": 1,
+      "09.0021": 1
+    },
+    "boundingFrame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        100.0,
+        100.0,
+        100.0
+      ]
+    },
+    "holeCoordinates": "source",
+    "holes": [
+      {
+        "target": "doorBack",
+        "originMm": [
+          0,
+          16.5021,
+          0
+        ],
+        "direction": [
+          -1.0,
+          0,
+          0
+        ],
+        "diameterMm": 3.0,
+        "depthMm": 3.0
+      },
+      {
+        "target": "supportFace",
+        "originMm": [
+          67.0,
+          0.0021,
+          -0.084
+        ],
+        "direction": [
+          0,
+          -1.0,
+          -0.0001
+        ],
+        "diameterMm": 3.0,
+        "depthMm": 3.0
+      },
+      {
+        "target": "supportFace",
+        "originMm": [
+          15.0,
+          0.0021,
+          -0.084
+        ],
+        "direction": [
+          0,
+          -1.0,
+          -0.0001
+        ],
+        "diameterMm": 3.0,
+        "depthMm": 3.0
+      }
+    ],
+    "minimumOverlayDoorRearToCabinetFrontMm": 3,
+    "anchor": {
+      "origin": "Линия пересечения опорной пласти корпуса с тыльной плоскостью закрытого фасада.",
+      "localX": "От фасада в глубину шкафа.",
+      "localY": "От опоры внутрь проёма.",
+      "localZ": "Поперёк толкателя по правилу правой руки.",
+      "bodyFrontFromDoorRearMm": 3,
+      "adapterLengthMm": 80
+    }
+  },
+  "bored": {
+    "file": "AQ_ONE_PUSH_09.0019.fr3d",
+    "supplierFile": "09.0019 Толкатель AQ ONE-PUSH врезной с магнитным оконч. белый.fr3d",
+    "sha256": "55c13a3b8e33b584a35511f5fb3d36b2d613fb7d3973b4cc7eaa193f8573a3ee",
+    "partsPerDoor": {
+      "09.0019": 1,
+      "09.0021": 1
+    },
+    "boundingFrame": {
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        100.0,
+        100.0,
+        100.0
+      ]
+    },
+    "holeCoordinates": "source",
+    "holes": [
+      {
+        "target": "supportFrontEdge",
+        "originMm": [
+          3.8001,
+          -8.9999,
+          0
+        ],
+        "direction": [
+          1.0,
+          0,
+          0
+        ],
+        "diameterMm": 10.0,
+        "depthMm": 70.0
+      },
+      {
+        "target": "doorBack",
+        "originMm": [
+          0,
+          0.0001,
+          0
+        ],
+        "direction": [
+          -1.0,
+          0,
+          0
+        ],
+        "diameterMm": 3.0,
+        "depthMm": 3.0
+      }
+    ],
+    "minimumOverlayDoorRearToCabinetFrontMm": 3.8,
+    "anchor": {
+      "origin": "Центр засверловки ответной пластины в тыльной плоскости фасада.",
+      "localX": "От фасада в глубину шкафа.",
+      "bodyBoreCentreRelativeToOriginMm": [
+        3.8,
+        -9,
+        0
+      ],
+      "minimumBoringDepthMm": 70,
+      "boreDiameterMm": 10
+    }
+  },
+  "workshopReference": {
+    "singleDoor": "modern-cabinet-sources/ВМД1-600. отк L. tip-on.Паз.fr3d",
+    "pairOfDoors": "modern-cabinet-sources/ВМД2-600.(Сушка).tip-on.Паз.fr3d",
+    "mount": "bored",
+    "support": "bottomFrontEdge",
+    "bodyBoreFromDoorFreeEdgeMm": 70,
+    "bodyBoreFromBottomFaceMm": 9,
+    "bottomPanelThicknessMm": 18,
+    "observedCabinetFrontToDoorBackMm": {
+      "singleDoor": 2,
+      "pairOfDoors": 0
+    }
+  }
+}

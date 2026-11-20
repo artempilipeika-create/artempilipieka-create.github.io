@@ -1,6 +1,7 @@
 import {isEdgePull} from './wardrobe-edge-pulls.mjs';
 import {sectionWidths,levelOf,isRightBank} from './wardrobe-layout.mjs';
 import {nicheOpenings} from './wardrobe-niches.mjs';
+import {adjustedHingeDoors,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
 import {overlayFronts} from './wardrobe-fronts.mjs';
 import {doorZones,drawerSections} from './wardrobe-drawers.mjs';
 import {isFacadeProfile,hasFacadeProfiles,planFacadeProfiles} from './wardrobe-facade-profiles.mjs';
@@ -26,7 +27,7 @@ export function sectionSpans(s){
  });
 }
 function divisionSpan(s,scope){
- const middle=s.sections===2?sectionSpans(s)[0].right:s.width/2;
+ const middle=usesDivider(s.front)?middleDivider(s).x:s.sections===2?sectionSpans(s)[0].right:s.width/2;
  return {left:scope==='right'?middle:0,right:scope==='left'?middle:s.width};
 }
 export function doorShelfOptions(s,scope='all'){
@@ -97,13 +98,21 @@ export function baseWardrobeDoors(s,banks=[]){
  const roof=f.topProfile?s.height-30:s.height-1.5;
  if(!divisions){
   const sides=f.swing==='pair'?['left','right']:[f.swing];
-  const rows=doorZones(s,overlayFronts(s,sides.length),banks);
+  let panels=overlayFronts(s,sides.length);
+  if(sides.length===2&&(usesDivider(f)||f.hinges&&s.sections===2)){
+   const x=middleDivider(s).x;
+   panels=panels.map((p,i)=>({...p,left:i?x+1.5:1.5,width:(i?s.width-x:x)-3}));
+  }else if(sides.length===1&&usesDivider(f)){
+   const x=middleDivider(s).x,left=sides[0]==='left';
+   panels=[{...panels[0],left:left?1.5:x+1.5,width:(left?x:s.width-x)-3}];
+  }
+  const rows=doorZones(s,panels,banks);
   const enlarged=sides.length===2&&meetingEdge(f,'door-left','right')&&meetingEdge(f,'door-right','left');
-  return rows.map((l,i)=>({...l,key:'door-'+sides[i],side:sides[i],left:l.left+(enlarged&&i===1?.5:0),width:l.width-(enlarged?.5:0),height:l.height-(s.height-1.5-roof)})).filter(l=>l.height>0);
+  return adjustedHingeDoors(s,rows.map((l,i)=>({...l,key:'door-'+sides[i],side:sides[i],left:l.left+(enlarged&&i===1?.5:0),width:l.width-(enlarged?.5:0),height:l.height-(s.height-1.5-roof)})).filter(l=>l.height>0));
  }
  const d=divisions,anchor=anchoredShelf(s),mid=anchor.y+s.thickness/2,partial=d.scope!=='all';
  if(partial&&[d.below,d.above].some(mode=>mode!=='open'&&mode!==d.scope))throw Error('Для разделённой створки выберите петли у наружной боковины.');
- const center=s.sections===2?sectionSpans(s)[0].right:s.width/2;
+ const center=usesDivider(f)?middleDivider(s).x:s.sections===2?sectionSpans(s)[0].right:s.width/2;
  const a=anchor.left+1.5,b=anchor.right-1.5;
  const below=bandLeaves(f,'lower',d.below,a,b,1.5,mid,center);
  const above=bandLeaves(f,'upper',d.above,a,b,mid,roof,center);
@@ -123,11 +132,11 @@ export function baseWardrobeDoors(s,banks=[]){
    for(const p of [...below,...above]){if(other==='left')p.left+=.5;else p.right-=.5;}
   }
  }
- return [...below,...above,...full].map(p=>{
+ return adjustedHingeDoors(s,[...below,...above,...full].map(p=>{
    const ext=banks.filter(bank=>bank&&!bank.internal&&bank.left+s.width/2<p.right&&bank.right+s.width/2>p.left&&bank.base<p.high&&bank.top>p.low);
    const bottom=Math.max(p.low,...ext.map(bank=>bank.top+1.5));
    return {key:p.key,side:p.side,left:p.left,bottom,width:p.right-p.left,height:p.high-bottom};
- }).filter(p=>p.height>0);
+ }).filter(p=>p.height>0),anchor);
 }
 
 // A saved assembly and its blanks share the same spec. Cache only the installation runs;

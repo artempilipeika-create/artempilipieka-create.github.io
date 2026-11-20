@@ -1,12 +1,13 @@
+import {installedSide,depthBehindDoor,mountKey} from './wardrobe-hinge-layout.mjs';
 import {applyLighting} from './wardrobe-lighting.mjs';
 import {canMachine,checkBackMount,backCut,backTrim,backSideTrim,rearClearance,rearProjection} from './panel-machining.mjs';
 import {aboveGola,installedOpenings} from './wardrobe-gola-shelves.mjs';
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
 export {sectionWidths} from './wardrobe-layout.mjs';
-import {outerFront,drawerSections,buildDrawerBoards,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
+import {frontProjection,drawerSections,buildDrawerBoards,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
 import {sectionWidths,nicheSlot,columnWidths,columnOpenings,localBaseShelf,openingBase,splitKey} from './wardrobe-layout.mjs';
 import {fitNicheBanks,nicheOpenings} from './wardrobe-niches.mjs';
-import {doorHinges} from './wardrobe-hinges.mjs';
+import {doorHinges,doorPush} from './wardrobe-hinges.mjs';
 import {shelfUndersides} from './shelf-levels.mjs';
 import {fittedPull,trimFace,validateEdgePull} from './wardrobe-edge-pulls.mjs';
 import {facadeLayout,hasFacadeProfiles,doorSide,usesProfileEdge,handlePlacement,drawerFacades,checkDrawerHandle} from './wardrobe-door-layout.mjs';
@@ -67,6 +68,10 @@ export function buildCarcass(input={},options={}){
   const bottomTop=t,topBottom=['inset','overlay','rails'].includes(s.top)?H-t:H-80;
   let shelfRuns=[];
   const installedLevels=new Map();
+  const widths=sectionWidths(s);
+  if(s.drawerBanks?.some(b=>b?.layout))s.drawerBanks=fitNicheBanks(s,s.drawerBanks);
+  const {doors:leaves,banks,runs}=facadeLayout(s,drawerSections(s,widths,Boolean(options.legacyDrawers)));
+  const recessed=leaves.filter(d=>d.faceOffset<=0);
   const add=(key,name,axis,L,B,T,x,y,z,code,binding=null,shelf=null)=>{
     const mountCut=mount?backCut(s,key,floorSide(s,key)?legHeight:0):null;
     const machining=[...(mountCut?[mountCut]:[]),...(s.machining?.[key]??[])];
@@ -75,7 +80,7 @@ export function buildCarcass(input={},options={}){
       const board=trimFace(grip,L,B,x,y);
       if(doorSide(key)&&(usesProfileEdge(s.front,key,grip.edge)||s.front?.edgeProfiles?.[key]?.some(h=>h.edge===grip.edge)))
         throw Error('Торец с профилем Gola уже занят. Выберите другой торец для врезной ручки.');
-      const problem=validateEdgePull(grip,board.width,board.height,T,doorSide(key));
+      const problem=validateEdgePull(grip,board.width,board.height,T,doorSide(key)&&installedSide(s.front,key));
       if(problem)throw Error(name+' · '+problem);
       L=board.height;B=board.width;x=board.x;y=board.y;
     }
@@ -87,6 +92,22 @@ export function buildCarcass(input={},options={}){
         binding={...binding,depth_offset_mm:binding.depth_offset_mm+extension/2,gola_flush:true};
         installedLevels.set(key,{bottom:y,top:y+T});
       }
+    }
+    if(recessed.length&&(key.startsWith('shelf-')||key.startsWith('divider-')||key.endsWith('-divider'))){
+      const halfWidth=(axis==='horizontal'?L:T)/2,h=axis==='horizontal'?T:L;
+      const from=x+W/2-halfWidth,to=x+W/2+halfWidth;
+      const covered=recessed.filter(d=>d.left<to&&d.left+d.width>from&&d.bottom<y+h&&d.bottom+d.height>y);
+      const front=z+B/2;
+      let limit=Math.min(front,...covered.map(d=>D/2-depthBehindDoor(s,d.key)));
+      if(binding){
+        const hosts=parts.filter(p=>[binding.left_id,binding.right_id].includes(p.item.item_id));
+        limit=Math.min(limit,...hosts.map(p=>p.item.z+p.item.depth/2));
+      }
+      if(limit<front){
+        if(binding?.gola_flush)throw Error('Полка над Gola пересекает вкладную дверь. Выберите другую посадку фасада на этом стыке.');
+        B-=front-limit;z-=(front-limit)/2;
+      }
+      if(binding)binding={...binding,depth_offset_mm:z-parts.find(p=>p.item.item_id===binding.left_id).item.z};
     }
     const item=blankItem({item_id:prefix+':'+key,name:(options.name||s.label)+' · '+name,axis,length:L,partWidth:B,thickness:T,
       x,z,elevation:y+s.elevation+(key==='plinth'||floorSide(s,key)?0:legHeight),edges:axis==='front'?'1111':key==='back'?'0000':key==='plinth'?'1111':options.edges?.[key]??code,blank_edge_thickness_mm:key==='rear-brace'?1:axis==='front'?2:s.edgeThickness,
@@ -115,15 +136,15 @@ export function buildCarcass(input={},options={}){
     add('rail-'+key,'Царга '+(key==='front'?'передняя':'задняя'),'horizontal',W-2*t,80,t,0,H-t,z,edge(key==='front'?'1000':'0100'),binding(left,right,0,z));
   if(s.top==='sink')for(const [key,name,y,z] of [['front','передняя',H-80,(D-t)/2],['rear','задняя',H-80,-(D-t)/2],['rear-lower','задняя нижняя',t,-(D-t)/2]])
     add('rail-'+key,'Царга '+name,'back',W-2*t,80,t,0,y,z,edge('1100'));
-  const widths=sectionWidths(s),dividerSetback=s.dividerSetback??0;
+  const installedDividers=new Set(leaves.map(d=>d.hostKey).filter(k=>k?.startsWith('divider-')));
   if(widths.some(w=>w-2*s.shelfGap<100))throw Error('Секции слишком узкие. Измените положение стойки, ширину шкафа или количество секций.');
   const supports=[left];let x=-W/2+t;
   for(let i=0;i<s.sections-1;i++){
+    const dividerSetback=installedDividers.has('divider-'+i)?0:(s.dividerSetback??0);
     x+=widths[i];supports.push(add('divider-'+i,'Перегородка '+(i+1),'side',H-(noBottom?1:2)*t,D-innerRear-dividerSetback,t,x+t/2,noBottom?0:t,(innerRear-dividerSetback)/2,edge()));x+=t;
   }
   supports.push(right);
-  if(s.drawerBanks?.some(b=>b?.layout))s.drawerBanks=fitNicheBanks(s,s.drawerBanks);
-  const {doors:leaves,banks,runs}=facadeLayout(s,drawerSections(s,widths,Boolean(options.legacyDrawers)));
+
   if(!options.legacyGolaShelves)shelfRuns=runs;
   const counts=s.sectionShelves??Array(s.sections).fill(s.shelves);
   const shelfYs=counts.map((count,section)=>{
@@ -207,20 +228,22 @@ export function buildCarcass(input={},options={}){
       if(pull?.back&&usesProfileEdge(s.front,door.key,pull.edge))throw Error('Кромку с профилем Gola оставьте свободной от торцевой ручки.');
       const row=door.key.includes('upper-')?' верхний':door.key.includes('lower-')?' нижний':'';
       add(door.key,'Фасад'+row+' · петли '+(door.side==='left'?'слева':'справа'),'front',door.height,door.width,18,
-        door.left+door.width/2-W/2,door.bottom,D/2+9,'1111');
+        door.left+door.width/2-W/2,door.bottom,D/2+(door.faceOffset??18)-9,'1111');
     }
   }
   clearProfileShelves(s,parts,legHeight);
   const drawerIssues=[],hingeConflicts=[];
-  if(s.front?.autoHinges){
+  if(s.front?.autoHinges||s.front?.hinges){
     buildDrawerBoards(s,banks,add);
     const panels=parts.map(p=>p.item);
     const bySide={left:[],right:[]};
     for(const {key,item:door} of parts){
       const side=doorSide(key);if(!side)continue;
       try{
-        const axes=doorHinges({...door,assistant_carcass:{spec:s,group_id:prefix}},panels);
-        bySide[side].push(...axes.map(h=>h.position.y-s.elevation-legHeight));
+        const tagged={...door,assistant_carcass:{spec:s,group_id:prefix}};
+        const axes=doorHinges(tagged,panels);
+        doorPush(tagged,panels);
+        if(mountKey(s,key)===side)bySide[side].push(...axes.map(h=>h.position.y-s.elevation-legHeight));
       }catch(error){
         if(!error.hingeConflict)throw error;
         drawerIssues.push(error.message);hingeConflicts.push(error.hingeConflict);
@@ -273,12 +296,12 @@ export function buildCarcass(input={},options={}){
   }
   const rods=planRods(s,installedLevels);
   return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
-    width:W,height:H,depth:D+rearProjection(s)+(outerFront(s)?18:0),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
+    width:W,height:H,depth:D+rearProjection(s)+frontProjection(s),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 
 export function placeCarcass(built,position){
   // Placement envelope includes the overlay back; recipe origin remains at the carcass centre.
-  const shift=rearProjection(built.spec)/2-(outerFront(built.spec)?9:0);
+  const shift=rearProjection(built.spec)/2-frontProjection(built.spec)/2;
   return built.items.map(it=>({...it,...worldPoint({x:it.x,z:it.z+shift},position.rotation||0),rotation:position.rotation||0}))
     .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?.article==='118779'?10:0)}));
 }

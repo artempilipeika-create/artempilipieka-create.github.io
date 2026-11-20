@@ -1,3 +1,5 @@
+import {hingeControls} from './wardrobe-hinge-ui.mjs';
+import {activeLeafKeys,nominalSide} from './wardrobe-hinge-layout.mjs';
 import {isEdgePull,gripCut,verticalEdge} from './wardrobe-edge-pulls.mjs';
 import {fitNicheBanks} from './wardrobe-niches.mjs';
 import {profileEdges} from './wardrobe-facade-profiles.mjs';
@@ -121,6 +123,12 @@ export function doorControls(ui){
  const preset=!f?'none':!d?f.swing:d.below==='pair'&&d.above==='pair'?'quad':'stack';
  ui.select(box,'Исполнение фасада',presets,preset,value=>selectPreset(ui,value));
  if(d)doorSettings(ui,f,box);
+ if(f?.hinges){
+  const keys=activeLeafKeys(f);
+  for(const k of Object.keys(f.hinges))if(!keys.includes(k))delete f.hinges[k];
+  if(!Object.keys(f.hinges).length){delete f.hinges;delete f.hingeDivider;}
+ }
+ if(f?.hingeDivider!=null&&f.hingeDivider>=ui.fields.sections-1)delete f.hingeDivider;
  const spec=formSpec(ui);
  let raw=[],rawBanks=[],choices=[];
  try{
@@ -131,17 +139,22 @@ export function doorControls(ui){
   raw=[...leaves,...drawerFacades(spec,rawBanks)];
   if(f)cleanHandles(f,leaves);
   choices=raw;
- }catch{choices=drawerFacades(spec,ui.previewBuilt?.drawerBanks??[]);}
+  }catch{
+  choices=[...activeLeafKeys(f).map(key=>({key,side:nominalSide(key),left:0,bottom:0,width:spec.width,height:spec.height})),...drawerFacades(spec,ui.previewBuilt?.drawerBanks??[])];
+ }
  const leaf=choices.find(p=>p.key===ui.selectedDoor)||choices.find(p=>p.side===ui.selectedDoor)||choices[0];
  if(!leaf)return;
  ui.selectedDoor=leaf.key;
- const panel=el('fieldset');panel.className='wardrobe-door-editor';panel.append(el('legend','Ручки на фасаде'));box.append(panel);
- const doorSelect=ui.select(panel,'Выбранный фасад',choices.map(p=>[p.key,p.label??doorLabel(p.key)]),leaf.key,v=>{ui.selectedDoor=v;ui.inspectInternalFronts=!!choices.find(q=>q.key===v)?.internal;ui.render();});doorSelect.dataset.doorPicker='';
+ const picker=el('div');box.append(picker);
+ const panel=el('fieldset');panel.className='wardrobe-door-editor';panel.append(el('legend','Ручки на фасаде'));
+ const doorSelect=ui.select(picker,'Выбранный фасад',choices.map(p=>[p.key,p.label??doorLabel(p.key)]),leaf.key,v=>{ui.selectedDoor=v;ui.inspectInternalFronts=!!choices.find(q=>q.key===v)?.internal;ui.render();});doorSelect.dataset.doorPicker='';
  if(f&&choices.some(q=>q.internal)){
   const inside=btn(ui.inspectInternalFronts?'Показать двери':'Показать внутренние шуфляды',()=>{ui.inspectInternalFronts=!ui.inspectInternalFronts;ui.selectedDoor=choices.find(q=>ui.inspectInternalFronts?q.internal:q.slot==null)?.key;ui.render();});
   inside.setAttribute('aria-pressed',String(!!ui.inspectInternalFronts));panel.append(inside);
  }
  const drawer=leaf.slot==null?null:ui.fields.drawerBanks[leaf.slot].faces[leaf.index];
+ if(!drawer)hingeControls(ui,box,spec,leaf);
+ box.append(panel);
  const own=drawer?drawer.handle:f?.handles?.[leaf.key];
  const stored=!drawer?storedProfiles(f,leaf.key):[],inherited=stored[0];
  const supplemental=f?.edgeProfiles?.[leaf.key]??[],h=own??inherited??supplemental[0],edges=profileEdges(leaf,raw);
@@ -247,7 +260,7 @@ export function doorControls(ui){
   const pair=!drawer&&own&&raw.find(q=>q.slot==null&&q.side!==leaf.side&&q.key.replace(/(left|right)$/,'')===leaf.key.replace(/(left|right)$/,''));
   if(pair){const mirror=btn('Зеркально на парную дверь',()=>{f.handles[pair.key]=isFacadeProfile(h)?{...h}:mirrorHandle(h);ui.changed(true);});mirror.dataset.handleMirror='';panel.append(mirror);}
  }
- if(!drawer&&!d&&f?.swing==='pair')panel.append(btn('Разделить выбранную дверь по полке',()=>{if(startDivision(ui,leaf.side,leaf.side,leaf.side))ui.changed(true);}));
+ if(!drawer&&!d&&f?.swing==='pair')panel.append(btn('Разделить выбранную дверь по полке',()=>{if(startDivision(ui,nominalSide(leaf.key),nominalSide(leaf.key),nominalSide(leaf.key)))ui.changed(true);}));
 }
 // Dragging writes the same edge offsets used by the numeric controls and the native export.
 export function wireHandleDrag(ui){

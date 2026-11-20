@@ -7,8 +7,10 @@ import {doorHandle,panelProfiles,boardProfileCuts,horizontalProfileCuts} from '.
 import {buildRodMeshes,panelRods} from './wardrobe-rod-mesh.mjs';
 import aksCatalogue from './aks-wardrobe.json' with {type:'json'};
 import {installedCuts} from './wardrobe-aks-native.mjs';
+import {hingeCatalogue} from './wardrobe-hinge-layout.mjs';
+import primeMeshes from './wardrobe-prime-meshes.json' with {type:'json'};
 import primeMesh from './prime-hinge-mesh.json' with {type:'json'};
-import {doorHinges} from './wardrobe-hinges.mjs';
+import {doorHinges,doorPush} from './wardrobe-hinges.mjs';
 import {localPoint} from './blank-bindings.mjs';
 import {fixedShelfScheme} from './shelf-choices.mjs';
 import {jointRows,shelfJointRows,dividerEnds,backRows} from './carcass-joints.mjs';
@@ -33,6 +35,7 @@ import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,prod
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
+  pushPlastic:{color:'#f4f4ed',roughness:.51,metalness:0},
   railSteel:{color:'#b5bfc2',roughness:.32,metalness:.75},
   slideSteel:{color:'#828e94',roughness:.36,metalness:.67},
   drawerMetal:{color:'#f4f4f1',roughness:.4,metalness:.3},
@@ -380,17 +383,39 @@ export class MeshFactory{
       }
     }
     for(const hinge of this.visibleDoorHinges(it)){
-      const side=hinge.door_side==='left'?1:-1,key='prime:112595:'+side;
+      const side=hinge.door_side==='left'?1:-1,asset=hingeCatalogue[hinge.article].mesh;
+      const data=asset==='112595'?primeMesh:primeMeshes[asset],key='prime:'+asset+':'+side;
       const geometry=this.acquire(key,()=>{
         const decode=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0)).buffer;
-        const vertices=Float32Array.from(new Int16Array(decode(primeMesh[0])),v=>v*S/10);
+        const vertices=Float32Array.from(new Int16Array(decode(data[0])),v=>v*S/10);
         const g=new THREE.BufferGeometry();
         g.setAttribute('position',new THREE.BufferAttribute(vertices,3));
-        g.setIndex(new THREE.BufferAttribute(new Uint16Array(decode(primeMesh[1])),1));
+        g.setIndex(new THREE.BufferAttribute(new Uint16Array(decode(data[1])),1));
         g.rotateY(Math.PI/2);g.rotateZ(-side*Math.PI/2);g.computeVertexNormals();return g;
       });
       const at=localPoint({x:hinge.position.x-it.x,z:hinge.position.z-it.z},it.rotation);
-      this.mesh(group,'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost).userData.article='112595';
+      this.mesh(group,'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost).userData.article=hinge.article;
+    }
+    for(const push of this.visiblePushes(it)){
+      const at=localPoint({x:push.position.x-it.x,z:push.position.z-it.z},it.rotation);
+      const y=push.position.y-it.elevation_mm,dir=push.wardrobe_push_mount==='top'?1:-1;
+      if(push.joined_panel_id===it.item_id){
+        const catchPlate=this.box(group,'hinge',20,20,1,at.x,y+dir*11.5,at.z-.5,null,ghost,.4);
+        Object.assign(catchPlate.userData,{article:'09.0021',frontAccessory:true});
+      }else{
+        const key='aq:09.0020:'+dir;
+        const adapter=this.acquire(key,()=>{
+          const shape=new THREE.Shape();
+          shape.moveTo(3*S,0);shape.lineTo(83*S,0);shape.lineTo(83*S,5.13*S);
+          shape.lineTo(79*S,13*S);shape.quadraticCurveTo(62*S,15*S,45.51*S,15*S);
+          shape.lineTo(3*S,15*S);shape.closePath();
+          const g=new THREE.ExtrudeGeometry(shape,{depth:15*S,bevelEnabled:false});
+          g.translate(0,0,-7.58*S);g.rotateY(Math.PI/2);if(dir<0)g.rotateZ(Math.PI);return g;
+        });
+        this.mesh(group,'pushPlastic',adapter,key,at.x,y,at.z,null,ghost).userData.article='09.0020';
+        const tipKey='aq:09.0019',tip=this.acquire(tipKey,()=>new THREE.CylinderGeometry(3.6*S,3.6*S,2*S,20).rotateX(Math.PI/2));
+        this.mesh(group,'hinge',tip,tipKey,at.x,y+dir*7.5,at.z-2,null,ghost).userData.article='09.0019';
+      }
     }
     for(const foot of panelFeet(it)){
       const decor=decorFoot(it.assistant_carcass.spec);
@@ -848,7 +873,20 @@ export class MeshFactory{
     if(it.blank_axis!=='front')return [];
     try{return doorHinges(it,this.adapter.items||[]);}catch{return [];}
   }
-  signature(it){return JSON.stringify([it.width,it.height,it.depth,doorHandle(it),panelProfiles(it,this.adapter.items||[]),boardProfileCuts(it,this.adapter.items||[]),horizontalProfileCuts(it,this.adapter.items||[]),panelRods(it,this.adapter.items).map(r=>[r.id,r.article,r.left,r.width,r.y,r.z,it.assistant_carcass.spec.height-it.assistant_carcass.spec.thickness]),this.spacerCuts(it),this.visibleDoorHinges(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?[it.blank_edge_code,it.blank_edge_thickness_mm,it.blank_edge_pull,it.blank_machining,it.item_id.endsWith(':door-right')&&it.assistant_carcass?.spec?.front?.swing==='pair']:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  visiblePushes(it){
+    const meta=it.assistant_carcass;
+    if(!meta||!['horizontal','front'].includes(it.blank_axis))return [];
+    const configured=Object.entries(meta.spec.front?.hinges??{}).filter(([,setting])=>setting.push);
+    if(!configured.length)return [];
+    const items=this.adapter.items??[];
+    return configured.flatMap(([key])=>{
+      const door=items.find(p=>p.item_id===meta.group_id+':'+key);
+      if(!door)return [];
+      try{return doorPush(door,items).filter(p=>p.host_blank_id===it.item_id||p.joined_panel_id===it.item_id);}
+      catch{return [];}
+    });
+  }
+  signature(it){return JSON.stringify([it.width,it.height,it.depth,doorHandle(it),panelProfiles(it,this.adapter.items||[]),boardProfileCuts(it,this.adapter.items||[]),horizontalProfileCuts(it,this.adapter.items||[]),panelRods(it,this.adapter.items).map(r=>[r.id,r.article,r.left,r.width,r.y,r.z,it.assistant_carcass.spec.height-it.assistant_carcass.spec.thickness]),this.spacerCuts(it),this.visibleDoorHinges(it),this.visiblePushes(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?[it.blank_edge_code,it.blank_edge_thickness_mm,it.blank_edge_pull,it.blank_machining,it.item_id.endsWith(':door-right')&&it.assistant_carcass?.spec?.front?.swing==='pair']:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

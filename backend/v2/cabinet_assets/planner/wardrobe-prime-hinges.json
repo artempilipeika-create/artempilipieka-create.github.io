@@ -1,0 +1,140 @@
+[
+  {
+    "article": "112595",
+    "kind": "overlay",
+    "series": "PRIME 3D",
+    "closing": "soft",
+    "fixing": "screw",
+    "file": "Петля PRIME 3D, накладная с доводчиком, 45 мм, h0 clip-on саморез (112595).fr3d",
+    "sha": "fa4fb4dfa6310cdec87d25d683a7d5e1d5923470bed7ae25c3f35923cf7166a8",
+    "cupFromHostMm": 4.5,
+    "mesh": "112595"
+  },
+  {
+    "article": "112644",
+    "kind": "half",
+    "series": "PRIME 3D",
+    "closing": "soft",
+    "fixing": "screw",
+    "file": "Петля PRIME 3D, полунакладная с доводчиком, 45 мм, h0 clip-on саморез (112644).fr3d",
+    "sha": "6e1ea6201e047c50e3bf6999981032f5c4cdf999857c7bfae60654400bcbf211",
+    "cupFromHostMm": 14.5,
+    "mesh": "112644"
+  },
+  {
+    "article": "113403",
+    "kind": "half",
+    "series": "PRIME 3D",
+    "closing": "soft",
+    "fixing": "euro",
+    "file": "Петля PRIME 3D, полунакладная с доводчиком, 45 мм, h0 clip-on еврошуруп (113403).fr3d",
+    "sha": "02faf3bacddea51bbca29b096e2cd4335ebddad9cce87e3eee6e272fc8172579",
+    "cupFromHostMm": 14.5,
+    "mesh": "112644"
+  },
+  {
+    "article": "112643",
+    "kind": "half",
+    "series": "PRIME",
+    "closing": "soft",
+    "fixing": "screw",
+    "file": "Петля PRIME, полунакладная с доводчиком, 45 мм, h0 clip-on саморез (112643).fr3d",
+    "sha": "e1ca5ff73ee7b68424d1ba6e2126f89edb458c4587583e43c20bc96b5579351d",
+    "cupFromHostMm": 14.5,
+    "mesh": "112643"
+  },
+  {
+    "article": "112708",
+    "kind": "half",
+    "series": "PRIME 3D",
+    "closing": "springless",
+    "fixing": "screw",
+    "file": "Петля PRIME 3D, полунакладная без пружины, 45 мм, h0 clip-on саморез (112708).fr3d",
+    "sha": "73dc99596463a540c5ea5e22a513fb584dc6b3818855bf667ea1c01fe5b62f9e",
+    "cupFromHostMm": 14.5,
+    "mesh": "112644"
+  },
+  {
+    "article": "112703",
+    "kind": "half",
+    "series": "PRIME",
+    "closing": "springless",
+    "fixing": "screw",
+    "file": "Петля PRIME, полунакладная без пружины 45мм h0 clip-on саморез (112703).fr3d",
+    "sha": "7ecead3bab9db7074278a7f7828725edab80a71c47b0a90a34d10b9cd4143198",
+    "cupFromHostMm": 14.5,
+    "mesh": "112643"
+  },
+  {
+    "article": "112650",
+    "kind": "inset",
+    "series": "PRIME 3D",
+    "closing": "soft",
+    "fixing": "screw",
+    "file": "Петля PRIME 3D, внутренняя с доводчиком, 45 мм, h0 clip-on саморез (112650).fr3d",
+    "sha": "ec910e25e81f6cc0d21feb490f8f75aec9ca702b6861e3f32e84fd2cfc5f7786",
+    "cupFromHostMm": 22,
+    "mesh": "112650",
+    "sourceCupFromHostMm": 21.5
+  },
+  {
+    "article": "113408",
+    "kind": "inset",
+    "series": "PRIME 3D",
+    "closing": "soft",
+    "fixing": "euro",
+    "file": "Петля PRIME 3D, внутренняя с доводчиком, 45 мм, h0 clip-on еврошуруп (113408).fr3d",
+    "sha": "54d0e9115b9f9c64d288b344e3a62e20d16d902c40c7dab6de2b559baa4478b8",
+    "cupFromHostMm": 22,
+    "mesh": "113408",
+    "sourceCupFromHostMm": 21.5
+  },
+  {
+    "article": "112649",
+    "kind": "inset",
+    "series": "PRIME",
+    "closing": "soft",
+    "fixing": "screw",
+    "file": "Петля PRIME, внутренняя с доводчиком, 45 мм, h0 clip-on саморез (112649).fr3d",
+    "sha": "f489112cca5d1723701632860800a406bddc7d532be77520c16b528e3f8fc71e",
+    "cupFromHostMm": 22,
+    "mesh": "112649",
+    "sourceCupFromHostMm": 21.5
+  },
+  {
+    "article": "113405",
+    "kind": "inset",
+    "series": "PRIME",
+    "closing": "soft",
+    "fixing": "euro",
+    "file": "Петля PRIME, внутренняя с доводчиком, 45 мм, h0 clip-on еврошуруп (113405).fr3d",
+    "sha": "99fb5e120020a3173a76dbc8b567739d45774700c4d40c9b4ba76551a078849e",
+    "cupFromHostMm": 22,
+    "mesh": "112649",
+    "sourceCupFromHostMm": 21.5
+  },
+  {
+    "article": "112712",
+    "kind": "inset",
+    "series": "PRIME 3D",
+    "closing": "springless",
+    "fixing": "screw",
+    "file": "Петля PRIME 3D, внутренняя без пружины, 45 мм, h0 clip-on саморез (112712).fr3d",
+    "sha": "72d7aaec991ef421ed2f387596e52501c6dbf4ce72bed8826ab08c3155cfe32d",
+    "cupFromHostMm": 22,
+    "mesh": "112650",
+    "sourceCupFromHostMm": 21.5
+  },
+  {
+    "article": "112710",
+    "kind": "inset",
+    "series": "PRIME",
+    "closing": "springless",
+    "fixing": "screw",
+    "file": "Петля PRIME, внутренняя без пружины, 45мм, h0 clip-on саморезы (112710).fr3d",
+    "sha": "fa4837cd9dfbe912605ae12be725ee52959ca98a49455ffe734fcd1bddb35775",
+    "cupFromHostMm": 22,
+    "mesh": "112649",
+    "sourceCupFromHostMm": 21.5
+  }
+]

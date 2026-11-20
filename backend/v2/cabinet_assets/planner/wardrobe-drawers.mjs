@@ -1,3 +1,4 @@
+import {activeLeafKeys,hingeProduct,settingFor,bandKey,onDivider,depthBehindDoor,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
 import {rearClearance} from './panel-machining.mjs';
 import {sectionOf,isRightBank,levelOf,splitAt,columnWidths} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
@@ -5,7 +6,11 @@ import {anchoredShelf} from './wardrobe-door-layout.mjs';
 import {fittedFaceHeights,frontEdgeGap,coverClearance,mm} from './wardrobe-niches.mjs';
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
 
-export const outerFront=s=>Boolean(s.front||s.drawerBanks?.some(b=>b?.kind==='external'));
+export function frontProjection(s){
+ const faces=activeLeafKeys(s.front).map(key=>hingeProduct(s.front,key).kind==='inset'?0:18+(settingFor(s.front,key).push?3:0));
+ return Math.max(0,...faces,s.drawerBanks?.some(b=>b?.kind==='external')?18:0);
+}
+export const outerFront=s=>frontProjection(s)>0;
 export const drawerMember=(id,role)=>new RegExp(':drawer-\\d+-'+role+'$').test(id??'');
 export const drawerBottom=id=>drawerMember(id,'\\d+-bottom');
 export const drawerSide=id=>drawerMember(id,'\\d+-side-(?:left|right)');
@@ -80,9 +85,9 @@ export function drawerSections(s,widths,legacy=false){
   if(!internal&&bank.kind!=='external')throw Error('Выберите исполнение шуфляд.');
   const divide=s.front?.division,cut=divide?anchoredShelf(s):null,n=i+1;
   const above=cut&&(internal?s.thickness:0)+(bank.bottomOffset??0)>=cut.y;
-  const onSide=side=>divide&&(divide.scope==='all'||divide.scope===side)?(above?divide.above:divide.below):s.front?.swing;
-  const spacerL=internal&&!rightBank&&i===0&&['left','pair'].includes(onSide('left'))?18:0;
-  const spacerR=internal&&(!shared||rightBank)&&i===widths.length-1&&['right','pair'].includes(onSide('right'))?18:0;
+  const onSide=side=>{const key=bandKey(s.front,side,above);return key&&!onDivider(s.front,key);};
+  const spacerL=internal&&!rightBank&&i===0&&onSide('left')?18:0;
+  const spacerR=internal&&(!shared||rightBank)&&i===widths.length-1&&onSide('right')?18:0;
   const mountWidth=clear-spacerL-spacerR;
   if(mountWidth<163)throw Error('Секция '+n+': монтажный проём AKS должен быть от 163 мм.');
   const center=(left+spacerL+right-spacerR)/2;
@@ -99,7 +104,16 @@ export function drawerSections(s,widths,legacy=false){
   // Equal cuts round down to 0.001 mm. Keep the specified shelf clearance exact.
   const rounding=bank.coverFixing?mm(bank.height-frontEdgeGap-coverClearance-bank.gap*(heights.length-1)-heights.reduce((sum,h)=>sum+h,0)):0;
   let bottom=mm(base+rounding);
-  const faceFront=s.depth/2+(internal?-3:18);
+  const seam=s.front?.hinges&&(usesDivider(s.front)||s.sections===2)?middleDivider(s).x:s.width/2;
+  const rowKeys=['left','right'].flatMap(side=>{
+   const key=bandKey(s.front,side,above);
+   if(!key)return [];
+   const paired=s.front?.division?(s.front.division.scope!=='all'||(above?s.front.division.above:s.front.division.below)==='pair'):s.front?.swing==='pair';
+   if((paired||onDivider(s.front,key))&&(side==='left'?left+s.width/2>=seam:right+s.width/2<=seam))return [];
+   return [key];
+  });
+  const insetSetback=Math.max(0,...rowKeys.map(key=>depthBehindDoor(s,key)));
+  const faceFront=s.depth/2+(internal?-Math.max(3,insetSetback):18);
   const bodyFront=faceFront-18;
   const clearDepth=bodyFront+s.depth/2-rearClearance(s);
   const rail=railForOpening(clearDepth,legacy);

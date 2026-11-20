@@ -120,6 +120,11 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    catch{ /* An invalidated anchor can be chosen again on this drawing. */ }
    const y0=Y(footHeight(s)),x0=X(-W/2);
    drawing+=doorLeaves(s,front.swing,x0,y0,k,front.division?11:40,leaves,selection);
+   const selected=leaves.find(l=>l.key===selection?.door);
+   if(selected?.hostKey){
+    const support=built.parts.find(p=>p.key===selected.hostKey)?.item;
+    if(support){drawing+='<rect pointer-events="none" x="'+num(X(support.x-support.width/2))+'" y="'+num(Y(support.elevation_mm-s.elevation+support.height))+'" width="'+num(support.width*k)+'" height="'+num(support.height*k)+'" fill="#277958" opacity=".32"/>';}
+   }
    for(const leaf of leaves){
     drawing+=handleDrawing(leaf,front.handles?.[leaf.key],doorLabel(leaf.key));
    }
@@ -131,7 +136,7 @@ function elevationView(built,view,section,front,selectedShelf,selection){
      drawing+='<g data-door-shelf-pick="'+p.section+':'+p.shelf+'" role="button" tabindex="0" aria-label="Стык на высоте '+(bottom+footHeight(s)+s.elevation)+' мм от пола"><title>До низа перегородки от пола</title><path d="M'+num(ax)+' '+num(y)+'h7" stroke="'+ink+'"/><rect x="'+num(ax+6)+'" y="'+num(y-8)+'" width="34" height="15" rx="3" fill="'+(selected?'#deece5':'#f6f8f7')+'"/><text x="'+num(ax+23)+'" y="'+num(y+3)+'" fill="'+ink+'" text-anchor="middle" font-size="9">'+(bottom+footHeight(s)+s.elevation)+'</text></g>';
     }
    }
-   drawing+=label(200,312,legal?(d?leaves.length+' ств. · стык по перегородке':swingNames[front.swing]):'Проверьте параметры створки');
+   drawing+=label(200,312,legal?(d?leaves.length+' ств. · стык по перегородке':front.hinges?leaves.length+' ств. · выберите дверь на схеме':swingNames[front.swing]):'Проверьте параметры створки');
  }
  if(view==='sections'){
    const widths=sectionWidths(s);section=Math.max(0,Math.min(widths.length-1,section));

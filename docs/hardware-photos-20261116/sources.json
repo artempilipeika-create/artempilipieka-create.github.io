@@ -116,6 +116,82 @@
       185
     ]
   },
+  "112643": {
+    "name": "Петля полунакладная с доводчиком 45мм h0 clip-on PRIME by AKS (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119916-144375-p?OFFER_ID=144380",
+    "asset": "https://aks.by/upload/iblock/d7f/9r2nfcvl47ox9668hqna1jvb6nyv7sda.jpg",
+    "pixels": [
+      664,
+      580
+    ]
+  },
+  "112644": {
+    "name": "Петля полунакладная с доводчиком 45мм h0 clip-on PRIME by AKS 3D (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119917-144376-p?OFFER_ID=145314",
+    "asset": "https://aks.by/upload/iblock/75e/i5pxe5kakgyc75io889qjlnnq62zwl48.jpg",
+    "pixels": [
+      700,
+      580
+    ]
+  },
+  "112649": {
+    "name": "Петля внутренняя с доводчиком 45мм h0 clip-on PRIME by AKS (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119916-144375-p?OFFER_ID=144382",
+    "asset": "https://aks.by/upload/iblock/028/t180mgcv9dnd9q6g1ylpq7t2flyx1d5d.jpg",
+    "pixels": [
+      674,
+      580
+    ]
+  },
+  "112650": {
+    "name": "Петля внутренняя с доводчиком 45мм h0 clip-on PRIME by AKS 3D (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119917-144376-p?OFFER_ID=144385",
+    "asset": "https://aks.by/upload/iblock/220/xcpp1du2l3js0kfd68h2232ibd480juh.jpg",
+    "pixels": [
+      715,
+      580
+    ]
+  },
+  "112703": {
+    "name": "Петля полунакладная без пружины 45мм h0 clip-on PRIME by AKS (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/121538-145462-p?OFFER_ID=145490",
+    "asset": "https://aks.by/upload/iblock/a23/5ast8hxjej2k1uzm3txojuzkp1gbaa51.jpg",
+    "pixels": [
+      717,
+      580
+    ],
+    "supplierAlsoUsesFor": "112643"
+  },
+  "112708": {
+    "name": "Петля полунакладная без пружины 45мм h0 clip-on PRIME by AKS 3D (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119918-144377-p?OFFER_ID=145464",
+    "asset": "https://aks.by/upload/iblock/8de/6zq015ml7l6q403xmkwlg6f5vvp3r7v0.jpg",
+    "pixels": [
+      720,
+      559
+    ],
+    "supplierAlsoUsesFor": "112644"
+  },
+  "112710": {
+    "name": "Петля внутренняя без пружины 45мм h0 clip-on PRIME by AKS (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/121538-145462-p?OFFER_ID=145492",
+    "asset": "https://aks.by/upload/iblock/006/y4w2jg7ccu1o63wx5conft4pdbgq1ztb.jpg",
+    "pixels": [
+      713,
+      580
+    ],
+    "supplierAlsoUsesFor": "112649"
+  },
+  "112712": {
+    "name": "Петля внутренняя без пружины 45мм h0 clip-on PRIME by AKS 3D (саморезы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119918-144377-p?OFFER_ID=145466",
+    "asset": "https://aks.by/upload/iblock/b9c/su2i2x1k3f8u19ekh74ryordjwg1wzxb.jpg",
+    "pixels": [
+      720,
+      563
+    ],
+    "supplierAlsoUsesFor": "112650"
+  },
   "112848": {
     "name": "Опора меб. мет. OLYMPIA h120 угловая черный матовый AKS",
     "source": "https://aksgeorgia.ge/ru/product/%d0%be%d0%bf%d0%be%d1%80%d0%b0-%d0%bc%d0%b5%d0%b1-%d0%bc%d0%b5%d1%82-olympia-h120-%d1%83%d0%b3%d0%bb%d0%be%d0%b2%d0%b0%d1%8f-%d1%87%d0%b5%d1%80%d0%bd%d1%8b%d0%b9-%d0%bc%d0%b0%d1%82%d0%be%d0%b2%d1%8b/",
@@ -330,6 +406,33 @@
     "pixels": [
       432,
       476
+    ]
+  },
+  "113403": {
+    "name": "Петля полунакладная с доводчиком 45мм h0 clip-on PRIME by AKS 3D (еврошурупы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119917-144376-p?OFFER_ID=145318",
+    "asset": "https://aks.by/upload/iblock/d1e/x1mavesqhq812hs1qqnccfu0odc00rdw.jpg",
+    "pixels": [
+      720,
+      558
+    ]
+  },
+  "113405": {
+    "name": "Петля внутренняя с доводчиком 45мм h0 clip-on PRIME by AKS (еврошурупы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119916-144375-p?OFFER_ID=145312",
+    "asset": "https://aks.by/upload/iblock/9a9/diw86lagt3l7a1him0ltcln600gxdinh.jpg",
+    "pixels": [
+      702,
+      580
+    ]
+  },
+  "113408": {
+    "name": "Петля внутренняя с доводчиком 45мм h0 clip-on PRIME by AKS 3D (еврошурупы, заглушки) (упак. = 2 шт.)",
+    "source": "https://aks.by/119917-144376-p?OFFER_ID=145320",
+    "asset": "https://aks.by/upload/iblock/add/z7imoi3hdx14n2gaozn930gbn6bmmmj3.jpg",
+    "pixels": [
+      720,
+      557
     ]
   },
   "114003": {

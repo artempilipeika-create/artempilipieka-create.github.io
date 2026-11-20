@@ -239,3 +239,11 @@
 .wardrobe-kit th:first-child, .wardrobe-kit td:first-child { text-align: left; }
 .wardrobe-kit td a { display: block; color: #235745; }
 .wardrobe-kit td input { width: 5em; min-width: 0; padding: .3rem; }
+
+.wardrobe-hinge-editor{min-width:0}
+.wardrobe-prime-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:.5rem}
+.wardrobe-prime-cards button{padding:.5rem;min-width:0;height:auto;text-align:left;white-space:normal}
+.wardrobe-prime-cards [aria-pressed=true]{border-color:#205c45;box-shadow:inset 0 0 0 1px #205c45;background:#eff6ef}
+.wardrobe-prime-cards figure{margin:0;display:block}
+.wardrobe-prime-cards img{display:block;width:100%;height:75px;object-fit:contain;margin-bottom:.45rem}
+.wardrobe-prime-cards figcaption{display:block;font-size:.87rem;line-height:1.35;overflow-wrap:anywhere}

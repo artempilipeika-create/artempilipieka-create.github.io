@@ -3,6 +3,7 @@
 import * as THREE from './vendor/three.module.js';
 import {wallPanels,WALLS} from './room-plan.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
+import {installedSide} from './wardrobe-hinge-layout.mjs';
 import {doorLabel,doorSide} from './wardrobe-door-layout.mjs';
 
 const rad=Math.PI/180,zero=[0,0,0],epsilon=.00001;
@@ -11,7 +12,7 @@ export const slidingKey=item=>item?.item_id?.match(/:drawer-(\d+-\d+)-(?:face|fr
 export const leafKey=it=>it?.assistant_carcass?it.item_id.slice(it.assistant_carcass.group_id.length+1):'';
 
 export function hingePose(it,degrees){
- const sign=doorSide(leafKey(it))==='left'?-1:1;
+ const sign=installedSide(it.assistant_carcass?.spec?.front,leafKey(it))==='left'?-1:1;
  const a=sign*degrees*rad,c=Math.cos(a),s=Math.sin(a);
  const x=sign*(it.width/2-1.5),z=it.depth/2;
  return {a,dx:x*(1-c)-z*s,dz:z*(1-c)+x*s};

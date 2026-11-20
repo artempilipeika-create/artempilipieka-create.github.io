@@ -1,3 +1,4 @@
+import {hingeCatalogue} from './wardrobe-hinge-layout.mjs';
 import pullCatalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {splitAt,levelOf,splitKey,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
@@ -7,9 +8,12 @@ import {doorHinges} from './wardrobe-hinges.mjs';
 import {spacerCuts,frontAtHinge} from './wardrobe-drawers.mjs';
 
 const close=(a,b)=>Math.abs(a-b)<.01;
+function hostHinges(group,host,items){
+ return items.filter(i=>i.item_id.startsWith(group+':')&&doorSide(i.item_id.slice(group.length+1)))
+   .flatMap(i=>doorHinges(i,items)).filter(h=>h.host_blank_id===host.item_id);
+}
 function sideAxes(group,side,items){
- return items.filter(i=>i.item_id.startsWith(group+':')&&doorSide(i.item_id.slice(group.length+1))===side)
-   .flatMap(i=>doorHinges(i,items).map(h=>h.position.y)).sort((a,b)=>a-b);
+ return hostHinges(group,{item_id:group+':'+side},items).map(h=>h.position.y).sort((a,b)=>a-b);
 }
 export function installedCuts(panel,items){
  const meta=panel.assistant_carcass,match=/:drawer-(\d+)-spacer-(left|right)$/.exec(panel.item_id??'');
@@ -62,7 +66,7 @@ export function wardrobeHardware(items){
    const split=splitAt(spec,section,levelOf(slot)),shared=split?.kind==='drawers',innerSide=isRightBank(slot)?0:1;
    if(shared)panels[innerSide]=get(splitKey(split)+'-divider');
    const spacers=sides.map(side=>parts.get(prefix+'spacer-'+side));
-   const axes=sides.map((side,k)=>spacers[k]?sideAxes(origin.assistant_carcass.group_id,side,items):[]);
+   const hinges=panels.map((p,k)=>hostHinges(origin.assistant_carcass.group_id,p,items).filter(h=>h.door_side===sides[k]));
    const cuts=spacers.map(p=>p?installedCuts(p,items):[]);
    let railFront,railLength;
    bank.faces.forEach((_,index)=>{
@@ -76,7 +80,7 @@ export function wardrobeHardware(items){
      if(!close((box-mount)*sign,13.5))throw Error('Секция '+(section+1)+': направляющей нужно 13,5 мм с каждой стороны.');
      if(cuts[k].some(([lo,hi])=>ax+22.5>host.elevation_mm+lo&&ax-22.5<host.elevation_mm+hi))throw Error('Шуфляда '+(index+1)+': направляющая попадает в вырез под петлю. Измените положение блока.');
      const faceClear=sign*(at(face).x-(at(panels[k]).x+sign*panels[k].width/2))-face.width/2;
-     if(faceClear<23.6&&axes[k].some(y=>frontAtHinge(face.elevation_mm,face.height,y,side)))throw Error('Фасад шуфляды '+(index+1)+' пересекает петлю. Пересчитайте ширину фасада в анкете шкафа.');
+     if(hinges[k].some(h=>faceClear<{overlay:23.6,half:33.6,inset:41.1}[hingeCatalogue[h.article].kind]&&frontAtHinge(face.elevation_mm,face.height,h.position.y,side)))throw Error('Фасад шуфляды '+(index+1)+' пересекает петлю. Пересчитайте ширину фасада в анкете шкафа.');
      const label='PRIME by AKS '+cat.article+' · '+L+' мм · '+(k?'правая':'левая')+' · '+face.name;
      let source=cat[side];
      if(shared&&k===innerSide){
