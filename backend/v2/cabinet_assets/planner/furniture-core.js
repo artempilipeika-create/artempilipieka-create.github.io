@@ -574,7 +574,31 @@
     const n=rotateXZ(0,(next.depth-source.depth)/2+b.rearServiceGapMm-a.rearServiceGapMm,next.rotation||0);
     return {...next,x:next.x+n.x,z:next.z+n.z,rearServiceGapMm:b.rearServiceGapMm};
   }
+  function shelfMounting(it){
+    if(it?.module_type!=='blank'||it.blank_axis!=='horizontal'||!it.blank_binding)return 'none';
+    if(it.blank_shelf==='board/confirmat'||it.blank_shelf==='board/cam_dowel')return 'none';
+    if(it.blank_shelf)return it.blank_shelf;
+    if(it.blank_binding.mounting)return it.blank_binding.mounting;
+    // Older scenes also bound the roof, bottom and rails to the uprights.
+    return /:(bottom|top|rail-[^:]+)$/.test(it.item_id)?'none':'sekura-95388';
+  }
+  function blankEdgeCode(it,code=it.blank_edge_code){
+    if(!/^[01]{4}$/.test(code)||it.blank_shelf&&!it.blank_shelf.startsWith('board/'))return code;
+    if(shelfMounting(it)!=='none')return '1111';
+    const bits=code.split('');
+    const gripSide={right:0,left:1,bottom:2,top:3}[it.blank_edge_pull?.edge];
+    if(gripSide!=null)bits[gripSide]='1';
+    const cutSides={x1:0,x0:1,y0:2,y1:3};
+    if(Array.isArray(it.blank_machining))for(const cut of it.blank_machining){
+      if(cut&&(cut.kind==='groove'||cut.kind==='rabbet')&&cutSides[cut.edge]!=null)bits[cutSides[cut.edge]]='1';
+    }
+    return bits.join('');
+  }
   function normalizeKitchen(it,room){
+    if(it.module_type==='blank'){
+      const code=blankEdgeCode(it);
+      return code===it.blank_edge_code?it:{...it,blank_edge_code:code};
+    }
     it=refreshBaseSource(VITRINE?.normalizeSource(it)||it);
     it=root.MF_PULLOUT_DRYERS?.normalizeSource(it)||it;
     const k=kitchenSettings(it);if(!k)return it;
@@ -1108,5 +1132,5 @@
     });
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({blankEdgeCode,shelfMounting,DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

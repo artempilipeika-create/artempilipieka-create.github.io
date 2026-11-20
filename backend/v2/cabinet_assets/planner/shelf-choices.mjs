@@ -62,5 +62,5 @@ export function fixedShelfScheme(it){
 export function shelfDescription(c,n){
  if(c.scheme==='cam_dowel')return 'Эксцентрики × '+(4*n)+' · шканты × '+(4*n);
  if(c.scheme==='confirmat')return 'Конфирматы 7×50 × '+(4*n);
- return c.hardware.name+' · арт. '+c.hardware.article+' × '+(4*n)+' шт.';
+ return c.hardware.name+' · арт. '+c.hardware.article+' × '+(4*n)+' шт.'+(c.kind==='board'?' · ПВХ по четырём торцам':'');
 }

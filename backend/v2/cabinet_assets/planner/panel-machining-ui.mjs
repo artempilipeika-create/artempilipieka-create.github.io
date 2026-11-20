@@ -18,20 +18,21 @@ function section(parent,op,item){
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 310 138');svg.setAttribute('role','img');svg.setAttribute('aria-label','Сечение выбранной обработки');
  const draw=(tag,attrs)=>{const n=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,v);svg.append(n);return n;};
  draw('rect',{x:20,y:108-height,width:268,height,fill:'#d5bda1',stroke:'#6c5846'});
+ if(op.kind==='groove'||op.kind==='rabbet')draw('rect',{x:20,y:108-height,width:item.blank_edge_thickness_mm*sx,height,fill:'#50806b'});
  draw('polygon',{points:plan.profile.map(point).join(' '),fill:'#d9edf5',stroke:'#236b8a','stroke-width':2});
  draw('text',{x:20,y:Math.max(12,102-height),fill:'#334c40','font-size':12}).textContent=faceLabels[item.blank_axis][1]+' пласть';
  draw('text',{x:20,y:127,fill:'#334c40','font-size':12}).textContent=faceLabels[item.blank_axis][0]+' пласть';
  parent.append(svg);
  const description=op.kind==='miter'?'45° · остаток у края '+mm(op.land)+' мм':
   'Ширина '+mm(op.width)+' мм · глубина '+mm(op.depth)+' мм'+(op.kind==='groove'?' · от края до начала '+mm(op.offset)+' мм':'');
- parent.append(el('figcaption',description));
+ parent.append(el('figcaption',op.kind==='miter'?description:description+' · ПВХ '+mm(item.blank_edge_thickness_mm)+' мм'));
 }
 
 export function backMountControls(ui){
  const b=ui.fields.backMount;if(!b)return;
  const group=el('fieldset');group.append(el('legend','Посадка задней стенки'));
  const figure=el('figure');figure.className='cut-section';
- const board={blank_axis:'side',blank_thickness_mm:ui.fields.thickness,blank_length_mm:ui.fields.height,blank_width_mm:ui.fields.depth};
+ const board={blank_axis:'side',blank_edge_thickness_mm:ui.fields.edgeThickness??1,blank_thickness_mm:ui.fields.thickness,blank_length_mm:ui.fields.height,blank_width_mm:ui.fields.depth};
  const preview=()=>section(figure,{...b,edge:'x0',face:1},board);
  for(const [key,label] of [['width','Ширина выборки, мм'],['depth','Глубина в плиту, мм'],...(b.kind==='groove'?[['offset','От заднего торца до начала паза, мм']]:[])]){
   measurement(group,label,b[key],v=>{b[key]=v;ui.changed();preview();},'.5');
@@ -73,6 +74,7 @@ export function machiningControls(ui){
  ui.select(box,'Операция',Object.entries(cutTitles),op.kind,v=>{ui.cutDraft=defaultCut(v,op.edge,op.face);ui.render();});
  ui.select(box,'Торец детали',panelEdges.map((v,i)=>[v,edgeLabels[item.blank_axis][i]]),op.edge,v=>{op.edge=v;redraw();});
  ui.select(box,'Обрабатываемая пласть',faceLabels[item.blank_axis].map((s,i)=>[i,s]),op.face,v=>{op.face=Number(v);redraw();});
+ if(op.kind==='groove'||op.kind==='rabbet')box.append(el('small','Наружный торец со стороны выборки оклеивается ПВХ.'));
  if(op.kind==='miter')box.append(button('Перевернуть скос',()=>{op.face=1-op.face;ui.render();}));
  const dimensions=op.kind==='miter'?[['land','Оставить у края, мм']]:[
   ['width','Ширина выборки, мм'],['depth','Глубина в плиту, мм'],...(op.kind==='groove'?[['offset','От края до начала паза, мм']]:[])];

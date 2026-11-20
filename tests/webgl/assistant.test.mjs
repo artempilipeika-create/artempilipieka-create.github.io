@@ -228,3 +228,22 @@ test('wardrobe drawer banks survive save, reopen, material changes and one undo 
  assert.throws(()=>wardrobeSpec({...form,drawerBanks:[{kind:'internal',faces:[{height:2400}]}]}));
  assert.ok(get('drawer-0-spacer-left'));
 });
+
+test('editing a saved wardrobe moves the required PVC with the machining and the actual shelf support',()=>{
+ const {a}=setup();
+ const initial={...spec,shelves:2,sectionShelves:[2],shelfChoices:[['board/95388','board/confirmat']],
+  machining:{top:[{kind:'rabbet',edge:'x0',face:0,width:4,depth:8}]}};
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec:initial},{id:'edging'}));
+ const part=key=>a.items.find(it=>it.item_id==='edging:'+key);
+ assert.equal(part('top').blank_edge_code,'1100');
+ part('top').blank_edge_code='1101';
+ part('shelf-0-0').blank_edge_code='1000'; // old project
+ const edited={...initial,shelfChoices:[['board/cam_dowel','board/70245']],
+  machining:{top:[{kind:'groove',edge:'y0',face:1,width:4,depth:5,offset:18}]}};
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:edited}));
+ assert.equal(part('top').blank_edge_code,'1011');
+ assert.equal(part('shelf-0-0').blank_edge_code,'1000');
+ assert.equal(part('shelf-0-1').blank_edge_code,'1111');
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:{...edited,machining:{}}}));
+ assert.equal(part('top').blank_edge_code,'1001');
+});

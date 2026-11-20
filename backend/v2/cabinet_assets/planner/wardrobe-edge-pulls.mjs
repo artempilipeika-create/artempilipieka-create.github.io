@@ -1,9 +1,7 @@
 import catalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 
-const edgeCodes={right:'0111',left:'1011',bottom:'1101',top:'1110'};
 const roll={top:0,bottom:180,left:90,right:-90};
 export const isEdgePull=h=>h?.article==='67698'||h?.article==='75975';
-export const pullEdgeCode=edge=>edgeCodes[edge];
 export const verticalEdge=edge=>edge==='left'||edge==='right';
 
 export function gripCut(h){
@@ -20,7 +18,7 @@ export function fittedPull(spec,key){
 
 export function validateEdgePull(h,width,height,thickness,hingeSide){
  const part=catalogue[h.article],vertical=verticalEdge(h.edge);
- if(!isEdgePull(h)||!edgeCodes[h.edge]||thickness!==part.facadeThickness)
+ if(!isEdgePull(h)||!Object.hasOwn(roll,h.edge)||thickness!==part.facadeThickness)
   return 'Врезной профиль AKS рассчитан на торец фасада 18 мм.';
  if(hingeSide&&h.edge===hingeSide)return 'На этом торце установлены петли. Выберите свободный торец фасада для врезной ручки.';
  if((vertical?height:width)>part.usableLength)return 'Длина профиля превышает полезную длину хлыста '+part.usableLength+' мм.';

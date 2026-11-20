@@ -1,6 +1,7 @@
 import {CARCASSES,CARCASS_BACK_MATERIAL_ID,buildCarcass,placeCarcass,insertCarcass} from './carcass-model.mjs';
 import {cuttingSize} from './blanks-model.mjs';
 import {findSpace} from './placement.mjs';
+import {blankEdgeCode} from './furniture-core.mjs';
 
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const numeric=(name,label,value,min,max)=>`<label>${label}<input name="corpus-${name}" type="number" min="${min}" max="${max}" step="1" value="${value}" required></label>`;
@@ -97,7 +98,7 @@ export class CarcassUI{
       this.root.querySelector('[data-part-count]').textContent='· '+built.items.length;
       if(rows)this.root.querySelector('[data-carcass-parts]').innerHTML=built.parts.map(({key,label,item})=>{
         const cut=cuttingSize(item),names=item.blank_axis==='side'?['спереди','сзади','снизу','сверху']:item.blank_axis==='back'?['снизу','сверху','слева','справа']:['спереди','сзади','слева','справа'];
-        return `<div class="mf-carcass-part"><strong>${escape(label)}</strong><span>${item.blank_length_mm} × ${item.blank_width_mm} × ${item.blank_thickness_mm} мм</span><small>Распил: ${cut.length} × ${cut.width} мм</small><label>ПВХ · ${escape(label)}<select data-part-edge="${key}" ${key==='back'?'disabled':''}>${codes.map(code=>`<option value="${code}" ${code===item.blank_edge_code?'selected':''}>${code} · ${code==='0000'?'без ПВХ':code==='1111'?'в круг':names.filter((_,i)=>code[i]==='1').join(', ')}</option>`).join('')}</select></label></div>`;
+        return `<div class="mf-carcass-part"><strong>${escape(label)}</strong><span>${item.blank_length_mm} × ${item.blank_width_mm} × ${item.blank_thickness_mm} мм</span><small>Распил: ${cut.length} × ${cut.width} мм</small><label>ПВХ · ${escape(label)}<select data-part-edge="${key}" ${key==='back'||blankEdgeCode(item,'0000')==='1111'?'disabled':''}>${codes.filter(code=>blankEdgeCode(item,code)===code).map(code=>`<option value="${code}" ${code===item.blank_edge_code?'selected':''}>${code} · ${code==='0000'?'без ПВХ':code==='1111'?'в круг':names.filter((_,i)=>code[i]==='1').join(', ')}</option>`).join('')}</select></label></div>`;
       }).join('');
       this.root.querySelector('[data-carcass-total]').textContent=built.items.length+' деталей · ПВХ '+built.edgeMeters.toFixed(2)+' м · глубина со стенкой '+built.depth+' мм';
       error.hidden=true;error.textContent='';add.disabled=false;this.built=built;return true;

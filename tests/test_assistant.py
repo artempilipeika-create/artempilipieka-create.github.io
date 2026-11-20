@@ -405,3 +405,22 @@ def test_fourth_section_preserves_legacy_slots_and_accepts_both_sides_of_a_local
         assert any('общая стойка' in r['name'] for r in rows)
     with pytest.raises(ValidationError,match='перегородка'):
         CarcassDesign.model_validate({**spec,'nicheSplits':None})
+
+
+def test_saved_wardrobes_receive_workshop_pvc_on_reopen():
+    spec={**SPEC,'shelves':2,'sectionShelves':[2],'shelfChoices':[['board/95388','board/confirmat']],
+          'front':{'swing':'pair','offset':90,'autoHinges':True,'handles':{'door-left':{'article':'75975','edge':'right'}}},
+          'backMount':{'kind':'rabbet','width':4,'depth':8}}
+    scene=generated_scene(spec)
+    legacy={'door-left':'0111','shelf-0-0':'1000','right':'1011'}
+    parts={i['item_id'].split(':')[-1]:i for i in scene['items']}
+    for key,code in legacy.items():
+        parts[key]['blank_edge_code']=code
+    parts['left']['blank_edge_code']='0010'
+    saved=Scene.model_validate(scene).model_dump(mode='json')
+    parts={i['item_id'].split(':')[-1]:i for i in saved['items']}
+    assert all(parts[key]['blank_edge_code']=='1111' for key in legacy)
+    assert parts['shelf-0-1']['blank_edge_code']=='1000' and parts['left']['blank_edge_code']=='0010'
+    assert parts['back']['blank_edge_code']=='0000'
+    from backend.v2.three_d_document import module_contents
+    assert 'торец под ручкой оклеить ПВХ 2 мм' in module_contents(parts['door-left'])

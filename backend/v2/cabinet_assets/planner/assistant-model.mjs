@@ -10,6 +10,7 @@ import {joinPlinths,splitPlinths} from './wardrobe-plinth-runs.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
+import {blankEdgeCode} from './furniture-core.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
@@ -99,7 +100,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   const item={...old,...generated,blank_binding:generated.blank_binding??null,assistant_carcass:metadata};
   if(old){
    retained.add(previousId);
-   const customName=originalItems.find(i=>i.item_id===previousId)?.name!==old.name;
+   const original=originalItems.find(i=>i.item_id===previousId);
+   const customName=original?.name!==old.name;
    if(customName)item.name=old.name;
    if(!generated.blank_machining)delete item.blank_machining;
    if(!generated.blank_shelf)delete item.blank_shelf;
@@ -110,7 +112,11 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    if(!old.blank_shelf?.match(/^[468]\//)&&!generated.blank_shelf?.match(/^[468]\//)&&spec.edgePolicy===current.metadata.spec.edgePolicy){
     const oldSide=previousSides.find(i=>i.item_id===old.item_id);
     const recalculate=resetSideEdges&&[prefix+':left',prefix+':right'].includes(item.item_id);
-    if(!recalculate&&(!oldSide||oldSide.blank_edge_code!==old.blank_edge_code))item.blank_edge_code=old.blank_edge_code;
+    if(!recalculate&&(!oldSide||oldSide.blank_edge_code!==old.blank_edge_code)){
+     const previousRequired=blankEdgeCode(old,'0000');
+     // When a groove moves or a loose shelf becomes fixed, release only its old compulsory edges.
+     item.blank_edge_code=[...old.blank_edge_code].map((bit,i)=>previousRequired[i]==='1'?generated.blank_edge_code[i]:bit).join('');
+    }
    }
    if(spec.edgeThickness===current.metadata.spec.edgeThickness)item.blank_edge_thickness_mm=old.blank_edge_thickness_mm;
   }
@@ -122,6 +128,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   else if(bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;
   if(item.item_id===prefix+':rear-brace'){item.blank_edge_code='1100';item.blank_edge_thickness_mm=1;}
   if(item.item_id===prefix+':plinth')item.blank_edge_code='1111';
+  item.blank_edge_code=blankEdgeCode(item);
   return item;
  });
  const removed=current?.items.filter(i=>!retained.has(i.item_id))||[];
@@ -146,7 +153,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
   ...(hinges.length?['Накладные фасады · PRIME 3D 112595 · '+hinges.length+' петель на шкаф']:[]),
-  spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм без кромки · полки короче на '+spec.backThickness+' мм':spec.backMount?'ХДФ 3 мм '+(spec.backMount.kind==='groove'?'в пазу':'в правой четверти')+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
+  spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм · полки короче на '+spec.backThickness+' мм':spec.backMount?'ХДФ 3 мм '+(spec.backMount.kind==='groove'?'в пазу':'в правой четверти')+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{
    const ends=dividerScheme(spec,i);
    return 'Стойка '+(i+1)+' · сверху: '+jointOptions[ends.top]+' · снизу: '+jointOptions[ends.bottom];

@@ -336,7 +336,7 @@ def module_contents(it):
         depth=grip.get('grooveDepth') or product['trialGrooveDepth']
         kerf=f"Паз {width:g} × {depth:g} мм (ширина × глубина), ось 9 мм от лицевой пласти."
         if grip.get('grooveWidth') is None:kerf+=' Расчётная посадка, проверить на обрезке перед серией.'
-        return f"{edge} торец фасада без ПВХ. Длина отрезка ручки AKS {grip['article']} — {length:g} мм. {kerf}"
+        return f"{edge} торец под ручкой оклеить ПВХ 2 мм. Глубина паза от готового торца. Длина отрезка ручки AKS {grip['article']} — {length:g} мм. {kerf}"
     it=refresh_dryer_source(it)
     v=gola_variant(it) or dryer_variant(it) or cargo_variant(it);dish=dishwasher(it)
     gola_front=(v and v.get('execution')=='gola') or (dish and dish.get('variant')=='gola')

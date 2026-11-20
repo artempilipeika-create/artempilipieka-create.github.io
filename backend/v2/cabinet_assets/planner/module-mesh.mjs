@@ -1,4 +1,5 @@
 import {machineBoardMeshes} from './panel-machining-mesh.mjs';
+import {blankEdgeCode} from './furniture-core.mjs';
 import {groovedBoxes} from './wardrobe-edge-pulls.mjs';
 import {buildDoorHardware,shapedProfilePanel} from './wardrobe-door-mesh.mjs';
 import {doorHandle,panelProfiles,boardProfileCuts,horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
@@ -324,7 +325,7 @@ export class MeshFactory{
   buildBlank(it,ghost=false){
     const group=new THREE.Group();
     group.userData={itemId:it.item_id,ghost,visualApproximation:false};
-    const W=it.width,H=it.height,D=it.depth,ax=it.blank_axis,code=it.blank_edge_code||'0000';
+    const W=it.width,H=it.height,D=it.depth,ax=it.blank_axis,code=blankEdgeCode(it,it.blank_edge_code||'0000');
     buildRodMeshes(this,group,it,ghost);
     buildDoorHardware(this,group,it,ghost);
     const cuts=this.spacerCuts(it);

@@ -1,16 +1,10 @@
 // The fragment origin is the intersection of the bearing surface and the inner panel face.
 import {localPoint,worldPoint,shelfBearing} from './blank-bindings.mjs';
 import {holders} from './shelf-donors.mjs';
-import {choice,fixedShelfScheme} from './shelf-choices.mjs';
+import {choice} from './shelf-choices.mjs';
+import {shelfMounting} from './furniture-core.mjs';
+export {shelfMounting};
 export const SEKURA='sekura-95388';
-export function shelfMounting(it){
-  if(it?.module_type!=='blank'||it.blank_axis!=='horizontal'||!it.blank_binding)return 'none';
-  if(fixedShelfScheme(it))return 'none';
-  if(it.blank_shelf)return it.blank_shelf;
-  if(it.blank_binding.mounting)return it.blank_binding.mounting;
-  // Older carcass recipes bound fixed parts in the same way as loose shelves.
-  return /:(bottom|top|rail-[^:]+)$/.test(it.item_id)?'none':SEKURA;
-}
 function rows(it,host){
   const bearing=it.blank_binding?.gola_flush?shelfBearing(it,host):{rear:-it.depth/2,front:it.depth/2,depth:it.depth};
   const inset=Math.min(37,bearing.depth/4);

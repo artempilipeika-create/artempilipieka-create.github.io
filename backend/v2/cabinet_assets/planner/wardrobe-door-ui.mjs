@@ -259,5 +259,5 @@ function insetDetails(panel,h,leaf){
  }
  panel.append(install);
  const cut=gripCut(h);
- panel.append(el('p','Торцевой паз '+cut.grooveWidth.toLocaleString('ru-RU')+' × '+cut.grooveDepth.toLocaleString('ru-RU')+' мм · ось 9 мм · по всей длине выбранного торца.'),el('small',h.grooveWidth!=null?'Сохранённая посадка этого фасада.':'Расчётная посадка. Перед серией проверьте на обрезке с этой ручкой.'));
+ panel.append(el('p','Торцевой паз '+cut.grooveWidth.toLocaleString('ru-RU')+' × '+cut.grooveDepth.toLocaleString('ru-RU')+' мм · ось 9 мм. Торец под ручкой оклеен ПВХ 2 мм. Глубина паза указана от готового торца.'),el('small',h.grooveWidth!=null?'Сохранённая посадка этого фасада.':'Расчётная посадка. Перед серией проверьте на обрезке с этой ручкой.'));
 }

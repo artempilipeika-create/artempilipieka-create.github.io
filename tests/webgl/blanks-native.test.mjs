@@ -148,3 +148,27 @@ test('wardrobe spacer through cut, split PVC, clipped corners and real thin draw
   const {c,obj}=setup('0000');assert.doesNotThrow(()=>c.resizeAndPlace(obj,out,[]));
  }
 });
+
+test('the importer mills through clipped PVC on each AKS edge and accepts existing unbanded exports',()=>{
+ const contour=()=>({Objects:[],get Count(){return this.Objects.length;},
+  AddLine(x,y,a,b){this.Objects.push({Pos1:{x,y},Pos2:{x:a,y:b}});},
+  AddRectangle(x,y,a,b){this.AddLine(x,y,a,y);this.AddLine(a,y,a,b);this.AddLine(a,b,x,b);this.AddLine(x,b,x,y);}});
+ for(const article of ['67698','75975'])for(const [index,edge] of ['right','left','bottom','top'].entries()){
+  const item=blankItem({axis:'front',edges:'1111',length:700,partWidth:410,
+   blank_edge_thickness_mm:2,blank_edge_pull:{article,edge}});
+  const out=blankNativeItem(item,material),{c,obj,panel}=setup('1111');
+  panel.Cuts={Cuts:[],get Count(){return this.Cuts.length;}};
+  c.panelOperations={cutType:{freeForm:4},AddCut(p,type,name){
+   const cut={CutType:type,Name:name,Contour:contour(),Trajectory:contour()};p.Cuts.Cuts.push(cut);return cut;
+  }};
+  const plan=c.edgeGripGroovePlan(out.blank),depth=article==='67698'?10.5:13.5;
+  const line=index<2?[edge==='right'?410-depth/2:depth/2,0,edge==='right'?410-depth/2:depth/2,700]:
+   [0,edge==='top'?700-depth/2:depth/2,410,edge==='top'?700-depth/2:depth/2];
+  assert.deepEqual([...plan.line],line);
+  c.resizeAndPlace(obj,out,[]);
+  assert.equal(panel.Cuts.Count,1);assert.equal(panel.Butts.Count,4);
+  assert.ok(panel.Butts.Butts.every(b=>b.Thickness===2 && b.ClipPanel));
+  const oldCode=['0111','1011','1101','1110'][index];
+  assert.deepEqual([...c.edgeGripGroovePlan({...out.blank,edge_code:oldCode}).line],line);
+ }
+});

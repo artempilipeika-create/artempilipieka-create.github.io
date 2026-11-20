@@ -16,12 +16,13 @@ function face(grip,side){
  const panels=buildCarcass(spec,{idPrefix:'wardrobe'}).items.map(p=>({...p,assistant_carcass:{group_id:'wardrobe',spec}}));
  return {board:panels.find(p=>p.item_id==='wardrobe:'+key),hardware:nativeDoorHardware(panels)};
 }
-test('inset metal, unfinished edge and actual cutter follow each selected facade edge',()=>{
- for(const [article,depth] of [['67698',10],['75975',13]])for(const [edge,code] of Object.entries({left:'1011',right:'0111',top:'1110',bottom:'1101'})){
+test('inset metal, four finished edges and actual cutter follow each selected facade edge',()=>{
+ for(const [article,depth] of [['67698',10],['75975',13]])for(const edge of ['left','right','top','bottom']){
   const grip={article,edge,grooveDepth:depth+.5,grooveWidth:2.4},side=edge==='left'?'right':'left';
   const {board,hardware}=face(grip,side),native=blankNativeItem(board,material);
   const {width,height}=finishedFaceSize(board),vertical=['left','right'].includes(edge);
-  assert.equal(width,397);assert.equal(height,1997);assert.equal(native.blank.edge_code,code);
+  assert.equal(width,397);assert.equal(height,1997);assert.equal(native.blank.edge_code,'1111');
+  assert.deepEqual(native.blank.cut,{width:board.width-4,length:board.height-4});
   assert.equal(native.blank.edge_grip.groove_depth_mm,depth+.5);assert.equal(native.blank.edge_grip.groove_width_mm,2.4);
   assert.equal(hardware.length,1);assert.equal(hardware[0].span_mm,vertical?height:width);
   assert.equal(hardware[0].wardrobe_edge_pull,true);assert.equal(hardware[0].joined_panel_id,board.item_id);

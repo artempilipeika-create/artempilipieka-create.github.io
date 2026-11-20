@@ -71,3 +71,23 @@ test('3D board volume removes the real cut in each installed plane and remains c
   assert.equal(mesh.geometry.attributes.uv.count,mesh.geometry.attributes.position.count);
  }
 });
+
+test('groove and rabbet require the matching external edge across faces, rotations and choices of PVC',()=>{
+ for(const axis of ['side','back','horizontal'])for(const kind of ['groove','rabbet','miter']){
+  for(const [edge,mask] of Object.entries({x0:'0100',x1:'1000',y0:'0010',y1:'0001'})){
+   const item=blankItem({axis,length:600,partWidth:510,edges:'0000',rotation:90,
+    blank_edge_thickness_mm:.8,blank_machining:[defaultCut(kind,edge,0)]});
+   const target=kind==='miter'?'0000':mask;
+   const out=blankNativeItem({...item,blank_edge_code:'0000'},board).blank;
+   assert.equal(item.blank_edge_code,target);assert.equal(out.edge_code,target);
+   assert.equal(out.cut.width,target.slice(0,2).includes('1')?509.2:510);
+   assert.equal(out.cut.length,target.slice(2).includes('1')?599.2:600);
+   assert.equal(out.machining[0].edge,edge);
+  }
+ }
+ const back=project({backMount:defaultBackMount('rabbet')});
+ assert.equal(part(back,'right').blank_edge_code,'1111');assert.equal(part(back,'left').blank_edge_code,'1011');
+ assert.equal(part(back,'back').blank_edge_code,'0000');
+ const shelved=project({sectionShelves:[4],shelfChoices:[['board/95388','board/134286','board/confirmat','6/48846']]});
+ assert.deepEqual(shelved.parts.filter(p=>p.key.startsWith('shelf-')).map(p=>p.item.blank_edge_code),['1111','1111','1000','0000']);
+});

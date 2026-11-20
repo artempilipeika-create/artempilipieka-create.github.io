@@ -253,8 +253,11 @@ export class AssistantUI{
     else if(Number(this.materials.body?.thickness)===Number(v))this.materials.back=this.materials.body;
     this.changed();this.render();
    });
-   if(this.fields.backMount)backMountControls(this);
-   else this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Без кромки. Чашки открываются сзади. На обеих боковинах эксцентрики стоят равномерно с шагом до 400 мм. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':this.fields.back?'Накладная ЛХДФ добавляет 3 мм к глубине.':'Задняя стенка отсутствует.'));
+   if(this.fields.backMount){
+    backMountControls(this);
+    this.form.append(el('small','Задний торец каждой детали с выборкой оклеивается ПВХ.'));
+   }
+   else this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Чашки открываются сзади. На обеих боковинах эксцентрики стоят равномерно с шагом до 400 мм. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':this.fields.back?'Накладная ЛХДФ добавляет 3 мм к глубине.':'Задняя стенка отсутствует.'));
    if(this.fields.backThickness)this.form.append(jointPhotos('cam_dowel'));
    }
   }else if(this.step===1){

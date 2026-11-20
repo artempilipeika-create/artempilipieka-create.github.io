@@ -172,6 +172,20 @@ class FurnitureItem(StrictModel):
             for op in self.blank_machining:
                 op.check_board(self.blank_width_mm,self.blank_length_mm,self.blank_thickness_mm)
         grip=self.blank_edge_pull
+        required_edges=set()
+        if self.module_type=='blank' and self.blank_edge_code is not None:
+            if self.blank_axis=='horizontal' and self.blank_binding:
+                holder = self.blank_shelf or self.blank_binding.mounting
+                if holder is None and not re.search(r':(bottom|top|rail-[^:]+)$',self.item_id):
+                    holder='sekura-95388'
+                if holder=='sekura-95388' or holder and re.fullmatch(r'board/\d+',holder):
+                    required_edges.update(range(4))
+            if grip:
+                required_edges.add({'right':0,'left':1,'bottom':2,'top':3}[grip.edge])
+            for op in self.blank_machining or ():
+                if op.kind in ('groove','rabbet'):
+                    required_edges.add({'x1':0,'x0':1,'y0':2,'y1':3}[op.edge])
+            self.blank_edge_code=''.join('1' if i in required_edges else bit for i,bit in enumerate(self.blank_edge_code))
         drawer_face=banks[slot].faces[index] if banks and slot<len(banks) and banks[slot] and index<len(banks[slot].faces) else None
         saved_handle=drawer_face.handle if drawer_face else (group.spec.front.handles or {}).get(key) if group and group.spec.front else None
         if group and (grip is not None or isinstance(saved_handle,InsetEdgeGrip)) and (
@@ -195,15 +209,16 @@ class FurnitureItem(StrictModel):
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')
         if self.blank_axis=='front':
-            if self.module_type!='blank' or self.blank_edge_code!=(grip.edge_code if grip else '1111') or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
-                raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм. Торец под врезную ручку оставьте без кромки.')
+            if self.module_type!='blank' or self.blank_edge_code!='1111' or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
+                raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм по всем четырём торцам.')
             if grip:
                 grip.check_size(self.width,self.height,key.rsplit('-',1)[1] if door else None)
         elif self.width%1 or ((self.blank_width_mm or 0)*(2 if key=='right' and group.spec.backMount and group.spec.backMount.kind=='rabbet' else 1))%1 or (self.elevation_mm or 0)*(2 if post or flush else 1)%1:
             raise ValueError('Для этой детали требуются целые размеры.')
         if self.assistant_carcass and self.assistant_carcass.spec.backThickness and self.item_id==str(self.assistant_carcass.group_id)+':back':
-            if self.blank_axis!='back' or self.blank_edge_code!='0000' or self.blank_thickness_mm!=self.assistant_carcass.spec.backThickness:
-                raise ValueError('Вкладная задняя стенка должна соответствовать выбранной толщине и быть без кромки.')
+            expected_edges=''.join('1' if i in required_edges else '0' for i in range(4))
+            if self.blank_axis!='back' or self.blank_edge_code!=expected_edges or self.blank_thickness_mm!=self.assistant_carcass.spec.backThickness:
+                raise ValueError('Проверьте толщину вкладной задней стенки и кромку вдоль выборки.')
         if self.assistant_carcass and self.item_id==str(self.assistant_carcass.group_id)+':plinth':
             if self.blank_axis!='back' or self.blank_edge_code!='1111':
                 raise ValueError('Цоколь шкафа должен иметь ПВХ по четырём торцам.')

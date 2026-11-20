@@ -1,4 +1,5 @@
 import './blanks-native.mjs';
+import {blankEdgeCode} from './furniture-core.mjs';
 import {choice,shelfDescription} from './shelf-choices.mjs';
 import {shelfMounting,shelfSupportPlan} from './sekura.mjs';
 import {defaultHookFace,hookHeightLimits} from './blank-hook.mjs';
@@ -89,7 +90,7 @@ function formHtml(kind){
       ${catalog?`<button type="button" class="mf-blank-primary" data-blank-add>+ Добавить заготовку в 3D</button>
       <button type="button" class="secondary mf-blank-export" data-blank-export>Деталировка заготовок · CSV</button>
       <button type="button" class="mf-blank-primary" data-blank-bazis>Экспорт проекта в БАЗИС</button>
-      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261118-9.9.31" download="Martin_Forest_Import_v9_9_31.js">Импортёр 9.9.31 ↓</a></div>`:''}
+      <div class="mf-blank-downloads"><a href="/account/planner/bazis-drawers-import.js?v=20261120-9.9.38" download="Martin_Forest_Import_v9_9_38.js">Импортёр 9.9.38 ↓</a></div>`:''}
       ${!catalog?`<details class="mf-blank-repeat"><summary>Копировать с шагом</summary><div class="mf-blank-fields"><label>Копий<input name="copyCount" type="number" min="1" max="30" value="1"></label><label>Шаг, мм<input name="copyStep" type="number" step="0.5" value="300"></label></div><label>Направление<select name="copyAxis"><option value="elevation_mm">По высоте</option><option value="x">По X</option><option value="z">По Z</option></select></label><button type="button" data-blank-copy>Создать копии</button></details>`:''}
     </div>
   </div>`;
@@ -122,7 +123,19 @@ function showHolderPhoto(form){
   figure.dataset.choice=field.value;
 }
 function draw(form,room){
-  const v=readForm(form),error=validateBlank(v,room);
+  const v={...form.blankItem,...readForm(form)};
+  if(form.blankItem){
+    const mounting=form.elements.shelfMounting.value;
+    v.blank_binding=form.elements.bound.checked?{...v.blank_binding,mounting}:null;
+  }
+  const required=v.blank_axis==='front'?'1111':blankEdgeCode(v,'0000');
+  v.blank_edge_code=required==='1111'?'1111':blankEdgeCode(v,v.blank_edge_code);
+  for(let i=0;i<4;i++){
+    const control=form.elements['edge'+i];
+    control.disabled=required[i]==='1';
+    control.checked=v.blank_edge_code[i]==='1';
+  }
+  const error=validateBlank(v,room);
   showHolderPhoto(form);
   if(form.elements.hook){
     form.querySelector('[data-hook-controls]').hidden=!v.blank_hook;
@@ -146,7 +159,7 @@ function draw(form,room){
   const m=edgeMeters(v),count=v.blank_edge_code.split('1').length-1;
   form.querySelector('[data-blank-summary]').textContent=error?'':
     v.blank_length_mm+' × '+v.blank_width_mm+' × '+v.blank_thickness_mm+' мм · '+count+' торц. · ПВХ '+m.toFixed(2)+' м';
-  form.querySelector('[data-blank-source]').textContent='Кромка остаётся на выбранных торцах при повороте детали. В деталировке и БАЗИС толщина ПВХ вычитается из готового размера.';
+  form.querySelector('[data-blank-source]').textContent=required.includes('1')?'Кромка на обязательных торцах учтена в распиле и экспорте БАЗИС.':'Кромка остаётся на выбранных торцах при повороте детали. В деталировке и БАЗИС толщина ПВХ вычитается из готового размера.';
   const box=form.querySelector('[data-blank-error]');
   box.textContent=error;box.hidden=!error;
   return !error;
@@ -208,7 +221,7 @@ export class BlanksUI{
     exports.setAttribute('aria-label','Экспорт корпусов');
     for(const selector of ['[data-blank-bazis]','[data-blank-export]','.mf-blank-downloads'])exports.append(this.catalog.querySelector(selector));
     const help=document.createElement('details');
-    help.innerHTML='<summary>Как открыть в БАЗИС</summary><ol><li>Скачайте импортёр 9.9.24 и замените им действующий скрипт Martin Forest. Старую копию сохраните вне папки Scripts.</li><li>Распакуйте «Исходные заготовки» в отдельную подпапку вашей общей библиотеки модулей. Имена FR3D не меняйте.</li><li>Нажмите «Экспорт проекта в БАЗИС»: скачается файл .mf-bazis.json.</li><li>В БАЗИС откройте новую пустую модель и запустите импортёр. Он найдёт последний экспорт в Загрузках; при запросе укажите общую папку модулей.</li><li>Проверьте модель и сохраните её как B3D.</li></ol><p class="mf-blank-source">Если материал не выбран, экспорт укажет деталь. Выберите её в проекте и назначьте материал нужной толщины в панели справа.</p>';
+    help.innerHTML='<summary>Как открыть в БАЗИС</summary><ol><li>Скачайте импортёр 9.9.38 и замените им действующий скрипт Martin Forest. Старую копию сохраните вне папки Scripts.</li><li>Распакуйте «Исходные заготовки» в отдельную подпапку вашей общей библиотеки модулей. Имена FR3D не меняйте.</li><li>Нажмите «Экспорт проекта в БАЗИС»: скачается файл .mf-bazis.json.</li><li>В БАЗИС откройте новую пустую модель и запустите импортёр. Он найдёт последний экспорт в Загрузках; при запросе укажите общую папку модулей.</li><li>Проверьте модель и сохраните её как B3D.</li></ol><p class="mf-blank-source">Если материал не выбран, экспорт укажет деталь. Выберите её в проекте и назначьте материал нужной толщины в панели справа.</p>';
     exports.append(help);this.catalog.append(exports);
     this.sync();
   }
@@ -279,7 +292,7 @@ export class BlanksUI{
     controls.hookAlong.value=hook?.along_mm??'';controls.hookHeight.value=hook?.height_mm??'';
     this.inspector.querySelector('[data-hook-along-label]').textContent=side?'От заднего края до центра ряда, мм':'От левого края до центра ряда, мм';
     this.inspector.querySelector('[data-hook-controls]').hidden=!hook;
-    values(this.inspector,item);draw(this.inspector,this.app.adapter.room);
+    this.inspector.blankItem=item;values(this.inspector,item);
     const form=this.inspector,b=item.blank_binding,field=form.querySelector('.mf-blank-binding');
     field.hidden=item.blank_axis!=='horizontal';
     const mounting=form.elements.shelfMounting;
@@ -299,7 +312,7 @@ export class BlanksUI{
       select.value=id||'';
     }
     form.querySelector('[name="bound"]').checked=Boolean(b);
-    showHolderPhoto(form);
+    draw(form,this.app.adapter.room);
     for(const [name,value] of [['gapLeft',b?.gap_left_mm],['gapRight',b?.gap_right_mm],['depthOffset',b?.depth_offset_mm]])form.querySelector('[name="'+name+'"]').value=value??0;
     for(const name of ['length','x','z','rotation','axis'])form.querySelector('[name="'+name+'"]').disabled=Boolean(b);
     form.querySelector('[data-binding-result]').textContent=b?'Расчётная длина: '+item.blank_length_mm+' мм. При изменении стоек полка пересчитывается автоматически. Чтобы двигать её отдельно, снимите привязку.':'Выберите стойки и зазоры, затем включите привязку.';

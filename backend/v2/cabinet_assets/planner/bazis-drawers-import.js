@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.37 PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.38 PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,12 +135,14 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
   for (const item of payload.items) {
     if (!item || typeof item !== 'object') throw new Error('Некорректный модуль в JSON.');
+    if(payload.format==='martin-forest-bazis-native-v17'&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
+      throw Error('Для фасада с врезной ручкой требуется ПВХ по четырём торцам.');
   }
   return { filename, payload, automatic };
 }
@@ -1161,9 +1163,8 @@ function edgeGripGroovePlan(blank) {
     typeof width!=='number'||!Number.isFinite(width)||width<=0||width>=thickness||
     depth>=(side<2?boardWidth:boardHeight)-2)
    throw Error('Проверьте паз в торце фасада для врезной ручки AKS '+grip.article+'.');
- if(blank.edge_code[side]!=='0')throw Error('Торец фасада под врезную ручку должен быть без ПВХ.');
  // Using a symmetric cross section makes its extent independent of the direction
- // in which the trajectory is traversed. Its outer edge coincides with the LDSP end.
+ // in which the trajectory is traversed. Depth is measured from the finished panel edge, including PVC.
  const vertical=side<2;
  const center=(edge==='right'?boardWidth:edge==='top'?boardHeight:0)+((edge==='left'||edge==='bottom')?1:-1)*depth/2;
  const line=vertical?[center,0,center,boardHeight]:[0,center,boardWidth,center];
@@ -2110,7 +2111,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.37 PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.38 PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');

@@ -172,10 +172,6 @@ class InsetEdgeGrip(StrictModel):
             raise ValueError('Глубина паза меньше длины шипа выбранной ручки.')
         return self
 
-    @property
-    def edge_code(self):
-        return {'right':'0111','left':'1011','bottom':'1101','top':'1110'}[self.edge]
-
     def check_size(self,width,height,hinge_side=None,*,finished=False):
         product=DOOR_HARDWARE[self.article]
         if self.edge==hinge_side:

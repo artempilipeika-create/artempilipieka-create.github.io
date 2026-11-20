@@ -51,7 +51,7 @@ test('odd division widths and all editable thicknesses fit without intersections
 test('manual PVC survives size changes, native export and cutting calculation',()=>{
  const edges={left:'1011',bottom:'1111','shelf-0-0':'0101'};
  const b=buildCarcass({recipe:'shelves',width:800,edgeThickness:2},{edges});
- for(const [key,code] of Object.entries(edges))assert.equal(b.parts.find(p=>p.key===key).item.blank_edge_code,code);
+ for(const [key,code] of Object.entries({...edges,'shelf-0-0':'1111'}))assert.equal(b.parts.find(p=>p.key===key).item.blank_edge_code,code);
  assert.deepEqual(cuttingSize(b.parts.find(p=>p.key==='bottom').item),{length:760,width:573});
  const shelf=b.parts.find(p=>p.key==='shelf-0-0').item,right=b.parts.find(p=>p.key==='right').item;
  const updated=resolveBlankBindings(b.items.map(i=>i===right?{...right,x:right.x+100}:i));
