@@ -1,5 +1,6 @@
 """Bounded carcass plans. Geometry remains owned by the existing constructor."""
 import json
+from math import ceil
 from pathlib import Path
 from typing import Literal, Annotated
 from uuid import UUID
@@ -48,8 +49,8 @@ class CarcassSpec(StrictModel):
 
 
 class CarcassPosition(StrictModel):
-    x: float = Field(ge=-12000, le=12000, multiple_of=0.5, allow_inf_nan=False)
-    z: float = Field(ge=-12000, le=12000, multiple_of=0.5, allow_inf_nan=False)
+    x: float = Field(ge=-12000, le=12000, multiple_of=0.25, allow_inf_nan=False)
+    z: float = Field(ge=-12000, le=12000, multiple_of=0.25, allow_inf_nan=False)
     elevation_mm: int = Field(ge=0, le=5000, strict=True)
     rotation: Literal[0, 90, 180, 270]
 
@@ -291,7 +292,54 @@ class WardrobeRod(StrictModel):
     fromBack: int | None = Field(default=None,ge=0,le=1200,strict=True,exclude_if=lambda v:v is None)
 
 
+MachiningSize = Annotated[float, Field(strict=True,ge=0,le=3000,allow_inf_nan=False)]
+class PanelCut(StrictModel):
+    kind: Literal['groove','rabbet','miter']
+    edge: Literal['x0','x1','y0','y1']
+    face: Literal[0,1]
+    width: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    depth: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    offset: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    land: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    start: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+    end: MachiningSize | None = Field(default=None,exclude_if=lambda v:v is None)
+
+    @model_validator(mode='after')
+    def section(self):
+        if self.kind=='miter':
+            if self.land is None or any(v is not None for v in (self.width,self.depth,self.offset)):
+                raise ValueError('Проверьте остаток у края запила.')
+        elif not self.width or not self.depth or self.land is not None or self.kind=='rabbet' and self.offset:
+            raise ValueError('Проверьте ширину, глубину и отступ выборки.')
+        return self
+
+    def check_board(self,width,length,thickness):
+        across,span=(width,length) if self.edge.startswith('x') else (length,width)
+        if (self.start or 0)+(self.end or 0)>=span:
+            raise ValueError('Обработка выходит за длину торца.')
+        if self.kind=='miter':
+            if self.land>=thickness or thickness-self.land>=across:
+                raise ValueError('Запил выходит за сечение детали.')
+        elif self.depth>=thickness or (self.offset or 0)+self.width>=across:
+            raise ValueError('Выборка выходит за сечение детали.')
+
+class RearMount(StrictModel):
+    kind: Literal['groove','rabbet']
+    width: float=Field(ge=3,lt=1200,multiple_of=.5,strict=True,allow_inf_nan=False)
+    depth: float=Field(gt=1,lt=40,multiple_of=.5,strict=True,allow_inf_nan=False)
+    offset: float | None=Field(default=None,ge=0,lt=1200,multiple_of=.5,strict=True,allow_inf_nan=False,exclude_if=lambda v:v is None)
+
+PanelCutList=Annotated[list[PanelCut],Field(min_length=1,max_length=32)]
+PanelCutKey=Annotated[str,Field(pattern=r'^[a-z][a-z0-9-]{0,64}$')]
 class CarcassDesign(CarcassSpec):
+    machining: dict[PanelCutKey,PanelCutList] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
+    backMount: RearMount | None=Field(default=None,exclude_if=lambda v:v is None)
+
+    @property
+    def rear_clearance(self):
+        b=self.backMount
+        return ceil((b.offset or 0)+b.width) if b and b.kind=='groove' else self.backThickness or 0
+
     rods: list[WardrobeRod] | None = Field(default=None,min_length=1,max_length=128,exclude_if=lambda v:v is None)
     gapLocks: list[Annotated[list[LockIndex],Field(max_length=11)]] | None = Field(default=None,max_length=4,exclude_if=lambda v:v is None)
     clearLayout: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -506,7 +554,7 @@ class CarcassDesign(CarcassSpec):
                 height+=73
             y=height-r.offset if r.anchor=='top' else r.offset
             min_y,max_y,min_z,max_z=profile['bounds']
-            back=(self.backThickness or 0)+(self.thickness if self.bottomFit=='none' and self.sections>1 else 0)
+            back=self.rear_clearance+(self.thickness if self.bottomFit=='none' and self.sections>1 else 0)
             front=self.shelfSetback if zone else (self.dividerSetback or 1) if self.sections>1 else 0
             usable=self.depth-back-front
             z=usable/2 if r.fromBack is None else r.fromBack
@@ -610,7 +658,7 @@ class CarcassDesign(CarcassSpec):
                         row=self.shelfChoices[i] if self.shelfChoices and i<len(self.shelfChoices) else []
                         for index in [level,*([level-1] if level else [])]:
                             if index>=len(row) or row[index]!='board/'+self.drawerFixing:raise ValueError('Закрепите ограничивающие полки шуфляд.')
-                    depth=self.depth-(self.backThickness or 0)-(21 if inside else 0)
+                    depth=self.depth-self.rear_clearance-(21 if inside else 0)
                     top=(bank.bottomOffset or 0)+bank.span()+(self.thickness if inside else 0)
                     if top>self.height-(self.thickness if inside else 0) or w-left-right<163 or depth<255:
                         raise ValueError(f'Секция {i+1}: блоку AKS недостаточно места.')
@@ -657,6 +705,10 @@ class CarcassDesign(CarcassSpec):
             width = (self.width-3*count)/count
             if self.recipe not in ('shelves','divided') or width>600 or self.height-3>2400 or self.height-3<(126 if self.front.autoHinges else 2*self.front.offset+64):
                 raise ValueError('Проверьте габариты створки и отступ петель.')
+        if self.backMount:
+            b=self.backMount
+            if not self.back or self.backThickness or self.recipe not in ('shelves','divided') or b.depth>=self.thickness or (b.offset or 0)+b.width>=self.depth or (b.kind=='rabbet' and b.offset) or (b.kind=='groove' and b.offset is None):
+                raise ValueError('Проверьте параметры посадки ХДФ 3 мм.')
         if self.backThickness and (not self.back or self.recipe not in ('shelves','divided') or (self.backThickness>=16 and self.thickness<16)):
             raise ValueError('Проверьте конструкцию и толщины панелей вкладной задней стенки.')
         if (self.feet or self.topFit or self.bottomFit) and self.recipe not in ('shelves','divided'):
@@ -688,7 +740,7 @@ class CarcassDesign(CarcassSpec):
         if self.dividerJoints is not None:
             if self.thickness != 18 or self.recipe != 'divided' or len(self.dividerJoints) != self.sections - 1:
                 raise ValueError('Проверьте количество и толщину внутренних стоек.')
-            if self.depth-(self.backThickness or 0)-(self.dividerSetback or 0) < 216 and any('cam_dowel' in (row.top,row.bottom) for row in self.dividerJoints):
+            if self.depth-self.rear_clearance-(self.dividerSetback or 0) < 216 and any('cam_dowel' in (row.top,row.bottom) for row in self.dividerJoints):
                 raise ValueError('Для эксцентрика со шкантом в стойке нужна глубина от 216 мм.')
         if self.shelfLevels is not None:
             if not self.sectionShelves or [len(row) for row in self.shelfLevels] != self.sectionShelves:
@@ -708,7 +760,7 @@ class CarcassDesign(CarcassSpec):
                         bank=(self.drawerBanks or [])[slot] if slot<len(self.drawerBanks or []) else None
                         if value in ('board/cam_dowel','board/confirmat') and not (bank and bank.coverFixing or self.drawerFixing and any(k<len(self.drawerBanks or []) and self.drawerBanks[k] and self.drawerBanks[k].layout for k in (slot,niche_slot(section,level+1)))):
                             raise ValueError('Для этой толщины фиксированный крепёж задаётся в нише шуфляд.')
-            depth = self.depth - self.shelfSetback - (self.backThickness or 0)
+            depth = self.depth - self.shelfSetback - self.rear_clearance
             for row in self.shelfChoices:
                 if ('board/cam_dowel' in row and depth < 216) or ('board/confirmat' in row and depth < 152):
                     raise ValueError('Для крепежа недостаточно глубины самой полки.')

@@ -37,7 +37,7 @@ export function splitPlinths(items){
 export function joinPlinths(items){
  const rows=new Map(),replacements=new Map();
  for(const it of items){
-  if(!it.assistant_carcass||it.item_id!==it.assistant_carcass.group_id+':plinth'||it.production_note||it.blank_hook||it.blank_edge_code!=='1111')continue;
+  if(!it.assistant_carcass||it.item_id!==it.assistant_carcass.group_id+':plinth'||it.production_note||it.blank_machining?.length||it.blank_hook||it.blank_edge_code!=='1111')continue;
   const p=localPoint(it,it.rotation);
   const row=JSON.stringify([it.rotation,p.z,it.elevation_mm,it.height,it.depth,it.body_variant_id,it.blank_edge_thickness_mm]);
   if(!rows.has(row))rows.set(row,[]);

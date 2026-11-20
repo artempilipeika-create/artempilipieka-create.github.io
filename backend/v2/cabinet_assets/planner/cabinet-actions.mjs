@@ -1,3 +1,4 @@
+import {rearProjection} from './panel-machining.mjs';
 import {outerFront} from './wardrobe-drawers.mjs';
 import {splitPlinths,joinPlinths} from './wardrobe-plinth-runs.mjs';
 import {resolveBlankBindings} from './blank-bindings.mjs';
@@ -10,7 +11,7 @@ export const isInterior=item=>Boolean(cabinetId(item)&&/^(shelf-|divider-|drawer
 export function cabinetEnvelope(meta){
  const {spec:s,position:p}=meta;
  return {...p,item_id:meta.group_id,module_type:'blank',name:'Шкаф',base:'wall',
-   width:s.width,height:s.height+footHeight(s),depth:s.depth+(s.back&&!s.backThickness?3:0)+(outerFront(s)?18:0)};
+   width:s.width,height:s.height+footHeight(s),depth:s.depth+rearProjection(s)+(outerFront(s)?18:0)};
 }
 
 export function cabinetChange(adapter,id,offset){

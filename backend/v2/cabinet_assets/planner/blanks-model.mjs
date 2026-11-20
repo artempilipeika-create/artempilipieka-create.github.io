@@ -1,3 +1,4 @@
+import {machiningError} from './panel-machining.mjs';
 import {isEdgePull,pullEdgeCode,validateEdgePull} from './wardrobe-edge-pulls.mjs';
 /** Universal rectangular board. Dimensions in mm, never inferred from a cabinet. */
 import {drawerBottom,drawerSide,drawerMember} from './wardrobe-drawers.mjs';
@@ -47,7 +48,7 @@ export function validateBlank(input,room){
   const precise=value=>Number.isFinite(value)&&Math.abs(value*1000-Math.round(value*1000))<.000001;
   const door=b.axis==='front'&&/:door-(?:(?:lower|upper)-)?(?:left|right)$/.test(input.item_id??'');
   if(!(drawerFace?precise(b.length):Number.isInteger(b.length*(door||post?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
-  if(!Number.isInteger(b.width*(b.axis==='front'?2:1))||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
+  if(!Number.isInteger(b.width*(b.axis==='front'||b.axis==='side'&&input.blank_machining?.some(op=>op.kind==='rabbet')?2:1))||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
   if(input.assistant_carcass?.spec?.backThickness&&input.item_id===input.assistant_carcass.group_id+':back'&&(b.axis!=='back'||b.code!=='0000'||b.thickness!==input.assistant_carcass.spec.backThickness))return 'Вкладная задняя стенка должна соответствовать выбранной толщине и быть без кромки.';
@@ -58,6 +59,7 @@ export function validateBlank(input,room){
     if(issue)return issue;
   }
   if(b.axis==='front'&&((!input.blank_edge_pull&&b.code!=='1111')||b.edgeThickness!==2||b.thickness!==18))return 'Для фасада нужна плита 18 мм и ПВХ 2 мм в круг.';
+  const machining=machiningError(input);if(machining)return machining;
   const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
   let glass=false;
   if(input.blank_shelf){
@@ -83,6 +85,7 @@ export function blankItem(input={}){
   return {
     ...dims,
     module_type:'blank',template_id:null,bazis_id:null,
+    ...(input.blank_machining?.length?{blank_machining:structuredClone(input.blank_machining)}:{}),
     ...(input.blank_edge_pull?{blank_edge_pull:{...input.blank_edge_pull}}:{}),
     ...(input.blank_shelf?{blank_shelf:input.blank_shelf}:{}),
     ...(input.blank_hook?{blank_hook:{...input.blank_hook}}:{}),

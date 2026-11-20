@@ -1060,6 +1060,27 @@
       return {id:f.id,kind:f.kind,name:f.label||({shaft:'Вентшахта',column:'Выступ стены',radiator:'Радиатор',gas_cooker:'Газовая плита',gas_boiler:'Газовый котёл',water_heater:'Бойлер'}[f.kind]),minX,maxX:minX+(horizontal?f.width:f.projection),minZ,maxZ:minZ+(horizontal?f.projection:f.width),minY:f.elevation,maxY:f.elevation+f.height};
     });
   }
+  // A back seated inside a machined pocket shares its bounding box with the
+  // host panel. Permit only the intersection that actually lies inside that cut.
+  function fittedBackOverlap(first,second,box,other){
+    const group=first.assistant_carcass?.group_id;
+    if(!group||second.assistant_carcass?.group_id!==group||!first.assistant_carcass.spec.backMount)return false;
+    const backId=group+':back';
+    const host=first.item_id===backId?second:second.item_id===backId?first:null;
+    if(!host||!host.blank_machining||!['side','horizontal'].includes(host.blank_axis))return false;
+    const side=host.blank_axis==='side',T=host.blank_thickness_mm;
+    const coords=[];
+    for(const x of [Math.max(box.minX,other.minX),Math.min(box.maxX,other.maxX)])
+      for(const z of [Math.max(box.minZ,other.minZ),Math.min(box.maxZ,other.maxZ)])
+        for(const y of [Math.max(box.minY,other.minY),Math.min(box.maxY,other.maxY)]){
+          const p=rotateXZ(x-host.x,z-host.z,-host.rotation),up=y-host.elevation_mm;
+          coords.push([p.z+host.depth/2,side?up:p.x+host.width/2,side?T/2-p.x:up]);
+        }
+    const inside=(v,lo,hi)=>v>=lo-.001&&v<=hi+.001;
+    return host.blank_machining.some(c=>c.kind===first.assistant_carcass.spec.backMount.kind&&c.edge==='x0'&&
+      coords.every(([u,v,t])=>inside(u,c.offset||0,(c.offset||0)+c.width)&&
+        inside(v,c.start||0,host.blank_length_mm-(c.end||0))&&inside(c.face?T-t:t,0,c.depth)));
+  }
   function placementError(it,items,room){
     if(![it.x,it.z,it.width,it.height,it.depth,elevation(it,room)].every(Number.isFinite))return 'Некорректные размеры или положение';
     if(it.module_type!=='blank'&&(it.width<150||it.height<250||it.depth<200))return 'Размер меньше допустимого';
@@ -1080,7 +1101,11 @@
       const top={minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z)),minY:b.maxY,maxY:b.maxY+k.countertopThicknessMm};
       const obstruction=obstacles.find(o=>overlaps(top,o));if(obstruction)return (['shaft','column'].includes(obstruction.kind)?'Столешница пересекает выступ стены: ':'Столешница пересекает оборудование: ')+obstruction.name;
     }
-    const other=items.find(x=>x.item_id!==it.item_id&&overlaps(b,bounds(x,room)));
+    const other=items.find(x=>{
+      if(x.item_id===it.item_id)return false;
+      const box=bounds(x,room);
+      return overlaps(b,box)&&!fittedBackOverlap(it,x,b,box);
+    });
     return other?'Пересечение: '+other.name:'';
   }
   root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});

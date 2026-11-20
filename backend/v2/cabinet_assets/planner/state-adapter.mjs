@@ -56,7 +56,7 @@ export class StateAdapter{
       if(checkMaterial&&it.body_variant_id){
         const mismatch=blankMaterialError(it,this.material(it.body_variant_id));if(mismatch)return mismatch;
       }
-      const precision=it.blank_axis==='front'?4:2;
+      const precision=it.blank_axis==='front'||it.assistant_carcass?.spec.backMount?4:2;
       if(!Number.isInteger(it.x*precision)||!Number.isInteger(it.z*precision)||![0,90,180,270].includes(it.rotation))return 'Положение с шагом 0,5 мм, поворот с шагом 90°';
       return placementError(it,items,this.room);
     }

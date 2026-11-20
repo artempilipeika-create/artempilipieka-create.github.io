@@ -42,7 +42,8 @@ export function resolveBlankBindings(items){
         fail('Полка выходит за глубину или высоту опорной стойки.');
     }
     const position=worldPoint({x:(start+end)/2,z},left.rotation);
-    if(!Number.isInteger(position.x*2)||!Number.isInteger(position.z*2))fail('Положение полки должно иметь шаг 0,5 мм.');
+    const grid=item.assistant_carcass?.spec.backMount?4:2;
+    if(!Number.isInteger(position.x*grid)||!Number.isInteger(position.z*grid))fail('Положение полки должно иметь шаг 0,5 мм.');
     return updateBlank(item,{blank_length_mm:length,...position});
   });
 }

@@ -1497,8 +1497,9 @@ function exportBazisProject(){
   if(state.items.some(it=>it.assistant_carcass||it.blank_edge_pull)){
     globalThis.MF_BLANKS_NATIVE.assignCabinetBlocks(payload.items,state.items);
     payload.format='martin-forest-bazis-native-v15';payload.minimum_importer='9.9.36';
-    const pending=payload.items.filter(it=>it.blank?.edge_grip&&!it.blank.edge_grip.groove_width_mm);
-    if(pending.length)payload.technical_notes.push('Параметры фрезы не заданы. Для выреза паза отредактируйте фасады: '+pending.map(it=>[it.cabinet_block?.name,it.name].filter(Boolean).join(' · ')).join(', '));
+  }
+  if(payload.items.some(it=>it.blank?.machining?.length)){
+    payload.format='martin-forest-bazis-native-v16';payload.minimum_importer='9.9.37';
   }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});

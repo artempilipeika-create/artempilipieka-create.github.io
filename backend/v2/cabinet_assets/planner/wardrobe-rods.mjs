@@ -1,3 +1,4 @@
+import {rearClearance} from './panel-machining.mjs';
 import catalogue from './wardrobe-rods.json' with {type:'json'};
 import {columnWidths,nicheSlot,sectionWidths,splitAt,splitKey} from './wardrobe-layout.mjs';
 import {measuredRooms,installedShelfLevels} from './wardrobe-gola-shelves.mjs';
@@ -33,7 +34,7 @@ export function rodRoom(s,cell,levels){
    if(cell.column===0)rhs=divider;
    else{lhs=divider;left+=halves[0]+18;}
  }else if(cell.column!=null)throw Error('Для этой штанги нужна перегородка в выбранной нише.');
- const innerRear=(s.backThickness??0)+(s.bottomFit==='none'&&s.sections>1?s.thickness:0);
+ const innerRear=rearClearance(s)+(s.bottomFit==='none'&&s.sections>1?s.thickness:0);
  const frontSetback=zone?(s.shelfSetback??1):s.sections>1?(s.dividerSetback??1):0;
  return {left,width,low,high,lhs,rhs,rear:-s.depth/2+innerRear,usableDepth:s.depth-innerRear-frontSetback};
 }

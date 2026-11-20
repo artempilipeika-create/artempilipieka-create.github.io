@@ -1,4 +1,4 @@
-import {isEdgePull,validateEdgePull,verticalEdge} from './wardrobe-edge-pulls.mjs';
+import {isEdgePull,gripCut,verticalEdge} from './wardrobe-edge-pulls.mjs';
 import {fitNicheBanks} from './wardrobe-niches.mjs';
 import {profileEdges} from './wardrobe-facade-profiles.mjs';
 import {drawerSections} from './wardrobe-drawers.mjs';
@@ -195,7 +195,7 @@ export function doorControls(ui){
   }else if(isEdgePull(h)){
    const allowed=[['top','Верхняя'],['bottom','Нижняя'],['left','Левая'],['right','Правая']].filter(([v])=>drawer||v!==leaf.side);
    ui.select(panel,'Кромка фасада',allowed,h.edge,v=>apply({...h,edge:v})).dataset.handleEdge='';
-   insetDetails(panel,h,leaf,apply);
+   insetDetails(panel,h,leaf);
   }else{
    const ak=doorHardware[h.article].family==='ak700';
    const products=Object.entries(doorHardware).filter(([,p])=>p.family===familyOf(h)).sort(([,a],[,b])=>a.pitch-b.pitch);
@@ -249,7 +249,7 @@ export function wireHandleDrag(ui){
 }
 
 
-function insetDetails(panel,h,leaf,apply){
+function insetDetails(panel,h,leaf){
  const product=doorHardware[h.article],photo=photosByArticle[h.article],edgeLength=verticalEdge(h.edge)?leaf.height:leaf.width;
  panel.append(el('small','Длина ручки '+edgeLength+' мм · фасад 18 мм · профиль занимает '+product.edgeRise+' мм от готового габарита.'));
  const install=el('details');install.className='wardrobe-handle-details';install.append(el('summary','Схема установки'));
@@ -258,18 +258,6 @@ function insetDetails(panel,h,leaf,apply){
   fig.append(img,el('figcaption',label));install.append(fig);
  }
  panel.append(install);
- const box=el('details');box.className='wardrobe-handle-details';box.append(el('summary','Паз под профиль'));
- panel.append(box);
- box.append(el('p',h.grooveWidth?'Паз '+h.grooveWidth+' × '+h.grooveDepth+' мм · по центру торца.':'Параметры фрезы не заданы. Для выгрузки паза укажите размеры по пробной посадке.'));
- const field=(label,value)=>{const wrap=el('label',label),input=el('input');input.type='number';input.step='any';input.min='0';input.value=value??'';input.setAttribute('aria-label',label);wrap.append(input);box.append(wrap);return input;};
- const width=field('Ширина паза, мм',h.grooveWidth),depth=field('Глубина паза, мм',h.grooveDepth);
- const feedback=el('small');feedback.setAttribute('role','status');
- box.append(btn('Задать паз',()=>{
-   const value={...h,grooveWidth:width.valueAsNumber,grooveDepth:depth.valueAsNumber};
-   const vertical=verticalEdge(h.edge);
-   const error=validateEdgePull(value,leaf.width-(vertical?product.edgeRise:0),leaf.height-(vertical?0:product.edgeRise),18,leaf.side);
-   if(error){feedback.textContent=error;return;}
-   apply(value);
- }),feedback);
- if(h.grooveWidth)box.append(btn('Сбросить размеры паза',()=>apply({article:h.article,edge:h.edge})));
+ const cut=gripCut(h);
+ panel.append(el('p','Торцевой паз '+cut.grooveWidth.toLocaleString('ru-RU')+' × '+cut.grooveDepth.toLocaleString('ru-RU')+' мм · ось 9 мм · по всей длине выбранного торца.'),el('small',h.grooveWidth!=null?'Сохранённая посадка этого фасада.':'Расчётная посадка. Перед серией проверьте на обрезке с этой ручкой.'));
 }

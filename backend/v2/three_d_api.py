@@ -7,7 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
-from .assistant_model import AssistantCarcass, InsetEdgeGrip, ShelfValue, shelf_valid
+from .assistant_model import AssistantCarcass, InsetEdgeGrip, PanelCutList, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
 from .domain_api import require
@@ -136,6 +136,7 @@ class FurnitureItem(StrictModel):
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back','front']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
+    blank_machining: PanelCutList|None=Field(default=None,exclude_if=lambda v:v is None)
     blank_edge_pull: InsetEdgeGrip|None=Field(default=None,exclude_if=lambda v:v is None)
     blank_binding: BlankBinding|None=None
     blank_hook: BlankHook|None=None
@@ -165,6 +166,11 @@ class FurnitureItem(StrictModel):
         if self.blank_gola_runs and (key!='top' or not individual or self.blank_axis!='horizontal' or any(r.length_mm>group.spec.width for r in self.blank_gola_runs)):
             raise ValueError('Проверьте длины профилей Gola этого шкафа.')
         if individual and key=='top' and not self.blank_gola_runs:raise ValueError('В раскрое шкафа отсутствует выбранный профиль Gola.')
+        if self.blank_machining:
+            if self.module_type!='blank' or (self.blank_thickness_mm or 0)<10 or not self.blank_length_mm or not self.blank_width_mm or self.blank_shelf and not self.blank_shelf.startswith('board/'):
+                raise ValueError('Обработка требует плиты с заданными размерами.')
+            for op in self.blank_machining:
+                op.check_board(self.blank_width_mm,self.blank_length_mm,self.blank_thickness_mm)
         grip=self.blank_edge_pull
         drawer_face=banks[slot].faces[index] if banks and slot<len(banks) and banks[slot] and index<len(banks[slot].faces) else None
         saved_handle=drawer_face.handle if drawer_face else (group.spec.front.handles or {}).get(key) if group and group.spec.front else None
@@ -193,7 +199,7 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм. Торец под врезную ручку оставьте без кромки.')
             if grip:
                 grip.check_size(self.width,self.height,key.rsplit('-',1)[1] if door else None)
-        elif self.width%1 or (self.blank_width_mm or 0)%1 or (self.elevation_mm or 0)*(2 if post or flush else 1)%1:
+        elif self.width%1 or ((self.blank_width_mm or 0)*(2 if key=='right' and group.spec.backMount and group.spec.backMount.kind=='rabbet' else 1))%1 or (self.elevation_mm or 0)*(2 if post or flush else 1)%1:
             raise ValueError('Для этой детали требуются целые размеры.')
         if self.assistant_carcass and self.assistant_carcass.spec.backThickness and self.item_id==str(self.assistant_carcass.group_id)+':back':
             if self.blank_axis!='back' or self.blank_edge_code!='0000' or self.blank_thickness_mm!=self.assistant_carcass.spec.backThickness:

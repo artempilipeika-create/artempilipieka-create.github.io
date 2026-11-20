@@ -1,3 +1,4 @@
+import {canMachine} from './panel-machining.mjs';
 import {secureDoorShelf} from './wardrobe-door-layout.mjs';
 import {footPlan} from './wardrobe-feet.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
@@ -15,6 +16,8 @@ export function wardrobeSpec(f){
  if(!Number.isInteger(sections)||sections<1||sections>4||!Array.isArray(counts)||counts.length!==sections)throw Error('Выберите от одной до четырёх секций.');
  if(counts.some(n=>!Number.isInteger(n)||n<0||n>10))throw Error('В секции может быть от 0 до 10 полок.');
  const spec={recipe:sections===1?'shelves':'divided',width:Number(f.width),height:Number(f.height),depth:Number(f.depth),thickness:Number(f.thickness),shelves:Math.max(...counts),sections,sectionShelves:[...counts],back:f.back,elevation:f.elevation??0,shelfSetback:1,dividerSetback:1,shelfGap:f.shelfGap??0,edgeThickness:f.edgeThickness??1,edgePolicy:f.edgePolicy??'front'};
+ if(f.machining&&Object.keys(f.machining).length)spec.machining=structuredClone(f.machining);
+ if(f.back&&f.backMount)spec.backMount={...f.backMount};
  if(f.rods?.length)spec.rods=structuredClone(f.rods);
  if(f.clearLayout)spec.clearLayout=true;
  if(f.drawerFixing||f.bottomFit==='none'||f.nicheSplits?.length)spec.drawerFixing=f.drawerFixing??'cam_dowel';
@@ -57,6 +60,11 @@ export function wardrobeSpec(f){
  if(spec.drawerBanks)spec.drawerBanks=fitNicheBanks(spec,spec.drawerBanks);
  const group_id='questionnaire';
  const built=buildCarcass(spec,{idPrefix:group_id});
+ if(spec.machining){
+   const panels=new Set(built.parts.filter(p=>canMachine(p.item)).map(p=>p.key));
+   spec.machining=Object.fromEntries(Object.entries(spec.machining).filter(([key])=>panels.has(key)));
+   if(!Object.keys(spec.machining).length)delete spec.machining;
+ }
  if(rows.some(row=>row.includes('board/confirmat')||row.includes('board/cam_dowel')))nativeCarcassJoints(built.items.map(i=>({...i,assistant_carcass:{spec,group_id}})));
  return spec;
 }

@@ -6,6 +6,12 @@ export const isEdgePull=h=>h?.article==='67698'||h?.article==='75975';
 export const pullEdgeCode=edge=>edgeCodes[edge];
 export const verticalEdge=edge=>edge==='left'||edge==='right';
 
+export function gripCut(h){
+ if(!isEdgePull(h)||h.grooveWidth!=null||h.grooveDepth!=null)return h;
+ const part=catalogue[h.article];
+ return {...h,grooveWidth:part.trialGrooveWidth,grooveDepth:part.trialGrooveDepth};
+}
+
 export function fittedPull(spec,key){
  const drawer=/^drawer-(\d+)-(\d+)-face$/.exec(key);
  const value=drawer?spec.drawerBanks?.[+drawer[1]]?.faces?.[+drawer[2]]?.handle:spec.front?.handles?.[key];
@@ -20,8 +26,7 @@ export function validateEdgePull(h,width,height,thickness,hingeSide){
  if((vertical?height:width)>part.usableLength)return 'Длина профиля превышает полезную длину хлыста '+part.usableLength+' мм.';
  const available=vertical?width:height;
  if(available<40)return 'После установки профиля осталось слишком мало плиты для фасада.';
- const {grooveWidth:w,grooveDepth:d}=h;
- if(w==null&&d==null)return '';
+ const {grooveWidth:w,grooveDepth:d}=gripCut(h);
  if(!Number.isFinite(w)||w<=0||w>=thickness||!Number.isFinite(d)||d<part.shankDepth||d>=available-2)
   return 'Проверьте ширину паза и глубину от '+part.shankDepth+' мм по рабочему инструменту.';
  return '';
@@ -48,12 +53,14 @@ export function installedEdgePull(board,h){
   y:vertical?b/2:h.edge==='bottom'?0:b};
 }
 export function nativeGrip(h){
- return {article:h.article,edge:h.edge,groove_width_mm:h.grooveWidth??null,groove_depth_mm:h.grooveDepth??null};
+ const cut=gripCut(h);
+ return {article:h.article,edge:h.edge,groove_width_mm:cut.grooveWidth,groove_depth_mm:cut.grooveDepth};
 }
 
 // Split the wood or PVC only where the registered cutter passes through this box.
 // The origin in a front mesh is the centre of its bottom edge and mid-thickness.
 export function groovedBoxes(low,high,board,grip){
+ grip=gripCut(grip);
  if(!grip?.grooveWidth)return [[low,high]];
  const axis=verticalEdge(grip.edge)?0:1,positive=grip.edge==='right'||grip.edge==='top';
  const end=axis===0?(positive?board.width/2:-board.width/2):(positive?board.height:0);

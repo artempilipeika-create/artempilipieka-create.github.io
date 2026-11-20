@@ -74,6 +74,7 @@ export function setSectionShelfCount(f,section,count){
    if(f.shelfChoices)f.shelfChoices=shelfRows(f);
    if(f.topGaps)f.topGaps[section]=null;
    if(legacy?.shelvesBelow>count)legacy.shelvesBelow=count;
+   for(const change of changes)moveMachining(f,{section,level:change.level},change.delta);
    return changes;
  }
  const rooms=nicheOpenings(f,section);
@@ -119,6 +120,7 @@ export function setSectionShelfCount(f,section,count){
  for(const zone of f.nicheSplits??[])if(zone.section===section)zone.level=shifted(zone.level);
  f.sectionShelves[section]=count;
  writeHeights(f,section,null,sizes,newLocks);
+ for(const level of remove)moveMachining(f,{section,level},-1);
  return remove.map(level=>({level,delta:-1}));
 }
 
@@ -229,7 +231,12 @@ export function insertShelves(f,cell,count){
    for(const split of f.nicheSplits??[])if(split.section===section&&split.level>level)split.level+=count;
    f.sectionShelves[section]+=count;
  }
+ moveMachining(f,cell,count);
  writeHeights(f,section,column,sizes,newLocks);
+}
+
+function moveMachining(f,cell,count){
+ if(f.machining)f.machining=Object.fromEntries(keysAfterInsertion(new Map(Object.entries(f.machining)),cell,count));
 }
 
 // Part keys encode the shelf or niche index. Carry existing panel assignments to
@@ -239,6 +246,7 @@ export function keysAfterInsertion(keys,cell,count){
  const {section,level,column,opening}=cell;
  const result=new Map();
  for(const [key,original] of keys){
+   if(count<0&&key==='shelf-'+section+'-'+level)continue;
    let moved=key;
    if(column!=null){
      const local=/^shelf-niche-(\d+)-(\d+)-(\d+)-(\d+)$/.exec(key);

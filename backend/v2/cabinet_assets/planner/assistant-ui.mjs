@@ -1,3 +1,5 @@
+import {defaultBackMount,rearClearance} from './panel-machining.mjs';
+import {backMountControls,machiningControls,pickMachiningPart} from './panel-machining-ui.mjs';
 import {wardrobeNames,nextCabinetName} from './wardrobe-blocks.mjs';
 import {measuredRooms} from './wardrobe-gola-shelves.mjs';
 import {doorControls,setDoorShelf,wireHandleDrag} from './wardrobe-door-ui.mjs';
@@ -29,6 +31,10 @@ function buildPreview(ui){
    let built,issue='';
    try{built=buildCarcass(ui.spec(),options);}
    catch(error){
+    if(ui.view==='machining'&&ui.fields.machining){
+     const fields={...ui.fields};delete fields.machining;
+     return {built:buildCarcass(wardrobeSpec(fields),options),issue:error.message};
+    }
     if(ui.view!=='fronts')throw error;
     const guide=structuredClone(ui.fields);delete guide.front;
     for(const bank of guide.drawerBanks??[])for(const face of bank?.faces??[])delete face.handle;
@@ -100,6 +106,8 @@ export class AssistantUI{
    const original=this.fields.shelfLevels;
    this.fields.shelfLevels=this.fields.sectionShelves.map((n,i)=>nicheOpenings(this.fields,i).slice(0,n).map((r,j)=>original?.[i]?.[j]??{mode:'floor',mm:base+r.top}));
   }
+  this.partKey=c?this.app.adapter.selected?.item_id?.slice(c.metadata.group_id.length+1):null;
+  this.cutIndex=null;this.cutDraft=null;this.showMachiningFronts=false;
   this.fields.clearLayout=true;this.column=0;this.gapIndex=0;
   this.view='body';this.activeSection=0;this.footOpen=false;this.footGroup=null;this.footFilter='all';
   this.editorKey=null;this.shelfScopes={};this.shelfDrafts={};this.levelUnits={};this.levelIndex=0;this.nicheIndex=0;this.interior='cell';this.inspectInternalFronts=false;this.selectedDoor=null;this.previewBuilt=null;this.resetSideEdges=false;
@@ -122,6 +130,9 @@ export class AssistantUI{
  }
  pickShelf(event){
   if(this.busy||this.suppressDiagramClick)return;
+  if(this.view==='machining'){
+   const hit=event.target.closest?.('[data-cut-part]');if(hit)pickMachiningPart(this,hit.dataset.cutPart);return;
+  }
   const hit=event.target.closest?.('[data-clear-width],[data-clear-level],[data-split-section],[data-shelf-index],[data-niche],[data-hinge],[data-door-shelf-pick],[data-door-id]');
   if(!hit)return;
   const d=hit.dataset,section=Number(d.section);
@@ -185,8 +196,8 @@ export class AssistantUI{
  go(index){if(this.busy||index<0||index>4)return;const invalid=this.form?.querySelector?.('input:invalid');if(invalid){invalid.reportValidity();return;}if(index>this.step && !(index===3&&(this.fields.front||this.fields.drawerBanks?.some(Boolean))) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices||this.fields.shelfLevels||this.fields.drawerBanks||this.fields.rods?.length))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
  groupTabs(){
   const nav=el('nav');nav.className='wardrobe-subsections';nav.setAttribute('aria-label','Подразделы корпуса');
-  for(const key of ['body','feet','plinth','back']){
-   const b=button(drawingTitles[key],()=>{this.view=key;this.render();this.form.querySelector('[data-subsection="'+key+'"]').focus({preventScroll:true});});
+  for(const key of ['body','feet','plinth','back','machining']){
+   const b=button(key==='machining'?'Обработка детали':drawingTitles[key],()=>{this.view=key;this.render();this.form.querySelector('[data-subsection="'+key+'"]').focus({preventScroll:true});});
    b.dataset.subsection=key;b.setAttribute('aria-pressed',String(this.view===key));nav.append(b);
   }
   this.form.append(nav);
@@ -228,17 +239,22 @@ export class AssistantUI{
     this.form.append(el('small','Заднее ребро между боковинами · 100 мм · кромка 1 мм по обеим длинным сторонам.'));
    }
    }else if(this.view==='feet')this.footControls();
+   else if(this.view==='machining')machiningControls(this);
    else if(this.view==='plinth')this.plinthControls();
    else{
-   this.select(this.form,'Задняя стенка',[['yes','Накладная ЛХДФ 3 мм'],...[16,18].map(n=>[String(n),'Вкладная ЛДСП '+n+' мм']),['no','Без задней стенки']],this.fields.back?(this.fields.backThickness??'yes'):'no',v=>{
-    this.fields.back=v!=='no';delete this.fields.backThickness;
+   this.select(this.form,'Задняя стенка',[['yes','Накладная ЛХДФ 3 мм'],['groove','ХДФ 3 мм в пазу'],['rabbet','ХДФ 3 мм в четверти справа'],...[16,18].map(n=>[String(n),'Вкладная ЛДСП '+n+' мм']),['no','Без задней стенки']],this.fields.back?(this.fields.backMount?.kind??this.fields.backThickness??'yes'):'no',v=>{
+    const previousMaterial=this.materials.back;
+    this.fields.back=v!=='no';delete this.fields.backThickness;delete this.fields.backMount;
+    if(['groove','rabbet'].includes(v))this.fields.backMount=defaultBackMount(v);
     if(['16','18'].includes(v))this.fields.backThickness=Number(v);
     this.serial.back++;this.materialChanged.back=true;this.materials.back=null;
-    if(v==='yes')this.loadMaterial('back',CARCASS_BACK_MATERIAL_ID);
+    if(this.fields.back&&Number(previousMaterial?.thickness)===(this.fields.backThickness??3))this.materials.back=previousMaterial;
+    else if(['yes','groove','rabbet'].includes(v))this.loadMaterial('back',CARCASS_BACK_MATERIAL_ID);
     else if(Number(this.materials.body?.thickness)===Number(v))this.materials.back=this.materials.body;
     this.changed();this.render();
    });
-   this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Без кромки. Чашки открываются сзади. На обеих боковинах эксцентрики стоят равномерно с шагом до 400 мм. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':this.fields.back?'Накладная ЛХДФ добавляет 3 мм к глубине.':'Задняя стенка отсутствует.'));
+   if(this.fields.backMount)backMountControls(this);
+   else this.form.append(el('p',this.fields.backThickness?'Вкладная стенка между стойками, дном и крышей. Без кромки. Чашки открываются сзади. На обеих боковинах эксцентрики стоят равномерно с шагом до 400 мм. На дне и крыше по 1 паре при длине детали до 800 мм и по 2 при большей длине.':this.fields.back?'Накладная ЛХДФ добавляет 3 мм к глубине.':'Задняя стенка отсутствует.'));
    if(this.fields.backThickness)this.form.append(jointPhotos('cam_dowel'));
    }
   }else if(this.step===1){
@@ -523,7 +539,7 @@ export class AssistantUI{
    const group=el('fieldset'),number=i+1;
    group.append(el('legend','Внутренняя стойка '+number+' · между секциями '+number+' и '+(number+1)));
    for(const [end,direction] of [['top','сверху'],['bottom','снизу']]){
-    const options=Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth-1-(this.fields.backThickness??0)<216]);
+    const options=Object.entries(jointOptions).map(([code,text])=>[code,text,code==='cam_dowel'&&this.fields.depth-1-rearClearance(this.fields)<216]);
     this.select(group,'Стойка '+number+' · крепление '+direction,options,settings[end],value=>{
      settings[end]=value;this.changed();this.render();
     });
@@ -559,7 +575,7 @@ export class AssistantUI{
  }
  draw(preview=buildPreview(this)){
   const view=this.step===0&&this.view==='body'?'sections':this.view;
-  this.figureTitle.textContent=view==='sections'?'Вид спереди · размеры в свету':drawingTitles[view];
+  this.figureTitle.textContent=view==='machining'?'Выбор детали':view==='sections'?'Вид спереди · размеры в свету':drawingTitles[view];
   const warning=this.form.querySelector('.front-choice-warning');
   if(warning)warning.hidden=true;
   try{
@@ -569,7 +585,7 @@ export class AssistantUI{
    const cell=activeCell(this),slot=nicheSlot(cell.section,cell.level,splitAt(built.spec,cell.section,cell.level)?.kind==='drawers'?cell.column??0:0);
    const selected=this.step===2;
    const {svg,caption}=wardrobeDrawing(built,view,this.activeSection,this.fields.front,selected&&this.interior==='shelf'?this.levelIndex:null,
-     {rodId:this.interior==='rod'?this.rodId:null,editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,internalFronts:!!this.inspectInternalFronts,
+     {partKey:this.partKey,showFronts:this.showMachiningFronts,rodId:this.interior==='rod'?this.rodId:null,editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,internalFronts:!!this.inspectInternalFronts,
        dimensions:view==='sections',splitLevel:selected?cell.level:null,drawerDetail:selected&&this.interior==='drawer'});
    this.paintDrawing(svg);
    this.dimensions.textContent='Ш '+built.width+' · В '+(built.height+footHeight(built.spec))+' · Г '+(built.depth+(issue?18:0))+' мм';

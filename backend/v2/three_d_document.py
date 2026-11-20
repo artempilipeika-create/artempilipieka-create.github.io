@@ -330,8 +330,12 @@ def module_contents(it):
         row=_facade_handle_row(grip,it)
         edge={'left':'Левый','right':'Правый','top':'Верхний','bottom':'Нижний'}[grip['edge']]
         length=row['qty']*1000
-        kerf=(f"Паз {grip['grooveWidth']:g} × {grip['grooveDepth']:g} мм (ширина × глубина), ось 9 мм от лицевой пласти."
-              if grip.get('grooveWidth') is not None else 'Ширину и глубину паза требуется задать по рабочей фрезе.')
+        from .assistant_model import DOOR_HARDWARE
+        product=DOOR_HARDWARE[grip['article']]
+        width=grip.get('grooveWidth') or product['trialGrooveWidth']
+        depth=grip.get('grooveDepth') or product['trialGrooveDepth']
+        kerf=f"Паз {width:g} × {depth:g} мм (ширина × глубина), ось 9 мм от лицевой пласти."
+        if grip.get('grooveWidth') is None:kerf+=' Расчётная посадка, проверить на обрезке перед серией.'
         return f"{edge} торец фасада без ПВХ. Длина отрезка ручки AKS {grip['article']} — {length:g} мм. {kerf}"
     it=refresh_dryer_source(it)
     v=gola_variant(it) or dryer_variant(it) or cargo_variant(it);dish=dishwasher(it)

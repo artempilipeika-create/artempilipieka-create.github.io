@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.36 WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.37 PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,7 +135,7 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
@@ -1200,6 +1200,58 @@ function verifyEdgeGripGroove(check) {
  return {moduleName:panel.Name,kind:'edge-grip-groove',article:plan.article,verified:true};
 }
 
+function panelMachiningPlan(op,W,L,T){
+ const {kind,edge,face}=op;
+ const inset=op.offset??0,start=op.start??0,end=op.end??0;
+ const alongY=edge==='x0'||edge==='x1',span=alongY?L:W,across=alongY?W:L;
+ if(!['x0','x1','y0','y1'].includes(edge)||![0,1].includes(face)||
+    ![start,end].every(v=>Number.isFinite(v)&&v>=0)||start+end>=span)
+  throw Error('Проверьте торец, пласть и длину обработки.');
+ const line={x0:[0,L-end,0,start],x1:[W,start,W,L-end],y0:[start,0,W-end,0],y1:[W-end,L,start,L]}[edge];
+ const surface=face?T:0;
+ let profile,name;
+ if(kind==='miter'){
+  const land=op.land,run=T-land;
+  if(!Number.isFinite(land)||land<0||land>=T||run>=across)throw Error('Остаток у края должен быть от 0 до толщины детали.');
+  profile=[[0,surface],[run,surface],[0,face?land:T-land]];
+  name='Запил 45°';
+ }else{
+  if(!['groove','rabbet'].includes(kind)||!Number.isFinite(inset)||inset<0||
+     !Number.isFinite(op.width)||op.width<=0||inset+op.width>=across||
+     !Number.isFinite(op.depth)||op.depth<=0||op.depth>=T||kind==='rabbet'&&inset!==0)
+   throw Error('Выборка должна помещаться в пласти, а её глубина должна быть меньше толщины детали.');
+  const stop=face?T-op.depth:op.depth;
+  profile=[[inset,surface],[inset+op.width,surface],[inset+op.width,stop],[inset,stop]];
+  name=kind==='groove'?'Паз в пласти':'Четверть';
+ }
+ return {name,line,profile};
+}
+function addPanelMachining(panel,op,W,L,T){
+ const plan=panelMachiningPlan(op,W,L,T);
+ const index=Number(panel.Cuts.Count);
+ const cut=panelOperations.AddCut(panel,panelOperations.cutType.freeForm,plan.name);
+ cut.Trajectory.AddLine(...plan.line);
+ for(let i=0;i<plan.profile.length;i++){
+  const a=plan.profile[i],b=plan.profile[(i+1)%plan.profile.length];
+  cut.Contour.AddLine(...a,...b);
+ }
+ return {machining:true,moduleName:panel.Name,panel,index,plan};
+}
+function verifyPanelMachining(check){
+ const {panel,index,plan}=check,cut=panel.Cuts.Cuts[index],count=plan.profile.length;
+ const near=(a,x,y)=>Math.abs(a.x-x)<.001&&Math.abs(a.y-y)<.001;
+ const matches=(obj,[x,y,a,b])=>obj&&near(obj.Pos1,x,y)&&near(obj.Pos2,a,b);
+ if(!cut||cut.Name!==plan.name||cut.CutType!==panelOperations.cutType.freeForm||
+    cut.Trajectory.Count!==1||cut.Contour.Count!==count||!matches(cut.Trajectory.Objects[0],plan.line))
+  throw Error('Не подтверждена обработка «'+plan.name+'» на детали '+panel.Name+'.');
+ for(let i=0;i<count;i++){
+  const a=plan.profile[i],b=plan.profile[(i+1)%count];
+  if(!Array.from({length:count},(_,j)=>cut.Contour.Objects[j]).some(e=>matches(e,[...a,...b])||matches(e,[...b,...a])))
+   throw Error('Не совпало сечение обработки «'+plan.name+'» на детали '+panel.Name+'.');
+ }
+ return {moduleName:panel.Name,kind:plan.name,verified:true};
+}
+
 function resizeAndPlaceBlank(obj,item,log){
  const b=item.blank,source=BLANK_DONORS[String(item.source_sha256||'').toLowerCase()];
  if(!source||b?.schema!==1||b.finished_dimensions!==true)throw Error('Неизвестный исходник или формат заготовки.');
@@ -1213,7 +1265,7 @@ function resizeAndPlaceBlank(obj,item,log){
  const wardrobeDoor=b.axis==='front'&&/:door-(?:(?:upper|lower)-)?(?:right|left)$/.test(item.blank_item_id);
  const nichePost=b.axis==='side'&&/:niche-\d+-\d+-divider$/.test(item.blank_item_id);
  const validLength=wardrobeDoor||nichePost?Number.isInteger(L*2):drawerFace?Number.isFinite(L)&&Math.abs(L*1000-Math.round(L*1000))<.000001:Number.isInteger(L);
- if(!validLength||L<(drawerSide||b.edge_grip?40:100)||L>3000||!Number.isInteger(W*(b.axis==='front'?2:1))||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&!drawerBottom&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back','front'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
+ if(!validLength||L<(drawerSide||b.edge_grip?40:100)||L>3000||!Number.isInteger(W*(b.axis==='front'||b.axis==='side'&&b.machining?.some(o=>o.kind==='rabbet')?2:1))||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&!drawerBottom&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back','front'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
  const expected=b.axis==='front'?{width:W,height:L,depth:T}:b.axis==='side'?{width:T,height:L,depth:W}:b.axis==='back'?{width:L,height:W,depth:T}:{width:L,height:T,depth:W};
  if(['width','height','depth'].some(k=>Number(item.target?.[k])!==expected[k]))throw Error('Габариты заготовки не совпали с её ориентацией.');
  if(!item.material_assignments?.body?.name||Number(item.material_assignments.body.thickness)!==T)throw Error('Не задан подходящий материал заготовки.');
@@ -1244,8 +1296,12 @@ function resizeAndPlaceBlank(obj,item,log){
   edge.Thickness=E;edge.Width=T+4;edge.Sign='в цвет корпуса';edge.ClipPanel=true;edge.Allowance=0;edge.Overhung=0;edge.CutIndex=-1;
  }
  const grooveCheck=addEdgeGripGroove(panel,groove);
+ const operations=b.machining??[];
+ if(!Array.isArray(operations)||operations.length>32||operations.length&&T<10)throw Error('Некорректные обработки панели.');
+ const machiningChecks=operations.map(op=>addPanelMachining(panel,op,W,L,T));
  panel.Build();
  if(grooveCheck)verifyEdgeGripGroove(grooveCheck);
+ machiningChecks.forEach(verifyPanelMachining);
  const list=asList(obj);
  for(let i=0;i<list.Count;i++){
   const child=childAt(list,i);if(isServiceFrame(child)){
@@ -1276,7 +1332,7 @@ function resizeAndPlaceBlank(obj,item,log){
   if(distance({x:actual.x-finalOrigin.x,y:actual.y-finalOrigin.y,z:actual.z-finalOrigin.z},expected)>PLACEMENT_TOLERANCE_MM)throw Error('Не совпала ориентация заготовки.');
  }
  log.push('ЗАГОТОВКА OK: '+item.name+'; '+L+' × '+W+' × '+T+' мм; ПВХ '+b.edge_code+' / '+E+' мм; подрезка включена; '+b.axis);
- return {materialChecks,profileChecks:grooveCheck?[grooveCheck]:[]};
+ return {materialChecks,profileChecks:grooveCheck?[grooveCheck,...machiningChecks]:machiningChecks};
 }
 
 const GLASS_SHELVES = {"a3ba7315723500c0cda62751195a2917511e0738924adc0ea76f9416af3aa0d8": 4, "e62793eec974a6ffcc385e5d92d5fb42ad25aa393d4f900569c5fc97288cdade": 8, "acec3cbac6262b250f1abbf901c4804da07748fbf2926948645e0b48eff12bb7": 6};
@@ -2054,7 +2110,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.36 WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.37 PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -2377,7 +2433,7 @@ function importProject(prepared, root, payload) {
     return result;
   });
   const profileChecks = liveProfiles.map(check => {
-    try { return check.edgeGrip?verifyEdgeGripGroove(check):verifyNativeProfile(check); }
+    try { if(check.machining)return verifyPanelMachining(check);return check.edgeGrip?verifyEdgeGripGroove(check):verifyNativeProfile(check); }
     catch (error) {
       const message = String(error.message || error);
       log.push("ОШИБКА ПРОФИЛЯ ПОСЛЕ COMMIT: " + check.moduleName + " — " + message);

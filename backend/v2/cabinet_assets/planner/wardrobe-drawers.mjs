@@ -1,3 +1,4 @@
+import {rearClearance} from './panel-machining.mjs';
 import {sectionOf,isRightBank,levelOf,splitAt,columnWidths} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {anchoredShelf} from './wardrobe-door-layout.mjs';
@@ -100,7 +101,7 @@ export function drawerSections(s,widths,legacy=false){
   let bottom=mm(base+rounding);
   const faceFront=s.depth/2+(internal?-3:18);
   const bodyFront=faceFront-18;
-  const clearDepth=bodyFront+s.depth/2-(s.backThickness??0);
+  const clearDepth=bodyFront+s.depth/2-rearClearance(s);
   const rail=railForOpening(clearDepth,legacy);
   const faces=heights.map((height,j)=>{
    const width=bank.faces[j].width??maxWidth;

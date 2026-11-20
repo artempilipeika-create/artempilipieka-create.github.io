@@ -96,7 +96,7 @@ export function wardrobeHardware(items){
     let screwX=at(face).x,usable=Math.min(fore.width,face.width),screwY=y+left.height/2;
     if(grip){
      // Fix the two boards only where their wood overlaps, clear of the profile shank.
-     const clearance=grip.grooveDepth??pullCatalogue[grip.article].shankDepth,margin=3;
+     const clearance=grip.grooveDepth??pullCatalogue[grip.article].trialGrooveDepth,margin=3;
      const lowX=Math.max(at(fore).x-fore.width/2,at(face).x-face.width/2+(grip.edge==='left'?clearance:0));
      const highX=Math.min(at(fore).x+fore.width/2,at(face).x+face.width/2-(grip.edge==='right'?clearance:0));
      const lowY=Math.max(fore.elevation_mm,face.elevation_mm+(grip.edge==='bottom'?clearance:0))+margin;

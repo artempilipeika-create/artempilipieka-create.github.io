@@ -31,11 +31,13 @@ test('inset metal, unfinished edge and actual cutter follow each selected facade
   assert.ok(Math.abs(volume-expected)<.00001);
  }
 });
-test('an unspecified cutter is recorded as pending and the hinge edge remains available for cups',()=>{
+test('a new grip gets its article-specific trial cut and the hinge edge remains available for cups',()=>{
  const grip={article:'75975',edge:'top'};
  const native=blankNativeItem(face(grip,'left').board,material);
- assert.equal(native.blank.edge_grip.groove_width_mm,null);
- assert.match(native.production_note,/паза.*не заданы/);
+ assert.deepEqual([native.blank.edge_grip.groove_width_mm,native.blank.edge_grip.groove_depth_mm],[3,13.5]);
+ const other=blankNativeItem(face({...grip,article:'67698'},'left').board,material);
+ assert.deepEqual([other.blank.edge_grip.groove_width_mm,other.blank.edge_grip.groove_depth_mm],[2,10.5]);
+ assert.match(native.production_note,/расчётная посадка/);
  assert.throws(()=>face({...grip,edge:'left'},'left'),/петли/);
 });
 test('AK700 pivots around a fixing on doors and around its centre on drawers',()=>{
