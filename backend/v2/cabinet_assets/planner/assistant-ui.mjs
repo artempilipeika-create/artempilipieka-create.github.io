@@ -236,8 +236,8 @@ export class AssistantUI{
   const keep=editorKey&&editorKey===this.editorKey;
   this.editorKey=editorKey;
   this.dialog.toggleAttribute('data-interior',this.step===2);
-  this.zoom.hidden=!(this.step<=2&&(this.step>0||(this.view==='body'||this.view==='surround'||this.view==='lighting')));
-  this.dialog.toggleAttribute('data-cell-view',!this.zoom.hidden);
+  const cellView=this.step<=2&&(this.step>0||['body','surround','lighting'].includes(this.view));
+  this.dialog.toggleAttribute('data-cell-view',cellView);
   const scroll=this.dialog.scrollTop,focused=document.activeElement;
   const focus=keep&&this.form.contains(focused)?{tag:focused.localName,label:focused.getAttribute('aria-label')||focused.textContent}:null;
   const expanded=keep?[...this.form.querySelectorAll('details[open]')].map(d=>d.firstElementChild.textContent):[];

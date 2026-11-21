@@ -254,7 +254,7 @@
 .wardrobe-prime-cards figcaption{display:block;font-size:.87rem;line-height:1.35;overflow-wrap:anywhere}
 
 #planner-assistant-dialog.assistant-wizard{
- width:min(1660px,calc(100vw - 40px));height:94dvh;max-height:94dvh;
+ width:min(1660px,calc(100vw - 40px));max-width:calc(100vw - 12px);height:94dvh;max-height:94dvh;
  padding:clamp(16px,1.7vw,28px);
 }
 #planner-assistant-dialog .surround-sides{
@@ -287,7 +287,7 @@
 #planner-assistant-dialog[data-zoom]>:not(.assistant-grid),
 #planner-assistant-dialog[data-zoom] :is(.assistant-fields,.wardrobe-live){display:none}
 #planner-assistant-dialog[data-zoom] .assistant-grid,#planner-assistant-dialog[data-zoom] .assistant-visuals{display:block;position:static}
-#planner-assistant-dialog[data-cell-view][data-zoom] .assistant-drawing{
+#planner-assistant-dialog.assistant-wizard[data-zoom] .assistant-drawing{
  height:calc(100dvh - 40px);min-height:0;grid-template-rows:auto minmax(0,1fr) auto;
 }
 #planner-assistant-dialog[data-zoom] .assistant-drawing p:last-child{display:none}

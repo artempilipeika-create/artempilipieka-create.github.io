@@ -157,6 +157,8 @@ def diagram_controls(page, form):
             frame = form.bounding_box()
             assert frame and frame['width'] >= width * .80 and frame['height'] >= height * .85, (width, height, frame)
             assert frame['x'] >= -1 and frame['x'] + frame['width'] <= width + 1, frame
+            fields = form.locator('.assistant-fields').bounding_box()
+            assert fields and fields['width'] >= width * (.37 if width > 800 else .82), (width, fields)
             before = drawing.bounding_box()
             button(form, 'Развернуть схему').click()
             restore = button(form, 'Вернуться к анкете')
@@ -169,7 +171,7 @@ def diagram_controls(page, form):
             restore.click()
             expect(field(form, TOTAL_HEIGHT)).to_be_visible()
             print(f'PASS {width}×{height}: dialog {frame["width"]:.0f}×{frame["height"]:.0f}, '
-                  f'diagram {before["width"]:.0f}×{before["height"]:.0f} → {after["width"]:.0f}×{after["height"]:.0f}')
+                  f'fields {fields["width"]:.0f}, diagram {before["width"]:.0f}×{before["height"]:.0f} → {after["width"]:.0f}×{after["height"]:.0f}')
     finally:
         page.set_viewport_size(original)
 
