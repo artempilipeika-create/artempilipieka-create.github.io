@@ -211,6 +211,7 @@ function normalizeItem(x,room){
 function normalizeScene(s={}){
   const room=s.room||{width:4200,depth:3200,height:2700};
   const items=Array.isArray(s.items)?s.items.map(x=>normalizeItem(x,room)):[legacyItem(s)];
+  globalThis.MF_BLANKS_NATIVE?.alignSavedTrimReturns?.(items);
   return{
     schema_version:2,
     room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700,setup_complete:room.setup_complete??null,survey:room.survey??null,features:Array.isArray(room.features)?room.features:[]},

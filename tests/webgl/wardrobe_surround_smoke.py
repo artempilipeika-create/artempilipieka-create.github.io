@@ -87,6 +87,13 @@ def check_trim(parts, side, roles, intervals):
             panel = parts[key]
             assert (panel['elevation_mm'], panel['height']) == (bottom, length), (key, panel, intervals)
             assert 100 <= length <= 2780
+            if role == 'return':
+                sign = -1 if side == 'left' else 1
+                wall = parts[side]
+                assert panel['rotation'] == wall['rotation'] == 0
+                assert panel['x'] - sign * panel['width'] / 2 == wall['x'] + sign * wall['width'] / 2
+                face = parts[key.removesuffix('return') + 'face']
+                assert front(panel) == face['z'] - face['depth'] / 2
 
 
 def check_native_lengths(rows, source, expected):
@@ -252,6 +259,7 @@ def surround_scenarios(page, projects, first_id):
     drawing = form.locator('.wardrobe-figure svg[data-view="surround"]')
     expect(drawing).to_contain_text('1118 мм')
     expect(drawing).to_contain_text('2850 мм')
+    expect(drawing.locator('[data-filler-plan="left"]')).to_have_count(1)
     diagram_controls(page, form)
     button(form, '4. Фасады').click()
     field(form, 'Исполнение фасада').select_option('pair')
@@ -276,6 +284,20 @@ def surround_scenarios(page, projects, first_id):
     pair = ['mezz-door-left', 'mezz-door-right']
     verify_assembly(parts, 500, 20, 'right', pair, True)
 
+    # Reopen an actual pre-fix placement with the narrow boards at the wall edge.
+    # Export immediately, before any edits in the questionnaire.
+    for stem in ('trim-left-', 'trim-left-2-'):
+        parts[stem + 'return']['x'] -= parts[stem + 'face']['width'] - 18
+    parts['trim-left-2-return']['production_note'] = 'Верхняя проставка у шкафа'
+    page.evaluate('id => MF_PLANNER.bridge.open(id)', first_id)
+    reopened = page.evaluate('() => MF_PLANNER.bridge.state().items')
+    check_trim({p['item_id'].rsplit(':', 1)[1]: p for p in reopened},
+               'left', ['face', 'return'], [(0, 2270), (2270, 580)])
+    rows = native_export(page, ['MF_Trim_Right.fr3d', 'MF_Trim_End.fr3d', 'MF_Trim_Ceiling.fr3d'],
+                         pair, '72258', lift=False)
+    check_native_lengths(rows, 'MF_Trim_Right.fr3d', [2270, 580])
+    assert any('Верхняя проставка у шкафа' in row.get('production_note', '') for row in rows)
+
     form = reopen(page, first_id)
     expect(field(form, TOTAL_HEIGHT)).to_have_value('2850')
     left, right = open_surround(form)
@@ -294,9 +316,9 @@ def surround_scenarios(page, projects, first_id):
     assert spec['height'] == 2170 and parts['trim-left-2-face']['width'] == 125
     check_trim(parts, 'left', ['face', 'return'], [(0, 2270), (2270, 580)])
     check_trim(parts, 'right', ['end'], [(97, 2753)])
-    rows = native_export(page, ['MF_Trim_Left.fr3d', 'MF_Trim_End.fr3d', 'MF_Trim_Ceiling.fr3d'],
+    rows = native_export(page, ['MF_Trim_Right.fr3d', 'MF_Trim_End.fr3d', 'MF_Trim_Ceiling.fr3d'],
                          pair, '72258', lift=False)
-    check_native_lengths(rows, 'MF_Trim_Left.fr3d', [2270, 580])
+    check_native_lengths(rows, 'MF_Trim_Right.fr3d', [2270, 580])
     check_native_lengths(rows, 'MF_Trim_End.fr3d', [2753])
     old_id = legacy_copy(projects, first_id)
     print('PASS total 2850; automatic 2270 + 580 at the module joint, 2750 from support or 2753 from finished plinth')
@@ -330,6 +352,7 @@ def surround_scenarios(page, projects, first_id):
     expect(right.locator('[data-trim-result="right"]')).to_contain_text('в раскрой 1300 + 1300 мм')
     expect(drawing).to_contain_text('698 мм')
     expect(drawing).to_contain_text('2600 мм')
+    expect(drawing.locator('[data-filler-plan="right"]')).to_have_count(1)
     button(form, '4. Фасады').click()
     field(form, 'Исполнение фасада').select_option('right')
     button(form, 'Антресоль').click()
@@ -379,10 +402,10 @@ def surround_scenarios(page, projects, first_id):
     assert spec['surround']['cap']['fit'] == 'over'
     check_trim(parts, 'left', ['end'], [(50, 1970), (2020, 500)])
     check_trim(parts, 'right', ['face', 'return'], [(lower_edge, 2520 - lower_edge)])
-    rows = native_export(page, ['MF_Trim_Right.fr3d', 'MF_Trim_End.fr3d', 'MF_Trim_Ceiling.fr3d'],
+    rows = native_export(page, ['MF_Trim_Left.fr3d', 'MF_Trim_End.fr3d', 'MF_Trim_Ceiling.fr3d'],
                          single, '115823', lift=True)
     check_native_lengths(rows, 'MF_Trim_End.fr3d', [1970, 500])
-    check_native_lengths(rows, 'MF_Trim_Right.fr3d', [2520 - lower_edge])
+    check_native_lengths(rows, 'MF_Trim_Left.fr3d', [2520 - lower_edge])
     assert projects.writes >= 4
     print('PASS total 2600; 1920 body, forced module/equal joints, custom and door-edge datums, bottom-mounted lift TIP-ON')
 

@@ -41,7 +41,7 @@ def test_downloadable_trim_retains_the_workshop_boards_joints_and_drilling(tmp_p
         for hole in fr.child(definitions[obj['FastID']],'Holes')['children']:
             h=fr.vals(hole)
             drilling[(h['Radius']*2,h['Depth'])]+=1
-    key={'Left':'trim-left-face','Right':'trim-right-face','End':'trim-right-end','Ceiling':'trim-cap-face'}[name]
+    key={'Left':'trim-right-face','Right':'trim-left-face','End':'trim-right-end','Ceiling':'trim-cap-face'}[name]
     scene={'item_id':'a:'+key,'module_type':'blank','blank_axis':'side' if name=='End' else 'back',
            'width':1000 if name=='Ceiling' else 100,'height':100 if name=='Ceiling' else 1000,
            'assistant_carcass':{'group_id':'a','spec':{'surround':{'cap':{'height':100}}}}}
@@ -54,6 +54,42 @@ def test_downloadable_trim_retains_the_workshop_boards_joints_and_drilling(tmp_p
         assert [(r['article'],r['qty']) for r in rows]==[('',3),('39319',3)]
         for secondary in (['trim-cap-base','trim-cap-upright'] if name=='Ceiling' else [key.replace('face','return')]):
             assert not _panel_hardware({**scene,'item_id':'a:'+secondary})[0]
+
+
+@pytest.mark.parametrize('cabinet_side,source', [('left','Right'),('right','Left')])
+def test_return_and_native_bores_follow_the_cabinet_edge_after_width_resize(tmp_path,cabinet_side,source):
+    path=tmp_path/f'MF_Trim_{source}.fr3d'
+    with ZipFile(BytesIO(kit_bytes())) as kit:
+        path.write_bytes(kit.read('Martin Forest AKS/'+path.name))
+    tree=fr.load(path)
+    definitions={fr.vals(n)['FastID']:n for n in fr.child(tree,'FurnList')['children']}
+    model=fr.child(tree,'Model')
+    planes=fr.planeinfo(fr.child(fr.child(tree,'ModelParams'),'Params'))
+    plane=next(p['Pos'] for p in planes if p['Axis']==0)
+    stock=fr.frame(model)['size'][0]
+    for width in (40,100,125,1200):
+        def resized(x):
+            return x+(width-stock if x>plane else 0)
+        low=width-18 if cabinet_side=='left' else 0
+        high=low+18
+        bores=Counter()
+        for node,matrix,at in fr.walk(model):
+            obj=fr.vals(node)
+            if obj.get('Name')=='Боковая Проставка':
+                bounds=fr.panelinfo(node,matrix,at)['bounds']
+                assert [resized(bounds[k][0]) for k in ('lo','hi')]==pytest.approx([low,high])
+            if obj.get('Type')!=3001:
+                continue
+            for hole in fr.child(definitions[obj['FastID']],'Holes')['children']:
+                h=fr.vals(hole)
+                x=(matrix@[h['X'],h['Y'],h['Z'],1])[0]
+                dx=(matrix[:3,:3]@[h['DirX'],h['DirY'],h['DirZ']])[0]
+                diameter=round(h['Radius']*2)
+                start=resized(x)
+                assert start==pytest.approx(high if diameter==15 else low+9)
+                assert low-1e-6<=start+dx*h['Depth']<=high+1e-6
+                bores[diameter]+=1
+        assert bores=={5:3,8:9,15:3}
 
 
 def test_web_schedule_uses_the_native_two_end_offsets_and_explicit_intervals():

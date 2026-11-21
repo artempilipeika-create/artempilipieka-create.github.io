@@ -89,7 +89,7 @@
 #planner-assistant-dialog .assistant-drawing h3,#planner-assistant-dialog .assistant-drawing p{margin:0}
 #planner-assistant-dialog .assistant-drawing h3{text-align:left;font-size:16px}
 #planner-assistant-dialog .wardrobe-figure{min-height:0;min-width:0;background:#fdfcf8;border-radius:7px}
-#planner-assistant-dialog .wardrobe-figure svg{display:block;width:100%;height:100%;font-family:inherit}
+#planner-assistant-dialog .wardrobe-figure>svg{display:block;width:100%;height:100%;font-family:inherit}
 #planner-assistant-dialog .assistant-drawing p:last-child{font-size:13px;color:#476051}
 #planner-assistant-dialog .wardrobe-hinge figure{margin:0;display:grid;justify-items:center;gap:6px}
 #planner-assistant-dialog .wardrobe-hinge img{width:min(100%,260px);height:160px;object-fit:contain;background:white}

@@ -8,10 +8,37 @@ const sources={
  cap:['MF_Trim_Ceiling.fr3d','1593b2bf163f12120e40c96b9feca7ff7a035da5ba5b67f96f197b97aaf7f5a9']
 };
 const partKey=/^trim-((?:left|right)(?:-[1-9]\d*)?|cap)-(face|return|end|upright|base)$/;
+// The shop fragment is named for the edge of its face that carries the
+// return, so the cabinet's left side takes its right-hand joint and vice versa.
+const sourceAtSide={left:'right',right:'left',cap:'cap'};
+
+// Older saved wardrobes placed the return at the wall edge of the face.
+// Recognise that exact assembly before adjusting a loaded panel's position.
+export function alignSavedTrimReturns(items){
+ const byId=new Map(items.map(it=>[it.item_id,it]));
+ const near=(a,b)=>Math.abs(a-b)<.01;
+ for(const it of items){
+  const owner=it.assistant_carcass?.group_id;
+  if(!owner||it.module_type!=='blank'||it.blank_axis!=='side'||!it.item_id?.startsWith(owner+':'))continue;
+  const side=/^trim-(left|right)(?:-[1-9]\d*)?-return$/.exec(it.item_id.slice(owner.length+1))?.[1];
+  if(!side||it.assistant_carcass.spec?.surround?.[side]?.kind!=='filler')continue;
+  const face=byId.get(it.item_id.replace(/-return$/,'-face')),wall=byId.get(owner+':'+side),rotation=it.rotation||0;
+  if(face?.blank_axis!=='back'||wall?.blank_axis!=='side'||![0,90,180,270].includes(rotation)||
+     [face,wall].some(p=>p.assistant_carcass?.group_id!==owner||(p.rotation||0)!==rotation)||
+     it.width!==18||it.depth!==82||face.depth!==18||wall.width!==18||
+     it.height!==face.height||it.elevation_mm!==face.elevation_mm)continue;
+  const f=localPoint(face,rotation),r=localPoint(it,rotation),w=localPoint(wall,rotation);
+  const sign=side==='left'?-1:1,edge=w.x+sign*wall.width/2;
+  if(near(f.x-sign*face.width/2,edge)&&near(r.x,f.x+sign*(face.width-it.width)/2)&&
+     near(r.z+it.depth/2,f.z-face.depth/2)){
+   Object.assign(it,worldPoint({x:edge+sign*it.width/2,z:r.z},rotation));
+  }
+ }
+}
 
 function makeRow(unit,segmented,lookup){
  const {side,number,parts}=unit;
- const kind=parts.has('end')?'end':side;
+ const kind=parts.has('end')?'end':sourceAtSide[side];
  const roles=kind==='cap'?['face','upright','base']:kind==='end'?['end']:['face','return'];
  const name=kind==='cap'?'Закладная под потолок':(kind==='end'?'Торцевая стойка ':'Г-образная фальшпланка ')+(side==='left'?'слева':'справа');
  const title=segmented?name+' · часть '+number:name;
@@ -31,7 +58,7 @@ function makeRow(unit,segmented,lookup){
   let dimensions,offset;
   if(role==='face'){dimensions=[width,height,18];offset=[0,0,depth-18];}
   else if(role==='end'){dimensions=[18,height,depth];offset=[0,0,0];}
-  else if(role==='return'){dimensions=[18,height,depth-18];offset=[side==='left'?0:width-18,0,0];}
+  else if(role==='return'){dimensions=[18,height,depth-18];offset=[kind==='right'?width-18:0,0,0];}
   else if(role==='upright'){dimensions=[width,height-18,18];offset=[0,18,depth-36];}
   else {dimensions=[width,18,depth-18];offset=[0,0,0];}
   const actual=[it.width,it.height,it.depth,local.x-x0-it.width/2,it.elevation_mm-y0,local.z-z0-it.depth/2];

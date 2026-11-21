@@ -10,6 +10,18 @@ const rect=(x,y,w,h,fill,stroke=frame)=>'<rect x="'+fmt(x)+'" y="'+fmt(y)+'" wid
 const line=(x1,y1,x2,y2,stroke=frame)=>'<line x1="'+fmt(x1)+'" y1="'+fmt(y1)+'" x2="'+fmt(x2)+'" y2="'+fmt(y2)+'" stroke="'+stroke+'"/>';
 const label=(x,y,value,anchor='start',size=11)=>'<text x="'+fmt(x)+'" y="'+fmt(y)+'" text-anchor="'+anchor+'" fill="'+frame+'" font-size="'+size+'">'+value+'</text>';
 
+function fillerPlan(parts,side,x,y){
+ const board=key=>parts.find(p=>p.key===key).item;
+ const face=board('trim-'+side+'-face'),spacer=board('trim-'+side+'-return'),wall=board(side);
+ const left=side==='left',edge=wall.x+(left?-1:1)*wall.width/2;
+ // Crop to the joint even when the face is much wider than this detail.
+ const view=[edge-(left?120:40),face.z+face.depth/2-110,160,116].map(fmt).join(' ');
+ const plan=(it,fill)=>rect(it.x-it.width/2,it.z-it.depth/2,it.width,it.depth,fill);
+ return '<svg x="'+x+'" y="'+y+'" width="80" height="58" viewBox="'+view+'" overflow="hidden" data-filler-plan="'+side+'">'+
+  plan(wall,'#d5e2db')+plan(spacer,sideColor[side])+plan(face,sideColor[side])+'</svg>'+
+  label(x+40,y+70,left?'Слева':'Справа','middle',10);
+}
+
 export function surroundDrawing(built,view){
  const s=built.spec,a=s.surround??{},g=built.envelope,floor=301,total=(s.elevation??0)+g.height;
  const k=Math.min(235/g.width,280/total),X=x=>156+(x-g.centerX)*k,Y=y=>floor-(y+s.elevation)*k;
@@ -59,6 +71,12 @@ export function surroundDrawing(built,view){
   const t=g.sides[side];if(!t)continue;
   const lengths=t.pieces.map(p=>number(p.height)).join(' + ');
   art+=rect(46,row-9,9,9,sideColor[side])+label(62,row,(side==='left'?'Слева':'Справа')+' · '+lengths+' мм');row+=16;
+ }
+ const fillers=trimSides.filter(side=>g.sides[side]&&!g.sides[side].end);
+ if(fillers.length){
+  art+=label(46,row+3,'Примыкание фальшпланки к боковине · вид сверху','start',10);
+  for(const [i,side] of fillers.entries())art+=fillerPlan(built.parts,side,46+i*104,row+9);
+  row+=89;
  }
  const end=trimSides.find(side=>g.sides[side]?.end);
  if(end){

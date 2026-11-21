@@ -5,6 +5,8 @@ import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapte
 import {prepareAssistantPlan,applyAssistantPlan,selectedCarcass} from '../../backend/v2/cabinet_assets/planner/assistant-model.mjs';
 import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
 import {surroundDrawing} from '../../backend/v2/cabinet_assets/planner/wardrobe-surround-drawing.mjs';
+import {alignSavedTrimReturns,nativeTrimRows} from '../../backend/v2/cabinet_assets/planner/wardrobe-trim-native.mjs';
+import {localPoint,worldPoint} from '../../backend/v2/cabinet_assets/planner/blank-bindings.mjs';
 import {viewingDoor,hingePose,clearanceSession} from '../../backend/v2/cabinet_assets/planner/wardrobe-clearance.mjs';
 import {WardrobeMotion} from '../../backend/v2/cabinet_assets/planner/wardrobe-motion.mjs';
 
@@ -26,7 +28,7 @@ test('assembled envelope, donor boards and edge schedules match the agreed quest
  const side=part(b,'right'),post=part(b,'trim-right-end'),left=part(b,'trim-left-face'),base=part(b,'trim-cap-base');
  assert.equal(frontEdge(post)-frontEdge(side),20);
  assert.deepEqual([left.body_variant_id,left.width,left.height,left.depth,left.blank_edge_code,left.blank_edge_thickness_mm],[front,100,2000,18,'1111',1]);
- const spacer=part(b,'trim-left-return');assert.deepEqual([spacer.body_variant_id,spacer.depth,spacer.x,spacer.blank_edge_code],[body,82,-591,'0111']);
+ const spacer=part(b,'trim-left-return');assert.deepEqual([spacer.body_variant_id,spacer.depth,spacer.x,spacer.blank_edge_code],[body,82,-509,'0111']);
  assert.deepEqual([post.width,post.depth,post.height,post.body_variant_id],[18,100,2620,front]);
  const door=part(b,'mezz-door-left'),cap=part(b,'trim-cap-face');
  assert.deepEqual([frontEdge(door)-frontEdge(side),cap.elevation_mm,frontEdge(cap),base.blank_edge_code],[20,2620,frontEdge(door),'1011']);
@@ -38,6 +40,50 @@ test('assembled envelope, donor boards and edge schedules match the agreed quest
   const rows=placeCarcass(b,{x:1000,z:1300,elevation_mm:0,rotation});
   const bounds=prop=>{const dims=rotation%180===0?['width','depth']:['depth','width'];const dim=dims[prop==='x'?0:1];return [Math.min(...rows.map(it=>it[prop]-it[dim]/2)),Math.max(...rows.map(it=>it[prop]+it[dim]/2))];};
   assert.equal((bounds('x')[0]+bounds('x')[1])/2,1000);assert.equal((bounds('z')[0]+bounds('z')[1])/2,1300);
+ }
+});
+
+test('both returns touch the cabinet at every width, rotation and segment, including reopened wall-edge assemblies',()=>{
+ const source={left:['right','6021bf08e71f565041b181a01e3b8db350e1d1fa767f5fc26665aef391918604'],
+  right:['left','30be270bbfac56f50a29e10319db4d64a03afe46e58abca0b46d265458078dd1']};
+ for(const width of [40,100,1200]){
+  const filler=w=>({kind:'filler',width:w,split:'equal',heightMode:'body',start:'floor'});
+  const b=buildCarcass(spec({surround:{left:filler(width),right:filler(1240-width)}}),options);
+  const drawing=surroundDrawing(b,'surround').svg;
+  for(const side of ['left','right'])assert.match(drawing,new RegExp('data-filler-plan="'+side+'"'));
+  for(const rotation of [0,90,180,270]){
+   const boards=placeCarcass(b,{x:1421.5,z:1733,elevation_mm:54,rotation})
+    .map(it=>({...it,assistant_carcass:{group_id:options.idPrefix,spec:b.spec}}));
+   const get=key=>boards.find(p=>p.item_id==='wardrobe:'+key);
+   const lookup=name=>({name,thickness:18});
+   const rows=nativeTrimRows(boards,lookup);
+   const current=structuredClone(boards);
+   for(const [side,sign] of [['left',-1],['right',1]]){
+    const wall=get(side),outer=localPoint(wall,rotation).x+sign*wall.width/2;
+    for(const suffix of ['','-2']){
+     const prefix='trim-'+side+suffix,face=get(prefix+'-face'),spacer=get(prefix+'-return');
+     const f=localPoint(face,rotation),r=localPoint(spacer,rotation);
+     assert.equal(r.x-sign*spacer.width/2,outer);
+     assert.equal(f.x-sign*face.width/2,outer);
+     assert.equal(r.z+spacer.depth/2,f.z-face.depth/2);
+     const row=rows.get(face.item_id);
+     assert.deepEqual([row.wardrobe_trim.kind,row.source_sha256],source[side]);
+     const origin=localPoint(row.position,rotation).x-row.target.width/2;
+     assert.equal(origin+(side==='left'?row.target.width:0),outer);
+     Object.assign(spacer,worldPoint({x:f.x+sign*(face.width-spacer.width)/2,z:r.z},rotation));
+    }
+   }
+   alignSavedTrimReturns(boards);
+   assert.deepEqual(boards,current);
+   alignSavedTrimReturns(boards);
+   assert.deepEqual(boards,current);
+   const detached=get('trim-left-return');
+   detached.z+=3;
+   const moved=structuredClone(boards);
+   alignSavedTrimReturns(boards);
+   assert.deepEqual(boards,moved);
+   assert.throws(()=>nativeTrimRows(boards,lookup),/взаимное положение/);
+  }
  }
 });
 

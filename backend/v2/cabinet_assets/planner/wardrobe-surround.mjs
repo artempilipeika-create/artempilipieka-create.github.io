@@ -70,7 +70,7 @@ export function surroundParts(s,g,prefix,options={}){
    if(t.end)board(key+'end',label,'side',height,t.depth,t.x,bottom,t.front-t.depth/2,'1111');
    else{
     board(key+'face',label+' · глухой фасад','back',t.span,height,t.x,bottom,t.front-9,'1111');
-    board(key+'return',label+' · боковая проставка','side',height,82,t.sign*(s.width/2+t.span-9),bottom,t.front-59,'0111');
+    board(key+'return',label+' · боковая проставка','side',height,82,t.sign*(s.width/2+9),bottom,t.front-59,'0111');
    }
   });
  }

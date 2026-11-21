@@ -80,7 +80,7 @@ test('right and left native trims stay separate across cupboards and detached re
    .map(p=>({...p,assistant_carcass:{group_id:id,name:id,spec:built.spec}}));
  });
  const rows=[...nativeTrimRows(boards,lookup).values()].filter(Boolean);
- assert.deepEqual(rows.map(p=>p.source_file),['MF_Trim_End.fr3d','MF_Trim_Right.fr3d','MF_Trim_End.fr3d','MF_Trim_Right.fr3d']);
+ assert.deepEqual(rows.map(p=>p.source_file),['MF_Trim_End.fr3d','MF_Trim_Left.fr3d','MF_Trim_End.fr3d','MF_Trim_Left.fr3d']);
  assignCabinetBlocks(rows,boards);
  assert.deepEqual(rows.map(p=>p.cabinet_block.name),['a','a','b','b']);
  assert.equal(rows[1].wardrobe_trim.expected_pairs,4);
@@ -125,7 +125,7 @@ test('independent native trim segments keep their quarter-millimetre cuts, label
    assert.equal(row.cabinet_block.name,owner);
    assert.equal(row.target.height,heights[index]);assert.equal(row.position.y,[32.5,132.5,932.75][index]);
    assert.equal(row.rotation,rotation);assert.match(row.name,new RegExp('часть '+(index+1)+'$'));
-   assert.equal(row.source_file,role==='end'?'MF_Trim_End.fr3d':side==='left'?'MF_Trim_Left.fr3d':'MF_Trim_Right.fr3d');
+   assert.equal(row.source_file,role==='end'?'MF_Trim_End.fr3d':side==='left'?'MF_Trim_Right.fr3d':'MF_Trim_Left.fr3d');
    assert.equal(trim.expected_pairs,role==='end'?0:[1,3,2][index]);
    assert.deepEqual(trim.panels.map(p=>p.role),role==='end'?['end']:['face','return']);
    for(const p of trim.panels){
