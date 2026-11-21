@@ -269,8 +269,8 @@ class FurnitureItem(StrictModel):
             l,w,t=self.blank_length_mm,self.blank_width_mm,self.blank_thickness_mm
             drawer=None
             if self.assistant_carcass and self.assistant_carcass.spec.drawerBanks:
-                group=str(self.assistant_carcass.group_id)+':'
-                drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-(side-left|side-right|front|rear|face|bottom)',self.item_id[len(group):]) if self.item_id.startswith(group) else None
+                group_prefix=str(self.assistant_carcass.group_id)+':'
+                drawer=re.fullmatch(r'drawer-(\d+)-(\d+)-(side-left|side-right|front|rear|face|bottom)',self.item_id[len(group_prefix):]) if self.item_id.startswith(group_prefix) else None
                 if drawer:
                     section,index=map(int,drawer.group(1,2))
                     banks=self.assistant_carcass.spec.drawerBanks

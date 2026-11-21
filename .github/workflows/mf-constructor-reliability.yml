@@ -43,11 +43,26 @@ jobs:
         run: node --test tests/webgl/*.test.mjs
       - name: Catalogue contract and isolated database saves
         run: python -m pytest -q tests/test_*.py tests/stage07/test_furniture_heights.py tests/stage07/test_presentation.py tests/stage07/test_material_visuals.py tests/stage07/test_user_textures.py tests/stage07/test_collected_textures.py --junitxml=qa-output/reliability.xml
+      - name: Preserve test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: constructor-reliability
+          path: qa-output/reliability.xml
+
+  wardrobe-questionnaire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Save, reopen and edit the wardrobe questionnaire in Chromium
         env:
           MF_QA_LIVE: ${{ startsWith(github.ref_name, 'mf-reliability-live-surround-') }}
         run: |
-          pip install playwright==1.58.0
+          pip install -r backend/v2/requirements.txt playwright==1.58.0
           if command -v google-chrome >/dev/null; then
             export MF_QA_CHROME="$(command -v google-chrome)"
           else
@@ -58,9 +73,3 @@ jobs:
           else
             python tests/webgl/wardrobe_surround_smoke.py
           fi
-      - name: Preserve test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: constructor-reliability
-          path: qa-output/reliability.xml
