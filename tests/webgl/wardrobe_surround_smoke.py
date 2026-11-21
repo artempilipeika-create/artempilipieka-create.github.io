@@ -242,7 +242,8 @@ if __name__ == '__main__':
     def run(page, projects, first_id):
         if args.live:
             for name in ('assistant-ui.mjs', 'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs',
-                         'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs'):
+                         'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
+                         'wardrobe-trim-native.mjs', 'wardrobe-trim-joint.json', 'bazis-drawers-import.js'):
                 asset = page.request.get(ORIGIN + '/account/planner/' + name, max_redirects=0)
                 assert asset.status == 200 and asset.body() == (ROOT / 'backend/v2/cabinet_assets/planner' / name).read_bytes(), name
         surround_scenarios(page, projects, first_id)
