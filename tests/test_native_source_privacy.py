@@ -50,6 +50,16 @@ def test_render_assets_and_importer_remain_available(client):
         assert client.get('/account/planner/'+asset).status_code==200
 
 
+def test_all_selectable_blum_parts_serve_their_product_photo(client):
+    catalogue = client.get('/account/planner/wardrobe-z1-data.json').json()
+    for family in ('hinges', 'boardHinges', 'plates'):
+        for part in catalogue[family]:
+            image = client.get(part['photo'])
+            assert image.status_code == 200, part['photo']
+            assert image.headers['content-type'] == 'image/webp'
+            assert image.content[:4] == b'RIFF' and image.content[8:12] == b'WEBP'
+
+
 def test_importer_download_uses_the_current_attachment_name_in_every_constructor(client):
     from backend.v2.wardrobe_aks import IMPORTER_NAME, IMPORTER_VERSION
     asset = '/account/planner/bazis-drawers-import.js'

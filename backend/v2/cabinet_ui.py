@@ -65,7 +65,9 @@ def router():
     from .assistant_model import ASSETS
     import json
     planner_files.update({'wardrobe-z1-data.json','wardrobe-z1-meshes.json'})
-    planner_files.update(p['photo'].removeprefix('/account/planner/') for p in json.loads((ASSETS/'wardrobe-z1-data.json').read_text())['hinges'])
+    blum_catalogue = json.loads((ASSETS/'wardrobe-z1-data.json').read_text())
+    for family in ('hinges', 'boardHinges', 'plates'):
+        planner_files.update(part['photo'].removeprefix('/account/planner/') for part in blum_catalogue[family])
     planner_files.update({'wardrobe-prime-hinges.json','wardrobe-prime-meshes.json','wardrobe-push-open.json','wardrobe-hinge-layout.mjs','wardrobe-hinge-fit.mjs','wardrobe-hinge-mesh.mjs','wardrobe-hinge-ui.mjs'})
     planner_files.update({'wardrobe-aks-push.json','aks-push-meshes.json','wardrobe-push-layout.mjs','wardrobe-push-ui.mjs','wardrobe-push-product-ui.mjs'})
     planner_files.update('shelf-images/'+sku+'.webp' for sku in json.loads((ASSETS/'wardrobe-aks-push.json').read_text()))
