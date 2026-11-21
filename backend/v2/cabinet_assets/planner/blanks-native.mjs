@@ -1,5 +1,6 @@
 import z1 from './wardrobe-z1-data.json' with {type:'json'};
 import {worldPoint} from './blank-bindings.mjs';
+import {fitSavedMezzanineBacks} from './wardrobe-surround.mjs';
 import {alignSavedTrimReturns,nativeTrimRows} from './wardrobe-trim-native.mjs';
 import {lightingSystems} from './wardrobe-lighting.mjs';
 import {nativeGrip} from './wardrobe-edge-pulls.mjs';
@@ -60,4 +61,4 @@ function nativeItems(items,lookup){
  }
  return rows;
 }
-globalThis.MF_BLANKS_NATIVE={alignSavedTrimReturns,assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>[...nativeDoorHinges(it,items),...doorPush(it,items)]),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems};
+globalThis.MF_BLANKS_NATIVE={alignSavedTrimReturns,fitSavedMezzanineBacks,assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>[...nativeDoorHinges(it,items),...doorPush(it,items)]),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems};

@@ -46,8 +46,9 @@ export function validateBlank(input,room,mount=input.assistant_carcass?.spec.bac
   const b=normalizeBlank(input);
   const post=b.axis==='side'&&/:niche-\d+-\d+-divider$/.test(input.item_id);
   const key=input.item_id?.split(':').at(-1);
-  const hdf=mount?.layout&&key==='back'&&b.axis==='back';
-  const fittedWidth=mount?.layout&&['top','bottom','left','right','back'].includes(key);
+  const carcassKey=key?.replace(/^mezz-/,'');
+  const hdf=mount?.layout&&carcassKey==='back'&&b.axis==='back';
+  const fittedWidth=mount?.layout&&['top','bottom','left','right','back','divider'].includes(carcassKey);
   const sidePart=/^trim-(left|right)(?:-([2-9]|[1-9]\d+))?-(face|return|end)$/.exec(key);
   const trimFace=sidePart?.[3]==='face'&&b.axis==='back';
   const trimPost=sidePart&&sidePart[3]!=='face'&&b.axis==='side';

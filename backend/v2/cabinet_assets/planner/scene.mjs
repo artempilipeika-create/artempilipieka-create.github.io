@@ -267,7 +267,7 @@ export class PlannerScene{
     return [...weights].sort((a,b)=>b[1]-a[1])[0]?.[0]||0;
   }
   renderRotation(){
-    return this.adapter.items.some(it=>kitchenSettings(it))?this.kitchenRotation():(this.adapter.items.find(it=>cabinetId(it))?.rotation||0);
+    return this.adapter.items.some(it=>kitchenSettings(it))?this.kitchenRotation():(this.adapter.items.find(it=>cabinetId(it)||it.module_type==='wardrobe')?.rotation||0);
   }
   fitRenderRoom(){
     const view=this.renderRooms.cameraView();
@@ -299,7 +299,7 @@ export class PlannerScene{
   }
   fitShadow(){
     const box=this.cameraBox('kitchen'),center=box.getCenter(new THREE.Vector3());
-    const rotation=-this.kitchenRotation()*Math.PI/180;
+    const rotation=-this.renderRotation()*Math.PI/180;
     this.sun.target.position.copy(center);const daylight=roomDaylight(this.adapter.room,finishSettings(this.adapter.state?.displaySettings));
     const key=daylightKey(daylight,roomById(this.renderRooms?.id),rotation);
     this.sun.position.copy(center).add(key);
@@ -469,14 +469,15 @@ export class PlannerScene{
     // Kitchen, backsplash and wall profiles; exclude the room shell and labels.
     const box=new THREE.Box3();
     for(const e of this.entries.values())if(e.group.visible)box.expandByObject(e.group);
-    for(const g of this.dressing?.children||[])if(g.visible)box.expandByObject(g);
-    if(this.wallFinishes)box.expandByObject(this.wallFinishes.root);
+    if(view!=='wardrobe')for(const g of this.dressing?.children||[])if(g.visible)box.expandByObject(g);
+    if(view!=='wardrobe'&&this.wallFinishes)box.expandByObject(this.wallFinishes.root);
     if(box.isEmpty())return this.fit('room');
     this.stopOrbitInertia();this.clientView=view;this.mode='3d';this.camera=this.perspective;
     this.controls.object=this.camera;this.controls.enableRotate=true;this.controls.minPolarAngle=0;this.controls.maxPolarAngle=Math.PI*.495;
     this.camera.fov=32;this.camera.zoom=1;this.camera.clearViewOffset();this.resize();
     const center=box.getCenter(new THREE.Vector3()),axis=new THREE.Vector3(0,1,0);
-    const dir=(view==='front'?new THREE.Vector3(.035,.055,1):view==='left'?new THREE.Vector3(-.6,.22,1):view==='right'?new THREE.Vector3(.6,.22,1):new THREE.Vector3(.38,.14,1)).applyAxisAngle(axis,-this.kitchenRotation()*Math.PI/180).normalize();
+    const rotation=view==='wardrobe'?this.renderRotation():this.kitchenRotation();
+    const dir=(view==='wardrobe'?new THREE.Vector3(.32,0,1):view==='front'?new THREE.Vector3(.035,.055,1):view==='left'?new THREE.Vector3(-.6,.22,1):view==='right'?new THREE.Vector3(.6,.22,1):new THREE.Vector3(.38,.14,1)).applyAxisAngle(axis,-rotation*Math.PI/180).normalize();
     const right=axis.clone().cross(dir).normalize(),up=dir.clone().cross(right).normalize(),points=[];
     for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z]){
       const p=new THREE.Vector3(x,y,z).sub(center);points.push({x:p.dot(right),y:p.dot(up),z:p.dot(dir)});

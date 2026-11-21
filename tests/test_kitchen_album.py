@@ -165,3 +165,39 @@ def test_provider_contract_is_one_edit_with_no_automatic_retry(monkeypatch,style
     assert ('at most three loose objects' in request['data']['prompt'])==(style=='lived_in')
     assert ('Do not add decor' in request['data']['prompt'])==(style=='catalog')
     assert 'never merge separate fronts' in request['data']['prompt']
+
+
+def test_glazed_wardrobe_uses_saved_leaf_geometry_and_one_provider_edit(monkeypatch):
+    project = {'items': [], 'albumSettings': {'order_number': 'QA-Z1'}}
+    group = {'group_id': 'cab', 'name': 'Шкаф 01', 'spec': {'recipe': 'divided',
+             'surround': {'upper': {'height': 400, 'leaves': 2, 'frame': 'Z1', 'opening': 'swing'}}}}
+    for key, axis, width, height, depth, bottom in [
+        ('mezz-back','back',964,364,18,2118),
+        ('mezz-door-left','front',497,397,20.5,2101.5),('mezz-door-right','front',497,397,20.5,2101.5),
+        ('door-left','front',497,2007,20.5,80),('door-right','front',497,2007,20.5,80)]:
+        part = dict(item_id='cab:'+key, name='Шкаф 01 · '+key, assistant_carcass=group, module_type='blank',
+                    blank_axis=axis, width=width, height=height, depth=depth, elevation_mm=bottom, x=0, z=0)
+        if axis=='front':
+            part['blank_front_frame']='Z1'
+        else:
+            part['body_variant_id']='decor'
+        project['items'].append(part)
+    calls = []
+    encoded=base64.b64encode(image()).decode()
+    class Provider:
+        def __init__(self,**kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self,*args): pass
+        def post(self,url,**kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(status_code=200,json=lambda:{'data':[{'b64_json':encoded}]})
+    monkeypatch.setenv('MF_IMAGE_API_KEY','test')
+    monkeypatch.setattr(sales_render.httpx,'Client',Provider)
+    sales_render.generate('qa',project,{'decor':'EGGER U708 ST9'},'data:image/jpeg;base64,'+encoded,'lived_in')
+    assert len(calls)==1 and calls[0]['data']['n']=='1'
+    prompt=calls[0]['data']['prompt']
+    assert all(term in prompt for term in ('wardrobe','EGGER U708 ST9','mezz-back','mezz-door-left','mezz-door-right','397','2007','19 mm','4 mm'))
+    assert 'kitchen' not in prompt and 'countertop' not in prompt
+    pdf=PdfReader(BytesIO(kitchen_album.render('Витрина',project,{'decor':'EGGER U708 ST9'},image())))
+    text=' '.join(page.extract_text() for page in pdf.pages)
+    assert 'Состав шкафа' in text and 'КУХНЯ ПО ВАШЕМУ ПРОЕКТУ' not in text

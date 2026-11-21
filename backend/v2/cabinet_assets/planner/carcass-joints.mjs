@@ -121,7 +121,8 @@ export function backRows(panel){
    }
    return rows;
  }
- if(!s?.backThickness||panel.item_id!==meta.group_id+':back')return [];
+ const upper=panel.item_id===meta?.group_id+':mezz-back'&&s?.surround?.upper;
+ if(upper?!(s.back?s.backThickness:18):!s?.backThickness||panel.item_id!==meta.group_id+':back')return [];
  const w=panel.width,h=panel.height,rows=[];
  function pair(edge,x,y,dx,dy,roll,alongX,alongY){
    rows.push({edge,kind:'cam',x,y,dx,dy,roll},
@@ -136,8 +137,8 @@ export function backRows(panel){
    pair('left',-w/2,y,1,0,0,0,alongY);
    pair('right',w/2,y,-1,0,180,0,alongY);
  }
- for(const edge of (s.bottomFit==='none'?['top']:['bottom','top'])){
-   const length=s[edge+'Fit']==='overlay'?s.width:w;
+ for(const edge of (!upper&&s.bottomFit==='none'?['top']:['bottom','top'])){
+   const length=!upper&&s[edge+'Fit']==='overlay'?s.width:w;
    for(const x of length>800?[-w/4,w/4]:[0]){
      const bottom=edge==='bottom';
      pair(edge,x,bottom?0:h,0,bottom?1:-1,bottom?90:-90,x<=0?1:-1,0);
@@ -149,11 +150,13 @@ export function backRows(panel){
 function nativeBackJoints(panel,byId){
  const angle=panel.rotation||0,centre=localPoint(panel,angle);
  return backRows(panel).map(({edge,kind,x,y,dx,dy,roll})=>{
-   const hostId=panel.assistant_carcass.group_id+':'+edge,host=byId.get(hostId);
+   const upper=panel.item_id.endsWith(':mezz-back'),spec=panel.assistant_carcass.spec;
+   const thickness=upper&&!spec.back?18:panel.item_id.endsWith(':rear-brace')?spec.thickness:spec.backThickness;
+   const hostId=panel.assistant_carcass.group_id+(upper?':mezz-':':')+edge,host=byId.get(hostId);
    const mount={x:centre.x+x,z:centre.z-panel.depth/2+(kind==='confirmat'?panel.depth/2:9)},height=panel.elevation_mm+y;
    const at=host&&localPoint(host,angle),side=dx!==0;
    if(!host||host.rotation!==panel.rotation||host.blank_axis!==(side?'side':'horizontal')||
-       (side?host.width:host.height)<16||(panel.item_id.endsWith(':rear-brace')?panel.depth!==panel.assistant_carcass.spec.thickness:panel.depth!==panel.assistant_carcass.spec.backThickness)||
+       (side?host.width:host.height)<16||panel.depth!==thickness||
        Math.abs(mount.z-at.z)+4>host.depth/2+.01||
        (side?(Math.abs(at.x+dx*host.width/2-mount.x)>.01||height-4<host.elevation_mm||height+4>host.elevation_mm+host.height):
        (Math.abs(host.elevation_mm+(dy>0?host.height:0)-height)>.01||Math.abs(mount.x-at.x)+4>host.width/2+.01)))

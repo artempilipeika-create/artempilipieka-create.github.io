@@ -29,7 +29,7 @@ function openCabinet(built,pick=null){
  const s=built.spec,H=built.height+footHeight(s),D=s.depth,W=s.width;
  const scale=Math.min(326/(W+.46*D),270/(H+.2*D));
  const point=(x,y,z)=>[200+(x-.46*z)*scale,160+((H/2-y)+.20*z)*scale];
- const order=({key,item})=>pick&&item.blank_axis==='front'?3e5:key==='back'?-1e5:key==='right'?1e5:key==='top'?2e5:key==='left'?-1e4:item.elevation_mm;
+ const order=({key,item})=>pick&&item.blank_axis==='front'?3e5:(key==='back'||key==='mezz-back')?-1e5:key==='right'?1e5:key==='top'?2e5:key==='left'?-1e4:item.elevation_mm;
  const panels=built.parts.filter(p=>p.item.blank_axis!=='front'||(pick?(!pick.lighting&&pick.showFronts):p.key.startsWith('drawer-'))).sort((a,b)=>order(a)-order(b));
  return panels.map(({key,item:i,label:partName})=>{
    const x=i.x-i.width/2,X=x+i.width,y=i.elevation_mm-s.elevation+(s.feet?.article==='118779'?10:0),Y=y+i.height;
@@ -45,7 +45,7 @@ function openCabinet(built,pick=null){
    }
    return '<g data-panel="'+key+'"'+hit+(pick?.partKey===key?' class="cut-selected"':'')+'>'+polygon([point(x,Y,z),point(X,Y,z),point(X,Y,Z),point(x,Y,Z)],glass?'#d2e7e3':'#f3ebdd')+
      polygon([point(X,y,z),point(X,Y,z),point(X,Y,Z),point(X,y,Z)],glass?'#c0d6d0':end)+
-     polygon([point(x,y,Z),point(X,y,Z),point(X,Y,Z),point(x,Y,Z)],glass?'#d6e7e0':key==='back'?'#dedbcc':wood)+lights+'</g>';
+     polygon([point(x,y,Z),point(X,y,Z),point(X,Y,Z),point(x,Y,Z)],glass?'#d6e7e0':(key==='back'||key==='mezz-back')?'#dedbcc':wood)+lights+'</g>';
  }).join('');
 }
 function elevationView(built,view,section,front,selectedShelf,selection){
@@ -103,10 +103,10 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    return '<g data-drag-handle="'+leaf.key+'" data-door-id="'+leaf.key+'" data-scale="'+k+'" role="button" tabindex="0" aria-label="Переместить ручку · '+title+'"><path d="'+path+'" stroke="#282b29" stroke-width="'+Math.max(2,(h.back?4:12)*k)+'" stroke-linecap="round"/><path d="'+path+'" stroke="transparent" stroke-width="12"/></g>';
  }
  const ordered=built.parts.filter(p=>p.item.blank_axis!=='front'||p.key.startsWith('drawer-')).sort((a,b)=>panelOrder(a)-panelOrder(b));
- function panelOrder(p){return p.key==='back'?-3:p.key.endsWith('-face')?3:p.key==='plinth'?2:0;}
+ function panelOrder(p){return (p.key==='back'||p.key==='mezz-back')?-3:p.key.endsWith('-face')?3:p.key==='plinth'?2:0;}
  for(const {key,item} of ordered){
    const q=panel(item);if(q.y>=height)continue;
-   const grey=key==='back'?'#edece5':wood;
+   const grey=(key==='back'||key==='mezz-back')?'#edece5':wood;
    drawing+=rect(X(q.x),Y(Math.min(height,q.y+q.h)),q.w*k,(Math.min(height,q.y+q.h)-q.y)*k,key==='plinth'&&zoom?'#bed9cd':grey);
  }
  if(facade)for(const face of drawerFacades(s,built.drawerBanks??[])){

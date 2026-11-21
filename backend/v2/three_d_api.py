@@ -177,7 +177,8 @@ class FurnitureItem(StrictModel):
             raise ValueError('Проверьте точность раскроя и высоту каждой части боковой планки от 100 до 2780 мм.')
         mount=group.spec.backMount if group else None
         preset=bool(mount and mount.layout)
-        hdf=bool(preset and key=='back' and self.blank_axis=='back')
+        back_key=key.removeprefix('mezz-') if group and group.spec.surround and group.spec.surround.upper else key
+        hdf=bool(preset and back_key=='back' and self.blank_axis=='back')
         if self.blank_binding and not preset and self.blank_binding.depth_offset_mm%0.5:
             raise ValueError('Для этой привязки допустим шаг 0,5 мм.')
         face=re.fullmatch(r'drawer-(\d+)-(\d+)-face',key)
@@ -259,7 +260,7 @@ class FurnitureItem(StrictModel):
             if grip:
                 grip.check_size(self.width,self.height,group.spec.front.hinge_side(key) if door else None)
         else:
-            fitted_width=(preset and key in ('left','right','bottom','top','back')) or (key=='right' and mount and mount.kind=='rabbet')
+            fitted_width=(preset and back_key in ('left','right','bottom','top','back')) or (back_key=='right' and mount and mount.kind=='rabbet')
             width_step=split_scale if split_trim and self.blank_axis=='back' else 2 if fitted_width else 1
             elevation_step=split_scale if split_trim else 2 if post or flush or hdf else 1
             if self.width*(2 if hdf else 1)%1 or not on_grid(self.blank_width_mm,width_step) or not on_grid(self.elevation_mm,elevation_step):

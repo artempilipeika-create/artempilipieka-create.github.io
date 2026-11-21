@@ -83,7 +83,8 @@ export function surroundControls(ui){
  if(a.upper){
   number(ui,upper,'Высота модуля, мм',a.upper,'height',150,1500);
   select(ui,upper,'Перегородка',[['no','Без перегородки'],['yes','По центру']],a.upper.divider?'yes':'no',v=>{a.upper.divider=v==='yes';});
-  upper.append(el('p','Дно, две стойки и крыша. Двери и типон выбираются в шаге «Фасады».'));
+  const rear=fields.back?(fields.backThickness?'вкладная ЛДСП '+fields.backThickness+' мм':'ХДФ 3 мм'):'вкладная ЛДСП 18 мм в цвет корпуса';
+  upper.append(el('p','Отдельные дно, стойки, крыша и задняя стенка. Задняя стенка антресоли — '+rear+'.'));
  }
  const cap=section(ui.form,'Закладная под потолок');
  toggle(ui,cap,'Добавить потолочную закладную',Boolean(a.cap),on=>{if(on)a.cap={height:80};else delete a.cap;});

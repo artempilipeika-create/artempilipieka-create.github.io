@@ -51,7 +51,7 @@ export class WardrobePreview{
     const prior=new Map(current?.items.map(it=>[it.item_id.slice(current.metadata.group_id.length+1),it])||[]);
     const materials=new Map(built.parts.map(({key,item})=>{
       const old=prior.get(key);
-      const role=item.blank_axis==='front'?'front':key==='back'?'back':key.startsWith('drawer-')&&built.spec.thickness!==18?'drawer':'body';
+      const role=item.blank_axis==='front'?'front':key==='back'||key==='mezz-back'&&built.spec.back?'back':key.startsWith('drawer-')&&built.spec.thickness!==18?'drawer':'body';
       const preserve=!changed[role]&&!(drawerBottom(item.item_id)&&item.blank_thickness_mm===3)&&(!item.blank_shelf||item.blank_shelf.startsWith('board/'));
       return [item.item_id,preserve?retainedBlankMaterial(item,old,id=>this.app.adapter.material(id)):item.body_variant_id];
     }));

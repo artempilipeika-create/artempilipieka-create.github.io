@@ -323,11 +323,12 @@ def _panel_hardware(it):
         _,section,level,_=key.split('-')
         ends=1+int(int(level)>0 or spec.get('bottomFit')!='none' or bool((dict(enumerate(spec.get('drawerBanks') or [])).get(int(section)))))
         return ([_row('Конфирмат 7×50',2*ends)] if spec.get('drawerFixing')=='confirmat' else [_row('Эксцентриковая стяжка',2*ends),_row('Шкант деревянный 8×35',2*ends,'pcs','39319')]),None
-    if spec.get('backThickness') and it.get('item_id') == str(meta['group_id'])+':back':
+    upper_back=key=='mezz-back' and upper and (spec.get('backThickness') or not spec.get('back'))
+    if upper_back or key=='back' and spec.get('backThickness'):
         # Two end cams, plus intermediate cams wherever a span exceeds 400 mm.
         per_side = max(2, 1 + ceil((it['height'] - 200) / 400))
-        pairs = 2 * per_side + sum(1 + int((spec['width'] if spec.get(edge+'Fit')=='overlay' else it['width']) > 800)
-                        for edge in (('top',) if spec.get('bottomFit')=='none' else ('bottom','top')))
+        pairs = 2 * per_side + sum(1 + int((spec['width'] if not upper_back and spec.get(edge+'Fit')=='overlay' else it['width']) > 800)
+                        for edge in (('top',) if not upper_back and spec.get('bottomFit')=='none' else ('bottom','top')))
         return [_row('Эксцентриковая стяжка · задняя стенка',pairs),_row('Шкант деревянный 8×35',pairs,'pcs','39319')],None
     if (it.get('module_type')=='blank' and it.get('blank_axis')=='side' and it.get('width')==18
             and re.search(r':divider-\d+$',it.get('item_id',''))):

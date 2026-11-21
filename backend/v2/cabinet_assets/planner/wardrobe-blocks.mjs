@@ -99,7 +99,7 @@ function panelLabel(item,key,g){
  if(raw&&raw===base)return raw; // All generator-owned labels carry a cabinet prefix.
  if(key.startsWith('mezz-')&&base.startsWith('Антресоль'+separator)){
   const label=base.slice(('Антресоль'+separator).length);
-  const generated={left:'левая стойка',right:'правая стойка',bottom:'дно',top:'крыша',divider:'перегородка',
+  const generated={left:'левая стойка',right:'правая стойка',bottom:'дно',top:'крыша',back:'задняя стенка',divider:'перегородка',
    'door-left':'левый фасад','door-right':'правый фасад'}[key.slice(5)];
   if(label===generated||key.startsWith('mezz-door-')&&label==='фасад')
    return label.charAt(0).toUpperCase()+label.slice(1);

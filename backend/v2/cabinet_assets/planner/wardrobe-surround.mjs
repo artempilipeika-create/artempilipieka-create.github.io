@@ -1,10 +1,12 @@
+import {blankEdgeCode} from './furniture-core.mjs';
 import {blankItem,validateBlank} from './blanks-model.mjs';
 import {footHeight} from './plinth-options.mjs';
-import {rearProjection} from './panel-machining.mjs';
+import {backPanel,backSideTrim,backTrim,backCut,rearProjection} from './panel-machining.mjs';
 import {frameDepth} from './wardrobe-hinge-layout.mjs';
 import {frontProjection} from './wardrobe-drawers.mjs';
 
 import {sideBottom,trimPieces,trimSides} from './wardrobe-trim-layout.mjs';
+import {worldPoint,localPoint} from './blank-bindings.mjs';
 export {trimSides};
 export const upperPush=()=>({article:'70787',mount:'auto',support:'auto',heightMm:1050});
 export const surroundPart=key=>key.startsWith('trim-')||key.startsWith('mezz-');
@@ -60,12 +62,12 @@ export function surroundLayout(s,facades){
 
 export function surroundParts(s,g,prefix,options={}){
  const parts=[],a=s.surround??{},name=options.name||s.label;
- const board=(key,label,axis,length,partWidth,x,y,z,edges)=>{
+ const board=(key,label,axis,length,partWidth,x,y,z,edges,custom={})=>{
   const framed=axis==='front'&&a.upper?.frame==='Z1';
   const item=blankItem({item_id:prefix+':'+key,name:name+' · '+label+(framed?' · витрина Z1':''),axis,length,partWidth,thickness:framed?frameDepth:18,x,z,
    ...(framed?{blank_front_frame:'Z1'}:{}),
-   elevation:s.elevation+y,edges:framed?'0000':edges,blank_edge_thickness_mm:axis==='front'?2:1,body_variant_id:framed?null:(surroundFace(key)?options.frontMaterialId:options.bodyMaterialId)??null});
-  const error=validateBlank(item);if(error)throw Error(label+' · '+error);
+   elevation:s.elevation+y,edges:framed?'0000':edges,blank_edge_thickness_mm:axis==='front'?2:1,body_variant_id:framed?null:(surroundFace(key)?options.frontMaterialId:options.bodyMaterialId)??null,...custom});
+  const error=validateBlank(item,null,s.backMount);if(error)throw Error(label+' · '+error);
   parts.push({key,label,item});
  };
  for(const [side,t] of Object.entries(g.sides)){
@@ -81,11 +83,22 @@ export function surroundParts(s,g,prefix,options={}){
  }
  if(a.upper){
   const u=a.upper,w=s.width,d=s.depth,y=g.bodyTop;
-  for(const [side,sign] of [['left',-1],['right',1]])
-   board('mezz-'+side,'Антресоль · '+sideNames[side].toLowerCase()+' стойка','side',u.height,d,sign*(w-18)/2,y,0,'1011');
-  board('mezz-bottom','Антресоль · дно','horizontal',w-36,d,0,y,0,'1000');
-  board('mezz-top','Антресоль · крыша','horizontal',w-36,d,0,g.upperTop-18,0,'1000');
-  if(u.divider)board('mezz-divider','Антресоль · перегородка','side',u.height-36,d,0,y+18,0,'1000');
+  const upper={...s,height:u.height,top:'inset',bottom:'inset',back:true,backThickness:s.back?s.backThickness:18};
+  const back=backPanel(upper),trim=backTrim(upper.backMount);
+  const machining=key=>{
+   const cut=backCut(upper,key,0);
+   return cut?{blank_machining:[cut]}:{};
+  };
+  for(const [side,sign] of [['left',-1],['right',1]]){
+   const cutback=backSideTrim(upper.backMount,side);
+   board('mezz-'+side,'Антресоль · '+sideNames[side].toLowerCase()+' стойка','side',u.height,d-cutback,sign*(w-18)/2,y,cutback/2,'1011',machining(side));
+  }
+  board('mezz-bottom','Антресоль · дно','horizontal',w-36,d-trim,0,y,trim/2,'1000',machining('bottom'));
+  board('mezz-top','Антресоль · крыша','horizontal',w-36,d-trim,0,g.upperTop-18,trim/2,'1000',machining('top'));
+  board('mezz-back','Антресоль · задняя стенка','back',back.length,back.width,back.x,y+back.y,back.z,'0000',
+   {thickness:back.thickness,body_variant_id:(s.back?options.backMaterialId:options.bodyMaterialId)??null});
+  const clearance=Math.max(0,Math.ceil(d/2+back.z+back.thickness/2));
+  if(u.divider)board('mezz-divider','Антресоль · перегородка','side',u.height-36,d-clearance,0,y+18,clearance/2,'1000');
   for(const side of u.leaves===2?trimSides:[u.side]){
    const x=u.leaves===2?(side==='left'?-1:1)*w/4:0;
    board('mezz-door-'+side,'Антресоль · '+(u.leaves===1?'фасад':side==='left'?'левый фасад':'правый фасад'),'front',u.height-3,w/u.leaves-3,x,y+1.5,d/2+2+(u.frame?frameDepth:18)/2,'1111');
@@ -100,3 +113,35 @@ export function surroundParts(s,g,prefix,options={}){
  return parts;
 }
 
+// Old upper boxes have full-depth, unmachined panels. Upgrade only that exact
+// assembly so a manually moved or machined panel is never overwritten.
+export function fitSavedMezzanineBacks(items){
+ const byId=new Map(items.map(item=>[item.item_id,item]));
+ for(const base of [...items]){
+  const meta=base.assistant_carcass,s=meta?.spec,u=s?.surround?.upper;
+  if(!u||base.item_id!==meta.group_id+':mezz-bottom'||byId.has(meta.group_id+':mezz-back')||items.length>=100)continue;
+  const prefix=meta.group_id,get=k=>byId.get(prefix+':'+k),rotation=base.rotation||0;
+  const anchor=localPoint(base,rotation),y=base.elevation_mm;
+  if(s.back&&!get('back'))continue;
+  const parts=surroundParts({...s,elevation:0,surround:{upper:u}},{sides:{},bodyTop:0,upperTop:u.height},prefix,{
+   name:meta.name||base.name.split(' · Антресоль')[0],bodyMaterialId:get('left')?.body_variant_id,backMaterialId:get('back')?.body_variant_id});
+  const structure=parts.filter(p=>p.key!=='mezz-back'&&!p.key.startsWith('mezz-door-'));
+  if(!structure.every(({key,item})=>{
+   const old=get(key);
+   if(!old||old.blank_axis!==item.blank_axis||(old.rotation||0)!==rotation||old.blank_machining?.length)return false;
+   const point=localPoint(old,rotation);
+   return old.depth===s.depth&&old.width===item.width&&old.height===item.height&&old.blank_thickness_mm===18&&
+    Math.abs(point.x-anchor.x-item.x)<.001&&Math.abs(point.z-anchor.z)<.001&&Math.abs(old.elevation_mm-y-item.elevation_mm)<.001;
+  }))continue;
+  for(const {key,item} of [...structure,parts.find(p=>p.key==='mezz-back')]){
+   const xyz=worldPoint({x:anchor.x+item.x,z:anchor.z+item.z},rotation),old=get(key);
+   if(!old){
+    const added={...item,...xyz,elevation_mm:y+item.elevation_mm,rotation,assistant_carcass:meta};
+    items.push(added);byId.set(added.item_id,added);
+   }else{
+    Object.assign(old,xyz,{depth:item.depth,blank_width_mm:item.blank_width_mm});
+    if(item.blank_machining){old.blank_machining=item.blank_machining;old.blank_edge_code=blankEdgeCode(old);}
+   }
+  }
+ }
+}

@@ -1,6 +1,6 @@
 import {installedSide,depthBehindDoor,mountKey,leafDepth} from './wardrobe-hinge-layout.mjs';
 import {applyLighting} from './wardrobe-lighting.mjs';
-import {canMachine,checkBackMount,backCut,backTrim,backSideTrim,rearClearance} from './panel-machining.mjs';
+import {canMachine,checkBackMount,backPanel,backCut,backTrim,backSideTrim,rearClearance} from './panel-machining.mjs';
 import {aboveGola,installedOpenings} from './wardrobe-gola-shelves.mjs';
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
 export {sectionWidths} from './wardrobe-layout.mjs';
@@ -282,19 +282,8 @@ export function buildCarcass(input={},options={}){
     buildDrawerBoards(s,banks,add);
   }
   if(plinth)add('plinth','Цоколь','back',plinth.width,plinth.height,t,plinth.x,0,plinth.z,'1111');
-  // Overlay HDF is deliberately separate from the 18 mm material and has no PVC.
-  if(rear)add('back','Задняя стенка ЛДСП '+rear+' мм','back',W-2*t,H-(noBottom?1:2)*t,rear,0,noBottom?0:t,(rear-D)/2,'0000');
-  else if(mount){
-    const b=mount,grooved=b.kind==='groove',perimeter=grooved&&b.layout!=='sides';
-    const bite=b.layout?b.depth-1:Math.floor(b.depth-1);
-    const lower=perimeter&&!noBottom?t-bite:1,upper=perimeter?H-t+bite:H-1;
-    const leftEdge=-W/2+(grooved||b.layout==='left'||b.layout==='both'?t-bite:1);
-    const rightEdge=W/2-(b.layout==='left'?1:t-bite);
-    const innerFace=b.layout?(b.offset??0)+b.width:grooved?b.offset+(b.width+3)/2:0;
-    const z=-D/2+innerFace-1.5;
-    add('back','Задняя стенка ХДФ 3 мм','back',rightEdge-leftEdge,upper-lower,3,(rightEdge+leftEdge)/2,lower,z,'0000');
-  }
-  else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
+  const back=backPanel(s);
+  if(back)add('back','Задняя стенка '+(rear?'ЛДСП '+rear:'ХДФ 3')+' мм','back',back.length,back.width,back.thickness,back.x,back.y,back.z,'0000');
   const envelope=surroundLayout(s,{doors:leaves,banks});
   const extras=surroundParts(s,envelope,prefix,options);
   parts.push(...extras);

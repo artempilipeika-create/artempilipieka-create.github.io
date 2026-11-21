@@ -1,28 +1,37 @@
-// One saved kitchen, one paid photo, automatically inserted into the client PDF.
-export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNumber}){
+// One saved project, one paid original for the client PDF.
+function albumSubject(items=[]){
+ const wardrobe=items.some(it=>it.module_type==='wardrobe'||it.module_type==='blank'&&
+  (['shelves','divided'].includes(it.assistant_carcass?.spec?.recipe)||/^Шкаф с (полками|перегородкой) ·/.test(it.name)));
+ if(!wardrobe)return 'kitchen';
+ return items.some(it=>!['blank','wardrobe'].includes(it.module_type))?'mixed':'wardrobe';
+}
+export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNumber,hasCurrentView=false}){
   if(document.getElementById('kitchen-album-dialog'))return;
   const d=document.createElement('dialog');d.id='kitchen-album-dialog';d.className='mf-sales-dialog mf-kitchen-album';
   d.setAttribute('aria-labelledby','kitchen-album-title');
-  d.innerHTML=`<div class="mf-sales-heading"><div><small>MARTIN FOREST / КЛИЕНТСКАЯ ПРЕЗЕНТАЦИЯ</small><h2 id="kitchen-album-title">Альбом вашей кухни</h2></div><button type="button" data-close aria-label="Закрыть">×</button></div>
+  const mode=albumSubject(snapshot()?.scene?.items),wardrobe=mode==='wardrobe';
+  const title={wardrobe:'Альбом шкафа',kitchen:'Альбом вашей кухни',mixed:'Альбом проекта'}[mode];
+  d.innerHTML=`<div class="mf-sales-heading"><div><small>MARTIN FOREST / КЛИЕНТСКАЯ ПРЕЗЕНТАЦИЯ</small><h2 id="kitchen-album-title">${title}</h2></div><button type="button" data-close aria-label="Закрыть">×</button></div>
     <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: обложка на весь лист, чертёж спереди с размерами, фурнитура по модулям с фотографиями и количеством, материалы с образцами и состав заказа.</p>
     <label>Номер заказа для обложки<input data-order maxlength="60" autocomplete="off" placeholder="Например, МФ-2026-125"></label>
-    <canvas data-preview width="1200" height="800" aria-label="Главный вид кухни"></canvas>
+    ${wardrobe?'<label data-view-label>Ракурс шкафа<select data-view><option value="full">Шкаф целиком</option>'+(hasCurrentView?'<option value="current">Текущий ракурс из 3D</option>':'')+'</select></label>':''}
+    <canvas data-preview width="1200" height="800" aria-label="Предпросмотр фоторендера"></canvas>
     <div class="mf-album-pages"><span>Обложка</span><span>Чертёж и размеры</span><span>Фурнитура</span><span>Материалы</span><span>Комплект</span></div>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера повышенного качества. Он автоматически попадёт в PDF. Открытие готового альбома и скачивание не запускают новую генерацию.</label>
-    <p data-message role="status" aria-live="polite">Сохраняем кухню и проверяем готовый фоторендер…</p>
+    <p data-message role="status" aria-live="polite">Сохраняем проект и проверяем готовый фоторендер…</p>
     <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Проверить готовность · бесплатно</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>
-    <p class="mf-album-note">Качество «Живого интерьера» сохранено. Планировка и список шкафчиков формируются по сохранённому проекту. Перед отправкой клиенту проверьте изображение и материалы.</p>`;
+    <p class="mf-album-note">${wardrobe?'Для витрины Z1 проверьте в предпросмотре границы створок, блики на рамке и полки за стеклом.':'Проверьте ракурс и материалы перед созданием фоторендера.'}</p>`;
   document.body.append(d);d.showModal();
   const q=s=>d.querySelector(s),say=t=>q('[data-message]').textContent=t;
   const showError=error=>{
     say(error.message);q('[data-message]').setAttribute('role','alert');
     q('[data-message]').scrollIntoView?.({block:'nearest'});
   };
-  let frozen,views,hero=null,pdfURL=null,busy=true,automatic=false,closed=false,requested=false,timer=null;
+  let frozen,views,angle='full',hero=null,pdfURL=null,busy=true,automatic=false,closed=false,requested=false,timer=null;
   const requestId=crypto.randomUUID();
   const orderNumber=()=>String(q('[data-order]').value||'').trim();
   const same=()=>frozen&&JSON.stringify(snapshot())===JSON.stringify(frozen);
-  const assertSame=()=>{if(!same())throw Error('Кухня изменилась. Закройте альбом и откройте заново, чтобы использовать сохранённую версию.');};
+  const assertSame=()=>{if(!same())throw Error('Проект изменился. Закройте альбом и откройте заново, чтобы использовать сохранённую версию.');};
   const refresh=()=>{
     q('[data-create]').disabled=busy||requested||!automatic||!q('[data-consent]').checked||!frozen||!orderNumber();
     q('[data-create]').hidden=requested||Boolean(hero);
@@ -32,6 +41,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     q('[data-build]').hidden=!hero||Boolean(pdfURL);q('[data-build]').disabled=busy||!orderNumber();
     q('[data-order]').disabled=busy;
     q('[data-pdf]').hidden=!pdfURL;
+    if(wardrobe){q('[data-view-label]').hidden=requested||Boolean(hero);q('[data-view]').disabled=busy||requested||Boolean(hero);}
     d.setAttribute('aria-busy',String(busy));
   };
   const close=()=>{closed=true;clearTimeout(timer);if(pdfURL)URL.revokeObjectURL(pdfURL);d.close();d.remove();};
@@ -52,14 +62,14 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     if(!r.ok){const b=await r.json().catch(()=>({}));throw Error(b.detail?.code||'Не удалось собрать PDF. Фоторендер сохранён; повторная сборка PDF бесплатна.');}
     const blob=await r.blob();assertSame();if(closed)return;
     if(pdfURL)URL.revokeObjectURL(pdfURL);pdfURL=URL.createObjectURL(blob);
-    q('[data-pdf]').href=pdfURL;q('[data-pdf]').download='Martin_Forest_Kitchen_Album.pdf';
+    q('[data-pdf]').href=pdfURL;q('[data-pdf]').download=wardrobe?'Martin_Forest_Wardrobe_Album.pdf':mode==='mixed'?'Martin_Forest_Album.pdf':'Martin_Forest_Kitchen_Album.pdf';
     say('Альбом готов. Этот фоторендер уже внутри PDF, а после чертежей — фурнитура по модулям. Можно скачать файл.');
   };
   const consume=async result=>{
     if(closed)return;assertSame();
     if(result.state==='none'){
       if(requested)throw Error('Сохранённый результат пока не найден. Новая платная генерация не запущена.');
-      say(automatic?'Кухня сохранена. Подтвердите одну платную генерацию — дальше PDF соберётся автоматически.':'Сервис фоторендера сейчас недоступен. Ранее оплаченные изображения будут доступны после восстановления сервиса.');return;
+      say(automatic?'Проект сохранён. Подтвердите одну платную генерацию — дальше PDF соберётся автоматически.':'Сервис фоторендера сейчас недоступен. Ранее оплаченные изображения будут доступны после восстановления сервиса.');return;
     }
     requested=true;
     if(result.state==='pending'){
@@ -86,12 +96,18 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     if(pdfURL){URL.revokeObjectURL(pdfURL);pdfURL=null;}
     if(hero)await build();else say('Номер заказа сохранён. Подтвердите одну генерацию фоторендера.');
   });
+  if(wardrobe)q('[data-view]').onchange=()=>perform(async()=>{
+    const select=q('[data-view]'),chosen=select.value;
+    try{
+      const next=await capture(mode,chosen);assertSame();await draw(next.hero);views=next;angle=chosen;
+    }catch(error){select.value=angle;throw error;}
+  });
   q('[data-check]').onclick=()=>perform(check);
   q('[data-build]').onclick=()=>perform(build);
-  q('[data-pdf]').onclick=e=>{if(!same()||!pdfURL){e.preventDefault();say('Кухня изменилась. Откройте альбом заново для сохранённой версии.');}};
+  q('[data-pdf]').onclick=e=>{if(!same()||!pdfURL){e.preventDefault();say('Проект изменился. Откройте альбом заново для сохранённой версии.');}};
   refresh();
   try{
-    await save();if(closed)return;frozen=structuredClone(snapshot());views=await capture();if(closed)return;await draw(views.hero);q('[data-order]').value=frozen.scene?.albumSettings?.order_number||'';
+    await save();if(closed)return;frozen=structuredClone(snapshot());views=await capture(mode);if(closed)return;await draw(views.hero);q('[data-order]').value=frozen.scene?.albumSettings?.order_number||'';
     const result=await request(`/3d-projects/${frozen.id}/sales-photo/reuse`,'POST',{version:frozen.version,preview_data_url:views.hero});
     if(closed)return;
     // A missing provider/key must not prevent retrieval of an already paid image.

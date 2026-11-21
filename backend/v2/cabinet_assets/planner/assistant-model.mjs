@@ -68,7 +68,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:selectedMaterials.body??(Number(first?.blank_thickness_mm)===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),
   frontMaterialId:frontMaterialId??selectedMaterials.front??current?.items.find(i=>i.blank_axis==='front'||surroundFace(i.item_id.split(':').at(-1)))?.body_variant_id,
   drawerMaterialId:drawerMaterialId??(spec.thickness===18?bodyMaterialId??selectedMaterials.body:selectedMaterials.drawer)??current?.items.find(i=>drawerMember(i.item_id,'\\d+-side-left'))?.body_variant_id,
-  backMaterialId:backMaterialId??selectedMaterials.back??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
+  backMaterialId:backMaterialId??selectedMaterials.back??current?.items.find(i=>i.item_id===prefix+':back'&&i.blank_thickness_mm===(spec.backThickness||3))?.body_variant_id??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
  if(spec.drawerBanks?.some(bank=>bank?.layout))spec.drawerBanks=built.spec.drawerBanks;
  if(built.drawerIssues.length)throw Error(built.drawerIssues.join(' '));
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
@@ -130,7 +130,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   if(generated.blank_front_frame){item.blank_edge_code='0000';item.body_variant_id=null;}
   else if(generated.blank_axis==='front'){item.blank_edge_code=generated.blank_edge_code;item.blank_edge_thickness_mm=2;if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
   else if(surroundFace(generated.item_id.slice(prefix.length+1))){if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
-  else if(generated.item_id.endsWith(':back')){item.blank_edge_code='0000';if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
+  else if((generated.item_id.endsWith(':back')||generated.item_id.endsWith(':mezz-back')&&spec.back)){item.blank_edge_code='0000';if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
   else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
   else if(drawerBottom(item.item_id)&&generated.blank_thickness_mm===3)item.body_variant_id=CARCASS_BACK_MATERIAL_ID;
   else if(drawerMember(item.item_id,'.+')){if(drawerMaterialId!==undefined)item.body_variant_id=drawerMaterialId;else if(spec.thickness===18&&bodyMaterialId!==undefined)item.body_variant_id=bodyMaterialId;}

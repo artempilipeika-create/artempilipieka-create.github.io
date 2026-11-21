@@ -10,6 +10,7 @@ from reportlab.lib.colors import HexColor, white
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph
 from reportlab.lib.utils import ImageReader
+from .wardrobe_photo import subject
 from .sales_album import fonts, client_title, material_name
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
@@ -103,12 +104,14 @@ def schedule_pages(items):
 def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None, include_hardware=False):
     fonts()
     if not hero or not scene.get('items'):
-        raise ValueError('Добавьте мебель и вид кухни.')
+        raise ValueError('Добавьте мебель и вид проекта.')
     name = client_title(name)
     material_visuals = material_visuals or {}
     material_sheets=material_pages(scene,materials,material_visuals)
     schedule_sheets=schedule_pages(scene['items'])
     drawings=album_wardrobe.drawing_sets(scene['items'])
+    mode=subject(scene['items'],drawings)
+    product={'kitchen':'КУХНЯ','wardrobe':'ШКАФ','mixed':'МЕБЕЛЬ'}[mode]
     details=validate_geometry(scene['items'],elevation_geometry)
     report = customer_hardware.build(name, scene) if include_hardware else None
     hardware_sheets = customer_hardware_pdf.pages(report) if report else []
@@ -133,7 +136,7 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         c.setFillColor(PAPER)
         c.rect(0, 0, W, H, fill=1, stroke=0)
         text('MARTIN FOREST', M, H-24, 240, 12, True)
-        text('КУХНЯ ПО ВАШЕМУ ПРОЕКТУ', W-290, H-26, 254, 8, color=MUTED)
+        text(product+' ПО ВАШЕМУ ПРОЕКТУ', W-290, H-26, 254, 8, color=MUTED)
         title_height = text(title, M, H-66, W-2*M, 25, True)
         c.setStrokeColor(HexColor('#d7ddd5'))
         c.line(M, 40, W-M, 40)
@@ -174,7 +177,7 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         c.setFillColor(white);c.rect(0,0,W,H,fill=1,stroke=0)
         text('MARTIN FOREST',32,H-20,240,12,True)
         text('ЗАКАЗ № '+(order or 'не указан'),W-250,H-22,218,8,True)
-        title='Кухня. Вид спереди' if cabinet is None else cabinet[0]['name'].split(' · ')[0]+' · 2D'
+        title=('Кухня. Вид спереди' if mode=='kitchen' else 'Общий вид спереди') if cabinet is None else cabinet[0]['name'].split(' · ')[0]+' · 2D'
         text(title,32,H-50,W-64,22,True)
         reference=f'лист {schedule_start}' if len(schedule_sheets)==1 else f'листы {schedule_start}–{page_count}'
         text(f'Фасады условно сняты. Состав модулей — {reference}. Размеры в мм.',32,H-83,W-64,8,color=MUTED)
@@ -226,8 +229,8 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
 
     column=(W-2*M-24)/2
     for sheet, columns in enumerate(schedule_sheets):
-        page(schedule_start+sheet, 'Ваша кухня. Ваш комплект.' if sheet == 0 else 'Комплект · продолжение')
-        text('Состав кухни',M,H-125,W-2*M,15,True)
+        page(schedule_start+sheet, ('Ваша кухня. Ваш комплект.' if mode=='kitchen' else 'Комплектация шкафа' if mode=='wardrobe' else 'Комплектация проекта') if sheet == 0 else 'Комплект · продолжение')
+        text({'kitchen':'Состав кухни','wardrobe':'Состав шкафа','mixed':'Состав проекта'}[mode],M,H-125,W-2*M,15,True)
         schedule_height=max(sum(h for _,h in part) for part in columns)
         compact=schedule_height>H-155-250
         for col,part in enumerate(columns):

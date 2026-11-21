@@ -116,7 +116,9 @@ test('downloads one pinned native trim per assembly and a separately grouped upp
   assert.deepEqual(trims[2].wardrobe_trim.panels.map(p=>[p.role,p.material.article]),
    [['face','CUSTOM'],['upright','605 PO'],['base','CUSTOM']]);
   const upper=payload.items.filter(it=>it.cabinet_block?.module_key==='mezzanine');
-  assert.equal(upper.filter(it=>it.blank).length,7);
+  assert.equal(upper.filter(it=>it.blank).length,8);
+  const back=upper.find(it=>it.blank_item_id===id+':mezz-back');
+  assert.equal(back.name,'Задняя стенка');assert.equal(back.blank.axis,'back');assert.equal(back.blank.thickness,3);
   assert.ok(upper.every(it=>it.cabinet_block.module_name==='Антресоль'));
   const upperDoor=upper.find(it=>it.blank_item_id===id+':mezz-door-left');
   assert.equal(upperDoor.name,'Левый фасад');

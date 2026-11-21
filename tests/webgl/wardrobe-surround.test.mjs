@@ -6,6 +6,9 @@ import {prepareAssistantPlan,applyAssistantPlan,selectedCarcass} from '../../bac
 import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
 import {surroundDrawing} from '../../backend/v2/cabinet_assets/planner/wardrobe-surround-drawing.mjs';
 import {alignSavedTrimReturns,nativeTrimRows} from '../../backend/v2/cabinet_assets/planner/wardrobe-trim-native.mjs';
+import {fitSavedMezzanineBacks} from '../../backend/v2/cabinet_assets/planner/wardrobe-surround.mjs';
+import {defaultBackMount} from '../../backend/v2/cabinet_assets/planner/panel-machining.mjs';
+import {nativeCarcassJoints} from '../../backend/v2/cabinet_assets/planner/carcass-joints.mjs';
 import {localPoint,worldPoint} from '../../backend/v2/cabinet_assets/planner/blank-bindings.mjs';
 import {viewingDoor,hingePose,clearanceSession} from '../../backend/v2/cabinet_assets/planner/wardrobe-clearance.mjs';
 import {WardrobeMotion} from '../../backend/v2/cabinet_assets/planner/wardrobe-motion.mjs';
@@ -126,3 +129,55 @@ test('a lift front pivots at its top even on rotated cabinets; the closed board 
  motion.close();motion.step(101,true);motion.pose(entries,[it]);assert.equal(g.rotation.x,0);assert.deepEqual(it,saved);
 });
 
+
+test('upper back fits its own box, inherits HDF machining or the board and exports paired fasteners',()=>{
+ for(const setting of [{back:false},{back:true,backThickness:18},{back:true,backThickness:16},{back:true},
+  ...['sides','perimeter','left','right','both','groove','rabbet'].map(kind=>({back:true,backMount:defaultBackMount(kind)}))]){
+  const b=buildCarcass(spec(setting),{...options,backMaterialId:'rear-decor'});
+  const panel=part(b,'mezz-back'),floor=part(b,'mezz-bottom'),divider=part(b,'mezz-divider');
+  const thickness=setting.back?(setting.backThickness??3):18;
+  assert.equal(panel.blank_thickness_mm,thickness);assert.equal(panel.blank_edge_code,'0000');
+  assert.equal(panel.body_variant_id,setting.back?'rear-decor':body);
+  assert.equal(panel.z+thickness/2<=divider.z-divider.depth/2,true);
+  assert.equal(frontEdge(divider),290);
+  if(setting.back){
+   const lower=part(b,'back');
+   assert.deepEqual([panel.width,panel.z,panel.elevation_mm-floor.elevation_mm],[lower.width,lower.z,lower.elevation_mm]);
+   for(const key of ['left','right','bottom','top']){
+    assert.deepEqual(part(b,'mezz-'+key).blank_machining,part(b,key).blank_machining);
+    assert.equal(part(b,'mezz-'+key).depth,part(b,key).depth);
+   }
+  }
+  const tagged=placeCarcass(b,{x:1000,z:1200,elevation_mm:0,rotation:90})
+   .map(it=>({...it,assistant_carcass:{group_id:options.idPrefix,spec:b.spec}}));
+  const joints=nativeCarcassJoints(tagged).filter(i=>i.joined_panel_id.endsWith(':mezz-back'));
+  if(thickness===3)assert.equal(joints.length,0);
+  else{
+   assert.equal(joints.filter(i=>i.joint_part==='cam').length,joints.filter(i=>i.joint_part==='dowel').length);
+   assert.deepEqual(new Set(joints.map(i=>i.host_blank_id.split(':').pop())),new Set(['mezz-left','mezz-right','mezz-top','mezz-bottom']));
+  }
+ }
+});
+
+test('opening an old rotated upper updates only the factory-sized panels and keeps notes and selected decors',()=>{
+ for(const rotation of [0,90,180,270]){
+  const b=buildCarcass(spec({backMount:defaultBackMount('sides')}),{...options,backMaterialId:'blue HDF'});
+  const position={x:760,z:311,elevation_mm:45,rotation};
+  const items=placeCarcass(b,position).map(it=>({...it,assistant_carcass:{group_id:options.idPrefix,name:'Шкаф',spec:b.spec,position}}));
+  const expected=items.find(it=>it.item_id.endsWith(':mezz-back'));
+  const old=items.filter(it=>it!==expected);
+  const anchor=localPoint(old.find(it=>it.item_id.endsWith(':mezz-left')),rotation);
+  for(const it of old.filter(it=>/:mezz-(left|right|top|bottom|divider)$/.test(it.item_id))){
+   Object.assign(it,worldPoint({x:localPoint(it,rotation).x,z:anchor.z},rotation),{depth:b.spec.depth,blank_width_mm:b.spec.depth});
+   delete it.blank_machining;
+  }
+  const top=old.find(it=>it.item_id.endsWith(':mezz-top'));top.production_note='Моя подпись';top.body_variant_id='other';
+  const edited=structuredClone(old);edited.find(it=>it.item_id===top.item_id).x+=3;
+  fitSavedMezzanineBacks(edited);assert.ok(!edited.some(it=>it.item_id===expected.item_id));
+  fitSavedMezzanineBacks(old);
+  const added=old.find(it=>it.item_id===expected.item_id);
+  for(const prop of ['x','z','rotation','height','width','elevation_mm','body_variant_id'])assert.equal(added[prop],expected[prop]);
+  assert.equal(top.production_note,'Моя подпись');assert.equal(top.body_variant_id,'other');
+  const once=structuredClone(old);fitSavedMezzanineBacks(old);assert.deepEqual(old,once);
+ }
+});

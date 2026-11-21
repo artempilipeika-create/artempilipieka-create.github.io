@@ -66,6 +66,7 @@ def verify_assembly(parts, upper_height, projection, end_side, doors, divider):
     assert upper_floor['elevation_mm'] == y
     assert parts['mezz-top']['elevation_mm'] + 18 == y + upper_height
     assert parts['mezz-left']['width'] == parts['mezz-right']['width'] == 18
+    assert parts['mezz-back']['blank_axis'] == 'back' and parts['mezz-back']['blank_edge_code'] == '0000'
     assert parts['mezz-left']['height'] == parts['mezz-right']['height'] == upper_height
     assert ('mezz-divider' in parts) is divider
     assert {k for k in parts if k.startswith('mezz-door-')} == set(doors)
@@ -110,6 +111,7 @@ def native_export(page, trims, doors, article, lift):
     assert {r['source_file'] for r in rows if r.get('wardrobe_trim')} == set(trims)
     upper = [r for r in rows if r.get('cabinet_block', {}).get('module_key') == 'mezzanine']
     assert {r['cabinet_block']['module_name'] for r in upper} == {'Антресоль'}
+    assert sum(r.get('blank_item_id', '').endswith(':mezz-back') for r in upper) == 1
     pushes = [r for r in upper if r.get('push_part') == 'body']
     assert {r['joined_panel_id'].rsplit(':', 1)[1] for r in pushes} == set(doors)
     assert all(r['article'] == article for r in pushes)
@@ -508,6 +510,26 @@ def z1_scenario(page, projects, seed):
     assert len(board)==2 and {r['article'] for r in board}=={'71B3550'}
     assert len(plates)==len(hinges)+len(board) and all(r['mount_blank_id']==r['host_blank_id'] for r in plates)
     assert {(r['article'],r['finish']) for r in plates}=={('173H7100','ONS'),('175H3100','NI')}
+    # Actual in-browser WebGL capture; the synthetic project never contacts a paid service.
+    references=[]
+    def reuse(route):
+        references.append(route.request.post_data_json['preview_data_url'])
+        route.fulfill(json={'state':'none'})
+    page.route('**/api/v2/3d-projects/*/sales-photo/reuse',reuse)
+    page.route('**/api/v2/3d-projects/*/sales-album/preflight',lambda r:r.fulfill(json={'ok':True}))
+    page.route('**/api/v2/3d-sales-capabilities',lambda r:r.fulfill(json={'automatic_render':True}))
+    page.evaluate('() => MF_PLANNER.bridge.openAlbum()')
+    album=page.locator('#kitchen-album-dialog')
+    expect(album.get_by_role('heading',name='Альбом шкафа')).to_be_visible()
+    expect(album.locator('[data-message]')).to_contain_text('Проект сохранён')
+    assert len(references)==1 and references[0].startswith('data:image/png;base64,')
+    expect(album.get_by_label('Ракурс шкафа')).to_have_value('full')
+    expect(album.locator('[data-consent]')).not_to_be_checked()
+    expect(album.locator('[data-create]')).to_be_disabled()
+    album.get_by_label('Ракурс шкафа').select_option('current')
+    expect(album).to_have_attribute('aria-busy','false')
+    album.get_by_role('button',name='Закрыть').click()
+    print('PASS wardrobe render reference, free view selection and PDF preflight')
     print('PASS wardrobe Z1: chooser, real product photo, inset, mixed pair, TIP-ON, mezzanine, persisted edit and native export')
 
 
@@ -522,7 +544,7 @@ if __name__ == '__main__':
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
                          'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs', 'wardrobe-hinge-ui.mjs', 'wardrobe-hinges.mjs',
-                         'bazis-drawers-import.js'):
+                         'bazis-drawers-import.js', 'kitchen-album-ui.mjs', 'presentation-capture.mjs'):
                 asset = page.request.get(ORIGIN + '/account/planner/' + name, max_redirects=0)
                 assert asset.status == 200 and asset.body() == (ROOT / 'backend/v2/cabinet_assets/planner' / name).read_bytes(), name
         surround_scenarios(page, projects, first_id)

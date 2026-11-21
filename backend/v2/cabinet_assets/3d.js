@@ -212,6 +212,7 @@ function normalizeScene(s={}){
   const room=s.room||{width:4200,depth:3200,height:2700};
   const items=Array.isArray(s.items)?s.items.map(x=>normalizeItem(x,room)):[legacyItem(s)];
   globalThis.MF_BLANKS_NATIVE?.alignSavedTrimReturns?.(items);
+  globalThis.MF_BLANKS_NATIVE?.fitSavedMezzanineBacks?.(items);
   return{
     schema_version:2,
     room:{width:+room.width||4200,depth:+room.depth||3200,height:+room.height||2700,setup_complete:room.setup_complete??null,survey:room.survey??null,features:Array.isArray(room.features)?room.features:[]},
@@ -563,22 +564,24 @@ function capturePdfPreviews(){
 }
 async function openKitchenAlbumFlow(){
   const plannerScene=globalThis.MF_PLANNER?.scene;
-  const albumView=plannerScene?.renderRooms?.id&&plannerScene.mode==='3d'?plannerScene.captureView():null;
-  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261120-hardware');
+  const currentView=plannerScene?.mode==='3d'&&!plannerScene.isFallback?plannerScene.captureView():null;
+  const albumView=plannerScene?.renderRooms?.id?currentView:null;
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261122-wardrobe-render');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
   return openKitchenAlbum({
     save:async()=>{if(!state.items.length)throw Error('Добавьте мебель в проект.');await saveProject();},
     snapshot:cleanSnapshot,
     setOrderNumber:value=>{state.albumSettings={order_number:value};updateAll();},
-    capture:async()=>{
+    hasCurrentView:Boolean(currentView),
+    capture:async(mode,view='full')=>{
       const {albumGeometry}=await import('/account/planner/album-geometry.mjs?v=20261029-album-pagination');
       const geometry=albumGeometry(state.items,templateFor);
       const scene=globalThis.MF_PLANNER?.scene;
-      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид кухни.');return {hero:data,geometry};}
-      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261029-album-pagination');
+      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид проекта.');return {hero:data,geometry};}
+      const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261122-wardrobe-render');
       await scene.renderRooms?.waitReady();
-      return {...captureAlbumViews(scene,{detail:false,savedView:albumView}),geometry};
+      return {...captureAlbumViews(scene,{detail:false,wardrobe:mode==='wardrobe',savedView:view==='current'?currentView:mode==='wardrobe'?null:albumView}),geometry};
     },
     request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:325000})
   });

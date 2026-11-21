@@ -28,7 +28,7 @@ function harness({existing={state:'none'},pdfFails=false,renderPending=false,pre
       return {ok:!pdfFails||pdfAttempts>1,json:async()=>({}),blob:async()=>new Blob(['PDF'])};}
   });
   vm.runInContext(source.replace('export async function','async function'),context);
-  const options={setOrderNumber:value=>{state.scene.albumSettings={order_number:value};},save:async()=>{state.version=++version;},snapshot:()=>structuredClone(state),capture:async()=>({hero:view,detail:view}),
+  const options={hasCurrentView:true,setOrderNumber:value=>{state.scene.albumSettings={order_number:value};},save:async()=>{state.version=++version;},snapshot:()=>structuredClone(state),capture:async(mode,angle)=>({hero:angle==='current'?'data:image/png;base64,Y3VycmVudA==':view,detail:view}),
     request:async(path,method='GET',body)=>{requests.push({path,method,body});
       if(path==='/3d-sales-capabilities')return {automatic_render:true};
       if(path.endsWith('/sales-album/preflight')){
@@ -98,4 +98,15 @@ test('A missing order number blocks payment and PDF until it has been saved',asy
   h.q('[data-order]').value='МФ-127';await h.q('[data-order]').onchange();
   assert.equal(h.q('[data-create]').disabled,false);await h.q('[data-create]').onclick();
   assert.equal(h.paid,1);assert.equal(h.exports.length,1);
+});
+
+test('wardrobe album chooses its reference for free and reuses the single confirmed photo',async()=>{
+  const h=harness();h.state.scene.items=[{module_type:'blank',assistant_carcass:{spec:{recipe:'divided'}}}];
+  await h.open();assert.match(h.d.html,/Альбом шкафа/);assert.equal(h.paid,0);
+  h.q('[data-view]').value='current';await h.q('[data-view]').onchange();assert.equal(h.paid,0);
+  h.q('[data-consent]').checked=true;await h.q('[data-create]').onclick();
+  const request=h.requests.find(r=>r.method==='POST'&&r.path.endsWith('/sales-photo'));
+  assert.equal(request.body.preview_data_url,'data:image/png;base64,Y3VycmVudA==');assert.equal(h.paid,1);
+  assert.equal(h.exports[0].hero_data_url,photo);assert.equal(h.q('[data-pdf]').download,'Martin_Forest_Wardrobe_Album.pdf');
+  h.q('[data-close]').onclick();await h.open();assert.equal(h.paid,1);assert.equal(h.q('[data-view-label]').hidden,true);
 });

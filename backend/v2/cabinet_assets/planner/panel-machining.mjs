@@ -98,6 +98,25 @@ export function rearProjection(s){
  if(s.backMount)return s.backMount.kind==='rabbet'&&!s.backMount.layout?s.backMount.width:0;
  return s.back&&!s.backThickness?3:0;
 }
+
+// Finished size and centre in carcass coordinates, shared by each separate box.
+export function backPanel(s){
+ const {width:w,height:h,depth:d,thickness:t,backMount:b}=s;
+ if(!s.back)return null;
+ if(s.backThickness){
+  const bottom=s.bottom==='none'?0:t,thickness=s.backThickness;
+  return {length:w-2*t,width:h-t-bottom,thickness,x:0,y:bottom,z:(thickness-d)/2};
+ }
+ if(!b)return {length:w-2,width:h-2,thickness:3,x:0,y:1,z:-(d+3)/2};
+ const grooved=b.kind==='groove',perimeter=grooved&&b.layout!=='sides';
+ const bite=b.layout?b.depth-1:Math.floor(b.depth-1);
+ const bottom=perimeter&&s.bottom!=='none'?t-bite:1,top=perimeter?h-t+bite:h-1;
+ const left=-w/2+(grooved||b.layout==='left'||b.layout==='both'?t-bite:1);
+ const right=w/2-(b.layout==='left'?1:t-bite);
+ const innerFace=b.layout?(b.offset??0)+b.width:grooved?b.offset+(b.width+3)/2:0;
+ return {length:right-left,width:top-bottom,thickness:3,x:(left+right)/2,y:bottom,z:-d/2+innerFace-1.5};
+}
+
 export function backCut(s,key,legExtension){
  const b=s.backMount;
  const side=key==='left'||key==='right';
