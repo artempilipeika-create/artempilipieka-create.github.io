@@ -219,6 +219,12 @@ def router():
                 return Response(image,media_type=mime,headers={'Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'})
         file=root/'planner'/asset
         if not file.is_file():return Response(status_code=404)
+        if asset == 'bazis-drawers-import.js':
+            from .wardrobe_aks import IMPORTER_NAME
+            return Response(file.read_bytes(), media_type='application/javascript', headers={
+                'Content-Disposition': f'attachment; filename="{IMPORTER_NAME}"',
+                'Cache-Control': 'no-store', 'Content-Security-Policy': CSP, 'X-Content-Type-Options': 'nosniff',
+            })
         if asset.endswith(('.glb','.exr')):
             mime='model/gltf-binary' if asset.endswith('.glb') else 'application/octet-stream'
             return Response(file.read_bytes(),media_type=mime,headers={'Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'})

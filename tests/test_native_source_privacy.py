@@ -48,3 +48,17 @@ def test_render_assets_and_importer_remain_available(client):
     for asset in ['modern-cabinet-variants.js','modern-cabinets.js','module-mesh.mjs',
                   'hardware-photos/38402.webp','bazis-drawers-import.js']:
         assert client.get('/account/planner/'+asset).status_code==200
+
+
+def test_importer_download_uses_the_current_attachment_name_in_every_constructor(client):
+    from backend.v2.wardrobe_aks import IMPORTER_NAME, IMPORTER_VERSION
+    asset = '/account/planner/bazis-drawers-import.js'
+    url = f'{asset}?v={IMPORTER_VERSION}'
+    for page in ('/constructor', '/account/planner/blanks-ui.mjs'):
+        text = client.get(page).text
+        assert f'href="{url}" download="{IMPORTER_NAME}"' in text
+    response = client.get(url)
+    assert response.headers['content-disposition'] == f'attachment; filename="{IMPORTER_NAME}"'
+    assert response.headers['cache-control'] == 'no-store'
+    assert response.content == (PLANNER/'bazis-drawers-import.js').read_bytes()
+    assert f"const IMPORTER_RELEASE = '{IMPORTER_VERSION}'" in response.text

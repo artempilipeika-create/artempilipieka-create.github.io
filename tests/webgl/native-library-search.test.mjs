@@ -28,6 +28,33 @@ function donor(root,name='Модуль.fr3d',bytes='exact donor'){
 test('Published and packaged importer are byte-identical',()=>{
  assert.equal(source,fs.readFileSync(new URL('../../tools/bazis_import/Martin_Forest_Import_v9_9_8_BLANKS.js',import.meta.url),'utf8'));
 });
+test('opens a numbered wardrobe export from Downloads and distinguishes upgrade, format and content errors',()=>{
+ const f=fixture();
+ try{
+  const {c}=runtime(f);
+  c.process.env.USERPROFILE=f.temp;
+  const dir=path.join(f.temp,'Downloads');fs.mkdirSync(dir);
+  const file=path.join(dir,'QA_AKS_27_17.11.2026.mf-bazis (4).json');
+  const save=p=>fs.writeFileSync(file,'\uFEFF'+JSON.stringify(p));
+  const item={source_file:'MF_Trim_Left.fr3d',wardrobe_trim:{kind:'left'},production_note:'Стык по антресоли'};
+  const current={format:'martin-forest-bazis-native-v21',minimum_importer:'9.9.42',items:[item]};
+  save(current);
+  const loaded=c.loadProjectFile();assert.equal(loaded.filename,file);assert.equal(loaded.automatic,true);
+  assert.deepEqual(JSON.parse(JSON.stringify(loaded.payload)),current);
+  for(let v=2;v<=20;v++){
+   const format='martin-forest-bazis-native-v'+v;save({format,items:[item]});assert.equal(c.loadProjectFile().payload.format,format);
+  }
+  for(const [patch,reason] of [
+   [{format:'martin-forest-bazis-native-v22',minimum_importer:'9.9.100'},/нужен импортёр 9\.9\.100.+9\.9\.43/],
+   [{minimum_importer:'10.0.0'},/нужен импортёр 10\.0\.0/],
+   [{format:'martin-forest-bazis-native-v22'},/не поддерживает формат martin-forest-bazis-native-v22/],
+   [{format:'other'},/другой тип файла/],[{items:[]},/нет деталей и модулей/],[{items:null},/отсутствует список/]
+  ]){
+   save({...current,...patch});assert.throws(()=>c.loadProjectFile(),e=>reason.test(e.message)&&e.message.includes(file));
+  }
+ }finally{f.cleanup();}
+});
+
 test('First run chooses the common folder; later script instances remember it without prompting',()=>{
  const f=fixture();try{
   const d=donor(f.root,'Нижние/Ящики/Корпус.FR3D'),before=fs.readFileSync(d.file),{c,prompts}=runtime(f,[f.root]);

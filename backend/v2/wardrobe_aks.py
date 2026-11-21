@@ -11,8 +11,10 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE
 
 ROOT = Path(__file__).parent
-KIT_NAME = 'Martin_Forest_AKS_19mm_v9_9_42.zip'
-IMPORTER_NAME = 'Martin_Forest_Import_v9_9_42.js'
+IMPORTER_VERSION = '9.9.43'
+_version_tag = IMPORTER_VERSION.replace('.', '_')
+KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
+IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
 
 
 def private_rod_sources():

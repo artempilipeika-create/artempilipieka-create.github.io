@@ -100,6 +100,8 @@ test('downloads one pinned native trim per assembly and a separately grouped upp
   const {payload,message}=await e.result();
   assert.ok(payload,message);
   assert.equal(payload.minimum_importer,'9.9.42');assert.equal(payload.format,'martin-forest-bazis-native-v21');
+  assert.match(message,/импортёр БАЗИС 9\.9\.42 или новее/);
+  assert.doesNotMatch(message,/импортёр 9\.9\.1[678]/);
   const trims=payload.items.filter(it=>it.wardrobe_trim);
   assert.deepEqual(trims.map(it=>it.source_file),['MF_Trim_Left.fr3d','MF_Trim_End.fr3d','MF_Trim_Ceiling.fr3d']);
   assert.ok(trims.every(it=>it.cabinet_block.id===id&&!it.blank&&it.rotation===rotation));
