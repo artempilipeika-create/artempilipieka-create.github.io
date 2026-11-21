@@ -98,8 +98,10 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
   });
   if(wardrobe)q('[data-view]').onchange=()=>perform(async()=>{
     const select=q('[data-view]'),chosen=select.value;
+    say('Готовим предпросмотр выбранного ракурса…');
     try{
       const next=await capture(mode,chosen);assertSame();await draw(next.hero);views=next;angle=chosen;
+      say('Ракурс готов. Для создания фоторендера подтвердите одну платную генерацию.');
     }catch(error){select.value=angle;throw error;}
   });
   q('[data-check]').onclick=()=>perform(check);

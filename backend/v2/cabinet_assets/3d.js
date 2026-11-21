@@ -566,6 +566,7 @@ async function openKitchenAlbumFlow(){
   const plannerScene=globalThis.MF_PLANNER?.scene;
   const currentView=plannerScene?.mode==='3d'&&!plannerScene.isFallback?plannerScene.captureView():null;
   const albumView=plannerScene?.renderRooms?.id?currentView:null;
+  let geometry;
   const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261122-wardrobe-render');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
@@ -576,7 +577,7 @@ async function openKitchenAlbumFlow(){
     hasCurrentView:Boolean(currentView),
     capture:async(mode,view='full')=>{
       const {albumGeometry}=await import('/account/planner/album-geometry.mjs?v=20261029-album-pagination');
-      const geometry=albumGeometry(state.items,templateFor);
+      geometry??=albumGeometry(state.items,templateFor);
       const scene=globalThis.MF_PLANNER?.scene;
       if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид проекта.');return {hero:data,geometry};}
       const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261122-wardrobe-render');
