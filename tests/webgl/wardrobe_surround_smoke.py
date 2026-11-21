@@ -460,6 +460,16 @@ def z1_scenario(page, projects, seed):
     form.locator('[data-hinge-kind="overlay"]').click()
     field(form,'Способ открывания').select_option('push')
     expect(form.locator('[data-hinge-article="70T950A.TL"]')).to_have_attribute('aria-pressed','true')
+    hinge_ui=form.locator('.wardrobe-hinge-editor')
+    cross=hinge_ui.locator('[data-plate-article="173H7100"]')
+    assert cross.locator('img').evaluate('async i=>{await i.decode();return i.naturalWidth>100}')
+    cross.click()
+    field(form,'Выбранный фасад').select_option('door-right')
+    hinge_ui.locator('[data-hinge-brand="Blum"]').click()
+    expect(hinge_ui.locator('[data-hinge-article="71B3550"]')).to_have_attribute('aria-pressed','true')
+    expect(hinge_ui.locator('[data-plate-article="173H7100"]')).to_have_attribute('aria-pressed','true')
+    hinge_ui.locator('[data-plate-article="175H3100"]').click()
+    field(form,'Выбранный фасад').select_option('door-left')
     upper=open_upper_fronts(form)
     field(upper,'Тип фасада антресоли').select_option('Z1')
     finish(page,form)
@@ -476,6 +486,7 @@ def z1_scenario(page, projects, seed):
     button(form,'4. Фасады').click()
     field(form,'Выбранный фасад').select_option('door-left')
     expect(field(form,'Тип фасада')).to_have_value('Z1')
+    expect(form.locator('.wardrobe-hinge-editor [data-plate-article="173H7100"]')).to_have_attribute('aria-pressed','true')
     expect(form.locator('[data-hinge-article="70T950A.TL"]')).to_have_attribute('aria-pressed','true')
     field(form,'Способ открывания').select_option('handle')
     form.locator('[data-hinge-article="71T950A-ONS"]').click()
@@ -484,7 +495,7 @@ def z1_scenario(page, projects, seed):
     with page.expect_download() as event:
         page.locator('#export-bazis').click()
     payload=json.loads(Path(event.value.path()).read_text())
-    assert payload['minimum_importer']=='9.9.46'
+    assert payload['minimum_importer']=='9.9.47'
     rows=payload['items']
     frames=[r for r in rows if r.get('wardrobe_z1_front')]
     assert len(frames)==3 and all(r['source_file']=='MF_Z1_D1.fr3d' and r['target']['width']==301 for r in frames)
@@ -492,6 +503,11 @@ def z1_scenario(page, projects, seed):
     assert len(hinges)==6
     assert {(r['article'],r['finish']) for r in hinges}=={('71T950A','ONS'),('70T950A.TL','NI')}
     assert all(r['joined_panel_id'] in {p['blank_item_id'] for p in frames} for r in hinges)
+    plates=[r for r in payload['items'] if r.get('wardrobe_blum_part')=='plate']
+    board=[r for r in rows if r.get('wardrobe_blum_part')=='hinge' and not r.get('wardrobe_z1_hinge')]
+    assert len(board)==2 and {r['article'] for r in board}=={'71B3550'}
+    assert len(plates)==len(hinges)+len(board) and all(r['mount_blank_id']==r['host_blank_id'] for r in plates)
+    assert {(r['article'],r['finish']) for r in plates}=={('173H7100','ONS'),('175H3100','NI')}
     print('PASS wardrobe Z1: chooser, real product photo, inset, mixed pair, TIP-ON, mezzanine, persisted edit and native export')
 
 
@@ -505,7 +521,7 @@ if __name__ == '__main__':
             for name in ('assistant-ui.mjs', 'assistant.css', 'wardrobe-questionnaire.mjs',
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
-                         'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs',
+                         'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs', 'wardrobe-hinge-ui.mjs', 'wardrobe-hinges.mjs',
                          'bazis-drawers-import.js'):
                 asset = page.request.get(ORIGIN + '/account/planner/' + name, max_redirects=0)
                 assert asset.status == 200 and asset.body() == (ROOT / 'backend/v2/cabinet_assets/planner' / name).read_bytes(), name

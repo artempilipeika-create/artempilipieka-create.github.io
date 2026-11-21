@@ -432,11 +432,15 @@ export class MeshFactory{
     }
     for(const hinge of this.visibleDoorHinges(it)){
       const side=hinge.door_side==='left'?1:-1,asset=hingeCatalogue[hinge.hinge_variant??hinge.article].mesh;
-      const part=hinge.host_blank_id===it.item_id?'body':'cup',key='prime:'+asset+':'+side+':'+part;
-      const geometry=this.acquire(key,()=>hingeGeometry(asset,side,part));
+      const onHost=hinge.host_blank_id===it.item_id;
+      const parts=onHost&&hinge.plate_sku?[['body',asset],['plate',hinge.plate_sku]]:[[onHost?'body':'cup',asset]];
       const at=localPoint({x:hinge.position.x-it.x,z:hinge.position.z-it.z},it.rotation);
-      const mesh=this.mesh(group,hinge.finish==='ONS'?'frame':'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost);
-      Object.assign(mesh.userData,{article:hinge.article,hingePart:part});
+      for(const [part,source] of parts){
+        const key='hinge:'+source+':'+side+':'+part;
+        const geometry=this.acquire(key,()=>hingeGeometry(source,side,part));
+        const mesh=this.mesh(group,hinge.finish==='ONS'?'frame':'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost);
+        Object.assign(mesh.userData,{article:part==='plate'?hinge.plate_sku:hinge.article,hingePart:part});
+      }
     }
     for(const push of this.visiblePushes(it)){
       const at=localPoint({x:push.position.x-it.x,z:push.position.z-it.z},it.rotation);

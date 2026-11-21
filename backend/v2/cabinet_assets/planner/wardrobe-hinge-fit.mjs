@@ -33,7 +33,7 @@ export function drawerHingeSpan(fit,side,clear,setback,pivot,doorDepth,slides){
  const closedReach=setback<=flange+allowance?
   pivot+Math.sqrt(Math.max(0,radius2-(doorDepth+Math.max(0,setback-allowance))**2)):-Infinity;
  const openReach=slides?pivot+doorDepth+flange:-Infinity; // drawer passing the open leaf at 90°
- if(clear<Math.max(closedReach,openReach)+allowance)return fit.frame?[-(fit.cupHalfHeight??27.5),fit.cupHalfHeight??27.5]:[-31.8,31.8];
+ if(clear<Math.max(closedReach,openReach)+allowance)return [-(fit.cupHalfHeight??31.8),fit.cupHalfHeight??31.8];
  return high?[low-allowance,high+allowance]:null;
 }
 

@@ -1,3 +1,5 @@
+import {plateControls} from './wardrobe-hinge-ui.mjs';
+import {hingeCatalogue,withMountingPlate} from './wardrobe-hinge-layout.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {trimSides,upperPush} from './wardrobe-surround.mjs';
 import {lowerBodyHeight,savedTrimExtension} from './wardrobe-trim-layout.mjs';
@@ -106,10 +108,11 @@ export function upperFrontTabs(ui){
 export function upperFrontControls(ui){
  const u=ui.fields.surround.upper,box=section(ui.form,'Фасады антресоли');
  select(ui,box,'Количество створок',[[1,'Одна'],[2,'Две']],u.leaves,v=>{u.leaves=Number(v);});
- select(ui,box,'Как открываются',[['swing','Распашные'],['lift','Вверх на газлифтах']],u.opening,v=>{u.opening=v;if(v==='lift')delete u.frame;});
+ select(ui,box,'Как открываются',[['swing','Распашные'],['lift','Вверх на газлифтах']],u.opening,v=>{u.opening=v;if(v==='lift'){delete u.frame;delete u.plate;}});
  if(u.opening==='swing'&&u.leaves===1)select(ui,box,'Петли',[['left','Слева'],['right','Справа']],u.side,v=>{u.side=v;});
- if(u.opening==='swing')select(ui,box,'Тип фасада антресоли',[['board','Глухой фасад'],['Z1','Витрина · алюминиевая рамка Z1']],u.frame??'board',v=>{if(v==='Z1')u.frame='Z1';else delete u.frame;});
+ if(u.opening==='swing')select(ui,box,'Тип фасада антресоли',[['board','Глухой фасад'],['Z1','Витрина · алюминиевая рамка Z1']],u.frame??'board',v=>{if(v==='Z1')u.frame='Z1';else{delete u.frame;delete u.plate;}});
  box.append(el('p',u.frame?'TIP-ON · беспружинная Blum CLIP top 95° для узких рамок · арт. 70T950A.TL.':u.opening==='swing'?'Открывание нажатием · беспружинные петли. Артикул и присадка появятся после выбора модели петли.':'Открывание нажатием · типон на дне. Артикул и присадка газлифта появятся после выбора модели.'));
+ if(u.frame)plateControls(box,withMountingPlate(hingeCatalogue['70T950A.TL'],u.plate),plate=>{u.plate=plate;ui.changed(true);});
  aksPushProductControls(ui,box,u.push,next=>{u.push=next;ui.changed(true);});
 }
 

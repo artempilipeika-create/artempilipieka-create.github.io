@@ -177,7 +177,7 @@ export function hingePhotoCard(article){
  if(!hinge)return null;
  const figure=document.createElement('figure'),caption=document.createElement('figcaption'),fit=hingeCatalogue[article];
  figure.className='fitting-card';
- if(fit?.frame){
+ if(fit?.brand==='Blum'){
   const img=document.createElement('img');img.src=fit.photo;img.alt=hinge[1];img.loading='lazy';
   caption.textContent=hinge[1]+' · '+fit.sku+' · '+(fit.finish==='ONS'?'чёрный оникс':'никель');
   figure.append(img,caption);return figure;

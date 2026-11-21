@@ -254,7 +254,7 @@ export function buildCarcass(input={},options={}){
           pushLocations[key]={host:host.label,style:push.push_install,height:push.push_height_mm};
         }
         hingeLocations.push(...axes.map(h=>({x:h.position.x,y:h.position.y,side:h.door_side,article:h.article})));
-        if(mountKey(s,key)===side)bySide[side].push(...axes.map(h=>({y:h.position.y-s.elevation-legHeight,z:h.position.z,article:h.article})));
+        if(mountKey(s,key)===side)bySide[side].push(...axes.map(h=>({y:h.position.y-s.elevation-legHeight,z:h.position.z,article:h.hinge_variant??h.article,plate_sku:h.plate_sku})));
       }catch(error){
         if(!error.hingeConflict)throw error;
         drawerIssues.push(error.message);hingeConflicts.push(error.hingeConflict);

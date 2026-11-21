@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE, Z1_DATA
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.46'
+IMPORTER_VERSION = '9.9.47'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
@@ -58,17 +58,17 @@ def private_handle_sources(required):
 
 
 def private_z1_sources(required):
-    key = os.environ.get('MF_WARDROBE_Z1_KEY')
+    key = os.environ.get('MF_WARDROBE_BLUM_PARTS_KEY')
     if not key:
         if required:
             raise ValueError('Исходные фрагменты витрины Z1 ещё не установлены на сервере.')
         return {}
     archive = (ROOT / 'wardrobe-aks' / 'MF_Z1.enc').read_bytes()
     try:
-        plaintext = AESGCM(bytes.fromhex(key)).decrypt(archive[:12], archive[12:], b'Martin Forest Z1 archive v1')
+        plaintext = AESGCM(bytes.fromhex(key)).decrypt(archive[:12], archive[12:], b'Martin Forest Blum components v1')
     except (InvalidTag, ValueError) as exc:
         raise ValueError('Не удалось открыть исходные фрагменты витрины Z1.') from exc
-    products = [Z1_DATA['front'], *Z1_DATA['hinges']]
+    products = [Z1_DATA['front'], *Z1_DATA['hinges'], *Z1_DATA['boardHinges'], *Z1_DATA['plates']]
     with ZipFile(BytesIO(plaintext)) as bundle:
         if sorted(bundle.namelist()) != sorted(row['source_file'] for row in products):
             raise ValueError('Неполный комплект витрины Z1.')

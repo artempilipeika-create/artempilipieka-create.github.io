@@ -4,7 +4,7 @@ import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-que
 import {buildCarcass,placeCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-model.mjs';
 import {chooseHinge,selectLeafFrame} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinge-layout.mjs';
 import {blankNativeItem} from '../../backend/v2/cabinet_assets/planner/blanks-native.mjs';
-import {doorHinges,doorPush} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinges.mjs';
+import {doorHinges,nativeDoorHinges,doorPush} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinges.mjs';
 import {blanksCSV} from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
 import {hingeGeometry} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinge-mesh.mjs';
 import {angleLimit} from '../../backend/v2/cabinet_assets/planner/wardrobe-clearance.mjs';
@@ -48,7 +48,7 @@ test('changing one wardrobe door to Z1 preserves the finished gaps and replaces 
   selectLeafFrame(f,key,'board');const restored=cabinet(f).part(key);assert.equal(restored.depth,18);assert.deepEqual(rect(restored),rect(p));
  }
 });
-test('all eight signed Blum assemblies keep their seat, SKU, finish and frame-relative mounting origin',()=>{
+test('all eight independent Blum hinges keep their seat, SKU, finish and frame-relative mounting origin',()=>{
  for(const fit of z1.hinges)for(const angle of [0,90,180,270]){
   const key='door-right',f={swing:'pair',hinges:{[key]:{article:fit.article}}};
   const {items,part}=cabinet(f,angle),p=part(key),rows=doorHinges(p,items);
@@ -91,5 +91,33 @@ test('the full questionnaire saves and reopens a framed cabinet and preserves it
   assert.equal(part('left').z,datum);
   assert.equal(part('shelf-0-0').blank_binding.left_id,part('left').item_id);
   assert.equal(part('door-left').depth,type==='Z1'?20.5:18);
+ }
+});
+
+test('every native Blum axis has one leaf part and one selected cabinet plate; all board and frame variants stay separate',()=>{
+ for(const fit of [...z1.hinges,...z1.boardHinges])for(const sku of ['175H3100','173H7100'])for(const rotation of [0,90,180,270]){
+  for(const side of ['left','right']){
+   const key='door-'+side,{items,part}=cabinet({swing:'pair',hinges:{[key]:{article:fit.article,plate:sku}}},rotation);
+   const door=part(key),rows=nativeDoorHinges(door,items),axes=doorHinges(door,items);
+   const plate=z1.plates.find(p=>p.sku===sku&&p.finish===fit.finish);assert.equal(rows.length,axes.length*2);
+   for(let i=0;i<axes.length;i++){
+    const [h,p]=rows.slice(2*i,2*i+2);
+    assert.deepEqual([h.wardrobe_blum_part,p.wardrobe_blum_part],['hinge','plate']);
+    assert.equal(h.source_sha256,fit.sha);assert.equal(p.source_sha256,plate.sha);assert.notEqual(h.source_sha256,p.source_sha256);
+    assert.equal(h.mount_blank_id,door.item_id);assert.equal(p.mount_blank_id,axes[i].host_blank_id);
+    assert.deepEqual(h.position,p.position);assert.equal(h.rotation,rotation);assert.equal(p.rotation,rotation);
+   }
+   assert.ok(hingeGeometry(plate.mesh,side==='left'?1:-1,'plate').index.count>30);
+   assert.equal(angleLimit(door),fit.frame?95:110);
+  }
+ }
+});
+test('separate components on the TIP-ON mezzanine use its saved mounting plate',()=>{
+ const surround={upper:{height:450,leaves:2,side:'left',opening:'swing',divider:false,push:{article:'70787',mount:'auto',support:'auto',heightMm:1050},frame:'Z1',plate:'173H7100'}};
+ const {items,part}=cabinet({swing:'pair'},270,surround);
+ for(const side of ['left','right']){
+  const rows=nativeDoorHinges(part('mezz-door-'+side),items);
+  assert.deepEqual(rows.map(r=>r.article),['70T950A.TL','173H7100','70T950A.TL','173H7100']);
+  assert.ok(rows.filter(r=>r.wardrobe_blum_part==='plate').every(r=>r.mount_blank_id===part('mezz-'+side).item_id));
  }
 });

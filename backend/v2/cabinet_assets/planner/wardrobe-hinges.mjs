@@ -1,6 +1,6 @@
 import {planAksPush} from './wardrobe-push-layout.mjs';
 import pushKit from './wardrobe-push-open.json' with {type:'json'};
-import {doorPushGap,hingeCatalogue,hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,meetingGap} from './wardrobe-hinge-layout.mjs';
+import {doorPushGap,hingeCatalogue,withMountingPlate,hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,meetingGap} from './wardrobe-hinge-layout.mjs';
 import {finishedFaceSize} from './wardrobe-edge-pulls.mjs';
 import {doorSide,physicalProfiles} from './wardrobe-door-layout.mjs';
 import {splitAt,levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
@@ -118,12 +118,12 @@ export function doorHinges(door,items){
  if(mezz&&upper?.frame==='Z1'&&upper.opening==='swing'){
   const side=mezz[1],host=items.find(p=>p.item_id===group.group_id+':mezz-'+side);
   if(!host)throw Error('Для рамки антресоли нужна боковая стойка.');
-  const fit=hingeCatalogue['70T950A.TL'],angle=door.rotation,wall=localPoint(host,angle),leaf=localPoint(door,angle);
+  const fit=withMountingPlate(hingeCatalogue['70T950A.TL'],upper.plate),angle=door.rotation,wall=localPoint(host,angle),leaf=localPoint(door,angle);
   const x=wall.x+(side==='left'?1:-1)*host.width/2,z=leaf.z-door.depth/2;
   const {count}=hingeLoad(door.width,door.height,null,'Z1');
   const offset=Math.min(90,Math.floor((door.height-64)/2));
   return hingeAxes(door.height,count,offset).map(y=>({name:'Петля Blum · '+door.name,article:fit.article,article_sku:fit.sku,finish:fit.finish,
-   source_file:fit.file,source_sha256:fit.sha,wardrobe_z1_hinge:true,door_side:side,host_blank_id:host.item_id,joined_panel_id:door.item_id,
+   source_file:fit.file,source_sha256:fit.sha,wardrobe_z1_hinge:true,hinge_variant:fit.article,plate_sku:fit.plate.sku,door_side:side,host_blank_id:host.item_id,joined_panel_id:door.item_id,
    rotation:angle,position:{...worldPoint({x,z},angle),y:door.elevation_mm+y},elastic_resize:false}));
  }
  if(!front)return [];
@@ -140,8 +140,8 @@ export function doorHinges(door,items){
  const oldAQ=settingFor(front,key).push===true&&fit.kind!=='inset'&&Math.abs(z-expectedZ-1)<.01;
  if((Math.abs(z-expectedZ)>.01&&!oldAQ)||Math.abs(leaf.x-sign*door.width/2-(x-sign*overlay))>.01)
    throw Error('Проверьте положение фасада относительно выбранной стойки.');
- if(fit.frame && (z-20+2>at.z+host.depth/2||z-52-2<at.z-host.depth/2))throw Error('Крепление планки Blum выходит за глубину стойки.');
- if(!fit.frame&&(z-37+3>at.z+host.depth/2||z-37-3<at.z-host.depth/2))throw Error('Крепление петли выходит за глубину стойки.');
+ if(fit.plate?.pilots.some(([dz])=>z-dz+2>at.z+host.depth/2||z-dz-2<at.z-host.depth/2))throw Error('Крепление планки Blum выходит за глубину стойки.');
+ if(!fit.plate&&(z-37+3>at.z+host.depth/2||z-37-3<at.z-host.depth/2))throw Error('Крепление петли выходит за глубину стойки.');
  const cupMargin=fit.cupFromHostMm+overlay-17.5;
  if(!fit.frame&&fit.kind!=='overlay'&&(cupMargin<3||cupMargin>7))throw Error('Эта толщина стойки требует другой планки или присадки PRIME. Проверьте наложение фасада.');
  const center=hostKey.startsWith('divider-');
@@ -152,9 +152,9 @@ export function doorHinges(door,items){
   const otherKey=peer.item_id.slice(group.group_id.length+1);
   if(!doorSide(otherKey)||installedSide(front,otherKey)!=='left'||mountKey(spec,otherKey)!==hostKey)continue;
   const other=hingeProduct(front,otherKey);
-  if((fit.frame?10:fit.fixing==='euro'?13:16)+(other.frame?10:other.fixing==='euro'?13:16)<=host.width)continue;
+  if((fit.plate?10:fit.fixing==='euro'?13:16)+(other.plate?10:other.fixing==='euro'?13:16)<=host.width)continue;
   const otherZ=localPoint(peer,angle).z-peer.depth/2;
-  const pilots=f=>f.frame?[[20,0],[52,0]]:[[37,-16],[37,16]];
+  const pilots=f=>f.plate?.pilots??[[37,-16],[37,16]];
   const offsets=new Set();
   for(const [dz,dy] of pilots(fit))for(const [oz,oy] of pilots(other))
     if(Math.abs(z-dz-(otherZ-oz))<=5)offsets.add(oy-dy);
@@ -173,15 +173,29 @@ export function doorHinges(door,items){
  }
  const finished=finishedFaceSize(door),{count}=hingeLoad(finished.width,finished.height,front.massKg,fit.frame);
  const axes=front.autoHinges||front.hinges?automaticAxes(door,host,items,side,obstacles,count,section,opposing,fit):hingeAxes(door.height,count,front.offset,obstacles);
- if(axes.some(y=>door.elevation_mm+y-26<host.elevation_mm||door.elevation_mm+y+26>host.elevation_mm+host.height))
+ const [plateLow,plateHigh]=fit.plate?plateSpan(fit,side):[-26,26];
+ if(axes.some(y=>door.elevation_mm+y+plateLow<host.elevation_mm||door.elevation_mm+y+plateHigh>host.elevation_mm+host.height))
    throw Error('Ответная планка выходит за боковину. Проверьте высоту фасада.');
  const opening=settingFor(front,key).push;
  const native=opening&&opening!==true&&fit.pushNative?fit.pushNative:fit;
  return axes.map(y=>({
-   name:'Петля '+(fit.frame?'Blum ':'')+fit.series+' · '+door.name,article:fit.sku??fit.article,source_file:native.file,source_sha256:native.sha,...(fit.frame?{wardrobe_z1_hinge:true,hinge_variant:fit.article,finish:fit.finish}:{}),
+   name:'Петля '+(fit.plate?'Blum ':'')+fit.series+' · '+door.name,article:fit.sku??fit.article,source_file:native.file,source_sha256:native.sha,...(fit.plate?{...(fit.frame?{wardrobe_z1_hinge:true}:{}),hinge_variant:fit.article,plate_sku:fit.plate.sku,finish:fit.finish}:{}),
    door_side:side,host_blank_id:host.item_id,joined_panel_id:door.item_id,rotation:angle,
    position:{...worldPoint({x,z},angle),y:door.elevation_mm+y},elastic_resize:false
  }));
+}
+
+// Layout returns one axis per hinge. The native export installs the leaf fitting
+// and its cabinet plate from two independently pinned workshop files.
+export function nativeDoorHinges(door,items){
+ return doorHinges(door,items).flatMap(axis=>{
+  if(!axis.plate_sku)return [axis];
+  const plate=withMountingPlate(hingeCatalogue[axis.hinge_variant],axis.plate_sku).plate;
+  const {wardrobe_z1_hinge,...common}=axis;
+  return [{...axis,wardrobe_blum_part:'hinge',mount_blank_id:axis.joined_panel_id},
+   {...common,name:'Ответная планка Blum '+plate.sku+' · '+door.name,article:plate.sku,
+    wardrobe_blum_part:'plate',mount_blank_id:axis.host_blank_id,source_file:plate.file,source_sha256:plate.sha}];
+ });
 }
 
 // Choose a board face that carries both adapter screws. The catch is attached

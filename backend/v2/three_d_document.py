@@ -68,6 +68,17 @@ UPPER_COMMON=[
     _row('Гвозди 1,4x25 РМЗ',52),
 ]
 
+def _blum_hardware(fit, plate_sku, quantity):
+    from .assistant_model import BLUM_PLATES
+    kind={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fit['kind']]
+    closing={'soft':'с доводчиком','standard':'с пружиной','springless':'без пружины'}[fit['closing']]
+    sku=plate_sku or ('175H3100' if fit.get('frame') else '173H7100')
+    plate=BLUM_PLATES[(sku,fit['finish'])]
+    shape='Прямая' if plate['shape']=='straight' else 'Крестообразная'
+    return [_row(f"Петля Blum {fit['series']} {fit['angle']}° {kind} {closing} · {fit['finish']}",quantity,'pcs',fit['sku']),
+            _row(f"{shape} ответная планка Blum H0 · {fit['finish']}",quantity,'pcs',sku)]
+
+
 def drawer_slide_length(depth):
     d=int(depth or 0)
     if d==510:return 500
@@ -259,10 +270,7 @@ def _panel_hardware(it):
         setup={'article':'70T950A.TL','push':upper['push']} if mezz else main['hinges'][key]
         fit=Z1_HINGES[setup['article']]
         count=z1_hinge_count(it['width'],it['height'],None if mezz else main.get('massKg'))
-        name={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fit['kind']]
-        closing={'soft':'с доводчиком','standard':'с пружиной','springless':'без пружины'}[fit['closing']]
-        rows=[_row(f"Петля {fit['series']} 95° {name} {closing} · {fit['finish']}",count,'pcs',fit['sku']),
-              _row(f"Прямая ответная планка Blum H0 · {fit['finish']}",count,'pcs','175H3100')]
+        rows=_blum_hardware(fit,upper.get('plate') if mezz else setup.get('plate'),count)
         push=setup.get('push')
         if isinstance(push,dict):
             sku=push['article']
@@ -285,14 +293,17 @@ def _panel_hardware(it):
         mass=spec['front'].get('massKg') or w*h*18*700/1e9
         for n,(limit,kg) in enumerate([(900,8),(1600,13),(2000,17),(2400,22)],2):
             if w<=600 and h<=limit and mass<=kg:
-                from .assistant_model import DoorHingeSetting, PRIME_HINGES
+                from .assistant_model import DoorHingeSetting, DOOR_HINGES
                 setting=(spec['front'].get('hinges') or {}).get(key) or {}
                 sku=DoorHingeSetting.model_validate(setting).article if setting else '112595'
-                fitting=PRIME_HINGES[sku]
-                kind={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fitting['kind']]
-                fixing='еврошурупы' if fitting['fixing']=='euro' else 'саморезы'
-                closing={'soft':'с доводчиком','springless':'без пружины','reverse':'с пружиной обратного действия'}[fitting['closing']]
-                rows=[_row(f"Петля {fitting['series']} {kind} {closing} с планкой H0 · {fixing}",n,'pcs',sku)]
+                fitting=DOOR_HINGES[sku]
+                if fitting.get('brand')=='Blum':
+                    rows=_blum_hardware(fitting,setting.get('plate'),n)
+                else:
+                    kind={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fitting['kind']]
+                    fixing='еврошурупы' if fitting['fixing']=='euro' else 'саморезы'
+                    closing={'soft':'с доводчиком','springless':'без пружины','reverse':'с пружиной обратного действия'}[fitting['closing']]
+                    rows=[_row(f"Петля {fitting['series']} {kind} {closing} с планкой H0 · {fixing}",n,'pcs',sku)]
                 push=setting.get('push')
                 if isinstance(push,dict):
                     from .assistant_model import AKS_PUSH
@@ -422,7 +433,7 @@ def _panel_hardware(it):
 
 def module_contents(it):
     if it.get('blank_front_frame')=='Z1':
-        return 'Распашная витрина. Петли закрепить в алюминиевой стойке Z1, прямые ответные планки H0 — на стойке корпуса.'
+        return 'Распашная витрина. Петли закрепить в алюминиевой стойке Z1, выбранные ответные планки H0 — на стойке корпуса.'
     grip=it.get('blank_edge_pull')
     if grip:
         row=_facade_handle_row(grip,it)

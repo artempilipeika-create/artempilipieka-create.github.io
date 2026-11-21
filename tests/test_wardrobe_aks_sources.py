@@ -173,16 +173,17 @@ def test_aks_push_kit_has_one_purchased_article_and_real_bores_for_every_install
             DoorHingeSetting(article=hinge,push={'article':article,'mount':mount})
 
 
-def test_z1_kit_contains_the_exact_frame_and_all_eight_sets():
+def test_blum_kit_contains_the_exact_frame_separate_hinges_and_plates():
     from hashlib import sha256
     catalog=json.loads((ROOT/'cabinet_assets/planner/wardrobe-z1-data.json').read_text())
     fittings=catalog['hinges']
     assert len(fittings)==8 and len({(h['sku'],h['finish']) for h in fittings})==8
     assert [h['sku'] for h in fittings if h['closing']=='springless']==['70T950A.TL']
-    products = [catalog['front'], *fittings]
+    products = [catalog['front'], *fittings, *catalog['plates'], *catalog['boardHinges']]
+    assert len(products)==len({row['sha256'] for row in products})==25
     importer = (ROOT/'cabinet_assets/planner/bazis-drawers-import.js').read_text()
     assert all(row['sha256'] in importer for row in products)
-    if not os.environ.get('MF_WARDROBE_Z1_KEY'):
+    if not os.environ.get('MF_WARDROBE_BLUM_PARTS_KEY'):
         with pytest.raises(ValueError, match='Z1'):
             kit_bytes(z1_required=True)
         return
@@ -201,7 +202,7 @@ def test_z1_private_archive_preserves_complete_bytes_and_rejects_wrong_source(tm
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     from backend.v2 import wardrobe_aks as aks
 
-    mock_sources = {'frame.fr3d': b'frame-with-trailer', 'hinge.fr3d': b'hinge-with-plate'}
+    mock_sources = {'frame.fr3d': b'frame-with-trailer', 'hinge.fr3d': b'hinge-only', 'plate.fr3d':b'plate-only'}
     rows = [dict(source_file=k, sha256=hashlib.sha256(v).hexdigest()) for k, v in mock_sources.items()]
     archive = BytesIO()
     with zipfile.ZipFile(archive, 'w') as bundle:
@@ -209,17 +210,17 @@ def test_z1_private_archive_preserves_complete_bytes_and_rejects_wrong_source(tm
             bundle.writestr(name, data)
     key = AESGCM.generate_key(bit_length=256)
     nonce = os.urandom(12)
-    sealed = nonce + AESGCM(key).encrypt(nonce, archive.getvalue(), b'Martin Forest Z1 archive v1')
+    sealed = nonce + AESGCM(key).encrypt(nonce, archive.getvalue(), b'Martin Forest Blum components v1')
     folder = tmp_path/'wardrobe-aks'
     folder.mkdir()
     (folder/'MF_Z1.enc').write_bytes(sealed)
     monkeypatch.setattr(aks, 'ROOT', tmp_path)
-    monkeypatch.setattr(aks, 'Z1_DATA', {'front':rows[0], 'hinges':[rows[1]]})
-    monkeypatch.setenv('MF_WARDROBE_Z1_KEY', key.hex())
+    monkeypatch.setattr(aks, 'Z1_DATA', {'front':rows[0], 'hinges':[rows[1]], 'plates':[rows[2]], 'boardHinges':[]})
+    monkeypatch.setenv('MF_WARDROBE_BLUM_PARTS_KEY', key.hex())
     assert aks.private_z1_sources(True) == mock_sources
     rows[0]['sha256'] = '0'*64
     with pytest.raises(ValueError, match='frame.fr3d'):
         aks.private_z1_sources(True)
-    monkeypatch.setenv('MF_WARDROBE_Z1_KEY', AESGCM.generate_key(bit_length=256).hex())
+    monkeypatch.setenv('MF_WARDROBE_BLUM_PARTS_KEY', AESGCM.generate_key(bit_length=256).hex())
     with pytest.raises(ValueError, match='открыть'):
         aks.private_z1_sources(True)

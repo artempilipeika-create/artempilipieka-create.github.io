@@ -17,7 +17,7 @@ function hostHinges(group,host,items){
 }
 function sideAxes(group,side,items,rotation){
  const front=items.find(i=>i.assistant_carcass?.group_id===group)?.assistant_carcass.spec.front;
- return hostHinges(group,{item_id:group+':'+side},items).map(h=>front?.autoHinges||front?.hinges?{y:h.position.y,z:localPoint(h.position,rotation).z,article:h.article}:h.position.y);
+ return hostHinges(group,{item_id:group+':'+side},items).map(h=>front?.autoHinges||front?.hinges?{y:h.position.y,z:localPoint(h.position,rotation).z,article:h.hinge_variant??h.article,plate_sku:h.plate_sku}:h.position.y);
 }
 export function installedCuts(panel,items){
  const meta=panel.assistant_carcass,match=/:drawer-(\d+)-spacer-(left|right)$/.exec(panel.item_id??'');

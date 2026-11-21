@@ -3,13 +3,22 @@ import z1 from './wardrobe-z1-data.json' with {type:'json'};
 import pulls from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {sectionWidths} from './wardrobe-layout.mjs';
 
-export const hingeCatalogue=Object.fromEntries([...catalogue,...z1.hinges].map(p=>[p.article,p]));
+export const hingeCatalogue=Object.fromEntries([...catalogue,...z1.boardHinges,...z1.hinges].map(p=>[p.article,p]));
+export const blumPlates=z1.plates;
+export const hingeBrand=fit=>fit?.brand??'AKS';
+export function withMountingPlate(fit,selection){
+ if(hingeBrand(fit)!=='Blum')return fit;
+ const sku=selection??(fit.frame?'175H3100':'173H7100');
+ const plate=blumPlates.find(p=>p.sku===sku&&p.finish===fit.finish);
+ if(!plate)throw Error('Для петли Blum выберите планку H0 в отделке петли.');
+ return {...fit,plate,plateSpan:plate.plateSpan,plateReach:plate.plateReach,plateDepth:plate.plateDepth};
+}
 export const closingNames={standard:'с пружиной',soft:'с доводчиком',springless:'без пружины',reverse:'с пружиной обратного действия'};
 export const doorPushGap=2;
 export const hingeKinds={overlay:'Накладная',half:'Полунакладная',inset:'Вкладная'};
 export function hingeName(article){
  const p=hingeCatalogue[article];
- return p?'Петля '+(p.frame?'Blum ':'')+p.series+(p.frame?' 95° ':' ')+hingeKinds[p.kind].toLowerCase()+' '+closingNames[p.closing]+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
+ return p?'Петля '+(p.brand==='Blum'?'Blum ':'')+p.series+(p.angle?' '+p.angle+'° ':' ')+hingeKinds[p.kind].toLowerCase()+' '+closingNames[p.closing]+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
 }
 export const frameDepth=20.5;
 export const leafDepth=(f,key)=>hingeCatalogue[settingFor(f,key).article]?.frame==='Z1'?frameDepth:18;
@@ -17,7 +26,9 @@ export function selectLeafFrame(front,key,frame){
  const current=settingFor(front,key),product=hingeProduct(front,key);
  const next=chooseHinge(product.kind,current.push,current.article,frame);
  if(!next)return false;
- (front.hinges??={})[key]={...current,article:next.article};
+ const setting={...current,article:next.article};
+ if(next.brand!=='Blum')delete setting.plate;
+ (front.hinges??={})[key]=setting;
  if(frame==='Z1'&&front.handles?.[key]&&!['118124','118129'].includes(front.handles[key].article)){
   delete front.handles[key];
   if(!Object.keys(front.handles).length)delete front.handles;
@@ -27,11 +38,11 @@ export function selectLeafFrame(front,key,frame){
 const defaultSetting={article:'112595'};
 export const nominalSide=key=>/^door-(?:(?:lower|upper)-)?(left|right)$/.exec(key)?.[1];
 export const compatibleHinge=(hinge,push)=>!push||hinge.closing==='springless';
-export function chooseHinge(kind,push,preferred,frame=hingeCatalogue[preferred]?.frame??'board'){
+export function chooseHinge(kind,push,preferred,frame=hingeCatalogue[preferred]?.frame??'board',brand=frame==='Z1'?'Blum':hingeCatalogue[preferred]?.frame?'AKS':hingeBrand(hingeCatalogue[preferred])){
  const current=hingeCatalogue[preferred];
- if(current?.kind===kind&&(current.frame??'board')===frame&&compatibleHinge(current,push))return current;
+ if(hingeBrand(current)===brand&&current?.kind===kind&&(current.frame??'board')===frame&&compatibleHinge(current,push))return current;
  const score=p=>Number(p.fixing!==(current?.fixing??'screw'))*8+Number(p.closing!==(push?'springless':current?.closing??'soft'))*4+Number(p.series!==current?.series)*2+Number(p.finish==='ONS');
- return Object.values(hingeCatalogue).filter(p=>(p.frame??'board')===frame&&p.kind===kind&&compatibleHinge(p,push))
+ return Object.values(hingeCatalogue).filter(p=>hingeBrand(p)===brand&&(p.frame??'board')===frame&&p.kind===kind&&compatibleHinge(p,push))
   .sort((a,b)=>score(a)-score(b)||a.article.localeCompare(b.article))[0];
 }
 export function settingFor(front,key){
@@ -43,7 +54,7 @@ export function hingeProduct(f,key){
  const setting=settingFor(f,key),p=hingeCatalogue[setting.article];
  if(!p)throw Error('Выберите петлю из каталога для этого фасада.');
  if(!compatibleHinge(p,setting.push))throw Error('Для открывания нажатием выберите петлю без пружины.');
- return p;
+ return withMountingPlate(p,setting.plate);
 }
 export const onDivider=(f,key)=>hingeProduct(f,key).kind==='half'||settingFor(f,key).central===true;
 export const installedSide=(f,key)=>onDivider(f,key)?(nominalSide(key)==='left'?'right':'left'):nominalSide(key);

@@ -3,7 +3,7 @@
 import * as THREE from './vendor/three.module.js';
 import {wallPanels,WALLS} from './room-plan.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
-import {installedSide} from './wardrobe-hinge-layout.mjs';
+import {hingeCatalogue,installedSide} from './wardrobe-hinge-layout.mjs';
 import {doorLabel,doorSide} from './wardrobe-door-layout.mjs';
 
 const rad=Math.PI/180,zero=[0,0,0],epsilon=.00001;
@@ -14,7 +14,8 @@ export const leafKey=it=>it?.assistant_carcass?it.item_id.slice(it.assistant_car
 const mezzSide=it=>/^mezz-door-(left|right)$/.exec(leafKey(it))?.[1];
 export const viewingDoor=it=>doorSide(leafKey(it))||mezzSide(it);
 export const viewingDoorLabel=it=>mezzSide(it)?'Антресоль · '+(mezzSide(it)==='left'?'левый фасад':'правый фасад'):doorLabel(leafKey(it));
-export const angleLimit=it=>it?.blank_front_frame==='Z1'?95:mezzSide(it)?90:maxOpening;
+export const angleLimit=it=>it?.blank_front_frame==='Z1'?95:mezzSide(it)?90:
+ hingeCatalogue[it?.assistant_carcass?.spec?.front?.hinges?.[leafKey(it)]?.article]?.angle??maxOpening;
 export function hingePose(it,degrees){
  const side=mezzSide(it);
  if(side&&it.assistant_carcass.spec.surround?.upper?.opening==='lift'){

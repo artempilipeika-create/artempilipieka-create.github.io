@@ -163,7 +163,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
   ...(spec.surround?['В сборе · '+built.width+' × '+built.envelope.height+' × '+built.depth+' мм']:[]),
   ...(spec.surround?.upper?[spec.surround.upper.frame?'Антресоль · рамка Z1, TIP-ON и петли Blum 70T950A.TL.':spec.surround.upper.opening==='swing'?'Антресоль · TIP-ON и беспружинные петли. Модель петель уточняется.':'Антресоль · TIP-ON и газлифты. Модель подъёмного механизма уточняется.']:[]),
-  ...(hinges.length?[(hinges.some(h=>h.wardrobe_z1_hinge)?'Петли · ':'Петли PRIME · ')+[...new Set(hinges.map(h=>h.article))].join(', ')+' · '+hinges.length+' шт.']:[]),
+  ...(hinges.length?[(hinges.some(h=>h.plate_sku)?'Петли · ':'Петли PRIME · ')+[...new Set(hinges.map(h=>h.article))].join(', ')+' · '+hinges.length+' шт.']:[]),
   spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм · полки короче на '+spec.backThickness+' мм':spec.backMount?backMountLabel(spec.backMount)+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{
    const ends=dividerScheme(spec,i);

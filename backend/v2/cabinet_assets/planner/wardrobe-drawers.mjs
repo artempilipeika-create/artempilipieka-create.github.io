@@ -1,6 +1,6 @@
 import {doorPushGap,leafDepth} from './wardrobe-hinge-layout.mjs';
 import {plateSpan,spacerReachesHinge} from './wardrobe-hinge-fit.mjs';
-import {hingeCatalogue,activeLeafKeys,hingeProduct,settingFor,bandKey,onDivider,insetDepth,depthBehindDoor,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
+import {withMountingPlate,hingeCatalogue,activeLeafKeys,hingeProduct,settingFor,bandKey,onDivider,insetDepth,depthBehindDoor,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
 import {rearClearance} from './panel-machining.mjs';
 import {sectionOf,isRightBank,levelOf,splitAt,columnWidths,nicheSlot} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
@@ -34,7 +34,7 @@ const overlaps=(lo,hi,a,b)=>lo<b&&a<hi;
 export function spacerCuts(bottom,height,axes,side='left',front=Infinity){
  const slots=[];
  for(const entry of [...axes].sort((a,b)=>(a.y??a)-(b.y??b))){
-  const axis=entry.y??entry,fit=hingeCatalogue[entry.article];
+  const axis=entry.y??entry,fit=withMountingPlate(hingeCatalogue[entry.article],entry.plate_sku);
   if(fit&&!spacerReachesHinge(fit,entry.z,front))continue;
   const [a,b]=fit?plateSpan(fit,side):side==='left'?[-25,26]:[-26,25];
   if(!overlaps(bottom,bottom+height,axis+a-(fit?2:0),axis+b+(fit?2:0)))continue;

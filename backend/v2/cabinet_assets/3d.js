@@ -1538,8 +1538,8 @@ function exportBazisProject(){
     payload.format='martin-forest-bazis-native-v21';
     payload.minimum_importer=payload.items.some(it=>it.wardrobe_trim)?'9.9.44':'9.9.42';
   }
-  if(payload.items.some(it=>it.wardrobe_z1_front||it.wardrobe_z1_hinge)){
-    payload.format='martin-forest-bazis-native-v22';payload.minimum_importer='9.9.46';
+  if(payload.items.some(it=>it.wardrobe_z1_front||it.wardrobe_blum_part)){
+    payload.format='martin-forest-bazis-native-v23';payload.minimum_importer='9.9.47';
   }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
@@ -1551,6 +1551,7 @@ function exportBazisProject(){
   const adjusted=payload.items.filter(x=>x.construction?.native_adjustment);
   const guidance=[];
   if(payload.minimum_importer)guidance.push('Для этого файла нужен импортёр БАЗИС '+payload.minimum_importer+' или новее. Скачать его можно в разделе «Инструменты производства».');
+  if(hingeItems.some(it=>it.wardrobe_blum_part))guidance.push('Петли Blum и ответные планки выгружены отдельными деталями. Скачайте актуальный комплект фрагментов в «Инструментах производства».');
   if(hingeItems.some(it=>it.push_install))guidance.push('Типоны AKS и присадка включены в экспорт.');
   if(doorHardware.length)guidance.push('Ручки и профили: '+doorHardware.length+' шт.');
   if(rodItems.length)guidance.push('Штанг с держателями: '+rodItems.length+'.');

@@ -7,7 +7,7 @@ import {assignCabinetBlocks} from './wardrobe-blocks.mjs';
 import {nativeDoorHardware,boardProfileCuts,horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
 import {nativeRods} from './wardrobe-rods.mjs';
 import {installedCuts,wardrobeHardware} from './wardrobe-aks-native.mjs';
-import {doorHinges,doorPush} from './wardrobe-hinges.mjs';
+import {nativeDoorHinges,doorPush} from './wardrobe-hinges.mjs';
 import {nativeFeet} from './wardrobe-feet.mjs';
 import {normalizeBlank,validateBlank,cuttingSize} from './blanks-model.mjs';
 import {glassShelves} from './shelf-donors.mjs';
@@ -60,4 +60,4 @@ function nativeItems(items,lookup){
  }
  return rows;
 }
-globalThis.MF_BLANKS_NATIVE={alignSavedTrimReturns,assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>[...doorHinges(it,items),...doorPush(it,items)]),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems};
+globalThis.MF_BLANKS_NATIVE={alignSavedTrimReturns,assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>[...nativeDoorHinges(it,items),...doorPush(it,items)]),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems};

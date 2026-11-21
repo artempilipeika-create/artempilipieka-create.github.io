@@ -112,7 +112,9 @@ DOOR_HARDWARE = json.loads((ASSETS/'wardrobe-handle-catalogue.json').read_text()
 PRIME_HINGES = {p['article']:p for p in json.loads((ASSETS/'wardrobe-prime-hinges.json').read_text())}
 Z1_DATA = json.loads((ASSETS/'wardrobe-z1-data.json').read_text())
 Z1_HINGES = {p['article']:p for p in Z1_DATA['hinges']}
-DOOR_HINGES = PRIME_HINGES | Z1_HINGES
+BLUM_BOARD_HINGES = {p['article']:p for p in Z1_DATA['boardHinges']}
+BLUM_PLATES = {(p['sku'],p['finish']):p for p in Z1_DATA['plates']}
+DOOR_HINGES = PRIME_HINGES | BLUM_BOARD_HINGES | Z1_HINGES
 
 
 def z1_hinge_count(width,height,mass=None):
@@ -229,6 +231,7 @@ class DoorPushSetting(StrictModel):
 
 class DoorHingeSetting(StrictModel):
     article: str
+    plate: Literal['175H3100','173H7100'] | None = Field(default=None,exclude_if=lambda v:v is None)
     recess: int | None = Field(default=None,ge=0,le=1140,strict=True,exclude_if=lambda v:v is None)
     central: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     push: DoorPushSetting | Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -237,6 +240,8 @@ class DoorHingeSetting(StrictModel):
     def match_article(self):
         product=DOOR_HINGES.get(self.article)
         if not product:raise ValueError('Выберите петлю из каталога для этого фасада.')
+        if self.plate and (self.plate,product.get('finish')) not in BLUM_PLATES:
+            raise ValueError('Выберите ответную планку Blum в отделке петли.')
         if (self.recess is not None or self.central) and product['kind']!='inset':
             raise ValueError('Утопление и выбор стойки задаются для вкладной двери.')
         if self.push and product['closing']=='reverse':
@@ -466,11 +471,14 @@ class SurroundUpper(StrictModel):
     leaves: Literal[1,2]
     side: Literal['left','right']
     opening: Literal['swing','lift']
+    plate: Literal['175H3100','173H7100'] | None = Field(default=None,exclude_if=lambda v:v is None)
     frame: Literal['Z1'] | None = Field(default=None,exclude_if=lambda v:v is None)
     push: DoorPushSetting
 
     @model_validator(mode='after')
     def matching_hinges(self):
+        if self.plate and not self.frame:
+            raise ValueError('Ответная планка Blum антресоли требует рамочного фасада.')
         if self.frame and self.opening!='swing':
             raise ValueError('Для петель рамки Z1 выберите распашную антресоль.')
         return self
