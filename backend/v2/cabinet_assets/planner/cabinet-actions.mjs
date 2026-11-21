@@ -7,9 +7,9 @@ export const cabinetId=item=>item?.assistant_carcass?.group_id;
 export const isInterior=item=>Boolean(cabinetId(item)&&/^(shelf-|divider-|drawer-|niche-)/.test(item.item_id.slice(cabinetId(item).length+1)));
 
 export function cabinetEnvelope(meta){
- const {width,height,depth}=surroundLayout(meta.spec);
+ const {width,height,depth,minY}=surroundLayout(meta.spec);
  return {...meta.position,item_id:meta.group_id,module_type:'blank',name:'Шкаф',base:'wall',
-   width,height,depth};
+   width,height:height-minY,depth,elevation_mm:meta.position.elevation_mm+minY};
 }
 
 export function cabinetChange(adapter,id,offset){

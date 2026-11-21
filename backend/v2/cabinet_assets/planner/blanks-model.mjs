@@ -47,14 +47,18 @@ export function validateBlank(input,room,mount=input.assistant_carcass?.spec.bac
   const key=input.item_id?.split(':').at(-1);
   const hdf=mount?.layout&&key==='back'&&b.axis==='back';
   const fittedWidth=mount?.layout&&['top','bottom','left','right','back'].includes(key);
-  const trimFace=/^trim-(left|right)-face$/.test(key);
+  const sidePart=/^trim-(left|right)(?:-([2-9]|[1-9]\d+))?-(face|return|end)$/.exec(key);
+  const trimFace=sidePart?.[3]==='face'&&b.axis==='back';
+  const trimPost=sidePart&&sidePart[3]!=='face'&&b.axis==='side';
+  if((sidePart?.[2]||input.assistant_carcass?.spec?.surround?.[sidePart?.[1]]?.split)&&
+    (trimFace||trimPost)&&(trimFace?b.width:b.length)>2780)return 'Длина одной части боковой планки не может превышать 2780 мм.';
   const minWidth=key==='trim-cap-upright'?22:40;
   const minLength=trimFace||drawerSide(input.item_id)||input.blank_edge_pull?40:100;
   const drawerFace=b.axis==='front'&&(input.blank_edge_pull||drawerMember(input.item_id,'\\d+-face'));
   const precise=value=>Number.isFinite(value)&&Math.abs(value*1000-Math.round(value*1000))<.000001;
   const door=b.axis==='front'&&/:(?:mezz-door-|door-(?:(?:lower|upper)-)?)(?:left|right)$/.test(input.item_id??'');
-  if(!(drawerFace?precise(b.length):Number.isInteger(b.length*(door||post||hdf?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
-  if(!Number.isInteger(b.width*(fittedWidth||b.axis==='front'||b.axis==='side'&&input.blank_machining?.some(op=>op.kind==='rabbet')?2:1))||b.width<minWidth||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от '+minWidth+' до '+(b.axis==='back'?3000:1200)+' мм.';
+  if(!(drawerFace||trimPost?precise(b.length):Number.isInteger(b.length*(door||post||hdf?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
+  if(!(trimFace?precise(b.width):Number.isInteger(b.width*(fittedWidth||b.axis==='front'||b.axis==='side'&&input.blank_machining?.some(op=>op.kind==='rabbet')?2:1)))||b.width<minWidth||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от '+minWidth+' до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
   if(input.assistant_carcass?.spec?.backThickness&&input.item_id===input.assistant_carcass.group_id+':back'&&(b.axis!=='back'||b.code!==blankEdgeCode(input,'0000')||b.thickness!==input.assistant_carcass.spec.backThickness))return 'Проверьте толщину вкладной задней стенки и кромку вдоль выборки.';
@@ -78,7 +82,7 @@ export function validateBlank(input,room,mount=input.assistant_carcass?.spec.bac
   if(!glass&&!thinBack&&!thinBottom&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
-  if(!(drawerFace?precise(b.elevation):Number.isInteger(b.elevation*(b.axis==='front'||post||hdf||input.blank_binding?.gola_flush?2:1)))||b.elevation<0||b.elevation>5000)return 'Проверьте высоту низа детали в мм.';
+  if(!(drawerFace||trimFace||trimPost?precise(b.elevation):Number.isInteger(b.elevation*(b.axis==='front'||post||hdf||input.blank_binding?.gola_flush?2:1)))||b.elevation<0||b.elevation>5000)return 'Проверьте высоту низа детали в мм.';
   if(!Number.isFinite(b.edgeThickness)||b.edgeThickness<0.4||b.edgeThickness>3)return 'Толщина ПВХ: от 0,4 до 3 мм.';
   const d=geometryFromBlank(b.length,b.width,b.thickness,b.axis);
   const hardwareError=hookError({...input,...d,blank_axis:b.axis});

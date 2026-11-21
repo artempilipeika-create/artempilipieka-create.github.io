@@ -30,7 +30,6 @@
 #planner-assistant-dialog .shelf-options select{font-size:12px;padding:3px}
 #planner-assistant-dialog .shelf-schedule{font-size:12px;margin-bottom:0}
 #planner-assistant{display:inline-flex!important}
-#planner-assistant-dialog.surround-sides{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px}
 .surround-section{min-width:0;margin:10px 0;padding:12px;border:1px solid #c6d4cc;border-radius:8px}
 .surround-section legend{padding:0 5px;font-weight:650}
 .surround-section p{font-size:.88em;line-height:1.45;color:#455f54}
@@ -253,3 +252,43 @@
 .wardrobe-prime-cards figure{margin:0;display:block}
 .wardrobe-prime-cards img{display:block;width:100%;height:75px;object-fit:contain;margin-bottom:.45rem}
 .wardrobe-prime-cards figcaption{display:block;font-size:.87rem;line-height:1.35;overflow-wrap:anywhere}
+
+#planner-assistant-dialog.assistant-wizard{
+ width:min(1660px,calc(100vw - 40px));height:94dvh;max-height:94dvh;
+ padding:clamp(16px,1.7vw,28px);
+}
+#planner-assistant-dialog .surround-sides{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;
+}
+#planner-assistant-dialog .surround-sides .surround-section{margin:0;align-content:start}
+#planner-assistant-dialog .wardrobe-height-result,#planner-assistant-dialog [data-trim-result]:not(:empty){
+ padding:9px 12px;border-left:3px solid #497462;background:#eef4ef;color:#223f32;font-variant-numeric:tabular-nums;
+}
+@media(min-width:801px){
+ #planner-assistant-dialog .assistant-grid,#planner-assistant-dialog[data-cell-view] .assistant-grid{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(18px,2vw,36px);
+ }
+ #planner-assistant-dialog .assistant-visuals{order:-1}
+ #planner-assistant-dialog .assistant-drawing,#planner-assistant-dialog[data-cell-view] .assistant-drawing{
+  grid-template-rows:auto clamp(340px,58dvh,720px) auto auto;
+ }
+ #planner-assistant-dialog .assistant-visuals:has(.wardrobe-live:not([hidden])) .assistant-drawing{
+  grid-template-rows:auto clamp(200px,28dvh,340px) auto auto;
+ }
+}
+@media(max-width:800px){
+ #planner-assistant-dialog.assistant-wizard{width:calc(100vw - 12px);height:96dvh;max-height:96dvh;padding:12px;scrollbar-gutter:auto}
+ #planner-assistant-dialog .assistant-grid,#planner-assistant-dialog[data-cell-view] .assistant-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+ #planner-assistant-dialog .assistant-visuals{order:-1;position:static}
+ #planner-assistant-dialog .assistant-drawing,#planner-assistant-dialog[data-cell-view] .assistant-drawing{min-height:0;grid-template-rows:auto clamp(165px,30dvh,265px) auto}
+ #planner-assistant-dialog .assistant-drawing p:last-child{display:none}
+}
+#planner-assistant-dialog.assistant-wizard[data-zoom]{width:calc(100vw - 12px);height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);padding:12px}
+#planner-assistant-dialog[data-zoom]>:not(.assistant-grid),
+#planner-assistant-dialog[data-zoom] :is(.assistant-fields,.wardrobe-live){display:none}
+#planner-assistant-dialog[data-zoom] .assistant-grid,#planner-assistant-dialog[data-zoom] .assistant-visuals{display:block;position:static}
+#planner-assistant-dialog[data-cell-view][data-zoom] .assistant-drawing{
+ height:calc(100dvh - 40px);min-height:0;grid-template-rows:auto minmax(0,1fr) auto;
+}
+#planner-assistant-dialog[data-zoom] .assistant-drawing p:last-child{display:none}
+#planner-assistant-dialog .cell-figure-head .cell-zoom{padding:7px 11px;min-height:34px;font-size:13px;flex-shrink:0}

@@ -292,7 +292,7 @@ export function buildCarcass(input={},options={}){
     add('back','Задняя стенка ХДФ 3 мм','back',rightEdge-leftEdge,upper-lower,3,(rightEdge+leftEdge)/2,lower,z,'0000');
   }
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
-  const envelope=surroundLayout(s);
+  const envelope=surroundLayout(s,{doors:leaves,banks});
   const extras=surroundParts(s,envelope,prefix,options);
   parts.push(...extras);
   if(s.surround?.upper){

@@ -61,3 +61,57 @@ def test_web_schedule_uses_the_native_two_end_offsets_and_explicit_intervals():
             assert not rows and '2800' in note and '39319' in note
         else:
             assert [r['qty'] for r in rows]==[expected,expected]
+
+
+def test_schedule_counts_each_side_segment_once_at_its_own_length():
+    from backend.v2.three_d_document import hardware_for
+
+    quantities=Counter()
+    for owner in ('first','second'):
+        for side in ('left','right'):
+            for number,length in enumerate((100,800.25,400.25),1):
+                key='trim-'+side+('' if number==1 else '-'+str(number))
+                for role in ('face','return') if side=='left' else ('end',):
+                    panel={'item_id':f'{owner}:{key}-{role}','module_type':'blank','height':length,
+                           'blank_axis':'back' if role=='face' else 'side',
+                           'assistant_carcass':{'group_id':owner,'spec':{'surround':{'left':{'kind':'filler'},'right':{'kind':'end'}}}}}
+                    rows,_=hardware_for(panel)
+                    expected=(1,3,2)[number-1] if role=='face' else 0
+                    assert [(r['article'],r['qty']) for r in rows]==([('',expected),('39319',expected)] if expected else [])
+                    for row in rows:
+                        quantities[row['article']]+=row['qty']
+    assert quantities=={'':12,'39319':12}
+
+
+@pytest.mark.parametrize('hand',['Left','Right'])
+def test_shortest_segment_accommodates_every_boring_in_a_native_cam_and_dowel_pair(tmp_path,hand):
+    path=tmp_path/('MF_Trim_'+hand+'.fr3d')
+    with ZipFile(BytesIO(kit_bytes())) as kit:
+        path.write_bytes(kit.read('Martin Forest AKS/'+path.name))
+    tree=fr.load(path)
+    definitions={fr.vals(n)['FastID']:n for n in fr.child(tree,'FurnList')['children']}
+    by_fitting={'cam':[],'dowel':[]}
+    for native,matrix,_ in fr.walk(fr.child(tree,'Model')):
+        obj=fr.vals(native)
+        if obj.get('Type')!=3001:
+            continue
+        bore_bounds=[]
+        for hole in fr.child(definitions[obj['FastID']],'Holes')['children']:
+            h=fr.vals(hole)
+            y=(matrix@[h['X'],h['Y'],h['Z'],1])[1]
+            dy=(matrix[:3,:3]@[h['DirX'],h['DirY'],h['DirZ']])[1]
+            assert dy==pytest.approx(0,abs=1e-6)
+            bore_bounds.append((y-h['Radius'],y+h['Radius']))
+        kind='dowel' if '39319' in obj['Name'] else 'cam'
+        by_fitting[kind].append((y,bore_bounds))
+    cam=min(by_fitting['cam'],key=lambda v:v[0])
+    dowel=min(by_fitting['dowel'],key=lambda v:v[0])
+    spacing=dowel[0]-cam[0]
+    assert spacing==pytest.approx(32)
+    # At a 100 mm joint the native symmetric scheme has one central main
+    # fastener. Translate its measured shop drilling to that axis and check
+    # all five bores, including the +/-32 mm companion on either end.
+    shift=50-cam[0]
+    for low,high in cam[1]+dowel[1]:
+        assert low+shift>0 and high+shift<100
+    assert min(100-high-shift for _,high in dowel[1])==pytest.approx(14)

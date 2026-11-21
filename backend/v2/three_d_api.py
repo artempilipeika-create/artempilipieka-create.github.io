@@ -7,7 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
-from .assistant_model import AssistantCarcass, InsetEdgeGrip, PanelCutList, ShelfValue, shelf_valid
+from .assistant_model import AssistantCarcass, DOOR_HARDWARE, InsetEdgeGrip, PanelCutList, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
 from .domain_api import require,create_draft
@@ -131,7 +131,7 @@ class FurnitureItem(StrictModel):
     back_variant_id: UUID|None=None
     # Individual rectangular board; no inferred cabinet or fabricated BAZIS geometry.
     blank_length_mm: int|float|None=Field(default=None,ge=40,le=3000)
-    blank_width_mm: int|float|None=Field(default=None,ge=22,le=3000,multiple_of=0.5)
+    blank_width_mm: int|float|None=Field(default=None,ge=22,le=3000)
     blank_thickness_mm: int|None=Field(default=None,ge=3,le=40)
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back','front']|None=None
@@ -157,6 +157,23 @@ class FurnitureItem(StrictModel):
     def separated_heights(self):
         group=self.assistant_carcass
         key=self.item_id.removeprefix(str(group.group_id)+':') if group else ''
+        trim=re.fullmatch(r'trim-(left|right)(?:-([2-9]|[1-9][0-9]+))?-(face|return|end)',key)
+        trim_side=getattr(group.spec.surround,trim[1],None) if trim and group and self.item_id.startswith(str(group.group_id)+':') else None
+        split_trim=bool(trim_side and trim_side.split and self.module_type=='blank' and self.blank_thickness_mm==18 and (
+            trim_side.kind=='filler' and (trim[3],self.blank_axis) in (('face','back'),('return','side')) or
+            trim_side.kind=='end' and (trim[3],self.blank_axis)==('end','side')))
+        if trim and (trim[2] or trim_side and trim_side.split) and not split_trim:
+            raise ValueError('Часть боковой планки должна соответствовать делению выбранной стороны.')
+        # In the back orientation the board's local width is its installed vertical length.
+        # A custom start, height or finished external drawer can put either end on a thousandth.
+        split_scale=1000
+        def on_grid(value,scale):
+            scaled=(value or 0)*scale
+            return abs(scaled-round(scaled))<1e-6 if scale==1000 else scaled%1==0
+        if not on_grid(self.blank_width_mm,split_scale if split_trim and self.blank_axis=='back' else 2):
+            raise ValueError('Проверьте точность ширины заготовки.')
+        if split_trim and (not 100<=self.height<=2780 or any(not on_grid(v,split_scale) for v in (self.height,self.body_height,self.blank_length_mm,self.elevation_mm))):
+            raise ValueError('Проверьте точность раскроя и высоту каждой части боковой планки от 100 до 2780 мм.')
         mount=group.spec.backMount if group else None
         preset=bool(mount and mount.layout)
         hdf=bool(preset and key=='back' and self.blank_axis=='back')
@@ -222,7 +239,7 @@ class FurnitureItem(StrictModel):
         if post and any(v*2%1 for v in vertical):raise ValueError('Шаг размеров стойки 0,5 мм.')
         if hdf and any(v*2%1 for v in vertical):
             raise ValueError('Шаг размеров задней стенки 0,5 мм.')
-        if not fitted and not door and not post and not hdf and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
+        if not fitted and not door and not post and not hdf and not split_trim and (self.height%1 or (self.body_height or 0)%1 or (self.blank_length_mm or 0)%1 or ((self.elevation_mm or 0)*2)%1):
             raise ValueError('Проверьте точность размеров детали.')
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')
@@ -233,7 +250,9 @@ class FurnitureItem(StrictModel):
                 grip.check_size(self.width,self.height,group.spec.front.hinge_side(key) if door else None)
         else:
             fitted_width=(preset and key in ('left','right','bottom','top','back')) or (key=='right' and mount and mount.kind=='rabbet')
-            if self.width*(2 if hdf else 1)%1 or (self.blank_width_mm or 0)*(2 if fitted_width else 1)%1 or (self.elevation_mm or 0)*(2 if post or flush or hdf else 1)%1:
+            width_step=split_scale if split_trim and self.blank_axis=='back' else 2 if fitted_width else 1
+            elevation_step=split_scale if split_trim else 2 if post or flush or hdf else 1
+            if self.width*(2 if hdf else 1)%1 or not on_grid(self.blank_width_mm,width_step) or not on_grid(self.elevation_mm,elevation_step):
                 raise ValueError('Проверьте точность размеров детали корпуса.')
         if self.assistant_carcass and self.assistant_carcass.spec.backThickness and self.item_id==str(self.assistant_carcass.group_id)+':back':
             expected_edges=''.join('1' if i in required_edges else '0' for i in range(4))
@@ -280,7 +299,7 @@ class FurnitureItem(StrictModel):
                         raise ValueError('Для шуфляды PRIME нужна плита 18 мм.')
                     if banks[section].railFamily=='concealed' and drawer[3] in ('bottom','side-left','side-right') and w not in (290,340,390,440,490,540):
                         raise ValueError('Глубина детали PRIME должна соответствовать выбранной длине направляющей.')
-            trim_face=group and group.spec.surround and key in ('trim-left-face','trim-right-face') and self.blank_axis=='back'
+            trim_face=group and group.spec.surround and (key in ('trim-left-face','trim-right-face') or split_trim and trim[3]=='face') and self.blank_axis=='back'
             cap_upright=group and group.spec.surround and group.spec.surround.cap and key=='trim-cap-upright' and self.blank_axis=='back'
             if w<40 and not cap_upright:
                 raise ValueError('Ширина заготовки от 40 мм.')
@@ -585,6 +604,60 @@ class PresentationView(StrictModel):
 class AlbumSettings(StrictModel):
     order_number: str=Field(default='',max_length=60)
 
+def _validate_trim_facade_levels(items):
+    """The first side segment must reach the lowest finished exterior front on that side."""
+    from .blank_bindings import local_point
+    groups={}
+    for panel in items:
+        meta=panel.assistant_carcass
+        surround=meta and meta.spec.surround
+        if not surround or not any(s and s.start=='facade' for s in (surround.left,surround.right)):
+            continue
+        prefix=str(meta.group_id)+':'
+        if panel.item_id.startswith(prefix):
+            groups.setdefault(meta.group_id,{})[panel.item_id[len(prefix):]]=panel
+    for parts in groups.values():
+        meta=next(iter(parts.values())).assistant_carcass
+        spec=meta.spec
+        widths=spec.clear_widths()
+        fronts=[]
+        for key,panel in parts.items():
+            if panel.blank_axis!='front':
+                continue
+            drawer=re.fullmatch(r'drawer-(\d+)-\d+-face',key)
+            if drawer:
+                banks=spec.drawerBanks or []
+                slot=int(drawer[1])
+                if slot>=len(banks) or not banks[slot] or banks[slot].kind!='external':
+                    continue
+            elif not re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key):
+                continue
+            x,_=local_point(panel,panel.rotation)
+            grip=panel.blank_edge_pull
+            rise=DOOR_HARDWARE[grip.article]['edgeRise'] if grip else 0
+            edge=grip.edge if grip else None
+            fronts.append((x-panel.width/2-(rise if edge=='left' else 0),
+                           x+panel.width/2+(rise if edge=='right' else 0),
+                           (panel.elevation_mm or 0)-(rise if edge=='bottom' else 0)))
+        for side,sign,span in [('left',1,widths[0]),('right',-1,widths[-1])]:
+            setting=getattr(spec.surround,side)
+            if not setting or setting.start!='facade' or side not in parts:
+                continue
+            outer=parts[side]
+            first=parts.get(f'trim-{side}-'+('end' if setting.kind=='end' else 'face'))
+            if not first:
+                continue
+            x,_=local_point(outer,outer.rotation)
+            probe=x+sign*(outer.width/2+span/4)
+            floors=[y for lo,hi,y in fronts if lo<=probe<=hi]
+            if not floors:
+                raise ValueError('У выбранной боковины отсутствует наружный фасад нижнего корпуса.')
+            floor=min(floors)
+            if abs((first.elevation_mm or 0)-floor)>.00001:
+                raise ValueError('Низ боковой детали должен совпадать с готовым фасадом у выбранной боковины.')
+            spec.check_side_limits(setting,*spec.side_limits(setting,facade_floor=floor))
+
+
 class Scene(StrictModel):
     # Legacy single-module fields stay accepted so previously saved projects remain readable.
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity','blank']='chest'
@@ -617,6 +690,7 @@ class Scene(StrictModel):
     def wall_finish_placement(self):
         from .blank_bindings import validate_bindings
         validate_bindings(self.items)
+        _validate_trim_facade_levels(self.items)
         if self.module_type!='blank' and (self.width<150 or self.height<250 or self.depth<200):
             raise ValueError('Размер меньше допустимого для модуля')
         if self.upperMountingRule == 'worktop600':

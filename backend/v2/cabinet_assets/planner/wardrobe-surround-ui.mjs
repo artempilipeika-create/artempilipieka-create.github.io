@@ -1,11 +1,12 @@
 import {footHeight} from './plinth-options.mjs';
 import {trimSides,upperPush} from './wardrobe-surround.mjs';
+import {lowerBodyHeight,savedTrimExtension} from './wardrobe-trim-layout.mjs';
 import {aksPushProductControls} from './wardrobe-push-product-ui.mjs';
 
 const el=(tag,text)=>Object.assign(document.createElement(tag),{textContent:text??''});
-function number(ui,box,label,obj,key,min,max){
+function number(ui,box,label,obj,key,min,max,step='1'){
  const wrap=el('label',label),input=el('input');
- Object.assign(input,{type:'number',min:String(min),max:String(max),step:'1',value:String(obj[key])});
+ Object.assign(input,{type:'number',min:String(min),max:String(max),step,value:String(obj[key])});
  input.setAttribute('aria-label',label);
  input.oninput=()=>{obj[key]=input.valueAsNumber;ui.changed();};
  wrap.append(input);box.append(wrap);
@@ -21,16 +22,34 @@ function toggle(ui,box,label,checked,change){
 function select(ui,box,label,options,value,change){
  ui.select(box,label,options,value,next=>{change(next);ui.changed(true);});
 }
+const mm=value=>Number(value.toFixed(3)).toLocaleString('ru-RU',{useGrouping:false,maximumFractionDigits:3});
+export function heightControl(ui){
+ ui.number('overallHeight','Общая высота шкафа от пола, мм',200,5000);
+ const result=el('p');result.className='wardrobe-height-result';result.dataset.bodyHeight='';ui.form.append(result);
+}
+export function updateHeights(ui,built){
+ const f=ui.fields,h=lowerBodyHeight(f),body=ui.form.querySelector('[data-body-height]');
+ if(body){
+  const names=[['установка',f.elevation],['опоры',footHeight(f)],['антресоль',f.surround?.upper?.height],['закладная',f.surround?.cap?.height]].filter(([,n])=>n);
+  const extension=savedTrimExtension(f);
+  if(extension)names.push(['выступ планки над шкафом',extension]);
+  body.textContent=Number.isFinite(h)?'Основной корпус '+mm(h)+' мм'+(names.length?' · '+mm(f.overallHeight)+names.map(([label,n])=>' − '+mm(n)+' ('+label+')').join('')+' = '+mm(h)+' мм':''):'Введите высоту шкафа и его элементов.';
+ }
+ for(const side of trimSides){
+  const result=ui.form.querySelector('[data-trim-result="'+side+'"]'),t=built?.envelope.sides[side];
+  if(result)result.textContent=t?'Отметки от пола '+mm(t.bottom+built.spec.elevation)+'–'+mm(t.bottom+t.h+built.spec.elevation)+' мм · в раскрой '+t.pieces.map(p=>mm(p.height)).join(' + ')+' мм':'';
+ }
+}
 export function surroundControls(ui){
- const fields=ui.fields,a=fields.surround??={},bodyTop=fields.height+footHeight(fields),floor=fields.elevation??0;
- ui.form.append(el('p','Основной шкаф · ширина '+fields.width+' мм · от пола до крыши '+(bodyTop+floor)+' мм'));
+ const fields=ui.fields,a=fields.surround??={};
+ heightControl(ui);
  const grid=el('div');grid.className='surround-sides';ui.form.append(grid);
  for(const side of trimSides){
   const box=section(grid,side==='left'?'Слева':'Справа'),t=a[side];
   select(ui,box,'Исполнение '+(side==='left'?'слева':'справа'),[['none','Без планки'],['filler','Г-образная фальшпланка'],['end','Торцевая стойка']],t?.kind??'none',v=>{
    if(v==='none'){delete a[side];return;}
-   const placement=t?{heightMode:t.heightMode,bottom:t.bottom,...(t.heightMode==='custom'?{height:t.height}:{})}
-    :v==='end'?{heightMode:'full',bottom:0}:{heightMode:'custom',height:Math.min(2000,bodyTop),bottom:0};
+   const placement=t?{heightMode:t.heightMode,bottom:t.bottom,start:t.start,split:t.split,...(t.heightMode==='custom'?{height:t.height}:{})}
+    :{heightMode:'assembly',start:'floor',split:'auto',bottom:0};
    a[side]=v==='end'?{kind:v,depth:100,projection:20,...placement}:{kind:v,width:100,...placement};
   });
   if(!t)continue;
@@ -39,16 +58,25 @@ export function surroundControls(ui){
    number(ui,box,'Глубина торцевой стойки, мм',t,'depth',40,1200);
    number(ui,box,'Выступ от переднего торца боковины, мм',t,'projection',0,300);
   }
-  select(ui,box,'Высота боковой детали',[['custom','Своя высота'],['body','До крыши основного шкафа'],['full',a.upper?'До верха антресоли':'До верха шкафа в сборе']],t.heightMode,v=>{
-   const roof=fields.height+footHeight(fields)+(t.heightMode==='full'?(a.upper?.height??0):0);
-   t.heightMode=v;if(v==='custom')t.height=Math.max(100,roof-t.bottom);else delete t.height;
+  select(ui,box,'Нижний край планки',[['floor','От пола'],['plinth','От уровня опор (низ корпуса)'],['plinthEdge','По верхней кромке цоколя'],['facade','По нижней кромке фасада'],['custom','Своя отметка от пола']],t.start,v=>{
+   if(v==='custom'){
+    const previous=ui.previewBuilt?.envelope.sides[side];
+    t.bottom=previous?previous.bottom+(fields.elevation??0):t.bottom??0;
+   }else t.bottom=0;
+   t.start=v;
   });
-  if(t.heightMode==='custom')number(ui,box,'Высота детали, мм',t,'height',100,3000);
-  number(ui,box,fields.elevation?'Низ от уровня установки, мм':'Низ детали от пола, мм',t,'bottom',0,4900);
+  if(t.start==='custom')number(ui,box,'Нижняя отметка от пола, мм',t,'bottom',0,4900,'0.001');
+  select(ui,box,'Высота боковой детали',[['assembly','По высоте шкафа в сборе'],['body','До крыши основного шкафа'],['full','До верха корпуса с антресолью'],['custom','Своя высота']],t.heightMode,v=>{
+   if(v==='custom')t.height=ui.previewBuilt?.envelope.sides[side]?.h??Math.max(100,fields.height);else delete t.height;
+   t.heightMode=v;
+  });
+  if(t.heightMode==='custom')number(ui,box,'Высота детали, мм',t,'height',100,5000,'0.001');
+  select(ui,box,'Стык планки',[['auto','Авто · цельная до 2780 мм'],['joint','По стыку с антресолью',!a.upper],['equal','На равные части']],t.split,v=>{t.split=v;});
+  const result=el('p');result.dataset.trimResult=side;box.append(result);
  }
  const upper=section(ui.form,'Антресоль сверху');
  toggle(ui,upper,'Добавить отдельный модуль антресоли',Boolean(a.upper),on=>{
-  if(on)a.upper={height:540,divider:false,leaves:2,side:'left',opening:fields.width/2-3>600?'lift':'swing',push:upperPush()};else delete a.upper;
+  if(on)a.upper={height:540,divider:false,leaves:2,side:'left',opening:fields.width/2-3>600?'lift':'swing',push:upperPush()};else{delete a.upper;for(const side of trimSides)if(a[side]?.split==='joint')a[side].split='auto';}
  });
  if(a.upper){
   number(ui,upper,'Высота модуля, мм',a.upper,'height',150,1500);
@@ -59,7 +87,10 @@ export function surroundControls(ui){
  toggle(ui,cap,'Добавить потолочную закладную',Boolean(a.cap),on=>{if(on)a.cap={height:80};else delete a.cap;});
  if(a.cap){
   number(ui,cap,'Высота закладной, мм',a.cap,'height',40,1200);
-  select(ui,cap,'Длина закладной',[['body','По корпусу · '+fields.width+' мм'],['custom','Своя длина']],a.cap.length==null?'body':'custom',v=>{if(v==='custom')a.cap.length=fields.width;else delete a.cap.length;});
+  select(ui,cap,'Длина закладной',[['body','Между планками · по ширине корпуса'],['over','Поверх боковых планок'],['custom','Своя длина по центру']],a.cap.fit==='over'?'over':a.cap.length==null?'body':'custom',v=>{
+   if(v==='custom')a.cap.length=ui.previewBuilt?.envelope.capLength??fields.width;else delete a.cap.length;
+   if(v==='over')a.cap.fit='over';else delete a.cap.fit;
+  });
   if(a.cap.length!=null)number(ui,cap,'Длина по центру шкафа, мм',a.cap,'length',100,3000);
   cap.append(el('p',a.upper?'На крыше антресоли, лицевая планка вровень с закрытыми фасадами.':'На крыше основного шкафа, лицевая планка вровень с закрытым фасадом.'));
  }

@@ -88,3 +88,58 @@ test('right and left native trims stay separate across cupboards and detached re
  const second=boards.find(p=>p.item_id==='b:trim-right-return');second.z+=2;
  assert.throws(()=>nativeTrimRows(boards,lookup),/взаимное положение/);
 });
+
+test('independent native trim segments keep their quarter-millimetre cuts, labels, materials and workshop joints',async()=>{
+ const {buildCarcass,placeCarcass}=await import('../../backend/v2/cabinet_assets/planner/carcass-model.mjs');
+ const {nativeTrimRows}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-trim-native.mjs');
+ const lookup=id=>({name:id,thickness:18});
+ for(const rotation of [0,90,180,270]){
+  const boards=[];
+  const heights=[100,800.25,400.25];
+  for(const [owner,fillerSide] of [['A','left'],['B','right']]){
+   const endSide=fillerSide==='left'?'right':'left';
+   const surround={[fillerSide]:{kind:'filler',width:112},[endSide]:{kind:'end',depth:150,projection:20}};
+   const built=buildCarcass({recipe:'shelves',width:1000,height:1900,depth:600,surround},
+    {idPrefix:owner,name:owner,frontMaterialId:'F',bodyMaterialId:'B'});
+   const originals=placeCarcass(built,{x:owner==='A'?500:1700,z:765,elevation_mm:31,rotation});
+   for(const original of originals.filter(p=>p.item_id.includes(':trim-'))){
+    const [,side,role]=original.item_id.split(':trim-')[1].match(/^(left|right)-(face|return|end)$/);
+    let bottom=32.5;
+    for(const [i,height] of heights.entries()){
+     const ordinal=i+1,stem=(side==='left'?'Левая':'Правая')+(role==='end'?' торцевая стойка':' фальшпланка');
+     const name=stem+' · часть '+ordinal+({face:' · глухой фасад',return:' · боковая проставка',end:''})[role];
+     const key='trim-'+side+(i?'-'+ordinal:'')+'-'+role;
+     boards.push({...original,item_id:owner+':'+key,name:owner+' · '+name,height,
+      [role==='face'?'blank_width_mm':'blank_length_mm']:height,elevation_mm:bottom,
+      body_variant_id:owner+key,production_note:'Метка '+owner+key,assistant_carcass:{group_id:owner,name:owner,spec:built.spec}});
+     bottom+=height;
+    }
+   }
+  }
+  const rows=[...nativeTrimRows(boards,lookup).values()].filter(Boolean);
+  assert.equal(rows.length,12);assert.equal(assignCabinetBlocks(rows,boards),12);
+  for(const row of rows){
+   const ref=boards.find(p=>p.item_id===row.host_blank_id);
+   const [,side,label,role]=ref.item_id.split(':trim-')[1].match(/^(left|right)(?:-(\d))?-(face|end)$/);
+   const index=Number(label||1)-1,owner=ref.assistant_carcass.group_id,trim=row.wardrobe_trim;
+   assert.equal(row.cabinet_block.name,owner);
+   assert.equal(row.target.height,heights[index]);assert.equal(row.position.y,[32.5,132.5,932.75][index]);
+   assert.equal(row.rotation,rotation);assert.match(row.name,new RegExp('часть '+(index+1)+'$'));
+   assert.equal(row.source_file,role==='end'?'MF_Trim_End.fr3d':side==='left'?'MF_Trim_Left.fr3d':'MF_Trim_Right.fr3d');
+   assert.equal(trim.expected_pairs,role==='end'?0:[1,3,2][index]);
+   assert.deepEqual(trim.panels.map(p=>p.role),role==='end'?['end']:['face','return']);
+   for(const p of trim.panels){
+    const board=boards.find(it=>it.item_id===p.blank_item_id);
+    assert.equal(p.name,board.name.slice((owner+' · ').length));
+    assert.equal(p.material.name,board.body_variant_id);
+    assert.equal(p.production_note,board.production_note);assert.ok(row.production_note.includes(board.production_note));
+   }
+  }
+  const incomplete=boards.filter(p=>p.item_id!=='A:trim-left-2-return');
+  assert.throws(()=>nativeTrimRows(incomplete,lookup),/часть 2 — неполный комплект/);
+  const unsafe=boards.map(p=>p.item_id==='A:trim-left-face'?{...p,height:99.75}:p);
+  assert.throws(()=>nativeTrimRows(unsafe,lookup),/часть 1 — высота одной детали.*100/);
+  const shifted=boards.map(p=>p.item_id==='A:trim-left-2-return'?{...p,elevation_mm:p.elevation_mm+.25}:p);
+  assert.throws(()=>nativeTrimRows(shifted,lookup),/часть 2.*взаимное положение/);
+ }
+});

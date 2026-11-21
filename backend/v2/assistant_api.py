@@ -247,7 +247,7 @@ def router(settings):
             error(422,'WARDROBE_FRONT_MISMATCH')
         if body.spec.recipe not in ('shelves', 'divided') or body.spec.sectionShelves is None:
             error(422, 'WARDROBE_RECIPE_REQUIRED')
-        if body.spec.installed_height+body.spec.elevation > body.room_height:
+        if body.spec.installed_top > body.room_height:
             error(422, 'WARDROBE_ABOVE_CEILING')
         with transaction(settings) as conn:
             release = catalogue.active(conn)

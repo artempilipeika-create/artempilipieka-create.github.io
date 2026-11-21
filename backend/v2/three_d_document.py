@@ -241,7 +241,7 @@ def _panel_hardware(it):
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     spec = meta.get('spec') or {}
     surround=spec.get('surround') or {}
-    if surround and it.get('module_type')=='blank' and key in ('trim-left-face','trim-right-face','trim-cap-face'):
+    if surround and it.get('module_type')=='blank' and re.fullmatch(r'trim-(?:cap|(?:left|right)(?:-[1-9]\d*)?)-face',key):
         # Each complete native assembly has just one joint. Other boards and the
         # standalone end post do not add another set to the purchasing schedule.
         length=it['width'] if key=='trim-cap-face' else it['height']

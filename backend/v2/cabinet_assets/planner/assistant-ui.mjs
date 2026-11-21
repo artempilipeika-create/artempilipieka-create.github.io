@@ -5,7 +5,8 @@ import {backMountControls,machiningControls,pickMachiningPart} from './panel-mac
 import {wardrobeNames,nextCabinetName} from './wardrobe-blocks.mjs';
 import {measuredRooms} from './wardrobe-gola-shelves.mjs';
 import {hasSurround,surroundFace,surroundLayout} from './wardrobe-surround.mjs';
-import {surroundControls,upperFrontTabs,upperFrontControls} from './wardrobe-surround-ui.mjs';
+import {prepareHeightFields,lowerBodyHeight,trimSides} from './wardrobe-trim-layout.mjs';
+import {heightControl,updateHeights,surroundControls,upperFrontTabs,upperFrontControls} from './wardrobe-surround-ui.mjs';
 import {doorControls,setDoorShelf,wireHandleDrag} from './wardrobe-door-ui.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
@@ -68,10 +69,11 @@ export class AssistantUI{
   const grid=el('div');grid.className='assistant-grid';this.form=el('div');this.form.className='assistant-fields';
   const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.drawing.onclick=e=>this.pickShelf(e);wireCellDrag(this);wireRodDrag(this);wireHandleDrag(this);
   this.drawing.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.pickShelf(e);}};this.dimensions=el('p');this.description=el('p');const figureHead=el('div');figureHead.className='cell-figure-head';
-  this.zoom=button('Увеличить схему',()=>this.zoomDiagram(!this.diagramExpanded));this.zoom.className='cell-zoom';
+  this.zoom=button('Развернуть схему',()=>this.zoomDiagram(!this.diagramExpanded));this.zoom.className='cell-zoom';
   figureHead.append(this.figureTitle,this.zoom);aside.append(figureHead,this.drawing,this.dimensions,this.description);const visuals=el('div');visuals.className='assistant-visuals';
   this.livePreview=new WardrobePreview(this.app,(section,level,column)=>{this.activeSection=section;this.nicheIndex=level;this.column=column;this.render();});
   visuals.append(this.livePreview.root,aside);grid.append(this.form,visuals);
+  this.dialog.addEventListener('cancel',event=>{if(this.diagramExpanded){event.preventDefault();this.zoomDiagram(false);}});
   this.dialog.addEventListener('close',()=>this.livePreview.release());
   this.output=el('p');this.output.setAttribute('role','status');this.output.setAttribute('aria-live','polite');this.summary=el('ul');this.summary.hidden=true;
   const footer=el('div');footer.className='assistant-footer';this.previous=button('Назад',()=>this.go(this.step-1));this.next=button('Далее',()=>this.go(this.step+1));
@@ -94,6 +96,7 @@ export class AssistantUI{
   const c=this.mode.value==='update'?this.current:null,s=c?.metadata.spec;
   this.cabinetName=c?wardrobeNames(this.app.adapter.items).get(c.metadata.group_id):nextCabinetName(this.app.adapter.items);
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[0],back:true};
+  prepareHeightFields(this.fields);
   this.sourceKeys=c?new Map(c.items.map(it=>[it.item_id.slice(c.metadata.group_id.length+1),it.item_id])):null;
   this.rodId=null;this.rodDraft=null;this.wholeWidth=false;this.layoutUndo=[];this.layoutAnchor=null;this.zoomDiagram(false);
   if(c&&s.front&&!s.front.autoHinges&&s.drawerBanks){
@@ -162,8 +165,11 @@ export class AssistantUI{
  spec(){return wardrobeSpec(this.fields);}
  invalidate(){this.pending=null;this.apply.hidden=true;this.summary.hidden=true;this.output.textContent='';}
  zoomDiagram(expanded){
+  const wasExpanded=this.diagramExpanded;
+  if(expanded)this.formScroll=this.dialog.scrollTop;
   this.diagramExpanded=expanded;this.dialog.toggleAttribute('data-zoom',expanded);
-  this.zoom.textContent=expanded?'Свернуть схему':'Увеличить схему';this.zoom.setAttribute('aria-expanded',String(expanded));
+  this.zoom.textContent=expanded?'Вернуться к анкете':'Развернуть схему';this.zoom.setAttribute('aria-expanded',String(expanded));
+  if(this.dialog.open&&(expanded||wasExpanded)){this.dialog.scrollTop=expanded?0:this.formScroll??0;this.zoom.focus({preventScroll:true});}
  }
  rememberLayout(){
   return {fields:structuredClone(this.fields),keys:this.sourceKeys,section:this.activeSection,level:this.nicheIndex,column:this.column,gap:this.gapIndex,interior:this.interior};
@@ -175,6 +181,7 @@ export class AssistantUI{
   this.invalidate();this.render();
  }
  changed(rebuild=false){
+  this.fields.height=lowerBodyHeight(this.fields);
   const old=this.layoutAnchor;
   if(old){
     const changed=Object.keys({...old.fields,...this.fields}).filter(k=>!sameAssistantSpec(old.fields[k],this.fields[k]));
@@ -204,7 +211,7 @@ export class AssistantUI{
    return '';
   }catch(e){return e.message;}
  }
- go(index){if(this.busy||index<0||index>4)return;const invalid=this.form?.querySelector?.('input:invalid');if(invalid){invalid.reportValidity();return;}if(index>this.step && !(index===3&&(this.fields.front||this.fields.drawerBanks?.some(Boolean))) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices||this.fields.shelfLevels||this.fields.drawerBanks||this.fields.rods?.length))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
+ go(index){if(this.busy||index<0||index>4)return;const invalid=this.form?.querySelector?.('input:invalid');if(invalid){invalid.reportValidity();return;}if(index>this.step && !(index===3&&(this.fields.front||this.fields.drawerBanks?.some(Boolean)||trimSides.some(side=>this.fields.surround?.[side]?.start==='facade'))) && !(index===1&&this.fields.dividerPositions) && !(index===2 && (this.fields.joints||this.fields.dividerJoints||this.fields.shelfChoices||this.fields.shelfLevels||this.fields.drawerBanks||this.fields.rods?.length))){const e=this.error();if(e){this.output.textContent=e;return;}}this.step=index;this.view=['body','sections','sections','fronts','body'][index];this.render();this.steps[index].focus();}
  groupTabs(){
   const nav=el('nav');nav.className='wardrobe-subsections';nav.setAttribute('aria-label','Подразделы корпуса');
   for(const key of ['body','surround','feet','plinth','back','lighting','machining']){
@@ -223,6 +230,7 @@ export class AssistantUI{
   }this.form.append(nav);
  }
  render(){
+  this.fields.height=lowerBodyHeight(this.fields);
   const preview=buildPreview(this);this.previewBuilt=preview.built??null;
   const editorKey=this.step===2?[this.activeSection,this.interior,this.nicheIndex,this.column,this.gapIndex].join('/'):this.step===1?'shelves/'+this.activeSection:'';
   const keep=editorKey&&editorKey===this.editorKey;
@@ -240,7 +248,7 @@ export class AssistantUI{
    const label=el('label','Название шкафа'),name=el('input');name.type='text';name.maxLength=120;
    name.value=this.cabinetName;name.setAttribute('aria-label','Название шкафа');
    name.oninput=()=>{this.cabinetName=name.value;this.invalidate();};label.append(name);this.form.append(label);
-   this.number('width','Ширина, мм',200,2400);this.number('height','Высота корпуса, мм',200,3000);this.number('depth','Глубина ЛДСП, мм',200,1200);
+   this.number('width','Ширина, мм',200,2400);heightControl(this);this.number('depth','Глубина ЛДСП, мм',200,1200);
    this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);resizeDividerChoices(this.fields);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
    const division=el('fieldset');division.append(el('legend','Деление корпуса'));sectionChoices(this,division);this.form.append(division);
    for(const [key,title,overlay] of [['bottomFit','Конструкция дна','Накладное дно'],['topFit','Конструкция крыши','Накладная крыша']])
@@ -595,7 +603,8 @@ export class AssistantUI{
   for(const a of sel.attributes)if(outline.getAttribute(a.name)!==a.value)outline.setAttribute(a.name,a.value);
  }
  draw(preview=buildPreview(this)){
-  const view=this.step===0&&this.view==='body'?'sections':this.view;
+  const view=this.step===0&&this.view==='body'?(hasSurround(this.fields.surround)?'surround':'sections'):this.view;
+  updateHeights(this,preview.built);
   this.figureTitle.textContent=view==='machining'?'Выбор детали':view==='sections'?'Вид спереди · размеры в свету':drawingTitles[view];
   const warning=this.form.querySelector('.front-choice-warning');
   if(warning)warning.hidden=true;
@@ -610,7 +619,7 @@ export class AssistantUI{
      {lighting:view==='lighting',partKey:this.partKey,showFronts:this.showMachiningFronts,rodId:this.interior==='rod'?this.rodId:null,editor:view==='sections',level:selected?cell.level:null,column:cell.column,opening:cell.opening,door:this.selectedDoor,internalFronts:!!this.inspectInternalFronts,
        dimensions:view==='sections',splitLevel:selected?cell.level:null,drawerDetail:selected&&this.interior==='drawer'});
    this.paintDrawing(svg);
-   this.dimensions.textContent='Ш '+built.width+' · В '+built.envelope.height+' · Г '+(built.depth+(issue?18:0))+' мм';
+   this.dimensions.textContent='Ш '+built.width+' · В '+(built.spec.overallHeight??built.envelope.height)+' · Г '+(built.depth+(issue?18:0))+' мм';
    const rodIssue=this.form.querySelector('[data-rod-issues]');if(rodIssue){rodIssue.textContent=built.rodIssues.join(' ');rodIssue.hidden=!built.rodIssues.length;}
    this.description.textContent=built.rodIssues.length?built.rodIssues.join(' '):built.drawerIssues.length?built.drawerIssues.join(' '):view==='sections'?'Нажмите на нишу или размер. Полку, штангу и перегородку можно перетащить.':caption;
    if(this.interior!=='rod'&&built.rods.length&&this.fields.depth<500)this.description.textContent+=' Глубина корпуса '+this.fields.depth+' мм. Проверьте место для плечиков перед фасадом.';

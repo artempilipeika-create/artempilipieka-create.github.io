@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 from backend.v2 import assistant_api as assistant
 from backend.v2.assistant_model import AssistantPlan, CarcassDesign
-from backend.v2.three_d_api import Scene
+from backend.v2.three_d_api import FurnitureItem, Scene
 from backend.v2.db import transaction
 from backend.v2.security import grant
 from tests.stage03.test_api import settings, api, admin_user
@@ -84,14 +84,14 @@ def test_invalid_model_plans_are_rejected(patch):
     with pytest.raises(ValidationError):
         AssistantPlan.model_validate(dict(action='create',message='x',spec={**SPEC,**patch}))
 
-def generated_scene(spec=None):
+def generated_scene(spec=None,room_height=2700):
     script="""import {prepareAssistantPlan} from './backend/v2/cabinet_assets/planner/assistant-model.mjs';
     import {StateAdapter} from './backend/v2/cabinet_assets/planner/state-adapter.mjs';
-    const scene={room:{width:6000,depth:5000,height:2700,setup_complete:true},items:[]};
+    const scene={room:{width:6000,depth:5000,height:Number(process.argv[2]),setup_complete:true},items:[]};
     const a=new StateAdapter({state:()=>scene,projectId:()=>null,selected:()=>null,material:()=>null});
     scene.items=prepareAssistantPlan(a,{action:'create',spec:JSON.parse(process.argv[1])}).items;
     console.log(JSON.stringify(scene));"""
-    return json.loads(subprocess.check_output(['node','--input-type=module','-e',script,json.dumps(spec or SPEC)],cwd=Path(__file__).resolve().parents[1]))
+    return json.loads(subprocess.check_output(['node','--input-type=module','-e',script,json.dumps(spec or SPEC),str(room_height)],cwd=Path(__file__).resolve().parents[1]))
 
 def test_generated_scene_metadata_survives_validation_and_assets_are_served():
     before=generated_scene()
@@ -126,6 +126,90 @@ def test_surround_board_measurements_and_materials_survive_scene_validation():
     assert len({p['assistant_carcass']['group_id'] for p in parts.values()})==1
     with pytest.raises(ValidationError):
         Scene.model_validate({**saved,'room':{**saved['room'],'height':2661}})
+
+
+def height_spec():
+    return {**SPEC,'width':950,'height':1950,'elevation':50,'overallHeight':2720,
+            'front':{'swing':'pair','offset':90,'autoHinges':True},
+            'feet':{'article':'86502','front':80,'rear':60,'layout':'width'},
+            'surround':{'upper':{'height':550,'leaves':2,'side':'left','divider':True,'opening':'swing',
+                                  'push':{'article':'70787','mount':'auto'}},
+                        'left':{'kind':'filler','width':64,'heightMode':'assembly','start':'facade','bottom':0,'split':'equal'},
+                        'right':{'kind':'end','depth':100,'projection':20,'heightMode':'assembly','start':'floor','bottom':0,'split':'joint'},
+                        'cap':{'height':70,'fit':'over'}}}
+
+
+def test_cut_side_parts_and_finished_facade_anchor_roundtrip_through_saved_scene():
+    scene=generated_scene(height_spec(),3000)
+    rows=Scene.model_validate(scene).model_dump(mode='json')['items']
+    parts={row['item_id'].split(':')[-1]:row for row in rows}
+    left=parts['trim-left-face'];next_left=parts['trim-left-2-face']
+    assert left['elevation_mm']==parts['door-left']['elevation_mm']==151.5
+    assert left['height']==next_left['height']==1249.25
+    assert next_left['elevation_mm']==1400.75
+    assert parts['trim-left-2-return']['height']==next_left['blank_width_mm']
+    assert parts['trim-right-end']['elevation_mm']==0
+    assert parts['trim-right-2-end']['elevation_mm']==2100
+    assert parts['trim-cap-face']['blank_length_mm']==1032
+    assert parts['trim-cap-face']['elevation_mm']+70==2720
+    with pytest.raises(ValidationError,match='точность|размер'):
+        FurnitureItem.model_validate({**next_left,'item_id':next_left['item_id'].replace('trim-left-2-face','custom-board')})
+    with pytest.raises(ValidationError,match='2780'):
+        FurnitureItem.model_validate({**next_left,'height':2780.125,'blank_width_mm':2780.125,'body_height':2780.125})
+    with pytest.raises(ValidationError,match='точность'):
+        FurnitureItem.model_validate({**next_left,'elevation_mm':1400.7501})
+    for row in scene['items']:
+        if row['item_id'].endswith(':trim-left-face'):
+            row['elevation_mm']+=1
+    with pytest.raises(ValidationError,match='готовым фасадом'):
+        Scene.model_validate(scene)
+
+
+@pytest.mark.parametrize(('start','expected'),[('floor',0),('custom',137.125),('plinth',150),('plinthEdge',147)])
+def test_start_levels_and_custom_fractions(start,expected):
+    raw=height_spec()
+    side=raw['surround']['left']
+    side.update(start=start,bottom=137.125,heightMode='custom',height=800.375,split='equal')
+    spec=CarcassDesign.model_validate(raw)
+    assert spec.side_limits(spec.surround.left)==(expected,expected+800.375)
+    assert spec.installed_top==2720
+    scene=generated_scene(raw,3000)
+    checked=Scene.model_validate(scene)
+    left=[p for p in checked.items if ':trim-left-' in p.item_id and p.item_id.endswith('face')]
+    assert len(left)==2
+    assert min(p.elevation_mm for p in left)==expected
+    assert max(p.elevation_mm+p.height for p in left)==expected+800.375
+
+
+def test_height_mismatch_plinth_edge_and_short_forced_joint_rejected_and_legacy_unsplit_preserved():
+    raw=height_spec()
+    with pytest.raises(ValidationError,match='Общая высота'):
+        CarcassDesign.model_validate({**raw,'overallHeight':2721})
+    raw['surround']['left'].update(start='plinthEdge')
+    without_feet={k:v for k,v in raw.items() if k!='feet'}
+    with pytest.raises(ValidationError,match='кромки цоколя'):
+        CarcassDesign.model_validate({**without_feet,'overallHeight':2620})
+    raw['surround']['right'].update(heightMode='custom',height=2150)
+    with pytest.raises(ValidationError,match='стыка'):
+        CarcassDesign.model_validate(raw)
+    legacy={**SPEC,'surround':{'left':{'kind':'end','depth':100,'projection':20,'heightMode':'custom','bottom':0,'height':3000}}}
+    saved=Scene.model_validate(generated_scene(legacy,3100))
+    assert next(p for p in saved.items if p.item_id.endswith(':trim-left-end')).height==3000
+    assert 'overallHeight' not in saved.items[0].assistant_carcass.spec.model_dump(exclude_none=True)
+
+
+def test_centred_manual_cap_only_trims_sides_in_its_footprint():
+    raw=height_spec()
+    raw['surround']['cap']={'height':70,'length':1100}
+    raw['surround']['left']['start']='floor'
+    raw['surround']['right'].update(depth=40,projection=180)
+    spec=CarcassDesign.model_validate(raw)
+    assert spec.side_limits(spec.surround.left)==(0,2650)
+    assert spec.side_limits(spec.surround.right)==(0,2720)
+    rows=Scene.model_validate(generated_scene(raw,3000)).items
+    def top(key):
+        return max(p.elevation_mm+p.height for p in rows if ':trim-'+key+'-' in p.item_id)
+    assert (top('left'),top('right'))==(2650,2720)
 
 def test_surround_project_reopen_edit(api,admin_user):
     scene=surround_scene()

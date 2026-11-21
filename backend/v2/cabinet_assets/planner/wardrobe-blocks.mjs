@@ -104,11 +104,12 @@ function panelLabel(item,key,g){
   if(label===generated||key.startsWith('mezz-door-')&&label==='фасад')
    return label.charAt(0).toUpperCase()+label.slice(1);
  }
- const trim=/^trim-(left|right)-(face|return|end)$/.exec(key);
+ const trim=/^trim-(left|right)(?:-([1-9]\d*))?-(face|return|end)$/.exec(key);
  if(trim){
-  const side=trim[1]==='left'?'Левая':'Правая';
-  const tail={face:'фальшпланка · глухой фасад',return:'фальшпланка · боковая проставка',end:'торцевая стойка'}[trim[2]];
-  if(base===side+' '+tail)return base;
+  const [,hand,number,role]=trim,side=hand==='left'?'Левая':'Правая';
+  const stem=side+(role==='end'?' торцевая стойка':' фальшпланка');
+  const tail={face:separator+'глухой фасад',return:separator+'боковая проставка',end:''}[role];
+  if(base===stem+separator+'часть '+(number||1)+tail||!number&&base===stem+tail)return base;
  }
  if(key.startsWith('trim-cap-')){
   const plate={face:'лицевая',upright:'внутренняя',base:'нижняя'}[key.slice(9)];

@@ -14,7 +14,7 @@ import {blankEdgeCode} from './furniture-core.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount','surround'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount','surround','overallHeight'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -79,10 +79,11 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
-  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.envelope.height,depth:built.depth,
-   x:0,z:0,rotation:0,elevation_mm:spec.elevation,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
+  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.envelope.height-built.envelope.minY,depth:built.depth,
+   x:0,z:0,rotation:0,elevation_mm:spec.elevation+built.envelope.minY,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
   position=findSpace(envelope,adapter.items,adapter.room,adapter.selected,{wallOffset:0,autoRotate:false});
   if(!position)throw Error('Для корпуса нет свободного места. Проверьте размеры помещения.');
+  position={...position,elevation_mm:spec.elevation};
  }
  position=Object.fromEntries(['x','z','elevation_mm','rotation'].map(k=>[k,position[k]??0]));
  const metadata={group_id:prefix,name:groupName,spec,position};
@@ -119,6 +120,11 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
     }
    }
    if(spec.edgeThickness===current.metadata.spec.edgeThickness)item.blank_edge_thickness_mm=old.blank_edge_thickness_mm;
+  }
+  if(!old&&current){
+   const firstSegment=generated.item_id.replace(/(:trim-(?:left|right))-\d+-(face|return|end)$/,'$1-$2');
+   const donor=firstSegment!==generated.item_id&&current.items.find(it=>it.item_id===firstSegment);
+   if(donor)item.body_variant_id=retainedBlankMaterial(generated,donor,id=>adapter.material?.(id));
   }
   if(generated.blank_axis==='front'){item.blank_edge_code=generated.blank_edge_code;item.blank_edge_thickness_mm=2;if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
   else if(surroundFace(generated.item_id.slice(prefix.length+1))){if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}

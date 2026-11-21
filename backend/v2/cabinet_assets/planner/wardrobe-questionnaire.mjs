@@ -4,6 +4,7 @@ import {canMachine,rearClearance} from './panel-machining.mjs';
 import {secureDoorShelf} from './wardrobe-door-layout.mjs';
 import {settingFor} from './wardrobe-hinge-layout.mjs';
 import {footPlan} from './wardrobe-feet.mjs';
+import {lowerBodyHeight,savedTrimExtension} from './wardrobe-trim-layout.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
 import {buildCarcass} from './carcass-model.mjs';
@@ -60,6 +61,13 @@ export function wardrobeSpec(f){
  if(!Number.isInteger(sections)||sections<1||sections>4||!Array.isArray(counts)||counts.length!==sections)throw Error('Выберите от одной до четырёх секций.');
  if(counts.some(n=>!Number.isInteger(n)||n<0||n>10))throw Error('В секции может быть от 0 до 10 полок.');
  const spec={recipe:sections===1?'shelves':'divided',width:Number(f.width),height:Number(f.height),depth:Number(f.depth),thickness:Number(f.thickness),shelves:Math.max(...counts),sections,sectionShelves:[...counts],back:f.back,elevation:f.elevation??0,shelfSetback:1,dividerSetback:1,shelfGap:f.shelfGap??0,edgeThickness:f.edgeThickness??1,edgePolicy:f.edgePolicy??'front'};
+ if(f.overallHeight!=null){
+  if(!Number.isInteger(f.overallHeight)||f.overallHeight<200||f.overallHeight>5000)throw Error('Общая высота от пола должна быть от 200 до 5000 мм.');
+  // Older, deliberately taller bespoke trims can project above the ceiling panel.
+  if(!savedTrimExtension(f))spec.overallHeight=f.overallHeight;
+  spec.height=lowerBodyHeight(f);
+  if(spec.height<200||spec.height>3000)throw Error('На основной корпус остаётся '+spec.height+' мм. Допустимо от 200 до 3000 мм. Проверьте общую высоту, опоры, антресоль и закладную.');
+ }
  if(f.surround&&Object.values(f.surround).some(Boolean))spec.surround=structuredClone(f.surround);
  if(f.machining&&Object.keys(f.machining).length)spec.machining=structuredClone(f.machining);
  if(f.back&&f.backMount)spec.backMount={...f.backMount};

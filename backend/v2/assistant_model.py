@@ -263,11 +263,11 @@ class ShelfLevel(StrictModel):
     mm: int = Field(ge=0, le=5000, strict=True)
 
 
-DrawerMillimetres = Annotated[int, Field(strict=True)] | Annotated[float, Field(strict=True)]
+StrictMillimetres = Annotated[int, Field(strict=True)] | Annotated[float, Field(strict=True)]
 
 class DrawerFace(StrictModel):
     handle: FacadeFitting | None = Field(default=None,exclude_if=lambda v:v is None)
-    height: DrawerMillimetres | None = Field(ge=100,le=3000)
+    height: StrictMillimetres | None = Field(ge=100,le=3000)
     width: float | None = Field(default=None,ge=40,le=1200,multiple_of=.5,exclude_if=lambda v:v is None)
 
 
@@ -277,7 +277,7 @@ class DrawerBank(StrictModel):
     opening: Literal['soft','push'] | None = Field(default=None,exclude_if=lambda v:v is None)
     faceFixing: Literal['cam','plank'] | None = Field(default=None,exclude_if=lambda v:v is None)
     layout: Literal['equal','manual'] | None = Field(default=None,exclude_if=lambda v:v is None)
-    gap: DrawerMillimetres | None = Field(default=None,ge=0,le=3000,exclude_if=lambda v:v is None)
+    gap: StrictMillimetres | None = Field(default=None,ge=0,le=3000,exclude_if=lambda v:v is None)
     coverFixing: Literal['cam_dowel','confirmat'] | None = Field(default=None,exclude_if=lambda v:v is None)
     shelvesBelow: int | None = Field(default=None,ge=0,le=10,strict=True,exclude_if=lambda v:v is None)
     bottomOffset: int | None = Field(default=None,ge=0,le=3000,strict=True,exclude_if=lambda v:v is None)
@@ -426,9 +426,11 @@ class SurroundSide(StrictModel):
     width: int | None = Field(default=None, ge=40, le=1200, strict=True, exclude_if=lambda v:v is None)
     depth: int | None = Field(default=None, ge=40, le=1200, strict=True, exclude_if=lambda v:v is None)
     projection: int | None = Field(default=None, ge=0, le=300, strict=True, exclude_if=lambda v:v is None)
-    heightMode: Literal['custom','body','full']
-    height: int | None = Field(default=None, ge=100, le=3000, strict=True, exclude_if=lambda v:v is None)
-    bottom: int = Field(ge=0, le=4900, strict=True)
+    heightMode: Literal['custom','body','full','assembly']
+    start: Literal['floor','plinth','plinthEdge','facade','custom'] | None = Field(default=None, exclude_if=lambda v:v is None)
+    split: Literal['auto','joint','equal'] | None = Field(default=None, exclude_if=lambda v:v is None)
+    height: StrictMillimetres | None = Field(default=None, ge=100, le=5000, allow_inf_nan=False, exclude_if=lambda v:v is None)
+    bottom: StrictMillimetres = Field(ge=0, le=4900, allow_inf_nan=False)
 
     @model_validator(mode='after')
     def fit(self):
@@ -438,6 +440,12 @@ class SurroundSide(StrictModel):
             raise ValueError('Задайте ширину лица Г-образной фальшпланки.')
         if (self.heightMode=='custom') != (self.height is not None):
             raise ValueError('Задайте высоту боковой детали или привяжите её к крыше.')
+        if not self.split and (type(self.bottom) is not int or self.height is not None and type(self.height) is not int):
+            raise ValueError('Для боковой детали без деления задайте целые размеры.')
+        if any(abs(v-round(v,3))>1e-8 for v in (self.bottom,self.height or 0)):
+            raise ValueError('Низ и высоту боковой детали задавайте с точностью до 0,001 мм.')
+        if self.height is not None and self.height>3000 and not self.split:
+            raise ValueError('Для боковой детали длиннее 3000 мм выберите деление.')
         return self
 
 class SurroundUpper(StrictModel):
@@ -451,6 +459,7 @@ class SurroundUpper(StrictModel):
 class SurroundCap(StrictModel):
     height: int = Field(ge=40, le=1200, strict=True)
     length: int | None = Field(default=None, ge=100, le=3000, strict=True, exclude_if=lambda v:v is None)
+    fit: Literal['over'] | None = Field(default=None, exclude_if=lambda v:v is None)
 
 class WardrobeSurround(StrictModel):
     left: SurroundSide | None = Field(default=None, exclude_if=lambda v:v is None)
@@ -459,6 +468,7 @@ class WardrobeSurround(StrictModel):
     cap: SurroundCap | None = Field(default=None, exclude_if=lambda v:v is None)
 
 class CarcassDesign(CarcassSpec):
+    overallHeight: int | None = Field(default=None, ge=200, le=5000, strict=True, exclude_if=lambda v:v is None)
     surround: WardrobeSurround | None = Field(default=None, exclude_if=lambda v:v is None)
     lightKit: LightingKit | None = Field(default=None, exclude_if=lambda v: v is None)
     lighting: dict[PanelCutKey,Annotated[list[LightingLine],Field(min_length=1,max_length=32)]] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
@@ -466,17 +476,83 @@ class CarcassDesign(CarcassSpec):
     backMount: RearMount | None=Field(default=None,exclude_if=lambda v:v is None)
 
     @property
-    def installed_height(self):
-        body_top=self.height+(self.feet.height if self.feet else 0)
+    def body_floor(self):
+        return self.elevation+(self.feet.height if self.feet else 0)
+
+    @property
+    def assembly_top(self):
         a=self.surround
-        if not a:
-            return body_top
+        return self.body_floor+self.height+(a.upper.height if a and a.upper else 0)+(a.cap.height if a and a.cap else 0)
+
+    def cap_overlaps_side(self,side):
+        cap=self.surround.cap
+        if not cap or not cap.fit and (cap.length or self.width)<=self.width:
+            return False
+        if side.kind=='filler':
+            return True
+        front=self.front
+        projection=max((22 if bank.railFamily=='concealed' and bank.opening=='push' else 18
+                        for bank in self.drawerBanks or [] if bank and bank.kind=='external'),default=0)
+        if front:
+            def band(row,swing):
+                sides=[] if swing=='open' else ('left','right') if swing=='pair' else (swing,)
+                return ['door-'+row+hand for hand in sides]
+            d=front.division
+            keys=band('',front.swing) if not d else band('lower-',d.below)+band('upper-',d.above)
+            if d and d.scope!='all':
+                keys+=band('','right' if d.scope=='left' else 'left')
+            for key in keys:
+                hinge=(front.hinges or {}).get(key)
+                if not hinge or PRIME_HINGES[hinge.article]['kind']!='inset':
+                    projection=max(projection,20 if hinge and hinge.push else 18)
+        cap_plane=20 if self.surround.upper else projection if front or projection else 18
+        return side.projection>cap_plane-100 and side.projection-side.depth<cap_plane
+
+    def side_limits(self,side,facade_floor=None):
+        a=self.surround
+        if side.start=='facade' and facade_floor is None:
+            return None  # The manufactured door or external drawer face establishes this level.
+        if side.start=='plinthEdge' and (not self.feet or self.feet.article not in PLINTH_FEET):
+            raise ValueError('Для отсчёта от верхней кромки цоколя выберите опоры с цокольной планкой.')
+        starts={None:self.elevation+side.bottom,'floor':0,'custom':side.bottom,'plinth':self.body_floor,
+                'plinthEdge':self.body_floor-3,'facade':facade_floor}
+        low=starts[side.start]
+        body_top=self.body_floor+self.height
         upper_top=body_top+(a.upper.height if a.upper else 0)
-        heights=[upper_top+(a.cap.height if a.cap else 0)]
-        for side in (a.left,a.right):
-            if side and side.heightMode=='custom':
-                heights.append(side.bottom+side.height)
-        return max(heights)
+        cap_covers=a.cap and (a.cap.fit=='over' or self.cap_overlaps_side(side))
+        top={'body':body_top,'full':upper_top,'assembly':upper_top if cap_covers else self.assembly_top,
+             'custom':low+(side.height or 0)}[side.heightMode]
+        return low,top
+
+    def check_side_limits(self,side,low,top):
+        height=round(top-low,3)
+        if height<100 or not side.split and (height>3000 or height%1):
+            raise ValueError('Проверьте высоту и нижнюю отметку боковой детали.')
+        if side.split=='equal' and height<200:
+            raise ValueError('Для двух равных частей боковой детали нужны минимум 200 мм.')
+        if self.overallHeight is not None and top>self.overallHeight+.00001:
+            raise ValueError('Боковая деталь выходит выше заданной общей высоты шкафа.')
+        joint=self.body_floor+self.height
+        if side.split=='joint' and (joint-low<100-.00001 or top-joint<100-.00001):
+            raise ValueError('По обе стороны стыка антресоли нужно по 100 мм или больше.')
+        cap=self.surround.cap
+        if cap and (self.overallHeight is not None or side.start or side.split or cap.fit) and self.cap_overlaps_side(side):
+            underside=self.assembly_top-cap.height
+            if low<self.assembly_top and top>underside+.00001:
+                raise ValueError('Закладная пересекает боковую деталь. Проверьте высоту планки или длину закладной.')
+
+    @property
+    def installed_top(self):
+        top=self.assembly_top
+        if self.surround:
+            for side in (self.surround.left,self.surround.right):
+                if side and (limits:=self.side_limits(side)):
+                    top=max(top,limits[1])
+        return top
+
+    @property
+    def installed_height(self):
+        return self.installed_top-self.elevation
 
     @property
     def rear_clearance(self):
@@ -746,19 +822,27 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.overallHeight is not None and self.overallHeight!=self.assembly_top:
+            raise ValueError('Общая высота от пола должна включать отметку установки, опоры, корпус, антресоль и закладную.')
         if self.surround:
             a=self.surround
             if self.thickness!=18 or self.recipe not in ('shelves','divided'):
                 raise ValueError('Фальшпланки и антресоль предназначены для шкафа из плиты 18 мм.')
-            body_top=self.height+(self.feet.height if self.feet else 0)
-            upper_top=body_top+(a.upper.height if a.upper else 0)
             if a.upper and self.width/a.upper.leaves-3>(600 if a.upper.opening=='swing' else 1200):
                 raise ValueError('Проверьте ширину створки антресоли.')
+            if a.cap and a.cap.fit=='over':
+                cap_length=self.width+sum(18 if side.kind=='end' else side.width for side in (a.left,a.right) if side)
+                if cap_length>3000:
+                    raise ValueError('Длина общей закладной над боковыми деталями превышает 3000 мм.')
             for side in (a.left,a.right):
-                if side:
-                    h=side.height if side.heightMode=='custom' else (upper_top if side.heightMode=='full' else body_top)-side.bottom
-                    if not 100<=h<=3000:
-                        raise ValueError('Проверьте высоту и нижнюю отметку боковой детали.')
+                if not side:
+                    continue
+                if side.start=='facade' and not self.front and not any(b and b.kind=='external' for b in self.drawerBanks or []):
+                    raise ValueError('Для отсчёта от фасада добавьте наружный фасад нижнего корпуса.')
+                if side.split=='joint' and not a.upper:
+                    raise ValueError('Для деления по стыку нужна антресоль.')
+                if limits:=self.side_limits(side):
+                    self.check_side_limits(side,*limits)
         if self.braceOffset is not None and (self.bottomFit!='none' or self.braceOffset+100>self.height-self.thickness):
             raise ValueError('Проверьте положение заднего ребра.')
         if self.gapLocks and (len(self.gapLocks)!=self.sections or not self.sectionShelves or any(i>self.sectionShelves[j] for j,row in enumerate(self.gapLocks) for i in row)):

@@ -196,7 +196,7 @@ def exercise(live=False, scenario=None):
             page.evaluate('id=>MF_PLANNER.bridge.open(id)',layout_id)
             page.locator('#planner-assistant').click()
             form.get_by_label('Ширина, мм',exact=True).fill('1000')
-            form.get_by_label('Высота корпуса, мм',exact=True).fill('2400')
+            form.get_by_label('Общая высота шкафа от пола, мм',exact=True).fill('2400')
             form.get_by_label('Конструкция дна').select_option('none')
             step(4);form.get_by_label('Исполнение фасада',exact=True).select_option('pair')
             step(3);button('Полки').click()

@@ -122,3 +122,31 @@ test('downloads one pinned native trim per assembly and a separately grouped upp
   assert.equal(upper.filter(it=>it.prime_hinge).length,0);
  }
 });
+
+test('exports the real equal split from the lower facade edge through the download button',async()=>{
+ const {wardrobeSpec}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs');
+ const id='segmented',name='Шкаф у ниши';
+ const spec=wardrobeSpec({width:594,height:2001,depth:580,thickness:18,back:true,sections:1,sectionShelves:[0],
+  front:{swing:'left',offset:90,hinges:{'door-left':{article:'112595'}}},
+  surround:{left:{kind:'filler',width:92,heightMode:'body',start:'facade',bottom:0,split:'equal'}}});
+ const built=buildCarcass(spec,{idPrefix:id,name,frontMaterialId:'custom',bodyMaterialId:core.DEFAULT_MATERIALS.body_variant_id,backMaterialId:CARCASS_BACK_MATERIAL_ID});
+ const items=placeCarcass(built,{x:600,z:400,elevation_mm:75,rotation:270})
+  .map(it=>({...it,assistant_carcass:{group_id:id,name,spec:built.spec}}));
+ const part=key=>items.find(p=>p.item_id===id+':'+key);
+ const second=part('trim-left-2-face');
+ assert.ok(second,'the generated second panel must exist');
+ second.production_note='Лицевой стык сверху';
+ const e=exporter(items);await e.context.exportBazisProjectReady();
+ const {payload,message}=await e.result();assert.ok(payload,message);
+ const halves=payload.items.filter(it=>it.wardrobe_trim);
+ assert.equal(payload.minimum_importer,'9.9.42');assert.equal(halves.length,2);
+ assert.deepEqual(halves.map(row=>row.source_file),['MF_Trim_Left.fr3d','MF_Trim_Left.fr3d']);
+ assert.deepEqual(halves.map(row=>row.position.y),[part('door-left').elevation_mm,second.elevation_mm]);
+ assert.equal(halves[0].target.height,halves[1].target.height);
+ assert.equal(halves[0].position.y+halves[0].target.height,halves[1].position.y);
+ assert.equal(halves[1].position.y+halves[1].target.height,part('top').elevation_mm+part('top').height);
+ assert.ok(!Number.isInteger(halves[0].target.height*2)&&Number.isInteger(halves[0].target.height*4));
+ assert.deepEqual(halves.map(row=>row.wardrobe_trim.panels.length),[2,2]);
+ assert.equal(halves[1].wardrobe_trim.panels.find(p=>p.role==='face').production_note,'Лицевой стык сверху');
+ assert.equal(payload.items.filter(row=>row.blank_item_id?.includes(':trim-left')).length,0);
+});

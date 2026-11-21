@@ -7,13 +7,14 @@ const sources={
  end:['MF_Trim_End.fr3d','2fb535965b6a2cdd48a5061256dc72f45ea8e09c73645833049150ee0b293eec'],
  cap:['MF_Trim_Ceiling.fr3d','1593b2bf163f12120e40c96b9feca7ff7a035da5ba5b67f96f197b97aaf7f5a9']
 };
-const partKey=/^trim-(left|right|cap)-(face|return|end|upright|base)$/;
+const partKey=/^trim-((?:left|right)(?:-[1-9]\d*)?|cap)-(face|return|end|upright|base)$/;
 
-function makeRow(unit,lookup){
- const {side,parts}=unit;
+function makeRow(unit,segmented,lookup){
+ const {side,number,parts}=unit;
  const kind=parts.has('end')?'end':side;
  const roles=kind==='cap'?['face','upright','base']:kind==='end'?['end']:['face','return'];
- const title=kind==='cap'?'Закладная под потолок':(kind==='end'?'Торцевая стойка ':'Г-образная фальшпланка ')+(side==='left'?'слева':'справа');
+ const name=kind==='cap'?'Закладная под потолок':(kind==='end'?'Торцевая стойка ':'Г-образная фальшпланка ')+(side==='left'?'слева':'справа');
+ const title=segmented?name+' · часть '+number:name;
  if(parts.size!==roles.length||roles.some(role=>!parts.has(role)))throw Error(title+' — неполный комплект панелей.');
  const reference=parts.get(roles[0]),rotation=reference.rotation||0;
  if(![0,90,180,270].includes(rotation))throw Error(title+' — проверьте угол поворота сборки.');
@@ -21,6 +22,7 @@ function makeRow(unit,lookup){
  // the bottom of that face. Measure in cabinet coordinates before rotating back.
  const face=localPoint(reference,rotation);
  const width=reference.width,height=reference.height,depth=kind==='end'?reference.depth:100;
+ if(kind!=='cap'&&(height<100||height>3000))throw Error(title+' — высота одной детали должна быть от 100 до 3000 мм.');
  const x0=face.x-width/2,y0=reference.elevation_mm,z0=face.z+reference.depth/2-depth;
  const panels=[];
  for(const role of roles){
@@ -52,23 +54,23 @@ function makeRow(unit,lookup){
 // Keep separate boards in the scene, drawings and cutting list. Replace one
 // complete assembly with its signed native source only for the BAZIS export.
 export function nativeTrimRows(items,lookup){
- const groups=new Map(),ids=new Map();
+ const units=new Map(),splitSides=new Set(),ids=new Map();
  for(const it of items){
   const owner=it.assistant_carcass?.group_id;
   if(it.module_type!=='blank'||!owner||!it.item_id?.startsWith(owner+':'))continue;
   const match=partKey.exec(it.item_id.slice(owner.length+1));
   if(!match)continue;
-  const [,side,role]=match;
-  if(!groups.has(owner))groups.set(owner,new Map());
-  const units=groups.get(owner);
-  if(!units.has(side))units.set(side,{side,parts:new Map()});
-  const unit=units.get(side);
+  const [,key,role]=match,[side,ordinal]=key.split('-'),number=Number(ordinal||1);
+  const sideId=owner+':trim-'+side,unitId=number===1?sideId:sideId+'-'+number;
+  if(number>1)splitSides.add(sideId);
+  if(!units.has(unitId))units.set(unitId,{sideId,side,number,parts:new Map()});
+  const unit=units.get(unitId);
   if(unit.parts.has(role))throw Error('Повторяется деталь фальшпланки «'+it.name+'».');
   unit.parts.set(role,it);
   ids.set(it.item_id,null);
  }
- for(const units of groups.values())for(const unit of units.values()){
-  const row=makeRow(unit,lookup);
+ for(const unit of units.values()){
+  const row=makeRow(unit,splitSides.has(unit.sideId),lookup);
   ids.set(row.host_blank_id,row);
  }
  return ids;
