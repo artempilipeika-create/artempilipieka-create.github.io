@@ -15,8 +15,7 @@ import {clientFrame} from './client-camera.mjs';
 import {studioEnvironment} from './studio-environment.mjs';
 import {roomDaylight,daylightKey} from './room-daylight.mjs';
 import {buildRoomSurfaces,wallVisible} from './room-surfaces.mjs';
-import {clearanceSession,drawerStroke,leafKey,maxOpening} from './wardrobe-clearance.mjs';
-import {doorSide} from './wardrobe-door-layout.mjs';
+import {clearanceSession,drawerStroke,viewingDoor,angleLimit} from './wardrobe-clearance.mjs';
 import {WardrobeMotion,drawerKey} from './wardrobe-motion.mjs';
 import {StudioRender} from './studio-render.mjs';
 import {allSegments} from './wall-finishes.mjs';
@@ -318,7 +317,7 @@ export class PlannerScene{
     if(this.mode!=='3d')this.setView('3d');
     m.reset();m.show(id);
     const members=this.adapter.items.filter(it=>cabinetId(it)===id);
-    const leaves=members.filter(it=>doorSide(leafKey(it))),picked=leaves.find(it=>it===item);
+    const leaves=members.filter(viewingDoor),picked=leaves.find(it=>it===item);
     m.defaultDegrees=0;m.leaf=(picked||leaves[0])?.item_id??null;
     m.drawer=members.map(drawerKey).find(Boolean)??null;
     const session=this.wardrobeChecks();
@@ -335,14 +334,14 @@ export class PlannerScene{
   }
   selectWardrobeDoor(id){
     const m=this.wardrobeMotion;
-    if(!m.open||!this.adapter.items.some(it=>it.item_id===id&&cabinetId(it)===m.id&&doorSide(leafKey(it))))return false;
+    if(!m.open||!this.adapter.items.some(it=>it.item_id===id&&cabinetId(it)===m.id&&viewingDoor(it)))return false;
     m.leaf=id;this.onWardrobeChanged?.();return true;
   }
   setWardrobeAngle(value){
     const m=this.wardrobeMotion,item=this.adapter.items.find(it=>it.item_id===m.leaf);
     if(!m.open||!item||!Number.isFinite(value))return;
     const session=this.wardrobeChecks();
-    const result=session.swing(item,m.degrees(m.leaf),Math.max(0,Math.min(maxOpening,value)));
+    const result=session.swing(item,m.degrees(m.leaf),Math.max(0,Math.min(angleLimit(item),value)));
     m.setDegrees(m.leaf,result.degrees);m.contact=null;m.message='';
     if(result.contact)this.reportDoorContact(result);
     else if(m.requested)this.checkDrawerTravel(session,m.requested);

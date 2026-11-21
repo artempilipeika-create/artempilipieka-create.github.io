@@ -1,17 +1,15 @@
-import {rearProjection} from './panel-machining.mjs';
-import {frontProjection} from './wardrobe-drawers.mjs';
+import {surroundLayout} from './wardrobe-surround.mjs';
 import {splitPlinths,joinPlinths} from './wardrobe-plinth-runs.mjs';
 import {resolveBlankBindings} from './blank-bindings.mjs';
-import {footHeight} from './plinth-options.mjs';
 import {placementError,kitchenGroup,dimensionPatch,heights,elevation,mountedItems,upperWorktopTop} from './furniture-core.mjs';
 
 export const cabinetId=item=>item?.assistant_carcass?.group_id;
 export const isInterior=item=>Boolean(cabinetId(item)&&/^(shelf-|divider-|drawer-|niche-)/.test(item.item_id.slice(cabinetId(item).length+1)));
 
 export function cabinetEnvelope(meta){
- const {spec:s,position:p}=meta;
- return {...p,item_id:meta.group_id,module_type:'blank',name:'Шкаф',base:'wall',
-   width:s.width,height:s.height+footHeight(s),depth:s.depth+rearProjection(s)+frontProjection(s)};
+ const {width,height,depth}=surroundLayout(meta.spec);
+ return {...meta.position,item_id:meta.group_id,module_type:'blank',name:'Шкаф',base:'wall',
+   width,height,depth};
 }
 
 export function cabinetChange(adapter,id,offset){

@@ -97,6 +97,23 @@ function generatedLabel(key,base,group) {
 function panelLabel(item,key,g){
  const raw=text(item.name),base=stripPrefix(raw,g);
  if(raw&&raw===base)return raw; // All generator-owned labels carry a cabinet prefix.
+ if(key.startsWith('mezz-')&&base.startsWith('Антресоль'+separator)){
+  const label=base.slice(('Антресоль'+separator).length);
+  const generated={left:'левая стойка',right:'правая стойка',bottom:'дно',top:'крыша',divider:'перегородка',
+   'door-left':'левый фасад','door-right':'правый фасад'}[key.slice(5)];
+  if(label===generated||key.startsWith('mezz-door-')&&label==='фасад')
+   return label.charAt(0).toUpperCase()+label.slice(1);
+ }
+ const trim=/^trim-(left|right)-(face|return|end)$/.exec(key);
+ if(trim){
+  const side=trim[1]==='left'?'Левая':'Правая';
+  const tail={face:'фальшпланка · глухой фасад',return:'фальшпланка · боковая проставка',end:'торцевая стойка'}[trim[2]];
+  if(base===side+' '+tail)return base;
+ }
+ if(key.startsWith('trim-cap-')){
+  const plate={face:'лицевая',upright:'внутренняя',base:'нижняя'}[key.slice(9)];
+  if(base==='Закладная под потолок'+separator+plate+' планка')return base;
+ }
  const door=/^door-(?:(lower|upper)-)?(left|right)$/.exec(key);
  if(door){
   const tier=door[1]==='upper'?' верхний':door[1]==='lower'?' нижний':'';
@@ -169,6 +186,7 @@ export function assignCabinetBlocks(rows,items) {
   const board=itemsById.get(row.blank_item_id);
   const drawer=drawerOf(ids[0],owner);
   const sameDrawer=drawer&&ids.every(id=>drawerOf(id,owner)===drawer);
+  const mezzanine=ids.every(id=>id.startsWith(owner.id+':mezz-'));
   const related=ids.map(id=>itemsById.get(id));
   if(row.aks_kind==='rail'||row.aks_kind==='concealed'){
    const movingPart=ids.map(id=>drawerOf(id,owner)).find(Boolean);
@@ -176,7 +194,12 @@ export function assignCabinetBlocks(rows,items) {
    if(face)related.push(face);
   }
   row.name=board?panelLabel(board,row.blank_item_id.slice(owner.id.length+1),owner):hardwareLabel(row,related);
+  if(row.wardrobe_trim)for(const part of row.wardrobe_trim.panels){
+   const panel=itemsById.get(part.blank_item_id);
+   part.name=panelLabel(panel,part.blank_item_id.slice(owner.id.length+1),owner);
+  }
   row.cabinet_block={id:owner.id,name:owner.name,part_name:row.name};
+  if(mezzanine)Object.assign(row.cabinet_block,{module_key:'mezzanine',module_name:'Антресоль'});
   if(sameDrawer)Object.assign(row.cabinet_block,{drawer_key:drawer,drawer_name:drawerName(drawer,owner)});
   grouped++;
  }

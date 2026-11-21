@@ -131,7 +131,7 @@ class FurnitureItem(StrictModel):
     back_variant_id: UUID|None=None
     # Individual rectangular board; no inferred cabinet or fabricated BAZIS geometry.
     blank_length_mm: int|float|None=Field(default=None,ge=40,le=3000)
-    blank_width_mm: int|float|None=Field(default=None,ge=40,le=3000,multiple_of=0.5)
+    blank_width_mm: int|float|None=Field(default=None,ge=22,le=3000,multiple_of=0.5)
     blank_thickness_mm: int|None=Field(default=None,ge=3,le=40)
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back','front']|None=None
@@ -280,7 +280,11 @@ class FurnitureItem(StrictModel):
                         raise ValueError('Для шуфляды PRIME нужна плита 18 мм.')
                     if banks[section].railFamily=='concealed' and drawer[3] in ('bottom','side-left','side-right') and w not in (290,340,390,440,490,540):
                         raise ValueError('Глубина детали PRIME должна соответствовать выбранной длине направляющей.')
-            if l<100 and not grip and not (drawer and drawer[3].startswith('side-') and self.blank_axis=='side' and t==18):
+            trim_face=group and group.spec.surround and key in ('trim-left-face','trim-right-face') and self.blank_axis=='back'
+            cap_upright=group and group.spec.surround and group.spec.surround.cap and key=='trim-cap-upright' and self.blank_axis=='back'
+            if w<40 and not cap_upright:
+                raise ValueError('Ширина заготовки от 40 мм.')
+            if l<100 and not trim_face and not grip and not (drawer and drawer[3].startswith('side-') and self.blank_axis=='side' and t==18):
                 raise ValueError('Длина заготовки от 100 мм.')
             thin_bottom=drawer and drawer[3]=='bottom' and self.blank_axis=='horizontal' and self.blank_edge_code=='0000' and t==3
             if w>1200 and self.blank_axis!='back':

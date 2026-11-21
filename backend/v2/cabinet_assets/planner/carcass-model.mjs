@@ -1,10 +1,10 @@
 import {installedSide,depthBehindDoor,mountKey} from './wardrobe-hinge-layout.mjs';
 import {applyLighting} from './wardrobe-lighting.mjs';
-import {canMachine,checkBackMount,backCut,backTrim,backSideTrim,rearClearance,rearProjection} from './panel-machining.mjs';
+import {canMachine,checkBackMount,backCut,backTrim,backSideTrim,rearClearance} from './panel-machining.mjs';
 import {aboveGola,installedOpenings} from './wardrobe-gola-shelves.mjs';
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
 export {sectionWidths} from './wardrobe-layout.mjs';
-import {frontProjection,drawerSections,buildDrawerBoards,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
+import {drawerSections,buildDrawerBoards,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
 import {sectionWidths,nicheSlot,columnWidths,columnOpenings,localBaseShelf,openingBase,splitKey} from './wardrobe-layout.mjs';
 import {fitNicheBanks,nicheOpenings} from './wardrobe-niches.mjs';
 import {doorHinges,doorPush} from './wardrobe-hinges.mjs';
@@ -13,6 +13,7 @@ import {fittedPull,trimFace,validateEdgePull} from './wardrobe-edge-pulls.mjs';
 import {facadeLayout,hasFacadeProfiles,doorSide,usesProfileEdge,handlePlacement,drawerFacades,checkDrawerHandle} from './wardrobe-door-layout.mjs';
 import {clearProfileShelves,verifyProfileSupports} from './wardrobe-door-hardware.mjs';
 import {hingeLoad} from './wardrobe-fronts.mjs';
+import {surroundLayout,surroundParts,surroundPart} from './wardrobe-surround.mjs';
 import {blankItem,validateBlank,edgeMeters} from './blanks-model.mjs';
 import {worldPoint,resolveBlankBindings} from './blank-bindings.mjs';
 
@@ -291,6 +292,16 @@ export function buildCarcass(input={},options={}){
     add('back','Задняя стенка ХДФ 3 мм','back',rightEdge-leftEdge,upper-lower,3,(rightEdge+leftEdge)/2,lower,z,'0000');
   }
   else if(s.back)add('back','Задняя стенка ХДФ 3 мм','back',W-2,H-2,3,0,1,-(D+3)/2,'0000');
+  const envelope=surroundLayout(s);
+  const extras=surroundParts(s,envelope,prefix,options);
+  parts.push(...extras);
+  if(s.surround?.upper){
+    const panels=parts.map(p=>p.item);
+    for(const p of extras.filter(p=>p.key.startsWith('mezz-door-'))){
+      const push=doorPush({...p.item,assistant_carcass:{spec:s,group_id:prefix}},panels)[0];
+      if(push)pushLocations[p.key]={host:parts.find(host=>host.item.item_id===push.host_blank_id)?.label,style:push.push_install,height:push.push_height_mm};
+    }
+  }
   if(s.lighting)applyLighting(parts,s.lighting);
   verifyProfileSupports(s,parts,runs,s.elevation+legHeight);
   const items=resolveBlankBindings(parts.map(p=>p.item),mount);
@@ -304,14 +315,13 @@ export function buildCarcass(input={},options={}){
   }
   const rods=planRods(s,installedLevels);
   return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,hingeLocations,pushLocations,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
-    width:W,height:H,depth:D+rearProjection(s)+frontProjection(s),edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
+    width:envelope.width,height:H,depth:envelope.depth,envelope,edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 
 export function placeCarcass(built,position){
-  // Placement envelope includes the overlay back; recipe origin remains at the carcass centre.
-  const shift=rearProjection(built.spec)/2-frontProjection(built.spec)/2;
-  return built.items.map(it=>({...it,...worldPoint({x:it.x,z:it.z+shift},position.rotation||0),rotation:position.rotation||0}))
-    .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?.article==='118779'?10:0)}));
+  const {centerX,centerZ}=built.envelope;
+  return built.items.map(it=>({...it,...worldPoint({x:it.x-centerX,z:it.z-centerZ},position.rotation||0),rotation:position.rotation||0}))
+    .map(it=>({...it,x:it.x+position.x,z:it.z+position.z,elevation_mm:it.elevation_mm-built.spec.elevation+position.elevation_mm+(built.spec.feet?.article==='118779'&&!surroundPart(it.item_id.split(':').at(-1))?10:0)}));
 }
 
 export function insertCarcass(adapter,items){

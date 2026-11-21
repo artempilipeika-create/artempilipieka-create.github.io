@@ -1,5 +1,5 @@
 // Runtime viewing poses in millimetres. The project items are read-only here.
-import {drawerStroke,hingePose,slidingKey} from './wardrobe-clearance.mjs';
+import {drawerStroke,hingePose,slidingKey,viewingDoor} from './wardrobe-clearance.mjs';
 export {slidingKey as drawerKey};
 const rad=Math.PI/180,unit=.001;
 const advance=(value,target,amount)=>value<target?Math.min(target,value+amount):Math.max(target,value-amount);
@@ -53,12 +53,12 @@ export class WardrobeMotion{
       if(!g)continue;
       const active=Boolean(this.id)&&it.assistant_carcass?.group_id===this.id;
       if(!active&&!g.userData.wardrobePosed)continue;
-      const leaf=it.item_id.match(/:door-(?:(?:lower|upper)-)?(left|right)$/),key=slidingKey(it);
+      const leaf=viewingDoor(it),key=slidingKey(it);
       if(!leaf&&!key)continue;
-      let angle=0,dx=0,dz=0;
+      let angle=0,pitch=0,dx=0,dy=0,dz=0;
       if(leaf&&active){
         const p=hingePose(it,this.degrees(it.item_id)*smooth(this.door));
-        angle=p.a;dx=p.dx*unit;dz=p.dz*unit;
+        angle=p.a;pitch=p.pitch??0;dx=p.dx*unit;dy=(p.dy??0)*unit;dz=p.dz*unit;
       }
       const slide=active&&key&&key===this.shown?travel:0;
       if(key){
@@ -68,6 +68,7 @@ export class WardrobeMotion{
       const base=-(it.rotation||0)*rad;
       g.position.x=it.x*unit+dx*Math.cos(base)+dz*Math.sin(base);
       g.position.z=it.z*unit-dx*Math.sin(base)+dz*Math.cos(base);
+      if(it.item_id.includes(':mezz-door-')){g.rotation.order='YXZ';g.rotation.x=pitch;g.position.y=(it.elevation_mm??0)*unit+dy;}
       g.rotation.y=base+angle;
       g.userData.wardrobePosed=active;
     }

@@ -1,4 +1,4 @@
-import {planAksPush,pushProducts} from './wardrobe-push-layout.mjs';
+import {planAksPush} from './wardrobe-push-layout.mjs';
 import pushKit from './wardrobe-push-open.json' with {type:'json'};
 import {doorPushGap,hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,meetingGap} from './wardrobe-hinge-layout.mjs';
 import {finishedFaceSize} from './wardrobe-edge-pulls.mjs';
@@ -171,14 +171,14 @@ export function doorPush(door,items){
  const group=door.assistant_carcass;
  if(!group||door.blank_axis!=='front')return [];
  const key=door.item_id.slice(group.group_id.length+1),front=group.spec.front;
+ const upper=group.spec.surround?.upper,mezzSide=/^mezz-door-(left|right)$/.exec(key)?.[1];
+ if(upper&&mezzSide){
+  const setup=upper.opening==='lift'?{...upper.push,support:'bottom'}:upper.push;
+  return planAksPush(door,items,setup,mezzSide,()=>[]);
+ }
  if(!front||!doorSide(key)||!settingFor(front,key).push)return [];
  const setup=settingFor(front,key).push;
- if(setup!==true){
-  const product=pushProducts[setup.article],closing=hingeProduct(front,key).closing;
-  if(!product||(product.tip==='rubber'?closing!=='reverse':!['springless','reverse'].includes(closing)))throw Error('Выберите совместимую петлю для типона.');
-  return planAksPush(door,items,setup,installedSide(front,key),doorHinges);
- }
- if(hingeProduct(front,key).closing!=='springless')throw Error('Толкателю AQ нужна петля без пружины.');
+ if(setup!==true)return planAksPush(door,items,setup,installedSide(front,key),doorHinges);
  const angle=door.rotation,sign=installedSide(front,key)==='left'?1:-1,at=localPoint(door,angle);
  const x=at.x+sign*(door.width/2-pushKit.workshopReference.bodyBoreFromDoorFreeEdgeMm),z=at.z-door.depth/2;
  const low=door.elevation_mm,high=low+door.height,boards=items.filter(p=>p.item_id.startsWith(group.group_id+':')&&p!==door&&p.item_id!==door.item_id);

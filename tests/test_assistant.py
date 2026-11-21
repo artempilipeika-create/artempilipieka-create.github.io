@@ -102,8 +102,46 @@ def test_generated_scene_metadata_survives_validation_and_assets_are_served():
     from backend.v2.cabinet_ui import router
     app=FastAPI();app.include_router(router())
     with TestClient(app) as client:
-        for name in ('assistant-model.mjs','assistant-ui.mjs','assistant.css','wardrobe-questionnaire.mjs'):
+        for name in ('assistant-model.mjs','assistant-ui.mjs','assistant.css','wardrobe-questionnaire.mjs','wardrobe-surround.mjs','wardrobe-surround-ui.mjs','wardrobe-surround-drawing.mjs','wardrobe-push-product-ui.mjs'):
             assert client.get('/account/planner/'+name).status_code==200
+
+def surround_scene():
+    upper={'height':540,'divider':True,'leaves':2,'side':'left','opening':'swing',
+           'push':{'article':'70787','mount':'auto','support':'auto','heightMm':1050}}
+    surround={'left':{'kind':'filler','width':64,'heightMode':'custom','height':2000,'bottom':0},
+              'right':{'kind':'end','depth':100,'projection':20,'heightMode':'full','bottom':0},
+              'upper':upper,'cap':{'height':42}}
+    return generated_scene({**SPEC,'width':1000,'height':2080,'surround':surround})
+
+def test_surround_board_measurements_and_materials_survive_scene_validation():
+    scene=surround_scene()
+    saved=Scene.model_validate(scene).model_dump(mode='json')
+    parts={i['item_id'].split(':')[-1]:i for i in saved['items']}
+    assert parts['trim-left-face']['blank_length_mm']==64
+    assert parts['trim-cap-upright']['blank_width_mm']==24
+    assert parts['trim-right-end']['height']==2620
+    door=parts['mezz-door-right']
+    assert (door['width'],door['height'],door['elevation_mm'])==(497,537,2081.5)
+    assert CarcassDesign.model_validate(door['assistant_carcass']['spec']).installed_height==2662
+    assert len({p['assistant_carcass']['group_id'] for p in parts.values()})==1
+    with pytest.raises(ValidationError):
+        Scene.model_validate({**saved,'room':{**saved['room'],'height':2661}})
+
+def test_surround_project_reopen_edit(api,admin_user):
+    scene=surround_scene()
+    made=api.post('/api/v2/3d-projects',json={'name':'QA шкаф с антресолью','scene':scene})
+    assert made.status_code==201,made.text
+    url='/api/v2/3d-projects/'+made.json()['project_id']
+    saved=api.get(url).json()
+    assert saved['scene']['items'][0]['assistant_carcass']['spec']['surround']==scene['items'][0]['assistant_carcass']['spec']['surround']
+    for part in saved['scene']['items']:
+        part['assistant_carcass']['spec']['surround']['right']['projection']=25
+        if part['item_id'].endswith(':trim-right-end'):
+            part['z']+=5
+    changed=api.patch(url,json={'name':saved['name'],'version':saved['version'],'scene':saved['scene']})
+    assert changed.status_code==200,changed.text
+    reopened=api.get(url).json()['scene']['items']
+    assert next(i for i in reopened if i['item_id'].endswith(':trim-right-end'))['assistant_carcass']['spec']['surround']['right']['projection']==25
 
 def test_questionnaire_ai_cannot_change_form_parameters(monkeypatch):
     from backend.v2.assistant_model import CarcassDesign

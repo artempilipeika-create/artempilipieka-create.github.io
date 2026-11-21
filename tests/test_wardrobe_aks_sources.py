@@ -121,7 +121,7 @@ def test_aks_push_kit_has_one_purchased_article_and_real_bores_for_every_install
         importer = archive.read(IMPORTER_NAME)
         for article, product in products.items():
             magnetic = product['tip'] == 'magnet'
-            hinge = '112706' if magnetic else '122555'
+            hinge = '112706'
             assert (assets/'shelf-images'/f'{article}.webp').is_file()
             for mount, native in product['mounts'].items():
                 setting = DoorHingeSetting(article=hinge, push={'article':article,'mount':mount})
@@ -166,6 +166,6 @@ def test_aks_push_kit_has_one_purchased_article_and_real_bores_for_every_install
             src=hinge.get('pushNative',hinge)
             data=archive.read('Martin Forest AKS/'+src['file'])
             assert hashlib.sha256(data).hexdigest()==src['sha'] and src['sha'].encode() in importer
-    for hinge,article,mount in [('112595','72258','bored'),('112706','82723','bored'),('112706','70787','bored')]:
+    for hinge,article,mount in [('112595','72258','bored'),('112706','70787','bored')]:
         with pytest.raises(ValidationError):
             DoorHingeSetting(article=hinge,push={'article':article,'mount':mount})

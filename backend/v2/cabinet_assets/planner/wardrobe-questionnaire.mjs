@@ -2,6 +2,7 @@ import {wardrobeHardware} from './wardrobe-aks-native.mjs';
 import {canLight} from './wardrobe-lighting.mjs';
 import {canMachine,rearClearance} from './panel-machining.mjs';
 import {secureDoorShelf} from './wardrobe-door-layout.mjs';
+import {settingFor} from './wardrobe-hinge-layout.mjs';
 import {footPlan} from './wardrobe-feet.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {validateJoints,nativeCarcassJoints,jointOptions} from './carcass-joints.mjs';
@@ -59,6 +60,7 @@ export function wardrobeSpec(f){
  if(!Number.isInteger(sections)||sections<1||sections>4||!Array.isArray(counts)||counts.length!==sections)throw Error('Выберите от одной до четырёх секций.');
  if(counts.some(n=>!Number.isInteger(n)||n<0||n>10))throw Error('В секции может быть от 0 до 10 полок.');
  const spec={recipe:sections===1?'shelves':'divided',width:Number(f.width),height:Number(f.height),depth:Number(f.depth),thickness:Number(f.thickness),shelves:Math.max(...counts),sections,sectionShelves:[...counts],back:f.back,elevation:f.elevation??0,shelfSetback:1,dividerSetback:1,shelfGap:f.shelfGap??0,edgeThickness:f.edgeThickness??1,edgePolicy:f.edgePolicy??'front'};
+ if(f.surround&&Object.values(f.surround).some(Boolean))spec.surround=structuredClone(f.surround);
  if(f.machining&&Object.keys(f.machining).length)spec.machining=structuredClone(f.machining);
  if(f.back&&f.backMount)spec.backMount={...f.backMount};
  if(f.lighting&&Object.keys(f.lighting).length)spec.lighting=structuredClone(f.lighting);
@@ -74,7 +76,10 @@ export function wardrobeSpec(f){
    const levels=counts.map((count,section)=>Array.from({length:count},(_,i)=>f.shelfLevels[section]?.[i]??null));
    if(levels.some(row=>row.some(Boolean)))spec.shelfLevels=levels;
  }
- if(f.front)spec.front={...f.front,autoHinges:true};
+ if(f.front){
+   spec.front={...f.front,autoHinges:true};
+   if(f.front.hinges)spec.front.hinges=Object.fromEntries(Object.keys(f.front.hinges).map(key=>[key,settingFor(f.front,key)]));
+ }
  if(f.back&&f.backThickness)spec.backThickness=f.backThickness;
  for(const key of ['topFit','bottomFit'])if(f[key]==='overlay')spec[key]='overlay';
  if(f.feet)spec.feet={layout:'width',article:f.feet.article,front:f.feet.front,rear:f.feet.rear,...(f.feet.left==='side'?{left:'side'}:{}),...(f.feet.right==='side'?{right:'side'}:{})};

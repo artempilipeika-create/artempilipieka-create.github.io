@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- Martin Forest -> BAZIS native importer v9.9.41 DOOR TIP-ON + PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
+ Martin Forest -> BAZIS native importer v9.9.42 WARDROBE SURROUNDS + MEZZANINE + DOOR TIP-ON + PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + MULTIPLE LIBRARY FOLDERS + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + CARCASSES + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES (2026-10-29)
  v9.9.15: place rigid room sockets relative to furniture.
  v9.9.14: retain previously selected FR3D folders and combine source searches.
  v9.9.13: restore mounting rail anchors for all 22 upper corner/vitrine sources.
@@ -135,13 +135,13 @@ function loadProjectFile() {
     // Never silently skip a damaged newest export and import an older project.
     throw new Error('Не удалось прочитать выбранный экспорт:\n' + filename + '\n' + error.message);
   }
-  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19','martin-forest-bazis-native-v20'].includes(payload.format) ||
+  if (!payload || !['martin-forest-bazis-native-v2','martin-forest-bazis-native-v3','martin-forest-bazis-native-v4','martin-forest-bazis-native-v5','martin-forest-bazis-native-v6','martin-forest-bazis-native-v7','martin-forest-bazis-native-v8','martin-forest-bazis-native-v9','martin-forest-bazis-native-v10','martin-forest-bazis-native-v11','martin-forest-bazis-native-v12','martin-forest-bazis-native-v13','martin-forest-bazis-native-v14','martin-forest-bazis-native-v15','martin-forest-bazis-native-v16','martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19','martin-forest-bazis-native-v20','martin-forest-bazis-native-v21'].includes(payload.format) ||
       !Array.isArray(payload.items) || !payload.items.length) {
     throw new Error('Неподдерживаемый или пустой экспорт: ' + filename);
   }
   for (const item of payload.items) {
     if (!item || typeof item !== 'object') throw new Error('Некорректный модуль в JSON.');
-    if(['martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19','martin-forest-bazis-native-v20'].includes(payload.format)&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
+    if(['martin-forest-bazis-native-v17','martin-forest-bazis-native-v18','martin-forest-bazis-native-v19','martin-forest-bazis-native-v20','martin-forest-bazis-native-v21'].includes(payload.format)&&item.blank?.edge_grip&&item.blank.edge_code!=='1111')
       throw Error('Для фасада с врезной ручкой требуется ПВХ по четырём торцам.');
   }
   return { filename, payload, automatic };
@@ -1268,7 +1268,7 @@ function resizeAndPlaceBlank(obj,item,log){
  if(!Array.isArray(cuts)||cuts.length&&(!/:drawer-\d+-spacer-(left|right)$/.test(item.blank_item_id)||b.axis!=='side'||T!==18))throw Error('Неизвестный контур проставки.');
  const thinBack=b.axis==='back'&&(T===3||T===4)&&b.edge_code==='0000';
  const drawerFace=!!b.edge_grip||/:drawer-\d+-\d+-face$/.test(item.blank_item_id)&&b.axis==='front';
- const wardrobeDoor=b.axis==='front'&&/:door-(?:(?:upper|lower)-)?(?:right|left)$/.test(item.blank_item_id);
+ const wardrobeDoor=b.axis==='front'&&/:(?:mezz-)?door-(?:(?:upper|lower)-)?(?:right|left)$/.test(item.blank_item_id);
  const nichePost=b.axis==='side'&&/:niche-\d+-\d+-divider$/.test(item.blank_item_id);
  const validLength=wardrobeDoor||nichePost?Number.isInteger(L*2):drawerFace?Number.isFinite(L)&&Math.abs(L*1000-Math.round(L*1000))<.000001:Number.isInteger(L);
  if(!validLength||L<(drawerSide||b.edge_grip?40:100)||L>3000||!Number.isInteger(W*(b.axis==='front'||b.axis==='side'&&b.machining?.some(o=>o.kind==='rabbet')?2:1))||W<40||W>(b.axis==='back'?3000:1200)||!Number.isInteger(T)||(!thinBack&&!drawerBottom&&(T<10||T>40))||!Number.isFinite(E)||E<.4||E>3||!['horizontal','side','back','front'].includes(b.axis)||!/^\d{4}$/.test(b.edge_code)||/[^01]/.test(b.edge_code))throw Error('Некорректные параметры заготовки.');
@@ -2236,6 +2236,117 @@ function placeWardrobeRod(obj,item,log){
   return {materialChecks:[],profileChecks:[]};
 }
 
+// These identities are the four workshop assemblies, including their native
+// elastic parameters, carrier panels, joint scheme, and fitting drillings.
+const WARDROBE_TRIM_SOURCES={
+ '30be270bbfac56f50a29e10319db4d64a03afe46e58abca0b46d265458078dd1':'left',
+ '6021bf08e71f565041b181a01e3b8db350e1d1fa767f5fc26665aef391918604':'right',
+ '2fb535965b6a2cdd48a5061256dc72f45ea8e09c73645833049150ee0b293eec':'end',
+ '1593b2bf163f12120e40c96b9feca7ff7a035da5ba5b67f96f197b97aaf7f5a9':'cap'
+};
+function trimFittings(check){
+ const list=asList(check.root);
+ let cams=0,dowels=0;
+ for(let i=0;i<list.Count;i++){
+  const obj=childAt(list,i);
+  if(!/^ст[. ]+эксцентриковая/i.test(String(obj?.Name||'')))continue;
+  const joint=asList(obj);
+  for(let j=0;j<joint.Count;j++){
+   const name=String(childAt(joint,j)?.Name||'');
+   if(/^эксцентриковая стяжка/i.test(name))cams++;
+   if(/^шкант деревянный/i.test(name))dowels++;
+  }
+ }
+ const valid=cams===dowels&&(check.kind==='end'?cams===0:cams>0);
+ if(!valid)throw Error(check.moduleName+' — родная схема крепежа: эксцентриков '+cams+', шкантов '+dowels+'.');
+ return {kind:'Крепёж фальшпланки',moduleName:check.moduleName,cams,dowels,verified:true};
+}
+function verifyTrimFittings(check){
+ const result=trimFittings(check);
+ if(check.count!=null&&result.cams!==check.count)
+  throw Error(check.moduleName+' — в ведомости '+check.count+' пар, в БАЗИС '+result.cams+'. Проверьте длину стыка и параметры схемы.');
+ return result;
+}
+function inspectTrim(root,item){
+ const plan=item.wardrobe_trim,kind=WARDROBE_TRIM_SOURCES[item.source_sha256];
+ if(!plan||!kind||plan.kind!==kind||!Array.isArray(plan.panels)||!item.cabinet_block)
+  throw Error('Неизвестный исходник или неполное описание фальшпланки.');
+ const expected=kind==='end'?['end']:kind==='cap'?['face','upright','base']:['face','return'];
+ const panels=new Map(),axes=['x','y','z'],list=asList(root);
+ for(let i=0;i<list.Count;i++){
+  const child=childAt(list,i);
+  if(!child)throw Error('Не прочитан элемент фальшпланки.');
+  if(!objectTypeChecker.ObjectIsPanel(child))continue;
+  const name=normalizePanelName(child.Name),edges=Number(child.Butts.Count);
+  const role=name==='закладная'?(edges===0?'upright':'base'):
+   ({'боковая проставка':'return','торцевая стойка':'end','фасад глухой':'face','фальш планка вверх':'face'})[name];
+  if(!expected.includes(role)||panels.has(role)||Math.abs(Number(child.Thickness)-18)>.01||
+     edges!==({return:3,end:4,face:4,upright:0,base:3})[role])
+   throw Error('Не совпали панель или кромка исходника «'+child.Name+'».');
+  const origin=profilePoint(root,child,{x:0,y:0,z:0});
+  const basis=axes.map(k=>{
+   const v={x:0,y:0,z:0};v[k]=1;
+   const p=profilePoint(root,child,v);
+   return axes.map(k=>Math.abs(p[k]-origin[k]));
+  });
+  panels.set(role,{panel:child,basis,size:vector(child.GSize||getLocalSize(child),'trim.panel')});
+ }
+ if(panels.size!==expected.length||plan.panels.length!==expected.length||
+    expected.some(role=>plan.panels.filter(p=>p.role===role).length!==1))
+  throw Error('Не совпало число панелей родной фальшпланки.');
+ return panels;
+}
+// Contour element numbers measured on the signed workshop panels. Two faces
+// of the cap share a name, yet have different local orientations.
+function applyTrimEdges(panel,part) {
+ const elements={face:[0,2,3,1],end:[1,3,0,2],return:[1,3,0,2],upright:[0,2,1,3],base:[1,3,0,2]}[part.role];
+ const donorCode={face:'1111',end:'1111',return:'0111',upright:'0000',base:'1011'}[part.role];
+ const code=part.edge_code,thickness=Number(part.edge_thickness);
+ if(!/^[01]{4}$/.test(code)||!Number.isFinite(thickness)||thickness<.4||thickness>3)throw Error('Проверьте ПВХ детали «'+part.name+'».');
+ if(code===donorCode&&thickness===1)return;
+ const front=['face','end','base'].includes(part.role);
+ panel.Butts.Clear();
+ for(const [i,elem] of elements.entries())if(code[i]==='1'){
+  const edge=panel.Butts.Add();
+  edge.ElemIndex=elem;edge.Material=front?'ПВХ В цвет фасада\rВ цвет фасада':'ПВХ В цвет корпуса\rЦвет корпуса';
+  edge.Thickness=thickness;edge.Width=22;edge.Sign=front?'В цвет фасада':'в цвет корпуса';
+  edge.ClipPanel=true;edge.Allowance=0;edge.Overhung=0;edge.CutIndex=-1;
+ }
+ if(typeof panel.Build==='function')panel.Build();
+ const restored=['0','0','0','0'];
+ for(let i=0;i<panel.Butts.Count;i++){
+  const edge=panel.Butts.Butts[i],k=elements.indexOf(Number(edge.ElemIndex));
+  if(k<0||Math.abs(Number(edge.Thickness)-thickness)>.001||edge.ClipPanel!==true)throw Error('Не сохранилась кромка детали «'+part.name+'».');
+  restored[k]='1';
+ }
+ if(restored.join('')!==code)throw Error('Не совпали оклеенные торцы детали «'+part.name+'».');
+}
+function finishTrim(root,item,before,from,to,log){
+ const after=inspectTrim(root,item),checks=[];
+ for(const part of item.wardrobe_trim.panels){
+  const prev=before.get(part.role),actual=after.get(part.role),panel=actual.panel;
+  // Compare deltas in the panel's own axes. Finished outlines with PVC need
+  // not equal the sawn contour even in the unmodified workshop source.
+  const dw=to.x-from.x,dh=to.y-from.y,dd=to.z-from.z;
+  const delta={face:[dw,dh,0],end:[0,dh,dd],return:[0,dh,dd],upright:[dw,dh,0],base:[dw,0,dd]}[part.role];
+  for(const [i,k] of ['x','y','z'].entries()){
+   const change=prev.basis[i].reduce((sum,value,j)=>sum+value*delta[j],0);
+   if(Math.abs(actual.size[k]-prev.size[k]-change)>PLACEMENT_TOLERANCE_MM)
+    throw Error('Не подтвердился размер детали «'+part.name+'» после изменения фальшпланки.');
+  }
+  if(!part.name||!part.material?.name||Number(part.material.thickness)!==18)
+   throw Error('Для панели фальшпланки не заданы название и материал 18 мм.');
+  const native=materialData.CreateMaterialData(materialNameForBazis(part.material),18);
+  if(!native)throw Error('БАЗИС не создал материал детали «'+part.name+'».');
+  historyOperations.RegisterObjectChanging(panel,false);
+  checks.push(assignVerifiedMaterial(panel,native,part.material,log));
+  applyTrimEdges(panel,part);
+  setWardrobePanelLabel(panel,part.name,item.cabinet_block.name+' · '+item.name);
+  if(hasNote(part.production_note)&&!verifiedObjectNote(panel,normalizedNote(part.production_note),part.name,log).verified)
+   throw Error('Не сохранилась заметка детали «'+part.name+'».');
+ }
+ return checks;
+}
 function resizeAndPlace(obj, item, log, shelfPanel) {
   if(item.wardrobe_gola_mount||item.source_sha256===WARDROBE_GOLA_MOUNT_SHA)return placeWardrobeGolaMount(obj,item,log);
   if(item.wardrobe_handle||item.wardrobe_profile||WARDROBE_DOOR_SOURCES[item.source_sha256]||EDGE_PULL_SOURCE[item.source_sha256])return placeWardrobeDoorHardware(obj,item,log);
@@ -2293,6 +2404,7 @@ function resizeAndPlace(obj, item, log, shelfPanel) {
   // a 320 mm native frame to the 317 mm carcass depth (which would lose 3 mm).
   const target = vector(targetVector(map, nativeDimensions(item.target, profile)), 'target');
   if (target.x <= 0 || target.y <= 0 || target.z <= 0) throw new Error('Некорректный целевой размер');
+  const trim=(item.wardrobe_trim||WARDROBE_TRIM_SOURCES[item.source_sha256])?inspectTrim(obj,item):null;
   const profileChecks = snapshotNativeProfiles(obj, item, before, target);
   if (distance(before.size, target) > PLACEMENT_TOLERANCE_MM) {
     if (!item.elastic_resize || !elasticTransformation.ObjectIsElasticBlock(list)) {
@@ -2305,8 +2417,17 @@ function resizeAndPlace(obj, item, log, shelfPanel) {
   if (distance(after.size, target) > PLACEMENT_TOLERANCE_MM) {
     throw new Error('БАЗИС не применил размер: ' + fmtSize(after.size) + ', нужен ' + fmtSize(target));
   }
-  const materialChecks = applyProjectMaterials(obj, item, log);
+  const materialChecks = trim?finishTrim(obj,item,trim,before.size,after.size,log):applyProjectMaterials(obj,item,log);
   repairNativeProfiles(profileChecks, after, log);
+  if(trim){
+    const check={trimFittings:true,root:obj,moduleName:item.name,kind:item.wardrobe_trim.kind,count:item.wardrobe_trim.expected_pairs};
+    const actual=trimFittings(check);
+    if(check.kind!=='end'){
+      const text='Родной крепёж БАЗИС: эксцентрики для плиты 18 мм — '+actual.cams+' шт., шканты 8×35 арт. 39319 — '+actual.dowels+' шт.';
+      if(!verifiedObjectNote(obj,text,item.name,log).verified)throw Error('Не удалось сохранить количество крепежа фальшпланки.');
+    }
+    profileChecks.push(check);
+  }
   const placementFrame = sceneFrame(after, profile);
   if (profile.rearInsetMm) log.push('РАМКА ' + item.name + ': корпус=' + fmtSize(placementFrame.size) +
     '; с задником=' + fmtSize(after.size) + '; задник=' + profile.rearInsetMm + ' мм');
@@ -2401,7 +2522,7 @@ function prepareProjectWithLibrary(payload) {
 }
 
 // Native API only. Node tests do not establish compatibility with BAZIS 2025.
-const IMPORT_VERSION = '9.9.41 DOOR TIP-ON + PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
+const IMPORT_VERSION = '9.9.42 WARDROBE SURROUNDS + MEZZANINE + DOOR TIP-ON + PRIME DRAWERS + PRIME HINGES + PVC + PANEL MACHINING + WARDROBE BLOCKS + INSET HANDLES + WARDROBE DOORS + RODS + SHELVES + BLANK HOOKS + SOCKETS + MODERN CORPUS + GASLIFT + FRIDGE + UPPER MOUNT RAILS + DEPTH + UPPER VITRINES + CORNERS + BLANKS + NATIVE PROFILES + UNIVERSAL SEARCH + SOURCE PINS + MATERIAL NAMES + NMD2 + XZ0 + MATERIAL CHECK + NOTES + GLASS + TEXTURES';
 const IMPORT_SCRIPT_PATH = typeof __filename === 'string' ? __filename : 'Среда не предоставила __filename';
 function normalizedNote(value) {
   return String(value == null ? '' : value).replace(/\r\n?/g, '\n');
@@ -2512,6 +2633,11 @@ function assertEmptyTestModel() {
 }
 // A wardrobe is a movable native block. Templates of individual fittings keep
 // their original nested objects, working planes and drilling operations.
+function wardrobeChild(meta) {
+  if (meta.module_key != null) return {key:'module:'+meta.module_key, name:meta.module_name};
+  if (meta.drawer_key != null) return {key:'drawer:'+meta.drawer_key, name:meta.drawer_name};
+  return null;
+}
 function wardrobeBlockPlan(items) {
   const cabinets = new Map();
   for (const item of items) {
@@ -2519,18 +2645,20 @@ function wardrobeBlockPlan(items) {
     if (meta == null) continue;
     const text = value => typeof value === 'string' && value.trim().length > 0;
     if (!text(meta.id) || !text(meta.name) || !text(meta.part_name) ||
-        (meta.drawer_key != null || meta.drawer_name != null) && (!text(meta.drawer_key) || !text(meta.drawer_name)))
-      throw Error('Проверьте название шкафа, детали и шуфляды в выгрузке.');
+        (meta.drawer_key != null || meta.drawer_name != null) && (!text(meta.drawer_key) || !text(meta.drawer_name)) ||
+        (meta.module_key != null || meta.module_name != null) && (!text(meta.module_key) || !text(meta.module_name) || meta.drawer_key != null))
+      throw Error('Проверьте название шкафа, детали и вложенного блока в выгрузке.');
     let cabinet = cabinets.get(meta.id);
     if (!cabinet) {
-      cabinet = {name:meta.name, drawers:new Map()};
+      cabinet = {name:meta.name, children:new Map()};
       cabinets.set(meta.id, cabinet);
     }
     if (cabinet.name !== meta.name) throw Error('Для одного шкафа указаны разные названия.');
-    if (meta.drawer_key != null) {
-      const drawer = cabinet.drawers.get(meta.drawer_key);
-      if (drawer && drawer.name !== meta.drawer_name) throw Error('Для одной шуфляды указаны разные названия.');
-      if (!drawer) cabinet.drawers.set(meta.drawer_key, {name:meta.drawer_name});
+    const child=wardrobeChild(meta);
+    if (child) {
+      const existing = cabinet.children.get(child.key);
+      if (existing && existing.name !== child.name) throw Error('Для одного вложенного блока указаны разные названия.');
+      if (!existing) cabinet.children.set(child.key, {name:child.name});
     }
   }
   if (cabinets.size && (typeof objects3d === 'undefined' || typeof objects3d.NewBlock !== 'function'))
@@ -2543,11 +2671,12 @@ function wardrobeOwners(cabinets, meta, model) {
   const cabinet = cabinets.get(meta.id);
   if (!cabinet.obj) cabinet.obj = objects3d.NewBlock(cabinet.name, model);
   if (!cabinet.obj) throw Error('Не удалось создать блок шкафа «'+cabinet.name+'».');
-  if (meta.drawer_key == null) return [cabinet.obj];
-  const drawer = cabinet.drawers.get(meta.drawer_key);
-  if (!drawer.obj) drawer.obj = objects3d.NewBlock(drawer.name, cabinet.obj);
-  if (!drawer.obj) throw Error('Не удалось создать вложенный блок «'+drawer.name+'».');
-  return [cabinet.obj, drawer.obj];
+  const child=wardrobeChild(meta);
+  if (!child) return [cabinet.obj];
+  const record=cabinet.children.get(child.key);
+  if (!record.obj) record.obj=objects3d.NewBlock(record.name,cabinet.obj);
+  if (!record.obj) throw Error('Не удалось создать вложенный блок «'+record.name+'».');
+  return [cabinet.obj,record.obj];
 }
 
 function cabinetObjectPath(model, objects) {
@@ -2569,33 +2698,36 @@ function finishWardrobeBlocks(cabinets, model) {
     record.obj = null;
   }
   for (const cabinet of cabinets.values()) {
-    for (const drawer of cabinet.drawers.values()) prune(drawer);
+    for (const child of cabinet.children.values()) prune(child);
     prune(cabinet);
   }
   const paths = [];
   for (const cabinet of cabinets.values()) if (cabinet.obj) {
     paths.push(cabinetObjectPath(model, [cabinet.obj]));
-    for (const drawer of cabinet.drawers.values()) if (drawer.obj)
-      paths.push(cabinetObjectPath(model, [cabinet.obj, drawer.obj]));
+    for (const child of cabinet.children.values()) if (child.obj)
+      paths.push(cabinetObjectPath(model, [cabinet.obj, child.obj]));
   }
   return paths;
 }
 
+function setWardrobePanelLabel(panel,name,ownerName) {
+  const property='Узел для бирки';
+  historyOperations.RegisterObjectChanging(panel,false);
+  panel.Name=name;
+  const properties=objectData.GetObjectUserProperties(panel);
+  properties.set(property,ownerName);
+  objectData.SetObjectUserProperties(panel,properties);
+  if(String(panel.Name)!==name||objectData.GetObjectUserProperties(panel).get(property)!==ownerName)
+    throw Error('БАЗИС не подтвердил наименование или принадлежность панели для бирки.');
+}
 function labelWardrobePanel(item, obj, owner) {
   const meta=item.cabinet_block;
   if (!meta || !item.blank && !item.glass_shelf) return obj;
   const panels=[];
   walkPanels(obj,p=>panels.push(p));
   if (panels.length!==1) throw Error('Для бирки детали должна быть найдена одна панель.');
-  const panel=panels[0], property='Узел для бирки';
-  const value=meta.drawer_key==null?meta.name:meta.name+' · '+meta.drawer_name;
-  historyOperations.RegisterObjectChanging(panel,false);
-  panel.Name=meta.part_name;
-  const properties=objectData.GetObjectUserProperties(panel);
-  properties.set(property, value);
-  objectData.SetObjectUserProperties(panel, properties);
-  if (String(panel.Name)!==meta.part_name || objectData.GetObjectUserProperties(panel).get(property)!==value)
-    throw Error('БАЗИС не подтвердил наименование или принадлежность панели для бирки.');
+  const panel=panels[0], child=wardrobeChild(meta);
+  setWardrobePanelLabel(panel,meta.part_name,child?meta.name+' · '+child.name:meta.name);
   if (objectTypeChecker.ObjectIsPanel(obj)) return obj;
 
   // Unwrap only a verified plain sheet fragment. Any machining, fasteners or
@@ -2666,6 +2798,7 @@ function importProject(prepared, root, payload) {
       }
       importedObjects.push(obj);
       if ((item.blank||item.glass_shelf) && item.blank_item_id) loadedBlanks.add(item.blank_item_id);
+      if(item.wardrobe_trim)for(const part of item.wardrobe_trim.panels)loadedBlanks.add(part.blank_item_id);
       if (!item.wardrobe_gola_mount && !item.wardrobe_handle && !item.wardrobe_profile && !item.wardrobe_rod && !item.aks_kind && !isPrimeHinge(item) && !isSurfacePush(item) && !isWardrobeFoot(item) && !isNativeSocket(item) && !isBlankHook(item) && !isShelfSupport(item) && !JOINT_HASHES.has(item.source_sha256)) furnitureObjects.push(obj);
       liveProfiles.push(...(placement.profileChecks || []));
       liveGolaMounts.push(...(placement.golaMountChecks || []));
@@ -2724,7 +2857,7 @@ function importProject(prepared, root, payload) {
     return result;
   });
   const profileChecks = liveProfiles.map(check => {
-    try { if(check.machining)return verifyPanelMachining(check);return check.edgeGrip?verifyEdgeGripGroove(check):verifyNativeProfile(check); }
+    try { if(check.trimFittings)return verifyTrimFittings(check);if(check.machining)return verifyPanelMachining(check);return check.edgeGrip?verifyEdgeGripGroove(check):verifyNativeProfile(check); }
     catch (error) {
       const message = String(error.message || error);
       log.push("ОШИБКА ПРОФИЛЯ ПОСЛЕ COMMIT: " + check.moduleName + " — " + message);

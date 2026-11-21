@@ -7,11 +7,12 @@ import {mm,mmText,nicheSlot} from './wardrobe-niches.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {backRows} from './carcass-joints.mjs';
 import {footPlan,feetCatalogue} from './wardrobe-feet.mjs';
+import {surroundDrawing} from './wardrobe-surround-drawing.mjs';
 import {footHeight,plinthPanel,floorSide} from './plinth-options.mjs';
 import {turn} from './decor-feet.mjs';
 import {doorLeaves,swingNames} from './door-swing.mjs';
 
-export const drawingTitles={lighting:'Подсветка',machining:'Выбор детали',body:'Корпус',sections:'Секции и полки',feet:'Опоры',plinth:'Цоколь',back:'Задняя стенка',fronts:'Фасады'};
+export const drawingTitles={surround:'Фальшпланки и антресоль','upper-fronts':'Фасады антресоли',lighting:'Подсветка',machining:'Выбор детали',body:'Корпус',sections:'Секции и полки',feet:'Опоры',plinth:'Цоколь',back:'Задняя стенка',fronts:'Фасады'};
 const edge='#495b54',accent='#19664f',wood='#e6dcc9',end='#c4b8a2';
 import {measuredRooms} from './wardrobe-gola-shelves.mjs';
 import {openingBase,splitAt,columnWidths} from './wardrobe-layout.mjs';
@@ -297,6 +298,7 @@ function rear(built){
  }
 }
 export function wardrobeDrawing(built,view='body',section=0,front=built.spec.front,selectedShelf=null,selection=null){
+ if(view==='surround'||view==='upper-fronts')return surroundDrawing(built,view);
  const s=built.spec,feet=footPlan(s),shelves=(s.sectionShelves??Array(s.sections).fill(s.shelves)).reduce((a,b)=>a+b,0);
  const art=view==='machining'||view==='lighting'?openCabinet(built,selection??{}):view==='body'?openCabinet(built):view==='back'?rear(built):view==='feet'?underside(s):elevationView(built,view,section,front,selectedShelf,selection);
  const notes={lighting:'Нажмите на полку или боковину, чтобы выбрать подсветку.',machining:'Нажмите на деталь шкафа или выберите её в списке.',body:s.sections+' секц. · полок '+shelves+' · плита '+s.thickness+' мм',sections:'Вид спереди · чистая ширина выделенной секции',

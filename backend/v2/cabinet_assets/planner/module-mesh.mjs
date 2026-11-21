@@ -926,11 +926,13 @@ export class MeshFactory{
   visiblePushes(it){
     const meta=it.assistant_carcass;
     if(!meta||!['horizontal','front','side'].includes(it.blank_axis))return [];
-    const configured=Object.entries(meta.spec.front?.hinges??{}).filter(([,setting])=>setting.push);
-    if(!configured.length)return [];
-    const items=this.adapter.items??[];
-    return configured.flatMap(([key])=>{
-      const door=items.find(p=>p.item_id===meta.group_id+':'+key);
+    const items=this.adapter.items??[],prefix=meta.group_id+':';
+    const upper=meta.spec.surround?.upper;
+    const keys=it.item_id.startsWith(prefix+'mezz-')&&upper
+      ?(upper.leaves===2?['left','right']:[upper.side]).map(side=>'mezz-door-'+side)
+      :Object.keys(meta.spec.front?.hinges??{}).filter(key=>meta.spec.front.hinges[key].push);
+    return keys.flatMap(key=>{
+      const door=items.find(p=>p.item_id===prefix+key);
       if(!door)return [];
       try{return doorPush(door,items).filter(p=>p.push_part?(p.push_part==='catch'?p.joined_panel_id:p.host_blank_id)===it.item_id:p.host_blank_id===it.item_id||p.joined_panel_id===it.item_id);}
       catch{return [];}

@@ -5,6 +5,8 @@ import {buildCarcass,placeCarcass} from '../../backend/v2/cabinet_assets/planner
 import {doorPush,doorHinges} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinges.mjs';
 import {pushProducts} from '../../backend/v2/cabinet_assets/planner/wardrobe-push-layout.mjs';
 import {chooseHinge} from '../../backend/v2/cabinet_assets/planner/wardrobe-push-ui.mjs';
+import {settingFor} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinge-layout.mjs';
+import '../../backend/v2/cabinet_assets/planner/blanks-native.mjs';
 import {localPoint} from '../../backend/v2/cabinet_assets/planner/blank-bindings.mjs';
 
 function cabinet({swing='left',angle=0,elevation=0,article='72258',mount='auto',support='auto',heightMm=1050,kind='overlay',...custom}={}){
@@ -31,7 +33,7 @@ test('all 18 AKS installations use real parts, compatible hinges and the request
   assert.equal(home.push_height_mm,1125);
   assert.equal(home.source_sha256,native.body.sha);
   assert.equal(home.article,article);
-  assert.equal(hinge.closing,p.tip==='magnet'?'springless':'reverse');
+  assert.equal(hinge.closing,'springless');
   assert.ok(doorHinges(door,items).every(h=>h.article===hinge.article));
   if(p.tip==='magnet'){
    assert.equal(catchPlate.host_blank_id,door.item_id);
@@ -42,6 +44,43 @@ test('all 18 AKS installations use real parts, compatible hinges and the request
   count++;
  }
  assert.equal(count,18);
+});
+
+test('saved reverse-spring settings resolve to springless hinges for every push tip and retain the chosen installation',()=>{
+ for(const [article,replacement] of [['122555','112706'],['122556','112703'],['122557','112710']]){
+  for(const push of [true,{article:'70787',mount:'surface'},{article:'82722',mount:'bored'}]){
+   const original={article,...(article==='122557'?{recess:11,central:true}:{}),push};
+   assert.deepEqual(settingFor({hinges:{'door-left':original}},'door-left'),{...original,article:replacement});
+   assert.equal(original.article,article);
+   assert.equal(settingFor({hinges:{'door-left':{article}}},'door-left').article,article);
+  }
+ }
+});
+
+test('each separate upper door exports its real push mechanism and matching plate independently of main doors and hardware',()=>{
+ for(const rotation of [0,90,180,270])for(const swing of ['left','right','pair']){
+  const push={article:'72255',mount:'auto',support:'auto',heightMm:1050};
+  for(const opening of ['lift','swing']){
+   const setup={...push,support:opening==='lift'?'side':'auto'};
+   const spec=wardrobeSpec({width:swing==='pair'?940:580,height:2120,depth:580,thickness:18,back:true,
+    sections:1,sectionShelves:[0],surround:{upper:{height:380,divider:swing==='pair',leaves:swing==='pair'?2:1,
+     side:swing==='right'?'right':'left',opening,push:setup}}});
+   const group={group_id:'qa',spec},position={x:350,z:470,rotation,elevation_mm:150};
+   const assembly=buildCarcass(spec,{idPrefix:'qa'});
+   const items=placeCarcass(assembly,position).map(p=>({...p,assistant_carcass:group}));
+   const rows=globalThis.MF_BLANKS_NATIVE.hingeItems(items);
+   for(const door of items.filter(p=>p.blank_axis==='front')){
+    const parts=rows.filter(p=>p.joined_panel_id===door.item_id);
+    assert.deepEqual(parts.map(p=>[p.push_part,p.article]),[['body','72255'],['catch','72255']]);
+    assert.equal(parts[0].host_blank_id,'qa:mezz-bottom');
+    assert.equal(parts[0].source_sha256,pushProducts['72255'].mounts.bored.body.sha);
+    assert.equal(parts[1].host_blank_id,door.item_id);
+    assert.equal(parts[1].source_sha256,pushProducts['72255'].mounts.bored.catch.sha);
+    assert.equal(localPoint(door,rotation).z-door.depth/2-localPoint(parts[0].position,rotation).z,2);
+   }
+   assert.equal(rows.length,swing==='pair'?4:2);
+  }
+ }
 });
 
 test('short right and left fronts use opposite 70 mm offsets in one bottom, with a 2 mm closed gap at every rotation',()=>{

@@ -47,12 +47,14 @@ export function validateBlank(input,room,mount=input.assistant_carcass?.spec.bac
   const key=input.item_id?.split(':').at(-1);
   const hdf=mount?.layout&&key==='back'&&b.axis==='back';
   const fittedWidth=mount?.layout&&['top','bottom','left','right','back'].includes(key);
-  const minLength=drawerSide(input.item_id)||input.blank_edge_pull?40:100;
+  const trimFace=/^trim-(left|right)-face$/.test(key);
+  const minWidth=key==='trim-cap-upright'?22:40;
+  const minLength=trimFace||drawerSide(input.item_id)||input.blank_edge_pull?40:100;
   const drawerFace=b.axis==='front'&&(input.blank_edge_pull||drawerMember(input.item_id,'\\d+-face'));
   const precise=value=>Number.isFinite(value)&&Math.abs(value*1000-Math.round(value*1000))<.000001;
-  const door=b.axis==='front'&&/:door-(?:(?:lower|upper)-)?(?:left|right)$/.test(input.item_id??'');
+  const door=b.axis==='front'&&/:(?:mezz-door-|door-(?:(?:lower|upper)-)?)(?:left|right)$/.test(input.item_id??'');
   if(!(drawerFace?precise(b.length):Number.isInteger(b.length*(door||post||hdf?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
-  if(!Number.isInteger(b.width*(fittedWidth||b.axis==='front'||b.axis==='side'&&input.blank_machining?.some(op=>op.kind==='rabbet')?2:1))||b.width<40||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от 40 до '+(b.axis==='back'?3000:1200)+' мм.';
+  if(!Number.isInteger(b.width*(fittedWidth||b.axis==='front'||b.axis==='side'&&input.blank_machining?.some(op=>op.kind==='rabbet')?2:1))||b.width<minWidth||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от '+minWidth+' до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')
     return 'У цоколя шкафа ПВХ обязателен по четырём торцам.';
   if(input.assistant_carcass?.spec?.backThickness&&input.item_id===input.assistant_carcass.group_id+':back'&&(b.axis!=='back'||b.code!==blankEdgeCode(input,'0000')||b.thickness!==input.assistant_carcass.spec.backThickness))return 'Проверьте толщину вкладной задней стенки и кромку вдоль выборки.';

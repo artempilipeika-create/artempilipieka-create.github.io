@@ -126,3 +126,40 @@ test('Export button waits for selected body and drawer materials; unresolved sel
  c.hydrateMaterials=async()=>{};materials.delete('BOX16');await c.exportBazisProjectReady();
  assert.deepEqual(events,['load','export']);assert.ok(status.at(-1).includes('не удалось загрузить выбранные материалы'));assert.equal(button.disabled,false);
 });
+
+test('keeps distinct assignments on the two identically named ceiling rails and counts the native joint after resize',()=>{
+ const c=runtime(),foot=material('Нижняя планка по образцу','BASE',18);
+ c.objectData={
+  GetObjectUserProperties:p=>new Map(p.props),SetObjectUserProperties:(p,v)=>{p.props=v;},
+  GetObjectNotes:p=>p.note||'',SetObjectNotes:(p,v)=>{p.note=v;}
+ };
+ const create=(name,size,edges,basis=p=>p)=>{
+  const p=panel(name,18);
+  const tracks=Array.from({length:edges},()=>({}));
+  return Object.assign(p,{GSize:size,ToGlobal:basis,Butts:{Butts:tracks,get Count(){return tracks.length;},
+   Clear(){tracks.length=0;},Add(){const e={};tracks.push(e);return e;}}});
+ };
+ const face=create('Фальш Планка Вверх',{x:1000,y:100,z:18},4);
+ const rail=create('Закладная',{x:1000,y:82,z:18},0);
+ const base=create('Закладная',{x:82,y:1000,z:18},3,p=>({x:p.y,y:p.z,z:p.x}));
+ const joint=group(Array.from({length:3},()=>[{Name:'Эксцентриковая стяжка 18мм'},{Name:'Шкант деревянный 8*35'}]).flat());
+ joint.Name='Ст.Эксцентриковая 18мм+шкант -100';
+ const root=group([base,face,joint,rail]);root.ToObject=p=>p;
+ const item={name:'Закладная',cabinet_block:{name:'Шкаф 05'},source_sha256:'1593b2bf163f12120e40c96b9feca7ff7a035da5ba5b67f96f197b97aaf7f5a9',
+  wardrobe_trim:{kind:'cap',panels:[
+   {role:'face',name:'Лицевая',material:front,edge_code:'1111',edge_thickness:1},
+   {role:'upright',name:'Вровень с потолком',material:body,edge_code:'0010',edge_thickness:2,production_note:'Метка A'},
+   {role:'base',name:'Нижняя',material:foot,edge_code:'1011',edge_thickness:1}
+  ]}};
+ const before=c.inspectTrim(root,item);
+ face.GSize={x:940,y:80,z:18};rail.GSize={x:940,y:62,z:18};base.GSize={x:82,y:940,z:18};
+ const checks=c.finishTrim(root,item,before,{x:1000,y:100,z:100},{x:940,y:80,z:100},[]);
+ assert.equal(checks.length,3);
+ assert.deepEqual([face,rail,base].map(p=>p.MaterialName),[front,body,foot].map(m=>m.name+'\r'+m.article));
+ assert.deepEqual([face,rail,base].map(p=>p.Name),['Лицевая','Вровень с потолком','Нижняя']);
+ assert.equal(rail.props.get('Узел для бирки'),'Шкаф 05 · Закладная');assert.match(rail.note,/Метка A/);
+ assert.deepEqual(rail.Butts.Butts.map(e=>[e.ElemIndex,e.Thickness]),[[1,2]]);
+ assert.equal(c.verifyTrimFittings({root,kind:'cap',count:3}).cams,3);
+ assert.throws(()=>c.verifyTrimFittings({root,kind:'cap',count:5}),/в ведомости 5 пар, в БАЗИС 3/);
+ assert.equal(c.verifyTrimFittings({root,kind:'cap',count:null}).dowels,3);
+});

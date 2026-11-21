@@ -1,20 +1,20 @@
-import {backMountLabel,rearProjection} from './panel-machining.mjs';
+import {backMountLabel} from './panel-machining.mjs';
 import {wardrobeNames,nextCabinetName} from './wardrobe-blocks.mjs';
-import {frontProjection,drawerBottom,drawerMember} from './wardrobe-drawers.mjs';
+import {surroundFace,surroundLayout} from './wardrobe-surround.mjs';
+import {drawerBottom,drawerMember} from './wardrobe-drawers.mjs';
 import {buildCarcass,placeCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {doorHinges} from './wardrobe-hinges.mjs';
 import {shelfSupportPlan} from './sekura.mjs';
 import {jointQuantity,nativeCarcassJoints,dividerScheme,jointOptions} from './carcass-joints.mjs';
 import {choice,shelfDescription} from './shelf-choices.mjs';
 import {joinPlinths,splitPlinths} from './wardrobe-plinth-runs.mjs';
-import {footHeight} from './plinth-options.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
 import {blankEdgeCode} from './furniture-core.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount','surround'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -66,7 +66,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  const groupName=cabinetName?.trim()||names.get(prefix)||nextCabinetName(adapter.items);
  const built=buildCarcass(spec,{idPrefix:prefix,name:groupName,
   bodyMaterialId:bodyMaterialId!==undefined?bodyMaterialId:selectedMaterials.body??(Number(first?.blank_thickness_mm)===spec.thickness?first.body_variant_id:spec.thickness===18?defaultMaterial:null),
-  frontMaterialId:frontMaterialId??selectedMaterials.front??current?.items.find(i=>i.blank_axis==='front')?.body_variant_id,
+  frontMaterialId:frontMaterialId??selectedMaterials.front??current?.items.find(i=>i.blank_axis==='front'||surroundFace(i.item_id.split(':').at(-1)))?.body_variant_id,
   drawerMaterialId:drawerMaterialId??(spec.thickness===18?bodyMaterialId??selectedMaterials.body:selectedMaterials.drawer)??current?.items.find(i=>drawerMember(i.item_id,'\\d+-side-left'))?.body_variant_id,
   backMaterialId:backMaterialId??selectedMaterials.back??(spec.backThickness?null:CARCASS_BACK_MATERIAL_ID)});
  if(spec.drawerBanks?.some(bank=>bank?.layout))spec.drawerBanks=built.spec.drawerBanks;
@@ -74,12 +74,12 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  let position=current?{...current.metadata.position,elevation_mm:spec.elevation}:null;
  if(current){
   // Resize from the right and front, keeping the left edge and rear envelope.
-  const previous=current.metadata.spec;
-  const delta=worldPoint({x:(spec.width-previous.width)/2,z:(built.depth-previous.depth-rearProjection(previous)-frontProjection(previous))/2},position.rotation);
+  const previous=surroundLayout(current.metadata.spec);
+  const delta=worldPoint({x:(built.width-previous.width)/2,z:(built.depth-previous.depth)/2},position.rotation);
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
-  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.height+footHeight(spec),depth:built.depth,
+  const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.envelope.height,depth:built.depth,
    x:0,z:0,rotation:0,elevation_mm:spec.elevation,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
   position=findSpace(envelope,adapter.items,adapter.room,adapter.selected,{wallOffset:0,autoRotate:false});
   if(!position)throw Error('Для корпуса нет свободного места. Проверьте размеры помещения.');
@@ -121,6 +121,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    if(spec.edgeThickness===current.metadata.spec.edgeThickness)item.blank_edge_thickness_mm=old.blank_edge_thickness_mm;
   }
   if(generated.blank_axis==='front'){item.blank_edge_code=generated.blank_edge_code;item.blank_edge_thickness_mm=2;if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
+  else if(surroundFace(generated.item_id.slice(prefix.length+1))){if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
   else if(generated.item_id.endsWith(':back')){item.blank_edge_code='0000';if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
   else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
   else if(drawerBottom(item.item_id)&&generated.blank_thickness_mm===3)item.body_variant_id=CARCASS_BACK_MATERIAL_ID;
@@ -152,6 +153,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.width} × ${spec.height} × ${spec.depth} мм · ЛДСП ${spec.thickness} мм`,
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
+  ...(spec.surround?['В сборе · '+built.width+' × '+built.envelope.height+' × '+built.depth+' мм']:[]),
+  ...(spec.surround?.upper?[spec.surround.upper.opening==='swing'?'Антресоль · TIP-ON и беспружинные петли. Модель петель уточняется.':'Антресоль · TIP-ON и газлифты. Модель подъёмного механизма уточняется.']:[]),
   ...(hinges.length?['Петли PRIME · '+[...new Set(hinges.map(h=>h.article))].join(', ')+' · '+hinges.length+' шт.']:[]),
   spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм · полки короче на '+spec.backThickness+' мм':spec.backMount?backMountLabel(spec.backMount)+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{

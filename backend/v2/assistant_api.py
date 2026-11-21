@@ -247,11 +247,11 @@ def router(settings):
             error(422,'WARDROBE_FRONT_MISMATCH')
         if body.spec.recipe not in ('shelves', 'divided') or body.spec.sectionShelves is None:
             error(422, 'WARDROBE_RECIPE_REQUIRED')
-        if body.spec.height+body.spec.elevation+(body.spec.feet.height if body.spec.feet else 0) > body.room_height:
+        if body.spec.installed_height+body.spec.elevation > body.room_height:
             error(422, 'WARDROBE_ABOVE_CEILING')
         with transaction(settings) as conn:
             release = catalogue.active(conn)
-            for variant, thickness in [(body.body_material_id, body.spec.thickness), *([(body.front_material_id,18)] if body.spec.front or any(body.spec.drawerBanks or []) else []), *([(body.drawer_material_id,18)] if any(body.spec.drawerBanks or []) and body.spec.thickness!=18 else []), *([(body.back_material_id, body.spec.backThickness or 3)] if body.spec.back else [])]:
+            for variant, thickness in [(body.body_material_id, body.spec.thickness), *([(body.front_material_id,18)] if body.spec.front or body.spec.surround or any(body.spec.drawerBanks or []) else []), *([(body.drawer_material_id,18)] if any(body.spec.drawerBanks or []) and body.spec.thickness!=18 else []), *([(body.back_material_id, body.spec.backThickness or 3)] if body.spec.back else [])]:
                 if variant is None:
                     error(422, 'WARDROBE_MATERIAL_REQUIRED')
                 material = catalogue.get_item(conn, release, variant, 'material')

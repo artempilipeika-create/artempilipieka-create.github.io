@@ -22,7 +22,7 @@ function boxAt(pt,side,bounds){
  return [project(pt.x,a,b),project(pt.y,b,-a),[pt.z-hi[0],pt.z-lo[0]]];
 }
 function supportKind(p,key){
- if(p.blank_axis==='side'&&/^(left|right|divider-\d+|niche-.+-divider)$/.test(key))return 'side';
+ if(p.blank_axis==='side'&&/^(left|right|divider(?:-\d+)?|niche-.+-divider)$/.test(key))return 'side';
  if(p.blank_axis!=='horizontal')return null;
  if(key==='top'||key==='bottom'||key==='rail-front')return key==='bottom'?'bottom':'roof';
  return fixedShelfScheme(p)?'shelf':null;
@@ -36,10 +36,12 @@ function makeItem(door,host,style,side,part,source,config,pt){
 export function planAksPush(door,items,setting,hingeSide,hingePlan){
  const cfg={...pushDefault,...setting},product=catalogue[cfg.article];
  if(!product||cfg.mount!=='auto'&&!product.mounts[cfg.mount])throw Error('Выберите доступное исполнение типона AKS.');
- const group=door.assistant_carcass,prefix=group.group_id+':',angle=door.rotation;
- const rows=items.filter(p=>p.item_id.startsWith(prefix)).map(p=>({p,key:p.item_id.slice(prefix.length),b:limits(p,angle)}));
+ const group=door.assistant_carcass,root=group.group_id+':',angle=door.rotation;
+ const upper=door.item_id.startsWith(root+'mezz-door-'),prefix=upper?root+'mezz-':root;
+ const rows=items.filter(p=>p.item_id.startsWith(prefix)&&(upper||!p.item_id.startsWith(root+'mezz-')))
+  .map(p=>({p,key:p.item_id.slice(prefix.length),b:limits(p,angle)}));
  const [xx,yy,zz]=limits(door,angle),back=zz[0],free=hingeSide==='left'?xx[1]:xx[0],inward=hingeSide==='left'?-1:1;
- const x70=free+inward*70,tall=door.height>=1100&&!door.item_id.includes(':door-upper-');
+ const x70=free+inward*70,tall=!upper&&door.height>=1100&&!door.item_id.includes(':door-upper-');
  const lowTarget=yy[0]+7.5,target=tall||cfg.support==='side'||cfg.support==='shelf'?clamp(cfg.heightMm,yy[0]+9,yy[1]-9):lowTarget;
  const tagged=rows.map(({p})=>p.assistant_carcass?p:{...p,assistant_carcass:group});
  const joints=nativeCarcassJoints(tagged,{checkOpposing:false}).map(j=>({...j,at:localPoint(j.position,angle)}));

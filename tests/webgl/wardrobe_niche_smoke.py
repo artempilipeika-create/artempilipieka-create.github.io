@@ -20,13 +20,16 @@ from tests.webgl.synthetic_projects import SyntheticProjects
 ORIGIN = 'https://martin-forest-v2-staging-production.up.railway.app'
 
 
-def exercise(live=False):
-    from fastapi import FastAPI
-    from fastapi.testclient import TestClient
-    from backend.v2.cabinet_ui import router
-    service=FastAPI()
-    service.include_router(router())
-    files=TestClient(service)
+def exercise(live=False, scenario=None):
+    if not live:
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from backend.v2.cabinet_ui import router
+        from backend.v2.presentation_ui import router as presentation_router
+        service=FastAPI()
+        service.include_router(router())
+        service.include_router(presentation_router())
+        files=TestClient(service)
     projects=SyntheticProjects()
     pid=str(uuid4())
     projects.projects[pid]={'project_id':pid,'name':'QA · ниши шкафа','version':1,
@@ -56,14 +59,20 @@ def exercise(live=False):
         browser=p.chromium.launch(executable_path=os.getenv('MF_QA_CHROME') or None,
             args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
         try:
-            context=browser.new_context(viewport={'width':int(os.getenv('MF_QA_WIDTH','1440')),'height':int(os.getenv('MF_QA_HEIGHT','1000'))})
+            context=browser.new_context(service_workers='block',viewport={'width':int(os.getenv('MF_QA_WIDTH','1440')),'height':int(os.getenv('MF_QA_HEIGHT','1000'))})
             context.route('**/*',request)
             page=context.new_page()
             page.set_default_timeout(45000)
             page.on('pageerror',lambda exc:errors.append(str(exc)))
+            if scenario:
+                page.on('console',lambda message:errors.append(message.text) if message.type=='error' else None)
             page.goto(ORIGIN+'/constructor',wait_until='domcontentloaded')
             page.locator('#planner-assistant').wait_for(state='attached',timeout=45000)
             page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+            if scenario:
+                scenario(page, projects, pid)
+                assert not errors, errors
+                return
             room=page.locator('#planner-room-settings')
             room.locator('summary').click()
             expect(room.locator('#room-floor')).to_have_value('concrete')

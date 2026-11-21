@@ -30,7 +30,13 @@
 #planner-assistant-dialog .shelf-options select{font-size:12px;padding:3px}
 #planner-assistant-dialog .shelf-schedule{font-size:12px;margin-bottom:0}
 #planner-assistant{display:inline-flex!important}
-#planner-assistant-dialog.assistant-wizard{width:min(960px,calc(100vw - 32px));max-width:none;height:min(85vh,860px);scrollbar-gutter:stable;box-sizing:border-box}
+#planner-assistant-dialog.surround-sides{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px}
+.surround-section{min-width:0;margin:10px 0;padding:12px;border:1px solid #c6d4cc;border-radius:8px}
+.surround-section legend{padding:0 5px;font-weight:650}
+.surround-section p{font-size:.88em;line-height:1.45;color:#455f54}
+.surround-section .surround-toggle{display:flex;align-items:center;gap:8px}
+.surround-section .surround-toggle input{width:auto}
+.assistant-wizard{width:min(960px,calc(100vw - 32px));max-width:none;height:min(85vh,860px);scrollbar-gutter:stable;box-sizing:border-box}
 .assistant-steps{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}
 #planner-assistant-dialog .assistant-steps button{margin:0;font-size:13px;padding:8px 12px}
 #planner-assistant-dialog .assistant-steps [aria-current="step"]{background:#236144;color:#fff}

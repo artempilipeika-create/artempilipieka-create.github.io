@@ -243,3 +243,24 @@ test('bad metadata fails before creating any block or importing kitchen modules'
   assert.equal(old.failed,0);
   assert.equal(model.Objects[1].Name,'Старое название k');
 });
+
+test('restores the upper cabinet as a movable native subassembly with board notes and drilling',()=>{
+ const c=setup(),meta={id:'unit',name:'Шкаф 01',module_key:'mezzanine',module_name:'Антресоль'};
+ const items=[
+  row('board','lower',group(meta.id,meta.name,'Крыша шкафа'),{blank:true}),
+  row('board','upper',{...meta,part_name:'Дно'},{blank:true}),
+  row('board','door',{...meta,part_name:'Фасад'},{blank:true,production_note:'Беспружинные петли · модель по образцу.'}),
+  row('hardware','push',{...meta,part_name:'Толкатель'})
+ ];
+ const result=run(c,items);
+ assert.equal(result.failed,0,JSON.stringify(result.log));
+ const [cab,upper]=[c.currentFileData.model.Objects.at(-1),c.currentFileData.model.Objects.at(-1).Objects[1]];
+ assert.equal(cab.Objects[0].Name,'Крыша шкафа');assert.equal(upper.Name,'Антресоль');
+ assert.deepEqual(upper.Objects.map(p=>p.Name),['Дно','Фасад','Толкатель']);
+ assert.equal(upper.Objects[1].props.get('Узел для бирки'),'Шкаф 01 · Антресоль');
+ const check=result.noteChecks.find(n=>n.itemIndex===2);
+ assert.deepEqual(Array.from(check.objectPathNames),['Шкаф 01','Антресоль','Фасад']);
+ c.currentFileData.model=restore(c.currentFileData.model);
+ assert.equal(c.readNotesForDisplay(result).errors.length,0);
+ assert.match(byPath(c.currentFileData.model,check.objectPath).note,/Беспружинные/);
+});

@@ -1,0 +1,75 @@
+import {localPoint,worldPoint} from './blank-bindings.mjs';
+import joint from './wardrobe-trim-joint.json' with {type:'json'};
+
+const sources={
+ left:['MF_Trim_Left.fr3d','30be270bbfac56f50a29e10319db4d64a03afe46e58abca0b46d265458078dd1'],
+ right:['MF_Trim_Right.fr3d','6021bf08e71f565041b181a01e3b8db350e1d1fa767f5fc26665aef391918604'],
+ end:['MF_Trim_End.fr3d','2fb535965b6a2cdd48a5061256dc72f45ea8e09c73645833049150ee0b293eec'],
+ cap:['MF_Trim_Ceiling.fr3d','1593b2bf163f12120e40c96b9feca7ff7a035da5ba5b67f96f197b97aaf7f5a9']
+};
+const partKey=/^trim-(left|right|cap)-(face|return|end|upright|base)$/;
+
+function makeRow(unit,lookup){
+ const {side,parts}=unit;
+ const kind=parts.has('end')?'end':side;
+ const roles=kind==='cap'?['face','upright','base']:kind==='end'?['end']:['face','return'];
+ const title=kind==='cap'?'Закладная под потолок':(kind==='end'?'Торцевая стойка ':'Г-образная фальшпланка ')+(side==='left'?'слева':'справа');
+ if(parts.size!==roles.length||roles.some(role=>!parts.has(role)))throw Error(title+' — неполный комплект панелей.');
+ const reference=parts.get(roles[0]),rotation=reference.rotation||0;
+ if(![0,90,180,270].includes(rotation))throw Error(title+' — проверьте угол поворота сборки.');
+ // The face is the frontmost surface. The solid donor and all of its boards share
+ // the bottom of that face. Measure in cabinet coordinates before rotating back.
+ const face=localPoint(reference,rotation);
+ const width=reference.width,height=reference.height,depth=kind==='end'?reference.depth:100;
+ const x0=face.x-width/2,y0=reference.elevation_mm,z0=face.z+reference.depth/2-depth;
+ const panels=[];
+ for(const role of roles){
+  const it=parts.get(role),local=localPoint(it,rotation),material=lookup(it.body_variant_id);
+  if(!material?.name||Number(material.thickness)!==18)throw Error(it.name+' — выберите материал толщиной 18 мм.');
+  let dimensions,offset;
+  if(role==='face'){dimensions=[width,height,18];offset=[0,0,depth-18];}
+  else if(role==='end'){dimensions=[18,height,depth];offset=[0,0,0];}
+  else if(role==='return'){dimensions=[18,height,depth-18];offset=[side==='left'?0:width-18,0,0];}
+  else if(role==='upright'){dimensions=[width,height-18,18];offset=[0,18,depth-36];}
+  else {dimensions=[width,18,depth-18];offset=[0,0,0];}
+  const actual=[it.width,it.height,it.depth,local.x-x0-it.width/2,it.elevation_mm-y0,local.z-z0-it.depth/2];
+  const required=[...dimensions,...offset];
+  if((it.rotation||0)!==rotation||!actual.every((n,i)=>Number.isFinite(n)&&Math.abs(n-required[i])<.01))
+   throw Error(it.name+' — взаимное положение панелей отличается от родной фальшпланки.');
+  panels.push({role,blank_item_id:it.item_id,name:it.name,material,edge_code:it.blank_edge_code,
+   edge_thickness:it.blank_edge_thickness_mm,production_note:it.production_note||''});
+ }
+ const [source_file,source_sha256]=sources[kind];
+ const source_default=kind==='cap'?{width:1000,height:100,depth:100}:{width:kind==='end'?18:100,height:1000,depth:100};
+ const position={...worldPoint({x:x0+width/2,z:z0+depth/2},rotation),y:y0};
+ const span=(kind==='cap'?width:height)-2*joint.symmetric_end_inset_mm;
+ const pairs=kind==='end'?0:joint.pairs_by_clear_span.find(([limit])=>span<=limit)?.[1]??null;
+ return {name:title,host_blank_id:reference.item_id,source_file,source_sha256,source_default,target:{width,height,depth},
+  position,rotation,elastic_resize:true,wardrobe_trim:{kind,panels,expected_pairs:pairs},
+  production_note:panels.filter(p=>p.production_note).map(p=>p.name+' — '+p.production_note).join('\n')};
+}
+
+// Keep separate boards in the scene, drawings and cutting list. Replace one
+// complete assembly with its signed native source only for the BAZIS export.
+export function nativeTrimRows(items,lookup){
+ const groups=new Map(),ids=new Map();
+ for(const it of items){
+  const owner=it.assistant_carcass?.group_id;
+  if(it.module_type!=='blank'||!owner||!it.item_id?.startsWith(owner+':'))continue;
+  const match=partKey.exec(it.item_id.slice(owner.length+1));
+  if(!match)continue;
+  const [,side,role]=match;
+  if(!groups.has(owner))groups.set(owner,new Map());
+  const units=groups.get(owner);
+  if(!units.has(side))units.set(side,{side,parts:new Map()});
+  const unit=units.get(side);
+  if(unit.parts.has(role))throw Error('Повторяется деталь фальшпланки «'+it.name+'».');
+  unit.parts.set(role,it);
+  ids.set(it.item_id,null);
+ }
+ for(const units of groups.values())for(const unit of units.values()){
+  const row=makeRow(unit,lookup);
+  ids.set(row.host_blank_id,row);
+ }
+ return ids;
+}

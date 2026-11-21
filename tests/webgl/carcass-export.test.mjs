@@ -82,3 +82,43 @@ test('shared divider seats, drilling separation, legacy shelves and disabled fix
   assert.throws(()=>globalThis.MF_BLANKS_NATIVE.supportItems(items),/12 мм/);
  }
 });
+
+test('downloads one pinned native trim per assembly and a separately grouped upper cabinet at every rotation',async()=>{
+ const id='wardrobe:entrance',name='Шкаф у окна';
+ const surround={left:{kind:'filler',width:114,heightMode:'custom',height:2013,bottom:42},
+  right:{kind:'end',depth:142,projection:20},cap:{length:1000,height:94},
+  upper:{height:410,leaves:2,opening:'swing',side:'left',divider:true}};
+ for(const rotation of [0,90,180,270]){
+  const b=buildCarcass({width:1000,height:2000,depth:550,recipe:'shelves',surround},
+   {idPrefix:id,name,frontMaterialId:'custom',bodyMaterialId:core.DEFAULT_MATERIALS.body_variant_id,backMaterialId:CARCASS_BACK_MATERIAL_ID});
+  const items=placeCarcass(b,{x:500,z:760,elevation_mm:100,rotation})
+   .map(it=>({...it,assistant_carcass:{group_id:id,name,spec:b.spec}}));
+  const part=key=>items.find(it=>it.item_id===id+':'+key);
+  part('trim-left-return').production_note='Подписать стену А';
+  part('mezz-door-left').production_note='Сохранить направление';
+  const e=exporter(items);await e.context.exportBazisProjectReady();
+  const {payload,message}=await e.result();
+  assert.ok(payload,message);
+  assert.equal(payload.minimum_importer,'9.9.42');assert.equal(payload.format,'martin-forest-bazis-native-v21');
+  const trims=payload.items.filter(it=>it.wardrobe_trim);
+  assert.deepEqual(trims.map(it=>it.source_file),['MF_Trim_Left.fr3d','MF_Trim_End.fr3d','MF_Trim_Ceiling.fr3d']);
+  assert.ok(trims.every(it=>it.cabinet_block.id===id&&!it.blank&&it.rotation===rotation));
+  assert.equal(payload.items.filter(it=>it.blank_item_id?.includes(':trim-')).length,0);
+  assert.deepEqual(trims[0].target,{width:114,height:2013,depth:100});
+  // For every orientation the bottom-centre is calculated from the placed face.
+  const front=part('trim-left-face'),dx=[0,41,0,-41][rotation/90],dz=[-41,0,41,0][rotation/90];
+  assert.deepEqual(trims[0].position,{x:front.x+dx,y:front.elevation_mm,z:front.z+dz});
+  assert.deepEqual(trims[1].position,{x:part('trim-right-end').x,y:100,z:part('trim-right-end').z});
+  assert.deepEqual(trims[2].target,{width:1000,height:94,depth:100});
+  assert.ok(trims[0].production_note.includes('Подписать стену А'));
+  assert.deepEqual(trims[2].wardrobe_trim.panels.map(p=>[p.role,p.material.article]),
+   [['face','CUSTOM'],['upright','605 PO'],['base','CUSTOM']]);
+  const upper=payload.items.filter(it=>it.cabinet_block?.module_key==='mezzanine');
+  assert.equal(upper.filter(it=>it.blank).length,7);
+  assert.ok(upper.every(it=>it.cabinet_block.module_name==='Антресоль'));
+  const upperDoor=upper.find(it=>it.blank_item_id===id+':mezz-door-left');
+  assert.equal(upperDoor.name,'Левый фасад');
+  assert.match(upperDoor.production_note,/Сохранить направление[\s\S]*Беспружинные петли/);
+  assert.equal(upper.filter(it=>it.prime_hinge).length,0);
+ }
+});

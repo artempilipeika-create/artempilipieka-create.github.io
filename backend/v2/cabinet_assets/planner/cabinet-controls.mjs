@@ -1,7 +1,8 @@
 import {cabinetId,heightTargets,matchCabinetHeight} from './cabinet-actions.mjs';
 import {kitchenGroup,heights} from './furniture-core.mjs';
-import {leafKey,maxOpening,slidingKey} from './wardrobe-clearance.mjs';
-import {doorLabel,doorSide,drawerFacadeKey} from './wardrobe-door-layout.mjs';
+import {surroundLayout} from './wardrobe-surround.mjs';
+import {leafKey,maxOpening,slidingKey,viewingDoor,viewingDoorLabel,angleLimit} from './wardrobe-clearance.mjs';
+import {drawerFacadeKey} from './wardrobe-door-layout.mjs';
 import {sectionOf,levelOf,isRightBank,splitAt} from './wardrobe-layout.mjs';
 
 const node=(tag,text)=>Object.assign(document.createElement(tag),text?{textContent:text}:{});
@@ -42,13 +43,13 @@ class OpeningControls{
   document.getElementById('scene').parentElement.append(this.root);
  }
  sync(m,members,s){
-  const leaves=members.filter(it=>doorSide(leafKey(it))),drawers=members.filter(it=>drawerFacadeKey(leafKey(it)));
+  const leaves=members.filter(viewingDoor),drawers=members.filter(it=>drawerFacadeKey(leafKey(it)));
   this.leafRow.hidden=this.angleRow.hidden=!leaves.length;
   this.drawerRow.hidden=this.extend.hidden=!drawers.length;
-  selectOptions(this.leaf,leaves.map(it=>[it.item_id,doorLabel(leafKey(it))]),m.leaf);
+  selectOptions(this.leaf,leaves.map(it=>[it.item_id,viewingDoorLabel(it)]),m.leaf);
   if(m.leaf){
    const degrees=m.degrees(m.leaf),text=degrees.toLocaleString('ru-RU')+'°';
-   this.range.value=degrees;this.angle.value=text;this.range.setAttribute('aria-valuetext',text);
+   this.range.max=angleLimit(leaves.find(it=>it.item_id===m.leaf));this.range.value=degrees;this.angle.value=text;this.range.setAttribute('aria-valuetext',text);
   }
   selectOptions(this.drawer,drawers.map(it=>{
    const {slot,index}=drawerFacadeKey(leafKey(it)),section=sectionOf(slot),level=levelOf(slot);
@@ -121,7 +122,7 @@ export class CabinetControls{
    scene.onWardrobeChanged=this.openingChanged;
    const members=id?adapter.items.filter(part=>cabinetId(part)===id):[];
    const hasDrawer=members.some(part=>drawerFacadeKey(leafKey(part)));
-   this.drawers.hidden=!(hasDrawer||members.some(part=>doorSide(leafKey(part))))||!scene.inspectWardrobe||scene.mode!=='3d';
+   this.drawers.hidden=!(hasDrawer||members.some(viewingDoor))||!scene.inspectWardrobe||scene.mode!=='3d';
    const open=Boolean(id&&scene.wardrobeMotion?.id===id&&scene.wardrobeMotion.open);
    this.drawers.setAttribute('aria-pressed',String(open));this.drawers.textContent=open?'Закрыть шкаф':hasDrawer?'Шуфляды':'Открывание';
    this.drawers.title=open?'Закрыть шкаф':'Изменить угол открывания дверей'+(hasDrawer?' и проверить ход шуфляды':'');
@@ -129,7 +130,7 @@ export class CabinetControls{
    if(!this.opening.root.hidden)this.opening.sync(scene.wardrobeMotion,members,it.assistant_carcass.spec);
    document.getElementById('item-controls').classList.toggle('whole-cabinet',!this.panel.hidden);
    if(!this.panel.hidden){
-     const s=it.assistant_carcass.spec;this.size.textContent='Шкаф целиком · '+s.width+' × '+s.height+' × '+s.depth+' мм';
+     const s=it.assistant_carcass.spec,g=s.surround?surroundLayout(s):s;this.size.textContent='Шкаф целиком · '+g.width+' × '+g.height+' × '+g.depth+' мм';
      if(this.lastGroup!==id)this.offsets.forEach(input=>input.value='0');
    }
    this.lastGroup=scene.cabinetSelection;

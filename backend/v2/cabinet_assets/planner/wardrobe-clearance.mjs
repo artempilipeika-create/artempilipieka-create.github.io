@@ -11,8 +11,17 @@ export const maxOpening=105; // PRIME by AKS 112595, manufacturer opening angle.
 export const slidingKey=item=>item?.item_id?.match(/:drawer-(\d+-\d+)-(?:face|front|rear|bottom|side-left|side-right)$/)?.[1]??null;
 export const leafKey=it=>it?.assistant_carcass?it.item_id.slice(it.assistant_carcass.group_id.length+1):'';
 
+const mezzSide=it=>/^mezz-door-(left|right)$/.exec(leafKey(it))?.[1];
+export const viewingDoor=it=>doorSide(leafKey(it))||mezzSide(it);
+export const viewingDoorLabel=it=>mezzSide(it)?'Антресоль · '+(mezzSide(it)==='left'?'левый фасад':'правый фасад'):doorLabel(leafKey(it));
+export const angleLimit=it=>mezzSide(it)?90:maxOpening;
 export function hingePose(it,degrees){
- const sign=installedSide(it.assistant_carcass?.spec?.front,leafKey(it))==='left'?-1:1;
+ const side=mezzSide(it);
+ if(side&&it.assistant_carcass.spec.surround?.upper?.opening==='lift'){
+  const pitch=-degrees*rad,c=Math.cos(pitch),sn=Math.sin(pitch),z=it.depth/2,h=it.height;
+  return {a:0,pitch,dx:0,dy:h*(1-c)+z*sn,dz:z*(1-c)-h*sn};
+ }
+ const sign=(side||installedSide(it.assistant_carcass?.spec?.front,leafKey(it)))==='left'?-1:1;
  const a=sign*degrees*rad,c=Math.cos(a),s=Math.sin(a);
  const x=sign*(it.width/2-1.5),z=it.depth/2;
  return {a,dx:x*(1-c)-z*s,dz:z*(1-c)+x*s};
@@ -86,15 +95,17 @@ function fronts(group,mounted=false){
  if(!wood.isEmpty())solids.unshift({lo:wood.min.multiplyScalar(1000).toArray(),hi:wood.max.multiplyScalar(1000).toArray()});
  meshCache.set(group,solids);return solids;
 }
-function placed(name,local,yaw,origin){
+function placed(name,local,yaw,origin,pitch=0){
  const c=Math.cos(yaw),s=Math.sin(yaw),{lo,hi}=local,p=[];
- for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]])p.push(point([x,y,z],c,s,origin));
- const axes=unitAxes.map(a=>rotate(a,c,s)),extent=unitAxes.map(a=>projection(p,a));
+ const cp=Math.cos(pitch),sp=Math.sin(pitch);
+ const tilt=pitch?([x,y,z])=>[x,y*cp-z*sp,y*sp+z*cp]:v=>v;
+ for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]])p.push(point(tilt([x,y,z]),c,s,origin));
+ const axes=unitAxes.map(a=>rotate(tilt(a),c,s)),extent=unitAxes.map(a=>projection(p,a));
  const body={name,p,edges:axes,normals:axes,extent};
  if(local.vertices){
   body.facets=()=>{
    if(body.tris)return body.tris;
-   const pts=local.vertices.map(v=>point(v,c,s,origin)),idx=local.indices,n=idx?.length??pts.length;
+   const pts=local.vertices.map(v=>point(tilt(v),c,s,origin)),idx=local.indices,n=idx?.length??pts.length;
    const tris=[];for(let i=0;i<n;i+=3){const t=triangle(pts[idx?.[i]??i],pts[idx?.[i+1]??i+1],pts[idx?.[i+2]??i+2]);if(t)tris.push(t);}
    body.tris=tris;return tris;
   };
@@ -168,14 +179,14 @@ function meet(a,b,v){
  return {time,point:center,moving:a.name,obstacle:b.name};
 }
 function shapes(it,angle=0,slide=0,group){
- const door=doorSide(leafKey(it)),base=-(it.rotation||0)*rad;
+ const door=viewingDoor(it),base=-(it.rotation||0)*rad;
  const pose=door?hingePose(it,angle):{a:0,dx:0,dz:0};
- const origin=point([pose.dx,0,pose.dz+slide],Math.cos(base),Math.sin(base),[it.x,it.elevation_mm??0,it.z]);
+ const origin=point([pose.dx,pose.dy??0,pose.dz+slide],Math.cos(base),Math.sin(base),[it.x,it.elevation_mm??0,it.z]);
  const drawer=slidingKey(it);
- const name=door?doorLabel(leafKey(it)):drawer?'Шуфляда '+(Number(drawer.split('-')[1])+1):it.name||'Соседний корпус';
+ const name=door?viewingDoorLabel(it):drawer?'Шуфляда '+(Number(drawer.split('-')[1])+1):it.name||'Соседний корпус';
  const local=it.blank_axis==='front'?fronts(group):[];
  const stock={lo:[-it.width/2,0,-it.depth/2],hi:[it.width/2,it.height,it.depth/2]};
- return (local.length&&local.some(p=>!p.vertices)?local:[stock,...local]).map(part=>placed(part.label||name,part,base+pose.a,origin));
+ return (local.length&&local.some(p=>!p.vertices)?local:[stock,...local]).map(part=>placed(part.label||name,part,base+pose.a,origin,pose.pitch));
 }
 function roomSolids(room){
  const solids=[];if(!room?.width||!room.depth||!room.height)return solids;
@@ -204,7 +215,8 @@ export function drawerStroke(items,id,key){
 export function clearanceSession(items,entries,room,motion){
  const group=it=>entries?.get(it.item_id)?.group;
  const own=it=>it.assistant_carcass?.group_id===motion.id;
- const leaves=items.filter(it=>doorSide(leafKey(it)));
+ const leaves=items.filter(viewingDoor);
+ const trims=items.filter(it=>leafKey(it).startsWith('trim-')).flatMap(it=>shapes(it));
  const doors=(except)=>leaves.filter(it=>it!==except).flatMap(it=>shapes(it,own(it)?motion.degrees(it.item_id):0,0,group(it)));
  // Other cabinets may use integrated fronts, rather than individual door blanks.
  const neighboring=items.filter(it=>it.module_type!=='blank'&&!own(it)&&!it.assistant_carcass&&it.width&&it.depth&&it.height);
@@ -232,13 +244,13 @@ export function clearanceSession(items,entries,room,motion){
  function swing(leaf,from,to){
   const movingDrawer=motion.shown&&motion.extension>0?drawerPieces(motion.shown,motion.extension*drawerStroke(items,motion.id,motion.shown)):[];
   const closedFaces=faces.filter(it=>!own(it)||slidingKey(it)!==motion.shown||!motion.extension);
-  const obstacles=[...doors(leaf),...walls,...movingDrawer,...closedFaces.flatMap(it=>shapes(it,0,0,group(it))),...neighboring.flatMap(it=>shapes(it,0,0,group(it)))];
+  const obstacles=[...doors(leaf),...trims,...walls,...movingDrawer,...closedFaces.flatMap(it=>shapes(it,0,0,group(it))),...neighboring.flatMap(it=>shapes(it,0,0,group(it)))];
   const at=deg=>first(shapes(leaf,deg,0,group(leaf)),obstacles,zero);
   const distance=to-from;
   if(!distance)return {degrees:to,contact:at(to)};
   // Sample the sweep at sub-millimetre angular increments at the outer corner,
   // then refine the first contact to a hundredth of a degree.
-  const steps=Math.ceil(Math.abs(distance)/Math.min(1,60/Math.max(60,leaf.width)));
+  const steps=Math.ceil(Math.abs(distance)/Math.min(1,60/Math.max(60,mezzSide(leaf)&&leaf.assistant_carcass.spec.surround?.upper?.opening==='lift'?leaf.height:leaf.width)));
   const initial=at(from);let last=from,wasBlocked=Boolean(initial);
   for(let i=1;i<=steps;i++){
    const next=from+distance*i/steps,h=at(next);

@@ -99,6 +99,7 @@ def drawer_hardware(count,depth):
     rows.append(_row('Шуруп 3.5x16 мм, Zn',count*18))
     return rows
 
+TRIM_JOINT=json.loads((ASSETS/'wardrobe-trim-joint.json').read_text())
 WARDROBE_RODS=json.loads((ASSETS/'wardrobe-rods.json').read_text())
 AKS_GUIDES=json.loads((ASSETS/'aks-wardrobe.json').read_text())['rails']
 
@@ -239,6 +240,23 @@ def _panel_hardware(it):
     meta = it.get('assistant_carcass') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     spec = meta.get('spec') or {}
+    surround=spec.get('surround') or {}
+    if surround and it.get('module_type')=='blank' and key in ('trim-left-face','trim-right-face','trim-cap-face'):
+        # Each complete native assembly has just one joint. Other boards and the
+        # standalone end post do not add another set to the purchasing schedule.
+        length=it['width'] if key=='trim-cap-face' else it['height']
+        clear_span=length-2*TRIM_JOINT['symmetric_end_inset_mm']
+        pairs=next((qty for limit,qty in TRIM_JOINT['pairs_by_clear_span'] if clear_span<=limit),None)
+        if pairs is None:
+            return [],'Эксцентрики для плиты 18 мм и шканты 8×35 (арт. '+TRIM_JOINT['dowel_article']+'). Для стыка '+str(length)+' мм количество пар указано в заметках сборки после импорта в БАЗИС.'
+        return [_row('Эксцентриковая стяжка для плиты 18 мм',pairs),
+                _row('Шкант деревянный 8×35',pairs,'pcs',TRIM_JOINT['dowel_article'])],None
+    upper=surround.get('upper')
+    if upper and it.get('blank_axis')=='front' and key in ('mezz-door-left','mezz-door-right'):
+        from .assistant_model import AKS_PUSH
+        article=upper['push']['article']
+        note=('Беспружинные петли и газлифт' if upper['opening']=='lift' else 'Беспружинные петли')+' · модель и присадка подбираются по образцу.'
+        return [_row(AKS_PUSH[article]['name'],1,'pcs',article)],note
     if it.get('blank_axis')=='front' and spec.get('front') and re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key):
         w,h=it['width'],it['height']
         if grip:=it.get('blank_edge_pull'):
@@ -249,9 +267,9 @@ def _panel_hardware(it):
         mass=spec['front'].get('massKg') or w*h*18*700/1e9
         for n,(limit,kg) in enumerate([(900,8),(1600,13),(2000,17),(2400,22)],2):
             if w<=600 and h<=limit and mass<=kg:
-                from .assistant_model import PRIME_HINGES
+                from .assistant_model import DoorHingeSetting, PRIME_HINGES
                 setting=(spec['front'].get('hinges') or {}).get(key) or {}
-                sku=setting.get('article','112595')
+                sku=DoorHingeSetting.model_validate(setting).article if setting else '112595'
                 fitting=PRIME_HINGES[sku]
                 kind={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fitting['kind']]
                 fixing='еврошурупы' if fitting['fixing']=='euro' else 'саморезы'

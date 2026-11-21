@@ -67,3 +67,24 @@ test('uses explicit cabinet name, honours legacy custom prefixes and reserves ex
  assert.deepEqual([...wardrobeNames(raw).values()].slice(0,2),['Шкаф 02','Шкаф 01']);
  assert.equal(nextCabinetName(raw),'Шкаф 03');
 });
+
+test('right and left native trims stay separate across cupboards and detached return geometry cannot silently move',async()=>{
+ const {buildCarcass,placeCarcass}=await import('../../backend/v2/cabinet_assets/planner/carcass-model.mjs');
+ const {nativeTrimRows}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-trim-native.mjs');
+ const lookup=id=>({name:id,thickness:18});
+ const surround={right:{kind:'filler',width:87,heightMode:'full'},left:{kind:'end',depth:150,projection:20}};
+ const boards=['a','b'].flatMap((id,i)=>{
+  const built=buildCarcass({recipe:'shelves',width:1000,height:1900,depth:600,surround},
+   {idPrefix:id,name:id,frontMaterialId:'front',bodyMaterialId:'body'});
+  return placeCarcass(built,{x:500+i*1200,z:765,elevation_mm:31,rotation:i*180})
+   .map(p=>({...p,assistant_carcass:{group_id:id,name:id,spec:built.spec}}));
+ });
+ const rows=[...nativeTrimRows(boards,lookup).values()].filter(Boolean);
+ assert.deepEqual(rows.map(p=>p.source_file),['MF_Trim_End.fr3d','MF_Trim_Right.fr3d','MF_Trim_End.fr3d','MF_Trim_Right.fr3d']);
+ assignCabinetBlocks(rows,boards);
+ assert.deepEqual(rows.map(p=>p.cabinet_block.name),['a','a','b','b']);
+ assert.equal(rows[1].wardrobe_trim.expected_pairs,4);
+ assert.throws(()=>nativeTrimRows(boards.filter(p=>p.item_id!=='b:trim-right-return'),lookup),/неполный комплект/);
+ const second=boards.find(p=>p.item_id==='b:trim-right-return');second.z+=2;
+ assert.throws(()=>nativeTrimRows(boards,lookup),/взаимное положение/);
+});

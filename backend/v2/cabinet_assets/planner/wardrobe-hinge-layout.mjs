@@ -12,10 +12,23 @@ export function hingeName(article){
 }
 const defaultSetting={article:'112595'};
 export const nominalSide=key=>/^door-(?:(?:lower|upper)-)?(left|right)$/.exec(key)?.[1];
-export const settingFor=(f,key)=>f?.hinges?.[key]??defaultSetting;
+export const compatibleHinge=(hinge,push)=>!push||hinge.closing==='springless';
+export function chooseHinge(kind,push,preferred){
+ const current=hingeCatalogue[preferred];
+ if(current?.kind===kind&&compatibleHinge(current,push))return current;
+ const score=p=>Number(p.fixing!==(current?.fixing??'screw'))*2+Number(p.series!==current?.series);
+ return Object.values(hingeCatalogue).filter(p=>p.kind===kind&&compatibleHinge(p,push))
+  .sort((a,b)=>score(a)-score(b)||a.article.localeCompare(b.article))[0];
+}
+export function settingFor(front,key){
+ const setting=front?.hinges?.[key]??defaultSetting,product=hingeCatalogue[setting.article];
+ if(setting.push&&product?.closing==='reverse')return {...setting,article:chooseHinge(product.kind,setting.push,setting.article).article};
+ return setting;
+}
 export function hingeProduct(f,key){
- const p=hingeCatalogue[settingFor(f,key).article];
+ const setting=settingFor(f,key),p=hingeCatalogue[setting.article];
  if(!p)throw Error('Выберите петлю PRIME из каталога.');
+ if(!compatibleHinge(p,setting.push))throw Error('Для открывания нажатием выберите петлю без пружины.');
  return p;
 }
 export const onDivider=(f,key)=>hingeProduct(f,key).kind==='half'||settingFor(f,key).central===true;

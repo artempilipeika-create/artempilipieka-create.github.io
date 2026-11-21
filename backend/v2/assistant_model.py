@@ -227,10 +227,10 @@ class DoorHingeSetting(StrictModel):
         if not product:raise ValueError('Выберите петлю PRIME из каталога.')
         if (self.recess is not None or self.central) and product['kind']!='inset':
             raise ValueError('Утопление и выбор стойки задаются для вкладной двери.')
-        if isinstance(self.push,DoorPushSetting):
-            allowed = ('reverse',) if AKS_PUSH[self.push.article]['tip']=='rubber' else ('springless','reverse')
-            if product['closing'] not in allowed:
-                raise ValueError('Петля не совместима с наконечником выбранного типона.')
+        if self.push and product['closing']=='reverse':
+            # Earlier questionnaires offered reverse-spring hinges with AKS push latches.
+            matches=(p for p in PRIME_HINGES.values() if p['kind']==product['kind'] and p['closing']=='springless')
+            self.article=min(matches,key=lambda p:(p['fixing']!=product['fixing'],p['series']!=product['series'],p['article']))['article']
         elif self.push and product['closing']!='springless':
             raise ValueError('Для открывания нажатием выберите петлю без пружины.')
         return self
@@ -421,11 +421,62 @@ class RearMount(StrictModel):
 
 PanelCutList=Annotated[list[PanelCut],Field(min_length=1,max_length=32)]
 PanelCutKey=Annotated[str,Field(pattern=r'^[a-z][a-z0-9-]{0,64}$')]
+class SurroundSide(StrictModel):
+    kind: Literal['filler','end']
+    width: int | None = Field(default=None, ge=40, le=1200, strict=True, exclude_if=lambda v:v is None)
+    depth: int | None = Field(default=None, ge=40, le=1200, strict=True, exclude_if=lambda v:v is None)
+    projection: int | None = Field(default=None, ge=0, le=300, strict=True, exclude_if=lambda v:v is None)
+    heightMode: Literal['custom','body','full']
+    height: int | None = Field(default=None, ge=100, le=3000, strict=True, exclude_if=lambda v:v is None)
+    bottom: int = Field(ge=0, le=4900, strict=True)
+
+    @model_validator(mode='after')
+    def fit(self):
+        if self.kind=='end' and (self.depth is None or self.projection is None or self.width is not None):
+            raise ValueError('Задайте глубину и выступ торцевой стойки от боковины.')
+        if self.kind=='filler' and (self.width is None or self.depth is not None or self.projection is not None):
+            raise ValueError('Задайте ширину лица Г-образной фальшпланки.')
+        if (self.heightMode=='custom') != (self.height is not None):
+            raise ValueError('Задайте высоту боковой детали или привяжите её к крыше.')
+        return self
+
+class SurroundUpper(StrictModel):
+    height: int = Field(ge=150, le=1500, strict=True)
+    divider: bool
+    leaves: Literal[1,2]
+    side: Literal['left','right']
+    opening: Literal['swing','lift']
+    push: DoorPushSetting
+
+class SurroundCap(StrictModel):
+    height: int = Field(ge=40, le=1200, strict=True)
+    length: int | None = Field(default=None, ge=100, le=3000, strict=True, exclude_if=lambda v:v is None)
+
+class WardrobeSurround(StrictModel):
+    left: SurroundSide | None = Field(default=None, exclude_if=lambda v:v is None)
+    right: SurroundSide | None = Field(default=None, exclude_if=lambda v:v is None)
+    upper: SurroundUpper | None = Field(default=None, exclude_if=lambda v:v is None)
+    cap: SurroundCap | None = Field(default=None, exclude_if=lambda v:v is None)
+
 class CarcassDesign(CarcassSpec):
+    surround: WardrobeSurround | None = Field(default=None, exclude_if=lambda v:v is None)
     lightKit: LightingKit | None = Field(default=None, exclude_if=lambda v: v is None)
     lighting: dict[PanelCutKey,Annotated[list[LightingLine],Field(min_length=1,max_length=32)]] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
     machining: dict[PanelCutKey,PanelCutList] | None=Field(default=None,max_length=100,exclude_if=lambda v:v is None)
     backMount: RearMount | None=Field(default=None,exclude_if=lambda v:v is None)
+
+    @property
+    def installed_height(self):
+        body_top=self.height+(self.feet.height if self.feet else 0)
+        a=self.surround
+        if not a:
+            return body_top
+        upper_top=body_top+(a.upper.height if a.upper else 0)
+        heights=[upper_top+(a.cap.height if a.cap else 0)]
+        for side in (a.left,a.right):
+            if side and side.heightMode=='custom':
+                heights.append(side.bottom+side.height)
+        return max(heights)
 
     @property
     def rear_clearance(self):
@@ -695,6 +746,19 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.surround:
+            a=self.surround
+            if self.thickness!=18 or self.recipe not in ('shelves','divided'):
+                raise ValueError('Фальшпланки и антресоль предназначены для шкафа из плиты 18 мм.')
+            body_top=self.height+(self.feet.height if self.feet else 0)
+            upper_top=body_top+(a.upper.height if a.upper else 0)
+            if a.upper and self.width/a.upper.leaves-3>(600 if a.upper.opening=='swing' else 1200):
+                raise ValueError('Проверьте ширину створки антресоли.')
+            for side in (a.left,a.right):
+                if side:
+                    h=side.height if side.heightMode=='custom' else (upper_top if side.heightMode=='full' else body_top)-side.bottom
+                    if not 100<=h<=3000:
+                        raise ValueError('Проверьте высоту и нижнюю отметку боковой детали.')
         if self.braceOffset is not None and (self.bottomFit!='none' or self.braceOffset+100>self.height-self.thickness):
             raise ValueError('Проверьте положение заднего ребра.')
         if self.gapLocks and (len(self.gapLocks)!=self.sections or not self.sectionShelves or any(i>self.sectionShelves[j] for j,row in enumerate(self.gapLocks) for i in row)):

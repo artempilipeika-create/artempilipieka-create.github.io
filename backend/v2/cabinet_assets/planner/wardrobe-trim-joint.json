@@ -1,0 +1,5 @@
+{
+  "symmetric_end_inset_mm": 100,
+  "dowel_article": "39319",
+  "pairs_by_clear_span": [[100, 1], [600, 2], [1200, 3], [1800, 4], [2400, 5]]
+}
