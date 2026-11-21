@@ -19,7 +19,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     <div class="mf-album-pages"><span>Обложка</span><span>Чертёж и размеры</span><span>Фурнитура</span><span>Материалы</span><span>Комплект</span></div>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера повышенного качества. Он автоматически попадёт в PDF. Открытие готового альбома и скачивание не запускают новую генерацию.</label>
     <p data-message role="status" aria-live="polite">Сохраняем проект и проверяем готовый фоторендер…</p>
-    <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Проверить готовность · бесплатно</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>
+    <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Проверить готовность · бесплатно</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-photo class="presentation-download" hidden>Скачать фоторендер</a><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>
     <p class="mf-album-note">${wardrobe?'Для витрины Z1 проверьте в предпросмотре границы створок, блики на рамке и полки за стеклом.':'Проверьте ракурс и материалы перед созданием фоторендера.'}</p>`;
   document.body.append(d);d.showModal();
   const q=s=>d.querySelector(s),say=t=>q('[data-message]').textContent=t;
@@ -40,7 +40,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     q('[data-check]').hidden=!requested||Boolean(hero);q('[data-check]').disabled=busy;
     q('[data-build]').hidden=!hero||Boolean(pdfURL);q('[data-build]').disabled=busy||!orderNumber();
     q('[data-order]').disabled=busy;
-    q('[data-pdf]').hidden=!pdfURL;
+    q('[data-photo]').hidden=!hero;q('[data-pdf]').hidden=!pdfURL;
     if(wardrobe){q('[data-view-label]').hidden=requested||Boolean(hero);q('[data-view]').disabled=busy||requested||Boolean(hero);}
     d.setAttribute('aria-busy',String(busy));
   };
@@ -77,7 +77,10 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
       clearTimeout(timer);timer=setTimeout(()=>perform(check),3000);return;
     }
     if(result.state!=='ready')throw Error(result.message||'Рендер не получен. Повторный платный запрос не запускается.');
-    clearTimeout(timer);hero=result.image_data_url;await draw(hero);if(!closed)await build();
+    clearTimeout(timer);hero=result.image_data_url;
+    const photo=q('[data-photo]');
+    photo.href=hero;photo.download='Martin_Forest_'+(wardrobe?'Wardrobe':'Render')+'.'+(hero.startsWith('data:image/png;')?'png':hero.startsWith('data:image/webp;')?'webp':'jpg');
+    await draw(hero);if(!closed)await build();
   };
   const perform=async action=>{
     if(busy||closed)return;clearTimeout(timer);busy=true;refresh();
@@ -106,6 +109,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
   });
   q('[data-check]').onclick=()=>perform(check);
   q('[data-build]').onclick=()=>perform(build);
+  q('[data-photo]').onclick=e=>{if(!hero||!same()){e.preventDefault();say('Проект изменился. Откройте альбом заново.');}};
   q('[data-pdf]').onclick=e=>{if(!same()||!pdfURL){e.preventDefault();say('Проект изменился. Откройте альбом заново для сохранённой версии.');}};
   refresh();
   try{

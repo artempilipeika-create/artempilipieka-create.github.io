@@ -57,6 +57,7 @@ test('One consent creates one photo and automatically uses the original in the f
 test('Rebuilding a failed PDF never calls the paid provider again',async()=>{
   const h=harness({existing:{state:'ready',image_data_url:photo},pdfFails:true});await h.open();
   assert.equal(h.q('[data-build]').hidden,false);assert.equal(h.q('[data-pdf]').hidden,true);
+  assert.equal(h.q('[data-photo]').hidden,false);assert.equal(h.q('[data-photo]').href,photo);
   assert.equal(h.q('[data-message]').scrolled,true);
   assert.ok(h.d.html.indexOf('data-message')>h.d.html.indexOf('data-preview'));
   await h.q('[data-build]').onclick();assert.equal(h.paid,0);assert.equal(h.q('[data-pdf]').hidden,false);
@@ -107,6 +108,7 @@ test('wardrobe album chooses its reference for free and reuses the single confir
   h.q('[data-consent]').checked=true;await h.q('[data-create]').onclick();
   const request=h.requests.find(r=>r.method==='POST'&&r.path.endsWith('/sales-photo'));
   assert.equal(request.body.preview_data_url,'data:image/png;base64,Y3VycmVudA==');assert.equal(h.paid,1);
+  assert.equal(h.q('[data-photo]').href,photo);assert.equal(h.q('[data-photo]').download,'Martin_Forest_Wardrobe.jpg');
   assert.equal(h.exports[0].hero_data_url,photo);assert.equal(h.q('[data-pdf]').download,'Martin_Forest_Wardrobe_Album.pdf');
   h.q('[data-close]').onclick();await h.open();assert.equal(h.paid,1);assert.equal(h.q('[data-view-label]').hidden,true);
 });
