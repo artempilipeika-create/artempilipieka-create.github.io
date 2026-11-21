@@ -53,6 +53,7 @@ export function hingeControls(ui,box,s,leaf,clearHandle){
  section.append(options);
  const other=key.replace(/(left|right)$/,side==='left'?'right':'left');
  if(activeLeafKeys(f).includes(other)){
-  section.append(button('Применить к парной двери',()=>{if(current.push)clearHandle(other);else if(product.frame&&f.handles?.[other]&&!['118124','118129'].includes(f.handles[other].article))delete f.handles[other];(f.hinges??={})[other]=structuredClone(current);set({...current});}));
+  const applyLabel=product.frame!==hingeProduct(f,other).frame?'Применить фасад и петли к парной двери':'Применить к парной двери';
+  section.append(button(applyLabel,()=>{if(current.push)clearHandle(other);else if(product.frame&&f.handles?.[other]&&!['118124','118129'].includes(f.handles[other].article))delete f.handles[other];(f.hinges??={})[other]=structuredClone(current);set({...current});}));
  }
 }

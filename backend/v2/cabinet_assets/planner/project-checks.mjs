@@ -82,7 +82,7 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
     const blank=it.module_type==='blank';
     const glass=blank&&it.blank_shelf&&!it.blank_shelf.startsWith('board/');
     let needed;
-    if(blank)needed=glass?[]:[{name:it.name,material:{variant_id:it.body_variant_id}}];
+    if(blank)needed=glass||it.blank_front_frame?[]:[{name:it.name,material:{variant_id:it.body_variant_id}}];
     else if(parts)needed=parts.filter(p=>p.type==='panel'&&!p.optical_material);
     else needed=[{name:'Корпус',material:{variant_id:it.body_variant_id}},...(it.layout==='niche'?[]:[{name:'Фасад',material:{variant_id:it.front_variant_id}}])];
     const missing=needed.filter(p=>!p.material?.variant_id),unresolved=needed.filter(p=>p.material?.variant_id&&!material(p.material.variant_id));

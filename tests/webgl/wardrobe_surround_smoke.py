@@ -456,7 +456,7 @@ def z1_scenario(page, projects, seed):
     expect(form.locator('svg [data-door-id="door-left"] [data-frame="Z1"]')).to_have_count(1)
     form.locator('[data-hinge-kind="inset"]').click()
     expect(form.locator('[data-hinge-article="71B970A"]')).to_have_attribute('aria-pressed','true')
-    assert field(form,'Способ открывания').locator('option[value="push"]').is_disabled()
+    expect(field(form,'Способ открывания').locator('option[value="push"]')).to_have_count(0)
     form.locator('[data-hinge-kind="overlay"]').click()
     field(form,'Способ открывания').select_option('push')
     expect(form.locator('[data-hinge-article="70T950A.TL"]')).to_have_attribute('aria-pressed','true')

@@ -14,7 +14,7 @@ export const leafKey=it=>it?.assistant_carcass?it.item_id.slice(it.assistant_car
 const mezzSide=it=>/^mezz-door-(left|right)$/.exec(leafKey(it))?.[1];
 export const viewingDoor=it=>doorSide(leafKey(it))||mezzSide(it);
 export const viewingDoorLabel=it=>mezzSide(it)?'Антресоль · '+(mezzSide(it)==='left'?'левый фасад':'правый фасад'):doorLabel(leafKey(it));
-export const angleLimit=it=>mezzSide(it)?90:maxOpening;
+export const angleLimit=it=>it?.blank_front_frame==='Z1'?95:mezzSide(it)?90:maxOpening;
 export function hingePose(it,degrees){
  const side=mezzSide(it);
  if(side&&it.assistant_carcass.spec.surround?.upper?.opening==='lift'){

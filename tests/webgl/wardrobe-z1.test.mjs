@@ -7,6 +7,8 @@ import {blankNativeItem} from '../../backend/v2/cabinet_assets/planner/blanks-na
 import {doorHinges,doorPush} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinges.mjs';
 import {blanksCSV} from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
 import {hingeGeometry} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinge-mesh.mjs';
+import {angleLimit} from '../../backend/v2/cabinet_assets/planner/wardrobe-clearance.mjs';
+import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {localPoint} from '../../backend/v2/cabinet_assets/planner/blank-bindings.mjs';
 import z1 from '../../backend/v2/cabinet_assets/planner/wardrobe-z1-data.json' with {type:'json'};
 
@@ -27,6 +29,9 @@ test('changing one wardrobe door to Z1 preserves the finished gaps and replaces 
   const {items,part}=cabinet(f),p=part(key);
   assert.deepEqual(rect(p),rect(solid.part(key)));
   assert.deepEqual([p.width,p.height,p.elevation_mm],[swing==='pair'?297:597,697,1.5]);
+  assert.equal(angleLimit(p),95);
+  const adapter=new StateAdapter({state:()=>({items,room:{width:6000,depth:4500,height:3000}}),material:()=>null});
+  for(const item of items)assert.equal(adapter.validate(item,items),'');
   assert.equal(p.blank_front_frame,'Z1');assert.equal(p.blank_edge_code,'0000');assert.equal(p.body_variant_id,null);
   assert.equal(p.depth,20.5);assert.equal(p.z-p.depth/2-part('left').z,solid.part(key).z-9-solid.part('left').z);
   assert.deepEqual(doorHinges(p,items).map(f=>f.article),['71B950A','71B950A']);

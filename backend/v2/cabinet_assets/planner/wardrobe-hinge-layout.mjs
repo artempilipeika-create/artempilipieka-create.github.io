@@ -9,9 +9,10 @@ export const doorPushGap=2;
 export const hingeKinds={overlay:'Накладная',half:'Полунакладная',inset:'Вкладная'};
 export function hingeName(article){
  const p=hingeCatalogue[article];
- return p?'Петля '+(p.frame?'Blum ':'')+p.series+' '+hingeKinds[p.kind].toLowerCase()+' '+closingNames[p.closing]+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
+ return p?'Петля '+(p.frame?'Blum ':'')+p.series+(p.frame?' 95° ':' ')+hingeKinds[p.kind].toLowerCase()+' '+closingNames[p.closing]+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
 }
 export const frameDepth=20.5;
+export const wardrobeHasFrame=s=>s?.surround?.upper?.frame==='Z1'||Object.values(s?.front?.hinges??{}).some(h=>hingeCatalogue[h.article]?.frame==='Z1');
 export const leafDepth=(f,key)=>hingeCatalogue[settingFor(f,key).article]?.frame==='Z1'?frameDepth:18;
 export function selectLeafFrame(front,key,frame){
  const current=settingFor(front,key),product=hingeProduct(front,key);
