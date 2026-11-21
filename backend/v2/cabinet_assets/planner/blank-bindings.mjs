@@ -43,8 +43,9 @@ export function resolveBlankBindings(items,backMount){
         fail('Полка выходит за глубину или высоту опорной стойки.');
     }
     const position=worldPoint({x:(start+end)/2,z},left.rotation);
-    const grid=mount?4:2;
-    if(!Number.isInteger(position.x*grid)||!Number.isInteger(position.z*grid))fail('Положение полки должно иметь шаг 0,5 мм.');
+    // A cabinet keeps its wall datum when a 20.5 mm frame is exchanged for board.
+    const grid=item.assistant_carcass||mount?4:2;
+    if(!Number.isInteger(position.x*grid)||!Number.isInteger(position.z*grid))fail('Уточните положение полки с шагом '+(grid===4?'0,25':'0,5')+' мм.');
     return updateBlank(item,{blank_length_mm:length,...position});
   });
 }

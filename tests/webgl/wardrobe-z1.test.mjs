@@ -8,6 +8,7 @@ import {doorHinges,doorPush} from '../../backend/v2/cabinet_assets/planner/wardr
 import {blanksCSV} from '../../backend/v2/cabinet_assets/planner/blanks-model.mjs';
 import {hingeGeometry} from '../../backend/v2/cabinet_assets/planner/wardrobe-hinge-mesh.mjs';
 import {angleLimit} from '../../backend/v2/cabinet_assets/planner/wardrobe-clearance.mjs';
+import {prepareAssistantPlan,applyAssistantPlan} from '../../backend/v2/cabinet_assets/planner/assistant-model.mjs';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {localPoint} from '../../backend/v2/cabinet_assets/planner/blank-bindings.mjs';
 import z1 from '../../backend/v2/cabinet_assets/planner/wardrobe-z1-data.json' with {type:'json'};
@@ -73,5 +74,22 @@ test('TIP-ON keeps the +2 mm mounting gap and chooses only the supplied springle
   assert.equal(p.z-10.25-host.z-host.depth/2,2);
   assert.deepEqual(doorHinges(p,items).map(h=>h.article),['70T950A.TL','70T950A.TL']);
   assert.ok(doorPush(p,items).length);
+ }
+});
+
+test('the full questionnaire saves and reopens a framed cabinet and preserves its wall datum on replacement',()=>{
+ let state={room:{width:5000,height:3000,depth:4500,setup_complete:true},items:[]};
+ const adapter=new StateAdapter({supportsElevation:true,state:()=>state,projectId:()=>null,
+  selected:()=>state.items.find(i=>i.item_id===state.selected_item_id),select:key=>state.selected_item_id=key,refresh(){},material:()=>null});
+ const fields={width:600,height:700,depth:570,thickness:18,sections:2,sectionShelves:[1,1],back:true,front:{swing:'pair',offset:90}};
+ const apply=action=>applyAssistantPlan(adapter,prepareAssistantPlan(adapter,{action,spec:wardrobeSpec(fields)},{id}));
+ const part=key=>state.items.find(p=>p.item_id===id+':'+key);
+ selectLeafFrame(fields.front,'door-left','Z1');apply('create');
+ const datum=part('left').z;
+ for(const type of ['board','Z1']){
+  state=JSON.parse(JSON.stringify(state));selectLeafFrame(fields.front,'door-left',type);apply('update');
+  assert.equal(part('left').z,datum);
+  assert.equal(part('shelf-0-0').blank_binding.left_id,part('left').item_id);
+  assert.equal(part('door-left').depth,type==='Z1'?20.5:18);
  }
 });
