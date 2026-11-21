@@ -7,7 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
-from .assistant_model import AssistantCarcass, DOOR_HARDWARE, InsetEdgeGrip, PanelCutList, ShelfValue, shelf_valid
+from .assistant_model import AssistantCarcass, Z1_HINGES, DOOR_HARDWARE, InsetEdgeGrip, PanelCutList, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
 from .domain_api import require,create_draft
@@ -132,7 +132,8 @@ class FurnitureItem(StrictModel):
     # Individual rectangular board; no inferred cabinet or fabricated BAZIS geometry.
     blank_length_mm: int|float|None=Field(default=None,ge=40,le=3000)
     blank_width_mm: int|float|None=Field(default=None,ge=22,le=3000)
-    blank_thickness_mm: int|None=Field(default=None,ge=3,le=40)
+    blank_front_frame: Literal['Z1']|None=Field(default=None,exclude_if=lambda v:v is None)
+    blank_thickness_mm: int|float|None=Field(default=None,ge=3,le=40)
     blank_edge_thickness_mm: float=Field(default=1,ge=0.4,le=3,allow_inf_nan=False)
     blank_axis: Literal['horizontal','side','back','front']|None=None
     blank_edge_code: str|None=Field(default=None,pattern=r'^[01]{4}$')
@@ -243,8 +244,17 @@ class FurnitureItem(StrictModel):
             raise ValueError('Проверьте точность размеров детали.')
         if self.upper_mount_offset_mm is not None and self.module_type!='wall_cabinet':
             raise ValueError('Отметка навески относится к верхнему шкафу.')
+        upper=group.spec.surround.upper if group and group.spec.surround else None
+        setup=(group.spec.front.hinges or {}).get(key) if door else None
+        framed=bool(setup and setup.article in Z1_HINGES or upper and upper.frame and re.fullmatch(r'mezz-door-(left|right)',key))
+        if bool(self.blank_front_frame)!=framed or self.blank_front_frame and (
+                self.module_type!='blank' or self.blank_axis!='front' or self.blank_thickness_mm!=20.5 or self.blank_edge_code!='0000'
+                or self.body_variant_id or self.blank_machining or grip):
+            raise ValueError('Фасад витрины должен соответствовать рамке Z1 и петлям в анкете.')
+        if self.blank_thickness_mm is not None and not framed and self.blank_thickness_mm%1:
+            raise ValueError('Укажите толщину плиты в целых миллиметрах.')
         if self.blank_axis=='front':
-            if self.module_type!='blank' or self.blank_edge_code!='1111' or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18:
+            if not framed and (self.module_type!='blank' or self.blank_edge_code!='1111' or self.blank_edge_thickness_mm!=2 or self.blank_thickness_mm!=18):
                 raise ValueError('Для фасада нужна плита 18 мм и кромка ПВХ 2 мм по всем четырём торцам.')
             if grip:
                 grip.check_size(self.width,self.height,group.spec.front.hinge_side(key) if door else None)

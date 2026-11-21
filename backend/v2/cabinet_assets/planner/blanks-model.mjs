@@ -35,6 +35,7 @@ export function blankMaterialError(item,material){
   return (name?'Материал «'+name+'»':'Назначенный материал')+' имеет толщину '+actual+' мм. Для детали требуется '+required+' мм.';
 }
 export function retainedBlankMaterial(item,previous,lookup){
+  if(item.blank_front_frame||previous?.blank_front_frame)return item.body_variant_id;
   const saved=previous?.body_variant_id,selected=item.body_variant_id;
   if(!saved||saved===selected||Number(previous.blank_thickness_mm)!==Number(item.blank_thickness_mm))return selected;
   // A compatible manual decor wins. Repair a known mismatch only with a verified replacement.
@@ -68,7 +69,9 @@ export function validateBlank(input,room,mount=input.assistant_carcass?.spec.bac
     const issue=validateEdgePull(h,b.width,b.length,b.thickness);
     if(issue)return issue;
   }
-  if(b.axis==='front'&&(b.code!=='1111'||b.edgeThickness!==2||b.thickness!==18))return 'Для фасада нужна плита 18 мм и ПВХ 2 мм в круг.';
+  const framed=input.blank_front_frame==='Z1';
+  if(framed&&(!door||b.thickness!==20.5||b.code!=='0000'||input.blank_edge_pull||input.blank_machining?.length||input.body_variant_id))return 'Для витрины Z1 нужны рамка 20,5 мм и стекло 4 мм.';
+  if(!framed&&b.axis==='front'&&(b.code!=='1111'||b.edgeThickness!==2||b.thickness!==18))return 'Для фасада нужна плита 18 мм и ПВХ 2 мм в круг.';
   const machining=machiningError(input);if(machining)return machining;
   const thinBack=b.axis==='back'&&[3,4].includes(b.thickness)&&b.code==='0000';
   let glass=false;
@@ -79,7 +82,7 @@ export function validateBlank(input,room,mount=input.assistant_carcass?.spec.bac
     }catch(e){return e.message;}
   }
   const thinBottom=drawerBottom(input.item_id)&&b.axis==='horizontal'&&b.thickness===3&&b.code==='0000';
-  if(!glass&&!thinBack&&!thinBottom&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
+  if(!framed&&!glass&&!thinBack&&!thinBottom&&(!Number.isInteger(b.thickness)||b.thickness<10||b.thickness>40))return 'Толщина ЛДСП: от 10 до 40 мм; ХДФ: 3 или 4 мм, только задняя панель без ПВХ.';
   if(!AXES.includes(b.axis))return 'Неизвестная ориентация заготовки.';
   if(!/^[01]{4}$/.test(b.code))return 'Код ПВХ должен содержать четыре цифры 0/1.';
   if(!(drawerFace||trimFace||trimPost?precise(b.elevation):Number.isInteger(b.elevation*(b.axis==='front'||post||hdf||input.blank_binding?.gola_flush?2:1)))||b.elevation<0||b.elevation>5000)return 'Проверьте высоту низа детали в мм.';
@@ -95,6 +98,7 @@ export function blankItem(input={}){
   return {
     ...dims,
     module_type:'blank',template_id:null,bazis_id:null,
+    ...(input.blank_front_frame?{blank_front_frame:input.blank_front_frame}:{}),
     ...(input.blank_machining?.length?{blank_machining:structuredClone(input.blank_machining)}:{}),
     ...(input.blank_edge_pull?{blank_edge_pull:{...input.blank_edge_pull}}:{}),
     ...(input.blank_shelf?{blank_shelf:input.blank_shelf}:{}),
@@ -120,9 +124,15 @@ export function edgeMeters(blank){
 export function blanksCSV(items,materialLookup=()=>null){
   const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
   const header=['Название','Длина, мм','Ширина, мм','Толщина, мм','Кромка 1','Кромка 2','Кромка 3','Кромка 4','Код ПВХ','ПВХ, м','Материал','Артикул','Материал (ID)','Распил длина, мм','Распил ширина, мм','ПВХ толщина, мм'];
-  const rows=items.filter(it=>it.module_type==='blank').map(it=>{
+  const rows=items.filter(it=>it.module_type==='blank').flatMap(it=>{
+    if(it.blank_front_frame==='Z1'){
+      const glassH=it.height-27.5,glassW=it.width-27.5;
+      const row=(name,h,w,t,material,sku)=>[it.name+' · '+name,h,w,t,0,0,0,0,'0000','0,00',material,sku,'',h,w,''];
+      return [row('Стекло',glassH,glassW,4,'Стекло 4 мм',''),
+       ...[it.height,it.height,it.width,it.width].map((l,i)=>row((i<2?'Стойка':'Перекладина')+' Z1',l,19,20.5,'Алюминиевый профиль, рез 45°','Z1'))];
+    }
     const b=normalizeBlank(it),material=it.body_variant_id?materialLookup(it.body_variant_id):null;
-    return [it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),material?.name||(it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'Стекло '+b.thickness+' мм':''),material?.article||'',it.body_variant_id||'',cuttingSize(it).length,cuttingSize(it).width,b.edgeThickness];
+    return [[it.name,b.length,b.width,b.thickness,...b.code.split(''),b.code,edgeMeters(it).toFixed(2).replace('.',','),material?.name||(it.blank_shelf&&!it.blank_shelf.startsWith('board/')?'Стекло '+b.thickness+' мм':''),material?.article||'',it.body_variant_id||'',cuttingSize(it).length,cuttingSize(it).width,b.edgeThickness]];
   });
   return '\ufeff'+[header,...rows].map(row=>row.map(quote).join(';')).join('\r\n')+'\r\n';
 }

@@ -2,10 +2,24 @@ import * as THREE from './vendor/three.module.js';
 import overlay from './prime-hinge-mesh.json' with {type:'json'};
 import models from './wardrobe-prime-meshes.json' with {type:'json'};
 
+import z1 from './wardrobe-z1-meshes.json' with {type:'json'};
 const parts=new Map();
 const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
 function hingeParts(asset){
  if(parts.has(asset))return parts.get(asset);
+ if(z1.meshes[asset]){
+  const result={};
+  for(const [kind,ids] of Object.entries(z1.meshes[asset])){
+   const verts=[],faces=[];
+   for(const id of ids){
+    const [v,f]=z1.parts[id],offset=verts.length/3;
+    for(const n of new Uint16Array(decode(f)))faces.push(offset+n);
+    for(const n of new Int16Array(decode(v)))verts.push(n*.0001);
+   }
+   result[kind]={positions:new Float32Array(verts),indices:new Uint32Array(faces)};
+  }
+  parts.set(asset,result);return result;
+ }
  const [v,f]=asset==='112595'?overlay:models[asset];
  const points=new Int16Array(decode(v)),indices=new Uint16Array(decode(f));
  const parent=Array.from({length:points.length/3},(_,i)=>i);

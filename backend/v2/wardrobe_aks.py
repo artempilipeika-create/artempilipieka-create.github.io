@@ -11,7 +11,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.44'
+IMPORTER_VERSION = '9.9.45'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
@@ -68,6 +68,9 @@ def kit_bytes(rods_required=False, handles_required=False):
             entry.compress_type = ZIP_DEFLATED
             entry.external_attr = 0o100644 << 16
             archive.writestr(entry, data)
+        with ZipFile(sources/'MF_Z1.zip') as frames:
+            for name in frames.namelist():
+                add('Martin Forest AKS/' + name, frames.read(name))
         for source in sorted(sources.glob('*.fr3d')):
             add('Martin Forest AKS/' + source.name, source.read_bytes())
         for name, data in {**rods, **handles}.items():

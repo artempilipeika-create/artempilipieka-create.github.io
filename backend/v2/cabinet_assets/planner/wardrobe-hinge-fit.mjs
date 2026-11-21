@@ -9,11 +9,12 @@ const allowance=1,flange=3.5;
 const mirrored=(lo,hi,side)=>side==='left'?[lo,hi]:[-hi,-lo];
 
 export function plateSpan(fit,side){
+ if(fit.plateSpan)return mirrored(...fit.plateSpan,side);
  return mirrored(fit.series==='PRIME 3D'?-25:-26,26,side);
 }
 
 export function spacerReachesHinge(fit,hingeZ,front){
- return front>=hingeZ-(fit.kind==='inset'?71.5:75.1)-2;
+ return front>=hingeZ-(fit.armDepth??(fit.kind==='inset'?71.5:75.1))-2;
 }
 
 export function gapAxisRange(fit,side,bottom,top){
@@ -25,14 +26,14 @@ export function drawerHingeSpan(fit,side,clear,setback,pivot,doorDepth,slides){
  const [reach,below,above]=fit.armSpan??arms[fit.mesh];
  let low=0,high=0;
  if(clear<reach+allowance)[low,high]=mirrored(-below,above,side);
- if(clear<8+allowance)[low,high]=plateSpan(fit,side);
+ if(clear<(fit.plateReach??8)+allowance)[low,high]=plateSpan(fit,side);
  // The cup opens forwards. Until it clears the front in depth its outer
  // corner is bounded by its circle about the vertical door pivot.
- const radius2=(cupReach[fit.kind]-pivot)**2+(doorDepth+flange)**2;
+ const radius2=((fit.cupReach??cupReach[fit.kind])-pivot)**2+(doorDepth+flange)**2;
  const closedReach=setback<=flange+allowance?
   pivot+Math.sqrt(Math.max(0,radius2-(doorDepth+Math.max(0,setback-allowance))**2)):-Infinity;
  const openReach=slides?pivot+doorDepth+flange:-Infinity; // drawer passing the open leaf at 90°
- if(clear<Math.max(closedReach,openReach)+allowance)return [-31.8,31.8];
+ if(clear<Math.max(closedReach,openReach)+allowance)return fit.frame?[-(fit.cupHalfHeight??27.5),fit.cupHalfHeight??27.5]:[-31.8,31.8];
  return high?[low-allowance,high+allowance]:null;
 }
 

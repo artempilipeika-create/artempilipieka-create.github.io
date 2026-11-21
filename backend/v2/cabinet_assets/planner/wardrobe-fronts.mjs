@@ -1,3 +1,4 @@
+import z1 from './wardrobe-z1-data.json' with {type:'json'};
 import {cuttingSize} from './blanks-model.mjs';
 
 // Closed overlay fronts, measured from the lower left corner of the carcass.
@@ -21,8 +22,16 @@ export const primeHinge={
  sha:'fa4fb4dfa6310cdec87d25d683a7d5e1d5923470bed7ae25c3f35923cf7166a8'
 };
 
+// Four aluminium mitres are measured at their long points. The pane is 4 mm glass.
+const Z1_KG_PER_MM=z1.front.estimatedKgPerMetre/1000;
 // Published AKS chart for a 35 mm cup and a door up to 600 mm wide.
-export function hingeLoad(width,height,massKg){
+export function hingeLoad(width,height,massKg,frame){
+ if(frame==='Z1'){
+  const mass=massKg??(width-27.5)*(height-27.5)*.00001+2*(width+height)*Z1_KG_PER_MM;
+  const level=[[750,6],[1500,12],[2000,17],[2500,22]].findIndex(([h,kg])=>height<=h&&mass<=kg);
+  if(width>600||mass<=0||level<0)throw Error('Для рамки Z1 шире 600 мм, выше 2500 мм или тяжелее 22 кг нужен отдельный подбор петель Blum.');
+  return {mass,count:level+2};
+ }
  const mass=massKg??width*height*18*700/1e9;
  const levels=[[900,8],[1600,13],[2000,17],[2400,22]];
  const level=levels.findIndex(([h,m])=>height<=h&&mass<=m);

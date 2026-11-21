@@ -1,0 +1,408 @@
+{
+  "front": {
+    "source_file": "MF_Z1_D1.fr3d",
+    "sha256": "e9fa21aa56315fb5f463793e812cbe0129da0b062b546f70c0b9901113cf174e",
+    "thicknessMm": 20.5,
+    "sectionWidthMm": 19,
+    "sectionAreaMm2": 92.58,
+    "estimatedKgPerMetre": 0.249966,
+    "sectionOuterMm": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        19.0,
+        0.0
+      ],
+      [
+        19.0,
+        15.2
+      ],
+      [
+        18.0,
+        15.2
+      ],
+      [
+        18.0,
+        14.2
+      ],
+      [
+        13.3,
+        14.2
+      ],
+      [
+        13.3,
+        19.5
+      ],
+      [
+        19.0,
+        19.5
+      ],
+      [
+        19.0,
+        20.5
+      ],
+      [
+        0.0,
+        20.5
+      ]
+    ],
+    "sectionVoidMm": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        4.0,
+        5.0
+      ],
+      [
+        1.0,
+        5.0
+      ],
+      [
+        1.0,
+        19.5
+      ],
+      [
+        12.3,
+        19.5
+      ],
+      [
+        12.3,
+        13.2
+      ],
+      [
+        17.6,
+        13.2
+      ],
+      [
+        17.6,
+        5.0
+      ],
+      [
+        14.6,
+        5.0
+      ],
+      [
+        14.6,
+        4.0
+      ],
+      [
+        17.6,
+        4.0
+      ],
+      [
+        17.6,
+        1.0
+      ]
+    ]
+  },
+  "hinges": [
+    {
+      "article": "71B950A",
+      "sku": "71B950A",
+      "finish": "NI",
+      "frame": "Z1",
+      "kind": "overlay",
+      "series": "CLIP top BLUMOTION",
+      "closing": "soft",
+      "fixing": "screw",
+      "source_file": "MF_Z1_71B950A_NI.fr3d",
+      "sha256": "2682bdd3bc242de281be70967a662bb1e43406a0dbd19ddad54dbc135a0fdc3e",
+      "file": "MF_Z1_71B950A_NI.fr3d",
+      "sha": "2682bdd3bc242de281be70967a662bb1e43406a0dbd19ddad54dbc135a0fdc3e",
+      "mesh": "71B950A",
+      "nativeSku": "71B950A MB V50 NI",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 NI",
+      "cupFromHostMm": 6.5,
+      "armSpan": [
+        20.94,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.74,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 28.06,
+      "cupHalfHeight": 27.5,
+      "cupFlange": 3.29,
+      "photo": "/account/planner/hardware-photos/71B950A-NI.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip-specialni/71b950ambv50ni",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/09350813_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    },
+    {
+      "article": "71T950A",
+      "sku": "71T950A",
+      "finish": "NI",
+      "frame": "Z1",
+      "kind": "overlay",
+      "series": "CLIP top",
+      "closing": "standard",
+      "fixing": "screw",
+      "source_file": "MF_Z1_71T950A_NI.fr3d",
+      "sha256": "aa1337ec405cb5a2301e4d54790554c737fb8bdb62a23febfb192c099c44762c",
+      "file": "MF_Z1_71T950A_NI.fr3d",
+      "sha": "aa1337ec405cb5a2301e4d54790554c737fb8bdb62a23febfb192c099c44762c",
+      "mesh": "71T950A",
+      "nativeSku": "71T950A MB V50 NI",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 NI",
+      "cupFromHostMm": 6.5,
+      "armSpan": [
+        21.09,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.74,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 21.72,
+      "cupHalfHeight": 20.7,
+      "cupFlange": 0.0,
+      "photo": "/account/planner/hardware-photos/71T950A-NI.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip-specialni/71t950ambv50ni",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/03810053_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    },
+    {
+      "article": "71T950A-ONS",
+      "sku": "71T950A",
+      "finish": "ONS",
+      "frame": "Z1",
+      "kind": "overlay",
+      "series": "CLIP top",
+      "closing": "standard",
+      "fixing": "screw",
+      "source_file": "MF_Z1_71T950A_ONS.fr3d",
+      "sha256": "7c5b6c95052b993f3bcb4c6f04d554bc63bb4e917460ce71a0c6c74db6a0c739",
+      "file": "MF_Z1_71T950A_ONS.fr3d",
+      "sha": "7c5b6c95052b993f3bcb4c6f04d554bc63bb4e917460ce71a0c6c74db6a0c739",
+      "mesh": "71T950A",
+      "nativeSku": "71T950A MB V50 ONS",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 ONS",
+      "cupFromHostMm": 6.5,
+      "armSpan": [
+        21.09,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.74,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 21.72,
+      "cupHalfHeight": 20.7,
+      "cupFlange": 0.0,
+      "photo": "/account/planner/hardware-photos/71T950A-ONS.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip-specialni/71t950ambv50ons",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/01488410_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    },
+    {
+      "article": "70T950A.TL",
+      "sku": "70T950A.TL",
+      "finish": "NI",
+      "frame": "Z1",
+      "kind": "overlay",
+      "series": "CLIP top",
+      "closing": "springless",
+      "fixing": "screw",
+      "source_file": "MF_Z1_70T950A_TL_NI.fr3d",
+      "sha256": "c598c0cc1e012322a0b8df594c18e754bc5b3b96e370ce31247c060e54b7f668",
+      "file": "MF_Z1_70T950A_TL_NI.fr3d",
+      "sha": "c598c0cc1e012322a0b8df594c18e754bc5b3b96e370ce31247c060e54b7f668",
+      "mesh": "71T950A",
+      "nativeSku": "70T950A.TLMB V50 NI",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 NI",
+      "cupFromHostMm": 6.5,
+      "armSpan": [
+        21.09,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.74,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 21.72,
+      "cupHalfHeight": 20.7,
+      "cupFlange": 0.0,
+      "photo": "/account/planner/shelf-images/70T950A.TLMB-V50-NI.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip-zavisy/70t950a-tlmbv50ni",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/05948803_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    },
+    {
+      "article": "71B960A",
+      "sku": "71B960A",
+      "finish": "NI",
+      "frame": "Z1",
+      "kind": "half",
+      "series": "CLIP top BLUMOTION",
+      "closing": "soft",
+      "fixing": "screw",
+      "source_file": "MF_Z1_71B960A_NI.fr3d",
+      "sha256": "c0f7a8c5243e6b9b3cf82dd2b37a53c37ad54b4217c6f9821cc08ef6da225331",
+      "file": "MF_Z1_71B960A_NI.fr3d",
+      "sha": "c0f7a8c5243e6b9b3cf82dd2b37a53c37ad54b4217c6f9821cc08ef6da225331",
+      "mesh": "71B960A",
+      "nativeSku": "71B960A MB V50 NI",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 NI",
+      "cupFromHostMm": 16,
+      "armSpan": [
+        30.4,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.74,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 37.51,
+      "cupHalfHeight": 27.5,
+      "cupFlange": 3.29,
+      "photo": "/account/planner/hardware-photos/71B960A-NI.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip/71b960ambv50ni",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/09350983_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    },
+    {
+      "article": "71T960A",
+      "sku": "71T960A",
+      "finish": "NI",
+      "frame": "Z1",
+      "kind": "half",
+      "series": "CLIP top",
+      "closing": "standard",
+      "fixing": "screw",
+      "source_file": "MF_Z1_71T960A_NI.fr3d",
+      "sha256": "870c264877efbe73b57be0324d41fc244f535fba01cda24942437177b0682070",
+      "file": "MF_Z1_71T960A_NI.fr3d",
+      "sha": "870c264877efbe73b57be0324d41fc244f535fba01cda24942437177b0682070",
+      "mesh": "71T960A",
+      "nativeSku": "71T960A MB V50 NI",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 NI",
+      "cupFromHostMm": 16,
+      "armSpan": [
+        30.59,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.74,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 31.22,
+      "cupHalfHeight": 20.7,
+      "cupFlange": 0.0,
+      "photo": "/account/planner/hardware-photos/71T960A-NI.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip-specialni/71t960ambv50ni",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/03810133_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    },
+    {
+      "article": "71B970A",
+      "sku": "71B970A",
+      "finish": "NI",
+      "frame": "Z1",
+      "kind": "inset",
+      "series": "CLIP top BLUMOTION",
+      "closing": "soft",
+      "fixing": "screw",
+      "source_file": "MF_Z1_71B970A_NI.fr3d",
+      "sha256": "d61407a975c127238d84c53d6b1c95370015fccaad5f9a2318662d0565174b9d",
+      "file": "MF_Z1_71B970A_NI.fr3d",
+      "sha": "d61407a975c127238d84c53d6b1c95370015fccaad5f9a2318662d0565174b9d",
+      "mesh": "71B970A",
+      "nativeSku": "71B970A MB V50 NI",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 NI",
+      "cupFromHostMm": 24.5,
+      "armSpan": [
+        38.9,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.51,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 46.01,
+      "cupHalfHeight": 27.5,
+      "cupFlange": 3.05,
+      "photo": "/account/planner/hardware-photos/71B970A-NI.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip/71b970ambv50ni",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/09351043_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    },
+    {
+      "article": "71T970A",
+      "sku": "71T970A",
+      "finish": "NI",
+      "frame": "Z1",
+      "kind": "inset",
+      "series": "CLIP top",
+      "closing": "standard",
+      "fixing": "screw",
+      "source_file": "MF_Z1_71T970A_NI.fr3d",
+      "sha256": "2b0d5e46d0d5ec2f4070d7802689920fae3eb105f94a71b701379d4dc3733f22",
+      "file": "MF_Z1_71T970A_NI.fr3d",
+      "sha": "2b0d5e46d0d5ec2f4070d7802689920fae3eb105f94a71b701379d4dc3733f22",
+      "mesh": "71T970A",
+      "nativeSku": "71T970A MB V50 NI",
+      "plateSku": "175H3100",
+      "nativePlateSku": "175H3100 MPL V500 NI",
+      "cupFromHostMm": 24.5,
+      "armSpan": [
+        39.09,
+        8.58,
+        8.58
+      ],
+      "armDepth": 67.74,
+      "plateSpan": [
+        -9.33,
+        9.33
+      ],
+      "plateReach": 8.5,
+      "plateDepth": 58.46,
+      "cupReach": 39.72,
+      "cupHalfHeight": 20.7,
+      "cupFlange": 0.0,
+      "photo": "/account/planner/hardware-photos/71T970A-NI.webp",
+      "url": "https://shop-ua.blum.com/catalog/clip-specialni/71t970ambv50ni",
+      "photoSource": "https://shop-ua.blum.com/uploads/bmecat/03810303_ID_P_1_PB_BAU_SALL_AOF_V1.webp"
+    }
+  ]
+}

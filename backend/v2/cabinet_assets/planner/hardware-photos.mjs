@@ -175,8 +175,14 @@ const sharedHingePhotos={'112703':'112643','112708':'112644','112710':'112649','
 export function hingePhotoCard(article){
  const hinge=Object.hasOwn(hingeCatalogue,article)?[article,hingeName(article)]:hinges[article];
  if(!hinge)return null;
- const figure=document.createElement('figure'),caption=document.createElement('figcaption');
- figure.className='fitting-card';caption.textContent=hinge[1]+' · арт. '+article;
+ const figure=document.createElement('figure'),caption=document.createElement('figcaption'),fit=hingeCatalogue[article];
+ figure.className='fitting-card';
+ if(fit?.frame){
+  const img=document.createElement('img');img.src=fit.photo;img.alt=hinge[1];img.loading='lazy';
+  caption.textContent=hinge[1]+' · '+fit.sku+' · '+(fit.finish==='ONS'?'чёрный оникс':'никель');
+  figure.append(img,caption);return figure;
+ }
+ caption.textContent=hinge[1]+' · арт. '+article;
  if(sharedHingePhotos[article]){
    const note=document.createElement('small');
    note.textContent='Общее фото AKS для '+article+' и '+sharedHingePhotos[article]+' · 45 мм, H0, никель';

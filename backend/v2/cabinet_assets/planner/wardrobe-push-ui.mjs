@@ -11,11 +11,16 @@ export function pushControls(ui,box,leaf,clearHandle){
   const value={...current};
   if(next){
    clearHandle(key);value.push=next;value.article=chooseHinge(hingeProduct(f,key).kind,next,current.article).article;
-  }else delete value.push;
+  }else{
+   delete value.push;
+   if(current.push&&hingeProduct(f,key).frame)value.article='71B950A';
+  }
   (f.hinges??={})[key]=value;ui.changed(true);
  }
  function select(title,choices,value,action){return ui.select(section,title,Object.entries(choices),value,action);}
- select('Способ открывания',{handle:'Ручка',push:'Нажатием'},push?'push':'handle',v=>update(v==='push'?{...pushDefault}:null));
+ const productHinge=hingeProduct(f,key),canPush=chooseHinge(productHinge.kind,true,current.article);
+ const mode=select('Способ открывания',{handle:productHinge.frame?'Рукой':'Ручка',push:'Нажатием'},push?'push':'handle',v=>update(v==='push'?{...pushDefault}:null));
+ if(!canPush){mode.querySelector('option[value="push"]').disabled=true;section.append(node('small','Для Z1 с TIP-ON доступна накладная беспружинная петля 70T950A.TL.'));}
  if(!push)return;
  select('Система типона',{aks:'AKS',aq:'AQ ONE-PUSH'},push===true?'aq':'aks',v=>update(v==='aq'?true:{...pushDefault}));
  if(push===true){

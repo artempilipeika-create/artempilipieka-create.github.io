@@ -1,4 +1,4 @@
-import {doorPushGap} from './wardrobe-hinge-layout.mjs';
+import {doorPushGap,leafDepth} from './wardrobe-hinge-layout.mjs';
 import {plateSpan,spacerReachesHinge} from './wardrobe-hinge-fit.mjs';
 import {hingeCatalogue,activeLeafKeys,hingeProduct,settingFor,bandKey,onDivider,insetDepth,depthBehindDoor,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
 import {rearClearance} from './panel-machining.mjs';
@@ -15,7 +15,7 @@ export function concealedRail(depth,opening='soft'){
 export const drawerSource='Мульти ящик AKS_доводчика.fr3d';
 
 export function frontProjection(s){
- const faces=activeLeafKeys(s.front).map(key=>hingeProduct(s.front,key).kind==='inset'?0:18+(settingFor(s.front,key).push?doorPushGap:0));
+ const faces=activeLeafKeys(s.front).map(key=>hingeProduct(s.front,key).kind==='inset'?0:leafDepth(s.front,key)+(settingFor(s.front,key).push?doorPushGap:0));
  return Math.max(0,...faces,...(s.drawerBanks??[]).map(b=>b?.kind==='external'?18+(b.railFamily==='concealed'&&b.opening==='push'?4:0):0));
 }
 export const outerFront=s=>frontProjection(s)>0;
@@ -133,7 +133,7 @@ export function drawerSections(s,widths,legacy=false){
   let hingeSetback=0;
   if(internal&&bank.hingeClearanceMm&&rowKeys.length){
    const deepestDoor=Math.max(...rowKeys.map(key=>hingeProduct(s.front,key).kind==='inset'?
-    18+insetDepth(s.front,key):settingFor(s.front,key).push?-3:0));
+    leafDepth(s.front,key)+insetDepth(s.front,key):settingFor(s.front,key).push?-3:0));
    const shift=deepestDoor+bank.hingeClearanceMm-setback;
    // Retain the selected guide and its specified rear installation allowance.
    if(shift>0&&clearDepth-shift-(push?4:0)>=rail.length+(concealed?3:5)){

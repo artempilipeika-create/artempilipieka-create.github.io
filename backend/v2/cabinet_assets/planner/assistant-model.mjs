@@ -106,6 +106,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    if(customName)item.name=old.name;
    if(!generated.blank_machining)delete item.blank_machining;
    if(!generated.blank_shelf)delete item.blank_shelf;
+   if(!generated.blank_front_frame)delete item.blank_front_frame;
    if(!generated.blank_edge_pull)delete item.blank_edge_pull;
    if(!generated.blank_gola_runs)delete item.blank_gola_runs;
    if(!old.blank_shelf&&!generated.blank_shelf&&old.blank_binding?.mounting&&item.blank_binding)item.blank_binding={...item.blank_binding,mounting:old.blank_binding.mounting};
@@ -126,7 +127,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    const donor=firstSegment!==generated.item_id&&current.items.find(it=>it.item_id===firstSegment);
    if(donor)item.body_variant_id=retainedBlankMaterial(generated,donor,id=>adapter.material?.(id));
   }
-  if(generated.blank_axis==='front'){item.blank_edge_code=generated.blank_edge_code;item.blank_edge_thickness_mm=2;if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
+  if(generated.blank_front_frame){item.blank_edge_code='0000';item.body_variant_id=null;}
+  else if(generated.blank_axis==='front'){item.blank_edge_code=generated.blank_edge_code;item.blank_edge_thickness_mm=2;if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
   else if(surroundFace(generated.item_id.slice(prefix.length+1))){if(frontMaterialId!==undefined)item.body_variant_id=frontMaterialId;}
   else if(generated.item_id.endsWith(':back')){item.blank_edge_code='0000';if(backMaterialId!==undefined)item.body_variant_id=backMaterialId;}
   else if(generated.blank_shelf&&!generated.blank_shelf.startsWith('board/'))item.body_variant_id=null;
@@ -160,8 +162,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
   ...(spec.surround?['В сборе · '+built.width+' × '+built.envelope.height+' × '+built.depth+' мм']:[]),
-  ...(spec.surround?.upper?[spec.surround.upper.opening==='swing'?'Антресоль · TIP-ON и беспружинные петли. Модель петель уточняется.':'Антресоль · TIP-ON и газлифты. Модель подъёмного механизма уточняется.']:[]),
-  ...(hinges.length?['Петли PRIME · '+[...new Set(hinges.map(h=>h.article))].join(', ')+' · '+hinges.length+' шт.']:[]),
+  ...(spec.surround?.upper?[spec.surround.upper.frame?'Антресоль · рамка Z1, TIP-ON и петли Blum 70T950A.TL.':spec.surround.upper.opening==='swing'?'Антресоль · TIP-ON и беспружинные петли. Модель петель уточняется.':'Антресоль · TIP-ON и газлифты. Модель подъёмного механизма уточняется.']:[]),
+  ...(hinges.length?[(hinges.some(h=>h.wardrobe_z1_hinge)?'Петли · ':'Петли PRIME · ')+[...new Set(hinges.map(h=>h.article))].join(', ')+' · '+hinges.length+' шт.']:[]),
   spec.backThickness?'Вкладная задняя стенка ЛДСП '+spec.backThickness+' мм · полки короче на '+spec.backThickness+' мм':spec.backMount?backMountLabel(spec.backMount)+' · общая глубина '+built.depth+' мм':spec.back?'Задняя стенка ХДФ 3 мм; общая глубина '+built.depth+' мм':'Без задней стенки',
   ...Array.from({length:spec.thickness===18?spec.sections-1:0},(_,i)=>{
    const ends=dividerScheme(spec,i);

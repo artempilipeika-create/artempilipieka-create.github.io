@@ -1,3 +1,5 @@
+import z1 from './wardrobe-z1-data.json' with {type:'json'};
+import {worldPoint} from './blank-bindings.mjs';
 import {alignSavedTrimReturns,nativeTrimRows} from './wardrobe-trim-native.mjs';
 import {lightingSystems} from './wardrobe-lighting.mjs';
 import {nativeGrip} from './wardrobe-edge-pulls.mjs';
@@ -16,6 +18,13 @@ export const BLANK_SOURCES={"0000": {"file": "Заготовка_1.Без ПВХ
 
 export function blankNativeItem(it,material,items=[]){
  const error=validateBlank(it);if(error)throw Error(error);
+ if(it.blank_front_frame==='Z1'){
+  // BAZIS's nominal envelope has 2 mm on each edge of the physical frame.
+  const delta=worldPoint({x:0,z:.75},it.rotation||0);
+  return {name:it.name,wardrobe_z1_front:true,blank_item_id:it.item_id,source_file:z1.front.source_file,source_sha256:z1.front.sha256,
+   source_default:{width:600,height:700,depth:22},target:{width:it.width+4,height:it.height+4,depth:22},elastic_resize:true,
+   position:{x:it.x+delta.x,y:it.elevation_mm-2,z:it.z+delta.z},rotation:it.rotation||0,production_note:it.production_note||''};
+ }
  const golaCuts=boardProfileCuts(it,items),shelfCuts=horizontalProfileCuts(it,items);
  const upper=it.assistant_carcass?.spec?.surround?.upper;
  const upperNote=upper&&/:mezz-door-(?:left|right)$/.test(it.item_id)?

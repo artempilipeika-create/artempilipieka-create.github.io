@@ -1,3 +1,4 @@
+import {hingeCatalogue as wardrobeHinges} from './wardrobe-hinge-layout.mjs';
 import {lightKitControls,updateLightQuote} from './wardrobe-light-kit-ui.mjs';
 import {lightControls,pickLightPart} from './wardrobe-lighting-ui.mjs';
 import {defaultBackMount,rearClearance} from './panel-machining.mjs';
@@ -326,9 +327,10 @@ export class AssistantUI{
     const box=el('details');box.className='wardrobe-hinge';box.append(el('summary','Петли и присадка'));
     this.select(box,'Предпочтительный отступ петли',[[90,'90 мм сверху и снизу'],[130,'130 мм сверху и снизу']],this.fields.front.offset,v=>{this.fields.front.offset=Number(v);this.changed();});
     const lbl=el('label','Масса одной готовой створки, кг'),input=el('input');
-    input.type='number';input.min='0.01';input.max='22';input.step='0.01';input.placeholder='Авто · ЛДСП 700 кг/м³';input.value=this.fields.front.massKg??'';
+    const framed=Object.values(this.fields.front.hinges??{}).some(h=>wardrobeHinges[h.article]?.frame);
+    input.type='number';input.min='0.01';input.max='22';input.step='0.01';input.placeholder=framed?'Авто · по материалу каждой створки':'Авто · ЛДСП 700 кг/м³';input.value=this.fields.front.massKg??'';
     input.oninput=()=>{if(input.value==='')delete this.fields.front.massKg;else this.fields.front.massKg=Number(input.value);this.changed();};lbl.append(input);box.append(lbl);
-    const hint=el('details');hint.append(el('summary','Как рассчитаны петли'),el('p','Таблица AKS для чашки Ø35 учитывает высоту и массу одной двери шириной до 600 мм. Уточните массу, если известен вес готового фасада. Отступ 130 мм — схема мастерской.'));box.append(hint);this.form.append(box);
+    const hint=el('details');hint.append(el('summary','Как рассчитаны петли'),el('p',framed?'Для рамки Z1 количество петель Blum зависит от высоты и массы створки. В расчёт входят стекло 4 мм и четыре алюминиевых профиля.':'Таблица AKS для чашки Ø35 учитывает высоту и массу одной двери шириной до 600 мм. Уточните массу, если известен вес готового фасада. Отступ 130 мм — схема мастерской.'));box.append(hint);this.form.append(box);
    }
 
   }else{

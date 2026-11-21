@@ -72,33 +72,42 @@ export function planAksPush(door,items,setting,hingeSide,hingePlan){
     const heights=[y0];
     if(sideBoard&&cfg.support==='auto')for(let d=16;d<=128;d+=16)heights.push(y0-d,y0+d);
     for(const y of heights){
-     const pt={x:sideBoard?plane:x70,y,z};
-     const cx=pt.x+nx*contactY,cy=pt.y+ny*contactY;
-     const halfNormal=src.catch?src.catchHeight/2:3.7,halfCross=src.catch?src.catchWidth/2:3.7;
-     const hx=sideBoard?halfNormal:halfCross,hy=sideBoard?halfCross:halfNormal;
-     if(cx-hx<xx[0]-.03||cx+hx>xx[1]+.03||cy-hy<yy[0]-.03||cy+hy>yy[1]+.03||Math.abs(cx-free)>85)continue;
-     if(sideBoard?(y-halfCross<b[1][0]||y+halfCross>b[1][1]):(x70-halfCross<b[0][0]||x70+halfCross>b[0][1]))continue;
-     if(!bored&&src.pilots.some(dx=>z-dx-2<b[2][0]||z-dx+2>b[2][1]))continue;
-     const volume=boxAt(pt,side,src.bounds);
-     const drill=bored?[[sideBoard?axisPos-5:x70-5,sideBoard?axisPos+5:x70+5],
-      [sideBoard?y-5:axisPos-5,sideBoard?y+5:axisPos+5],[z-70,z+.1]]:volume;
-     const conflict=joints.some(j=>{
-      if(j.joined_panel_id!==p.item_id&&j.host_blank_id!==p.item_id)return false;
-      const half=j.joint_part==='confirmat'?40:34;
-      return overlaps(drill,[[j.at.x-half,j.at.x+half],[j.position.y-10,j.position.y+10],[j.at.z-8,j.at.z+8]]);
-     });
-     if(conflict||hingeBoxes.some(box=>overlaps(drill,box)))continue;
-     if(rows.some(other=>{
-      if(other.p.item_id===p.item_id||other.p.item_id===door.item_id)return false;
-      const swept=/^drawer-\d+-\d+-/.test(other.key)?[other.b[0],other.b[1],[other.b[2][0],Infinity]]:other.b;
-      return overlaps(volume,swept);
-     }))continue;
-     const home=makeItem(door,p,style,side,'body',body,cfg,pt);
-     home.push_height_mm=cy+(sideBoard?0:ny*(src.tipY-contactY));
-     if(body===src.bodyAt3)home.push_gap_mm=3;
-     const parts=[home];
-     if(src.catch)parts.push(makeItem(door,door,style,side,'catch',src.catch,cfg,{x:cx,y:cy,z:back}));
-     candidates.push({parts,score:Math.abs(cy-target)+(bored?0:32)+(tall&&sideBoard?0:sideBoard?24:0)});
+     for(const bodyX of door.blank_front_frame&&!sideBoard?[x70,free+14*inward]:[x70]){
+      const pt={x:sideBoard?plane:bodyX,y,z};
+      const cx=pt.x+nx*contactY,cy=pt.y+ny*contactY;
+      const halfNormal=src.catch?src.catchHeight/2:3.7,halfCross=src.catch?src.catchWidth/2:3.7;
+      const hx=sideBoard?halfNormal:halfCross,hy=sideBoard?halfCross:halfNormal;
+      if(cx-hx<xx[0]-.03||cx+hx>xx[1]+.03||cy-hy<yy[0]-.03||cy+hy>yy[1]+.03||Math.abs(cx-free)>85)continue;
+      if(door.blank_front_frame){
+        const onRail=(x,y,r)=>Math.min(x-xx[0],xx[1]-x,y-yy[0],yy[1]-y)<=19-r;
+        // The magnet's screwed plate lies behind the pane. Its actual pilot
+        // and the tip must both land on the rear aluminium web.
+        const pilot=cfg.article==='74055'?0:5,tip=src.tipY-contactY;
+        if(!onRail(cx+nx*tip,cy+ny*tip,3.7)||src.catch&&!onRail(cx+nx*pilot,cy+ny*pilot,1.5))continue;
+      }
+      if(sideBoard?(y-halfCross<b[1][0]||y+halfCross>b[1][1]):(bodyX-halfCross<b[0][0]||bodyX+halfCross>b[0][1]))continue;
+      if(!bored&&src.pilots.some(dx=>z-dx-2<b[2][0]||z-dx+2>b[2][1]))continue;
+      const volume=boxAt(pt,side,src.bounds);
+      const drill=bored?[[sideBoard?axisPos-5:bodyX-5,sideBoard?axisPos+5:bodyX+5],
+       [sideBoard?y-5:axisPos-5,sideBoard?y+5:axisPos+5],[z-70,z+.1]]:volume;
+      const conflict=joints.some(j=>{
+       if(j.joined_panel_id!==p.item_id&&j.host_blank_id!==p.item_id)return false;
+       const half=j.joint_part==='confirmat'?40:34;
+       return overlaps(drill,[[j.at.x-half,j.at.x+half],[j.position.y-10,j.position.y+10],[j.at.z-8,j.at.z+8]]);
+      });
+      if(conflict||hingeBoxes.some(box=>overlaps(drill,box)))continue;
+      if(rows.some(other=>{
+       if(other.p.item_id===p.item_id||other.p.item_id===door.item_id)return false;
+       const swept=/^drawer-\d+-\d+-/.test(other.key)?[other.b[0],other.b[1],[other.b[2][0],Infinity]]:other.b;
+       return overlaps(volume,swept);
+      }))continue;
+      const home=makeItem(door,p,style,side,'body',body,cfg,pt);
+      home.push_height_mm=cy+(sideBoard?0:ny*(src.tipY-contactY));
+      if(body===src.bodyAt3)home.push_gap_mm=3;
+      const parts=[home];
+      if(src.catch)parts.push(makeItem(door,door,style,side,'catch',src.catch,cfg,{x:cx,y:cy,z:back}));
+      candidates.push({parts,score:(bodyX===x70?0:.1)+Math.abs(cy-target)+(bored?0:32)+(tall&&sideBoard?0:sideBoard?24:0)});
+     }
     }
    }
   }

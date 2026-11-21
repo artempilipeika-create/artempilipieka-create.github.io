@@ -15,11 +15,13 @@ export function hingeControls(ui,box,s,leaf,clearHandle){
  }
  const tabs=el('div');tabs.className='wardrobe-subsections';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Тип петли');
  for(const [kind,label] of Object.entries(hingeKinds)){
+  const next=chooseHinge(kind,current.push,product.frame?current.article:({overlay:'112595',half:'112644',inset:'112650'})[kind]);
   const tab=button(label,()=>{
-   if(product.kind!==kind){const next=chooseHinge(kind,current.push,({overlay:'112595',half:'112644',inset:'112650'})[kind]);set({article:next.article,...(current.push?{push:current.push}:{})});}
+   if(next&&product.kind!==kind){set({article:next.article,...(current.push?{push:current.push}:{})});}
   });
   tab.dataset.hingeKind=kind;tab.setAttribute('aria-pressed',String(product.kind===kind));
   if(kind==='half'&&s.sections<2){tab.disabled=true;tab.title='Добавьте перегородку в разделе «Полки».';}
+  if(!next){tab.disabled=true;tab.title='Для Z1 с TIP-ON доступна накладная беспружинная петля.';}
   tabs.append(tab);
  }
  section.append(tabs);
@@ -40,7 +42,7 @@ export function hingeControls(ui,box,s,leaf,clearHandle){
   'Петли на '+(side==='left'?'левой':'правой')+' боковине · заход '+(s.thickness-1.5)+' мм.'));
  if(s.sections<2)section.append(el('small','Для полунакладной петли добавьте перегородку в разделе «Полки».'));
  const options=el('div');options.className='wardrobe-prime-cards';options.setAttribute('role','group');options.setAttribute('aria-label','Модели петель');
- for(const fit of Object.values(hingeCatalogue).filter(p=>p.kind===product.kind&&compatibleHinge(p,current.push))){
+ for(const fit of Object.values(hingeCatalogue).filter(p=>p.frame===product.frame&&p.kind===product.kind&&compatibleHinge(p,current.push))){
   const card=button('',()=>{
    if(fit.article!==current.article)set({...current,article:fit.article});
   });
@@ -51,6 +53,6 @@ export function hingeControls(ui,box,s,leaf,clearHandle){
  section.append(options);
  const other=key.replace(/(left|right)$/,side==='left'?'right':'left');
  if(activeLeafKeys(f).includes(other)){
-  section.append(button('Применить к парной двери',()=>{if(current.push)clearHandle(other);(f.hinges??={})[other]=structuredClone(current);set({...current});}));
+  section.append(button('Применить к парной двери',()=>{if(current.push)clearHandle(other);else if(product.frame&&f.handles?.[other]&&!['118124','118129'].includes(f.handles[other].article))delete f.handles[other];(f.hinges??={})[other]=structuredClone(current);set({...current});}));
  }
 }

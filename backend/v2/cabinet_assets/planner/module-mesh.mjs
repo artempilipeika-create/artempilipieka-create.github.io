@@ -34,6 +34,7 @@ import {hookPlacement} from './blank-hook.mjs';
 import {vertices as hookVertices, indices as hookIndices} from './akkord-mesh.mjs';
 import * as THREE from './vendor/three.module.js';
 import {materialVisual,physicalPanelUV,surfaceFinish} from './material-visuals.mjs';
+import z1 from './wardrobe-z1-data.json' with {type:'json'};
 import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
 import {countertopSurfaces,countertopGeometry} from './countertop-visuals.mjs';
 import {fixturePlans} from './worktop-fixtures.mjs';
@@ -369,7 +370,27 @@ export class MeshFactory{
     // Cut the display core back under its four PVC strips. Coplanar overlays
     // used to shimmer when orbiting and incorrectly darkened light-coloured PVC.
     const panelStart=group.children.length;
-    if(!shapedProfilePanel(this,group,it,ghost))for(const [loY,hiY,depth] of spans){
+    if(it.blank_front_frame==='Z1'){
+      const w=W/2,rails=[[-w,0,1,0,W],[w,0,0,1,H],[w,H,-1,0,W],[-w,H,0,-1,H]];
+      for(const [i,[x,y,dx,dy,length]] of rails.entries()){
+        const key=['z1-rail',W,H,i].join(':');
+        const geo=this.acquire(key,()=>{
+          const points=loop=>loop.map(([u,z])=>new THREE.Vector2(u,z));
+          const section=new THREE.Shape(points(z1.front.sectionOuterMm));
+          section.holes.push(new THREE.Path(points(z1.front.sectionVoidMm)));
+          const g=new THREE.ExtrudeGeometry(section,{depth:1,bevelEnabled:false});
+          const vertices=g.getAttribute('position');
+          // At each mitre the inner edge is inset by its distance from the outer edge.
+          for(let j=0;j<vertices.count;j++){
+            const u=vertices.getX(j),depth=vertices.getY(j),along=u+vertices.getZ(j)*(length-2*u);
+            vertices.setXYZ(j,(x+dx*along-dy*u)*S,(y+dy*along+dx*u)*S,depth*S);
+          }
+          g.computeVertexNormals();return g;
+        });
+        this.mesh(group,'frame',geo,key,0,0,-D/2,null,ghost);
+      }
+      this.box(group,'glass',W-27.5,H-27.5,4,0,H/2,17.5-D/2,null,ghost,0);
+    }else if(!shapedProfilePanel(this,group,it,ghost))for(const [loY,hiY,depth] of spans){
       const lo=[-W/2,loY,-D/2],hi=[W/2,hiY,depth-D/2];
       tapeAxes.forEach(([axis,high],index)=>{
         if(code[index]!=='1'||(ax==='side'&&(index===0&&depth!==D||index===2&&loY!==0||index===3&&hiY!==H)))return;
@@ -410,11 +431,11 @@ export class MeshFactory{
       }
     }
     for(const hinge of this.visibleDoorHinges(it)){
-      const side=hinge.door_side==='left'?1:-1,asset=hingeCatalogue[hinge.article].mesh;
+      const side=hinge.door_side==='left'?1:-1,asset=hingeCatalogue[hinge.hinge_variant??hinge.article].mesh;
       const part=hinge.host_blank_id===it.item_id?'body':'cup',key='prime:'+asset+':'+side+':'+part;
       const geometry=this.acquire(key,()=>hingeGeometry(asset,side,part));
       const at=localPoint({x:hinge.position.x-it.x,z:hinge.position.z-it.z},it.rotation);
-      const mesh=this.mesh(group,'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost);
+      const mesh=this.mesh(group,hinge.finish==='ONS'?'frame':'shelfSupport',geometry,key,at.x,hinge.position.y-it.elevation_mm,at.z,null,ghost);
       Object.assign(mesh.userData,{article:hinge.article,hingePart:part});
     }
     for(const push of this.visiblePushes(it)){
@@ -916,10 +937,10 @@ export class MeshFactory{
   }
   visibleDoorHinges(it){
     const meta=it.assistant_carcass,items=this.adapter.items||[];
-    if(!meta?.spec.front)return [];
+    if(!meta?.spec.front&&!meta?.spec.surround?.upper?.frame)return [];
     if(it.blank_axis==='front'){try{return doorHinges(it,items);}catch{return [];}}
-    if(it.blank_axis!=='side'||!/^((left|right)$|divider-\d+$)/.test(it.item_id.slice(meta.group_id.length+1)))return [];
-    return items.filter(p=>p.blank_axis==='front'&&p.assistant_carcass?.group_id===meta.group_id&&p.item_id.startsWith(meta.group_id+':door-')).flatMap(door=>{
+    if(it.blank_axis!=='side'||!/^(?:(?:mezz-)?(?:left|right)|divider-\d+)$/.test(it.item_id.slice(meta.group_id.length+1)))return [];
+    return items.filter(p=>p.blank_axis==='front'&&p.assistant_carcass?.group_id===meta.group_id&&/^(?:mezz-)?door-/.test(p.item_id.slice(meta.group_id.length+1))).flatMap(door=>{
       try{return doorHinges(door,items).filter(h=>h.host_blank_id===it.item_id);}catch{return [];}
     });
   }

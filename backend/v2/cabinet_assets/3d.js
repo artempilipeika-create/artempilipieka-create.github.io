@@ -1072,6 +1072,10 @@ function buildBoxes(){
 }
 
 function cutlistItem(it){
+  if(it.blank_front_frame==='Z1')return [
+    [it.name+' · стекло',it.height-27.5,it.width-27.5,1,'fixed',it,'Стекло 4 мм'],
+    [it.name+' · стойка',it.height,19,2,'fixed',it,'Профиль Z1, рез 45°'],
+    [it.name+' · перекладина',it.width,19,2,'fixed',it,'Профиль Z1, рез 45°']];
   if(it.module_type==='blank')return [[it.name+' · ПВХ '+it.blank_edge_code,
     it.blank_length_mm,it.blank_width_mm,1,'body',it]];
   const t=18,inner=Math.max(1,it.width-2*t),baseH=globalThis.MF_FURNITURE_CORE.heights(it).base_height,a=[],prefix=it.name+' · ';
@@ -1533,6 +1537,9 @@ function exportBazisProject(){
   if(payload.items.some(it=>it.wardrobe_trim||it.cabinet_block?.module_key)){
     payload.format='martin-forest-bazis-native-v21';
     payload.minimum_importer=payload.items.some(it=>it.wardrobe_trim)?'9.9.44':'9.9.42';
+  }
+  if(payload.items.some(it=>it.wardrobe_z1_front||it.wardrobe_z1_hinge)){
+    payload.format='martin-forest-bazis-native-v22';payload.minimum_importer='9.9.45';
   }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});

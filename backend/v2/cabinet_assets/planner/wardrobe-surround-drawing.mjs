@@ -36,11 +36,13 @@ export function surroundDrawing(built,view){
   }
  }
  for(const f of [...(built.doors??[]),...drawerFacades(s,built.drawerBanks??[]).filter(f=>!f.internal)])
-  art+=board(lo+f.left,feet+f.bottom,f.width,f.height,leaves);
+  {art+=board(lo+f.left,feet+f.bottom,f.width,f.height,leaves);
+   if(f.frame)art+=board(lo+f.left+19,feet+f.bottom+19,f.width-38,f.height-38,'#d9eaf0');}
  if(a.upper){
   art+=board(lo,g.bodyTop,w,a.upper.height,upper);
   for(const p of built.parts.filter(p=>p.key.startsWith('mezz-door-'))){
    const it=p.item;art+=board(it.x-it.width/2,it.elevation_mm-s.elevation,it.width,it.height,upper);
+   if(it.blank_front_frame)art+=board(it.x-it.width/2+19,it.elevation_mm-s.elevation+19,it.width-38,it.height-38,'#d9eaf0');
    const x=X(it.x),y=Y(g.bodyTop+a.upper.height/2),dir=p.key.endsWith('left')?-1:1;
    art+=a.upper.opening==='lift'?line(x-5,y+3,x,y-3)+line(x,y-3,x+5,y+3):line(x-dir*3,y-4,x+dir*3,y)+line(x+dir*3,y,x-dir*3,y+4);
   }

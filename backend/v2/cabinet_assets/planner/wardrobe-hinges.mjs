@@ -1,6 +1,6 @@
 import {planAksPush} from './wardrobe-push-layout.mjs';
 import pushKit from './wardrobe-push-open.json' with {type:'json'};
-import {doorPushGap,hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,meetingGap} from './wardrobe-hinge-layout.mjs';
+import {doorPushGap,hingeCatalogue,hingeProduct,installedSide,mountKey,insetDepth,middleDivider,settingFor,meetingGap} from './wardrobe-hinge-layout.mjs';
 import {finishedFaceSize} from './wardrobe-edge-pulls.mjs';
 import {doorSide,physicalProfiles} from './wardrobe-door-layout.mjs';
 import {splitAt,levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
@@ -112,8 +112,21 @@ function automaticAxes(door,host,items,side,shelves,count,section,opposing,fit){
 export function doorHinges(door,items){
  if(door.blank_axis!=='front')return [];
  const group=door.assistant_carcass,front=group?.spec?.front;
- if(!front)return [];
+ if(!group)return [];
  const key=door.item_id.slice(group.group_id.length+1);
+ const upper=group.spec.surround?.upper,mezz=/^mezz-door-(left|right)$/.exec(key);
+ if(mezz&&upper?.frame==='Z1'&&upper.opening==='swing'){
+  const side=mezz[1],host=items.find(p=>p.item_id===group.group_id+':mezz-'+side);
+  if(!host)throw Error('Для рамки антресоли нужна боковая стойка.');
+  const fit=hingeCatalogue['70T950A.TL'],angle=door.rotation,wall=localPoint(host,angle),leaf=localPoint(door,angle);
+  const x=wall.x+(side==='left'?1:-1)*host.width/2,z=leaf.z-door.depth/2;
+  const {count}=hingeLoad(door.width,door.height,null,'Z1');
+  const offset=Math.min(90,Math.floor((door.height-64)/2));
+  return hingeAxes(door.height,count,offset).map(y=>({name:'Петля Blum · '+door.name,article:fit.article,article_sku:fit.sku,finish:fit.finish,
+   source_file:fit.file,source_sha256:fit.sha,wardrobe_z1_hinge:true,door_side:side,host_blank_id:host.item_id,joined_panel_id:door.item_id,
+   rotation:angle,position:{...worldPoint({x,z},angle),y:door.elevation_mm+y},elastic_resize:false}));
+ }
+ if(!front)return [];
  if(!doorSide(key))return [];
  const spec=group.spec,fit=hingeProduct(front,key),side=installedSide(front,key),hostKey=mountKey(spec,key);
  const host=items.find(i=>i.item_id===group.group_id+':'+hostKey);
@@ -127,9 +140,10 @@ export function doorHinges(door,items){
  const oldAQ=settingFor(front,key).push===true&&fit.kind!=='inset'&&Math.abs(z-expectedZ-1)<.01;
  if((Math.abs(z-expectedZ)>.01&&!oldAQ)||Math.abs(leaf.x-sign*door.width/2-(x-sign*overlay))>.01)
    throw Error('Проверьте положение фасада относительно выбранной стойки.');
- if(z-37+3>at.z+host.depth/2||z-37-3<at.z-host.depth/2)throw Error('Крепление петли выходит за глубину стойки.');
+ if(fit.frame && (z-20+2>at.z+host.depth/2||z-52-2<at.z-host.depth/2))throw Error('Крепление планки Blum выходит за глубину стойки.');
+ if(!fit.frame&&(z-37+3>at.z+host.depth/2||z-37-3<at.z-host.depth/2))throw Error('Крепление петли выходит за глубину стойки.');
  const cupMargin=fit.cupFromHostMm+overlay-17.5;
- if(fit.kind!=='overlay'&&(cupMargin<3||cupMargin>7))throw Error('Эта толщина стойки требует другой планки или присадки PRIME. Проверьте наложение фасада.');
+ if(!fit.frame&&fit.kind!=='overlay'&&(cupMargin<3||cupMargin>7))throw Error('Эта толщина стойки требует другой планки или присадки PRIME. Проверьте наложение фасада.');
  const center=hostKey.startsWith('divider-');
  const section=center?middleDivider(spec).index+(side==='left'?1:0):side==='left'?0:spec.sections-1;
  const opposing=[];
@@ -138,9 +152,14 @@ export function doorHinges(door,items){
   const otherKey=peer.item_id.slice(group.group_id.length+1);
   if(!doorSide(otherKey)||installedSide(front,otherKey)!=='left'||mountKey(spec,otherKey)!==hostKey)continue;
   const other=hingeProduct(front,otherKey);
-  if((fit.fixing==='euro'?13:16)+(other.fixing==='euro'?13:16)<=host.width)continue;
-  if(Math.abs(localPoint(peer,angle).z-peer.depth/2-z)>5)continue;
-  for(const h of doorHinges({...peer,assistant_carcass:group},items))for(const dy of [-32,0,32]){
+  if((fit.frame?10:fit.fixing==='euro'?13:16)+(other.frame?10:other.fixing==='euro'?13:16)<=host.width)continue;
+  const otherZ=localPoint(peer,angle).z-peer.depth/2;
+  const pilots=f=>f.frame?[[20,0],[52,0]]:[[37,-16],[37,16]];
+  const offsets=new Set();
+  for(const [dz,dy] of pilots(fit))for(const [oz,oy] of pilots(other))
+    if(Math.abs(z-dz-(otherZ-oz))<=5)offsets.add(oy-dy);
+  if(!offsets.size)continue;
+  for(const h of doorHinges({...peer,assistant_carcass:group},items))for(const dy of offsets){
    const y=h.position.y-door.elevation_mm+dy;opposing.push([y-5,y+5]);
   }
  }
@@ -152,14 +171,14 @@ export function doorHinges(door,items){
    const top=roof.elevation_mm-group.spec.height+group.spec.thickness+run.top-door.elevation_mm;
    obstacles.push([top+(run.cutBottom-run.top),top+(run.cutTop-run.top)]);
  }
- const finished=finishedFaceSize(door),{count}=hingeLoad(finished.width,finished.height,front.massKg);
+ const finished=finishedFaceSize(door),{count}=hingeLoad(finished.width,finished.height,front.massKg,fit.frame);
  const axes=front.autoHinges||front.hinges?automaticAxes(door,host,items,side,obstacles,count,section,opposing,fit):hingeAxes(door.height,count,front.offset,obstacles);
  if(axes.some(y=>door.elevation_mm+y-26<host.elevation_mm||door.elevation_mm+y+26>host.elevation_mm+host.height))
    throw Error('Ответная планка выходит за боковину. Проверьте высоту фасада.');
  const opening=settingFor(front,key).push;
  const native=opening&&opening!==true&&fit.pushNative?fit.pushNative:fit;
  return axes.map(y=>({
-   name:'Петля '+fit.series+' · '+door.name,article:fit.article,source_file:native.file,source_sha256:native.sha,
+   name:'Петля '+(fit.frame?'Blum ':'')+fit.series+' · '+door.name,article:fit.sku??fit.article,source_file:native.file,source_sha256:native.sha,...(fit.frame?{wardrobe_z1_hinge:true,hinge_variant:fit.article,finish:fit.finish}:{}),
    door_side:side,host_blank_id:host.item_id,joined_panel_id:door.item_id,rotation:angle,
    position:{...worldPoint({x,z},angle),y:door.elevation_mm+y},elastic_resize:false
  }));
@@ -180,24 +199,29 @@ export function doorPush(door,items){
  const setup=settingFor(front,key).push;
  if(setup!==true)return planAksPush(door,items,setup,installedSide(front,key),doorHinges);
  const angle=door.rotation,sign=installedSide(front,key)==='left'?1:-1,at=localPoint(door,angle);
- const x=at.x+sign*(door.width/2-pushKit.workshopReference.bodyBoreFromDoorFreeEdgeMm),z=at.z-door.depth/2;
+ const free=at.x+sign*door.width/2,z=at.z-door.depth/2;
+ const offsets=door.blank_front_frame?[pushKit.workshopReference.bodyBoreFromDoorFreeEdgeMm,14]:[pushKit.workshopReference.bodyBoreFromDoorFreeEdgeMm];
  const low=door.elevation_mm,high=low+door.height,boards=items.filter(p=>p.item_id.startsWith(group.group_id+':')&&p!==door&&p.item_id!==door.item_id);
  const candidates=[];
  for(const p of boards){
   const part=p.item_id.slice(group.group_id.length+1);
   if(p.blank_axis!=='horizontal'||p.blank_shelf&&!p.blank_shelf.startsWith('board/')||!/^((top|bottom)$|shelf-|rail-front$)/.test(part))continue;
   const c=localPoint(p,angle);
-  if(Math.abs(x-c.x)+11>p.width/2||z-15+2>c.z+p.depth/2||z-67-2<c.z-p.depth/2)continue;
-  for(const direction of [1,-1]){
-   const y=p.elevation_mm+(direction===1?p.height:0),contact=y+direction*16.5021;
-   if(contact-10<low||contact+10>high)continue;
-   const a=Math.min(y,y+direction*28),b=Math.max(y,y+direction*28);
-   const blocked=boards.some(other=>{
-    if(other.item_id===p.item_id||a>=other.elevation_mm+other.height||b<=other.elevation_mm)return false;
-    const q=localPoint(other,angle);
-    return Math.abs(q.x-x)<other.width/2+11&&q.z+other.depth/2>z-83&&q.z-other.depth/2<z-3;
-   });
-   if(!blocked)candidates.push({p,y,direction,priority:Math.min(Math.abs(y-low),Math.abs(y-high))});
+  for(const offset of offsets){
+   const x=free-sign*offset;
+   if(Math.abs(x-c.x)+11>p.width/2||z-15+2>c.z+p.depth/2||z-67-2<c.z-p.depth/2)continue;
+   for(const direction of [1,-1]){
+    const y=p.elevation_mm+(direction===1?p.height:0),contact=y+direction*16.5021;
+    if(contact-10<low||contact+10>high)continue;
+    if(door.blank_front_frame&&Math.min(offset,contact-low,high-contact)>15)continue;
+    const a=Math.min(y,y+direction*28),b=Math.max(y,y+direction*28);
+    const blocked=boards.some(other=>{
+     if(other.item_id===p.item_id||a>=other.elevation_mm+other.height||b<=other.elevation_mm)return false;
+     const q=localPoint(other,angle);
+     return Math.abs(q.x-x)<other.width/2+11&&q.z+other.depth/2>z-83&&q.z-other.depth/2<z-3;
+    });
+    if(!blocked)candidates.push({p,x,y,direction,priority:Math.min(Math.abs(y-low),Math.abs(y-high))});
+   }
   }
  }
  candidates.sort((a,b)=>a.priority-b.priority||a.y-b.y);
@@ -206,5 +230,5 @@ export function doorPush(door,items){
  const native=pushKit.surface;
  return [{name:'Толкатель AQ ONE-PUSH с адаптером · '+door.name,article:'09.0019',source_file:native.supplierFile,source_sha256:native.sha256,
   host_blank_id:chosen.p.item_id,joined_panel_id:door.item_id,wardrobe_push_mount:chosen.direction===1?'top':'bottom',
-  rotation:angle,position:{...worldPoint({x,z},angle),y:chosen.y},elastic_resize:false}];
+  rotation:angle,position:{...worldPoint({x:chosen.x,z},angle),y:chosen.y},elastic_resize:false}];
 }

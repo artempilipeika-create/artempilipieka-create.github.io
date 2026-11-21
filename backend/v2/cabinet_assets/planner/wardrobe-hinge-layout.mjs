@@ -1,23 +1,37 @@
 import catalogue from './wardrobe-prime-hinges.json' with {type:'json'};
+import z1 from './wardrobe-z1-data.json' with {type:'json'};
 import pulls from './wardrobe-handle-catalogue.json' with {type:'json'};
 import {sectionWidths} from './wardrobe-layout.mjs';
 
-export const hingeCatalogue=Object.fromEntries(catalogue.map(p=>[p.article,p]));
-export const closingNames={soft:'с доводчиком',springless:'без пружины',reverse:'с пружиной обратного действия'};
+export const hingeCatalogue=Object.fromEntries([...catalogue,...z1.hinges].map(p=>[p.article,p]));
+export const closingNames={standard:'с пружиной',soft:'с доводчиком',springless:'без пружины',reverse:'с пружиной обратного действия'};
 export const doorPushGap=2;
 export const hingeKinds={overlay:'Накладная',half:'Полунакладная',inset:'Вкладная'};
 export function hingeName(article){
  const p=hingeCatalogue[article];
- return p?'Петля '+p.series+' '+hingeKinds[p.kind].toLowerCase()+' '+closingNames[p.closing]+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
+ return p?'Петля '+(p.frame?'Blum ':'')+p.series+' '+hingeKinds[p.kind].toLowerCase()+' '+closingNames[p.closing]+' · '+(p.fixing==='euro'?'еврошурупы':'саморезы'):'';
+}
+export const frameDepth=20.5;
+export const leafDepth=(f,key)=>hingeCatalogue[settingFor(f,key).article]?.frame==='Z1'?frameDepth:18;
+export function selectLeafFrame(front,key,frame){
+ const current=settingFor(front,key),product=hingeProduct(front,key);
+ const next=chooseHinge(product.kind,current.push,current.article,frame);
+ if(!next)return false;
+ (front.hinges??={})[key]={...current,article:next.article};
+ if(frame==='Z1'&&front.handles?.[key]&&!['118124','118129'].includes(front.handles[key].article)){
+  delete front.handles[key];
+  if(!Object.keys(front.handles).length)delete front.handles;
+ }
+ return true;
 }
 const defaultSetting={article:'112595'};
 export const nominalSide=key=>/^door-(?:(?:lower|upper)-)?(left|right)$/.exec(key)?.[1];
 export const compatibleHinge=(hinge,push)=>!push||hinge.closing==='springless';
-export function chooseHinge(kind,push,preferred){
+export function chooseHinge(kind,push,preferred,frame=hingeCatalogue[preferred]?.frame??'board'){
  const current=hingeCatalogue[preferred];
- if(current?.kind===kind&&compatibleHinge(current,push))return current;
- const score=p=>Number(p.fixing!==(current?.fixing??'screw'))*2+Number(p.series!==current?.series);
- return Object.values(hingeCatalogue).filter(p=>p.kind===kind&&compatibleHinge(p,push))
+ if(current?.kind===kind&&(current.frame??'board')===frame&&compatibleHinge(current,push))return current;
+ const score=p=>Number(p.fixing!==(current?.fixing??'screw'))*8+Number(p.closing!==(push?'springless':current?.closing??'soft'))*4+Number(p.series!==current?.series)*2+Number(p.finish==='ONS');
+ return Object.values(hingeCatalogue).filter(p=>(p.frame??'board')===frame&&p.kind===kind&&compatibleHinge(p,push))
   .sort((a,b)=>score(a)-score(b)||a.article.localeCompare(b.article))[0];
 }
 export function settingFor(front,key){
@@ -27,7 +41,7 @@ export function settingFor(front,key){
 }
 export function hingeProduct(f,key){
  const setting=settingFor(f,key),p=hingeCatalogue[setting.article];
- if(!p)throw Error('Выберите петлю PRIME из каталога.');
+ if(!p)throw Error('Выберите петлю из каталога для этого фасада.');
  if(!compatibleHinge(p,setting.push))throw Error('Для открывания нажатием выберите петлю без пружины.');
  return p;
 }
@@ -84,7 +98,7 @@ export function adjustedHingeDoors(s,rows,anchor){
   }
   if(b<=a||high<=low)throw Error('Недостаточно места для выбранного фасада.');
   return {...p,side,left:a,width:b-a,bottom:low,height:high-low,
-   faceOffset:inset?-insetDepth(f,p.key):18+(settingFor(f,p.key).push?doorPushGap:0),hostKey:mountKey(s,p.key)};
+   frame:fit.frame,faceOffset:inset?-insetDepth(f,p.key):leafDepth(f,p.key)+(settingFor(f,p.key).push?doorPushGap:0),hostKey:mountKey(s,p.key)};
  });
 }
 export function bandKey(f,side,above){
@@ -98,5 +112,5 @@ export function bandKey(f,side,above){
 // The back of an inset door needs free space in front of the fittings it covers.
 export function depthBehindDoor(s,key){
  const setting=settingFor(s.front,key);
- return hingeProduct(s.front,key).kind==='inset'?18+insetDepth(s.front,key)+(setting.push?doorPushGap:1):0;
+ return hingeProduct(s.front,key).kind==='inset'?Math.ceil(leafDepth(s.front,key)+insetDepth(s.front,key)+(setting.push?doorPushGap:1)):0;
 }

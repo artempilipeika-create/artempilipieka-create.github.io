@@ -64,6 +64,8 @@ def router():
         return Response((root/'planner/render-rooms/file-studio.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':local_images})
     from .assistant_model import ASSETS
     import json
+    planner_files.update({'wardrobe-z1-data.json','wardrobe-z1-meshes.json'})
+    planner_files.update(p['photo'].removeprefix('/account/planner/') for p in json.loads((ASSETS/'wardrobe-z1-data.json').read_text())['hinges'])
     planner_files.update({'wardrobe-prime-hinges.json','wardrobe-prime-meshes.json','wardrobe-push-open.json','wardrobe-hinge-layout.mjs','wardrobe-hinge-fit.mjs','wardrobe-hinge-mesh.mjs','wardrobe-hinge-ui.mjs'})
     planner_files.update({'wardrobe-aks-push.json','aks-push-meshes.json','wardrobe-push-layout.mjs','wardrobe-push-ui.mjs','wardrobe-push-product-ui.mjs'})
     planner_files.update('shelf-images/'+sku+'.webp' for sku in json.loads((ASSETS/'wardrobe-aks-push.json').read_text()))

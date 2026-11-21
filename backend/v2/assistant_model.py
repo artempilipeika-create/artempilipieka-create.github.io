@@ -110,6 +110,18 @@ def inner_foot_pairs(width, sections, layout):
 
 DOOR_HARDWARE = json.loads((ASSETS/'wardrobe-handle-catalogue.json').read_text())
 PRIME_HINGES = {p['article']:p for p in json.loads((ASSETS/'wardrobe-prime-hinges.json').read_text())}
+Z1_DATA = json.loads((ASSETS/'wardrobe-z1-data.json').read_text())
+Z1_HINGES = {p['article']:p for p in Z1_DATA['hinges']}
+DOOR_HINGES = PRIME_HINGES | Z1_HINGES
+
+
+def z1_hinge_count(width,height,mass=None):
+    weight=mass if mass is not None else (width-27.5)*(height-27.5)*.00001+2*(width+height)*Z1_DATA['front']['estimatedKgPerMetre']/1000
+    for count,(limit,kg) in enumerate(((750,6),(1500,12),(2000,17),(2500,22)),2):
+        if width<=600 and height<=limit and 0<weight<=kg:
+            return count
+    raise ValueError('Размеры или масса створки выходят за диапазон петель Blum для рамки Z1.')
+
 LeafKey = Annotated[str, Field(pattern=r'^door-(?:(?:lower|upper)-)?(?:left|right)$')]
 Swing = Literal['left','right','pair','open']
 
@@ -223,8 +235,8 @@ class DoorHingeSetting(StrictModel):
 
     @model_validator(mode='after')
     def match_article(self):
-        product=PRIME_HINGES.get(self.article)
-        if not product:raise ValueError('Выберите петлю PRIME из каталога.')
+        product=DOOR_HINGES.get(self.article)
+        if not product:raise ValueError('Выберите петлю из каталога для этого фасада.')
         if (self.recess is not None or self.central) and product['kind']!='inset':
             raise ValueError('Утопление и выбор стойки задаются для вкладной двери.')
         if self.push and product['closing']=='reverse':
@@ -237,7 +249,7 @@ class DoorHingeSetting(StrictModel):
 
     @property
     def on_divider(self):
-        return self.central or PRIME_HINGES[self.article]['kind']=='half'
+        return self.central or DOOR_HINGES[self.article]['kind']=='half'
 
 
 class OverlayFront(StrictModel):
@@ -454,7 +466,14 @@ class SurroundUpper(StrictModel):
     leaves: Literal[1,2]
     side: Literal['left','right']
     opening: Literal['swing','lift']
+    frame: Literal['Z1'] | None = Field(default=None,exclude_if=lambda v:v is None)
     push: DoorPushSetting
+
+    @model_validator(mode='after')
+    def matching_hinges(self):
+        if self.frame and self.opening!='swing':
+            raise ValueError('Для петель рамки Z1 выберите распашную антресоль.')
+        return self
 
 class SurroundCap(StrictModel):
     height: int = Field(ge=40, le=1200, strict=True)
@@ -503,9 +522,9 @@ class CarcassDesign(CarcassSpec):
                 keys+=band('','right' if d.scope=='left' else 'left')
             for key in keys:
                 hinge=(front.hinges or {}).get(key)
-                if not hinge or PRIME_HINGES[hinge.article]['kind']!='inset':
-                    projection=max(projection,20 if hinge and hinge.push else 18)
-        cap_plane=20 if self.surround.upper else projection if front or projection else 18
+                if not hinge or DOOR_HINGES[hinge.article]['kind']!='inset':
+                    projection=max(projection,(20.5 if hinge and hinge.article in Z1_HINGES else 18)+(2 if hinge and hinge.push else 0))
+        cap_plane=(22.5 if self.surround.upper.frame else 20) if self.surround.upper else projection if front or projection else 18
         return side.projection>cap_plane-100 and side.projection-side.depth<cap_plane
 
     def side_limits(self,side,facade_floor=None):
@@ -729,10 +748,10 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Для этой створки выбран типон. Уберите ручку или профиль.')
             if setup and setup.on_divider:
                 prefix=key.rsplit('-',1)[0]+'-'
-                reveal=2 if PRIME_HINGES[setup.article]['kind']=='half' and torc(prefix+'left','right') and torc(prefix+'right','left') else 1.5
+                reveal=2 if DOOR_HINGES[setup.article]['kind']=='half' and torc(prefix+'left','right') and torc(prefix+'right','left') else 1.5
                 if key.endswith('left'):right=middle-reveal
                 else:left=middle+reveal
-            if setup and PRIME_HINGES[setup.article]['kind']=='inset':
+            if setup and DOOR_HINGES[setup.article]['kind']=='inset':
                 if (setup.recess or 0)>self.depth-60:raise ValueError('Недостаточно глубины для вкладной петли.')
                 axes=self.door_divider_axes()
                 if left==1.5:left+=self.thickness
@@ -747,10 +766,15 @@ class CarcassDesign(CarcassSpec):
                 if not inside and a<right and b>left and start<top and end>bottom:bottom=max(bottom,end+1.5)
             h=top-bottom
             if h<=0:continue
-            if right-left>600 or not (126 if f.autoHinges else 2*f.offset+64)<=h<=2400:
+            framed=setup and setup.article in Z1_HINGES
+            if framed:
+                z1_hinge_count(right-left,h,f.massKg)
+            if right-left>600 or not (126 if f.autoHinges or framed else 2*f.offset+64)<=h<=(2500 if framed else 2400):
                 raise ValueError('Проверьте размеры выбранной створки и отступ петель.')
             if key in handles:
                 handle=handles[key]
+                if framed and not isinstance(handle,FacadeProfile):
+                    raise ValueError('Для рамки Z1 выберите профиль корпуса или открывание за рамку.')
                 if isinstance(handle,InsetEdgeGrip):
                     handle.check_size(right-left,h,f.hinge_side(key),finished=True)
                     profiles=(f.edgeProfiles or {}).get(key) or []

@@ -19,7 +19,7 @@ const x=(it,angle)=>localPoint(it,angle).x;
 const z=(it,angle)=>localPoint(it,angle).z;
 test('all H0 articles resolve to their own pinned source and the H2 variant is unavailable',()=>{
  const counts={};
- for(const p of Object.values(hingeCatalogue)){
+ for(const p of Object.values(hingeCatalogue).filter(p=>!p.frame)){
   counts[p.kind]=(counts[p.kind]??0)+1;
   const {part,items}=cabinet(both({article:p.article}));
   const hs=doorHinges(part('door-left'),items);

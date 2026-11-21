@@ -169,3 +169,15 @@ def test_aks_push_kit_has_one_purchased_article_and_real_bores_for_every_install
     for hinge,article,mount in [('112595','72258','bored'),('112706','70787','bored')]:
         with pytest.raises(ValidationError):
             DoorHingeSetting(article=hinge,push={'article':article,'mount':mount})
+
+
+def test_z1_kit_contains_the_exact_frame_and_all_eight_sets():
+    from hashlib import sha256
+    catalog=json.loads((ROOT/'cabinet_assets/planner/wardrobe-z1-data.json').read_text())
+    fittings=catalog['hinges']
+    assert len(fittings)==8 and len({(h['sku'],h['finish']) for h in fittings})==8
+    assert [h['sku'] for h in fittings if h['closing']=='springless']==['70T950A.TL']
+    with zipfile.ZipFile(BytesIO(kit_bytes())) as kit:
+        for product in [catalog['front'],*fittings]:
+            source=kit.read('Martin Forest AKS/'+product['source_file'])
+            assert sha256(source).hexdigest()==product['sha256']

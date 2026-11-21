@@ -1,6 +1,6 @@
 import {pushControls} from './wardrobe-push-ui.mjs';
 import {hingeControls} from './wardrobe-hinge-ui.mjs';
-import {activeLeafKeys,nominalSide} from './wardrobe-hinge-layout.mjs';
+import {activeLeafKeys,nominalSide,hingeProduct,selectLeafFrame} from './wardrobe-hinge-layout.mjs';
 import {isEdgePull,gripCut,verticalEdge} from './wardrobe-edge-pulls.mjs';
 import {fitNicheBanks} from './wardrobe-niches.mjs';
 import {profileEdges} from './wardrobe-facade-profiles.mjs';
@@ -30,14 +30,16 @@ const categories=[
  ['surface','Накладные',['ak700']],['edge','Торцевые',['monblan']],
  ['inset','Врезные',['insetL','insetC']],['gola','Gola',['golaL','golaC']]
 ];
-function familyCards(ui,panel,h,set,edges,key){
+function familyCards(ui,panel,h,set,edges,key,frame){
+ const available=frame?categories.filter(([id])=>id==='gola'):categories;
  const selected=familyOf(h);
  if(ui.handleCategoryKey!==key){
   ui.handleCategoryKey=key;
   ui.handleCategory=categories.find(([,label,ids])=>ids.includes(selected))?.[0]??'surface';
  }
+ if(!available.some(([id])=>id===ui.handleCategory))ui.handleCategory=available[0][0];
  const tabs=el('div');tabs.className='wardrobe-subsections';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Тип ручки');
- for(const [id,label] of categories){
+ for(const [id,label] of available){
   const tab=btn(label,()=>{ui.handleCategory=id;ui.render();});tab.dataset.handleCategory=id;
   tab.setAttribute('aria-pressed',String(ui.handleCategory===id));tabs.append(tab);
  }
@@ -159,6 +161,12 @@ export function doorControls(ui){
    if(f.topProfile||f.division?.gola)localizeProfiles(f,choices,key);
    for(const field of ['handles','edgeProfiles'])if(f[field]){delete f[field][key];if(!Object.keys(f[field]).length)delete f[field];}
   };
+  const current=hingeProduct(f,leaf.key);
+  const type=ui.select(picker,'Тип фасада',[['board','Глухой фасад'],['Z1','Витрина · алюминиевая рамка Z1']],current.frame??'board',v=>{
+   if(selectLeafFrame(f,leaf.key,v)){ui.changed(true);return;}
+   ui.output.textContent='Для рамки Z1 с TIP-ON есть накладная беспружинная петля. Выберите накладную посадку или открывание рукой.';
+   type.value=current.frame??'board';
+  });type.dataset.doorFrame='';
   pushControls(ui,box,leaf,clearHandle);
   hingeControls(ui,box,spec,leaf,clearHandle);
   if(f.hinges?.[leaf.key]?.push){if(panel.querySelector('button'))box.append(panel.querySelector('button'));return;}
@@ -220,7 +228,7 @@ export function doorControls(ui){
   else if(family!=='none')value=defaultHandle(leaf,article);
   apply(value);
  }
- familyCards(ui,panel,h,choose,edges,leaf.key);
+ familyCards(ui,panel,h,choose,edges,leaf.key,!drawer&&hingeProduct(f,leaf.key).frame);
  const none=btn('Без отдельной ручки',()=>choose('none'));none.dataset.handleFamily='none';none.setAttribute('aria-pressed',String(!h));none.className='wardrobe-handle-none';panel.append(none);
  if(h&&categories.find(([,label,ids])=>ids.includes(familyOf(h)))?.[0]===ui.handleCategory){
   if(isFacadeProfile(h)){
@@ -267,7 +275,7 @@ export function doorControls(ui){
   const p=photosByArticle[h.article],source=el('a','АКС · арт. '+h.article);
   source.href=p.source_url;source.target='_blank';source.rel='noopener noreferrer';source.className='wardrobe-handle-source';panel.append(source);
   const pair=!drawer&&own&&raw.find(q=>q.slot==null&&q.side!==leaf.side&&q.key.replace(/(left|right)$/,'')===leaf.key.replace(/(left|right)$/,''));
-  if(pair){const mirror=btn('Зеркально на парную дверь',()=>{f.handles[pair.key]=isFacadeProfile(h)?{...h}:mirrorHandle(h);ui.changed(true);});mirror.dataset.handleMirror='';panel.append(mirror);}
+  if(pair&&(!hingeProduct(f,pair.key).frame||isFacadeProfile(h))){const mirror=btn('Зеркально на парную дверь',()=>{f.handles[pair.key]=isFacadeProfile(h)?{...h}:mirrorHandle(h);ui.changed(true);});mirror.dataset.handleMirror='';panel.append(mirror);}
  }
  if(!drawer&&!d&&f?.swing==='pair')panel.append(btn('Разделить выбранную дверь по полке',()=>{if(startDivision(ui,nominalSide(leaf.key),nominalSide(leaf.key),nominalSide(leaf.key)))ui.changed(true);}));
 }

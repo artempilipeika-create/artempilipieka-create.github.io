@@ -1,6 +1,7 @@
 import {blankItem,validateBlank} from './blanks-model.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {rearProjection} from './panel-machining.mjs';
+import {frameDepth} from './wardrobe-hinge-layout.mjs';
 import {frontProjection} from './wardrobe-drawers.mjs';
 
 import {sideBottom,trimPieces,trimSides} from './wardrobe-trim-layout.mjs';
@@ -13,11 +14,12 @@ const sideNames={left:'Левая',right:'Правая'};
 const ranges=(v,min,max,label)=>{if(!Number.isInteger(v)||v<min||v>max)throw Error(label+' · от '+min+' до '+max+' мм.');};
 export function surroundLayout(s,facades){
  const a=s.surround??{},bodyTop=footHeight(s)+s.height,upperTop=bodyTop+(a.upper?.height??0);
- const lower=frontProjection(s),sidePlane=s.depth/2+(s.front||lower?lower:(a.upper?20:18));
+ const upperDepth=a.upper?.frame?frameDepth+2:20;
+ const lower=frontProjection(s),sidePlane=s.depth/2+(s.front||lower?lower:(a.upper?upperDepth:18));
  let minX=-s.width/2,maxX=s.width/2,minZ=-s.depth/2-rearProjection(s),maxZ=s.depth/2+lower,height=upperTop+(a.cap?.height??0);
  const sides={},span=side=>a[side]?.kind==='end'?18:a[side]?.width??0;
  const over=a.cap?.fit==='over',capX=over?(span('right')-span('left'))/2:0;
- const capLength=over?s.width+span('left')+span('right'):a.cap?.length??s.width,capPlane=a.upper?s.depth/2+20:sidePlane;
+ const capLength=over?s.width+span('left')+span('right'):a.cap?.length??s.width,capPlane=a.upper?s.depth/2+upperDepth:sidePlane;
  let minY=0;
  if(hasSurround(a)&&s.thickness!==18)throw Error('Для фальшпланок и антресоли выберите плиту корпуса 18 мм.');
  if(a.upper){
@@ -25,7 +27,8 @@ export function surroundLayout(s,facades){
   if(![1,2].includes(a.upper.leaves)||!['swing','lift'].includes(a.upper.opening)||!['left','right'].includes(a.upper.side))throw Error('Проверьте количество створок и открывание антресоли.');
   const leafWidth=s.width/a.upper.leaves-3;
   if(leafWidth>(a.upper.opening==='swing'?600:1200))throw Error('Створка антресоли слишком широкая. Измените число створок или открывание в шаге «Фасады».');
-  maxZ=Math.max(maxZ,s.depth/2+20);
+  if(a.upper.frame&&a.upper.opening!=='swing')throw Error('Рамка Z1 с этими петлями рассчитана на распашную антресоль.');
+  maxZ=Math.max(maxZ,s.depth/2+upperDepth);
  }
  for(const side of trimSides){
   const t=a[side];if(!t)continue;
@@ -58,8 +61,10 @@ export function surroundLayout(s,facades){
 export function surroundParts(s,g,prefix,options={}){
  const parts=[],a=s.surround??{},name=options.name||s.label;
  const board=(key,label,axis,length,partWidth,x,y,z,edges)=>{
-  const item=blankItem({item_id:prefix+':'+key,name:name+' · '+label,axis,length,partWidth,thickness:18,x,z,
-   elevation:s.elevation+y,edges,blank_edge_thickness_mm:axis==='front'?2:1,body_variant_id:(surroundFace(key)?options.frontMaterialId:options.bodyMaterialId)??null});
+  const framed=axis==='front'&&a.upper?.frame==='Z1';
+  const item=blankItem({item_id:prefix+':'+key,name:name+' · '+label+(framed?' · витрина Z1':''),axis,length,partWidth,thickness:framed?frameDepth:18,x,z,
+   ...(framed?{blank_front_frame:'Z1'}:{}),
+   elevation:s.elevation+y,edges:framed?'0000':edges,blank_edge_thickness_mm:axis==='front'?2:1,body_variant_id:framed?null:(surroundFace(key)?options.frontMaterialId:options.bodyMaterialId)??null});
   const error=validateBlank(item);if(error)throw Error(label+' · '+error);
   parts.push({key,label,item});
  };
@@ -83,7 +88,7 @@ export function surroundParts(s,g,prefix,options={}){
   if(u.divider)board('mezz-divider','Антресоль · перегородка','side',u.height-36,d,0,y+18,0,'1000');
   for(const side of u.leaves===2?trimSides:[u.side]){
    const x=u.leaves===2?(side==='left'?-1:1)*w/4:0;
-   board('mezz-door-'+side,'Антресоль · '+(u.leaves===1?'фасад':side==='left'?'левый фасад':'правый фасад'),'front',u.height-3,w/u.leaves-3,x,y+1.5,d/2+11,'1111');
+   board('mezz-door-'+side,'Антресоль · '+(u.leaves===1?'фасад':side==='left'?'левый фасад':'правый фасад'),'front',u.height-3,w/u.leaves-3,x,y+1.5,d/2+2+(u.frame?frameDepth:18)/2,'1111');
   }
  }
  if(a.cap){

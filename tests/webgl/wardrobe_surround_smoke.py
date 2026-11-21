@@ -431,6 +431,70 @@ def surround_scenarios(page, projects, first_id):
     print('PASS legacy 2170 mm carcass reopened as 2850 total; changed total/upper retain 97 mm datum and 72258 hardware')
 
 
+def z1_scenario(page, projects, seed):
+    from backend.v2.three_d_api import Scene
+    project_id = str(uuid4())
+    project = deepcopy(projects.projects[seed])
+    project.update(project_id=project_id, name='QA · фасады Z1', version=1)
+    project['scene']['items'] = []
+    projects.projects[project_id] = project
+    page.evaluate('id => MF_PLANNER.bridge.open(id)', project_id)
+    page.locator('#planner-assistant').click()
+    form = page.locator('#planner-assistant-dialog')
+    field(form, 'Ширина, мм').fill('600')
+    field(form, TOTAL_HEIGHT).fill('1200')
+    open_surround(form)
+    field(form, 'Добавить отдельный модуль антресоли').check()
+    field(form, 'Высота модуля, мм').fill('500')
+    button(form, '4. Фасады').click()
+    field(form, 'Исполнение фасада').select_option('pair')
+    field(form, 'Выбранный фасад').select_option('door-left')
+    field(form, 'Тип фасада').select_option('Z1')
+    selected = form.locator('[data-hinge-article="71B950A"]')
+    expect(selected).to_have_attribute('aria-pressed','true')
+    assert selected.locator('img').evaluate('async i=>{await i.decode();return i.naturalWidth>100}')
+    expect(form.locator('svg [data-door-id="door-left"] [data-frame="Z1"]')).to_have_count(1)
+    form.locator('[data-hinge-kind="inset"]').click()
+    expect(form.locator('[data-hinge-article="71B970A"]')).to_have_attribute('aria-pressed','true')
+    assert field(form,'Способ открывания').locator('option[value="push"]').is_disabled()
+    form.locator('[data-hinge-kind="overlay"]').click()
+    field(form,'Способ открывания').select_option('push')
+    expect(form.locator('[data-hinge-article="70T950A.TL"]')).to_have_attribute('aria-pressed','true')
+    upper=open_upper_fronts(form)
+    field(upper,'Тип фасада антресоли').select_option('Z1')
+    finish(page,form)
+    group,spec,parts=panels(projects,project_id)
+    Scene.model_validate(projects.projects[project_id]['scene'])
+    left,right=parts['door-left'],parts['door-right']
+    assert left['blank_front_frame']=='Z1' and not right.get('blank_front_frame')
+    assert left['width']==right['width']==297 and left['height']==right['height']==spec['height']-3
+    assert right['x']-right['width']/2-left['x']-left['width']/2==3
+    assert left['z']-left['depth']/2-front(parts['left'])==2
+    assert right['z']-right['depth']/2==front(parts['right'])
+    assert all(parts['mezz-door-'+side]['blank_front_frame']=='Z1' for side in ('left','right'))
+    form=reopen(page,project_id)
+    button(form,'4. Фасады').click()
+    field(form,'Выбранный фасад').select_option('door-left')
+    expect(field(form,'Тип фасада')).to_have_value('Z1')
+    expect(form.locator('[data-hinge-article="70T950A.TL"]')).to_have_attribute('aria-pressed','true')
+    field(form,'Способ открывания').select_option('handle')
+    form.locator('[data-hinge-article="71T950A-ONS"]').click()
+    finish(page,form,update=True)
+    Scene.model_validate(projects.projects[project_id]['scene'])
+    with page.expect_download() as event:
+        page.locator('#export-bazis').click()
+    payload=json.loads(Path(event.value.path()).read_text())
+    assert payload['minimum_importer']=='9.9.45'
+    rows=payload['items']
+    frames=[r for r in rows if r.get('wardrobe_z1_front')]
+    assert len(frames)==3 and all(r['source_file']=='MF_Z1_D1.fr3d' and r['target']['width']==301 for r in frames)
+    hinges=[r for r in rows if r.get('wardrobe_z1_hinge')]
+    assert len(hinges)==6
+    assert {(r['article'],r['finish']) for r in hinges}=={('71T950A','ONS'),('70T950A.TL','NI')}
+    assert all(r['joined_panel_id'] in {p['blank_item_id'] for p in frames} for r in hinges)
+    print('PASS wardrobe Z1: chooser, real product photo, inset, mixed pair, TIP-ON, mezzanine, persisted edit and native export')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
@@ -440,9 +504,11 @@ if __name__ == '__main__':
         if args.live:
             for name in ('assistant-ui.mjs', 'assistant.css', 'wardrobe-questionnaire.mjs',
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs',
-                         'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs'):
+                         'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
+                         'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs'):
                 asset = page.request.get(ORIGIN + '/account/planner/' + name, max_redirects=0)
                 assert asset.status == 200 and asset.body() == (ROOT / 'backend/v2/cabinet_assets/planner' / name).read_bytes(), name
         surround_scenarios(page, projects, first_id)
+        z1_scenario(page, projects, first_id)
 
     exercise(args.live, run)

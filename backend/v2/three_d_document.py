@@ -252,6 +252,24 @@ def _panel_hardware(it):
         return [_row('Эксцентриковая стяжка для плиты 18 мм',pairs),
                 _row('Шкант деревянный 8×35',pairs,'pcs',TRIM_JOINT['dowel_article'])],None
     upper=surround.get('upper')
+    if it.get('blank_front_frame')=='Z1':
+        from .assistant_model import AKS_PUSH, Z1_HINGES, z1_hinge_count
+        main=spec.get('front') or {}
+        mezz=key.startswith('mezz-door-')
+        setup={'article':'70T950A.TL','push':upper['push']} if mezz else main['hinges'][key]
+        fit=Z1_HINGES[setup['article']]
+        count=z1_hinge_count(it['width'],it['height'],None if mezz else main.get('massKg'))
+        name={'overlay':'накладная','half':'полунакладная','inset':'вкладная'}[fit['kind']]
+        closing={'soft':'с доводчиком','standard':'с пружиной','springless':'без пружины'}[fit['closing']]
+        rows=[_row(f"Петля {fit['series']} 95° {name} {closing} · {fit['finish']}",count,'pcs',fit['sku']),
+              _row(f"Прямая ответная планка Blum H0 · {fit['finish']}",count,'pcs','175H3100')]
+        push=setup.get('push')
+        if isinstance(push,dict):
+            sku=push['article']
+            rows.append(_row(AKS_PUSH[sku]['name'],1,'pcs',sku))
+        elif push:
+            rows.extend([_row('Толкатель AQ ONE-PUSH',1,'pcs','09.0019'),_row('Адаптер AQ',1,'pcs','09.0020'),_row('Ответная планка AQ',1,'pcs','09.0021')])
+        return rows,None
     if upper and it.get('blank_axis')=='front' and key in ('mezz-door-left','mezz-door-right'):
         from .assistant_model import AKS_PUSH
         article=upper['push']['article']
@@ -403,6 +421,8 @@ def _panel_hardware(it):
     return [],None
 
 def module_contents(it):
+    if it.get('blank_front_frame')=='Z1':
+        return 'Распашная витрина. Петли закрепить в алюминиевой стойке Z1, прямые ответные планки H0 — на стойке корпуса.'
     grip=it.get('blank_edge_pull')
     if grip:
         row=_facade_handle_row(grip,it)
@@ -479,6 +499,9 @@ def module_contents(it):
     return 'состав определяется выбранным модулем'
 
 def module_materials(it,body,front,materials=None):
+    if it.get('blank_front_frame')=='Z1':
+        w,h=it['width'],it['height']
+        return [('Профиль Z1',f"2 × {h:g} мм и 2 × {w:g} мм · рез 45°"),('Стекло 4 мм',f"{w-27.5:g} × {h-27.5:g} мм")]
     if grip:=it.get('blank_edge_pull'):
         row=_facade_handle_row(grip,it)
         return [('Заготовка фасада 18 мм',body or 'Не выбран'),('Алюминиевый профиль',f"{row['name']} · {grip['article']}")]
