@@ -11,7 +11,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.43'
+IMPORTER_VERSION = '9.9.44'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'

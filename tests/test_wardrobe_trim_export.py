@@ -25,6 +25,10 @@ def test_downloadable_trim_retains_the_workshop_boards_joints_and_drilling(tmp_p
     tree=fr.load(path)
     definitions={fr.vals(n)['FastID']:n for n in fr.child(tree,'FurnList')['children']}
     model=fr.child(tree,'Model')
+    planes=fr.planeinfo(fr.child(fr.child(tree,'ModelParams'),'Params'))
+    expected_planes={'Left':{0:55,1:845},'Right':{0:55,1:845},'End':{1:795,2:55},'Ceiling':{0:845,1:65}}
+    assert {p['Axis']:p['Pos'] for p in planes}==expected_planes[name]
+    assert all(p['Weight']==1 for p in planes)
     boards=[n for n in model['children'] if fr.vals(n).get('Type')==4002]
     assert len(boards)==panels and all(fr.vals(n)['Thick']==18 for n in boards)
     parts=Counter()

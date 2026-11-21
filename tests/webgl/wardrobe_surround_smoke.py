@@ -98,7 +98,7 @@ def native_export(page, trims, doors, article, lift):
     with page.expect_download() as event:
         page.locator('#export-bazis').click()
     export = json.loads(Path(event.value.path()).read_text())
-    assert tuple(map(int, export['minimum_importer'].split('.'))) >= (9, 9, 42)
+    assert tuple(map(int, export['minimum_importer'].split('.'))) >= ((9, 9, 44) if trims else (9, 9, 42))
     rows = export['items']
     assert {r['source_file'] for r in rows if r.get('wardrobe_trim')} == set(trims)
     upper = [r for r in rows if r.get('cabinet_block', {}).get('module_key') == 'mezzanine']

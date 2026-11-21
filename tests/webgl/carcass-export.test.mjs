@@ -99,8 +99,8 @@ test('downloads one pinned native trim per assembly and a separately grouped upp
   const e=exporter(items);await e.context.exportBazisProjectReady();
   const {payload,message}=await e.result();
   assert.ok(payload,message);
-  assert.equal(payload.minimum_importer,'9.9.42');assert.equal(payload.format,'martin-forest-bazis-native-v21');
-  assert.match(message,/импортёр БАЗИС 9\.9\.42 или новее/);
+  assert.equal(payload.minimum_importer,'9.9.44');assert.equal(payload.format,'martin-forest-bazis-native-v21');
+  assert.match(message,/импортёр БАЗИС 9\.9\.44 или новее/);
   assert.doesNotMatch(message,/импортёр 9\.9\.1[678]/);
   const trims=payload.items.filter(it=>it.wardrobe_trim);
   assert.deepEqual(trims.map(it=>it.source_file),['MF_Trim_Left.fr3d','MF_Trim_End.fr3d','MF_Trim_Ceiling.fr3d']);
@@ -141,7 +141,7 @@ test('exports the real equal split from the lower facade edge through the downlo
  const e=exporter(items);await e.context.exportBazisProjectReady();
  const {payload,message}=await e.result();assert.ok(payload,message);
  const halves=payload.items.filter(it=>it.wardrobe_trim);
- assert.equal(payload.minimum_importer,'9.9.42');assert.equal(halves.length,2);
+ assert.equal(payload.minimum_importer,'9.9.44');assert.equal(halves.length,2);
  assert.deepEqual(halves.map(row=>row.source_file),['MF_Trim_Left.fr3d','MF_Trim_Left.fr3d']);
  assert.deepEqual(halves.map(row=>row.position.y),[part('door-left').elevation_mm,second.elevation_mm]);
  assert.equal(halves[0].target.height,halves[1].target.height);

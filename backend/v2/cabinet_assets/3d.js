@@ -1530,7 +1530,8 @@ function exportBazisProject(){
     payload.format='martin-forest-bazis-native-v20';payload.minimum_importer='9.9.41';
   }
   if(payload.items.some(it=>it.wardrobe_trim||it.cabinet_block?.module_key)){
-    payload.format='martin-forest-bazis-native-v21';payload.minimum_importer='9.9.42';
+    payload.format='martin-forest-bazis-native-v21';
+    payload.minimum_importer=payload.items.some(it=>it.wardrobe_trim)?'9.9.44':'9.9.42';
   }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});

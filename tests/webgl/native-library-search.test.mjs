@@ -45,7 +45,7 @@ test('opens a numbered wardrobe export from Downloads and distinguishes upgrade,
    const format='martin-forest-bazis-native-v'+v;save({format,items:[item]});assert.equal(c.loadProjectFile().payload.format,format);
   }
   for(const [patch,reason] of [
-   [{format:'martin-forest-bazis-native-v22',minimum_importer:'9.9.100'},/нужен импортёр 9\.9\.100.+9\.9\.43/],
+   [{format:'martin-forest-bazis-native-v22',minimum_importer:'9.9.100'},/нужен импортёр 9\.9\.100.+9\.9\.44/],
    [{minimum_importer:'10.0.0'},/нужен импортёр 10\.0\.0/],
    [{format:'martin-forest-bazis-native-v22'},/не поддерживает формат martin-forest-bazis-native-v22/],
    [{format:'other'},/другой тип файла/],[{items:[]},/нет деталей и модулей/],[{items:null},/отсутствует список/]
