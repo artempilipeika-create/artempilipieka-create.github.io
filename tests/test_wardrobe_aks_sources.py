@@ -2,6 +2,8 @@
 from io import BytesIO
 import hashlib
 import json
+import os
+import pytest
 import zipfile
 from pathlib import Path
 
@@ -177,7 +179,47 @@ def test_z1_kit_contains_the_exact_frame_and_all_eight_sets():
     fittings=catalog['hinges']
     assert len(fittings)==8 and len({(h['sku'],h['finish']) for h in fittings})==8
     assert [h['sku'] for h in fittings if h['closing']=='springless']==['70T950A.TL']
-    with zipfile.ZipFile(BytesIO(kit_bytes())) as kit:
-        for product in [catalog['front'],*fittings]:
-            source=kit.read('Martin Forest AKS/'+product['source_file'])
-            assert sha256(source).hexdigest()==product['sha256']
+    products = [catalog['front'], *fittings]
+    importer = (ROOT/'cabinet_assets/planner/bazis-drawers-import.js').read_text()
+    assert all(row['sha256'] in importer for row in products)
+    if not os.environ.get('MF_WARDROBE_Z1_KEY'):
+        with pytest.raises(ValueError, match='Z1'):
+            kit_bytes(z1_required=True)
+        return
+    with zipfile.ZipFile(BytesIO(kit_bytes(z1_required=True))) as kit:
+        for product in products:
+            source = kit.read('Martin Forest AKS/'+product['source_file'])
+            assert sha256(source).hexdigest() == product['sha256']
+        import zlib
+        front = kit.read('Martin Forest AKS/'+catalog['front']['source_file'])
+        payload = zlib.decompressobj()
+        payload.decompress(front[front.index(bytes.fromhex('00010000ff01789c'))+6:])
+        assert payload.eof and len(payload.unused_data) == 64
+
+
+def test_z1_private_archive_preserves_complete_bytes_and_rejects_wrong_source(tmp_path, monkeypatch):
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from backend.v2 import wardrobe_aks as aks
+
+    mock_sources = {'frame.fr3d': b'frame-with-trailer', 'hinge.fr3d': b'hinge-with-plate'}
+    rows = [dict(source_file=k, sha256=hashlib.sha256(v).hexdigest()) for k, v in mock_sources.items()]
+    archive = BytesIO()
+    with zipfile.ZipFile(archive, 'w') as bundle:
+        for name, data in mock_sources.items():
+            bundle.writestr(name, data)
+    key = AESGCM.generate_key(bit_length=256)
+    nonce = os.urandom(12)
+    sealed = nonce + AESGCM(key).encrypt(nonce, archive.getvalue(), b'Martin Forest Z1 archive v1')
+    folder = tmp_path/'wardrobe-aks'
+    folder.mkdir()
+    (folder/'MF_Z1.enc').write_bytes(sealed)
+    monkeypatch.setattr(aks, 'ROOT', tmp_path)
+    monkeypatch.setattr(aks, 'Z1_DATA', {'front':rows[0], 'hinges':[rows[1]]})
+    monkeypatch.setenv('MF_WARDROBE_Z1_KEY', key.hex())
+    assert aks.private_z1_sources(True) == mock_sources
+    rows[0]['sha256'] = '0'*64
+    with pytest.raises(ValueError, match='frame.fr3d'):
+        aks.private_z1_sources(True)
+    monkeypatch.setenv('MF_WARDROBE_Z1_KEY', AESGCM.generate_key(bit_length=256).hex())
+    with pytest.raises(ValueError, match='открыть'):
+        aks.private_z1_sources(True)

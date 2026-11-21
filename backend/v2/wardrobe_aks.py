@@ -8,10 +8,13 @@ import os
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
-from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE, Z1_DATA
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.45'
+IMPORTER_VERSION = '9.9.46'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
@@ -54,8 +57,30 @@ def private_handle_sources(required):
     return result
 
 
-@lru_cache(maxsize=4)
-def kit_bytes(rods_required=False, handles_required=False):
+def private_z1_sources(required):
+    key = os.environ.get('MF_WARDROBE_Z1_KEY')
+    if not key:
+        if required:
+            raise ValueError('Исходные фрагменты витрины Z1 ещё не установлены на сервере.')
+        return {}
+    archive = (ROOT / 'wardrobe-aks' / 'MF_Z1.enc').read_bytes()
+    try:
+        plaintext = AESGCM(bytes.fromhex(key)).decrypt(archive[:12], archive[12:], b'Martin Forest Z1 archive v1')
+    except (InvalidTag, ValueError) as exc:
+        raise ValueError('Не удалось открыть исходные фрагменты витрины Z1.') from exc
+    products = [Z1_DATA['front'], *Z1_DATA['hinges']]
+    with ZipFile(BytesIO(plaintext)) as bundle:
+        if sorted(bundle.namelist()) != sorted(row['source_file'] for row in products):
+            raise ValueError('Неполный комплект витрины Z1.')
+        sources = {row['source_file']: bundle.read(row['source_file']) for row in products}
+    for row in products:
+        if sha256(sources[row['source_file']]).hexdigest() != row['sha256']:
+            raise ValueError('Не подтверждён исходный файл ' + row['source_file'])
+    return sources
+
+
+@lru_cache(maxsize=8)
+def kit_bytes(rods_required=False, handles_required=False, z1_required=False):
     rods = private_rod_sources()
     if rods_required and not rods:
         raise ValueError('Исходные штанги ещё не установлены на сервере.')
@@ -68,12 +93,9 @@ def kit_bytes(rods_required=False, handles_required=False):
             entry.compress_type = ZIP_DEFLATED
             entry.external_attr = 0o100644 << 16
             archive.writestr(entry, data)
-        with ZipFile(sources/'MF_Z1.zip') as frames:
-            for name in frames.namelist():
-                add('Martin Forest AKS/' + name, frames.read(name))
         for source in sorted(sources.glob('*.fr3d')):
             add('Martin Forest AKS/' + source.name, source.read_bytes())
-        for name, data in {**rods, **handles}.items():
+        for name, data in {**rods, **handles, **private_z1_sources(z1_required)}.items():
             add('Martin Forest AKS/' + name, data)
         add(IMPORTER_NAME, (ROOT / 'cabinet_assets/planner/bazis-drawers-import.js').read_bytes())
     return result.getvalue()

@@ -45,13 +45,49 @@ test('opens a numbered wardrobe export from Downloads and distinguishes upgrade,
    const format='martin-forest-bazis-native-v'+v;save({format,items:[item]});assert.equal(c.loadProjectFile().payload.format,format);
   }
   for(const [patch,reason] of [
-   [{format:'martin-forest-bazis-native-v22',minimum_importer:'9.9.100'},/нужен импортёр 9\.9\.100.+9\.9\.45/],
+   [{format:'martin-forest-bazis-native-v22',minimum_importer:'9.9.100'},/нужен импортёр 9\.9\.100.+9\.9\.46/],
    [{minimum_importer:'10.0.0'},/нужен импортёр 10\.0\.0/],
    [{format:'martin-forest-bazis-native-v23'},/не поддерживает формат martin-forest-bazis-native-v23/],
    [{format:'other'},/другой тип файла/],[{items:[]},/нет деталей и модулей/],[{items:null},/отсутствует список/]
   ]){
    save({...current,...patch});assert.throws(()=>c.loadProjectFile(),e=>reason.test(e.message)&&e.message.includes(file));
   }
+ }finally{f.cleanup();}
+});
+
+test('old Z1 exports retain both door IDs, all ten hinge joints and resolve only original native files',()=>{
+ const f=fixture();
+ try{
+  const {c}=runtime(f);
+  const oldFrame='e9fa21aa56315fb5f463793e812cbe0129da0b062b546f70c0b9901113cf174e';
+  const oldHinge='aa1337ec405cb5a2301e4d54790554c737fb8bdb62a23febfb192c099c44762c';
+  const catalog=JSON.parse(fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/wardrobe-z1-data.json',import.meta.url)));
+  const front=catalog.front,hinge=catalog.hinges.find(h=>h.article==='71T950A');
+  const project={items:[]};
+  for(const side of ['left','right']){
+   project.items.push({source_file:front.source_file,source_sha256:oldFrame,wardrobe_z1_front:true,blank_item_id:side});
+   for(let j=0;j<5;j++)project.items.push({source_file:hinge.file,source_sha256:oldHinge,wardrobe_z1_hinge:true,article:hinge.sku,finish:hinge.finish,host_blank_id:side+'-wall',joined_panel_id:side});
+  }
+  const saved=JSON.stringify(project);
+  for(const [product,old] of [[front,oldFrame],[hinge,oldHinge]]){
+   donor(f.root,'old/'+product.source_file,old);
+   donor(f.root,'original/'+product.source_file,product.sha256);
+  }
+  // Model the reported hashes of real FR3Ds without publishing private workshop fragments in CI.
+  c.sha256File=file=>fs.readFileSync(file,'utf8');
+  const {entries}=c.prepareProject(project,f.root);
+  assert.equal(entries.length,12);
+  assert.deepEqual(Array.from(entries,(e,i)=>({...e.item,source_sha256:project.items[i].source_sha256})),project.items);
+  for(const {item,source} of entries){
+   assert.equal(path.dirname(source),path.join(f.root,'original'));
+   assert.equal(item.source_sha256,item.wardrobe_z1_front?front.sha256:hinge.sha256);
+  }
+  assert.equal(JSON.stringify(project),saved);
+  assert.equal(c.z1OriginalItem({...project.items[1],finish:'ONS'}).source_sha256,oldHinge);
+  assert.equal(c.z1OriginalItem({source_sha256:oldFrame}).source_sha256,oldFrame);
+  assert.equal(c.z1OriginalItem({...project.items[0],source_sha256:front.sha256}).source_sha256,front.sha256);
+  fs.rmSync(path.join(f.root,'original'),{recursive:true});
+  assert.throws(()=>c.prepareProject(project,f.root),/точный FR3D/);
  }finally{f.cleanup();}
 });
 

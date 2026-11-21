@@ -484,7 +484,7 @@ def z1_scenario(page, projects, seed):
     with page.expect_download() as event:
         page.locator('#export-bazis').click()
     payload=json.loads(Path(event.value.path()).read_text())
-    assert payload['minimum_importer']=='9.9.45'
+    assert payload['minimum_importer']=='9.9.46'
     rows=payload['items']
     frames=[r for r in rows if r.get('wardrobe_z1_front')]
     assert len(frames)==3 and all(r['source_file']=='MF_Z1_D1.fr3d' and r['target']['width']==301 for r in frames)
@@ -505,7 +505,8 @@ if __name__ == '__main__':
             for name in ('assistant-ui.mjs', 'assistant.css', 'wardrobe-questionnaire.mjs',
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
-                         'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs'):
+                         'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs',
+                         'bazis-drawers-import.js'):
                 asset = page.request.get(ORIGIN + '/account/planner/' + name, max_redirects=0)
                 assert asset.status == 200 and asset.body() == (ROOT / 'backend/v2/cabinet_assets/planner' / name).read_bytes(), name
         surround_scenarios(page, projects, first_id)
