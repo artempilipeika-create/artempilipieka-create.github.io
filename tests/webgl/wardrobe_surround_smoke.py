@@ -183,8 +183,16 @@ def legacy_copy(projects, source_id):
     project = deepcopy(projects.projects[source_id])
     project.update(project_id=legacy_id, name='QA · прежний шкаф с типоном', version=1)
     scene = project['scene']
+    previous = scene['items'][0]['assistant_carcass']
+    position = previous['position']
+    # Removing the left filler moves the assembly centre half its width in
+    # local +X. Each remaining panel keeps its original world coordinates.
+    delta = previous['spec']['surround']['left']['width'] / 2
+    dx, dz = {0: (delta, 0), 90: (0, delta), 180: (-delta, 0), 270: (0, -delta)}[position['rotation']]
+    new_position = {**position, 'x': position['x'] + dx, 'z': position['z'] + dz}
     scene['items'] = [b for b in scene['items'] if ':trim-left-' not in b['item_id']]
     for b in scene['items']:
+        b['assistant_carcass']['position'] = new_position.copy()
         spec = b['assistant_carcass']['spec']
         spec.pop('overallHeight', None)
         spec['surround'].pop('left', None)
