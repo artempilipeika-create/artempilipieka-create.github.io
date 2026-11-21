@@ -495,7 +495,7 @@ def z1_scenario(page, projects, seed):
     with page.expect_download() as event:
         page.locator('#export-bazis').click()
     payload=json.loads(Path(event.value.path()).read_text())
-    assert payload['minimum_importer']=='9.9.47'
+    assert payload['minimum_importer']=='9.9.48'
     rows=payload['items']
     frames=[r for r in rows if r.get('wardrobe_z1_front')]
     assert len(frames)==3 and all(r['source_file']=='MF_Z1_D1.fr3d' and r['target']['width']==301 for r in frames)

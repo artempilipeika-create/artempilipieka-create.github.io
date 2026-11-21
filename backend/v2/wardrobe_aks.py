@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE, Z1_DATA
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.47'
+IMPORTER_VERSION = '9.9.48'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
