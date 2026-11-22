@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {kitchenFields,kitchenSpec,kitchenHinges,kitchenRails,kitchenModels} from '../../backend/v2/cabinet_assets/planner/ai-kitchen.mjs';
 import {prepareAssistantPlan,applyAssistantPlan} from '../../backend/v2/cabinet_assets/planner/assistant-model.mjs';
+import {kitchenMaterials,kitchenRow,lowerMembers,standardFields,saveKitchen} from '../../backend/v2/cabinet_assets/planner/ai-kitchen-project.mjs';
+import {selectedCarcass} from '../../backend/v2/cabinet_assets/planner/assistant-model.mjs';
+import {kitchenFeet,isVitrine} from '../../backend/v2/cabinet_assets/planner/ai-kitchen.mjs';
+import {fixturePlans} from '../../backend/v2/cabinet_assets/planner/worktop-fixtures.mjs';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {buildCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-model.mjs';
 import {nativeCarcassJoints} from '../../backend/v2/cabinet_assets/planner/carcass-joints.mjs';
@@ -19,12 +23,12 @@ function assemble(adapter,id,fields,action='create'){
  return plan.items;
 }
 test('each kitchen cabinet supports zero to three removable shelves with the correct material and fittings',()=>{
- for(const model of kitchenModels)for(let shelves=0;shelves<=3;shelves++){
+ for(const model of kitchenModels)for(let shelves=0;shelves<=(model.id==='base-sink'?0:3);shelves++){
   const fields={...kitchenFields(model.id),shelves,swing:'pair',width:800};
   const spec=kitchenSpec(fields),built=buildCarcass(spec,{idPrefix:'cabinet'});
   const boards=built.items.filter(it=>it.item_id.includes(':shelf-'));
   assert.equal(boards.length,shelves);
-  assert.ok(boards.every(p=>model.id==='wall-vitrine'?p.blank_shelf==='6/48846'&&p.blank_thickness_mm===6:p.blank_thickness_mm===18));
+  assert.ok(boards.every(p=>isVitrine(model.id)?p.blank_shelf==='4/48846'&&p.blank_thickness_mm===4:p.blank_thickness_mm===18));
   assert.equal(built.hingeLocations.length,4);
   assert.equal(built.hingeConflicts.length,0);
   assert.equal(kitchenFields(model.id,spec).hinge,fields.hinge);
@@ -74,4 +78,43 @@ test('all kitchen rail pull SKUs persist in both orientations with mirrored two-
   const l=spec.front.handles['door-left'],r=spec.front.handles['door-right'];
   assert.deepEqual([l.edge,r.edge],orientation==='vertical'?['right','left']:['top','top']);
  }
+});
+
+test('source standards, mixed shelf construction and full-height light share the same machining',()=>{
+ const parts=id=>buildCarcass(kitchenSpec(kitchenFields(id)),{idPrefix:id}).parts;
+ const board=(p,k)=>p.find(x=>x.key===k).item;
+ const lower=parts('base-swing'),upper=parts('wall-swing'),v=parts('wall-vitrine');
+ assert.deepEqual([board(lower,'shelf-0-0').width,board(lower,'shelf-0-0').depth,board(lower,'back').width,board(lower,'back').height],[564,509,596,716]);
+ assert.deepEqual([board(upper,'shelf-0-0').width,board(upper,'shelf-0-0').depth],[562,317]);
+ assert.deepEqual([board(v,'shelf-0-0').width,board(v,'shelf-0-0').depth,board(v,'shelf-0-0').height],[556,316,4]);
+ for(const side of ['left','right']){const p=board(v,side),op=p.blank_machining[0];assert.equal(op.start,9);assert.equal(op.end??0,0);assert.equal(p.blank_length_mm-op.start,711);assert.equal(op.offset+op.width/2,158.5);}
+ const f=kitchenFields('base-vitrine');f.shelfChoices=['board/confirmat','6/48846','board/cam_dowel'];f.shelves=3;f.lightAxis=61;f.lightStart=7;f.lightEnd=0;
+ const b=buildCarcass(kitchenSpec(f),{idPrefix:'m'});assert.deepEqual(b.parts.filter(p=>p.key.startsWith('shelf')).map(p=>p.item.blank_thickness_mm),[18,6,18]);
+ assert.equal(b.parts[0].item.blank_machining[0].offset+8.75,61);
+ assert.deepEqual(new Set(kitchenFeet.filter(p=>p.category==='plinth').map(p=>p.height)),new Set([60,100,120,150]));
+ assert.ok(kitchenFeet.every(p=>p.height!==80));
+});
+test('a standard sink, selectable installed heights and per-panel materials survive rebuilds',()=>{
+ const a=project(),add=id=>saveKitchen(a,{fields:standardFields(a,id)}),one=add('base-swing'),two=add('base-sink'),three=add('base-vitrine');
+ const members=lowerMembers(a.items);assert.deepEqual(kitchenRow(members,one).map(c=>c.id),[one,two,three]);
+ const sink=a.items.filter(p=>p.assistant_carcass.group_id===two);
+ assert.equal(sink.filter(p=>p.item_id.includes(':rail-')&&p.blank_axis==='back').length,3);
+ assert.ok(!sink.some(p=>p.item_id.endsWith(':back')));
+ assert.equal(nativeCarcassJoints(sink).filter(p=>p.joined_panel_id.includes(':rail-')).length,6);
+ assert.equal(fixturePlans(a.items,a.room)[0].y,858);
+ const cfg=id=>{a.select(id+':left');const current=selectedCarcass(a),fields=kitchenFields(current.metadata.spec.kitchenModel,current.metadata.spec);fields.materials=kitchenMaterials(current);return {fields,current};};
+ const upper=add('wall-vitrine');
+ const entry=cfg(one);entry.fields.height=800;
+ const custom='91518079-f405-4256-984c-c6a256c16960',global='178978ec-3e85-4938-9472-b14df7c0dc65';
+ entry.fields.materials.parts.left=custom;saveKitchen(a,{...entry,heightIds:[one,two,three]});
+ assert.equal(fixturePlans(a.items,a.room)[0].y,938);
+ assert.equal(a.items.find(i=>i.item_id===upper+':left').assistant_carcass.spec.elevation,1538);
+ const other=cfg(three);other.fields.materials.body=global;saveKitchen(a,{...other,wholeKitchen:true,materialRoles:['body']});
+ assert.equal(a.items.find(i=>i.item_id===one+':left').body_variant_id,custom);
+ assert.equal(a.items.find(i=>i.item_id===one+':right').body_variant_id,global);
+ assert.equal(a.items.find(i=>i.item_id===three+':shelf-0-0').body_variant_id,null);
+ const end=cfg(two);end.fields.feet='86505';end.fields.height=840;saveKitchen(a,end);
+ assert.ok(lowerMembers(a.items).every(p=>p.height===900));assert.equal(standardFields(a,'wall-swing').elevation,1538);
+ const before=structuredClone(a.items),invalid=cfg(one);invalid.fields.width=730;
+ assert.throws(()=>saveKitchen(a,invalid),/две двери/);assert.deepEqual(a.items,before);
 });

@@ -102,11 +102,12 @@ export class WardrobePreview{
     this.root.hidden=false;this.invalidate();
   }
   pick(e){
-    if(this.slot==null)return;
+    if(this.slot==null&&!this.onPart)return;
     const rect=this.canvas.getBoundingClientRect();
     this.ray.setFromCamera({x:(e.clientX-rect.left)*2/rect.width-1,y:1-(e.clientY-rect.top)*2/rect.height},this.camera);
     const hit=this.ray.intersectObject(this.model,true).find(h=>h.object.visible&&h.object.isMesh);
     const item=this.adapter.items.find(it=>it.item_id===hit?.object.userData.itemId);
+    if(this.onPart&&item){this.onPart(item.item_id.slice(groupId.length+1));return;}
     const key=drawerKey(item);if(!key||!item.item_id.endsWith('-face'))return;
     const slot=Number(key.split('-')[0]);
     this.motion.toggleDrawer(key);this.onPick(sectionOf(slot),levelOf(slot),Number(isRightBank(slot)));

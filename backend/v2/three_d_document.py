@@ -135,6 +135,11 @@ def hardware_for(it):
     spec=meta.get('spec') or {}
     key=it.get('item_id','').removeprefix(str(meta.get('group_id'))+':')
     front=spec.get('front') or {}
+    if spec.get('kitchenStandard')==2:
+        if key=='top' and spec.get('kitchenModel','').startswith('wall-'):
+            rows=[*rows,_row('Навес простой, белый',2,'pcs','13198'),_row('Шуруп 3×30 мм, Zn',4)]
+        if key=='rail-front' and spec.get('kitchenModel')=='base-sink':
+            rows=[*rows,_row('Уголок №1 (литой)',4),_row('Шуруп 3,5×16 мм, Zn · уголки',8)]
     if key=='top' and (it.get('blank_gola_runs') or front.get('topProfile') or (front.get('division') or {}).get('gola')):
         width=spec['width']; split=front.get('division') or {};scope=split.get('scope','all')
         widths=spec.get('dividerPositions') or [(width-3*spec['thickness']+1)//2]
@@ -350,6 +355,9 @@ def _panel_hardware(it):
         if confirmats:rows.append(_row('Конфирмат 7×50',confirmats))
         if pairs:rows.extend([_row('Эксцентриковая стяжка для плиты 18 мм',2*pairs),_row('Шкант деревянный 8×35',2*pairs,'pcs','39319')])
         return rows,None
+    meta=it.get('assistant_carcass') or {}
+    if (meta.get('spec') or {}).get('kitchenModel')=='base-sink' and it.get('item_id','').removeprefix(meta['group_id']+':') in ('rail-front','rail-rear','rail-rear-lower'):
+        return [_row('Конфирмат 7×50',2)],None
     binding=it.get('blank_binding')
     if it.get('module_type')=='blank' and it.get('blank_axis')=='horizontal' and (binding or (it.get('assistant_carcass') or {}).get('spec',{}).get(it.get('item_id','').rsplit(':',1)[-1]+'Fit')=='overlay'):
         binding=binding or {}
@@ -360,7 +368,7 @@ def _panel_hardware(it):
         article = shelf.partition('/')[2]
         metadata = it.get('assistant_carcass') or {}
         cabinet_spec = metadata.get('spec') or {}
-        joint_key = 'top' if cabinet_spec.get('kitchenModel')=='base-swing' and key in ('rail-front','rail-rear') else key
+        joint_key = 'top' if cabinet_spec.get('kitchenModel') in ('base-swing','base-vitrine') and key in ('rail-front','rail-rear') else key
         scheme = article if shelf else (cabinet_spec.get('joints') or {}).get(joint_key)
         if scheme == 'cam_dowel':
             return [_row('Эксцентриковая стяжка для плиты 18 мм',4),_row('Шкант деревянный 8×35',4,'pcs','39319')],None

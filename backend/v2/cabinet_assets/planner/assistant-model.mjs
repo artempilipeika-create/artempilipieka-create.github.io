@@ -14,7 +14,7 @@ import {blankEdgeCode} from './furniture-core.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['kitchenModel','clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount','surround','overallHeight'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['kitchenModel','kitchenStandard','kitchenMaterials','clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount','surround','overallHeight'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -66,7 +66,7 @@ function kitchenPlacementItems(items){
   if(groups.has(meta.group_id))continue;
   groups.add(meta.group_id);
   const box=surroundLayout(meta.spec);
-  occupied.push({...part,...meta.position,item_id:meta.group_id,width:box.width,depth:box.depth,
+  occupied.push({...part,...meta.position,assemblyWallOffset:meta.spec.kitchenModel.startsWith('base-')?(meta.spec.back?47:50):0,item_id:meta.group_id,width:box.width,depth:box.depth,
    height:box.height-box.minY,elevation_mm:meta.position.elevation_mm+box.minY});
  }
  return occupied;
@@ -96,12 +96,13 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  if(!position){
   const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.envelope.height-built.envelope.minY,depth:built.depth,
    x:0,z:0,rotation:0,elevation_mm:spec.elevation+built.envelope.minY,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
+  if(spec.kitchenModel)envelope.assemblyWallOffset=spec.kitchenModel.startsWith('base-')?(spec.back?47:50):0;
   const occupied=spec.kitchenModel?kitchenPlacementItems(adapter.items):adapter.items;
   const selectedGroup=adapter.selected?.assistant_carcass?.group_id;
   const anchor=occupied.find(it=>it.item_id===selectedGroup)??adapter.selected;
   // The applied HDF extends 3 mm behind the side. Move the envelope 47 mm
   // from the wall so the side and the kitchen worktop datum retain their 50 mm offset.
-  position=findSpace(envelope,occupied,adapter.room,anchor,{wallOffset:spec.kitchenModel==='base-swing'?47:0,autoRotate:false});
+  position=findSpace(envelope,occupied,adapter.room,anchor,{wallOffset:envelope.assemblyWallOffset??0,autoRotate:false});
   if(!position)throw Error('Для корпуса нет свободного места. Проверьте размеры помещения.');
   position={...position,elevation_mm:spec.elevation};
  }

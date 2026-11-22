@@ -378,6 +378,7 @@ class LightingKit(StrictModel):
 
 
 class LightingLine(StrictModel):
+    fullPanel: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     pairId: UUID | None = Field(default=None,exclude_if=lambda v:v is None)
     system: LightSystem
     anchor: Literal['front','center','back']
@@ -497,8 +498,16 @@ class WardrobeSurround(StrictModel):
     upper: SurroundUpper | None = Field(default=None, exclude_if=lambda v:v is None)
     cap: SurroundCap | None = Field(default=None, exclude_if=lambda v:v is None)
 
+class KitchenMaterials(StrictModel):
+    body: UUID
+    front: UUID
+    parts: dict[Annotated[str,Field(pattern=r'^(left|right|back|bottom|top|plinth|rail-(front|rear|rear-lower)|door-(left|right)|shelf-0-[0-2])$')],UUID] = Field(default_factory=dict,max_length=16)
+
+
 class CarcassDesign(CarcassSpec):
-    kitchenModel: Literal['base-swing','wall-swing','wall-vitrine'] | None = Field(default=None, exclude_if=lambda value: value is None)
+    kitchenStandard: Literal[2] | None = Field(default=None, exclude_if=lambda v:v is None)
+    kitchenMaterials: KitchenMaterials | None = Field(default=None, exclude_if=lambda v:v is None)
+    kitchenModel: Literal['base-swing','base-sink','base-vitrine','wall-swing','wall-vitrine'] | None = Field(default=None, exclude_if=lambda value: value is None)
 
     overallHeight: int | None = Field(default=None, ge=200, le=5000, strict=True, exclude_if=lambda v:v is None)
     surround: WardrobeSurround | None = Field(default=None, exclude_if=lambda v:v is None)
@@ -860,8 +869,9 @@ class CarcassDesign(CarcassSpec):
     @model_validator(mode='after')
     def section_layout(self):
         if self.kitchenModel:
-            lower = self.kitchenModel == 'base-swing'
-            if self.recipe != ('base' if lower else 'wall') or self.sections != 1 or not self.front or not self.front.hinges or not self.back:
+            lower = self.kitchenModel.startswith('base-')
+            sink = self.kitchenModel == 'base-sink'
+            if self.recipe != ('sink' if sink else 'base' if lower else 'wall') or self.sections != 1 or not self.front or not self.front.hinges or self.back == sink:
                 raise ValueError('Проверьте корпус, фасады и петли кухонного модуля ИИ.')
             if self.thickness != 18 or self.shelves > 3 or self.width > 1200 or self.width > 600 and self.front.swing != 'pair':
                 raise ValueError('Кухонный корпус из плиты 18 мм допускает до трёх полок и до 600 мм на одну дверь.')
@@ -869,14 +879,14 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Проверьте дно, царги и опоры кухонного модуля ИИ.')
             if lower and (not self.joints or self.joints.top != 'confirmat'):
                 raise ValueError('Для царг нижнего модуля нужен конфирмат.')
-            want_glass = self.kitchenModel == 'wall-vitrine'
+            want_glass = self.kitchenModel.endswith('-vitrine')
             active = ('left','right') if self.front.swing == 'pair' else (self.front.swing,)
             for side in active:
                 fitting = self.front.hinges.get('door-'+side)
                 if not fitting or (fitting.article in Z1_HINGES) != want_glass or DOOR_HINGES[fitting.article]['kind'] == 'half':
                     raise ValueError('Выберите подходящие к фасаду и боковине петли.')
-            if want_glass and self.shelves and (not self.shelfChoices or any(value.startswith('board/') for row in self.shelfChoices for value in row)):
-                raise ValueError('Для витрины ИИ выберите стеклянные полки.')
+            if not want_glass and any(not value.startswith('board/') for row in self.shelfChoices or [] for value in row):
+                raise ValueError('Для распашного шкафа выберите полки из ЛДСП.')
         if self.overallHeight is not None and self.overallHeight!=self.assembly_top:
             raise ValueError('Общая высота от пола должна включать отметку установки, опоры, корпус, антресоль и закладную.')
         if self.surround:

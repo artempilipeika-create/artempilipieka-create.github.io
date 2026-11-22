@@ -1,6 +1,6 @@
 import {bounds,elevation,tier,rotateXZ,placementError,dimensionError,kitchenSettings,kitchenGroup,isTallModule,tallRearExtension,cabinetFrontExtension,alignTallFront,cornerSpec,cornerReturnPlacement,roomObstacles} from './furniture-core.mjs';
-const rounded=it=>{const scale=isTallModule(it)?4:2;return {...it,x:Math.round(it.x*scale)/scale,z:Math.round(it.z*scale)/scale,elevation_mm:Math.round(it.elevation_mm)};};
-const wallOffsetFor=(it,options)=>kitchenSettings(it)?.rearServiceGapMm??(isTallModule(it)?tallRearExtension(it):(Number(options.wallOffset)||0));
+const rounded=it=>{const scale=isTallModule(it)||it.assemblyWallOffset!=null?4:2;return {...it,x:Math.round(it.x*scale)/scale,z:Math.round(it.z*scale)/scale,elevation_mm:Math.round(it.elevation_mm)};};
+const wallOffsetFor=(it,options)=>it.assemblyWallOffset??kitchenSettings(it)?.rearServiceGapMm??(isTallModule(it)?tallRearExtension(it):(Number(options.wallOffset)||0));
 function fitTallBesideLower(it,items,room){
   if(!isTallModule(it))return it;
   const local=rotateXZ(it.x,it.z,-(it.rotation||0)),span=(it.rotation||0)%180?room.width:room.depth;

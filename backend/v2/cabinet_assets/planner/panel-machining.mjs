@@ -107,7 +107,7 @@ export function backPanel(s){
   const bottom=s.bottom==='none'?0:t,thickness=s.backThickness;
   return {length:w-2*t,width:h-t-bottom,thickness,x:0,y:bottom,z:(thickness-d)/2};
  }
- if(!b)return {length:w-2,width:h-2,thickness:3,x:0,y:1,z:-(d+3)/2};
+ if(!b){const inset=s.kitchenStandard===2?2:1;return {length:w-2*inset,width:h-2*inset,thickness:3,x:0,y:inset,z:-(d+3)/2};}
  const grooved=b.kind==='groove',perimeter=grooved&&b.layout!=='sides';
  const bite=b.layout?b.depth-1:Math.floor(b.depth-1);
  const bottom=perimeter&&s.bottom!=='none'?t-bite:1,top=perimeter?h-t+bite:h-1;

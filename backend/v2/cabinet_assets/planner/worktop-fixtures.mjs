@@ -11,9 +11,14 @@ export function roundedOutline(w,d,r=18,cx=0,cz=0){
     for(let i=0;i<=8;i++){const a=(start+i*90/8)*Math.PI/180;p.push([cx+x+Math.cos(a)*r,cz+z+Math.sin(a)*r]);}
   return p;
 }
+function settings(it){
+ const m=it?.assistant_carcass;
+ if(m?.spec.kitchenModel==='base-sink'&&it.item_id===m.group_id+':bottom')return kitchenSettings({...it,worktop_thickness:38},true);
+ return kitchenSettings(it);
+}
 export function fixtureError(it){
   const f=it?.worktop_fixture;if(!f)return '';
-  const k=kitchenSettings(it);
+  const k=settings(it);
   if(!k)return 'Выберите нижний шкаф из каталога БАЗИС.';
   if(!k.countertopEnabled)return 'Для мойки или варочной нужна столешница над шкафом.';
   if(!fixtureNames[f.kind]||!faucetNames[f.faucet]||!['steel','black'].includes(f.finish)||!['chrome','black'].includes(f.faucet_finish))return 'Проверьте исполнение мойки или варочной.';
@@ -43,7 +48,7 @@ function contains(polygon,outline){
 export function fixturePlans(items,room,runs=kitchenRuns(items,room)){
   return items.filter(it=>it.worktop_fixture).map(it=>{
     const f=it.worktop_fixture,error=fixtureError(it);if(error)return {itemId:it.item_id,error};
-    const k=kitchenSettings(it),z=-it.depth/2-k.rearServiceGapMm+k.countertopDepthMm-f.front_offset-f.depth/2;
+    const k=settings(it),z=-it.depth/2-k.rearServiceGapMm+k.countertopDepthMm-f.front_offset-f.depth/2;
     const p=rotateXZ(f.offset_x,z,it.rotation||0),x=it.x+p.x,wz=it.z+p.z;
     const toRun=(points,run)=>points.map(([a,b])=>{const w=rotateXZ(a,b,it.rotation||0),v=rotateXZ(x+w.x-run.position.x,wz+w.z-run.position.z,-run.rotation);return [v.x,v.z];});
     const outer=roundedOutline(f.width,f.depth,12);
@@ -52,7 +57,7 @@ export function fixturePlans(items,room,runs=kitchenRuns(items,room)){
     if(!part)return {itemId:it.item_id,error:'Модель попадает на край или стык столешниц. Измените размеры или положение.'};
     // Keep the whole generated bowl clear of the worktop; its rim covers the opening.
     const hole=roundedOutline(f.width-20,f.depth-20,f.kind==='sink'?12:8);
-    const y=elevation(it,room)+it.height+k.countertopThicknessMm;
+    const y=run.position.y+part.position.y+part.size.y/2;
     const hood=f.hood==='chimney'?{width:f.hood_width??600,height:525,depth:450,y:(f.hood_gap??650)+525/2,z:-it.depth/2-k.rearServiceGapMm+450/2-z}:null;
     if(hood){
       if(y+hood.y+hood.height/2>(room.height??2700))return {itemId:it.item_id,error:'Вытяжка выходит выше потолка. Уменьшите высоту установки.'};

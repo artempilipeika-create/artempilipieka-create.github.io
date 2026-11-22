@@ -66,7 +66,12 @@ export class PlannerWorkspace {
       const start=this.pickStart;this.pickStart=null;
       if(!start||start.id!==e.pointerId||Math.hypot(e.clientX-start.x,e.clientY-start.y)>5)return;
       if(this.isClient()){const hit=this.app.scene.pick(e.clientX,e.clientY);if(hit?.id)this.app.adapter.select(hit.id);return;}
-      queueMicrotask(()=>{if(innerWidth>=1100&&!this.manualInspectorClosed&&!this.isClient()&&this.app.adapter.selected)this.panel('right',true);});
+      const hit=this.app.scene.pick(e.clientX,e.clientY);
+      queueMicrotask(()=>{
+        if(this.isClient()||!hit?.id)return;
+        if(this.app.adapter.selected?.item_id===hit.id&&this.app.adapter.selected.assistant_carcass?.spec.kitchenModel){this.app.aiKitchen?.edit();return;}
+        if(innerWidth>=1100&&!this.manualInspectorClosed&&this.app.adapter.selected)this.panel('right',true);
+      });
     },{capture:true});
     // Window capture runs before legacy document-level UI shortcuts. Furniture
     // Escape goes to Interaction unchanged, including its one-command rollback.
@@ -85,6 +90,7 @@ export class PlannerWorkspace {
   isClient(){return document.body.classList.contains('planner-client');}
   panel(side,open,{manual=false,focus=false}={}) {
     if(this.isClient())return;
+    if(side==='right'&&open&&this.app.adapter.selected?.assistant_carcass?.spec.kitchenModel&&this.app.aiKitchen){this.app.aiKitchen.edit();return;}
     if(side==='right'&&manual)this.manualInspectorClosed=!open;
     this[side]=open;if(!open&&this[side==='left'?'right':'left'])this.lastPanel=side==='left'?'right':'left';if(open){this.lastPanel=side;if(innerWidth<1700)this[side==='left'?'right':'left']=false;if(innerWidth<1100)this.cutlist.open=false;}
     this.update();this.resize();

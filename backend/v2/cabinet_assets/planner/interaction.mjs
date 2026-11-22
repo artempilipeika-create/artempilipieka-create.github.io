@@ -68,13 +68,14 @@ export class Interaction {
     if(hit?.featureId&&this.equipment?.down(e,hit))return;
     if(!hit?.id){this.scene.hover(null);return;}
     const it=this.adapter.items.find(x=>x.item_id===hit.id);if(!it)return;
-    if(this.scene.wardrobeMotion?.open&&this.scene.wardrobeMotion.id===cabinetId(it)&&
+    if(!it.assistant_carcass?.spec.kitchenModel&&this.scene.wardrobeMotion?.open&&this.scene.wardrobeMotion.id===cabinetId(it)&&
        (it.item_id.endsWith('-face')||/:door-(?:(?:upper|lower)-)?(?:left|right)$/.test(it.item_id))){
       this.consume(e);this.gesture={pointerId:e.pointerId,drawer:it,x:e.clientX,y:e.clientY};
       this.canvas.setPointerCapture(e.pointerId);return;
     }
     this.consume(e);
-    if(this.scene.cabinetSelection!==cabinetId(it)||this.scene.xrayEnabled)this.scene.cabinetSelection=null;
+    if(it.assistant_carcass?.spec.kitchenModel)this.scene.cabinetSelection=cabinetId(it);
+    else if(this.scene.cabinetSelection!==cabinetId(it)||this.scene.xrayEnabled)this.scene.cabinetSelection=null;
     this.scene.pickedInterior=hit.part||null;
     this.adapter.select(it.item_id);
     if(this.scene.cabinetSelection){

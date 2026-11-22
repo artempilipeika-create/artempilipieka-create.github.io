@@ -204,7 +204,8 @@ class FurnitureItem(StrictModel):
                 edge='x0' if setting.anchor=='back' else 'x1'
                 offset=(self.blank_width_mm-cut.width)/2 if setting.anchor=='center' else setting.offset
                 if (setting.system!=cut.lightSystem or setting.face!=cut.face or cut.edge!=edge or
-                    cut.offset is None or abs(cut.offset-offset)>.00001):
+                    cut.offset is None or abs(cut.offset-offset)>.00001 or setting.fullPanel and
+                    ((cut.start or 0)!=(setting.start or 0) or (cut.end or 0)!=(setting.end or 0))):
                     raise ValueError('Положение паза подсветки должно совпадать с анкетой шкафа.')
         grip=self.blank_edge_pull
         required_edges=set()
@@ -331,7 +332,10 @@ class FurnitureItem(StrictModel):
                 raise ValueError('Заготовка не имеет цоколя и столешницы')
             if self.body_height not in (None,self.height):
                 raise ValueError('Высота заготовки должна соответствовать её геометрии')
-            if self.shelves or self.drawers or self.worktop_fixture or self.plinthMaterialId:
+            if f:=self.worktop_fixture:
+                if not group or group.spec.kitchenModel!='base-sink' or key!='bottom' or f.kind!='sink' or abs(f.offset_x)+f.width/2>self.width/2 or f.front_offset+f.depth>580:
+                    raise ValueError('Проверьте мойку и её положение на столешнице.')
+            if self.shelves or self.drawers or self.plinthMaterialId:
                 raise ValueError('У отдельной детали нет корпусного наполнения')
             return self
         if self.width<150 or self.height<250 or self.depth<200 or (self.body_height is not None and self.body_height<150):

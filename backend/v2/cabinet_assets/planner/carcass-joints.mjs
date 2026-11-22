@@ -179,9 +179,21 @@ export function nativeCarcassJoints(items,{checkOpposing=true}={}) {
   const byId=new Map(items.map(it=>[it.item_id,it])),out=[];
   for (const panel of items) {
     const meta=panel.assistant_carcass;
+    if(meta?.spec.kitchenModel==='base-sink'&&panel.blank_axis==='back'&&panel.item_id.startsWith(meta.group_id+':rail-')){
+      const angle=panel.rotation??0,centre=localPoint(panel,angle);
+      for(const side of ['left','right']){
+        const host=byId.get(meta.group_id+':'+side);
+        if(!host)throw Error('Отсутствует боковина шкафа под мойку.');
+        const point=worldPoint({x:centre.x+(side==='left'?-1:1)*panel.width/2,z:centre.z},angle);
+        const [source_file,source_sha256]=fittings.confirmat;
+        out.push({name:'Конфирмат 7×50 · '+panel.name,joint_part:'confirmat',joined_panel_id:panel.item_id,host_blank_id:host.item_id,
+          source_file,source_sha256,rotation:(angle+(side==='left'?0:180))%360,position:{...point,y:panel.elevation_mm+panel.height/2},elastic_resize:false});
+      }
+      continue;
+    }
     const shelfScheme=fixedShelfScheme(panel);
     if (!shelfScheme && !meta?.spec.joints) continue;
-    const rail=meta?.spec.kitchenModel==='base-swing'&&['rail-front','rail-rear'].some(key=>panel.item_id===meta.group_id+':'+key);
+    const rail=['base-swing','base-vitrine'].includes(meta?.spec.kitchenModel)&&['rail-front','rail-rear'].some(key=>panel.item_id===meta.group_id+':'+key);
     const level=rail?'top':['top','bottom'].find(key=>panel.item_id===meta?.group_id+':'+key);
     if (!shelfScheme && (!level||meta.spec[level+'Fit']==='overlay')) continue;
     const scheme=shelfScheme || meta.spec.joints[level];

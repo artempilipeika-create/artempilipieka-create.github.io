@@ -43,7 +43,7 @@ export function lightingCut(part,parts,setting){
  const width=system.groove_width_mm,depth=system.groove_depth_mm;
  const spans=lightSpans(part,parts,setting.face),room=spans.rooms.find(r=>r.key===setting.niche);
  if(setting.niche&&!room)throw Error('Для подсветки выберите существующую нишу.');
- const [low,high]=room?[room.low,room.high]:spans.range;
+ const [low,high]=room?[room.low,room.high]:setting.fullPanel?[0,p.blank_length_mm]:spans.range;
  const across=p.blank_width_mm,length=p.blank_length_mm;
  const centered=setting.anchor==='center';
  const offset=centered?(across-width)/2:setting.offset;

@@ -21,3 +21,19 @@
 .ai-fitted img{height:46px;width:100%;object-fit:contain}.ai-fitted figcaption{font-size:10.5px;line-height:1.35}
 
 .ai-kitchen-drawing svg{display:block;width:100%;max-height:300px}
+#ai-kitchen-dialog{width:min(1240px,96vw);max-width:96vw;max-height:95dvh}
+#ai-kitchen-dialog[open]{display:flex;flex-direction:column}#ai-kitchen-dialog header,#ai-kitchen-dialog footer{flex:none}
+.ai-kitchen-body{min-height:0;overflow:auto;grid-template-columns:minmax(0,1.16fr) minmax(0,1fr);gap:28px}
+.ai-kitchen-body aside{position:sticky;top:0}.ai-kitchen-tabs{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 18px}
+.ai-kitchen-tabs button{min-height:36px;border:1px solid #c8d4cc;border-radius:7px;background:white;padding:6px 12px}
+.ai-kitchen-tabs [aria-current]{background:#245743;color:white;border-color:#245743}.ai-kitchen-grid{align-items:start;gap:12px}
+.ai-kitchen-grid h3{margin:8px 0 0;font-size:15px}.ai-span{grid-column:1/-1}.ai-kitchen-grid fieldset{border:1px solid #c9d7cd;border-radius:8px;padding:10px}
+.ai-kitchen-grid fieldset label{display:flex;align-items:center;gap:6px}.ai-kitchen-grid input[type=checkbox]{width:auto}
+.ai-presets{display:flex;gap:6px;align-self:end}.ai-picker{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}.ai-picker strong,.ai-material-results{grid-column:1/-1}
+.ai-material-results{display:grid;max-height:170px;overflow:auto}.ai-material-results button,.ai-feet button{text-align:left;background:white;border:1px solid #d4ded7}
+.ai-material-results i,.ai-material-results img{display:inline-block;width:24px;height:24px;vertical-align:middle;margin-right:7px}
+.ai-feet>div{max-height:260px;overflow:auto;display:grid;gap:4px}.ai-feet figure{margin:0;display:flex;gap:12px;align-items:center}.ai-feet img{width:67px;height:48px;object-fit:contain}
+.ai-feet [aria-pressed=true]{outline:2px solid #267359;outline-offset:-2px}
+.ai-project-materials{margin:8px 0}.ai-kitchen-body .ai-fitted{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+#ai-kitchen-dialog .wardrobe-live canvas{height:clamp(250px,44vh,470px);cursor:pointer}
+@media(max-width:720px){#ai-kitchen-dialog{width:97vw;max-width:97vw}.ai-kitchen-body{display:flex;flex-direction:column;gap:12px}.ai-kitchen-body form,.ai-kitchen-body aside{width:100%}.ai-kitchen-body aside{position:static}#ai-kitchen-dialog .wardrobe-live canvas{height:220px}.ai-kitchen-tabs button{padding:5px 8px}.ai-kitchen-grid{gap:8px}}

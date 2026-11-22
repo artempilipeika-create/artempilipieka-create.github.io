@@ -945,7 +945,7 @@
       const meta=item.assistant_carcass;
       // The overlaid bottom spans the cabinet. It anchors a single worktop member
       // even when a cabinet has several shelves, doors or independently edited panels.
-      const assembledBase=meta?.spec.kitchenModel==='base-swing'&&item.item_id===meta.group_id+':bottom';
+      const assembledBase=meta?.spec.kitchenModel?.startsWith('base-')&&item.item_id===meta.group_id+':bottom';
       const it=assembledBase?{...item,elevation_mm:meta.position.elevation_mm,
         base_height:item.elevation_mm-meta.position.elevation_mm,worktop_thickness:38,
         height:meta.spec.height+item.elevation_mm-meta.position.elevation_mm}:item;

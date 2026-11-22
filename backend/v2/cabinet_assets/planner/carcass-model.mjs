@@ -171,11 +171,13 @@ export function buildCarcass(input={},options={}){
     const a=supports[section],b=supports[section+1];
     const value=s.shelfChoices?.[section]?.[i]??defaultShelf;
     const {kind,thickness,hardware,scheme}=choice(value,t);
-    const gap=scheme?0:Math.max(s.shelfGap,kind==='glass'&&!options.legacyGlassGap?1:0,fittingGap(hardware.article));
+    const kitchenGlass=s.kitchenStandard===2&&kind==='glass';
+    const setback=kitchenGlass?Math.max(1,s.shelfSetback):s.shelfSetback,centre=(innerRear-setback)/2;
+    const gap=scheme?0:Math.max(s.shelfGap,kitchenGlass?4:kind==='glass'&&!options.legacyGlassGap?1:0,fittingGap(hardware.article));
     if(scheme && D-innerRear-s.shelfSetback < (scheme==='cam_dowel'?216:152))throw Error('Для выбранного крепежа недостаточно глубины полки после отступа.');
     const label=kind==='glass'?'Стекло '+thickness+' мм · полка ':'Полка ';
     add('shelf-'+section+'-'+i,label+(i+1)+(s.sections>1?' · секция '+(section+1):''),'horizontal',
-      widths[section]-2*gap,D-innerRear-s.shelfSetback,thickness,(a.x+b.x)/2,y,shelfCentre,kind==='glass'?'0000':edge(),binding(a,b,gap,shelfCentre-a.z),value===defaultShelf?null:value);
+      widths[section]-2*gap,D-innerRear-setback,thickness,(a.x+b.x)/2,y,centre,kind==='glass'?'0000':edge(),binding(a,b,gap,centre-a.z),value===defaultShelf?null:value);
   }
   function checkOpenings(rooms){
     if(rooms.some(r=>r.top-r.bottom<60))throw Error('Над полкой с Gola не хватает места. Увеличьте высоту ниши до 60 мм.');
