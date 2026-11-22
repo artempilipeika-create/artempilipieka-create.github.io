@@ -226,7 +226,7 @@ def test_z1_private_archive_preserves_complete_bytes_and_rejects_wrong_source(tm
         aks.private_z1_sources(True)
 
 
-def test_catalogue_pulls_publish_both_views_and_keep_their_purchased_article():
+def test_catalogue_pulls_show_only_supplier_photographs_and_keep_their_purchased_article():
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
     from backend.v2.assistant_model import DOOR_HARDWARE, FacadeHandle
@@ -244,9 +244,9 @@ def test_catalogue_pulls_publish_both_views_and_keep_their_purchased_article():
         photo = pictures['aks-' + sku]
         assert photo['pictured_article'] == sku and photo['source_url'].startswith('https://aks.by/')
         assert (photo['pitch_mm'], photo['length_mm'], photo['finish']) == (part['pitch'], part['length'], part['finish'])
-        for view in ('file', 'model_file'):
-            response = client.get(asset_root + photo[view])
-            assert response.status_code == 200 and response.content[8:12] == b'WEBP'
+        assert 'model_file' not in photo and photo['file'] == f'aks-{sku}.webp'
+        response = client.get(asset_root + photo['file'])
+        assert response.status_code == 200 and response.content[8:12] == b'WEBP'
         data = {'article': sku, 'edge': 'top', 'from': 'center', 'offset': 0, 'inset': 50}
         handle = FacadeHandle.model_validate(data)
         handle.check_size(part['length'], 600)

@@ -76,10 +76,15 @@ export class WardrobePreview{
         this.bounds.expandByPoint(v.add(new THREE.Vector3(it.width/2000,it.height*.001,it.depth/2000)));
       }
     }
-    if(this.root.hidden){this.motion.reset();this.motion.show(groupId);}
+    const interior=slot!=null;
+    if(this.root.hidden||interior!==(this.slot!=null)){
+      this.motion.reset();
+      if(interior)this.motion.show(groupId);
+      this.canvas.setAttribute('aria-label',interior?'Открытый шкаф с внутренними фасадами':'Шкаф с выбранной фурнитурой');
+    }
     if(this.slot!==slot&&this.motion.requested?.split('-')[0]!==String(slot))this.motion.requested=null;
     this.slot=slot;
-    const bank=built.drawerBanks?.[slot],count=bank?.faces.length||0;
+    const bank=interior?built.drawerBanks?.[slot]:null,count=bank?.faces.length||0;
     if(this.select.dataset.bank!==slot+':'+count){
       this.select.replaceChildren(new Option('Все шуфляды',''),...Array.from({length:count},(_,i)=>new Option('Шуфляда '+(i+1),slot+'-'+i)));
       this.select.dataset.bank=slot+':'+count;
@@ -97,6 +102,7 @@ export class WardrobePreview{
     this.root.hidden=false;this.invalidate();
   }
   pick(e){
+    if(this.slot==null)return;
     const rect=this.canvas.getBoundingClientRect();
     this.ray.setFromCamera({x:(e.clientX-rect.left)*2/rect.width-1,y:1-(e.clientY-rect.top)*2/rect.height},this.camera);
     const hit=this.ray.intersectObject(this.model,true).find(h=>h.object.visible&&h.object.isMesh);

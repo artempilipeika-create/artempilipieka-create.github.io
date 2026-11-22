@@ -123,7 +123,8 @@
 .wardrobe-live>div{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px}
 .wardrobe-live h3{margin:0;font-size:15px}
 #planner-assistant-dialog .wardrobe-live select{max-width:60%;margin:0;padding:3px 6px}
-.wardrobe-live canvas{display:block;width:100%;height:clamp(180px,27vh,290px);transform:scaleY(-1);cursor:pointer}
+.wardrobe-live canvas{display:block;width:100%;height:clamp(180px,27vh,290px);transform:scaleY(-1)}
+.wardrobe-live:has(select:not([hidden])) canvas{cursor:pointer}
 .assistant-visuals>.assistant-drawing{position:static}
 @media(min-width:641px){.assistant-visuals{position:sticky;top:0}.assistant-visuals:has(.wardrobe-live:not([hidden])) .assistant-drawing{min-height:215px;grid-template-rows:auto minmax(120px,18vh) auto auto}}
 @media(max-width:640px){.assistant-visuals{order:-1}.assistant-visuals:has(.wardrobe-live:not([hidden])){grid-template-columns:1fr 1fr;align-items:start;gap:4px}.wardrobe-live canvas{height:148px}.wardrobe-live>div{display:grid;padding:4px}.wardrobe-live h3{font-size:13px}#planner-assistant-dialog .wardrobe-live select{max-width:100%;font-size:12px}#planner-assistant-dialog .assistant-visuals:has(.wardrobe-live:not([hidden])) .assistant-drawing{min-height:0;grid-template-rows:145px auto;position:static;order:0}}
@@ -221,11 +222,6 @@
 .wardrobe-handle-cards button[aria-disabled="true"]{color:#566059;background:#f4f5f2}
 .wardrobe-handle-cards button small{font-weight:400;font-size:.72rem}
 
-.wardrobe-pull-options button{grid-template-rows:auto auto auto 1fr;align-content:start;align-items:start;text-align:left;padding:7px 9px;gap:3px}
-.wardrobe-pull-options img{height:clamp(58px,9vh,92px);margin-bottom:3px}
-.wardrobe-pull-options strong{font-size:.83rem}
-.wardrobe-pull-options span{font-size:.79rem;color:#28523f;font-variant-numeric:tabular-nums}
-.wardrobe-pull-options small{color:#465950}
 .wardrobe-pull-selected{display:block;margin-top:6px;font-size:.9rem;color:#184c35}
 .wardrobe-handle-axes{display:flex;gap:6px;flex-wrap:wrap}
 .wardrobe-handle-axes [aria-pressed=true]{background:#245b47;color:#fff}

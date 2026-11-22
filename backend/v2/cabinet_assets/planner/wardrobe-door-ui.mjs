@@ -23,11 +23,11 @@ const families=[
 ];
 const photosByArticle=Object.fromEntries(Object.values(photos).map(p=>[p.pictured_article,p]));
 const familyOf=h=>h?.article==='118124'?'golaL':h?.article==='118129'?'golaC':doorHardware[h?.article]?.family??'none';
-function productImage(p){
- const img=el('img');img.src='/account/planner/door-photos/'+p.file;img.alt=p.model;img.width=225;img.height=130;return img;
+function productImage(p,alt=p.model){
+ const img=el('img');img.src='/account/planner/door-photos/'+p.file;img.alt=alt;img.width=225;img.height=130;return img;
 }
 const categories=[
- ['rail','Рейлинговые',['rail']],['surface','Скобы',['ak700','cobra','grafitti','margarita','ps15']],['edge','Торцевые',['monblan']],
+ ['rail','Рейлинговые ручки AKS',['rail']],['surface','Скобы',['ak700','cobra','grafitti','margarita','ps15']],['edge','Торцевые',['monblan']],
  ['inset','Врезные',['insetL','insetC']],['gola','Gola',['golaL','golaC']]
 ];
 const bracketSeries=[['ak700','AK700'],['cobra','COBRA'],['grafitti','GRAFITTI'],['margarita','MARGARITA'],['ps15','PS15/C15']];
@@ -38,22 +38,16 @@ function cataloguePullCards(ui,panel,setting,family,choose){
  const product=doorHardware[setting?.article];
  const pitch=ui.pullPitch??(product?.family===family?product.pitch:pitches.includes(128)?128:pitches[0]);
  if(pitches.length>1)ui.select(panel,'Межосевое расстояние',pitches.map(mm=>[mm,mm+' мм']),pitch,v=>{ui.pullPitch=Number(v);ui.render();});
- const views=el('div');views.className='wardrobe-handle-axes';views.setAttribute('role','group');views.setAttribute('aria-label','Изображение ручки');
- for(const [value,label] of [['photo','Фото АКС'],['model','Модель БАЗИС']]){
-  const button=btn(label,()=>{ui.pullView=value;ui.render();});
-  button.setAttribute('aria-pressed',String((ui.pullView??'photo')===value));views.append(button);
- }
- panel.append(views);
- const grid=el('div');grid.className='wardrobe-handle-cards wardrobe-pull-options';grid.setAttribute('role','group');grid.setAttribute('aria-label','Артикулы ручек');
+ const grid=el('div');grid.className='wardrobe-prime-cards';grid.setAttribute('role','group');grid.setAttribute('aria-label','Артикулы ручек');
  for(const [article,p] of products.filter(([,row])=>row.pitch===pitch).sort((a,b)=>a[1].length-b[1].length||a[1].finish.localeCompare(b[1].finish,'ru'))){
-  const photo=photosByArticle[article],model=ui.pullView==='model';
+  const photo=photosByArticle[article],name=p.model+' · '+p.finish+' · AKS '+article;
   const card=btn('',()=>choose(family,article));card.dataset.pullArticle=article;
   card.setAttribute('aria-pressed',String(setting?.article===article));
-  const img=productImage({...photo,file:model?photo.model_file:photo.file,model:p.model+' · '+p.finish+' · AKS '+article});
-  img.loading='lazy';
-  card.append(img,el('strong',p.model+' · '+p.finish),el('span','AKS '+article),
-   el('small','Длина '+p.length+' мм'+(p.hollow?' · полая сталь':'')));
-  if(!model&&photo.shared_image_articles?.length>1)card.append(el('small','Фото серии АКС'));
+  const figure=el('figure'),caption=el('figcaption',name),img=productImage(photo,name);
+  figure.className='fitting-card';img.loading='lazy';
+  const size='Межосевое '+p.pitch+' мм · длина '+p.length+' мм'+(p.hollow?' · полая сталь':'');
+  caption.append(el('br'),el('small',size+(photo.shared_image_articles?.length>1?' · фото серии':'')));
+  figure.append(img,caption);card.append(figure);
   grid.append(card);
  }
  panel.append(grid);

@@ -242,8 +242,7 @@
       "79084",
       "15350",
       "79078"
-    ],
-    "model_file": "model-79080.webp"
+    ]
   },
   "aks-89074": {
     "file": "aks-89074.webp",
@@ -261,8 +260,7 @@
       "89076",
       "89078",
       "89080"
-    ],
-    "model_file": "model-89074.webp"
+    ]
   },
   "aks-112409": {
     "file": "aks-112409.webp",
@@ -280,8 +278,7 @@
       "112410",
       "89072",
       "112408"
-    ],
-    "model_file": "model-112409.webp"
+    ]
   },
   "aks-61544": {
     "file": "aks-61544.webp",
@@ -302,8 +299,7 @@
       "11735",
       "61542",
       "11769"
-    ],
-    "model_file": "model-61544.webp"
+    ]
   },
   "aks-112412": {
     "file": "aks-112412.webp",
@@ -320,8 +316,7 @@
       "112412",
       "112423",
       "112418"
-    ],
-    "model_file": "model-112412.webp"
+    ]
   },
   "aks-11782": {
     "file": "aks-11782.webp",
@@ -341,8 +336,7 @@
       "79084",
       "15350",
       "79078"
-    ],
-    "model_file": "model-11782.webp"
+    ]
   },
   "aks-15865": {
     "file": "aks-15865.webp",
@@ -361,8 +355,7 @@
       "94132",
       "11703",
       "11723"
-    ],
-    "model_file": "model-15865.webp"
+    ]
   },
   "aks-11731": {
     "file": "aks-11731.webp",
@@ -383,8 +376,7 @@
       "11735",
       "61542",
       "11769"
-    ],
-    "model_file": "model-11731.webp"
+    ]
   },
   "aks-89076": {
     "file": "aks-89076.webp",
@@ -402,8 +394,7 @@
       "89076",
       "89078",
       "89080"
-    ],
-    "model_file": "model-89076.webp"
+    ]
   },
   "aks-112410": {
     "file": "aks-112410.webp",
@@ -421,8 +412,7 @@
       "112410",
       "89072",
       "112408"
-    ],
-    "model_file": "model-112410.webp"
+    ]
   },
   "aks-61546": {
     "file": "aks-61546.webp",
@@ -443,8 +433,7 @@
       "11735",
       "61542",
       "11769"
-    ],
-    "model_file": "model-61546.webp"
+    ]
   },
   "aks-112423": {
     "file": "aks-112423.webp",
@@ -461,8 +450,7 @@
       "112412",
       "112423",
       "112418"
-    ],
-    "model_file": "model-112423.webp"
+    ]
   },
   "aks-11783": {
     "file": "aks-11783.webp",
@@ -482,8 +470,7 @@
       "79084",
       "15350",
       "79078"
-    ],
-    "model_file": "model-11783.webp"
+    ]
   },
   "aks-11691": {
     "file": "aks-11691.webp",
@@ -502,8 +489,7 @@
       "94132",
       "11703",
       "11723"
-    ],
-    "model_file": "model-11691.webp"
+    ]
   },
   "aks-11734": {
     "file": "aks-11734.webp",
@@ -524,8 +510,7 @@
       "11735",
       "61542",
       "11769"
-    ],
-    "model_file": "model-11734.webp"
+    ]
   },
   "aks-79084": {
     "file": "aks-79084.webp",
@@ -545,8 +530,7 @@
       "79084",
       "15350",
       "79078"
-    ],
-    "model_file": "model-79084.webp"
+    ]
   },
   "aks-94132": {
     "file": "aks-94132.webp",
@@ -565,8 +549,7 @@
       "94132",
       "11703",
       "11723"
-    ],
-    "model_file": "model-94132.webp"
+    ]
   },
   "aks-89078": {
     "file": "aks-89078.webp",
@@ -584,8 +567,7 @@
       "89076",
       "89078",
       "89080"
-    ],
-    "model_file": "model-89078.webp"
+    ]
   },
   "aks-89070": {
     "file": "aks-89070.webp",
@@ -597,8 +579,7 @@
     "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142861",
     "image_url": "https://aks.by/upload/iblock/d56/2gu2u7l7idexjmw0jt0cuwyn0890jwc2.jpg",
     "pitch_mm": 192,
-    "length_mm": 250,
-    "model_file": "model-89070.webp"
+    "length_mm": 250
   },
   "aks-11735": {
     "file": "aks-11735.webp",
@@ -619,8 +600,7 @@
       "11735",
       "61542",
       "11769"
-    ],
-    "model_file": "model-11735.webp"
+    ]
   },
   "aks-89080": {
     "file": "aks-89080.webp",
@@ -638,8 +618,7 @@
       "89076",
       "89078",
       "89080"
-    ],
-    "model_file": "model-89080.webp"
+    ]
   },
   "aks-15350": {
     "file": "aks-15350.webp",
@@ -659,8 +638,7 @@
       "79084",
       "15350",
       "79078"
-    ],
-    "model_file": "model-15350.webp"
+    ]
   },
   "aks-11703": {
     "file": "aks-11703.webp",
@@ -679,8 +657,7 @@
       "94132",
       "11703",
       "11723"
-    ],
-    "model_file": "model-11703.webp"
+    ]
   },
   "aks-79078": {
     "file": "aks-79078.webp",
@@ -700,8 +677,7 @@
       "79084",
       "15350",
       "79078"
-    ],
-    "model_file": "model-79078.webp"
+    ]
   },
   "aks-89072": {
     "file": "aks-89072.webp",
@@ -719,8 +695,7 @@
       "112410",
       "89072",
       "112408"
-    ],
-    "model_file": "model-89072.webp"
+    ]
   },
   "aks-112408": {
     "file": "aks-112408.webp",
@@ -738,8 +713,7 @@
       "112410",
       "89072",
       "112408"
-    ],
-    "model_file": "model-112408.webp"
+    ]
   },
   "aks-61542": {
     "file": "aks-61542.webp",
@@ -760,8 +734,7 @@
       "11735",
       "61542",
       "11769"
-    ],
-    "model_file": "model-61542.webp"
+    ]
   },
   "aks-112418": {
     "file": "aks-112418.webp",
@@ -778,8 +751,7 @@
       "112412",
       "112423",
       "112418"
-    ],
-    "model_file": "model-112418.webp"
+    ]
   },
   "aks-11723": {
     "file": "aks-11723.webp",
@@ -798,8 +770,7 @@
       "94132",
       "11703",
       "11723"
-    ],
-    "model_file": "model-11723.webp"
+    ]
   },
   "aks-11769": {
     "file": "aks-11769.webp",
@@ -820,8 +791,7 @@
       "11735",
       "61542",
       "11769"
-    ],
-    "model_file": "model-11769.webp"
+    ]
   },
   "aks-68421": {
     "file": "aks-68421.webp",
@@ -837,8 +807,7 @@
     "shared_image_articles": [
       "68421",
       "68423"
-    ],
-    "model_file": "model-68421.webp"
+    ]
   },
   "aks-68423": {
     "file": "aks-68423.webp",
@@ -854,8 +823,7 @@
     "shared_image_articles": [
       "68421",
       "68423"
-    ],
-    "model_file": "model-68423.webp"
+    ]
   },
   "aks-68424": {
     "file": "aks-68424.webp",
@@ -867,8 +835,7 @@
     "source_url": "https://aks.by/74829-106050-p?OFFER_ID=106081",
     "image_url": "https://aks.by/upload/iblock/01a/0wmz9c9omi50yqgsh1yoju9ps9zq4wet.jpg",
     "pitch_mm": 320,
-    "length_mm": 400,
-    "model_file": "model-68424.webp"
+    "length_mm": 400
   },
   "aks-117956": {
     "file": "aks-117956.webp",
@@ -880,8 +847,7 @@
     "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146472",
     "image_url": "https://aks.by/upload/iblock/e57/2p38hdehd90jfz8hrjc4o4st5gcg6fl7.jpg",
     "pitch_mm": 128,
-    "length_mm": 178,
-    "model_file": "model-117956.webp"
+    "length_mm": 178
   },
   "aks-117958": {
     "file": "aks-117958.webp",
@@ -897,8 +863,7 @@
     "shared_image_articles": [
       "117958",
       "117961"
-    ],
-    "model_file": "model-117958.webp"
+    ]
   },
   "aks-117955": {
     "file": "aks-117955.webp",
@@ -915,8 +880,7 @@
       "117955",
       "117959",
       "117962"
-    ],
-    "model_file": "model-117955.webp"
+    ]
   },
   "aks-117960": {
     "file": "aks-117960.webp",
@@ -928,8 +892,7 @@
     "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146475",
     "image_url": "https://aks.by/upload/iblock/2dd/cn5sm9d80xvxkapv8q2igd3l6y098sxt.jpg",
     "pitch_mm": 192,
-    "length_mm": 242,
-    "model_file": "model-117960.webp"
+    "length_mm": 242
   },
   "aks-117961": {
     "file": "aks-117961.webp",
@@ -945,8 +908,7 @@
     "shared_image_articles": [
       "117958",
       "117961"
-    ],
-    "model_file": "model-117961.webp"
+    ]
   },
   "aks-117959": {
     "file": "aks-117959.webp",
@@ -963,8 +925,7 @@
       "117955",
       "117959",
       "117962"
-    ],
-    "model_file": "model-117959.webp"
+    ]
   },
   "aks-117963": {
     "file": "aks-117963.webp",
@@ -976,8 +937,7 @@
     "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146478",
     "image_url": "https://aks.by/upload/iblock/c8f/rcmynvqla3z3e9tguxeabjwpk5fde5xi.jpg",
     "pitch_mm": 320,
-    "length_mm": 370,
-    "model_file": "model-117963.webp"
+    "length_mm": 370
   },
   "aks-117964": {
     "file": "aks-117964.webp",
@@ -989,8 +949,7 @@
     "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146479",
     "image_url": "https://aks.by/upload/iblock/e12/bq8ind5p8z9sma43z1woeeszxfzwviji.jpg",
     "pitch_mm": 320,
-    "length_mm": 370,
-    "model_file": "model-117964.webp"
+    "length_mm": 370
   },
   "aks-117962": {
     "file": "aks-117962.webp",
@@ -1007,8 +966,7 @@
       "117955",
       "117959",
       "117962"
-    ],
-    "model_file": "model-117962.webp"
+    ]
   },
   "aks-104221": {
     "file": "aks-104221.webp",
@@ -1020,8 +978,7 @@
     "source_url": "https://aks.by/108118-136290-p?OFFER_ID=136300",
     "image_url": "https://aks.by/upload/iblock/bff/ti6p2zyt5p73no06ucslf2npbs9i9tgj.jpg",
     "pitch_mm": 128,
-    "length_mm": 160,
-    "model_file": "model-104221.webp"
+    "length_mm": 160
   },
   "aks-104225": {
     "file": "aks-104225.webp",
@@ -1033,8 +990,7 @@
     "source_url": "https://aks.by/108118-136290-p?OFFER_ID=136301",
     "image_url": "https://aks.by/upload/iblock/009/dlmofqi4lk4354vp7r4942swfd8z59n9.jpg",
     "pitch_mm": 128,
-    "length_mm": 160,
-    "model_file": "model-104225.webp"
+    "length_mm": 160
   },
   "aks-52188": {
     "file": "aks-52188.webp",
@@ -1050,8 +1006,7 @@
     "shared_image_articles": [
       "52188",
       "52906"
-    ],
-    "model_file": "model-52188.webp"
+    ]
   },
   "aks-52906": {
     "file": "aks-52906.webp",
@@ -1067,7 +1022,6 @@
     "shared_image_articles": [
       "52188",
       "52906"
-    ],
-    "model_file": "model-52906.webp"
+    ]
   }
 }

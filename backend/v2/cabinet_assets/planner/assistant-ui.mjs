@@ -9,6 +9,7 @@ import {hasSurround,surroundFace,surroundLayout} from './wardrobe-surround.mjs';
 import {prepareHeightFields,lowerBodyHeight,trimSides} from './wardrobe-trim-layout.mjs';
 import {heightControl,updateHeights,surroundControls,upperFrontTabs,upperFrontControls} from './wardrobe-surround-ui.mjs';
 import {doorControls,setDoorShelf,wireHandleDrag} from './wardrobe-door-ui.mjs';
+import {drawerFacadeKey} from './wardrobe-door-layout.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
 import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
@@ -629,8 +630,10 @@ export class AssistantUI{
    if(issue&&warning){warning.textContent=issue;warning.hidden=false;}
    else if(issue)this.description.textContent=issue;
    if(this.livePreview){
-    const visible=this.step===2&&this.interior==='drawer'&&(built.spec.front||built.drawerBanks?.some(Boolean));
-    try{this.livePreview.sync(visible?built:null,slot,this.mode.value==='update'?this.current:null,this.materialChanged);}
+    const drawers=this.step===2&&this.interior==='drawer',facades=this.step===3&&view==='fronts';
+    const visible=(drawers||facades)&&(built.spec.front||built.drawerBanks?.some(Boolean));
+    const previewSlot=drawers?slot:this.inspectInternalFronts?drawerFacadeKey(this.selectedDoor)?.slot:null;
+    try{this.livePreview.sync(visible?built:null,previewSlot,this.mode.value==='update'?this.current:null,this.materialChanged);}
     catch{this.livePreview.release();}
    }
   }catch(e){
