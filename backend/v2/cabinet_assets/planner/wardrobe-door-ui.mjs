@@ -321,7 +321,16 @@ export function doorControls(ui){
   const p=photosByArticle[h.article],source=el('a','АКС · арт. '+h.article);
   source.href=p.source_url;source.target='_blank';source.rel='noopener noreferrer';source.className='wardrobe-handle-source';panel.append(source);
   const pair=!drawer&&own&&raw.find(q=>q.slot==null&&q.side!==leaf.side&&q.key.replace(/(left|right)$/,'')===leaf.key.replace(/(left|right)$/,''));
-  if(pair&&(!hingeProduct(f,pair.key).frame||isFacadeProfile(h))){const mirror=btn('Зеркально на парную дверь',()=>{f.handles[pair.key]=isFacadeProfile(h)?{...h}:mirrorHandle(h);ui.changed(true);});mirror.dataset.handleMirror='';panel.append(mirror);}
+  if(pair&&!f.hinges?.[pair.key]?.push&&(!hingeProduct(f,pair.key).frame||isFacadeProfile(h))){
+   const mirror=btn('Зеркально на парную дверь',()=>{
+    const placement=isFacadeProfile(h)?{...h}:mirrorHandle(h);
+    if(isSurfacePull(doorHardware[h.article])){
+     try{handlePlacement(pair,placement);}catch(error){ui.output.textContent=error.message;return;}
+    }
+    f.handles[pair.key]=placement;ui.changed(true);
+   });
+   mirror.dataset.handleMirror='';panel.append(mirror);
+  }
  }
  if(!drawer&&!d&&f?.swing==='pair')panel.append(btn('Разделить выбранную дверь по полке',()=>{if(startDivision(ui,nominalSide(leaf.key),nominalSide(leaf.key),nominalSide(leaf.key)))ui.changed(true);}));
 }

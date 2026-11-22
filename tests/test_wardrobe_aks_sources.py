@@ -224,3 +224,34 @@ def test_z1_private_archive_preserves_complete_bytes_and_rejects_wrong_source(tm
     monkeypatch.setenv('MF_WARDROBE_BLUM_PARTS_KEY', AESGCM.generate_key(bit_length=256).hex())
     with pytest.raises(ValueError, match='открыть'):
         aks.private_z1_sources(True)
+
+
+def test_catalogue_pulls_publish_both_views_and_keep_their_purchased_article():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from backend.v2.assistant_model import DOOR_HARDWARE, FacadeHandle
+    from backend.v2.cabinet_ui import router
+    from backend.v2.three_d_document import _facade_handle_row
+
+    service = FastAPI()
+    service.include_router(router())
+    client = TestClient(service)
+    asset_root = '/account/planner/door-photos/'
+    pictures = client.get(asset_root + 'sources.json').json()
+    products = {sku: row for sku, row in DOOR_HARDWARE.items() if row.get('model')}
+    assert len(products) == 46
+    for sku, part in products.items():
+        photo = pictures['aks-' + sku]
+        assert photo['pictured_article'] == sku and photo['source_url'].startswith('https://aks.by/')
+        assert (photo['pitch_mm'], photo['length_mm'], photo['finish']) == (part['pitch'], part['length'], part['finish'])
+        for view in ('file', 'model_file'):
+            response = client.get(asset_root + photo[view])
+            assert response.status_code == 200 and response.content[8:12] == b'WEBP'
+        data = {'article': sku, 'edge': 'top', 'from': 'center', 'offset': 0, 'inset': 50}
+        handle = FacadeHandle.model_validate(data)
+        handle.check_size(part['length'], 600)
+        with pytest.raises(ValueError, match='край фасада'):
+            handle.check_size(part['length'] - 1, 600)
+        row = _facade_handle_row(data, {'width': 600, 'height': 2100})
+        assert (row['article'], row['qty'], row['unit']) == (sku, 1, 'set')
+        assert part['finish'] in row['name']
