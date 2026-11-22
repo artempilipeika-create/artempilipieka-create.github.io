@@ -29,12 +29,16 @@
         {
           "length_mm": 2000,
           "article": "89609",
-          "url": "https://aks.by/79036-109715-p?OFFER_ID=118550"
+          "url": "https://aks.by/79036-109715-p?OFFER_ID=118550",
+          "file": "Профиль алюминиевый врезной LIRA-1707 с экраном, цвет черный, 2м, AKS (89609).fr3d",
+          "sha": "cf5326cf0e02ca008f446b1bc5e038e73d51cc5d394e62dc3346b3ef56753c9b"
         },
         {
           "length_mm": 3000,
           "article": "89672",
-          "url": "https://aks.by/79036-109715-p?OFFER_ID=118552"
+          "url": "https://aks.by/79036-109715-p?OFFER_ID=118552",
+          "file": "Профиль алюминиевый врезной LIRA-1707 с экраном, цвет черный, 3м, AKS (89672).fr3d",
+          "sha": "5d96d041903c7b65e5613878599346e1f68cccba8c33fa9da3f25706d0e01572"
         }
       ],
       "end_cap": {

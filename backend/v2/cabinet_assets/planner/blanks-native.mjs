@@ -46,7 +46,7 @@ export function blankNativeItem(it,material,items=[],liraArticles=[]){
  material_assignments:{body:material},production_note:[it.production_note,upperNote,...(it.blank_machining??[]).map((op,i)=>{
   if(!op.lightSystem)return '';
   const m=lightingSystems[op.lightSystem],length=b.length-(op.start??0)-(op.end??0);
-  const article=op.lightSystem==='lira-1708'?liraArticles[i]:(m.profile?.stock.find(s=>s.length_mm>=length)?.article??m.led_article);
+  const article=liraArticles[i]??m.profile?.stock.find(s=>s.length_mm>=length)?.article??m.led_article;
   return m.label+(article?' · арт. '+article:'')+' · паз '+op.width+' × '+op.depth+' мм · длина '+length+' мм';
  }),it.blank_edge_pull&&!it.blank_edge_pull.grooveWidth?'Врезная ручка AKS '+it.blank_edge_pull.article+' · расчётная посадка, проверить на обрезке перед серией.':''].filter(Boolean).join('\n'),
  blank:{schema:1,length:b.length,width:b.width,thickness:b.thickness,axis:b.axis,

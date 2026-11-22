@@ -453,12 +453,20 @@ def z1_scenario(page, projects, seed):
     form = page.locator('#planner-assistant-dialog')
     field(form, 'Ширина, мм').fill('600')
     field(form, TOTAL_HEIGHT).fill('1200')
+    button(form, '2. Полки').click()
+    form.locator('[data-shelf-count="1"]').click()
+    button(form, '1. Корпус').click()
     button(form, 'Подсветка').click()
     field(form, 'Деталь для подсветки').select_option('left')
     profile = form.locator('[data-lighting-system="lira-1708"]')
     assert profile.locator('img').evaluate('async img=>{await img.decode();return img.naturalWidth>80}')
     profile.click()
     button(form,'Зеркально на вторую боковину').click()
+    field(form, 'Деталь для подсветки').select_option('shelf-0-0')
+    form.locator('[data-lighting-system="lira-17.5x6.5"]').click()
+    form.get_by_text('Отступы по длине', exact=True).click()
+    field(form, 'От левого края, мм').fill('12')
+    field(form, 'От правого края, мм').fill('23')
     open_surround(form)
     field(form, 'Добавить отдельный модуль антресоли').check()
     field(form, 'Высота модуля, мм').fill('500')
@@ -498,7 +506,16 @@ def z1_scenario(page, projects, seed):
     assert left['z']-left['depth']/2-front(parts['left'])==2
     assert right['z']-right['depth']/2==front(parts['right'])
     assert all(parts['mezz-door-'+side]['blank_front_frame']=='Z1' for side in ('left','right'))
+    def exported():
+        with page.expect_download() as event:
+            page.locator('#export-bazis').click()
+        return json.loads(Path(event.value.path()).read_text())
+
+    before = next(row for row in exported()['items'] if row.get('wardrobe_lira') and row['article']=='89609')
+    assert before['span_mm']==parts['shelf-0-0']['blank_length_mm']-12-23
     form=reopen(page,project_id)
+    button(form, '1. Корпус').click()
+    field(form, 'Ширина, мм').fill('720')
     button(form,'4. Фасады').click()
     field(form,'Выбранный фасад').select_option('door-left')
     expect(field(form,'Тип фасада')).to_have_value('Z1')
@@ -508,22 +525,28 @@ def z1_scenario(page, projects, seed):
     form.locator('[data-hinge-article="71T950A-ONS"]').click()
     finish(page,form,update=True)
     Scene.model_validate(projects.projects[project_id]['scene'])
-    with page.expect_download() as event:
-        page.locator('#export-bazis').click()
-    payload=json.loads(Path(event.value.path()).read_text())
-    assert payload['minimum_importer']=='9.9.49'
+    payload=exported()
+    assert payload['minimum_importer']=='9.9.50'
     rows=payload['items']
     lights=[r for r in rows if r.get('wardrobe_lira')]
-    assert len(lights)==2 and {r['face'] for r in lights}=={0,1}
+    assert len(lights)==3 and {r['face'] for r in lights}=={0,1}
+    assert sorted(r['article'] for r in lights)==['78319','78319','89609']
     for light in lights:
         board=next(r for r in rows if r.get('blank_item_id')==light['host_blank_id'])
         cut=board['blank']['machining'][light['cut_index']]
-        assert light['article']=='78319' and light['cabinet_block']['id']==board['cabinet_block']['id']
-        assert cut['lightSystem']=='lira-1708' and (cut['width'],cut['depth'])==(17,8)
+        assert light['cabinet_block']['id']==board['cabinet_block']['id']
+        if light['article']=='89609':
+            assert board['blank_item_id']==before['host_blank_id'] and board['blank']['axis']=='horizontal'
+            assert (cut['lightSystem'],cut['width'],cut['depth'],cut['start'],cut['end'])==('lira-17.5x6.5',17.5,6.5,12,23)
+            assert 'LIRA-1707' in light['source_file'] and '89609' in board['production_note']
+            assert light['span_mm']==before['span_mm']+120
+            print(f"PASS LIRA-1707: shelf groove with 12/23 mm margins resized from {before['span_mm']} to {light['span_mm']} mm on re-export")
+        else:
+            assert cut['lightSystem']=='lira-1708' and (cut['width'],cut['depth'])==(17,8)
         assert light['span_mm']==board['blank']['length']-cut.get('start',0)-cut.get('end',0)
     print('PASS LIRA-1708: supplier photo, mirrored grooves, saved cabinet, two native cut profiles with correct stock article')
     frames=[r for r in rows if r.get('wardrobe_z1_front')]
-    assert len(frames)==3 and all(r['source_file']=='MF_Z1_D1.fr3d' and r['target']['width']==301 for r in frames)
+    assert len(frames)==3 and all(r['source_file']=='MF_Z1_D1.fr3d' and r['target']['width']==361 for r in frames)
     hinges=[r for r in rows if r.get('wardrobe_z1_hinge')]
     assert len(hinges)==6
     assert {(r['article'],r['finish']) for r in hinges}=={('71T950A','ONS'),('70T950A.TL','NI')}
@@ -569,7 +592,7 @@ if __name__ == '__main__':
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
                          'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs', 'wardrobe-hinge-ui.mjs', 'wardrobe-hinges.mjs',
                          'bazis-drawers-import.js', 'kitchen-album-ui.mjs', 'presentation-capture.mjs',
-                         'wardrobe-lighting.mjs', 'wardrobe-lira-1708.json', 'wardrobe-lira-native.mjs', 'light-kit-photos/78319.webp'):
+                         'wardrobe-lighting.mjs', 'wardrobe-lira-1708.json', 'wardrobe-lira-native.mjs', 'vitrine-lighting.json', 'light-kit-photos/78319.webp'):
                 asset = page.request.get(ORIGIN + '/account/planner/' + name, max_redirects=0)
                 assert asset.status == 200 and asset.body() == (ROOT / 'backend/v2/cabinet_assets/planner' / name).read_bytes(), name
         surround_scenarios(page, projects, first_id)

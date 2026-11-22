@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from .assistant_model import DOOR_HARDWARE, LIGHTING, ROD_CATALOGUE, Z1_DATA
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.49'
+IMPORTER_VERSION = '9.9.50'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
@@ -59,19 +59,19 @@ def private_handle_sources(required):
 
 def private_lira_sources(required):
     sources = {}
-    for stock in LIGHTING['lira-1708']['profile']['stock']:
+    for stock in (*LIGHTING['lira-1708']['profile']['stock'], *LIGHTING['lira-17.5x6.5']['profile']['stock']):
         article = stock['article']
         encoded = os.environ.get(f'MF_WARDROBE_LIRA_{article}_FR3D')
         if not encoded:
             if required:
-                raise ValueError(f'Не установлен исходный профиль LIRA-1708 {article}.')
+                raise ValueError(f'Не установлен исходный профиль LIRA {article}.')
             continue
         try:
             source = b64decode(encoded, validate=True)
         except (ValueError, Base64Error) as exc:
-            raise ValueError(f'Не прочитан профиль LIRA-1708 {article}.') from exc
+            raise ValueError(f'Не прочитан профиль LIRA {article}.') from exc
         if sha256(source).hexdigest() != stock['sha']:
-            raise ValueError(f'Не подтверждён исходник профиля LIRA-1708 {article}.')
+            raise ValueError(f'Не подтверждён исходник профиля LIRA {article}.')
         sources[stock['file']] = source
     return sources
 
