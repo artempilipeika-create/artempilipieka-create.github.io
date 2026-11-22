@@ -29,6 +29,13 @@ EDGES = [M, 150, 532, 657, 823, 993, 1065, W - M]
 
 
 @lru_cache(maxsize=1)
+def fitting_photos():
+    products = json.loads((ASSETS / 'wardrobe-fittings.json').read_bytes())
+    return {part.get('article') or part['sku']:part for p in products.values()
+            for part in (p,*p.get('components',[])) if part.get('photo')}
+
+
+@lru_cache(maxsize=1)
 def pictures():
     from_catalogue = catalogue()['products']
     images = {}
@@ -49,6 +56,9 @@ def pictures():
     sources.update({p['article']:p['url'] for p in hinges if p.get('url')})
     rods = json.loads((ASSETS / 'rod-photos' / 'sources.json').read_bytes())
     sources.update({sku:r['source'] for sku,r in rods.items() if r.get('source')})
+    for article,part in fitting_photos().items():
+        images[article]=ASSETS / 'wardrobe-fitting-photos' / (part['photo']+'.webp')
+        sources[article]=part['photoSource']
     return images, sources
 
 
@@ -111,8 +121,12 @@ def draw(c, report, sheet, page_number, total, page_size=(W,H)):
     for row,height in rows:
         article=row['article']
         if path:=images.get(article):
-            c.drawImage(ImageReader(str(path)),M+8,y-height+6,EDGES[1]-M-20,height-12,
+            series=fitting_photos().get(article,{}).get('seriesPhoto')
+            caption=10 if series else 0
+            c.drawImage(ImageReader(str(path)),M+8,y-height+6+caption,EDGES[1]-M-20,height-12-caption,
                         preserveAspectRatio=True,anchor='c',mask='auto')
+            if series:
+                write(c,'Фото серии',M+8,y-height+12,EDGES[1]-M-16,9,False,MUTED)
         else:
             write(c,'Фото уточняется',M+8,y-height/2+8,EDGES[1]-M-16,10,False,MUTED)
         for i,(value,size,bold) in enumerate(cells(row),1):

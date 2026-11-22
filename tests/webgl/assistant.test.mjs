@@ -264,3 +264,16 @@ test('wardrobe lighting estimate survives applying and editing the cabinet witho
  apply('update',{...fields,lighting:{}});
  assert.equal(selectedCarcass(a).metadata.spec.lightKit,undefined);
 });
+
+test('create and edit retain AKS section hardware and door straighteners in every saved panel',()=>{
+ const {a}=setup(wardrobeCatalogue);
+ const f={id:'gridli',variant:'113950',section:0,level:0,offset:0};
+ const s=wardrobeSpec({...spec,width:600,shelves:0,sectionShelves:[0],front:{swing:'right',offset:90,autoHinges:true},
+   fittings:[f],doorFittings:{'door-right':{variant:'83332',quantity:1}}});
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'create',spec:s},{id:'hardware',selectedMaterials:selectedStock}));
+ a.select('hardware:top');
+ const next=structuredClone(selectedCarcass(a).metadata.spec);
+ next.fittings[0].frontInset=24;next.doorFittings['door-right'].quantity=2;
+ applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:next},{selectedMaterials:selectedStock}));
+ for(const it of a.items){assert.deepEqual(it.assistant_carcass.spec.fittings,next.fittings);assert.deepEqual(it.assistant_carcass.spec.doorFittings,next.doorFittings);}
+});
