@@ -244,7 +244,11 @@ def _facade_handle_row(handle,it):
         shape='L-образная' if product['family']=='insetL' else 'C-образная'
         span=it['height'] if handle['edge'] in ('left','right') else it['width']
         return _row('Ручка-профиль врезная AKS '+shape,span/1000,'m',article)
-    name=('Ручка-скоба AK700' if product['family']=='ak700' else 'Ручка торцевая MONBLAN')+' · '+str(product['pitch'])+' мм с крепежом'
+    if product.get('model'):
+        model='Ручка рейлинговая' if product['family']=='rail' else 'Ручка-скоба '+product['model']
+        name=f"{model} AKS · {product['pitch']} / {product['length']} мм · {product['finish']} · с крепежом"
+    else:
+        name=('Ручка-скоба AK700' if product['family']=='ak700' else 'Ручка торцевая MONBLAN')+' · '+str(product['pitch'])+' мм с крепежом'
     return _row(name,1,'set',article)
 
 def _panel_hardware(it):

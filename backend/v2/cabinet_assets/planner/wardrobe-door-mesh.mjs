@@ -18,8 +18,10 @@ function profileMesh(run){
 export function buildDoorHardware(factory,group,item,ghost){
  const h=doorHandle(item);
  if(h){
-  const key='wardrobe-handle:'+h.article+(h.edgePull?':'+h.span:'');
-  const mesh=factory.mesh(group,'frame',factory.acquire(key,()=>h.edgePull?profileMesh(h).translate(-h.span*.0005,0,0):handleMesh(h.article)),key,h.x-item.width/2,h.y,(h.back?-1:1)*item.depth/2,null,ghost);
+  const geometryArticle=h.part.mesh??h.article;
+  const key='wardrobe-handle:'+geometryArticle+(h.edgePull?':'+h.span:'');
+  const role=h.part.finishKey?'pull-'+h.part.finishKey:'frame';
+  const mesh=factory.mesh(group,role,factory.acquire(key,()=>h.edgePull?profileMesh(h).translate(-h.span*.0005,0,0):handleMesh(geometryArticle)),key,h.x-item.width/2,h.y,(h.back?-1:1)*item.depth/2,null,ghost);
   if(h.back)mesh.rotateY(Math.PI);
   mesh.rotateOnWorldAxis(new THREE.Vector3(0,0,1),h.angle*Math.PI/180);
   Object.assign(mesh.userData,{frontAccessory:true,article:h.article});

@@ -36,6 +36,10 @@ const sources = [
   ['116550', 'fe1dd411e6a9a85f6877a50c830d81af69817e3e407344c69133cebbc4c64100', [-80, 80], 0, 5, 18, 1],
   ['92257', 'ddbd7d0e3fca6fffcdbb3814e5182e9563dfccb19e751801670b0977796dc584', [-370, 0, 370], -7.9, 3, 3, 2],
 ];
+const catalogue = JSON.parse(fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/wardrobe-handle-catalogue.json', import.meta.url)));
+for (const [article, part] of Object.entries(catalogue)) {
+  if (part.model) sources.push([article, part.sha, part.holes.map(p => p[0]), 0, part.holeDiameter, part.holeDepth, part.drillMode]);
+}
 const anchor = new Vector3(812, 1500, 534);
 function fixture([article, hash, xs, y, Diameter, Depth, DrillMode], layout) {
   const root = new Part(), pairs = [], holes = [];
@@ -83,4 +87,10 @@ test('A fixed handle with missing or reversed native drilling is rejected', () =
   assert.throws(() => ctx.resizeAndPlace(root, item, []), /направление присадки/);
   root.Holes.Count = 1;
   assert.throws(() => ctx.resizeAndPlace(root, item, []), /ожидается присадок 2, прочитано 1/);
+});
+
+test('the plastic PS15/C15 cannot be installed from a fragment with metal-handle drilling', () => {
+  const {root, item, pairs} = fixture(sources.find(([article]) => article === '52188'), 'block');
+  pairs[0][1].Diameter = 5;
+  assert.throws(() => ctx.resizeAndPlace(root, item, []), /Ø3/);
 });

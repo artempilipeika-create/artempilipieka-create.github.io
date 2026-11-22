@@ -221,6 +221,12 @@
 .wardrobe-handle-cards button[aria-disabled="true"]{color:#566059;background:#f4f5f2}
 .wardrobe-handle-cards button small{font-weight:400;font-size:.72rem}
 
+.wardrobe-pull-options button{grid-template-rows:auto auto auto 1fr;align-content:start;align-items:start;text-align:left;padding:7px 9px;gap:3px}
+.wardrobe-pull-options img{height:clamp(58px,9vh,92px);margin-bottom:3px}
+.wardrobe-pull-options strong{font-size:.83rem}
+.wardrobe-pull-options span{font-size:.79rem;color:#28523f;font-variant-numeric:tabular-nums}
+.wardrobe-pull-options small{color:#465950}
+.wardrobe-pull-selected{display:block;margin-top:6px;font-size:.9rem;color:#184c35}
 .wardrobe-handle-axes{display:flex;gap:6px;flex-wrap:wrap}
 .wardrobe-handle-axes [aria-pressed=true]{background:#245b47;color:#fff}
 .wardrobe-handle-details summary{cursor:pointer;font-weight:600;padding:.4rem 0}

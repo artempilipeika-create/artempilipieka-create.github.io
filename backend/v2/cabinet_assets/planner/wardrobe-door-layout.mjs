@@ -9,6 +9,19 @@ export {isFacadeProfile,hasFacadeProfiles};
 import catalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 
 export const doorHardware=catalogue;
+export const surfacePullFinishes=Object.freeze({
+  'black':{color:'#343639',roughness:.48,metalness:.38},
+  'chrome':{color:'#d8dee4',roughness:.16,metalness:.91},
+  'mattChrome':{color:'#c1c7cb',roughness:.36,metalness:.76},
+  'steel':{color:'#b9bfbe',roughness:.34,metalness:.80},
+  'satin':{color:'#c3beb0',roughness:.42,metalness:.67},
+  'brushedGold':{color:'#d8b46c',roughness:.31,metalness:.80},
+  'nickel':{color:'#cecac1',roughness:.26,metalness:.81},
+  'graphite':{color:'#66666a',roughness:.35,metalness:.63},
+  'plastic':{color:'#d3d5d8',roughness:.28,metalness:.48},
+});
+export const isSurfacePull=part=>part?.mount==='surface';
+export const pullHalfWidth=part=>Math.max(...part.bounds.map(point=>Math.abs(point[1])));
 export const doorKeyPattern=/^door-(?:(lower|upper)-)?(left|right)$/;
 export const doorSide=key=>doorKeyPattern.exec(key)?.[2];
 export const doorLabel=key=>{
@@ -183,7 +196,7 @@ export function checkDrawerHandle(face,h,leaves){
  const placement=handlePlacement(face,h);
  if(!placement||!face.internal)return;
  const cx=face.left+placement.x,cy=face.bottom+placement.y,half=placement.part.length/2;
- const across=placement.back?16.9:6,x=placement.vertical?across:half,y=placement.vertical?half:across;
+ const across=placement.back?16.9:pullHalfWidth(placement.part),x=placement.vertical?across:half,y=placement.vertical?half:across;
  if(leaves.some(d=>cx+x>d.left&&cx-x<d.left+d.width&&cy+y>d.bottom&&cy-y<d.bottom+d.height)){
   throw Error('Ручка внутренней шуфляды упирается в закрытую дверь. Выберите «Без отдельной ручки» или открытый проём.');
  }
@@ -192,20 +205,22 @@ export function checkDrawerHandle(face,h,leaves){
 export function handlePlacement(door,setting){
  if(!setting||isFacadeProfile(setting)||isEdgePull(setting))return null;
  const part=catalogue[setting.article];
- if(!part||!['ak700','monblan'].includes(part.family)||!edges.includes(setting.edge)||!['center','start','end'].includes(setting.from))throw Error('Проверьте артикул и положение ручки.');
- const edge=setting.edge,vertical=isVertical(edge),ak=part.family==='ak700';
+ const surface=isSurfacePull(part);
+ if((!surface&&part?.family!=='monblan')||!edges.includes(setting.edge)||!['center','start','end'].includes(setting.from))throw Error('Проверьте артикул и положение ручки.');
+ const edge=setting.edge,vertical=isVertical(edge);
  const span=vertical?door.height:door.width,other=vertical?door.width:door.height;
- if(setting.centerHeight&&(!ak||vertical))throw Error('Центр по высоте задан для другой ориентации ручки.');
- const offset=setting.offset??0,inset=ak?(setting.centerHeight?other/2:setting.inset??50):0;
+ if(setting.centerHeight&&(!surface||vertical))throw Error('Центр по высоте задан для другой ориентации ручки.');
+ const offset=setting.offset??0,inset=surface?(setting.centerHeight?other/2:setting.inset??50):0;
  if(![offset,inset].every(v=>Number.isFinite(v)&&v>=0&&v<=3000))throw Error('Проверьте отступы ручки в миллиметрах.');
- const half=(ak?part.pitch:part.length)/2;
+ const half=(surface?part.pitch:part.length)/2;
  let along=setting.from==='center'?span/2:offset+half;
  if(setting.from==='end')along=span-along;
- if(along-part.length/2<-.001||along+part.length/2>span+.001||(ak&&(inset<6||inset>other-6)))throw Error('Ручка выходит за край фасада. Уменьшите длину или измените отступ.');
+ const margin=surface?Math.max(6,pullHalfWidth(part)):0;
+ if(along-part.length/2<-.001||along+part.length/2>span+.001||(surface&&(inset<margin||inset>other-margin)))throw Error('Ручка выходит за край фасада. Уменьшите длину или измените отступ.');
  const x=vertical?(edge==='left'?inset:door.width-inset):along;
  const y=vertical?along:(edge==='bottom'?inset:door.height-inset);
- const angle=ak?(vertical?90:0):({top:0,bottom:180,left:90,right:-90})[edge];
- return {x,y,angle,back:!ak,edge,vertical,part,article:setting.article};
+ const angle=surface?(vertical?90:0):({top:0,bottom:180,left:90,right:-90})[edge];
+ return {x,y,angle,back:!surface,edge,vertical,part,article:setting.article};
 }
 export function pullHeight(placement){
  if(isVertical(placement.edge))return {start:'bottom',end:'top',center:'center'}[placement.from];
@@ -230,7 +245,7 @@ export function mirrorHandle(setting){
 
 export function orientHandle(leaf,setting,axis){
  const current=handlePlacement(leaf,setting),vertical=axis==='vertical';
- if(!current||current.part.family!=='ak700'||current.vertical===vertical)return setting;
+ if(!current||!isSurfacePull(current.part)||current.vertical===vertical)return setting;
  const {width:w,height:h}=leaf,pitch=current.part.pitch;
  let {x,y}=current;
  const centered=leaf.slot!=null;

@@ -1557,6 +1557,7 @@ function exportBazisProject(liraProfiles=[]){
     payload.format='martin-forest-bazis-native-v24';
     payload.minimum_importer=liraProfiles.some(row=>row.light_system==='lira-17.5x6.5')?'9.9.50':'9.9.49';
   }
+  if(payload.items.some(row=>row.wardrobe_catalogue_pull))payload.minimum_importer='9.9.51';
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');

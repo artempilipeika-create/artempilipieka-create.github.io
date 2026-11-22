@@ -223,5 +223,851 @@
     "section_file": "edge-inset-c-75975-section.webp",
     "section_image_url": "https://aks.by/upload/iblock/bcd/08f0vva22brpcpdxpne4qj3capn4e6k7.jpg",
     "installation_file": "edge-inset-c-75975-installed.webp"
+  },
+  "aks-79080": {
+    "file": "aks-79080.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "79080",
+    "pictured_size": "128 мм между креплениями, 178 мм общая длина",
+    "finish": "Матовый хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=113256",
+    "image_url": "https://aks.by/upload/iblock/1fb/55a9g9ty7um5kv4i6q03w6c6tz4xtjxq.jpg",
+    "pitch_mm": 128,
+    "length_mm": 178,
+    "shared_image_articles": [
+      "79080",
+      "11782",
+      "11783",
+      "79084",
+      "15350",
+      "79078"
+    ],
+    "model_file": "model-79080.webp"
+  },
+  "aks-89074": {
+    "file": "aks-89074.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "89074",
+    "pictured_size": "128 мм между креплениями, 178 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=119450",
+    "image_url": "https://aks.by/upload/iblock/07c/ec3mrpkqcloq7a0ubljqpjpgicjvufhg.jpg",
+    "pitch_mm": 128,
+    "length_mm": 178,
+    "shared_image_articles": [
+      "89074",
+      "89076",
+      "89078",
+      "89080"
+    ],
+    "model_file": "model-89074.webp"
+  },
+  "aks-112409": {
+    "file": "aks-112409.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "112409",
+    "pictured_size": "128 мм между креплениями, 188 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142813",
+    "image_url": "https://aks.by/upload/iblock/573/mwovwo3bbnqeckl61je6px008rw69o80.jpg",
+    "pitch_mm": 128,
+    "length_mm": 188,
+    "shared_image_articles": [
+      "112409",
+      "112410",
+      "89072",
+      "112408"
+    ],
+    "model_file": "model-112409.webp"
+  },
+  "aks-61544": {
+    "file": "aks-61544.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "61544",
+    "pictured_size": "128 мм между креплениями, 188 мм общая длина",
+    "finish": "Шлифованная сталь",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142863",
+    "image_url": "https://aks.by/upload/iblock/33d/7fg0fgsi66oddgn2juy4jdnkk9i1x0ul.jpg",
+    "pitch_mm": 128,
+    "length_mm": 188,
+    "shared_image_articles": [
+      "61544",
+      "11731",
+      "61546",
+      "11734",
+      "11735",
+      "61542",
+      "11769"
+    ],
+    "model_file": "model-61544.webp"
+  },
+  "aks-112412": {
+    "file": "aks-112412.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "112412",
+    "pictured_size": "128 мм между креплениями, 188 мм общая длина",
+    "finish": "Шлифованное золото",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142814",
+    "image_url": "https://aks.by/upload/iblock/b59/hjabam2nrtiad5076twy4tbvey617bzq.jpg",
+    "pitch_mm": 128,
+    "length_mm": 188,
+    "shared_image_articles": [
+      "112412",
+      "112423",
+      "112418"
+    ],
+    "model_file": "model-112412.webp"
+  },
+  "aks-11782": {
+    "file": "aks-11782.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11782",
+    "pictured_size": "128 мм между креплениями, 188 мм общая длина",
+    "finish": "Матовый хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88858",
+    "image_url": "https://aks.by/upload/iblock/a45/aa9lt89by11mmm4ntxhldjl43o1wb9fh.jpg",
+    "pitch_mm": 128,
+    "length_mm": 188,
+    "shared_image_articles": [
+      "79080",
+      "11782",
+      "11783",
+      "79084",
+      "15350",
+      "79078"
+    ],
+    "model_file": "model-11782.webp"
+  },
+  "aks-15865": {
+    "file": "aks-15865.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "15865",
+    "pictured_size": "128 мм между креплениями, 188 мм общая длина",
+    "finish": "Сатин",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88925",
+    "image_url": "https://aks.by/upload/iblock/190/kjzkvct8i2rs217z3ur9aaitilmt0vdi.jpg",
+    "pitch_mm": 128,
+    "length_mm": 188,
+    "shared_image_articles": [
+      "15865",
+      "11691",
+      "94132",
+      "11703",
+      "11723"
+    ],
+    "model_file": "model-15865.webp"
+  },
+  "aks-11731": {
+    "file": "aks-11731.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11731",
+    "pictured_size": "128 мм между креплениями, 188 мм общая длина",
+    "finish": "Хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88881",
+    "image_url": "https://aks.by/upload/iblock/529/xsxerjeg26qah93k7qpapebmvlvkc7gj.jpg",
+    "pitch_mm": 128,
+    "length_mm": 188,
+    "shared_image_articles": [
+      "61544",
+      "11731",
+      "61546",
+      "11734",
+      "11735",
+      "61542",
+      "11769"
+    ],
+    "model_file": "model-11731.webp"
+  },
+  "aks-89076": {
+    "file": "aks-89076.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "89076",
+    "pictured_size": "160 мм между креплениями, 210 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=119451",
+    "image_url": "https://aks.by/upload/iblock/06b/652hlzmtnzlcij74k2l2n1btaagwywdc.jpg",
+    "pitch_mm": 160,
+    "length_mm": 210,
+    "shared_image_articles": [
+      "89074",
+      "89076",
+      "89078",
+      "89080"
+    ],
+    "model_file": "model-89076.webp"
+  },
+  "aks-112410": {
+    "file": "aks-112410.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "112410",
+    "pictured_size": "160 мм между креплениями, 220 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142812",
+    "image_url": "https://aks.by/upload/iblock/9b3/8pggn3zfi7wujyc9anvl34makzzsg2c3.jpg",
+    "pitch_mm": 160,
+    "length_mm": 220,
+    "shared_image_articles": [
+      "112409",
+      "112410",
+      "89072",
+      "112408"
+    ],
+    "model_file": "model-112410.webp"
+  },
+  "aks-61546": {
+    "file": "aks-61546.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "61546",
+    "pictured_size": "160 мм между креплениями, 220 мм общая длина",
+    "finish": "Шлифованная сталь",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142864",
+    "image_url": "https://aks.by/upload/iblock/6ee/a93p0hh4rl9rra48vqgvn66epsrzgw2z.jpg",
+    "pitch_mm": 160,
+    "length_mm": 220,
+    "shared_image_articles": [
+      "61544",
+      "11731",
+      "61546",
+      "11734",
+      "11735",
+      "61542",
+      "11769"
+    ],
+    "model_file": "model-61546.webp"
+  },
+  "aks-112423": {
+    "file": "aks-112423.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "112423",
+    "pictured_size": "160 мм между креплениями, 220 мм общая длина",
+    "finish": "Шлифованное золото",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142820",
+    "image_url": "https://aks.by/upload/iblock/971/9k25dcgt38z2b4ka2wfi6ong79g0q6g1.jpg",
+    "pitch_mm": 160,
+    "length_mm": 220,
+    "shared_image_articles": [
+      "112412",
+      "112423",
+      "112418"
+    ],
+    "model_file": "model-112423.webp"
+  },
+  "aks-11783": {
+    "file": "aks-11783.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11783",
+    "pictured_size": "160 мм между креплениями, 220 мм общая длина",
+    "finish": "Матовый хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88859",
+    "image_url": "https://aks.by/upload/iblock/350/w24p4y6zuwvz4nw34i4elzqnilx6y0b1.jpg",
+    "pitch_mm": 160,
+    "length_mm": 220,
+    "shared_image_articles": [
+      "79080",
+      "11782",
+      "11783",
+      "79084",
+      "15350",
+      "79078"
+    ],
+    "model_file": "model-11783.webp"
+  },
+  "aks-11691": {
+    "file": "aks-11691.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11691",
+    "pictured_size": "160 мм между креплениями, 220 мм общая длина",
+    "finish": "Сатин",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88998",
+    "image_url": "https://aks.by/upload/iblock/240/ku3z9r3vw033hqoe8iu3hv79162i4d7s.jpg",
+    "pitch_mm": 160,
+    "length_mm": 220,
+    "shared_image_articles": [
+      "15865",
+      "11691",
+      "94132",
+      "11703",
+      "11723"
+    ],
+    "model_file": "model-11691.webp"
+  },
+  "aks-11734": {
+    "file": "aks-11734.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11734",
+    "pictured_size": "160 мм между креплениями, 220 мм общая длина",
+    "finish": "Хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88882",
+    "image_url": "https://aks.by/upload/iblock/a3d/26hzqf78hrq19spxev1488n3tf2y8qiq.jpg",
+    "pitch_mm": 160,
+    "length_mm": 220,
+    "shared_image_articles": [
+      "61544",
+      "11731",
+      "61546",
+      "11734",
+      "11735",
+      "61542",
+      "11769"
+    ],
+    "model_file": "model-11734.webp"
+  },
+  "aks-79084": {
+    "file": "aks-79084.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "79084",
+    "pictured_size": "192 мм между креплениями, 242 мм общая длина",
+    "finish": "Матовый хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=113260",
+    "image_url": "https://aks.by/upload/iblock/888/e13ftkv0zr4sszwg6n37o2mkhsym6ddr.jpg",
+    "pitch_mm": 192,
+    "length_mm": 242,
+    "shared_image_articles": [
+      "79080",
+      "11782",
+      "11783",
+      "79084",
+      "15350",
+      "79078"
+    ],
+    "model_file": "model-79084.webp"
+  },
+  "aks-94132": {
+    "file": "aks-94132.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "94132",
+    "pictured_size": "192 мм между креплениями, 242 мм общая длина",
+    "finish": "Сатин",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=135608",
+    "image_url": "https://aks.by/upload/iblock/333/prd7455babxrm1nkauakvlhx4v5qd5pi.jpg",
+    "pitch_mm": 192,
+    "length_mm": 242,
+    "shared_image_articles": [
+      "15865",
+      "11691",
+      "94132",
+      "11703",
+      "11723"
+    ],
+    "model_file": "model-94132.webp"
+  },
+  "aks-89078": {
+    "file": "aks-89078.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "89078",
+    "pictured_size": "192 мм между креплениями, 242 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=119452",
+    "image_url": "https://aks.by/upload/iblock/6c2/sbb1qv095uoifbu9yr95cvmxrgj5noql.jpg",
+    "pitch_mm": 192,
+    "length_mm": 242,
+    "shared_image_articles": [
+      "89074",
+      "89076",
+      "89078",
+      "89080"
+    ],
+    "model_file": "model-89078.webp"
+  },
+  "aks-89070": {
+    "file": "aks-89070.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "89070",
+    "pictured_size": "192 мм между креплениями, 250 мм общая длина",
+    "finish": "Шлифованная сталь",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142861",
+    "image_url": "https://aks.by/upload/iblock/d56/2gu2u7l7idexjmw0jt0cuwyn0890jwc2.jpg",
+    "pitch_mm": 192,
+    "length_mm": 250,
+    "model_file": "model-89070.webp"
+  },
+  "aks-11735": {
+    "file": "aks-11735.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11735",
+    "pictured_size": "192 мм между креплениями, 250 мм общая длина",
+    "finish": "Хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88883",
+    "image_url": "https://aks.by/upload/iblock/69d/0qqqpehfzj78qjhxpy6dw0u53luy2a34.jpg",
+    "pitch_mm": 192,
+    "length_mm": 250,
+    "shared_image_articles": [
+      "61544",
+      "11731",
+      "61546",
+      "11734",
+      "11735",
+      "61542",
+      "11769"
+    ],
+    "model_file": "model-11735.webp"
+  },
+  "aks-89080": {
+    "file": "aks-89080.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "89080",
+    "pictured_size": "320 мм между креплениями, 370 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=119453",
+    "image_url": "https://aks.by/upload/iblock/92e/she7grzxzjf23rg1v5t9fdotsalljyoc.jpg",
+    "pitch_mm": 320,
+    "length_mm": 370,
+    "shared_image_articles": [
+      "89074",
+      "89076",
+      "89078",
+      "89080"
+    ],
+    "model_file": "model-89080.webp"
+  },
+  "aks-15350": {
+    "file": "aks-15350.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "15350",
+    "pictured_size": "320 мм между креплениями, 400 мм общая длина",
+    "finish": "Матовый хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88871",
+    "image_url": "https://aks.by/upload/iblock/c44/gem0edpxhw1scfb9nqld3bvbyaauvoui.jpg",
+    "pitch_mm": 320,
+    "length_mm": 400,
+    "shared_image_articles": [
+      "79080",
+      "11782",
+      "11783",
+      "79084",
+      "15350",
+      "79078"
+    ],
+    "model_file": "model-15350.webp"
+  },
+  "aks-11703": {
+    "file": "aks-11703.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11703",
+    "pictured_size": "320 мм между креплениями, 400 мм общая длина",
+    "finish": "Сатин",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=89019",
+    "image_url": "https://aks.by/upload/iblock/b8a/ita6rpbqbxhaklc0np90optj96euz364.jpg",
+    "pitch_mm": 320,
+    "length_mm": 400,
+    "shared_image_articles": [
+      "15865",
+      "11691",
+      "94132",
+      "11703",
+      "11723"
+    ],
+    "model_file": "model-11703.webp"
+  },
+  "aks-79078": {
+    "file": "aks-79078.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "79078",
+    "pictured_size": "96 мм между креплениями, 146 мм общая длина",
+    "finish": "Матовый хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=117091",
+    "image_url": "https://aks.by/upload/iblock/66d/wtsgqg7bw95vkbmcdwks3195vyyib9vj.jpg",
+    "pitch_mm": 96,
+    "length_mm": 146,
+    "shared_image_articles": [
+      "79080",
+      "11782",
+      "11783",
+      "79084",
+      "15350",
+      "79078"
+    ],
+    "model_file": "model-79078.webp"
+  },
+  "aks-89072": {
+    "file": "aks-89072.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "89072",
+    "pictured_size": "96 мм между креплениями, 146 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=119449",
+    "image_url": "https://aks.by/upload/iblock/4d4/tzmiq6yz55vxxilp4tk05lbgsiqvsp7v.jpg",
+    "pitch_mm": 96,
+    "length_mm": 146,
+    "shared_image_articles": [
+      "112409",
+      "112410",
+      "89072",
+      "112408"
+    ],
+    "model_file": "model-89072.webp"
+  },
+  "aks-112408": {
+    "file": "aks-112408.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "112408",
+    "pictured_size": "96 мм между креплениями, 156 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142818",
+    "image_url": "https://aks.by/upload/iblock/267/zw093yxvsth7nk4hn4di65zng331l83o.jpg",
+    "pitch_mm": 96,
+    "length_mm": 156,
+    "shared_image_articles": [
+      "112409",
+      "112410",
+      "89072",
+      "112408"
+    ],
+    "model_file": "model-112408.webp"
+  },
+  "aks-61542": {
+    "file": "aks-61542.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "61542",
+    "pictured_size": "96 мм между креплениями, 156 мм общая длина",
+    "finish": "Шлифованная сталь",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142862",
+    "image_url": "https://aks.by/upload/iblock/9c8/hn0p4nttajfphrz6gck0t12klo45xtsv.jpg",
+    "pitch_mm": 96,
+    "length_mm": 156,
+    "shared_image_articles": [
+      "61544",
+      "11731",
+      "61546",
+      "11734",
+      "11735",
+      "61542",
+      "11769"
+    ],
+    "model_file": "model-61542.webp"
+  },
+  "aks-112418": {
+    "file": "aks-112418.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "112418",
+    "pictured_size": "96 мм между креплениями, 156 мм общая длина",
+    "finish": "Шлифованное золото",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/117848-142808-p?OFFER_ID=142810",
+    "image_url": "https://aks.by/upload/iblock/441/1kzsnvdmdpo4ymx6q3y3ny8q8mf827gz.jpg",
+    "pitch_mm": 96,
+    "length_mm": 156,
+    "shared_image_articles": [
+      "112412",
+      "112423",
+      "112418"
+    ],
+    "model_file": "model-112418.webp"
+  },
+  "aks-11723": {
+    "file": "aks-11723.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11723",
+    "pictured_size": "96 мм между креплениями, 156 мм общая длина",
+    "finish": "Сатин",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88916",
+    "image_url": "https://aks.by/upload/iblock/e0a/xk37gv6pvwhnha6aqbc2130h819kih04.jpg",
+    "pitch_mm": 96,
+    "length_mm": 156,
+    "shared_image_articles": [
+      "15865",
+      "11691",
+      "94132",
+      "11703",
+      "11723"
+    ],
+    "model_file": "model-11723.webp"
+  },
+  "aks-11769": {
+    "file": "aks-11769.webp",
+    "model": "Рейлинговая",
+    "pictured_article": "11769",
+    "pictured_size": "96 мм между креплениями, 156 мм общая длина",
+    "finish": "Хром",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/46707-84642-p?OFFER_ID=88888",
+    "image_url": "https://aks.by/upload/iblock/e65/gijpsl0r0xwsy0na96rk9x404rj0t2ft.jpg",
+    "pitch_mm": 96,
+    "length_mm": 156,
+    "shared_image_articles": [
+      "61544",
+      "11731",
+      "61546",
+      "11734",
+      "11735",
+      "61542",
+      "11769"
+    ],
+    "model_file": "model-11769.webp"
+  },
+  "aks-68421": {
+    "file": "aks-68421.webp",
+    "model": "COBRA",
+    "pictured_article": "68421",
+    "pictured_size": "128 мм между креплениями, 188 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/74829-106050-p?OFFER_ID=106079",
+    "image_url": "https://aks.by/upload/iblock/094/lqp07lkff2p5lq69b46pb8f5a8ark16a.jpg",
+    "pitch_mm": 128,
+    "length_mm": 188,
+    "shared_image_articles": [
+      "68421",
+      "68423"
+    ],
+    "model_file": "model-68421.webp"
+  },
+  "aks-68423": {
+    "file": "aks-68423.webp",
+    "model": "COBRA",
+    "pictured_article": "68423",
+    "pictured_size": "160 мм между креплениями, 220 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/74829-106050-p?OFFER_ID=106080",
+    "image_url": "https://aks.by/upload/iblock/367/myjhxxmvlclfvjk3l3aan09pzi1n1ia2.jpg",
+    "pitch_mm": 160,
+    "length_mm": 220,
+    "shared_image_articles": [
+      "68421",
+      "68423"
+    ],
+    "model_file": "model-68423.webp"
+  },
+  "aks-68424": {
+    "file": "aks-68424.webp",
+    "model": "COBRA",
+    "pictured_article": "68424",
+    "pictured_size": "320 мм между креплениями, 400 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/74829-106050-p?OFFER_ID=106081",
+    "image_url": "https://aks.by/upload/iblock/01a/0wmz9c9omi50yqgsh1yoju9ps9zq4wet.jpg",
+    "pitch_mm": 320,
+    "length_mm": 400,
+    "model_file": "model-68424.webp"
+  },
+  "aks-117956": {
+    "file": "aks-117956.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117956",
+    "pictured_size": "128 мм между креплениями, 178 мм общая длина",
+    "finish": "Брашированное золото",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146472",
+    "image_url": "https://aks.by/upload/iblock/e57/2p38hdehd90jfz8hrjc4o4st5gcg6fl7.jpg",
+    "pitch_mm": 128,
+    "length_mm": 178,
+    "model_file": "model-117956.webp"
+  },
+  "aks-117958": {
+    "file": "aks-117958.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117958",
+    "pictured_size": "128 мм между креплениями, 178 мм общая длина",
+    "finish": "Никель",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146473",
+    "image_url": "https://aks.by/upload/iblock/402/ue1ru42s12i9ohq3frjqx2jtj432neba.jpg",
+    "pitch_mm": 128,
+    "length_mm": 178,
+    "shared_image_articles": [
+      "117958",
+      "117961"
+    ],
+    "model_file": "model-117958.webp"
+  },
+  "aks-117955": {
+    "file": "aks-117955.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117955",
+    "pictured_size": "128 мм между креплениями, 178 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146471",
+    "image_url": "https://aks.by/upload/iblock/ffe/kbrqg4tk463ufw2gvu2mo2lfscggghp8.jpg",
+    "pitch_mm": 128,
+    "length_mm": 178,
+    "shared_image_articles": [
+      "117955",
+      "117959",
+      "117962"
+    ],
+    "model_file": "model-117955.webp"
+  },
+  "aks-117960": {
+    "file": "aks-117960.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117960",
+    "pictured_size": "192 мм между креплениями, 242 мм общая длина",
+    "finish": "Брашированное золото",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146475",
+    "image_url": "https://aks.by/upload/iblock/2dd/cn5sm9d80xvxkapv8q2igd3l6y098sxt.jpg",
+    "pitch_mm": 192,
+    "length_mm": 242,
+    "model_file": "model-117960.webp"
+  },
+  "aks-117961": {
+    "file": "aks-117961.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117961",
+    "pictured_size": "192 мм между креплениями, 242 мм общая длина",
+    "finish": "Никель",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146476",
+    "image_url": "https://aks.by/upload/iblock/c7f/f8q3723wfisqg6m09gx2kjn8vib6xco2.jpg",
+    "pitch_mm": 192,
+    "length_mm": 242,
+    "shared_image_articles": [
+      "117958",
+      "117961"
+    ],
+    "model_file": "model-117961.webp"
+  },
+  "aks-117959": {
+    "file": "aks-117959.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117959",
+    "pictured_size": "192 мм между креплениями, 242 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146474",
+    "image_url": "https://aks.by/upload/iblock/92a/8kwshh9kgxvev759vc1zeqdpbwevd3ds.jpg",
+    "pitch_mm": 192,
+    "length_mm": 242,
+    "shared_image_articles": [
+      "117955",
+      "117959",
+      "117962"
+    ],
+    "model_file": "model-117959.webp"
+  },
+  "aks-117963": {
+    "file": "aks-117963.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117963",
+    "pictured_size": "320 мм между креплениями, 370 мм общая длина",
+    "finish": "Брашированное золото",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146478",
+    "image_url": "https://aks.by/upload/iblock/c8f/rcmynvqla3z3e9tguxeabjwpk5fde5xi.jpg",
+    "pitch_mm": 320,
+    "length_mm": 370,
+    "model_file": "model-117963.webp"
+  },
+  "aks-117964": {
+    "file": "aks-117964.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117964",
+    "pictured_size": "320 мм между креплениями, 370 мм общая длина",
+    "finish": "Никель",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146479",
+    "image_url": "https://aks.by/upload/iblock/e12/bq8ind5p8z9sma43z1woeeszxfzwviji.jpg",
+    "pitch_mm": 320,
+    "length_mm": 370,
+    "model_file": "model-117964.webp"
+  },
+  "aks-117962": {
+    "file": "aks-117962.webp",
+    "model": "GRAFITTI",
+    "pictured_article": "117962",
+    "pictured_size": "320 мм между креплениями, 370 мм общая длина",
+    "finish": "Чёрный матовый",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/123652-146447-p?OFFER_ID=146477",
+    "image_url": "https://aks.by/upload/iblock/44e/4uvsj7mzswm3otqkdiwuylvc0nz42lgo.jpg",
+    "pitch_mm": 320,
+    "length_mm": 370,
+    "shared_image_articles": [
+      "117955",
+      "117959",
+      "117962"
+    ],
+    "model_file": "model-117962.webp"
+  },
+  "aks-104221": {
+    "file": "aks-104221.webp",
+    "model": "MARGARITA",
+    "pictured_article": "104221",
+    "pictured_size": "128 мм между креплениями, 160 мм общая длина",
+    "finish": "Брашированное золото",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/108118-136290-p?OFFER_ID=136300",
+    "image_url": "https://aks.by/upload/iblock/bff/ti6p2zyt5p73no06ucslf2npbs9i9tgj.jpg",
+    "pitch_mm": 128,
+    "length_mm": 160,
+    "model_file": "model-104221.webp"
+  },
+  "aks-104225": {
+    "file": "aks-104225.webp",
+    "model": "MARGARITA",
+    "pictured_article": "104225",
+    "pictured_size": "128 мм между креплениями, 160 мм общая длина",
+    "finish": "Графит",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/108118-136290-p?OFFER_ID=136301",
+    "image_url": "https://aks.by/upload/iblock/009/dlmofqi4lk4354vp7r4942swfd8z59n9.jpg",
+    "pitch_mm": 128,
+    "length_mm": 160,
+    "model_file": "model-104225.webp"
+  },
+  "aks-52188": {
+    "file": "aks-52188.webp",
+    "model": "PS15/C15",
+    "pictured_article": "52188",
+    "pictured_size": "128 мм между креплениями, 168 мм общая длина",
+    "finish": "Хром + металлик",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/53107-94306-p?OFFER_ID=94318",
+    "image_url": "https://aks.by/upload/iblock/f66/wovgfwnt3a4b65tqeo9uyjjm0iuxscby.jpg",
+    "pitch_mm": 128,
+    "length_mm": 168,
+    "shared_image_articles": [
+      "52188",
+      "52906"
+    ],
+    "model_file": "model-52188.webp"
+  },
+  "aks-52906": {
+    "file": "aks-52906.webp",
+    "model": "PS15/C15",
+    "pictured_article": "52906",
+    "pictured_size": "160 мм между креплениями, 200 мм общая длина",
+    "finish": "Хром + металлик",
+    "supplier": "АКС-Мебель (Беларусь)",
+    "source_url": "https://aks.by/53107-94306-p?OFFER_ID=94321",
+    "image_url": "https://aks.by/upload/iblock/355/a8kli7hxc7f8ntyzj9ucxgg654zue2zc.jpg",
+    "pitch_mm": 160,
+    "length_mm": 200,
+    "shared_image_articles": [
+      "52188",
+      "52906"
+    ],
+    "model_file": "model-52906.webp"
   }
 }

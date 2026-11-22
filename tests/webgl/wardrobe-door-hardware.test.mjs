@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildCarcass,placeCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-model.mjs';
 import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
-import {anchoredShelf,wardrobeDoors} from '../../backend/v2/cabinet_assets/planner/wardrobe-door-layout.mjs';
+import {anchoredShelf,wardrobeDoors,doorHardware,handlePlacement,orientHandle} from '../../backend/v2/cabinet_assets/planner/wardrobe-door-layout.mjs';
 import {boardProfileCuts,horizontalProfileCuts,golaOutline,nativeDoorHardware} from '../../backend/v2/cabinet_assets/planner/wardrobe-door-hardware.mjs';
 import {nativeCarcassJoints} from '../../backend/v2/cabinet_assets/planner/carcass-joints.mjs';
 import {measuredRooms} from '../../backend/v2/cabinet_assets/planner/wardrobe-gola-shelves.mjs';
@@ -150,4 +150,26 @@ test('the L shelf meets the aluminium and the divider above it fits between actu
  const rooms=measuredRooms(spec,0,1,1,built.installedLevels),rightShelf=board(built.items,'shelf-niche-0-1-1-0');
  assert.equal(rooms[0].bottom+spec.elevation,divider.elevation_mm);
  assert.equal(rooms[0].top+spec.elevation,rightShelf.elevation_mm);
+});
+
+test('all catalogue pulls fit using their own span and keep the other leaf independent',()=>{
+ const leaf={key:'door-left',side:'left',left:0,bottom:0,width:597,height:2197};
+ const products=Object.entries(doorHardware).filter(([,part])=>part.model);
+ assert.equal(products.length,46);
+ assert.equal(products.filter(([,part])=>part.family==='rail').length,30);
+ for(const [article,part] of products){
+  assert.equal(part.holes.length,2);
+  assert.equal(part.holes[1][0]-part.holes[0][0],part.pitch);
+  assert.equal(part.holeDiameter,part.family==='ps15'?3:5);
+  assert.ok(part.outline.startsWith('M'));
+  const initial=handle(article,'right'), rotated=orientHandle(leaf,initial,'horizontal');
+  assert.equal(handlePlacement(leaf,rotated).angle,0);
+  assert.equal(handlePlacement(leaf,initial).angle,90);
+  const f=fields();delete f.front.division;
+  f.width=1200;f.front.handles={'door-left':rotated,'door-right':handle('116550','left')};
+  const rows=nativeDoorHardware(assembled(f,270)).filter(row=>row.wardrobe_handle);
+  const selected=rows.find(row=>row.host_blank_id==='cab:door-left');
+  assert.deepEqual([selected.article,selected.source_sha256,selected.handle_roll_deg,selected.rotation],[article,part.sha,0,270]);
+  assert.equal(rows.find(row=>row.host_blank_id==='cab:door-right').article,'116550');
+ }
 });

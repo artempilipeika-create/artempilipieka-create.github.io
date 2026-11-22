@@ -6,7 +6,7 @@ import {fitNicheBanks} from './wardrobe-niches.mjs';
 import {profileEdges} from './wardrobe-facade-profiles.mjs';
 import {drawerSections} from './wardrobe-drawers.mjs';
 import {sectionWidths} from './wardrobe-layout.mjs';
-import {doorHardware,doorLabel,baseWardrobeDoors,doorShelfOptions,isFacadeProfile,usesProfileEdge,wardrobeDoors,drawerFacadeKey,drawerFacades,orientHandle,mirrorHandle,handlePlacement,pullHeight,setPullHeight} from './wardrobe-door-layout.mjs';
+import {doorHardware,doorLabel,baseWardrobeDoors,doorShelfOptions,isFacadeProfile,isSurfacePull,pullHalfWidth,usesProfileEdge,wardrobeDoors,drawerFacadeKey,drawerFacades,orientHandle,mirrorHandle,handlePlacement,pullHeight,setPullHeight} from './wardrobe-door-layout.mjs';
 import {footHeight} from './plinth-options.mjs';
 import photos from './door-photos/sources.json' with {type:'json'};
 
@@ -27,30 +27,67 @@ function productImage(p){
  const img=el('img');img.src='/account/planner/door-photos/'+p.file;img.alt=p.model;img.width=225;img.height=130;return img;
 }
 const categories=[
- ['surface','Накладные',['ak700']],['edge','Торцевые',['monblan']],
+ ['rail','Рейлинговые',['rail']],['surface','Скобы',['ak700','cobra','grafitti','margarita','ps15']],['edge','Торцевые',['monblan']],
  ['inset','Врезные',['insetL','insetC']],['gola','Gola',['golaL','golaC']]
 ];
+const bracketSeries=[['ak700','AK700'],['cobra','COBRA'],['grafitti','GRAFITTI'],['margarita','MARGARITA'],['ps15','PS15/C15']];
+
+function cataloguePullCards(ui,panel,setting,family,choose){
+ const products=Object.entries(doorHardware).filter(([,p])=>p.family===family);
+ const pitches=[...new Set(products.map(([,p])=>p.pitch))].sort((a,b)=>a-b);
+ const product=doorHardware[setting?.article];
+ const pitch=ui.pullPitch??(product?.family===family?product.pitch:pitches.includes(128)?128:pitches[0]);
+ if(pitches.length>1)ui.select(panel,'Межосевое расстояние',pitches.map(mm=>[mm,mm+' мм']),pitch,v=>{ui.pullPitch=Number(v);ui.render();});
+ const views=el('div');views.className='wardrobe-handle-axes';views.setAttribute('role','group');views.setAttribute('aria-label','Изображение ручки');
+ for(const [value,label] of [['photo','Фото АКС'],['model','Модель БАЗИС']]){
+  const button=btn(label,()=>{ui.pullView=value;ui.render();});
+  button.setAttribute('aria-pressed',String((ui.pullView??'photo')===value));views.append(button);
+ }
+ panel.append(views);
+ const grid=el('div');grid.className='wardrobe-handle-cards wardrobe-pull-options';grid.setAttribute('role','group');grid.setAttribute('aria-label','Артикулы ручек');
+ for(const [article,p] of products.filter(([,row])=>row.pitch===pitch).sort((a,b)=>a[1].length-b[1].length||a[1].finish.localeCompare(b[1].finish,'ru'))){
+  const photo=photosByArticle[article],model=ui.pullView==='model';
+  const card=btn('',()=>choose(family,article));card.dataset.pullArticle=article;
+  card.setAttribute('aria-pressed',String(setting?.article===article));
+  const img=productImage({...photo,file:model?photo.model_file:photo.file,model:p.model+' · '+p.finish+' · AKS '+article});
+  img.loading='lazy';
+  card.append(img,el('strong',p.model+' · '+p.finish),el('span','AKS '+article),
+   el('small','Длина '+p.length+' мм'+(p.hollow?' · полая сталь':'')));
+  if(!model&&photo.shared_image_articles?.length>1)card.append(el('small','Фото серии АКС'));
+  grid.append(card);
+ }
+ panel.append(grid);
+}
+
 function familyCards(ui,panel,h,set,edges,key,frame){
  const available=frame?categories.filter(([id])=>id==='gola'):categories;
  const selected=familyOf(h);
  if(ui.handleCategoryKey!==key){
   ui.handleCategoryKey=key;
-  ui.handleCategory=categories.find(([,label,ids])=>ids.includes(selected))?.[0]??'surface';
+  ui.handleCategory=categories.find(([,label,ids])=>ids.includes(selected))?.[0]??'rail';
+  ui.bracketSeries=bracketSeries.some(([id])=>id===selected)?selected:'ak700';ui.pullPitch=null;
  }
  if(!available.some(([id])=>id===ui.handleCategory))ui.handleCategory=available[0][0];
  const tabs=el('div');tabs.className='wardrobe-subsections';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Тип ручки');
  for(const [id,label] of available){
-  const tab=btn(label,()=>{ui.handleCategory=id;ui.render();});tab.dataset.handleCategory=id;
+  const tab=btn(label,()=>{ui.handleCategory=id;ui.pullPitch=null;ui.render();});tab.dataset.handleCategory=id;
   tab.setAttribute('aria-pressed',String(ui.handleCategory===id));tabs.append(tab);
  }
  panel.append(tabs);
- const visible=categories.find(([id])=>id===ui.handleCategory)[2];
+ let visible=categories.find(([id])=>id===ui.handleCategory)[2];
+ if(ui.handleCategory==='surface'){
+  ui.select(panel,'Серия скобы',bracketSeries,ui.bracketSeries,v=>{ui.bracketSeries=v;ui.pullPitch=null;ui.render();});
+  visible=[ui.bracketSeries];
+ }
+ if(ui.handleCategory==='rail'||ui.handleCategory==='surface'&&ui.bracketSeries!=='ak700'){
+  cataloguePullCards(ui,panel,h,visible[0],set);return;
+ }
  const grid=el('div');grid.className='wardrobe-handle-cards';grid.setAttribute('role','group');grid.setAttribute('aria-label','Модели ручек');
  for(const [family,label,article] of families){
   if(!visible.includes(family))continue;
   const chosen=family===selected,product=photosByArticle[chosen?h.article:article];
   const card=btn('',()=>set(family,article));card.dataset.handleFamily=family;card.setAttribute('aria-pressed',String(chosen));
-  card.append(productImage(product),el('span',label));
+  card.append(productImage(product),el('span',label),el('small','AKS '+product.pictured_article));
   if(family==='golaC'&&!edges.length){card.setAttribute('aria-disabled','true');card.append(el('small','Нужен стык фасадов'));}
   grid.append(card);
  }
@@ -58,7 +95,7 @@ function familyCards(ui,panel,h,set,edges,key,frame){
 }
 function num(ui,box,label,value,change){const l=el('label',label),i=el('input');i.type='number';i.min='0';i.max='3000';i.step='0.5';i.value=value;i.setAttribute('aria-label',label);i.required=true;i.oninput=()=>{if(i.value!==''&&i.checkValidity()){change(i.valueAsNumber);ui.changed();}};l.append(i);box.append(l);}
 function defaultHandle(leaf,article){
- if(leaf.slot!=null)return {article,edge:'top',from:'center',offset:0,inset:50,...(doorHardware[article].family==='ak700'?{centerHeight:true}:{})};
+ if(leaf.slot!=null)return {article,edge:'top',from:'center',offset:0,inset:50,...(isSurfacePull(doorHardware[article])?{centerHeight:true}:{})};
  const edge=leaf.side==='left'?'right':'left';
  return {article,edge,from:'center',offset:50,inset:50};
 }
@@ -217,7 +254,7 @@ export function doorControls(ui){
    btn('Снять с этой кромки',()=>{const extra=f.edgeProfiles;extra[leaf.key]=supplemental.filter(v=>v!==line);if(!extra[leaf.key].length)delete extra[leaf.key];if(!Object.keys(extra).length)delete f.edgeProfiles;ui.changed(true);}));panel.append(old);
  }
  function choose(family,article){
-  if(own&&familyOf(own)===family)return;
+  if(own&&(own.article===article||familyOf(own)===family&&!doorHardware[article]?.model))return;
   if(family==='golaC'&&!edges.length){ui.output.textContent='Gola S устанавливается между двумя фасадами. Выберите шуфляду или дверь на общем стыке.';return;}
   let value=null;
   if(family==='golaL')value={article,edge:'top'};
@@ -225,12 +262,16 @@ export function doorControls(ui){
    const edge=edges.find(e=>sharedProfile(leaf.key,e))??edges[0];value={article,edge,cutHeight:commonCut(edge)};
   }
   else if(isEdgePull({article}))value={article,edge:drawer?'top':leaf.side==='left'?'right':'left'};
-  else if(family!=='none')value=defaultHandle(leaf,article);
+  else if(family!=='none'){
+   value=isSurfacePull(doorHardware[own?.article])&&isSurfacePull(doorHardware[article])?{...own,article}:defaultHandle(leaf,article);
+   try{handlePlacement(leaf,value);}catch(error){ui.output.textContent=error.message;return;}
+  }
   apply(value);
  }
  familyCards(ui,panel,h,choose,edges,leaf.key,!drawer&&hingeProduct(f,leaf.key).frame);
  const none=btn('Без отдельной ручки',()=>choose('none'));none.dataset.handleFamily='none';none.setAttribute('aria-pressed',String(!h));none.className='wardrobe-handle-none';panel.append(none);
- if(h&&categories.find(([,label,ids])=>ids.includes(familyOf(h)))?.[0]===ui.handleCategory){
+ if(h&&categories.find(([,label,ids])=>ids.includes(familyOf(h)))?.[0]===ui.handleCategory&&
+    (ui.handleCategory!=='surface'||ui.bracketSeries===familyOf(h))){
   if(isFacadeProfile(h)){
    if(own){
     const positions=h.article==='118124'?['top']:[...new Set([...edges,h.edge])];
@@ -243,12 +284,17 @@ export function doorControls(ui){
    ui.select(panel,'Торец установки',allowed,h.edge,v=>apply({...h,edge:v})).dataset.handleEdge='';
    insetDetails(panel,h,leaf);
   }else{
-   const ak=doorHardware[h.article].family==='ak700';
-   const products=Object.entries(doorHardware).filter(([,p])=>p.family===familyOf(h)).sort(([,a],[,b])=>a.pitch-b.pitch);
-   ui.select(panel,'Размер ручки',products.map(([article,p])=>[article,(ak?p.pitch:p.pitch+' / '+p.length)+' мм · '+article]),h.article,article=>apply({...h,article})).dataset.handleArticle='';
-   if(!ak)ui.select(panel,'Торец установки',[['left','Левая'],['right','Правая'],['top','Верхняя'],['bottom','Нижняя']].filter(([e])=>drawer||!usesProfileEdge(f,leaf.key,e)),h.edge,v=>apply({...h,edge:v})).dataset.handleEdge='';
-   if(ak){
-    const controls=el('div');controls.className='wardrobe-handle-axes';controls.setAttribute('role','group');controls.setAttribute('aria-label','Поворот скобы');
+   const product=doorHardware[h.article],surface=isSurfacePull(product);
+   if(product.model){
+    const selected=el('strong','На фасаде · '+product.model+' · '+product.finish+' · AKS '+h.article);
+    selected.className='wardrobe-pull-selected';panel.append(selected);
+   }else{
+    const products=Object.entries(doorHardware).filter(([,p])=>p.family===familyOf(h)).sort(([,a],[,b])=>a.pitch-b.pitch);
+    ui.select(panel,'Размер ручки',products.map(([article,p])=>[article,(surface?p.pitch:p.pitch+' / '+p.length)+' мм · '+article]),h.article,article=>apply({...h,article})).dataset.handleArticle='';
+   }
+   if(!surface)ui.select(panel,'Торец установки',[['left','Левая'],['right','Правая'],['top','Верхняя'],['bottom','Нижняя']].filter(([e])=>drawer||!usesProfileEdge(f,leaf.key,e)),h.edge,v=>apply({...h,edge:v})).dataset.handleEdge='';
+   if(surface){
+    const controls=el('div');controls.className='wardrobe-handle-axes';controls.setAttribute('role','group');controls.setAttribute('aria-label','Поворот ручки');
     for(const [axis,label] of [['vertical','Вертикально'],['horizontal','Горизонтально']]){
      const button=btn(label,()=>{try{apply(orientHandle(leaf,h,axis));}catch(error){ui.output.textContent=error.message;}});
      button.dataset.handleAxis=axis;button.setAttribute('aria-pressed',String(verticalEdge(h.edge)===(axis==='vertical')));controls.append(button);
@@ -256,7 +302,7 @@ export function doorControls(ui){
     panel.append(controls);
    }
    const upright=['left','right'].includes(h.edge);
-   if(ak){
+   if(surface){
     const anchor=pullHeight(h);
     ui.select(panel,'По высоте фасада',[['center','По центру'],['bottom','От низа фасада'],['top','От верха фасада']],anchor,v=>apply(setPullHeight(h,v)));
     if(anchor!=='center')num(ui,panel,'От '+(anchor==='top'?'верха':'низа')+' до ближайшего отверстия, мм',upright?h.offset:h.inset,v=>{h[upright?'offset':'inset']=v;});
@@ -295,17 +341,18 @@ export function wireHandleDrag(ui){
   const move=e=>{
    if(e.pointerId!==event.pointerId)return;
    const p=pt(e),x=pos.x+(p.x-start.x)/scale,y=pos.y-(p.y-start.y)/scale;
-   const span=pos.vertical?leaf.height:leaf.width,along=pos.vertical?y:x,ak=pos.part.family==='ak700';
+   const span=pos.vertical?leaf.height:leaf.width,along=pos.vertical?y:x,surface=isSurfacePull(pos.part);
    const center=Math.max(pos.part.length/2,Math.min(span-pos.part.length/2,along));
    if(h.from!=='center'||Math.abs(center-span/2)>.25){
     if(h.from==='center')h.from=center<span/2?'start':'end';
     const distance=h.from==='end'?span-center:center;
-    h.offset=Math.round((distance-(ak?pos.part.pitch:pos.part.length)/2)*2)/2;
+    h.offset=Math.round((distance-(surface?pos.part.pitch:pos.part.length)/2)*2)/2;
    }
-   if(ak&&!(h.centerHeight&&Math.abs(y-leaf.height/2)<=.25)){
+   if(surface&&!(h.centerHeight&&Math.abs(y-leaf.height/2)<=.25)){
     if(h.centerHeight){delete h.centerHeight;h.edge=y<leaf.height/2?'bottom':'top';}
     const inset=h.edge==='left'?x:h.edge==='right'?leaf.width-x:h.edge==='top'?leaf.height-y:y;
-    h.inset=Math.max(6,Math.min((pos.vertical?leaf.width:leaf.height)-6,Math.round(inset*2)/2));
+    const margin=Math.max(6,pullHalfWidth(pos.part));
+    h.inset=Math.max(margin,Math.min((pos.vertical?leaf.width:leaf.height)-margin,Math.round(inset*2)/2));
    }
    ui.invalidate();ui.draw();
   };

@@ -1,3 +1,4 @@
+import {surfacePullFinishes} from './wardrobe-door-layout.mjs';
 import pushMeshes from './aks-push-meshes.json' with {type:'json'};
 import {pushProducts,pushRoll} from './wardrobe-push-layout.mjs';
 import {panelLightMeshes} from './wardrobe-lighting.mjs';
@@ -70,6 +71,7 @@ export const VISUAL_FINISHES=Object.freeze({
   back:{color:'#b2afa4',roughness:.94,metalness:0},
   plinth:{color:'#444a43',roughness:.87,metalness:0},
   handle:{color:'#343e3b',roughness:.48,metalness:.38},
+  ...Object.fromEntries(Object.entries(surfacePullFinishes).map(([key,finish])=>['pull-'+key,finish])),
   counter:{color:'#929b94',roughness:.67,metalness:0},
   reveal:{color:'#49544d',roughness:1,metalness:0}
   ,appliance:{color:'#414a46',roughness:.4,metalness:0}
@@ -142,7 +144,7 @@ export class MeshFactory{
       const brushed=['hinge','railSteel','slideSteel','lightProfile','lightAluminium','frame'].includes(role)&&!ghost&&!inspection;
       const Material=glass||counter||brushed||sheet&&!ghost&&!inspection&&optics.clearcoat>0?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:['handle','frame','hinge','shelfSupport','lightProfile','lightAluminium','drawerMetal','railSteel','slideSteel'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
+        metalness:role.startsWith('pull-')||['handle','frame','hinge','shelfSupport','lightProfile','lightAluminium','drawerMetal','railSteel','slideSteel'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       if(brushed){m.anisotropy=role==='frame'?.22:.4;m.anisotropyRotation=Math.PI/2;m.envMapIntensity=role==='frame'?1.05:.94;}

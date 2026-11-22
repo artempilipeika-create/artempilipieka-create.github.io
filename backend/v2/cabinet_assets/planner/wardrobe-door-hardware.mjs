@@ -177,7 +177,9 @@ export function nativeDoorHardware(items){
   const hardware=doorHandle(item);
   if(hardware){
    const h=hardware,at={x:p.x-item.width/2+h.x,z:p.z+(h.back?-1:1)*item.depth/2};
-   result.push({name:(h.edgePull?'Врезная ручка-профиль AKS '+h.article:h.back?'Торцевая ручка MONBLAN':'Ручка-скоба AK700')+' · '+item.name,wardrobe_handle:true,...(h.edgePull?{wardrobe_edge_pull:true,span_mm:h.span}:{}),article:h.article,source_file:h.part.file,source_sha256:h.part.sha,
+   const label=h.part.model?(h.part.family==='rail'?'Рейлинговая ручка':'Ручка-скоба '+h.part.model)+' · '+h.part.finish+' · AKS '+h.article:
+    h.edgePull?'Врезная ручка-профиль AKS '+h.article:h.back?'Торцевая ручка MONBLAN':'Ручка-скоба AK700';
+   result.push({name:label+' · '+item.name,wardrobe_handle:true,...(h.part.model?{wardrobe_catalogue_pull:true}:{}),...(h.edgePull?{wardrobe_edge_pull:true,span_mm:h.span}:{}),article:h.article,source_file:h.part.file,source_sha256:h.part.sha,
     host_blank_id:item.item_id,joined_panel_id:item.item_id,rotation,handle_roll_deg:h.angle,edge:h.edge,position:{...worldPoint(at,rotation),y:item.elevation_mm+h.y},elastic_resize:false});
   }
   for(const run of panelProfiles(item,items)){

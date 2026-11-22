@@ -139,23 +139,24 @@ class FacadeHandle(StrictModel):
 
     def check_size(self,width,height):
         product=DOOR_HARDWARE.get(self.article,{})
-        if product.get('family') not in ('ak700','monblan'):
+        pull=product.get('mount')=='surface'
+        if not pull and product.get('family')!='monblan':
             raise ValueError('Проверьте артикул ручки фасада.')
         vertical=self.edge in ('left','right')
         span,other=(height,width) if vertical else (width,height)
-        pull=product['family']=='ak700'
         half=(product['pitch'] if pull else product['length'])/2
         center=span/2 if self.along=='center' else self.offset+half
         if self.centerHeight and (vertical or not pull):
             raise ValueError('Центр по высоте задан для другой ориентации ручки.')
         inset=other/2 if self.centerHeight else self.inset
-        if center<product['length']/2 or center+product['length']/2>span or pull and not 6<=inset<=other-6:
+        margin=max(6, max(abs(point[1]) for point in product['bounds'])) if pull else 0
+        if center<product['length']/2-.001 or center+product['length']/2>span+.001 or pull and not margin<=inset<=other-margin:
             raise ValueError('Ручка выходит за край фасада.')
 
     def bounds(self,left,bottom,width,height):
         product=DOOR_HARDWARE[self.article]
         vertical=self.edge in ('left','right')
-        pull=product['family']=='ak700'
+        pull=product.get('mount')=='surface'
         span=height if vertical else width
         along=span/2 if self.along=='center' else self.offset+(product['pitch'] if pull else product['length'])/2
         if self.along=='end':along=span-along
@@ -163,7 +164,7 @@ class FacadeHandle(StrictModel):
         x=left+(inset if self.edge=='left' else width-inset) if vertical else left+along
         y=bottom+along if vertical else bottom+(inset if self.edge=='bottom' else height-inset)
         half=product['length']/2
-        cross=6 if pull else 16.9
+        cross=max(abs(point[1]) for point in product['bounds']) if pull else 16.9
         dx,dy=(cross,half) if vertical else (half,cross)
         return x-dx,x+dx,y-dy,y+dy
 

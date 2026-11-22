@@ -2,7 +2,7 @@ import {canLight} from './wardrobe-lighting.mjs';
 import {backMountLabel,canMachine} from './panel-machining.mjs';
 import {isEdgePull,verticalEdge} from './wardrobe-edge-pulls.mjs';
 import hardware from './wardrobe-handle-catalogue.json' with {type:'json'};
-import {doorLabel,doorShelfOptions,baseWardrobeDoors,drawerFacades,handlePlacement,isFacadeProfile} from './wardrobe-door-layout.mjs';
+import {doorLabel,doorShelfOptions,baseWardrobeDoors,drawerFacades,handlePlacement,isFacadeProfile,surfacePullFinishes} from './wardrobe-door-layout.mjs';
 import {mm,mmText,nicheSlot} from './wardrobe-niches.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {backRows} from './carcass-joints.mjs';
@@ -100,7 +100,10 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    const cx=X(leaf.left-W/2+h.x),cy=Y(footHeight(s)+leaf.bottom+h.y);
    const half=h.part.length*k/2,dx=h.vertical?0:half,dy=h.vertical?half:0;
    const path='M'+num(cx-dx)+' '+num(cy-dy)+'L'+num(cx+dx)+' '+num(cy+dy);
-   return '<g data-drag-handle="'+leaf.key+'" data-door-id="'+leaf.key+'" data-scale="'+k+'" role="button" tabindex="0" aria-label="Переместить ручку · '+title+'"><path d="'+path+'" stroke="#282b29" stroke-width="'+Math.max(2,(h.back?4:12)*k)+'" stroke-linecap="round"/><path d="'+path+'" stroke="transparent" stroke-width="12"/></g>';
+   const paint=h.part.outline
+     ? '<path d="'+h.part.outline+'" transform="translate('+num(cx)+' '+num(cy)+') scale('+k+') rotate('+(-h.angle)+')" fill="'+surfacePullFinishes[h.part.finishKey].color+'" fill-rule="evenodd" stroke="#343936" stroke-width=".65" vector-effect="non-scaling-stroke"/>'
+     : '<path d="'+path+'" stroke="#282b29" stroke-width="'+Math.max(2,(h.back?4:12)*k)+'" stroke-linecap="round"/>';
+   return '<g data-drag-handle="'+leaf.key+'" data-door-id="'+leaf.key+'" data-scale="'+k+'" role="button" tabindex="0" aria-label="Переместить ручку · '+title+'"><title>Ручка AKS '+setting.article+'</title>'+paint+'<path d="'+path+'" stroke="transparent" stroke-width="12"/></g>';
  }
  const ordered=built.parts.filter(p=>p.item.blank_axis!=='front'||p.key.startsWith('drawer-')).sort((a,b)=>panelOrder(a)-panelOrder(b));
  function panelOrder(p){return (p.key==='back'||p.key==='mezz-back')?-3:p.key.endsWith('-face')?3:p.key==='plinth'?2:0;}

@@ -76,7 +76,9 @@ def router():
     planner_files.update({'wardrobe-light-kit.json', 'wardrobe-light-kit-ui.mjs','wardrobe-lira-1708.json','wardrobe-lira-native.mjs'})
     planner_files.update('light-kit-photos/'+sku+'.webp' for sku in ('118634','81771','108206','78192','78319','90607','125300','124677'))
     planner_files.update({'wardrobe-door-layout.mjs','wardrobe-facade-profiles.mjs','wardrobe-gola-shelves.mjs','wardrobe-edge-pulls.mjs','wardrobe-blocks.mjs','wardrobe-door-hardware.mjs','wardrobe-door-ui.mjs','wardrobe-door-mesh.mjs','wardrobe-handle-catalogue.json','wardrobe-handle-meshes.json','door-photos/sources.json'})
-    planner_files.update('door-photos/'+key+'.webp' for key in ('ak700-96','ak700-128','ak700-160','ak700-192','ak700-320','monblan-128','monblan-160','monblan-320','monblan-740','monblan-1056','gola-l-118124','gola-c-118129','edge-inset-l-67698','edge-inset-c-75975','edge-inset-l-67698-section','edge-inset-c-75975-section','edge-inset-l-67698-installed','edge-inset-c-75975-installed'))
+    door_photos = json.loads((ASSETS/'door-photos/sources.json').read_text())
+    for photo in door_photos.values():
+        planner_files.update('door-photos/' + photo[key] for key in ('file', 'model_file', 'installation_file', 'section_file') if key in photo)
     planner_files.update({'wardrobe-rods.mjs','wardrobe-rods-ui.mjs','wardrobe-rod-mesh.mjs',
                           'wardrobe-rods.json','wardrobe-rod-meshes.json','rod-photos/sources.json'})
     planner_files.update('rod-photos/'+sku+'.webp' for sku in json.loads((ASSETS/'wardrobe-rods.json').read_text()))
