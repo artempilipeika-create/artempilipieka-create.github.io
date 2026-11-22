@@ -118,3 +118,49 @@ test('a standard sink, selectable installed heights and per-panel materials surv
  const before=structuredClone(a.items),invalid=cfg(one);invalid.fields.width=730;
  assert.throws(()=>saveKitchen(a,invalid),/две двери/);assert.deepEqual(a.items,before);
 });
+
+test('project shelf fixings update board machining, preserve glass and accept later cabinet exceptions',()=>{
+ const a=project();
+ const add=(id,params={})=>saveKitchen(a,{fields:{...standardFields(a,id),...params}});
+ const base=add('base-swing',{shelves:2}),wall=add('wall-swing');
+ const mixed=add('wall-vitrine',{shelfChoices:['board/confirmat','8/80936']});
+ const sink=add('base-sink'),empty=add('base-swing',{shelves:0});
+ const part=(id,key)=>a.items.find(it=>it.item_id===id+':'+key);
+ const savedSink=structuredClone(a.items.filter(it=>it.assistant_carcass.group_id===sink));
+ const edit=id=>{
+  a.select(id+':left');
+  const current=selectedCarcass(a);
+  return {current,fields:kitchenFields(current.metadata.spec.kitchenModel,current.metadata.spec,a.state.kitchenShelfFixing)};
+ };
+ const savedGlass=part(mixed,'shelf-0-1'),beforePosition=structuredClone(savedGlass.assistant_carcass.position);
+ const custom='91518079-f405-4256-984c-c6a256c16960';
+ part(mixed,'right').body_variant_id=custom;
+ part(mixed,'shelf-0-0').production_note='Сохранить подпись';
+ saveKitchen(a,{...edit(wall),projectFixing:'cam_dowel'});
+ for(const id of [base,wall,mixed]){
+  const shelf=part(id,'shelf-0-0');
+  assert.equal(shelf.blank_shelf,'board/cam_dowel');
+  const hardware=nativeCarcassJoints(a.items.filter(it=>it.assistant_carcass.group_id===id)).filter(x=>x.joined_panel_id===shelf.item_id);
+  assert.equal(hardware.filter(it=>it.joint_part==='cam').length,4);
+  assert.equal(hardware.filter(it=>it.joint_part==='dowel').length,4);
+ }
+ assert.deepEqual(a.items.filter(it=>it.assistant_carcass.group_id===sink),savedSink);
+ assert.equal(part(mixed,'shelf-0-1').blank_shelf,'8/80936');assert.equal(part(mixed,'shelf-0-1').height,savedGlass.height);
+ assert.deepEqual(part(mixed,'left').assistant_carcass.position,beforePosition);
+ assert.equal(part(mixed,'right').body_variant_id,custom);assert.equal(part(mixed,'shelf-0-0').production_note,'Сохранить подпись');
+ assert.equal(edit(empty).fields.shelfChoices[0],'board/cam_dowel');
+ assert.equal(a.state.kitchenShelfFixing,'cam_dowel');assert.equal(standardFields(a,'base-swing').shelfChoices[1],'board/cam_dowel');
+ const local=edit(base);local.fields.shelfChoices[0]='board/95388';saveKitchen(a,local);
+ assert.equal(part(base,'shelf-0-0').blank_binding.mounting,'sekura-95388');assert.equal(part(base,'shelf-0-1').blank_shelf,'board/cam_dowel');
+ assert.equal(part(wall,'shelf-0-0').blank_shelf,'board/cam_dowel');
+ assert.equal(part(add('wall-swing'),'shelf-0-0').blank_shelf,'board/cam_dowel');
+});
+
+test('a failure on a shallow neighbour leaves the whole project and default unchanged',()=>{
+ const a=project(),add=(id,params)=>saveKitchen(a,{fields:{...standardFields(a,id),...params}});
+ const base=add('base-swing',{});add('wall-swing',{depth:210});
+ a.select(base+':left');
+ const current=selectedCarcass(a),fields=kitchenFields('base-swing',current.metadata.spec),before=structuredClone(a.state);
+ assert.throws(()=>saveKitchen(a,{fields,current,projectFixing:'cam_dowel'}),/глубин/);
+ assert.deepEqual(a.state,before);
+});

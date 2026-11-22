@@ -1,5 +1,5 @@
 import {prepareAssistantPlan,applyAssistantPlan,selectedCarcass,assistantStamp} from './assistant-model.mjs';
-import {isBase,kitchenFields,kitchenFoot,kitchenModels,kitchenSpec} from './ai-kitchen.mjs';
+import {boardFixingChoices,isBase,kitchenFields,kitchenFoot,kitchenModels,kitchenSpec} from './ai-kitchen.mjs';
 import {splitPlinths,joinPlinths} from './wardrobe-plinth-runs.mjs';
 import {surroundLayout} from './wardrobe-surround.mjs';
 import {StateAdapter} from './state-adapter.mjs';
@@ -52,7 +52,7 @@ export function kitchenRow(members,id){
  return [...found].sort((a,b)=>a.lo-b.lo);
 }
 export function standardFields(adapter,id){
- const f=kitchenFields(id),members=lowerMembers(adapter.items);
+ const f=kitchenFields(id,null,adapter.state.kitchenShelfFixing),members=lowerMembers(adapter.items);
  const active=adapter.selected?.assistant_carcass?.group_id??adapter.selected?.item_id;
  const datum=(members.find(x=>x.id===active)??members.at(-1))?.height??820;
  if(isBase(id))f.height=datum-kitchenFoot(f.feet).height;
@@ -62,7 +62,7 @@ export function standardFields(adapter,id){
  if(recent)Object.assign(f.materials,{body:recent.body,front:recent.front});
  return f;
 }
-export function saveKitchen(adapter,{fields,current=null,heightIds=[],materialRoles=[],wholeKitchen=false,fixture,stamp}){
+export function saveKitchen(adapter,{fields,current=null,heightIds=[],materialRoles=[],wholeKitchen=false,projectFixing=null,fixture,stamp}){
  if(stamp!==undefined&&stamp!==assistantStamp(adapter))throw Error('Проект изменился. Откройте карточку шкафа заново.');
  const original=adapter.selected?.item_id,state={...adapter.state,items:structuredClone(adapter.items)};
  let selected=original;
@@ -70,10 +70,10 @@ export function saveKitchen(adapter,{fields,current=null,heightIds=[],materialRo
   select:id=>{selected=id;},refresh(){}});
  const owned=current?.metadata.group_id;
  if(owned&&adapter.selected?.assistant_carcass?.group_id!==owned)throw Error('Выбран другой шкаф. Откройте его карточку.');
- function apply(f,update,name,fit){
-  const spec=kitchenSpec(f),m=f.materials??kitchenMaterials(null);
+ function apply(spec,update,name,fit){
+  const m=spec.kitchenMaterials??kitchenMaterials(null);
   const target=selectedCarcassIfUpdating(update);
-  if(!update){const used=new Set(draft.items.map(it=>it.assistant_carcass?.name));let i=1;const stem='ИИ · '+kitchenModels.find(x=>x.id===f.id).name;while(used.has(stem+' '+i))i++;name=stem+' '+i;}
+  if(!update){const used=new Set(draft.items.map(it=>it.assistant_carcass?.name));let i=1;const stem='ИИ · '+kitchenModels.find(x=>x.id===spec.kitchenModel).name;while(used.has(stem+' '+i))i++;name=stem+' '+i;}
   const plan=prepareAssistantPlan(draft,{action:update?'update':'create',spec},{cabinetName:name??target?.metadata.name,
    defaultMaterial:m.body,bodyMaterialId:m.body,frontMaterialId:m.front});
   const gid=plan.items[0].assistant_carcass.group_id;
@@ -86,7 +86,7 @@ export function saveKitchen(adapter,{fields,current=null,heightIds=[],materialRo
     const previous=target?.items.find(p=>p.item_id===it.item_id);
     if(previous&&!target.metadata.spec.kitchenMaterials?.parts?.[key])it.body_variant_id=previous.body_variant_id;
    }
-   if(f.id==='base-sink'&&key==='bottom'){
+   if(spec.kitchenModel==='base-sink'&&key==='bottom'){
     const sink=fit===undefined?(!update?defaultFixture('sink'):it.worktop_fixture):fit;
     if(sink)it.worktop_fixture={...sink};else delete it.worktop_fixture;
    }
@@ -98,24 +98,36 @@ export function saveKitchen(adapter,{fields,current=null,heightIds=[],materialRo
   draft.select(draft.items.find(it=>it.assistant_carcass?.group_id===id)?.item_id);
   return selectedCarcass(draft);
  }
- const active=apply(fields,owned,current?.metadata.name,fixture),activeItem=selected;
+ const activeFields=projectFixing?{...fields,shelfFixing:projectFixing,shelfChoices:boardFixingChoices(fields.shelfChoices,projectFixing)}:fields;
+ const active=apply(kitchenSpec(activeFields),owned,current?.metadata.name,fixture),activeItem=selected;
  const datum=isBase(fields.id)?fields.height+kitchenFoot(fields.feet).height:null;
  const targets=new Set(heightIds.filter(id=>id!==active));
  const kitchenGroups=new Map(draft.items.filter(p=>p.assistant_carcass?.spec.kitchenModel).map(p=>[p.assistant_carcass.group_id,p.assistant_carcass]));
  for(const [id,meta] of kitchenGroups){
-  if(id===active||!(targets.has(id)||wholeKitchen&&materialRoles.length))continue;
+  const fixShelves=Boolean(projectFixing&&meta.spec.kitchenModel!=='base-sink');
+  const changeFinish=wholeKitchen&&materialRoles.length>0;
+  if(id===active||!(targets.has(id)||changeFinish||fixShelves))continue;
   const c=selectedCarcassIfUpdating(id),materials=kitchenMaterials(c);
-  if(wholeKitchen)for(const role of materialRoles)materials[role]=fields.materials[role];
-  if(targets.has(id)){
-   const f=kitchenFields(meta.spec.kitchenModel,meta.spec);f.materials=materials;f.height=datum-kitchenFoot(f.feet).height;
-   apply(f,id,meta.name);targets.delete(id);
+  if(changeFinish)for(const role of materialRoles)materials[role]=fields.materials[role];
+  const spec={...meta.spec,kitchenMaterials:materials};
+  let rebuiltShelves=false;
+  if(fixShelves){
+   spec.kitchenShelfFixing=projectFixing;
+   const before=spec.shelfChoices?.[0]??Array(spec.shelves).fill('board/95388');
+   const after=boardFixingChoices(before,projectFixing);
+   rebuiltShelves=after.some((v,i)=>v!==before[i]);
+   if(rebuiltShelves)spec.shelfChoices=[after];
+  }
+  const resize=targets.delete(id);
+  if(resize||rebuiltShelves){
+   if(resize)spec.height=datum-kitchenFoot(spec.feet.article).height;
+   apply(spec,id,meta.name);
   }else{
-   // Finish-only changes keep the original construction and all individual exceptions.
-   const metadata={...meta,spec:{...meta.spec,kitchenMaterials:materials}};
+   const metadata={...meta,spec};
    draft.state.items=draft.items.map(it=>{
     if(it.assistant_carcass?.group_id!==id)return it;
     const key=it.item_id.slice(id.length+1),role=materialRole(key,it);
-    return {...it,assistant_carcass:metadata,body_variant_id:materialRoles.includes(role)?materials.parts[key]??materials[role]:it.body_variant_id};
+    return {...it,assistant_carcass:metadata,body_variant_id:changeFinish&&materialRoles.includes(role)?materials.parts[key]??materials[role]:it.body_variant_id};
    });
   }
  }
@@ -150,5 +162,7 @@ export function saveKitchen(adapter,{fields,current=null,heightIds=[],materialRo
   }
  }
  const issue=fixturePlans(draft.items,draft.room).find(f=>f.error);if(issue)throw Error(issue.error);
- adapter.state.items=draft.items;adapter.select(activeItem);adapter.notify();return active;
+ adapter.state.items=draft.items;
+ if(projectFixing)adapter.state.kitchenShelfFixing=projectFixing;
+ adapter.select(activeItem);adapter.notify();return active;
 }

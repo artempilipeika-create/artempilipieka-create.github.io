@@ -14,7 +14,7 @@ import {blankEdgeCode} from './furniture-core.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
-const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['kitchenModel','kitchenStandard','kitchenMaterials','clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount','surround','overallHeight'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
+const cleanSpec=s=>({...Object.fromEntries(specKeys.map(k=>[k,s[k]])),...Object.fromEntries(['kitchenModel','kitchenStandard','kitchenShelfFixing','kitchenMaterials','clearLayout','drawerFixing','gapLocks','topGaps','nicheSplits','braceOffset','rods','lighting','lightKit','machining','backMount','surround','overallHeight'].filter(k=>s[k]!=null).map(k=>[k,s[k]])),...(s.front?{front:s.front}:{}),...(s.backThickness?{backThickness:s.backThickness}:{}),sectionShelves:s.sectionShelves??null,...(s.feet?{feet:s.feet}:{}),...(s.topFit?{topFit:s.topFit}:{}),...(s.bottomFit?{bottomFit:s.bottomFit}:{}),...(s.dividerSetback!=null?{dividerSetback:s.dividerSetback}:{}),...(s.dividerPositions?{dividerPositions:s.dividerPositions}:{}),...(s.dividerJoints?{dividerJoints:s.dividerJoints}:{}),...(s.joints?{joints:s.joints}:{}),...(s.shelfChoices?.length?{shelfChoices:s.shelfChoices}:{}),...(s.shelfLevels?{shelfLevels:s.shelfLevels}:{}),...(s.drawerBanks?.some(Boolean)?{drawerBanks:s.drawerBanks}:{})});
 // PostgreSQL JSONB may reorder object keys without changing their values.
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const signature=v=>JSON.stringify(ordered(v));
@@ -22,7 +22,7 @@ const geometry=i=>signature([i.item_id,i.blank_axis,
  ...['x','z','rotation','elevation_mm','width','height','depth','blank_length_mm','blank_width_mm','blank_thickness_mm'].map(k=>i[k]==null?null:Number(i[k])),
  i.blank_binding?Object.fromEntries(Object.entries(i.blank_binding).filter(([key])=>key!=='mounting')):null]);
 export const sameAssistantSpec=(a,b)=>signature(a)===signature(b);
-export const assistantStamp=adapter=>JSON.stringify([adapter.projectId,adapter.room,adapter.items]);
+export const assistantStamp=adapter=>JSON.stringify([adapter.projectId,adapter.room,adapter.items,adapter.state?.kitchenShelfFixing]);
 
 export function selectedCarcass(adapter){
  const metadata=adapter.selected?.assistant_carcass;

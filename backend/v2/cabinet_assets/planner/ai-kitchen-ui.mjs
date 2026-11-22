@@ -1,9 +1,9 @@
-import {kitchenModels,kitchenFields,kitchenHinges,kitchenRails,kitchenSpec,kitchenFeet,kitchenFoot,isBase,isVitrine} from './ai-kitchen.mjs';
+import {boardFixingChoices,kitchenShelfFixings,kitchenModels,kitchenFields,kitchenHinges,kitchenRails,kitchenSpec,kitchenFeet,kitchenFoot,isBase,isVitrine} from './ai-kitchen.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import railPhotos from './door-photos/sources.json' with {type:'json'};
-import {hingePhotoCard,fittingPhotoUrl,hardwareArtwork} from './hardware-photos.mjs';
+import {hingePhotoCard,fittingPhotoUrl,hardwareArtwork,jointPhotos} from './hardware-photos.mjs';
 import {kitchenMaterials,materialRole,lowerMembers,kitchenRow,standardFields,saveKitchen} from './ai-kitchen-project.mjs';
 import {choice,fittings,shelfDescription} from './shelf-choices.mjs';
 import {defaultFixture} from './worktop-fixtures.mjs';
@@ -26,13 +26,19 @@ export class AIKitchenUI{
   const head=el('header');this.title=el('h2');this.title.id='ai-kitchen-name';
   head.append(this.title,button('Закрыть',()=>this.dialog.close()));
   const content=el('div');content.className='ai-kitchen-body';this.form=el('form');this.form.onsubmit=e=>{e.preventDefault();this.save();};
+  this.tabs=el('nav');this.tabs.className='ai-kitchen-tabs';this.tabs.setAttribute('aria-label','Параметры шкафа');
+  this.form.id='ai-kitchen-fields';
+  for(const [id,label] of [['size','Размеры'],['inside','Полки'],['hardware','Фурнитура'],['light','Подсветка'],['materials','Материалы']]){
+   const b=button(label,()=>{this.tab=id;this.render();content.scrollTop=0;});
+   b.dataset.tab=id;b.setAttribute('aria-controls',this.form.id);this.tabs.append(b);
+  }
   const aside=el('aside');this.preview=new WardrobePreview(app,()=>{});this.showOpen=true;this.preview.onPart=key=>this.pickPart(key);
   this.view=button('Закрыть двери',()=>{this.showOpen=!this.showOpen;this.draw();});this.drawing=el('div');this.drawing.className='ai-kitchen-drawing';aside.append(this.preview.root,this.drawing,this.view);
   this.fitted=el('div');this.fitted.className='ai-fitted';aside.append(this.fitted);
   this.railDetails=el('details');this.railSummary=el('summary');this.railChoices=el('div');this.railChoices.className='ai-hinge-grid';this.railDetails.append(this.railSummary,this.railChoices);
   this.hingeDetails=el('details');this.hingeSummary=el('summary');this.choices=el('div');this.choices.className='ai-hinge-grid';this.hingeDetails.append(this.hingeSummary,this.choices);
   content.append(this.form,aside);const foot=el('footer');this.status=el('p');this.status.setAttribute('role','status');this.saveButton=button('',()=>this.save());this.saveButton.className='primary';
-  foot.append(this.status,this.saveButton);this.dialog.append(head,content,foot);document.body.append(this.dialog);
+  foot.append(this.status,this.saveButton);this.dialog.append(head,this.tabs,content,foot);document.body.append(this.dialog);
   this.dialog.addEventListener('close',()=>this.preview.release());
   const linked=new URLSearchParams(location.search).get('catalog')==='ai';
   const openLinkedCatalogue=()=>{if(linked)app.workspace?.panel('left',true);};
@@ -81,23 +87,25 @@ export class AIKitchenUI{
   if(this.app.workspace?.isClient())this.app.workspace.client();
   this.app.workspace?.panel('right',false);
   this.current=current;const id=current.metadata.spec.kitchenModel;
-  this.fields=kitchenFields(id,current.metadata.spec);this.fields.materials=kitchenMaterials(current);
+  this.fields=kitchenFields(id,current.metadata.spec,this.app.adapter.state.kitchenShelfFixing);this.fields.materials=kitchenMaterials(current);
+  this.fixingScope='one';this.projectFixing=null;
   this.fixture=current.items.find(it=>it.item_id.endsWith(':bottom'))?.worktop_fixture;
   this.fixture=this.fixture?structuredClone(this.fixture):null;
   this.stamp=assistantStamp(this.app.adapter);this.showOpen=true;this.tab=tab;
   this.heightScope='one';this.chosenIds=new Set();this.wholeKitchen=wholeKitchen;this.changedRoles=new Set();this.partKey=null;
   this.hingeDetails.open=false;this.railDetails.open=false;this.title.textContent=current.metadata.name;
   this.saveButton.textContent='Применить изменения';if(!this.dialog.open)this.dialog.showModal();this.render();
-  this.form.querySelector('[aria-current="step"]')?.focus();
+  this.form.parentElement.scrollTop=0;
+  this.tabs.querySelector('[aria-current="step"]')?.focus({preventScroll:true});
  }
  render(){
   const f=this.fields,base=isBase(f.id),glass=isVitrine(f.id),sink=f.id==='base-sink';
   this.form.replaceChildren();
-  const nav=el('nav');nav.className='ai-kitchen-tabs';nav.setAttribute('aria-label','Параметры шкафа');
-  for(const [id,title] of [['size','Размеры'],['inside',sink?'Мойка':'Полки'],['hardware','Фурнитура'],['light','Подсветка'],['materials','Материалы']]){
-   const b=button(title,()=>{this.tab=id;this.render();});b.dataset.tab=id;if(id===this.tab)b.setAttribute('aria-current','step');nav.append(b);
+  for(const b of this.tabs.children){
+   if(b.dataset.tab==='inside')b.textContent=sink?'Мойка':'Полки';
+   if(b.dataset.tab===this.tab)b.setAttribute('aria-current','step');
+   else b.removeAttribute('aria-current');
   }
-  this.form.append(nav);
   const grid=el('div');grid.className='ai-kitchen-grid';this.form.append(grid);
   const number=(key,name,value,min,max,change,step=1)=>{
    const i=el('input');i.type='number';Object.assign(i,{name:key,value,min,max,step,required:true});const label=el('label',name);i.setAttribute('aria-label',name);label.append(i);grid.append(label);
@@ -135,15 +143,25 @@ export class AIKitchenUI{
   }
   if(this.tab==='inside'&&!sink){
    select('shelves','Количество полок',f.shelves,[0,1,2,3].map(n=>[n,n]),v=>f.shelves=Number(v));
+   select('fixingScope','Где изменить крепление ЛДСП',this.fixingScope,[['one','Отдельная полка'],['cabinet','Все полки этого шкафа'],['project','Все шкафы ИИ в проекте']],v=>{this.fixingScope=v;this.projectFixing=null;});
+   if(this.fixingScope!=='one'){
+    const boards=new Set(f.shelfChoices.slice(0,f.shelves).filter(v=>v.startsWith('board/')).map(v=>v.split('/')[1]));
+    const selected=this.fixingScope==='project'?this.projectFixing??this.app.adapter.state.kitchenShelfFixing:boards.size===1?[...boards][0]:boards.size===0?f.shelfFixing:null;
+    this.fixingCards(grid,this.fixingScope==='project'?'Крепление ЛДСП во всех шкафах ИИ':'Крепление ЛДСП в этом шкафу',selected);
+   }
    for(let i=0;i<f.shelves;i++){
     const [size,article]=f.shelfChoices[i].split('/'),board=size==='board',name='Полка '+(i+1);
     const title=el('h3',name);title.className='ai-span';grid.append(title);
     if(glass)select('shelf-'+i,name+' · материал',size,[['board','ЛДСП 18 мм'],...['4','6','8'].map(n=>[n,'Стекло '+n+' мм'])],v=>{
-     f.shelfChoices[i]=v==='board'?'board/95388':v+'/'+(fittings.some(p=>p.article===article&&p.kind==='glass'&&p.sizes.includes(Number(v)))?article:'48846');
+     f.shelfChoices[i]=v==='board'?'board/'+(f.shelfFixing??'95388'):v+'/'+(fittings.some(p=>p.article===article&&p.kind==='glass'&&p.sizes.includes(Number(v)))?article:'48846');
     });
-    const schemes=[['95388','Полкодержатели'],['confirmat','Конфирматы'],['cam_dowel','Шкант + эксцентрик']];
-    select('fix-'+i,name+' · крепление',board&&!['confirmat','cam_dowel'].includes(article)?'95388':article,
-     board?schemes:fittings.filter(p=>p.kind==='glass'&&p.sizes.includes(Number(size))).map(p=>[p.article,p.name+' · '+p.article]),v=>f.shelfChoices[i]=size+'/'+v);
+    if(!board){
+     select('fix-'+i,name+' · держатели стекла',article,fittings.filter(p=>p.kind==='glass'&&p.sizes.includes(Number(size))).map(p=>[p.article,p.name+' · '+p.article]),v=>f.shelfChoices[i]=size+'/'+v);
+    }else if(this.fixingScope==='one'){
+     this.fixingCards(grid,'Крепление · '+name,Object.hasOwn(kitchenShelfFixings,article)?article:'95388',i);
+    }else{
+     grid.append(el('span',kitchenShelfFixings[article]??('Полкодержатели · '+article)));
+    }
    }
   }
   if(this.tab==='inside'&&sink){
@@ -203,6 +221,26 @@ export class AIKitchenUI{
   }
   this.draw();
  }
+ fixingCards(grid,title,selected,index=null){
+  const f=this.fields,group=el('fieldset');group.className='ai-shelf-fixings ai-span';group.append(el('legend',title));
+  const list=el('div');
+  for(const [code,label] of Object.entries(kitchenShelfFixings)){
+   const b=button('',()=>{
+    if(index!==null)f.shelfChoices[index]='board/'+code;
+    else{
+     f.shelfChoices=boardFixingChoices(f.shelfChoices,code);
+     f.shelfFixing=code;
+     if(this.fixingScope==='project')this.projectFixing=code;
+    }
+    this.render();
+    this.form.querySelector('[data-shelf-index="'+b.dataset.shelfIndex+'"][data-shelf-fixing="'+code+'"]')?.focus({preventScroll:true});
+   });
+   b.dataset.shelfIndex=index??'all';b.dataset.shelfFixing=code;b.setAttribute('aria-label',label);b.setAttribute('aria-pressed',String(selected===code));
+   const detail={'95388':'SEKURA 2 · 95388',confirmat:'7×50 мм',cam_dowel:'Шкант 8×35 мм'}[code];
+   b.append(jointPhotos(code),el('strong',label),el('small',detail));list.append(b);
+  }
+  group.append(list);grid.append(group);
+ }
  picker(grid,title,id,thickness,assign){
   const card=el('fieldset');card.className='ai-picker ai-span';card.append(el('legend',title));
   const material=this.app.adapter.material(id),defaultIds=globalThis.MF_FURNITURE_CORE.DEFAULT_MATERIALS;
@@ -259,7 +297,7 @@ export class AIKitchenUI{
    if(b.spec.elevation+b.envelope.height>this.app.adapter.room.height)throw Error('Шкаф выходит выше потолка.');
    const lights=b.parts.flatMap(({key,item})=>(item.blank_machining??[]).filter(op=>op.lightSystem).map(op=>({key,length:item.blank_length_mm-(op.start??0)-(op.end??0)})));
    const side=lights.find(p=>p.key!=='bottom'),under=lights.find(p=>p.key==='bottom');
-   this.status.textContent=[base?'Корпус '+f.height+' мм + опоры '+kitchenFoot(f.feet).height+' мм = '+b.envelope.height+' мм':'Корпус '+f.width+' × '+f.height+' × '+(f.depth+3)+' мм',side?'Боковой профиль '+side.length+' мм':null,under?'Под дном '+under.length+' мм':null].filter(Boolean).join(' · ');
+   this.status.textContent=[base?'Корпус '+f.height+' мм + опоры '+kitchenFoot(f.feet).height+' мм = '+b.envelope.height+' мм':'Корпус '+f.width+' × '+f.height+' × '+(f.depth+3)+' мм',side?'Боковой профиль '+side.length+' мм':null,under?'Под дном '+under.length+' мм':null,this.projectFixing?'Все шкафы ИИ · '+kitchenShelfFixings[this.projectFixing]:null].filter(Boolean).join(' · ');
    this.saveButton.disabled=!this.form.checkValidity();this.preview.selectedPart=this.tab==='materials'?this.partKey:null;this.preview.sync(b,this.showOpen?0:null,this.current,{body:true,front:true,back:true});
    this.drawing.hidden=!this.preview.root.hidden;
    if(!this.drawing.hidden)this.drawing.innerHTML=carcassSVG({...b,parts:this.showOpen?b.parts.filter(p=>!p.key.startsWith('door-')):b.parts},true);
@@ -270,7 +308,7 @@ export class AIKitchenUI{
   try{
    const a=this.app.adapter,id=this.current.metadata.group_id,targets=this.heightScope==='row'?kitchenRow(lowerMembers(a.items),id).map(x=>x.id):this.heightScope==='selected'?[...this.chosenIds]:[];
    const gid=this.change('Параметры кухонных шкафов',()=>saveKitchen(a,{fields:this.fields,current:this.current,heightIds:targets,materialRoles:[...this.changedRoles],
-    wholeKitchen:this.wholeKitchen,fixture:this.fixture,stamp:this.stamp}));
+    wholeKitchen:this.wholeKitchen,projectFixing:this.projectFixing,fixture:this.fixture,stamp:this.stamp}));
    if(gid){this.dialog.close();this.app.scene.cabinetSelection=gid;this.app.sync();a.status('Изменения применены.');}
   }catch(error){this.status.textContent=error.message;}
  }

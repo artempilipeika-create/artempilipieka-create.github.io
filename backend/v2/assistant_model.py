@@ -71,6 +71,7 @@ def shelf_valid(value, thickness):
     return size in ('4','6','8') and int(size) in GLASS_SUPPORTS.get(article, ())
 
 ShelfValue = Annotated[str, Field(max_length=15)]
+KitchenShelfFixing = Literal['95388', 'confirmat', 'cam_dowel']
 class CarcassJoints(StrictModel):
     top: Literal['none','confirmat','cam_dowel']
     bottom: Literal['none','confirmat','cam_dowel']
@@ -506,6 +507,7 @@ class KitchenMaterials(StrictModel):
 
 class CarcassDesign(CarcassSpec):
     kitchenStandard: Literal[2] | None = Field(default=None, exclude_if=lambda v:v is None)
+    kitchenShelfFixing: KitchenShelfFixing | None = Field(default=None, exclude_if=lambda v:v is None)
     kitchenMaterials: KitchenMaterials | None = Field(default=None, exclude_if=lambda v:v is None)
     kitchenModel: Literal['base-swing','base-sink','base-vitrine','wall-swing','wall-vitrine'] | None = Field(default=None, exclude_if=lambda value: value is None)
 

@@ -7,7 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
-from .assistant_model import AssistantCarcass, Z1_HINGES, DOOR_HARDWARE, InsetEdgeGrip, PanelCutList, ShelfValue, shelf_valid
+from .assistant_model import AssistantCarcass, Z1_HINGES, DOOR_HARDWARE, InsetEdgeGrip, KitchenShelfFixing, PanelCutList, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
 from .domain_api import require,create_draft
@@ -694,6 +694,7 @@ class Scene(StrictModel):
     selected_item_id: str|None=Field(default=None,max_length=80)
     production_note: str=Field(default='',max_length=2500)
     countertopSettings: CountertopSettings=Field(default_factory=CountertopSettings)
+    kitchenShelfFixing: KitchenShelfFixing | None = Field(default=None, exclude_if=lambda v:v is None)
     plinths: list[RowPlinth]=Field(default_factory=list,max_length=100)
     wallPanels: list[WallPanel]=Field(default_factory=list,max_length=16)
     wallLights: list[WallLight]=Field(default_factory=list,max_length=4)

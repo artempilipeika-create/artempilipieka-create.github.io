@@ -18,21 +18,30 @@ export const kitchenModels=Object.freeze([
 ]);
 export const kitchenFoot=article=>kitchenFeet.find(p=>p.article===article);
 export const shelfDefault=id=>isVitrine(id)?'4/48846':isBase(id)?'board/confirmat':'board/95388';
+export const kitchenShelfFixings=Object.freeze({
+ '95388':'Полкодержатели',confirmat:'Конфирмат',cam_dowel:'Эксцентрик со шкантом'
+});
+export function boardFixingChoices(values,fixing){
+ if(!Object.hasOwn(kitchenShelfFixings,fixing))throw Error('Выберите крепление полки из ЛДСП.');
+ return values.map(value=>value.startsWith('board/')?'board/'+fixing:value);
+}
 export function kitchenHinges(id){
  return Object.values(hingeCatalogue).filter(p=>Boolean(p.frame)===isVitrine(id)&&['overlay','inset'].includes(p.kind));
 }
-export function kitchenFields(id,s){
+export function kitchenFields(id,s,projectFixing=null){
  const m=kitchenModels.find(model=>model.id===id);
  if(!m)throw Error('Выберите кухонный модуль ИИ.');
  const vitrine=isVitrine(id),firstDoor=s?.front?.swing==='right'?'door-right':'door-left';
  const source=s?.lighting??{},left=source.left,right=source.right,line=(left??right??source.bottom)?.[0];
  const pull=s?.front?.handles?.[firstDoor],shelves=s?.shelves??m.shelves;
+ const shelfFixing=s?.kitchenShelfFixing??projectFixing;
+ const standard=shelfFixing&&!isVitrine(id)?'board/'+shelfFixing:shelfDefault(id);
  const system=line?.system??'lira-17.5x6.5',groove=lightingSystems[system].groove_width_mm;
  // Legacy clear-opening profiles had 8 mm at either end. Editing converts them
  // to the source workshop run, while preserving their original depth position.
  const legacy=Boolean(line&&!line.fullPanel&&line.start===8&&line.end===8);
  return {id,width:s?.width??600,height:s?.height??720,depth:s?.depth??m.depth,elevation:s?.elevation??m.elevation,
-   shelves,shelfChoices:Array.from({length:3},(_,i)=>s&&i<shelves?(s.shelfChoices?.[0]?.[i]??'board/95388'):shelfDefault(id)),
+   shelves,shelfFixing,shelfChoices:Array.from({length:3},(_,i)=>s&&i<shelves?(s.shelfChoices?.[0]?.[i]??'board/95388'):standard),
    swing:s?.front?.swing??(vitrine?'pair':'left'),hinge:s?hingeProduct(s.front,firstDoor).article:vitrine?'71B950A':'112595',
    feet:s?.feet?.article??'86502',handle:s?(pull?.article??'none'):(vitrine?'none':'79080'),
    orientation:pull&&['top','bottom'].includes(pull.edge)?'horizontal':'vertical',
@@ -55,6 +64,10 @@ export function kitchenSpec(f){
    shelfSetback:base?1:0,shelfGap:1,edgeThickness:1,edgePolicy:'front',joints:{top:'confirmat',bottom:'confirmat'},
    front:{swing:f.swing,offset:90,autoHinges:true,hinges:{}}};
  if(f.materials)s.kitchenMaterials=structuredClone(f.materials);
+ if(!sink&&f.shelfFixing!=null){
+   if(!Object.hasOwn(kitchenShelfFixings,f.shelfFixing))throw Error('Выберите крепление полки из ЛДСП.');
+   s.kitchenShelfFixing=f.shelfFixing;
+ }
  if(base){
    const foot=kitchenFoot(f.feet);if(!foot)throw Error('Выберите опору из присланных моделей.');
    s.bottomFit='overlay';s.feet={layout:'width',article:f.feet,front:foot.plinth?75:10,rear:foot.plinth?50:10};

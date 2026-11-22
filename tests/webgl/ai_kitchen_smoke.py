@@ -37,6 +37,8 @@ def scenario(page, projects, pid):
 
     def tab(id):
         form.locator('[data-tab="'+id+'"]').click()
+    def fixing(index,code):
+        return form.locator(f'[data-shelf-index="{index}"][data-shelf-fixing="{code}"]')
     def cabinet(model):
         return page.evaluate('id=>MF_PLANNER.adapter.items.find(p=>p.assistant_carcass?.spec.kitchenModel===id).assistant_carcass.group_id',model)
     def open_card(model):
@@ -70,7 +72,25 @@ def scenario(page, projects, pid):
     form.get_by_label('Ширина корпуса').fill('600')
     form.get_by_role('button',name='900 мм').click()
     form.locator('[name=heightScope]').select_option('row')
-    tab('inside');form.locator('[name=shelves]').select_option('3');form.locator('[name=fix-1]').select_option('cam_dowel')
+    tab('inside');form.locator('[name=shelves]').select_option('3')
+    assert form.locator('[data-shelf-index="1"]').count()==3
+    assert fixing(1,'cam_dowel').locator('img').count()==2
+    viewport=page.viewport_size
+    for size in (viewport,{'width':390,'height':760}):
+        page.set_viewport_size(size)
+        metrics=form.evaluate(r"""d=>{
+           const b=d.querySelector('.ai-kitchen-body'),nav=d.querySelector('nav');
+           b.scrollTop=0;const top=nav.getBoundingClientRect().top;b.scrollTop=b.scrollHeight;
+           function lum(rgb){const [r,g,b]=rgb.match(/\d+/g).slice(0,3).map(v=>v/255).map(v=>v<=0.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*r+.7152*g+.0722*b;}
+           const ratios=Array.from(nav.children,n=>{const s=getComputedStyle(n),a=lum(s.color),b=lum(s.backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);});
+           return {shift:nav.getBoundingClientRect().top-top,ratios,scroll:b.scrollTop};
+        }""")
+        assert metrics['shift']==0 and min(metrics['ratios'])>=4.5,metrics
+        if size['width']==390:assert metrics['scroll']>0
+    page.set_viewport_size(viewport)
+    form.locator('[name=fixingScope]').select_option('cabinet');fixing('all','95388').click()
+    form.locator('[name=fixingScope]').select_option('one');fixing(1,'cam_dowel').click()
+    expect(fixing(0,'95388')).to_have_attribute('aria-pressed','true')
     tab('hardware');form.get_by_text('Накладные под цоколь',exact=True).click()
     form.locator('[data-foot="107270"]').click()
     assert form.locator('[data-foot]').count()>30
@@ -94,7 +114,7 @@ def scenario(page, projects, pid):
     form.get_by_role('button',name='Дуб для теста · 18 мм').click()
     scene=save()
     open_card('wall-vitrine');tab('light');expect(form.locator('[role=status]')).to_contain_text('711 мм')
-    tab('inside');form.locator('[name=shelf-0]').select_option('board');form.locator('[name=fix-0]').select_option('confirmat')
+    tab('inside');form.locator('[name=shelf-0]').select_option('board');fixing(0,'confirmat').click()
     form.locator('[name=shelf-1]').select_option('8');scene=save()
     open_card('base-vitrine');tab('inside');form.locator('[name=shelf-0]').select_option('board');save()
     open_card('base-sink');tab('inside');expect(form.get_by_label('Ширина мойки')).to_have_value('500')
@@ -109,8 +129,16 @@ def scenario(page, projects, pid):
     assert next(i for i in groups['base-swing'] if i['item_id'].endswith(':left'))['body_variant_id']==custom
     assert not any(i['item_id'].endswith(':back') for i in groups['base-sink'])
     assert next(i for i in groups['base-sink'] if i['item_id'].endswith(':bottom'))['worktop_fixture']['finish']=='black'
+    open_card('wall-swing');tab('inside');form.locator('[name=fixingScope]').select_option('project')
+    fixing('all','confirmat').click();scene=save()
+    assert scene['kitchenShelfFixing']=='confirmat'
+    boards=[it for it in scene['items'] if (it.get('blank_shelf') or '').startswith('board/')]
+    assert len(boards)==6 and all(it['blank_shelf']=='board/confirmat' for it in boards)
+    assert any(it.get('blank_shelf')=='8/48846' for it in scene['items'])
     page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+    wait_state("()=>MF_PLANNER.adapter.state.kitchenShelfFixing==='confirmat'")
     open_card('base-swing');tab('inside');expect(form.locator('[name=shelves]')).to_have_value('3')
+    expect(fixing(1,'confirmat')).to_have_attribute('aria-pressed','true')
     tab('hardware');expect(form.get_by_label('Положение ручки')).to_have_value('horizontal')
     form.get_by_role('button',name='Закрыть',exact=True).click()
     with page.expect_download() as event:page.locator('#export-bazis').click()
