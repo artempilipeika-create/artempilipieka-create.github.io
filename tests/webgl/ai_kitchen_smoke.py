@@ -71,7 +71,18 @@ def scenario(page, projects, pid):
     hinge=form.locator('[data-hinge-article="71B3550"]')
     assert hinge.locator('img').get_attribute('src');hinge.click()
     form.get_by_label('Положение ручки').select_option('horizontal')
-    tab('materials');form.locator('[name=part]').select_option('left')
+    tab('materials')
+    form.get_by_role('button',name='Закрыть двери').click()
+    page.wait_for_function('MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
+    part_point=page.evaluate("""()=>{const v=MF_PLANNER.aiKitchen.preview,r=v.canvas.getBoundingClientRect();
+      const point=v.camera.position.clone().set(0,0.30,0.015);
+      const g=v.entries.get('questionnaire-preview:door-left').group;
+      point.applyMatrix4(g.matrixWorld).project(v.camera);
+      return [r.left+(1+point.x)*r.width/2,r.top+(1-point.y)*r.height/2];}""")
+    page.mouse.click(*part_point)
+    expect(form.locator('[name=part]')).to_have_value('door-left')
+    page.wait_for_function('MF_PLANNER.aiKitchen.preview.outline.visible')
+    form.locator('[name=part]').select_option('left')
     form.get_by_label('Поиск · Боковина левая').fill('Дуб')
     form.get_by_role('button',name='Дуб для теста · 18 мм').click()
     scene=save()

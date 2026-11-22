@@ -260,7 +260,7 @@ export class AIKitchenUI{
    const lights=b.parts.flatMap(({key,item})=>(item.blank_machining??[]).filter(op=>op.lightSystem).map(op=>({key,length:item.blank_length_mm-(op.start??0)-(op.end??0)})));
    const side=lights.find(p=>p.key!=='bottom'),under=lights.find(p=>p.key==='bottom');
    this.status.textContent=[base?'Корпус '+f.height+' мм + опоры '+kitchenFoot(f.feet).height+' мм = '+b.envelope.height+' мм':'Корпус '+f.width+' × '+f.height+' × '+(f.depth+3)+' мм',side?'Боковой профиль '+side.length+' мм':null,under?'Под дном '+under.length+' мм':null].filter(Boolean).join(' · ');
-   this.saveButton.disabled=!this.form.checkValidity();this.preview.sync(b,this.showOpen?0:null,this.current,{body:true,front:true,back:true});
+   this.saveButton.disabled=!this.form.checkValidity();this.preview.selectedPart=this.tab==='materials'?this.partKey:null;this.preview.sync(b,this.showOpen?0:null,this.current,{body:true,front:true,back:true});
    this.drawing.hidden=!this.preview.root.hidden;
    if(!this.drawing.hidden)this.drawing.innerHTML=carcassSVG({...b,parts:this.showOpen?b.parts.filter(p=>!p.key.startsWith('door-')):b.parts},true);
   }catch(error){this.preview.hide();this.drawing.hidden=true;this.status.textContent=error.message;}

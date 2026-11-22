@@ -125,6 +125,11 @@ export class WardrobePreview{
     const w=Math.max(1,Math.round(rect.width*scale)),h=Math.max(1,Math.round(rect.height*scale));
     if(this.target.width!==w||this.target.height!==h||!this.image){this.canvas.width=w;this.canvas.height=h;this.target.setSize(w,h);this.pixels=new Uint8Array(w*h*4);this.image=this.ctx.createImageData(w,h);}
     const moving=this.motion.step(time,owner.reducedMotion?.matches);this.motion.pose(this.entries,this.adapter.items);
+    if(this.onPart){
+      const selected=this.entries.get(groupId+':'+this.selectedPart);
+      this.outline.visible=Boolean(selected);
+      if(selected)this.outline.box.setFromObject(selected.group);
+    }
     const center=this.bounds.getCenter(new THREE.Vector3()),size=this.bounds.getSize(new THREE.Vector3());
     const aspect=w/h,tan=Math.tan(this.camera.fov*Math.PI/360);
     const distance=Math.max(size.y/.85,(size.x+size.z*.55)/(.81*aspect))/(2*tan)+size.z*.82;
