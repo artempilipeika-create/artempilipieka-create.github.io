@@ -39,3 +39,18 @@ test('pantograph opening limits, solid horizontal mount and independent heights'
  const installed=planFittings(wardrobeSpec(raw));assert.equal(installed[1].y-installed[0].y,200);
  raw.fittings[1].offset=70;assert.throws(()=>planFittings(wardrobeSpec(raw)),/пересекаются/);
 });
+
+test('the native GRIDLI trouser rack points down from its mounting plane for all cabinet rotations',async()=>{
+ const {createRequire}=await import('node:module'),vm=await import('node:vm'),T=await import('../../backend/v2/cabinet_assets/planner/vendor/three.module.js');
+ const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/bazis-drawers-import.js',import.meta.url),'utf8');
+ const c=vm.createContext({require:createRequire(import.meta.url),process:{env:{}},objectTransformation:{
+   RotateObject:(o,axis,degrees)=>o.q.premultiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(axis.x,axis.y,axis.z),degrees*Math.PI/180))}});
+ vm.runInContext(source.slice(0,source.lastIndexOf('(function main()')),c);
+ for(const variant of ['113941-left','113941-right'])for(const rotation of [0,90,180,270]){
+   const p=fittingCatalogue[variant],o={q:new T.Quaternion(),PositionX:0,PositionY:0,PositionZ:0,SetDefaultTransform(){},
+     ToGlobal(pt){return new T.Vector3(pt.x,pt.y,pt.z).applyQuaternion(this.q).add(new T.Vector3(this.PositionX,this.PositionY,this.PositionZ));}};
+   const zero={x:0,y:0,z:0},pos={x:100,y:700,z:600};
+   c.placeByFrame(o,null,{wardrobe_fitting:variant,source_sha256:p.sha,article:p.article,rotation,position:pos},[],zero);
+   assert.equal(o.ToGlobal({x:0,y:0,z:100}).y,600);
+ }
+});

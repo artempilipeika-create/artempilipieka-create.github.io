@@ -562,7 +562,7 @@ function placeByFrame(obj, frame, item, log, mountingPoint = null) {
   const finalOrigin = vector(obj.ToGlobal({x:0,y:0,z:0}), 'finalOrigin');
   for (const unit of [{x:100,y:0,z:0}, {x:0,y:100,z:0}, {x:0,y:0,z:100}]) {
     const measured = vector(obj.ToGlobal(unit), 'basis');
-    const v=item.wardrobe_blum_part==='plate'?{x:sign*unit.z,y:sign*unit.y,z:-unit.x}:hinge?{x:sign*unit.y,y:-sign*unit.z,z:-unit.x}:push?{x:unit.z,y:unit.y,z:-unit.x}:item.joint_back_face?{x:unit.x,y:-unit.z,z:unit.y}:unit;
+    const v=item.wardrobe_blum_part==='plate'?{x:sign*unit.z,y:sign*unit.y,z:-unit.x}:hinge?{x:sign*unit.y,y:-sign*unit.z,z:-unit.x}:push?{x:unit.z,y:unit.y,z:-unit.x}:(item.joint_back_face||fitting?.pitch===90)?{x:unit.x,y:-unit.z,z:unit.y}:unit;
     const r=(push?pushRoll:roll)*Math.PI/180;
     const tilted={x:v.x*Math.cos(r)-v.y*Math.sin(r),y:v.x*Math.sin(r)+v.y*Math.cos(r),z:v.z};
     const expected = rotateScene(tilted, angle);
