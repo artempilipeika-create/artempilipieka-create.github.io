@@ -31,10 +31,16 @@ export class AIKitchenUI{
   content.append(this.form,aside);const foot=el('footer');this.status=el('p');this.status.setAttribute('role','status');this.saveButton=button('',()=>this.save());this.saveButton.className='primary';
   foot.append(this.status,this.saveButton);this.dialog.append(head,content,foot);document.body.append(this.dialog);
   this.dialog.addEventListener('close',()=>this.preview.release());
-  this.unsubscribe=app.bridge.subscribe(reason=>{if(reason==='before-project'||reason==='project')this.dialog.close();});
+  const linked=new URLSearchParams(location.search).get('catalog')==='ai';
+  const openLinkedCatalogue=()=>{if(linked)app.workspace?.panel('left',true);};
+  this.unsubscribe=app.bridge.subscribe(reason=>{
+   if(reason==='before-project'||reason==='project')this.dialog.close();
+   if(reason==='project')queueMicrotask(openLinkedCatalogue);
+  });
+  document.getElementById('room-setup')?.addEventListener('close',openLinkedCatalogue,{signal:this.events.signal});
   document.addEventListener('mf:ai-kitchen-catalogue',e=>this.cards(e.detail),{signal:this.events.signal});
   document.dispatchEvent(new Event('mf:ai-kitchen-ready'));
-  if(new URLSearchParams(location.search).get('catalog')==='ai')app.workspace?.panel('left',true);
+  openLinkedCatalogue();
  }
  cards(root){
   const group=el('div');group.className='mf3d-module-group';group.dataset.category='ai';group.append(el('h3','Кухонные модули ИИ'));

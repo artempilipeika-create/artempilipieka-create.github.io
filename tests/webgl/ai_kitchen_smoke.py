@@ -102,6 +102,12 @@ def scenario(page, projects, pid):
     assert sum(bool(r.get('wardrobe_z1_hinge')) for r in rows)==4
     assert sum(r.get('article')=='71B3550' and r.get('wardrobe_blum_part')=='hinge' for r in rows)==2
     assert set(p['item_id'] for p in upper)=={p['item_id'] for p in scene['items'] if p['assistant_carcass']['spec']['kitchenModel']=='wall-swing'}
+    page.goto(ORIGIN+'/constructor?catalog=ai',wait_until='domcontentloaded')
+    page.locator('#ai-kitchen-dialog').wait_for(state='attached')
+    page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+    expect(page.locator('[data-module-filter="ai"]')).to_have_attribute('aria-pressed','true')
+    page.locator('[data-ai-kitchen="wall-vitrine"]').click()
+    expect(page.locator('#ai-kitchen-dialog')).to_be_visible()
     print('PASS three original kitchen cards, protected source catalogue, schema, supplier photos, saved and edited shelves, real hardware and Z1 export')
 
 
