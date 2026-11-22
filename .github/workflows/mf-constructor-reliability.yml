@@ -51,6 +51,11 @@ jobs:
           path: qa-output/reliability.xml
 
   wardrobe-questionnaire:
+    name: ${{ matrix.suite }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [wardrobe-questionnaire, kitchen-questionnaire]
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -60,6 +65,7 @@ jobs:
           python-version: '3.12'
       - name: Save, reopen and edit cabinets in Chromium
         env:
+          MF_QA_SUITE: ${{ matrix.suite }}
           MF_QA_LIVE_KITCHEN: ${{ startsWith(github.ref_name, 'mf-reliability-live-kitchen-') }}
           MF_QA_LIVE: ${{ startsWith(github.ref_name, 'mf-reliability-live-surround-') }}
         run: |
@@ -69,15 +75,16 @@ jobs:
           else
             python -m playwright install --with-deps chromium
           fi
-          if [ "$MF_QA_LIVE" = true ]; then
+          if [ "$MF_QA_SUITE" = kitchen-questionnaire ]; then
+            if [ "$MF_QA_LIVE_KITCHEN" = true ]; then
+              python tests/webgl/ai_kitchen_smoke.py --live
+            else
+              python tests/webgl/ai_kitchen_smoke.py
+            fi
+          elif [ "$MF_QA_LIVE" = true ]; then
             python tests/webgl/wardrobe_surround_smoke.py --live
             python tests/webgl/wardrobe_pull_smoke.py --live
           else
             python tests/webgl/wardrobe_surround_smoke.py
             python tests/webgl/wardrobe_pull_smoke.py
-          fi
-          if [ "$MF_QA_LIVE_KITCHEN" = true ]; then
-            python tests/webgl/ai_kitchen_smoke.py --live
-          else
-            python tests/webgl/ai_kitchen_smoke.py
           fi
