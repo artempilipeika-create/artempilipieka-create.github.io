@@ -10,6 +10,7 @@ import {resizeDividerChoices} from './wardrobe-questionnaire.mjs';
 
 export function resizeSections(f,n){
  if(!Number.isInteger(n)||n<1||n>4)throw Error('Выберите от одной до четырёх секций.');
+ if(f.fittings?.some(m=>m.section>=n))throw Error('Уберите фурнитуру AKS из удаляемой секции.');
  const oldCount=f.sections;
  if(n===oldCount)return;
  const d=f.front?.division;
@@ -61,7 +62,7 @@ export function setSectionShelfCount(f,section,count){
  const occupied=new Set(locks);
  const d=f.front?.division;
  const anchor=doorAnchorIndex(f,section);
- for(const rod of f.rods??[])if(rod.section===section)occupied.add(rod.level);
+ for(const rod of [...(f.rods??[]),...(f.fittings??[])])if(rod.section===section)occupied.add(rod.level);
  for(const zone of f.nicheSplits??[])if(zone.section===section)occupied.add(zone.level);
  for(const [slot,bank] of (f.drawerBanks??[]).entries())if(bank&&sectionOf(slot)===section)occupied.add(levelOf(slot));
  const legacy=f.drawerBanks?.[nicheSlot(section,0)];
@@ -116,7 +117,7 @@ export function setSectionShelfCount(f,section,count){
    });
    f.drawerBanks=trimBanks(banks,f.sections);
  }
- for(const rod of f.rods??[])if(rod.section===section)rod.level=shifted(rod.level);
+ for(const rod of [...(f.rods??[]),...(f.fittings??[])])if(rod.section===section)rod.level=shifted(rod.level);
  for(const zone of f.nicheSplits??[])if(zone.section===section)zone.level=shifted(zone.level);
  f.sectionShelves[section]=count;
  writeHeights(f,section,null,sizes,newLocks);
@@ -192,6 +193,9 @@ export function insertShelves(f,cell,count){
  if(locks.includes(index))throw Error('Снимите фиксацию высоты выбранной ниши.');
  const legacy=f.drawerBanks?.[nicheSlot(section,0)];
  if(!column&&(zone||f.drawerBanks?.[nicheSlot(section,level)]||legacy&&!legacy.layout))throw Error('Для полок выберите свободную нишу.');
+ const fittingField=column?'opening':'level';
+ const affectedFittings=(f.fittings??[]).filter(r=>r.section===section&&(column?r.level===level&&r.column===cell.column:true));
+ if(affectedFittings.some(r=>r[fittingField]===index))throw Error('В этой нише установлена фурнитура AKS. Для разделения выберите свободную нишу или уберите механизм.');
  const affected=(f.rods??[]).filter(r=>r.section===section&&(column?r.level===level&&r.column===cell.column:true));
  const hits=affected.filter(r=>column?r.opening===index:r.level===level);
  const gaps=clearGaps(sizes[index],Array(count).fill(f.thickness),Array(count+1).fill(null));
@@ -207,6 +211,7 @@ export function insertShelves(f,cell,count){
    throw Error('Новая полка пересекает держатель штанги. Сначала переместите штангу внутри ниши.');
  });
  const field=column?'opening':'level';
+ for(const r of affectedFittings)if(r[fittingField]>index)r[fittingField]+=count;
  for(const rod of affected)if(rod[field]>index)rod[field]+=count;
  for(const [rod,i,offset] of changes){rod[field]=index+i;rod.offset=offset;}
  const newLocks=locks.map(i=>i>index?i+count:i);

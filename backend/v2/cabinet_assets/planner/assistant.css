@@ -303,3 +303,6 @@
 }
 #planner-assistant-dialog[data-zoom] .assistant-drawing p:last-child{display:none}
 #planner-assistant-dialog .cell-figure-head .cell-zoom{padding:7px 11px;min-height:34px;font-size:13px;flex-shrink:0}
+
+.wardrobe-fitting-photos{display:flex;align-items:center;justify-content:center;min-width:0}
+.wardrobe-fitting-photos img{min-width:0;flex:1 1 0}

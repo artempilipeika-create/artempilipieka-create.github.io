@@ -11,10 +11,10 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from .assistant_model import DOOR_HARDWARE, LIGHTING, ROD_CATALOGUE, Z1_DATA
+from .assistant_model import DOOR_HARDWARE, LIGHTING, ROD_CATALOGUE, WARDROBE_FITTINGS, Z1_DATA
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.51'
+IMPORTER_VERSION = '9.9.52'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
@@ -100,21 +100,30 @@ def private_z1_sources(required):
     return sources
 
 
+def private_fitting_sources(required):
+    products = {row['file']: row['sha'] for row in WARDROBE_FITTINGS.values()}
+    return private_aks_sources(required, 'MF_AKS_wardrobe_fittings.enc', b'Martin Forest AKS wardrobe fittings v1', products, 'наполнения')
+
+
 def private_surface_sources(required):
+    products = {row['file']: row['sha'] for row in DOOR_HARDWARE.values() if row.get('model')}
+    return private_aks_sources(required, 'MF_AKS_surface_pulls.enc', b'Martin Forest AKS surface pulls v1', products, 'ручек')
+
+
+def private_aks_sources(required, filename, associated_data, products, label):
     key = os.environ.get('MF_WARDROBE_SURFACE_PULLS_KEY')
     if not key:
         if required:
-            raise ValueError('На сервере отсутствует комплект рейлинговых ручек и скоб АКС.')
+            raise ValueError('На сервере отсутствует комплект '+label+' АКС.')
         return {}
-    archive = (ROOT / 'wardrobe-aks' / 'MF_AKS_surface_pulls.enc').read_bytes()
+    archive = (ROOT / 'wardrobe-aks' / filename).read_bytes()
     try:
-        plaintext = AESGCM(bytes.fromhex(key)).decrypt(archive[:12], archive[12:], b'Martin Forest AKS surface pulls v1')
+        plaintext = AESGCM(bytes.fromhex(key)).decrypt(archive[:12], archive[12:], associated_data)
     except (InvalidTag, ValueError) as exc:
-        raise ValueError('Не удалось открыть исходные ручки АКС.') from exc
-    products = {row['file']: row['sha'] for row in DOOR_HARDWARE.values() if row.get('model')}
+        raise ValueError('Не удалось открыть комплект '+label+' АКС.') from exc
     with ZipFile(BytesIO(plaintext)) as bundle:
         if sorted(bundle.namelist()) != sorted(products):
-            raise ValueError('Комплект исходных ручек АКС неполон.')
+            raise ValueError('Комплект '+label+' АКС неполон.')
         sources = {name: bundle.read(name) for name in products}
     for name, digest in products.items():
         if sha256(sources[name]).hexdigest() != digest:
@@ -123,7 +132,7 @@ def private_surface_sources(required):
 
 
 @lru_cache(maxsize=32)
-def kit_bytes(rods_required=False, handles_required=False, z1_required=False, lira_required=False, pulls_required=False):
+def kit_bytes(rods_required=False, handles_required=False, z1_required=False, lira_required=False, pulls_required=False, fittings_required=False):
     rods = private_rod_sources()
     if rods_required and not rods:
         raise ValueError('Исходные штанги ещё не установлены на сервере.')
@@ -138,7 +147,7 @@ def kit_bytes(rods_required=False, handles_required=False, z1_required=False, li
             archive.writestr(entry, data)
         for source in sorted(sources.glob('*.fr3d')):
             add('Martin Forest AKS/' + source.name, source.read_bytes())
-        for name, data in {**rods, **handles, **private_surface_sources(pulls_required), **private_z1_sources(z1_required), **private_lira_sources(lira_required)}.items():
+        for name, data in {**rods, **handles, **private_surface_sources(pulls_required), **private_fitting_sources(fittings_required), **private_z1_sources(z1_required), **private_lira_sources(lira_required)}.items():
             add('Martin Forest AKS/' + name, data)
         add(IMPORTER_NAME, (ROOT / 'cabinet_assets/planner/bazis-drawers-import.js').read_bytes())
     return result.getvalue()

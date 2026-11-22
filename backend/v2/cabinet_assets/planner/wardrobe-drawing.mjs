@@ -227,6 +227,11 @@ function elevationView(built,view,section,front,selectedShelf,selection){
        (selected?rect(X(q.x),Y(q.y+q.h),q.w*k,Math.max(2,q.h*k),'#9bc7f1','#2468a6'):'')+
        '<rect x="'+num(X(q.x))+'" y="'+num(cy-5)+'" width="'+num(q.w*k)+'" height="10" fill="transparent"/></g>';
    }
+   for(const f of built.fittings??[]){
+     const [a,b]=f.box,x=X(a[0]),y=Y(footHeight(s)+b[1]),w=(b[0]-a[0])*k,h=(b[1]-a[1])*k;
+     drawing+='<g pointer-events="none" data-fitted-article="'+f.p.article+'"><title>'+f.p.name+' · AKS '+f.p.article+'</title><rect x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'" rx="1" fill="#719d8a" fill-opacity=".20" stroke="#3c7565" stroke-width=".8"/>'+
+       (w>33&&h>10?'<text x="'+num(x+w/2)+'" y="'+num(y+h/2+3)+'" text-anchor="middle" font-size="9" fill="#244e45">'+f.p.article+'</text>':'')+'</g>';
+   }
    for(const r of built.rods??[]){
      const y=Y(footHeight(s)+r.y),l=X(r.left),right=X(r.left+r.width),h=Math.max(2.6,k*(r.product.family==='round'?25:30));
      const active=selection?.rodId===r.id,fill={chrome:'#aebbbd',black:'#42484a',white:'#f2f1eb'}[r.product.finish];

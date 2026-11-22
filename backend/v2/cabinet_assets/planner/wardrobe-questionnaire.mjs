@@ -72,6 +72,8 @@ export function wardrobeSpec(f){
  if(f.machining&&Object.keys(f.machining).length)spec.machining=structuredClone(f.machining);
  if(f.back&&f.backMount)spec.backMount={...f.backMount};
  if(f.lighting&&Object.keys(f.lighting).length)spec.lighting=structuredClone(f.lighting);
+ if(f.fittings?.length)spec.fittings=structuredClone(f.fittings);
+ if(f.doorFittings&&f.front)spec.doorFittings=structuredClone(f.doorFittings);
  if(f.rods?.length)spec.rods=structuredClone(f.rods);
  if(f.clearLayout)spec.clearLayout=true;
  if(f.drawerFixing||f.bottomFit==='none'||f.nicheSplits?.length)spec.drawerFixing=f.drawerFixing??'cam_dowel';

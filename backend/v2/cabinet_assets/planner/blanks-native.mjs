@@ -7,6 +7,7 @@ import {lightingSystems} from './wardrobe-lighting.mjs';
 import {nativeGrip} from './wardrobe-edge-pulls.mjs';
 import {assignCabinetBlocks} from './wardrobe-blocks.mjs';
 import {nativeDoorHardware,boardProfileCuts,horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
+import {nativeFittings,fittingCatalogue} from './wardrobe-fittings.mjs';
 import {nativeRods} from './wardrobe-rods.mjs';
 import {installedCuts,wardrobeHardware} from './wardrobe-aks-native.mjs';
 import {nativeDoorHinges,doorPush} from './wardrobe-hinges.mjs';
@@ -43,7 +44,7 @@ export function blankNativeItem(it,material,items=[],liraArticles=[]){
  source_default:{width:18,height:600,depth:510},elastic_resize:false,
  target:{width:it.width,height:it.height,depth:it.depth},
  position:{x:it.x,y:b.elevation,z:it.z},rotation:it.rotation||0,
- material_assignments:{body:material},production_note:[it.production_note,upperNote,...(it.blank_machining??[]).map((op,i)=>{
+ material_assignments:{body:material},production_note:[it.production_note,upperNote,...Object.entries(it.assistant_carcass?.spec.doorFittings??{}).filter(([k])=>it.item_id===it.assistant_carcass.group_id+':'+k).map(([,v])=>{const p=fittingCatalogue[v.variant];return p.name+' · AKS '+p.article+' · '+v.quantity+' шт. '+p.manual;}),...(it.blank_machining??[]).map((op,i)=>{
   if(!op.lightSystem)return '';
   const m=lightingSystems[op.lightSystem],length=b.length-(op.start??0)-(op.end??0);
   const article=liraArticles[i]??m.profile?.stock.find(s=>s.length_mm>=length)?.article??m.led_article;
@@ -69,4 +70,4 @@ function nativeItems(items,lookup,liraRows=[]){
  }
  return rows;
 }
-globalThis.MF_BLANKS_NATIVE={nativeLiraProfiles,alignSavedTrimReturns,fitSavedMezzanineBacks,assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>[...nativeDoorHinges(it,items),...doorPush(it,items)]),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems};
+globalThis.MF_BLANKS_NATIVE={nativeLiraProfiles,alignSavedTrimReturns,fitSavedMezzanineBacks,assignCabinetBlocks,doorHardwareItems:nativeDoorHardware,rodItems:nativeRods,fittingItems:nativeFittings,drawerItems:wardrobeHardware,hingeItems:items=>items.filter(it=>it.blank_axis==='front').flatMap(it=>[...nativeDoorHinges(it,items),...doorPush(it,items)]),footItems:nativeFeet,jointItems:nativeCarcassJoints,supportItems:nativeShelfSupports,hookItems:items=>items.filter(it=>it.module_type==='blank'&&it.blank_hook).flatMap(it=>Array.from({length:it.blank_hook.count??1},(_,i)=>hookNativeItem(it,i))),nativeItems};

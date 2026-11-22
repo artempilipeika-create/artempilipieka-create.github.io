@@ -85,6 +85,7 @@ function change(ui,fn){
 // elevations in each column. Higher openings and their banks keep their anchors.
 function divideShelves(f,section,start,end){
  const rooms=nicheOpenings(f,section),count=f.sectionShelves[section],remove=end-start;
+ if(f.fittings?.some(r=>r.section===section&&r.level>=start&&r.level<=end))throw Error('В выбранной нише установлена фурнитура AKS.');
  if(f.rods?.some(r=>r.section===section&&r.level>=start&&r.level<=end))throw Error('В этом проёме установлена штанга. Уберите её перед установкой перегородки.');
  if(f.nicheSplits?.some(z=>z.section===section&&z.level>=start&&z.level<=end))throw Error('В этом промежутке уже есть перегородка.');
  if(Array.from({length:remove+1},(_,j)=>f.drawerBanks?.[nicheSlot(section,start+j)]).some(Boolean))throw Error('Выберите промежуток для полок выше шуфляд.');
@@ -110,7 +111,7 @@ function divideShelves(f,section,start,end){
      if(banks[old]){banks[nicheSlot(section,i-remove,column)]=banks[old];banks[old]=null;}
    }
    f.drawerBanks=trimBanks(banks,f.sections);
-   for(const r of f.rods??[])if(r.section===section&&r.level>end)r.level-=remove;
+   for(const r of [...(f.rods??[]),...(f.fittings??[])])if(r.section===section&&r.level>end)r.level-=remove;
    for(const z of f.nicheSplits??[])if(z.section===section&&z.level>end)z.level-=remove;
  }
  f.shelfLevels=levels;f.shelfChoices=rows;
@@ -149,7 +150,7 @@ export function splitControls(ui,parent,section){
    const col=zone.columns[ui.column??0];
    ui.select(box,'Полок в выбранной колонке',Array.from({length:11},(_,i)=>[i,String(i)]),col.gaps.length-1,v=>{
      const n=Number(v);
-     if(n<col.gaps.length-1&&f.rods?.some(r=>r.section===section&&r.level===level&&r.column===(ui.column??0)&&r.opening>=n)){
+     if(n<col.gaps.length-1&&[...(f.rods??[]),...(f.fittings??[])].some(r=>r.section===section&&r.level===level&&r.column===(ui.column??0)&&r.opening>=n)){
        ui.render();ui.output.textContent='Удаляемая полка ограничивает проём со штангой. Сначала уберите штангу.';return;
      }
      if(col.choices)col.choices=Array.from({length:n},(_,i)=>col.choices[i]??'board/95388');

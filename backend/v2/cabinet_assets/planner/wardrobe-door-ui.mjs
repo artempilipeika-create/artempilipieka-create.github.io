@@ -14,6 +14,8 @@ const el=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=
 const btn=(label,fn)=>{const b=el('button',label);b.type='button';b.onclick=fn;return b;};
 const presets=[['none','Открытый шкаф'],['left','Одна дверь · петли слева'],['right','Одна дверь · петли справа'],['pair','Две двери рядом'],['stack','Две двери одна над другой'],['quad','Четыре двери · две сверху, две снизу']];
 const swings=[['left','Одна · петли слева'],['right','Одна · петли справа'],['pair','Две двери рядом'],['open','Открытая ниша']];
+import {doorFittingControls} from './wardrobe-fitting-ui.mjs';
+
 function formSpec(ui){return {...ui.fields,shelves:Math.max(...ui.fields.sectionShelves)};}
 function shelves(ui,scope){try{return doorShelfOptions(formSpec(ui),scope);}catch{return [];}}
 const families=[
@@ -163,6 +165,11 @@ export function doorControls(ui){
   if(!Object.keys(f.hinges).length){delete f.hinges;delete f.hingeDivider;}
  }
  if(f?.hingeDivider!=null&&f.hingeDivider>=ui.fields.sections-1)delete f.hingeDivider;
+ if(ui.fields.doorFittings){
+  const valid=new Set(activeLeafKeys(f));
+  for(const key of Object.keys(ui.fields.doorFittings))if(!valid.has(key))delete ui.fields.doorFittings[key];
+  if(!Object.keys(ui.fields.doorFittings).length)delete ui.fields.doorFittings;
+ }
  const spec=formSpec(ui);
  let raw=[],rawBanks=[],choices=[];
  try{
@@ -194,10 +201,14 @@ export function doorControls(ui){
   };
   const current=hingeProduct(f,leaf.key);
   const type=ui.select(picker,'Тип фасада',[['board','Глухой фасад'],['Z1','Витрина · алюминиевая рамка Z1']],current.frame??'board',v=>{
-   if(selectLeafFrame(f,leaf.key,v)){ui.changed(true);return;}
+   if(selectLeafFrame(f,leaf.key,v)){
+    if(v==='Z1'&&ui.fields.doorFittings){delete ui.fields.doorFittings[leaf.key];if(!Object.keys(ui.fields.doorFittings).length)delete ui.fields.doorFittings;}
+    ui.changed(true);return;
+   }
    ui.output.textContent='Для рамки Z1 с TIP-ON есть накладная беспружинная петля. Выберите накладную посадку или открывание рукой.';
    type.value=current.frame??'board';
   });type.dataset.doorFrame='';
+  doorFittingControls(ui,box,leaf,Boolean(current.frame));
   pushControls(ui,box,leaf,clearHandle);
   hingeControls(ui,box,spec,leaf,clearHandle);
   if(f.hinges?.[leaf.key]?.push){if(panel.querySelector('button'))box.append(panel.querySelector('button'));return;}

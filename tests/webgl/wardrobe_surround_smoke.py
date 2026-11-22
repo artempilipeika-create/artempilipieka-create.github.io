@@ -608,8 +608,16 @@ def section_presets(page, projects, project_id):
     apply('Длинная одежда')
     button(form, 'Оставить').click()
     expect(field(form, 'Штанга в нише').locator('option')).to_have_count(2)
+    button(form, 'Фурнитура AKS').click()
+    form.locator('summary',has_text='Выдвижные вешалки GRIDLI').click()
+    card=form.locator('[data-fitting-variant="113950"]')
+    expect(card.locator('img')).to_be_visible()
+    card.click()
+    expect(form.locator('[data-installed-fitting="113950"]')).to_be_visible()
+    expect(form.locator('[data-fitted-article="113950"]')).to_have_count(1)
     finish(page, form)
     group, saved, parts = panels(projects, project_id)
+    assert saved['fittings'][0]['variant']=='113950' and saved['fittings'][0]['section']==1
     assert saved['sectionShelves'] == [1, 0] and len(saved['rods']) == 3
     assert parts['shelf-0-0']['elevation_mm'] == 1668
     assert saved['rods'][0]['offset'] == 130
@@ -629,6 +637,11 @@ def section_presets(page, projects, project_id):
     rods = {r['rod_id']: r for r in payload['items'] if r.get('wardrobe_rod')}
     assert set(rods) == {r['id'] for r in edited['rods']}
     assert rods[edited['rods'][0]['id']]['position']['y'] == 1668 - 145
+    assert edited['fittings']==saved['fittings']
+    fitted=[r for r in payload['items'] if r.get('wardrobe_fitting')]
+    assert len(fitted)==1 and fitted[0]['article']=='113950' and fitted[0]['host_blank_id'].endswith(':top')
+    assert payload['minimum_importer']=='9.9.52'
+    print('PASS installed GRIDLI with its photo, persisted source and native host panel',flush=True)
     print('PASS both section presets, undo, shelf and rod edits, saved wardrobe and native export', flush=True)
 
 
@@ -641,6 +654,7 @@ if __name__ == '__main__':
         if args.live:
             for name in ('assistant-ui.mjs', 'assistant.css', 'wardrobe-questionnaire.mjs',
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs', 'wardrobe-section-presets.mjs',
+                         'wardrobe-fittings.json', 'wardrobe-fittings.mjs', 'wardrobe-fitting-ui.mjs', 'wardrobe-fitting-meshes.json', 'wardrobe-fitting-photos/113950.webp',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
                          'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs', 'wardrobe-hinge-ui.mjs', 'wardrobe-hinges.mjs',
                          'bazis-drawers-import.js', 'kitchen-album-ui.mjs', 'presentation-capture.mjs',

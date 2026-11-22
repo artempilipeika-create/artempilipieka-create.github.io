@@ -2,6 +2,7 @@ import {installedSide,depthBehindDoor,mountKey,leafDepth} from './wardrobe-hinge
 import {applyLighting} from './wardrobe-lighting.mjs';
 import {canMachine,checkBackMount,backPanel,backCut,backTrim,backSideTrim,rearClearance} from './panel-machining.mjs';
 import {aboveGola,installedOpenings} from './wardrobe-gola-shelves.mjs';
+import {planFittings} from './wardrobe-fittings.mjs';
 import {planRods,rodWarnings} from './wardrobe-rods.mjs';
 export {sectionWidths} from './wardrobe-layout.mjs';
 import {drawerSections,buildDrawerBoards,drawerFit,spacerCuts} from './wardrobe-drawers.mjs';
@@ -307,8 +308,12 @@ export function buildCarcass(input={},options={}){
         throw Error(label+' над профилем Gola пересекает шуфляду. Выберите другой стык или увеличьте проём.');
     }
   }
+  for(const key of Object.keys(s.doorFittings??{})){
+    if(!parts.some(p=>p.key===key&&p.item.blank_axis==='front'&&!p.item.blank_front_frame))throw Error('Выравниватель FLAT требует глухую створку. Уберите его перед изменением фасадов.');
+  }
+  const fittings=planFittings(s,installedLevels);
   const rods=planRods(s,installedLevels);
-  return {spec:s,installedLevels,doors:leaves,profiles:runs,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,hingeLocations,pushLocations,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
+  return {spec:s,installedLevels,doors:leaves,profiles:runs,fittings,rods,rodIssues:rodWarnings(rods,s.thickness),drawerIssues,hingeConflicts,hingeLocations,pushLocations,drawerBanks:banks,parts:parts.map((p,i)=>({...p,item:items[i]})),items,
     width:envelope.width,height:H,depth:envelope.depth,envelope,edgeMeters:Math.round(items.reduce((sum,p)=>sum+edgeMeters(p),0)*100)/100};
 }
 

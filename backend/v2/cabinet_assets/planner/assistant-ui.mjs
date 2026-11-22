@@ -11,6 +11,7 @@ import {heightControl,updateHeights,surroundControls,upperFrontTabs,upperFrontCo
 import {doorControls,setDoorShelf,wireHandleDrag} from './wardrobe-door-ui.mjs';
 import {drawerFacadeKey} from './wardrobe-door-layout.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
+import {fittingControls} from './wardrobe-fitting-ui.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
 import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
 import {sectionPresetControls} from './wardrobe-section-presets.mjs';
@@ -189,7 +190,7 @@ export class AssistantUI{
   const old=this.layoutAnchor;
   if(old){
     const changed=Object.keys({...old.fields,...this.fields}).filter(k=>!sameAssistantSpec(old.fields[k],this.fields[k]));
-    const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing','rods','lighting','lightKit','surround'];
+    const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing','rods','fittings','doorFittings','lighting','lightKit','surround'];
     if(changed.includes('sectionShelves'))layout.push('machining');
     if(changed.length&&this.step<=2&&changed.every(k=>layout.includes(k))){
       this.layoutUndo.push(old);if(this.layoutUndo.length>20)this.layoutUndo.shift();
@@ -302,12 +303,13 @@ export class AssistantUI{
    sectionPresetControls(this,this.form,activeCell(this));
    const context=el('p',openingLabel(this.nicheIndex,count));context.className='opening-context';this.form.append(context);
    const tabs=el('div');tabs.className='wardrobe-subsections';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Элемент наполнения');
-   for(const [key,label] of [['cell','Ниша'],['shelf','Полки'],['rod','Штанги'],['drawer','Шуфляды'],['split','Перегородка']]){
+   for(const [key,label] of [['cell','Ниша'],['shelf','Полки'],['rod','Штанги'],['fitting','Фурнитура AKS'],['drawer','Шуфляды'],['split','Перегородка']]){
     const b=button(label,()=>{this.interior=key;this.wholeWidth=false;this.render();});b.setAttribute('aria-pressed',String(this.interior===key));tabs.append(b);
    }
    this.form.append(tabs);
    if(this.interior==='cell')cellControls(this,this.form);
    else if(this.interior==='rod')rodControls(this,this.form,activeCell(this));
+   else if(this.interior==='fitting')fittingControls(this,this.form,activeCell(this));
    else if(this.interior==='drawer')drawerControls(this,this.form,i);
    else if(this.interior==='split'||this.interior==='shelf'&&splitAt(this.fields,i,this.nicheIndex)?.kind==='shelves')splitControls(this,this.form,i);
    else{
@@ -635,8 +637,9 @@ export class AssistantUI{
    else if(issue)this.description.textContent=issue;
    if(this.livePreview){
     const drawers=this.step===2&&this.interior==='drawer',facades=this.step===3&&view==='fronts';
-    const visible=(drawers||facades)&&(built.spec.front||built.drawerBanks?.some(Boolean));
-    const previewSlot=drawers?slot:this.inspectInternalFronts?drawerFacadeKey(this.selectedDoor)?.slot:null;
+    const fittings=this.step===2&&this.interior==='fitting'&&built.fittings.length;
+    const visible=fittings||(drawers||facades)&&(built.spec.front||built.drawerBanks?.some(Boolean));
+    const previewSlot=fittings?-1:drawers?slot:this.inspectInternalFronts?drawerFacadeKey(this.selectedDoor)?.slot:null;
     try{this.livePreview.sync(visible?built:null,previewSlot,this.mode.value==='update'?this.current:null,this.materialChanged);}
     catch{this.livePreview.release();}
    }
@@ -645,7 +648,7 @@ export class AssistantUI{
    if(view==='lighting')updateLightQuote(this,null,e.message);
    updateNicheResult(this,null,e.message);
    try{
-    const fields={...this.fields,rods:undefined,drawerBanks:undefined,front:null};
+    const fields={...this.fields,rods:undefined,fittings:undefined,doorFittings:undefined,drawerBanks:undefined,front:null};
     const guide=buildCarcass(wardrobeSpec(fields),{idPrefix:'questionnaire-guide'});
     this.paintDrawing(wardrobeDrawing(guide,view,this.activeSection,null,null,{editor:view==='sections',dimensions:true,level:this.step===2?this.nicheIndex:null,column:this.column,opening:this.gapIndex}).svg);
    }catch{if(this.drawing.firstElementChild?.dataset.view!==view)this.drawing.replaceChildren();}

@@ -111,6 +111,7 @@ def drawer_hardware(count,depth):
     return rows
 
 TRIM_JOINT=json.loads((ASSETS/'wardrobe-trim-joint.json').read_text())
+WARDROBE_FITTINGS=json.loads((ASSETS/'wardrobe-fittings.json').read_text())
 WARDROBE_RODS=json.loads((ASSETS/'wardrobe-rods.json').read_text())
 AKS_GUIDES=json.loads((ASSETS/'aks-wardrobe.json').read_text())['rails']
 
@@ -160,6 +161,16 @@ def hardware_for(it):
         rows=list(rows)
         for article,label,span in spans:
             rows.extend([_row('Профиль Gola '+label+' · '+format(span,'g')+' мм',span/1000,'m',article),_row('Крепление профиля Gola · уголок с винтами',2,'pcs','118236'),_row('Саморез универсальный 4×16 мм для уголка Gola',4,'pcs','36936')])
+    if key=='top' and spec.get('fittings'):
+        rows=list(rows)
+        for fitting in spec['fittings']:
+            p=WARDROBE_FITTINGS[fitting['variant']]
+            rows.append(_row(p['name'].split(' · держатели')[0],1,'pcs' if p['series']=='FAME' else 'set',p['article']))
+            for component in p.get('components',[]):
+                rows.append(_row(component['name'],component['qty'],'pcs',component['sku']))
+    if straightener:=(spec.get('doorFittings') or {}).get(key):
+        p=WARDROBE_FITTINGS[straightener['variant']]
+        rows=[*rows,_row(p['name'],straightener['quantity'],'pcs',p['article'])]
     if key=='top' and spec.get('rods'):
         # Each fitted rail is one purchased set, even though the native model contains both holders.
         rows=list(rows)

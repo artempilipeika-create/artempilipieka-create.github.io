@@ -354,6 +354,25 @@ class NicheSplit(StrictModel):
 ROD_CATALOGUE = json.loads((ASSETS/'wardrobe-rods.json').read_text())
 
 
+WARDROBE_FITTINGS = json.loads((ASSETS/'wardrobe-fittings.json').read_text())
+
+
+class WardrobeFitting(StrictModel):
+    id: str = Field(pattern=r'^[A-Za-z0-9_-]{1,64}$')
+    variant: str = Field(min_length=1,max_length=24)
+    section: int = Field(ge=0,le=3,strict=True)
+    level: LockIndex
+    column: Literal[0,1] | None = Field(default=None,exclude_if=lambda v:v is None)
+    opening: LockIndex | None = Field(default=None,exclude_if=lambda v:v is None)
+    offset: int = Field(default=0,ge=0,le=3000,strict=True)
+    frontInset: int | None = Field(default=None,ge=0,le=1200,strict=True,exclude_if=lambda v:v is None)
+
+
+class DoorStraightener(StrictModel):
+    variant: Literal['111049','83332']
+    quantity: Literal[1,2] = 1
+
+
 class WardrobeRod(StrictModel):
     id: str = Field(pattern=r'^[A-Za-z0-9_-]{1,64}$')
     article: str = Field(min_length=1,max_length=12)
@@ -604,6 +623,8 @@ class CarcassDesign(CarcassSpec):
             return ceil(b.width)
         return ceil((b.offset or 0)+b.width) if b and b.kind=='groove' else self.backThickness or 0
 
+    fittings: list[WardrobeFitting] | None = Field(default=None,min_length=1,max_length=128,exclude_if=lambda v:v is None)
+    doorFittings: dict[Annotated[str,Field(pattern=r'^door-(?:(?:lower|upper)-)?(?:left|right)$')],DoorStraightener] | None = Field(default=None,min_length=1,max_length=6,exclude_if=lambda v:v is None)
     rods: list[WardrobeRod] | None = Field(default=None,min_length=1,max_length=128,exclude_if=lambda v:v is None)
     gapLocks: list[Annotated[list[LockIndex],Field(max_length=11)]] | None = Field(default=None,max_length=4,exclude_if=lambda v:v is None)
     clearLayout: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
@@ -765,6 +786,9 @@ class CarcassDesign(CarcassSpec):
                 leaves.append(tall)
         else:leaves=band('',f.swing,1.5,self.width-1.5,1.5,roof)
         configured=f.hinges or {}
+        for key in self.doorFittings or {}:
+            if key not in {p[0] for p in leaves} or key in configured and configured[key].article in Z1_HINGES:
+                raise ValueError('Выравниватель FLAT требует глухую створку.')
         if configured.keys()-{p[0] for p in leaves}:raise ValueError('Петля относится к отсутствующей створке.')
         for key,left,right,bottom,top in leaves:
             setup=configured.get(key)
@@ -819,6 +843,40 @@ class CarcassDesign(CarcassSpec):
         return bool(front and (front.edgeProfiles or front.division and front.division.gola or
                                any(isinstance(h,FacadeProfile) for h in (front.handles or {}).values())) or
                     any(isinstance(f.handle,FacadeProfile) for b in self.drawerBanks or [] if b for f in b.faces))
+
+    def validate_fittings(self,zones):
+        if self.doorFittings and not self.front:
+            raise ValueError('Выравниватель требует фасад.')
+        if not self.fittings:
+            return
+        if self.kitchenModel or self.recipe not in ('shelves','divided') or len({f.id for f in self.fittings})!=len(self.fittings):
+            raise ValueError('Проверьте список наполнения шкафа.')
+        widths=self.clear_widths()
+        for f in self.fittings:
+            p=WARDROBE_FITTINGS.get(f.variant)
+            if not p or p['mount']=='door' or f.section>=self.sections:
+                raise ValueError('Проверьте артикул и секцию фурнитуры AKS.')
+            bounds=self.niche_bounds(f.section,True)
+            slot=niche_slot(f.section,f.level)
+            banks=self.drawerBanks or []
+            if f.level>=len(bounds) or slot<len(banks) and banks[slot]:
+                raise ValueError('Для механизма AKS нужна свободная ниша.')
+            z=zones.get(slot)
+            width=widths[f.section]
+            if z:
+                if z.kind!='shelves' or f.column is None or f.opening is None or f.opening>=len(z.columns[f.column].gaps):
+                    raise ValueError('Укажите свободный проём колонки.')
+                left=z.leftWidth if z.leftWidth is not None else (width-18+1)//2
+                width=left if f.column==0 else width-18-left
+            elif f.column is not None or f.opening is not None:
+                raise ValueError('Для механизма указана отсутствующая колонка.')
+            if p.get('span') and not p['span'][0]<=width<=p['span'][1]:
+                raise ValueError('Ширина ниши вне диапазона '+p['name']+'.')
+            lo,hi=p['bounds']
+            if not p.get('span') and hi[0]-lo[0]>width+.05 or hi[2]-lo[2]>self.depth+.05:
+                raise ValueError('Механизм AKS выходит за границы ниши.')
+            if f.offset and p['mount'] in ('bottom','top','spanTop'):
+                raise ValueError('Высота механизма задана монтажной плоскостью.')
 
     def validate_rods(self,zones):
         if not self.rods:
@@ -948,6 +1006,7 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Для общей стойки нужны два блока шуфляд.')
         if self.clearLayout:
             for section in range(self.sections):self.niche_bounds(section,True)
+        self.validate_fittings(zones_by_slot)
         self.validate_rods(zones_by_slot)
         zones=[]
         drawer_pulls=[]

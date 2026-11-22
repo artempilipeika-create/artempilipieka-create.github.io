@@ -1350,10 +1350,11 @@ function exportBazisProject(liraProfiles=[]){
   }catch(error){status('Экспорт не создан: '+error.message);return;}
   const invalid=state.items.map(it=>globalThis.MF_FURNITURE_CORE.dimensionError(it,templateFor(it))).find(Boolean);
   if(invalid){status(invalid);return;}
-  let doorHardware=[],rodItems=[],wardrobeDrawerItems=[],hingeItems=[],blankItems=[],hookItems=[],supportItems=[],jointItems=[],footItems=[];
+  let doorHardware=[],rodItems=[],fittingItems=[],wardrobeDrawerItems=[],hingeItems=[],blankItems=[],hookItems=[],supportItems=[],jointItems=[],footItems=[];
   try{
     if(state.items.some(it=>it.module_type==='blank')&&!globalThis.MF_BLANKS_NATIVE)throw Error('Обновите страницу: модуль заготовок не загружен.');
     doorHardware=globalThis.MF_BLANKS_NATIVE?.doorHardwareItems?.(state.items)||[];
+    fittingItems=globalThis.MF_BLANKS_NATIVE?.fittingItems?.(state.items)||[];
     rodItems=globalThis.MF_BLANKS_NATIVE?.rodItems?.(state.items)||[];
     wardrobeDrawerItems=globalThis.MF_BLANKS_NATIVE?.drawerItems?.(state.items)||[];
     hingeItems=globalThis.MF_BLANKS_NATIVE?.hingeItems?.(state.items)||[];
@@ -1525,6 +1526,7 @@ function exportBazisProject(liraProfiles=[]){
   }
   if(wardrobeDrawerItems.some(it=>it.source_file.includes('_shared'))||jointItems.some(it=>it.joint_back_face&&it.joint_part==='confirmat'))payload.minimum_importer='9.9.31';
   for(const row of liraProfiles){row.index=payload.items.length+1;payload.items.push(row);}
+  for(const row of fittingItems){row.index=payload.items.length+1;payload.items.push(row);}
   if(rodItems.length){
     for(const rod of rodItems){rod.index=payload.items.length+1;payload.items.push(rod);}
     payload.format='martin-forest-bazis-native-v12';payload.minimum_importer='9.9.32';
@@ -1570,6 +1572,7 @@ function exportBazisProject(liraProfiles=[]){
     payload.minimum_importer=liraProfiles.some(row=>row.light_system==='lira-17.5x6.5')?'9.9.50':'9.9.49';
   }
   if(payload.items.some(row=>row.wardrobe_catalogue_pull))payload.minimum_importer='9.9.51';
+  if(fittingItems.length)payload.minimum_importer='9.9.52';
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1584,6 +1587,7 @@ function exportBazisProject(liraProfiles=[]){
   if(hingeItems.some(it=>it.push_install))guidance.push('Типоны AKS и присадка включены в экспорт.');
   if(doorHardware.length)guidance.push('Ручки и профили: '+doorHardware.length+' шт.');
   if(liraProfiles.length)guidance.push('Профили LIRA · '+liraProfiles.length+' отр. Фрагменты входят в комплект AKS.');
+  if(fittingItems.length)guidance.push('Механизмов наполнения AKS: '+fittingItems.length+'.');
   if(rodItems.length)guidance.push('Штанг с держателями: '+rodItems.length+'.');
   if(wardrobeDrawerItems.length)guidance.push('Шуфляды AKS экспортированы с родным крепежом.');
   else if(jointItems.length)guidance.push('Крепёж корпуса: '+jointItems.length+' шт.');

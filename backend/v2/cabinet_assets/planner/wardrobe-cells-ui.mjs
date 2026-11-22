@@ -126,7 +126,7 @@ export function selectCell(ui,{section,level,column=0,opening=0},axis,wholeWidth
  ui.levelIndex=level;ui.shelfScopes[section]=String(level);ui.step=2;ui.view='sections';ui.wholeWidth=wholeWidth;
  if(!ui.pending)ui.output.textContent='';
  const rods=ui.fields.rods?.filter(r=>sameRodCell(r,activeCell(ui)))??[];
- ui.interior=axis?'cell':ui.fields.drawerBanks?.[nicheSlot(section,level,column)]?'drawer':rods.length||ui.interior==='rod'?'rod':'cell';
+ ui.interior=axis?'cell':ui.fields.drawerBanks?.[nicheSlot(section,level,column)]?'drawer':ui.interior==='fitting'?'fitting':rods.length||ui.interior==='rod'?'rod':'cell';
  ui.render();
  const field=ui.form.querySelector(axis?'[data-cell-size="'+axis+'"]':'.cell-editor legend, .niche-editor legend');
  if(axis){field?.focus({preventScroll:true});if(field&&!field.readOnly)field.select();}
