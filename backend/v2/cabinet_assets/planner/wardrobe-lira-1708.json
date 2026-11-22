@@ -1,0 +1,32 @@
+{
+  "label": "LIRA-1708 с экраном, алюминий",
+  "groove_width_mm": 17,
+  "groove_depth_mm": 8,
+  "led_article": "75069",
+  "led_power_w_per_m": 9.6,
+  "led_cut_step_mm": 25,
+  "profile": {
+    "stock": [
+      {
+        "length_mm": 2000,
+        "article": "78319",
+        "url": "https://aks.by/89018-115718-p?OFFER_ID=115722",
+        "file": "Профиль алюминиевый врезной LIRA-1708 с экраном, цвет алюминий, 2м, AKS (78319).fr3d",
+        "sha": "da6733072d75c31e290681fe7fd18ae6aba74fb3dc8e5a5aefc49acc65366e13"
+      },
+      {
+        "length_mm": 3000,
+        "article": "90607",
+        "url": "https://aks.by/89018-115718-p?OFFER_ID=119127",
+        "file": "Профиль алюминиевый врезной LIRA-1708 с экраном, цвет алюминий, 3м, AKS (90607).fr3d",
+        "sha": "8ddcbe25b719007c6a25d7162e16afa5e8d72e49fe09bf3d7d0a5b4e18f84aaa"
+      }
+    ],
+    "end_cap": {
+      "article": "125300"
+    },
+    "holder": {
+      "article": "124677"
+    }
+  }
+}

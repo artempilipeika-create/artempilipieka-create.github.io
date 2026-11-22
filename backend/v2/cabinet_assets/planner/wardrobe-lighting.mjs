@@ -1,8 +1,11 @@
-import systems from './vitrine-lighting.json' with {type:'json'};
+import vitrineSystems from './vitrine-lighting.json' with {type:'json'};
+import * as THREE from './vendor/three.module.js';
+import {lightPlacement} from './wardrobe-lira-native.mjs';
 import {panelMachiningPlan} from './panel-machining.mjs';
 import {blankEdgeCode} from './furniture-core.mjs';
 
-export const lightingSystems=systems;
+import lira from './wardrobe-lira-1708.json' with {type:'json'};
+export const lightingSystems={...vitrineSystems,'lira-1708':lira};
 export function lightFaces(key){
  if(key==='left')return [0];
  if(key==='right')return [1];
@@ -35,7 +38,7 @@ export function lightSpans(part,parts,face){
  return {range:[low,high],rooms};
 }
 export function lightingCut(part,parts,setting){
- const p=part.item,system=systems[setting.system];
+ const p=part.item,system=lightingSystems[setting.system];
  if(!system||!canLight(part)||!lightFaces(part.key).includes(setting.face))throw Error('Выберите пласть и модель подсветки для этой детали.');
  const width=system.groove_width_mm,depth=system.groove_depth_mm;
  const spans=lightSpans(part,parts,setting.face),room=spans.rooms.find(r=>r.key===setting.niche);
@@ -74,22 +77,42 @@ export function applyLighting(parts,settings){
  }
 }
 
+// The donor has a 17 × 8 mm seat, two 2 mm lips and a circular crown.
+function liraCrown(factory,group,mount,ghost){
+ const {vertical,sign,span,x,y,z}=mount;
+ const center=96.6345,radius=Math.hypot(center+1.0573,10.5);
+ const crown=u=>Math.sqrt(radius*radius-u*u)-center;
+ const across=new THREE.Vector3(0,0,vertical?sign:-sign);
+ const outward=new THREE.Vector3(vertical?sign:0,vertical?0:sign,0);
+ const along=new THREE.Vector3(vertical?0:1,vertical?1:0,0);
+ const basis=new THREE.Matrix4().makeBasis(across,outward,along);
+ for(const [left,right,role] of [[-10.5,-8.5,'lightAluminium'],[-8.5,8.5,'liraScreen'],[8.5,10.5,'lightAluminium']]){
+  const key=['lira-1708',span,left].join(':');
+  const geometry=factory.acquire(key,()=>{
+   const shape=new THREE.Shape();shape.moveTo(left*.001,0);shape.lineTo(right*.001,0);
+   for(let i=0;i<=12;i++){const u=right+(left-right)*i/12;shape.lineTo(u*.001,crown(u)*.001);}
+   shape.closePath();
+   return new THREE.ExtrudeGeometry(shape,{depth:span*.001,bevelEnabled:false});
+  });
+  const mesh=factory.mesh(group,role,geometry,key,x,y,z,null,ghost);
+  mesh.quaternion.setFromRotationMatrix(basis);
+  Object.assign(mesh.userData,{visualOnly:true,wardrobeLight:'lira-1708'});
+ }
+}
+
 export function panelLightMeshes(factory,group,it,ghost){
- const vertical=it.blank_axis==='side';
  for(const op of it.blank_machining??[]){
   if(!op.lightSystem)continue;
-  const L=it.blank_length_mm,W=it.blank_width_mm,lo=op.start??0,hi=L-(op.end??0);
-  const z=(op.edge==='x0'?1:-1)*(op.offset+op.width/2-W/2);
-  const sign=vertical?(op.face?-1:1):(op.face?1:-1);
+  const mount=lightPlacement(it,op),{vertical,sign,span,x,y,z}=mount;
   function strip(role,width,thickness,above){
-   const length=hi-lo,along=(hi+lo)/2;
-   const surface=vertical?sign*it.width/2:op.face?it.height:0;
-   const normal=surface+sign*above;
-   const mesh=vertical?factory.box(group,role,thickness,length,width,normal,along,z,null,ghost,0):
-    factory.box(group,role,length,thickness,width,along-L/2,normal,z,null,ghost,0);
+   const mesh=vertical?factory.box(group,role,thickness,span,width,x+sign*above,y+span/2,z,null,ghost,0):
+    factory.box(group,role,span,thickness,width,x+span/2,y+sign*above,z,null,ghost,0);
    if(mesh)Object.assign(mesh.userData,{visualOnly:true,wardrobeLight:op.lightSystem});
   }
-  if(op.lightSystem==='lira-17.5x6.5'){
+  if(op.lightSystem==='lira-1708'){
+   strip('lightAluminium',17,8,-4);
+   liraCrown(factory,group,mount,ghost);
+  }else if(op.lightSystem==='lira-17.5x6.5'){
    strip('lightProfile',24.4,.6,.3);strip('led',14,.3,.75);
   }else strip('led',op.width,.5,-.23);
  }

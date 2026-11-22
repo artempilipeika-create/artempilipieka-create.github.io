@@ -60,6 +60,8 @@ export const VISUAL_FINISHES=Object.freeze({
   regulator:{color:'#292c2d',roughness:.68,metalness:0},
   shelfSupport:{color:'#656766',roughness:.24,metalness:.78},
   supportPad:{color:'#969c98',roughness:.85,metalness:0},
+  lightAluminium:{color:'#c2c5c6',roughness:.3,metalness:.78},
+  liraScreen:{color:'#faf8f2',roughness:.44,metalness:0,emissive:'#fff2d9',emissiveIntensity:.5},
   lightProfile:{color:'#202321',roughness:.3,metalness:.72},
   led:{color:'#fff7d9',roughness:.5,metalness:0,emissive:'#fff0b9',emissiveIntensity:1.2},
   body:{color:'#c7c3b8',roughness:.88,metalness:0},
@@ -137,10 +139,10 @@ export class MeshFactory{
       const color=visual.color||(id?'#aeb2b0':finish.color);
       const glass=role==='glass'&&!ghost&&!inspection,counter=role==='counter'&&!ghost&&!inspection;
       const sheet=['body','front','back','shelf','plinth','counter'].includes(role),optics=surfaceFinish(visual,role,Boolean(id));
-      const brushed=['hinge','railSteel','slideSteel','lightProfile','frame'].includes(role)&&!ghost&&!inspection;
+      const brushed=['hinge','railSteel','slideSteel','lightProfile','lightAluminium','frame'].includes(role)&&!ghost&&!inspection;
       const Material=glass||counter||brushed||sheet&&!ghost&&!inspection&&optics.clearcoat>0?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
-        metalness:['handle','frame','hinge','shelfSupport','lightProfile','drawerMetal','railSteel','slideSteel'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
+        metalness:['handle','frame','hinge','shelfSupport','lightProfile','lightAluminium','drawerMetal','railSteel','slideSteel'].includes(role)?finish.metalness:0,vertexColors:role==='front'||role==='counter'||glass,
         transparent:ghost||inspection||role==='glass',opacity:ghost?.36:inspection?.16:role==='glass'?.22:1,depthWrite:!ghost&&!inspection&&role!=='glass',
         side:inspection||role==='glass'?THREE.DoubleSide:THREE.FrontSide});
       if(brushed){m.anisotropy=role==='frame'?.22:.4;m.anisotropyRotation=Math.PI/2;m.envMapIntensity=role==='frame'?1.05:.94;}

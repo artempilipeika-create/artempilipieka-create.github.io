@@ -50,6 +50,12 @@ def prompt(scene, materials, style):
             x, z = local(p)
             cabinet['parts'].append([key, axis, p['width'], p['height'], p['depth'], x, p.get('elevation_mm', 0), z,
                                      finish, grain, bool(p.get('doors_open'))])
+            for cut in p.get('blank_machining') or []:
+                if cut.get('lightSystem') == 'lira-1708':
+                    cabinet.setdefault('fitted_lights', []).append({
+                        'panel':key, 'model':'AKS LIRA-1708, silver aluminium, milky diffuser, 4000 K',
+                        **{field:cut.get(field, 0) for field in ('edge','face','offset','start','end')}
+                    })
         cabinets.append(cabinet)
 
     others = [{k: it[k] for k in ('name', 'module_type', 'width', 'height', 'depth', 'x', 'z', 'rotation', 'layout',

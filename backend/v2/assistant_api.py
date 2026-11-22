@@ -202,7 +202,7 @@ def router(settings):
     api = APIRouter(prefix='/api/v2/3d-assistant')
 
     @api.get('/wardrobe-aks-kit')
-    def wardrobe_aks_kit(request: Request, rods: bool = False, handles: bool = False, z1: bool = False):
+    def wardrobe_aks_kit(request: Request, rods: bool = False, handles: bool = False, z1: bool = False, lira: bool = False):
         with transaction(settings) as conn:
             user = identity(conn, request)
             require(conn, user, 'orders.draft.write')
@@ -210,7 +210,7 @@ def router(settings):
             if user['roles'] not in ({'admin'}, {'manager'}):
                 error(403, 'STAFF_REQUIRED')
         try:
-            native = kit_bytes(rods_required=rods, handles_required=handles, z1_required=z1)
+            native = kit_bytes(rods_required=rods, handles_required=handles, z1_required=z1, lira_required=lira)
         except ValueError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         return Response(native, media_type='application/zip', headers={

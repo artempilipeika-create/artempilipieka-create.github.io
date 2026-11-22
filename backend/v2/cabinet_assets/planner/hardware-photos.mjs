@@ -212,6 +212,7 @@ export function hardwareArtwork(it,family,key,value){
  if(family==='upper'&&key==='filling'&&value==='dryer')return photo('113272','Фото серии MOUNT · белый · с поддоном');
  if(['vitrine','open-tall'].includes(family)&&key==='light_system'){
   if(value==='aq-4x8')return photo('15.0341','Лента 4 мм · нейтральный свет · арт. 15.0341');
+  if(value==='lira-1708')return {src:'/account/planner/light-kit-photos/78319.webp',article:'78319',source:'https://aks.by/89018-115718-p?OFFER_ID=115722'};
   if(value==='lira-17.5x6.5')return photo('89609','Профиль с экраном · паз 17,5 × 6,5 мм');
  }
  return null;

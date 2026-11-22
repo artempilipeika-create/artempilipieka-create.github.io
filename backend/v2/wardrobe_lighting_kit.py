@@ -1,6 +1,6 @@
 """Purchasing and fitting quantities for the lighting machined into a custom wardrobe."""
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from decimal import Decimal
 from functools import lru_cache
 from math import ceil
@@ -55,8 +55,8 @@ def lighting_quote(runs, settings=None):
     control = settings.get('control', 'touch')
     quantities = Counter()
     notes, lines, groups, stock_cuts = [], [], [], []
-    strips = {system: [] for system in LIGHTING}
-    profiles, loads = [], []
+    strips, profiles = defaultdict(list), defaultdict(list)
+    loads = []
     for number, run in enumerate(runs):
         system, span = run['system'], run['length']
         model = LIGHTING[system]
@@ -65,31 +65,32 @@ def lighting_quote(runs, settings=None):
         watts = round(fitted * model['led_power_w_per_m'] / 1000, 6)
         lines.append({'label': run['label'], 'system': system, 'length': span, 'fitted': fitted, 'watts': watts})
         if model.get('profile'):
-            profiles.append((span, number))
+            profiles[system].append((span, number))
         if fitted:
-            strips[system].append((fitted, number))
+            strips[model['led_article']].append((fitted, number))
             loads.append((watts, number))
             quantities['103033' if model.get('profile') else '92641'] += 1
         else:
             notes.append(f'{run["label"]} · длина паза {span:g} мм. Для целого сегмента ленты нужны {step} мм.')
 
-    for system, pieces in strips.items():
-        if pieces:
-            quantities[LIGHTING[system]['led_article']] = len(pack_lengths(pieces, REEL_MM))
-    if profiles:
-        profile = LIGHTING['lira-17.5x6.5']['profile']
+    for article, pieces in strips.items():
+        quantities[article] += len(pack_lengths(pieces, REEL_MM))
+    for system, pieces in profiles.items():
+        model = LIGHTING[system]
+        profile = model['profile']
         stock = sorted(profile['stock'], key=lambda item: item['length_mm'])
-        for bought, bar in profile_bars(profiles, stock):
+        for bought, bar in profile_bars(pieces, stock):
             quantities[bought['article']] += 1
             stock_cuts.append({'article': bought['article'], 'length': bought['length_mm'], 'lines': bar['keys']})
-        quantities[profile['end_cap']['article']] = 2 * len(profiles)
-        holders = settings.get('holders')
+        quantities[profile['end_cap']['article']] += 2 * len(pieces)
+        name = model['label'].split()[0]
+        holders = settings.get('holders1708' if system == 'lira-1708' else 'holders')
         if holders is None:
-            holders = sum(max(2, ceil(span/500)) for span,_ in profiles)
-            notes.append('Расчёт держателей LIRA для сметы — 4 шт. на 2 м, минимум 2 на отрезок. Количество и крепёж уточняют по монтажу.')
+            holders = sum(max(2, ceil(span/500)) for span,_ in pieces)
+            notes.append(f'Держатели {name} для сметы — 4 шт. на 2 м, минимум 2 на отрезок.')
         else:
-            notes.append(f'Держатели LIRA по заданию менеджера — {holders} шт.')
-        quantities[profile['holder']['article']] = holders
+            notes.append(f'Держатели {name} по заданию менеджера — {holders} шт.')
+        quantities[profile['holder']['article']] += holders
     supplies = sorted(data['supplies'], key=lambda s: s['watts'])
     for group in pack_lengths(loads, supplies[-1]['watts'] * MAX_UTILIZATION, limit=MAX_OUTPUTS):
         supply = next(s for s in supplies if group['used'] <= s['watts'] * MAX_UTILIZATION + 1e-7)
@@ -102,7 +103,7 @@ def lighting_quote(runs, settings=None):
                        'rated': supply['watts'], 'control': data['controls'].get(control)})
     if groups:
         notes.append('Блок с вилкой и выходным шнуром включён в комплект. Для тесной ниши с затруднённой вентиляцией запас мощности нужно пересмотреть по паспорту AKS.')
-    if strips['aq-4x8']:
+    if strips.get(LIGHTING['aq-4x8']['led_article']):
         notes.append('AQ LED-LINE устанавливается в паз. Для каждого отрезка предусмотрен 2-метровый провод со свободным концом. Соединение с лентой и изоляция выполняются на монтаже.')
     if any(len(g['lines']) > 1 for g in groups):
         notes.append('Для разветвителя 78715 сверить допустимый ток с нагрузкой группы. Длины проводов проверить по месту.')

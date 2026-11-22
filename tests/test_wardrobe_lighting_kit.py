@@ -79,3 +79,16 @@ def test_kit_request_schema_bounds_and_models_have_supplier_cards():
     for art in catalogue()['controls'].values():
         assert (base/(art+'.webp')).read_bytes()[8:12]==b'WEBP'
         assert catalogue()['products'][art]['url'].startswith('https://')
+
+
+def test_silver_stock_and_fittings_follow_each_groove_and_both_liras_share_the_flat_led_reel():
+    silver = 'lira-1708'
+    q = lighting_quote([run(1400, silver), run(1400, silver), run(1000), run(400, 'aq-4x8')],
+                       {'holders1708': 5, 'holders': 3})
+    qty = {r['article']: r['qty'] for r in q['rows']}
+    assert q['stock'] == [{'article': '90607', 'length': 3000, 'lines': [0, 1]},
+                          {'article': '89609', 'length': 2000, 'lines': [2]}]
+    assert {k: qty[k] for k in ('90607', '125300', '124677', '89609', '89610', '77267', '75069', '15.0341')} == {
+        '90607': 1, '125300': 4, '124677': 5, '89609': 1, '89610': 2, '77267': 3, '75069': 1, '15.0341': 1}
+    for length, article in ((80, '78319'), (2000, '78319'), (2000.5, '90607'), (3000, '90607')):
+        assert lighting_quote([run(length, silver)])['stock'][0]['article'] == article

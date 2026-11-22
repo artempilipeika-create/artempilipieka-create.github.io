@@ -435,6 +435,14 @@ def surround_scenarios(page, projects, first_id):
 
 def z1_scenario(page, projects, seed):
     from backend.v2.three_d_api import Scene
+    from backend.v2.assistant_api import LightingEstimate
+    from backend.v2.wardrobe_lighting_kit import lighting_quote
+
+    def estimate(route):
+        body = LightingEstimate.model_validate(route.request.post_data_json)
+        route.fulfill(json=lighting_quote([row.model_dump() for row in body.runs], body.settings.model_dump()))
+
+    page.route('**/api/v2/3d-assistant/lighting-estimate', estimate)
     project_id = str(uuid4())
     project = deepcopy(projects.projects[seed])
     project.update(project_id=project_id, name='QA · фасады Z1', version=1)
@@ -445,6 +453,12 @@ def z1_scenario(page, projects, seed):
     form = page.locator('#planner-assistant-dialog')
     field(form, 'Ширина, мм').fill('600')
     field(form, TOTAL_HEIGHT).fill('1200')
+    button(form, 'Подсветка').click()
+    field(form, 'Деталь для подсветки').select_option('left')
+    profile = form.locator('[data-lighting-system="lira-1708"]')
+    assert profile.locator('img').evaluate('async img=>{await img.decode();return img.naturalWidth>80}')
+    profile.click()
+    button(form,'Зеркально на вторую боковину').click()
     open_surround(form)
     field(form, 'Добавить отдельный модуль антресоли').check()
     field(form, 'Высота модуля, мм').fill('500')
@@ -497,8 +511,17 @@ def z1_scenario(page, projects, seed):
     with page.expect_download() as event:
         page.locator('#export-bazis').click()
     payload=json.loads(Path(event.value.path()).read_text())
-    assert payload['minimum_importer']=='9.9.48'
+    assert payload['minimum_importer']=='9.9.49'
     rows=payload['items']
+    lights=[r for r in rows if r.get('wardrobe_lira')]
+    assert len(lights)==2 and {r['face'] for r in lights}=={0,1}
+    for light in lights:
+        board=next(r for r in rows if r.get('blank_item_id')==light['host_blank_id'])
+        cut=board['blank']['machining'][light['cut_index']]
+        assert light['article']=='78319' and light['cabinet_block']['id']==board['cabinet_block']['id']
+        assert cut['lightSystem']=='lira-1708' and (cut['width'],cut['depth'])==(17,8)
+        assert light['span_mm']==board['blank']['length']-cut.get('start',0)-cut.get('end',0)
+    print('PASS LIRA-1708: supplier photo, mirrored grooves, saved cabinet, two native cut profiles with correct stock article')
     frames=[r for r in rows if r.get('wardrobe_z1_front')]
     assert len(frames)==3 and all(r['source_file']=='MF_Z1_D1.fr3d' and r['target']['width']==301 for r in frames)
     hinges=[r for r in rows if r.get('wardrobe_z1_hinge')]
@@ -545,7 +568,8 @@ if __name__ == '__main__':
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
                          'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs', 'wardrobe-hinge-ui.mjs', 'wardrobe-hinges.mjs',
-                         'bazis-drawers-import.js', 'kitchen-album-ui.mjs', 'presentation-capture.mjs'):
+                         'bazis-drawers-import.js', 'kitchen-album-ui.mjs', 'presentation-capture.mjs',
+                         'wardrobe-lighting.mjs', 'wardrobe-lira-1708.json', 'wardrobe-lira-native.mjs', 'light-kit-photos/78319.webp'):
                 asset = page.request.get(ORIGIN + '/account/planner/' + name, max_redirects=0)
                 assert asset.status == 200 and asset.body() == (ROOT / 'backend/v2/cabinet_assets/planner' / name).read_bytes(), name
         surround_scenarios(page, projects, first_id)

@@ -1326,11 +1326,17 @@ async function exportBazisProjectReady(){
     }
     for(const [label,panels]of [['Цоколь',state.plinths||[]],['Стеновая панель',state.wallPanels||[]]])for(const p of panels)if(p.material_id){const m=materials.get(String(p.material_id));if(!m||!(m.name||m.article))missing.push(label+' · '+p.material_id);}
     if(missing.length){status('Экспорт не создан: не удалось загрузить выбранные материалы. Повторите экспорт или выберите материал заново. '+[...new Set(missing)].join('; '));return;}
+    if(state.items.some(it=>it.blank_machining?.some(c=>c.lightSystem==='lira-1708'))){
+      const original=JSON.stringify(state.items);
+      const profiles=await globalThis.MF_BLANKS_NATIVE.nativeLiraProfiles(state.items,api);
+      if(original!==JSON.stringify(state.items))throw Error('Шкаф изменился во время расчёта профиля. Повторите экспорт.');
+      return exportBazisProject(profiles);
+    }
     return exportBazisProject();
   }catch(error){status('Экспорт не создан: '+(error.message||String(error)));}
   finally{button.disabled=false;}
 }
-function exportBazisProject(){
+function exportBazisProject(liraProfiles=[]){
   // Export is read-only: do not migrate source pins in the active scene.
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError){status(briefError);return;}
@@ -1353,7 +1359,7 @@ function exportBazisProject(){
     jointItems=globalThis.MF_BLANKS_NATIVE?.jointItems?.(state.items)||[];
     supportItems=globalThis.MF_BLANKS_NATIVE?.supportItems?.(state.items)||[];
     hookItems=globalThis.MF_BLANKS_NATIVE?.hookItems?.(state.items)||[];
-    blankItems=globalThis.MF_BLANKS_NATIVE?.nativeItems(state.items,exportMaterialDescriptor)||[];
+    blankItems=globalThis.MF_BLANKS_NATIVE?.nativeItems(state.items,exportMaterialDescriptor,liraProfiles)||[];
   }catch(error){status('Экспорт не создан: '+error.message);return;}
   const bazisItems=state.items.filter(x=>x.bazis_file);
   const missing=state.items.filter(x=>!x.bazis_file&&x.module_type!=='blank');
@@ -1506,6 +1512,7 @@ function exportBazisProject(){
       blankItems.some(it=>it.blank?.axis==='front'&&!Number.isInteger(it.blank.length))?'9.9.29':'9.9.28';
   }
   if(wardrobeDrawerItems.some(it=>it.source_file.includes('_shared'))||jointItems.some(it=>it.joint_back_face&&it.joint_part==='confirmat'))payload.minimum_importer='9.9.31';
+  for(const row of liraProfiles){row.index=payload.items.length+1;payload.items.push(row);}
   if(rodItems.length){
     for(const rod of rodItems){rod.index=payload.items.length+1;payload.items.push(rod);}
     payload.format='martin-forest-bazis-native-v12';payload.minimum_importer='9.9.32';
@@ -1546,6 +1553,9 @@ function exportBazisProject(){
     payload.format='martin-forest-bazis-native-v23';
     payload.minimum_importer=payload.items.some(it=>it.wardrobe_z1_front)?'9.9.48':'9.9.47';
   }
+  if(liraProfiles.length){
+    payload.format='martin-forest-bazis-native-v24';payload.minimum_importer='9.9.49';
+  }
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const href=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1559,6 +1569,7 @@ function exportBazisProject(){
   if(hingeItems.some(it=>it.wardrobe_blum_part))guidance.push('Петли Blum и ответные планки выгружены отдельными деталями. Скачайте актуальный комплект фрагментов в «Инструментах производства».');
   if(hingeItems.some(it=>it.push_install))guidance.push('Типоны AKS и присадка включены в экспорт.');
   if(doorHardware.length)guidance.push('Ручки и профили: '+doorHardware.length+' шт.');
+  if(liraProfiles.length)guidance.push('Профили LIRA-1708 · '+liraProfiles.length+' отр. Фрагменты входят в комплект AKS.');
   if(rodItems.length)guidance.push('Штанг с держателями: '+rodItems.length+'.');
   if(wardrobeDrawerItems.length)guidance.push('Шуфляды AKS экспортированы с родным крепежом.');
   else if(jointItems.length)guidance.push('Крепёж корпуса: '+jointItems.length+' шт.');

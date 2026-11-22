@@ -365,11 +365,13 @@ class WardrobeRod(StrictModel):
 
 
 MachiningSize = Annotated[float, Field(strict=True,ge=0,le=3000,allow_inf_nan=False)]
-LightSystem = Literal['aq-4x8','lira-17.5x6.5']
+LightSystem = Literal['aq-4x8','lira-17.5x6.5','lira-1708']
 LIGHTING = json.loads((ASSETS/'vitrine-lighting.json').read_text())
+LIGHTING['lira-1708'] = json.loads((ASSETS/'wardrobe-lira-1708.json').read_text())
 class LightingKit(StrictModel):
     control: Literal['touch', 'wave', 'motion', 'door', 'external'] = 'touch'
     holders: int | None = Field(default=None, ge=0, le=32000, strict=True, exclude_if=lambda v: v is None)
+    holders1708: int | None = Field(default=None, ge=0, le=32000, strict=True, exclude_if=lambda v: v is None)
     prices: dict[Annotated[str, Field(pattern=r'^[0-9.]{1,12}$')],
                  Annotated[float, Field(strict=True, ge=0, le=100000, multiple_of=.01, allow_inf_nan=False)]] = Field(default_factory=dict, max_length=32, exclude_if=lambda v: not v)
 

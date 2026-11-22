@@ -56,7 +56,7 @@ export function lightControls(ui){
   const art=hardwareArtwork(null,'vitrine','light_system',system),img=el('img');img.src=art.src;img.alt=model.label;img.width=225;img.height=130;
   const card=button('',()=>write({...current,face:current?.face??(key==='bottom'?1:lightFaces(key)[0]),anchor:current?.anchor??'front',...(current?{}:{offset:50}),system}));
   card.dataset.lightingSystem=system;card.setAttribute('aria-pressed',String(current?.system===system));
-  card.append(img,el('span',model.label+' · '+art.article),el('small','Паз '+mm(model.groove_width_mm)+' × '+mm(model.groove_depth_mm)+' мм'));grid.append(card);
+  card.append(img,el('span',model.label+' · '+(system==='lira-1708'?'78319 (2 м) / 90607 (3 м)':art.article)),el('small','Паз '+mm(model.groove_width_mm)+' × '+mm(model.groove_depth_mm)+' мм'));grid.append(card);
  }
  box.append(grid);if(!current)return;
  const side=item.blank_axis==='side',faces=lightFaces(key);

@@ -19,14 +19,15 @@ export function lightKitControls(ui){
   ui.select(section,'Управление подсветкой',Object.entries(controls),selected,value=>{
     ui.kitOpen=section.open;(ui.fields.lightKit??={}).control=value;ui.changed(true);
   });
-  if(Object.values(ui.fields.lighting).some(rows=>rows.some(row=>row.system==='lira-17.5x6.5'))){
-    const holderLabel=el('label','Держатели LIRA‑1707, шт.'),count=el('input');count.type='number';count.step='1';
-    count.min='0';count.max='32000';count.placeholder='Авто · 4 шт. на 2 м';count.value=ui.fields.lightKit?.holders??'';
-    count.setAttribute('aria-label','Количество держателей LIRA-1707');
+  for(const [system,series,field] of [['lira-17.5x6.5','LIRA-1707','holders'],['lira-1708','LIRA-1708','holders1708']]){
+    if(!Object.values(ui.fields.lighting).some(rows=>rows.some(row=>row.system===system)))continue;
+    const holderLabel=el('label','Держатели '+series+', шт.'),count=el('input');count.type='number';count.step='1';
+    count.min='0';count.max='32000';count.placeholder='Авто · 4 шт. на 2 м';count.value=ui.fields.lightKit?.[field]??'';
+    count.setAttribute('aria-label','Количество держателей '+series);
     count.onchange=()=>{
       if(!count.reportValidity())return;
       const settings=ui.fields.lightKit??={};
-      if(count.value==='')delete settings.holders;else settings.holders=count.valueAsNumber;
+      if(count.value==='')delete settings[field];else settings[field]=count.valueAsNumber;
       ui.changed();
     };holderLabel.append(count);section.append(holderLabel);
   }
@@ -72,7 +73,7 @@ function showQuote(ui,box,quote){
   prices.append(table);output.append(prices);
   const cuts=el('details');cuts.className='light-kit-cuts';cuts.open=cutsWereOpen;cuts.append(el('summary','Отрезки и подключение'));
   for(const [i,line] of quote.lines.entries())cuts.append(el('p',(i+1)+'. '+line.label+' · паз '+num(line.length)+' мм · лента '+num(line.fitted)+' мм'));
-  for(const bar of quote.stock)cuts.append(el('p','LIRA '+bar.length+' мм · отрезки '+bar.lines.map(i=>num(quote.lines[i].length)).join(' + ')+' мм'));
+  for(const bar of quote.stock)cuts.append(el('p','Арт. '+bar.article+' · хлыст '+bar.length+' мм · отрезки '+bar.lines.map(i=>num(quote.lines[i].length)).join(' + ')+' мм'));
   for(const [i,g] of quote.groups.entries())cuts.append(el('p','Блок '+(i+1)+' · арт. '+g.supply+' · линии '+g.lines.map(n=>n+1).join(', ')));
   cuts.append(el('small','До 80% мощности блока и до шести линий на группу. Между отрезками одного профиля заложен пропил 4,4 мм.'));
   for(const note of quote.notes)cuts.append(el('p',note));output.append(cuts);

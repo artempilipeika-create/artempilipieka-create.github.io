@@ -41,13 +41,13 @@ test('opens a numbered wardrobe export from Downloads and distinguishes upgrade,
   save(current);
   const loaded=c.loadProjectFile();assert.equal(loaded.filename,file);assert.equal(loaded.automatic,true);
   assert.deepEqual(JSON.parse(JSON.stringify(loaded.payload)),current);
-  for(let v=2;v<=23;v++){
+  for(let v=2;v<=24;v++){
    const format='martin-forest-bazis-native-v'+v;save({format,items:[item]});assert.equal(c.loadProjectFile().payload.format,format);
   }
   for(const [patch,reason] of [
-   [{format:'martin-forest-bazis-native-v22',minimum_importer:'9.9.100'},/нужен импортёр 9\.9\.100.+9\.9\.48/],
+   [{format:'martin-forest-bazis-native-v22',minimum_importer:'9.9.100'},/нужен импортёр 9\.9\.100.+9\.9\.49/],
    [{minimum_importer:'10.0.0'},/нужен импортёр 10\.0\.0/],
-   [{format:'martin-forest-bazis-native-v24'},/не поддерживает формат martin-forest-bazis-native-v24/],
+   [{format:'martin-forest-bazis-native-v25'},/не поддерживает формат martin-forest-bazis-native-v25/],
    [{format:'other'},/другой тип файла/],[{items:[]},/нет деталей и модулей/],[{items:null},/отсутствует список/]
   ]){
    save({...current,...patch});assert.throws(()=>c.loadProjectFile(),e=>reason.test(e.message)&&e.message.includes(file));

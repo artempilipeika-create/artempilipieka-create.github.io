@@ -125,6 +125,7 @@ export function wardrobeSpec(f){
      spec.lightKit={control:f.lightKit.control??'touch'};
      if(Object.keys(f.lightKit.prices??{}).length)spec.lightKit.prices={...f.lightKit.prices};
      if(f.lightKit.holders!=null&&Object.values(spec.lighting).some(rows=>rows.some(row=>row.system==='lira-17.5x6.5')))spec.lightKit.holders=f.lightKit.holders;
+     if(f.lightKit.holders1708!=null&&Object.values(spec.lighting).some(rows=>rows.some(row=>row.system==='lira-1708')))spec.lightKit.holders1708=f.lightKit.holders1708;
    }
  }
  if(spec.machining){

@@ -11,10 +11,10 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from .assistant_model import DOOR_HARDWARE, ROD_CATALOGUE, Z1_DATA
+from .assistant_model import DOOR_HARDWARE, LIGHTING, ROD_CATALOGUE, Z1_DATA
 
 ROOT = Path(__file__).parent
-IMPORTER_VERSION = '9.9.48'
+IMPORTER_VERSION = '9.9.49'
 _version_tag = IMPORTER_VERSION.replace('.', '_')
 KIT_NAME = f'Martin_Forest_AKS_19mm_v{_version_tag}.zip'
 IMPORTER_NAME = f'Martin_Forest_Import_v{_version_tag}.js'
@@ -57,6 +57,25 @@ def private_handle_sources(required):
     return result
 
 
+def private_lira_sources(required):
+    sources = {}
+    for stock in LIGHTING['lira-1708']['profile']['stock']:
+        article = stock['article']
+        encoded = os.environ.get(f'MF_WARDROBE_LIRA_{article}_FR3D')
+        if not encoded:
+            if required:
+                raise ValueError(f'Не установлен исходный профиль LIRA-1708 {article}.')
+            continue
+        try:
+            source = b64decode(encoded, validate=True)
+        except (ValueError, Base64Error) as exc:
+            raise ValueError(f'Не прочитан профиль LIRA-1708 {article}.') from exc
+        if sha256(source).hexdigest() != stock['sha']:
+            raise ValueError(f'Не подтверждён исходник профиля LIRA-1708 {article}.')
+        sources[stock['file']] = source
+    return sources
+
+
 def private_z1_sources(required):
     key = os.environ.get('MF_WARDROBE_BLUM_PARTS_KEY')
     if not key:
@@ -79,8 +98,8 @@ def private_z1_sources(required):
     return sources
 
 
-@lru_cache(maxsize=8)
-def kit_bytes(rods_required=False, handles_required=False, z1_required=False):
+@lru_cache(maxsize=16)
+def kit_bytes(rods_required=False, handles_required=False, z1_required=False, lira_required=False):
     rods = private_rod_sources()
     if rods_required and not rods:
         raise ValueError('Исходные штанги ещё не установлены на сервере.')
@@ -95,7 +114,7 @@ def kit_bytes(rods_required=False, handles_required=False, z1_required=False):
             archive.writestr(entry, data)
         for source in sorted(sources.glob('*.fr3d')):
             add('Martin Forest AKS/' + source.name, source.read_bytes())
-        for name, data in {**rods, **handles, **private_z1_sources(z1_required)}.items():
+        for name, data in {**rods, **handles, **private_z1_sources(z1_required), **private_lira_sources(lira_required)}.items():
             add('Martin Forest AKS/' + name, data)
         add(IMPORTER_NAME, (ROOT / 'cabinet_assets/planner/bazis-drawers-import.js').read_bytes())
     return result.getvalue()
