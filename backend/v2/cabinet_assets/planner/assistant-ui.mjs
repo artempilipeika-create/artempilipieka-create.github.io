@@ -13,6 +13,7 @@ import {drawerFacadeKey} from './wardrobe-door-layout.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
 import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
+import {sectionPresetControls} from './wardrobe-section-presets.mjs';
 import {keysAfterInsertion,setClearWidth,setSectionShelfCount} from './wardrobe-cells.mjs';
 import {nicheSlot,splitAt} from './wardrobe-layout.mjs';
 import {gapEditor,splitControls} from './wardrobe-zones-ui.mjs';
@@ -189,6 +190,7 @@ export class AssistantUI{
   if(old){
     const changed=Object.keys({...old.fields,...this.fields}).filter(k=>!sameAssistantSpec(old.fields[k],this.fields[k]));
     const layout=['sections','sectionShelves','shelfChoices','shelfLevels','topGaps','gapLocks','nicheSplits','drawerBanks','dividerPositions','dividerJoints','clearLayout','drawerFixing','rods','lighting','lightKit','surround'];
+    if(changed.includes('sectionShelves'))layout.push('machining');
     if(changed.length&&this.step<=2&&changed.every(k=>layout.includes(k))){
       this.layoutUndo.push(old);if(this.layoutUndo.length>20)this.layoutUndo.shift();
     }else if(changed.length)this.layoutUndo=[];
@@ -297,6 +299,7 @@ export class AssistantUI{
    this.sectionTabs();
    const i=this.activeSection,count=this.fields.sectionShelves[i];
    this.nicheIndex=Math.min(this.nicheIndex??0,count);
+   sectionPresetControls(this,this.form,activeCell(this));
    const context=el('p',openingLabel(this.nicheIndex,count));context.className='opening-context';this.form.append(context);
    const tabs=el('div');tabs.className='wardrobe-subsections';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Элемент наполнения');
    for(const [key,label] of [['cell','Ниша'],['shelf','Полки'],['rod','Штанги'],['drawer','Шуфляды'],['split','Перегородка']]){

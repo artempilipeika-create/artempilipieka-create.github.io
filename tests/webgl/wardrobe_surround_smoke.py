@@ -580,6 +580,58 @@ def z1_scenario(page, projects, seed):
     print('PASS wardrobe Z1: chooser, real product photo, inset, mixed pair, TIP-ON, mezzanine, persisted edit and native export')
 
 
+def section_presets(page, projects, project_id):
+    page.locator('#planner-assistant').click()
+    form = page.locator('#planner-assistant-dialog')
+    field(form, 'Ширина, мм').fill('1500')
+    button(form, '2. Полки').click()
+    form.locator('summary', has_text='Деление и ширина секций').click()
+    button(form, 'Две секции').click()
+    button(form, '3. Наполнение').click()
+
+    def apply(name):
+        button(form, 'Заполнить секцию').click()
+        button(form, name).click()
+
+    apply('Длинная одежда')
+    field(form, 'Размер до оси, мм').fill('130')
+    field(form, 'Размер до оси, мм').press('Tab')
+    button(form, 'Ниша').click()
+    field(form, 'Высота в свету, мм').fill('1650')
+    button(form, 'Применить высоту').click()
+    button(form, 'Секция 2').click()
+    apply('Рубашки в два яруса')
+    expect(field(form, 'Штанга в нише').locator('option')).to_have_count(2)
+    button(form, 'Отменить изменение').click()
+    expect(field(form, 'Штанга в нише')).to_have_count(0)
+    apply('Рубашки в два яруса')
+    apply('Длинная одежда')
+    button(form, 'Оставить').click()
+    expect(field(form, 'Штанга в нише').locator('option')).to_have_count(2)
+    finish(page, form)
+    group, saved, parts = panels(projects, project_id)
+    assert saved['sectionShelves'] == [1, 0] and len(saved['rods']) == 3
+    assert parts['shelf-0-0']['elevation_mm'] == 1668
+    assert saved['rods'][0]['offset'] == 130
+
+    form = reopen(page, project_id)
+    button(form, '3. Наполнение').click()
+    button(form, 'Штанги').click()
+    expect(field(form, 'Размер до оси, мм')).to_have_value('130')
+    field(form, 'Размер до оси, мм').fill('145')
+    field(form, 'Размер до оси, мм').press('Tab')
+    finish(page, form, update=True)
+    edited_group, edited, _ = panels(projects, project_id)
+    assert edited_group == group and edited['rods'][1:] == saved['rods'][1:]
+    with page.expect_download() as download:
+        page.locator('#export-bazis').click()
+    payload = json.loads(Path(download.value.path()).read_text())
+    rods = {r['rod_id']: r for r in payload['items'] if r.get('wardrobe_rod')}
+    assert set(rods) == {r['id'] for r in edited['rods']}
+    assert rods[edited['rods'][0]['id']]['position']['y'] == 1668 - 145
+    print('PASS both section presets, undo, shelf and rod edits, saved wardrobe and native export', flush=True)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
@@ -588,7 +640,7 @@ if __name__ == '__main__':
     def run(page, projects, first_id):
         if args.live:
             for name in ('assistant-ui.mjs', 'assistant.css', 'wardrobe-questionnaire.mjs',
-                         'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs',
+                         'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs', 'wardrobe-section-presets.mjs',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
                          'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs', 'wardrobe-hinge-ui.mjs', 'wardrobe-hinges.mjs',
                          'bazis-drawers-import.js', 'kitchen-album-ui.mjs', 'presentation-capture.mjs',
@@ -599,3 +651,4 @@ if __name__ == '__main__':
         z1_scenario(page, projects, first_id)
 
     exercise(args.live, run)
+    exercise(args.live, section_presets)

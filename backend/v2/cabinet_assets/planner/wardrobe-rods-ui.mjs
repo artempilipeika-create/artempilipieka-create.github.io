@@ -1,16 +1,11 @@
 import photos from './rod-photos/sources.json' with {type:'json'};
-import {planRods,rodCatalogue,rodFinish,rodLabel,rodLimits,rodRoom,sameRodCell} from './wardrobe-rods.mjs';
+import {newRod,planRods,rodCatalogue,rodFinish,rodLabel,rodLimits,rodRoom,sameRodCell} from './wardrobe-rods.mjs';
 
 const el=(tag,text)=>Object.assign(document.createElement(tag),{textContent:text??''});
 const button=(text,run)=>Object.assign(el('button',text),{type:'button',onclick:run});
 const groupNames={round:'Круглая Ø25',oval:'Овальная 30×15'};
 const order=['22109','72536','22111','113181','23007','57975','14066'];
 function fit(value,min,max){return Math.min(max,Math.max(min,value));}
-function newRod(cell,room){
- const limit=rodLimits(room,'22109','top');
- return {id:crypto.randomUUID(),section:cell.section,level:cell.level,
-   ...(cell.column!=null?{column:cell.column,opening:cell.opening??0}:{}),article:'22109',anchor:'top',offset:fit(100,limit.min,limit.max)};
-}
 export function rodControls(ui,parent,cell){
  const f=ui.fields;
  const box=el('fieldset');box.className='rod-editor';

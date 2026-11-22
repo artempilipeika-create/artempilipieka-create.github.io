@@ -80,7 +80,7 @@ def router():
     door_photos = json.loads((ASSETS/'door-photos/sources.json').read_text())
     for photo in door_photos.values():
         planner_files.update('door-photos/' + photo[key] for key in ('file', 'installation_file', 'section_file') if key in photo)
-    planner_files.update({'wardrobe-rods.mjs','wardrobe-rods-ui.mjs','wardrobe-rod-mesh.mjs',
+    planner_files.update({'wardrobe-section-presets.mjs','wardrobe-rods.mjs','wardrobe-rods-ui.mjs','wardrobe-rod-mesh.mjs',
                           'wardrobe-rods.json','wardrobe-rod-meshes.json','rod-photos/sources.json'})
     planner_files.update('rod-photos/'+sku+'.webp' for sku in json.loads((ASSETS/'wardrobe-rods.json').read_text()))
     planner_files.update('shelf-images/'+row['article']+'.webp' for row in json.loads((ASSETS/'decor-feet.json').read_text()))

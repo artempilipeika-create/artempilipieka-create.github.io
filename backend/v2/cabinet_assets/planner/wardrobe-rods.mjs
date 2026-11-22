@@ -44,6 +44,12 @@ export function rodLimits(room,article,anchor){
  return {min:Math.ceil(fromTop?maxY:-minY),max:Math.floor(span-(fromTop?-minY:maxY)),
    near:Math.ceil(-minZ),far:Math.floor(room.usableDepth-maxZ)};
 }
+export function newRod(cell,room){
+ const limit=rodLimits(room,'22109','top');
+ return {id:crypto.randomUUID(),section:cell.section,level:cell.level,
+   ...(cell.column!=null?{column:cell.column,opening:cell.opening??0}:{}),
+   article:'22109',anchor:'top',offset:Math.min(limit.max,Math.max(limit.min,100))};
+}
 export function planRods(spec,levels){
  const ids=new Set();
  return (spec.rods??[]).map(rod=>{
