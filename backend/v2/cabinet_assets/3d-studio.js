@@ -131,7 +131,7 @@
     get('pane-catalog').dataset.category=activeModuleFilter;
     for(const b of get('module-catalogue').querySelectorAll('.mf3d-module')){
       const tags=new Set((b.dataset.tags||b.dataset.category||'other').split(' '));
-      const matches=activeModuleFilter==='all'||(activeModuleFilter==='kitchen'?tags.has('base')||tags.has('wall')||tags.has('tall'):tags.has(activeModuleFilter));
+      const matches=tags.has('ai')?activeModuleFilter==='ai':activeModuleFilter==='all'||(activeModuleFilter==='kitchen'?tags.has('base')||tags.has('wall')||tags.has('tall'):tags.has(activeModuleFilter));
       b.hidden=!(matches&&(!q||(b.dataset.search||'').includes(q)));if(!b.hidden)count++;
     }
     const sort=get('studio-sort').value;
@@ -189,9 +189,16 @@
       }
       const editEquipment=make('button','secondary studio-sockets-edit','Расположение окон и техники');editEquipment.type='button';editEquipment.onclick=()=>document.dispatchEvent(new CustomEvent('mf:room-equipment-edit'));equipment.append(editEquipment);get('module-catalogue').append(equipment);
     }
+    document.dispatchEvent(new CustomEvent('mf:ai-kitchen-catalogue',{detail:get('module-catalogue')}));
     get('module-catalogue').querySelectorAll('.mf3d-module').forEach((b,i)=>b.dataset.studioOrder=String(i));
     applyCatalogueFilter();
   };
+  document.addEventListener('mf:ai-kitchen-ready',()=>{
+    if(new URLSearchParams(location.search).get('catalog')==='ai'){
+      activeModuleFilter='ai';showPane('catalog');togglePanel('library',true);
+    }
+    renderModuleCatalogue();
+  });
   function showPane(name,focus=false){
     const tabs=[...document.querySelectorAll('[data-studio-tab]')];
     tabs.forEach(b=>{const on=b.dataset.studioTab===name;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;get('pane-'+b.dataset.studioTab).hidden=!on;});

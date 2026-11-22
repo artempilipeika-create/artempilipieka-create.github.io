@@ -23,7 +23,7 @@ const shelfConfirmats = {
 };
 export function validateJoints(spec,depth=spec.depth-backTrim(spec.backMount)) {
   if (!spec.joints) return;
-  if (spec.thickness !== 18 || !['shelves','divided'].includes(spec.recipe)) throw Error('Крепёж рассчитан на вкладные детали корпуса 18 мм.');
+  if (spec.thickness !== 18 || !spec.kitchenModel&&!['shelves','divided'].includes(spec.recipe)) throw Error('Крепёж рассчитан на вкладные детали корпуса 18 мм.');
   for (const scheme of [spec.joints.top,spec.joints.bottom]) {
     if (!Object.hasOwn(jointOptions,scheme)) throw Error('Выберите схему крепежа крыши и дна.');
     if (scheme==='cam_dowel' && depth < 276) throw Error('Для двух пар эксцентрик + шкант нужна глубина детали от 276 мм.');
@@ -181,7 +181,8 @@ export function nativeCarcassJoints(items,{checkOpposing=true}={}) {
     const meta=panel.assistant_carcass;
     const shelfScheme=fixedShelfScheme(panel);
     if (!shelfScheme && !meta?.spec.joints) continue;
-    const level=['top','bottom'].find(key=>panel.item_id===meta?.group_id+':'+key);
+    const rail=meta?.spec.kitchenModel==='base-swing'&&['rail-front','rail-rear'].some(key=>panel.item_id===meta.group_id+':'+key);
+    const level=rail?'top':['top','bottom'].find(key=>panel.item_id===meta?.group_id+':'+key);
     if (!shelfScheme && (!level||meta.spec[level+'Fit']==='overlay')) continue;
     const scheme=shelfScheme || meta.spec.joints[level];
     if (scheme==='none') continue;
@@ -209,7 +210,10 @@ export function nativeCarcassJoints(items,{checkOpposing=true}={}) {
       const opposite=Boolean(shelfScheme&&isDrawerCover(panel)&&items.some(other=>
         fixedShelfScheme(other)&&other.blank_binding?.[side==='left'?'right_id':'left_id']===host.item_id&&
         Math.abs(other.elevation_mm-panel.elevation_mm)<10&&(side==='left'||!isDrawerCover(other))));
-      for(const row of shelfScheme?shelfJointRows(panel,host,scheme):jointRows(scheme,panel.depth,false)){
+      // Two confirmats on each end of the 80 mm kitchen stretcher, 20 mm from each edge.
+      const rows=rail?[-1,1].map(sign=>({kind:'confirmat',z:sign*(panel.depth/2-20)})):
+        shelfScheme?shelfJointRows(panel,host,scheme):jointRows(scheme,panel.depth,false);
+      for(const row of rows){
         // On a shared upright stagger facing fasteners without moving either shelf.
         const inset=opposite?16*Math.sign(row.z):0;
         place(row.kind,centre.z+row.z-inset);

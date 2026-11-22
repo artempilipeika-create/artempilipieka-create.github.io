@@ -48,7 +48,7 @@ export function carcassSpec(input={}){
   if(typeof s.back!=='boolean')throw Error('Выберите вариант задней стенки.');
   if(s.backThickness!=null&&(!s.back||![16,18].includes(s.backThickness)||!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте толщину вкладной задней стенки.');
   if(s.backThickness>=16&&s.thickness<16)throw Error('Для крепления вкладной стенки нужны боковины, дно и крыша толщиной от 16 мм.');
-  if(s.sectionShelves!=null&&(!Array.isArray(s.sectionShelves)||s.sectionShelves.length!==s.sections||s.sectionShelves.some(n=>!Number.isInteger(n)||n<0||n>10)||Math.max(...s.sectionShelves)!==s.shelves||!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте количество полок в каждой секции.');
+  if(s.sectionShelves!=null&&(!Array.isArray(s.sectionShelves)||s.sectionShelves.length!==s.sections||s.sectionShelves.some(n=>!Number.isInteger(n)||n<0||n>10)||Math.max(...s.sectionShelves)!==s.shelves||!s.kitchenModel&&!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте количество полок в каждой секции.');
   if(recipe.id==='sink'&&(s.back||s.shelves||s.sections!==1))throw Error('У корпуса под мойку нет полок, перегородок и задней стенки.');
   if(['base','cap'].includes(recipe.id)&&s.sections!==1)throw Error('У этой конструкции одна секция.');
   return {...s,top:s.topFit??recipe.top,bottom:s.bottomFit??recipe.bottom,label:recipe.name};

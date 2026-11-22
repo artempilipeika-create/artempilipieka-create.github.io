@@ -555,8 +555,8 @@
     if(!isTallModule(it)||!upper||tier(upper)!=='wall')throw new Error('Выберите пенал и верхний шкаф для выравнивания.');
     return dimensionPatch(it,{height:elevation(upper,room)+upper.height-elevation(it,room)},room);
   }
-  function kitchenSettings(it){
-    if(!isKitchenModule(it))return null;
+  function kitchenSettings(it,assembledBase=false){
+    if(!assembledBase&&!isKitchenModule(it))return null;
     const k={...KITCHEN_DEFAULTS};for(const key of Object.keys(k))if(it[key]!=null)k[key]=it[key];
     k.rearServiceGapMm=golaCountertop(it)?k.countertopDepthMm-it.depth-18-.5:50;
     k.legHeightMm=it.legHeightMm??it.base_height??100;
@@ -941,13 +941,20 @@
    */
   function kitchenRuns(items,room,materialLookup=()=>null){
     const groups=new Map(),runs=[];
-    for(const it of items){
-      const k=kitchenSettings(it);if(!k)continue;
+    for(const item of items){
+      const meta=item.assistant_carcass;
+      // The overlaid bottom spans the cabinet. It anchors a single worktop member
+      // even when a cabinet has several shelves, doors or independently edited panels.
+      const assembledBase=meta?.spec.kitchenModel==='base-swing'&&item.item_id===meta.group_id+':bottom';
+      const it=assembledBase?{...item,elevation_mm:meta.position.elevation_mm,
+        base_height:item.elevation_mm-meta.position.elevation_mm,worktop_thickness:38,
+        height:meta.spec.height+item.elevation_mm-meta.position.elevation_mm}:item;
+      const k=kitchenSettings(it,assembledBase);if(!k)continue;
       const rotation=it.rotation||0,local=rotateXZ(it.x,it.z,-rotation),level=elevation(it,room);
       const back=local.z-it.depth/2-k.rearServiceGapMm,top=level+it.height;
       const key=[rotation,mmNumber(back),top,k.countertopDepthMm,k.countertopThicknessMm].join('|');
       if(!groups.has(key))groups.set(key,[]);
-      groups.get(key).push({it,k,rotation,back,top,level,lo:local.x-it.width/2,hi:local.x+it.width/2});
+      groups.get(key).push({it,k,assembledBase,rotation,back,top,level,lo:local.x-it.width/2,hi:local.x+it.width/2});
     }
     for(const members of groups.values()){
       members.sort((a,b)=>a.lo-b.lo);const contiguous=[];
@@ -968,7 +975,7 @@
         for(const role of ['counter','plinth']){
           const sections=[];
           for(const m of run.members){
-            if(role==='counter'&&!m.k.countertopEnabled)continue;
+            if(role==='counter'&&!m.k.countertopEnabled||role==='plinth'&&m.assembledBase)continue;
             const {k,it}=m,id=role==='counter'?k.countertopMaterialId:k.plinthMaterialId;
             const z=role==='counter'?k.countertopDepthMm/2:k.rearServiceGapMm+it.depth-60;
             const y=role==='counter'?m.top+k.countertopThicknessMm/2:m.level+k.legHeightMm/2;

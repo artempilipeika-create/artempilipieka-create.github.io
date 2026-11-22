@@ -44,7 +44,7 @@
 <script defer src="/account/planner/cargo-ui.js"></script>
 <script defer src="/account/planner/modern-cabinet-variants.js?v=20261112"></script>
 <script defer src="/account/planner/modern-cabinets.js?v=20261112"></script>
-<script defer src="/account/planner/furniture-core.js?v=20261114-corner-face"></script>
+<script defer src="/account/planner/furniture-core.js?v=20261122-ai-kitchen"></script>
 <link rel="stylesheet" href="/account/planner/accessories.css?v=20261021-accessories">
 <script defer src="/account/planner/appliance-tall-ui.js?v=20261027-tall-gola"></script>
 <script defer src="/account/planner/vitrine-ui.js"></script>
@@ -57,7 +57,7 @@
 <script defer src="/account/planner/constructor-access.js?v=20261112"></script>
 <script type="module" src="/account/planner/socket-native.mjs"></script>
 <script type="module" src="/account/planner/blanks-native.mjs"></script>
-<script defer src="/account/3d.js?v=20261122-wardrobe-render"></script><script defer src="/account/3d-studio.js?v=20261106-blanks"></script>
+<script defer src="/account/3d.js?v=20261122-wardrobe-render"></script><script defer src="/account/3d-studio.js?v=20261122-ai-kitchen"></script>
 <link rel="stylesheet" href="/account/planner/planner.css">
 <link rel="stylesheet" href="/account/planner/blanks.css?v=20261106">
 <link rel="stylesheet" href="/account/planner/workspace.css">
@@ -69,7 +69,8 @@
 <link rel="stylesheet" href="/account/planner/surface-cards.css?v=20261025-lively-cards">
 <link rel="stylesheet" href="/account/planner/presentation.css">
 <script defer src="/account/planner/bridge.js?v=20261120-hardware"></script>
-<script type="module" src="/account/planner/entry.mjs?v=20261120-hardware"></script>
+<link rel="stylesheet" href="/account/planner/ai-kitchen.css?v=1">
+<script type="module" src="/account/planner/entry.mjs?v=20261122-ai-kitchen"></script>
 <link rel="stylesheet" href="/account/planner/client-workspace.css?v=20261112">
 </head>
 <body class="mf-3d-page mf3d-studio" data-planner-requested="webgl">
@@ -98,7 +99,7 @@
   <section id="pane-catalog" class="mf3d-catalog-section studio-pane" role="tabpanel" aria-labelledby="tab-catalog">
    <div class="mf3d-catalog-tools"><label class="studio-sr" for="module-search">Поиск по каталогу</label><input id="module-search" type="search" placeholder="Название, тип или файл БАЗИС…">
     <div id="module-tabs" class="mf3d-tabs" role="group" aria-label="Категории модулей">
-     <button type="button" class="active" data-module-filter="all" aria-pressed="true">Все</button><button type="button" data-module-filter="base" aria-pressed="false">Нижние модули</button><button type="button" data-module-filter="wall" aria-pressed="false">Верхние модули</button><button type="button" data-module-filter="tall" aria-pressed="false">Пеналы</button><button type="button" data-module-filter="finishes" aria-pressed="false">Отделка кухни</button><button type="button" data-module-filter="communications" aria-pressed="false">Коммуникации</button>
+     <button type="button" class="active" data-module-filter="all" aria-pressed="true">Все</button><button type="button" data-module-filter="ai" aria-pressed="false">ИИ</button><button type="button" data-module-filter="base" aria-pressed="false">Нижние модули</button><button type="button" data-module-filter="wall" aria-pressed="false">Верхние модули</button><button type="button" data-module-filter="tall" aria-pressed="false">Пеналы</button><button type="button" data-module-filter="finishes" aria-pressed="false">Отделка кухни</button><button type="button" data-module-filter="communications" aria-pressed="false">Коммуникации</button>
     </div>
     <div class="studio-catalog-meta"><span id="studio-catalog-count">Каталог модулей</span><label><span class="studio-sr">Сортировка каталога</span><select id="studio-sort"><option value="default">По типу</option><option value="name">По названию</option><option value="width">По ширине</option></select></label></div>
    </div>

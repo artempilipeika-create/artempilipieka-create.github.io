@@ -117,7 +117,7 @@ export class CabinetControls{
    this.xray.setAttribute('aria-pressed',String(this.xrayEnabled));
    this.panel.hidden=!scene.cabinetSelection;this.choose.hidden=!id||!this.panel.hidden;
    this.part.hidden=!scene.xrayEnabled||!scene.pickedInterior;this.part.textContent=scene.pickedInterior?.name||'';
-   this.edit.hidden=!this.app.assistant?.button||!id||!['shelves','divided'].includes(it.assistant_carcass.spec.recipe);
+   this.edit.hidden=!this.app.assistant?.button||!id||!it.assistant_carcass.spec.kitchenModel&&!['shelves','divided'].includes(it.assistant_carcass.spec.recipe);
    this.panelEdit.hidden=this.edit.hidden;
    scene.onWardrobeChanged=this.openingChanged;
    const members=id?adapter.items.filter(part=>cabinetId(part)===id):[];

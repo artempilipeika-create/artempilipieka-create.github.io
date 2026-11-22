@@ -34,6 +34,7 @@ import {ProjectSafety} from './project-safety.mjs?v=20261120-hardware';
 import {SceneDimensions} from './dimensions.mjs';
 import {BlanksUI} from './blanks-ui.mjs';
 import {CabinetControls} from './cabinet-controls.mjs';
+import {AIKitchenUI} from './ai-kitchen-ui.mjs';
 import {AssistantUI} from './assistant-ui.mjs';
 
 class PlannerApplication {
@@ -68,7 +69,7 @@ class PlannerApplication {
     this.adapter.status(this.scene.isFallback?'Резервный 2D-план. Проект доступен без перезагрузки.':'Сцена готова. Добавьте модуль из каталога или выберите шкаф.');
     this.roomSetup.projectChanged();
     this.safety=new ProjectSafety(this);await this.safety.start();
-    this.assistant=new AssistantUI(this);
+    this.assistant=new AssistantUI(this);this.aiKitchen=new AIKitchenUI(this);
     return this;
   }
   listen(el,event,fn,capture=false){el?.addEventListener(event,fn,{capture,signal:this.uiAbort.signal});}
@@ -490,7 +491,7 @@ class PlannerApplication {
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
     get('studio-empty-scene').hidden=Boolean(count||this.adapter.room.features?.some(f=>['window','radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)));this.paintMode();this.equipment?.sync();this.executions?.sync();
   }
-  dispose(){this.assistant?.dispose();this.blanks?.dispose();this.executions?.dispose();this.equipment?.dispose();this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
+  dispose(){this.aiKitchen?.dispose();this.assistant?.dispose();this.blanks?.dispose();this.executions?.dispose();this.equipment?.dispose();this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
 }
 export const planner=new PlannerApplication();
 window.MF_PLANNER=planner;

@@ -58,8 +58,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Save, reopen and edit the wardrobe questionnaire in Chromium
+      - name: Save, reopen and edit cabinets in Chromium
         env:
+          MF_QA_LIVE_KITCHEN: ${{ startsWith(github.ref_name, 'mf-reliability-live-kitchen-') }}
           MF_QA_LIVE: ${{ startsWith(github.ref_name, 'mf-reliability-live-surround-') }}
         run: |
           pip install -r backend/v2/requirements.txt playwright==1.58.0
@@ -74,4 +75,9 @@ jobs:
           else
             python tests/webgl/wardrobe_surround_smoke.py
             python tests/webgl/wardrobe_pull_smoke.py
+          fi
+          if [ "$MF_QA_LIVE_KITCHEN" = true ]; then
+            python tests/webgl/ai_kitchen_smoke.py --live
+          else
+            python tests/webgl/ai_kitchen_smoke.py
           fi

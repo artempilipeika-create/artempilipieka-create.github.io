@@ -498,6 +498,8 @@ class WardrobeSurround(StrictModel):
     cap: SurroundCap | None = Field(default=None, exclude_if=lambda v:v is None)
 
 class CarcassDesign(CarcassSpec):
+    kitchenModel: Literal['base-swing','wall-swing','wall-vitrine'] | None = Field(default=None, exclude_if=lambda value: value is None)
+
     overallHeight: int | None = Field(default=None, ge=200, le=5000, strict=True, exclude_if=lambda v:v is None)
     surround: WardrobeSurround | None = Field(default=None, exclude_if=lambda v:v is None)
     lightKit: LightingKit | None = Field(default=None, exclude_if=lambda v: v is None)
@@ -715,7 +717,7 @@ class CarcassDesign(CarcassSpec):
 
     def validate_door_layout(self,zones,drawer_pulls):
         f=self.front;d=f.division;handles=f.handles or {}
-        if self.recipe not in ('shelves','divided'):raise ValueError('Фасады задаются для шкафа.')
+        if not self.kitchenModel and self.recipe not in ('shelves','divided'):raise ValueError('Фасады задаются для шкафа.')
         def torc(key,edge):
             h=handles.get(key)
             return h and h.edge==edge and DOOR_HARDWARE.get(h.article,{}).get('family')=='monblan'
@@ -857,6 +859,24 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.kitchenModel:
+            lower = self.kitchenModel == 'base-swing'
+            if self.recipe != ('base' if lower else 'wall') or self.sections != 1 or not self.front or not self.front.hinges or not self.back:
+                raise ValueError('Проверьте корпус, фасады и петли кухонного модуля ИИ.')
+            if self.thickness != 18 or self.shelves > 3 or self.width > 1200 or self.width > 600 and self.front.swing != 'pair':
+                raise ValueError('Кухонный корпус из плиты 18 мм допускает до трёх полок и до 600 мм на одну дверь.')
+            if bool(self.feet) != lower or self.bottomFit != ('overlay' if lower else None) or self.topFit:
+                raise ValueError('Проверьте дно, царги и опоры кухонного модуля ИИ.')
+            if lower and (not self.joints or self.joints.top != 'confirmat'):
+                raise ValueError('Для царг нижнего модуля нужен конфирмат.')
+            want_glass = self.kitchenModel == 'wall-vitrine'
+            active = ('left','right') if self.front.swing == 'pair' else (self.front.swing,)
+            for side in active:
+                fitting = self.front.hinges.get('door-'+side)
+                if not fitting or (fitting.article in Z1_HINGES) != want_glass or DOOR_HINGES[fitting.article]['kind'] == 'half':
+                    raise ValueError('Выберите подходящие к фасаду и боковине петли.')
+            if want_glass and self.shelves and (not self.shelfChoices or any(value.startswith('board/') for row in self.shelfChoices for value in row)):
+                raise ValueError('Для витрины ИИ выберите стеклянные полки.')
         if self.overallHeight is not None and self.overallHeight!=self.assembly_top:
             raise ValueError('Общая высота от пола должна включать отметку установки, опоры, корпус, антресоль и закладную.')
         if self.surround:
@@ -1041,7 +1061,7 @@ class CarcassDesign(CarcassSpec):
                 raise ValueError('Проверьте параметры посадки ХДФ 3 мм.')
         if self.backThickness and (not self.back or self.recipe not in ('shelves','divided') or (self.backThickness>=16 and self.thickness<16)):
             raise ValueError('Проверьте конструкцию и толщины панелей вкладной задней стенки.')
-        if (self.feet or self.topFit or self.bottomFit) and self.recipe not in ('shelves','divided'):
+        if (self.feet or self.topFit or self.bottomFit) and not self.kitchenModel and self.recipe not in ('shelves','divided'):
             raise ValueError('Опоры и конструкция панелей задаются для шкафа.')
         cap_depth=self.depth-(self.backMount.board_trim if self.backMount else 0)
         if self.feet:
@@ -1054,7 +1074,7 @@ class CarcassDesign(CarcassSpec):
             elif self.feet.article=='118779' and (self.bottomFit or inner_foot_pairs(self.width,self.sections,self.feet.layout)) and self.thickness<=16:
                 raise ValueError('Дно должно быть толще 16 мм для выбранной муфты.')
         if self.joints:
-            if self.thickness != 18 or self.recipe not in ('shelves','divided'):
+            if self.thickness != 18 or not self.kitchenModel and self.recipe not in ('shelves','divided'):
                 raise ValueError('Для крепежа нужны вкладные детали 18 мм.')
             if 'cam_dowel' in (self.joints.top,self.joints.bottom) and cap_depth < 276:
                 raise ValueError('Глубина для эксцентриков со шкантами от 276 мм.')
@@ -1096,7 +1116,7 @@ class CarcassDesign(CarcassSpec):
                 if ('board/cam_dowel' in row and depth < 216) or ('board/confirmat' in row and depth < 152):
                     raise ValueError('Для крепежа недостаточно глубины самой полки.')
         if self.sectionShelves is not None:
-            if self.recipe not in ('shelves', 'divided') or len(self.sectionShelves) != self.sections or max(self.sectionShelves) != self.shelves:
+            if (not self.kitchenModel and self.recipe not in ('shelves', 'divided')) or len(self.sectionShelves) != self.sections or max(self.sectionShelves) != self.shelves:
                 raise ValueError('Invalid section layout')
         return self
 

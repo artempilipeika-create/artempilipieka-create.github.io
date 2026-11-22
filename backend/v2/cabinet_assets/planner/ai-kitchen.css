@@ -1,0 +1,23 @@
+#ai-kitchen-dialog{width:min(840px,94vw);max-height:91dvh;overflow:auto;padding:0;border:1px solid #b6c8bd;border-radius:15px;color:#173d32;background:#fafcf9}
+#ai-kitchen-dialog::backdrop{background:#11221c70}
+#ai-kitchen-dialog header,#ai-kitchen-dialog footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px}
+#ai-kitchen-dialog header{border-bottom:1px solid #d4ded7}
+#ai-kitchen-dialog h2{font-size:21px;margin:0}
+.ai-kitchen-body{padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+.ai-kitchen-grid,.ai-hinge-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ai-kitchen-grid label{display:grid;gap:3px;font-size:13px;font-weight:600}
+.ai-kitchen-grid input,.ai-kitchen-grid select{width:100%;min-width:0}
+#ai-kitchen-dialog details{margin-top:14px}#ai-kitchen-dialog summary{cursor:pointer;font-weight:650}
+.ai-hinge-grid{margin:10px 0;max-height:250px;overflow:auto}
+.ai-hinge-grid button{background:#fff;border:1px solid #c7d5cb}.ai-hinge-grid button[aria-pressed=true]{border:2px solid #267359}
+.ai-hinge-grid figure{margin:2px}.ai-hinge-grid img{height:64px;width:100%;object-fit:contain}.ai-hinge-grid figcaption{font-size:11px}
+#ai-kitchen-dialog aside>button{margin-top:8px}#ai-kitchen-dialog footer{border-top:1px solid #d4ded7}
+#ai-kitchen-dialog footer p{margin:0;font-size:13px}#ai-kitchen-dialog footer button{flex-shrink:0}
+#ai-kitchen-dialog .wardrobe-live canvas{width:100%;height:clamp(200px,33vh,330px);display:block;transform:scaleY(-1)}
+@media(max-width:650px){.ai-kitchen-body{grid-template-columns:1fr;gap:12px}#ai-kitchen-dialog header,#ai-kitchen-dialog footer,.ai-kitchen-body{padding:10px 14px}#ai-kitchen-dialog .wardrobe-live canvas{height:165px}}
+
+.ai-fitted{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:6px;margin-top:12px}
+.ai-fitted figure{margin:0;border:1px solid #d4ded7;border-radius:6px;padding:5px;background:#fff}
+.ai-fitted img{height:46px;width:100%;object-fit:contain}.ai-fitted figcaption{font-size:10.5px;line-height:1.35}
+
+.ai-kitchen-drawing svg{display:block;width:100%;max-height:300px}

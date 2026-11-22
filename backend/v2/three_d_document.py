@@ -359,7 +359,9 @@ def _panel_hardware(it):
         shelf = it.get('blank_shelf') or ''
         article = shelf.partition('/')[2]
         metadata = it.get('assistant_carcass') or {}
-        scheme = article if shelf else ((metadata.get('spec') or {}).get('joints') or {}).get(key)
+        cabinet_spec = metadata.get('spec') or {}
+        joint_key = 'top' if cabinet_spec.get('kitchenModel')=='base-swing' and key in ('rail-front','rail-rear') else key
+        scheme = article if shelf else (cabinet_spec.get('joints') or {}).get(joint_key)
         if scheme == 'cam_dowel':
             return [_row('Эксцентриковая стяжка для плиты 18 мм',4),_row('Шкант деревянный 8×35',4,'pcs','39319')],None
         if scheme == 'confirmat':

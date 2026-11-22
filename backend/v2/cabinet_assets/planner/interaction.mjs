@@ -29,7 +29,7 @@ export class Interaction {
     listen(window,'blur',()=>{this.cancel();this.touches.clear();this.touchBlocked=false;});
     this.catalogue=document.getElementById('module-catalogue');
     listen(this.catalogue,'click',e=>{
-      const card=e.target.closest('.mf3d-module');if(!card||this.suspended||card.dataset.roomFeature)return;
+      const card=e.target.closest('.mf3d-module');if(!card||this.suspended||card.dataset.roomFeature||card.dataset.aiKitchen)return;
       e.preventDefault();e.stopImmediatePropagation();
       if(this.add(this.cardOptions(card))&&this.adapter.template(this.adapter.selected)?.production?.tall?.family==='appliance')document.dispatchEvent(new Event('mf:appliance-choice'));
     },true);
@@ -236,7 +236,7 @@ export class Interaction {
     if(steps[e.key]&&this.adapter.selected){this.consume(e);this.nudge(...steps[e.key]);}
   }
   catalogueStart(e){
-    const card=e.target.closest('.mf3d-module');if(!card||!this.editable()){e.preventDefault();return;}
+    const card=e.target.closest('.mf3d-module');if(!card||card.dataset.aiKitchen||!this.editable()){e.preventDefault();return;}
     if(isEquipment(card.dataset.roomFeature)&&this.equipment){this.equipment.catalogueStart(e,card.dataset.roomFeature);return;}
     if(card.dataset.roomFeature){e.preventDefault();return;}
     this.cancel();

@@ -87,6 +87,7 @@ export class AssistantUI{
   this.unsubscribe=this.app.bridge.subscribe(reason=>{if(reason==='before-project'||reason==='project'){this.epoch=(this.epoch||0)+1;this.pending=null;this.dialog.close();}});
  }
  open(mode='create'){
+  if(mode==='update'&&this.app.adapter.selected?.assistant_carcass?.spec.kitchenModel){this.app.aiKitchen?.edit();return;}
   if(this.app.workspace?.isClient())this.app.workspace.client();this.current=null;
   try{const c=selectedCarcass(this.app.adapter);if(c&&['shelves','divided'].includes(c.metadata.spec.recipe))this.current=c;}catch(error){if(mode==='update'){this.app.adapter.status(error.message);return;}}
   if(mode==='update'&&!this.current){this.app.adapter.status('Выберите шкаф, созданный в конструкторе.');return;}
