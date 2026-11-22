@@ -47,6 +47,15 @@
 .ai-material-results i,.ai-material-results img{display:inline-block;width:24px;height:24px;vertical-align:middle;margin-right:7px}
 .ai-feet>div{max-height:260px;overflow:auto;display:grid;gap:4px}.ai-feet figure{margin:0;display:flex;gap:12px;align-items:center}.ai-feet img{width:67px;height:48px;object-fit:contain}
 .ai-feet [aria-pressed=true]{outline:2px solid #267359;outline-offset:-2px}
+.ai-handles-link,.ai-handle-catalogue{margin-top:14px}
+.ai-handle-catalogue h3{margin:0;font-size:16px}
+.ai-handle-catalogue p{margin:4px 0 10px;font-size:14px}
+.ai-handle-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,138px),1fr));max-height:360px;gap:8px;padding:3px}
+#ai-kitchen-dialog .ai-handle-catalogue button{border:1px solid #adc2b5;background:#fff;color:#214736;white-space:normal}
+#ai-kitchen-dialog .ai-handle-catalogue button[aria-pressed=true]{border-color:#246448;box-shadow:inset 0 0 0 1px #246448;background:#e4f2e8}
+#ai-kitchen-dialog .ai-handle-catalogue button:focus-visible{outline:2px solid #17694c;outline-offset:1px}
+.ai-handle-grid figcaption{font-size:12px;line-height:1.35}
+#ai-kitchen-dialog[data-section=handles] .ai-fitted{display:none}
 .ai-project-materials{margin:8px 0}.ai-kitchen-body .ai-fitted{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
 #ai-kitchen-dialog .wardrobe-live canvas{height:clamp(250px,44vh,470px);cursor:pointer}
 @media(max-width:720px){#ai-kitchen-dialog{width:97vw;max-width:97vw}.ai-kitchen-body{display:flex;flex-direction:column;gap:12px}.ai-kitchen-body form,.ai-kitchen-body aside{width:100%}.ai-kitchen-body aside{position:static}#ai-kitchen-dialog .wardrobe-live canvas{height:220px}#ai-kitchen-dialog .ai-kitchen-tabs{gap:4px;padding:7px 12px}#ai-kitchen-dialog .ai-kitchen-tabs button{padding:5px 8px}.ai-kitchen-grid{gap:8px}}

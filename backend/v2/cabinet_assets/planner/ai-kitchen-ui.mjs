@@ -28,14 +28,16 @@ export class AIKitchenUI{
   const content=el('div');content.className='ai-kitchen-body';this.form=el('form');this.form.onsubmit=e=>{e.preventDefault();this.save();};
   this.tabs=el('nav');this.tabs.className='ai-kitchen-tabs';this.tabs.setAttribute('aria-label','Параметры шкафа');
   this.form.id='ai-kitchen-fields';
-  for(const [id,label] of [['size','Размеры'],['inside','Полки'],['hardware','Фурнитура'],['light','Подсветка'],['materials','Материалы']]){
-   const b=button(label,()=>{this.tab=id;this.render();content.scrollTop=0;});
+  for(const [id,label] of [['size','Размеры'],['inside','Полки'],['handles','Ручки'],['hardware','Фурнитура'],['light','Подсветка'],['materials','Материалы']]){
+   const b=button(label,()=>this.switchTab(id));
    b.dataset.tab=id;b.setAttribute('aria-controls',this.form.id);this.tabs.append(b);
   }
   const aside=el('aside');this.preview=new WardrobePreview(app,()=>{});this.showOpen=true;this.preview.onPart=key=>this.pickPart(key);
-  this.view=button('Закрыть двери',()=>{this.showOpen=!this.showOpen;this.draw();});this.drawing=el('div');this.drawing.className='ai-kitchen-drawing';aside.append(this.preview.root,this.drawing,this.view);
+  this.view=button('Закрыть двери',()=>{
+   if(this.tab==='handles')this.handlesOpen=!this.handlesOpen;else this.showOpen=!this.showOpen;
+   this.draw();
+  });this.drawing=el('div');this.drawing.className='ai-kitchen-drawing';aside.append(this.preview.root,this.drawing,this.view);
   this.fitted=el('div');this.fitted.className='ai-fitted';aside.append(this.fitted);
-  this.railDetails=el('details');this.railSummary=el('summary');this.railChoices=el('div');this.railChoices.className='ai-hinge-grid';this.railDetails.append(this.railSummary,this.railChoices);
   this.hingeDetails=el('details');this.hingeSummary=el('summary');this.choices=el('div');this.choices.className='ai-hinge-grid';this.hingeDetails.append(this.hingeSummary,this.choices);
   content.append(this.form,aside);const foot=el('footer');this.status=el('p');this.status.setAttribute('role','status');this.saveButton=button('',()=>this.save());this.saveButton.className='primary';
   foot.append(this.status,this.saveButton);this.dialog.append(head,this.tabs,content,foot);document.body.append(this.dialog);
@@ -93,13 +95,20 @@ export class AIKitchenUI{
   this.fixture=this.fixture?structuredClone(this.fixture):null;
   this.stamp=assistantStamp(this.app.adapter);this.showOpen=true;this.tab=tab;
   this.heightScope='one';this.chosenIds=new Set();this.wholeKitchen=wholeKitchen;this.changedRoles=new Set();this.partKey=null;
-  this.hingeDetails.open=false;this.railDetails.open=false;this.title.textContent=current.metadata.name;
+  this.hingeDetails.open=false;this.handlesOpen=false;
+  this.handlePitch=kitchenRails.find(([article])=>article===this.fields.handle)?.[1].pitch??'all';
+  this.title.textContent=current.metadata.name;
   this.saveButton.textContent='Применить изменения';if(!this.dialog.open)this.dialog.showModal();this.render();
   this.form.parentElement.scrollTop=0;
   this.tabs.querySelector('[aria-current="step"]')?.focus({preventScroll:true});
  }
+ switchTab(id){
+  this.tab=id;this.render();this.form.parentElement.scrollTop=0;
+  this.tabs.querySelector('[aria-current="step"]')?.focus({preventScroll:true});
+ }
  render(){
   const f=this.fields,base=isBase(f.id),glass=isVitrine(f.id),sink=f.id==='base-sink';
+  this.dialog.dataset.section=this.tab;
   this.form.replaceChildren();
   for(const b of this.tabs.children){
    if(b.dataset.tab==='inside')b.textContent=sink?'Мойка':'Полки';
@@ -186,11 +195,28 @@ export class AIKitchenUI{
    this.choices.replaceChildren();
    for(const p of kitchenHinges(f.id)){const b=button('',()=>{f.hinge=p.article;this.draw();});b.dataset.hingeArticle=p.article;b.append(hingePhotoCard(p.article));this.choices.append(b);}
    this.form.append(this.hingeDetails);
-   if(!glass){
+   const handles=button('Ручки на фасаде',()=>this.switchTab('handles'));handles.className='ai-handles-link';this.form.append(handles);
+  }
+  if(this.tab==='handles'){
+   if(glass){
+    grid.append(el('p','Витрина Z1 открывается за алюминиевую рамку.'));
+   }else{
     select('orientation','Положение ручки',f.orientation,[['vertical','Вертикально'],['horizontal','Горизонтально']],v=>f.orientation=v);
-    this.railChoices.replaceChildren();const none=button('Без ручки',()=>{f.handle='none';this.draw();});none.dataset.railArticle='none';this.railChoices.append(none);
-    for(const [article,p] of kitchenRails){const photo=railPhotosByArticle.get(article),b=button('',()=>{f.handle=article;this.draw();});b.dataset.railArticle=article;b.append(productCard('/account/planner/door-photos/'+photo.file,p.pitch+' мм · '+p.finish+' · '+article));this.railChoices.append(b);}
-    this.form.append(this.railDetails);
+    const pitches=[...new Set(kitchenRails.map(([,p])=>p.pitch))];
+    select('handlePitch','Межосевое расстояние',this.handlePitch,[['all','Все размеры'],...pitches.map(p=>[p,p+' мм'])],v=>this.handlePitch=v==='all'?v:Number(v));
+    const group=el('section'),title=el('h3','Рейлинговые ручки AKS');title.id='ai-handles-title';
+    group.className='ai-handle-catalogue';group.setAttribute('aria-labelledby',title.id);
+    const current=el('p');current.dataset.selectedHandle='';current.setAttribute('role','status');
+    const none=button('Без ручки',()=>{f.handle='none';this.draw();});none.dataset.railArticle='none';
+    const cards=el('div');cards.className='ai-hinge-grid ai-handle-grid';
+    for(const [article,p] of kitchenRails){
+     if(this.handlePitch!=='all'&&p.pitch!==this.handlePitch)continue;
+     const photo=railPhotosByArticle.get(article),b=button('',()=>{f.handle=article;this.draw();});
+     b.dataset.railArticle=article;
+     b.append(productCard('/account/planner/door-photos/'+photo.file,'AKS '+article+' · '+p.pitch+' мм · '+p.finish+(photo.shared_image_articles?.length>1?' · фото серии':'')));
+     cards.append(b);
+    }
+    group.append(title,current,none,cards);this.form.append(group);
    }
   }
   if(this.tab==='light'){
@@ -289,18 +315,21 @@ export class AIKitchenUI{
   }
   if(base)this.fitted.append(productCard(fittingPhotoUrl(f.feet),kitchenFoot(f.feet).height+' мм · '+f.feet));
   if(f.light!=='off'||f.workLight){const p=hardwareArtwork(null,'vitrine','light_system',f.lightSystem);if(p)this.fitted.append(productCard(p.src,p.article+' · '+(f.lightSystem==='aq-4x8'?'AQ LED-LINE':'LIRA-1707')));}
-  this.railSummary.textContent='Рейлинговые ручки AKS · '+(f.handle==='none'?'Без ручки':f.handle);this.hingeSummary.textContent='Петли · '+f.hinge;
+  this.hingeSummary.textContent='Петли · '+f.hinge;
+  const current=this.form.querySelector('[data-selected-handle]');
+  if(current)current.textContent=f.handle==='none'?'Фасад без ручки':'На фасаде · AKS '+f.handle;
   for(const b of this.form.querySelectorAll('[data-foot],[data-rail-article],[data-hinge-article]'))b.setAttribute('aria-pressed',String(b.dataset.foot===f.feet||b.dataset.railArticle===f.handle||b.dataset.hingeArticle===f.hinge));
-  this.view.textContent=this.showOpen?'Закрыть двери':'Открыть двери';this.saveButton.disabled=true;
+  const open=this.tab==='handles'?this.handlesOpen:this.showOpen;
+  this.view.textContent=open?'Закрыть двери':'Открыть двери';this.saveButton.disabled=true;
   try{
    const b=this.build();if(b.hingeConflicts.length)throw Error(b.hingeConflicts.join(' '));
    if(b.spec.elevation+b.envelope.height>this.app.adapter.room.height)throw Error('Шкаф выходит выше потолка.');
    const lights=b.parts.flatMap(({key,item})=>(item.blank_machining??[]).filter(op=>op.lightSystem).map(op=>({key,length:item.blank_length_mm-(op.start??0)-(op.end??0)})));
    const side=lights.find(p=>p.key!=='bottom'),under=lights.find(p=>p.key==='bottom');
    this.status.textContent=[base?'Корпус '+f.height+' мм + опоры '+kitchenFoot(f.feet).height+' мм = '+b.envelope.height+' мм':'Корпус '+f.width+' × '+f.height+' × '+(f.depth+3)+' мм',side?'Боковой профиль '+side.length+' мм':null,under?'Под дном '+under.length+' мм':null,this.projectFixing?'Все шкафы ИИ · '+kitchenShelfFixings[this.projectFixing]:null].filter(Boolean).join(' · ');
-   this.saveButton.disabled=!this.form.checkValidity();this.preview.selectedPart=this.tab==='materials'?this.partKey:null;this.preview.sync(b,this.showOpen?0:null,this.current,{body:true,front:true,back:true});
+   this.saveButton.disabled=!this.form.checkValidity();this.preview.selectedPart=this.tab==='materials'?this.partKey:null;this.preview.sync(b,open?0:null,this.current,{body:true,front:true,back:true});
    this.drawing.hidden=!this.preview.root.hidden;
-   if(!this.drawing.hidden)this.drawing.innerHTML=carcassSVG({...b,parts:this.showOpen?b.parts.filter(p=>!p.key.startsWith('door-')):b.parts},true);
+   if(!this.drawing.hidden)this.drawing.innerHTML=carcassSVG({...b,parts:open?b.parts.filter(p=>!p.key.startsWith('door-')):b.parts},true);
   }catch(error){this.preview.hide();this.drawing.hidden=true;this.status.textContent=error.message;}
  }
  save(){

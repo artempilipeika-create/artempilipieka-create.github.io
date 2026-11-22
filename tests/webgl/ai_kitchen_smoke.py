@@ -39,6 +39,12 @@ def scenario(page, projects, pid):
         form.locator('[data-tab="'+id+'"]').click()
     def fixing(index,code):
         return form.locator(f'[data-shelf-index="{index}"][data-shelf-fixing="{code}"]')
+    def installed_handle(view,door,article,angle):
+        wait_state("""([view,door,article,angle])=>{
+          const v=view==='preview'?MF_PLANNER.aiKitchen.preview:MF_PLANNER.scene;
+          const mesh=v.entries.get(door)?.group.children.find(n=>n.isMesh&&n.userData.frontAccessory&&n.userData.article===article);
+          return Boolean(mesh?.visible&&Math.abs(mesh.rotation.z*180/Math.PI-angle)<.01);
+        }""",[view,door,article,angle])
     def cabinet(model):
         return page.evaluate('id=>MF_PLANNER.adapter.items.find(p=>p.assistant_carcass?.spec.kitchenModel===id).assistant_carcass.group_id',model)
     def open_card(model):
@@ -78,6 +84,7 @@ def scenario(page, projects, pid):
     viewport=page.viewport_size
     for size in (viewport,{'width':390,'height':760}):
         page.set_viewport_size(size)
+        expect(form.get_by_role('navigation').get_by_role('button',name='Ручки',exact=True)).to_be_in_viewport()
         metrics=form.evaluate(r"""d=>{
            const b=d.querySelector('.ai-kitchen-body'),nav=d.querySelector('nav');
            b.scrollTop=0;const top=nav.getBoundingClientRect().top;b.scrollTop=b.scrollHeight;
@@ -97,7 +104,17 @@ def scenario(page, projects, pid):
     form.locator('summary').filter(has_text='Петли').click()
     hinge=form.locator('[data-hinge-article="71B3550"]')
     assert hinge.locator('img').get_attribute('src');hinge.click()
+    form.get_by_role('button',name='Ручки на фасаде',exact=True).click()
+    expect(form.get_by_role('button',name='Ручки',exact=True)).to_have_attribute('aria-current','step')
+    expect(form.get_by_role('heading',name='Рейлинговые ручки AKS')).to_be_visible()
+    form.get_by_label('Межосевое расстояние').select_option('320')
+    rail=form.locator('[data-rail-article="89080"]')
+    expect(rail).to_be_visible()
+    assert rail.locator('img').evaluate('async i=>{await i.decode();return i.naturalWidth>0}')
+    rail.click()
+    installed_handle('preview','questionnaire-preview:door-left','89080',90)
     form.get_by_label('Положение ручки').select_option('horizontal')
+    installed_handle('preview','questionnaire-preview:door-left','89080',0)
     tab('materials')
     form.get_by_role('button',name='Закрыть двери').click()
     wait_state('()=>MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
@@ -113,7 +130,9 @@ def scenario(page, projects, pid):
     form.get_by_label('Поиск · Боковина левая').fill('Дуб')
     form.get_by_role('button',name='Дуб для теста · 18 мм').click()
     scene=save()
-    open_card('wall-vitrine');tab('light');expect(form.locator('[role=status]')).to_contain_text('711 мм')
+    installed_handle('scene',cabinet('base-swing')+':door-left','89080',0)
+    open_card('wall-vitrine');tab('handles');expect(form.get_by_text('Витрина Z1 открывается за алюминиевую рамку.')).to_be_visible()
+    tab('light');expect(form.locator('[role=status]')).to_contain_text('711 мм')
     tab('inside');form.locator('[name=shelf-0]').select_option('board');fixing(0,'confirmat').click()
     form.locator('[name=shelf-1]').select_option('8');scene=save()
     open_card('base-vitrine');tab('inside');form.locator('[name=shelf-0]').select_option('board');save()
@@ -139,7 +158,9 @@ def scenario(page, projects, pid):
     wait_state("()=>MF_PLANNER.adapter.state.kitchenShelfFixing==='confirmat'")
     open_card('base-swing');tab('inside');expect(form.locator('[name=shelves]')).to_have_value('3')
     expect(fixing(1,'confirmat')).to_have_attribute('aria-pressed','true')
-    tab('hardware');expect(form.get_by_label('Положение ручки')).to_have_value('horizontal')
+    tab('handles');expect(form.get_by_label('Положение ручки')).to_have_value('horizontal')
+    expect(form.locator('[data-rail-article="89080"]')).to_have_attribute('aria-pressed','true')
+    installed_handle('preview','questionnaire-preview:door-left','89080',0)
     form.get_by_role('button',name='Закрыть',exact=True).click()
     with page.expect_download() as event:page.locator('#export-bazis').click()
     export=json.loads(Path(event.value.path()).read_text());rows=export['items']
@@ -147,6 +168,7 @@ def scenario(page, projects, pid):
     assert sum(bool(r.get('wardrobe_lira')) and r.get('span_mm')==711 for r in rows)==2
     assert sum(bool(r.get('wardrobe_z1_front')) for r in rows)==4
     assert any(r.get('article')=='71B3550' and r.get('wardrobe_blum_part')=='hinge' for r in rows)
+    assert any(r.get('wardrobe_catalogue_pull') and r['article']=='89080' and r['handle_roll_deg']==0 and r['host_blank_id']==cabinet('base-swing')+':door-left' for r in rows)
     assert any(p['size']=={'x':1800,'y':38,'z':600} for r in export['kitchen_production']['runs'] for p in r['parts'])
     page.goto(ORIGIN+'/constructor?catalog=ai',wait_until='domcontentloaded')
     page.locator('#ai-kitchen-dialog').wait_for(state='attached')
