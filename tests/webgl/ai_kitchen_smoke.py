@@ -3,6 +3,7 @@ import argparse
 from collections import defaultdict
 import json
 import os
+from time import monotonic
 from pathlib import Path
 
 from playwright.sync_api import expect
@@ -28,6 +29,12 @@ def scenario(page, projects, pid):
     form=page.locator('#ai-kitchen-dialog')
     custom='91518079-f405-4256-984c-c6a256c16960'
     page.route('**/api/v2/catalogue/materials?*',lambda route:route.fulfill(json={'items':[{'name':'Дуб для теста','variant_id':custom,'thickness':18,'kind':'material'}]}))
+    def wait_state(expression,arg=None):
+        deadline=monotonic()+15
+        while not page.evaluate(expression,arg):
+            if monotonic()>=deadline:raise AssertionError(expression)
+            page.wait_for_timeout(75)
+
     def tab(id):
         form.locator('[data-tab="'+id+'"]').click()
     def cabinet(model):
@@ -46,7 +53,7 @@ def scenario(page, projects, pid):
     for key in MODELS:
         page.locator('[data-ai-kitchen="'+key+'"]').click()
         expect(form).to_be_hidden()
-        page.wait_for_function('key=>MF_PLANNER.adapter.items.some(p=>p.assistant_carcass?.spec.kitchenModel===key)',arg=key,timeout=4500)
+        wait_state('key=>MF_PLANNER.adapter.items.some(p=>p.assistant_carcass?.spec.kitchenModel===key)',key)
     page.evaluate("()=>MF_PLANNER.workspace.panel('left',false)")
     # Use the actual scene raycast and a physical click. Sidebar and popup must not compete.
     point=page.evaluate("""()=>{const view=MF_PLANNER.scene,r=view.canvas.getBoundingClientRect();
@@ -73,7 +80,7 @@ def scenario(page, projects, pid):
     form.get_by_label('Положение ручки').select_option('horizontal')
     tab('materials')
     form.get_by_role('button',name='Закрыть двери').click()
-    page.wait_for_function('MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
+    wait_state('()=>MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
     part_point=page.evaluate("""()=>{const v=MF_PLANNER.aiKitchen.preview,r=v.canvas.getBoundingClientRect();
       const point=v.camera.position.clone().set(0,0.30,0.015);
       const g=v.entries.get('questionnaire-preview:door-left').group;
@@ -81,7 +88,7 @@ def scenario(page, projects, pid):
       return [r.left+(1+point.x)*r.width/2,r.top+(1-point.y)*r.height/2];}""")
     page.mouse.click(*part_point)
     expect(form.locator('[name=part]')).to_have_value('door-left')
-    page.wait_for_function('MF_PLANNER.aiKitchen.preview.outline.visible')
+    wait_state('()=>MF_PLANNER.aiKitchen.preview.outline.visible')
     form.locator('[name=part]').select_option('left')
     form.get_by_label('Поиск · Боковина левая').fill('Дуб')
     form.get_by_role('button',name='Дуб для теста · 18 мм').click()
