@@ -1,3 +1,4 @@
+import {handlePlacement as kitchenPullPlacement} from './wardrobe-door-layout.mjs';
 import {surfacePullFinishes} from './wardrobe-door-layout.mjs';
 import pushMeshes from './aks-push-meshes.json' with {type:'json'};
 import {pushProducts,pushRoll} from './wardrobe-push-layout.mjs';
@@ -5,7 +6,7 @@ import {panelLightMeshes} from './wardrobe-lighting.mjs';
 import {machineBoardMeshes} from './panel-machining-mesh.mjs';
 import {blankEdgeCode} from './furniture-core.mjs';
 import {groovedBoxes} from './wardrobe-edge-pulls.mjs';
-import {buildDoorHardware,shapedProfilePanel} from './wardrobe-door-mesh.mjs';
+import {addFacadePull,buildDoorHardware,shapedProfilePanel} from './wardrobe-door-mesh.mjs';
 import {doorHandle,panelProfiles,boardProfileCuts,horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
 import {buildRodMeshes,panelRods} from './wardrobe-rod-mesh.mjs';
 import primeDrawerMeshes from './prime-drawer-mesh.json' with {type:'json'};
@@ -616,6 +617,12 @@ export class MeshFactory{
     if(parts){
       for(const part of parts.filter(p=>(p.role!=='front'||p.fixed)&&!p.facade_component)){
         const d=part.size,c=part.position,m=part.native_polygon?this.nativePolygon(group,part,ghost):part.contour_yz?this.contourPanel(group,part,ghost):this.box(group,part.optical_material||part.role,d.x,d.y,d.z,c.x,c.y,c.z,part.visual_variant_id??part.material.variant_id,ghost);
+        if(part.panel_machining){
+          const origin=m.position.clone();
+          m.position.sub(new THREE.Vector3(c.x,c.y-d.y/2,c.z).multiplyScalar(S));
+          machineBoardMeshes(this,{width:d.x,height:d.y,depth:d.z,blank_axis:part.machining_axis,blank_length_mm:part.length,blank_width_mm:part.width,blank_thickness_mm:part.thickness,blank_machining:part.panel_machining},[m],part.orientation.length_axis);
+          m.position.copy(origin);
+        }
         m.userData.part=part;m.userData.productionPart=part.role;
         if(part.back_type)m.userData.backType=part.back_type;
         if(part.shelf_id)m.userData.shelfId=part.shelf_id;
@@ -667,7 +674,10 @@ export class MeshFactory{
       }
       const panel=this.box(parent,'front',f.w,f.h,part?.thickness??18,px,f.cy-(hasPivot?part.pivot.y:0),pz,part?.material.variant_id??front,ghost);panel.userData.facade={...f};
       if(part){panel.userData.part=part;if(spec)panel.userData.hingeSide=spec.side;}
-      if(it.handles==='handles'&&production?.modern?.family!=='fridge'&&f.w>140&&f.h>100){
+      if(it.kitchenFilling?.pull){
+        const face={width:f.w,height:f.h,depth:part?.thickness??18},pull=kitchenPullPlacement(face,{article:it.kitchenFilling.pull,edge:'top',from:'center',offset:0,inset:0});
+        addFacadePull(this,parent,face,pull,ghost,{x:px,y:f.cy-f.h/2,z:pz});
+      }else if(it.handles==='handles'&&production?.modern?.family!=='fridge'&&f.w>140&&f.h>100){
         const rowDoors=cells.filter(c=>c.kind==='door'&&Math.abs(c.cy-f.cy)<1);
         const side=spec?(spec.side==='right'?-1:1):rowDoors.length>1?(f.cx<0?1:-1):/отк P/.test(it.bazis_file||'')?-1:1;
         const x=spec?.side==='up'?f.cx:drawer?f.cx:f.cx+side*(f.w/2-50),localX=hasPivot?x-part.pivot.x:x;
@@ -967,7 +977,7 @@ export class MeshFactory{
       catch{return [];}
     });
   }
-  signature(it){return JSON.stringify([primeBank(it),drawerCamSeats(it,this.adapter.items||[]),it.width,it.height,it.depth,doorHandle(it),panelProfiles(it,this.adapter.items||[]),boardProfileCuts(it,this.adapter.items||[]),horizontalProfileCuts(it,this.adapter.items||[]),panelRods(it,this.adapter.items).map(r=>[r.id,r.article,r.left,r.width,r.y,r.z,it.assistant_carcass.spec.height-it.assistant_carcass.spec.thickness]),this.spacerCuts(it),this.visibleDoorHinges(it),this.visiblePushes(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?[it.blank_edge_code,it.blank_edge_thickness_mm,it.blank_edge_pull,it.blank_machining,it.item_id.endsWith(':door-right')&&it.assistant_carcass?.spec?.front?.swing==='pair']:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
+  signature(it){return JSON.stringify([primeBank(it),drawerCamSeats(it,this.adapter.items||[]),it.width,it.height,it.depth,doorHandle(it),panelProfiles(it,this.adapter.items||[]),boardProfileCuts(it,this.adapter.items||[]),horizontalProfileCuts(it,this.adapter.items||[]),panelRods(it,this.adapter.items).map(r=>[r.id,r.article,r.left,r.width,r.y,r.z,it.assistant_carcass.spec.height-it.assistant_carcass.spec.thickness]),this.spacerCuts(it),this.visibleDoorHinges(it),this.visiblePushes(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?[it.blank_edge_code,it.blank_edge_thickness_mm,it.blank_edge_pull,it.blank_machining,it.item_id.endsWith(':door-right')&&it.assistant_carcass?.spec?.front?.swing==='pair']:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.kitchenFilling,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
   dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 

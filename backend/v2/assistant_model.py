@@ -1069,7 +1069,10 @@ class CarcassDesign(CarcassSpec):
             b=self.backMount
             if b.layout and (b.kind=='groove')!=(b.layout in ('sides','perimeter')):
                 raise ValueError('Выбранная обработка не соответствует посадке задней стенки.')
-            if not self.back or self.backThickness or self.recipe not in ('shelves','divided') or b.depth>=self.thickness or (b.offset or 0)+b.width>=self.depth or (b.kind=='rabbet' and b.offset) or (b.kind=='groove' and b.offset is None):
+            kitchen_back = self.kitchenModel in ('base-swing','base-vitrine','wall-swing','wall-vitrine')
+            if kitchen_back and self.recipe=='base' and b.layout=='perimeter' and (b.offset or 0)+b.width>=80:
+                raise ValueError('Паз выходит за глубину задней царги 80 мм.')
+            if not self.back or self.backThickness or (self.recipe not in ('shelves','divided') and not kitchen_back) or b.depth>=self.thickness or (b.offset or 0)+b.width>=self.depth or (b.kind=='rabbet' and b.offset) or (b.kind=='groove' and b.offset is None):
                 raise ValueError('Проверьте параметры посадки ХДФ 3 мм.')
         if self.backThickness and (not self.back or self.recipe not in ('shelves','divided') or (self.backThickness>=16 and self.thickness<16)):
             raise ValueError('Проверьте конструкцию и толщины панелей вкладной задней стенки.')

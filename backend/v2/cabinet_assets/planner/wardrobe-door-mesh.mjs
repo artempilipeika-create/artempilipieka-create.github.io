@@ -15,17 +15,17 @@ function profileMesh(run){
  section.forEach(([y,z],i)=>{if(i)shape.lineTo(-z*.001,y*.001);else shape.moveTo(-z*.001,y*.001);});shape.closePath();
  return new THREE.ExtrudeGeometry(shape,{depth:run.span*.001,bevelEnabled:false}).rotateY(Math.PI/2);
 }
-export function buildDoorHardware(factory,group,item,ghost){
- const h=doorHandle(item);
- if(h){
+export function addFacadePull(factory,group,item,h,ghost,origin={x:0,y:0,z:0}){
   const geometryArticle=h.part.mesh??h.article;
   const key='wardrobe-handle:'+geometryArticle+(h.edgePull?':'+h.span:'');
   const role=h.part.finishKey?'pull-'+h.part.finishKey:'frame';
-  const mesh=factory.mesh(group,role,factory.acquire(key,()=>h.edgePull?profileMesh(h).translate(-h.span*.0005,0,0):handleMesh(geometryArticle)),key,h.x-item.width/2,h.y,(h.back?-1:1)*item.depth/2,null,ghost);
+  const mesh=factory.mesh(group,role,factory.acquire(key,()=>h.edgePull?profileMesh(h).translate(-h.span*.0005,0,0):handleMesh(geometryArticle)),key,origin.x+h.x-item.width/2,origin.y+h.y,origin.z+(h.back?-1:1)*item.depth/2,null,ghost);
   if(h.back)mesh.rotateY(Math.PI);
   mesh.rotateOnWorldAxis(new THREE.Vector3(0,0,1),h.angle*Math.PI/180);
   Object.assign(mesh.userData,{frontAccessory:true,article:h.article});
- }
+}
+export function buildDoorHardware(factory,group,item,ghost){
+ const h=doorHandle(item);if(h)addFacadePull(factory,group,item,h,ghost);
  for(const run of panelProfiles(item,factory.adapter.items||[])){
   const key='wardrobe-profile:'+run.article+':'+run.span;
   const mesh=factory.mesh(group,'frame',factory.acquire(key,()=>profileMesh(run)),key,run.x,run.y,run.z,null,ghost);

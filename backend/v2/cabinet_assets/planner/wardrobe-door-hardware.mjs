@@ -12,17 +12,18 @@ export function doorHandle(item){
  const setting=face?group.spec.drawerBanks?.[face.slot]?.faces[face.index]?.handle:doorSide(key)&&group.spec.front?.handles?.[key];
  return isEdgePull(setting)?installedEdgePull(item,setting):handlePlacement(item,setting);
 }
+const profileCarrier=s=>s.kitchenModel?.startsWith('base-')?'bottom':'top';
 function cabinetFrame(item,items){
  const g=item.assistant_carcass,s=g?.spec;
  if(!s||!s.front?.topProfile&&!s.front?.division?.gola&&!hasFacadeProfiles(s))return null;
- const left=items.find(p=>p.item_id===g.group_id+':left'),top=items.find(p=>p.item_id===g.group_id+':top');
- if(!left||!top)return null;
- const at=localPoint(left,item.rotation);
- return {x:at.x-left.width/2,y:top.elevation_mm-s.height+s.thickness,z:at.z+left.depth/2,s};
+ const key=profileCarrier(s),left=items.find(p=>p.item_id===g.group_id+':left'),carrier=items.find(p=>p.item_id===g.group_id+':'+key);
+ if(!left||!carrier)return null;
+ const at=localPoint(left,item.rotation),y=key==='bottom'?carrier.elevation_mm:carrier.elevation_mm-s.height+s.thickness;
+ return {x:at.x-left.width/2,y,z:at.z+left.depth/2,s};
 }
 export function panelProfiles(item,items){
  const g=item.assistant_carcass;
- if(!g||item.item_id!==g.group_id+':top')return [];
+ if(!g||item.item_id!==g.group_id+':'+profileCarrier(g.spec))return [];
  const frame=cabinetFrame(item,items);if(!frame)return [];
  const roof=localPoint(item,item.rotation);
  return physicalProfiles(frame.s).map(run=>{

@@ -1456,6 +1456,16 @@ function exportBazisProject(liraProfiles=[]){
       };
     })
   };
+  for(const [index,it] of bazisItems.entries()){
+    if(!it.kitchenFilling)continue;
+    const message=globalThis.MF_KITCHEN_FILLINGS.adjustmentNote(it);if(!message)continue;
+    const entry=payload.items[index],c=entry.construction;
+    c.kitchen_filling=structuredClone(it.kitchenFilling);
+    if(it.kitchenFilling.backMount)c.back={type:it.kitchenFilling.backMount.kind,thickness:3,...it.kitchenFilling.backMount};
+    c.adjusted_panels=globalThis.MF_FURNITURE_CORE.productionParts(it,templateFor(it)).filter(p=>p.role==='body'||p.key==='back'||p.key==='back-1'||p.fitting_depth_mm).map(p=>({key:p.key,name:p.name,size:p.size,position:p.position,machining:p.panel_machining||[]}));
+    c.native_adjustment={...c.native_adjustment,requires_manual_native_adjustment:true,note:[c.native_adjustment?.note,message].filter(Boolean).join(' ')};
+    entry.technical_note=[entry.technical_note,message].filter(Boolean).join(' ');
+  }
   for(const item of blankItems){item.production_note=String(item.production_note||'').trim();if(!item.production_note)delete item.production_note;item.index=payload.items.length+1;payload.items.push(item);}
   if(blankItems.length){payload.minimum_importer='9.9.9';payload.format='martin-forest-bazis-native-v3';}
   if(payload.items.some(it=>it.construction?.modern_cabinet)){payload.minimum_importer='9.9.13';payload.format='martin-forest-bazis-native-v3';payload.technical_notes.push('НОВЫЕ КОРПУСА: импортёр 9.9.13; исходники из пакета новых модулей. '+payload.items.filter(it=>it.construction?.modern_cabinet).map(it=>it.name+': '+it.construction.native_adjustment.note).join('\n'));}

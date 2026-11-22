@@ -3,7 +3,7 @@ import {boardFixingChoices,isBase,kitchenFields,kitchenFoot,kitchenModels,kitche
 import {splitPlinths,joinPlinths} from './wardrobe-plinth-runs.mjs';
 import {surroundLayout} from './wardrobe-surround.mjs';
 import {StateAdapter} from './state-adapter.mjs';
-import {dimensionPatch,kitchenSettings,rotateXZ} from './furniture-core.mjs';
+import {assemblyRearGap,dimensionPatch,kitchenSettings,rotateXZ} from './furniture-core.mjs';
 import {defaultFixture,fixturePlans} from './worktop-fixtures.mjs';
 
 const defaults=()=>globalThis.MF_FURNITURE_CORE.DEFAULT_MATERIALS;
@@ -40,7 +40,7 @@ export function lowerMembers(items){
   if(m?!isBase(m.spec.kitchenModel)||it.item_id!==m.group_id+':bottom':!kitchenSettings(it))return [];
   const rot=it.rotation??0,p=rotateXZ(it.x,it.z,-rot);
   return [{id:m?.group_id??it.item_id,itemId:it.item_id,name:m?.name??it.name,rotation:rot,
-   back:p.z-it.depth/2-(m?50:kitchenSettings(it).rearServiceGapMm),lo:p.x-it.width/2,hi:p.x+it.width/2,
+   back:m?p.z+it.depth/2-m.spec.depth-assemblyRearGap(m.spec,surroundLayout(m.spec).maxZ-m.spec.depth/2,it.countertopDepthMm):p.z-it.depth/2-kitchenSettings(it).rearServiceGapMm,lo:p.x-it.width/2,hi:p.x+it.width/2,
    height:m?m.spec.height+kitchenFoot(m.spec.feet.article).height:it.height,topThickness:m?38:kitchenSettings(it).countertopThicknessMm}];
  });
 }

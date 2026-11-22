@@ -25,7 +25,7 @@ def scenario(page, projects, pid):
     page.locator('#studio-toggle-library').click()
     page.locator('[data-studio-tab="catalog"]').click()
     page.locator('[data-module-filter="ai"]').click()
-    assert page.locator('#module-catalogue .mf3d-module:visible').count()==len(MODELS)
+    assert page.locator('#module-catalogue .mf3d-module:visible').count()==len(MODELS)+4
     form=page.locator('#ai-kitchen-dialog')
     custom='91518079-f405-4256-984c-c6a256c16960'
     page.route('**/api/v2/catalogue/materials?*',lambda route:route.fulfill(json={'items':[{'name':'Дуб для теста','variant_id':custom,'thickness':18,'kind':'material'}]}))
@@ -174,6 +174,59 @@ def scenario(page, projects, pid):
     page.locator('#ai-kitchen-dialog').wait_for(state='attached')
     page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
     expect(page.locator('[data-module-filter="ai"]')).to_have_attribute('aria-pressed','true')
+    open_card('base-swing');tab('handles')
+    form.get_by_label('Тип ручки').select_option('monblan')
+    form.locator('[data-rail-article="92253"]').click()
+    tab('body');form.get_by_label('Задняя стенка',exact=True).select_option('quarter')
+    form.get_by_label('Боковина с четвертью').select_option('both')
+    scene=save()
+    door=next(x for x in scene['items'] if x['item_id']==cabinet('base-swing')+':door-left')
+    assert door['assistant_carcass']['spec']['front']['handles']['door-left']['article']=='92253'
+    assert door['assistant_carcass']['spec']['backMount']['layout']=='both'
+    open_card('base-swing');tab('handles');form.get_by_label('Тип ручки').select_option('gola')
+    form.locator('[data-rail-article="118124"]').click();scene=save()
+    assert next(x for x in scene['items'] if x['item_id']==door['item_id'])['assistant_carcass']['spec']['front']['topProfile']
+    # Start a separate empty room to exercise actual native filling sources at 820 mm.
+    page.evaluate("""async()=>{const a=MF_PLANNER,s=a.bridge.snapshot();s.scene.items=[];
+      s.scene.selected_item_id=null;s.selectedId=null;await a.bridge.loadSnapshot(s,a.bridge.projectMeta());}""")
+    page.evaluate("()=>MF_PLANNER.workspace.panel('left',true)")
+    fill=page.locator('#kitchen-filling-dialog')
+    def edit_filling(item):
+        page.evaluate('id=>{MF_PLANNER.adapter.select(id);MF_PLANNER.workspace.panel("right",true)}',item)
+        expect(fill).to_be_visible()
+    def save_fill():
+        fill.get_by_role('button',name='Применить изменения').click()
+        expect(fill).to_be_hidden()
+        page.evaluate('()=>MF_PLANNER.bridge.save()')
+        Scene.model_validate(projects.projects[pid]['scene'])
+    ids={}
+    for kind in ['drawers-three','drawers-two','dryer','cargo']:
+        page.evaluate("()=>MF_PLANNER.workspace.panel('left',true)")
+        page.locator('[data-ai-kitchen="'+kind+'"]').click()
+        wait_state('k=>MF_PLANNER.adapter.selected?.kitchenFilling?.kind===k',kind)
+        ids[kind]=page.evaluate('MF_PLANNER.adapter.selected.item_id')
+        edit_filling(ids[kind]);fill.locator('[data-tab=handles]').click()
+        fill.locator('[data-pull="92253"]').click()
+        if kind=='drawers-three':
+            fill.locator('[data-tab=body]').click()
+            fill.get_by_label('Задняя стенка',exact=True).select_option('quarter')
+        save_fill()
+        wait_state('id=>MF_PLANNER.scene.entries.get(id)?.group.children.some(m=>m.userData.article==="92253")',ids[kind])
+    for kind in ['drawers-two','dryer','cargo']:
+        edit_filling(ids[kind]);fill.locator('[data-tab=handles]').click();fill.locator('[data-pull=gola]').click()
+        save_fill()
+    page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+    wait_state('id=>MF_PLANNER.adapter.items.some(x=>x.item_id===id&&x.kitchenFilling?.pull==="92253")',ids['drawers-three'])
+    with page.expect_download() as downloaded:page.locator('#export-bazis').click()
+    payload=json.loads(Path(downloaded.value.path()).read_text())
+    expected={it['bazis_id'] for it in projects.projects[pid]['scene']['items'] if it.get('kitchenFilling')}
+    assert len(expected)==4 and len([r for r in payload['items'] if r.get('bazis_id') in expected])==4
+    custom=next(r for r in payload['items'] if (r.get('construction') or {}).get('kitchen_filling',{}).get('pull')=='92253')['construction']
+    assert next(p for p in custom['hardware']['items'] if p.get('article')=='92253')['quantity']==3
+    assert any(p['machining'] for p in custom['adjusted_panels'])
+    assert any((r.get('construction') or {}).get('pullout_dryer') for r in payload['items'])
+    assert any((r.get('construction') or {}).get('cargo') for r in payload['items'])
+    print('PASS four native fillings, custom handles, Gola, rear fitting, persisted scene and native export')
     print('PASS five cabinets, physical click, row heights, shelf fixings, mixed materials, sink, saved project and Z1 export')
 
 

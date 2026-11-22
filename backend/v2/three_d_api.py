@@ -7,7 +7,7 @@ from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
 from .auth_api import StrictModel
-from .assistant_model import AssistantCarcass, Z1_HINGES, DOOR_HARDWARE, InsetEdgeGrip, KitchenShelfFixing, PanelCutList, ShelfValue, shelf_valid
+from .assistant_model import AssistantCarcass, Z1_HINGES, DOOR_HARDWARE, InsetEdgeGrip, RearMount, KitchenShelfFixing, PanelCutList, ShelfValue, shelf_valid
 from .db import transaction
 from .security import identity,error
 from .domain_api import require,create_draft
@@ -93,6 +93,11 @@ class GolaCutLength(StrictModel):
     article: Literal['118124','118129']
     length_mm: float = Field(ge=94,le=2400,multiple_of=0.5,allow_inf_nan=False)
 
+class KitchenFilling(StrictModel):
+    kind: Literal['drawers-two','drawers-three','dryer','cargo']
+    pull: Literal['92253','92255','92256','92257','111214'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    backMount: RearMount | None = Field(default=None,exclude_if=lambda v:v is None)
+
 class FurnitureItem(StrictModel):
     item_id: str=Field(min_length=1,max_length=80)
     module_type: Literal['chest','base_cabinet','wall_cabinet','tall_cabinet','wardrobe','vanity','blank']='chest'
@@ -144,6 +149,7 @@ class FurnitureItem(StrictModel):
     blank_shelf: ShelfValue|None=None
     blank_gola_runs: list[GolaCutLength]|None=Field(default=None,min_length=1,max_length=4096,exclude_if=lambda v:v is None)
     blank_plinth_run: list[UUID]|None=Field(default=None,min_length=2,max_length=100,exclude_if=lambda v:v is None)
+    kitchenFilling: KitchenFilling | None = Field(default=None,exclude_if=lambda v:v is None)
     assistant_carcass: AssistantCarcass|None=None
     part_materials: dict[str,UUID]=Field(default_factory=dict,max_length=32)
     shelves: list[ShelfState]=Field(default_factory=list,max_length=16)
@@ -156,6 +162,22 @@ class FurnitureItem(StrictModel):
 
     @model_validator(mode='after')
     def separated_heights(self):
+        if o:=self.kitchenFilling:
+            source={'bazis_id':self.bazis_id,'bazis_sha256':self.bazis_sha256}
+            dryer=dryer_variant(source);cargo=cargo_variant(source);drawer=drawer_variant(source) or gola_variant(source)
+            # The two original ball-bearing presets predate the variant manifest.
+            ball={'bazis.39f282e08f0c':('f5f5c16f716ba2716f829ba6860768ce09667e540a7135265dc6f182a7fc24b2',2),
+                  'bazis.5f5697e39e27':('f1db2bfd1400b00c073ec4fc3598412fbf4532bde75d11968ae1beabda6e1ac0',3)}.get(self.bazis_id)
+            count=ball[1] if ball and ball[0]==self.bazis_sha256 else None
+            if drawer and drawer.get('kind','drawers')=='drawers' and drawer.get('layout') in ('two','three'):count=2 if drawer['layout']=='two' else 3
+            kind='dryer' if dryer else 'cargo' if cargo and not cargo.get('waste') else {2:'drawers-two',3:'drawers-three'}.get(count)
+            version=dryer or cargo or drawer or {}
+            if self.module_type!='base_cabinet' or kind!=o.kind:raise ValueError('Выберите исходный нижний модуль с этим наполнением.')
+            if o.pull and (version.get('execution')=='gola' or version.get('opening')=='push' or DOOR_HARDWARE[o.pull]['length']>self.width-3):
+                raise ValueError('Торцевая ручка должна помещаться на фасаде с открыванием за ручку.')
+            if b:=o.backMount:
+                if b.layout not in (('sides','perimeter') if b.kind=='groove' else ('left','both','right')) or b.depth>=18 or b.width<3 or (b.offset or 0)+b.width>=self.depth or (b.kind=='groove' and b.offset is None) or (b.kind=='rabbet' and b.offset) or (b.layout=='perimeter' and b.offset+b.width>=80):
+                    raise ValueError('Проверьте посадку задней стенки нижнего модуля.')
         group=self.assistant_carcass
         key=self.item_id.removeprefix(str(group.group_id)+':') if group else ''
         trim=re.fullmatch(r'trim-(left|right)(?:-([2-9]|[1-9][0-9]+))?-(face|return|end)',key)

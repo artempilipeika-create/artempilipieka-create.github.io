@@ -1,12 +1,16 @@
-import {boardFixingChoices,kitchenShelfFixings,kitchenModels,kitchenFields,kitchenHinges,kitchenRails,kitchenSpec,kitchenFeet,kitchenFoot,isBase,isVitrine} from './ai-kitchen.mjs';
+import {boardFixingChoices,kitchenShelfFixings,kitchenModels,kitchenFields,kitchenHinges,kitchenRails,kitchenPulls,kitchenSpec,kitchenFeet,kitchenFoot,isBase,isVitrine} from './ai-kitchen.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
 import {WardrobePreview} from './wardrobe-preview.mjs';
 import railPhotos from './door-photos/sources.json' with {type:'json'};
 import {hingePhotoCard,fittingPhotoUrl,hardwareArtwork,jointPhotos} from './hardware-photos.mjs';
 import {kitchenMaterials,materialRole,lowerMembers,kitchenRow,standardFields,saveKitchen} from './ai-kitchen-project.mjs';
+import {backMountControls} from './panel-machining-ui.mjs';
+import {defaultBackMount,rearProjection} from './panel-machining.mjs';
 import {choice,fittings,shelfDescription} from './shelf-choices.mjs';
 import {defaultFixture} from './worktop-fixtures.mjs';
+import {fillingCards} from './kitchen-filling-geometry.mjs';
+import {KitchenFillingUI} from './kitchen-filling-ui.mjs';
 import {selectedCarcass,assistantStamp} from './assistant-model.mjs';
 
 const el=(tag,text='')=>Object.assign(document.createElement(tag),{textContent:text});
@@ -21,14 +25,14 @@ const modelFor=id=>kitchenModels.find(m=>m.id===id);
 
 export class AIKitchenUI{
  constructor(app){
-  this.app=app;this.events=new AbortController();
+  this.app=app;this.filling=new KitchenFillingUI(this);this.events=new AbortController();
   this.dialog=el('dialog');this.dialog.id='ai-kitchen-dialog';this.dialog.setAttribute('aria-labelledby','ai-kitchen-name');
   const head=el('header');this.title=el('h2');this.title.id='ai-kitchen-name';
   head.append(this.title,button('Закрыть',()=>this.dialog.close()));
   const content=el('div');content.className='ai-kitchen-body';this.form=el('form');this.form.onsubmit=e=>{e.preventDefault();this.save();};
   this.tabs=el('nav');this.tabs.className='ai-kitchen-tabs';this.tabs.setAttribute('aria-label','Параметры шкафа');
   this.form.id='ai-kitchen-fields';
-  for(const [id,label] of [['size','Размеры'],['inside','Полки'],['handles','Ручки'],['hardware','Фурнитура'],['light','Подсветка'],['materials','Материалы']]){
+  for(const [id,label] of [['size','Размеры'],['body','Корпус'],['inside','Полки'],['handles','Ручки'],['hardware','Фурнитура'],['light','Подсветка'],['materials','Материалы']]){
    const b=button(label,()=>this.switchTab(id));
    b.dataset.tab=id;b.setAttribute('aria-controls',this.form.id);this.tabs.append(b);
   }
@@ -45,7 +49,7 @@ export class AIKitchenUI{
   const linked=new URLSearchParams(location.search).get('catalog')==='ai';
   const openLinkedCatalogue=()=>{if(linked)app.workspace?.panel('left',true);};
   this.unsubscribe=app.bridge.subscribe(reason=>{
-   if(reason==='before-project'||reason==='project')this.dialog.close();
+   if(reason==='before-project'||reason==='project'){this.dialog.close();this.filling.dialog.close();}
    if(reason==='project')queueMicrotask(openLinkedCatalogue);
   });
   document.getElementById('room-setup')?.addEventListener('close',openLinkedCatalogue,{signal:this.events.signal});
@@ -55,9 +59,9 @@ export class AIKitchenUI{
  }
  cards(root){
   const group=el('div');group.className='mf3d-module-group';group.dataset.category='ai';group.append(el('h3','Кухонные модули ИИ'));
-  for(const m of kitchenModels){
-   const b=button('',()=>this.add(m.id));b.className='mf3d-module';b.dataset.tags='ai';b.dataset.category='ai';b.dataset.aiKitchen=m.id;b.dataset.width='600';b.dataset.search=(m.name+' '+m.description+' ИИ').toLowerCase();b.setAttribute('aria-label',m.name);
-   const visual=el('span');visual.className='studio-card-visual';const img=el('img');img.className='studio-preview studio-preview-tripo';img.src='/account/planner/module-card-images/'+m.photo+'.webp';img.alt='';img.loading='lazy';visual.append(img);
+  for(const m of [...kitchenModels,...fillingCards]){
+   const b=button('',()=>m.width?this.filling.add(m.id):this.add(m.id));b.className='mf3d-module';b.dataset.tags='ai';b.dataset.category='ai';b.dataset.aiKitchen=m.id;b.dataset.width=String(m.width??600);b.dataset.search=(m.name+' '+m.description+' ИИ').toLowerCase();b.setAttribute('aria-label',m.name);
+   const visual=el('span');visual.className='studio-card-visual';const img=el('img');img.className='studio-preview studio-preview-tripo';img.src=m.id.startsWith('drawers-')?'/account/planner/execution-card-images/drawer-drawer-layout-'+m.id.slice(8)+'.webp':'/account/planner/module-card-images/'+m.photo+'.webp';img.alt='';img.loading='lazy';visual.append(img);
    const copy=el('span');copy.className='mf3d-module-copy';copy.append(el('strong',m.name),el('span',m.description));b.append(visual,copy);group.append(b);
   }
   const finish=button('Материалы кухни',()=>{
@@ -82,6 +86,7 @@ export class AIKitchenUI{
   if(problem)throw problem;return ok?value:null;
  }
  edit(tab='size',wholeKitchen=false){
+  if(this.app.adapter.selected?.kitchenFilling){this.filling.open(this.app.adapter.selected);return;}
   try{const c=selectedCarcass(this.app.adapter);if(c?.metadata.spec.kitchenModel)this.open(c,tab,wholeKitchen);}
   catch(error){this.app.adapter.status(error.message);}
  }
@@ -95,7 +100,9 @@ export class AIKitchenUI{
   this.fixture=this.fixture?structuredClone(this.fixture):null;
   this.stamp=assistantStamp(this.app.adapter);this.showOpen=true;this.tab=tab;
   this.heightScope='one';this.chosenIds=new Set();this.wholeKitchen=wholeKitchen;this.changedRoles=new Set();this.partKey=null;
-  this.hingeDetails.open=false;this.handlesOpen=false;
+  this.hingeDetails.open=false;this.handlesOpen=false;this.explicitOrientation=false;
+  this.handleFamily=this.fields.handle==='118124'?'gola':kitchenPulls.find(([id])=>id===this.fields.handle)?.[1].family??(isVitrine(id)?'gola':'rail');
+  if(this.handleFamily.startsWith('inset'))this.handleFamily='inset';
   this.handlePitch=kitchenRails.find(([article])=>article===this.fields.handle)?.[1].pitch??'all';
   this.title.textContent=current.metadata.name;
   this.saveButton.textContent='Применить изменения';if(!this.dialog.open)this.dialog.showModal();this.render();
@@ -150,6 +157,22 @@ export class AIKitchenUI{
    }
    select('swing','Открывание',f.swing,[['left','Петли слева'],['right','Петли справа'],['pair','Две двери']],v=>f.swing=v);
   }
+  if(this.tab==='body'){
+   if(sink)grid.append(el('p','За мойкой оставлен открытый проём для подвода воды и слива.'));
+   else{
+    const mount=f.backMount,method=mount?.kind==='rabbet'?'quarter':mount?.layout??'overlay';
+    select('backMount','Задняя стенка',method,[['overlay','Накладная ЛХДФ 3 мм'],['sides','Паз в боковинах · ХДФ под гвозди'],['perimeter','Паз по кругу'],['quarter','Четверть']],v=>f.backMount=v==='overlay'?null:defaultBackMount(v==='quarter'?'right':v));
+    if(mount){
+     const fields={...f,thickness:18,back:true,recipe:base?'base':'wall',bottomFit:base?'overlay':'inset'};
+     backMountControls({fields,form:this.form,changed:()=>this.draw(),select:(parent,label,options,value,assign)=>{
+      const node=el('label',label),control=el('select');control.setAttribute('aria-label',label);
+      for(const [id,name] of options)control.add(new Option(name,id));control.value=value;
+      control.onchange=()=>assign(control.value);node.append(control);parent.append(node);
+     }});
+     if(base&&method==='perimeter')this.form.append(el('p','Сверху паз проходит в задней горизонтальной царге.'));
+    }
+   }
+  }
   if(this.tab==='inside'&&!sink){
    select('shelves','Количество полок',f.shelves,[0,1,2,3].map(n=>[n,n]),v=>f.shelves=Number(v));
    select('fixingScope','Где изменить крепление ЛДСП',this.fixingScope,[['one','Отдельная полка'],['cabinet','Все полки этого шкафа'],['project','Все шкафы ИИ в проекте']],v=>{this.fixingScope=v;this.projectFixing=null;});
@@ -198,22 +221,35 @@ export class AIKitchenUI{
    const handles=button('Ручки на фасаде',()=>this.switchTab('handles'));handles.className='ai-handles-link';this.form.append(handles);
   }
   if(this.tab==='handles'){
-   if(glass){
-    grid.append(el('p','Витрина Z1 открывается за алюминиевую рамку.'));
-   }else{
-    select('orientation','Положение ручки',f.orientation,[['vertical','Вертикально'],['horizontal','Горизонтально']],v=>f.orientation=v);
-    const pitches=[...new Set(kitchenRails.map(([,p])=>p.pitch))];
-    select('handlePitch','Межосевое расстояние',this.handlePitch,[['all','Все размеры'],...pitches.map(p=>[p,p+' мм'])],v=>this.handlePitch=v==='all'?v:Number(v));
-    const group=el('section'),title=el('h3','Рейлинговые ручки AKS');title.id='ai-handles-title';
+   if(glass)grid.append(el('p','Витрина Z1 открывается за алюминиевую рамку.'));
+   if(!glass||base){
+    const families=[...(!glass?[['rail','Рейлинговые AKS'],['monblan','Торцевые MONBLAN'],['inset','Врезные AKS L и C']]:[]),...(base?[['gola','Профиль Gola']]:[])];
+    select('handleFamily','Тип ручки',this.handleFamily,families,v=>this.handleFamily=v);
+    const family=this.handleFamily;
+    if(family!=='gola')select('orientation','Положение ручки',f.orientation,[['vertical','Вертикально'],['horizontal','Горизонтально']],v=>{f.orientation=v;this.explicitOrientation=true;});
+    if(family==='rail'){
+     const pitches=[...new Set(kitchenRails.map(([,p])=>p.pitch))];
+     select('handlePitch','Межосевое расстояние',this.handlePitch,[['all','Все размеры'],...pitches.map(p=>[p,p+' мм'])],v=>this.handlePitch=v==='all'?v:Number(v));
+    }
+    const group=el('section'),title=el('h3',{rail:'Рейлинговые ручки AKS',monblan:'Торцевые ручки MONBLAN',inset:'Врезные ручки AKS',gola:'Профиль Gola под столешницей'}[family]);title.id='ai-handles-title';
     group.className='ai-handle-catalogue';group.setAttribute('aria-labelledby',title.id);
     const current=el('p');current.dataset.selectedHandle='';current.setAttribute('role','status');
-    const none=button('Без ручки',()=>{f.handle='none';this.draw();});none.dataset.railArticle='none';
+    const none=button(glass?'Открывание за рамку':'Без ручки',()=>{f.handle='none';this.draw();});none.dataset.railArticle='none';
     const cards=el('div');cards.className='ai-hinge-grid ai-handle-grid';
-    for(const [article,p] of kitchenRails){
-     if(this.handlePitch!=='all'&&p.pitch!==this.handlePitch)continue;
-     const photo=railPhotosByArticle.get(article),b=button('',()=>{f.handle=article;this.draw();});
+    const choices=family==='rail'?kitchenRails.filter(([,p])=>this.handlePitch==='all'||p.pitch===this.handlePitch):
+     family==='gola'?[['118124',{}]]:kitchenPulls.filter(([,p])=>family==='inset'?p.family.startsWith('inset'):p.family===family);
+    for(const [article,p] of choices){
+     const photo=railPhotosByArticle.get(article);
+     const b=button('',()=>{
+      const old=kitchenPulls.find(([id])=>id===f.handle)?.[1];
+      f.handle=article;
+      if((family==='monblan'||family==='inset')&&!old&&!this.explicitOrientation){f.orientation='horizontal';this.render();}
+      else this.draw();
+     });
      b.dataset.railArticle=article;
-     b.append(productCard('/account/planner/door-photos/'+photo.file,'AKS '+article+' · '+p.pitch+' мм · '+p.finish+(photo.shared_image_articles?.length>1?' · фото серии':'')));
+     const label=family==='rail'?'AKS '+article+' · '+p.pitch+' мм · '+p.finish:family==='monblan'?'MONBLAN '+article+' · длина '+p.length+' мм':
+      family==='inset'?'AKS '+article+' · профиль '+(p.family==='insetL'?'L':'C'):'Gola L · 118124 · по ширине корпуса';
+     b.append(productCard('/account/planner/door-photos/'+photo.file,label+(photo.shared_image_articles?.length>1?' · фото серии':'')));
      cards.append(b);
     }
     group.append(title,current,none,cards);this.form.append(group);
@@ -267,7 +303,7 @@ export class AIKitchenUI{
   }
   group.append(list);grid.append(group);
  }
- picker(grid,title,id,thickness,assign){
+ picker(grid,title,id,thickness,assign,refresh=()=>this.render()){
   const card=el('fieldset');card.className='ai-picker ai-span';card.append(el('legend',title));
   const material=this.app.adapter.material(id),defaultIds=globalThis.MF_FURNITURE_CORE.DEFAULT_MATERIALS;
   const known=id===defaultIds.body_variant_id?'BYSPAN 605 PO':id===defaultIds.front_variant_id?'BYSPAN 890 PO':id===CARCASS_BACK_MATERIAL_ID?'ЛХДФ белый':'Материал проекта';
@@ -281,7 +317,7 @@ export class AIKitchenUI{
     if(ticket!==sequence||!card.isConnected)return;
     matches.replaceChildren();
     for(const m of r.items.filter(x=>Number(x.thickness)===thickness)){
-     const b=button('',()=>{this.app.bridge.cacheMaterial(m);assign(m.variant_id);this.render();});
+     const b=button('',()=>{this.app.bridge.cacheMaterial(m);assign(m.variant_id);refresh();});
      const chip=el('i');chip.style.backgroundColor=m.visual?.render_color??'#dedfd9';
      const src=m.visual?.texture_url??m.visual?.preview_url;if(src?.startsWith('/')){const img=el('img');img.src=src;img.alt='';img.loading='lazy';chip.append(img);}
      b.append(chip,document.createTextNode(m.name+' · '+m.thickness+' мм'));matches.append(b);
@@ -317,7 +353,7 @@ export class AIKitchenUI{
   if(f.light!=='off'||f.workLight){const p=hardwareArtwork(null,'vitrine','light_system',f.lightSystem);if(p)this.fitted.append(productCard(p.src,p.article+' · '+(f.lightSystem==='aq-4x8'?'AQ LED-LINE':'LIRA-1707')));}
   this.hingeSummary.textContent='Петли · '+f.hinge;
   const current=this.form.querySelector('[data-selected-handle]');
-  if(current)current.textContent=f.handle==='none'?'Фасад без ручки':'На фасаде · AKS '+f.handle;
+  if(current)current.textContent=f.handle==='none'?'Фасад без ручки':f.handle==='118124'?'На корпусе · Gola L · 118124':'На фасаде · '+(kitchenPulls.some(([id,p])=>id===f.handle&&p.family==='monblan')?'MONBLAN ':'AKS ')+f.handle;
   for(const b of this.form.querySelectorAll('[data-foot],[data-rail-article],[data-hinge-article]'))b.setAttribute('aria-pressed',String(b.dataset.foot===f.feet||b.dataset.railArticle===f.handle||b.dataset.hingeArticle===f.hinge));
   const open=this.tab==='handles'?this.handlesOpen:this.showOpen;
   this.view.textContent=open?'Закрыть двери':'Открыть двери';this.saveButton.disabled=true;
@@ -326,7 +362,7 @@ export class AIKitchenUI{
    if(b.spec.elevation+b.envelope.height>this.app.adapter.room.height)throw Error('Шкаф выходит выше потолка.');
    const lights=b.parts.flatMap(({key,item})=>(item.blank_machining??[]).filter(op=>op.lightSystem).map(op=>({key,length:item.blank_length_mm-(op.start??0)-(op.end??0)})));
    const side=lights.find(p=>p.key!=='bottom'),under=lights.find(p=>p.key==='bottom');
-   this.status.textContent=[base?'Корпус '+f.height+' мм + опоры '+kitchenFoot(f.feet).height+' мм = '+b.envelope.height+' мм':'Корпус '+f.width+' × '+f.height+' × '+(f.depth+3)+' мм',side?'Боковой профиль '+side.length+' мм':null,under?'Под дном '+under.length+' мм':null,this.projectFixing?'Все шкафы ИИ · '+kitchenShelfFixings[this.projectFixing]:null].filter(Boolean).join(' · ');
+   this.status.textContent=[base?'Корпус '+f.height+' мм + опоры '+kitchenFoot(f.feet).height+' мм = '+b.envelope.height+' мм':'Корпус '+f.width+' × '+f.height+' × '+(f.depth+rearProjection(b.spec))+' мм',side?'Боковой профиль '+side.length+' мм':null,under?'Под дном '+under.length+' мм':null,this.projectFixing?'Все шкафы ИИ · '+kitchenShelfFixings[this.projectFixing]:null].filter(Boolean).join(' · ');
    this.saveButton.disabled=!this.form.checkValidity();this.preview.selectedPart=this.tab==='materials'?this.partKey:null;this.preview.sync(b,open?0:null,this.current,{body:true,front:true,back:true});
    this.drawing.hidden=!this.preview.root.hidden;
    if(!this.drawing.hidden)this.drawing.innerHTML=carcassSVG({...b,parts:open?b.parts.filter(p=>!p.key.startsWith('door-')):b.parts},true);
@@ -341,5 +377,5 @@ export class AIKitchenUI{
    if(gid){this.dialog.close();this.app.scene.cabinetSelection=gid;this.app.sync();a.status('Изменения применены.');}
   }catch(error){this.status.textContent=error.message;}
  }
- dispose(){this.events.abort();this.unsubscribe?.();this.preview.dispose();this.dialog.remove();}
+ dispose(){this.filling.dispose();this.events.abort();this.unsubscribe?.();this.preview.dispose();this.dialog.remove();}
 }

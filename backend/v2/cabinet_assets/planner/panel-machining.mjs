@@ -87,7 +87,7 @@ export function checkBackMount(s){
    (b.layout!=null&&!layouts.includes(b.layout))||
    ![b.width,b.depth,b.offset??0].every(v=>Number.isFinite(v)&&Number.isInteger(v*2))||
    b.width<3||b.depth<=1||b.depth>=s.thickness||(b.offset??0)<0||
-   b.kind==='groove'&&b.offset==null||(b.offset??0)+b.width>=s.depth||b.kind==='rabbet'&&(b.offset??0)!==0)
+   b.kind==='groove'&&b.offset==null||s.recipe==='base'&&b.layout==='perimeter'&&b.offset+b.width>=80||(b.offset??0)+b.width>=s.depth||b.kind==='rabbet'&&(b.offset??0)!==0)
   throw Error('Проверьте посадку ХДФ 3 мм, глубину выборки и отступ от заднего торца.');
 }
 export function rearClearance(s){
@@ -119,6 +119,7 @@ export function backPanel(s){
 
 export function backCut(s,key,legExtension){
  const b=s.backMount;
+ if(key==='rail-rear'&&s.top==='rails'&&b?.layout==='perimeter')return {kind:'groove',width:b.width,depth:b.depth,offset:b.offset,edge:'x0',face:0};
  const side=key==='left'||key==='right';
  if(!b||!side&&key!=='bottom'&&key!=='top'||b.layout==='sides'&&!side||
     b.kind==='rabbet'&&(!side||b.layout!=='both'&&key!==(b.layout??'right')))return null;

@@ -467,6 +467,12 @@
     return null;
   }
   function productionHardware(it,p=sourceProduction(it)){
+    const depth=it.kitchenFilling?.backMount?root.MF_KITCHEN_FILLINGS.drawerDepth(it):it.depth;
+    const hardware=sourceHardware(depth===it.depth?it:{...it,depth},p),pull=it.kitchenFilling?.pull&&root.MF_KITCHEN_FILLINGS.fillingPullRow(it);
+    if(!pull||!hardware)return hardware;
+    return {...hardware,items:[...(hardware.items||[]).filter(h=>!/^ручка/i.test(h.name)),pull]};
+  }
+  function sourceHardware(it,p){
     if(p?.dishwasher)return root.MF_ACCESSORIES.hardware(it);
     if(p?.modern)return root.MF_MODERN_CABINETS.hardware(it);
     if(p?.wall_special)return root.MF_WALL_SPECIAL.hardware(it,p);
@@ -555,10 +561,13 @@
     if(!isTallModule(it)||!upper||tier(upper)!=='wall')throw new Error('Выберите пенал и верхний шкаф для выравнивания.');
     return dimensionPatch(it,{height:elevation(upper,room)+upper.height-elevation(it,room)},room);
   }
+  function assemblyRearGap(spec,projection,worktopDepth=600){
+    return spec.front?.topProfile?worktopDepth-spec.depth-projection-.5:50;
+  }
   function kitchenSettings(it,assembledBase=false){
     if(!assembledBase&&!isKitchenModule(it))return null;
     const k={...KITCHEN_DEFAULTS};for(const key of Object.keys(k))if(it[key]!=null)k[key]=it[key];
-    k.rearServiceGapMm=golaCountertop(it)?k.countertopDepthMm-it.depth-18-.5:50;
+    k.rearServiceGapMm=assembledBase&&it.assemblyRearGap!=null?it.assemblyRearGap:golaCountertop(it)?k.countertopDepthMm-it.depth-18-.5:50;
     k.legHeightMm=it.legHeightMm??it.base_height??100;
     k.countertopThicknessMm=it.countertopThicknessMm??it.worktop_thickness??38;
     k.frontOverhangMm=k.countertopDepthMm-k.rearServiceGapMm-it.depth;
@@ -779,6 +788,10 @@
       contour_yz:s.contour_yz.map(([y,z])=>[y,z+it.depth-600-it.depth/2])}));
   }
   function productionParts(it,template,materialLookup=()=>null){
+    const parts=sourceParts(it,template,materialLookup);
+    return it.kitchenFilling?.backMount?root.MF_KITCHEN_FILLINGS.fittedParts(it,parts,depth=>sourceParts({...it,depth},template,materialLookup)):parts;
+  }
+  function sourceParts(it,template,materialLookup){
     const p=template?.production;if(!p?.carcass)return null;
     if(p.modern)return root.MF_MODERN_CABINETS.parts(it,p,materialLookup);
     if(p.wall_special)return root.MF_WALL_SPECIAL.parts(it,p,materialLookup);
@@ -946,9 +959,17 @@
       // The overlaid bottom spans the cabinet. It anchors a single worktop member
       // even when a cabinet has several shelves, doors or independently edited panels.
       const assembledBase=meta?.spec.kitchenModel?.startsWith('base-')&&item.item_id===meta.group_id+':bottom';
-      const it=assembledBase?{...item,elevation_mm:meta.position.elevation_mm,
+      let it=item;
+      if(assembledBase){
+        const rotation=item.rotation||0,depth=meta.spec.depth??item.depth;
+        const front=rotateXZ(item.x,item.z,-rotation).z+item.depth/2;
+        const shift=rotateXZ(0,(item.depth-depth)/2,rotation);
+        const faces=meta.spec.front?.topProfile?items.filter(p=>p.assistant_carcass?.group_id===meta.group_id&&p.blank_axis==='front'):[];
+        const projection=Math.max(0,...faces.map(p=>rotateXZ(p.x,p.z,-rotation).z+p.depth/2-front));
+        it={...item,x:item.x+shift.x,z:item.z+shift.z,depth,assemblyRearGap:assemblyRearGap(meta.spec,projection,item.countertopDepthMm),elevation_mm:meta.position.elevation_mm,
         base_height:item.elevation_mm-meta.position.elevation_mm,worktop_thickness:38,
-        height:meta.spec.height+item.elevation_mm-meta.position.elevation_mm}:item;
+        height:meta.spec.height+item.elevation_mm-meta.position.elevation_mm};
+      }
       const k=kitchenSettings(it,assembledBase);if(!k)continue;
       const rotation=it.rotation||0,local=rotateXZ(it.x,it.z,-rotation),level=elevation(it,room);
       const back=local.z-it.depth/2-k.rearServiceGapMm,top=level+it.height;
@@ -1139,5 +1160,5 @@
     });
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({blankEdgeCode,shelfMounting,DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({assemblyRearGap,blankEdgeCode,shelfMounting,DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

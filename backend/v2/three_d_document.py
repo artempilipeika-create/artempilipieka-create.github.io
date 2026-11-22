@@ -126,6 +126,14 @@ def _prime_fixings(cams, dowels=None):
 
 def hardware_for(it):
     rows,description=_panel_hardware(it)
+    filling=it.get('kitchenFilling') or {}
+    if article:=filling.get('pull'):
+        pull=_facade_handle_row({'article':article},it);pull['qty']=it['drawers']
+        rows=[*(r for r in rows if not r['name'].lower().startswith('ручка')),pull]
+    if b:=filling.get('backMount'):
+        title='Паз' if b['kind']=='groove' else 'Четверть'
+        description=(description+' · ' if description else '')+f"{title} под ЛХДФ 3 мм · {b['width']:g} × {b['depth']:g} мм"
+
     hook=it.get('blank_hook')
     if hook and hook['article']=='68416':
         rows=[*rows,_row('Крючок AKKORD двухрожковый, античная латунь',hook.get('count',1),'pcs','68416')]
@@ -140,7 +148,8 @@ def hardware_for(it):
             rows=[*rows,_row('Навес простой, белый',2,'pcs','13198'),_row('Шуруп 3×30 мм, Zn',4)]
         if key=='rail-front' and spec.get('kitchenModel')=='base-sink':
             rows=[*rows,_row('Уголок №1 (литой)',4),_row('Шуруп 3,5×16 мм, Zn · уголки',8)]
-    if key=='top' and (it.get('blank_gola_runs') or front.get('topProfile') or (front.get('division') or {}).get('gola')):
+    profile_carrier='bottom' if (spec.get('kitchenModel') or '').startswith('base-') else 'top'
+    if key==profile_carrier and (it.get('blank_gola_runs') or front.get('topProfile') or (front.get('division') or {}).get('gola')):
         width=spec['width']; split=front.get('division') or {};scope=split.get('scope','all')
         widths=spec.get('dividerPositions') or [(width-3*spec['thickness']+1)//2]
         half=widths[0]+1.5*spec['thickness'] if spec.get('sections')==2 else width/2

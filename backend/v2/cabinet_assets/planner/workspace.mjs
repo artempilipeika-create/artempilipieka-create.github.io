@@ -69,7 +69,7 @@ export class PlannerWorkspace {
       const hit=this.app.scene.pick(e.clientX,e.clientY);
       queueMicrotask(()=>{
         if(this.isClient()||!hit?.id)return;
-        if(this.app.adapter.selected?.item_id===hit.id&&this.app.adapter.selected.assistant_carcass?.spec.kitchenModel){this.app.aiKitchen?.edit();return;}
+        if(this.app.adapter.selected?.item_id===hit.id&&(this.app.adapter.selected.assistant_carcass?.spec.kitchenModel||this.app.adapter.selected.kitchenFilling)){this.app.aiKitchen?.edit();return;}
         if(innerWidth>=1100&&!this.manualInspectorClosed&&this.app.adapter.selected)this.panel('right',true);
       });
     },{capture:true});
@@ -90,7 +90,7 @@ export class PlannerWorkspace {
   isClient(){return document.body.classList.contains('planner-client');}
   panel(side,open,{manual=false,focus=false}={}) {
     if(this.isClient())return;
-    if(side==='right'&&open&&this.app.adapter.selected?.assistant_carcass?.spec.kitchenModel&&this.app.aiKitchen){this.app.aiKitchen.edit();return;}
+    if(side==='right'&&open&&(this.app.adapter.selected?.assistant_carcass?.spec.kitchenModel||this.app.adapter.selected?.kitchenFilling)&&this.app.aiKitchen){this.app.aiKitchen.edit();return;}
     if(side==='right'&&manual)this.manualInspectorClosed=!open;
     this[side]=open;if(!open&&this[side==='left'?'right':'left'])this.lastPanel=side==='left'?'right':'left';if(open){this.lastPanel=side;if(innerWidth<1700)this[side==='left'?'right':'left']=false;if(innerWidth<1100)this.cutlist.open=false;}
     this.update();this.resize();

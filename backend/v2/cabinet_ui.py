@@ -27,7 +27,7 @@ def router():
     @api.get('/constructor-legacy')
     def constructor_legacy(): return Response((root/'constructor.html').read_bytes(),media_type='text/html',headers={'Content-Security-Policy':CSP})
     planner_files={
-        'ai-kitchen.mjs','ai-kitchen-project.mjs','ai-kitchen-ui.mjs','ai-kitchen.css',
+        'ai-kitchen.mjs','ai-kitchen-project.mjs','kitchen-filling-geometry.mjs','kitchen-filling-ui.mjs','ai-kitchen-ui.mjs','ai-kitchen.css',
         'constructor-access.js','client-workspace.css',
         'wall-special-variants.js','wall-special-variants.json','wall-special-model.js','wall-special-ui.js','corner-layout.mjs',
         'open-tall-variants.js','open-tall-variants.json','open-tall-model.js','open-tall-ui.js',

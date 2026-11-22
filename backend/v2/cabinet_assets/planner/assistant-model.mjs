@@ -10,7 +10,7 @@ import {choice,shelfDescription} from './shelf-choices.mjs';
 import {joinPlinths,splitPlinths} from './wardrobe-plinth-runs.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
-import {blankEdgeCode} from './furniture-core.mjs';
+import {assemblyRearGap,blankEdgeCode} from './furniture-core.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
@@ -58,7 +58,11 @@ function validateWardrobePlan(adapter,next,items){
 
 // Use the full cabinet envelope so click placement cannot start inside a door,
 // a shelf opening or the space below an overlaid bottom.
-function kitchenPlacementItems(items){
+export function kitchenWallOffset(s,box){
+ if(!s.kitchenModel?.startsWith('base-'))return 0;
+ return assemblyRearGap(s,box.maxZ-s.depth/2)+box.minZ+s.depth/2;
+}
+export function kitchenPlacementItems(items){
  const groups=new Set(),occupied=[];
  for(const part of items){
   const meta=part.assistant_carcass;
@@ -66,7 +70,7 @@ function kitchenPlacementItems(items){
   if(groups.has(meta.group_id))continue;
   groups.add(meta.group_id);
   const box=surroundLayout(meta.spec);
-  occupied.push({...part,...meta.position,assemblyWallOffset:meta.spec.kitchenModel.startsWith('base-')?(meta.spec.back?47:50):0,item_id:meta.group_id,width:box.width,depth:box.depth,
+  occupied.push({...part,...meta.position,assemblyWallOffset:kitchenWallOffset(meta.spec,box),item_id:meta.group_id,width:box.width,depth:box.depth,
    height:box.height-box.minY,elevation_mm:meta.position.elevation_mm+box.minY});
  }
  return occupied;
@@ -90,13 +94,14 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
  if(current){
   // Resize from the right and front, keeping the left edge and rear envelope.
   const previous=surroundLayout(current.metadata.spec);
-  const delta=worldPoint({x:(built.width-previous.width)/2,z:(built.depth-previous.depth)/2},position.rotation);
+  const offset=spec.kitchenModel?kitchenWallOffset(spec,built.envelope)-kitchenWallOffset(current.metadata.spec,previous):0;
+  const delta=worldPoint({x:(built.width-previous.width)/2,z:(built.depth-previous.depth)/2+offset},position.rotation);
   position.x+=delta.x;position.z+=delta.z;
  }
  if(!position){
   const envelope={module_type:'blank',item_id:'assistant-envelope',name:built.spec.label,width:built.width,height:built.envelope.height-built.envelope.minY,depth:built.depth,
    x:0,z:0,rotation:0,elevation_mm:spec.elevation+built.envelope.minY,base:'wall',body_height:built.height,base_height:0,worktop_thickness:0};
-  if(spec.kitchenModel)envelope.assemblyWallOffset=spec.kitchenModel.startsWith('base-')?(spec.back?47:50):0;
+  if(spec.kitchenModel)envelope.assemblyWallOffset=kitchenWallOffset(spec,built.envelope);
   const occupied=spec.kitchenModel?kitchenPlacementItems(adapter.items):adapter.items;
   const selectedGroup=adapter.selected?.assistant_carcass?.group_id;
   const anchor=occupied.find(it=>it.item_id===selectedGroup)??adapter.selected;

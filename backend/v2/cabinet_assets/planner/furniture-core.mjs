@@ -1,3 +1,4 @@
+import './kitchen-filling-geometry.mjs';
 import './corner-variants.js';
 import './tall-variants.js';
 import './vitrine-model.js';
@@ -22,7 +23,7 @@ import './wall-special-model.js';
 import './modern-cabinet-variants.js';
 import './modern-cabinets.js';
 import './furniture-core.js?v=20261114-corner-face';
-export const {blankEdgeCode,shelfMounting}=globalThis.MF_FURNITURE_CORE;
+export const {assemblyRearGap,blankEdgeCode,shelfMounting}=globalThis.MF_FURNITURE_CORE;
 export const {VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY}=globalThis.MF_FURNITURE_CORE;
 export const {APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote}=globalThis.MF_FURNITURE_CORE;
 export const {CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant}=globalThis.MF_FURNITURE_CORE;

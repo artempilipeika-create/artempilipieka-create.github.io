@@ -6,6 +6,7 @@ import {choice} from './shelf-choices.mjs';
 import {lightingSystems} from './wardrobe-lighting.mjs';
 
 export const kitchenRails=Object.entries(doorHardware).filter(([,p])=>p.family==='rail').sort((a,b)=>a[1].pitch-b[1].pitch||a[1].finish.localeCompare(b[1].finish,'ru'));
+export const kitchenPulls=Object.entries(doorHardware).filter(([,p])=>['monblan','insetL','insetC'].includes(p.family)).sort((a,b)=>(a[1].pitch??0)-(b[1].pitch??0));
 export const kitchenFeet=feetCatalogue.filter(p=>['plinth','decor'].includes(p.category)&&!p.issue);
 export const isBase=id=>Boolean(id?.startsWith('base-'));
 export const isVitrine=id=>Boolean(id?.endsWith('-vitrine'));
@@ -43,7 +44,7 @@ export function kitchenFields(id,s,projectFixing=null){
  return {id,width:s?.width??600,height:s?.height??720,depth:s?.depth??m.depth,elevation:s?.elevation??m.elevation,
    shelves,shelfFixing,shelfChoices:Array.from({length:3},(_,i)=>s&&i<shelves?(s.shelfChoices?.[0]?.[i]??'board/95388'):standard),
    swing:s?.front?.swing??(vitrine?'pair':'left'),hinge:s?hingeProduct(s.front,firstDoor).article:vitrine?'71B950A':'112595',
-   feet:s?.feet?.article??'86502',handle:s?(pull?.article??'none'):(vitrine?'none':'79080'),
+   backMount:s?.backMount?{...s.backMount}:null,feet:s?.feet?.article??'86502',handle:s?(s.front?.topProfile?'118124':pull?.article??'none'):(vitrine?'none':'79080'),
    orientation:pull&&['top','bottom'].includes(pull.edge)?'horizontal':'vertical',
    light:s?(left&&right?'both':left?'left':right?'right':'off'):(vitrine?'both':'off'),workLight:Boolean(source.bottom),
    lightSystem:system,lightAxis:line?(line.offset??0)+groove/2:vitrine?(m.depth/2):50,
@@ -63,6 +64,10 @@ export function kitchenSpec(f){
    sections:1,sectionShelves:[f.shelves],clearLayout:true,back:!sink,elevation:base?0:f.elevation,
    shelfSetback:base?1:0,shelfGap:1,edgeThickness:1,edgePolicy:'front',joints:{top:'confirmat',bottom:'confirmat'},
    front:{swing:f.swing,offset:90,autoHinges:true,hinges:{}}};
+ if(!sink&&f.backMount)s.backMount={...f.backMount};
+ const family=doorHardware[f.handle]?.family;
+ if(f.handle==='118124'&&base)s.front.topProfile=true;
+ else if(f.handle!=='none'&&(glass||!['rail','monblan','insetL','insetC'].includes(family)))throw Error('Выберите ручку, подходящую к этому фасаду.');
  if(f.materials)s.kitchenMaterials=structuredClone(f.materials);
  if(!sink&&f.shelfFixing!=null){
    if(!Object.hasOwn(kitchenShelfFixings,f.shelfFixing))throw Error('Выберите крепление полки из ЛДСП.');
@@ -74,12 +79,15 @@ export function kitchenSpec(f){
  }
  for(const side of f.swing==='pair'?['left','right']:[f.swing]){
    const key='door-'+side;s.front.hinges[key]={article:f.hinge};
-   if(!glass&&f.handle!=='none'){
-    if(doorHardware[f.handle]?.family!=='rail'||!['vertical','horizontal'].includes(f.orientation))throw Error('Выберите ручку и её положение на фасаде.');
+   if(!glass&&f.handle!=='none'&&!s.front.topProfile){
+    if(!['vertical','horizontal'].includes(f.orientation))throw Error('Выберите положение ручки на фасаде.');
     const horizontal=f.orientation==='horizontal';
     const edge=horizontal?(base?'top':'bottom'):(side==='left'?'right':'left');
     const from=horizontal?(side==='left'?'end':'start'):(base?'end':'start');
-    (s.front.handles??={})[key]={article:f.handle,edge,from,offset:50,inset:50};
+    const pull={article:f.handle,edge};
+    if(family==='rail')Object.assign(pull,{from,offset:50,inset:50});
+    if(family==='monblan')Object.assign(pull,{from:'center',offset:0,inset:0});
+    (s.front.handles??={})[key]=pull;
    }
  }
  if(f.shelves)s.shelfChoices=[Array.from({length:f.shelves},(_,i)=>{

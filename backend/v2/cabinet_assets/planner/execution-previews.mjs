@@ -39,7 +39,7 @@ export class ExecutionPreviews{
   const it=executionPreviewItem(item,options);
   const key=JSON.stringify([this.factory.signature(it),options,options.sceneDisplayMode?[it,executionMaterialKey(it,this.owner.adapter)]:null]);
   if(this.jobs.get(canvas)?.key===key&&canvas.dataset.previewReady)return;
-  const first=!this.jobs.has(canvas);this.jobs.set(canvas,{key,it,options});if(first)this.observer.observe(canvas);delete canvas.dataset.previewReady;canvas.setAttribute('aria-busy','true');this.schedule();
+  const first=!this.jobs.has(canvas);this.jobs.set(canvas,{key,it,options});if(first&&!options.dialog)this.observer.observe(canvas);delete canvas.dataset.previewReady;canvas.setAttribute('aria-busy','true');this.schedule();
  }
  cancel(canvas){this.observer.unobserve(canvas);this.jobs.delete(canvas);this.visible.delete(canvas);}
  refreshImages(){if(this.closed)return;this.cache.clear();for(const c of this.jobs.keys())delete c.dataset.previewReady;this.schedule();}
@@ -49,7 +49,7 @@ export class ExecutionPreviews{
   if(this.owner.preview||this.owner.equipmentPreview){this.schedule();return;}
   for(const [canvas,job]of this.jobs){
    if(!canvas.isConnected){this.observer.unobserve(canvas);this.jobs.delete(canvas);this.visible.delete(canvas);continue;}
-   if(!this.visible.has(canvas)||canvas.dataset.previewReady||!canvas.getBoundingClientRect().width)continue;
+   if(!(job.options.dialog?canvas.closest('dialog')?.open:this.visible.has(canvas))||canvas.dataset.previewReady||!canvas.getBoundingClientRect().width)continue;
    try{const cached=this.cache.get(job.key),pixels=cached||this.paint(job.it,job.options);canvas.width=this.width;canvas.height=this.height;canvas.getContext('2d').putImageData(pixels,0,0);canvas.dataset.previewReady='true';canvas.closest('.execution-visual')?.classList.remove('execution-failed');if(!cached){this.cache.set(job.key,pixels);while(this.cache.size>24)this.cache.delete(this.cache.keys().next().value);}}
    catch(error){canvas.dataset.previewReady='fallback';canvas.closest('.execution-visual')?.classList.add('execution-failed');console.warn('Execution preview:',error.message);}
    canvas.setAttribute('aria-busy','false');this.schedule();break;

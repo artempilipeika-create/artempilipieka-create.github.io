@@ -164,3 +164,56 @@ test('a failure on a shallow neighbour leaves the whole project and default unch
  assert.throws(()=>saveKitchen(a,{fields,current,projectFixing:'cam_dowel'}),/глубин/);
  assert.deepEqual(a.state,before);
 });
+
+test('kitchen front options survive edits and the Gola worktop follows the actual closed front',async()=>{
+ const {nativeDoorHardware,boardProfileCuts}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-door-hardware.mjs');
+ const {defaultBackMount}=await import('../../backend/v2/cabinet_assets/planner/panel-machining.mjs');
+ for(const id of ['base-swing','base-vitrine','base-sink']){
+  const a=project(),f=kitchenFields(id),base=assemble(a,'a',f);
+  assemble(a,'b',kitchenFields('base-swing'));
+  a.select(base[0].item_id);
+  const it=assemble(a,'a',{...f,handle:'118124',backMount:id==='base-sink'?null:defaultBackMount('perimeter')},'update');
+  assert.equal(kitchenFields(id,it[0].assistant_carcass.spec).handle,'118124');
+  const pick=key=>it.find(p=>p.item_id==='a:'+key);
+  const hardware=nativeDoorHardware(it);
+  assert.equal(hardware.filter(p=>p.wardrobe_profile&&p.article==='118124'&&p.span_mm===600).length,1);
+  assert.equal(hardware.filter(p=>p.wardrobe_gola_mount).length,1);
+  assert.deepEqual(boardProfileCuts(pick('left'),it).map(c=>[c.depth,c.high-c.low]),[[27,57]]);
+  const top=kitchenRuns(a.items,a.room);assert.equal(top.length,1);assert.equal(top[0].countertopActualLengthMm,1200);
+  const door=it.find(p=>p.blank_axis==='front');assert.equal(top[0].position.z+600-door.z-door.depth/2,.5);
+  const rail=pick('rail-front'),side=pick('left');
+  if(id==='base-sink')assert.deepEqual([rail.height,side.elevation_mm+side.height-rail.elevation_mm-rail.height],[60,57]);
+  else{
+   assert.equal(side.z+side.depth/2-(rail.z+rail.depth/2),27);
+   assert.ok(pick('rail-rear').blank_machining.some(c=>c.kind==='groove'&&c.face===0&&c.offset===10));
+  }
+ }
+ for(const id of ['base-swing','wall-swing'])for(const handle of ['92253','67698','75975']){
+  const a=project(),f={...kitchenFields(id),handle,orientation:'horizontal',backMount:defaultBackMount('both')};
+  const parts=assemble(a,'one',f),spec=parts[0].assistant_carcass.spec;
+  assert.deepEqual(kitchenFields(id,spec).backMount,f.backMount);
+  assert.ok(parts.filter(i=>i.blank_axis==='side').every(p=>p.blank_machining.some(c=>c.kind==='rabbet')));
+  assert.equal(nativeDoorHardware(parts).find(p=>p.wardrobe_handle).article,handle);
+  assert.equal(spec.front.handles['door-left'].edge,id==='base-swing'?'top':'bottom');
+ }
+});
+
+test('original pull-out sources retain their drawer count, hardware, rear machining and exact handle quantities',async()=>{
+ const {fillingSource,fillingCards,fillingClearanceError}=await import('../../backend/v2/cabinet_assets/planner/kitchen-filling-geometry.mjs');
+ const {defaultBackMount}=await import('../../backend/v2/cabinet_assets/planner/panel-machining.mjs');
+ const {PRODUCTION_MODELS,productionHardware,productionParts}=await import('../../backend/v2/cabinet_assets/planner/furniture-core.mjs');
+ for(const card of fillingCards){
+  const id=fillingSource(card.id),p=PRODUCTION_MODELS[id],drawers=card.id==='cargo'?1:card.id==='drawers-three'?3:2;
+  const it={item_id:'native',module_type:'base_cabinet',name:card.name,width:card.width,height:820,depth:card.id==='dryer'?550:510,body_height:720,base_height:100,base:'legs',
+   bazis_id:id,bazis_sha256:p.source_sha256,bazis_file:p.source_file,handles:'handles',layout:'drawers',drawers};
+  const raw=productionParts(it,{production:p});
+  for(const layout of ['perimeter','sides','left','right','both']){
+   const chosen={...it,kitchenFilling:{kind:card.id,pull:'92253',backMount:defaultBackMount(layout)}},parts=productionParts(chosen,{production:p});
+   assert.equal(parts.length,raw.length);
+   assert.equal(fillingClearanceError(chosen,parts),'');
+   assert.equal(parts.filter(k=>k.role==='front').length,drawers);
+   assert.equal(productionHardware(chosen,p).items.find(row=>row.article==='92253').quantity,drawers);
+   assert.equal(parts.filter(k=>k.panel_machining).length,layout==='perimeter'?4:['sides','both'].includes(layout)?2:1);
+  }
+ }
+});

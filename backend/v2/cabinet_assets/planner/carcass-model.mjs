@@ -135,10 +135,10 @@ export function buildCarcass(input={},options={}){
   else add('bottom','Дно','horizontal',s.bottom==='overlay'?W:W-2*t,D-trim,t,0,0,trim/2,edge(s.bottomFit==='overlay'?'1011':'1000'),s.bottom==='inset'?capBinding:null);
   if(['inset','overlay'].includes(s.top))add('top','Крыша','horizontal',s.top==='overlay'?W:W-2*t,D-trim,t,0,H-t,trim/2,
     edge(s.top==='overlay'?'1111':'1000'),s.top==='inset'?capBinding:null);
-  if(s.top==='rails')for(const [key,z] of [['front',(D-80)/2],['rear',-(D-80)/2]])
-    add('rail-'+key,'Царга '+(key==='front'?'передняя':'задняя'),'horizontal',W-2*t,80,t,0,H-t,z,edge(key==='front'?'1000':'0100'),binding(left,right,0,z));
-  if(s.top==='sink')for(const [key,name,y,z] of [['front','передняя',H-80,(D-t)/2],['rear','задняя',H-80,-(D-t)/2],['rear-lower','задняя нижняя',t,-(D-t)/2]])
-    add('rail-'+key,'Царга '+name,'back',W-2*t,80,t,0,y,z,edge('1100'));
+  if(s.top==='rails')for(const [key,z] of [['front',(D-80)/2-(s.front?.topProfile?27:0)],['rear',-(D-80)/2+trim]])
+    add('rail-'+key,'Царга '+(key==='front'?'передняя':'задняя'),'horizontal',W-2*t,80,t,0,H-t,z,edge(key==='front'?'1000':'0100'),binding(left,right,0,z-left.z));
+  if(s.top==='sink')for(const [key,name,y,z] of [['front','передняя',s.front?.topProfile?H-117:H-80,(D-t)/2],['rear','задняя',H-80,-(D-t)/2],['rear-lower','задняя нижняя',t,-(D-t)/2]])
+    add('rail-'+key,'Царга '+name,'back',W-2*t,key==='front'&&s.front?.topProfile?60:80,t,0,y,z,edge('1100'));
   const installedDividers=new Set(leaves.map(d=>d.hostKey).filter(k=>k?.startsWith('divider-')));
   if(widths.some(w=>w-2*s.shelfGap<100))throw Error('Секции слишком узкие. Измените положение стойки, ширину шкафа или количество секций.');
   const supports=[left];let x=-W/2+t;
