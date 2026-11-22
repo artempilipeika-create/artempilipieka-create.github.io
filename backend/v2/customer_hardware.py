@@ -2,6 +2,7 @@
 from collections import Counter
 from decimal import Decimal
 from .album_layout import TYPES
+from .three_d_document import with_installed_drawer_depths
 from .sales_hardware import module_hardware, purchasing_rows
 from .sales_album import UNITS, client_title
 from .three_d_base import refresh_base_source
@@ -80,7 +81,7 @@ def module_groups(items):
 
 def module_rows(parts):
     counts, profiles = {}, {}
-    for item in parts:
+    for item in with_installed_drawer_depths(parts):
         rows, _ = module_hardware(item)
         rows, _ = purchasing_rows(refresh_base_source(item), rows)
         metrics = open_tall_metrics(item) or vitrine_metrics(item)

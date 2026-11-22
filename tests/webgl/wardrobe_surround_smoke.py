@@ -645,6 +645,62 @@ def section_presets(page, projects, project_id):
     print('PASS both section presets, undo, shelf and rod edits, saved wardrobe and native export', flush=True)
 
 
+def ready_layouts(page, projects, project_id):
+    page.locator('#planner-assistant').click()
+    form = page.locator('#planner-assistant-dialog')
+    field(form, 'Ширина, мм').fill('1800')
+    field(form, 'Глубина ЛДСП, мм').fill('480')
+    button(form, 'Собрать самому').click()
+    expect(button(form, 'Заполнить секцию')).to_be_visible()
+    button(form, '1. Корпус').click()
+    button(form, 'Выбрать готовое наполнение').click()
+    expect(form.locator('.ready-card img')).to_have_count(4)
+    button(form, 'Шкаф для двоих').click()
+    expect(form.locator('.ready-result svg')).to_be_visible()
+    expect(form.locator('.ready-result li')).to_have_count(3)
+    button(form, 'Пройти опрос').click()
+    field(form, 'Кто будет пользоваться?').select_option('two')
+    field(form, 'Пальто и платья').check()
+    field(form, 'Бельё и футболки').check()
+    button(form, 'Показать подходящий шкаф').click()
+    expect(form.locator('.ready-result')).to_contain_text('Три шуфляды')
+    button(form, 'Применить к шкафу').click()
+    button(form, 'Секция 2').click()
+    button(form, 'Заполнить секцию').click()
+    form.locator('summary', has_text='Готовая секция целиком').click()
+    button(form, 'Две высокие шуфляды').click()
+    expect(form.locator('.ready-section-list .ready-result')).to_contain_text('Секция 2')
+    button(form, 'Применить к секции').click()
+    button(form, 'Выдвинуть шуфляду').click()
+    expect(form.locator('.wardrobe-live output')).to_contain_text('Ход в просмотре')
+    button(form, 'Задвинуть шуфляду').click()
+    finish(page, form)
+    group, saved, parts = panels(projects, project_id)
+    assert len(saved['rods']) == 3 and len(saved['drawerBanks'][1]['faces']) == 2
+    assert parts['drawer-1-0-side-left']['depth'] == 450
+
+    form = reopen(page, project_id)
+    button(form, '1. Корпус').click()
+    field(form, 'Глубина ЛДСП, мм').fill('430')
+    notice = form.locator('[data-rail-change]')
+    expect(notice).to_contain_text('450 → 400 мм')
+    expect(notice).to_contain_text('114795')
+    finish(page, form, update=True)
+    updated_group, updated, boards = panels(projects, project_id)
+    assert group == updated_group and updated['rods'] == saved['rods'] and updated['depth'] == 430
+    assert [boards[f'drawer-1-{n}-side-left']['depth'] for n in range(2)] == [400, 400]
+    from backend.v2.sales_hardware import ledger
+    purchases, _ = ledger(projects.projects[project_id]['scene'])
+    guides = [r for r in purchases if r['article'] in ('114795', '114796')]
+    assert len(guides) == 1 and (guides[0]['article'], guides[0]['qty']) == ('114795', 2)
+    with page.expect_download() as download:
+        page.locator('#export-bazis').click()
+    rows = json.loads(Path(download.value.path()).read_text())['items']
+    rails = [r for r in rows if r.get('aks_kind') == 'rail']
+    assert len(rails) == 4 and all(r['article'] == '114795' and r['length_mm'] == 400 for r in rails)
+    print('PASS manual, catalogue, questionnaire, editable drawer bank, 3D travel, reopen, 450 to 400 mm, two 114795 sets and native export', flush=True)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
@@ -655,6 +711,9 @@ if __name__ == '__main__':
             for name in ('assistant-ui.mjs', 'assistant.css', 'wardrobe-questionnaire.mjs',
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs', 'wardrobe-section-presets.mjs',
                          'wardrobe-fittings.json', 'wardrobe-fittings.mjs', 'wardrobe-fitting-ui.mjs', 'wardrobe-fitting-meshes.json', 'wardrobe-fitting-photos/113950.webp',
+                         'wardrobe-ready-layouts.mjs', 'wardrobe-ready-ui.mjs', 'wardrobe-preview.mjs', 'wardrobe-drawers.mjs', 'wardrobe-aks-native.mjs',
+                         'wardrobe-layout-images/hall.webp', 'wardrobe-layout-images/couple.webp', 'wardrobe-layout-images/business.webp',
+                         'wardrobe-layout-images/utility.webp', 'wardrobe-layout-images/daily.webp', 'wardrobe-layout-images/deep.webp',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',
                          'wardrobe-z1-data.json', 'wardrobe-z1-meshes.json', 'wardrobe-door-ui.mjs', 'wardrobe-hinge-ui.mjs', 'wardrobe-hinges.mjs',
                          'bazis-drawers-import.js', 'kitchen-album-ui.mjs', 'presentation-capture.mjs',
@@ -666,3 +725,4 @@ if __name__ == '__main__':
 
     exercise(args.live, run)
     exercise(args.live, section_presets)
+    exercise(args.live, ready_layouts)

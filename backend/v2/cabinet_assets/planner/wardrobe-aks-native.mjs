@@ -284,7 +284,7 @@ export function wardrobeHardware(items){
        for(const [z,dy] of source.fixed)used.push({z:front-z,y:ax+dy});
        sharedSeats.set(host.item_id,used);
      }
-     add('rail',source,label,[host,sideParts[k]],mount,ax,front);
+     Object.assign(add('rail',source,label,[host,sideParts[k]],mount,ax,front),{article:cat.article,length_mm:L});
      const inset=Math.min(50,left.height/3);
      for(const end of [fore,rear])for(const level of [y+inset,y+left.height-inset]){
       add('bolt',aks.joints[k?'boltRight':'boltLeft'],'Конфирмат 7×50 · '+end.name,[sideParts[k],end],box,level,at(end).z);

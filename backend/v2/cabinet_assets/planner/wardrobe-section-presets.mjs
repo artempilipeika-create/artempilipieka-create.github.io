@@ -1,3 +1,4 @@
+import {readySectionControls} from './wardrobe-ready-ui.mjs';
 import {cellGeometry,insertShelves,keysAfterInsertion,setClearHeight} from './wardrobe-cells.mjs';
 import {sectionOf} from './wardrobe-layout.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
@@ -122,5 +123,5 @@ export function sectionPresetControls(ui,parent,cell){
    });
    select.setAttribute('aria-label',scheme.name);select.append(diagram(scheme.id),el('strong',scheme.name),el('small',scheme.description));cards.append(select);
  }
- panel.append(cards,feedback);wrap.append(trigger,panel);parent.append(wrap);
+ panel.append(cards,feedback);readySectionControls(ui,panel,cell.section);wrap.append(trigger,panel);parent.append(wrap);
 }

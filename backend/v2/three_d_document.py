@@ -125,6 +125,18 @@ def _prime_fixings(cams, dowels=None):
             _row('Шкант деревянный 8×35',cams if dowels is None else dowels,'pcs','39319')]
 
 
+def with_installed_drawer_depths(items):
+    # The side records the fitted ball-slide length including the door and rear setbacks.
+    sides = {it['item_id'].removesuffix('side-left')+'face': it['depth'] for it in items
+             if it.get('assistant_carcass') and re.search(r':drawer-\d+-\d+-side-left$', it.get('item_id', ''))}
+    for it in items:
+        key = it.get('item_id', '')
+        if it.get('assistant_carcass') and re.search(r':drawer-\d+-\d+-face$', key):
+            yield {**it, 'installed_drawer_depth_mm': sides.get(key)}
+        else:
+            yield it
+
+
 def hardware_for(it):
     rows,description=_panel_hardware(it)
     filling=it.get('kitchenFilling') or {}
@@ -188,8 +200,13 @@ def hardware_for(it):
             handle=banks[slot]['faces'][number].get('handle')
             if handle and handle['article'] not in ('118124','118129'):rows=[*rows,_facade_handle_row(handle,it)]
             depth=spec['depth']-(spec.get('backThickness') or 0)-(21 if banks[slot]['kind']=='internal' else 0)
-            length=min(600,((depth-5)//50)*50)
-            rail=AKS_GUIDES.get(str(length))
+            if 'installed_drawer_depth_mm' in it and banks[slot].get('railFamily')!='concealed':
+                length=it['installed_drawer_depth_mm']
+                if length is None or not float(length).is_integer() or str(int(length)) not in AKS_GUIDES:
+                    return rows,'Проверьте глубину боковины шуфляды для подбора направляющей.'
+            else:
+                length=min(600,((depth-5)//50)*50)
+            rail=AKS_GUIDES.get(str(int(length)))
             if rail and banks[slot].get('railFamily')!='concealed':
                 section,level,right_bank=niche_address(slot)
                 shared=any(z['kind']=='drawers' and z['section']==section and z['level']==level for z in spec.get('nicheSplits') or [])
@@ -647,7 +664,7 @@ def render(name,scene,materials,preview_png=None,module_previews=None):
     lighting_prices = {}
     def money(value):
         return 'Уточнить' if value is None else f'{value:.2f}'.replace('.', ',')
-    for i,it in enumerate(items,1):
+    for i,it in enumerate(with_installed_drawer_depths(items),1):
         if i>1: story.append(PageBreak())
         story.append(p('Комплектация по модулям','title'))
         title=f"{i}. {it.get('name') or MODULES.get(it.get('module_type'),'Модуль')} · {it.get('width')} x {it.get('height')} x {it.get('depth')} мм"

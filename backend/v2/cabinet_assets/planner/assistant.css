@@ -306,3 +306,22 @@
 
 .wardrobe-fitting-photos{display:flex;align-items:center;justify-content:center;min-width:0}
 .wardrobe-fitting-photos img{min-width:0;flex:1 1 0}
+
+/* Wardrobe entry and the editable layout catalogue share the normal questionnaire. */
+.ready-entry,.ready-section-list{min-width:0;margin:.85rem 0}
+.ready-routes{display:flex;flex-wrap:wrap;gap:.45rem}
+.ready-routes button[aria-pressed=true]{color:white;background:#244c3e;border-color:#244c3e}
+.ready-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr));gap:.65rem;margin:.75rem 0}
+.ready-cards .ready-card{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;min-width:0;text-align:left;background:#fff;color:#24382f;border:1px solid #c6d3c7;border-radius:.5rem;padding:.42rem;gap:.3rem;white-space:normal}
+.ready-card:is(:hover,:focus-visible){outline:2px solid #47765f;outline-offset:1px}
+.ready-card-art{display:grid;place-items:center;overflow:hidden;aspect-ratio:4/3;width:100%;background:#e9ebde;border-radius:.28rem}
+.ready-card-art img{display:block;width:100%;height:100%;object-fit:contain;min-height:0}
+.ready-card[data-ready-pick=daily] img,.ready-card[data-ready-pick=deep] img{object-fit:cover;object-position:50% 45%}
+.ready-card strong,.ready-card small{padding:0 .15rem}.ready-card small{font-size:.8rem;color:#4d6055}
+.ready-result:empty{display:none}.ready-result{border-top:1px solid #ccd7cc;padding-top:.55rem;margin-top:.65rem}.ready-result :is(h4,p,ul){margin:.35rem 0}
+.ready-result small{display:block;margin:.55rem 0}.ready-layout-spec{padding-left:1.15rem}
+.ready-layout-figure{background:#f3f4eb;text-align:center;border-radius:.35rem}.ready-layout-figure svg{display:block;margin:auto;max-width:100%;width:auto;height:11.5rem}
+.ready-things{display:flex;flex-wrap:wrap;gap:.35rem .8rem}.ready-things label{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:.35rem}.ready-things input{width:1rem;min-width:1rem;margin:0}
+.ready-section-icon{display:block;position:relative;height:82%;aspect-ratio:.5;background:#e5d6be;border:3px solid #a58b6a}.ready-section-icon i{position:absolute;width:100%;height:2px;background:#9b805f}
+.wardrobe-rail-notice{margin:.5rem 0;padding:.6rem .75rem;border-left:3px solid #457653;background:#e8f1e6;color:#1a462c;font-weight:600}
+.ready-entry [hidden], .wardrobe-rail-notice[hidden], .wardrobe-live button[hidden]{display:none!important}

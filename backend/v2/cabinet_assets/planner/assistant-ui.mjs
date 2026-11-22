@@ -14,6 +14,8 @@ import {WardrobePreview} from './wardrobe-preview.mjs';
 import {fittingControls} from './wardrobe-fitting-ui.mjs';
 import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
 import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
+import {startWardrobeControls} from './wardrobe-ready-ui.mjs';
+import {drawerRailSnapshot,drawerRailChanges} from './wardrobe-drawers.mjs';
 import {sectionPresetControls} from './wardrobe-section-presets.mjs';
 import {keysAfterInsertion,setClearWidth,setSectionShelfCount} from './wardrobe-cells.mjs';
 import {nicheSlot,splitAt} from './wardrobe-layout.mjs';
@@ -73,8 +75,9 @@ export class AssistantUI{
   const grid=el('div');grid.className='assistant-grid';this.form=el('div');this.form.className='assistant-fields';
   const aside=el('aside');aside.className='assistant-drawing';this.figureTitle=el('h3');this.drawing=el('div');this.drawing.className='wardrobe-figure';this.drawing.onclick=e=>this.pickShelf(e);wireCellDrag(this);wireRodDrag(this);wireHandleDrag(this);
   this.drawing.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.pickShelf(e);}};this.dimensions=el('p');this.description=el('p');const figureHead=el('div');figureHead.className='cell-figure-head';
+  this.railNotice=el('div');this.railNotice.dataset.railChange='';this.railNotice.className='wardrobe-rail-notice';this.railNotice.setAttribute('role','status');this.railNotice.setAttribute('aria-live','polite');this.railNotice.hidden=true;
   this.zoom=button('Развернуть схему',()=>this.zoomDiagram(!this.diagramExpanded));this.zoom.className='cell-zoom';
-  figureHead.append(this.figureTitle,this.zoom);aside.append(figureHead,this.drawing,this.dimensions,this.description);const visuals=el('div');visuals.className='assistant-visuals';
+  figureHead.append(this.figureTitle,this.zoom);aside.append(figureHead,this.railNotice,this.drawing,this.dimensions,this.description);const visuals=el('div');visuals.className='assistant-visuals';
   this.livePreview=new WardrobePreview(this.app,(section,level,column)=>{this.activeSection=section;this.nicheIndex=level;this.column=column;this.render();});
   visuals.append(this.livePreview.root,aside);grid.append(this.form,visuals);
   this.dialog.addEventListener('cancel',event=>{if(this.diagramExpanded){event.preventDefault();this.zoomDiagram(false);}});
@@ -84,7 +87,7 @@ export class AssistantUI{
   this.manual=button('Проверить по размерам',()=>this.ask(false));this.manual.className='assistant-primary';
   this.send=button('Проверить с ИИ',()=>this.ask());this.send.className='assistant-primary';this.apply=button('Добавить в проект',()=>this.commit());this.apply.className='assistant-primary';this.apply.hidden=true;
   footer.append(this.previous,this.next,this.manual,this.send,this.apply);this.remaining=el('p');this.remaining.className='assistant-hint';
-  this.dialog.append(head,el('p','Заполните пять шагов. Размеры и материалы сохраняются точно по анкете.'),this.mode,this.nav,grid,this.output,this.summary,footer,this.remaining);document.body.append(this.dialog);
+  this.dialog.append(head,this.mode,this.nav,grid,this.output,this.summary,footer,this.remaining);document.body.append(this.dialog);
   this.app.cabinets?.sync();
   this.unsubscribe=this.app.bridge.subscribe(reason=>{if(reason==='before-project'||reason==='project'){this.epoch=(this.epoch||0)+1;this.pending=null;this.dialog.close();}});
  }
@@ -103,6 +106,7 @@ export class AssistantUI{
   this.fields=s?{...structuredClone(s),sectionShelves:s.sectionShelves?.slice()??Array(s.sections).fill(s.shelves)}:{width:800,height:2200,depth:577,thickness:18,sections:1,sectionShelves:[0],back:true};
   prepareHeightFields(this.fields);
   this.sourceKeys=c?new Map(c.items.map(it=>[it.item_id.slice(c.metadata.group_id.length+1),it.item_id])):null;
+  this.wardrobeRoute=null;this.wardrobeAnswers=null;this.readyPick=null;this.refreshReady=null;this.railSnapshot=null;this.railUpdates=new Map();this.railNotice.replaceChildren();this.railNotice.hidden=true;
   this.rodId=null;this.rodDraft=null;this.wholeWidth=false;this.layoutUndo=[];this.layoutAnchor=null;this.zoomDiagram(false);
   if(c&&s.front&&!s.front.autoHinges&&s.drawerBanks){
    this.fields.drawerBanks.forEach((bank,slot)=>bank?.faces.forEach((face,i)=>{
@@ -247,7 +251,7 @@ export class AssistantUI{
   const scroll=this.dialog.scrollTop,focused=document.activeElement;
   const focus=keep&&this.form.contains(focused)?{tag:focused.localName,label:focused.getAttribute('aria-label')||focused.textContent}:null;
   const expanded=keep?[...this.form.querySelectorAll('details[open]')].map(d=>d.firstElementChild.textContent):[];
-  this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
+  this.refreshReady=null;this.form.replaceChildren();this.steps.forEach((b,i)=>{b.setAttribute('aria-current',i===this.step?'step':'false');b.disabled=this.busy;});this.form.append(el('h3',WARDROBE_STEPS[this.step]));
   if(this.step===0){
    this.groupTabs();
    if(this.view==='body'){
@@ -256,6 +260,7 @@ export class AssistantUI{
    name.oninput=()=>{this.cabinetName=name.value;this.invalidate();};label.append(name);this.form.append(label);
    this.number('width','Ширина, мм',200,2400);heightControl(this);this.number('depth','Глубина ЛДСП, мм',200,1200);
    this.select(this.form,'Толщина корпуса, мм',[...new Set([16,18,25,this.fields.thickness])].map(n=>[n,n+' мм']),this.fields.thickness,v=>{this.fields.thickness=Number(v);resizeDividerChoices(this.fields);if(Number(v)!==18)delete this.fields.joints;this.fields.shelfChoices=shelfRows(this.fields).map(row=>row.map(value=>{try{choice(value,Number(v));return value;}catch{return defaultShelf;}}));this.shelfDrafts={};this.serial.body++;this.materials.body=null;this.materialChanged.body=true;this.changed();});
+   startWardrobeControls(this,this.form);
    const division=el('fieldset');division.append(el('legend','Деление корпуса'));sectionChoices(this,division);this.form.append(division);
    for(const [key,title,overlay] of [['bottomFit','Конструкция дна','Накладное дно'],['topFit','Конструкция крыши','Накладная крыша']])
     this.select(this.form,title,[['inset','Между боковинами'],['overlay',overlay],...(key==='bottomFit'?[['none','Без дна · заднее ребро 100 мм']]:[])],this.fields[key]??'inset',v=>{this.fields[key]=v;this.changed();this.render();});
@@ -621,6 +626,7 @@ export class AssistantUI{
    if(preview.error)throw preview.error;
    const {built,issue}=preview;
    this.previewBuilt=built;
+   if(this.railNotice)this.updateRailNotice(built);this.refreshReady?.();
    if(view==='lighting')updateLightQuote(this,built,issue);
    const cell=activeCell(this),slot=nicheSlot(cell.section,cell.level,splitAt(built.spec,cell.section,cell.level)?.kind==='drawers'?cell.column??0:0);
    const selected=this.step===2;
@@ -644,7 +650,8 @@ export class AssistantUI{
     catch{this.livePreview.release();}
    }
   }catch(e){
-   this.previewBuilt=null;this.livePreview?.hide();
+   this.previewBuilt=null;this.livePreview?.hide();this.refreshReady?.();
+   if(this.railNotice)this.railNotice.hidden=true;
    if(view==='lighting')updateLightQuote(this,null,e.message);
    updateNicheResult(this,null,e.message);
    try{
@@ -654,6 +661,19 @@ export class AssistantUI{
    }catch{if(this.drawing.firstElementChild?.dataset.view!==view)this.drawing.replaceChildren();}
    this.dimensions.textContent='Проверьте параметры';this.description.textContent=e.message;
   }
+ }
+ updateRailNotice(built){
+  const next=drawerRailSnapshot(built.drawerBanks);
+  for(const [slot,change] of this.railUpdates){const now=next.get(slot);if(!now||now.family!==change.family||now.opening!==change.opening)this.railUpdates.delete(slot);}
+  for(const change of drawerRailChanges(this.railSnapshot,next)){
+   const previous=this.railUpdates.get(change.slot)?.previous??change.previous;
+   if(previous===change.length)this.railUpdates.delete(change.slot);
+   else this.railUpdates.set(change.slot,{...change,previous});
+  }
+  this.railSnapshot=next;
+  const text=[...this.railUpdates.values()].map(r=>r.place+' · шуфляд '+r.count+'. Направляющие '+r.previous+' → '+r.length+' мм, арт. '+r.article+'. Глубина коробов пересчитана.').join(' ');
+  if(this.railNotice.textContent!==text)this.railNotice.textContent=text;
+  this.railNotice.hidden=!text;
  }
  controls(){
   this.manual.hidden=this.step!==4||Boolean(this.pending);this.manual.disabled=this.busy;

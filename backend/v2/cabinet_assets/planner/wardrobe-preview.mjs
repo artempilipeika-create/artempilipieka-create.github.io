@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {MeshFactory} from './module-mesh.mjs';
 import {WardrobeMotion,drawerKey} from './wardrobe-motion.mjs';
+import {clearanceSession,drawerStroke} from './wardrobe-clearance.mjs';
 import {placeCarcass} from './carcass-model.mjs';
 import {footHeight} from './plinth-options.mjs';
 import {nicheOpenings} from './wardrobe-niches.mjs';
@@ -20,11 +21,28 @@ export class WardrobePreview{
     this.root=element('section');this.root.className='wardrobe-live';this.root.hidden=true;
     const header=element('div'),title=element('h3','Шкаф в 3D');
     this.select=element('select');this.select.setAttribute('aria-label','Шуфляда для просмотра');
-    header.append(title,this.select);this.canvas=element('canvas');this.canvas.setAttribute('aria-label','Открытый шкаф с внутренними фасадами');
-    this.root.append(header,this.canvas);
-    this.select.onchange=()=>{this.motion.requested=this.select.value||null;this.motion.changed=true;this.invalidate();};
+    this.drawerButton=element('button','Выдвинуть шуфляду');this.drawerButton.type='button';this.drawerButton.hidden=true;
+    this.drawerButton.onclick=()=>this.showDrawer(this.motion.requested?null:this.select.value||this.select.options[1]?.value);
+    header.append(title,this.select,this.drawerButton);this.canvas=element('canvas');this.canvas.setAttribute('aria-label','Открытый шкаф с внутренними фасадами');
+    this.travelNotice=element('output');this.travelNotice.hidden=true;this.root.append(header,this.canvas,this.travelNotice);
+    this.select.onchange=()=>this.showDrawer(this.select.value||null);
     this.canvas.onclick=e=>this.pick(e);
     this.resize=new ResizeObserver(()=>this.invalidate());this.resize.observe(this.canvas);
+  }
+  showDrawer(key){
+    const motion=this.motion;if(key!==motion.requested)motion.toggleDrawer(key||motion.requested);
+    this.updateTravel();this.invalidate();
+  }
+  updateTravel(){
+    const key=this.motion.requested;let message='';
+    if(key){
+      const hit=clearanceSession(this.adapter.items,this.entries,null,this.motion).drawer(key);
+      this.motion.limit=hit?.time??1;
+      const travel=Math.round(drawerStroke(this.adapter.items,groupId,key)*this.motion.limit);
+      message='Ход в просмотре '+travel+' мм.'+(hit?' Препятствие — '+hit.obstacle+'.':'');
+    }
+    this.select.value=key||'';this.drawerButton.textContent=key?'Задвинуть шуфляду':'Выдвинуть шуфляду';
+    this.travelNotice.textContent=message;this.travelNotice.hidden=!message;
   }
   init(owner){
     this.owner=owner;this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#e6ece5');
@@ -89,7 +107,8 @@ export class WardrobePreview{
       this.select.replaceChildren(new Option('Все шуфляды',''),...Array.from({length:count},(_,i)=>new Option('Шуфляда '+(i+1),slot+'-'+i)));
       this.select.dataset.bank=slot+':'+count;
     }
-    this.select.hidden=!count;this.select.value=this.motion.requested||'';
+    if(this.motion.requested&&!this.adapter.items.some(it=>it.item_id===groupId+':drawer-'+this.motion.requested+'-face'))this.motion.requested=null;
+    this.select.hidden=!count;this.drawerButton.hidden=!count;this.updateTravel();
     this.outline.visible=Boolean(bank);
     if(bank){
       const room=nicheOpenings(built.spec,bank.section)[levelOf(slot)];
@@ -110,8 +129,7 @@ export class WardrobePreview{
     if(this.onPart&&item){this.onPart(item.item_id.slice(groupId.length+1));return;}
     const key=drawerKey(item);if(!key||!item.item_id.endsWith('-face'))return;
     const slot=Number(key.split('-')[0]);
-    this.motion.toggleDrawer(key);this.onPick(sectionOf(slot),levelOf(slot),Number(isRightBank(slot)));
-    this.select.value=this.motion.requested||'';this.invalidate();
+    this.showDrawer(this.motion.requested===key?null:key);this.onPick(sectionOf(slot),levelOf(slot),Number(isRightBank(slot)));
   }
   invalidate(){
     if(!this.root.hidden&&!this.frame)this.frame=requestAnimationFrame(t=>this.draw(t));

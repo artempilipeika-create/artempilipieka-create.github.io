@@ -129,7 +129,9 @@ export function drawerSections(s,widths,legacy=false){
   const setback=Math.max(3,insetSetback);
   let faceFront=s.depth/2+(internal?-setback:18+(push?4:0));
   let bodyFront=faceFront-18,clearDepth=bodyFront+s.depth/2-rearClearance(s);
-  const rail=concealed?concealedRail(clearDepth-(push?4:0),bank.opening):railForOpening(clearDepth,legacy);
+  let rail;
+  try{rail=concealed?concealedRail(clearDepth-(push?4:0),bank.opening):railForOpening(clearDepth,legacy);}
+  catch(error){throw Error('Секция '+n+' · ниша '+(levelOf(slot)+1)+'. '+error.message+' Выберите другую серию в разделе «Шуфляды» или измените глубину.');}
   let hingeSetback=0;
   if(internal&&bank.hingeClearanceMm&&rowKeys.length){
    const deepestDoor=Math.max(...rowKeys.map(key=>hingeProduct(s.front,key).kind==='inset'?
@@ -214,4 +216,21 @@ export function doorZones(s,leaves,banks){
   if(top&&covered.some(b=>b.internal&&b.base<top))throw Error('Разделите створки для внутренних и наружных шуфляд по секциям.');
   return {...l,left,width,bottom:l.bottom+top,height:l.height-top};
  });
+}
+
+// The same fitted banks drive board geometry, the 3D preview and the change notice.
+export function drawerRailSnapshot(banks){
+ return new Map((banks??[]).filter(Boolean).map(b=>[b.slot,{section:b.section,length:b.rail.length,article:b.rail.article,
+  family:b.rail.family??'ball',opening:b.rail.opening??'soft',count:b.faces.length}]));
+}
+export function drawerRailChanges(before,after){
+ const changes=[];
+ for(const [slot,next] of after){
+  const old=before?.get(slot);
+  if(old&&old.length!==next.length&&old.family===next.family&&old.opening===next.opening){
+   const place='Секция '+(next.section+1)+' · ниша '+(levelOf(slot)+1)+(isRightBank(slot)?' справа':'');
+   changes.push({slot,previous:old.length,...next,place});
+  }
+ }
+ return changes;
 }
