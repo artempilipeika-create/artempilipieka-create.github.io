@@ -2,6 +2,7 @@
 // editing still belong to PlannerScene; this class only produces the pixels.
 import * as THREE from './vendor/three.module.js';
 
+import {CabinetShadows} from './canvas-shadows.mjs';
 import {textureSampler, chooseLevel, sample} from './canvas-materials.mjs';
 
 const studioKey = new THREE.Vector3(-.46, .67, .64).normalize();
@@ -41,7 +42,7 @@ function paint(frame, pixel, depth, ink, illumination, gloss, u, v) {
     dst[offset+1] = g*alpha + dst[offset+1]*(1-alpha);
     dst[offset+2] = b*alpha + dst[offset+2]*(1-alpha);
   }
-  if (ink.depthWrite) frame.depth[pixel] = depth;
+  if (ink.depthWrite) { frame.depth[pixel]=depth; frame.receiver[pixel]=ink.receiver?1:0; }
 }
 
 function triangle(frame, a, b, c, ink, mirrored) {
@@ -112,9 +113,8 @@ function line(frame, a, b, ink) {
 }
 
 const contactDirections=[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]];
-const shadowSteps=[.018,.046,.09,.16,.26];
 
-function contactShadows(frame,camera,key) {
+function contactShadows(frame,camera,shadows) {
   // Estimate short-range occlusion in metres, independently of the camera zoom.
   const step=3, width=Math.ceil(frame.width/step), height=Math.ceil(frame.height/step);
   if (width<3 || height<3) return;
@@ -124,10 +124,9 @@ function contactShadows(frame,camera,key) {
   }
   const dist=frame.distances, contact=frame.contact, proj=camera.projectionMatrix.elements;
   const focal=frame.height*proj[5]/(2*step);
-  const centerX=frame.width*(1-proj[8])/(2*step), centerY=frame.height*(1+proj[9])/(2*step);
   for (let y=0; y<height; y++) for (let x=0; x<width; x++) {
     const d=frame.depth[Math.min(frame.height-1,y*step+1)*frame.width+Math.min(frame.width-1,x*step+1)];
-    dist[y*width+x]=Number.isFinite(d)?proj[14]/(d+proj[10]):Infinity;
+    dist[y*width+x]=Number.isFinite(d)?(proj[14]-d*proj[15])/(proj[10]-d*proj[11]):Infinity;
   }
   contact.fill(1);
   for (let y=1; y<height-1; y++) for (let x=1; x<width-1; x++) {
@@ -136,7 +135,7 @@ function contactShadows(frame,camera,key) {
     const left=z-dist[i-1], right=dist[i+1]-z, up=z-dist[i-width], down=dist[i+width]-z;
     const dx=Math.abs(left)<Math.abs(right)?left:right, dy=Math.abs(up)<Math.abs(down)?up:down;
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) continue;
-    const radius=Math.min(20,Math.max(1,Math.round(focal*.075/z)));
+    const radius=Math.min(14,Math.max(1,Math.round(focal*.042/(camera.isPerspectiveCamera?z:1))));
     let shadow=0;
     for (let k=0; k<contactDirections.length; k++) {
       const direction=contactDirections[k], reach=k<4?radius*.48:radius;
@@ -147,22 +146,9 @@ function contactShadows(frame,camera,key) {
       const obstruction=delta+dx*sx+dy*sy-.0018;
       if (obstruction>0) shadow+=Math.min(1,obstruction/.022)*Math.max(0,1-Math.abs(delta)/.12);
     }
-    // Trace short rays towards the room's own key light. Only nearby depth intersections
-    // cast a shadow, keeping objects across the room out of a handle or shelf's shadow.
-    let cast=0;
-    if (key) {
-      const rayX=focal*key.x+(x-centerX)*key.z, rayY=-focal*key.y+(y-centerY)*key.z;
-      for (const reach of shadowSteps) {
-        const rayDepth=z-reach*key.z;
-        if (rayDepth<=camera.near) break;
-        const sx=Math.round(reach*rayX/rayDepth), sy=Math.round(reach*rayY/rayDepth);
-        if (x+sx<0 || x+sx>=width || y+sy<0 || y+sy>=height) break;
-        const blocker=dist[i+sy*width+sx], gap=rayDepth-blocker;
-        if (gap<=.0025 || gap>.08+reach*.25 || z+dx*sx+dy*sy-blocker<.005) continue;
-        cast=Math.max(cast,Math.min(1,(gap-.0025)/.015)*(1-reach/.34));
-      }
-    }
-    contact[i]=(1-.42*shadow/contactDirections.length)*(1-.24*cast);
+    const px=Math.min(frame.width-1,x*step+1), py=Math.min(frame.height-1,y*step+1), pixel=py*frame.width+px;
+    const visibility=shadows && frame.receiver[pixel]?shadows.visibility((px+.5)*2/frame.width-1,1-(py+.5)*2/frame.height,frame.depth[pixel]):1;
+    contact[i]=(1-.31*shadow/contactDirections.length)*visibility;
   }
   const data=frame.image.data;
   for (let y=0; y<frame.height; y++) {
@@ -186,6 +172,7 @@ export class CanvasRenderer {
     if (!this.context) throw new Error('2D canvas unavailable');
     this.capabilities={getMaxAnisotropy:()=>1, maxSamples:0, maxTextureSize:4096};
     this.shadowMap={};
+    this.cabinetShadows=new CabinetShadows();
     this.extensions={has:()=>false};
     this.ratio=1;
     this.moving=false;
@@ -224,7 +211,7 @@ export class CanvasRenderer {
     let frame=this.targets.get(owner);
     if (!frame || frame.width!==width || frame.height!==height) {
       const image=this.context.createImageData(width,height);
-      frame={width,height,image,words:new Uint32Array(image.data.buffer),depth:new Float32Array(width*height)};
+      frame={width,height,image,words:new Uint32Array(image.data.buffer),depth:new Float32Array(width*height),receiver:new Uint8Array(width*height)};
       this.targets.set(owner,frame);
     }
     return frame;
@@ -286,6 +273,7 @@ export class CanvasRenderer {
       if (colors) v.shade*=Math.sqrt(Math.max(0,.213*colors.getX(i)+.715*colors.getY(i)+.072*colors.getZ(i)));
     }
     const ink=this.ink(material), index=i=>indexed?indexed.getX(i):i;
+    ink.receiver=object.receiveShadow && !material.isMeshBasicMaterial;
     if (object.isLine) {
       for (let i=start; i+1<end; i+=object.isLineSegments?2:1) line(frame,vertices[index(i)],vertices[index(i+1)],ink);
       return;
@@ -302,11 +290,12 @@ export class CanvasRenderer {
     const frame=this.frame(), bg=scene.background?.isColor?scene.background.getHex():0xefece6;
     frame.words.fill((0xff000000 | channel(bg,0)<<16 | channel(bg,8)<<8 | channel(bg,16))>>>0);
     frame.depth.fill(Infinity);
-    const opaque=[], transparent=[];
+    const opaque=[], transparent=[], casters=[];
     let key=null;
     scene.traverseVisible(object=>{
       if (object.isDirectionalLight && object.castShadow && object.intensity>0 && object.layers.test(camera.layers)) key=object;
       if (!object.layers.test(camera.layers) || (!object.isMesh && !object.isLine && !object.isSprite)) return;
+      if (object.isMesh && object.castShadow && !object.isInstancedMesh) casters.push(object);
       if (object.frustumCulled && !(object.isSprite?this.frustum.intersectsSprite(object):this.frustum.intersectsObject(object))) return;
       const add=(material,group)=>{
         if (!material?.visible || material.opacity<=0 || material.isShadowMaterial) return;
@@ -323,9 +312,10 @@ export class CanvasRenderer {
     this.keyDirection.copy(studioKey);
     if (key) this.keyDirection.setFromMatrixPosition(key.matrixWorld).sub(this.viewLight.setFromMatrixPosition(key.target.matrixWorld)).normalize();
     camera.getWorldDirection(this.halfLight).negate().add(this.keyDirection).normalize();
-    this.viewLight.copy(this.keyDirection).transformDirection(camera.matrixWorldInverse);
+    const studioLighting=(camera.isPerspectiveCamera || Boolean(this.target && key)) && (!this.moving || this.target);
+    const shadows=studioLighting && key && this.shadowMap.enabled?this.cabinetShadows.build(key,casters,camera,this.target?640:1024):null;
     for (const queue of [opaque,transparent]) {
-      if (queue===transparent && camera.isPerspectiveCamera && (!this.moving || this.target)) contactShadows(frame,camera,key?this.viewLight:null);
+      if (queue===transparent && studioLighting) contactShadows(frame,camera,shadows);
       for (const {object,material,group} of queue) {
         if (object.isSprite) this.drawSprite(frame,object,camera);
         else this.draw(frame,object,material,group);

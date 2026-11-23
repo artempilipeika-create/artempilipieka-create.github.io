@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
 import {CanvasRenderer} from '../../backend/v2/cabinet_assets/planner/canvas-renderer.mjs';
 import {textureSampler, chooseLevel, sample} from '../../backend/v2/cabinet_assets/planner/canvas-materials.mjs';
+import {CabinetShadows} from '../../backend/v2/cabinet_assets/planner/canvas-shadows.mjs';
 
 function renderer(){
   const context={
@@ -87,4 +88,22 @@ test('real occluders shade nearby rear panels without drawing a border on a lone
   assert.ok(flat.every((v,i)=>i%4===3||v===255));
   const nearEdge=pixel(context.last,42,45)[0],outside=pixel(context.last,16,45)[0];
   assert.ok(nearEdge<outside,`near ${nearEdge}, outside ${outside}`);
+});
+
+test('a pull casts one continuous soft shadow at its physical offset from the facade',()=>{
+  const scene=new THREE.Scene(),key=new THREE.DirectionalLight(0xffffff,2);
+  key.position.set(-2,3,4);scene.add(key,key.target);key.castShadow=true;
+  Object.assign(key.shadow.camera,{left:-.6,right:.6,top:.6,bottom:-.6,near:.1,far:10});
+  key.shadow.camera.updateProjectionMatrix();
+  const pull=panel(scene,.28,.085,.04,0,0,.18,0x777777);pull.castShadow=true;
+  const camera=new THREE.PerspectiveCamera(36,1,.01,15);camera.position.z=2;
+  scene.updateMatrixWorld();camera.updateMatrixWorld();
+  const shadow=new CabinetShadows().build(key,[pull],camera,512);
+  const visible=(x,y)=>{const p=new THREE.Vector3(x,y,0).project(camera);return shadow.visibility(p.x,p.y,p.z);};
+  assert.ok(visible(.09,-.135)<.7);assert.equal(visible(.09,.13),1);
+  const row=Array.from({length:121},(_,i)=>visible(-.21+i*.005,-.135));
+  const first=row.findIndex(v=>v<.85),last=row.findLastIndex(v=>v<.85);
+  assert.ok(first>0 && last<row.length-1 && last-first>40);
+  assert.ok(row.slice(first,last+1).every(v=>v<.85));
+  assert.ok(row.some(v=>v>.65 && v<.99));
 });
