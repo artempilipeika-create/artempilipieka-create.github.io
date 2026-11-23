@@ -453,31 +453,39 @@ class PlannerApplication {
     return this.rendererChange;
   }
   async replaceRenderer(softwareOnly){
+    // Keep the current scene and its controls available until both implementations load.
+    const [native,softwareModule]=await Promise.allSettled([
+      import('./scene.mjs?v=canvas-views-1'),import('./canvas-renderer.mjs')
+    ]);
     const previous=this.scene,view=previous?.captureView?.(),oldMode=previous?.mode;
     const settings=previous&&{layer:previous.layer,clientView:previous.clientView,selectionScope:previous.selectionScope,
       cabinetSelection:previous.cabinetSelection,displayItemId:previous.displayItemId,displayMode:previous.displayMode,xrayEnabled:previous.xrayEnabled};
-    this.interaction?.dispose();previous?.dispose();this.scene=null;
+    this.interaction?.dispose();previous?.dispose();
+    let replacement;
     let canvas=get('scene');
     const freshCanvas=()=>{const next=canvas.cloneNode(false);canvas.replaceWith(next);canvas=next;};
     if(previous)freshCanvas();
     try{
-      const {PlannerScene}=await import('./scene.mjs?v=canvas-views-1');
+      if(native.status==='rejected')throw native.reason;
+      const {PlannerScene}=native.value;
       if(!softwareOnly){
         try{
           const context=canvas.getContext('webgl2',{antialias:true,alpha:false,depth:true,powerPreference:'high-performance'});
-          if(context)this.scene=new PlannerScene(canvas,this.adapter,()=>this.fallback(),{context});
+          if(context)replacement=new PlannerScene(canvas,this.adapter,()=>this.fallback(),{context});
         }catch(error){console.warn('WebGL scene unavailable:',error.message);}
         // A failed context request can leave this canvas bound to WebGL.
-        if(!this.scene)freshCanvas();
+        if(!replacement)freshCanvas();
       }
-      if(!this.scene){
-        const {CanvasRenderer}=await import('./canvas-renderer.mjs');
-        this.scene=new PlannerScene(canvas,this.adapter,()=>{},{softwareRenderer:new CanvasRenderer(canvas)});
+      if(!replacement){
+        if(softwareModule.status==='rejected')throw softwareModule.reason;
+        const {CanvasRenderer}=softwareModule.value;
+        replacement=new PlannerScene(canvas,this.adapter,()=>{},{softwareRenderer:new CanvasRenderer(canvas)});
       }
     }catch(error){
       console.warn('3D scene unavailable:',error.message);
-      freshCanvas();this.scene=new FallbackPlan(canvas,this.adapter);
+      freshCanvas();replacement=new FallbackPlan(canvas,this.adapter);
     }
+    this.scene=replacement;
     if(settings){
       for(const [key,value] of Object.entries(settings))if(value!==undefined)this.scene[key]=value;
       this.scene.sync();

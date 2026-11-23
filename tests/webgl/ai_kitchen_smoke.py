@@ -257,7 +257,7 @@ def scenario(page, projects, pid):
 def camera_views(page, projects, pid):
     """Exercise the real toolbar with GPU loss, recovery and a cold start without WebGL."""
     def ready():
-        page.wait_for_function("MF_PLANNER.ready && MF_PLANNER.scene.softwareRendering === true")
+        page.wait_for_function("MF_PLANNER.ready && MF_PLANNER.scene?.softwareRendering === true")
 
     def choose(selector, mode):
         button = page.locator(selector)
@@ -266,7 +266,11 @@ def camera_views(page, projects, pid):
         assert page.evaluate('MF_PLANNER.scene.mode') == mode
         return page.locator('#scene').screenshot()
 
+    assert page.evaluate('()=>MF_PLANNER.interaction.add({bazis:"bazis.3079d0656398"})')
+    page.evaluate('()=>MF_PLANNER.bridge.save()')
+    page.evaluate('id=>MF_PLANNER.bridge.open(id)', pid)
     items = page.evaluate('MF_PLANNER.adapter.items')
+    assert len(items) == 1
     choose('#planner-front', 'front')
     page.evaluate('MF_PLANNER.scene.renderer.forceContextLoss()')
     ready()
@@ -321,5 +325,5 @@ if __name__=='__main__':
                 asset=page.request.get(ORIGIN+'/account/planner/'+name)
                 assert asset.ok and asset.body()==(ROOT/'backend/v2/cabinet_assets/planner'/name).read_bytes(),name
         scenario(page,projects,pid)
-        camera_views(page,projects,pid)
+    exercise(a.live,camera_views)
     exercise(a.live,check)
