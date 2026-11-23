@@ -94,7 +94,7 @@ def test_context_recovery_preserves_unsaved_history_and_original_project_ids(pag
     page.locator('#planner-undo').click();expect(page.locator('#width')).to_have_value('600')
     panel(page,'right')
     page.locator('#planner-redo').click();expect(page.locator('#width')).to_have_value('650')
-    page.locator('#planner-retry').click()
+    page.evaluate('()=>MF_PLANNER.startRenderer()')
     expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl',timeout=20000)
     assert page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==before
     assert page.locator('.mf3d-canvas-wrap canvas').count()==1

@@ -66,7 +66,6 @@
 #planner-workspace #workspace-close-cutlist{position:absolute;right:7px;top:5px;z-index:3;height:27px;min-height:27px;padding:0 8px;font-size:20px;border:0;background:transparent}
 #planner-workspace .mf3d-cutlist:not([open]) #workspace-close-cutlist{display:none}
 #planner-workspace .studio-empty-scene{max-width:320px;padding:22px;top:48%;z-index:3}
-#planner-workspace #planner-fallback{top:72px;left:14px;right:70px;width:max-content;max-width:calc(100% - 85px);z-index:25}
 #planner-workspace #planner-mobile-nav{display:none}
 #planner-workspace.workspace-fullscreen .mf3d-top{height:48px;min-height:48px}
 /* Client presentation remains distinct from browser fullscreen editing. */
@@ -128,7 +127,6 @@
  #planner-workspace .studio-statusbar{bottom:110px;max-width:calc(100% - 24px);width:max-content;padding:7px 10px}
  #planner-workspace .mf3d-status{font-size:10px}
  #planner-workspace #planner-feedback{bottom:116px;max-width:calc(100% - 30px)}
- #planner-workspace #planner-fallback{top:60px;right:62px;max-width:calc(100% - 75px);font-size:9px;flex-wrap:wrap}
  #planner-workspace .studio-empty-scene{max-width:265px;top:45%;padding:18px}
  #planner-workspace .studio-empty-scene h2{font-size:27px}
  #planner-workspace.workspace-fullscreen .mf3d-top{height:80px;min-height:80px}

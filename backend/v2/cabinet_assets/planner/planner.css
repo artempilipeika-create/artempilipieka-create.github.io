@@ -18,8 +18,6 @@
 .mf-webgl #planner-dimension{position:absolute;transform:translateX(-50%);border:1px solid #bed0b5;background:#fffff5eb;color:#456c3e;box-shadow:0 3px 12px #314c2e10;padding:5px 10px;border-radius:6px;font:10px/1.3 "Segoe UI",Arial,sans-serif;pointer-events:none;white-space:nowrap}
 .mf-webgl #planner-feedback{position:absolute;bottom:53px;left:50%;transform:translateX(-50%);max-width:calc(100% - 36px);border:1px solid #aac59d;background:#eff6e8f2;color:#416639;padding:9px 13px;border-radius:8px;font-size:11px;text-align:center;pointer-events:none;z-index:3;box-shadow:0 5px 16px #395f2c12}
 .mf-webgl #planner-feedback[data-error=true]{border-color:#d1a581;background:#fff1e2f0;color:#925b32}
-.mf-webgl #planner-fallback{position:absolute;top:54px;left:14px;right:64px;background:#fff6e9f2;color:#805b35;border:1px solid #dbc6a6;padding:10px 12px;border-radius:9px;font-size:11px;display:flex;gap:12px;align-items:center;z-index:4}
-.mf-webgl #planner-fallback button{font-size:10px;flex-shrink:0}
 .mf-webgl .mf3d-help{max-width:calc(100% - 30px);font-size:9px;bottom:13px}
 .mf-webgl .studio-empty-scene{background:#f9faf4ed;box-shadow:0 12px 65px #4d5d390d;border-color:#fff;max-width:310px;padding:25px 23px}
 .mf-webgl .studio-empty-scene h2{font-size:31px;line-height:1.12}
@@ -50,8 +48,6 @@
  .mf-webgl .mf3d-left,.mf-webgl .mf3d-right{top:197px;bottom:74px}
  .mf-webgl .studio-empty-scene{max-width:270px;padding:18px 20px}
  .mf-webgl .studio-empty-scene h2{font-size:27px}
- .mf-webgl #planner-fallback{font-size:10px;right:12px;top:90px;padding:8px}
- .mf-webgl #planner-fallback button{padding:5px;font-size:9px}
  .mf-webgl #planner-feedback{font-size:10px;bottom:55px}
  .mf-webgl .mf3d-help{font-size:8px}
  .mf-webgl .studio-scene-caption{font-size:8px;min-height:25px}

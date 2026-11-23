@@ -40,5 +40,6 @@ def test_visual_geometry_cache_survives_rebuild_and_context_loss(page,api,settin
     before=page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')
     page.evaluate('MF_PLANNER.scene.renderer.forceContextLoss()');expect(page.locator('body')).to_have_attribute('data-planner-renderer','fallback')
     assert page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==before
-    page.locator('#planner-retry').click();expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl',timeout=20000)
+    page.evaluate('()=>MF_PLANNER.startRenderer()')
+    expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl',timeout=20000)
     assert page.evaluate('JSON.stringify(MF_PLANNER.bridge.payload())')==before

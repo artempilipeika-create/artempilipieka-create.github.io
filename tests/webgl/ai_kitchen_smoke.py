@@ -258,6 +258,8 @@ def camera_views(page, projects, pid):
     """Exercise the real toolbar with GPU loss, recovery and a cold start without WebGL."""
     def ready():
         page.wait_for_function("MF_PLANNER.ready && MF_PLANNER.scene?.softwareRendering === true")
+        expect(page.get_by_role('button', name='WebGL')).to_have_count(0)
+        expect(page.locator('#planner-fallback, #planner-renderer-note')).to_have_count(0)
 
     def choose(selector, mode):
         button = page.locator(selector)
@@ -291,9 +293,13 @@ def camera_views(page, projects, pid):
     assert page.evaluate('MF_PLANNER.scene.clientView') == 'front'
     page.locator('#planner-client').click()
     choose('#mode-2d', 'top')
-    page.locator('#planner-retry').click()
+    page.evaluate('()=>MF_PLANNER.bridge.save()')
+    page.reload(wait_until='domcontentloaded')
+    page.locator('#planner-assistant').wait_for(state='attached')
+    page.evaluate('id=>MF_PLANNER.bridge.open(id)', pid)
     expect(page.locator('body')).to_have_attribute('data-planner-renderer', 'webgl')
     expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed', 'true')
+    assert page.evaluate('MF_PLANNER.adapter.items') == items
 
     page.add_init_script("""const getContext=HTMLCanvasElement.prototype.getContext; let probes=0;
       HTMLCanvasElement.prototype.getContext=function(type,...args){
@@ -308,7 +314,7 @@ def camera_views(page, projects, pid):
     choose('#mode-2d', 'top')
     choose('#planner-front', 'front')
     old_canvas = page.locator('#scene').element_handle()
-    page.locator('#planner-retry').click()
+    page.evaluate('()=>MF_PLANNER.startRenderer()')
     page.wait_for_function('old=>!old.isConnected && MF_PLANNER.scene?.softwareRendering === true', arg=old_canvas)
     expect(page.locator('#planner-front')).to_have_attribute('aria-pressed', 'true')
     choose('#mode-3d', '3d')

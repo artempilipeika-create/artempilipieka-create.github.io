@@ -92,7 +92,6 @@ class PlannerApplication {
     const wrap=document.querySelector('.mf3d-canvas-wrap');
     const dimension=make('div','planner-dimension');dimension.hidden=true;wrap.append(dimension);
     const feedback=make('div','planner-feedback');feedback.hidden=true;feedback.setAttribute('role','status');wrap.append(feedback);
-    const fallback=make('div','planner-fallback');fallback.hidden=true;fallback.append(make('span','planner-renderer-note'),button('planner-retry','Включить WebGL'));wrap.append(fallback);
     const empty=get('studio-empty-scene');empty.querySelector('h2').textContent='Начните с первого модуля';empty.querySelector('p').textContent='Выберите шкаф в каталоге слева. Его размеры и материалы доступны справа.';
     const note=make('p','planner-elevation-note');note.className='studio-hint';get('studio-position-note').after(note);
     const nav=make('nav','planner-mobile-nav');nav.setAttribute('aria-label','Панели конструктора');
@@ -108,7 +107,6 @@ class PlannerApplication {
     offset.onchange=()=>{this.options.wallOffset=Math.max(0,Math.min(300,Number(offset.value)||0));offset.value=String(this.options.wallOffset);};
     auto.onchange=()=>{this.options.autoRotate=auto.checked;};
     client.onclick=()=>{this.interaction.cancel();const on=document.body.classList.toggle('planner-client');client.setAttribute('aria-pressed',String(on));client.textContent=on?'Редактировать':'Просмотр';this.scene.highlight();this.scene.hover(null);requestAnimationFrame(()=>{this.scene.resize();this.scene.fit('kitchen');});};
-    get('planner-retry').onclick=()=>this.startRenderer().then(()=>this.sync());
     const openPanel=which=>{
       const isInspector=which==='inspector',cls=isInspector?'studio-inspector-open':'studio-library-open';
       const already=document.body.classList.contains(cls)&&(isInspector||get('tab-'+which)?.getAttribute('aria-selected')==='true');
@@ -499,15 +497,16 @@ class PlannerApplication {
       this.scene.setView(mode);this.scene.fit(this.adapter.items.length?'kitchen':'room');
     }
     const limited=this.scene.isFallback,software=this.scene.softwareRendering;
-    get('planner-fallback').hidden=!(limited||software);
-    get('planner-renderer-note').textContent=limited?'Доступен план сверху.':'Ракурсы работают без WebGL.';
     if(limited)get('planner-dimension').hidden=true;
     document.body.dataset.plannerRenderer=limited||software?'fallback':'webgl';
     this.paintMode();
   }
   fallback(){
     if(this.scene?.isFallback||this.scene?.softwareRendering)return;
-    this.startRenderer(true).then(()=>{this.sync();this.adapter.status(this.scene.isFallback?'Открыт план сверху.':'Ракурс восстановлен без WebGL.');});
+    this.startRenderer(true).then(()=>{
+      this.sync();
+      if(this.scene.isFallback)this.adapter.status('Открыт план сверху.');
+    });
   }
   setView(mode){
     if(!this.scene||this.scene.isFallback&&mode!=='top')return;
