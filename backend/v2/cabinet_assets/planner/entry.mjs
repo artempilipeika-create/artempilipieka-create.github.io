@@ -463,11 +463,12 @@ class PlannerApplication {
     try{
       const {PlannerScene}=await import('./scene.mjs?v=canvas-views-1');
       if(!softwareOnly){
-        const context=canvas.getContext('webgl2',{antialias:true,alpha:false,depth:true,powerPreference:'high-performance'});
-        if(context){
-          try{this.scene=new PlannerScene(canvas,this.adapter,()=>this.fallback(),{context});}
-          catch(error){console.warn('WebGL scene unavailable:',error.message);freshCanvas();}
-        }
+        try{
+          const context=canvas.getContext('webgl2',{antialias:true,alpha:false,depth:true,powerPreference:'high-performance'});
+          if(context)this.scene=new PlannerScene(canvas,this.adapter,()=>this.fallback(),{context});
+        }catch(error){console.warn('WebGL scene unavailable:',error.message);}
+        // A failed context request can leave this canvas bound to WebGL.
+        if(!this.scene)freshCanvas();
       }
       if(!this.scene){
         const {CanvasRenderer}=await import('./canvas-renderer.mjs');

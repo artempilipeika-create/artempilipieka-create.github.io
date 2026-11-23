@@ -287,9 +287,11 @@ def camera_views(page, projects, pid):
     expect(page.locator('body')).to_have_attribute('data-planner-renderer', 'webgl')
     expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed', 'true')
 
-    page.add_init_script("""const getContext=HTMLCanvasElement.prototype.getContext;
+    page.add_init_script("""const getContext=HTMLCanvasElement.prototype.getContext; let probes=0;
       HTMLCanvasElement.prototype.getContext=function(type,...args){
-        return type==='webgl2'?null:getContext.call(this,type,...args);
+        if(type!=='webgl2')return getContext.call(this,type,...args);
+        if(probes++===0)return null;
+        throw new DOMException('WebGL disabled','SecurityError');
       };""")
     page.reload(wait_until='domcontentloaded')
     page.locator('#planner-assistant').wait_for(state='attached')
@@ -297,6 +299,10 @@ def camera_views(page, projects, pid):
     ready()
     choose('#mode-2d', 'top')
     choose('#planner-front', 'front')
+    old_canvas = page.locator('#scene').element_handle()
+    page.locator('#planner-retry').click()
+    page.wait_for_function('old=>!old.isConnected && MF_PLANNER.scene?.softwareRendering === true', arg=old_canvas)
+    expect(page.locator('#planner-front')).to_have_attribute('aria-pressed', 'true')
     choose('#mode-3d', '3d')
     assert page.locator('.mf3d-canvas-wrap canvas').count() == 1
     assert page.evaluate('MF_PLANNER.adapter.items') == items
