@@ -125,7 +125,8 @@ function railProfile(length,height,stage){
   return combine([plate,...[-1,1].map(side=>panelGeometry(lip,1.45,span,.24).translate((1-lip/2)*S,side*(height/2-.72)*S,0))]);
 }
 export class MeshFactory{
-  constructor(adapter,invalidate){
+  constructor(adapter,invalidate,boardRelief=null){
+    this.boardRelief=boardRelief;
     this.adapter=adapter;this.invalidate=invalidate;this.geometry=new THREE.BoxGeometry(1,1,1);
     this.plane=new THREE.PlaneGeometry(1,1);this.pool=new Map();this.materials=new Map();this.textures=new Map();
     this.applianceAssets=new ApplianceAssets(ready=>{if(this.dead)return;this.invalidate();if(ready)this.onAssetsReady?.();});
@@ -155,6 +156,9 @@ export class MeshFactory{
       if(brushed){m.anisotropy=role==='frame'?.22:.4;m.anisotropyRotation=Math.PI/2;m.envMapIntensity=role==='frame'?1.05:.94;}
       if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
       if(sheet&&!ghost&&!inspection){if(optics.roughness!==null)m.roughness=optics.roughness;if(m.isMeshPhysicalMaterial){m.clearcoat=optics.clearcoat;m.clearcoatRoughness=optics.clearcoatRoughness;m.ior=optics.ior;}m.envMapIntensity=.9;}
+      if(this.boardRelief&&sheet&&role!=='counter'&&!ghost&&!inspection&&m.roughness>=.55){
+        m.bumpMap=this.boardRelief;m.bumpScale=.00018;
+      }
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color,surfaceFinish:visual.finish};
       if(visual.url&&!ghost&&!inspection){
         const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);

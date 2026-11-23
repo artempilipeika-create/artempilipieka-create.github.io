@@ -107,7 +107,9 @@ export class StudioRender{
     const r=this.renderer;
     // Screenshots/catalogue render targets and technical orthographic views retain their own path.
     if(!this.available||r.getRenderTarget()||!camera.isPerspectiveCamera){r.render(scene,camera);return;}
-    const size=r.getDrawingBufferSize(new THREE.Vector2()),scale=Math.min(1,this.maxDimension/Math.max(size.x,size.y));
+    const size=r.getDrawingBufferSize(new THREE.Vector2());
+    const limit=moving?this.maxDimension:Math.max(2560,this.maxDimension);
+    const scale=Math.min(1,limit/Math.max(size.x,size.y));
     const w=Math.max(1,Math.round(size.x*scale)),h=Math.max(1,Math.round(size.y*scale));
     // Keep the full-resolution target at 4K. Limit transient multisample storage on laptop GPUs.
     const samples=Math.min(w*h>6000000?2:4,r.capabilities.maxSamples);

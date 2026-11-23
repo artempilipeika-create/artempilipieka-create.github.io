@@ -63,7 +63,12 @@ export class PlannerScene{
     });
     this.controls.addEventListener('start',()=>{this.orbitInput=true;});
     this.controls.addEventListener('end',()=>{if(!this.motionQuality)this.orbitInput=false;});
-    this.factory=new MeshFactory(adapter,()=>{this.invalidate();this.onVisualChanged?.();});this.root=new THREE.Group();this.scene.add(this.root);
+    const refreshMaterials=()=>{if(!this.dead){this.invalidate();this.onVisualChanged?.();}};
+    this.boardRelief=new THREE.TextureLoader().load('/account/planner/materials/studio-matte.webp',refreshMaterials);
+    this.boardRelief.wrapS=this.boardRelief.wrapT=THREE.RepeatWrapping;
+    this.boardRelief.repeat.set(4,4);
+    this.boardRelief.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
+    this.factory=new MeshFactory(adapter,refreshMaterials,this.boardRelief);this.root=new THREE.Group();this.scene.add(this.root);
     this.factory.maxAnisotropy=Math.min(12,this.renderer.capabilities.getMaxAnisotropy());
     this.guides=new THREE.Group();this.scene.add(this.guides);
     this.selectedBox=this.selectionBox();this.scene.add(this.selectedBox);
@@ -106,7 +111,9 @@ export class PlannerScene{
     if(this.clientFloor)this.clientFloor.visible=(this.mode==='3d'||Boolean(this.clientFloor.userData.tileSizeMm));
     if(this.floorJoints)this.floorJoints.visible=!this.clientFloor?.visible;
     if(this.ceiling)this.ceiling.visible=this.mode==='3d'&&this.camera.position.y<r.height*S;
-    if(this.mode==='3d')this.studioRender.render(this.scene,this.camera,!this.exportSize&&(this.motionQuality||moving||Boolean(this.preview)));else this.renderer.render(this.scene,this.camera);this.placeLabel();
+    const movingView=!this.exportSize&&(this.motionQuality||moving||Boolean(this.preview));
+    this.renderer.setMoving?.(movingView);
+    if(this.mode==='3d')this.studioRender.render(this.scene,this.camera,movingView);else this.renderer.render(this.scene,this.camera);this.placeLabel();
     if(!this.exportSize&&this.qualityMode==='auto'&&this.quality.name==='high'&&!document.hidden&&this.renderBudget.record(performance.now()-started))this.applyQuality('auto',true);
   }
   applyQuality(mode='auto',reduced=false){
@@ -606,5 +613,5 @@ export class PlannerScene{
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;clearTimeout(this.settleTimer);this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.surfaces?.disposeMaps();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);this.disposeTree(this.wardrobeContact);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;clearTimeout(this.settleTimer);this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.surfaces?.disposeMaps();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);this.disposeTree(this.wardrobeContact);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.boardRelief.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

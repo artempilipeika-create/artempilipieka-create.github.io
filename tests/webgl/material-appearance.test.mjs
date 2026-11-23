@@ -6,6 +6,19 @@ import {MeshFactory,panelGeometry} from '../../backend/v2/cabinet_assets/planner
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {PILOT_PRODUCTION,productionParts} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 const wood={variant_id:'wood',article:'Exact decor',material_id:'original',visual:{texture_url:'/wood.jpg',texture_size_mm:[1300,2800],rotation_deg:0,grain_direction:'length',roughness:.85,scale_confirmed:false}};
+test('Tripo matte relief modulates light on board without replacing its selected decor or glossy finishes',()=>{
+  const relief=new THREE.Texture(),state={displaySettings:{materialAppearance:{}}};
+  const f=new MeshFactory({state,material:()=>({visual:{render_color:'#d9cfbf'}})},()=>{},relief);
+  try{
+    for(const role of ['front','body','plinth','shelf']){
+      const m=f.material(role,'cream');assert.equal(m.bumpMap,relief);assert.equal(m.map,null);
+      assert.equal(m.color.getHexString(),'d9cfbf');assert.equal(m.userData.variantId,'cream');
+    }
+    state.displaySettings.materialAppearance.cream={finish:'gloss'};
+    assert.equal(f.material('front','cream').bumpMap,null);
+    for(const role of ['glass','handle','counter'])assert.equal(f.material(role).bumpMap,null);
+  }finally{f.dispose();relief.dispose();}
+});
 test('Display scale preserves the exact image, aspect ratio, source metadata and unconfirmed scale',()=>{
   const before=structuredClone(wood),v=materialVisual(wood,{scale:1.5,rotation:90,finish:'satin'});
   assert.deepEqual(v.size,[1950,4200]);assert.equal(v.rotation,90);assert.equal(v.url,'/wood.jpg');assert.equal(v.roughness,.48);assert.deepEqual(wood,before);

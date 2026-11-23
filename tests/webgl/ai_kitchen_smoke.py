@@ -278,6 +278,10 @@ def camera_views(page, projects, pid):
     front = choose('#planner-front', 'front')
     top = choose('#mode-2d', 'top')
     angle = choose('#mode-3d', '3d')
+    page.wait_for_function("""() => {
+        const scene=MF_PLANNER.scene, canvas=scene.canvas;
+        return canvas.width>=canvas.clientWidth && scene.factory.boardRelief.image?.naturalWidth===512;
+    }""")
     assert len({front, top, angle}) == 3
     assert page.evaluate('MF_PLANNER.scene.controls.enableRotate')
     assert page.evaluate('MF_PLANNER.adapter.items') == items

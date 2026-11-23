@@ -49,7 +49,7 @@ def router():
         'automatic-finishes.mjs','wall-finishes.mjs','wall-finish-mesh.mjs','wall-finish-ui.mjs','wall-finishes.css','wall-panel-sources.json',
         'presentation.mjs','presentation-capture.mjs','presentation-ui.mjs','presentation.css','kitchen-album-ui.mjs','album-geometry.mjs',
         'countertop-variants.js','countertop-variants.json','countertops.js','countertop-ui.mjs','countertop.css',
-        'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','canvas-renderer.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',
+        'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','canvas-renderer.mjs','canvas-materials.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',
         'studio-environment.mjs','studio-render.mjs','state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','vitrine-visuals.mjs','countertop-visuals.mjs','placement.mjs','mobility.mjs','mobility-ui.mjs',
         'interaction.mjs','material-visuals.mjs','room-state.mjs','room-daylight.mjs','room-interiors.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',

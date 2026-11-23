@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.module.js';
 import {CanvasRenderer} from '../../backend/v2/cabinet_assets/planner/canvas-renderer.mjs';
+import {textureSampler, chooseLevel, sample} from '../../backend/v2/cabinet_assets/planner/canvas-materials.mjs';
 
 function renderer(){
   const context={
@@ -51,4 +52,39 @@ test('geometry crossing the near plane remains visible from a perspective camera
   scene.add(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0xff0000,side:THREE.DoubleSide})));
   const camera=new THREE.PerspectiveCamera(60,120/90,.1,40);r.render(scene,camera);
   assert.deepEqual(pixel(context.last,60,45),[255,0,0]);assert.deepEqual(pixel(context.last,0,89),[239,236,230]);
+});
+
+test('a stationary kitchen resolves screen pixels, with independent motion, export and preview sizes',()=>{
+  const {r}=renderer();r.setSize(1864,895);
+  const still=[r.canvas.width,r.canvas.height];
+  assert.ok(still[0]>1864 && still[1]>895);
+  r.setMoving(true);assert.equal(r.canvas.width,1280);
+  r.setMoving(false);assert.deepEqual([r.canvas.width,r.canvas.height],still);
+  const target={width:768,height:600};r.setRenderTarget(target);r.setMoving(true);
+  assert.deepEqual([r.frame().width,r.frame().height],[768,600]);assert.equal(r.canvas.width,still[0]);
+  r.setRenderTarget(null);r.setSize(3840,2160,false,true);r.setMoving(true);
+  assert.deepEqual([r.canvas.width,r.canvas.height],[3840,2160]);
+});
+
+test('high resolution decor keeps fine strokes close up and averages them at a distance',()=>{
+  const w=2048, data=new Uint8ClampedArray(w*4);
+  for(let x=0;x<w;x++){data[x*4]=(x%2)*255;data[x*4+3]=255;}
+  const tx=new THREE.DataTexture(data,w,1), sampler=textureSampler(tx,new WeakMap()), out=new Float32Array(4);
+  chooseLevel(sampler,1/w,0,0,0);assert.equal(sampler.level.width,w);
+  sample(sampler,1.5/w,.5,out);assert.equal(out[0],1);
+  sample(sampler,2/w,.5,out);assert.ok(Math.abs(out[0]-.5)<.001);
+  chooseLevel(sampler,32/w,0,0,0);assert.ok(sampler.level.width<=256);
+  sample(sampler,.31,.5,out);assert.ok(Math.abs(out[0]-.5)<.01);assert.equal(out[3],1);
+});
+
+test('real occluders shade nearby rear panels without drawing a border on a lone flat face',()=>{
+  const {r,context}=renderer(),scene=new THREE.Scene();
+  panel(scene,2,2,.02,0,0,0,0xffffff);
+  const camera=new THREE.PerspectiveCamera(42,120/90,.01,10);camera.position.z=1;
+  r.render(scene,camera);const flat=Buffer.from(context.last.data);
+  panel(scene,.35,.6,.045,.04,0,.033,0xffffff);
+  r.render(scene,camera);
+  assert.ok(flat.every((v,i)=>i%4===3||v===255));
+  const nearEdge=pixel(context.last,42,45)[0],outside=pixel(context.last,16,45)[0];
+  assert.ok(nearEdge<outside,`near ${nearEdge}, outside ${outside}`);
 });

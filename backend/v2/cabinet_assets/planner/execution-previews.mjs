@@ -23,13 +23,13 @@ export function executionMaterialKey(item,adapter){
 // Isolated drafts, one existing WebGL context, and a bounded cache. No project writes.
 export class ExecutionPreviews{
  constructor(owner){
-  this.owner=owner;this.jobs=new Map();this.cache=new Map();this.visible=new Set();this.width=512;this.height=400;this.closed=false;
+  this.owner=owner;this.jobs=new Map();this.cache=new Map();this.visible=new Set();this.width=768;this.height=600;this.closed=false;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#f2efe8');this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=.7;
   this.scene.add(new THREE.HemisphereLight('#fffaf2','#b9b2a5',1.5));
   this.key=new THREE.DirectionalLight('#fff9ee',2.4);this.key.castShadow=true;this.key.shadow.mapSize.set(1024,1024);this.key.shadow.bias=-.00004;this.key.shadow.normalBias=.0006;this.key.shadow.intensity=.6;
   this.scene.add(this.key,this.key.target);const fill=new THREE.DirectionalLight('#ecf2ff',.9);fill.position.set(3,2,2);this.scene.add(fill);
   const previews=this;
-  this.factory=new MeshFactory({room:{width:4000,depth:4000,height:3000},get state(){return previews.renderMaterials?owner.adapter?.state||{}:{};},template:it=>({production:PRODUCTION_MODELS[it.bazis_id]}),material:id=>this.renderMaterials?owner.adapter?.material?.(id):null},()=>this.refreshImages());
+  this.factory=new MeshFactory({room:{width:4000,depth:4000,height:3000},get state(){return previews.renderMaterials?owner.adapter?.state||{}:{};},template:it=>({production:PRODUCTION_MODELS[it.bazis_id]}),material:id=>this.renderMaterials?owner.adapter?.material?.(id):null},()=>this.refreshImages(),owner.factory?.boardRelief);
   this.factory.onAssetsReady=()=>this.refreshImages();
   this.floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.ShadowMaterial({color:'#544b3a',opacity:.17,depthWrite:false}));this.floor.rotation.x=-Math.PI/2;this.floor.receiveShadow=true;this.scene.add(this.floor);
   this.target=new THREE.WebGLRenderTarget(this.width,this.height,{depthBuffer:true,samples:4});this.target.texture.colorSpace=THREE.SRGBColorSpace;this.pixels=new Uint8Array(this.width*this.height*4);
