@@ -175,6 +175,10 @@ function isDrawerCover(part){
   return Boolean(key&&(s?.drawerBanks?.[slot]?.coverFixing||s?.drawerFixing&&s?.drawerBanks?.[nicheSlot(Number(key[1]),Number(key[2])+1)]?.layout)||s&&part.item_id.includes(':shelf-base-'));
 }
 
+function canStaggerShelf(part){
+  return Boolean(part.assistant_carcass?.spec.dresser&&fixedShelfScheme(part))||isDrawerCover(part);
+}
+
 export function nativeCarcassJoints(items,{checkOpposing=true}={}) {
   const byId=new Map(items.map(it=>[it.item_id,it])),out=[];
   for (const panel of items) {
@@ -219,9 +223,9 @@ export function nativeCarcassJoints(items,{checkOpposing=true}={}) {
           host_blank_id:host.item_id,source_file,source_sha256,rotation:(angle+(side==='left'?0:180))%360,
           position:{x:point.x,y:panel.elevation_mm+(kind==='confirmat'?panel.height/2:9),z:point.z},elastic_resize:false});
       }
-      const opposite=Boolean(shelfScheme&&isDrawerCover(panel)&&items.some(other=>
+      const opposite=Boolean(shelfScheme&&canStaggerShelf(panel)&&items.some(other=>
         fixedShelfScheme(other)&&other.blank_binding?.[side==='left'?'right_id':'left_id']===host.item_id&&
-        Math.abs(other.elevation_mm-panel.elevation_mm)<10&&(side==='left'||!isDrawerCover(other))));
+        Math.abs(other.elevation_mm-panel.elevation_mm)<10&&(side==='left'||!canStaggerShelf(other))));
       // Two confirmats on each end of the 80 mm kitchen stretcher, 20 mm from each edge.
       const rows=rail?[-1,1].map(sign=>({kind:'confirmat',z:sign*(panel.depth/2-20)})):
         shelfScheme?shelfJointRows(panel,host,scheme):jointRows(scheme,panel.depth,false);

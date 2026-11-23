@@ -20,7 +20,7 @@ export class WardrobePreview{
     this.app=app;this.onPick=onPick;this.entries=new Map();this.motion=new WardrobeMotion();
     this.root=element('section');this.root.className='wardrobe-live';this.root.hidden=true;
     const header=element('div'),title=element('h3','Шкаф в 3D');
-    this.select=element('select');this.select.setAttribute('aria-label','Шуфляда для просмотра');
+    this.title=title;this.select=element('select');this.select.setAttribute('aria-label','Шуфляда для просмотра');
     this.drawerButton=element('button','Выдвинуть шуфляду');this.drawerButton.type='button';this.drawerButton.hidden=true;
     this.drawerButton.onclick=()=>this.showDrawer(this.motion.requested?null:this.select.value||this.select.options[1]?.value);
     header.append(title,this.select,this.drawerButton);this.canvas=element('canvas');this.canvas.setAttribute('aria-label','Открытый шкаф с внутренними фасадами');
@@ -74,6 +74,7 @@ export class WardrobePreview{
       return [item.item_id,preserve?retainedBlankMaterial(item,old,id=>this.app.adapter.material(id)):item.body_variant_id];
     }));
     const stamp=JSON.stringify([built.spec,[...materials.values()]]);
+    this.title.textContent=built.spec.dresser?'Комод в 3D':'Шкаф в 3D';
     if(this.stamp!==stamp){
       const meta={group_id:groupId,spec:built.spec,position:origin};
       const items=placeCarcass(built,origin).map(it=>({...it,body_variant_id:materials.get(it.item_id),assistant_carcass:meta}));
@@ -98,7 +99,7 @@ export class WardrobePreview{
     if(this.root.hidden||interior!==(this.slot!=null)){
       this.motion.reset();
       if(interior)this.motion.show(groupId);
-      this.canvas.setAttribute('aria-label',interior?'Открытый шкаф с внутренними фасадами':'Шкаф с выбранной фурнитурой');
+      this.canvas.setAttribute('aria-label',built.spec.dresser?'Комод с выбранным наполнением':interior?'Открытый шкаф с внутренними фасадами':'Шкаф с выбранной фурнитурой');
     }
     if(this.slot!==slot&&this.motion.requested?.split('-')[0]!==String(slot))this.motion.requested=null;
     this.slot=slot;

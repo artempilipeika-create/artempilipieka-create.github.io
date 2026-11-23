@@ -125,7 +125,7 @@ def z1_hinge_count(width,height,mass=None):
             return count
     raise ValueError('Размеры или масса створки выходят за диапазон петель Blum для рамки Z1.')
 
-LeafKey = Annotated[str, Field(pattern=r'^door-(?:(?:lower|upper)-)?(?:left|right)$')]
+LeafKey = Annotated[str, Field(pattern=r'^door-(?:(?:lower|upper|section-[0-3])-)?(?:left|right)$')]
 Swing = Literal['left','right','pair','open']
 
 class FacadeHandle(StrictModel):
@@ -260,16 +260,18 @@ class DoorHingeSetting(StrictModel):
 
 
 class OverlayFront(StrictModel):
-    hinges: dict[LeafKey,DoorHingeSetting] | None = Field(default=None,max_length=4,exclude_if=lambda v:v is None)
+    hinges: dict[LeafKey,DoorHingeSetting] | None = Field(default=None,max_length=8,exclude_if=lambda v:v is None)
     hingeDivider: int | None = Field(default=None,ge=0,le=2,strict=True,exclude_if=lambda v:v is None)
 
     def hinge_side(self,key):
         side=key.rsplit('-',1)[1]
+        if key.startswith('door-section-'):
+            return side
         setting=(self.hinges or {}).get(key)
         return ('right' if side=='left' else 'left') if setting and setting.on_divider else side
     division: FacadeDivision | None = Field(default=None,exclude_if=lambda v:v is None)
     edgeProfiles: dict[LeafKey,Annotated[list[FacadeProfile],Field(min_length=1,max_length=2)]] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
-    handles: dict[LeafKey,FacadeFitting] | None = Field(default=None,max_length=5,exclude_if=lambda v:v is None)
+    handles: dict[LeafKey,FacadeFitting] | None = Field(default=None,max_length=8,exclude_if=lambda v:v is None)
     topProfile: Literal[True] | None = Field(default=None,exclude_if=lambda v:v is None)
     swing: Literal['left','right','pair']
     offset: Literal[90,130]
@@ -524,7 +526,28 @@ class KitchenMaterials(StrictModel):
     parts: dict[Annotated[str,Field(pattern=r'^(left|right|back|bottom|top|plinth|rail-(front|rear|rear-lower)|door-(left|right)|shelf-0-[0-2])$')],UUID] = Field(default_factory=dict,max_length=16)
 
 
+class DresserBay(StrictModel):
+    kind: Literal['drawers','shelves','mixed','media']
+    drawers: int | None = Field(default=None,ge=1,le=24,strict=True,exclude_if=lambda v:v is None)
+    shelves: int | None = Field(default=None,ge=0,le=10,strict=True,exclude_if=lambda v:v is None)
+    swing: Literal['auto','left','right','pair'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    shelfGaps: list[Annotated[int,Field(ge=60,le=2900)] | None] | None = Field(default=None,max_length=10,exclude_if=lambda v:v is None)
+    clearHeight: int | None = Field(default=None,ge=60,le=2900,strict=True,exclude_if=lambda v:v is None)
+    heights: list[Annotated[int,Field(ge=100,le=3000)] | None] | None = Field(default=None,max_length=24,exclude_if=lambda v:v is None)
+    gap: float | None = Field(default=None,ge=0,le=100,exclude_if=lambda v:v is None)
+    fixing: Literal['board/95388','board/confirmat','board/cam_dowel'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    rail: Literal['ball','soft','push'] | None = Field(default=None,exclude_if=lambda v:v is None)
+    drawerPull: str | None = Field(default=None,pattern=r'^\d{5,6}$',exclude_if=lambda v:v is None)
+    doorPull: str | None = Field(default=None,pattern=r'^\d{5,6}$',exclude_if=lambda v:v is None)
+    cable: Literal['left','center','right'] | None = Field(default=None,exclude_if=lambda v:v is None)
+
+class DresserLayout(StrictModel):
+    installation: Literal['floor','wall']
+    bays: list[DresserBay] = Field(min_length=1,max_length=4)
+
+
 class CarcassDesign(CarcassSpec):
+    dresser: DresserLayout | None = Field(default=None,exclude_if=lambda v:v is None)
     kitchenStandard: Literal[2] | None = Field(default=None, exclude_if=lambda v:v is None)
     kitchenShelfFixing: KitchenShelfFixing | None = Field(default=None, exclude_if=lambda v:v is None)
     kitchenMaterials: KitchenMaterials | None = Field(default=None, exclude_if=lambda v:v is None)
@@ -785,6 +808,20 @@ class CarcassDesign(CarcassSpec):
                         else:leaf[2]-=.5
                 leaves.append(tall)
         else:leaves=band('',f.swing,1.5,self.width-1.5,1.5,roof)
+        if self.dresser:
+            leaves=[]
+            left=0
+            for i,(bay,width) in enumerate(zip(self.dresser.bays,self.clear_widths())):
+                end=left+width+self.thickness*(1+.5*(i==0)+.5*(i==self.sections-1))
+                if bay.kind in ('shelves','mixed'):
+                    swing=bay.swing
+                    if swing in (None,'auto'):
+                        swing='pair' if end-left-3>600 else 'left' if i<self.sections/2 else 'right'
+                    sides=('left','right') if swing=='pair' else (swing,)
+                    step=(end-left)/len(sides)
+                    for j,side in enumerate(sides):
+                        leaves.append([f'door-section-{i}-{side}',left+j*step+1.5,left+(j+1)*step-1.5,1.5,roof])
+                left=end
         configured=f.hinges or {}
         for key in self.doorFittings or {}:
             if key not in {p[0] for p in leaves} or key in configured and configured[key].article in Z1_HINGES:
@@ -794,7 +831,7 @@ class CarcassDesign(CarcassSpec):
             setup=configured.get(key)
             if setup and isinstance(setup.push,DoorPushSetting) and (key in handles or key in (f.edgeProfiles or {}) or f.topProfile and not key.startswith('door-lower-') or d and d.gola and key.startswith(('door-upper-','door-lower-'))):
                 raise ValueError('Для этой створки выбран типон. Уберите ручку или профиль.')
-            if setup and setup.on_divider:
+            if setup and setup.on_divider and not self.dresser:
                 prefix=key.rsplit('-',1)[0]+'-'
                 reveal=2 if DOOR_HINGES[setup.article]['kind']=='half' and torc(prefix+'left','right') and torc(prefix+'right','left') else 1.5
                 if key.endswith('left'):right=middle-reveal
@@ -928,6 +965,24 @@ class CarcassDesign(CarcassSpec):
 
     @model_validator(mode='after')
     def section_layout(self):
+        if self.dresser:
+            bays=self.dresser.bays
+            if self.kitchenModel or self.sections!=len(bays) or self.rods or self.fittings or self.doorFittings or self.nicheSplits or self.surround:
+                raise ValueError('Проверьте секции и наполнение комода.')
+            if (self.dresser.installation=='wall' and self.feet) or (self.dresser.installation=='floor' and self.elevation):
+                raise ValueError('Проверьте опоры и высоту установки комода.')
+            for i,bay in enumerate(bays):
+                slot=niche_slot(i,0)
+                bank=self.drawerBanks[slot] if self.drawerBanks and slot<len(self.drawerBanks) else None
+                count=(bay.shelves or 0)+int(bay.kind=='mixed' or bay.kind=='media' and bay.clearHeight is not None)
+                if self.sectionShelves is None or len(self.sectionShelves)!=len(bays) or self.sectionShelves[i]!=count:
+                    raise ValueError('Количество полок не совпадает с анкетой комода.')
+                if (bay.kind in ('drawers','mixed'))!=bool(bank) or bank and (bank.kind!='external' or len(bank.faces)!=bay.drawers):
+                    raise ValueError('Количество наружных шуфляд не совпадает с анкетой комода.')
+                if bay.cable and (bay.kind!='media' or not self.back):
+                    raise ValueError('Для вывода кабелей нужна задняя стенка за открытой нишей.')
+            if bool(self.front)!=any(b.kind in ('shelves','mixed') for b in bays):
+                raise ValueError('Для секции с полками нужны дверцы.')
         if self.kitchenModel:
             lower = self.kitchenModel.startswith('base-')
             sink = self.kitchenModel == 'base-sink'

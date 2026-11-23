@@ -14,16 +14,16 @@ const drawerLabels=new Map([
 ]);
 const text=value=>typeof value==='string'?value.trim():'';
 
-function nextNumber(used) {
+function nextNumber(used,product='Шкаф') {
  let i=1;
  while(used.has(i))i++;
  used.add(i);
- return 'Шкаф '+String(i).padStart(2,'0');
+ return product+' '+String(i).padStart(2,'0');
 }
-function occupiedNumbers(names) {
+function occupiedNumbers(names,product='Шкаф') {
  const used=new Set();
  for(const name of names){
-  const number=/^шкаф\s+(\d+)$/i.exec(name);
+  const number=(product==='Комод'?/^комод\s+(\d+)$/i:/^шкаф\s+(\d+)$/i).exec(name);
   if(number)used.add(Number(number[1]));
  }
  return used;
@@ -61,8 +61,8 @@ function wardrobeGroups(items){
 export function wardrobeNames(items) {
  return new Map([...wardrobeGroups(items)].map(([id,g])=>[id,g.name]));
 }
-export function nextCabinetName(items) {
- return nextNumber(occupiedNumbers(wardrobeNames(items).values()));
+export function nextCabinetName(items,product='Шкаф') {
+ return nextNumber(occupiedNumbers(wardrobeNames(items).values(),product),product);
 }
 
 function stripPrefix(name,g) {

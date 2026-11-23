@@ -52,7 +52,7 @@ export function carcassSpec(input={}){
   if(s.sectionShelves!=null&&(!Array.isArray(s.sectionShelves)||s.sectionShelves.length!==s.sections||s.sectionShelves.some(n=>!Number.isInteger(n)||n<0||n>10)||Math.max(...s.sectionShelves)!==s.shelves||!s.kitchenModel&&!['shelves','divided'].includes(s.recipe)))throw Error('Проверьте количество полок в каждой секции.');
   if(recipe.id==='sink'&&(s.back||s.shelves||s.sections!==1))throw Error('У корпуса под мойку нет полок, перегородок и задней стенки.');
   if(['base','cap'].includes(recipe.id)&&s.sections!==1)throw Error('У этой конструкции одна секция.');
-  return {...s,top:s.topFit??recipe.top,bottom:s.bottomFit??recipe.bottom,label:recipe.name};
+  return {...s,top:s.topFit??recipe.top,bottom:s.bottomFit??recipe.bottom,label:s.dresser?'Комод':recipe.name};
 }
 
 // Positions are measured from the inside face of the left side to the
@@ -236,7 +236,7 @@ export function buildCarcass(input={},options={}){
       const pull=handlePlacement(door,s.front.handles?.[door.key]);
       if(pull?.back&&usesProfileEdge(s.front,door.key,pull.edge))throw Error('Кромку с профилем Gola оставьте свободной от торцевой ручки.');
       const row=door.key.includes('upper-')?' верхний':door.key.includes('lower-')?' нижний':'';
-      add(door.key,(door.frame?'Витрина Z1':'Фасад')+row+' · петли '+(door.side==='left'?'слева':'справа'),'front',door.height,door.width,thickness,
+      add(door.key,(s.dresser?'Секция '+(door.section+1)+' · ':'')+(door.frame?'Витрина Z1':'Фасад')+row+' · петли '+(door.side==='left'?'слева':'справа'),'front',door.height,door.width,thickness,
         door.left+door.width/2-W/2,door.bottom,D/2+(door.faceOffset??18)-thickness/2,'1111');
     }
   }

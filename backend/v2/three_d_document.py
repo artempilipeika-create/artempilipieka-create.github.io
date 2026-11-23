@@ -329,7 +329,7 @@ def _panel_hardware(it):
         article=upper['push']['article']
         note=('Беспружинные петли и газлифт' if upper['opening']=='lift' else 'Беспружинные петли')+' · модель и присадка подбираются по образцу.'
         return [_row(AKS_PUSH[article]['name'],1,'pcs',article)],note
-    if it.get('blank_axis')=='front' and spec.get('front') and re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key):
+    if it.get('blank_axis')=='front' and spec.get('front') and re.fullmatch(r'door-(?:(?:lower|upper|section-[0-3])-)?(?:left|right)',key):
         w,h=it['width'],it['height']
         if grip:=it.get('blank_edge_pull'):
             from .assistant_model import DOOR_HARDWARE

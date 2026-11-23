@@ -1,11 +1,12 @@
+import {dresserLeaves} from './dresser-layout.mjs';
 import {isEdgePull} from './wardrobe-edge-pulls.mjs';
-import {sectionWidths,levelOf,isRightBank} from './wardrobe-layout.mjs';
+import {sectionSpans,sectionWidths,levelOf,isRightBank} from './wardrobe-layout.mjs';
 import {nicheOpenings} from './wardrobe-niches.mjs';
 import {adjustedHingeDoors,middleDivider,usesDivider} from './wardrobe-hinge-layout.mjs';
 import {overlayFronts} from './wardrobe-fronts.mjs';
 import {doorZones,drawerSections} from './wardrobe-drawers.mjs';
 import {isFacadeProfile,hasFacadeProfiles,planFacadeProfiles} from './wardrobe-facade-profiles.mjs';
-export {isFacadeProfile,hasFacadeProfiles};
+export {isFacadeProfile,hasFacadeProfiles,sectionSpans};
 import catalogue from './wardrobe-handle-catalogue.json' with {type:'json'};
 
 export const doorHardware=catalogue;
@@ -22,23 +23,17 @@ export const surfacePullFinishes=Object.freeze({
 });
 export const isSurfacePull=part=>part?.mount==='surface';
 export const pullHalfWidth=part=>Math.max(...part.bounds.map(point=>Math.abs(point[1])));
-export const doorKeyPattern=/^door-(?:(lower|upper)-)?(left|right)$/;
+export const doorKeyPattern=/^door-(?:(lower|upper|section-[0-3])-)?(left|right)$/;
 export const doorSide=key=>doorKeyPattern.exec(key)?.[2];
 export const doorLabel=key=>{
  const [,row,side]=doorKeyPattern.exec(key)??[];
+ if(row?.startsWith('section-'))return 'Секция '+(Number(row.slice(8))+1)+' · петли '+(side==='left'?'слева':'справа');
  return (row==='upper'?'Верхняя ':row==='lower'?'Нижняя ':'')+(side==='right'?'правая':'левая')+' дверь';
 };
 const edges=['left','right','bottom','top'];
 const isVertical=edge=>edge==='left'||edge==='right';
 const near=(a,b)=>Math.abs(a-b)<.001;
 
-export function sectionSpans(s){
- let x=0;
- return sectionWidths(s).map((width,i)=>{
-  const end=x+width+s.thickness*(1+(i===0?.5:0)+(i===s.sections-1?.5:0));
-  const span={left:x,right:end};x=end;return span;
- });
-}
 function divisionSpan(s,scope){
  const middle=usesDivider(s.front)?middleDivider(s).x:s.sections===2?sectionSpans(s)[0].right:s.width/2;
  return {left:scope==='right'?middle:0,right:scope==='left'?middle:s.width};
@@ -107,6 +102,7 @@ function bandLeaves(f,row,swing,a,b,low,high,center){
 }
 export function baseWardrobeDoors(s,banks=[]){
  const f=s.front;if(!f)return [];
+ if(s.dresser)return dresserLeaves(s,sectionSpans(s),banks);
  const divisions=f.division;
  const roof=f.topProfile?s.height-30:s.height-1.5;
  if(!divisions){

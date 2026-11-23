@@ -61,6 +61,7 @@ export function wardrobeSpec(f){
  if(!Number.isInteger(sections)||sections<1||sections>4||!Array.isArray(counts)||counts.length!==sections)throw Error('Выберите от одной до четырёх секций.');
  if(counts.some(n=>!Number.isInteger(n)||n<0||n>10))throw Error('В секции может быть от 0 до 10 полок.');
  const spec={recipe:sections===1?'shelves':'divided',width:Number(f.width),height:Number(f.height),depth:Number(f.depth),thickness:Number(f.thickness),shelves:Math.max(...counts),sections,sectionShelves:[...counts],back:f.back,elevation:f.elevation??0,shelfSetback:1,dividerSetback:1,shelfGap:f.shelfGap??0,edgeThickness:f.edgeThickness??1,edgePolicy:f.edgePolicy??'front'};
+ if(f.dresser)spec.dresser=structuredClone(f.dresser);
  if(f.overallHeight!=null){
   if(!Number.isInteger(f.overallHeight)||f.overallHeight<200||f.overallHeight>5000)throw Error('Общая высота от пола должна быть от 200 до 5000 мм.');
   // Older, deliberately taller bespoke trims can project above the ceiling panel.

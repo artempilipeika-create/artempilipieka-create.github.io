@@ -50,3 +50,11 @@ export function sectionWidths(s){
   const clear=inner-(s.sections-1)*s.thickness;
   return Array.from({length:s.sections},(_,i)=>Math.floor(clear/s.sections)+(i<clear%s.sections?1:0));
 }
+
+export function sectionSpans(s){
+ let x=0;
+ return sectionWidths(s).map((width,i)=>{
+  const end=x+width+s.thickness*(1+(i===0?.5:0)+(i===s.sections-1?.5:0));
+  const span={left:x,right:end};x=end;return span;
+ });
+}

@@ -255,7 +255,7 @@ class FurnitureItem(StrictModel):
         vertical=[self.height,self.body_height or 0,self.blank_length_mm or 0,self.elevation_mm or 0]
         if fitted and any(abs(v-round(v,3))>1e-8 for v in vertical):
             raise ValueError('Для фасада шуфляды допустима точность до 0,001 мм.')
-        door=bool(self.blank_axis=='front' and group and group.spec.front and re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key))
+        door=bool(self.blank_axis=='front' and group and group.spec.front and re.fullmatch(r'door-(?:(?:lower|upper|section-[0-3])-)?(?:left|right)',key))
         if door and any(v*2%1 for v in vertical):raise ValueError('Шаг размеров створки 0,5 мм.')
         post=bool(self.blank_axis=='side' and group and re.fullmatch(r'niche-\d+-\d+-divider',key))
         flush=bool(self.blank_binding and self.blank_binding.gola_flush)
@@ -667,7 +667,7 @@ def _validate_trim_facade_levels(items):
                 slot=int(drawer[1])
                 if slot>=len(banks) or not banks[slot] or banks[slot].kind!='external':
                     continue
-            elif not re.fullmatch(r'door-(?:(?:lower|upper)-)?(?:left|right)',key):
+            elif not re.fullmatch(r'door-(?:(?:lower|upper|section-[0-3])-)?(?:left|right)',key):
                 continue
             x,_=local_point(panel,panel.rotation)
             grip=panel.blank_edge_pull

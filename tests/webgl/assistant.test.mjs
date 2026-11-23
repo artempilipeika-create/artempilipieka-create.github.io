@@ -151,8 +151,8 @@ test('reopening the build wizard defaults to a new wardrobe with the previous on
  const previous=globalThis.document;
  globalThis.document={createElement:()=>({})};
  try{
-  const ui={app:{adapter:a},mode:{replaceChildren(){options.length=0;},append(option){options.push(option.value);}},
-   reset(){},dialog:{showModal(){}},steps:[{focus(){}}]};
+  const ui={app:{adapter:a},mode:{setAttribute(){},replaceChildren(){options.length=0;},append(option){options.push(option.value);}},
+   reset(){},dialog:{showModal(){},toggleAttribute(){},querySelector(){return {}; }},steps:[{focus(){}}]};
   AssistantUI.prototype.open.call(ui);
   assert.deepEqual(options,['create','update']);
   assert.equal(ui.mode.value,'create');
@@ -276,4 +276,45 @@ test('create and edit retain AKS section hardware and door straighteners in ever
  next.fittings[0].frontInset=24;next.doorFittings['door-right'].quantity=2;
  applyAssistantPlan(a,prepareAssistantPlan(a,{action:'update',spec:next},{selectedMaterials:selectedStock}));
  for(const it of a.items){assert.deepEqual(it.assistant_carcass.spec.fittings,next.fittings);assert.deepEqual(it.assistant_carcass.spec.doorFittings,next.doorFittings);}
+});
+
+test('dresser bays retain independent fronts, hinge hosts, fit and native cable coordinates through edits',async()=>{
+ const {newDresser,setDresserLayout,setDresserWidth,resizeDresser,syncDresser,dresserCableMarks}=await import('../../backend/v2/cabinet_assets/planner/dresser-layout.mjs');
+ const {buildCarcass}=await import('../../backend/v2/cabinet_assets/planner/carcass-model.mjs');
+ const {doorHinges}=await import('../../backend/v2/cabinet_assets/planner/wardrobe-hinges.mjs');
+ const {nativeCarcassJoints}=await import('../../backend/v2/cabinet_assets/planner/carcass-joints.mjs');
+ const f=newDresser(),design=()=>wardrobeSpec(syncDresser(f)),{a}=setup(wardrobeCatalogue);
+ const defaults=buildCarcass(design());
+ assert.deepEqual([defaults.drawerBanks[0].faces.length,defaults.doors.length],[3,0]);
+ assert.equal(defaults.parts.find(p=>p.key==='plinth').item.height,97);
+ const plan=action=>prepareAssistantPlan(a,{action,spec:design()},{selectedMaterials:selectedStock});
+ applyAssistantPlan(a,plan('create'));
+ const {group_id,name}=selectedCarcass(a).metadata;assert.equal(name,'Комод 01');
+ f.width=1600;f.height=600;f.depth=480;f.elevation=330;delete f.feet;f.dresser.installation='wall';
+ setDresserLayout(f,['drawers','media','shelves']);
+ Object.assign(f.dresser.bays[0],{heights:[null,null,140],rail:'soft',drawerPull:'127170'});
+ Object.assign(f.dresser.bays[1],{clearHeight:220,cable:'center'});
+ Object.assign(f.dresser.bays[2],{swing:'left',doorPull:'116550',shelfGaps:[160,null]});
+ assert.equal(buildCarcass(design()).drawerBanks[0].rail.length,450);
+ f.depth=430;
+ const updated=plan('update');applyAssistantPlan(a,updated);
+ a.restore(JSON.parse(JSON.stringify(a.snapshot())));
+ const saved=selectedCarcass(a).metadata;assert.equal(saved.group_id,group_id);assert.deepEqual(saved.spec.dresser,f.dresser);
+ const b=buildCarcass(saved.spec);
+ assert.equal(b.drawerBanks[0].rail.article,'113645');assert.deepEqual(b.drawerBanks[0].faces.map(v=>v.height),[225.5,225.5,140]);
+ assert.deepEqual(b.doors.map(d=>d.key),['door-section-2-left']);assert.deepEqual(b.drawerIssues,[]);
+ assert.deepEqual(dresserCableMarks(saved.spec),[{section:1,x:800.5,y:128}]);
+ const part=k=>a.items.find(it=>it.item_id===group_id+':'+k);
+ assert.equal(part('plinth'),undefined);assert.equal(part('left').elevation_mm,330);
+ assert.match(blankNativeItem(part('back'),{name:'ХДФ',thickness:3},a.items).production_note,/800.5 мм, от низа корпуса 128 мм/);
+ const hinges=doorHinges(part('door-section-2-left'),a.items);
+ assert.equal(hinges.length,2);assert.ok(hinges.every(h=>h.article==='112644'&&h.host_blank_id===group_id+':divider-1'));
+ setDresserWidth(f,1,530);assert.equal(sectionWidths(f)[1],530);resizeDresser(f,4);
+ assert.equal(f.dresser.bays[1].cable,'center');assert.equal(f.dividerPositions,undefined);
+ f.width=1800;setDresserLayout(f,['mixed','mixed','media','drawers']);
+ const mixed=buildCarcass(design());
+ const upper=mixed.doors.find(d=>d.section===1),faces=mixed.drawerBanks[1].faces;
+ assert.equal(upper.bottom-(faces.at(-1).y+faces.at(-1).height),3);
+ assert.equal(mixed.drawerBanks[66].section,3);
+ assert.doesNotThrow(()=>nativeCarcassJoints(mixed.items.map(it=>({...it,assistant_carcass:{group_id:it.item_id.split(':')[0],spec:mixed.spec}}))));
 });

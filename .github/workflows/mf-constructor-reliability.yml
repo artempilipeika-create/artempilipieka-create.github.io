@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [wardrobe-questionnaire, kitchen-questionnaire]
+        suite: [wardrobe-questionnaire, kitchen-questionnaire, dresser-questionnaire]
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -75,7 +75,13 @@ jobs:
           else
             python -m playwright install --with-deps chromium
           fi
-          if [ "$MF_QA_SUITE" = kitchen-questionnaire ]; then
+          if [ "$MF_QA_SUITE" = dresser-questionnaire ]; then
+            if [ "$MF_QA_LIVE" = true ]; then
+              python tests/webgl/dresser_smoke.py --live
+            else
+              python tests/webgl/dresser_smoke.py
+            fi
+          elif [ "$MF_QA_SUITE" = kitchen-questionnaire ]; then
             if [ "$MF_QA_LIVE_KITCHEN" = true ]; then
               python tests/webgl/ai_kitchen_smoke.py --live
             else

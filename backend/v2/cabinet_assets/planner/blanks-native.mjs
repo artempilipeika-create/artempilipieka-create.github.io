@@ -1,3 +1,4 @@
+import {dresserCableMarks} from './dresser-layout.mjs';
 import z1 from './wardrobe-z1-data.json' with {type:'json'};
 import {worldPoint} from './blank-bindings.mjs';
 import {fitSavedMezzanineBacks} from './wardrobe-surround.mjs';
@@ -29,7 +30,9 @@ export function blankNativeItem(it,material,items=[],liraArticles=[]){
    position:{x:it.x+delta.x,y:it.elevation_mm-2,z:it.z+delta.z},rotation:it.rotation||0,production_note:it.production_note||''};
  }
  const golaCuts=boardProfileCuts(it,items),shelfCuts=horizontalProfileCuts(it,items);
- const upper=it.assistant_carcass?.spec?.surround?.upper;
+ const spec=it.assistant_carcass?.spec;
+ const cableMarks=spec?.dresser&&it.item_id.endsWith(':back')?dresserCableMarks(spec):[];
+ const upper=spec?.surround?.upper;
  const upperNote=upper&&/:mezz-door-(?:left|right)$/.test(it.item_id)?
   (upper.opening==='lift'?'Беспружинные петли и газлифт':'Беспружинные петли')+' · модель и присадка подбираются по образцу.':'';
  const b=normalizeBlank(it),source=it.blank_edge_pull?BLANK_SOURCES['1111']:BLANK_SOURCES[b.code]||BLANK_SOURCES['1111'];
@@ -44,7 +47,7 @@ export function blankNativeItem(it,material,items=[],liraArticles=[]){
  source_default:{width:18,height:600,depth:510},elastic_resize:false,
  target:{width:it.width,height:it.height,depth:it.depth},
  position:{x:it.x,y:b.elevation,z:it.z},rotation:it.rotation||0,
- material_assignments:{body:material},production_note:[it.production_note,upperNote,...Object.entries(it.assistant_carcass?.spec.doorFittings??{}).filter(([k])=>it.item_id===it.assistant_carcass.group_id+':'+k).map(([,v])=>{const p=fittingCatalogue[v.variant];return p.name+' · AKS '+p.article+' · '+v.quantity+' шт. '+p.manual+' Фрагмент «'+p.file+'».';}),...(it.blank_machining??[]).map((op,i)=>{
+ material_assignments:{body:material},production_note:[it.production_note,upperNote,...cableMarks.map(m=>'Вывод кабеля · секция '+(m.section+1)+'. Центр от левого края корпуса '+m.x+' мм, от низа корпуса '+m.y+' мм.'),...Object.entries(it.assistant_carcass?.spec.doorFittings??{}).filter(([k])=>it.item_id===it.assistant_carcass.group_id+':'+k).map(([,v])=>{const p=fittingCatalogue[v.variant];return p.name+' · AKS '+p.article+' · '+v.quantity+' шт. '+p.manual+' Фрагмент «'+p.file+'».';}),...(it.blank_machining??[]).map((op,i)=>{
   if(!op.lightSystem)return '';
   const m=lightingSystems[op.lightSystem],length=b.length-(op.start??0)-(op.end??0);
   const article=liraArticles[i]??m.profile?.stock.find(s=>s.length_mm>=length)?.article??m.led_article;

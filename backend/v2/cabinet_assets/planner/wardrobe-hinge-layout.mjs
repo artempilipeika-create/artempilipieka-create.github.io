@@ -36,7 +36,7 @@ export function selectLeafFrame(front,key,frame){
  return true;
 }
 const defaultSetting={article:'112595'};
-export const nominalSide=key=>/^door-(?:(?:lower|upper)-)?(left|right)$/.exec(key)?.[1];
+export const nominalSide=key=>/^door-(?:(?:lower|upper|section-[0-3])-)?(left|right)$/.exec(key)?.[1];
 export const compatibleHinge=(hinge,push)=>!push||hinge.closing==='springless';
 export function chooseHinge(kind,push,preferred,frame=hingeCatalogue[preferred]?.frame??'board',brand=frame==='Z1'?'Blum':hingeCatalogue[preferred]?.frame?'AKS':hingeBrand(hingeCatalogue[preferred])){
  const current=hingeCatalogue[preferred];
@@ -57,7 +57,7 @@ export function hingeProduct(f,key){
  return withMountingPlate(p,setting.plate);
 }
 export const onDivider=(f,key)=>hingeProduct(f,key).kind==='half'||settingFor(f,key).central===true;
-export const installedSide=(f,key)=>onDivider(f,key)?(nominalSide(key)==='left'?'right':'left'):nominalSide(key);
+export const installedSide=(f,key)=>key.startsWith('door-section-')?nominalSide(key):onDivider(f,key)?(nominalSide(key)==='left'?'right':'left'):nominalSide(key);
 export const insetDepth=(f,key)=>settingFor(f,key).recess??2;
 export const usesDivider=f=>Object.keys(f?.hinges??{}).some(key=>onDivider(f,key));
 export function dividerAxes(s){
@@ -70,7 +70,12 @@ export function middleDivider(s){
  if(axes[index]==null)throw Error('Для петель на общей стойке добавьте перегородку в разделе «Полки» и выберите её в фасадах.');
  return {index,x:axes[index]};
 }
-export function mountKey(s,key){return onDivider(s.front,key)?'divider-'+middleDivider(s).index:installedSide(s.front,key);}
+export function mountKey(s,key){
+ if(s.dresser&&key.startsWith('door-section-')){
+   const i=Number(key.split('-')[2]);
+   return nominalSide(key)==='left'?(i===0?'left':'divider-'+(i-1)):(i===s.sections-1?'right':'divider-'+i);
+ }
+ return onDivider(s.front,key)?'divider-'+middleDivider(s).index:installedSide(s.front,key);}
 const near=(a,b)=>Math.abs(a-b)<.01;
 export function activeLeafKeys(f){
  if(!f)return [];

@@ -145,7 +145,7 @@ export function doorHinges(door,items){
  const cupMargin=fit.cupFromHostMm+overlay-17.5;
  if(!fit.frame&&fit.kind!=='overlay'&&(cupMargin<3||cupMargin>7))throw Error('Эта толщина стойки требует другой планки или присадки PRIME. Проверьте наложение фасада.');
  const center=hostKey.startsWith('divider-');
- const section=center?middleDivider(spec).index+(side==='left'?1:0):side==='left'?0:spec.sections-1;
+ const section=center?Number(hostKey.slice('divider-'.length))+(side==='left'?1:0):side==='left'?0:spec.sections-1;
  const opposing=[];
  if(center&&side==='right')for(const peer of items){
   if(!peer.item_id.startsWith(group.group_id+':'))continue;

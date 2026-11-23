@@ -58,7 +58,7 @@ export function validateBlank(input,room,mount=input.assistant_carcass?.spec.bac
   const minLength=trimFace||drawerSide(input.item_id)||input.blank_edge_pull?40:100;
   const drawerFace=b.axis==='front'&&(input.blank_edge_pull||drawerMember(input.item_id,'\\d+-face'));
   const precise=value=>Number.isFinite(value)&&Math.abs(value*1000-Math.round(value*1000))<.000001;
-  const door=b.axis==='front'&&/:(?:mezz-door-|door-(?:(?:lower|upper)-)?)(?:left|right)$/.test(input.item_id??'');
+  const door=b.axis==='front'&&/:(?:mezz-door-|door-(?:(?:lower|upper|section-[0-3])-)?)(?:left|right)$/.test(input.item_id??'');
   if(!(drawerFace||trimPost?precise(b.length):Number.isInteger(b.length*(door||post||hdf?2:1)))||b.length<minLength||b.length>3000)return 'Длина заготовки: от '+minLength+' до 3000 мм.';
   if(!(trimFace?precise(b.width):Number.isInteger(b.width*(fittedWidth||b.axis==='front'||b.axis==='side'&&input.blank_machining?.some(op=>op.kind==='rabbet')?2:1)))||b.width<minWidth||b.width>(b.axis==='back'?3000:1200))return 'Ширина заготовки: от '+minWidth+' до '+(b.axis==='back'?3000:1200)+' мм.';
   if(input.assistant_carcass&&input.item_id===input.assistant_carcass.group_id+':plinth'&&b.code!=='1111')

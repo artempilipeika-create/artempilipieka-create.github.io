@@ -6,7 +6,7 @@
 #planner-assistant-dialog .shelf-options>div{display:flex;flex-direction:column;gap:4px;min-width:0}
 #planner-assistant-dialog .shelf-options select{font-size:12px;padding:3px}
 #planner-assistant-dialog .shelf-schedule{font-size:12px;margin-bottom:0}
-#planner-assistant{color:#18573e;border-color:#6a967c;background:#eff8ef}
+#planner-assistant,#planner-dresser{color:#18573e;border-color:#6a967c;background:#eff8ef}
 #planner-assistant-dialog{width:min(560px,calc(100vw - 32px));max-height:85vh;overflow:auto;border:1px solid #b8c8b9;border-radius:18px;padding:24px;background:#fafcf8;color:#243a2e;box-shadow:0 20px 80px #18372540}
 #planner-assistant-dialog::backdrop{background:#102a2266}
 #planner-assistant-dialog .assistant-head{display:flex;justify-content:space-between;align-items:center;gap:16px}
@@ -328,3 +328,11 @@
 .ready-section-icon{display:block;position:relative;height:82%;aspect-ratio:.5;background:#e5d6be;border:3px solid #a58b6a}.ready-section-icon i{position:absolute;width:100%;height:2px;background:#9b805f}
 .wardrobe-rail-notice{margin:.5rem 0;padding:.6rem .75rem;border-left:3px solid #457653;background:#e8f1e6;color:#1a462c;font-weight:600}
 .ready-entry [hidden], .wardrobe-rail-notice[hidden], .wardrobe-live button[hidden]{display:none!important}
+
+#planner-assistant-dialog .dresser-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px}
+#planner-assistant-dialog .dresser-cards button{display:grid;align-content:center;justify-items:center;gap:5px;height:100%;min-width:0;margin:0;padding:8px;text-align:center}
+.dresser-cards button[aria-pressed=true]{outline:2px solid #257253;outline-offset:-2px}
+.dresser-cards img,.dresser-scheme svg{display:block;width:100%;height:80px;object-fit:contain}
+.dresser-cards strong{font-size:.87rem}
+.dresser-scheme{width:100%;padding:5px 0}
+#planner-assistant-dialog .wardrobe-figure [data-dresser-section]{cursor:pointer}

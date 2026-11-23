@@ -5,7 +5,7 @@ import {rearClearance} from './panel-machining.mjs';
 import {sectionOf,isRightBank,levelOf,splitAt,columnWidths,nicheSlot} from './wardrobe-layout.mjs';
 import aks from './aks-wardrobe.json' with {type:'json'};
 import {anchoredShelf} from './wardrobe-door-layout.mjs';
-import {fittedFaceHeights,frontEdgeGap,coverClearance,mm} from './wardrobe-niches.mjs';
+import {fittedFaceHeights,frontEdgeGap,coverClearance,mm,nicheOpenings} from './wardrobe-niches.mjs';
 import prime from './wardrobe-prime.json' with {type:'json'};
 export function concealedRail(depth,opening='soft'){
  const length=Math.min(550,Math.floor((depth-3)/50)*50),product=prime[opening]?.[length];
@@ -159,6 +159,8 @@ export function drawerSections(s,widths,legacy=false){
    const f={width,height,x:(lo+hi)/2,y:mm(bottom+frontEdgeGap),z:faceFront-9,boxY,hardwareBottom:concealed?boxY-railLift:boxY-3,railY:concealed?boxY-railLift+railRadius:boxY+40};
    bottom=mm(bottom+height+(bank.layout?bank.gap:3));return f;
   });
+  // The exterior front overlaps the roof or shelf, while the box travels beneath it.
+  if(s.dresser&&!internal)faces.at(-1).boxTop=nicheOpenings(s,i)[levelOf(slot)].top-3;
   if(bank.layout)bottom=base+bank.height;
   if(bottom>s.height-(internal?s.thickness:0))throw Error('Секция '+n+': блоку шуфляд не хватает '+(bottom-s.height+(internal?s.thickness:0))+' мм.');
   return {section:i,slot,legacy,base,internal,spacerL,spacerR,left,right,mountWidth,center,bodyFront,mountFront,rail,railRadius,hingeSetback,faceFixing:bank.faceFixing??'cam',clearDepth,faces,top:bottom,span:bottom-base};

@@ -118,7 +118,7 @@ export class CabinetControls{
    this.panel.hidden=!scene.cabinetSelection;this.choose.hidden=!id||!this.panel.hidden;
    this.part.hidden=!scene.xrayEnabled||!scene.pickedInterior;this.part.textContent=scene.pickedInterior?.name||'';
    this.edit.hidden=!this.app.assistant?.button||!id||!it.assistant_carcass.spec.kitchenModel&&!['shelves','divided'].includes(it.assistant_carcass.spec.recipe);
-   this.panelEdit.hidden=this.edit.hidden;
+   this.panelEdit.hidden=this.edit.hidden;this.panelEdit.textContent=it?.assistant_carcass?.spec.dresser?'Редактировать комод':'Редактировать шкаф';
    scene.onWardrobeChanged=this.openingChanged;
    const members=id?adapter.items.filter(part=>cabinetId(part)===id):[];
    const hasDrawer=members.some(part=>drawerFacadeKey(leafKey(part)));
@@ -130,7 +130,7 @@ export class CabinetControls{
    if(!this.opening.root.hidden)this.opening.sync(scene.wardrobeMotion,members,it.assistant_carcass.spec);
    document.getElementById('item-controls').classList.toggle('whole-cabinet',!this.panel.hidden);
    if(!this.panel.hidden){
-     const s=it.assistant_carcass.spec,g=s.surround?surroundLayout(s):s;this.size.textContent='Шкаф целиком · '+g.width+' × '+g.height+' × '+g.depth+' мм';
+     const s=it.assistant_carcass.spec,g=s.surround?surroundLayout(s):s;this.size.textContent=(s.dresser?'Комод':'Шкаф')+' целиком · '+g.width+' × '+g.height+' × '+g.depth+' мм';
      if(this.lastGroup!==id)this.offsets.forEach(input=>input.value='0');
    }
    this.lastGroup=scene.cabinetSelection;
