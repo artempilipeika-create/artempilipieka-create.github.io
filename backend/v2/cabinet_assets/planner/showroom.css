@@ -55,6 +55,7 @@
 #planner-workspace .mf3d-module-group{grid-template-columns:minmax(0,1fr);gap:16px}
 #planner-workspace .mf3d-module[data-card-artwork] .studio-preview{aspect-ratio:4/3;object-fit:contain}
 #planner-workspace .mf3d-module[data-card-artwork][data-category=tall] .studio-preview{aspect-ratio:1/1;object-fit:cover}
+#planner-workspace .mf3d-module:is([data-card-artwork=native],[data-ai-kitchen]) .studio-preview{aspect-ratio:1;object-fit:contain}
 #planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy{padding:13px 16px 8px;gap:5px}
 #planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy strong{font-size:17px}
 #planner-workspace .mf3d-module[data-card-artwork] .mf3d-module-copy>span:not(.studio-card-options){min-height:0;font-size:12px;line-height:1.45}

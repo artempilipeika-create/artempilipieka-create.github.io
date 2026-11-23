@@ -71,13 +71,20 @@ test('Actual export retains all39 source pins, native720 versus target450 and fr
  payload.items.forEach((out,i)=>{const v=M.variants[i];assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.source_file,v.source_file);assert.equal(out.target.height,v.default_height);assert.equal(out.source_default.height,v.native_frame.size[1]);assert.equal(out.construction.modern_cabinet.family,v.family);});
 });
 
-test('Updated upper bodies keep the previously approved catalogue and option photographs',async()=>{
+test('Modern covers and installed filling renders follow their own BAZIS donor',async()=>{
  await import('../../backend/v2/cabinet_assets/planner/catalogue-artwork.js');
- const {executionArtwork}=await import('../../backend/v2/cabinet_assets/planner/execution-artwork.mjs');
- for(const [family,legacy,file]of [['upper1','bazis.858266606bc5','upper-upper-execution-handles.webp'],['upper2','bazis.6c187245284a','upper-double-upper-execution-handles.webp']]){
-  const id=M.families[family].default_id,art=globalThis.MF_CATALOGUE_ARTWORK;
-  assert.equal(art[id].file,art[legacy].file);assert.equal(art[id].source,'tripo');
-  assert.ok(executionArtwork(item(M.choice(id)),'modern','execution','handles').includes(file));
+ const {executionArtwork,installedFillingArtwork}=await import('../../backend/v2/cabinet_assets/planner/execution-artwork.mjs');
+ for(const [key,family] of Object.entries(M.families)){
+  const art=globalThis.MF_CATALOGUE_ARTWORK[family.default_id];
+  assert.equal(art.file,'modern-'+key);assert.equal(art.source,'native');
+ }
+ for(const variant of M.variants){
+  const it=item(variant),before=structuredClone(it);
+  const image='/account/planner/kitchen-option-images/'+variant.id.slice(6)+'.webp';
+  assert.equal(new URL(installedFillingArtwork(it),'https://example.invalid').pathname,image);
+  const field=variant.family==='fridge'?'fridge_layout':'execution';
+  assert.equal(new URL(executionArtwork(it,'modern',field,variant[field]),'https://example.invalid').pathname,image);
+  assert.deepEqual(it,before);
  }
 });
 test('Both photographed dryers can be selected directly from a shelf cabinet without changing the source pins',async()=>{

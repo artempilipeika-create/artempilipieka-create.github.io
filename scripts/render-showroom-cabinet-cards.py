@@ -57,7 +57,7 @@ for filename, shot_id in input_data["cards"].items():
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.render.engine = "CYCLES"
-scene.cycles.samples = 12
+scene.cycles.samples = 18
 # Some distribution builds omit Cycles' bundled OIDN. Use the same Intel RT filter externally there.
 external_denoise = bool(os.environ.get("MF_OIDN_MODULES"))
 frame_directory = TemporaryDirectory(prefix="mf-cabinet-render-") if external_denoise else None
@@ -66,19 +66,20 @@ scene.cycles.max_bounces = 5
 scene.cycles.diffuse_bounces = 2
 scene.cycles.glossy_bounces = 2
 scene.cycles.transparent_max_bounces = 10
-scene.render.resolution_x = scene.render.resolution_y = 620
+scene.render.resolution_x = scene.render.resolution_y = 800
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = "PNG" if external_denoise else "WEBP"
 scene.render.image_settings.quality = 91
 scene.view_settings.view_transform = "AgX"
-scene.view_settings.exposure = 0.0
+scene.view_settings.look = "AgX - Medium High Contrast"
+scene.view_settings.exposure = -0.25
 # Blender's -t command-line setting controls CPU tenancy in either mode.
 scene.world = bpy.data.worlds.new("Daylight studio")
 scene.world.use_nodes = True
 world_nodes = scene.world.node_tree.nodes
 background = world_nodes.get("Background")
 background.inputs["Color"].default_value = (0.88, 0.90, 0.94, 1)
-background.inputs["Strength"].default_value = 0.33
+background.inputs["Strength"].default_value = 0.24
 
 
 def linear(code):
@@ -101,12 +102,12 @@ def studio_light(name, energy, color, size):
     return obj
 
 
-key = studio_light("Large softbox to the left", 350, (1.0, 0.944, 0.865), 3.7)
+key = studio_light("Large softbox to the left", 350, (1.0, 0.944, 0.865), 2.8)
 fill = studio_light("Window fill", 115, (0.88, 0.94, 1.0), 3.1)
 rim = studio_light("Top edge", 110, (1.0, 0.974, 0.92), 2.4)
-camera = bpy.data.objects.new("Product camera", bpy.data.cameras.new("Orthographic"))
+camera = bpy.data.objects.new("Product camera", bpy.data.cameras.new("Product camera"))
 scene.collection.objects.link(camera)
-camera.data.type = "ORTHO"
+camera.data.type = "PERSP"
 scene.camera = camera
 geometry_cache = {}
 material_cache = {}
@@ -115,21 +116,21 @@ material_cache = {}
 def material(definition):
     role, code = definition["role"], definition["color"]
     stock = {
-        "front": "e1d7cb",
-        "plinth": "e1d7cb",
+        "front": "bfa488",
+        "plinth": "bfa488",
         "body": "ffffff",
         "shelf": "ffffff",
         "drawer": "f5f4f0",
         "back": "f9f9f6",
-        "counter": "605449",
+        "counter": "d8d2c1",
         "handle": "292b2a",
         "leg": "292a28",
         "applianceMetal": "9ba0a0",
         "applianceDark": "424947",
         "rackSteel": "899497",
         "glass": "eaf4ef",
-        "showroom-wall": "e8e5df",
-        "showroom-floor": "e6e3dc",
+        "showroom-wall": "e1d9cc",
+        "showroom-floor": "d3c9b7",
     }
     code = stock.get(role, code)
     signature = (
@@ -149,52 +150,58 @@ def material(definition):
     shader.inputs["Base Color"].default_value = linear(code)
     shader.inputs["Roughness"].default_value = definition.get("roughness", 0.6)
     shader.inputs["Metallic"].default_value = definition.get("metalness", 0)
-    if role in ("body", "shelf", "drawer", "back", "plinth", "front", "counter"):
-        shader.inputs["Roughness"].default_value = 0.61 if role != "counter" else 0.68
-        tex = n.new("ShaderNodeTexCoord")
-        mapping = n.new("ShaderNodeVectorMath")
-        mapping.operation = "SCALE"
-        link(
-            tex.outputs["Generated"]
-            if role == "counter"
-            else n.new("ShaderNodeNewGeometry").outputs["Position"],
-            mapping.inputs[0],
-        )
-        mapping.inputs["Scale"].default_value = 1.0 if role == "counter" else 18.0
-        if role == "counter":
-            image = n.new("ShaderNodeTexImage")
-            image.image = bpy.data.images.load(
-                str(model_root / "materials/egger-f187-st9.jpg"), check_existing=True
-            )
-            image.projection = "BOX"
-            image.projection_blend = 0.08
-            link(mapping.outputs[0], image.inputs[0])
-            # Calibrate the physical swatch to the studio key light and AgX display transform.
-            gain = n.new("ShaderNodeVectorMath")
-            gain.operation = "SCALE"
-            gain.inputs["Scale"].default_value = 0.45
-            link(image.outputs["Color"], gain.inputs[0])
-            link(gain.outputs[0], shader.inputs["Base Color"])
-            shader.inputs["Specular IOR Level"].default_value = 0.13
-        micro = model_root / "materials/studio-matte.webp"
-        if micro.exists() and role != "counter":
-            texture = n.new("ShaderNodeTexImage")
-            texture.image = bpy.data.images.load(str(micro), check_existing=True)
-            texture.image.colorspace_settings.name = "Non-Color"
-            texture.projection = "BOX"
-            texture.projection_blend = 0.1
-            link(mapping.outputs[0], texture.inputs[0])
-            height = texture.outputs["Color"]
-        else:
-            texture = n.new("ShaderNodeTexNoise")
-            texture.inputs["Scale"].default_value = 360.0 if role == "counter" else 33.0
-            texture.inputs["Detail"].default_value = 1.5
-            link(mapping.outputs[0], texture.inputs[0])
-            height = texture.outputs["Fac"]
+    if role in ("front", "plinth", "counter"):
+        # This finish belongs to the illustration only. Both oak surfaces use the same photographed board.
+        image = n.new("ShaderNodeTexImage")
+        file = "egger-f637-st10.jpg" if role == "counter" else "egger-h305-st12.jpg"
+        image.image = bpy.data.images.load(str(model_root / "materials" / file), check_existing=True)
+        link(n.new("ShaderNodeTexCoord").outputs["UV"], image.inputs["Vector"])
+        color = image.outputs["Color"]
+        if role in ("front", "plinth"):
+            oak = n.new("ShaderNodeVectorMath")
+            oak.operation = "MULTIPLY"
+            oak.inputs[1].default_value = (.81, .72, .62)
+            link(color, oak.inputs[0])
+            color = oak.outputs["Vector"]
+        link(color, shader.inputs["Base Color"])
+        shader.inputs["Roughness"].default_value = .57 if role == "counter" else .49
+        shader.inputs["Specular IOR Level"].default_value = .28
         bump = n.new("ShaderNodeBump")
-        bump.inputs["Strength"].default_value = 0.13
-        bump.inputs["Distance"].default_value = 0.00013
-        link(height, bump.inputs["Height"])
+        bump.inputs["Strength"].default_value = .18
+        bump.inputs["Distance"].default_value = .00025 if role == "counter" else .00016
+        link(image.outputs["Color"], bump.inputs["Height"])
+        link(bump.outputs["Normal"], shader.inputs["Normal"])
+    if role in ("body", "shelf", "drawer", "back"):
+        shader.inputs["Roughness"].default_value = .60
+        tex = n.new("ShaderNodeTexNoise")
+        tex.inputs["Scale"].default_value = 1350
+        tex.inputs["Detail"].default_value = 1.5
+        link(n.new("ShaderNodeNewGeometry").outputs["Position"], tex.inputs[0])
+        bump = n.new("ShaderNodeBump")
+        bump.inputs["Strength"].default_value = .12
+        bump.inputs["Distance"].default_value = .00006
+        link(tex.outputs["Fac"], bump.inputs["Height"])
+        link(bump.outputs["Normal"], shader.inputs["Normal"])
+    if role in ("showroom-wall", "showroom-floor"):
+        coords = n.new("ShaderNodeNewGeometry").outputs["Position"]
+        grain = n.new("ShaderNodeTexNoise")
+        grain.inputs["Scale"].default_value = 2.1 if role == "showroom-wall" else 3.6
+        grain.inputs["Detail"].default_value = 7
+        grain.inputs["Roughness"].default_value = .68
+        link(coords, grain.inputs[0])
+        ramp = n.new("ShaderNodeValToRGB")
+        low, high = ("c5bbae", "eae4d9") if role == "showroom-wall" else ("b1a592", "e4ded3")
+        ramp.color_ramp.elements[0].color = linear(low)
+        ramp.color_ramp.elements[1].color = linear(high)
+        link(grain.outputs["Fac"], ramp.inputs[0])
+        link(ramp.outputs["Color"], shader.inputs["Base Color"])
+        fine = n.new("ShaderNodeTexNoise")
+        fine.inputs["Scale"].default_value = 185
+        link(coords, fine.inputs[0])
+        bump = n.new("ShaderNodeBump")
+        bump.inputs["Strength"].default_value = .22
+        bump.inputs["Distance"].default_value = .00065
+        link(fine.outputs["Fac"], bump.inputs["Height"])
         link(bump.outputs["Normal"], shader.inputs["Normal"])
     if role in ("applianceMetal", "rackSteel"):
         shader.inputs["Metallic"].default_value = 0.78
@@ -251,6 +258,32 @@ basis = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
 placeholder = bpy.data.materials.new("Instance material")
 
 
+def board_uv(mesh, transform, role):
+    # Three's panel axes are X across, Y up and Z deep. Map in metres before the hinge pose
+    # so an opened door keeps its grain. Fronts in the same bank share a registration datum.
+    result = mesh.copy()
+    positions = np.empty((len(mesh.vertices), 3), np.float32)
+    mesh.vertices.foreach_get("co", positions.ravel())
+    positions *= np.linalg.norm(transform[:3, :3], axis=0)
+    indices = np.empty(len(mesh.loops), np.int32)
+    mesh.loops.foreach_get("vertex_index", indices)
+    corners = positions[indices].reshape(-1, 3, 3)
+    normals = np.cross(corners[:, 1]-corners[:, 0], corners[:, 2]-corners[:, 0])
+    axis = np.repeat(np.argmax(np.abs(normals), axis=1), 3)
+    x, y, z = (positions[indices] + transform[:3, 3]).T
+    u = np.where(axis == 0, z, x)
+    v = np.where(axis == 1, z, y)
+    if role == "plinth":
+        u, v = v, u
+    if role == "counter":
+        uv = np.column_stack((v/.603 + .31, u/1.30 + .47))
+    else:
+        uv = np.column_stack((u/1.30 + .53, v/2.80 + .16))
+    layer = result.uv_layers.active or result.uv_layers.new(name="Board in metres")
+    layer.data.foreach_set("uv", np.ascontiguousarray(uv, dtype=np.float32).ravel())
+    return result
+
+
 def load_mesh(gid):
     if gid in geometry_cache:
         return geometry_cache[gid]
@@ -299,11 +332,15 @@ for num, (shot_id, files) in enumerate(groups.items(), 1):
     objects = []
     bounds = []
     illuminated_sides = set()
+    mapped_meshes = []
     for instance in shot["entries"]:
         mesh, corners = load_mesh(instance["geometry"])
         obj = bpy.data.objects.new(instance["material"]["role"] or "Fitting", mesh)
         scene.collection.objects.link(obj)
         transform = np.array(instance["matrix"]).reshape(4, 4).T
+        if instance["material"]["role"] in ("front", "plinth", "counter"):
+            obj.data = board_uv(mesh, transform, instance["material"]["role"])
+            mapped_meshes.append(obj.data)
         obj.matrix_world = basis @ Matrix(transform)
         obj.material_slots[0].link = "OBJECT"
         obj.material_slots[0].material = material(instance["material"])
@@ -341,12 +378,11 @@ for num, (shot_id, files) in enumerate(groups.items(), 1):
         + direction * ((depth.max() + depth.min()) / 2)
     )
     extent = max(np.ptp(across), np.ptp(rise))
-    camera.data.ortho_scale = extent * 1.19
-    camera.data.type = "PERSP" if paired_light else "ORTHO"
-    camera.data.lens = 50
-    # A centered perspective is the only single view that sees the inside face of
-    # both opposite LED channels. All other variants retain the same catalog angle.
-    distance = extent * 1.34 / (2 * math.tan(camera.data.angle / 2)) if paired_light else 6
+    camera.data.lens = 58 if paired_light else 72
+    half_angle = math.tan(camera.data.angle / 2)
+    offsets = points - np.array(center)
+    radius = np.maximum(np.abs(offsets @ np.array(right)), np.abs(offsets @ np.array(up)))
+    distance = max(offsets @ np.array(direction) + 1.17 * radius / half_angle)
     camera.location = center + direction * distance
     point(camera, center)
     floor.location.z = lower[2] - (extent * 0.29 if shot["wall"] else 0.0006)
@@ -380,3 +416,5 @@ for num, (shot_id, files) in enumerate(groups.items(), 1):
         bpy.data.objects.remove(obj, do_unlink=True)
         if data is not None:
             bpy.data.lights.remove(data)
+    for mesh in mapped_meshes:
+        bpy.data.meshes.remove(mesh)

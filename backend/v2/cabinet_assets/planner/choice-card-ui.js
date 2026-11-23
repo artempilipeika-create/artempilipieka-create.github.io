@@ -1,7 +1,11 @@
 (function(root){
  'use strict';
- const version='20261123-tripo-room';
- function image(file,folder='module-card-images'){return '/account/planner/'+folder+'/'+file.replace(/\.webp$/,'')+'.webp?v='+version;}
+ const version='20261123-kitchen-oak';
+ function image(file,folder='module-card-images'){
+  const kitchen=folder==='execution-card-images'||folder==='kitchen-option-images'||
+    folder==='module-card-images'&&!/^(?:countertop-|backsplash-|plinth$|aq-profile$|lira-profile$)/.test(file);
+  return '/account/planner/'+folder+'/'+file.replace(/\.webp$/,'')+'.webp?v='+(kitchen?version:'20261123-tripo-room');
+ }
  function corner(controls,variant){
   if(!variant)return;
   const text={side:{left:['Левый угол','Бленда слева'],right:['Правый угол','Бленда справа']},purpose:{sink:['Под мойку','Без полки'],shelf:['С полкой','Полка внутри']},door_count:{1:['Одна дверь','Один фасад'],2:['Две двери','Два фасада']}};

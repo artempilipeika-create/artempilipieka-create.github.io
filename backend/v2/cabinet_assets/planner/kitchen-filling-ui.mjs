@@ -7,6 +7,7 @@ import {dimensionPatch,productionParts,kitchenSettings,rotateXZ} from './furnitu
 import {defaultBackMount,checkBackMount} from './panel-machining.mjs';
 import {backMountControls} from './panel-machining-ui.mjs';
 import {hardwareArtwork} from './hardware-photos.mjs';
+import {kitchenPictureChoices} from './kitchen-picture-choices.mjs';
 import photos from './door-photos/sources.json' with {type:'json'};
 
 const node=(tag,text='')=>Object.assign(document.createElement(tag),{textContent:text});
@@ -81,7 +82,9 @@ export class KitchenFillingUI{
   if(this.tab==='inside'){
    const option=(key,names,title)=>{
     const peers=variants.filter(row=>['system','opening','execution','brand','dryer_brand'].every(k=>k===key||row[k]===v[k]));
-    const options=[...new Set(peers.map(n=>n[key]))];choice(grid,title,options.map(n=>[n,names[n]??n.toUpperCase()]),v[key],n=>this.variant({[key]:n}));
+    const options=[...new Set(peers.map(n=>n[key]))];
+    const select=choice(grid,title,options.map(n=>[n,names[n]??n.toUpperCase()]),v[key],n=>this.variant({[key]:n}));
+    kitchenPictureChoices(grid,select,value=>peers.find(row=>row[key]===value)?.id.slice(6));
    };
    if(family==='cargo')option('brand',{},'Комплект карго');
    if(family==='dryer')option('dryer_brand',{norwing:'NORWING',flat_line:'FLAT LINE'},'Комплект сушки');

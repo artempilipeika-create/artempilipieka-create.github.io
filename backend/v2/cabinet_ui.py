@@ -214,6 +214,13 @@ def router():
     import json
     planner_files.add('tall-gola-variants.json')
     planner_files.add('module-card-images/tall-gola.webp')
+    planner_files.update({'kitchen-picture-choices.mjs','execution-card-images/upper-double-upper-filling-dryer.webp'})
+    import re
+    planner_files.update('kitchen-option-images/'+photo.name for photo in (root/'planner/kitchen-option-images').glob('*.webp')
+                         if re.fullmatch(r'[0-9a-f]{12}\.webp',photo.name))
+    planner_files.update(f'kitchen-option-images/ai-{model}-shelves-{count}.webp'
+                         for model in ('base-swing','wall-swing','base-vitrine','wall-vitrine') for count in range(4))
+    planner_files.update(f'kitchen-option-images/ai-base-sink-{view}.webp' for view in ('installed','empty'))
     planner_files.update(
         f'execution-card-images/gola-{v["row_height"]}-{v["layout"]}-{v["opening"]}-closed.webp'
         for v in json.loads((root/'planner/tall-gola-variants.json').read_text())

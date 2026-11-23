@@ -91,7 +91,11 @@ def scenario(page, projects, pid):
     form.get_by_label('Ширина корпуса').fill('600')
     form.get_by_role('button',name='900 мм').click()
     form.locator('[name=heightScope]').select_option('row')
-    tab('inside');form.locator('[name=shelves]').select_option('3')
+    tab('inside')
+    shelf_photo=form.locator('.kitchen-picture-choices').get_by_role('button',name='3',exact=True)
+    assert shelf_photo.locator('img').evaluate('async i=>{await i.decode();return i.naturalWidth===800}')
+    shelf_photo.click()
+    expect(form.locator('[name=shelves]')).to_have_value('3')
     assert form.locator('[data-shelf-index="1"]').count()==3
     assert fixing(1,'cam_dowel').locator('img').count()==2
     viewport=page.viewport_size
@@ -218,7 +222,13 @@ def scenario(page, projects, pid):
         page.locator('[data-ai-kitchen="'+kind+'"]').click()
         wait_state('k=>MF_PLANNER.adapter.selected?.kitchenFilling?.kind===k',kind)
         ids[kind]=page.evaluate('MF_PLANNER.adapter.selected.item_id')
-        edit_filling(ids[kind]);fill.locator('[data-tab=handles]').click()
+        edit_filling(ids[kind])
+        if kind=='cargo':
+            photo=fill.locator('.kitchen-picture-choices').get_by_role('button',name='NORWING',exact=True)
+            assert photo.locator('img').evaluate('async i=>{await i.decode();return i.naturalWidth===800}')
+            photo.click()
+            expect(fill.get_by_label('Комплект карго',exact=True)).to_have_value('norwing')
+        fill.locator('[data-tab=handles]').click()
         fill.locator('[data-pull="92253"]').click()
         if kind=='drawers-three':
             fill.locator('[data-tab=body]').click()

@@ -12,6 +12,7 @@ import {choice,fittings,shelfDescription} from './shelf-choices.mjs';
 import {defaultFixture} from './worktop-fixtures.mjs';
 import {fillingCards} from './kitchen-filling-geometry.mjs';
 import {KitchenFillingUI} from './kitchen-filling-ui.mjs';
+import {kitchenPictureChoices} from './kitchen-picture-choices.mjs';
 import {selectedCarcass,assistantStamp} from './assistant-model.mjs';
 
 const el=(tag,text='')=>Object.assign(document.createElement(tag),{textContent:text});
@@ -175,7 +176,8 @@ export class AIKitchenUI{
    }
   }
   if(this.tab==='inside'&&!sink){
-   select('shelves','Количество полок',f.shelves,[0,1,2,3].map(n=>[n,n]),v=>f.shelves=Number(v));
+   const count=select('shelves','Количество полок',f.shelves,[0,1,2,3].map(n=>[n,n]),v=>f.shelves=Number(v));
+   kitchenPictureChoices(grid,count,value=>'ai-'+f.id+'-shelves-'+value);
    select('fixingScope','Где изменить крепление ЛДСП',this.fixingScope,[['one','Отдельная полка'],['cabinet','Все полки этого шкафа'],['project','Все шкафы ИИ в проекте']],v=>{this.fixingScope=v;this.projectFixing=null;});
    if(this.fixingScope!=='one'){
     const boards=new Set(f.shelfChoices.slice(0,f.shelves).filter(v=>v.startsWith('board/')).map(v=>v.split('/')[1]));
@@ -198,7 +200,8 @@ export class AIKitchenUI{
    }
   }
   if(this.tab==='inside'&&sink){
-   select('sink','Мойка на столешнице',Boolean(this.fixture),[['true','Установлена'],['false','Только тумба']],v=>this.fixture=v==='true'?defaultFixture('sink'):null);
+   const installed=select('sink','Мойка на столешнице',Boolean(this.fixture),[['true','Установлена'],['false','Только тумба']],v=>this.fixture=v==='true'?defaultFixture('sink'):null);
+   kitchenPictureChoices(grid,installed,value=>'ai-base-sink-'+(value==='true'?'installed':'empty'));
    if(this.fixture){
     for(const [key,label,min,max] of [['width','Ширина мойки, мм',300,1000],['depth','Глубина мойки, мм',300,700],['front_offset','От переднего края столешницы, мм',20,880],['offset_x','Смещение от центра, мм',-1500,1500]])
      number('sink-'+key,label,this.fixture[key],min,max,v=>this.fixture[key]=v);

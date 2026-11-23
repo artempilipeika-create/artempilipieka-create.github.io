@@ -1,6 +1,7 @@
 // node scripts/export-showroom-cabinet-cards.mjs /tmp/mf-cabinet-shoot
 // The render inputs are the same native models and option selectors used in the constructor.
 import fs from 'node:fs';
+import { visitKitchenCards } from './kitchen-card-views.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import * as THREE from '../backend/v2/cabinet_assets/planner/vendor/three.module.js';
@@ -37,7 +38,6 @@ const catalogue = Object.entries(PRODUCTION_MODELS).map(([id, p]) => ({
 }));
 const families = {};
 for (const [id, entry] of Object.entries(globalThis.MF_CATALOGUE_ARTWORK)) {
-  // Prefer the original family if an older index aliases modern uppers to its file.
   families[entry.file] ??= id;
 }
 const defaults = {
@@ -93,6 +93,8 @@ function item(id) {
   const plain = p.modern ?? p.wall_special ?? p.upper ?? p.tall ?? p.cargo ?? p.gola ?? p.metal_drawers ?? {};
   const handleless =
     plain.execution === 'gola' ||
+    plain.opening === 'push' ||
+    p.dishwasher?.variant === 'gola' ||
     ['push', 'handleless'].includes(plain.execution) ||
     p.vitrine ||
     p.open_tall ||
@@ -129,13 +131,19 @@ const moduleCard = (file, it, view) => add('module-card-images', file, it, view)
 const executionCard = (file, it, view) => add('execution-card-images', file, it, view);
 for (const [file, id] of Object.entries(families)) {
   let mode = 'closed';
-  if (['waste-standard', 'cargo', 'pullout-dryer', 'base-drawers'].includes(file)) mode = 'pulled';
+  if (['waste-standard', 'cargo', 'pullout-dryer'].includes(file)) mode = 'pulled';
   if (file === 'modern-gaslift') mode = 'hinge';
   if (file === 'dishwasher') mode = 'appliance';
   moduleCard(file, item(id), mode);
 }
 for (const f of Object.values(globalThis.MF_MODERN_CABINETS.families))
   moduleCard('modern-' + f.key, item(f.default_id), f.key === 'gaslift' ? 'hinge' : 'closed');
+for (const v of globalThis.MF_MODERN_CABINETS.variants)
+  add('kitchen-option-images', v.id.slice(6), item(v.id), v.family === 'fridge' ? 'closed' : 'hinge');
+for (const v of [...globalThis.MF_DRAWERS.choices(), ...globalThis.MF_CARGO.variants, ...globalThis.MF_PULLOUT_DRYERS.variants])
+  add('kitchen-option-images', v.id.slice(6), item(v.id), 'pulled');
+for (const v of globalThis.MF_GOLA.baseChoices())
+  add('kitchen-option-images', v.id.slice(6), item(v.id), v.purpose === 'sink' ? 'bareHinge' : 'hinge');
 for (const v of globalThis.MF_WALL_SPECIAL.variants)
   moduleCard(v.id.replace('bazis.', 'wall-special-'), item(v.id));
 for (const v of globalThis.MF_OPEN_TALL.variants.filter((v) => v.wall && v.catalogue_primary))
@@ -177,6 +185,7 @@ for (const [key, file] of Object.entries(EXECUTION_IMAGES)) {
   )
     view = 'pulled';
   if (category === 'corner' && field === 'purpose' && value === 'shelf') view = 'hinge';
+  if (family === 'upper' && field === 'filling') view = 'hinge';
   executionCard(file, it, view);
 }
 for (const v of globalThis.MF_OPEN_TALL.variants.filter(
@@ -338,6 +347,38 @@ const geomData = new Map(),
   geoCache = new WeakMap(),
   outScenes = {},
   cards = {};
+
+// Some BAZIS donors describe the drying kit by article only. Show the two
+// installed baskets and drip tray in the illustration, in the supplier finish.
+function dryingRacks(body, it, finish) {
+  const w = it.width - 49, d = Math.min(it.depth - 40, 260);
+  const wire = new THREE.MeshStandardMaterial(finish === 'inox'
+    ? {color: '#aeb7bf', metalness: .85, roughness: .24}
+    : {color: '#f6f7f5', metalness: .08, roughness: .42});
+  const segment = new THREE.CylinderGeometry(1, 1, 1, 8);
+  const axis = new THREE.Vector3(0, 1, 0);
+  function rod(a, b, diameter=3) {
+    const from = new THREE.Vector3(...a).multiplyScalar(.001), to = new THREE.Vector3(...b).multiplyScalar(.001);
+    const direction = to.sub(from), mesh = new THREE.Mesh(segment, wire);
+    mesh.position.copy(from).addScaledVector(direction, .5);
+    mesh.scale.set(diameter / 2000, direction.length(), diameter / 2000);
+    mesh.quaternion.setFromUnitVectors(axis, direction.normalize());
+    mesh.userData.role = 'rackWire';
+    body.add(mesh);
+  }
+  const front = d/2, back = -front;
+  for (const [y, plates] of [[65, false], [Math.min(it.height*.46, 322), true]]) {
+    for (const z of [back, front]) rod([-w/2,y+13,z],[w/2,y+13,z],6);
+    for (const x of [-w/2, w/2]) rod([x,y+13,back],[x,y+13,front],6);
+    for (let x = -w/2+13; x < w/2-8; x += plates ? 27 : 16) {
+      const points = plates ? [[x, y+41, back], [x,y+4,back+46], [x,y+4,front-74], [x+4,y+65,front-36], [x,y+13,front]]
+                            : [[x,y+13,back],[x,y,back+14],[x,y,front-14],[x,y+13,front]];
+      for (let k=1; k<points.length; k++) rod(points[k-1],points[k]);
+    }
+    factory.box(body,'dripTray',w-10,5,d-10,0,y-15,0,null,false,2);
+  }
+}
+
 function geometry(g, group, slot) {
   let ids = geoCache.get(g);
   if (!ids) {
@@ -368,6 +409,49 @@ function geometry(g, group, slot) {
   ids[slot] = id;
   return id;
 }
+function sceneEntries(root, production) {
+  root.updateMatrixWorld(true);
+  const entries = [];
+  root.traverseVisible((m) => {
+    if (!m.isMesh || m.material?.alphaMap || m.userData.role === 'reveal') return;
+    const g = m.geometry,
+      materials = Array.isArray(m.material) ? m.material : [m.material];
+    const groups =
+      materials.length > 1 && g.groups.length
+        ? g.groups
+        : [{ start: 0, count: g.index?.count ?? g.attributes.position.count, materialIndex: 0 }];
+    groups.forEach((group, i) => {
+      const mat = materials[group.materialIndex] ?? materials[0],
+        role =
+          m.userData.role === 'glass' && m.userData.part?.role === 'shelf'
+            ? 'glassShelf'
+            : (m.userData.artRole ?? (production ? null : m.userData.appliance) ?? m.userData.role ?? '');
+      let color = mat.color?.getHexString() ?? 'a9a8a6',
+        metalness = mat.metalness ?? 0;
+      if (m.userData.wasteColor) {
+        color = m.userData.wasteColor.replace('#', '');
+        metalness = 0.08;
+      } else if (m.userData.cargoBasket || m.userData.pulloutDryer) {
+        const chrome = production?.cargo?.brand === 'norwing' || production?.pullout_dryer?.dryer_brand === 'flat_line';
+        color = chrome ? '9aa4ac' : '43494c';
+        metalness = chrome ? 0.78 : 0.36;
+      }
+      entries.push({
+        geometry: geometry(g, group, i),
+        matrix: m.matrixWorld.toArray(),
+        material: {
+          role,
+          color,
+          roughness: mat.roughness ?? 0.55,
+          metalness,
+          asset: mat.userData.asset ?? (['sink','faucet'].includes(role) ? role : null),
+        },
+        lightSide: m.userData.lightingSide ?? null,
+      });
+    });
+  });
+  return entries;
+}
 function makeScene(it, view) {
   it = { ...it, doors_open: view === 'hinge' || view === 'bareHinge' };
   const p = PRODUCTION_MODELS[it.bazis_id];
@@ -386,16 +470,8 @@ function makeScene(it, view) {
         m.visible = false;
     });
   if (view === 'pulled') openDrawers(body, it);
-  if (p.dryer && view === 'inside') {
-    const w = it.width - 60,
-      d = Math.min(it.depth - 45, 260);
-    for (const y of [70, Math.min(it.height * 0.48, 320)]) {
-      for (let x = -w / 2; x <= w / 2; x += 24) factory.box(body, 'drawerMetal', 2, 2, d, x, y, 0, null);
-      for (const z of [-d / 2, d / 2]) factory.box(body, 'drawerMetal', w, 4, 3, 0, y, z, null);
-    }
-    for (let x = -w / 2 + 28; x < w / 2; x += 38)
-      factory.box(body, 'drawerMetal', 2, 48, d * 0.75, x, 94, 0, null);
-  }
+  if ((p.dryer || p.modern?.filling === 'dryer') && ['inside','hinge'].includes(view))
+    dryingRacks(body, it, p.modern?.dryer || 'mount');
   // Expose the top rails of a sink carcase in the filling view.
   if (
     p.tier === 'base' &&
@@ -420,46 +496,7 @@ function makeScene(it, view) {
       it.depth / 2 - 55,
       null,
     );
-  root.updateMatrixWorld(true);
-  const entries = [];
-  root.traverseVisible((m) => {
-    if (!m.isMesh || m.material?.alphaMap || m.userData.role === 'reveal') return;
-    const g = m.geometry,
-      materials = Array.isArray(m.material) ? m.material : [m.material];
-    const groups =
-      materials.length > 1 && g.groups.length
-        ? g.groups
-        : [{ start: 0, count: g.index?.count ?? g.attributes.position.count, materialIndex: 0 }];
-    groups.forEach((group, i) => {
-      const mat = materials[group.materialIndex] ?? materials[0],
-        role =
-          m.userData.role === 'glass' && m.userData.part?.role === 'shelf'
-            ? 'glassShelf'
-            : (m.userData.role ?? '');
-      let color = mat.color?.getHexString() ?? 'a9a8a6',
-        metalness = mat.metalness ?? 0;
-      if (m.userData.wasteColor) {
-        color = m.userData.wasteColor.replace('#', '');
-        metalness = 0.08;
-      } else if (m.userData.cargoBasket || m.userData.pulloutDryer) {
-        const chrome = p.cargo?.brand === 'norwing' || p.pullout_dryer?.dryer_brand === 'flat_line';
-        color = chrome ? '9aa4ac' : '43494c';
-        metalness = chrome ? 0.78 : 0.36;
-      }
-      entries.push({
-        geometry: geometry(g, group, i),
-        matrix: m.matrixWorld.toArray(),
-        material: {
-          role,
-          color,
-          roughness: mat.roughness ?? 0.55,
-          metalness,
-          asset: mat.userData.asset ?? null,
-        },
-        lightSide: m.userData.lightingSide ?? null,
-      });
-    });
-  });
+  const entries = sceneEntries(root, p);
   const side = it.doors_open
     ? (p.vitrine?.opening ?? p.tall?.opening ?? p.doors?.[0]?.side)
     : p.tall?.execution === 'gola'
@@ -471,8 +508,8 @@ function makeScene(it, view) {
       ? -0.48
       : 0.48;
   const camera = [
-    view === 'pulled' ? cameraX * 1.35 : cameraX,
-    p.tier === 'tall' ? 0.19 : p.tier === 'wall' ? 0.24 : view === 'pulled' ? 0.37 : 0.41,
+    view === 'pulled' ? cameraX * 2.2 : cameraX,
+    p.tier === 'tall' ? 0.19 : p.tier === 'wall' ? 0.24 : view === 'pulled' ? 0.69 : 0.41,
     1.35,
   ];
   const shot = { camera, wall: p.tier === 'wall', entries };
@@ -491,9 +528,15 @@ for (const [file, { it, view }] of jobs) {
   }
   cards[file] = cache.get(key);
 }
+visitKitchenCards((folder, file, root, {wall, sink}) => {
+  const shot = {camera:[.48, sink ? .66 : wall ? .24 : .41, 1.35], wall, entries:sceneEntries(root)};
+  const id = crypto.createHash('sha256').update(JSON.stringify(shot)).digest('hex').slice(0, 20);
+  outScenes[id] ??= {id, source:file, view:'questionnaire', ...shot};
+  cards[folder+'/'+file+'.webp'] = id;
+}, true);
 fs.writeFileSync(path.join(output, 'catalogue.json'), JSON.stringify({ cards, scenes: outScenes }));
 console.log(
-  jobs.size +
+  Object.keys(cards).length +
     ' card images, ' +
     Object.keys(outScenes).length +
     ' distinct views, ' +

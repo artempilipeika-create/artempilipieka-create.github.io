@@ -4,6 +4,15 @@ import {EXECUTION_IMAGES,TALL_GOLA_IMAGES,TALL_GOLA_OPEN_IMAGES} from './executi
 
 // Alternate views follow their own donor. The hero uses the editable production geometry.
 const art=globalThis.MF_CHOICE_CARDS.image;
+export function installedFillingArtwork(it){
+ if(globalThis.MF_MODERN_CABINETS?.info(it)||globalThis.MF_CARGO?.info(it)||globalThis.MF_PULLOUT_DRYERS?.info(it)||globalThis.MF_DRAWERS?.familyInfo(it)||globalThis.MF_GOLA?.baseInfo(it))
+  return art(it.bazis_id.slice(6),'kitchen-option-images');
+ const p=PRODUCTION_MODELS[it?.bazis_id];
+ if(p?.corner&&it.bazis_sha256===p.source_sha256)return art('corner-'+[p.corner.side,p.corner.purpose,p.corner.door_count].join('-'));
+ const u=globalThis.MF_UPPERS?.info(it);
+ if(u)return art((u.door_count===2?'upper-double':'upper')+'-upper-filling-'+u.filling,'execution-card-images');
+ return null;
+}
 export function executionCategory(it,family){
  const p=PRODUCTION_MODELS[it?.bazis_id];if(!p)return null;
  if(p.cargo)return 'cargo';if(p.pullout_dryer)return 'dryer';
@@ -17,7 +26,7 @@ export function executionCategory(it,family){
  if(family==='generic')return 'oven';
  return null;
 }
-export function executionArtwork(it,family,key,value){
+export function executionArtwork(it,family,key,value,target){
  const p=PRODUCTION_MODELS[it?.bazis_id];
  if(p?.tall?.execution==='gola'&&family==='tall'){
   // Resolve through the same native donor selection as the option controls.
@@ -31,11 +40,12 @@ export function executionArtwork(it,family,key,value){
  if(p?.open_tall?.wall&&family==='open-tall'){const v=globalThis.MF_OPEN_TALL.select(it,{[key]:value},globalThis.MF_OPEN_TALL.variants);return art(v.bazis_id.replace('bazis.','open-wall-'));}
  if(p?.open_tall&&!p.open_tall.wall&&family==='open-tall'&&key==='lighting'&&p.open_tall.light_system==='lira-17.5x6.5'&&['left','right','both'].includes(value))return art('open-tall-lira-'+value,'execution-card-images');
  if(p?.cargo?.waste&&family==='cargo'){const v=globalThis.MF_CARGO.select(it,{[key]:value},globalThis.MF_CARGO.variants);return art(globalThis.MF_CARGO.info(v).execution==='gola'?'waste-gola':'waste-standard');}
- if(p?.modern&&family==='modern'&&['upper1','upper2'].includes(p.modern.family)){
-  const category=p.modern.family==='upper2'?'upper-double':'upper';
-  const file=EXECUTION_IMAGES[[category,'upper',key,value].join(':')];
-  return file?art(file,'execution-card-images'):null;
+ if(p?.modern&&family==='modern'){
+  const source=globalThis.MF_MODERN_CABINETS;
+  const choice=source.available(source.info(it),{[key]:value});
+  return choice?art(choice.id.slice(6),'kitchen-option-images'):null;
  }
+ if(target&&(['drawer','cargo','dryer'].includes(family)||family==='base'&&key==='purpose'))return installedFillingArtwork(target);
  const category=executionCategory(it,family),file=EXECUTION_IMAGES[[category,family,key,value].join(':')];
  return file?art(file,'execution-card-images'):null;
 }

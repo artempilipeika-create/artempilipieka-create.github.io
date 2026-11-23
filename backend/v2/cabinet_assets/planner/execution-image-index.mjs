@@ -52,7 +52,7 @@ export const EXECUTION_IMAGES=Object.freeze({
  "upper:upper:side:left": "upper-upper-side-left.webp",
  "upper:upper:side:right": "upper-upper-side-right.webp",
  "upper-double:upper:filling:shelves": "upper-double-upper-filling-shelves.webp",
- "upper-double:upper:filling:dryer": "upper-upper-filling-dryer.webp",
+ "upper-double:upper:filling:dryer": "upper-double-upper-filling-dryer.webp",
  "upper-double:upper:execution:handles": "upper-double-upper-execution-handles.webp",
  "upper-double:upper:execution:handleless": "upper-double-upper-execution-handleless.webp",
  "upper-double:upper:execution:push": "upper-double-upper-execution-push.webp",

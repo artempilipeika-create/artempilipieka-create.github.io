@@ -1,7 +1,7 @@
 import {ExecutionPreviews} from './execution-previews.mjs';
 import {buttonFamilies,optionDescriptor,previewVariant} from './execution-options.mjs';
 import {PRODUCTION_MODELS,productionHardware} from './furniture-core.mjs';
-import {executionArtwork} from './execution-artwork.mjs';
+import {executionArtwork,installedFillingArtwork} from './execution-artwork.mjs';
 import {hardwareArtwork,productionHingeArticles,hingePhotoCard} from './hardware-photos.mjs';
 import {MODULE_VIEWS,moduleView,changeModuleView} from './module-view.mjs';
 import {doorOptionDrawing} from './door-swing.mjs';
@@ -30,6 +30,9 @@ export class ExecutionUI{
   this.proxy(get('handles'),'generic','handles',this.generic);
   this.configuration=el('section','mf3d-control-card');this.configuration.id='module-configuration';
   this.configuration.append(el('h3','','Наполнение и фасады'));this.root.after(this.configuration);
+  this.installed=el('figure','execution-installed');this.installed.hidden=true;
+  this.installedPhoto=el('img');this.installedPhoto.decoding='async';this.installedPhoto.loading='lazy';this.installedPhoto.alt='';
+  this.installed.append(this.installedPhoto,el('figcaption','','Выбранное исполнение в стандартном размере'));this.configuration.append(this.installed);
   for(const id of Object.values(families)){const section=get(id);if(section)this.configuration.append(section);}
   this.configuration.append(this.generic);
   get('vitrine-light-system').closest('label').dataset.productionOnly='';
@@ -64,7 +67,7 @@ export class ExecutionUI{
  update(button,it,family,key,value,sourceDisabled=false){
   const descriptor=optionDescriptor(family,key,value);if(PRODUCTION_MODELS[it.bazis_id]?.open_tall?.wall)descriptor.tall=false;let target,error='';
   try{target=previewVariant(it,family,key,value,this.app.bridge.catalogue.bazisModules);}catch(e){error=e.message;}
-  if(target&&!descriptor.swing){const hardware=hardwareArtwork(target,family,key,value);if(hardware){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
+  if(target&&!descriptor.swing){const hardware=hardwareArtwork(target,family,key,value);if(hardware){descriptor.art=hardware.src;descriptor.hardware=hardware;descriptor.hint=hardware.hint;}else{const art=executionArtwork(it,family,key,value,target);if(art&&!this.failedArtwork.has(art))descriptor.art=art;}}
   const visual=this.decorate(button,descriptor);
   if(target&&family==='cargo'&&key==='brand'&&!descriptor.hardware){const kit=globalThis.MF_CARGO.kit(target);descriptor.hint=(value==='norwing'?'Хром':'Графит')+' · '+(kit?.mounting==='side_left'?'крепление слева':'крепление снизу')+(kit?.article?' · '+kit.article:'');button.querySelector('.execution-hint').textContent=descriptor.hint;button.setAttribute('aria-label',descriptor.title+' · '+descriptor.hint);}
   if(sourceDisabled&&!error)error=button.title||'Недоступно для выбранного исполнения';
@@ -93,6 +96,9 @@ export class ExecutionUI{
   const handles=get('handles');handles.classList.toggle('execution-source-select',Boolean(p));handles.closest('label').classList.toggle('execution-proxied-label',Boolean(p));if(p){handles.tabIndex=-1;handles.setAttribute('aria-hidden','true');}else{handles.removeAttribute('tabindex');handles.removeAttribute('aria-hidden');}
   this.configuration.hidden=!it;
   if(!it||!p){this.generic.hidden=true;this.hinges.hidden=true;return;}
+  const installed=installedFillingArtwork(it);
+  this.installed.hidden=!installed;
+  if(installed&&this.installedPhoto.getAttribute('src')!==installed)this.installedPhoto.src=installed;
   const hingeArticles=productionHingeArticles(productionHardware(it,p)),hingeKey=hingeArticles.join('|');
   if(this.hinges.dataset.articles!==hingeKey){
     this.hinges.dataset.articles=hingeKey;this.hinges.replaceChildren(...hingeArticles.map(hingePhotoCard));

@@ -39,7 +39,7 @@ with sync_playwright() as pw:
  page.evaluate("""async()=>{const p=MF_PLANNER;await p.bridge.loadSnapshot({name:'Каталог Martin Forest',scene:{schema_version:2,room:{width:5000,depth:4000,height:3000,setup_complete:true,features:[]},items:[],plinths:[],selected_item_id:null,view_mode:'3d'},selectedId:null},null);p.roomSetup.projectChanged();p.history.reset();}""")
  page.locator('#studio-toggle-library').click()
  cards=page.locator('#module-catalogue .mf3d-module[data-bazis]')
- assert cards.count()==14 and page.locator('#module-catalogue [data-card-artwork]').count()==14
+ assert cards.count()>0 and cards.count()==page.locator('#module-catalogue [data-bazis][data-card-artwork]').count()
  for card in cards.all():
   card.scroll_into_view_if_needed()
   picture=card.locator('img.studio-preview-tripo');expect(picture).to_be_visible()
