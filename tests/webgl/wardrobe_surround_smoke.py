@@ -712,9 +712,11 @@ def ready_layouts(page, projects, project_id):
     expect(form.locator('[data-fitted-article="113750"]')).to_have_count(1)
     button(form, 'Фурнитура AKS').click()
     expect(form.locator('[data-fitting-variant="113750-side"]')).to_have_count(0)
-    trouser_racks=form.locator('details').filter(has=form.locator('summary',has_text='Брючницы GRIDLI и BRUNO'))
-    assert trouser_racks.locator('[data-fitting-variant="113941-left"]').count()==1
-    assert trouser_racks.locator('[data-fitting-variant="115591"]').count()==1
+    trousers=form.locator('summary',has_text='Брючницы GRIDLI и BRUNO')
+    trousers.click()
+    trouser_racks=trousers.locator('..')
+    expect(trouser_racks.locator('[data-fitting-variant="113941-left"]')).to_be_visible()
+    expect(trouser_racks.locator('[data-fitting-variant="115591"]')).to_be_visible()
     button(form, 'Заполнить секцию').click()
     button(form, 'Шуфляды в выбранную нишу').click()
     field(form, 'Сколько шуфляд поставить').select_option('2')
@@ -773,6 +775,6 @@ if __name__ == '__main__':
         surround_scenarios(page, projects, first_id)
         z1_scenario(page, projects, first_id)
 
+    exercise(args.live, ready_layouts)
     exercise(args.live, run)
     exercise(args.live, section_presets)
-    exercise(args.live, ready_layouts)

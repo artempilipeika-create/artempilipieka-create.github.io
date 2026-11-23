@@ -144,7 +144,7 @@ export function selectNiche(ui,section,level){
 function freezeShelves(fields,section,built){
  const panels=built?.parts?.filter(p=>p.key.startsWith('shelf-'+section+'-'));
  const footCorrection=fields.feet?.article==='118779'?10:0;
- const openings=nicheOpenings(fields,section);
+ const openings=nicheOpenings(built?{...fields,shelfLevels:undefined}:fields,section);
  fields.shelfLevels=fields.sectionShelves.map((n,i)=>Array.from({length:n},(_,j)=>fields.shelfLevels?.[i]?.[j]??null));
  const floor=(fields.elevation??0)+footHeight(fields);
  fields.shelfLevels[section]=fields.shelfLevels[section].map((entry,i)=>({

@@ -8,6 +8,11 @@ const button=(text,run)=>Object.assign(el('button',text),{type:'button',onclick:
 const groupNames={round:'Круглая Ø25',oval:'Овальная 30×15'};
 const order=['22109','72536','22111','113181','23007','57975','14066'];
 function fit(value,min,max){return Math.min(max,Math.max(min,value));}
+function checkPlacement(fields,rod,levels){
+ const planned=planRods({...fields,rods:[rod]},levels);
+ const inCell=(fields.fittings??[]).filter(v=>sameRodCell(v,rod)&&fittingCatalogue[v.variant].category==='rods');
+ if(inCell.some(v=>touchingStandardRod(planFitting(fields,v,levels),planned)))throw Error('Штанга пересекается с FAME. Измените высоту или положение по глубине.');
+}
 export function rodControls(ui,parent,cell){
  const f=ui.fields;
  const box=el('fieldset');box.className='rod-editor';
@@ -23,13 +28,9 @@ export function rodControls(ui,parent,cell){
  const height=room.high-room.low;
  box.append(el('p','Внутри '+room.width+' × '+height+' мм · ширина × высота'));
  const message=el('p');message.className='rod-message';message.setAttribute('role','status');
- function checkPlacement(rod){
-   const levels=ui.previewBuilt?.installedLevels,planned=planRods({...f,rods:[rod]},levels);
-   if(fitted.some(v=>touchingStandardRod(planFitting(f,v,levels),planned)))throw Error('Штанга пересекается с FAME. Измените высоту или положение по глубине.');
- }
  const edit=(delta)=>{
    const candidate={...rod,...delta};if(candidate.fromBack==null)delete candidate.fromBack;
-   try{if(saved)checkPlacement(candidate);else planRods({...f,rods:[candidate]},ui.previewBuilt?.installedLevels);}
+   try{if(saved)checkPlacement(f,candidate,ui.previewBuilt?.installedLevels);else planRods({...f,rods:[candidate]},ui.previewBuilt?.installedLevels);}
    catch(e){message.textContent=e.message;return;}
    if(saved){f.rods=f.rods.map(r=>r.id===candidate.id?candidate:r);ui.changed(true);}
    else{ui.rodDraft=candidate;ui.render();}
@@ -86,7 +87,7 @@ export function rodControls(ui,parent,cell){
      for(let i=1;i<edges.length;i++)if(edges[i]-edges[i-1]>widest){widest=edges[i]-edges[i-1];axis=(edges[i]+edges[i-1])/2;}
      next.offset=Math.round(next.anchor==='top'?room.high-axis:axis-room.low);
    }
-   try{checkPlacement(next);}catch(e){message.textContent=e.message;return;}
+   try{checkPlacement(f,next,ui.previewBuilt?.installedLevels);}catch(e){message.textContent=e.message;return;}
    (f.rods??=[]).push(next);ui.rodId=next.id;ui.changed(true);
  }));
  if(saved)actions.append(button('Убрать штангу',()=>{
@@ -128,6 +129,12 @@ export function wireRodDrag(ui){
    if(root.hasPointerCapture(e.pointerId))root.releasePointerCapture(e.pointerId);
    ui.suppressDiagramClick=true;setTimeout(()=>{ui.suppressDiagramClick=false;},0);
    if(cancel){ui.render();return;}
+   try{checkPlacement(ui.fields,{...d.rod,offset:d.offset},ui.previewBuilt?.installedLevels);}
+   catch(error){
+     selectRod(ui,d.rod.id);
+     const message=ui.form.querySelector('.rod-message');if(message)message.textContent=error.message;
+     return;
+   }
    d.rod.offset=d.offset;ui.changed(true);selectRod(ui,d.rod.id);
  }
  root.addEventListener('pointerup',e=>finish(e,false));
