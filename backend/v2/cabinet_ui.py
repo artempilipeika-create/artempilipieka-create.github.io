@@ -83,7 +83,7 @@ def router():
     planner_files.update({'wardrobe-fittings.mjs','wardrobe-fitting-ui.mjs','wardrobe-fitting-mesh.mjs','wardrobe-fittings.json','wardrobe-fitting-meshes.json'})
     fitting_cards=json.loads((ASSETS/'wardrobe-fittings.json').read_text()).values()
     planner_files.update('wardrobe-fitting-photos/'+part['photo']+'.webp' for p in fitting_cards for part in (p,*p.get('components',[])) if 'photo' in part)
-    planner_files.update({'wardrobe-ready-layouts.mjs', 'wardrobe-ready-ui.mjs'})
+    planner_files.update({'wardrobe-ready-layouts.mjs', 'wardrobe-ready-ui.mjs', 'dresser-layout.mjs', 'dresser-ui.mjs'})
     planner_files.update('wardrobe-layout-images/'+name+'.webp' for name in ('hall','couple','business','utility','daily','deep'))
     planner_files.update({'wardrobe-section-presets.mjs','wardrobe-rods.mjs','wardrobe-rods-ui.mjs','wardrobe-rod-mesh.mjs',
                           'wardrobe-rods.json','wardrobe-rod-meshes.json','rod-photos/sources.json'})

@@ -187,6 +187,8 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   `${spec.width} × ${spec.height} × ${spec.depth} мм · ЛДСП ${spec.thickness} мм`,
   `${spec.sections} секц. · полки: ${(spec.sectionShelves??Array(spec.sections).fill(spec.shelves)).join(' / ')} · ${items.length} деталей`,
   `Базовый зазор съёмных полок: ${spec.shelfGap} мм с каждой стороны`,
+  ...(spec.dresser?[spec.dresser.installation==='wall'?'Подвесной комод · низ корпуса на '+spec.elevation+' мм от пола':'Напольный комод',
+    ...built.drawerBanks.filter(Boolean).map(b=>'Секция '+(b.section+1)+' · шуфляд '+b.faces.length+' · направляющие '+b.rail.length+' мм · арт. '+b.rail.article)]:[]),
   ...(spec.surround?['В сборе · '+built.width+' × '+built.envelope.height+' × '+built.depth+' мм']:[]),
   ...(spec.surround?.upper?[spec.surround.upper.frame?'Антресоль · рамка Z1, TIP-ON и петли Blum 70T950A.TL.':spec.surround.upper.opening==='swing'?'Антресоль · TIP-ON и беспружинные петли. Модель петель уточняется.':'Антресоль · TIP-ON и газлифты. Модель подъёмного механизма уточняется.']:[]),
   ...(hinges.length?[(hinges.some(h=>h.plate_sku)?'Петли · ':'Петли PRIME · ')+[...new Set(hinges.map(h=>h.article))].join(', ')+' · '+hinges.length+' шт.']:[]),
@@ -201,7 +203,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
    const quantities=new Map();
    for(const value of row)quantities.set(value,(quantities.get(value)||0)+1);
    return [...quantities].map(([value,n])=>{const c=choice(value,spec.thickness);return 'Секция '+(i+1)+' · '+(c.kind==='glass'?'стекло':'ЛДСП')+' '+c.thickness+' мм × '+n+' · '+shelfDescription(c,n);});
-  }):['Открытый шкаф. На съёмную полку — четыре SEKURA 2.'])];
+  }):spec.dresser?[]:['Открытый шкаф. На съёмную полку — четыре SEKURA 2.'])];
  if(removed.length)summary.push('Будут удалены детали: '+removed.map(i=>i.name+(i.production_note?' (есть примечание)':'')).join(', '));
  if(current&&spec.thickness!==current.metadata.spec.thickness)summary.push('Толщина изменится: выберите соответствующий материал перед экспортом.');
  return {stamp:assistantStamp(adapter),next,items,summary,spec};
