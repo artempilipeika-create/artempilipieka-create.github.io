@@ -49,20 +49,19 @@ function start() {
   const environment=studioEnvironment(renderer);
   scene.environment=environment.texture;
   viewer.place(dimensions);
-  let surfaces=null,roomBusy=false,moving=false;
+  let surfaces=null,roomBusy=false;
   scene.background = viewer.background;
   const cache = new Map();
   let current = null, custom = null, rotation = 0, revision = 0, roomRevision = 0, fileRevision = 0;
   let manualView = false;
-  controls.addEventListener('start', () => { manualView = true; moving=true; });
-  controls.addEventListener('end', () => { moving=false;draw(); });
+  controls.addEventListener('start', () => { manualView = true; });
   let modelBusy = false, fileBusy = false, exporting = false, modelMessage = '';
   function draw() {
     if(surfaces){
       for(const wall of surfaces.walls)wall.visible=wallVisible(wall,dimensions,camera.position);
       if(surfaces.ceiling)surfaces.ceiling.visible=camera.position.y<dimensions.height/1000;
     }
-    post.render(scene, camera, moving&&!exporting);
+    post.render(scene, camera);
   }
   function size() {
     renderer.setSize(Math.max(1,stage.clientWidth), Math.max(1,stage.clientHeight), false);

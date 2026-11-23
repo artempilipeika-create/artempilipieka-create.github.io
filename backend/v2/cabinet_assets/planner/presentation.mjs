@@ -19,20 +19,10 @@ export function fileName(name,view,branded,date=new Date()){
   return `Martin Forest — ${clean(name)} — ${clean(view)}${branded?' — Презентация':''} — ${stamp}.png`;
 }
 export function qualityProfile(mode='auto',hints={}){
-  const low=(hints.memory>0&&hints.memory<=4)||(hints.cores>0&&hints.cores<=4);
+  const low=hints.software||(hints.memory>0&&hints.memory<=4)||(hints.cores>0&&hints.cores<=4);
   const effective=mode==='auto'?(low?'balanced':'high'):mode;
-  return effective==='balanced'?{name:'balanced',ratio:1,limit:1440}:{name:'high',ratio:1.75,limit:2560};
-}
-export class RenderBudget{
-  constructor(){this.samples=[];this.reduced=false;}
-  record(ms){
-    // Ignore shader compilation, background tabs and isolated stalls. Downgrade
-    // only after sustained expensive frames; never oscillate during a gesture.
-    if(this.reduced||!Number.isFinite(ms)||ms<1||ms>250)return false;
-    this.samples.push(ms);if(this.samples.length<36)return false;
-    const sorted=this.samples.splice(0).sort((a,b)=>a-b);
-    if(sorted[18]>42){this.reduced=true;return true;}return false;
-  }
+  return effective==='balanced'?{name:'balanced',ratio:1,limit:1920,occlusionSamples:8}
+    :{name:'high',ratio:1.75,limit:2560,occlusionSamples:16};
 }
 export function ellipsis(ctx,text,width){
   text=String(text);if(ctx.measureText(text).width<=width)return text;

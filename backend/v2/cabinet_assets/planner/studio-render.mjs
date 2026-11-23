@@ -40,6 +40,7 @@ export class StudioRender{
   constructor(renderer){
     this.renderer=renderer;
     this.maxDimension=2560;
+    this.occlusionSamples=16;
     installStudioShadows();
     this.available=renderer.extensions.has('EXT_color_buffer_float');
     if(!this.available)return;
@@ -103,19 +104,18 @@ export class StudioRender{
     this.scene=new THREE.Scene();this.camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
     this.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),this.material);this.quad.frustumCulled=false;this.scene.add(this.quad);
   }
-  render(scene,camera,moving=false){
+  render(scene,camera){
     const r=this.renderer;
     // Screenshots/catalogue render targets and technical orthographic views retain their own path.
     if(!this.available||r.getRenderTarget()||!camera.isPerspectiveCamera){r.render(scene,camera);return;}
     const size=r.getDrawingBufferSize(new THREE.Vector2());
-    const limit=moving?this.maxDimension:Math.max(2560,this.maxDimension);
-    const scale=Math.min(1,limit/Math.max(size.x,size.y));
+    const scale=Math.min(1,this.maxDimension/Math.max(size.x,size.y));
     const w=Math.max(1,Math.round(size.x*scale)),h=Math.max(1,Math.round(size.y*scale));
     // Keep the full-resolution target at 4K. Limit transient multisample storage on laptop GPUs.
     const samples=Math.min(w*h>6000000?2:4,r.capabilities.maxSamples);
     if(this.target.samples!==samples){this.target.dispose();this.target.samples=samples;}
     if(this.target.width!==w||this.target.height!==h)this.target.setSize(w,h);
-    const u=this.material.uniforms;u.sampleCount.value=moving?5:16;u.texel.value.set(1/w,1/h);
+    const u=this.material.uniforms;u.sampleCount.value=this.occlusionSamples;u.texel.value.set(1/w,1/h);
     u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.projection.value.copy(camera.projectionMatrix);
     try{
       r.setRenderTarget(this.target);r.render(scene,camera);

@@ -15,12 +15,13 @@ export function captureAlbumViews(scene,{detail=true,savedView=null,wardrobe=fal
 export function capturePresentation(scene,{width,height,view='threeQuarter',savedView=null}={}){
   if(scene.isFallback||scene.dead||!scene.adapter.items.length)throw Error('Добавьте мебель и дождитесь готовности 3D-сцены.');
   const r=scene.renderer,previous={view:scene.captureView(),client:scene.client,clientView:scene.clientView,clientFit:scene.clientFit,
-    ratio:r.getPixelRatio(),width:scene.width,height:scene.height,limit:scene.studioRender.maxDimension,
+    ratio:r.getPixelRatio(),width:scene.width,height:scene.height,limit:scene.studioRender.maxDimension,occlusionSamples:scene.studioRender.occlusionSamples,
     selected:scene.selectedBox.visible,hover:scene.hoverBox.visible,guides:scene.guides.visible};
   const boxes=[...scene.kitchenBoxes.values()].map(box=>[box,box.visible]);
   try{
     scene.stopOrbitInertia();scene.exportSize={width,height};scene.width=width;scene.height=height;
     r.setPixelRatio(1);r.setSize(width,height,false,true);scene.studioRender.maxDimension=width;
+    scene.studioRender.occlusionSamples=16;
     scene.perspective.aspect=width/height;scene.perspective.updateProjectionMatrix();
     scene.setPresentation(true);
     if(savedView||view==='current')scene.restoreView(viewForAspect(savedView||previous.view,width/height));
@@ -36,7 +37,8 @@ export function capturePresentation(scene,{width,height,view='threeQuarter',save
     return result;
   }finally{
     scene.exportSize=null;scene.width=previous.width;scene.height=previous.height;r.setPixelRatio(previous.ratio);
-    scene.studioRender.maxDimension=previous.limit;scene.setPresentation(previous.client);scene.restoreView(previous.view);
+    scene.studioRender.maxDimension=previous.limit;scene.studioRender.occlusionSamples=previous.occlusionSamples;
+    scene.setPresentation(previous.client);scene.restoreView(previous.view);
     scene.clientView=previous.clientView;scene.clientFit=previous.clientFit;
     scene.selectedBox.visible=previous.selected;scene.hoverBox.visible=previous.hover;scene.guides.visible=previous.guides;
     for(const [box,visible]of boxes)box.visible=visible;

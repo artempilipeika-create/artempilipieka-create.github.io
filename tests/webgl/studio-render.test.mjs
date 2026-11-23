@@ -31,10 +31,16 @@ test('A failed scene render always restores the default framebuffer',()=>{
   const r=renderer(),p=new StudioRender(r);r.render=()=>{throw Error('lost context');};
   assert.throws(()=>p.render(new THREE.Scene(),new THREE.PerspectiveCamera()),/lost context/);assert.equal(r.target,null);p.dispose();
 });
-test('orbiting keeps the viewport resolution and restores the stationary occlusion samples',()=>{
+test('each profile keeps one render target, antialiasing and shadow quality across camera positions',()=>{
   const r=renderer(),p=new StudioRender(r),s=new THREE.Scene(),c=new THREE.PerspectiveCamera();
-  p.render(s,c,true);assert.equal(p.material.uniforms.sampleCount.value,5);
-  const target=p.target,size=[target.width,target.height];p.render(s,c,false);
-  assert.equal(p.material.uniforms.sampleCount.value,16);assert.equal(p.target,target);
-  assert.deepEqual([p.target.width,p.target.height],size);p.dispose();
+  const target=p.target;
+  for(const [limit,samples] of [[1920,8],[2560,16]]){
+    p.maxDimension=limit;p.occlusionSamples=samples;
+    for(const angle of [0,.08,.16,.16]){
+      c.position.set(Math.sin(angle),0,Math.cos(angle));c.lookAt(0,0,0);p.render(s,c);
+      assert.equal(p.target,target);assert.deepEqual([target.width,target.height,target.samples],[limit,limit*9/16,4]);
+      assert.equal(p.material.uniforms.sampleCount.value,samples);
+    }
+  }
+  p.dispose();
 });

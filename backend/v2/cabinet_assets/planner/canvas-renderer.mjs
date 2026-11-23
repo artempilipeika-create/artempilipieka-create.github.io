@@ -4,11 +4,13 @@ import * as THREE from './vendor/three.module.js';
 
 import {CabinetShadows} from './canvas-shadows.mjs';
 import {textureSampler, chooseLevel, sample} from './canvas-materials.mjs';
+import {qualityProfile} from './presentation.mjs';
 
 const studioKey = new THREE.Vector3(-.46, .67, .64).normalize();
 const fill = new THREE.Vector3(.78, .19, .35).normalize();
 const channel = (hex, shift) => (hex >> shift) & 255;
 const cross = (ax, ay, bx, by) => ax * by - ay * bx;
+const byte = value => Math.max(0,Math.min(255,Math.round(value)));
 
 function nearIntersection(a, b) {
   const da = a.z + a.w, db = b.z + b.w;
@@ -24,7 +26,6 @@ function screen(vertex, frame) {
 }
 
 function paint(frame, pixel, depth, ink, illumination, gloss, u, v) {
-  if (depth < -1.00001 || depth > 1 || (ink.depthTest && depth > frame.depth[pixel] + 1e-7)) return;
   if (ink.relief) illumination += sample(ink.relief,u,v,ink.sample)*ink.bumpStrength;
   let alpha=ink.opacity, r=ink.r*illumination, g=ink.g*illumination, b=ink.b*illumination;
   if (ink.map) {
@@ -81,15 +82,36 @@ function fillTriangle(frame, a, b, c, ink, mirrored) {
     const uy=grad(a.u,b.u,c.u,u,-cx/area,bx/area), vy=grad(a.v,b.v,c.v,v,-cx/area,bx/area);
     chooseLevel(ink.map,ux,vx,uy,vy); chooseLevel(ink.mask,ux,vx,uy,vy); chooseLevel(ink.relief,ux,vx,uy,vy);
   }
+  // Clip each scanline to its two edges. Thin handles and large walls share this coverage rule.
+  let low=a, middle=b, high=c;
+  if (low.y>middle.y) [low,middle]=[middle,low];
+  if (middle.y>high.y) [middle,high]=[high,middle];
+  if (low.y>middle.y) [low,middle]=[middle,low];
+  const longSlope=(high.x-low.x)/(high.y-low.y);
+  const lowerSlope=middle.y===low.y?0:(middle.x-low.x)/(middle.y-low.y);
+  const upperSlope=high.y===middle.y?0:(high.x-middle.x)/(high.y-middle.y);
+  const flat=!ink.textured && ink.opacity===1 && ink.alphaTest<=1
+    && a.shade===b.shade && a.shade===c.shade && a.gloss===b.gloss && a.gloss===c.gloss;
+  const color=flat?(0xff000000 | byte(ink.b*a.shade+a.gloss)<<16 | byte(ink.g*a.shade+a.gloss)<<8 | byte(ink.r*a.shade+a.gloss))>>>0:0;
+  const depthStep=(b.z-a.z)*stepB+(c.z-a.z)*stepC;
   for (let y=top; y<=bottom; y++) {
-    let wb = cross(left+.5-a.x, y+.5-a.y, cx, cy)/area;
-    let wc = cross(bx, by, left+.5-a.x, y+.5-a.y)/area;
-    for (let x=left; x<=right; x++, wb+=stepB, wc+=stepC) {
-      const wa = 1-wb-wc;
-      if (wa < -1e-8 || wb < -1e-8 || wc < -1e-8) continue;
-      const depth = wa*a.z + wb*b.z + wc*c.z;
-      const pixel = y*frame.width+x;
-      if (ink.depthTest && depth > frame.depth[pixel]+1e-7) continue;
+    const sy=y+.5, longX=low.x+(sy-low.y)*longSlope;
+    const shortX=sy<middle.y || high.y===middle.y?low.x+(sy-low.y)*lowerSlope:middle.x+(sy-middle.y)*upperSlope;
+    const start=Math.max(left,Math.ceil(Math.min(longX,shortX)-.50000001));
+    const end=Math.min(right,Math.floor(Math.max(longX,shortX)-.49999999));
+    let wb=cross(start+.5-a.x,sy-a.y,cx,cy)/area, wc=cross(bx,by,start+.5-a.x,sy-a.y)/area;
+    let depth=a.z+wb*(b.z-a.z)+wc*(c.z-a.z), pixel=y*frame.width+start;
+    if (flat) {
+      for (let x=start;x<=end;x++,pixel++,depth+=depthStep) {
+        if (depth < -1.00001 || depth > 1 || (ink.depthTest && depth>frame.depth[pixel]+1e-7)) continue;
+        frame.words[pixel]=color;
+        if (ink.depthWrite) { frame.depth[pixel]=depth;frame.receiver[pixel]=ink.receiver?1:0; }
+      }
+      continue;
+    }
+    for (let x=start; x<=end; x++,pixel++,depth+=depthStep,wb+=stepB,wc+=stepC) {
+      if (depth < -1.00001 || depth > 1 || (ink.depthTest && depth>frame.depth[pixel]+1e-7)) continue;
+      const wa=1-wb-wc;
       let u=0, v=0;
       if (ink.textured) {
         const inv = 1/(wa*a.inv+wb*b.inv+wc*c.inv);
@@ -108,17 +130,19 @@ function line(frame, a, b, ink) {
   const steps=Math.max(1,Math.min(4*(frame.width+frame.height),Math.ceil(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y)))));
   for (let i=0; i<=steps; i++) {
     const t=i/steps, x=Math.floor(a.x+(b.x-a.x)*t), y=Math.floor(a.y+(b.y-a.y)*t);
-    if (x>=0 && y>=0 && x<frame.width && y<frame.height) paint(frame,y*frame.width+x,a.z+(b.z-a.z)*t-1e-6,ink,1,0,0,0);
+    if (x<0 || y<0 || x>=frame.width || y>=frame.height) continue;
+    const depth=a.z+(b.z-a.z)*t-1e-6,pixel=y*frame.width+x;
+    if (depth>=-1.00001 && depth<=1 && (!ink.depthTest || depth<=frame.depth[pixel]+1e-7)) paint(frame,pixel,depth,ink,1,0,0,0);
   }
 }
 
 const contactDirections=[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]];
 
-function contactShadows(frame,camera,shadows) {
+function contactShadows(frame,camera,shadows,step) {
   // Estimate short-range occlusion in metres, independently of the camera zoom.
-  const step=3, width=Math.ceil(frame.width/step), height=Math.ceil(frame.height/step);
+  const width=Math.ceil(frame.width/step), height=Math.ceil(frame.height/step);
   if (width<3 || height<3) return;
-  if (!frame.distances) {
+  if (frame.distances?.length!==width*height) {
     frame.distances=new Float32Array(width*height);
     frame.contact=new Float32Array(width*height);
   }
@@ -175,7 +199,7 @@ export class CanvasRenderer {
     this.cabinetShadows=new CabinetShadows();
     this.extensions={has:()=>false};
     this.ratio=1;
-    this.moving=false;
+    this.quality=qualityProfile('high');
     this.halfLight=new THREE.Vector3();
     this.keyDirection=new THREE.Vector3();
     this.viewLight=new THREE.Vector3();
@@ -189,18 +213,13 @@ export class CanvasRenderer {
     this.normal=new THREE.Vector3();
     this.vertices=[];
   }
-  setMoving(moving) {
-    if (moving===this.moving || this.target) return;
-    this.moving=moving;
-    if (this.cssWidth) this.setSize(this.cssWidth,this.cssHeight,false,this.fullResolution);
-  }
   setPixelRatio(ratio) { this.ratio=ratio; }
   getPixelRatio() { return this.ratio; }
   setSize(w,h,_updateStyle=false,fullResolution=false) {
-    this.cssWidth=w; this.cssHeight=h; this.fullResolution=fullResolution;
-    const longSide=Math.max(w,h);
-    const scale=fullResolution?1:this.moving?Math.min(this.ratio,1280/longSide)
-      :Math.min(Math.max(1,this.ratio)*1.25,4096/longSide,Math.sqrt(5e6/(w*h)));
+    this.fullResolution=fullResolution;
+    const supersampling=this.quality.name==='high'?1.25:1;
+    const scale=fullResolution?1:Math.min(Math.max(1,this.ratio)*supersampling,
+      this.quality.limit/Math.max(w,h),Math.sqrt(5e6/(w*h)));
     const width=Math.max(1,Math.round(w*scale)), height=Math.max(1,Math.round(h*scale));
     if (width!==this.canvas.width || height!==this.canvas.height) { this.canvas.width=width; this.canvas.height=height; }
   }
@@ -312,10 +331,16 @@ export class CanvasRenderer {
     this.keyDirection.copy(studioKey);
     if (key) this.keyDirection.setFromMatrixPosition(key.matrixWorld).sub(this.viewLight.setFromMatrixPosition(key.target.matrixWorld)).normalize();
     camera.getWorldDirection(this.halfLight).negate().add(this.keyDirection).normalize();
-    const studioLighting=(camera.isPerspectiveCamera || Boolean(this.target && key)) && (!this.moving || this.target);
-    const shadows=studioLighting && key && this.shadowMap.enabled?this.cabinetShadows.build(key,casters,camera,this.target?640:1024):null;
+    const studioLighting=camera.isPerspectiveCamera || Boolean(this.target && key);
+    const balanced=this.quality.name==='balanced' && !this.target && !this.fullResolution;
+    let shadows=null;
+    if (studioLighting && key && this.shadowMap.enabled) {
+      const size=this.target?640:balanced?512:1024;
+      shadows=this.cabinetShadows.build(key,casters,camera,size,this.shadowMap.autoUpdate!==false || this.shadowMap.needsUpdate);
+      this.shadowMap.needsUpdate=false;
+    }
     for (const queue of [opaque,transparent]) {
-      if (queue===transparent && studioLighting) contactShadows(frame,camera,shadows);
+      if (queue===transparent && studioLighting) contactShadows(frame,camera,shadows,balanced?5:3);
       for (const {object,material,group} of queue) {
         if (object.isSprite) this.drawSprite(frame,object,camera);
         else this.draw(frame,object,material,group);

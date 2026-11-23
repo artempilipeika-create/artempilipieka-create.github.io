@@ -4,6 +4,7 @@ import * as THREE from '../../backend/v2/cabinet_assets/planner/vendor/three.mod
 import {CanvasRenderer} from '../../backend/v2/cabinet_assets/planner/canvas-renderer.mjs';
 import {textureSampler, chooseLevel, sample} from '../../backend/v2/cabinet_assets/planner/canvas-materials.mjs';
 import {CabinetShadows} from '../../backend/v2/cabinet_assets/planner/canvas-shadows.mjs';
+import {qualityProfile} from '../../backend/v2/cabinet_assets/planner/presentation.mjs';
 
 function renderer(){
   const context={
@@ -55,15 +56,16 @@ test('geometry crossing the near plane remains visible from a perspective camera
   assert.deepEqual(pixel(context.last,60,45),[255,0,0]);assert.deepEqual(pixel(context.last,0,89),[239,236,230]);
 });
 
-test('a stationary kitchen resolves screen pixels, with independent motion, export and preview sizes',()=>{
+test('interactive profiles retain screen detail and leave preview and export sizes independent',()=>{
   const {r}=renderer();r.setSize(1864,895);
   const still=[r.canvas.width,r.canvas.height];
   assert.ok(still[0]>1864 && still[1]>895);
-  r.setMoving(true);assert.equal(r.canvas.width,1280);
-  r.setMoving(false);assert.deepEqual([r.canvas.width,r.canvas.height],still);
-  const target={width:768,height:600};r.setRenderTarget(target);r.setMoving(true);
+  const target={width:768,height:600};r.setRenderTarget(target);
   assert.deepEqual([r.frame().width,r.frame().height],[768,600]);assert.equal(r.canvas.width,still[0]);
-  r.setRenderTarget(null);r.setSize(3840,2160,false,true);r.setMoving(true);
+  r.setRenderTarget(null);r.quality=qualityProfile('balanced');r.setSize(1864,895);
+  assert.deepEqual([r.canvas.width,r.canvas.height],[1864,895]);
+  r.setSize(3840,2160);assert.equal(r.canvas.width,1920);
+  r.setSize(3840,2160,false,true);
   assert.deepEqual([r.canvas.width,r.canvas.height],[3840,2160]);
 });
 
@@ -74,6 +76,12 @@ test('high resolution decor keeps fine strokes close up and averages them at a d
   chooseLevel(sampler,1/w,0,0,0);assert.equal(sampler.level.width,w);
   sample(sampler,1.5/w,.5,out);assert.equal(out[0],1);
   sample(sampler,2/w,.5,out);assert.ok(Math.abs(out[0]-.5)<.001);
+  const redAtFootprint=footprint=>{
+    chooseLevel(sampler,footprint/w,0,0,footprint);
+    sample(sampler,1.5/w,.5,out);return out[0];
+  };
+  assert.ok(redAtFootprint(1.5)<.8 && redAtFootprint(1.5)>.6);
+  assert.ok(Math.abs(redAtFootprint(1.999)-redAtFootprint(2.001))<.002);
   chooseLevel(sampler,32/w,0,0,0);assert.ok(sampler.level.width<=256);
   sample(sampler,.31,.5,out);assert.ok(Math.abs(out[0]-.5)<.01);assert.equal(out[3],1);
 });
@@ -106,4 +114,13 @@ test('a pull casts one continuous soft shadow at its physical offset from the fa
   assert.ok(first>0 && last<row.length-1 && last-first>40);
   assert.ok(row.slice(first,last+1).every(v=>v<.85));
   assert.ok(row.some(v=>v>.65 && v<.99));
+  let rasterized=0;
+  const triangle=shadow.triangle.bind(shadow);
+  shadow.triangle=(...args)=>{rasterized++;return triangle(...args);};
+  camera.position.x=.3;camera.lookAt(0,0,0);camera.updateMatrixWorld();
+  shadow.build(key,[pull],camera,512,false);
+  assert.equal(rasterized,0);assert.ok(visible(.09,-.135)<.7);
+  pull.position.x=.32;pull.updateMatrixWorld();
+  shadow.build(key,[pull],camera,512,false);
+  assert.ok(rasterized>0);assert.equal(visible(.09,-.135),1);
 });

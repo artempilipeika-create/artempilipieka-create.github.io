@@ -453,7 +453,7 @@ class PlannerApplication {
   async replaceRenderer(softwareOnly){
     // Keep the current scene and its controls available until both implementations load.
     const [native,softwareModule]=await Promise.allSettled([
-      import('./scene.mjs?v=module-detail-1'),import('./canvas-renderer.mjs?v=module-detail-2')
+      import('./scene.mjs?v=steady-camera-1'),import('./canvas-renderer.mjs?v=steady-camera-1')
     ]);
     const previous=this.scene,view=previous?.captureView?.(),oldMode=previous?.mode;
     const settings=previous&&{layer:previous.layer,clientView:previous.clientView,selectionScope:previous.selectionScope,

@@ -7,10 +7,22 @@ export class CabinetShadows {
     this.transform=new THREE.Matrix4();
     this.fromScreen=new THREE.Matrix4();
     this.vertices=new Float32Array(0);
+    this.lightMatrix=new THREE.Matrix4();
+    this.casters=[];
+    this.casterMatrices=[];
   }
-  build(light,casters,camera,size) {
-    if (!casters.length) return null;
+  build(light,casters,camera,size,dirty=true) {
+    if (!casters.length) { this.casters=[];return null; }
     light.shadow.updateMatrices(light);
+    this.fromScreen.copy(light.shadow.matrix).multiply(camera.matrixWorld).multiply(camera.projectionMatrixInverse);
+    // An orbit changes the projection into the shadow map, not the light-space depth.
+    if (!dirty && this.light===light && this.size===size && this.lightMatrix.equals(light.shadow.matrix)
+      && casters.length===this.casters.length
+      && casters.every((mesh,i)=>mesh===this.casters[i] && mesh.matrixWorld.equals(this.casterMatrices[i]))) return this;
+    this.light=light;
+    this.lightMatrix.copy(light.shadow.matrix);
+    this.casters=casters.slice();
+    this.casterMatrices.length=casters.length;
     if (this.size!==size) { this.size=size; this.depth=new Float32Array(size*size); }
     this.depth.fill(1);
     const view=light.shadow.camera;
@@ -18,8 +30,8 @@ export class CabinetShadows {
     this.texel=Math.max(view.right-view.left,view.top-view.bottom)/size;
     this.bias=Math.max(.0008,this.texel*.65)/this.span;
     this.strength=Math.min(.45,(light.shadow.intensity??1)*.61);
-    this.fromScreen.copy(light.shadow.matrix).multiply(camera.matrixWorld).multiply(camera.projectionMatrixInverse);
-    for (const mesh of casters) {
+    for (const [i,mesh] of casters.entries()) {
+      (this.casterMatrices[i]??=new THREE.Matrix4()).copy(mesh.matrixWorld);
       const g=mesh.geometry, pos=g.attributes.position, index=g.index;
       if (!pos) continue;
       this.transform.multiplyMatrices(light.shadow.matrix,mesh.matrixWorld);

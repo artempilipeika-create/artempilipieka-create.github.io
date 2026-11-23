@@ -27,7 +27,8 @@ export function textureSampler(texture, cache, relief=false) {
   const pyramid = cache.get(image);
   if (!pyramid) return null;
   if (texture.matrixAutoUpdate) texture.updateMatrix();
-  return {pyramid, level:pyramid.levels[0], matrix:texture.matrix.elements, flipY:texture.flipY,
+  return {pyramid, level:pyramid.levels[0], next:null, blend:0, coarse:relief?null:new Float32Array(4),
+    matrix:texture.matrix.elements, flipY:texture.flipY,
     repeatX:texture.wrapS === THREE.RepeatWrapping, repeatY:texture.wrapT === THREE.RepeatWrapping, relief};
 }
 
@@ -49,26 +50,33 @@ export function chooseLevel(sampler, ux, vx, uy, vy) {
   const dx=Math.hypot((m[0]*ux+m[3]*vx)*base.width,(m[1]*ux+m[4]*vx)*base.height);
   const dy=Math.hypot((m[0]*uy+m[3]*vy)*base.width,(m[1]*uy+m[4]*vy)*base.height);
   const footprint=Math.max(Math.min(dx,dy),Math.max(dx,dy)/4,1);
-  const lod=Math.min(Math.floor(Math.log2(footprint)),Math.ceil(Math.log2(Math.max(base.width,base.height))));
-  while (levels.length<=lod) levels.push(smaller(levels[levels.length-1]));
-  sampler.level=levels[lod];
-  if (sampler.relief && !sampler.level.slopes) {
-    const {width,height,data}=sampler.level, slopes=new Float32Array(width*height);
-    for (let y=0; y<height; y++) for (let x=0; x<width; x++) {
-      const left=(y*width+(x+width-1)%width)*4, right=(y*width+(x+1)%width)*4;
-      const up=(((y+height-1)%height)*width+x)*4, down=(((y+1)%height)*width+x)*4;
-      slopes[y*width+x]=((data[left]-data[right])*.6+(data[up]-data[down])*.4)/255;
-    }
-    sampler.level.slopes=slopes;
+  const lod=Math.min(Math.log2(footprint),Math.ceil(Math.log2(Math.max(base.width,base.height))));
+  const fine=Math.floor(lod), coarse=Math.ceil(lod);
+  while (levels.length<=coarse) levels.push(smaller(levels[levels.length-1]));
+  sampler.level=levels[fine];
+  sampler.next=coarse===fine?null:levels[coarse];
+  sampler.blend=lod-fine;
+  if (sampler.relief) {
+    prepareSlopes(sampler.level);
+    if (sampler.next) prepareSlopes(sampler.next);
   }
 }
 
-export function sample(sampler,u,v,out) {
-  const {width,height,data,slopes}=sampler.level, m=sampler.matrix;
-  let x=m[0]*u+m[3]*v+m[6], y=m[1]*u+m[4]*v+m[7];
-  if (sampler.flipY) y=1-y;
-  x=sampler.repeatX?(x-Math.floor(x))*width-.5:Math.min(width-1,Math.max(0,x*width-.5));
-  y=sampler.repeatY?(y-Math.floor(y))*height-.5:Math.min(height-1,Math.max(0,y*height-.5));
+function prepareSlopes(level) {
+  if (level.slopes) return;
+  const {width,height,data}=level, slopes=new Float32Array(width*height);
+  for (let y=0; y<height; y++) for (let x=0; x<width; x++) {
+    const left=(y*width+(x+width-1)%width)*4, right=(y*width+(x+1)%width)*4;
+    const up=(((y+height-1)%height)*width+x)*4, down=(((y+1)%height)*width+x)*4;
+    slopes[y*width+x]=((data[left]-data[right])*.6+(data[up]-data[down])*.4)/255;
+  }
+  level.slopes=slopes;
+}
+
+function sampleLevel(sampler,level,u,v,out) {
+  const {width,height,data,slopes}=level;
+  const x=sampler.repeatX?u*width-.5:Math.min(width-1,Math.max(0,u*width-.5));
+  const y=sampler.repeatY?v*height-.5:Math.min(height-1,Math.max(0,v*height-.5));
   let x0=Math.floor(x), y0=Math.floor(y);
   const fx=x-x0, fy=y-y0;
   if (x0<0) x0+=width;
@@ -78,4 +86,17 @@ export function sample(sampler,u,v,out) {
   const wa=(1-fx)*(1-fy), wb=fx*(1-fy), wc=(1-fx)*fy, wd=fx*fy;
   if (sampler.relief) return slopes[a]*wa+slopes[b]*wb+slopes[c]*wc+slopes[d]*wd;
   for (let k=0; k<4; k++) out[k]=(data[a*4+k]*wa+data[b*4+k]*wb+data[c*4+k]*wc+data[d*4+k]*wd)/255;
+}
+
+export function sample(sampler,u,v,out) {
+  const m=sampler.matrix;
+  let x=m[0]*u+m[3]*v+m[6], y=m[1]*u+m[4]*v+m[7];
+  if (sampler.flipY) y=1-y;
+  if (sampler.repeatX) x-=Math.floor(x);
+  if (sampler.repeatY) y-=Math.floor(y);
+  const fine=sampleLevel(sampler,sampler.level,x,y,out);
+  if (!sampler.next) return fine;
+  const coarse=sampleLevel(sampler,sampler.next,x,y,sampler.coarse);
+  if (sampler.relief) return fine+(coarse-fine)*sampler.blend;
+  for (let k=0; k<4; k++) out[k]+=(sampler.coarse[k]-out[k])*sampler.blend;
 }

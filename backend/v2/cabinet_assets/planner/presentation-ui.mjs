@@ -28,7 +28,7 @@ export class PresentationUI{
     const quality=el('details',null,'presentation-quality');quality.append(el('summary','Качество на этом устройстве'));
     this.quality=this.select(quality,'Качество сцены',[['auto','Автоматически'],['high','Высокое'],['balanced','Плавная работа']]);
     this.app.listen(this.quality,'change',()=>this.app.scene.applyQuality?.(this.quality.value));
-    quality.append(el('p','Автоматический режим уменьшает нагрузку при медленной отрисовке. Разрешение сохранённой картинки задаётся отдельно.'));controls.append(quality);
+    quality.append(el('p','В автоматическом режиме качество подбирается при открытии конструктора. Разрешение PNG задаётся отдельно.'));controls.append(quality);
     this.status=el('p',null,'presentation-status');this.status.setAttribute('role','status');controls.append(this.status);
     this.download=el('a','Сохранить изображение','presentation-download');this.download.id='presentation-download';this.download.setAttribute('aria-disabled','true');controls.append(this.download);
     this.app.listen(this.download,'click',e=>{if(!this.download.href||this.download.getAttribute('aria-disabled')==='true'){e.preventDefault();return;}this.status.textContent='PNG подготовлен. Браузер сохранит файл в загрузки.';});

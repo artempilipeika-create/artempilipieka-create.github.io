@@ -20,7 +20,7 @@ import {WardrobeMotion,drawerKey} from './wardrobe-motion.mjs';
 import {StudioRender} from './studio-render.mjs';
 import {allSegments} from './wall-finishes.mjs';
 import {WallFinishMesh} from './wall-finish-mesh.mjs';
-import {qualityProfile,RenderBudget} from './presentation.mjs';
+import {qualityProfile} from './presentation.mjs';
 const SELECTION_BLUE='#1677ff',HOVER_BLUE='#80b8ff';
 export class PlannerScene{
   constructor(canvas,adapter,onLost,{context,softwareRenderer}={}){
@@ -28,13 +28,9 @@ export class PlannerScene{
     this.displayMode='normal';this.displayItemId=null;this.selectionScope='module';this.kitchenBoxes=new Map();
     this.softwareRendering=Boolean(softwareRenderer);
     this.renderer=softwareRenderer||new THREE.WebGLRenderer({canvas,context,antialias:true,alpha:false,powerPreference:'high-performance'});
-    this.qualityMode='auto';try{this.qualityMode=localStorage.getItem('mf.scene-quality')||'auto';}catch{}
-    this.renderBudget=new RenderBudget();this.quality=qualityProfile(this.qualityMode,{memory:navigator.deviceMemory,cores:navigator.hardwareConcurrency});
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality.ratio));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.03;
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
     this.studioRender=new StudioRender(this.renderer);
-    this.studioRender.maxDimension=this.quality.limit;
     this.scene=new THREE.Scene();this.planBackground=new THREE.Color();
     this.wardrobeContact=new THREE.Mesh(new THREE.SphereGeometry(.016,16,10),new THREE.MeshBasicMaterial({color:'#db482d',depthTest:false,depthWrite:false}));
     this.wardrobeContact.visible=false;this.wardrobeContact.renderOrder=90;this.wardrobeContact.userData.ownMaterial=true;
@@ -55,14 +51,7 @@ export class PlannerScene{
     this.camera.position.set(4,3.4,5);this.controls=new OrbitControls(this.camera,canvas);
     this.controls.enableDamping=true;this.controls.dampingFactor=.12;this.controls.minDistance=.5;this.controls.maxDistance=80;
     this.controls.maxPolarAngle=Math.PI*.495;this.controls.screenSpacePanning=true;this.controls.target.set(0,1,0);
-    this.controls.addEventListener('change',()=>{
-      this.invalidate();
-      if(this.mode!=='3d'||!this.orbitInput)return;
-      this.motionQuality=true;clearTimeout(this.settleTimer);
-      this.settleTimer=setTimeout(()=>{this.motionQuality=false;this.orbitInput=false;this.invalidate();},150);
-    });
-    this.controls.addEventListener('start',()=>{this.orbitInput=true;});
-    this.controls.addEventListener('end',()=>{if(!this.motionQuality)this.orbitInput=false;});
+    this.controls.addEventListener('change',()=>this.invalidate());
     const refreshMaterials=()=>{if(!this.dead){this.invalidate();this.onVisualChanged?.();}};
     this.boardRelief=new THREE.TextureLoader().load('/account/planner/materials/studio-matte.webp',refreshMaterials);
     this.boardRelief.wrapS=this.boardRelief.wrapT=THREE.RepeatWrapping;
@@ -78,7 +67,8 @@ export class PlannerScene{
     this.lost=e=>{e.preventDefault();if(!this.dead)this.onLost();};canvas.addEventListener('webglcontextlost',this.lost);
     this.wallFinishes=new WallFinishMesh(this);
     this.renderRooms=new RenderRooms();
-    this.resize();this.sync();this.fit('room');if(!softwareRenderer)this.previews=new CataloguePreviews(this);
+    let qualityMode='auto';try{qualityMode=localStorage.getItem('mf.scene-quality')||'auto';}catch{}
+    this.applyQuality(qualityMode);this.sync();this.fit('room');if(!softwareRenderer)this.previews=new CataloguePreviews(this);
     this.factory.onAssetsReady=()=>{this.renderer.shadowMap.needsUpdate=true;this.previews?.refreshAppliances();};
   }
   invalidate(){if(!this.dead&&!this.frame)this.frame=requestAnimationFrame(()=>this.render());}
@@ -111,16 +101,15 @@ export class PlannerScene{
     if(this.clientFloor)this.clientFloor.visible=(this.mode==='3d'||Boolean(this.clientFloor.userData.tileSizeMm));
     if(this.floorJoints)this.floorJoints.visible=!this.clientFloor?.visible;
     if(this.ceiling)this.ceiling.visible=this.mode==='3d'&&this.camera.position.y<r.height*S;
-    const movingView=!this.exportSize&&(this.motionQuality||moving||Boolean(this.preview));
-    this.renderer.setMoving?.(movingView);
-    if(this.mode==='3d')this.studioRender.render(this.scene,this.camera,movingView);else this.renderer.render(this.scene,this.camera);this.placeLabel();
-    if(!this.exportSize&&this.qualityMode==='auto'&&this.quality.name==='high'&&!document.hidden&&this.renderBudget.record(performance.now()-started))this.applyQuality('auto',true);
+    if(this.mode==='3d')this.studioRender.render(this.scene,this.camera);else this.renderer.render(this.scene,this.camera);this.placeLabel();
   }
-  applyQuality(mode='auto',reduced=false){
+  applyQuality(mode='auto'){
     this.qualityMode=['auto','balanced','high'].includes(mode)?mode:'auto';
-    this.quality=qualityProfile(reduced?'balanced':this.qualityMode,{memory:navigator.deviceMemory,cores:navigator.hardwareConcurrency});
-    if(!reduced)this.renderBudget=new RenderBudget();
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality.ratio));this.studioRender.maxDimension=this.quality.limit;
+    this.quality=qualityProfile(this.qualityMode,{memory:navigator.deviceMemory,cores:navigator.hardwareConcurrency,software:this.softwareRendering});
+    if(this.softwareRendering)this.renderer.quality=this.quality;
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality.ratio));
+    this.studioRender.maxDimension=this.quality.limit;
+    this.studioRender.occlusionSamples=this.quality.occlusionSamples;
     try{localStorage.setItem('mf.scene-quality',this.qualityMode);}catch{}this.resize();
   }
   resize(){
@@ -613,5 +602,5 @@ export class PlannerScene{
   }
   clearPreview(){this.previewItems=null;this.clearGroupPreview();this.renderer.shadowMap.needsUpdate=true;this.factory.release(this.preview);this.preview=null;this.disposeTree(this.guides);this.guides=new THREE.Group();this.scene.add(this.guides);this.sync();}
   projectPoint(point){this.camera.updateMatrixWorld();const p=new THREE.Vector3(point.x*S,point.y*S,point.z*S).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-  dispose(){this.dead=true;clearTimeout(this.settleTimer);this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.surfaces?.disposeMaps();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);this.disposeTree(this.wardrobeContact);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.boardRelief.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
+  dispose(){this.dead=true;this.wallFinishes?.dispose();this.socketAssets?.dispose();this.roomEquipmentAssets?.dispose();this.previews?.dispose();cancelAnimationFrame(this.frame);this.resizeObserver.disconnect();this.canvas.removeEventListener('webglcontextlost',this.lost);this.controls.dispose();this.disposeTree(this.roomRoot);this.surfaces?.disposeMaps();this.disposeTree(this.guides);this.disposeTree(this.selectedBox);this.disposeTree(this.hoverBox);this.disposeTree(this.wardrobeContact);for(const box of this.kitchenBoxes.values())this.disposeTree(box);this.kitchenBoxes.clear();this.factory.dispose();this.boardRelief.dispose();this.studioEnvironment?.dispose();this.studioRender?.dispose();this.sun.shadow.dispose();this.renderer.dispose();}
 }

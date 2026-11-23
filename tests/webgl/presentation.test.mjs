@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fileName,exportSize,qualityProfile,RenderBudget,viewForAspect} from '../../backend/v2/cabinet_assets/planner/presentation.mjs';
+import {fileName,exportSize,qualityProfile,viewForAspect} from '../../backend/v2/cabinet_assets/planner/presentation.mjs';
 import {capturePresentation,captureAlbumViews} from '../../backend/v2/cabinet_assets/planner/presentation-capture.mjs';
 import {History} from '../../backend/v2/cabinet_assets/planner/history.mjs';
 import {fingerprint} from '../../backend/v2/cabinet_assets/planner/project-autosave.mjs';
@@ -16,13 +16,15 @@ test('download filenames preserve Cyrillic without filesystem controls',()=>{
   assert.match(name,/Кухня Анна/);assert.match(name,/2026-10-24\.png$/);assert.doesNotMatch(name,/[<>:"/\\|?*\n]/);
   assert.match(fileName('Кухня','Общий',true,new Date('2026-10-23T22:30:00Z')),/2026-10-24\.png$/);
 });
-test('automatic quality responds to sustained cost, not a single shader stall',()=>{
-  assert.equal(qualityProfile('auto',{memory:4,cores:8}).name,'balanced');
-  assert.equal(qualityProfile('high',{memory:2}).name,'high');
-  const b=new RenderBudget();assert.equal(b.record(1000),false);
-  for(let i=0;i<35;i++)assert.equal(b.record(60),false);
-  assert.equal(b.record(60),true);assert.equal(b.record(60),false);
-  const fast=new RenderBudget();for(let i=0;i<100;i++)assert.equal(fast.record(12),false);
+test('automatic quality selects by device at startup and respects the saved manual choice',()=>{
+  const high=qualityProfile('high'),balanced=qualityProfile('balanced');
+  assert.deepEqual(qualityProfile('auto',{memory:4,cores:8}),balanced);
+  assert.deepEqual(qualityProfile('auto',{cores:2}),balanced);
+  assert.deepEqual(qualityProfile('auto',{memory:8,cores:8,software:true}),balanced);
+  assert.deepEqual(qualityProfile('auto',{memory:8,cores:8}),high);
+  assert.deepEqual(qualityProfile('high',{memory:2}),high);
+  assert.deepEqual(qualityProfile('high',{software:true}),high);
+  assert.deepEqual(qualityProfile('balanced',{cores:12}),balanced);
 });
 test('saved views participate in undo and autosave without changing furniture',()=>{
   let snapshot={name:'Кухня',scene:{items:[{item_id:'a',width:600}],room:{width:3600},presentationViews:[]}};
@@ -34,7 +36,7 @@ test('saved views participate in undo and autosave without changing furniture',(
 function mockScene(){
   const box={visible:true};let ratio=1.5;
   return {adapter:{items:[{}]},canvas:{},width:1000,height:700,client:false,clientView:'front',clientFit:{x:1},
-    renderer:{getPixelRatio:()=>ratio,setPixelRatio:v=>ratio=v,setSize(){}},studioRender:{maxDimension:1440},
+    renderer:{getPixelRatio:()=>ratio,setPixelRatio:v=>ratio=v,setSize(){}},studioRender:{maxDimension:1920,occlusionSamples:8},
     cameraState:{mode:'front',position:[1,2,3]},captureView(){return structuredClone(this.cameraState);},
     restoreView(v){this.cameraState=structuredClone(v);},setPresentation(v){this.client=v;},
     perspective:{updateProjectionMatrix(){}},selectedBox:{visible:true},hoverBox:{visible:true},guides:{visible:true},kitchenBoxes:new Map([['a',box]]),
@@ -49,7 +51,8 @@ for(const fail of [false,true])test('capture restores renderer/camera/selection 
     else assert.equal(capturePresentation(s,{width:1920,height:1080}).width,1920);
     assert.equal(s.client,false);assert.equal(s.clientView,'front');assert.deepEqual(s.cameraState,view);
     assert.equal(s.renderer.getPixelRatio(),1.5);assert.equal(s.width,1000);assert.equal(s.height,700);
-    assert.equal(s.studioRender.maxDimension,1440);assert.equal(s.guides.visible,true);assert.equal(s.selectedBox.visible,true);
+    assert.equal(s.studioRender.maxDimension,1920);assert.equal(s.studioRender.occlusionSamples,8);
+    assert.equal(s.guides.visible,true);assert.equal(s.selectedBox.visible,true);
     assert.equal(s.kitchenBoxes.get('a').visible,true);assert.equal(JSON.stringify(s.adapter.items),before);assert.equal(s.exportSize,null);
   }finally{globalThis.document=old;}
 });

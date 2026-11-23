@@ -257,6 +257,49 @@ def scenario(page, projects, pid):
 
 
 
+def check_orbit_quality(page):
+    start = page.evaluate("""() => {
+        const scene=MF_PLANNER.scene, rect=scene.canvas.getBoundingClientRect();
+        let point;
+        for (let y=rect.top+90; !point && y<rect.bottom-60; y+=45) {
+            for (let x=rect.left+90; x<rect.right-100; x+=45) {
+                if (document.elementFromPoint(x,y)===scene.canvas && !scene.pick(x,y)) {point=[x,y];break;}
+            }
+        }
+        if (!point) throw Error('No free space for an orbit gesture');
+        const frames=[], original=scene.render;
+        const position=scene.camera.position.clone();
+        scene.render=function() {
+            original.call(this);
+            const studio=this.studioRender, target=studio.target;
+            frames.push([this.canvas.width,this.canvas.height,target?.width,target?.height,
+                target?.samples,studio.material?.uniforms.sampleCount.value]);
+        };
+        window.qaOrbit={frames,original,position};
+        scene.render();
+        return point;
+    }""")
+    page.mouse.move(*start)
+    page.mouse.down()
+    try:
+        page.mouse.move(start[0]+55, start[1]+12, steps=2)
+        wait_for_state(page, """()=>qaOrbit.frames.length>1 &&
+            MF_PLANNER.scene.camera.position.distanceTo(qaOrbit.position)>.0001""")
+    finally:
+        page.mouse.up()
+    frames = page.evaluate("""async () => {
+        const scene=MF_PLANNER.scene;
+        scene.stopOrbitInertia();
+        await new Promise(requestAnimationFrame);
+        scene.render();
+        const {frames,original}=window.qaOrbit;
+        scene.render=original;
+        delete window.qaOrbit;
+        return frames;
+    }""")
+    assert len(set(map(tuple, frames))) == 1, frames
+
+
 def camera_views(page, projects, pid):
     """Exercise the real toolbar with GPU loss, recovery and a cold start without WebGL."""
     def ready():
@@ -277,6 +320,7 @@ def camera_views(page, projects, pid):
     page.evaluate('id=>MF_PLANNER.bridge.open(id)', pid)
     items = page.evaluate('MF_PLANNER.adapter.items')
     assert len(items) == 1
+    check_orbit_quality(page)
     choose('#planner-front', 'front')
     page.evaluate('MF_PLANNER.scene.renderer.forceContextLoss()')
     ready()
@@ -289,6 +333,7 @@ def camera_views(page, projects, pid):
         return canvas.width>=canvas.clientWidth && scene.factory.boardRelief.image?.naturalWidth===512;
     }""")
     assert len({front, top, angle}) == 3
+    check_orbit_quality(page)
     assert page.evaluate('MF_PLANNER.scene.controls.enableRotate')
     assert page.evaluate('MF_PLANNER.adapter.items') == items
     page.locator('#planner-client').click()
