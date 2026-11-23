@@ -297,10 +297,7 @@ def camera_views(page, projects, pid):
     assert page.evaluate('MF_PLANNER.scene.clientView') == 'front'
     page.locator('#planner-client').click()
     choose('#mode-2d', 'top')
-    page.evaluate('()=>MF_PLANNER.bridge.save()')
-    page.reload(wait_until='domcontentloaded')
-    page.locator('#planner-assistant').wait_for(state='attached')
-    page.evaluate('id=>MF_PLANNER.bridge.open(id)', pid)
+    page.evaluate('()=>MF_PLANNER.startRenderer()')
     expect(page.locator('body')).to_have_attribute('data-planner-renderer', 'webgl')
     expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed', 'true')
     assert page.evaluate('MF_PLANNER.adapter.items') == items
