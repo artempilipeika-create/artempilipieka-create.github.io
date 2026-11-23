@@ -68,8 +68,9 @@ test('Stock length butt joints remain full-height, with only one visual seam',()
   assert.equal(surfaces.size,2);assert.equal([...surfaces.values()].reduce((n,s)=>n+s.joints.length,0),1);
   for(const [part,s]of surfaces){assert.equal(s.radii.filter(r=>r===0).length,1);verifyGeometry(part,s).dispose();}
 });
-test('Showroom Chicago concrete is matte; a chosen countertop retains its own finish',()=>{
+test('Countertop satin finish respects an explicit roughness and leaves cabinet materials alone',()=>{
   const f=new MeshFactory({room,material:()=>({visual:{roughness:.91,render_color:'#aaaaaa'}})},()=>{});
-  assert.equal(f.material('counter').metalness,0);assert.equal(f.material('counter').roughness,.85);assert.equal(f.material('counter').color.getHexString(),'605448');assert.equal(f.material('counter').userData.variantId,null);assert.equal(f.material('counter','matte').roughness,.91);assert.equal(f.material('counter').clearcoat,0);assert.equal(f.material('counter','matte').color.getHexString(),'aaaaaa');
+  assert.equal(f.material('counter').metalness,0);assert.equal(f.material('counter').roughness,.58);assert.equal(f.material('counter','matte').roughness,.91);assert.ok(f.material('counter').clearcoat>0);
+  assert.equal(f.material('counter').userData.variantId,null);assert.equal(f.material('counter','matte').color.getHexString(),'aaaaaa');
   assert.equal(f.material('body').isMeshPhysicalMaterial,undefined);f.dispose();
 });

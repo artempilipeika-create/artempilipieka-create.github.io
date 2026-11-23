@@ -22,6 +22,19 @@ def scenario(page, projects, pid):
         route.fulfill(json=lighting_quote([r.model_dump() for r in body.runs],body.settings.model_dump()))
     page.route('**/api/v2/3d-assistant/lighting-estimate',estimate)
 
+    room=page.locator('#planner-room-settings')
+    room.locator('summary').click()
+    expect(room.locator('#room-floor')).to_have_value('concrete')
+    room.get_by_role('button',name='Вернуть сцену «Молочный и дуб»').click()
+    expect(room.locator('#room-floor')).to_have_value('palette')
+    expect(room.locator('#room-lighting')).to_have_value('palette')
+    page.evaluate('()=>MF_PLANNER.bridge.save()')
+    page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+    assert projects.projects[pid]['scene']['displaySettings']['renderRoomId']==1
+    expect(room.locator('#room-floor option:checked')).to_contain_text('Дубовый пол')
+    expect(room.locator('#room-lighting option:checked')).to_contain_text('Нейтральный')
+    room.locator('summary').click()
+
     page.locator('#studio-toggle-library').click()
     page.locator('[data-studio-tab="catalog"]').click()
     page.locator('[data-module-filter="ai"]').click()

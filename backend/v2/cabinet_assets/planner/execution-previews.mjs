@@ -1,8 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {MeshFactory} from './module-mesh.mjs';
 import {PRODUCTION_MODELS,heights,productionParts} from './furniture-core.mjs';
-import {materialVisual,SHOWROOM} from './material-visuals.mjs';
-import {LIGHTS} from './room-state.mjs';
+import {materialVisual} from './material-visuals.mjs';
 
 export function executionPreviewItem(item,options={}){
  const it=structuredClone(item);Object.assign(it,{x:0,z:0,rotation:0,elevation_mm:0,doors_open:options.sceneDisplayMode?Boolean(item.doors_open):options.view==='hinge'});
@@ -25,11 +24,10 @@ export function executionMaterialKey(item,adapter){
 export class ExecutionPreviews{
  constructor(owner){
   this.owner=owner;this.jobs=new Map();this.cache=new Map();this.visible=new Set();this.width=512;this.height=400;this.closed=false;
-  const light=LIGHTS.daylight;
-  this.scene=new THREE.Scene();this.scene.background=new THREE.Color(SHOWROOM.background);this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=light.environment;
-  this.scene.add(new THREE.HemisphereLight(light.sky,light.ground,light.hemi));
-  this.key=new THREE.DirectionalLight(light.key,light.sun);this.key.castShadow=true;this.key.shadow.mapSize.set(1024,1024);this.key.shadow.bias=-.00004;this.key.shadow.normalBias=.0006;this.key.shadow.intensity=.6;
-  this.scene.add(this.key,this.key.target);const fill=new THREE.DirectionalLight(light.fill,light.fillPower);fill.position.set(3,2,2);this.scene.add(fill);
+  this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#f2efe8');this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=.7;
+  this.scene.add(new THREE.HemisphereLight('#fffaf2','#b9b2a5',1.5));
+  this.key=new THREE.DirectionalLight('#fff9ee',2.4);this.key.castShadow=true;this.key.shadow.mapSize.set(1024,1024);this.key.shadow.bias=-.00004;this.key.shadow.normalBias=.0006;this.key.shadow.intensity=.6;
+  this.scene.add(this.key,this.key.target);const fill=new THREE.DirectionalLight('#ecf2ff',.9);fill.position.set(3,2,2);this.scene.add(fill);
   const previews=this;
   this.factory=new MeshFactory({room:{width:4000,depth:4000,height:3000},get state(){return previews.renderMaterials?owner.adapter?.state||{}:{};},template:it=>({production:PRODUCTION_MODELS[it.bazis_id]}),material:id=>this.renderMaterials?owner.adapter?.material?.(id):null},()=>this.refreshImages());
   this.factory.onAssetsReady=()=>this.refreshImages();
@@ -72,7 +70,7 @@ export class ExecutionPreviews{
    if(inside&&inner&&(role==='front'&&part?.drawer_index===2||role==='handle'&&m.userData.frontAccessory&&m.position.y>it.height/2000))m.visible=false;
    const drawer=part?.role==='drawer'||/^drawer-/.test(part?.key||'')||m.userData.drawerMetal||m.userData.cargoBasket||m.userData.pulloutDryer||role==='front'&&m.userData.facade?.kind==='drawer'||role==='handle'&&m.userData.frontAccessory;
    if(pull&&drawer){m.position.z+=Math.min(.32,it.depth/1800);moved.push(m);}
-   if(!opt.sceneDisplayMode&&['body','shelf','front','back','plinth'].includes(role))m.material=f.material(role,null);
+   if(!opt.sceneDisplayMode&&(role==='body'||role==='shelf'||role==='front'||role==='back')){const mat=m.material.clone();mat.color.set(role==='front'?'#d9cdb7':role==='back'?'#c7bdad':'#e0d8c8');m.material=mat;owned.add(mat);}
    if(m.userData.cargoBasket||m.userData.pulloutDryer){const mat=m.material.clone(),chrome=p.cargo?.brand==='norwing'||p.pullout_dryer?.dryer_brand==='flat_line';mat.color.set(chrome?'#aab7c5':'#414a51');mat.metalness=.45;mat.roughness=.42;m.material=mat;owned.add(mat);}
    if(opt.highlight==='filler'&&/^filler/.test(part?.key||'')){const mat=m.material.clone();mat.color.set('#62a7f6');m.material=mat;owned.add(mat);}
   });
@@ -85,9 +83,6 @@ export class ExecutionPreviews{
    for(let x=-w/2+28;x<w/2;x+=38)f.box(extra,'drawerMetal',2,48,d*.75,x,94,0,null);
   }
   if(heights(it).base_height>0){const base=heights(it).base_height;f.box(extra,'plinth',it.width-2,base-2,18,0,base/2,it.depth/2-55,opt.sceneDisplayMode?it.plinthMaterialId:null);}
-  if(p?.tier==='base'&&!inside&&!opt.focus){
-   extra.add(f.dress([it],{items:[it],plinths:[],room:f.adapter.room}));
-  }
   this.scene.add(model,extra);model.updateMatrixWorld(true);
   let box=this.bounds(model).union(this.bounds(extra)),direction=new THREE.Vector3(.58,.36,1.5);
   if(p?.corner?.side==='right'||opt.view==='hinge'&&(p?.doors?.[0]?.side==='right'||p?.vitrine?.opening==='right'))direction.x*=-1;
@@ -120,7 +115,7 @@ export class ExecutionPreviews{
   Object.assign(this.key.shadow.camera,{left:-span*2,right:span*2,top:span*2,bottom:-span*2,near:.01,far:span*16});this.key.shadow.camera.updateProjectionMatrix();
   const renderer=this.owner.renderer,old={target:renderer.getRenderTarget(),exposure:renderer.toneMappingExposure,shadows:renderer.shadowMap.enabled,update:renderer.shadowMap.needsUpdate};
   try{
-   renderer.toneMappingExposure=opt.sceneDisplayMode?old.exposure:LIGHTS.daylight.exposure;renderer.shadowMap.enabled=true;renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(this.target);renderer.render(this.scene,camera);renderer.readRenderTargetPixels(this.target,0,0,this.width,this.height,this.pixels);
+   renderer.toneMappingExposure=opt.sceneDisplayMode?old.exposure:1.12;renderer.shadowMap.enabled=true;renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(this.target);renderer.render(this.scene,camera);renderer.readRenderTargetPixels(this.target,0,0,this.width,this.height,this.pixels);
    const result=new ImageData(this.width,this.height);for(let y=0;y<this.height;y++)result.data.set(this.pixels.subarray((this.height-1-y)*this.width*4,(this.height-y)*this.width*4),y*this.width*4);
    // A readable glow follows the actual light segments; it never changes their geometry.
    if(p?.open_tall||p?.vitrine){const overlay=document.createElement('canvas');overlay.width=this.width;overlay.height=this.height;const ctx=overlay.getContext('2d');ctx.putImageData(result,0,0);

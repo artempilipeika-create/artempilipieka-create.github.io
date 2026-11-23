@@ -4,7 +4,7 @@ import pushMeshes from './aks-push-meshes.json' with {type:'json'};
 import {pushProducts,pushRoll} from './wardrobe-push-layout.mjs';
 import {panelLightMeshes} from './wardrobe-lighting.mjs';
 import {machineBoardMeshes} from './panel-machining-mesh.mjs';
-import {blankEdgeCode,DEFAULT_MATERIALS} from './furniture-core.mjs';
+import {blankEdgeCode} from './furniture-core.mjs';
 import {groovedBoxes} from './wardrobe-edge-pulls.mjs';
 import {addFacadePull,buildDoorHardware,shapedProfilePanel} from './wardrobe-door-mesh.mjs';
 import {doorHandle,panelProfiles,boardProfileCuts,horizontalProfileCuts} from './wardrobe-door-hardware.mjs';
@@ -37,8 +37,7 @@ import {vertices as supportVertices,indices as supportIndices} from './sekura-me
 import {hookPlacement} from './blank-hook.mjs';
 import {vertices as hookVertices, indices as hookIndices} from './akkord-mesh.mjs';
 import * as THREE from './vendor/three.module.js';
-import {materialVisual,physicalPanelUV,surfaceFinish,SHOWROOM} from './material-visuals.mjs';
-import {LIGHTS} from './room-state.mjs';
+import {materialVisual,physicalPanelUV,surfaceFinish} from './material-visuals.mjs';
 import z1 from './wardrobe-z1-data.json' with {type:'json'};
 import {glassVertices,glassFinish,vitrineLightSpec,lightVitrineSurface} from './vitrine-visuals.mjs';
 import {countertopSurfaces,countertopGeometry} from './countertop-visuals.mjs';
@@ -71,14 +70,14 @@ export const VISUAL_FINISHES=Object.freeze({
   liraScreen:{color:'#faf8f2',roughness:.44,metalness:0,emissive:'#fff2d9',emissiveIntensity:.5},
   lightProfile:{color:'#202321',roughness:.3,metalness:.72},
   led:{color:'#fff7d9',roughness:.5,metalness:0,emissive:'#fff0b9',emissiveIntensity:1.2},
-  body:{color:SHOWROOM.white,roughness:.88,metalness:0},
-  shelf:{color:SHOWROOM.white,roughness:.88,metalness:0},
-  front:{color:SHOWROOM.pearl,roughness:.85,metalness:0},
-  back:{color:SHOWROOM.white,roughness:.94,metalness:0},
-  plinth:{color:SHOWROOM.pearl,roughness:.85,metalness:0},
+  body:{color:'#c7c3b8',roughness:.88,metalness:0},
+  shelf:{color:'#c7c3b8',roughness:.88,metalness:0},
+  front:{color:'#bbb5a8',roughness:.72,metalness:0},
+  back:{color:'#b2afa4',roughness:.94,metalness:0},
+  plinth:{color:'#444a43',roughness:.87,metalness:0},
   handle:{color:'#343e3b',roughness:.48,metalness:.38},
   ...Object.fromEntries(Object.entries(surfacePullFinishes).map(([key,finish])=>['pull-'+key,finish])),
-  counter:{color:SHOWROOM.stone,roughness:.85,metalness:0},
+  counter:{color:'#929b94',roughness:.67,metalness:0},
   reveal:{color:'#49544d',roughness:1,metalness:0}
   ,appliance:{color:'#414a46',roughness:.4,metalness:0}
   ,applianceGlass:{color:'#16251e',roughness:.2,metalness:0}
@@ -141,15 +140,12 @@ export class MeshFactory{
     for(const [kind,opacity]of [['floor',.14],['wall',.19]])this.contactMaterials[kind]=new THREE.MeshBasicMaterial({color:'#35443b',alphaMap:this.contactMap,transparent:true,opacity,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
   }
   material(role,id,ghost=false,inspection=false){
-    const showroomCounter=!id&&role==='counter';
-    const data=id?this.adapter.material(id):showroomCounter?SHOWROOM.countertop:null;
-    const visual=materialVisual(data,this.adapter.state?.displaySettings?.materialAppearance?.[id]),finish=VISUAL_FINISHES[role]||VISUAL_FINISHES.body;
+    const data=id?this.adapter.material(id):null,visual=materialVisual(data,this.adapter.state?.displaySettings?.materialAppearance?.[id]),finish=VISUAL_FINISHES[role]||VISUAL_FINISHES.body;
     const key=JSON.stringify([role,id||'',visual,ghost,inspection]);
     if(!this.materials.has(key)){
-      const defaultBoard=id===DEFAULT_MATERIALS.body_variant_id?SHOWROOM.white:id===DEFAULT_MATERIALS.front_variant_id?SHOWROOM.pearl:null;
-      const color=visual.color||defaultBoard||(id?'#aeb2b0':finish.color);
+      const color=visual.color||(id?'#aeb2b0':finish.color);
       const glass=role==='glass'&&!ghost&&!inspection,counter=role==='counter'&&!ghost&&!inspection;
-      const sheet=['body','front','back','shelf','plinth','counter'].includes(role),optics=surfaceFinish(visual,role,Boolean(id)||showroomCounter);
+      const sheet=['body','front','back','shelf','plinth','counter'].includes(role),optics=surfaceFinish(visual,role,Boolean(id));
       const brushed=['hinge','railSteel','slideSteel','lightProfile','lightAluminium','frame'].includes(role)&&!ghost&&!inspection;
       const Material=glass||counter||brushed||sheet&&!ghost&&!inspection&&optics.clearcoat>0?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
       const m=new Material({...finish,color,roughness:id?visual.roughness:finish.roughness,
@@ -160,7 +156,7 @@ export class MeshFactory{
       if(glass){m.ior=1.5;m.specularIntensity=1;m.envMapIntensity=1.15;glassFinish(m);}
       if(sheet&&!ghost&&!inspection){if(optics.roughness!==null)m.roughness=optics.roughness;if(m.isMeshPhysicalMaterial){m.clearcoat=optics.clearcoat;m.clearcoatRoughness=optics.clearcoatRoughness;m.ior=optics.ior;}m.envMapIntensity=.9;}
       m.userData={visualSource:visual.source,visualStatus:visual.status,variantId:id||null,fallbackColor:color,surfaceFinish:visual.finish};
-      if(visual.url&&!ghost&&!inspection&&(!showroomCounter||globalThis.document?.createElementNS)){
+      if(visual.url&&!ghost&&!inspection){
         const rotation=visual.rotation+(visual.grain==='width'?90:0),txKey=JSON.stringify([visual.url,visual.size,rotation]);
         if(!this.textures.has(txKey)){
           const tx=new THREE.TextureLoader().load(visual.url,()=>{if(!this.dead)this.invalidate();},undefined,()=>{
@@ -173,14 +169,6 @@ export class MeshFactory{
         }
         const tx=this.textures.get(txKey);if(!tx.userData.failed){m.map=tx;m.color.set('#ffffff');}
         else {m.userData.visualSource=visual.color?'color':'fallback';m.userData.visualStatus=visual.color?'COLOR_ONLY':'MISSING_VISUAL';}
-      }
-      if(sheet&&role!=='counter'&&role!=='back'&&(!id||defaultBoard)&&!ghost&&!inspection&&m.roughness>=.75&&globalThis.document?.createElementNS){
-        if(!this.matteTexture){
-          this.matteTexture=new THREE.TextureLoader().load(SHOWROOM.matteMap,()=>{if(!this.dead)this.invalidate();});
-          this.matteTexture.wrapS=this.matteTexture.wrapT=THREE.RepeatWrapping;
-          this.matteTexture.repeat.set(8,8);
-        }
-        m.bumpMap=this.matteTexture;m.bumpScale=.000055;
       }
       this.materials.set(key,m);
     }
@@ -995,7 +983,7 @@ export class MeshFactory{
     });
   }
   signature(it){return JSON.stringify([primeBank(it),drawerCamSeats(it,this.adapter.items||[]),it.width,it.height,it.depth,doorHandle(it),panelProfiles(it,this.adapter.items||[]),boardProfileCuts(it,this.adapter.items||[]),horizontalProfileCuts(it,this.adapter.items||[]),panelFittings(it,this.adapter.items).map(f=>[f.id,f.variant,f.x,f.y,f.z,f.width,it.assistant_carcass.spec.height-it.assistant_carcass.spec.thickness]),panelRods(it,this.adapter.items).map(r=>[r.id,r.article,r.left,r.width,r.y,r.z,it.assistant_carcass.spec.height-it.assistant_carcass.spec.thickness]),this.spacerCuts(it),this.visibleDoorHinges(it),this.visiblePushes(it),panelFeet(it),backRows(it),it.assistant_carcass?.spec?.feet?.article,dividerEnds(it),it.blank_shelf,it.blank_hook,it.blank_binding?shelfSupportPlan(it,this.adapter.items||[]).parts:null,it.module_type==='blank'?[it.blank_edge_code,it.blank_edge_thickness_mm,it.blank_edge_pull,it.blank_machining,it.item_id.endsWith(':door-right')&&it.assistant_carcass?.spec?.front?.swing==='pair']:null,it.module_type==='blank'?it.blank_axis:null,it.module_type==='blank'?it.body_variant_id:null,it.base,it.body_height,it.base_height,it.legHeightMm,it.worktop_thickness,it.kitchenFilling,it.handles,it.layout,it.drawers,it.template_id,it.bazis_id,it.bazis_sha256,it.doors_open,it.upper_shelf_count,it.glass_shelf_count,it.shelves?.map(({material_variant_id,...s})=>s)]);}
-  dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.matteTexture?.dispose();this.materials.clear();this.textures.clear();}
+  dispose(){this.dead=true;this.applianceAssets.dispose();this.geometry.dispose();this.plane.dispose();this.pool.forEach(v=>v.geometry.dispose());this.pool.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());Object.values(this.contactMaterials).forEach(m=>m.dispose());this.contactMap.dispose();this.materials.clear();this.textures.clear();}
 }
 
 /** Lazy catalogue thumbnails from the SAME mesh factory and SAME WebGL context. */
@@ -1007,14 +995,13 @@ export class CataloguePreviews{
     this.target=new THREE.WebGLRenderTarget(this.width,this.height,{depthBuffer:true,samples:4});this.target.texture.colorSpace=THREE.SRGBColorSpace;
     this.pixels=new Uint8Array(this.width*this.height*4);
     // Reuse one small studio and the editor's WebGL context for visible cards only.
-    const light=LIGHTS.daylight;
-    this.scene=new THREE.Scene();this.scene.background=new THREE.Color(SHOWROOM.background);
-    this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=light.environment;
-    this.scene.add(new THREE.HemisphereLight(light.sky,light.ground,light.hemi));
-    this.key=new THREE.DirectionalLight(light.key,light.sun);this.key.castShadow=true;
+    this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#f0eee8');
+    this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=.65;
+    this.scene.add(new THREE.HemisphereLight('#fffefa','#c4c8c2',1));
+    this.key=new THREE.DirectionalLight('#fffaf3',1.8);this.key.castShadow=true;
     this.key.shadow.mapSize.set(512,512);this.key.shadow.bias=-.00004;this.key.shadow.normalBias=.0007;this.key.shadow.intensity=1;this.key.shadow.radius=4;
     this.scene.add(this.key,this.key.target);
-    const fill=new THREE.DirectionalLight(light.fill,light.fillPower);fill.position.set(4,2,1);this.scene.add(fill);
+    const fill=new THREE.DirectionalLight('#eef3ff',.6);fill.position.set(4,2,1);this.scene.add(fill);
     this.floor=new THREE.Mesh(owner.factory.plane,new THREE.ShadowMaterial({color:'#435047',opacity:.18,depthWrite:false}));
     this.floor.rotation.x=-Math.PI/2;this.floor.receiveShadow=true;this.scene.add(this.floor);
     this.contact=new THREE.Mesh(owner.factory.plane,owner.factory.contactMaterials.floor);
@@ -1064,7 +1051,7 @@ export class CataloguePreviews{
     const oldTarget=renderer.getRenderTarget(),shadows=renderer.shadowMap.enabled,shadowUpdate=renderer.shadowMap.needsUpdate,exposure=renderer.toneMappingExposure;
     try{
       // Keep previews independent of the selected room-light preset, and restore editor state.
-      renderer.toneMappingExposure=LIGHTS.daylight.exposure;renderer.shadowMap.enabled=true;renderer.shadowMap.needsUpdate=true;
+      renderer.toneMappingExposure=1.03;renderer.shadowMap.enabled=true;renderer.shadowMap.needsUpdate=true;
       renderer.setRenderTarget(this.target);renderer.render(scene,camera);
       const {width,height,pixels}=this;renderer.readRenderTargetPixels(this.target,0,0,width,height,pixels);
       const ctx=canvas.getContext('2d');if(ctx){canvas.width=width;canvas.height=height;const image=ctx.createImageData(width,height);for(let y=0;y<height;y++)image.data.set(pixels.subarray((height-1-y)*width*4,(height-y)*width*4),y*width*4);ctx.putImageData(image,0,0);canvas.dataset.modelPreview='mesh-v2';}

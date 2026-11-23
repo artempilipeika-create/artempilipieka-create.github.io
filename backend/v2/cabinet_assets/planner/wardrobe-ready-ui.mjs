@@ -3,14 +3,16 @@ import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {buildCarcass} from './carcass-model.mjs';
 import {wardrobeDrawing} from './wardrobe-drawing.mjs';
 import {showroomSnapshot} from './questionnaire-showroom.mjs';
+import './choice-card-ui.js';
 
 const el=(tag,label='')=>Object.assign(document.createElement(tag),{textContent:label});
 const button=(label,onclick)=>Object.assign(el('button',label),{type:'button',onclick});
-const folder='/account/planner/wardrobe-layout-images/';
+const sectionFittingPhotos={shallow:'113951',business:'115591',lift:'123793',ironing:'114784'};
 export function imageFor(id,whole=false){
- const file=whole||['daily','deep'].includes(id)?id:'section-'+id;
+ const fitting=!whole&&sectionFittingPhotos[id];
+ const file=whole||id==='daily'||id==='deep'?id:'section-'+id;
  const img=el('img');img.alt='';img.loading='lazy';img.decoding='async';img.width=680;img.height=510;
- img.src=folder+file+'.webp?v=studio-pearl-1';return img;
+ img.src=globalThis.MF_CHOICE_CARDS.image(fitting||file,fitting?'wardrobe-fitting-photos':'wardrobe-layout-images');return img;
 }
 function card(id,title,description,whole,choose){
  const b=button('',choose);b.className='ready-card';b.setAttribute('aria-label',title);b.setAttribute('aria-pressed','false');b.dataset.readyPick=id;

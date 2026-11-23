@@ -2,13 +2,6 @@
 const local=value=>typeof value==='string'&&/^\/(?!\/)[\w/.-]+\.(?:png|jpe?g|webp)$/i.test(value)&&!value.includes('..')?value:null;
 const hex=value=>typeof value==='string'&&/^#[\da-f]{6}$/i.test(value)?value:null;
 export const SURFACE_FINISHES=Object.freeze({auto:'По материалу',matte:'Матовая',satin:'Полуматовая',gloss:'Глянцевая'});
-// Presentation finishes for unassigned surfaces; project and purchasing IDs stay independent.
-export const SHOWROOM=Object.freeze({
-  white:'#ffffff',pearl:'#e1d7cb',stone:'#605448',background:'#eeeae4',
-  matteMap:'/account/planner/materials/studio-matte.webp',
-  countertop:{visual:{preview_url:'/account/planner/materials/egger-f187-st9.jpg',render_color:'#605448',
-    texture_size_mm:[603,1300],grain_direction:'length',roughness:.85}}
-});
 export function materialAppearance(value={}){
   return {scale:Number.isFinite(value?.scale)?Math.max(.25,Math.min(4,value.scale)):1,
     rotation:[0,90,180,270].includes(value?.rotation)?value.rotation:0,

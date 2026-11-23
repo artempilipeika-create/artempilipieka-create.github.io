@@ -1,6 +1,8 @@
 {
   "workspace": "Tripo Studio",
   "date": "2026-11-23",
+  "source_revision": "81ae392",
+  "scope": "Historical studio edition. File paths and hashes below refer to this revision.",
   "palette": {
     "carcass_and_shelves": "BYSPAN 605 PO",
     "facades_and_plinth": "BYSPAN 890 PO",

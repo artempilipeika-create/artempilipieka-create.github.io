@@ -35,7 +35,7 @@ export function selectInterior(current,name){
   return next;
 }
 export const LIGHTS=Object.freeze({
-  daylight:{key:'#fffaf4',fill:'#f0f4fb',sky:'#fffdfa',ground:'#c5bfb7',sun:2.35,fillPower:.67,hemi:.79,exposure:1.02,environment:.75},
+  daylight:{key:'#fffdf8',fill:'#f4f7ff',sky:'#ffffff',ground:'#cbc8c0',sun:2.55,fillPower:.65,hemi:.70,exposure:1.04,environment:.75},
   warm:{key:'#fff2e2',fill:'#faf8f4',sky:'#fffaf3',ground:'#c6bcac',sun:2.35,fillPower:.53,hemi:.63,exposure:1.04,environment:.72},
   neutral:{key:'#fffdf9',fill:'#ffffff',sky:'#ffffff',ground:'#c6c5c2',sun:2.45,fillPower:.59,hemi:.65,exposure:1.04,environment:.73}
 });

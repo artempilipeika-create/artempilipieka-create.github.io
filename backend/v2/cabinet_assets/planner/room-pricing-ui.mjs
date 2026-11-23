@@ -50,7 +50,10 @@ export class RoomPricingUI{
       const current=roomSettings(app.adapter.state.displaySettings),preset=presetSettings(current.environmentPreset);
       apply(designedInterior(current.environmentPreset)?{...current,wallColor:preset.wallColor}:preset);
     };
-    controls.append(this.applyPreset);d.append(controls);document.querySelector('.mf3d-canvas-wrap').append(d);
+    this.defaultRoom=el('button','Вернуть сцену «'+roomById(1).name+'»','room-restore-default');
+    this.defaultRoom.type='button';
+    this.defaultRoom.onclick=()=>apply({...presetSettings('graphite'),renderRoomId:1,usePaletteFloor:true,usePaletteLight:true,wallFinishes:{}});
+    controls.append(this.applyPreset,this.defaultRoom);d.append(controls);document.querySelector('.mf3d-canvas-wrap').append(d);
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']]){
       document.getElementById(id).onchange=e=>{
         const value=e.target.value;
@@ -79,6 +82,8 @@ export class RoomPricingUI{
     this.measureSummary.textContent=`${a.room.width} × ${a.room.depth} × ${a.room.height} мм · `+(a.room.setup_complete===true?'размеры заданы':a.room.setup_complete===false?'требуется замер':'замер не подтверждён');
     for(const [id,key]of [['room-preset','environmentPreset'],['room-wall-color','wallColor'],['room-floor','floorMaterial'],['room-lighting','lightingPreset']])document.getElementById(id).value=s[key];
     const photographic=this.roomPicker.sync({...s,renderRoomId:a.state.displaySettings?.renderRoomId});
+    this.defaultRoom.hidden=s.renderRoomId===1&&display.usePaletteFloor&&display.usePaletteLight&&
+      s.environmentPreset==='graphite'&&s.wallColor.toLowerCase()===ROOM_PRESETS.graphite.wallColor&&!Object.keys(s.wallFinishes).length;
     for(const id of ['room-preset','room-wall-color'])document.getElementById(id).closest('label').hidden=photographic;
     const scheme=roomById(s.renderRoomId);
     for(const [id,follow,key,options] of [['room-floor','usePaletteFloor','floor',FLOOR_OPTIONS],['room-lighting','usePaletteLight','lighting',LIGHT_OPTIONS]]){

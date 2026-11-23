@@ -1,6 +1,6 @@
 (function(root){
  'use strict';
- const version='20261123-martin-studio';
+ const version='20261123-tripo-room';
  function image(file,folder='module-card-images'){return '/account/planner/'+folder+'/'+file.replace(/\.webp$/,'')+'.webp?v='+version;}
  function corner(controls,variant){
   if(!variant)return;

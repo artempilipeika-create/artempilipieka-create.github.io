@@ -71,14 +71,13 @@ test('Actual export retains all39 source pins, native720 versus target450 and fr
  payload.items.forEach((out,i)=>{const v=M.variants[i];assert.equal(out.source_sha256,v.source_sha256);assert.equal(out.source_file,v.source_file);assert.equal(out.target.height,v.default_height);assert.equal(out.source_default.height,v.native_frame.size[1]);assert.equal(out.construction.modern_cabinet.family,v.family);});
 });
 
-test('Modern upper cabinets use their own cover and native option geometry',async()=>{
+test('Updated upper bodies keep the previously approved catalogue and option photographs',async()=>{
  await import('../../backend/v2/cabinet_assets/planner/catalogue-artwork.js');
  const {executionArtwork}=await import('../../backend/v2/cabinet_assets/planner/execution-artwork.mjs');
- for(const [family,legacy]of [['upper1','bazis.858266606bc5'],['upper2','bazis.6c187245284a']]){
+ for(const [family,legacy,file]of [['upper1','bazis.858266606bc5','upper-upper-execution-handles.webp'],['upper2','bazis.6c187245284a','upper-double-upper-execution-handles.webp']]){
   const id=M.families[family].default_id,art=globalThis.MF_CATALOGUE_ARTWORK;
-  assert.equal(art[id].file,'modern-'+family);assert.notEqual(art[id].file,art[legacy].file);
-  assert.ok(fs.existsSync(new URL('../../backend/v2/cabinet_assets/planner/module-card-images/'+art[id].file+'.webp',import.meta.url)));
-  assert.equal(executionArtwork(item(M.choice(id)),'modern','execution','handles'),null);
+  assert.equal(art[id].file,art[legacy].file);assert.equal(art[id].source,'tripo');
+  assert.ok(executionArtwork(item(M.choice(id)),'modern','execution','handles').includes(file));
  }
 });
 test('Both photographed dryers can be selected directly from a shelf cabinet without changing the source pins',async()=>{

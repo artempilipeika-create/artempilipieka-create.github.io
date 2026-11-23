@@ -31,7 +31,11 @@ export function executionArtwork(it,family,key,value){
  if(p?.open_tall?.wall&&family==='open-tall'){const v=globalThis.MF_OPEN_TALL.select(it,{[key]:value},globalThis.MF_OPEN_TALL.variants);return art(v.bazis_id.replace('bazis.','open-wall-'));}
  if(p?.open_tall&&!p.open_tall.wall&&family==='open-tall'&&key==='lighting'&&p.open_tall.light_system==='lira-17.5x6.5'&&['left','right','both'].includes(value))return art('open-tall-lira-'+value,'execution-card-images');
  if(p?.cargo?.waste&&family==='cargo'){const v=globalThis.MF_CARGO.select(it,{[key]:value},globalThis.MF_CARGO.variants);return art(globalThis.MF_CARGO.info(v).execution==='gola'?'waste-gola':'waste-standard');}
- if(p?.modern&&family==='modern')return null; // Render the actual selected modern variant.
+ if(p?.modern&&family==='modern'&&['upper1','upper2'].includes(p.modern.family)){
+  const category=p.modern.family==='upper2'?'upper-double':'upper';
+  const file=EXECUTION_IMAGES[[category,'upper',key,value].join(':')];
+  return file?art(file,'execution-card-images'):null;
+ }
  const category=executionCategory(it,family),file=EXECUTION_IMAGES[[category,family,key,value].join(':')];
  return file?art(file,'execution-card-images'):null;
 }
