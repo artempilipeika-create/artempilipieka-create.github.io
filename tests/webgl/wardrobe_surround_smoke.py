@@ -700,6 +700,55 @@ def ready_layouts(page, projects, project_id):
     assert len(rails) == 4 and all(r['article'] == '114795' and r['length_mm'] == 400 for r in rails)
     print('PASS manual, catalogue, questionnaire, editable drawer bank, 3D travel, reopen, 450 to 400 mm, two 114795 sets and native export', flush=True)
 
+    form = reopen(page, project_id)
+    button(form, '3. Наполнение').click()
+    button(form, 'Секция 1').click()
+    button(form, 'Штанги').click()
+    button(form, 'Прямоугольная FAME').click()
+    field(form, 'Как установить FAME').select_option(index=1)
+    form.locator('[data-fitting-variant="113749-side"]').click()
+    form.locator('[data-fitting-variant="113750-side"]').click()
+    expect(form.locator('[data-installed-fitting="113750-side"]')).to_be_visible()
+    expect(form.locator('[data-fitted-article="113750"]')).to_have_count(1)
+    button(form, 'Фурнитура AKS').click()
+    expect(form.locator('[data-fitting-variant="113750-side"]')).to_have_count(0)
+    trouser_racks=form.locator('details').filter(has=form.locator('summary',has_text='Брючницы GRIDLI и BRUNO'))
+    assert trouser_racks.locator('[data-fitting-variant="113941-left"]').count()==1
+    assert trouser_racks.locator('[data-fitting-variant="115591"]').count()==1
+    button(form, 'Заполнить секцию').click()
+    button(form, 'Шуфляды в выбранную нишу').click()
+    field(form, 'Сколько шуфляд поставить').select_option('2')
+    button(form, 'Добавить шуфляды').click()
+    expect(field(form, 'Количество шуфляд')).to_have_value('2')
+    target=form.locator('.wardrobe-figure .niche-target[data-section="2"][data-niche="1"]')
+    target.focus()
+    target.press('Enter')
+    expect(button(form, 'Шуфляды')).to_have_attribute('aria-pressed','true')
+    field(form, 'Сколько шуфляд поставить').select_option('1')
+    button(form, 'Добавить шуфляды').click()
+    expect(field(form, 'Количество шуфляд')).to_have_value('1')
+    finish(page,form,update=True)
+    final_group, final, _=panels(projects,project_id)
+    assert final_group==group and final['rods']==[r for r in saved['rods'] if r['section']!=0]
+    assert len(final['fittings'])==1 and final['fittings'][0]['variant']=='113750-side'
+    assert (final['fittings'][0]['section'],final['fittings'][0]['level'])==(0,1)
+    assert [len(final['drawerBanks'][i]['faces']) for i in (0,1,5)]==[2,2,1]
+    purchases, _=ledger(projects.projects[project_id]['scene'])
+    qty={r['article']:r['qty'] for r in purchases}
+    assert qty['113750']==1 and qty['113742']==2 and '113749' not in qty
+    with page.expect_download() as download:
+        page.locator('#export-bazis').click()
+    rows=json.loads(Path(download.value.path()).read_text())['items']
+    fame=[r for r in rows if r.get('wardrobe_fitting')=='113750-side']
+    assert len(fame)==1 and fame[0]['article']=='113750' and fame[0]['span_mm']==576
+    form=reopen(page,project_id)
+    button(form,'3. Наполнение').click()
+    form.locator('.wardrobe-figure [data-fitting-id]').focus()
+    form.locator('.wardrobe-figure [data-fitting-id]').press('Enter')
+    expect(button(form,'Прямоугольная FAME')).to_have_attribute('aria-pressed','true')
+    expect(form.locator('[data-installed-fitting="113750-side"]')).to_be_visible()
+    print('PASS FAME in rods, both holders in purchasing, local drawers below FAME and in a preset top opening, native export and reopen',flush=True)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
@@ -712,6 +761,7 @@ if __name__ == '__main__':
                          'wardrobe-surround-ui.mjs', 'wardrobe-surround.mjs', 'wardrobe-trim-layout.mjs', 'wardrobe-section-presets.mjs',
                          'wardrobe-fittings.json', 'wardrobe-fittings.mjs', 'wardrobe-fitting-ui.mjs', 'wardrobe-fitting-meshes.json', 'wardrobe-fitting-photos/113950.webp',
                          'wardrobe-ready-layouts.mjs', 'wardrobe-ready-ui.mjs', 'wardrobe-preview.mjs', 'wardrobe-drawers.mjs', 'wardrobe-aks-native.mjs',
+                         'wardrobe-rods-ui.mjs', 'wardrobe-interior-ui.mjs', 'wardrobe-cells-ui.mjs', 'wardrobe-cells.mjs', 'wardrobe-drawing.mjs',
                          'wardrobe-layout-images/hall.webp', 'wardrobe-layout-images/couple.webp', 'wardrobe-layout-images/business.webp',
                          'wardrobe-layout-images/utility.webp', 'wardrobe-layout-images/daily.webp', 'wardrobe-layout-images/deep.webp',
                          'wardrobe-trim-native.mjs', 'wardrobe-surround-drawing.mjs', 'wardrobe-push-product-ui.mjs',

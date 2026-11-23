@@ -1,5 +1,5 @@
 import products from './wardrobe-fittings.json' with {type:'json'};
-import {rodRoom} from './wardrobe-rods.mjs';
+import {rodRoom,sameRodCell} from './wardrobe-rods.mjs';
 import {splitAt,splitKey} from './wardrobe-layout.mjs';
 import {installedShelfLevels} from './wardrobe-gola-shelves.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
@@ -60,6 +60,14 @@ export function planFittings(spec,levels){
      throw Error('В одной нише пересекаются '+a.p.article+' и '+b.p.article+'. Измените отступ или выберите другую нишу.');
  }
  return planned;
+}
+export function touchingStandardRod(fitting,rods){
+ const [low,high]=fitting.box;
+ return rods.find(r=>{
+   if(!sameRodCell(r,fitting))return false;
+   const [bottom,top,back,front]=r.product.bounds;
+   return r.y+top>low[1]&&r.y+bottom<high[1]&&r.z+front>low[2]&&r.z+back<high[2];
+ });
 }
 export function panelFittings(it,items=[]){
  const meta=it.assistant_carcass;

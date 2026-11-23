@@ -1,6 +1,7 @@
 import {footHeight} from './plinth-options.mjs';
 import {anchoredShelf,doorAnchorIndex,sectionSpans} from './wardrobe-door-layout.mjs';
 import {rodCatalogue} from './wardrobe-rods.mjs';
+import {fittingCatalogue} from './wardrobe-fittings.mjs';
 import {sectionWidths} from './carcass-model.mjs';
 import {measuredRooms} from './wardrobe-gola-shelves.mjs';
 import {clearGaps,columnWidths,isRightBank,levelOf,nicheSlot,sectionOf,splitAt} from './wardrobe-layout.mjs';
@@ -186,7 +187,7 @@ export function setClearHeight(f,cell,value){
  writeHeights(f,cell.section,column,sizes,locks);
 }
 
-export function insertShelves(f,cell,count){
+export function insertShelves(f,cell,count,lowerDrawerGap=null){
  const {section,level}=cell;
  const {sizes,index,column,zone,locks}=cellGeometry(f,cell);
  if(!Number.isInteger(count)||count<1||sizes.length-1+count>10)throw Error('В колонке может быть до десяти полок.');
@@ -195,23 +196,30 @@ export function insertShelves(f,cell,count){
  if(!column&&(zone||f.drawerBanks?.[nicheSlot(section,level)]||legacy&&!legacy.layout))throw Error('Для полок выберите свободную нишу.');
  const fittingField=column?'opening':'level';
  const affectedFittings=(f.fittings??[]).filter(r=>r.section===section&&(column?r.level===level&&r.column===cell.column:true));
- if(affectedFittings.some(r=>r[fittingField]===index))throw Error('В этой нише установлена фурнитура AKS. Для разделения выберите свободную нишу или уберите механизм.');
+ const retained=affectedFittings.filter(r=>r[fittingField]===index);
+ if(retained.length&&lowerDrawerGap==null)throw Error('В этой нише установлена фурнитура AKS. Для разделения выберите свободную нишу или уберите механизм.');
  const affected=(f.rods??[]).filter(r=>r.section===section&&(column?r.level===level&&r.column===cell.column:true));
  const hits=affected.filter(r=>column?r.opening===index:r.level===level);
- const gaps=clearGaps(sizes[index],Array(count).fill(f.thickness),Array(count+1).fill(null));
+ const gaps=clearGaps(sizes[index],Array(count).fill(f.thickness),lowerDrawerGap==null?Array(count+1).fill(null):[lowerDrawerGap,null]);
  // Reassign a rail in the divided opening to the new opening containing its original axis.
  const changes=hits.map(rod=>{
    const axis=rod.anchor==='top'?sizes[index]-rod.offset:rod.offset;
    const bounds=rodCatalogue[rod.article].bounds;
    let base=0;
    for(const [i,gap] of gaps.entries()){
-     if(axis+bounds[0]>=base&&axis+bounds[1]<=base+gap)return [rod,i,rod.anchor==='top'?base+gap-axis:axis-base];
+     if((lowerDrawerGap==null||i>0)&&axis+bounds[0]>=base&&axis+bounds[1]<=base+gap)return [rod,i,rod.anchor==='top'?base+gap-axis:axis-base];
      base+=gap+f.thickness;
    }
    throw Error('Новая полка пересекает держатель штанги. Сначала переместите штангу внутри ниши.');
  });
  const field=column?'opening':'level';
  for(const r of affectedFittings)if(r[fittingField]>index)r[fittingField]+=count;
+ // Drawer placement has already checked the lower edge of each retained fitting.
+ // The top mount stays on its original board. A tray measures from the new floor.
+ for(const r of retained){
+   r[field]=index+1;
+   if(fittingCatalogue[r.variant].mount==='tray')r.offset-=lowerDrawerGap+f.thickness;
+ }
  for(const rod of affected)if(rod[field]>index)rod[field]+=count;
  for(const [rod,i,offset] of changes){rod[field]=index+i;rod.offset=offset;}
  const newLocks=locks.map(i=>i>index?i+count:i);

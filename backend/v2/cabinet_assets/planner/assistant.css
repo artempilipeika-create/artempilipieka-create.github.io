@@ -194,6 +194,9 @@
 #planner-assistant-dialog .rod-editor{display:grid;gap:10px;min-width:0}
 #planner-assistant-dialog .rod-editor p,#planner-assistant-dialog .rod-editor small{margin:0}
 #planner-assistant-dialog .rod-families,#planner-assistant-dialog .rod-position{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#planner-assistant-dialog .rod-families{grid-template-columns:repeat(auto-fit,minmax(min(100%,110px),1fr))}
+#planner-assistant-dialog [data-drawer-feedback]:empty{display:none}
+#planner-assistant-dialog [data-drawer-feedback]{margin:.5rem 0;color:#753a22}
 #planner-assistant-dialog .rod-families button{padding:6px;min-width:0;display:grid;gap:3px;align-content:start;text-align:left;background:#fff}
 #planner-assistant-dialog .rod-families img{background:#fff;border-radius:5px;width:100%;height:clamp(65px,10vw,100px);object-fit:contain}
 #planner-assistant-dialog .rod-families button[aria-pressed=true]{outline:2px solid #236a51;outline-offset:-2px;color:#174738;background:#f5faf5}

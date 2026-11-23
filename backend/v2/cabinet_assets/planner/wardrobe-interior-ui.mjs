@@ -1,7 +1,10 @@
-import {splitAt,sectionOf,levelOf} from './wardrobe-layout.mjs';
+import {splitAt,sectionOf,levelOf,openingBase} from './wardrobe-layout.mjs';
 import {nicheOpenings,nicheSlot,trimBanks,mmText,coverClearance,frontEdgeGap,prepareDrawerCovers} from './wardrobe-niches.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {footHeight} from './plinth-options.mjs';
+import {insertShelves,keysAfterInsertion} from './wardrobe-cells.mjs';
+import {planRods} from './wardrobe-rods.mjs';
+import {fittingCatalogue,planFitting} from './wardrobe-fittings.mjs';
 
 import joinery from './prime-drawer-joinery.json' with {type:'json'};
 
@@ -141,7 +144,7 @@ export function selectNiche(ui,section,level){
 function freezeShelves(fields,section,built){
  const panels=built?.parts?.filter(p=>p.key.startsWith('shelf-'+section+'-'));
  const footCorrection=fields.feet?.article==='118779'?10:0;
- const openings=nicheOpenings({...fields,shelfLevels:undefined},section);
+ const openings=nicheOpenings(fields,section);
  fields.shelfLevels=fields.sectionShelves.map((n,i)=>Array.from({length:n},(_,j)=>fields.shelfLevels?.[i]?.[j]??null));
  const floor=(fields.elevation??0)+footHeight(fields);
  fields.shelfLevels[section]=fields.shelfLevels[section].map((entry,i)=>({
@@ -149,36 +152,79 @@ function freezeShelves(fields,section,built){
  }));
 }
 
-export function installBank(ui,section,level,template,convert=false,kind=template?.kind??'internal'){
+function coverForDrawers(f,section,level,requiredFaces,kind,occupied,rise){
+ const room=nicheOpenings(f,section)[level],height=room.top-room.bottom,thickness=f.thickness;
+ const minFaceSpace=requiredFaces*100+(requiredFaces-1)*(kind==='internal'?30:3)+(kind==='internal'?coverClearance+frontEdgeGap:3);
+ let limit=room.top-60;
+ for(const r of occupied.rods)limit=Math.min(limit,r.y+r.product.bounds[0]);
+ for(const v of occupied.fittings){
+   if(v.p.mount==='bottom')throw Error('Внизу этой ниши установлена гладильная доска. Перенесите её или выберите другую нишу.');
+   limit=Math.min(limit,v.box[0][1]);
+ }
+ const min=Math.ceil(minFaceSpace+rise),max=Math.floor(limit-thickness-room.bottom);
+ if(max<min)throw Error('Для установки под полкой требуется '+Math.ceil(minFaceSpace)+' мм в свету. Доступно '+Math.max(0,max-rise)+' мм. Выберите другую нишу, уменьшите количество шуфляд или поднимите наполнение.');
+ const target=Math.round((height-thickness)/2);
+ const belowHardware=occupied.rods.length||occupied.fittings.length;
+ return Math.min(max,Math.max(min,belowHardware?Math.min(target,630+rise):target));
+}
+
+export function installBank(ui,section,level,template,convert=false,kind=template?.kind??'internal',options={}){
  try{
-   const f=structuredClone(ui.fields),banks=trimBanks(f.drawerBanks??[],f.sections),slot=nicheSlot(section,level);
-   const legacy=banks[nicheSlot(section,0)]&&!banks[nicheSlot(section,0)].layout;
+   const f=structuredClone(ui.fields),cell={section,level},zone=splitAt(f,section,level);
+   const slot=nicheSlot(section,level,zone?.kind==='drawers'?ui.column??0:0),first=nicheSlot(section,0);
+   const legacy=f.drawerBanks?.[first]&&!f.drawerBanks[first].layout;
    if(legacy&&!convert)throw Error('Привяжите существующий блок целевой секции к нише перед копированием.');
-   if(convert){freezeShelves(f,section,ui.previewBuilt);banks[nicheSlot(section,0)]=null;}
-   if(level===f.sectionShelves[section]){
-     if(f.gapLocks?.[section]?.includes(level))throw Error('Снимите фиксацию высоты ниши для установки полки над шуфлядами.');
-     if(level>=10)throw Error('В секции уже десять полок. Выберите нишу под существующей полкой.');
-     freezeShelves(f,section,ui.previewBuilt);
-     const room=nicheOpenings(f,section)[level],floor=(f.elevation??0)+footHeight(f);
-     const y=Math.round((room.bottom+room.top-f.thickness)/2);
-     f.sectionShelves[section]++;
-     f.shelfLevels[section].push({mode:'floor',mm:y+floor});
-     if(f.shelfChoices){f.shelfChoices[section]??=[];f.shelfChoices[section].push('board/95388');}
+   if(convert){freezeShelves(f,section,ui.previewBuilt);f.drawerBanks[first]=null;}
+   if(zone?.kind==='shelves'){
+     if(!options.pair||!emptyDivider(f,zone))throw Error('Выберите свободную нишу для блока шуфляд.');
+     f.nicheSplits=f.nicheSplits.filter(z=>z!==zone);
    }
+   const sameOpening=r=>r.section===section&&r.level===level;
+   if(options.replaceContents){
+     for(const key of ['rods','fittings']){
+       if(f[key])f[key]=f[key].filter(v=>!sameOpening(v));
+       if(!f[key]?.length)delete f[key];
+     }
+   }
+   const occupied={rods:planRods({...f,rods:(f.rods??[]).filter(sameOpening)}),
+     fittings:(f.fittings??[]).filter(sameOpening).map(v=>planFitting(f,v))};
+   const insert=level===f.sectionShelves[section]||occupied.rods.length>0||occupied.fittings.length>0;
+   const rise=level===0&&f.bottomFit==='none'?openingBase({...f,drawerBanks:{[first]:true}},section)-openingBase(f,section):0;
+   if(insert){
+     const gap=coverForDrawers(f,section,level,options.count??template?.faces.length??1,kind,occupied,rise);
+     insertShelves(f,cell,1,gap);
+   }
+   if(rise)freezeShelves(f,section,insert?null:ui.previewBuilt);
    const opening=nicheOpenings(f,section)[level];
    const inside=kind==='internal',gap=inside?30:3;
    const usable=(inside?opening.top-opening.bottom-coverClearance-frontEdgeGap:opening.overlayTop-opening.overlayBottom-3);
-   const count=Math.max(1,Math.min(3,Math.floor((usable+gap)/(100+gap))));
+   const capacity=Math.floor((usable-rise+gap)/(100+gap));
+   const count=options.count??Math.max(1,Math.min(3,capacity));
+   if(!template&&count>capacity)throw Error('Секция '+(section+1)+', ниша '+(level+1)+'. Для выбранных шуфляд мало высоты. Помещается '+Math.max(0,capacity)+'.');
+   const banks=trimBanks(f.drawerBanks??[],f.sections);
    banks[slot]=template?structuredClone(template):{kind,layout:'equal',gap,faces:Array.from({length:count},()=>({height:null}))};
    delete banks[slot].height;delete banks[slot].bottomOffset;delete banks[slot].shelvesBelow;
+   if(options.pair){
+     f.nicheSplits.push({kind:'drawers',section,level,edge:'open',...(zone.leftWidth!=null?{leftWidth:zone.leftWidth}:{})});
+     banks[nicheSlot(section,level,1)]=structuredClone(banks[slot]);
+   }
    f.drawerBanks=trimBanks(banks,f.sections);
    const prepared=wardrobeSpec(f);
    f.sectionShelves=prepared.sectionShelves;f.shelfChoices=prepared.shelfChoices;f.shelfLevels=prepared.shelfLevels;f.drawerBanks=prepared.drawerBanks;
+   if(insert)ui.sourceKeys=keysAfterInsertion(ui.sourceKeys,cell,1);
    ui.fields=f;ui.activeSection=section;ui.nicheIndex=level;ui.interior='drawer';ui.changed(true);
  }catch(e){
    if(ui.interior==='cell'){ui.interior='drawer';ui.render();}
    ui.output.textContent=e.message;
+   const note=ui.form?.querySelector('[data-drawer-feedback]');if(note)note.textContent=e.message;
  }
+}
+
+function emptyDivider(f,zone){
+ const prefix='niche-'+zone.section+'-'+zone.level+'-';
+ return zone.columns.every(c=>c.gaps.length===1&&!c.locks?.length)&&
+   ![...(f.rods??[]),...(f.fittings??[])].some(v=>v.section===zone.section&&v.level===zone.level)&&
+   ![...Object.keys(f.machining??{}),...Object.keys(f.lighting??{})].some(k=>k.startsWith(prefix)||k.startsWith('shelf-'+prefix));
 }
 
 function copyControls(ui,box,section,level){
@@ -202,16 +248,32 @@ export function drawerControls(ui,parent,section){
  const slot=nicheSlot(section,level,shared?ui.column:0);
  const legacy=f.drawerBanks?.[nicheSlot(section,0)];
  if(legacy&&!legacy.layout){legacyControls(ui,parent,section);return;}
- const box=el('fieldset');box.className='niche-editor';box.append(el('legend','Шуфляды · ниша '+(level+1)));parent.append(box);
+ const box=el('fieldset');box.className='niche-editor';box.append(el('legend','Шуфляды · секция '+(section+1)+' · ниша '+(level+1)));parent.append(box);
  const levels=Array.from({length:f.sectionShelves[section]+1},(_,i)=>[i,'Ниша '+(i+1)+(i===0?' · нижняя':'')]);
  if(levels.length>1)ui.select(box,'Ниша снизу вверх',levels,level,v=>selectNiche(ui,section,Number(v)));
- if(zone?.kind==='shelves'){box.append(action('Настроить перегородку и полки',()=>{ui.interior='split';ui.render();}));return;}
+ const pair=zone?.kind==='shelves';
+ if(pair&&!emptyDivider(f,zone)){
+   box.append(el('p','В этой нише перегородка с наполнением. Для двух блоков шуфляд с общей стойкой освободите обе колонки или выберите другую секцию.'),
+     action('Настроить перегородку и полки',()=>{ui.interior='split';ui.render();}));return;
+ }
  if(shared)ui.select(box,'Блок шуфляд',[['0','Левый блок'],['1','Правый блок']],ui.column??0,v=>{ui.column=Number(v);ui.render();});
  let bank=f.drawerBanks?.[slot];
  if(!bank){
-   let kind='internal';
+   let kind='internal',count=null;
    ui.select(box,'Исполнение шуфляд',drawerExecutions,kind,value=>{kind=value;});
-   const add=action('Добавить шуфляды',()=>installBank(ui,section,level,null,false,kind));add.dataset.addBank='';box.append(add);return;
+   ui.select(box,'Сколько шуфляд поставить',[['auto','По высоте ниши'],...[1,2,3,4].map(n=>[n,String(n)])],'auto',value=>{count=value==='auto'?null:Number(value);});
+   const note=el('p');note.dataset.drawerFeedback='';note.setAttribute('role','status');
+   const add=action(pair?'Поставить шуфляды слева и справа':'Добавить шуфляды',()=>installBank(ui,section,level,null,false,kind,{count,pair}));add.dataset.addBank='';
+   box.append(add,note);
+   const occupied=[...(f.rods??[]),...(f.fittings??[])].filter(v=>v.section===section&&v.level===level);
+   if(occupied.length){
+     const replace=el('details');replace.append(el('summary','Заменить наполнение этой ниши шуфлядами'));
+     const names=occupied.map(v=>v.variant?fittingCatalogue[v.variant].name:'Штанга AKS '+v.article);
+     replace.append(el('p','Будут сняты из ниши '+(level+1)+' секции '+(section+1)+' — '+names.join(', ')+'.'),
+       action('Заменить перечисленное шуфлядами',()=>installBank(ui,section,level,null,false,kind,{count,replaceContents:true})));
+     box.append(replace);
+   }
+   return;
  }
  function set(next,finished=true){
    if(bank?.kind==='internal'&&next?.kind!=='internal'&&f.thickness!==18&&f.shelfChoices?.[section]){

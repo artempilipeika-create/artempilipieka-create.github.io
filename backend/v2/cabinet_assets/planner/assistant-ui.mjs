@@ -16,6 +16,7 @@ import {rodControls,selectRod,wireRodDrag} from './wardrobe-rods-ui.mjs';
 import {activeCell,cellControls,sectionChoices,selectCell,wireCellDrag} from './wardrobe-cells-ui.mjs';
 import {startWardrobeControls} from './wardrobe-ready-ui.mjs';
 import {drawerRailSnapshot,drawerRailChanges} from './wardrobe-drawers.mjs';
+import {fittingCatalogue} from './wardrobe-fittings.mjs';
 import {sectionPresetControls} from './wardrobe-section-presets.mjs';
 import {keysAfterInsertion,setClearWidth,setSectionShelfCount} from './wardrobe-cells.mjs';
 import {nicheSlot,splitAt} from './wardrobe-layout.mjs';
@@ -107,7 +108,8 @@ export class AssistantUI{
   prepareHeightFields(this.fields);
   this.sourceKeys=c?new Map(c.items.map(it=>[it.item_id.slice(c.metadata.group_id.length+1),it.item_id])):null;
   this.wardrobeRoute=null;this.wardrobeAnswers=null;this.readyPick=null;this.refreshReady=null;this.railSnapshot=null;this.railUpdates=new Map();this.railNotice.replaceChildren();this.railNotice.hidden=true;
-  this.rodId=null;this.rodDraft=null;this.wholeWidth=false;this.layoutUndo=[];this.layoutAnchor=null;this.zoomDiagram(false);
+  this.rodId=null;this.rodDraft=null;this.rodFamily=null;this.fameId=undefined;this.fameMount=null;this.fittingCategory=null;
+  this.wholeWidth=false;this.layoutUndo=[];this.layoutAnchor=null;this.zoomDiagram(false);
   if(c&&s.front&&!s.front.autoHinges&&s.drawerBanks){
    this.fields.drawerBanks.forEach((bank,slot)=>bank?.faces.forEach((face,i)=>{
     const old=c.items.find(it=>it.item_id===c.metadata.group_id+':drawer-'+slot+'-'+i+'-face');
@@ -159,6 +161,15 @@ export class AssistantUI{
   const hit=event.target.closest?.('[data-clear-width],[data-clear-level],[data-split-section],[data-shelf-index],[data-niche],[data-hinge],[data-door-shelf-pick],[data-door-id]');
   if(!hit)return;
   const d=hit.dataset,section=Number(d.section);
+  if(d.fittingId){
+   const item=this.fields.fittings?.find(f=>f.id===d.fittingId);if(!item)return;
+   const product=fittingCatalogue[item.variant];this.zoomDiagram(false);
+   this.activeSection=item.section;this.nicheIndex=item.level;this.column=item.column??0;this.gapIndex=item.opening??item.level;
+   this.step=2;this.view='sections';this.interior=product.category==='rods'?'rod':'fitting';
+   if(product.category==='rods'){this.rodFamily='fame';this.fameId=item.id;this.fameMount=product.mount;}
+   else this.fittingCategory=product.category;
+   this.render();return;
+  }
   if(d.rodId){selectRod(this,d.rodId);return;}
   if(d.doorShelfPick){setDoorShelf(this,d.doorShelfPick);return;}
   if(d.doorId){this.selectedDoor=d.doorId;this.step=3;this.view='fronts';this.render();this.form.querySelector(d.doorId.startsWith('door-')?'[data-hinge-kind][aria-pressed="true"]':'[data-handle-article]')?.focus({preventScroll:true});return;}
@@ -643,7 +654,7 @@ export class AssistantUI{
    else if(issue)this.description.textContent=issue;
    if(this.livePreview){
     const drawers=this.step===2&&this.interior==='drawer',facades=this.step===3&&view==='fronts';
-    const fittings=this.step===2&&this.interior==='fitting'&&built.fittings.length;
+    const fittings=this.step===2&&(this.interior==='fitting'&&built.fittings.length||this.interior==='rod'&&built.fittings.some(f=>f.p.category==='rods'&&f.section===cell.section&&f.level===cell.level));
     const visible=fittings||(drawers||facades)&&(built.spec.front||built.drawerBanks?.some(Boolean));
     const previewSlot=fittings?-1:drawers?slot:this.inspectInternalFronts?drawerFacadeKey(this.selectedDoor)?.slot:null;
     try{this.livePreview.sync(visible?built:null,previewSlot,this.mode.value==='update'?this.current:null,this.materialChanged);}

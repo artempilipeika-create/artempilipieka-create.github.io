@@ -1,5 +1,7 @@
 import photos from './rod-photos/sources.json' with {type:'json'};
 import {newRod,planRods,rodCatalogue,rodFinish,rodLabel,rodLimits,rodRoom,sameRodCell} from './wardrobe-rods.mjs';
+import {fittingControls} from './wardrobe-fitting-ui.mjs';
+import {fittingCatalogue,planFitting,touchingStandardRod} from './wardrobe-fittings.mjs';
 
 const el=(tag,text)=>Object.assign(document.createElement(tag),{textContent:text??''});
 const button=(text,run)=>Object.assign(el('button',text),{type:'button',onclick:run});
@@ -13,32 +15,44 @@ export function rodControls(ui,parent,cell){
  let room;
  try{room=rodRoom(f,cell,ui.previewBuilt?.installedLevels);}catch(e){box.append(el('p',e.message));return;}
  const list=(f.rods??[]).filter(r=>sameRodCell(r,cell));
+ const fitted=(f.fittings??[]).filter(v=>sameRodCell(v,cell)&&fittingCatalogue[v.variant].category==='rods');
  const saved=list.find(r=>r.id===ui.rodId)??list[0];
  if(!ui.rodDraft||!sameRodCell(ui.rodDraft,cell))ui.rodDraft=newRod(cell,room);
  const rod=saved??ui.rodDraft;
  ui.rodId=saved?.id??null;
  const height=room.high-room.low;
  box.append(el('p','Внутри '+room.width+' × '+height+' мм · ширина × высота'));
- if(list.length>1)ui.select(box,'Штанга в нише',list.map((r,i)=>[r.id,'Штанга '+(i+1)+' · '+r.offset+' мм '+(r.anchor==='top'?'от верха':'от низа')]),rod.id,v=>{ui.rodId=v;ui.render();});
  const message=el('p');message.className='rod-message';message.setAttribute('role','status');
+ function checkPlacement(rod){
+   const levels=ui.previewBuilt?.installedLevels,planned=planRods({...f,rods:[rod]},levels);
+   if(fitted.some(v=>touchingStandardRod(planFitting(f,v,levels),planned)))throw Error('Штанга пересекается с FAME. Измените высоту или положение по глубине.');
+ }
  const edit=(delta)=>{
    const candidate={...rod,...delta};if(candidate.fromBack==null)delete candidate.fromBack;
-   try{planRods({...f,rods:[candidate]},ui.previewBuilt?.installedLevels);}
+   try{if(saved)checkPlacement(candidate);else planRods({...f,rods:[candidate]},ui.previewBuilt?.installedLevels);}
    catch(e){message.textContent=e.message;return;}
    if(saved){f.rods=f.rods.map(r=>r.id===candidate.id?candidate:r);ui.changed(true);}
    else{ui.rodDraft=candidate;ui.render();}
  };
  const family=rodCatalogue[rod.article].family;
  const families=el('div');families.className='rod-families';
+ const fame=ui.rodFamily==='fame'||(!ui.rodFamily&&!saved&&fitted.length>0);
  for(const [key,name] of Object.entries(groupNames)){
    const example=family===key?rod.article:key==='round'?'22109':'57975';
    const p=photos[example],img=el('img');
    img.src='/account/planner/rod-photos/'+p.file;img.alt=name+' · '+rodFinish[rodCatalogue[example].finish]+' · AKS '+example;
-   const b=button('',()=>{if(key!==family)edit({article:example});});
+   const b=button('',()=>{ui.rodFamily='classic';if(key!==family)edit({article:example});else if(fame)ui.render();});
    b.append(img,el('strong',name+' мм'),el('small',rodFinish[rodCatalogue[example].finish]+' · арт. '+example));
-   b.setAttribute('aria-pressed',String(key===family));families.append(b);
+   b.setAttribute('aria-pressed',String(!fame&&key===family));families.append(b);
  }
+ const shown=fittingCatalogue[(fitted.find(v=>v.id===ui.fameId)??fitted[0])?.variant??'113750-side'];
+ const fameButton=button('',()=>{ui.rodFamily='fame';ui.render();});fameButton.setAttribute('aria-label','Прямоугольная FAME');
+ const picture=el('img');picture.src='/account/planner/wardrobe-fitting-photos/'+shown.photo+'.webp';picture.alt='';
+ fameButton.append(picture,el('strong','Прямоугольная FAME'),el('small',shown.name.split(' · ')[0].replace('Штанга FAME ','')+' · арт. '+shown.article));
+ fameButton.setAttribute('aria-pressed',String(Boolean(fame)));families.append(fameButton);
  box.append(families);
+ if(fame){fittingControls(ui,box,cell,true);return;}
+ if(list.length>1)ui.select(box,'Штанга в нише',list.map((r,i)=>[r.id,'Штанга '+(i+1)+' · '+r.offset+' мм '+(r.anchor==='top'?'от верха':'от низа')]),rod.id,v=>{ui.rodId=v;ui.render();});
  ui.select(box,'Исполнение штанги AKS',order.filter(id=>rodCatalogue[id].family===family).map(id=>[id,rodFinish[rodCatalogue[id].finish]+' · '+String(rodCatalogue[id].wallMm).replace('.',',')+' мм · '+id]),rod.article,v=>edit({article:v}));
  const src=el('a','Фото поставщика · AKS '+rod.article+' ↗');src.href=photos[rod.article].source;src.target='_blank';src.rel='noopener noreferrer';src.className='rod-source';box.append(src);
  const pos=el('div');pos.className='rod-position';
@@ -72,7 +86,7 @@ export function rodControls(ui,parent,cell){
      for(let i=1;i<edges.length;i++)if(edges[i]-edges[i-1]>widest){widest=edges[i]-edges[i-1];axis=(edges[i]+edges[i-1])/2;}
      next.offset=Math.round(next.anchor==='top'?room.high-axis:axis-room.low);
    }
-   try{planRods({...f,rods:[next]},ui.previewBuilt?.installedLevels);}catch(e){message.textContent=e.message;return;}
+   try{checkPlacement(next);}catch(e){message.textContent=e.message;return;}
    (f.rods??=[]).push(next);ui.rodId=next.id;ui.changed(true);
  }));
  if(saved)actions.append(button('Убрать штангу',()=>{
@@ -86,7 +100,7 @@ export function rodControls(ui,parent,cell){
 export function selectRod(ui,id){
  const r=ui.fields.rods?.find(r=>r.id===id);if(!r)return;
  ui.zoomDiagram(false);ui.activeSection=r.section;ui.nicheIndex=r.level;ui.column=r.column??0;
- ui.gapIndex=r.column==null?r.level:r.opening;ui.rodId=id;ui.interior='rod';ui.step=2;ui.view='sections';ui.render();
+ ui.gapIndex=r.column==null?r.level:r.opening;ui.rodId=id;ui.rodFamily='classic';ui.interior='rod';ui.step=2;ui.view='sections';ui.render();
 }
 export function wireRodDrag(ui){
  const root=ui.drawing;let drag=null;

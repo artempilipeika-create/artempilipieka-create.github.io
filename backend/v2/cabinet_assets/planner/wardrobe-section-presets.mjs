@@ -107,7 +107,7 @@ export function sectionPresetControls(ui,parent,cell){
      const result=prepareSectionPreset(ui.fields,cell,scheme.id,ui.sourceKeys,replace);
      ui.fields=result.fields;ui.sourceKeys=result.keys;ui.rodId=result.rodId;ui.rodDraft=null;
      delete ui.shelfScopes[cell.section];delete ui.shelfDrafts[cell.section];
-     ui.interior='rod';ui.changed(true);
+     ui.interior='rod';ui.rodFamily='classic';ui.changed(true);
      ui.output.textContent='Схема «'+scheme.name+'» применена к секции '+section+'.';
      ui.form.querySelector('.section-presets > button')?.focus({preventScroll:true});
    }catch(error){feedback.textContent=error.message;}
@@ -123,5 +123,6 @@ export function sectionPresetControls(ui,parent,cell){
    });
    select.setAttribute('aria-label',scheme.name);select.append(diagram(scheme.id),el('strong',scheme.name),el('small',scheme.description));cards.append(select);
  }
- panel.append(cards,feedback);readySectionControls(ui,panel,cell.section);wrap.append(trigger,panel);parent.append(wrap);
+ const drawers=button('Шуфляды в выбранную нишу',()=>{ui.interior='drawer';ui.render();ui.form.querySelector('[data-add-bank], [data-niche-count]')?.focus({preventScroll:true});});
+ panel.append(cards,drawers,feedback);readySectionControls(ui,panel,cell.section);wrap.append(trigger,panel);parent.append(wrap);
 }

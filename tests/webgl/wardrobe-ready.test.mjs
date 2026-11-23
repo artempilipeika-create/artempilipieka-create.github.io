@@ -6,9 +6,48 @@ import {buildCarcass,placeCarcass} from '../../backend/v2/cabinet_assets/planner
 import {defaultBackMount} from '../../backend/v2/cabinet_assets/planner/panel-machining.mjs';
 import {wardrobeHardware} from '../../backend/v2/cabinet_assets/planner/wardrobe-aks-native.mjs';
 import {drawerRailSnapshot,drawerRailChanges} from '../../backend/v2/cabinet_assets/planner/wardrobe-drawers.mjs';
+import {installBank} from '../../backend/v2/cabinet_assets/planner/wardrobe-interior-ui.mjs';
+import {defaultFitting,fittingCatalogue} from '../../backend/v2/cabinet_assets/planner/wardrobe-fittings.mjs';
 
 const base=(width=1800,depth=600)=>({width,height:2400,depth,thickness:18,back:true,sections:1,sectionShelves:[0],clearLayout:true,drawerFixing:'cam_dowel'});
 function build(fields){return buildCarcass(wardrobeSpec(fields),{idPrefix:'qa'});}
+function addDrawers(fields,section,level,options={}){
+ const ui={fields,previewBuilt:build(fields),changed(){},output:{}};
+ installBank(ui,section,level,null,false,'internal',options);return ui;
+}
+test('upper preset opening and drawer bank below a hanging rail keep neighboring panel and hanger positions',()=>{
+ const f=planReadyLayout(base(),{id:'couple'}).fields,before=build(f);
+ f.fittings=[defaultFitting('113750-side',{section:0,level:0})];f.rods=f.rods.filter(r=>r.section!==0);
+ const initial=build(f),ui=addDrawers(f,0,0,{count:2});assert.equal(ui.output.textContent,undefined);
+ let b=build(ui.fields);assert.equal(b.drawerBanks[0].faces.length,2);
+ assert.equal(b.fittings[0].id,initial.fittings[0].id);assert.equal(b.fittings[0].level,1);
+ assert.deepEqual(b.fittings[0].box,initial.fittings[0].box);
+ assert.deepEqual(b.rods.map(x=>x.y),initial.rods.map(x=>x.y));
+ const top=addDrawers(ui.fields,2,1,{count:1});assert.equal(top.output.textContent,undefined);b=build(top.fields);
+ assert.equal(b.drawerBanks[5].faces.length,1);
+ for(const key of ['shelf-1-0','shelf-1-1','shelf-2-0'])assert.equal(b.parts.find(v=>v.key===key).item.elevation_mm,before.parts.find(v=>v.key===key).item.elevation_mm);
+});
+test('an empty shelf partition can accept a drawer bank on both sides at its original widths',()=>{
+ const f=base(1050);f.nicheSplits=[{section:0,level:0,kind:'shelves',leftWidth:430,columns:[{gaps:[null]},{gaps:[null]}]}];
+ const ui=addDrawers(f,0,0,{count:2,pair:true});assert.equal(ui.output.textContent,undefined);
+ const fitted=build(ui.fields);assert.equal(fitted.spec.nicheSplits[0].leftWidth,430);
+ for(const slot of [0,33])assert.equal(fitted.drawerBanks[slot].faces.length,2);
+ assert.equal(f.nicheSplits[0].kind,'shelves');
+});
+test('occupied floors and explicit height locks report a local reason and preserve the existing assembly',()=>{
+ const f=planReadyLayout(base(1100),{id:'utility'}).fields,before=structuredClone(f),v=f.fittings.find(x=>x.variant==='114784');
+ const blocked=addDrawers(f,v.section,v.level);assert.match(blocked.output.textContent,/гладильная доска/);assert.deepEqual(f,before);
+ const replaced=addDrawers(f,v.section,v.level,{replaceContents:true,count:2});assert.equal(replaced.output.textContent,undefined);
+ assert.equal(build(replaced.fields).fittings.length,0);assert.deepEqual(f,before);
+ const locked=planReadyLayout(base(),{id:'couple'}).fields;locked.gapLocks=[[],[],[1]];
+ const original=structuredClone(locked),result=addDrawers(locked,2,1);assert.match(result.output.textContent,/фиксацию/);assert.deepEqual(result.fields,original);
+});
+test('all 49 supplied AKS assemblies have one functional category and preserve all FAME mounting options',()=>{
+ const groups=Object.groupBy(Object.values(fittingCatalogue),p=>p.category);
+ assert.deepEqual(Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.length])),{trousers:7,hangers:13,ties:2,trays:2,doors:2,ironing:2,lifts:9,rods:12});
+ assert.equal(new Set(groups.rods.map(p=>p.article)).size,6);
+ for(const p of groups.rods)assert.ok(p.series==='FAME'&&['spanTop','spanSide'].includes(p.mount)&&p.components.length>0);
+});
 test('the four catalogue cards create editable production parts for the supplied enclosure',()=>{
  for(const [id,width,depth,widths,articles] of [
   ['hall',1000,420,[546,400],['113951']],['couple',1800,600,[576,576,576],[]],

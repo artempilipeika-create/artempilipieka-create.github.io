@@ -229,8 +229,13 @@ function elevationView(built,view,section,front,selectedShelf,selection){
    }
    for(const f of built.fittings??[]){
      const [a,b]=f.box,x=X(a[0]),y=Y(footHeight(s)+b[1]),w=(b[0]-a[0])*k,h=(b[1]-a[1])*k;
-     drawing+='<g pointer-events="none" data-fitted-article="'+f.p.article+'"><title>'+f.p.name+' · AKS '+f.p.article+'</title><rect x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'" rx="1" fill="#719d8a" fill-opacity=".20" stroke="#3c7565" stroke-width=".8"/>'+
+     const isRod=f.p.category==='rods';
+     drawing+='<g pointer-events="none" data-fitted-article="'+f.p.article+'"><title>'+f.p.name+' · AKS '+f.p.article+'</title><rect x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'" rx="1" fill="'+(isRod?'#746c61':'#719d8a')+'" fill-opacity="'+(isRod?'.85':'.20')+'" stroke="#3c7565" stroke-width=".8"/>'+
        (w>33&&h>10?'<text x="'+num(x+w/2)+'" y="'+num(y+h/2+3)+'" text-anchor="middle" font-size="9" fill="#244e45">'+f.p.article+'</text>':'')+'</g>';
+     if(editor){
+       const hitHeight=Math.min(14,Math.max(h,6));
+       handles+='<g role="button" tabindex="0" data-niche="'+f.level+'" data-section="'+f.section+'" data-fitting-id="'+f.id+'" aria-label="'+f.p.name+' · '+f.p.article+'"><title>'+f.p.name+'</title><rect x="'+num(x)+'" y="'+num(y+(h-hitHeight)/2)+'" width="'+num(Math.max(w,5))+'" height="'+num(hitHeight)+'" fill="transparent"/></g>';
+     }
    }
    for(const r of built.rods??[]){
      const y=Y(footHeight(s)+r.y),l=X(r.left),right=X(r.left+r.width),h=Math.max(2.6,k*(r.product.family==='round'?25:30));
