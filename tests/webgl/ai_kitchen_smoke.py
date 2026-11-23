@@ -12,6 +12,14 @@ from wardrobe_niche_smoke import exercise, ORIGIN, ROOT
 MODELS = ('base-swing', 'base-sink', 'base-vitrine', 'wall-swing', 'wall-vitrine')
 
 
+def wait_for_state(page, expression, arg=None):
+    deadline = monotonic() + 15
+    while not page.evaluate(expression, arg):
+        if monotonic() >= deadline:
+            raise AssertionError(expression)
+        page.wait_for_timeout(75)
+
+
 def scenario(page, projects, pid):
     from backend.v2.three_d_api import Scene
     from backend.v2.assistant_api import LightingEstimate
@@ -42,18 +50,13 @@ def scenario(page, projects, pid):
     form=page.locator('#ai-kitchen-dialog')
     custom='91518079-f405-4256-984c-c6a256c16960'
     page.route('**/api/v2/catalogue/materials?*',lambda route:route.fulfill(json={'items':[{'name':'Дуб для теста','variant_id':custom,'thickness':18,'kind':'material'}]}))
-    def wait_state(expression,arg=None):
-        deadline=monotonic()+15
-        while not page.evaluate(expression,arg):
-            if monotonic()>=deadline:raise AssertionError(expression)
-            page.wait_for_timeout(75)
 
     def tab(id):
         form.locator('[data-tab="'+id+'"]').click()
     def fixing(index,code):
         return form.locator(f'[data-shelf-index="{index}"][data-shelf-fixing="{code}"]')
     def installed_handle(view,door,article,angle):
-        wait_state("""([view,door,article,angle])=>{
+        wait_for_state(page, """([view,door,article,angle])=>{
           const v=view==='preview'?MF_PLANNER.aiKitchen.preview:MF_PLANNER.scene;
           const mesh=v.entries.get(door)?.group.children.find(n=>n.isMesh&&n.userData.frontAccessory&&n.userData.article===article);
           return Boolean(mesh?.visible&&Math.abs(mesh.rotation.z*180/Math.PI-angle)<.01);
@@ -74,7 +77,7 @@ def scenario(page, projects, pid):
     for key in MODELS:
         page.locator('[data-ai-kitchen="'+key+'"]').click()
         expect(form).to_be_hidden()
-        wait_state('key=>MF_PLANNER.adapter.items.some(p=>p.assistant_carcass?.spec.kitchenModel===key)',key)
+        wait_for_state(page, 'key=>MF_PLANNER.adapter.items.some(p=>p.assistant_carcass?.spec.kitchenModel===key)',key)
     page.evaluate("()=>MF_PLANNER.workspace.panel('left',false)")
     # Use the actual scene raycast and a physical click. Sidebar and popup must not compete.
     point=page.evaluate("""()=>{const view=MF_PLANNER.scene,r=view.canvas.getBoundingClientRect();
@@ -134,7 +137,7 @@ def scenario(page, projects, pid):
     installed_handle('preview','questionnaire-preview:door-left','89080',0)
     tab('materials')
     form.get_by_role('button',name='Закрыть двери').click()
-    wait_state('()=>MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
+    wait_for_state(page, '()=>MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
     part_point=page.evaluate("""()=>{const v=MF_PLANNER.aiKitchen.preview,r=v.canvas.getBoundingClientRect();
       const point=v.camera.position.clone().set(0,0.30,0.015);
       const g=v.entries.get('questionnaire-preview:door-left').group;
@@ -142,7 +145,7 @@ def scenario(page, projects, pid):
       return [r.left+(1+point.x)*r.width/2,r.top+(1-point.y)*r.height/2];}""")
     page.mouse.click(*part_point)
     expect(form.locator('[name=part]')).to_have_value('door-left')
-    wait_state('()=>MF_PLANNER.aiKitchen.preview.outline.visible')
+    wait_for_state(page, '()=>MF_PLANNER.aiKitchen.preview.outline.visible')
     form.locator('[name=part]').select_option('left')
     form.get_by_label('Поиск · Боковина левая').fill('Дуб')
     form.get_by_role('button',name='Дуб для теста · 18 мм').click()
@@ -172,7 +175,7 @@ def scenario(page, projects, pid):
     assert len(boards)==6 and all(it['blank_shelf']=='board/confirmat' for it in boards)
     assert any(it.get('blank_shelf')=='8/48846' for it in scene['items'])
     page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
-    wait_state("()=>MF_PLANNER.adapter.state.kitchenShelfFixing==='confirmat'")
+    wait_for_state(page, "()=>MF_PLANNER.adapter.state.kitchenShelfFixing==='confirmat'")
     open_card('base-swing');tab('inside');expect(form.locator('[name=shelves]')).to_have_value('3')
     expect(fixing(1,'confirmat')).to_have_attribute('aria-pressed','true')
     tab('handles');expect(form.get_by_label('Положение ручки')).to_have_value('horizontal')
@@ -220,7 +223,7 @@ def scenario(page, projects, pid):
     for kind in ['drawers-three','drawers-two','dryer','cargo']:
         page.evaluate("()=>MF_PLANNER.workspace.panel('left',true)")
         page.locator('[data-ai-kitchen="'+kind+'"]').click()
-        wait_state('k=>MF_PLANNER.adapter.selected?.kitchenFilling?.kind===k',kind)
+        wait_for_state(page, 'k=>MF_PLANNER.adapter.selected?.kitchenFilling?.kind===k',kind)
         ids[kind]=page.evaluate('MF_PLANNER.adapter.selected.item_id')
         edit_filling(ids[kind])
         if kind=='cargo':
@@ -234,12 +237,12 @@ def scenario(page, projects, pid):
             fill.locator('[data-tab=body]').click()
             fill.get_by_label('Задняя стенка',exact=True).select_option('quarter')
         save_fill()
-        wait_state('id=>MF_PLANNER.scene.entries.get(id)?.group.children.some(m=>m.userData.article==="92253")',ids[kind])
+        wait_for_state(page, 'id=>MF_PLANNER.scene.entries.get(id)?.group.children.some(m=>m.userData.article==="92253")',ids[kind])
     for kind in ['drawers-two','dryer','cargo']:
         edit_filling(ids[kind]);fill.locator('[data-tab=handles]').click();fill.locator('[data-pull=gola]').click()
         save_fill()
     page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
-    wait_state('id=>MF_PLANNER.adapter.items.some(x=>x.item_id===id&&x.kitchenFilling?.pull==="92253")',ids['drawers-three'])
+    wait_for_state(page, 'id=>MF_PLANNER.adapter.items.some(x=>x.item_id===id&&x.kitchenFilling?.pull==="92253")',ids['drawers-three'])
     with page.expect_download() as downloaded:page.locator('#export-bazis').click()
     payload=json.loads(Path(downloaded.value.path()).read_text())
     expected={it['bazis_id'] for it in projects.projects[pid]['scene']['items'] if it.get('kitchenFilling')}
@@ -257,7 +260,8 @@ def scenario(page, projects, pid):
 def camera_views(page, projects, pid):
     """Exercise the real toolbar with GPU loss, recovery and a cold start without WebGL."""
     def ready():
-        page.wait_for_function("MF_PLANNER.ready && MF_PLANNER.scene?.softwareRendering === true")
+        expect(page.locator('body')).to_have_attribute('data-planner-renderer', 'fallback', timeout=20000)
+        assert page.evaluate('MF_PLANNER.scene.softwareRendering === true')
         expect(page.get_by_role('button', name='WebGL')).to_have_count(0)
         expect(page.locator('#planner-fallback, #planner-renderer-note')).to_have_count(0)
 
@@ -280,7 +284,7 @@ def camera_views(page, projects, pid):
     front = choose('#planner-front', 'front')
     top = choose('#mode-2d', 'top')
     angle = choose('#mode-3d', '3d')
-    page.wait_for_function("""() => {
+    wait_for_state(page, """() => {
         const scene=MF_PLANNER.scene, canvas=scene.canvas;
         return canvas.width>=canvas.clientWidth && scene.factory.boardRelief.image?.naturalWidth===512;
     }""")
@@ -315,7 +319,8 @@ def camera_views(page, projects, pid):
     choose('#planner-front', 'front')
     old_canvas = page.locator('#scene').element_handle()
     page.evaluate('()=>MF_PLANNER.startRenderer()')
-    page.wait_for_function('old=>!old.isConnected && MF_PLANNER.scene?.softwareRendering === true', arg=old_canvas)
+    assert page.evaluate('old=>!old.isConnected', old_canvas)
+    ready()
     expect(page.locator('#planner-front')).to_have_attribute('aria-pressed', 'true')
     choose('#mode-3d', '3d')
     assert page.locator('.mf3d-canvas-wrap canvas').count() == 1
