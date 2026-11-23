@@ -106,12 +106,13 @@ function paint(canvas,built,ui,open,section){
   scene.environment=owner.scene.environment;scene.environmentIntensity=.55;scene.add(model);
   scene.add(new THREE.HemisphereLight('#fffdf7','#bfb5a7',1.45));
   const {camera,centre,half}=studioCamera(built,canvas.width/canvas.height);
-  const key=new THREE.DirectionalLight('#fff8ed',2.05);
-  key.position.copy(centre).add(new THREE.Vector3(-2.7,4.3,3.6).multiplyScalar(half));key.target.position.copy(centre);
+  const key=new THREE.DirectionalLight('#fffaf5',1.85);
+  key.position.copy(centre).add(new THREE.Vector3(-1.9,2.6,5.2).multiplyScalar(half));key.target.position.copy(centre);
   key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.bias=-.00006;key.shadow.normalBias=.00027;
+  key.shadow.intensity=.3;key.shadow.radius=4;
   Object.assign(key.shadow.camera,{left:-half*2,right:half*2,top:half*2,bottom:-half*2,near:.01,far:half*15+4});
   key.shadow.camera.updateProjectionMatrix();scene.add(key,key.target);
-  const fill=new THREE.DirectionalLight('#f2f5fc',.55);fill.position.set(4,2,1);scene.add(fill);
+  const fill=new THREE.DirectionalLight('#f2f5fc',.74);fill.position.set(4,2,1);scene.add(fill);
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshStandardMaterial({color:'#e6e3dc',roughness:.94}));
   const wall=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshStandardMaterial({color:'#e8e5df',roughness:.93}));
   const wallGap=built.spec.dresser?.installation==='wall'?5:130;
