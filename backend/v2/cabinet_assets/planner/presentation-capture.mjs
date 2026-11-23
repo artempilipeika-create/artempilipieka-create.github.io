@@ -20,7 +20,7 @@ export function capturePresentation(scene,{width,height,view='threeQuarter',save
   const boxes=[...scene.kitchenBoxes.values()].map(box=>[box,box.visible]);
   try{
     scene.stopOrbitInertia();scene.exportSize={width,height};scene.width=width;scene.height=height;
-    r.setPixelRatio(1);r.setSize(width,height,false);scene.studioRender.maxDimension=width;
+    r.setPixelRatio(1);r.setSize(width,height,false,true);scene.studioRender.maxDimension=width;
     scene.perspective.aspect=width/height;scene.perspective.updateProjectionMatrix();
     scene.setPresentation(true);
     if(savedView||view==='current')scene.restoreView(viewForAspect(savedView||previous.view,width/height));

@@ -253,6 +253,58 @@ def scenario(page, projects, pid):
     print('PASS five cabinets, physical click, row heights, shelf fixings, mixed materials, sink, saved project and Z1 export')
 
 
+
+def camera_views(page, projects, pid):
+    """Exercise the real toolbar with GPU loss, recovery and a cold start without WebGL."""
+    def ready():
+        page.wait_for_function("MF_PLANNER.ready && MF_PLANNER.scene.softwareRendering === true")
+
+    def choose(selector, mode):
+        button = page.locator(selector)
+        button.click()
+        expect(button).to_have_attribute('aria-pressed', 'true')
+        assert page.evaluate('MF_PLANNER.scene.mode') == mode
+        return page.locator('#scene').screenshot()
+
+    items = page.evaluate('MF_PLANNER.adapter.items')
+    choose('#planner-front', 'front')
+    page.evaluate('MF_PLANNER.scene.renderer.forceContextLoss()')
+    ready()
+    expect(page.locator('#planner-front')).to_have_attribute('aria-pressed', 'true')
+    front = choose('#planner-front', 'front')
+    top = choose('#mode-2d', 'top')
+    angle = choose('#mode-3d', '3d')
+    assert len({front, top, angle}) == 3
+    assert page.evaluate('MF_PLANNER.scene.controls.enableRotate')
+    assert page.evaluate('MF_PLANNER.adapter.items') == items
+    page.locator('#planner-client').click()
+    page.locator('#planner-front').click()
+    expect(page.locator('#planner-front')).to_have_attribute('aria-pressed', 'true')
+    assert page.evaluate('MF_PLANNER.scene.clientView') == 'front'
+    page.locator('#planner-client').click()
+    choose('#mode-2d', 'top')
+    page.locator('#planner-retry').click()
+    expect(page.locator('body')).to_have_attribute('data-planner-renderer', 'webgl')
+    expect(page.locator('#mode-2d')).to_have_attribute('aria-pressed', 'true')
+
+    page.add_init_script("""const getContext=HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext=function(type,...args){
+        return type==='webgl2'?null:getContext.call(this,type,...args);
+      };""")
+    page.reload(wait_until='domcontentloaded')
+    page.locator('#planner-assistant').wait_for(state='attached')
+    page.evaluate('id=>MF_PLANNER.bridge.open(id)', pid)
+    ready()
+    choose('#mode-2d', 'top')
+    choose('#planner-front', 'front')
+    choose('#mode-3d', '3d')
+    assert page.locator('.mf3d-canvas-wrap canvas').count() == 1
+    assert page.evaluate('MF_PLANNER.adapter.items') == items
+    page.evaluate('()=>MF_PLANNER.bridge.save()')
+    assert projects.projects[pid]['scene']['view_mode'] == '3d'
+    print('PASS top/front/3D, client front, context loss and recovery, disabled WebGL at startup')
+
+
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--live',action='store_true')
@@ -263,4 +315,5 @@ if __name__=='__main__':
                 asset=page.request.get(ORIGIN+'/account/planner/'+name)
                 assert asset.ok and asset.body()==(ROOT/'backend/v2/cabinet_assets/planner'/name).read_bytes(),name
         scenario(page,projects,pid)
+        camera_views(page,projects,pid)
     exercise(a.live,check)

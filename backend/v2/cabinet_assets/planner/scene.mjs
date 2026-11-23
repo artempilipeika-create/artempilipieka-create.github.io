@@ -23,10 +23,11 @@ import {WallFinishMesh} from './wall-finish-mesh.mjs';
 import {qualityProfile,RenderBudget} from './presentation.mjs';
 const SELECTION_BLUE='#1677ff',HOVER_BLUE='#80b8ff';
 export class PlannerScene{
-  constructor(canvas,adapter,onLost){
+  constructor(canvas,adapter,onLost,{context,softwareRenderer}={}){
     this.canvas=canvas;this.adapter=adapter;this.onLost=onLost;this.mode='3d';this.layer='all';this.entries=new Map();this.frame=0;this.dead=false;
     this.displayMode='normal';this.displayItemId=null;this.selectionScope='module';this.kitchenBoxes=new Map();
-    this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+    this.softwareRendering=Boolean(softwareRenderer);
+    this.renderer=softwareRenderer||new THREE.WebGLRenderer({canvas,context,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.qualityMode='auto';try{this.qualityMode=localStorage.getItem('mf.scene-quality')||'auto';}catch{}
     this.renderBudget=new RenderBudget();this.quality=qualityProfile(this.qualityMode,{memory:navigator.deviceMemory,cores:navigator.hardwareConcurrency});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality.ratio));
@@ -43,8 +44,8 @@ export class PlannerScene{
     this.roomBounce=new THREE.DirectionalLight(0xfffcf3,.38);
     this.roomBounce.position.set(0,-2.5,1.4);this.roomBounce.target.position.set(0,2.2,0);
     this.roomBounce.visible=false;this.scene.add(this.roomBounce,this.roomBounce.target);
-    this.studioEnvironment=studioEnvironment(this.renderer);
-    this.scene.environment=this.studioEnvironment.texture;this.scene.environmentIntensity=.55;
+    this.studioEnvironment=softwareRenderer?null:studioEnvironment(this.renderer);
+    this.scene.environment=this.studioEnvironment?.texture??null;this.scene.environmentIntensity=.55;
     this.sun=new THREE.DirectionalLight('#fff7e9',2.1);this.sun.position.set(-3,5,7);this.sun.castShadow=true;
     this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.1,far:30});
     this.sun.shadow.bias=-.00004;this.sun.shadow.normalBias=.0007;this.sun.shadow.intensity=.58;this.sun.shadow.radius=5;this.scene.add(this.sun,this.sun.target);
@@ -72,7 +73,7 @@ export class PlannerScene{
     this.lost=e=>{e.preventDefault();if(!this.dead)this.onLost();};canvas.addEventListener('webglcontextlost',this.lost);
     this.wallFinishes=new WallFinishMesh(this);
     this.renderRooms=new RenderRooms();
-    this.resize();this.sync();this.fit('room');this.previews=new CataloguePreviews(this);
+    this.resize();this.sync();this.fit('room');if(!softwareRenderer)this.previews=new CataloguePreviews(this);
     this.factory.onAssetsReady=()=>{this.renderer.shadowMap.needsUpdate=true;this.previews?.refreshAppliances();};
   }
   invalidate(){if(!this.dead&&!this.frame)this.frame=requestAnimationFrame(()=>this.render());}
@@ -117,7 +118,7 @@ export class PlannerScene{
   }
   resize(){
     if(this.dead)return;const r=this.exportSize||this.canvas.parentElement.getBoundingClientRect();this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);
-    this.renderer.setSize(this.width,this.height,false);this.perspective.aspect=this.width/this.height;
+    this.renderer.setSize(this.width,this.height,false,Boolean(this.exportSize));this.perspective.aspect=this.width/this.height;
     const v=this.perspective.view;if(v?.enabled)this.perspective.setViewOffset(this.width,this.height,v.offsetX*this.width/v.fullWidth,v.offsetY*this.height/v.fullHeight,this.width,this.height);
     this.perspective.updateProjectionMatrix();
     const span=this.orthoSpan||3;this.ortho.left=-span*this.width/this.height;this.ortho.right=-this.ortho.left;this.ortho.top=span;this.ortho.bottom=-span;this.ortho.updateProjectionMatrix();this.invalidate();

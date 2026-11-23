@@ -92,7 +92,7 @@ class PlannerApplication {
     const wrap=document.querySelector('.mf3d-canvas-wrap');
     const dimension=make('div','planner-dimension');dimension.hidden=true;wrap.append(dimension);
     const feedback=make('div','planner-feedback');feedback.hidden=true;feedback.setAttribute('role','status');wrap.append(feedback);
-    const fallback=make('div','planner-fallback');fallback.hidden=true;fallback.append(make('span',null,'WebGL недоступен. Резервный 2D-план; несохранённые данные сохранены в текущем проекте.'),button('planner-retry','Повторить 3D'));wrap.append(fallback);
+    const fallback=make('div','planner-fallback');fallback.hidden=true;fallback.append(make('span','planner-renderer-note'),button('planner-retry','Включить WebGL'));wrap.append(fallback);
     const empty=get('studio-empty-scene');empty.querySelector('h2').textContent='Начните с первого модуля';empty.querySelector('p').textContent='Выберите шкаф в каталоге слева. Его размеры и материалы доступны справа.';
     const note=make('p','planner-elevation-note');note.className='studio-hint';get('studio-position-note').after(note);
     const nav=make('nav','planner-mobile-nav');nav.setAttribute('aria-label','Панели конструктора');
@@ -448,30 +448,65 @@ class PlannerApplication {
     if(remarks&&document.activeElement!==remarks)remarks.value=selected?.appliance_details?.remarks||'';
   }
   ensureSelectedVisible(){const it=this.adapter.selected;if(it&&this.scene.layer!=='all'&&this.scene.layer!==tier(it)){this.scene.layer='all';get('planner-layer').value='all';this.scene.sync();}}
-  async startRenderer(){
-    this.interaction?.dispose();this.scene?.dispose();
-    let canvas=get('scene');if(this.scene){const replacement=canvas.cloneNode(false);canvas.replaceWith(replacement);canvas=replacement;}
-    try{const {PlannerScene}=await import('./scene.mjs');this.scene=new PlannerScene(canvas,this.adapter,()=>this.fallback());get('planner-fallback').hidden=true;document.body.dataset.plannerRenderer='webgl';}
-    catch(error){console.warn('Planner switched to 2D:',error.message);this.installFallback(canvas);}
+  startRenderer(softwareOnly=false){
+    if(!this.rendererChange)this.rendererChange=this.replaceRenderer(softwareOnly).finally(()=>{this.rendererChange=null;});
+    return this.rendererChange;
+  }
+  async replaceRenderer(softwareOnly){
+    const previous=this.scene,view=previous?.captureView?.(),oldMode=previous?.mode;
+    const settings=previous&&{layer:previous.layer,clientView:previous.clientView,selectionScope:previous.selectionScope,
+      cabinetSelection:previous.cabinetSelection,displayItemId:previous.displayItemId,displayMode:previous.displayMode,xrayEnabled:previous.xrayEnabled};
+    this.interaction?.dispose();previous?.dispose();this.scene=null;
+    let canvas=get('scene');
+    const freshCanvas=()=>{const next=canvas.cloneNode(false);canvas.replaceWith(next);canvas=next;};
+    if(previous)freshCanvas();
+    try{
+      const {PlannerScene}=await import('./scene.mjs?v=canvas-views-1');
+      if(!softwareOnly){
+        const context=canvas.getContext('webgl2',{antialias:true,alpha:false,depth:true,powerPreference:'high-performance'});
+        if(context){
+          try{this.scene=new PlannerScene(canvas,this.adapter,()=>this.fallback(),{context});}
+          catch(error){console.warn('WebGL scene unavailable:',error.message);freshCanvas();}
+        }
+      }
+      if(!this.scene){
+        const {CanvasRenderer}=await import('./canvas-renderer.mjs');
+        this.scene=new PlannerScene(canvas,this.adapter,()=>{},{softwareRenderer:new CanvasRenderer(canvas)});
+      }
+    }catch(error){
+      console.warn('3D scene unavailable:',error.message);
+      freshCanvas();this.scene=new FallbackPlan(canvas,this.adapter);
+    }
+    if(settings){
+      for(const [key,value] of Object.entries(settings))if(value!==undefined)this.scene[key]=value;
+      this.scene.sync();
+    }
     this.scene.onVisualChanged=()=>this.roomPricing?.syncVisualNotice();
     this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);this.interaction.equipment=this.equipment;
     this.dimensions?.attach();
-    this.scene.fit(this.adapter.items.length?'kitchen':'room');this.paintMode();
-  }
-  installFallback(canvas){
-    const next=canvas.cloneNode(false);canvas.replaceWith(next);this.scene=new FallbackPlan(next,this.adapter);
-    get('planner-fallback').hidden=false;get('planner-dimension').hidden=true;document.body.dataset.plannerRenderer='fallback';
+    if(view&&this.scene.restoreView)this.scene.restoreView(view);
+    else{
+      const mode=oldMode||(this.adapter.state.view_mode==='2d'?'top':'3d');
+      this.scene.setView(mode);this.scene.fit(this.adapter.items.length?'kitchen':'room');
+    }
+    const limited=this.scene.isFallback,software=this.scene.softwareRendering;
+    get('planner-fallback').hidden=!(limited||software);
+    get('planner-renderer-note').textContent=limited?'Доступен план сверху.':'Ракурсы работают без WebGL.';
+    if(limited)get('planner-dimension').hidden=true;
+    document.body.dataset.plannerRenderer=limited||software?'fallback':'webgl';
+    this.paintMode();
   }
   fallback(){
-    if(this.scene?.isFallback)return;
-    this.interaction?.dispose();this.scene?.dispose();this.installFallback(get('scene'));
-    this.interaction=new Interaction(this.scene,this.adapter,this.history,()=>this.options);this.interaction.equipment=this.equipment;this.dimensions?.attach();this.sync();this.paintMode();
-    this.adapter.status('WebGL-контекст потерян. Открыт резервный 2D-план; проект не перезагружался.');
+    if(this.scene?.isFallback||this.scene?.softwareRendering)return;
+    this.startRenderer(true).then(()=>{this.sync();this.adapter.status(this.scene.isFallback?'Открыт план сверху.':'Ракурс восстановлен без WebGL.');});
   }
-  setView(mode){if(!this.scene)return;this.interaction?.cancel();if(this.scene.isFallback)mode='top';this.scene.setView(mode);this.bridge.view(mode);this.paintMode();}
+  setView(mode){
+    if(!this.scene||this.scene.isFallback&&mode!=='top')return;
+    this.interaction?.cancel();this.scene.setView(mode);this.bridge.view(mode);this.paintMode();
+  }
   paintMode(){
     if(!this.scene)return;for(const [id,value]of [['mode-2d','top'],['mode-3d','3d'],['planner-front','front']]){
-      const b=get(id),on=this.scene.mode===value;b.className=on?'':'secondary';b.setAttribute('aria-pressed',String(on));
+      const b=get(id),on=this.scene.mode===value;b.className=on?'':'secondary';b.setAttribute('aria-pressed',String(on));b.disabled=Boolean(this.scene.isFallback&&value!=='top');
     }
     get('scene-help').textContent=this.scene.isFallback?'2D · резервный план · перетаскивайте модуль мышью':this.scene.mode==='top'?'2D · план сверху · тяните модуль для точной расстановки':this.scene.mode==='front'?'Спереди · перемещение по горизонтали · высота по правилу проекта':'Модуль — перемещение · фон — вращение · правая кнопка — сдвиг вида';
     get('studio-zoom-in').disabled=false;get('studio-zoom-out').disabled=false;
