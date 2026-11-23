@@ -334,6 +334,8 @@
 #planner-assistant-dialog .dresser-presets img{width:100%;height:auto;aspect-ratio:4/3;border-radius:.28rem}
 #planner-assistant-dialog .questionnaire-studio{display:block;width:100%;height:auto;max-height:18rem;object-fit:contain;background:#f4f1eb;border-radius:.42rem}
 #planner-assistant-dialog .questionnaire-studio[hidden]{display:none}
+#planner-assistant-dialog .questionnaire-reference{display:block;width:100%;height:auto;max-height:18rem;object-fit:contain;border-radius:.42rem}
+#planner-assistant-dialog .questionnaire-studio:not([hidden]) + .questionnaire-reference{display:none}
 #planner-assistant-dialog .questionnaire-photo:has(.questionnaire-studio[hidden]) + .questionnaire-pose{display:none}
 .ready-card strong,.ready-card small{padding:0 .15rem}.ready-card small{font-size:.8rem;color:#4d6055}
 .ready-result:empty{display:none}.ready-result{border-top:1px solid #ccd7cc;padding-top:.55rem;margin-top:.65rem}.ready-result :is(h4,p,ul){margin:.35rem 0}

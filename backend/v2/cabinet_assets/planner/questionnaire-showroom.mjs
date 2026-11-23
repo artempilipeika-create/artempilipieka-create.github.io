@@ -92,14 +92,15 @@ export function studioCamera(built,aspect=1.38){
 const images=new Map();
 function paint(canvas,built,ui,open,section){
   const owner=ui.app?.scene,renderer=owner?.renderer;
-  if(!renderer||owner.dead||!canvas.isConnected||!canvas.parentElement?.getClientRects().length)return;
+  if(!canvas.isConnected)return;
+  if(!renderer||owner.dead){canvas.dataset.previewState='waiting-for-renderer';return;}
   const material=id=>id&&ui.app.adapter.material(id);
   const state=ui.app.adapter.state??{};
   const variants=panelMaterials(built,ui),unique=new Set(variants.filter(Boolean));
   const stamp=JSON.stringify([built.spec,open,section,variants,[...unique].map(id=>materialVisual(material(id))),state.displaySettings?.materialAppearance]);
   const cached=images.get(stamp),ctx=canvas.getContext('2d',{alpha:false});
-  if(!ctx)return;
-  if(cached){ctx.putImageData(cached,0,0);canvas.hidden=false;return;}
+  if(!ctx){canvas.dataset.previewState='unavailable';return;}
+  if(cached){ctx.putImageData(cached,0,0);canvas.hidden=false;canvas.dataset.previewState='ready';return;}
   const {model,release}=questionnaireModel(built,{open,material,state,section,sceneFactory:owner.factory,variants});
   const scene=new THREE.Scene();scene.background=new THREE.Color('#f4f1eb');
   scene.environment=owner.scene.environment;scene.environmentIntensity=.55;scene.add(model);
@@ -125,7 +126,7 @@ function paint(canvas,built,ui,open,section){
     renderer.shadowMap.enabled=true;renderer.shadowMap.needsUpdate=true;renderer.toneMappingExposure=1;
     renderer.setRenderTarget(target);renderer.render(scene,camera);renderer.readRenderTargetPixels(target,0,0,width,height,pixels);
     for(let y=0;y<height;y++)data.data.set(pixels.subarray((height-1-y)*width*4,(height-y)*width*4),y*width*4);
-    ctx.putImageData(data,0,0);canvas.hidden=false;
+    ctx.putImageData(data,0,0);canvas.hidden=false;canvas.dataset.previewState='ready';
     const pending=new Set();
     model.traverse(o=>{if(o.isMesh)for(const t of [o.material?.map,o.material?.bumpMap])if(t&&!t.image&&!t.userData.failed)pending.add(t);});
     const missing=[...unique].filter(id=>id!==DEFAULT_MATERIALS.body_variant_id&&id!==DEFAULT_MATERIALS.front_variant_id&&!material(id));
@@ -151,6 +152,18 @@ export function showroomSnapshot(built,ui,{open=true,section=null}={}){
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=360;canvas.hidden=true;
   canvas.className='questionnaire-studio';canvas.setAttribute('role','img');
   canvas.setAttribute('aria-label',(built.spec.dresser?'Комод':'Шкаф')+(open?' · вид наполнения':' · с фасадами'));
-  requestAnimationFrame(()=>{try{paint(canvas,built,ui,open,section);}catch{canvas.hidden=true;}});
+  canvas.dataset.previewState='queued';
+  const until=performance.now()+15000;
+  function render(){
+    if(!canvas.isConnected)return;
+    try{
+      paint(canvas,built,ui,open,section);
+      if(canvas.dataset.previewState==='waiting-for-renderer'&&performance.now()<until)setTimeout(render,250);
+    }catch(error){
+      canvas.hidden=true;canvas.dataset.previewState='unavailable';
+      console.warn('Questionnaire preview:',error);
+    }
+  }
+  requestAnimationFrame(render);
   return canvas;
 }

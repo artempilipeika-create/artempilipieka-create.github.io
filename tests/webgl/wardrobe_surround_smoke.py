@@ -664,7 +664,13 @@ def ready_layouts(page, projects, project_id):
     expect(form.locator('.ready-card img')).to_have_count(4)
     button(form, 'Шкаф для двоих').click()
     expect(form.locator('.ready-result svg')).to_be_visible()
-    expect(form.locator('.ready-result .questionnaire-studio')).to_be_visible()
+    portrait=form.locator('.ready-result .questionnaire-studio')
+    try:
+        expect(portrait).to_be_visible(timeout=20000)
+    except AssertionError:
+        print('Wardrobe portrait:',portrait.get_attribute('data-preview-state'),flush=True)
+        print('Preview warnings:',[m.text for m in page.console_messages() if m.type=='warning' and 'Questionnaire preview' in m.text],flush=True)
+        raise
     expect(form.locator('.ready-result li')).to_have_count(3)
     button(form, 'Пройти опрос').click()
     field(form, 'Кто будет пользоваться?').select_option('two')

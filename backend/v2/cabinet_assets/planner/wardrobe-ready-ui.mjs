@@ -35,7 +35,17 @@ function preview(ui,host,request){
   const title=whole?(request.name??readyWardrobes[request.id].name):readySections[request.id];
   const heading=el('h4',title);host.append(heading);
   const picture=el('div');picture.className='questionnaire-photo';host.append(picture);
-  let open=true;const show=()=>picture.replaceChildren(showroomSnapshot(built,ui,{open,section:whole?null:section}));show();
+  let open=true;
+  const show=()=>{
+   const snapshot=showroomSnapshot(built,ui,{open,section:whole?null:section});
+   picture.replaceChildren(snapshot);
+   if(open&&Object.hasOwn(whole?readyWardrobes:readySections,request.id)){
+    const reference=imageFor(request.id,whole);
+    reference.className='questionnaire-reference';reference.alt='Образец наполнения — '+title;
+    picture.append(reference);
+   }
+  };
+  show();
   if(built.doors.length||built.drawerBanks.some(Boolean)){
    const toggle=button('С фасадами',()=>{open=!open;toggle.textContent=open?'С фасадами':'Вид наполнения';show();});
    toggle.className='questionnaire-pose';host.append(toggle);
