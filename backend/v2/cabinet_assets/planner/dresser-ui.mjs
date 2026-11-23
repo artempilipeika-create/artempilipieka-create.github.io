@@ -87,7 +87,7 @@ export function drawDresser(ui,preview){
  const {built,error}=preview;ui.previewBuilt=built??null;
  const presets=ui.form.querySelector('.dresser-presets');
  if(presets)presets.dataset.pose=ui.dresserClosed?'closed':'open';
- ui.figureTitle.textContent='Комод';
+ ui.figureTitle.textContent=ui.dresserClosed?'Внешний вид комода':'Наполнение комода';
  if(!built){ui.livePreview?.hide();ui.drawing.replaceChildren();ui.description.textContent=error?.message??'Проверьте размеры секций.';ui.dimensions.textContent='';ui.railNotice.hidden=true;return;}
  const layers=el('div');layers.className='wardrobe-subsections';
  for(const [closed,name] of [[true,'С фасадами'],[false,'Вид наполнения']]){
