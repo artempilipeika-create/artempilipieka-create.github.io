@@ -352,12 +352,22 @@
 .dresser-cards strong{font-size:.87rem}
 .dresser-scheme{width:100%;padding:5px 0}
 #planner-assistant-dialog .wardrobe-figure [data-dresser-section]{cursor:pointer}
-#planner-assistant-dialog .assistant-visuals .assistant-drawing:has(.wardrobe-figure>.dresser-front-view){height:auto;min-height:0;grid-template-rows:auto auto auto auto}
+/* Size the dresser preview to its photo, diagram and controls before placing the dimensions. */
+#planner-assistant-dialog .assistant-drawing:has(.dresser-front-view){
+  display:flex;
+  flex-direction:column;
+  height:auto;
+  min-height:0;
+}
 #planner-assistant-dialog .wardrobe-figure:has(>.dresser-front-view){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:center;padding:4px}
 #planner-assistant-dialog .wardrobe-figure:has(>.dresser-front-view)>.wardrobe-subsections,
 #planner-assistant-dialog .questionnaire-studio[hidden]+.dresser-front-view{grid-column:1 / -1}
 #planner-assistant-dialog .dresser-front-view{min-width:0}
 #planner-assistant-dialog .dresser-front-view svg{width:100%;height:clamp(112px,17dvh,170px)}
+#planner-assistant-dialog[data-zoom] .dresser-front-view svg{height:clamp(190px,45dvh,480px)}
+@media(max-width:640px){
+ #planner-assistant-dialog .wardrobe-figure:has(>.dresser-front-view){grid-template-columns:minmax(0,1fr)}
+}
 @media(min-width:801px) and (min-height:740px){
  #planner-assistant-dialog .assistant-visuals:has(.wardrobe-live[hidden]) .wardrobe-figure:has(>.dresser-front-view){grid-template-columns:minmax(0,1fr)}
 }

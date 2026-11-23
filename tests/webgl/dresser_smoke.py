@@ -21,6 +21,31 @@ def open_saved(page, project_id):
     return form
 
 
+def check_preview_layout(page, form):
+    picture = form.locator('.wardrobe-figure .questionnaire-studio')
+    diagram = form.locator('.dresser-front-view svg')
+    dimensions = form.locator('.assistant-drawing p').first
+    original = page.viewport_size
+    try:
+        for width, height in ((1440, 900), (390, 844)):
+            page.set_viewport_size({'width': width, 'height': height})
+            expect(picture).to_be_visible()
+            expect(diagram).to_be_visible()
+            expect(dimensions).to_contain_text('Корпус')
+            photo, scheme, caption = [element.bounding_box() for element in (picture, diagram, dimensions)]
+            assert photo and scheme and caption, (width, photo, scheme, caption)
+            for visual in (photo, scheme):
+                assert visual['y'] + visual['height'] <= caption['y'] + 1, (width, visual, caption)
+            if width == 390:
+                assert photo['y'] + photo['height'] <= scheme['y'] + 1, (photo, scheme)
+            button(form, 'Развернуть схему').click()
+            expanded = diagram.bounding_box()
+            assert expanded and expanded['height'] > scheme['height'] + 25, (width, scheme, expanded)
+            button(form, 'Вернуться к анкете').click()
+    finally:
+        page.set_viewport_size(original)
+
+
 def scenario(page, projects, project_id):
     page.locator('#planner-dresser').click()
     form=page.locator('#planner-assistant-dialog')
@@ -41,6 +66,7 @@ def scenario(page, projects, project_id):
     expect(portrait).to_have_attribute('aria-label','Комод · вид наполнения')
     expect(portrait).to_be_visible()
     assert portrait.evaluate('(canvas) => canvas.toDataURL()') != closed
+    check_preview_layout(page, form)
     finish(page,form)
     group,spec,parts=panels(projects,project_id)
     assert spec['dresser']['installation']=='floor' and parts['plinth']['height']==97
