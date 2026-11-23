@@ -8,6 +8,8 @@ import {nicheOpenings} from './wardrobe-niches.mjs';
 import {levelOf,sectionOf,isRightBank} from './wardrobe-layout.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 import {drawerBottom} from './wardrobe-drawers.mjs';
+import {SHOWROOM} from './material-visuals.mjs';
+import {LIGHTS} from './room-state.mjs';
 
 const element=(tag,text='')=>Object.assign(document.createElement(tag),{textContent:text});
 const groupId='questionnaire-preview';
@@ -45,11 +47,12 @@ export class WardrobePreview{
     this.travelNotice.textContent=message;this.travelNotice.hidden=!message;
   }
   init(owner){
-    this.owner=owner;this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#e6ece5');
-    this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=.70;
-    this.scene.add(new THREE.HemisphereLight('#fffaf0','#b6c4bc',1.05));
-    const sun=new THREE.DirectionalLight('#fff5df',1.75);sun.position.set(-3,4,4);this.scene.add(sun);
-    const fill=new THREE.DirectionalLight('#e3f2ff',.58);fill.position.set(3,2,2);this.scene.add(fill);
+    const light=LIGHTS.daylight;
+    this.owner=owner;this.scene=new THREE.Scene();this.scene.background=new THREE.Color(SHOWROOM.background);
+    this.scene.environment=owner.scene.environment;this.scene.environmentIntensity=light.environment;
+    this.scene.add(new THREE.HemisphereLight(light.sky,light.ground,light.hemi));
+    const sun=new THREE.DirectionalLight(light.key,light.sun);sun.position.set(-3,4,4);this.scene.add(sun);
+    const fill=new THREE.DirectionalLight(light.fill,light.fillPower);fill.position.set(3,2,2);this.scene.add(fill);
     this.model=new THREE.Group();this.scene.add(this.model);
     this.outline=new THREE.Box3Helper(new THREE.Box3(),0x2376c5);
     Object.assign(this.outline.material,{transparent:true,opacity:.91,toneMapped:false,depthWrite:false});
@@ -155,13 +158,13 @@ export class WardrobePreview{
     this.camera.aspect=aspect;this.camera.updateProjectionMatrix();
     this.camera.position.copy(center).addScaledVector(new THREE.Vector3(.35,.16,1).normalize(),distance);
     this.camera.lookAt(center);this.camera.updateMatrixWorld();
-    const renderer=owner.renderer,old=renderer.getRenderTarget(),shadows=renderer.shadowMap.enabled;
+    const renderer=owner.renderer,old=renderer.getRenderTarget(),shadows=renderer.shadowMap.enabled,exposure=renderer.toneMappingExposure;
     try{
-      renderer.shadowMap.enabled=false;renderer.setRenderTarget(this.target);renderer.render(this.scene,this.camera);
+      renderer.toneMappingExposure=LIGHTS.daylight.exposure;renderer.shadowMap.enabled=false;renderer.setRenderTarget(this.target);renderer.render(this.scene,this.camera);
       renderer.readRenderTargetPixels(this.target,0,0,w,h,this.pixels);
       this.image.data.set(this.pixels);this.ctx.putImageData(this.image,0,0);
     }catch{this.hide();return;}
-    finally{renderer.setRenderTarget(old);renderer.shadowMap.enabled=shadows;}
+    finally{renderer.setRenderTarget(old);renderer.shadowMap.enabled=shadows;renderer.toneMappingExposure=exposure;}
     this.nextPaint=time+(moving?1000/30:0);
     if(moving)this.invalidate();
   }

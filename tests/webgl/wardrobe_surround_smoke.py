@@ -591,7 +591,14 @@ def section_presets(page, projects, project_id):
 
     def apply(name):
         button(form, 'Заполнить секцию').click()
-        button(form, name).click()
+        pick = button(form, name)
+        photo = pick.locator('img')
+        expect(photo).to_be_visible()
+        stem = 'section-long' if name == 'Длинная одежда' else 'section-niche-shirts'
+        assert stem+'.webp' in photo.get_attribute('src')
+        photo.evaluate('(image) => image.decode()')
+        assert photo.evaluate('(image) => image.naturalWidth') == 680
+        pick.click()
 
     apply('Длинная одежда')
     field(form, 'Размер до оси, мм').fill('130')
@@ -657,6 +664,7 @@ def ready_layouts(page, projects, project_id):
     expect(form.locator('.ready-card img')).to_have_count(4)
     button(form, 'Шкаф для двоих').click()
     expect(form.locator('.ready-result svg')).to_be_visible()
+    expect(form.locator('.ready-result .questionnaire-studio')).to_be_visible()
     expect(form.locator('.ready-result li')).to_have_count(3)
     button(form, 'Пройти опрос').click()
     field(form, 'Кто будет пользоваться?').select_option('two')
@@ -668,6 +676,7 @@ def ready_layouts(page, projects, project_id):
     button(form, 'Секция 2').click()
     button(form, 'Заполнить секцию').click()
     form.locator('summary', has_text='Готовая секция целиком').click()
+    expect(form.locator('.ready-section-list .ready-card img')).to_have_count(11)
     button(form, 'Две высокие шуфляды').click()
     expect(form.locator('.ready-section-list .ready-result')).to_contain_text('Секция 2')
     button(form, 'Применить к секции').click()

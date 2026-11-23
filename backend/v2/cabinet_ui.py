@@ -83,8 +83,12 @@ def router():
     planner_files.update({'wardrobe-fittings.mjs','wardrobe-fitting-ui.mjs','wardrobe-fitting-mesh.mjs','wardrobe-fittings.json','wardrobe-fitting-meshes.json'})
     fitting_cards=json.loads((ASSETS/'wardrobe-fittings.json').read_text()).values()
     planner_files.update('wardrobe-fitting-photos/'+part['photo']+'.webp' for p in fitting_cards for part in (p,*p.get('components',[])) if 'photo' in part)
-    planner_files.update({'wardrobe-ready-layouts.mjs', 'wardrobe-ready-ui.mjs', 'dresser-layout.mjs', 'dresser-ui.mjs'})
+    planner_files.update({'wardrobe-ready-layouts.mjs', 'wardrobe-ready-ui.mjs', 'dresser-layout.mjs', 'dresser-ui.mjs', 'questionnaire-showroom.mjs'})
     planner_files.update('wardrobe-layout-images/'+name+'.webp' for name in ('hall','couple','business','utility','daily','deep'))
+    planner_files.update('wardrobe-layout-images/section-'+name+'.webp' for name in
+                         ('long','shirts','niche-shirts','shallow','shoes','business','lift','tall','ironing','shelves'))
+    planner_files.update(f'wardrobe-layout-images/dresser-{name}{mount}-{pose}.webp' for name in ('classic','side','media')
+                         for mount in ('','-wall') for pose in ('open','closed'))
     planner_files.update({'wardrobe-section-presets.mjs','wardrobe-rods.mjs','wardrobe-rods-ui.mjs','wardrobe-rod-mesh.mjs',
                           'wardrobe-rods.json','wardrobe-rod-meshes.json','rod-photos/sources.json'})
     planner_files.update('rod-photos/'+sku+'.webp' for sku in json.loads((ASSETS/'wardrobe-rods.json').read_text()))
@@ -205,6 +209,7 @@ def router():
     from .material_visuals import manifest,user_textures,user_texture_bytes
     material_assets={'materials/'+r['asset'] for r in manifest()['decors'].values()}
     planner_files.update(material_assets)
+    planner_files.add('materials/studio-matte.webp')
     planner_files.update('materials/'+asset for asset in user_textures()['assets'])
     import json
     planner_files.add('tall-gola-variants.json')

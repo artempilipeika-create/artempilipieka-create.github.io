@@ -6,6 +6,7 @@ import {backMountControls} from './panel-machining-ui.mjs';
 import {footHeight,plinthPanel} from './plinth-options.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {buildCarcass} from './carcass-model.mjs';
+import {showroomSnapshot} from './questionnaire-showroom.mjs';
 import photos from './door-photos/sources.json' with {type:'json'};
 
 export {dresserSteps};
@@ -29,35 +30,37 @@ function group(parent,title){
 }
 function begin(ui,step){ui.step=step;ui.view=step===3?'fronts':step===0?'body':'sections';ui.render();}
 function drawing(built,active=-1,interactive=false,closed=true){
- const s=built.spec,w=s.width,h=s.height,leg=footHeight(s),k=Math.min(412/w,226/(h+leg));
+ const s=built.spec,w=s.width,h=s.height,leg=footHeight(s);
+ const suspended=s.dresser.installation==='wall',gap=suspended?Math.min(s.elevation,h*.8):0;
+ const k=Math.min(412/w,226/(h+leg+gap));
  const x=width=>28+width*k,y=height=>24+(h-height)*k;
  const rect=(left,bottom,width,height,fill,stroke='#665c50')=>'<rect x="'+x(left)+'" y="'+y(bottom+height)+'" width="'+width*k+'" height="'+height*k+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1"/>';
  const line=(x1,y1,x2,y2,extra='')=>'<path d="M '+x(x1)+' '+y(y1)+' L '+x(x2)+' '+y(y2)+'" fill="none" stroke="#726b5b" '+extra+'/>';
  const label=(cx,cy,t)=>'<text x="'+x(cx)+'" y="'+y(cy)+'" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#30483e">'+t+'</text>';
- let svg=rect(0,0,w,h,'#cebfaa');
+ let svg=rect(0,0,w,h,'#eeeae3');
  const plinth=plinthPanel(s);
  if(plinth){
    const left=s.feet.left==='side'?s.thickness:0,right=s.feet.right==='side'?s.thickness:0;
-   svg+=rect(left,-leg,plinth.width,plinth.height,'#b1a28f');
-   if(left)svg+=rect(0,-leg,left,leg,'#cebfaa');if(right)svg+=rect(w-right,-leg,right,leg,'#cebfaa');
+   svg+=rect(left,-leg,plinth.width,plinth.height,'#c6bbac');
+   if(left)svg+=rect(0,-leg,left,leg,'#eeeae3');if(right)svg+=rect(w-right,-leg,right,leg,'#eeeae3');
  }
  else if(leg)for(const edge of [25,w-50])svg+=rect(edge,-leg,25,leg,'#8b8275');
  const widths=sectionWidths(s),spans=sectionSpans(s);
  let start=s.thickness;
  spans.forEach((span,i)=>{
    const bay=s.dresser.bays[i],width=widths[i],lo=start;
-   svg+=rect(lo,s.thickness,width,h-2*s.thickness,'#f2ece2');
+   svg+=rect(lo,s.thickness,width,h-2*s.thickness,'#fcfaf6');
    for(const p of built.parts.filter(p=>p.key.startsWith('shelf-'+i+'-'))){
-     svg+=rect(lo,p.item.elevation_mm-s.elevation-leg,width,p.item.height,'#caba9e');
+     svg+=rect(lo,p.item.elevation_mm-s.elevation-leg,width,p.item.height,'#e3e2dd');
    }
    const bank=built.drawerBanks[nicheSlot(i,0)];
    for(const face of bank?.faces??[]){
      const left=face.x+w/2-face.width/2;
-     svg+=rect(left,face.y,face.width,face.height,'#e2d4bf');
+     svg+=rect(left,face.y,face.width,face.height,'#e1d7cb');
      if(interactive&&face.height*k>17&&width*k>49)svg+=label(left+face.width/2,face.y+face.height/2,mm(face.height));
    }
    for(const d of built.doors.filter(d=>closed&&d.section===i)){
-     svg+=rect(d.left,d.bottom,d.width,d.height,'#dfcfb6');
+     svg+=rect(d.left,d.bottom,d.width,d.height,'#e1d7cb');
      const hinge=d.side==='left'?d.left:d.left+d.width,free=d.side==='left'?d.left+d.width:d.left;
      svg+=line(free,d.bottom,hinge,d.bottom+d.height/2,'stroke-dasharray="4 3"')+line(hinge,d.bottom+d.height/2,free,d.bottom+d.height,'stroke-dasharray="4 3"');
    }
@@ -69,19 +72,31 @@ function drawing(built,active=-1,interactive=false,closed=true){
    }
    start+=width+s.thickness;
  });
- return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(56+w*k)+' '+(52+(h+leg)*k)+'" role="'+(interactive?'group':'img')+'" aria-label="Комод, вид спереди">'+svg+'</svg>';
+ if(suspended){
+   const floor=-gap,tickWidth=Math.min(20,w*.04),datum=gap>0?Math.min(w*.68,w-6/k):w*.5;
+   svg+=line(-10/k,floor,w+10/k,floor,'stroke-dasharray="3 2"');
+   if(gap*k>23){
+     svg+=line(datum,0,datum,floor)+line(datum-tickWidth,0,datum+tickWidth,0)+line(datum-tickWidth,floor,datum+tickWidth,floor);
+     if(s.elevation>gap)svg+=line(datum-tickWidth,-gap/2-4/k,datum+tickWidth,-gap/2+4/k);
+   }
+   svg+=label(w*.5,floor-(interactive&&gap*k<32?30:12)/k,'От пола '+mm(s.elevation)+' мм');
+ }
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(56+w*k)+' '+(52+(h+leg+gap)*k+(suspended&&interactive&&gap*k<32?16:0))+'" role="'+(interactive?'group':'img')+'" aria-label="Комод, вид спереди">'+svg+'</svg>';
 }
 export function drawDresser(ui,preview){
  const {built,error}=preview;ui.previewBuilt=built??null;
- ui.figureTitle.textContent='Комод · вид спереди';
+ const presets=ui.form.querySelector('.dresser-presets');
+ if(presets)presets.dataset.pose=ui.dresserClosed?'closed':'open';
+ ui.figureTitle.textContent='Комод';
  if(!built){ui.livePreview?.hide();ui.drawing.replaceChildren();ui.description.textContent=error?.message??'Проверьте размеры секций.';ui.dimensions.textContent='';ui.railNotice.hidden=true;return;}
  const layers=el('div');layers.className='wardrobe-subsections';
  for(const [closed,name] of [[true,'С фасадами'],[false,'Вид наполнения']]){
    const b=button(name,()=>{ui.dresserClosed=closed;drawDresser(ui,preview);});
    b.setAttribute('aria-pressed',String(ui.dresserClosed===closed));layers.append(b);
  }
- const graph=el('div');graph.innerHTML=drawing(built,ui.activeSection,true,ui.dresserClosed);
- ui.drawing.replaceChildren(layers,graph);
+ const graph=el('div');graph.className='dresser-front-view';graph.innerHTML=drawing(built,ui.activeSection,true,ui.dresserClosed);
+ const portrait=showroomSnapshot(built,ui,{open:!ui.dresserClosed,section:ui.activeSection});
+ ui.drawing.replaceChildren(layers,portrait,graph);
  ui.updateRailNotice(built);
  const s=built.spec;
  ui.dimensions.textContent='Корпус '+s.width+' × '+s.height+' × '+s.depth+' мм'+(s.dresser.installation==='wall'?' · низ на '+s.elevation+' мм от пола':' · с опорами '+(s.height+footHeight(s))+' мм');
@@ -90,11 +105,19 @@ export function drawDresser(ui,preview){
  try{ui.livePreview?.sync(ui.step===2||ui.step===3?built:null,built.drawerBanks[slot]?slot:null,ui.mode.value==='update'?ui.current:null,ui.materialChanged);}
  catch{ui.livePreview?.release();}
 }
+function dresserImage(id,installation,open){
+ return '/account/planner/wardrobe-layout-images/dresser-'+id+(installation==='wall'?'-wall':'')+'-'+(open?'open':'closed')+'.webp?v=studio-pearl-1';
+}
 function previewLayout(ui,host,kinds,count){
- const f=structuredClone(ui.fields);
- setDresserLayout(f,kinds,count);
- const built=buildCarcass(wardrobeSpec(syncDresser(f)),{idPrefix:'dresser-preview'});
- const fig=el('div');fig.className='dresser-scheme';fig.innerHTML=drawing(built);host.append(fig);
+ const fields=structuredClone(ui.fields);setDresserLayout(fields,kinds,count);
+ const built=buildCarcass(wardrobeSpec(syncDresser(fields)),{idPrefix:'dresser-preview'});
+ const photo=el('div'),fig=el('div'),toggle=button('Показать закрытый вариант',()=>{open=!open;render();});let open=true;
+ photo.className='questionnaire-photo';fig.className='dresser-scheme';toggle.className='questionnaire-pose';
+ function render(){
+   photo.replaceChildren(showroomSnapshot(built,ui,{open}));fig.innerHTML=drawing(built,-1,false,!open);
+   toggle.textContent=open?'Показать закрытый вариант':'Открыть наполнение';
+ }
+ host.append(photo,toggle,fig);render();
  return built;
 }
 function routes(ui){
@@ -112,15 +135,23 @@ function routes(ui){
    ui.step=2;ui.view='sections';ui.changed(true);
  }
  if(route==='ready'){
-   const cards=el('div');cards.className='dresser-cards';
+   const cards=el('div');cards.className='dresser-cards dresser-presets';cards.dataset.pose=ui.dresserClosed?'closed':'open';
    for(const preset of dresserPresets){
      const card=button('',()=>{ui.dresserPick=preset.id;ui.render();});
      card.setAttribute('aria-label',preset.name);card.setAttribute('aria-pressed',String(ui.dresserPick===preset.id));
-     try{previewLayout(ui,card,preset.kinds);}catch(e){card.append(el('small',e.message));}
+     const pic=el('span'),img=el('img'),closed=el('img');
+     for(const shot of [img,closed]){
+       shot.alt='';shot.width=680;shot.height=510;shot.loading='lazy';shot.decoding='async';
+       shot.src=dresserImage(preset.id,ui.fields.dresser.installation,shot===img);
+     }
+     pic.className='dresser-preset-photos';closed.className='dresser-closed';pic.append(img,closed);card.append(pic);
      card.append(el('strong',preset.name));cards.append(card);
    }box.append(cards);
    const selected=dresserPresets.find(v=>v.id===ui.dresserPick);
-   if(selected)box.append(button('Применить наполнение',()=>apply(selected.kinds)));
+   if(selected){
+     try{previewLayout(ui,box,selected.kinds);box.append(button('Применить наполнение',()=>apply(selected.kinds)));}
+     catch(e){box.append(el('p',e.message));}
+   }
  }
  if(route==='survey'){
    const a=ui.dresserAnswers??={count:3,shelves:true,media:false};

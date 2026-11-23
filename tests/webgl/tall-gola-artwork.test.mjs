@@ -23,7 +23,7 @@ test('option art follows the selected native donor across all bases, layouts and
    const expected=`gola-${selected.row_height}-${selected.layout}-${selected.opening}-${open?'open':'closed'}.webp`;
    const url=new URL(executionArtwork(it,'tall',key,value),'https://example.invalid');
    assert.equal(url.pathname,'/account/planner/execution-card-images/'+expected);
-   assert.equal(url.searchParams.get('v'),'20261027-pn600-gola');
+   assert.equal(url.searchParams.get('v'),globalThis.MF_CHOICE_CARDS.version);
    assert.deepEqual(it,before);
   }
  }

@@ -1,0 +1,150 @@
+{
+  "workspace": "Tripo Studio",
+  "date": "2026-11-23",
+  "palette": {
+    "carcass_and_shelves": "BYSPAN 605 PO",
+    "facades_and_plinth": "BYSPAN 890 PO",
+    "kitchen_worktop": "EGGER F187 ST9, 38 mm for the catalogue"
+  },
+  "finish": {
+    "file": "materials/studio-matte.webp",
+    "tripo_image_id": "59aded46-44b0-4393-9fdf-d4787ec771ca",
+    "use": "Seamless microtexture for matte board in the catalogue and 3D previews.",
+    "sha256": "8360bf4a2a82eb67454b0b4ce720fcda7ac617b9fd8fae53f768ae977ded8eca"
+  },
+  "paths_relative_to": "backend/v2/cabinet_assets/planner/",
+  "reference_based_images": [
+    {
+      "file": "execution-card-images/drawer-drawer-layout-three.webp",
+      "tripo_image_id": "795d26f2-c7dd-4ec1-a8cb-3143752573bb",
+      "sha256": "35213c2ec266ecbef0fd059ac6db518f372ade6f3d0ad5e9f3fb208859f5e3d9"
+    },
+    {
+      "file": "module-card-images/base-double.webp",
+      "tripo_image_id": "c8318f73-0a6b-411b-9a04-998c9c75ebdc",
+      "sha256": "c953f53f532828e6995667be5d129401879ab26f3d47f1dae2dfe586ba8d372a"
+    },
+    {
+      "file": "module-card-images/base-drawers.webp",
+      "tripo_image_id": "fb86f7b8-114f-4fb1-9978-2d85378b0229",
+      "sha256": "5c89622bceb182ddd05aa7ab2da169c723894e823b35236e2acc5fc689aef853"
+    },
+    {
+      "file": "module-card-images/base-oven.webp",
+      "tripo_image_id": "977311ee-4bc2-4107-9371-f821732f1d42",
+      "sha256": "32720f2dfa22eefc81a5d3b688bc0586bc2110c6f9956240e6897fb6a96fc6bf"
+    },
+    {
+      "file": "module-card-images/base-single.webp",
+      "tripo_image_id": "c369dc27-f19d-4adc-98cd-4fd713ae2353",
+      "sha256": "6b8ef704181dcf6252e0e6d901f71d9ea87996a3d44e35f33e75b852b3706325"
+    },
+    {
+      "file": "module-card-images/cargo.webp",
+      "tripo_image_id": "915512b5-4207-44e9-a394-468967db2af3",
+      "sha256": "321cec11f9eea54f205a0f2d0fc154b0c4089caf5745d6252628c145c66dc38e"
+    },
+    {
+      "file": "module-card-images/dishwasher.webp",
+      "tripo_image_id": "70c2060b-d5c7-4dfc-a6b3-ae75cd826d5a",
+      "sha256": "31e049e9f0d2a296200f5ed822ee2f14c7c25c8e7aec03f6b57c023fba988398"
+    },
+    {
+      "file": "module-card-images/modern-fridge.webp",
+      "tripo_image_id": "07da6edb-e3ed-4780-87c2-14d73ea059e0",
+      "sha256": "28cb702e8b2f1967c4b971977fea7645d6f8e6c4f446d0a7e3718136742d1a6e"
+    },
+    {
+      "file": "module-card-images/modern-gaslift.webp",
+      "tripo_image_id": "13cfc1d4-7ea3-424c-bb31-3d63c4b07316",
+      "sha256": "ff151cd04e875f63706814eaadf287f69f751ca54e0f30331cc3667deffe1bf4"
+    },
+    {
+      "file": "module-card-images/modern-upper1.webp",
+      "tripo_image_id": "f9f779c3-8218-410f-9dec-d9ea681441e7",
+      "sha256": "2090767c96bcfa432f8d0b5684325751f1883b546ae046796e8478214c7b72ab"
+    },
+    {
+      "file": "module-card-images/modern-upper2.webp",
+      "tripo_image_id": "3e31ba6e-6c9e-463f-a188-c169623020b1",
+      "sha256": "88d370dbc18f5638ebd61cdd28c97bc223cd089579ed6e1398561b6522ec29a0"
+    },
+    {
+      "file": "module-card-images/open-tall-none.webp",
+      "tripo_image_id": "a1dfd885-bcb9-4c76-9034-a1496b1bd196",
+      "sha256": "bd2e1392bad49ce7f12b6983535b87b095fcdaf4b94143219297c57fa391ad67"
+    },
+    {
+      "file": "module-card-images/pullout-dryer.webp",
+      "tripo_image_id": "d72b9894-43dc-4e47-9e86-125bf0047122",
+      "sha256": "941cee432e2904a9edc68b422941ed04a82343eee15676362cc6e2d1b913458b"
+    },
+    {
+      "file": "module-card-images/tall-appliance.webp",
+      "tripo_image_id": "f4ee79cc-21d0-4123-a25c-ef0717c480f3",
+      "sha256": "ceadb278c417d4e37d4d595b31a432980b3c974d1ee1f706c90e95ea30f74304"
+    },
+    {
+      "file": "module-card-images/tall-gola.webp",
+      "tripo_image_id": "b6b1e5de-7cec-430e-87b2-2cab31376bf1",
+      "sha256": "45b0fdba5ea9c380e8b4427832695d53d7a7caa5558340bff026ae232f734715"
+    },
+    {
+      "file": "module-card-images/tall-vitrine.webp",
+      "tripo_image_id": "caba4f95-bba5-477a-b5f5-c5c3092ef948",
+      "sha256": "813cb01bdd4bde20575099e03839506c7629b2eab6f2cea4c232df52974b4f49"
+    },
+    {
+      "file": "module-card-images/wall-double.webp",
+      "tripo_image_id": "e5a05cfd-e3e1-4525-aa43-bed533f64602",
+      "sha256": "1fdf1fc965fe440302a049ad129ba1a852d86c9930b8fbf5453059a36c8ef5b5"
+    },
+    {
+      "file": "module-card-images/wall-single.webp",
+      "tripo_image_id": "99e4fc67-805a-4fcd-b078-55b0b6be4ae9",
+      "sha256": "853b4d1759a319f6168292e30a11bd33927a0d5d804b35d373cc600d1a9e61a6"
+    },
+    {
+      "file": "module-card-images/wall-special-4fabc7072fe1.webp",
+      "tripo_image_id": "8aef9403-70f2-4a9d-bc41-4ac6338d2fe8",
+      "sha256": "db997498a2e92225b5a2c92a4cac4cb47397241aa0f63535d11aca8926c0b652"
+    },
+    {
+      "file": "module-card-images/wall-special-93a91adaa8d5.webp",
+      "tripo_image_id": "da7f0aeb-35f3-4844-af65-35c83baa7cb5",
+      "sha256": "a92ba5e28f0b8a051ecef5d58812352cab043519d0d07535d58fd394235f1f40"
+    },
+    {
+      "file": "module-card-images/waste-standard.webp",
+      "tripo_image_id": "251a5325-1d8b-4aeb-99d5-af1409fbbe83",
+      "sha256": "8f8fe99026e823add2c45545591d5b4dc16b91b02877f0d976dfc958689b0423"
+    },
+    {
+      "file": "wardrobe-layout-images/business.webp",
+      "tripo_image_id": "8bb36b42-4911-4227-8129-97f32c975e3e",
+      "sha256": "8e660dd5a1b8f5eb871f9ea7531440f569e1c6a19e5744858cfa7e5a3139d969"
+    },
+    {
+      "file": "wardrobe-layout-images/couple.webp",
+      "tripo_image_id": "6fb918a3-dd31-42d2-9ef9-83779eda1bea",
+      "sha256": "e422c5327215237c1e4156ed28acbde0996f9cbe2e11e203d673dd46eddea8f5"
+    },
+    {
+      "file": "wardrobe-layout-images/dresser-media-wall-closed.webp",
+      "tripo_image_id": "3fd82dec-ae0a-4317-b015-5944312d8410",
+      "sha256": "5afd284d680c17564553f1b8583bcc4c51cac25d9f5f2e4df9556fa7a9e65b24"
+    },
+    {
+      "file": "wardrobe-layout-images/hall.webp",
+      "tripo_image_id": "24fc1e1b-9b85-4204-a043-4f6510f52fcb",
+      "sha256": "75e87356440d6a439e47f8d30d68193ef6f4a334bfe07db6b7771860447cb0c6"
+    },
+    {
+      "file": "wardrobe-layout-images/utility.webp",
+      "tripo_image_id": "0c81d652-081e-4d0a-b295-97579a60522a",
+      "sha256": "25254048488535f6b708f33da66a7976c1cb8fdcef9928ffbfc9c2ed7864e15b"
+    }
+  ],
+  "other_images": "Native configuration geometry with common studio finishes; catalogue source files and export generators retain model identity.",
+  "dishwasher": "The supplied front is dimensioned from its module, the open dishwasher interior gives an illustrative view of the two racks."
+}

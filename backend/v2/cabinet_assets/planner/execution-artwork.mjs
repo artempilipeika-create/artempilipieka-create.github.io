@@ -1,7 +1,9 @@
+import './choice-card-ui.js';
 import {PRODUCTION_MODELS,TALL_GOLA_VARIANTS,tallVariant,tallVariantInfo} from './furniture-core.mjs';
 import {EXECUTION_IMAGES,TALL_GOLA_IMAGES,TALL_GOLA_OPEN_IMAGES} from './execution-image-index.mjs';
 
-// Reviewed illustrative photographs. The hero stays tied to current production geometry.
+// Alternate views follow their own donor. The hero uses the editable production geometry.
+const art=globalThis.MF_CHOICE_CARDS.image;
 export function executionCategory(it,family){
  const p=PRODUCTION_MODELS[it?.bazis_id];if(!p)return null;
  if(p.cargo)return 'cargo';if(p.pullout_dryer)return 'dryer';
@@ -23,16 +25,13 @@ export function executionArtwork(it,family,key,value){
   if(!tallVariantInfo(it)||!['row_height','layout','opening'].includes(key))return null;
   const target=tallVariant(it,{[key]:key==='row_height'?Number(value):value},TALL_GOLA_VARIANTS);
   const file=(key==='opening'&&TALL_GOLA_OPEN_IMAGES[target.bazis_id])||TALL_GOLA_IMAGES[target.bazis_id];
-  return file?'/account/planner/execution-card-images/'+file+'?v=20261027-pn600-gola':null;
+  return file?art(file,'execution-card-images'):null;
  }
- if(p?.wall_special&&family==='wall-special'){const v=globalThis.MF_WALL_SPECIAL.select(it,{[key]:value},globalThis.MF_WALL_SPECIAL.variants);return '/account/planner/module-card-images/'+v.bazis_id.replace('bazis.','wall-special-')+'.webp?v=20261112';}
- if(p?.open_tall?.wall&&family==='open-tall'){const v=globalThis.MF_OPEN_TALL.select(it,{[key]:value},globalThis.MF_OPEN_TALL.variants);return '/account/planner/module-card-images/'+v.bazis_id.replace('bazis.','open-wall-')+'.webp?v=20261027-full-oak';}
- if(p?.open_tall&&!p.open_tall.wall&&family==='open-tall'&&key==='lighting'&&p.open_tall.light_system==='lira-17.5x6.5'&&['left','right','both'].includes(value))return '/account/planner/execution-card-images/open-tall-lira-'+value+'.webp?v=20261027-full-oak';
- if(p?.cargo?.waste&&family==='cargo'){const v=globalThis.MF_CARGO.select(it,{[key]:value},globalThis.MF_CARGO.variants);return '/account/planner/module-card-images/'+(globalThis.MF_CARGO.info(v).execution==='gola'?'waste-gola':'waste-standard')+'.webp';}
- if(p?.modern&&family==='modern'&&['upper1','upper2'].includes(p.modern.family)){
-  const category=p.modern.family==='upper2'?'upper-double':'upper',file=EXECUTION_IMAGES[[category,'upper',key,value].join(':')];
-  return file?'/account/planner/execution-card-images/'+file+'?v=20261027-full-oak':null;
- }
+ if(p?.wall_special&&family==='wall-special'){const v=globalThis.MF_WALL_SPECIAL.select(it,{[key]:value},globalThis.MF_WALL_SPECIAL.variants);return art(v.bazis_id.replace('bazis.','wall-special-'));}
+ if(p?.open_tall?.wall&&family==='open-tall'){const v=globalThis.MF_OPEN_TALL.select(it,{[key]:value},globalThis.MF_OPEN_TALL.variants);return art(v.bazis_id.replace('bazis.','open-wall-'));}
+ if(p?.open_tall&&!p.open_tall.wall&&family==='open-tall'&&key==='lighting'&&p.open_tall.light_system==='lira-17.5x6.5'&&['left','right','both'].includes(value))return art('open-tall-lira-'+value,'execution-card-images');
+ if(p?.cargo?.waste&&family==='cargo'){const v=globalThis.MF_CARGO.select(it,{[key]:value},globalThis.MF_CARGO.variants);return art(globalThis.MF_CARGO.info(v).execution==='gola'?'waste-gola':'waste-standard');}
+ if(p?.modern&&family==='modern')return null; // Render the actual selected modern variant.
  const category=executionCategory(it,family),file=EXECUTION_IMAGES[[category,family,key,value].join(':')];
- return file?'/account/planner/execution-card-images/'+file+'?v=20261027-full-oak':null;
+ return file?art(file,'execution-card-images'):null;
 }

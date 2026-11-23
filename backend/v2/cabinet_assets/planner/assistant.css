@@ -317,15 +317,29 @@
 .ready-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr));gap:.65rem;margin:.75rem 0}
 .ready-cards .ready-card{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;min-width:0;text-align:left;background:#fff;color:#24382f;border:1px solid #c6d3c7;border-radius:.5rem;padding:.42rem;gap:.3rem;white-space:normal}
 .ready-card:is(:hover,:focus-visible){outline:2px solid #47765f;outline-offset:1px}
-.ready-card-art{display:grid;place-items:center;overflow:hidden;aspect-ratio:4/3;width:100%;background:#e9ebde;border-radius:.28rem}
+.ready-card-art{display:grid;place-items:center;overflow:hidden;aspect-ratio:4/3;width:100%;background:#efebe5;border-radius:.28rem}
 .ready-card-art img{display:block;width:100%;height:100%;object-fit:contain;min-height:0}
-.ready-card[data-ready-pick=daily] img,.ready-card[data-ready-pick=deep] img{object-fit:cover;object-position:50% 45%}
+#planner-assistant-dialog .ready-card[aria-pressed=true],
+#planner-assistant-dialog .dresser-presets button[aria-pressed=true]{border-color:#395947;box-shadow:0 0 0 1px #395947}
+#planner-assistant-dialog .dresser-cards.dresser-presets{grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr))}
+#planner-assistant-dialog .dresser-cards.dresser-presets button{align-content:start;text-align:left;justify-items:stretch;background:#fff;color:#24382f}
+.dresser-preset-photos{display:grid}
+.dresser-preset-photos img{grid-area:1 / 1}
+.dresser-closed{opacity:0}
+.dresser-presets[data-pose=closed] .dresser-closed{opacity:1}
+@media(hover:hover){
+ .dresser-presets[data-pose=closed] button:hover .dresser-closed{opacity:0}
+ .dresser-presets[data-pose=open] button:hover .dresser-closed{opacity:1}
+}
+#planner-assistant-dialog .dresser-presets img{width:100%;height:auto;aspect-ratio:4/3;border-radius:.28rem}
+#planner-assistant-dialog .questionnaire-studio{display:block;width:100%;height:auto;max-height:18rem;object-fit:contain;background:#f4f1eb;border-radius:.42rem}
+#planner-assistant-dialog .questionnaire-studio[hidden]{display:none}
+#planner-assistant-dialog .questionnaire-photo:has(.questionnaire-studio[hidden]) + .questionnaire-pose{display:none}
 .ready-card strong,.ready-card small{padding:0 .15rem}.ready-card small{font-size:.8rem;color:#4d6055}
 .ready-result:empty{display:none}.ready-result{border-top:1px solid #ccd7cc;padding-top:.55rem;margin-top:.65rem}.ready-result :is(h4,p,ul){margin:.35rem 0}
 .ready-result small{display:block;margin:.55rem 0}.ready-layout-spec{padding-left:1.15rem}
 .ready-layout-figure{background:#f3f4eb;text-align:center;border-radius:.35rem}.ready-layout-figure svg{display:block;margin:auto;max-width:100%;width:auto;height:11.5rem}
 .ready-things{display:flex;flex-wrap:wrap;gap:.35rem .8rem}.ready-things label{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:.35rem}.ready-things input{width:1rem;min-width:1rem;margin:0}
-.ready-section-icon{display:block;position:relative;height:82%;aspect-ratio:.5;background:#e5d6be;border:3px solid #a58b6a}.ready-section-icon i{position:absolute;width:100%;height:2px;background:#9b805f}
 .wardrobe-rail-notice{margin:.5rem 0;padding:.6rem .75rem;border-left:3px solid #457653;background:#e8f1e6;color:#1a462c;font-weight:600}
 .ready-entry [hidden], .wardrobe-rail-notice[hidden], .wardrobe-live button[hidden]{display:none!important}
 
@@ -336,3 +350,15 @@
 .dresser-cards strong{font-size:.87rem}
 .dresser-scheme{width:100%;padding:5px 0}
 #planner-assistant-dialog .wardrobe-figure [data-dresser-section]{cursor:pointer}
+#planner-assistant-dialog .assistant-visuals .assistant-drawing:has(.wardrobe-figure>.dresser-front-view){height:auto;min-height:0;grid-template-rows:auto auto auto auto}
+#planner-assistant-dialog .wardrobe-figure:has(>.dresser-front-view){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:center;padding:4px}
+#planner-assistant-dialog .wardrobe-figure:has(>.dresser-front-view)>.wardrobe-subsections,
+#planner-assistant-dialog .questionnaire-studio[hidden]+.dresser-front-view{grid-column:1 / -1}
+#planner-assistant-dialog .dresser-front-view{min-width:0}
+#planner-assistant-dialog .dresser-front-view svg{width:100%;height:clamp(112px,17dvh,170px)}
+@media(min-width:801px) and (min-height:740px){
+ #planner-assistant-dialog .assistant-visuals:has(.wardrobe-live[hidden]) .wardrobe-figure:has(>.dresser-front-view){grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:800px){
+ #planner-assistant-dialog .assistant-visuals:has(.wardrobe-figure>.dresser-front-view){grid-template-columns:minmax(0,1fr);position:static}
+}

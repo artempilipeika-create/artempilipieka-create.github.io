@@ -13,7 +13,7 @@ const template=it=>({production:C.PRODUCTION_MODELS[it.bazis_id]});
 test('seven upper and two waste sources preserve identity, materials and their artwork',()=>{
  assert.equal(wall.length,7);assert.equal(waste.length,2);
  for(const from of wall)for(const to of wall){const it={...item(from),body_variant_id:'custom',part_materials:{'side-L':'custom'},upper_shelf_count:2},next=O.select(it,to,O.variants);assert.equal(next.bazis_id,to.id);assert.equal(next.body_variant_id,'custom');assert.equal(next.upper_shelf_count,2);assert.deepEqual(next.part_materials,it.part_materials);assert.equal(O.info(next).wall,true);const file=executionArtwork(next,'open-tall','lighting',to.lighting);const url=new URL(file,'https://example.invalid');assert.equal(url.pathname,'/account/planner/module-card-images/'+to.id.replace('bazis.','open-wall-')+'.webp');assert.ok(url.searchParams.get('v'));assert.ok(fs.existsSync(new URL('../../backend/v2/cabinet_assets/planner/module-card-images/'+to.id.replace('bazis.','open-wall-')+'.webp',import.meta.url)));}
- for(const from of waste)for(const to of waste){const it=item(from),next=G.select(it,to,G.variants);assert.equal(next.bazis_sha256,to.source_sha256);assert.equal(next.width,350);assert.match(executionArtwork(it,'cargo','execution',to.execution),new RegExp('waste-'+to.execution+'\\.webp$'));}
+ for(const from of waste)for(const to of waste){const it=item(from),next=G.select(it,to,G.variants);assert.equal(next.bazis_sha256,to.source_sha256);assert.equal(next.width,350);assert.match(new URL(executionArtwork(it,'cargo','execution',to.execution),'https://example.invalid').pathname,new RegExp('waste-'+to.execution+'\\.webp$'));}
 });
 
 test('open tall lighting artwork follows the selected AQ or LIRA profile and side',()=>{

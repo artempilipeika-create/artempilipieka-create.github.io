@@ -2,20 +2,18 @@ import {planReadyLayout,readyWardrobes,readySections,recommendWardrobe,layoutSou
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {buildCarcass} from './carcass-model.mjs';
 import {wardrobeDrawing} from './wardrobe-drawing.mjs';
+import {showroomSnapshot} from './questionnaire-showroom.mjs';
 
 const el=(tag,label='')=>Object.assign(document.createElement(tag),{textContent:label});
 const button=(label,onclick)=>Object.assign(el('button',label),{type:'button',onclick});
 const folder='/account/planner/wardrobe-layout-images/';
-const sectionPicture={daily:'daily',deep:'deep',shallow:'113951',business:'115591',lift:'123793',ironing:'114784'};
-function imageFor(id,whole){
- const name=whole?id:sectionPicture[id];
- if(name){const image=el('img');image.alt='';image.loading='lazy';image.src=(!whole&&/^\d+$/.test(name)?'/account/planner/wardrobe-fitting-photos/':folder)+name+'.webp';return image;}
- const figure=el('span');figure.className='ready-section-icon';figure.setAttribute('aria-hidden','true');
- const levels={shoes:[18,34,50,72,88],shelves:[24,48,72],tall:[16],long:[16,24],shirts:[16,26,63]}[id]??[25,50,75];
- for(const y of levels){const shelf=el('i');shelf.style.top=y+'%';figure.append(shelf);}return figure;
+export function imageFor(id,whole=false){
+ const file=whole||['daily','deep'].includes(id)?id:'section-'+id;
+ const img=el('img');img.alt='';img.loading='lazy';img.decoding='async';img.width=680;img.height=510;
+ img.src=folder+file+'.webp?v=studio-pearl-1';return img;
 }
 function card(id,title,description,whole,choose){
- const b=button('',choose);b.className='ready-card';b.setAttribute('aria-label',title);b.dataset.readyPick=id;
+ const b=button('',choose);b.className='ready-card';b.setAttribute('aria-label',title);b.setAttribute('aria-pressed','false');b.dataset.readyPick=id;
  const art=el('span');art.className='ready-card-art';art.append(imageFor(id,whole));b.append(art,el('strong',title));
  if(description)b.append(el('small',description));return b;
 }
@@ -36,6 +34,12 @@ function preview(ui,host,request){
   const section=request.section??0;
   const title=whole?(request.name??readyWardrobes[request.id].name):readySections[request.id];
   const heading=el('h4',title);host.append(heading);
+  const picture=el('div');picture.className='questionnaire-photo';host.append(picture);
+  let open=true;const show=()=>picture.replaceChildren(showroomSnapshot(built,ui,{open,section:whole?null:section}));show();
+  if(built.doors.length||built.drawerBanks.some(Boolean)){
+   const toggle=button('С фасадами',()=>{open=!open;toggle.textContent=open?'С фасадами':'Вид наполнения';show();});
+   toggle.className='questionnaire-pose';host.append(toggle);
+  }
   const visual=el('div');visual.className='ready-layout-figure';
   const {svg}=wardrobeDrawing(built,'sections',section,null,null,{dimensions:true});visual.innerHTML=svg;host.append(visual);
   const spec=el('ul');spec.className='ready-layout-spec';
@@ -78,11 +82,13 @@ export function startWardrobeControls(ui,parent){
  }
  if(route!=='quiz'&&route!=='catalog')return;
  const result=el('div');result.className='ready-result';result.setAttribute('aria-live','polite');
- const choose=req=>{ui.readyPick=req;if(req)preview(ui,result,req);else result.replaceChildren();};
+ const choose=req=>{ui.readyPick=req;for(const c of box.querySelectorAll('[data-ready-pick]'))c.setAttribute('aria-pressed',String(c.dataset.readyPick===req?.id));if(req)preview(ui,result,req);else result.replaceChildren();};
  if(route==='quiz')quiz(ui,box,choose);
  else{
   const cards=el('div');cards.className='ready-cards';box.append(cards);
-  for(const [id,data] of Object.entries(readyWardrobes))cards.append(card(id,data.name,data.description,true,()=>choose({id})));
+  for(const [id,data] of Object.entries(readyWardrobes)){
+   const choice=card(id,data.name,data.description,true,()=>choose({id}));choice.setAttribute('aria-pressed',String(id===ui.readyPick?.id));cards.append(choice);
+  }
  }
  box.append(result);ui.refreshReady=()=>{if(ui.readyPick)preview(ui,result,ui.readyPick);};
 }
@@ -90,5 +96,8 @@ export function readySectionControls(ui,parent,section){
  const box=el('details');box.className='ready-section-list';box.append(el('summary','Готовая секция целиком'));parent.append(box);
  const cards=el('div');cards.className='ready-cards';const result=el('div');result.className='ready-result';result.setAttribute('aria-live','polite');
  box.append(cards,result);
- for(const [id,title] of Object.entries(readySections))cards.append(card(id,title,'',false,()=>preview(ui,result,{id,section})));
+ for(const [id,title] of Object.entries(readySections))cards.append(card(id,title,'',false,()=>{
+  for(const c of cards.children)c.setAttribute('aria-pressed',String(c.dataset.readyPick===id));
+  preview(ui,result,{id,section});
+ }));
 }

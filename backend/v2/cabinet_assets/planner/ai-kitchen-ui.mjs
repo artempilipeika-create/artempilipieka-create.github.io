@@ -1,3 +1,4 @@
+import './choice-card-ui.js';
 import {boardFixingChoices,kitchenShelfFixings,kitchenModels,kitchenFields,kitchenHinges,kitchenRails,kitchenPulls,kitchenSpec,kitchenFeet,kitchenFoot,isBase,isVitrine} from './ai-kitchen.mjs';
 import {buildCarcass,CARCASS_BACK_MATERIAL_ID} from './carcass-model.mjs';
 import {carcassSVG} from './carcass-ui.mjs';
@@ -61,7 +62,7 @@ export class AIKitchenUI{
   const group=el('div');group.className='mf3d-module-group';group.dataset.category='ai';group.append(el('h3','Кухонные модули ИИ'));
   for(const m of [...kitchenModels,...fillingCards]){
    const b=button('',()=>m.width?this.filling.add(m.id):this.add(m.id));b.className='mf3d-module';b.dataset.tags='ai';b.dataset.category='ai';b.dataset.aiKitchen=m.id;b.dataset.width=String(m.width??600);b.dataset.search=(m.name+' '+m.description+' ИИ').toLowerCase();b.setAttribute('aria-label',m.name);
-   const visual=el('span');visual.className='studio-card-visual';const img=el('img');img.className='studio-preview studio-preview-tripo';img.src=m.id.startsWith('drawers-')?'/account/planner/execution-card-images/drawer-drawer-layout-'+m.id.slice(8)+'.webp':'/account/planner/module-card-images/'+m.photo+'.webp';img.alt='';img.loading='lazy';visual.append(img);
+   const visual=el('span');visual.className='studio-card-visual';const img=el('img');img.className='studio-preview studio-preview-tripo';img.src=m.id.startsWith('drawers-')?globalThis.MF_CHOICE_CARDS.image('drawer-drawer-layout-'+m.id.slice(8),'execution-card-images'):globalThis.MF_CHOICE_CARDS.image(m.photo);img.alt='';img.loading='lazy';visual.append(img);
    const copy=el('span');copy.className='mf3d-module-copy';copy.append(el('strong',m.name),el('span',m.description));b.append(visual,copy);group.append(b);
   }
   const finish=button('Материалы кухни',()=>{

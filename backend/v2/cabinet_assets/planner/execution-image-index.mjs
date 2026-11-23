@@ -1,4 +1,4 @@
-// Tripo Studio GPT Image 2.5; reviewed natural oak option illustrations.
+// Illustrations for the native execution selected in the constructor.
 export const EXECUTION_IMAGES=Object.freeze({
  "base:base:purpose:shelf": "base-base-purpose-shelf.webp",
  "base:base:purpose:sink": "base-base-purpose-sink.webp",

@@ -1,4 +1,4 @@
-import {readySectionControls} from './wardrobe-ready-ui.mjs';
+import {imageFor,readySectionControls} from './wardrobe-ready-ui.mjs';
 import {sectionContents} from './wardrobe-ready-layouts.mjs';
 import {cellGeometry,insertShelves,keysAfterInsertion,setClearHeight} from './wardrobe-cells.mjs';
 import {isFittedRod} from './wardrobe-fittings.mjs';
@@ -119,7 +119,12 @@ export function sectionPresetControls(ui,parent,cell){
        confirm,button('Оставить',()=>{feedback.replaceChildren();select.focus();}));
      confirm.focus();
    });
-   select.setAttribute('aria-label',scheme.name);select.append(diagram(scheme.id),el('strong',scheme.name),el('small',scheme.description));cards.append(select);
+   const picture=el('span');picture.className='ready-card-art';
+   const image=imageFor(scheme.id==='shirts'?'niche-shirts':scheme.id);
+   image.onerror=()=>picture.replaceChildren(diagram(scheme.id));picture.append(image);
+   const description=el('small',scheme.description);description.id=panel.id+'-'+scheme.id+'-description';
+   select.setAttribute('aria-label',scheme.name);select.setAttribute('aria-describedby',description.id);
+   select.append(picture,el('strong',scheme.name),description);cards.append(select);
  }
  const drawers=button('Шуфляды в выбранную нишу',()=>{ui.interior='drawer';ui.render();ui.form.querySelector('[data-add-bank], [data-niche-count]')?.focus({preventScroll:true});});
  panel.append(cards,drawers,feedback);readySectionControls(ui,panel,cell.section);wrap.append(trigger,panel);parent.append(wrap);

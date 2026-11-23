@@ -1,6 +1,6 @@
 (function(root){
  'use strict';
- // Reviewed Tripo pictures use the geometry-reviewed catalogue views as references.
+ // Each cover follows its own production donor and the shared studio materials.
  const rows=[
   ["bazis.dadbe9a423b7","tall-gola","ПН-600 Gola","Полки, духовка или духовка + СВЧ","22 исполнения","База 820 / 900"],
   ['bazis.934509b39a14','open-wall-934509b39a14','Верхний открытый','Открытые полки · без подсветки, AQ или LIRA','7 исполнений','ЛДСП 18 мм'],
@@ -21,6 +21,6 @@
   ['bazis.d9c0c30544f4','tall-appliance','Пенал под технику','Духовка или духовка + СВЧ','База 820 / 900','Дверь / ящик']
  ];
  for(const f of Object.values(root.MF_WALL_SPECIAL?.families||{}))rows.push([f.default_id,f.default_id.replace('bazis.','wall-special-'),f.label,f.key==='corner'?'Левый / правый угол · ручки / без ручек':'Стекло 4 мм · две полки · подсветка',f.key==='corner'?root.MF_WALL_SPECIAL.variants.filter(v=>v.family==='corner').length+' исполнений':f.key==='vitrine1'?'12 исполнений':'6 исполнений','По модели БАЗИС']);
- for(const f of Object.values(root.MF_MODERN_CABINETS?.families||{}))rows.push([f.default_id,({upper1:'wall-single',upper2:'wall-double'}[f.key]||'modern-'+f.key),f.label,f.key==='fridge'?'Одна дверь или разделение 820 / 900':f.key==='gaslift'?'Три исполнения · высота 450 мм':'Задняя стенка в пазу · MOUNT / INOX','По модели БАЗИС']);
+ for(const f of Object.values(root.MF_MODERN_CABINETS?.families||{}))rows.push([f.default_id,'modern-'+f.key,f.label,f.key==='fridge'?'Одна дверь или разделение 820 / 900':f.key==='gaslift'?'Три исполнения · высота 450 мм':'Задняя стенка в пазу · MOUNT / INOX','По модели БАЗИС']);
  root.MF_CATALOGUE_ARTWORK=Object.freeze(Object.fromEntries(rows.map(([id,file,title,description,...badges])=>[id,Object.freeze({file,title,description,badges,source:file.startsWith('modern-')||id.startsWith('bazis.')&&root.MF_WALL_SPECIAL?.choice(id)?'native':'tripo'})])));
 })(globalThis);

@@ -34,7 +34,13 @@ def scenario(page, projects, project_id):
     expect(field(form,'Наполнение секции')).to_have_value('drawers')
     button(form,'Секция 2').click()
     expect(field(form,'Наполнение секции')).to_have_value('shelves')
+    portrait=form.locator('.wardrobe-figure .questionnaire-studio')
+    expect(portrait).to_be_visible()
+    closed=portrait.evaluate('(canvas) => canvas.toDataURL()')
     button(form,'Вид наполнения').click()
+    expect(portrait).to_have_attribute('aria-label','Комод · вид наполнения')
+    expect(portrait).to_be_visible()
+    assert portrait.evaluate('(canvas) => canvas.toDataURL()') != closed
     finish(page,form)
     group,spec,parts=panels(projects,project_id)
     assert spec['dresser']['installation']=='floor' and parts['plinth']['height']==97
@@ -51,6 +57,8 @@ def scenario(page, projects, project_id):
     field(form,'От пола до низа корпуса, мм').fill('330')
     field(form,'Задняя стенка').select_option('perimeter')
     button(form,'Выбрать готовое наполнение').click()
+    expect(form.locator('.dresser-presets img[src*="-wall-"]')).to_have_count(6)
+    expect(form.locator('.wardrobe-figure svg')).to_contain_text('От пола 330 мм')
     button(form,'Комод с нишей для техники').click()
     button(form,'Применить наполнение').click()
     button(form,'Скрытые PRIME · с доводчиком').click()
