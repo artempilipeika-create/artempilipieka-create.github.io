@@ -63,8 +63,8 @@ test('interactive profiles retain screen detail and leave preview and export siz
   const target={width:768,height:600};r.setRenderTarget(target);
   assert.deepEqual([r.frame().width,r.frame().height],[768,600]);assert.equal(r.canvas.width,still[0]);
   r.setRenderTarget(null);r.quality=qualityProfile('balanced');r.setSize(1864,895);
-  assert.deepEqual([r.canvas.width,r.canvas.height],[1864,895]);
-  r.setSize(3840,2160);assert.equal(r.canvas.width,1920);
+  assert.deepEqual([r.canvas.width,r.canvas.height],still);
+  r.setSize(3840,2160);assert.deepEqual([r.canvas.width,r.canvas.height],[2400,1350]);
   r.setSize(3840,2160,false,true);
   assert.deepEqual([r.canvas.width,r.canvas.height],[3840,2160]);
 });

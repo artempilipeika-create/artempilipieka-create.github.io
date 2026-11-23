@@ -217,9 +217,10 @@ export class CanvasRenderer {
   getPixelRatio() { return this.ratio; }
   setSize(w,h,_updateStyle=false,fullResolution=false) {
     this.fullResolution=fullResolution;
-    const supersampling=this.quality.name==='high'?1.25:1;
-    const scale=fullResolution?1:Math.min(Math.max(1,this.ratio)*supersampling,
-      this.quality.limit/Math.max(w,h),Math.sqrt(5e6/(w*h)));
+    // Keep subpixel coverage for thin cabinet edges, including the CPU profile at 1× display density.
+    const displayScale=Math.min(Math.max(1,this.ratio),this.quality.limit/Math.max(w,h));
+    const pixelBudget=this.quality.name==='balanced'?3.3e6:5e6;
+    const scale=fullResolution?1:Math.min(displayScale*1.25,Math.sqrt(pixelBudget/(w*h)));
     const width=Math.max(1,Math.round(w*scale)), height=Math.max(1,Math.round(h*scale));
     if (width!==this.canvas.width || height!==this.canvas.height) { this.canvas.width=width; this.canvas.height=height; }
   }
