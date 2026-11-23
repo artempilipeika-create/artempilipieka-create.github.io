@@ -5,6 +5,7 @@ import {installedShelfLevels} from './wardrobe-gola-shelves.mjs';
 import {localPoint,worldPoint} from './blank-bindings.mjs';
 
 export {products as fittingCatalogue};
+export const isFittedRod=item=>products[item.variant]?.category==='rods';
 export const adjustableHeight=p=>['tray','left','right','lift','spanSide'].includes(p.mount);
 const centredDepth=p=>['spanTop','spanSide','lift'].includes(p.mount);
 export function defaultFitting(key,cell){

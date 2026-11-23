@@ -3,7 +3,7 @@ import {defaultShelf,shelfRows} from './shelf-choices.mjs';
 import {trimBanks,coverClearance,frontEdgeGap} from './wardrobe-niches.mjs';
 import {resizeSections} from './wardrobe-cells.mjs';
 import {newRod,planRods,rodRoom,rodWarnings} from './wardrobe-rods.mjs';
-import {defaultFitting,fittingCatalogue,planFitting} from './wardrobe-fittings.mjs';
+import {defaultFitting,fittingCatalogue,isFittedRod,planFitting} from './wardrobe-fittings.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {doorAnchorIndex} from './wardrobe-door-layout.mjs';
 
@@ -35,9 +35,12 @@ const scopedPart=(key,section)=>{
  return shelf?Number(shelf[1])===section:split?Number(split[1])===section:drawer?sectionOf(Number(drawer[1]))===section:false;
 };
 export function sectionContents(f,i){
- const shelves=f.sectionShelves[i]??0,banks=(f.drawerBanks??[]).filter((b,slot)=>b&&sectionOf(slot)===i),
-  rods=(f.rods??[]).filter(r=>r.section===i),fittings=(f.fittings??[]).filter(r=>r.section===i),splits=(f.nicheSplits??[]).filter(r=>r.section===i);
- return [[shelves,'полок'],[banks.reduce((sum,b)=>sum+b.faces.length,0),'шуфляд'],[rods.length,'штанг'],[fittings.length,'механизмов'],[splits.length,'перегородок']]
+ const banks=(f.drawerBanks??[]).filter((b,slot)=>b&&sectionOf(slot)===i);
+ const splits=(f.nicheSplits??[]).filter(r=>r.section===i);
+ const shelves=(f.sectionShelves[i]??0)+splits.reduce((sum,z)=>sum+(z.columns??[]).reduce((n,c)=>n+c.gaps.length-1,0),0);
+ const fittings=(f.fittings??[]).filter(r=>r.section===i),fittedRods=fittings.filter(isFittedRod).length;
+ const rods=(f.rods??[]).filter(r=>r.section===i).length+fittedRods;
+ return [[shelves,'полок'],[banks.reduce((sum,b)=>sum+b.faces.length,0),'шуфляд'],[rods,'штанг'],[fittings.length-fittedRods,'механизмов'],[splits.length,'перегородок']]
   .filter(([n])=>n).map(([n,word])=>word+' — '+n).join(', ');
 }
 function clearSection(f,section){

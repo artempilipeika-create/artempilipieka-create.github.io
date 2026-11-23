@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {planReadyLayout,recommendWardrobe,layoutSourceKeys} from '../../backend/v2/cabinet_assets/planner/wardrobe-ready-layouts.mjs';
+import {planReadyLayout,recommendWardrobe,layoutSourceKeys,sectionContents} from '../../backend/v2/cabinet_assets/planner/wardrobe-ready-layouts.mjs';
+import {prepareSectionPreset} from '../../backend/v2/cabinet_assets/planner/wardrobe-section-presets.mjs';
 import {wardrobeSpec} from '../../backend/v2/cabinet_assets/planner/wardrobe-questionnaire.mjs';
 import {buildCarcass,placeCarcass} from '../../backend/v2/cabinet_assets/planner/carcass-model.mjs';
 import {defaultBackMount} from '../../backend/v2/cabinet_assets/planner/panel-machining.mjs';
@@ -47,6 +48,17 @@ test('all 49 supplied AKS assemblies have one functional category and preserve a
  assert.deepEqual(Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.length])),{trousers:7,hangers:13,ties:2,trays:2,doors:2,ironing:2,lifts:9,rods:12});
  assert.equal(new Set(groups.rods.map(p=>p.article)).size,6);
  for(const p of groups.rods)assert.ok(p.series==='FAME'&&['spanTop','spanSide'].includes(p.mount)&&p.components.length>0);
+});
+test('a local preset counts FAME as a rail and only replaces it after a deliberate selection',()=>{
+ const f=planReadyLayout(base(),{id:'couple'}).fields,cell={section:0,level:0};
+ f.rods=f.rods.filter(r=>r.section!==0);
+ const local=defaultFitting('113750-side',cell),neighbor=defaultFitting('113749-side',{section:1,level:1});
+ f.fittings=[local,neighbor];
+ assert.match(sectionContents(f,0),/штанг — 1/);assert.doesNotMatch(sectionContents(f,0),/механизмов/);
+ assert.throws(()=>prepareSectionPreset(f,cell,'shirts'),/уже установлены штанги/);
+ const result=prepareSectionPreset(f,cell,'shirts',null,true).fields;
+ assert.deepEqual(f.fittings,[local,neighbor]);assert.deepEqual(result.fittings,[neighbor]);
+ assert.equal(result.rods.filter(r=>r.section===0).length,2);
 });
 test('the four catalogue cards create editable production parts for the supplied enclosure',()=>{
  for(const [id,width,depth,widths,articles] of [

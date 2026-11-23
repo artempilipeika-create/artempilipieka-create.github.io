@@ -1,7 +1,7 @@
 import photos from './rod-photos/sources.json' with {type:'json'};
 import {newRod,planRods,rodCatalogue,rodFinish,rodLabel,rodLimits,rodRoom,sameRodCell} from './wardrobe-rods.mjs';
 import {fittingControls} from './wardrobe-fitting-ui.mjs';
-import {fittingCatalogue,planFitting,touchingStandardRod} from './wardrobe-fittings.mjs';
+import {fittingCatalogue,isFittedRod,planFitting,touchingStandardRod} from './wardrobe-fittings.mjs';
 
 const el=(tag,text)=>Object.assign(document.createElement(tag),{textContent:text??''});
 const button=(text,run)=>Object.assign(el('button',text),{type:'button',onclick:run});
@@ -10,7 +10,7 @@ const order=['22109','72536','22111','113181','23007','57975','14066'];
 function fit(value,min,max){return Math.min(max,Math.max(min,value));}
 function checkPlacement(fields,rod,levels){
  const planned=planRods({...fields,rods:[rod]},levels);
- const inCell=(fields.fittings??[]).filter(v=>sameRodCell(v,rod)&&fittingCatalogue[v.variant].category==='rods');
+ const inCell=(fields.fittings??[]).filter(v=>sameRodCell(v,rod)&&isFittedRod(v));
  if(inCell.some(v=>touchingStandardRod(planFitting(fields,v,levels),planned)))throw Error('Штанга пересекается с FAME. Измените высоту или положение по глубине.');
 }
 export function rodControls(ui,parent,cell){
@@ -20,7 +20,7 @@ export function rodControls(ui,parent,cell){
  let room;
  try{room=rodRoom(f,cell,ui.previewBuilt?.installedLevels);}catch(e){box.append(el('p',e.message));return;}
  const list=(f.rods??[]).filter(r=>sameRodCell(r,cell));
- const fitted=(f.fittings??[]).filter(v=>sameRodCell(v,cell)&&fittingCatalogue[v.variant].category==='rods');
+ const fitted=(f.fittings??[]).filter(v=>sameRodCell(v,cell)&&isFittedRod(v));
  const saved=list.find(r=>r.id===ui.rodId)??list[0];
  if(!ui.rodDraft||!sameRodCell(ui.rodDraft,cell))ui.rodDraft=newRod(cell,room);
  const rod=saved??ui.rodDraft;

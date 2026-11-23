@@ -1,6 +1,7 @@
 import {readySectionControls} from './wardrobe-ready-ui.mjs';
+import {sectionContents} from './wardrobe-ready-layouts.mjs';
 import {cellGeometry,insertShelves,keysAfterInsertion,setClearHeight} from './wardrobe-cells.mjs';
-import {sectionOf} from './wardrobe-layout.mjs';
+import {isFittedRod} from './wardrobe-fittings.mjs';
 import {wardrobeSpec} from './wardrobe-questionnaire.mjs';
 import {newRod,planRods,rodCatalogue,rodLimits,rodRoom,rodWarnings,sameRodCell} from './wardrobe-rods.mjs';
 
@@ -9,15 +10,8 @@ const schemes=[
  {id:'shirts',name:'Рубашки в два яруса',description:'Две штанги на разной высоте'}
 ];
 
-function existingContents(fields,section){
- const splits=(fields.nicheSplits??[]).filter(z=>z.section===section);
- const shelves=fields.sectionShelves[section]+splits.reduce((sum,z)=>
-   sum+(z.columns??[]).reduce((n,c)=>n+c.gaps.length-1,0),0);
- const drawers=(fields.drawerBanks??[]).reduce((n,bank,slot)=>
-   n+(bank&&sectionOf(slot)===section?bank.faces.length:0),0);
- const rods=(fields.rods??[]).filter(r=>r.section===section).length;
- return [[shelves,'полок'],[rods,'штанг'],[drawers,'шуфляд'],[splits.length,'перегородок']]
-   .filter(([count])=>count).map(([count,label])=>label+' — '+count).join(', ');
+function rodsInCell(fields,cell){
+ return [...(fields.rods??[]),...(fields.fittings??[]).filter(isFittedRod)].filter(r=>sameRodCell(r,cell));
 }
 
 // Stagger only the new holders when rails meet on opposite faces of a divider.
@@ -39,8 +33,12 @@ export function prepareSectionPreset(fields,cell,scheme,sourceKeys=null,replaceR
  const draft=structuredClone(fields);
  rodRoom(draft,cell);
  const previous=draft.rods??[];
- if(!replaceRods&&previous.some(r=>sameRodCell(r,cell)))throw Error('В выбранной нише уже установлены штанги.');
+ if(!replaceRods&&rodsInCell(draft,cell).length)throw Error('В выбранной нише уже установлены штанги.');
  draft.rods=previous.filter(r=>!sameRodCell(r,cell));
+ if(replaceRods&&draft.fittings){
+   draft.fittings=draft.fittings.filter(r=>!isFittedRod(r)||!sameRodCell(r,cell));
+   if(!draft.fittings.length)delete draft.fittings;
+ }
  const rodCount=scheme==='shirts'?2:1;
  if(draft.rods.length+rodCount>128)throw Error('В шкафу может быть до 128 штанг.');
  let keys=sourceKeys;
@@ -95,7 +93,7 @@ export function sectionPresetControls(ui,parent,cell){
    panel.hidden=!panel.hidden;trigger.setAttribute('aria-expanded',String(!panel.hidden));
  });
  trigger.setAttribute('aria-controls',panel.id);trigger.setAttribute('aria-expanded','false');
- const summary=existingContents(ui.fields,cell.section),section=cell.section+1;
+ const summary=sectionContents(ui.fields,cell.section),section=cell.section+1;
  if(summary){
    const place='ниша '+(cell.level+1)+(cell.column==null?'':(cell.column?' справа':' слева')+', проём '+(cell.opening+1));
    panel.append(el('p','В секции '+section+' '+summary+'. Для схемы выбрана '+place+'.'));
@@ -114,7 +112,7 @@ export function sectionPresetControls(ui,parent,cell){
  }
  for(const scheme of schemes){
    const select=button('',()=>{
-     const rods=ui.fields.rods?.filter(r=>sameRodCell(r,cell))??[];
+     const rods=rodsInCell(ui.fields,cell);
      if(!rods.length){apply(scheme);return;}
      const confirm=button('Заменить штанги в этой нише',()=>apply(scheme,true));
      feedback.replaceChildren(el('p','Установлено штанг в выбранной нише — '+rods.length+'. Заменить их по схеме «'+scheme.name+'»?'),

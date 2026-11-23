@@ -1,4 +1,4 @@
-import {adjustableHeight,defaultFitting,fittingCatalogue,planFitting,planFittings,touchingStandardRod} from './wardrobe-fittings.mjs';
+import {adjustableHeight,defaultFitting,fittingCatalogue,isFittedRod,planFitting,planFittings,touchingStandardRod} from './wardrobe-fittings.mjs';
 import {planRods,sameRodCell} from './wardrobe-rods.mjs';
 
 const el=(tag,text='')=>Object.assign(document.createElement(tag),{textContent:text});
@@ -24,7 +24,7 @@ const categories=[
 ];
 export function fittingControls(ui,parent,cell,fame=false){
  const f=ui.fields,message=el('p');message.setAttribute('role','status');const installed=el('div');
- const inCell=(f.fittings??[]).filter(x=>sameRodCell(x,cell)&&((fittingCatalogue[x.variant].category==='rods')===fame));
+ const inCell=(f.fittings??[]).filter(x=>sameRodCell(x,cell)&&isFittedRod(x)===fame);
  const selected=fame&&ui.fameId!==null?(inCell.find(x=>x.id===ui.fameId)??inCell[0]):null;
  const levels=ui.previewBuilt?.installedLevels;
  let replaceRod='';
