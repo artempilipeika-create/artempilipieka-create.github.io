@@ -6,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import Field,model_validator
 from fastapi import APIRouter,Request,Response
 from psycopg.types.json import Jsonb
+from .kitchen_worktop import WORKTOP, WORKTOP_ID, WORKTOP_LABEL, with_default_worktops
 from .auth_api import StrictModel
 from .assistant_model import AssistantCarcass, Z1_HINGES, DOOR_HARDWARE, InsetEdgeGrip, RearMount, KitchenShelfFixing, PanelCutList, ShelfValue, shelf_valid
 from .db import transaction
@@ -876,7 +877,7 @@ def router(settings):
         row=conn.execute('SELECT * FROM mf_3d_projects WHERE project_id=%s AND owner_user_id=%s AND archived_at IS NULL'+(' FOR UPDATE' if lock else ''),
                          (project_id,user['user_id'])).fetchone()
         if not row: error(404,'PROJECT_3D_NOT_FOUND')
-        return row
+        return {**row,'scene':with_default_worktops(row['scene'])}
 
     from .wardrobe_estimate_api import register as register_estimates
     register_estimates(api,settings,own)
@@ -898,10 +899,10 @@ def router(settings):
             digest,replayed=request_receipt(conn,user,body,'create')
             if replayed:
                 own(conn,user,replayed['project_id'])
-                return {**replayed,'scene':body.scene.model_dump(mode='json')}
+                return {**replayed,'scene':with_default_worktops(body.scene.model_dump(mode='json'))}
             row=conn.execute('''INSERT INTO mf_3d_projects(project_id,owner_user_id,name,module_type,scene)
                 VALUES(%s,%s,%s,%s,%s) RETURNING *''',
-                (pid,user['user_id'],body.name,'chest',Jsonb(body.scene.model_dump(mode='json')))).fetchone()
+                (pid,user['user_id'],body.name,'chest',Jsonb(with_default_worktops(body.scene.model_dump(mode='json'))))).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.created',object_type='3d_project',object_id=pid,reason='User created 3D project')
             return save_receipt(conn,user,body,digest,projection(row))
 
@@ -916,11 +917,11 @@ def router(settings):
             user=identity(conn,request);require_design(conn,user)
             digest,replayed=request_receipt(conn,user,body,'update:'+str(project_id))
             row=own(conn,user,project_id,True)
-            if replayed:return {**replayed,'scene':body.scene.model_dump(mode='json')}
+            if replayed:return {**replayed,'scene':with_default_worktops(body.scene.model_dump(mode='json'))}
             if row['version']!=body.version: error(409,'PROJECT_3D_VERSION_CONFLICT')
             row=conn.execute('''UPDATE mf_3d_projects SET name=%s,module_type=%s,scene=%s,version=version+1,updated_at=now()
                 WHERE project_id=%s RETURNING *''',
-                (body.name,'chest',Jsonb(body.scene.model_dump(mode='json')),project_id)).fetchone()
+                (body.name,'chest',Jsonb(with_default_worktops(body.scene.model_dump(mode='json'))),project_id)).fetchone()
             record_event(conn,settings,actor=user['user_id'],action='3d.project.updated',object_type='3d_project',object_id=project_id,reason='User updated 3D project',version=row['version'])
             return save_receipt(conn,user,body,digest,projection(row))
 
@@ -983,6 +984,10 @@ def router(settings):
             ids.update(str(x) for x in (scene.get('body_variant_id'),scene.get('front_variant_id')) if x)
         ids.update(str(p['material_id']) for p in scene.get('plinths',[])+scene.get('wallPanels',[]) if p.get('material_id'))
         ids.update(str(it['plinthMaterialId']) for it in scene.get('items',[]) if it.get('plinthMaterialId'))
+        if WORKTOP_ID in ids:
+            materials[WORKTOP_ID]=WORKTOP_LABEL
+            if visuals is not None:visuals[WORKTOP_ID]=visual_metadata(WORKTOP)
+            ids.remove(WORKTOP_ID)
         if release:
             for ident in ids:
                 found=conn.execute("SELECT snapshot FROM mf_catalogue_items WHERE release_id=%s AND item_id=%s AND kind='material'",(release,UUID(ident))).fetchone()

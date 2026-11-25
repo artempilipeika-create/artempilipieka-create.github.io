@@ -3,6 +3,7 @@ import base64, hashlib, json, os, threading
 import httpx
 from .sales_album import image_bytes
 from . import wardrobe_photo
+from .kitchen_worktop import WORKTOP_ID, carries_worktop, render_data
 
 _LOCK=threading.Lock()
 _ACTIVE=set()
@@ -14,8 +15,8 @@ def available():
 
 def validate_render_scene(scene, materials):
     missing = [f'М{i}' for i, it in enumerate(scene.get('items', []), 1)
-               if it.get('module_type') == 'base_cabinet' and it.get('countertopEnabled', True)
-               and (not it.get('countertopMaterialId') or str(it['countertopMaterialId']) not in materials)]
+               if carries_worktop(it) and it.get('countertopMaterialId')
+               and str(it['countertopMaterialId']) != WORKTOP_ID and str(it['countertopMaterialId']) not in materials]
     if missing:
         raise ValueError('Перед фоторендером выберите материал столешницы: ' + ', '.join(missing)
                          + '. Готовую картинку можно использовать без новой генерации.')
@@ -58,6 +59,7 @@ def generate(owner,scene,materials,preview,render_style='catalog'):
         raise ValueError('Неизвестный стиль фоторендера')
     key=os.environ.get('MF_IMAGE_API_KEY')
     if not key:raise ValueError('Автоматический фоторендер пока не подключён. Добавьте готовую картинку.')
+    scene, materials = render_data(scene, materials)
     validate_render_scene(scene, materials)
     image=image_bytes(preview)
     if not image:raise ValueError('Не удалось получить вид из конструктора')

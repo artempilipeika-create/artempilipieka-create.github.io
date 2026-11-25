@@ -47,6 +47,9 @@ def exercise(live=False, scenario=None):
         if path=='/api/v2/3d-assistant/status' and req.method=='GET':route.fulfill(json={'available':False,'remaining':0});return
         if path.startswith('/api/v2/catalogue/materials/') and req.method=='GET':
             key=path.rsplit('/',1)[1]
+            from backend.v2.kitchen_worktop import WORKTOP_ID, catalogue_worktop
+            if key==WORKTOP_ID:
+                route.fulfill(json=catalogue_worktop());return
             route.fulfill(json={'variant_id':key,'name':'QA материал','thickness':3 if key=='fb7b270e-66ad-5411-affc-5717b1adf0d6' else 18,'kind':'material'});return
         if path.startswith('/api/') or req.method!='GET':
             errors.append('Unexpected API '+req.method+' '+path);route.abort();return

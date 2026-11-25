@@ -2,6 +2,22 @@
   "schema": 1,
   "note": "Verified manufacturer images. Existing EGGER scan metadata is preserved. BYSPAN 605 PO and 890 PO use official solid-colour samples, not tiled surface scans. IDs, finish codes and manufacturing data remain unchanged.",
   "decors": {
+    "F243 ST76": {
+      "asset": "egger-f243-st76.webp",
+      "texture_url": "/account/planner/materials/egger-f243-st76.webp",
+      "render_color": "#aaa5a1",
+      "texture_size_mm": [
+        1300,
+        2800
+      ],
+      "rotation_deg": 0,
+      "grain_direction": "length",
+      "roughness": 0.8,
+      "source_url": "https://www.egger.com/en/furniture-interior-design/decors/F243_76",
+      "image_source_url": "https://cdn.egger.com/img/pim/8854512009246/8854512042014/original.png",
+      "sha256": "52e8a1c38413024a87b54a63360090ade1eb8d68cdad4367253e136af72f47f8",
+      "original_sha256": "8e745be02fb98edd526b36cfeb57f399adccc8a38abcf250fa6ebd1b50440ead"
+    },
     "W1000 ST9": {
       "asset": "egger-w1000-st9.jpg",
       "texture_url": "/account/planner/materials/egger-w1000-st9.jpg",

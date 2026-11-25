@@ -3,6 +3,7 @@ import json
 
 from .album_wardrobe import drawing_sets
 from .upper_mounting import local
+from .kitchen_worktop import carries_worktop
 
 
 def subject(items, drawings):
@@ -64,6 +65,12 @@ def prompt(scene, materials, style):
     data = {'wardrobes': cabinets, 'other_furniture': others, 'materials': materials,
             'material_appearance': (scene.get('displaySettings') or {}).get('materialAppearance', {}),
             'room_lights': scene.get('wallLights', [])}
+    worktops = [{'module': it.get('item_id'), 'material': materials.get(str(it.get('countertopMaterialId'))),
+                 'thickness_mm': it.get('countertopThicknessMm') or it.get('worktop_thickness')}
+                for it in items if carries_worktop(it)]
+    if worktops:
+        data['kitchen_worktops'] = worktops
+        mode = 'mixed'
     target = 'wardrobe' if mode == 'wardrobe' else 'furniture arrangement'
     style_note = ('Give the existing room the soft natural light of an inhabited interior. ' if style == 'lived_in'
                   else 'Use restrained catalogue lighting. ')

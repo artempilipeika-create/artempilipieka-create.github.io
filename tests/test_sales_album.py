@@ -8,6 +8,7 @@ from pypdf import PdfReader
 from backend.v2.sales_album import render,image_bytes,client_title
 from backend.v2.sales_hardware import LEGACY,ledger,module_hardware
 from backend.v2 import sales_render
+from backend.v2.kitchen_worktop import WORKTOP_ID, WORKTOP_LABEL, with_default_worktops
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -133,10 +134,41 @@ def test_unresolved_countertop_stops_before_paid_request(monkeypatch):
     monkeypatch.setenv('MF_IMAGE_API_KEY','synthetic-test-key')
     monkeypatch.setattr(sales_render.httpx,'Client',lambda *a,**kw:pytest.fail('Provider must not be called'))
     with pytest.raises(ValueError,match='выберите материал столешницы: М1'):
-        sales_render.generate('test',{'items':[{'module_type':'base_cabinet'}]}, {}, None)
+        sales_render.generate('test',{'items':[{'module_type':'base_cabinet','countertopMaterialId':'missing'}]}, {}, None)
+    sales_render.validate_render_scene({'items':[{'module_type':'base_cabinet'}]}, {})
     sales_render.validate_render_scene({'items':[{'module_type':'base_cabinet','countertopMaterialId':'stone'}]}, {'stone':'Stone'})
     sales_render.validate_render_scene({'items':[{'module_type':'wall_cabinet'}]}, {})
     sales_render.validate_render_scene({'items':[{'module_type':'base_cabinet','countertopEnabled':False}]}, {})
+
+
+def test_legacy_render_uses_the_workshop_worktop_without_editing_the_saved_scene(monkeypatch):
+    bottom = {'module_type':'blank','item_id':'A:bottom','worktop_thickness':0,
+              'assistant_carcass':{'group_id':'A','spec':{'kitchenModel':'base-drawers'}}}
+    original = {'items':[{'module_type':'base_cabinet','depth':510}, bottom, {**bottom,'item_id':'A:left'},
+                         {'module_type':'base_cabinet','countertopEnabled':False}, {'module_type':'wall_cabinet'},
+                         {'module_type':'base_cabinet','countertopMaterialId':'custom','worktop_thickness':28}]}
+    snapshot = deepcopy(original)
+    scene = with_default_worktops(original)
+    assert original == snapshot
+    assert scene['items'][0]['worktop_thickness'] == scene['items'][1]['countertopThicknessMm'] == 38
+    assert scene['items'][1]['worktop_thickness'] == 0
+    assert all(it['countertopMaterialId']==WORKTOP_ID for it in scene['items'][:2])
+    assert scene['items'][2:] == original['items'][2:]
+    assert with_default_worktops(scene) == scene
+    captured = {}
+    encoded = base64.b64encode(preview()).decode()
+    class Provider:
+        def __init__(self, **kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def post(self, url, *, headers, data, files):
+            captured.update(data)
+            return type('Response', (), {'status_code':200, 'json':lambda self:{'data':[{'b64_json':encoded}]}})()
+    monkeypatch.setenv('MF_IMAGE_API_KEY','synthetic-test-key')
+    monkeypatch.setattr(sales_render.httpx,'Client',Provider)
+    result = sales_render.generate('test', {'items':[original['items'][0]]}, {}, 'data:image/png;base64,'+encoded)
+    assert result.startswith('data:image/jpeg;base64,')
+    assert WORKTOP_LABEL in captured['prompt'] and WORKTOP_ID in captured['prompt']
 
 
 def test_client_album_technical_name_and_unapproved_visual_details():
@@ -146,7 +178,7 @@ def test_client_album_technical_name_and_unapproved_visual_details():
     pdf=PdfReader(BytesIO(render('QA_Equipment_Drag_20261024_new',{'items':[item(bid,LEGACY[bid])]}, {},preview())))
     text=' '.join(p.extract_text() for p in pdf.pages)
     assert 'QA_Equipment' not in text and 'QA_Equipment' not in pdf.metadata.title
-    assert 'Столешница не согласована' in text and 'Подсветка на визуализации' in text
+    assert 'Столешница не согласована' not in text and 'F243 ST76' in text and 'Подсветка на визуализации' in text
     assert 'Комплект шариковых направляющих = пара' in text
 
 def test_bound_shelf_sekura_count_and_fixed_parts():

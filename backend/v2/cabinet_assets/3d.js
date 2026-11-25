@@ -210,7 +210,7 @@ function normalizeItem(x,room){
 }
 function normalizeScene(s={}){
   const room=s.room||{width:4200,depth:3200,height:2700};
-  const items=Array.isArray(s.items)?s.items.map(x=>normalizeItem(x,room)):[legacyItem(s)];
+  const items=Array.isArray(s.items)?s.items.map(x=>normalizeItem(x,room)):[normalizeItem(legacyItem(s),room)];
   globalThis.MF_BLANKS_NATIVE?.alignSavedTrimReturns?.(items);
   globalThis.MF_BLANKS_NATIVE?.fitSavedMezzanineBacks?.(items);
   return{
@@ -953,7 +953,7 @@ async function searchMaterial(input,results,kind){
   const q=input.value.trim();
   results.replaceChildren();
   if(q.length<2)return;
-  const d=await api('/catalogue/materials?q='+encodeURIComponent(q)+'&limit=8');
+  const d=await api('/catalogue/materials?q='+encodeURIComponent(q)+'&limit=8'+(kind==='countertop'?'&worktops=true':''));
   if(input.dataset.materialRequest!==requestId||input.value.trim()!==q)return;
   if(!d.items.length){const empty=document.createElement('p');empty.textContent='Материал не найден. Уточните артикул или название.';results.append(empty);}
   for(const m of d.items){
@@ -980,7 +980,7 @@ async function searchMaterial(input,results,kind){
       if(kind==='drawerback')targets=targets.filter(x=>globalThis.MF_DRAWERS.familyInfo(x));
       if(kind==='front')targets=targets.filter(x=>!templateFor(x)?.production?.vitrine&&!templateFor(x)?.production?.open_tall);
       if(kind==='plinth')targets=targets.filter(x=>globalThis.MF_ACCESSORIES.supportsPlinth(x));
-      if(kind==='countertop')targets=targets.filter(x=>core.kitchenSettings(x));
+      if(kind==='countertop')targets=targets.filter(x=>core.carriesWorktop(x));
       if(!targets.length){status('В выбранной группе нет модулей для этого материала.');return;}
       const field={body:'body_variant_id',front:'front_variant_id',plinth:'plinthMaterialId',countertop:'countertopMaterialId'}[kind];
       for(const target of targets){
@@ -1641,7 +1641,8 @@ async function toOrder(){
 async function start(){
   try{user=await api('/auth/me')}catch{location.assign('/login');return}
   globalThis.MF_CONSTRUCTOR_ACCESS?.apply(user);
-  await Promise.all([...new Set(Object.values(globalThis.MF_FURNITURE_CORE.DEFAULT_MATERIALS))].map(material));
+  const core=globalThis.MF_FURNITURE_CORE;
+  await Promise.all([...new Set([...Object.values(core.DEFAULT_MATERIALS),core.DEFAULT_WORKTOP_ID])].map(material));
   bindCatalogueControls();
   renderModuleCatalogue();
   await loadProjects();

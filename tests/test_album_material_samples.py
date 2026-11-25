@@ -121,5 +121,6 @@ def test_album_route_uses_saved_catalogue_visuals_and_never_requests_a_photo(mon
             'version': 3, 'layout': 'client', 'hero_data_url': encoded, 'photo': False})
     assert response.status_code == 200, response.text
     pdf = PdfReader(BytesIO(response.content))
-    assert len(pdf.pages) == 4 and len(pdf.pages[2].images) == 1
-    assert 'Дуб натуральный' in pdf.pages[2].extract_text()
+    assert len(pdf.pages) == 4 and len(pdf.pages[2].images) == 2
+    text = pdf.pages[2].extract_text()
+    assert 'Дуб натуральный' in text and 'F243 ST76' in text

@@ -12,6 +12,7 @@ from reportlab.lib.pagesizes import A3, landscape
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Paragraph
+from .kitchen_worktop import carries_worktop, render_data
 from .document_renderer import FONTS
 from .sales_hardware import ledger
 from .three_d_open_tall import open_tall_variant
@@ -66,8 +67,7 @@ def client_title(name):
 
 def visualization_notes(scene, materials):
     notes = []
-    bases = [it for it in scene.get('items', []) if it.get('module_type') == 'base_cabinet'
-             and it.get('countertopEnabled', True)]
+    bases = [it for it in scene.get('items', []) if carries_worktop(it)]
     if any(not it.get('countertopMaterialId') or str(it['countertopMaterialId']) not in materials for it in bases):
         notes.append('Столешница не согласована: материал и окончательный вид рабочей поверхности требуют выбора.')
     if not scene.get('wallLights') and not any(op.get('lightSystem') for it in scene.get('items', []) for op in it.get('blank_machining') or []):
@@ -78,6 +78,7 @@ def visualization_notes(scene, materials):
 
 def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,version=1):
     fonts()
+    scene, materials = render_data(scene, materials)
     name = client_title(name)
     if not hero: raise ValueError('Добавьте визуализацию проекта')
     items=scene.get('items') or []
@@ -137,7 +138,7 @@ def render(name,scene,materials,hero,detail=None,module_images=None,photo=True,v
     pic(detail or hero,M,185,CW*.64,440)
     x=M+CW*.69; w=CW*.31; y=H-192
     for title,field in [('КОРПУС','body_variant_id'),('ФАСАДЫ','front_variant_id'),('ЦОКОЛЬ','plinthMaterialId'),('СТОЛЕШНИЦА','countertopMaterialId')]:
-        values=list(dict.fromkeys(material_name(materials,it.get(field)) for it in items if (field not in ('plinthMaterialId','countertopMaterialId') or it.get('module_type')!='wall_cabinet') and not (field=='front_variant_id' and open_tall_variant(it))))
+        values=list(dict.fromkeys(material_name(materials,it.get(field)) for it in items if (field!='countertopMaterialId' or carries_worktop(it)) and (field!='plinthMaterialId' or it.get('module_type')!='wall_cabinet') and not (field=='front_variant_id' and open_tall_variant(it))))
         if not values:continue
         text(title,x,y,10,ACCENT,True);y-=17
         y-=para('\n'.join(values),x,y,w,12);y-=25

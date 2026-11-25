@@ -21,9 +21,27 @@
     front_variant_id:'389a2abc-c6e2-5214-a41b-60054320d0ff', // Персидский жемчуг 890 PO
     plinthMaterialId:'389a2abc-c6e2-5214-a41b-60054320d0ff'
   });
+  // Finish specified in the workshop's standard 38 mm BAZIS worktop fragments.
+  const DEFAULT_WORKTOP_ID='0cb4afc4-e60c-53fd-8409-24777829d031';
+  function assembledWorktopBase(it){
+    const meta=it.assistant_carcass;
+    return it.module_type==='blank'&&Boolean(meta?.spec?.kitchenModel?.startsWith('base-'))&&it.item_id===meta.group_id+':bottom';
+  }
+  function carriesWorktop(it){
+    if(it.countertopEnabled===false)return false;
+    if(it.module_type!=='base_cabinet')return assembledWorktopBase(it);
+    const source=sourceProduction(it);
+    return (!source||source.tier==='base')&&it.depth<=750&&it.worktop_thickness!==0;
+  }
+  function withDefaultWorktop(it){
+    if(it.countertopMaterialId||!carriesWorktop(it))return it;
+    const thickness=it.countertopThicknessMm??(it.module_type==='base_cabinet'?it.worktop_thickness:null)??38;
+    return {...it,countertopMaterialId:DEFAULT_WORKTOP_ID,countertopThicknessMm:thickness,
+      ...(it.module_type==='base_cabinet'?{worktop_thickness:thickness}:{})};
+  }
   function withDefaultMaterials(it){
     const p=PRODUCTION_MODELS[it.bazis_id];
-    return {...it,
+    return {...withDefaultWorktop(it),
       body_variant_id:it.body_variant_id??DEFAULT_MATERIALS.body_variant_id,
       front_variant_id:it.front_variant_id??(p?.vitrine||p?.open_tall||(p?.wall_special&&p.wall_special.family!=='corner')?null:DEFAULT_MATERIALS.front_variant_id),
       ...(it.base==='wall'?{}:{plinthMaterialId:it.plinthMaterialId??DEFAULT_MATERIALS.plinthMaterialId})
@@ -566,6 +584,7 @@
   }
   function kitchenSettings(it,assembledBase=false){
     if(!assembledBase&&!isKitchenModule(it))return null;
+    it=withDefaultWorktop(it);
     const k={...KITCHEN_DEFAULTS};for(const key of Object.keys(k))if(it[key]!=null)k[key]=it[key];
     k.rearServiceGapMm=assembledBase&&it.assemblyRearGap!=null?it.assemblyRearGap:golaCountertop(it)?k.countertopDepthMm-it.depth-18-.5:50;
     k.legHeightMm=it.legHeightMm??it.base_height??100;
@@ -604,6 +623,7 @@
     return bits.join('');
   }
   function normalizeKitchen(it,room){
+    it=withDefaultWorktop(it);
     if(it.module_type==='blank'){
       const code=blankEdgeCode(it);
       return code===it.blank_edge_code?it:{...it,blank_edge_code:code};
@@ -627,6 +647,7 @@
   // `height` remains the saved module envelope and the native FR3D target.
   // Old projects keep that envelope; a worktop has never been part of it.
   function heights(it){
+    it=withDefaultWorktop(it);
     const k=kitchenSettings(it),base=k?k.legHeightMm:it.base==='wall'?0:(Number.isFinite(it.base_height)?it.base_height:it.base==='plinth'?80:60);
     const worktop=it.countertopEnabled!==false&&it.module_type==='base_cabinet'&&it.depth<=750
       ?(k?k.countertopThicknessMm:Number.isFinite(it.worktop_thickness)?it.worktop_thickness:32):0;
@@ -958,7 +979,7 @@
       const meta=item.assistant_carcass;
       // The overlaid bottom spans the cabinet. It anchors a single worktop member
       // even when a cabinet has several shelves, doors or independently edited panels.
-      const assembledBase=meta?.spec.kitchenModel?.startsWith('base-')&&item.item_id===meta.group_id+':bottom';
+      const assembledBase=assembledWorktopBase(item);
       let it=item;
       if(assembledBase){
         const rotation=item.rotation||0,depth=meta.spec.depth??item.depth;
@@ -996,7 +1017,7 @@
         for(const role of ['counter','plinth']){
           const sections=[];
           for(const m of run.members){
-            if(role==='counter'&&!m.k.countertopEnabled||role==='plinth'&&m.assembledBase)continue;
+            if(role==='counter'&&(!m.k.countertopEnabled||m.k.countertopThicknessMm<=0)||role==='plinth'&&m.assembledBase)continue;
             const {k,it}=m,id=role==='counter'?k.countertopMaterialId:k.plinthMaterialId;
             const z=role==='counter'?k.countertopDepthMm/2:k.rearServiceGapMm+it.depth-60;
             const y=role==='counter'?m.top+k.countertopThicknessMm/2:m.level+k.legHeightMm/2;
@@ -1160,5 +1181,5 @@
     });
     return other?'Пересечение: '+other.name:'';
   }
-  root.MF_FURNITURE_CORE=Object.freeze({assemblyRearGap,blankEdgeCode,shelfMounting,DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
+  root.MF_FURNITURE_CORE=Object.freeze({DEFAULT_WORKTOP_ID,carriesWorktop,withDefaultWorktop,assemblyRearGap,blankEdgeCode,shelfMounting,DEFAULT_MATERIALS,withDefaultMaterials,BASE_SOURCE_REVISION,refreshBaseSource,VITRINE,VITRINE_VARIANTS,VITRINE_FAMILY,APPLIANCE_TALL_FAMILY,APPLIANCE_TALL_VARIANTS,TALL_FAMILY,TALL_VARIANTS,TALL_GOLA_FAMILY,TALL_GOLA_VARIANTS,tallFamily,tallGolaProfiles,TALL_PRODUCTION,tallVariantInfo,tallVariant,tallDefaultId,tallUpperShelves,tallShelfAdjustment,tallDrawerKit,tallDrawerNote,FACADE_GAP_MM,MM_TO_WORLD,PILOT_PRODUCTION,WALL_PRODUCTION,SPECIAL_BASE_PRODUCTION,CORNER_PRODUCTION,PRODUCTION_MODELS,sourceProduction,DOOR_FAMILIES,doorFamilyById,doorFamily,doorVariant,CORNER_FAMILY,CORNER_VARIANTS,cornerVariantInfo,cornerVariant,cornerSpec,cornerReturnPlacement,dimensionError,DRAWER_SLIDE_RULE,KITCHEN_DEFAULTS,drawerSlideLengthMm,productionShelves,productionHardware,isKitchenModule,kitchenGroup,scopeMatches,isTallModule,cabinetFrontExtension,tallRearExtension,cabinetFrontDatum,tallWallPlacement,alignTallFront,alignTallTop,kitchenSettings,golaCountertop,alignKitchenChange,normalizeKitchen,kitchenRuns,kitchenLegs,productionParts,heights,rightAnchoredWidth,dimensionPatch,facadeCells,legacyFrontSpec,elevation,upperWorktopTop,mountedItems,syncUpperMounting,tier,rotateXZ,bounds,overlaps,roomObstacles,placementError});
 })(globalThis);

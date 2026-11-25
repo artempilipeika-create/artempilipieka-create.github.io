@@ -29,7 +29,7 @@ test('Two separate doors, 1.5 mm on each side, handles at the meeting edges',()=
 test('Three drawers have three independent meshes and horizontal low-poly handles',()=>{const f=make({kind:'drawers',count:3}),g=f.build({...item,layout:'drawers',drawers:3});assert.equal(roles(g,'front').length,3);assert.equal(roles(g,'handle').length,3);assert.ok(roles(g,'handle').every(m=>m.rotation.z===Math.PI/2));f.dispose();});
 test('Carcass boards remain 18 mm thick; no shaded single-box substitute',()=>{const f=make(),g=f.build(item);assert.equal(roles(g,'body').length,4);assert.ok(roles(g,'body').every(m=>size(m.geometry).includes(18)));f.dispose();});
 test('Plinth is a recessed 18 mm apron with side returns, not a solid block',()=>{const f=make(),g=f.build(item);assert.equal(roles(g,'plinth').length,3);assert.deepEqual(size(roles(g,'plinth')[0].geometry),[800,78,18]);assert.ok(roles(g,'plinth')[0].position.z<roles(g,'front')[0].position.z-.04);f.dispose();});
-test('Touching lower units share one visual countertop and one continuous plinth run',()=>{const f=make(),g=f.dress([item,{...item,item_id:'second',x:800}]);assert.equal(g.children.length,1);assert.equal(roles(g.children[0],'counter').length,1);assert.deepEqual(g.userData.mergedPlinthIds,['fixed','second']);assert.equal(size(roles(g.children[0],'counter')[0].geometry)[1],32);f.dispose();});
+test('Touching lower units share one visual countertop and one continuous plinth run',()=>{const f=make(),g=f.dress([item,{...item,item_id:'second',x:800}]);assert.equal(g.children.length,1);assert.equal(roles(g.children[0],'counter').length,1);assert.deepEqual(g.userData.mergedPlinthIds,['fixed','second']);assert.equal(size(roles(g.children[0],'counter')[0].geometry)[1],38);f.dispose();});
 test('Separated rows and different heights do not create an imaginary shared countertop',()=>{const f=make(),g=f.dress([item,{...item,item_id:'second',x:1800},{...item,item_id:'third',x:800,height:800}]);assert.equal(g.children.length,3);assert.equal(g.userData.mergedPlinthIds.length,0);f.dispose();});
 test('Unknown FR3D interiors do not receive invented shelves or a back',()=>{const f=make(),g=f.build({...item,bazis_id:'source',layout:'niche'});assert.equal(roles(g,'back').length,0);assert.equal(roles(g,'shelf').length,0);assert.equal(roles(g,'body').length,4);assert.equal(g.userData.visualApproximation,true);f.dispose();});
 
@@ -117,9 +117,10 @@ test('Editing worktop cannot resize the module or its facade; body and base edit
  const base=dimensionPatch(separated,{base_height:120});assert.equal(base.height,840);assert.equal(base.body_height,720);
  const total=dimensionPatch(separated,{height:900});assert.equal(total.body_height,800);
 });
-test('Legacy lower native target remains 720 and old worktop remains 32 without mutating data',()=>{
+test('Legacy lower carcass stays 720 and its unassigned worktop defaults to 38 without mutating data',()=>{
  const legacy={...item,bazis_id:'original',bazis_file:'original.fr3d',bazis_sha256:'a'.repeat(64)};
- const json=JSON.stringify(legacy);assert.equal(heights(legacy).module_height,720);assert.equal(heights(legacy).overall_height_with_worktop,752);
+ const json=JSON.stringify(legacy);assert.equal(heights(legacy).module_height,720);assert.equal(heights(legacy).overall_height_with_worktop,758);
+ assert.equal(heights({...legacy,countertopMaterialId:'selected',worktop_thickness:32}).overall_height_with_worktop,752);
  assert.equal(dimensionPatch(legacy,{worktop_thickness:38}).height,720);assert.equal(JSON.stringify(legacy),json);
 });
 for(const module_type of ['base_cabinet','wall_cabinet','tall_cabinet'])test('Every swing handle uses the correct vertical edge: '+module_type,()=>{

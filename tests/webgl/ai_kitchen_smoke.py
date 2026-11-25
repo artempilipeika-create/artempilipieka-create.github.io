@@ -22,6 +22,7 @@ def wait_for_state(page, expression, arg=None):
 
 def scenario(page, projects, pid):
     from backend.v2.three_d_api import Scene
+    from backend.v2.kitchen_worktop import WORKTOP_ID
     from backend.v2.assistant_api import LightingEstimate
     from backend.v2.wardrobe_lighting_kit import lighting_quote
 
@@ -78,6 +79,9 @@ def scenario(page, projects, pid):
         page.locator('[data-ai-kitchen="'+key+'"]').click()
         expect(form).to_be_hidden()
         wait_for_state(page, 'key=>MF_PLANNER.adapter.items.some(p=>p.assistant_carcass?.spec.kitchenModel===key)',key)
+    bottoms=page.evaluate("""()=>MF_PLANNER.adapter.items.filter(it=>it.assistant_carcass?.spec.kitchenModel.startsWith('base-')
+      &&it.item_id===it.assistant_carcass.group_id+':bottom').map(it=>[it.countertopMaterialId,it.countertopThicknessMm])""")
+    assert bottoms==[[WORKTOP_ID,38]]*3
     page.evaluate("()=>MF_PLANNER.workspace.panel('left',false)")
     # Use the actual scene raycast and a physical click. Sidebar and popup must not compete.
     point=page.evaluate("""()=>{const view=MF_PLANNER.scene,r=view.canvas.getBoundingClientRect();
@@ -252,6 +256,25 @@ def scenario(page, projects, pid):
     assert any(p['machining'] for p in custom['adjusted_panels'])
     assert any((r.get('construction') or {}).get('pullout_dryer') for r in payload['items'])
     assert any((r.get('construction') or {}).get('cargo') for r in payload['items'])
+    saved=projects.projects[pid]['scene']
+    native={it['item_id']:it for it in saved['items']}
+    assert all(native[key]['countertopMaterialId']==WORKTOP_ID for key in ids.values())
+    # Reopen a legacy project with an empty, an explicitly selected, and a disabled worktop.
+    native[ids['drawers-three']]['countertopMaterialId']=None
+    native[ids['drawers-two']]['countertopMaterialId']='91518079-f405-4256-984c-c6a256c16960'
+    native[ids['cargo']]['countertopEnabled']=False
+    page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+    wait_for_state(page, """([a,b,c,defaultId])=>{
+      const planner=MF_PLANNER, parts=[];
+      planner.scene.scene.traverse(m=>{if(m.isMesh&&m.userData.part?.role==='counter')parts.push(m);});
+      const stone=parts.find(m=>m.userData.part.module_ids.includes(a));
+      const other=parts.find(m=>m.userData.part.module_ids.includes(b));
+      return stone?.material.userData.variantId===defaultId && stone.material.map?.image?.naturalWidth>0
+        && stone.userData.part.thickness===38 && other?.material.userData.variantId==='91518079-f405-4256-984c-c6a256c16960'
+        && !parts.some(m=>m.userData.part.module_ids.includes(c));}""",
+      [ids['drawers-three'],ids['drawers-two'],ids['cargo'],WORKTOP_ID])
+    assert len(page.evaluate('MF_PLANNER.bridge.estimatePreview()'))>2000
+    print('PASS exact marble texture in render preview, legacy fallback, manual selection and disabled countertop')
     print('PASS four native fillings, custom handles, Gola, rear fitting, persisted scene and native export')
     print('PASS five cabinets, physical click, row heights, shelf fixings, mixed materials, sink, saved project and Z1 export')
 
@@ -378,7 +401,7 @@ if __name__=='__main__':
     a=p.parse_args()
     def check(page,projects,pid):
         if a.live:
-            for name in ['ai-kitchen.mjs','ai-kitchen-project.mjs','ai-kitchen-ui.mjs','ai-kitchen.css']+['module-card-images/ai-'+key+'.webp' for key in MODELS]:
+            for name in ['ai-kitchen.mjs','ai-kitchen-project.mjs','ai-kitchen-ui.mjs','ai-kitchen.css','furniture-core.js','module-mesh.mjs','materials/egger-f243-st76.webp']+['module-card-images/ai-'+key+'.webp' for key in MODELS]:
                 asset=page.request.get(ORIGIN+'/account/planner/'+name)
                 assert asset.ok and asset.body()==(ROOT/'backend/v2/cabinet_assets/planner'/name).read_bytes(),name
         scenario(page,projects,pid)

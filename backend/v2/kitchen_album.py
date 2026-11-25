@@ -10,6 +10,7 @@ from reportlab.lib.colors import HexColor, white
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph
 from reportlab.lib.utils import ImageReader
+from .kitchen_worktop import carries_worktop
 from .wardrobe_photo import subject
 from .sales_album import fonts, client_title, material_name
 from .three_d_open_tall import open_tall_variant
@@ -42,7 +43,7 @@ def material_pages(scene, materials, visuals):
         relevant=[it for it in scene['items'] if not (
             field=='front_variant_id' and open_tall_variant(it)) and not (
             field in ('plinthMaterialId','countertopMaterialId') and it.get('module_type')=='wall_cabinet') and not (
-            field=='countertopMaterialId' and not it.get('countertopEnabled',True))]
+            field=='countertopMaterialId' and not carries_worktop(it))]
         ids=list(dict.fromkeys(str(it.get(field) or '') for it in relevant))
         swatch=72 if len(ids)==1 else 32
         label_width=width-40-swatch-14

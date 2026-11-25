@@ -8,6 +8,7 @@ from uuid import UUID,uuid4
 from fastapi import APIRouter,Request,Response,Query
 from pydantic import Field,field_validator,model_validator
 from psycopg.types.json import Jsonb
+from .kitchen_worktop import WORKTOP, WORKTOP_ID, catalogue_worktop
 from .auth_api import StrictModel
 from .db import transaction
 from .domain_api import require,admin
@@ -209,7 +210,7 @@ def router(settings,policy):
             return {'items':[{'file_id':r['file_id'],'name':r['original_name'],'download_url':'/api/v2/files/'+str(r['file_id'])+'/download'} for r in rows if 'client' not in user['roles'] or r['created_by']==user['user_id']]}
 
     @api.get('/catalogue/materials')
-    def materials(request:Request,q:str='',thickness:float|None=Query(None,gt=0),release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
+    def materials(request:Request,q:str='',worktops:bool=False,thickness:float|None=Query(None,gt=0),release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
         with transaction(settings) as conn:
             from .constructor_access import manager_grant
             user=identity(conn,request)
@@ -217,6 +218,8 @@ def router(settings,policy):
                 require(conn,user,'catalogue.read')
             version=release_or_active(conn,release)
             found=[safe_item(i,version) for i in catalogue.items(conn,version,'material') if matches(i,q)]
+            if worktops and matches(WORKTOP,q):
+                found.insert(0,catalogue_worktop())
             if thickness is not None:
                 found=[i for i in found if i.get('thickness') is not None and float(i['thickness'])==thickness]
             return {'kind':'candidates','catalogue_release':version,'items':found[offset:offset+limit],
@@ -245,6 +248,8 @@ def router(settings,policy):
             user=identity(conn,request)
             if not manager_grant(conn,user,'catalogue.read'):
                 require(conn,user,'catalogue.read')
+            if release is None and str(variant_id)==WORKTOP_ID:
+                return catalogue_worktop()
             return catalogue.get_item(conn,release_or_active(conn,release),variant_id,'material')
 
     @api.get('/catalogue/releases')

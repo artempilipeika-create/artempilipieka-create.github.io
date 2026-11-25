@@ -44,7 +44,7 @@ import {countertopSurfaces,countertopGeometry} from './countertop-visuals.mjs';
 import {fixturePlans} from './worktop-fixtures.mjs';
 import {buildWorktopFixture} from './worktop-fixture-mesh.mjs';
 import {ApplianceAssets,applianceLayout} from './appliance-assets.mjs';
-import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts,kitchenRuns,kitchenLegs,isKitchenModule} from './furniture-core.mjs';
+import {MM_TO_WORLD as S,elevation,facadeCells,tier,rotateXZ,bounds,heights,productionParts,kitchenRuns,kitchenLegs,isKitchenModule,withDefaultWorktop} from './furniture-core.mjs';
 
 // Pilot carcasses and kitchen run accessories both consume canonical production geometry.
 export const VISUAL_FINISHES=Object.freeze({
@@ -903,8 +903,10 @@ export class MeshFactory{
     for(const it of items){
       if(isKitchenModule(it)||tier(it)!=='base'||it.depth>750)continue;
       const r=it.rotation||0,axis=r===90||r===270?'z':'x',cross=axis==='x'?'z':'x',normal=rotateXZ(0,1,r)[cross];
-      const dims=heights(it),line=it[cross]+normal*it.depth/2,top=elevation(it,this.adapter.room)+dims.module_height,key=[r,line,top,it.base,dims.base_height,dims.worktop_thickness].join('|');
-      if(!groups.has(key))groups.set(key,[]);groups.get(key).push({it,axis,cross,normal,line,top,dims,lo:it[axis]-it.width/2,hi:it[axis]+it.width/2});
+      const dims=heights(it),line=it[cross]+normal*it.depth/2,top=elevation(it,this.adapter.room)+dims.module_height;
+      const materialId=withDefaultWorktop(it).countertopMaterialId;
+      const key=[r,line,top,it.base,dims.base_height,dims.worktop_thickness,materialId].join('|');
+      if(!groups.has(key))groups.set(key,[]);groups.get(key).push({it,axis,cross,normal,line,top,dims,materialId,lo:it[axis]-it.width/2,hi:it[axis]+it.width/2});
     }
     for(const members of groups.values()){
       members.sort((a,b)=>a.lo-b.lo);const runs=[];
@@ -927,7 +929,7 @@ export class MeshFactory{
         }
         const alongSign=rotateXZ(1,0,f.it.rotation||0)[f.axis];
         const thickness=f.dims.worktop_thickness,base=f.dims.base_height;
-        this.box(g,'counter',width+left+right,thickness,depth+36,alongSign*(right-left)/2,f.top+thickness/2,18,null);
+        if(thickness>0)this.box(g,'counter',width+left+right,thickness,depth+36,alongSign*(right-left)/2,f.top+thickness/2,18,f.materialId);
         if(f.it.base==='plinth'&&base>2&&run.members.length>1){
           this.box(g,'plinth',width,base-2,18,0,elevation(f.it,this.adapter.room)+base/2,depth/2-60,null);
           for(const sign of[-1,1])this.box(g,'plinth',18,base-2,depth-100,sign*(width/2-9),elevation(f.it,this.adapter.room)+base/2,-10,null);

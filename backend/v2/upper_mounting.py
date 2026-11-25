@@ -14,7 +14,7 @@ def worktop_top(item):
     if item.get('countertopEnabled', True) and item.get('depth', 510) <= 750:
         thickness = item.get('countertopThicknessMm')
         if thickness is None: thickness = item.get('worktop_thickness')
-        if thickness is None: thickness = 38 if item.get('bazis_id') or item.get('legHeightMm') is not None else 32
+        if thickness is None: thickness = 38 if not item.get('countertopMaterialId') or item.get('bazis_id') or item.get('legHeightMm') is not None else 32
     return item['height'] + thickness
 
 

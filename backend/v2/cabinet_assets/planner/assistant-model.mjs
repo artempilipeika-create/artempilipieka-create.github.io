@@ -10,7 +10,7 @@ import {choice,shelfDescription} from './shelf-choices.mjs';
 import {joinPlinths,splitPlinths} from './wardrobe-plinth-runs.mjs';
 import {findSpace} from './placement.mjs';
 import {resolveBlankBindings,worldPoint} from './blank-bindings.mjs';
-import {assemblyRearGap,blankEdgeCode} from './furniture-core.mjs';
+import {assemblyRearGap,blankEdgeCode,withDefaultWorktop} from './furniture-core.mjs';
 import {retainedBlankMaterial} from './blanks-model.mjs';
 
 export const specKeys=['recipe','width','height','depth','thickness','shelves','sections','back','elevation','shelfSetback','shelfGap','edgeThickness','edgePolicy'];
@@ -164,7 +164,7 @@ export function prepareAssistantPlan(adapter,plan,{id=crypto.randomUUID(),defaul
   if(item.item_id===prefix+':rear-brace'){item.blank_edge_code='1100';item.blank_edge_thickness_mm=1;}
   if(item.item_id===prefix+':plinth')item.blank_edge_code='1111';
   item.blank_edge_code=blankEdgeCode(item);
-  return item;
+  return withDefaultWorktop(item);
  });
  const removed=current?.items.filter(i=>!retained.has(i.item_id))||[];
  const oldIds=new Set(current?.items.map(i=>i.item_id)||[]);

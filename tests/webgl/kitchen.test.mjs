@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {PILOT_PRODUCTION,normalizeKitchen,kitchenSettings,kitchenRuns,kitchenLegs,productionParts,dimensionPatch,heights,facadeCells,rotateXZ,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
+import {DEFAULT_WORKTOP_ID,PILOT_PRODUCTION,normalizeKitchen,kitchenSettings,kitchenRuns,kitchenLegs,productionParts,dimensionPatch,heights,facadeCells,rotateXZ,placementError} from '../../backend/v2/cabinet_assets/planner/furniture-core.mjs';
 import {snapItem,findSpace} from '../../backend/v2/cabinet_assets/planner/placement.mjs';
 import {StateAdapter} from '../../backend/v2/cabinet_assets/planner/state-adapter.mjs';
 import {MeshFactory} from '../../backend/v2/cabinet_assets/planner/module-mesh.mjs';
@@ -111,4 +111,16 @@ test('A pilot cannot enter the legacy suspended-base state that cannot be saved 
  const it=item(),adapter=new StateAdapter({state:()=>({room,items:[it]}),template:x=>({production:PILOT_PRODUCTION[x.bazis_id]})});
  assert.equal(adapter.validate(it),'');
  assert.match(adapter.validate(dimensionPatch(it,{base:'wall'})),/ножки/);
+});
+
+test('Empty worktops use the standard 38 mm stone on enabled bases and on the assistant bottom only',()=>{
+ const top=kitchenRuns(row(),room).flatMap(r=>r.parts).filter(p=>p.role==='counter');
+ assert.deepEqual(top.map(p=>[p.material.variant_id,p.thickness,p.length]),[[DEFAULT_WORKTOP_ID,38,1800]]);
+ const blank={module_type:'blank',item_id:'A:bottom',worktop_thickness:0,assistant_carcass:{group_id:'A',spec:{kitchenModel:'base-sink'}}};
+ assert.equal(normalizeKitchen(blank).countertopMaterialId,DEFAULT_WORKTOP_ID);
+ assert.equal(normalizeKitchen(blank).worktop_thickness,0);
+ for(const other of [{...blank,item_id:'A:left'},{...blank,countertopEnabled:false},{module_type:'wall_cabinet'}])
+   assert.ok(!normalizeKitchen(other).countertopMaterialId);
+ const choice=normalizeKitchen({...row()[0],countertopMaterialId:'stone-B',countertopThicknessMm:28,worktop_thickness:28});
+ assert.equal(choice.countertopMaterialId,'stone-B');assert.equal(choice.worktop_thickness,28);
 });
