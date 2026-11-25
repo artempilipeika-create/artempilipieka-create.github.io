@@ -74,3 +74,15 @@ def test_saved_material_identity_preserves_the_16_mm_drawer_override():
     item['part_materials'] = {}
     other = quote(item)
     assert all(r['key'] != sheet_key for r in other['groups']['materials']['rows'])
+
+
+def test_corner_front_notch_uses_its_actual_inner_cut_path():
+    from backend.v2.kitchen_estimate import project_geometry
+    from backend.v2.three_d_wall_special import VARIANTS
+    source = next(v for v in VARIANTS if v['id'] == 'bazis.74184f6983e5')
+    item = dict(item_id='C', name='Верхний угловой', module_type='wall_cabinet', bazis_id=source['id'],
+                bazis_file=source['source_file'], bazis_sha256=source['source_sha256'], width=1000, height=720, depth=300,
+                x=0, z=0, rotation=0, drawers=0, base='wall', body_variant_id=BODY, front_variant_id=FRONT)
+    geometry = project_geometry({'items':[item]})['modules']['C']
+    lengths = [cut['mm'] for p in geometry['panels'] for cut in p['cuts'] if cut['key']=='curveCut']
+    assert lengths == [631]

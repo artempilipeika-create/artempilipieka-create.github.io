@@ -10,6 +10,18 @@ const round = value => Math.round(value * 1e5) / 1e5;
 function pathLength(points) {
   return points.slice(1).reduce((sum, point, i) => sum + Math.hypot(...point.map((n, j) => n - points[i][j])), 0);
 }
+function milledContourLength(points) {
+  const bounds=[0,1].map(axis=>{
+    const values=points.map(point=>point[axis]);
+    return [Math.min(...values),Math.max(...values)];
+  });
+  // The bounding blank's four outside lines are already charged as straight saw cuts.
+  return points.reduce((total,u,i)=>{
+    const v=points[(i+1)%points.length];
+    const onOutside=bounds.some((ends,axis)=>ends.some(edge=>Math.abs(u[axis]-edge)<.01 && Math.abs(v[axis]-edge)<.01));
+    return onOutside?total:total+pathLength([u,v]);
+  },0);
+}
 function seatLength(parts) {
   return parts.filter(part => part.edge === -1).reduce((n, part) => {
     if (part.arc) return n + 10 * Math.asin(Math.min(1,Math.hypot(part.arc[0]-part.arc[4],part.arc[1]-part.arc[5])/10));
@@ -68,13 +80,13 @@ function summarizePanel(p,native,drawer) {
     const span=cut.edge.startsWith('x')?(p.machining_axis==='side'?p.size.y:p.size.x):p.size.z;
     cuts.push({key:'mill16to18',name:cut.kind==='rabbet'?'Выборка четверти':'Фрезеровка паза',mm:round(span-(cut.start||0)-(cut.end||0))});
   }
-  if(p.contour_yz?.length>4) {
-    const pts=p.contour_yz, ys=pts.map(q=>q[0]), zs=pts.map(q=>q[1]);
-    const limits=[[Math.min(...ys),Math.max(...ys)],[Math.min(...zs),Math.max(...zs)]];
-    let mm=0;
-    pts.forEach((u,i)=>{const v=pts[(i+1)%pts.length];
-      if(!limits.some((ends,a)=>ends.some(x=>Math.abs(u[a]-x)<.01 && Math.abs(v[a]-x)<.01))) mm+=pathLength([u,v]);
-    });
+  let contour=p.contour_yz;
+  if(!contour && p.native_polygon?.front?.length>4){
+    const axes=[p.orientation.length_axis,p.orientation.width_axis].map(axis=>'xyz'.indexOf(axis));
+    contour=p.native_polygon.front.map(point=>axes.map(axis=>point[axis]));
+  }
+  if(contour?.length>4){
+    const mm=milledContourLength(contour);
     if(mm)cuts.push({key:'curveCut',name:'Вырез по контуру детали',mm:round(mm)});
   }
   return {id:p.part_id,name:p.name,role:p.role,drawer,length:round(p.length),width:round(p.width),thickness:round(p.thickness),

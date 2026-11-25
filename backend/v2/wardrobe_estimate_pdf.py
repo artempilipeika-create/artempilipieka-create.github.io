@@ -38,7 +38,7 @@ def render(name, scene, quote, hero=None):
     date = '.'.join(reversed(quote['date'].split('-')))
     groups = quote['groups']
     columns = W-2*M
-    limit = 11
+    limit = 12 if quote.get('modules') else 11
     page_counts = {k:1 for k in groups}
     module_rows=[]
     for m in quote.get('modules',[]):
