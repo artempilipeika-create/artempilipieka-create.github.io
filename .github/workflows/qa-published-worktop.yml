@@ -1,0 +1,110 @@
+name: Published worktop checkout
+on:
+  push:
+    branches: [qa-worktop-swatch-20261125]
+permissions:
+  contents: read
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    services:
+      postgres:
+        image: postgres:17
+        env: {POSTGRES_USER: mf_staging_ci, POSTGRES_DB: mf_staging_ci, POSTGRES_HOST_AUTH_METHOD: trust}
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 8
+    env:
+      MF_TEST_DATABASE_URL: postgresql://mf_staging_ci@localhost:5432/mf_staging_ci
+      MF_EMAIL_PROVIDER: fake
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: c55a059b6a99f822fafbe2118a735369e8b9d0ee
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Open the published constructor with a disposable local project
+        run: |
+          pip install -q -r backend/v2/requirements.txt playwright==1.58.0 pytest==9.1.1 pypdf==6.9.1
+          export MF_QA_CHROME="$(command -v google-chrome)"
+          cat > qa_published_worktop_test.py <<'PY'
+          import os
+          from urllib.parse import urlsplit
+          from uuid import uuid4
+          from psycopg.types.json import Jsonb
+          from playwright.sync_api import sync_playwright, expect
+          from backend.v2.db import transaction
+          from backend.v2.kitchen_worktop import WORKTOP_ID
+          from backend.v2 import sales_render
+          from tests.stage03.test_api import api, settings, admin_user, publish
+          from tests.test_kitchen_estimate import cabinet
+          
+          ORIGIN='https://martin-forest-v2-staging-production.up.railway.app'
+          
+          def test_published_countertop(api, settings, admin_user, monkeypatch):
+              publish(api)
+              choice=api.get('/api/v2/catalogue/materials?q=621').json()['items'][0]
+              marble=api.get('/api/v2/catalogue/materials?q=F243&worktops=true').json()['items'][0]
+              assert marble['variant_id']==WORKTOP_ID and marble['thickness']==38
+              unit=cabinet()
+              result=api.post('/api/v2/3d-projects',json={'name':'QA Мрамор','scene':{'items':[unit],'selected_item_id':'A','room':{'width':4200,'height':2700,'depth':3200,'setup_complete':True}}})
+              assert result.status_code==201,result.text
+              pid=result.json()['project_id']
+              saved=result.json()['scene']
+              assert saved['items'][0]['countertopMaterialId']==WORKTOP_ID
+              saved['items'][0].update(countertopMaterialId=None,worktop_thickness=None,countertopThicknessMm=None)
+              saved['materialIdentities']={}
+              with transaction(settings) as db:
+                  db.execute('UPDATE mf_3d_projects SET scene=%s WHERE project_id=%s',(Jsonb(saved),pid))
+              errors=[]
+              with sync_playwright() as pw:
+                  browser=pw.chromium.launch(executable_path=os.environ['MF_QA_CHROME'],headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
+                  context=browser.new_context(viewport={'width':1440,'height':1000},service_workers='block')
+                  def router(route):
+                      req=route.request;u=urlsplit(req.url)
+                      if not req.url.startswith(ORIGIN+'/'): route.abort();return
+                      if not u.path.startswith('/api/'):
+                          assert req.method=='GET'
+                          route.continue_();return
+                      response=api.request(req.method,u.path+('?'+u.query if u.query else ''),content=req.post_data_buffer)
+                      if response.status_code==422 and u.path.startswith('/api/v2/catalogue/materials/') and u.path.rsplit('/',1)[-1] not in [WORKTOP_ID,choice['variant_id']]:
+                          route.fulfill(json={'kind':'material','variant_id':u.path.rsplit('/',1)[-1],'name':'QA плита','thickness':18});return
+                      if response.status_code>=400: errors.append([u.path,response.status_code])
+                      route.fulfill(status=response.status_code,body=response.content,headers={k:v for k,v in response.headers.items() if k.lower() not in ['content-encoding','content-length','transfer-encoding']})
+                  context.route('**/*',router)
+                  page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
+                  assert page.request.get(ORIGIN+'/health').ok
+                  page.goto(ORIGIN+'/constructor',wait_until='domcontentloaded',timeout=60000)
+                  page.locator('body[data-planner-ready=true]').wait_for(state='attached')
+                  page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+                  def check_marble():
+                      page.wait_for_function("""id=>{let found=false;MF_PLANNER.scene.scene.traverse(m=>{
+                        if(m.isMesh&&m.userData.part?.role==='counter'&&m.userData.part.thickness===38&&m.material.userData.variantId===id&&m.material.map?.image?.naturalWidth>0)found=true;});
+                        return found;}""",arg=WORKTOP_ID,timeout=45000)
+                  check_marble()
+                  expect(page.locator('#countertop-selected')).to_contain_text('F243 ST76')
+                  preview=page.evaluate('MF_PLANNER.bridge.estimatePreview()')
+                  captured=[]
+                  def image(owner, scene, materials, view, style):
+                      captured.append(sales_render.kitchen_prompt(scene,materials,style))
+                      return view
+                  monkeypatch.setattr(sales_render,'generate',image)
+                  version=api.get('/api/v2/3d-projects/'+pid).json()['version']
+                  photo=api.post('/api/v2/3d-projects/'+pid+'/sales-photo',json={'version':version,'request_id':str(uuid4()),'paid_confirmed':True,'preview_data_url':preview})
+                  assert photo.status_code==200,photo.text[:400]
+                  assert len(preview)>2000 and len(captured)==1 and 'F243 ST76' in captured[0]
+                  page.eval_on_selector('#countertop-search','el=>{el.value="621";el.dispatchEvent(new Event("input",{bubbles:true}));}')
+                  page.wait_for_function('()=>document.querySelector("#countertop-results button")')
+                  page.eval_on_selector('#countertop-results button','el=>el.click()')
+                  page.wait_for_function('id=>MF_PLANNER.adapter.selected.countertopMaterialId===id',arg=choice['variant_id'])
+                  page.evaluate('MF_PLANNER.bridge.save()');page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+                  assert page.evaluate('MF_PLANNER.adapter.selected.countertopMaterialId')==choice['variant_id']
+                  page.evaluate('()=>MF_PLANNER.interaction.modify({countertopEnabled:false},"QA")')
+                  page.evaluate('MF_PLANNER.bridge.save()');page.evaluate('id=>MF_PLANNER.bridge.open(id)',pid)
+                  assert page.evaluate('MF_PLANNER.adapter.selected.countertopEnabled') is False
+                  assert not page.evaluate("""()=>{let surface=false; MF_PLANNER.scene.scene.traverse(m=>{if(m.userData.part?.role==='counter')surface=true;});return surface;}""")
+                  assert not errors,errors
+                  print('PASS published WebGL stone, authenticated create / reopen / edit, preserved manual finish, disabled countertop and real render endpoint with no paid request')
+                  browser.close()
+          PY
+          python -m pytest -q -s qa_published_worktop_test.py
