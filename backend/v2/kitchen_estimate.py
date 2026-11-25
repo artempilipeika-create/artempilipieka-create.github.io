@@ -204,13 +204,16 @@ def edge_options(board, thickness, board_thickness, exact):
     group = 'декорированная' if wood or brand=='EGGER' and str(board.get('code','')).startswith('H') else 'однотонная'
     white = bool(re.search(r'\bбелый\b',decor)) and not wood
     matches=list(exact)
+    thickness = Decimal(str(thickness))
     for row in edge_tariffs():
-        if row['width'] not in widths or not row['minT']<=thickness<=row['maxT']:
+        if row['width'] not in widths or not Decimal(str(row['minT']))<=thickness<=Decimal(str(row['maxT'])):
             continue
         supplier,g=row['supplier'],row['group']
         if supplier=='ABC Egger' and brand!='EGGER' or supplier=='Dekta' and brand!='DEKTA':
             continue
-        ok = g==group or white and g=='белая базовая'
+        ok = (g=='одноцветная' and group=='однотонная') or g==group or white and g=='белая базовая'
+        if g=='Perfect Sense Top&Smart':
+            ok='perfectsense' in decor.replace(' ', '') and ('top' in decor or 'smart' in decor)
         if supplier=='Dekta':
             ok=bool(texture and texture in [s.strip().upper() for s in g.split(',')])
         if ok:

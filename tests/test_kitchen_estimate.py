@@ -86,3 +86,16 @@ def test_corner_front_notch_uses_its_actual_inner_cut_path():
     geometry = project_geometry({'items':[item]})['modules']['C']
     lengths = [cut['mm'] for p in geometry['panels'] for cut in p['cuts'] if cut['key']=='curveCut']
     assert lengths == [631]
+
+
+def test_expensive_compatible_edge_by_decor_and_actual_glued_board_width():
+    from backend.v2.kitchen_estimate import edge_options
+    plain = dict(brand='BYSPAN', code='806', texture='PO', name='Капучино')
+    wood = dict(brand='BYSPAN', code='402', texture='SWO', name='Ноче Милано')
+    def highest(board, thickness, board_thickness):
+        return max(edge_options(board, Decimal(thickness), board_thickness, []), key=lambda row: row['price'])
+    assert highest(plain, '0.8', 36)['group'] == 'одноцветная'
+    assert highest(wood, '0.8', 36)['group'] == 'декорированная'
+    assert highest(plain, '1', 18)['supplier'] == 'El-mech-Plast'
+    assert highest(wood, '1.8', 36)['width'] == 42
+    assert highest({**wood,'brand':'EGGER','code':'H1180'}, '2', 36)['supplier'] == 'ABC Egger'
