@@ -26,7 +26,7 @@ def test_full_module_list_fits_four_pages_without_losing_names_or_numbers(count)
     text=pdf.pages[3].extract_text()
     for i in range(count):assert f'{i+1}. Нижний шкаф с ящиками {i+1}' in text
     assert text.count('600 × 820 × 510 мм')==count
-    assert 'После расчёта' in text and 'Для самостоятельной сборки' in text
+    assert 'Уточнит менеджер' in text and 'Для самостоятельной сборки' in text
     assert len(pdf.pages[0].images)==1 and len(pdf.pages[1].images)==0
 
 
@@ -34,6 +34,9 @@ def test_preflight_checks_saved_layout_and_pdf_retry_reuses_original_image(monke
     pid=uuid4();row={'version':3,'name':'Кухня','scene':kitchen()};auth={'ok':True}
     class Connection:
         def execute(self,sql,params):
+            if 'mf_3d_estimates' in sql:
+                self.found = None
+                return self
             assert 'owner_user_id' in sql
             self.found=row if params==(pid,'owner') else None;return self
         def fetchone(self):return self.found
@@ -41,9 +44,9 @@ def test_preflight_checks_saved_layout_and_pdf_retry_reuses_original_image(monke
     def transaction(_):yield Connection()
     def identity(*_):
         if not auth['ok']:raise HTTPException(401)
-        return {'user_id':'owner'}
+        return {'user_id':'owner','roles':{'client'},'account_status':'active'}
     monkeypatch.setattr(api,'transaction',transaction);monkeypatch.setattr(api,'identity',identity)
-    monkeypatch.setattr(api,'require',lambda *a:None);monkeypatch.setattr(api.catalogue,'active',lambda *a:None)
+    monkeypatch.setattr(api,'require_design',lambda *a:None);monkeypatch.setattr(api.catalogue,'active',lambda *a:None)
     monkeypatch.setattr(api.sales_render,'generate',lambda *a,**kw:pytest.fail('No paid generation during preflight or retry'))
     app=FastAPI();app.include_router(api.router(None));client=TestClient(app)
     url=f'/api/v2/3d-projects/{pid}/sales-album/preflight'

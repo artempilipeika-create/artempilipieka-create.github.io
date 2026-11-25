@@ -13,6 +13,7 @@ from reportlab.lib.utils import ImageReader
 from .kitchen_worktop import carries_worktop
 from .wardrobe_photo import subject
 from .sales_album import fonts, client_title, material_name
+from .wardrobe_estimate_pdf import money
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
 from .album_elevation import draw as draw_elevation, validate_geometry
@@ -102,7 +103,7 @@ def schedule_pages(items):
     return pages
 
 
-def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None, include_hardware=False):
+def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None, include_hardware=False, price=None):
     fonts()
     if not hero or not scene.get('items'):
         raise ValueError('Добавьте мебель и вид проекта.')
@@ -240,16 +241,40 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
                 c.setFillColor(white);c.roundRect(px,cursor-height,column,height-4,4,fill=1,stroke=0)
                 _,ph=p.wrap(column-16,H);p.drawOn(c,px+8,cursor-6-ph);cursor-=height
         if sheet == len(schedule_sheets)-1:
-            c.setFillColor(INK);c.roundRect(M,109 if compact else 140,W-2*M,58 if compact else 96,9,fill=1,stroke=0)
-            text('СТОИМОСТЬ КОМПЛЕКТА',M+22,155 if compact else 218,W-2*M-44,8 if compact else 9,True,white)
-            text('После расчёта',M+22,140 if compact else 196,W-2*M-44,18 if compact else 24,True,white)
-            terms='Согласуйте размеры, материалы и комплектацию. Состав фурнитуры, обработку и комплектность подтверждаем перед заказом. Техника и декор на изображении не означают включение в поставку.'
-            assembly='Для самостоятельной сборки. Доставка рассчитывается отдельно.'
-            if compact:
-                text(assembly+' '+terms,M,98,W-2*M,8.5,color=MUTED)
-            else:
-                text(assembly,M+22,158,W-2*M-44,9,color=white)
-                text(terms,M,120,W-2*M,10,color=MUTED)
+            bottom, height = (109, 58) if compact else (140, 96)
+            top = bottom + height
+            c.setFillColor(INK)
+            c.roundRect(M, bottom, W-2*M, height, 9, fill=1, stroke=0)
+            label = 'Стоимость заказа'
+            amount = 'Уточнит менеджер'
+            note = ''
+            groups = {}
+            if price:
+                groups = price['groups']
+                note = 'Расчёт от ' + '.'.join(reversed(price['date'].split('-')))
+                if price['total'] is not None:
+                    amount = money(price['total']) + ' BYN'
+                    if not price['complete']:
+                        label = 'Рассчитанная часть заказа'
+                if price['missing']:
+                    note += ' · Позиций к уточнению: ' + str(price['missing'])
+            left = M+20
+            text(label, left, top-(5 if compact else 10), W/2-M, 9, True, white)
+            text(amount, left, top-(18 if compact else 25), W/2-M, 17 if compact else 24, True, white)
+            if note:
+                text(note, left, bottom+(14 if compact else 26), W/2-M, 8 if compact else 10, color=white)
+            row_height = 15 if compact else 23
+            y = bottom + (height + (len(groups)-1)*row_height)/2 - 4
+            for title, subtotal in groups.items():
+                c.setFillColor(white)
+                c.setFont('Sales', 9 if compact else 11)
+                c.drawString(W*.55, y, title)
+                c.setFont('SalesBold', 9 if compact else 11)
+                c.drawRightString(W-M-20, y, 'Уточняется' if subtotal is None else money(subtotal)+' BYN')
+                y -= row_height
+            assembly = 'Для самостоятельной сборки. Доставка рассчитывается отдельно.'
+            terms = 'Согласуйте размеры, материалы и комплектацию. Состав фурнитуры, обработку и комплектность подтверждаем перед заказом. Техника и декор на изображении не означают включение в поставку.'
+            text(assembly+' '+terms, M, 98 if compact else 120, W-2*M, 8.5 if compact else 10, color=MUTED)
         else:
             text('Продолжение состава — на следующем листе.',M,120,W-2*M,10,color=MUTED)
         c.showPage()

@@ -24,19 +24,34 @@ class Issue(StrictModel):
     preview_data_url: str | None = Field(default=None,max_length=11_000_000)
 
 
+def can_price(user):
+    return user['account_status'] == 'active' and bool(user['roles'] & {'admin', 'manager'})
+
+
+def markup(conn, user):
+    row = conn.execute('SELECT markup_bp FROM mf_estimate_preferences WHERE user_id=%s',
+                       (user['user_id'],)).fetchone()
+    return Decimal(row['markup_bp'] if row else 0) / 100
+
+
+def issued_album_price(conn, project_id, version):
+    row = conn.execute("""SELECT cost_date, amount, complete FROM mf_3d_estimates
+        WHERE project_id=%s AND project_version=%s ORDER BY created_at DESC, estimate_id DESC LIMIT 1""",
+        (project_id, version)).fetchone()
+    if row:
+        return dict(date=row['cost_date'].isoformat(), total=row['amount'] if row['complete'] or row['amount'] else None,
+                    complete=row['complete'], missing=None, groups={})
+
+
 def register(api, settings, own):
     from .three_d_api import Scene
 
     def owner(conn,request):
         user=identity(conn,request)
-        if user['account_status']!='active' or not (user['roles'] & {'manager','admin'}):
+        if not can_price(user):
             error(403,'MANAGER_ESTIMATE_REQUIRED')
         require_design(conn,user)
         return user
-
-    def markup(conn,user):
-        row=conn.execute('SELECT markup_bp FROM mf_estimate_preferences WHERE user_id=%s',(user['user_id'],)).fetchone()
-        return Decimal(row['markup_bp'] if row else 0)/100
 
     @api.get('/account/estimate-settings')
     def get_terms(request:Request):

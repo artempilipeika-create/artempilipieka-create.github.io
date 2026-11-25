@@ -13,6 +13,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import kitchen_estimate as kitchen
+from .kitchen_worktop import with_default_worktops
 from . import sheet_estimator
 from .estimate_drilling import drill_key
 from .sales_hardware import module_hardware, purchasing_rows
@@ -355,6 +356,7 @@ def hardware_costs(scene, book, prices, drilling, lines, geometry=None):
 
 
 def calculate(scene, markup=0, date=None, rates=None):
+    scene = with_default_worktops(scene)
     book, prices, drilling = rates or ratebook()
     items = scene.get('items') or []
     has_kitchen = any(kitchen.is_kitchen(it) for it in items) or bool(scene.get('wallPanels') or scene.get('plinths'))
@@ -383,3 +385,15 @@ def calculate(scene, markup=0, date=None, rates=None):
         panel_costs(scene,book,lines)
     hardware_costs(scene,book,prices,drilling,lines,geometry)
     return lines.finish(markup,date or datetime.now(ZoneInfo('Europe/Minsk')).date().isoformat())
+
+
+def customer_totals(quote):
+    """Only customer selling amounts are passed from the estimate into the album."""
+    groups = {}
+    for group in quote['groups'].values():
+        if group['rows']:
+            priced = group['missing'] < len(group['rows'])
+            groups[group['title']] = group['total'] if priced else None
+    has_price = any(amount is not None for amount in groups.values())
+    return dict(date=quote['date'], total=quote['total'] if has_price else None,
+                complete=has_price and quote['complete'], missing=quote['missing'], groups=groups)

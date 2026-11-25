@@ -53,7 +53,7 @@ def test_long_module_schedule_continues_without_dropping_rows():
     text=' '.join(p.extract_text() for p in pdf.pages[3:])
     assert text.count('600 × 820 × 510 мм')==35
     for n,module in enumerate(modules,1):assert f'{n}. '+module['name']+'\n' in text
-    assert text.count('После расчёта')==1
+    assert text.count('Уточнит менеджер')==1
     assert f'листы 4–{len(pdf.pages)}' in pdf.pages[1].extract_text()
 
 

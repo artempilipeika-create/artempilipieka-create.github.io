@@ -12,11 +12,11 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
   const mode=albumSubject(snapshot()?.scene?.items),wardrobe=mode==='wardrobe';
   const title={wardrobe:'Альбом шкафа',kitchen:'Альбом вашей кухни',mixed:'Альбом проекта'}[mode];
   d.innerHTML=`<div class="mf-sales-heading"><div><small>MARTIN FOREST / КЛИЕНТСКАЯ ПРЕЗЕНТАЦИЯ</small><h2 id="kitchen-album-title">${title}</h2></div><button type="button" data-close aria-label="Закрыть">×</button></div>
-    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: обложка на весь лист, чертёж спереди с размерами, фурнитура по модулям с фотографиями и количеством, материалы с образцами и состав заказа.</p>
+    <p>Один фоторендер в стиле «Живой интерьер» автоматически войдёт в PDF: обложка на весь лист, чертёж спереди с размерами, фурнитура по модулям с фотографиями и количеством, материалы с образцами, состав и стоимость заказа.</p>
     <label>Номер заказа для обложки<input data-order maxlength="60" autocomplete="off" placeholder="Например, МФ-2026-125"></label>
     ${wardrobe?'<label data-view-label>Ракурс шкафа<select data-view><option value="full">Шкаф целиком</option>'+(hasCurrentView?'<option value="current">Текущий ракурс из 3D</option>':'')+'</select></label>':''}
     <canvas data-preview width="1200" height="800" aria-label="Предпросмотр фоторендера"></canvas>
-    <div class="mf-album-pages"><span>Обложка</span><span>Чертёж и размеры</span><span>Фурнитура</span><span>Материалы</span><span>Комплект</span></div>
+    <div class="mf-album-pages"><span>Обложка</span><span>Чертёж и размеры</span><span>Фурнитура</span><span>Материалы</span><span>Состав и стоимость</span></div>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера повышенного качества. Он автоматически попадёт в PDF. Открытие готового альбома и скачивание не запускают новую генерацию.</label>
     <p data-message role="status" aria-live="polite">Сохраняем проект и проверяем готовый фоторендер…</p>
     <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Проверить готовность · бесплатно</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-photo class="presentation-download" hidden>Скачать фоторендер</a><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>
@@ -63,7 +63,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     const blob=await r.blob();assertSame();if(closed)return;
     if(pdfURL)URL.revokeObjectURL(pdfURL);pdfURL=URL.createObjectURL(blob);
     q('[data-pdf]').href=pdfURL;q('[data-pdf]').download=wardrobe?'Martin_Forest_Wardrobe_Album.pdf':mode==='mixed'?'Martin_Forest_Album.pdf':'Martin_Forest_Kitchen_Album.pdf';
-    say('Альбом готов. Этот фоторендер уже внутри PDF, а после чертежей — фурнитура по модулям. Можно скачать файл.');
+    say('Альбом готов. На обложке — ваш фоторендер, на последнем листе — состав и стоимость заказа.');
   };
   const consume=async result=>{
     if(closed)return;assertSame();

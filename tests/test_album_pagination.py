@@ -60,7 +60,7 @@ def test_every_material_and_module_survives_continuations_with_original_photo(co
     schedule_text=' '.join(texts[schedule_start-1:])
     assert schedule_text.count('600 × 820 × 510 мм')==count
     for n in range(count):assert f'{n+1}. Нижний шкаф с ящиками {n+1}\n' in schedule_text
-    assert schedule_text.count('После расчёта')==1
+    assert schedule_text.count('Уточнит менеджер')==1
 
 
 def test_single_long_catalogue_name_continues_at_readable_size_without_truncation():
@@ -83,6 +83,9 @@ def test_material_overflow_preflight_and_pdf_succeed_without_a_paid_request(monk
     row={'version':3,'name':'Кухня','scene':scene}
     class Connection:
         def execute(self,sql,params):
+            if 'mf_3d_estimates' in sql:
+                self.found = None
+                return self
             if 'mf_catalogue_items' in sql:
                 assert params[0]==release
                 self.found={'snapshot':records[params[1]]}
@@ -94,8 +97,8 @@ def test_material_overflow_preflight_and_pdf_succeed_without_a_paid_request(monk
     @contextmanager
     def transaction(_):yield Connection()
     monkeypatch.setattr(api,'transaction',transaction)
-    monkeypatch.setattr(api,'identity',lambda *a:{'user_id':'owner'})
-    monkeypatch.setattr(api,'require',lambda *a:None)
+    monkeypatch.setattr(api,'identity',lambda *a:{'user_id':'owner','roles':{'client'},'account_status':'active'})
+    monkeypatch.setattr(api,'require_design',lambda *a:None)
     monkeypatch.setattr(api.catalogue,'active',lambda *a:release)
     monkeypatch.setattr(api.sales_render,'generate',lambda *a,**kw:pytest.fail('No paid generation'))
     app=FastAPI();app.include_router(api.router(None));jpeg=image()

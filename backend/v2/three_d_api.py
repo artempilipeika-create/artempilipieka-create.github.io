@@ -18,6 +18,7 @@ from .constructor_access import require_design
 from .three_d_document import render as render_spec
 from .sales_album import render as render_sales, image_bytes as sales_image
 from . import sales_render, sales_render_store, kitchen_album, customer_hardware, customer_hardware_pdf
+from . import wardrobe_estimate, wardrobe_estimate_api
 from .material_visuals import visual_metadata
 from .three_d_corner import corner_variant
 from .three_d_tall import tall_variant, GOLA_VARIANTS as TALL_GOLA_VARIANTS
@@ -879,8 +880,7 @@ def router(settings):
         if not row: error(404,'PROJECT_3D_NOT_FOUND')
         return {**row,'scene':with_default_worktops(row['scene'])}
 
-    from .wardrobe_estimate_api import register as register_estimates
-    register_estimates(api,settings,own)
+    wardrobe_estimate_api.register(api,settings,own)
 
     @api.get('/3d-projects')
     def list_projects(request:Request):
@@ -1052,51 +1052,76 @@ def router(settings):
     @api.get('/3d-sales-capabilities')
     def sales_capabilities(request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            user=identity(conn,request);require_design(conn,user)
         return {'automatic_render':sales_render.available(),'max_pages':5,'client_pages':4,'images_per_request':1}
+
+    def client_album(project_id, body, request):
+        from io import BytesIO
+        from PIL import Image
+
+        visuals = {}
+        with transaction(settings) as conn:
+            user = identity(conn, request)
+            require_design(conn, user)
+            row = own(conn, user, project_id)
+            if row['version'] != body.version:
+                error(409, 'Проект изменился. Откройте альбом заново.')
+            materials = project_materials(conn, row['scene'], visuals)
+            percent = None
+            if wardrobe_estimate_api.can_price(user):
+                percent = wardrobe_estimate_api.markup(conn, user)
+            else:
+                price = wardrobe_estimate_api.issued_album_price(conn, project_id, row['version'])
+
+        try:
+            if percent is not None:
+                price = wardrobe_estimate.customer_totals(wardrobe_estimate.calculate(row['scene'], percent))
+            if isinstance(body, SalesAlbumRender):
+                hero = sales_image(body.hero_data_url)
+                detail = sales_image(body.detail_data_url)
+                _module_previews(row['scene'], body.module_preview_data_urls)
+                photo = body.photo
+            else:
+                # Exercise the same layout locally before offering a paid photo.
+                probe = BytesIO()
+                Image.new('RGB', (8, 6), '#f6f3ed').save(probe, 'JPEG')
+                hero, detail, photo = probe.getvalue(), None, False
+            geometry = None if body.elevation_geometry is None else [g.model_dump() for g in body.elevation_geometry]
+            return kitchen_album.render(row['name'], row['scene'], materials, hero, detail, photo,
+                                        material_visuals=visuals, elevation_geometry=geometry,
+                                        include_hardware=body.include_hardware, price=price)
+        except ValueError as exc:
+            logging.getLogger(__name__).warning('Client album rejected: %s', str(exc))
+            error(400, str(exc))
 
     @api.post('/3d-projects/{project_id}/sales-album/preflight')
     def sales_album_preflight(project_id:UUID,body:SalesAlbumPreflight,request:Request):
-        # Exercise the complete saved-project layout before offering a paid image.
-        # The local neutral thumbnail is discarded with the probe PDF; no provider call.
-        from io import BytesIO
-        from PIL import Image
-        visuals={}
-        with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
-            if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
-            materials=project_materials(conn,row['scene'],visuals)
-        probe=BytesIO();Image.new('RGB',(8,6),'#f6f3ed').save(probe,'JPEG')
-        try:
-            kitchen_album.render(row['name'],row['scene'],materials,probe.getvalue(),photo=False,include_hardware=body.include_hardware,
-                material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
-        except ValueError as exc:
-            logging.getLogger(__name__).warning('Client album preflight rejected: %s',str(exc))
-            error(400,str(exc))
+        client_album(project_id, body, request)
         return {'ok':True}
 
     @api.post('/3d-projects/{project_id}/sales-album.pdf')
     def sales_album(project_id:UUID,body:SalesAlbumRender,request:Request):
-        visuals={}
-        with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
-            if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
-            materials=project_materials(conn,row['scene'],visuals if body.layout=='client' else None)
-        try:
-            hero=sales_image(body.hero_data_url);detail=sales_image(body.detail_data_url)
-            previews=_module_previews(row['scene'],body.module_preview_data_urls)
-            previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
-            data=(kitchen_album.render(row['name'],row['scene'],materials,hero,detail,body.photo,include_hardware=body.include_hardware,material_visuals=visuals,elevation_geometry=[g.model_dump() for g in body.elevation_geometry] if body.elevation_geometry is not None else None)
-                  if body.layout=='client' else render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version))
-        except ValueError as exc:
-            logging.getLogger(__name__).warning('Client album PDF rejected: %s',str(exc))
-            error(400,str(exc))
+        if body.layout == 'client':
+            data = client_album(project_id, body, request)
+        else:
+            with transaction(settings) as conn:
+                user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+                if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
+                materials=project_materials(conn,row['scene'])
+            try:
+                hero=sales_image(body.hero_data_url);detail=sales_image(body.detail_data_url)
+                previews=_module_previews(row['scene'],body.module_preview_data_urls)
+                previews={key:sales_image('data:image/png;base64,'+base64.b64encode(value).decode()) for key,value in previews.items()}
+                data=render_sales(row['name'],row['scene'],materials,hero,detail,previews,body.photo,body.version)
+            except ValueError as exc:
+                logging.getLogger(__name__).warning('Sales album PDF rejected: %s',str(exc))
+                error(400,str(exc))
         return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename=Martin_Forest_Sales_Album.pdf','Cache-Control':'no-store'})
 
     @api.post('/3d-projects/{project_id}/sales-photo')
     def sales_photo(project_id:UUID,body:SalesPhotoRender,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            user=identity(conn,request);require_design(conn,user);row=own(conn,user,project_id)
             if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
             materials=project_materials(conn,row['scene'])
         try:
@@ -1115,7 +1140,7 @@ def router(settings):
     @api.post('/3d-projects/{project_id}/sales-photo/reuse')
     def sales_photo_reuse(project_id:UUID,body:SalesPhotoLookup,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            user=identity(conn,request);require_design(conn,user);row=own(conn,user,project_id)
             if row['version']!=body.version:error(409,'Проект изменился. Откройте альбом заново.')
         return sales_render_store.current(settings.storage_root,user['user_id'],project_id,
                                           row['scene'],row['version'],body.preview_data_url) or {'state':'none'}
@@ -1123,14 +1148,14 @@ def router(settings):
     @api.get('/3d-projects/{project_id}/sales-photo')
     def sales_photo_current(project_id:UUID,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            user=identity(conn,request);require_design(conn,user);row=own(conn,user,project_id)
         return sales_render_store.current(settings.storage_root,user['user_id'],project_id,
                                           row['scene'],row['version']) or {'state':'none'}
 
     @api.get('/3d-projects/{project_id}/sales-photo/{request_id}')
     def sales_photo_status(project_id:UUID,request_id:UUID,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');row=own(conn,user,project_id)
+            user=identity(conn,request);require_design(conn,user);row=own(conn,user,project_id)
         result=sales_render_store.read(settings.storage_root,user['user_id'],project_id,request_id)
         if result is None:error(404,'Запуск не найден.')
         if result.get('version',row['version'])!=row['version']:

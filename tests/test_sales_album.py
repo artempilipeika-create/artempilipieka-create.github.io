@@ -91,6 +91,7 @@ def test_sales_routes_authorization_revision_and_pdf(monkeypatch):
         if not auth['ok']:raise HTTPException(401)
         return {'user_id':'owner'}
     monkeypatch.setattr(api,'transaction',transaction);monkeypatch.setattr(api,'identity',identity)
+    monkeypatch.setattr(api,'require_design',lambda *args:None)
     monkeypatch.setattr(api,'require',lambda *args:None);monkeypatch.setattr(api.catalogue,'active',lambda conn:None)
     monkeypatch.delenv('MF_IMAGE_API_KEY',raising=False)
     app=FastAPI();app.include_router(api.router(None));client=TestClient(app)

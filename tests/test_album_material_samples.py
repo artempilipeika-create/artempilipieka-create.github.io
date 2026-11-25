@@ -99,6 +99,9 @@ def test_album_route_uses_saved_catalogue_visuals_and_never_requests_a_photo(mon
                 'article': 'H1180 ST37', 'name': 'Дуб натуральный'}
     class Connection:
         def execute(self, sql, params):
+            if 'mf_3d_estimates' in sql:
+                self.found = None
+                return self
             if 'mf_catalogue_items' in sql:
                 assert params == (release, mid)
                 self.found = {'snapshot': material}
@@ -110,8 +113,8 @@ def test_album_route_uses_saved_catalogue_visuals_and_never_requests_a_photo(mon
     @contextmanager
     def transaction(_): yield Connection()
     monkeypatch.setattr(api, 'transaction', transaction)
-    monkeypatch.setattr(api, 'identity', lambda *a: {'user_id': 'owner'})
-    monkeypatch.setattr(api, 'require', lambda *a: None)
+    monkeypatch.setattr(api, 'identity', lambda *a: {'user_id': 'owner', 'roles': {'client'}, 'account_status': 'active'})
+    monkeypatch.setattr(api, 'require_design', lambda *a: None)
     monkeypatch.setattr(api.catalogue, 'active', lambda *a: release)
     monkeypatch.setattr(api.sales_render, 'generate', lambda *a: pytest.fail('No paid render'))
     app = FastAPI(); app.include_router(api.router(None))

@@ -28,7 +28,7 @@ def test_client_album_four_pages_no_private_costs_or_false_price():
     assert len(pdf.pages)==4
     assert float(pdf.pages[0].mediabox.width)==pytest.approx(841.89,abs=.1)
     text=' '.join(p.extract_text() for p in pdf.pages)
-    assert all(v in text for v in ['Кухня Анны','Белый 605 PO','Дуб 890 PO','Камень','После расчёта','самостоятельной сборки'])
+    assert all(v in text for v in ['Кухня Анны','Белый 605 PO','Дуб 890 PO','Камень','Уточнит менеджер','самостоятельной сборки'])
     assert 'PRIVATE_FILE' not in text and '430.32' not in text and '590' not in text
     assert 'Материал требует выбора' in text
 
@@ -41,7 +41,7 @@ def test_client_material_overflow_continues_without_losing_names():
     text=' '.join(p.extract_text() for p in pdf.pages[2:-1])
     assert all(text.count(name)==1 for name in names.values())
     assert 'КОРПУС · ПРОДОЛЖЕНИЕ' in text
-    assert 'После расчёта' in pdf.pages[-1].extract_text()
+    assert 'Уточнит менеджер' in pdf.pages[-1].extract_text()
 
 
 def test_receipt_is_persistent_and_never_repeats_a_failed_or_ready_request(tmp_path):
@@ -108,7 +108,7 @@ def test_route_requires_confirmation_ownership_and_current_version(tmp_path,monk
         return {'user_id':'owner'}
     encoded='data:image/jpeg;base64,'+base64.b64encode(image()).decode()
     monkeypatch.setattr(api,'transaction',transaction);monkeypatch.setattr(api,'identity',identity)
-    monkeypatch.setattr(api,'require',lambda *a:None)
+    monkeypatch.setattr(api,'require_design',lambda *a:None)
     monkeypatch.setattr(api.catalogue,'active',lambda *a:None)
     row['scene']['items'][0]['countertopEnabled']=False
     def generate(*args):
