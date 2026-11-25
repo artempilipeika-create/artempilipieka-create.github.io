@@ -36,7 +36,7 @@ def test_module_rows_and_photo_sheets_match_the_installed_runs():
     pages=[p.extract_text() for p in standalone.pages]
     assert '209,98' in ''.join(pages) and pages[-1].count('Шкаф справа')==1
     album=kitchen_album.render('Два шкафа',scene,{},image(),include_hardware=True)
-    assert 'Фурнитура по модулям' in read(album).pages[2].extract_text()
+    assert 'Фурнитура в проекте' in read(album).pages[2].extract_text()
 
 
 def test_order_draft_freezes_scope_and_reuses_one_revision(api,settings):

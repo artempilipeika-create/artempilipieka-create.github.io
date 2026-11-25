@@ -31,7 +31,7 @@ def pack_text(count, size, label):
     return f'{count} × {number(size / 1000)} м · {label}'
 
 
-def light_rows(kit):
+def light_components(kit):
     """Match installed lengths to their actual reel SKU or bar cutting plan."""
     lengths = Counter()
     for line in kit['lines']:
@@ -43,11 +43,17 @@ def light_rows(kit):
         stock[sku] = bar['length']
     for product in kit['rows']:
         sku, qty = product['article'], product['qty']
-        installed = purchase = measured(qty, 'pcs')
         if sku in lengths:
-            installed = measured(lengths[sku] / 1000, 'm')
-            purchase = pack_text(qty, stock.get(sku, REEL_MM), 'хлыст' if sku in stock else 'бобина')
-        yield dict(name=product['name'], article=sku, installed=installed, purchase=purchase,
+            yield product, Decimal(str(lengths[sku])) / 1000, 'm', (stock.get(sku, REEL_MM), 'хлыст' if sku in stock else 'бобина')
+        else:
+            yield product, qty, 'pcs', None
+
+
+def light_rows(kit):
+    for product, qty, unit, pack in light_components(kit):
+        installed = measured(qty, unit)
+        purchase = pack_text(product['qty'], *pack) if pack else installed
+        yield dict(name=product['name'], article=product['article'], installed=installed, purchase=purchase,
                    price=money(product['price']), amount=money(product['amount']))
 
 
@@ -79,28 +85,33 @@ def module_groups(items):
         yield title, parts
 
 
+def module_components(item):
+    """Installed quantities and, where relevant, the corresponding purchase pack."""
+    rows, _ = module_hardware(item)
+    rows, _ = purchasing_rows(refresh_base_source(item), rows)
+    metrics = open_tall_metrics(item) or vitrine_metrics(item)
+    for row in rows:
+        if row['qty'] == 0:
+            continue
+        if metrics and metrics.get('light_profile_article') == row['article'] and row['unit'] == 'pcs' and row['article']:
+            length = Decimal(str(sum(metrics['light_profile_cuts_mm']))) / 1000
+            yield row, length, 'm', (metrics['light_profile_stock_mm'], 'хлыст')
+        else:
+            yield row, row['qty'], row['unit'], None
+
+
 def module_rows(parts):
-    counts, profiles = {}, {}
+    counts = {}
     for item in with_installed_drawer_depths(parts):
-        rows, _ = module_hardware(item)
-        rows, _ = purchasing_rows(refresh_base_source(item), rows)
-        metrics = open_tall_metrics(item) or vitrine_metrics(item)
-        if metrics and metrics.get('light_profile_article'):
-            sku = metrics['light_profile_article']
-            profiles[sku] = (sum(metrics['light_profile_cuts_mm']), metrics['light_profile_stock_mm'])
-        for row in rows:
-            qty = row['qty']
-            if qty == 0:
-                continue
-            key = (row['name'], str(row['article'] or ''), row['unit'])
-            before = counts.get(key, 0)
-            counts[key] = None if before is None or qty is None else before + Decimal(str(qty))
+        for row, qty, unit, pack in module_components(item):
+            key = (row['name'], str(row['article'] or ''), unit, pack)
+            fitted, purchase = counts.get(key, (0, 0))
+            counts[key] = (None if qty is None or fitted is None else fitted + Decimal(str(qty)),
+                           None if row['qty'] is None or purchase is None else purchase + Decimal(str(row['qty'])))
     result = []
-    for (name, article, unit), qty in counts.items():
-        installed = purchase = measured(qty, unit)
-        if article in profiles and unit == 'pcs':
-            length, stock = profiles[article]
-            installed, purchase = measured(length / 1000, 'm'), pack_text(qty, stock, 'хлыст')
+    for (name, article, unit, pack), (qty, purchase_qty) in counts.items():
+        installed = measured(qty, unit)
+        purchase = pack_text(purchase_qty, *pack) if pack else installed
         result.append(dict(name=name, article=article, installed=installed, purchase=purchase))
     return result
 

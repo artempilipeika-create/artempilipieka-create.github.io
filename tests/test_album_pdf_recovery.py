@@ -59,7 +59,7 @@ def test_preflight_checks_saved_layout_and_pdf_retry_reuses_original_image(monke
             'version':3,'layout':'client','hero_data_url':encoded,'photo':True})
         assert response.status_code==200,response.text
         pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)>=5
-        assert 'Фурнитура по модулям' in pdf.pages[2].extract_text()
+        assert 'Фурнитура в проекте' in pdf.pages[2].extract_text()
         assert pdf.pages[0].images[0].data==jpeg
     row['scene']=kitchen(35)
     assert client.post(url,json={'version':3}).json()=={'ok':True}

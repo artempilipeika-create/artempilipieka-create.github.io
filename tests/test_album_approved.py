@@ -166,7 +166,7 @@ def test_price_is_one_regular_line_in_the_lower_right_and_keeps_the_drawings(bac
     assert color[0]==color[1]==color[2] and (color[0]>.5)==light_text
     assert next(iter(page['/Resources']['/XObject'].values())).get_object().get_data()==picture.getvalue()
     assert 'Вид спереди' in pdf.pages[1].extract_text()
-    assert 'Фурнитура по модулям' in pdf.pages[2].extract_text()
+    assert 'Фурнитура в проекте' in pdf.pages[2].extract_text()
     assert 'Материалы и характер' in pdf.pages[-2].extract_text()
     assert 'Состав кухни' in pdf.pages[-1].extract_text() and caption in pdf.pages[-1].extract_text()
     assert all('Рассчитанная часть' not in pg.extract_text() for pg in pdf.pages)

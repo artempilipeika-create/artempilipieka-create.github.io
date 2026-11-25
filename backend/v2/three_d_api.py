@@ -1087,10 +1087,11 @@ def router(settings):
                 Image.new('RGB', (8, 6), '#f6f3ed').save(probe, 'JPEG')
                 hero, detail, photo = probe.getvalue(), None, False
             geometry = None if body.elevation_geometry is None else [g.model_dump() for g in body.elevation_geometry]
+            summary = kitchen_album.price_summary(price)
             data = kitchen_album.render(row['name'], row['scene'], materials, hero, detail, photo,
                                        material_visuals=visuals, elevation_geometry=geometry,
-                                       include_hardware=body.include_hardware, price=price)
-            return data, kitchen_album.price_summary(price)
+                                       include_hardware=body.include_hardware, price=price, page_info=summary)
+            return data, summary
         except ValueError as exc:
             logging.getLogger(__name__).warning('Client album rejected: %s', str(exc))
             error(400, str(exc))

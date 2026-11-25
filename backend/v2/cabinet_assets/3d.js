@@ -569,7 +569,7 @@ async function openKitchenAlbumFlow(){
   const currentView=plannerScene?.mode==='3d'&&!plannerScene.isFallback?plannerScene.captureView():null;
   const albumView=plannerScene?.renderRooms?.id?currentView:null;
   let geometry;
-  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261125-full-album');
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261125-project-hardware');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
   return openKitchenAlbum({

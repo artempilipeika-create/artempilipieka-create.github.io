@@ -1,6 +1,6 @@
 """Client album with the approved cover and automatic material/list continuations.
 
-Optional hardware sheets contain each module’s customer-visible fittings and installed quantities.
+Optional hardware sheets collect the installed fittings across the saved project.
 """
 from io import BytesIO
 from html import escape
@@ -18,7 +18,7 @@ from .wardrobe_estimate import GROUPS
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
 from .album_elevation import draw as draw_elevation, validate_geometry
-from . import album_wardrobe, customer_hardware, customer_hardware_pdf
+from . import album_wardrobe, album_hardware, album_hardware_pdf
 from .album_layout import schedule
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -172,7 +172,7 @@ def draw_cover(c, name, scene, hero, caption):
     return order
 
 
-def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None, include_hardware=False, price=None):
+def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None, include_hardware=False, price=None, page_info=None):
     fonts()
     if not hero or not scene.get('items'):
         raise ValueError('Добавьте мебель и вид проекта.')
@@ -184,8 +184,7 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
     mode=subject(scene['items'],drawings)
     product={'kitchen':'КУХНЯ','wardrobe':'ШКАФ','mixed':'МЕБЕЛЬ'}[mode]
     details=validate_geometry(scene['items'],elevation_geometry)
-    report = customer_hardware.build(name, scene) if include_hardware else None
-    hardware_sheets = customer_hardware_pdf.pages(report) if report else []
+    hardware_sheets = album_hardware_pdf.sheets(album_hardware.project_rows(scene), W, H) if include_hardware else []
     hardware_start = 2 + len(drawings)
     material_start = hardware_start + len(hardware_sheets)
     schedule_start=material_start+len(material_sheets)
@@ -236,7 +235,9 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         c.showPage()
 
     for i, sheet in enumerate(hardware_sheets, hardware_start):
-        customer_hardware_pdf.draw(c, report, sheet, i, page_count, (W, H))
+        page(i, 'Фурнитура в проекте')
+        album_hardware_pdf.draw(c, sheet, (W, H), pricing['groups']['hardware'], i == hardware_start)
+        c.showPage()
 
     gap = 24
     width = (W-2*M-gap)/2
@@ -314,4 +315,6 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
             text('Продолжение состава — на следующем листе.',M,120,W-2*M,10,color=MUTED)
         c.showPage()
     c.save()
+    if page_info is not None:
+        page_info.update(pages=page_count, hardwarePages=len(hardware_sheets))
     return out.getvalue()

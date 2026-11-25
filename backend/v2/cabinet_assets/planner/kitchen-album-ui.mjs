@@ -18,7 +18,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
       <canvas data-preview width="1200" height="849" aria-label="Рендер проекта"></canvas>
       <span data-cover-price class="mf-album-cover-price" hidden></span>
     </div>
-    <ul class="mf-album-pages" aria-label="Содержание альбома"><li>Обложка</li><li>2D-чертежи с размерами</li><li>Фурнитура</li><li>Материалы</li><li>Состав и стоимость</li></ul>
+    <ul class="mf-album-pages" aria-label="Содержание альбома"><li>Обложка</li><li>2D-чертежи с размерами</li><li data-hardware>Фурнитура в проекте</li><li>Материалы</li><li>Состав и стоимость</li></ul>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера для альбома.</label>
     <p data-message role="status" aria-live="polite">Сохраняем проект и проверяем готовый фоторендер…</p>
     <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Обновить статус</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-photo class="presentation-download" hidden>Скачать фоторендер</a><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>`;
@@ -74,9 +74,10 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     const price=JSON.parse(r.headers.get('X-MF-Album-Price'));
     if(!price)throw Error('Не удалось получить стоимость заказа. Соберите PDF ещё раз.');
     showPrice(price);
+    if(price.hardwarePages)q('[data-hardware]').textContent=`Фурнитура в проекте · ${price.hardwarePages} стр.`;
     if(pdfURL)URL.revokeObjectURL(pdfURL);pdfURL=URL.createObjectURL(blob);
     q('[data-pdf]').href=pdfURL;q('[data-pdf]').download=wardrobe?'Martin_Forest_Wardrobe_Album.pdf':mode==='mixed'?'Martin_Forest_Album.pdf':'Martin_Forest_Kitchen_Album.pdf';
-    say('Альбом готов.');
+    say(price.pages ? `Альбом готов · ${price.pages} стр.` : 'Альбом готов.');
   };
   const consume=async result=>{
     if(closed)return;assertSame();

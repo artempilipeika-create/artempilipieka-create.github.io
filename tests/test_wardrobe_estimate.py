@@ -121,8 +121,10 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
         pdf = PdfReader(BytesIO(response.content))
         assert len(pdf.pages) >= 5 and pdf.pages[0].images[0].data == photo
         cover, sheet = pdf.pages[0].extract_text(), pdf.pages[-1].extract_text()
-        assert 'мм' in pdf.pages[1].extract_text() and 'Фурнитура по модулям' in pdf.pages[2].extract_text()
+        assert 'мм' in pdf.pages[1].extract_text() and 'Фурнитура в проекте' in pdf.pages[2].extract_text()
         shown = json.loads(response.headers['X-MF-Album-Price'])
+        assert shown['pages'] == len(pdf.pages) and shown['hardwarePages'] >= 1
+        assert shown['groups']['hardware'] in pdf.pages[2].extract_text()
         assert shown['amount'] == money(quote['total'])+' BYN'
         assert shown['amount'] in cover and shown['amount'] in sheet and shown['label'] in cover
         assert all(x not in str(shown).lower() for x in ('markup','fingerprint','baseunit'))
@@ -177,9 +179,14 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
     with transaction(settings) as conn:
         conn.execute("UPDATE mf_user_roles SET role='client' WHERE user_id=%s", (manager,))
     def issued_sheet(path, version):
-        response = api.post(path+'/sales-album.pdf', json=dict(version=version, layout='client', hero_data_url=encoded))
+        response = api.post(path+'/sales-album.pdf', json=dict(version=version, layout='client', include_hardware=True, hero_data_url=encoded))
         assert response.status_code == 200, response.text
-        return PdfReader(BytesIO(response.content)).pages[-1].extract_text()
+        doc = PdfReader(BytesIO(response.content))
+        hardware = doc.pages[2].extract_text()
+        assert 'Стоимость фурнитуры' in hardware and json.loads(response.headers['X-MF-Album-Price'])['groups']['hardware'] in hardware
+        if path == kitchen_path:
+            assert 'BYN' not in hardware
+        return doc.pages[-1].extract_text()
     issued = issued_sheet(path, 1)
     assert all(money(g['total'])+' BYN' in issued for g in quote['groups'].values())
     assert money(quote['total'])+' BYN' in issued
