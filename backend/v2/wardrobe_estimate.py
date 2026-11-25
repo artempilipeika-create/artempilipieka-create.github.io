@@ -390,10 +390,10 @@ def calculate(scene, markup=0, date=None, rates=None):
 def customer_totals(quote):
     """Only customer selling amounts are passed from the estimate into the album."""
     groups = {}
+    has_price = False
     for group in quote['groups'].values():
-        if group['rows']:
-            priced = group['missing'] < len(group['rows'])
-            groups[group['title']] = group['total'] if priced else None
-    has_price = any(amount is not None for amount in groups.values())
+        priced = group['missing'] < len(group['rows'])
+        has_price = has_price or priced
+        groups[group['title']] = group['total'] if priced or not group['rows'] else None
     return dict(date=quote['date'], total=quote['total'] if has_price else None,
                 complete=has_price and quote['complete'], missing=quote['missing'], groups=groups)

@@ -5,7 +5,8 @@ import vm from 'node:vm';
 import {randomUUID} from 'node:crypto';
 const source=fs.readFileSync(new URL('../../backend/v2/cabinet_assets/planner/kitchen-album-ui.mjs',import.meta.url),'utf8');
 const photo='data:image/jpeg;base64,cGFpZC1waG90bw==',view='data:image/png;base64,dmlldw==';
-function harness({existing={state:'none'},pdfFails=false,renderPending=false,preflightFails=false}={}){
+const price={label:'Стоимость заказа',total_label:'Итого',amount:'2 005,51 BYN',groups:{hardware:'1 207,30 BYN',materials:'386,40 BYN',work:'411,81 BYN'},note:''};
+function harness({summary=price,existing={state:'none'},pdfFails=false,renderPending=false,preflightFails=false}={}){
   let dialog,paid=0,pdfAttempts=0,current=existing,version=1,timers=new Map(),serial=0;
   const exports=[],requests=[],state={id:'project',version:1,user:'owner',scene:{width:600,albumSettings:{order_number:"QA-125"}}};
   class Element{
@@ -25,14 +26,14 @@ function harness({existing={state:'none'},pdfFails=false,renderPending=false,pre
     createImageBitmap:async()=>({width:1536,height:1024,close(){}}),
     setTimeout:fn=>{const id=++serial;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     fetch:async(url,opts)=>{assert.match(url,/sales-album.pdf$/);const body=JSON.parse(opts.body);exports.push(body);pdfAttempts++;
-      return {ok:!pdfFails||pdfAttempts>1,json:async()=>({}),blob:async()=>new Blob(['PDF'])};}
+      return {ok:!pdfFails||pdfAttempts>1,headers:{get:key=>key==='X-MF-Album-Price'?JSON.stringify(summary):null},json:async()=>({}),blob:async()=>new Blob(['PDF'])};}
   });
   vm.runInContext(source.replace('export async function','async function'),context);
   const options={hasCurrentView:true,setOrderNumber:value=>{state.scene.albumSettings={order_number:value};},save:async()=>{state.version=++version;},snapshot:()=>structuredClone(state),capture:async(mode,angle)=>({hero:angle==='current'?'data:image/png;base64,Y3VycmVudA==':view,detail:view}),
     request:async(path,method='GET',body)=>{requests.push({path,method,body});
       if(path==='/3d-sales-capabilities')return {automatic_render:true};
       if(path.endsWith('/sales-album/preflight')){
-        if(preflightFails)throw Error('Чертёж не соответствует сохранённой кухне.');
+        if(preflightFails)throw Error('Добавьте мебель и вид проекта.');
         return {ok:true};
       }
       if(path.endsWith('/reuse')||method==='GET')return current;
@@ -42,7 +43,7 @@ function harness({existing={state:'none'},pdfFails=false,renderPending=false,pre
   return {open:()=>context.openKitchenAlbum(options),get d(){return dialog;},q:s=>dialog.querySelector(s),exports,requests,
     get paid(){return paid;},state,setResult:r=>current=r,tick:async()=>{const f=[...timers.values()][0];assert.ok(f);timers.clear();await f();}};
 }
-test('One consent creates one photo and automatically uses the original in the four-page PDF',async()=>{
+test('One consent creates one photo and automatically uses the original in the two-page PDF',async()=>{
   const h=harness();await h.open();assert.equal(h.paid,0);
   h.q('[data-consent]').checked=true;h.q('[data-consent]').onchange();
   await Promise.all([h.q('[data-create]').onclick(),h.q('[data-create]').onclick()]);
@@ -54,6 +55,20 @@ test('One consent creates one photo and automatically uses the original in the f
   assert.equal(h.paid,1);assert.equal(h.exports.length,2);assert.equal(h.exports[1].hero_data_url,photo);
   assert.equal(h.q('[data-create]').hidden,true);
 });
+test('the render and the three price rows use the very same complete or partial PDF quote',async()=>{
+ for(const summary of [price,{...price,label:'Рассчитанная часть заказа',total_label:'Итого по рассчитанным позициям',note:'Позиций без цены: 24.'}]){
+   const h=harness({summary,existing:{state:'ready',image_data_url:photo}});await h.open();
+   assert.equal(h.q('[data-cover-price]').hidden,false);assert.equal(h.q('[data-breakdown]').hidden,false);
+   assert.equal(h.q('[data-cover-label]').textContent,summary.label);
+   assert.equal(h.q('[data-cover-amount]').textContent,h.q('[data-total]').textContent);
+   assert.equal(h.q('[data-total]').textContent,summary.amount);
+   for(const [key,value] of Object.entries(summary.groups))assert.equal(h.q('[data-'+key+']').textContent,value);
+   assert.equal(h.q('[data-total-label]').textContent,summary.total_label);
+   assert.equal(h.q('[data-price-note]').hidden,!summary.note);assert.equal(h.paid,0);
+   assert.ok(h.d.html.indexOf('data-breakdown')>h.d.html.indexOf('data-preview'));
+   assert.doesNotMatch(h.d.html,/Чертёж и размеры|Состав и стоимость/);
+ }
+});
 test('Rebuilding a failed PDF never calls the paid provider again',async()=>{
   const h=harness({existing:{state:'ready',image_data_url:photo},pdfFails:true});await h.open();
   assert.equal(h.q('[data-build]').hidden,false);assert.equal(h.q('[data-pdf]').hidden,true);
@@ -64,7 +79,7 @@ test('Rebuilding a failed PDF never calls the paid provider again',async()=>{
 });
 test('Layout failure is visible and blocks charging before the paid image request',async()=>{
   const h=harness({preflightFails:true});await h.open();
-  assert.match(h.q('[data-message]').textContent,/Чертёж не соответствует/);
+  assert.match(h.q('[data-message]').textContent,/Добавьте мебель/);
   assert.equal(h.q('[data-message]').scrolled,true);
   h.q('[data-consent]').checked=true;h.q('[data-consent]').onchange();
   assert.equal(h.q('[data-create]').disabled,true);

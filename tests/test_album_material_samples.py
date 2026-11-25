@@ -88,7 +88,7 @@ def test_page_three_keeps_mixed_decors_names_and_their_samples():
     assert len(pdf.pages[1].images) == 0
 
 
-def test_album_route_uses_saved_catalogue_visuals_and_never_requests_a_photo(monkeypatch):
+def test_price_album_omits_catalogue_samples_and_never_requests_a_photo(monkeypatch):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
     from backend.v2 import three_d_api as api
@@ -124,6 +124,6 @@ def test_album_route_uses_saved_catalogue_visuals_and_never_requests_a_photo(mon
             'version': 3, 'layout': 'client', 'hero_data_url': encoded, 'photo': False})
     assert response.status_code == 200, response.text
     pdf = PdfReader(BytesIO(response.content))
-    assert len(pdf.pages) == 4 and len(pdf.pages[2].images) == 2
-    text = pdf.pages[2].extract_text()
-    assert 'Дуб натуральный' in text and 'F243 ST76' in text
+    assert len(pdf.pages) == 2 and len(pdf.pages[1].images) == 0
+    text = pdf.pages[1].extract_text()
+    assert 'Материалы' in text and 'Дуб натуральный' not in text and 'F243 ST76' not in text

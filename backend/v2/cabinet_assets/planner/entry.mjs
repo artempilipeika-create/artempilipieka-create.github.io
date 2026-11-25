@@ -31,7 +31,7 @@ import {FinishCatalogue} from './finish-catalogue.mjs';
 import {AccessoryUI} from './accessory-ui.mjs?v=20261025-lively-cards';
 import {MobilityUI} from './mobility-ui.mjs';
 import {roomError} from './room-plan.mjs';
-import {ProjectSafety} from './project-safety.mjs?v=20261120-hardware';
+import {ProjectSafety} from './project-safety.mjs?v=20261125-album-price';
 import {SceneDimensions} from './dimensions.mjs';
 import {BlanksUI} from './blanks-ui.mjs';
 import {CabinetControls} from './cabinet-controls.mjs';
@@ -407,7 +407,7 @@ class PlannerApplication {
     // the designer must see the collected technical brief first.
     this.listen(get('to-order'),'click',event=>{
       event.preventDefault();event.stopImmediatePropagation();
-      if(this.safety)this.safety.reviewBeforeOrder(()=>show(true));else show(true);
+      show(true);
     },true);
     this.listen(input,'input',render);
     this.listen(input,'change',commit);

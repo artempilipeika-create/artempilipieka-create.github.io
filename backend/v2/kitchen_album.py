@@ -103,6 +103,52 @@ def schedule_pages(items):
     return pages
 
 
+def draw_cover(c, name, scene, hero, *, price=None):
+    # Approved cover 2: original image to the page edges, brand above, order/title below.
+    cover_font=Path(__file__).with_name('document_assets')/'DejaVuSerif.ttf'
+    if hashlib.sha256(cover_font.read_bytes()).hexdigest()!='8f2c103bfa3fd5de71f1b92b18f21906b5a26871fb7e19a9a4c9af539c3cc7ab':
+        raise ValueError('Font integrity failure')
+    if 'SalesSerif' not in pdfmetrics.getRegisteredFontNames():pdfmetrics.registerFont(TTFont('SalesSerif',str(cover_font)))
+    picture=ImageReader(BytesIO(hero));iw,ih=picture.getSize();factor=max(W/iw,H/ih)
+    c.drawImage(picture,(W-iw*factor)/2,(H-ih*factor)/2,iw*factor,ih*factor)
+    with Image.open(BytesIO(hero)) as im:
+        # Select readable text colour without altering or recompressing the photo.
+        grey=im.convert('L')
+        top_luma=ImageStat.Stat(grey.crop((0,0,iw,max(1,int(ih*.08))))).mean[0]
+        bottom_luma=ImageStat.Stat(grey.crop((0,int(ih*.80),iw,ih))).mean[0]
+    top_ink=INK if top_luma>140 else white;bottom_ink=INK if bottom_luma>140 else white
+    c.saveState()
+    label='MARTIN FOREST';spacing=2.4;size=19
+    brand_width=pdfmetrics.stringWidth(label,'SalesBold',size)+(len(label)-1)*spacing
+    t=c.beginText((W-brand_width)/2,H-30);t.setFont('SalesBold',size);t.setCharSpace(spacing);t.setFillColor(top_ink);t.textLine(label);c.drawText(t)
+    c.restoreState()
+    order=str((scene.get('albumSettings') or {}).get('order_number') or '').strip()
+    c.setFont('SalesBold',8.5);c.setFillColor(bottom_ink)
+    c.drawString(32,91,'ЗАКАЗ № '+(order or 'не указан'))
+    style=ParagraphStyle('cover-title',fontName='SalesSerif',fontSize=24,leading=28,textColor=bottom_ink)
+    width = W-64 if price is None else W*.55
+    title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
+    if th>70:
+        style.fontSize=18;style.leading=21;title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
+    if th>70 and price is not None:
+        style.fontSize=13;style.leading=15;title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
+    if th>70:raise ValueError('Название слишком длинное для обложки. Сократите название проекта.')
+    title.drawOn(c,32,79-th)
+    if price is not None:
+        right, width = W-32, W*.335
+        c.saveState()
+        c.setFillColor(INK)
+        c.setFillAlpha(.94)
+        c.roundRect(right-width, 26, width, 78, 4, fill=1, stroke=0)
+        c.restoreState()
+        c.setFillColor(white)
+        for value, font, size, y in [(price['label'], 'Sales', 13, 81), (price['amount'], 'SalesBold', 28, 45)]:
+            size = min(size, size*(width-30)/max(1, pdfmetrics.stringWidth(value, font, size)))
+            c.setFont(font, size)
+            c.drawRightString(right-15, y, value)
+    return order
+
+
 def render(name, scene, materials, hero, detail=None, photo=True, *, material_visuals=None, elevation_geometry=None, include_hardware=False, price=None):
     fonts()
     if not hero or not scene.get('items'):
@@ -146,33 +192,7 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         text(f'{number:02d} / {page_count:02d}', W-90, 30, 54, 8, color=MUTED)
         return H-66-title_height-18
 
-    # Approved cover 2: original image to the page edges, brand above, order/title below.
-    cover_font=Path(__file__).with_name('document_assets')/'DejaVuSerif.ttf'
-    if hashlib.sha256(cover_font.read_bytes()).hexdigest()!='8f2c103bfa3fd5de71f1b92b18f21906b5a26871fb7e19a9a4c9af539c3cc7ab':
-        raise ValueError('Font integrity failure')
-    if 'SalesSerif' not in pdfmetrics.getRegisteredFontNames():pdfmetrics.registerFont(TTFont('SalesSerif',str(cover_font)))
-    picture=ImageReader(BytesIO(hero));iw,ih=picture.getSize();factor=max(W/iw,H/ih)
-    c.drawImage(picture,(W-iw*factor)/2,(H-ih*factor)/2,iw*factor,ih*factor)
-    with Image.open(BytesIO(hero)) as im:
-        # Select readable text colour without altering or recompressing the photo.
-        grey=im.convert('L')
-        top_luma=ImageStat.Stat(grey.crop((0,0,iw,max(1,int(ih*.08))))).mean[0]
-        bottom_luma=ImageStat.Stat(grey.crop((0,int(ih*.80),iw,ih))).mean[0]
-    top_ink=INK if top_luma>140 else white;bottom_ink=INK if bottom_luma>140 else white
-    c.saveState()
-    label='MARTIN FOREST';spacing=2.4;size=19
-    brand_width=pdfmetrics.stringWidth(label,'SalesBold',size)+(len(label)-1)*spacing
-    t=c.beginText((W-brand_width)/2,H-30);t.setFont('SalesBold',size);t.setCharSpace(spacing);t.setFillColor(top_ink);t.textLine(label);c.drawText(t)
-    c.restoreState()
-    order=str((scene.get('albumSettings') or {}).get('order_number') or '').strip()
-    c.setFont('SalesBold',8.5);c.setFillColor(bottom_ink)
-    c.drawString(32,91,'ЗАКАЗ № '+(order or 'не указан'))
-    style=ParagraphStyle('cover-title',fontName='SalesSerif',fontSize=24,leading=28,textColor=bottom_ink)
-    title=Paragraph(escape(name),style);_,th=title.wrap(W-64,90)
-    if th>70:
-        style.fontSize=18;style.leading=21;title=Paragraph(escape(name),style);_,th=title.wrap(W-64,90)
-    if th>70:raise ValueError('Название слишком длинное для обложки. Сократите название проекта.')
-    title.drawOn(c,32,79-th)
+    order = draw_cover(c, name, scene, hero)
     c.showPage()
 
     for sheet_number,cabinet in enumerate(drawings,2):

@@ -568,8 +568,7 @@ async function openKitchenAlbumFlow(){
   const plannerScene=globalThis.MF_PLANNER?.scene;
   const currentView=plannerScene?.mode==='3d'&&!plannerScene.isFallback?plannerScene.captureView():null;
   const albumView=plannerScene?.renderRooms?.id?currentView:null;
-  let geometry;
-  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261122-wardrobe-render');
+  const {openKitchenAlbum}=await import('/account/planner/kitchen-album-ui.mjs?v=20261125-album-price');
   const cleanSnapshot=()=>{const scene=scenePayload();delete scene.selected_item_id;delete scene.view_mode;
     return {id:project?.project_id,version:project?.version,name:$('project-name').value.trim(),user:user?.user_id,scene};};
   return openKitchenAlbum({
@@ -578,13 +577,11 @@ async function openKitchenAlbumFlow(){
     setOrderNumber:value=>{state.albumSettings={order_number:value};updateAll();},
     hasCurrentView:Boolean(currentView),
     capture:async(mode,view='full')=>{
-      const {albumGeometry}=await import('/account/planner/album-geometry.mjs?v=20261029-album-pagination');
-      geometry??=albumGeometry(state.items,templateFor);
       const scene=globalThis.MF_PLANNER?.scene;
-      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид проекта.');return {hero:data,geometry};}
+      if(!scene||scene.isFallback){const data=capturePdfPreviews().preview_data_url;if(!data)throw Error('Не удалось получить вид проекта.');return {hero:data};}
       const {captureAlbumViews}=await import('/account/planner/presentation-capture.mjs?v=20261122-wardrobe-render');
       await scene.renderRooms?.waitReady();
-      return {...captureAlbumViews(scene,{detail:false,wardrobe:mode==='wardrobe',savedView:view==='current'?currentView:mode==='wardrobe'?null:albumView}),geometry};
+      return captureAlbumViews(scene,{detail:false,wardrobe:mode==='wardrobe',savedView:view==='current'?currentView:mode==='wardrobe'?null:albumView});
     },
     request:(path,method='GET',body)=>api(path,method,body,{},{timeoutMs:325000})
   });
@@ -1599,7 +1596,8 @@ function exportBazisProject(liraProfiles=[]){
 }
 
 async function toOrder(){
-  if(globalThis.MF_PROJECT_SAFETY&&!globalThis.MF_PROJECT_SAFETY.orderReady())return;
+  const orderError=globalThis.MF_PROJECT_SAFETY?.orderError();
+  if(orderError)throw new Error(orderError);
   const briefError=globalThis.MF_PRODUCTION_NOTES?.validate(state);
   if(briefError)throw new Error(briefError);
   if(state.items.some(it=>it.module_type==='blank')){

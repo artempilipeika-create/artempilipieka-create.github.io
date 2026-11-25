@@ -74,7 +74,9 @@ def test_elevation_module_is_served_with_the_constructor_assets():
     r=client.get('/account/planner/album-geometry.mjs')
     assert r.status_code==200 and 'export function albumGeometry' in r.text
     assert '/account/planner/bridge.js?' in client.get('/constructor').text
-    assert '/account/planner/album-geometry.mjs?' in client.get('/account/3d.js').text
+    entry=client.get('/account/3d.js').text
+    assert '/account/planner/kitchen-album-ui.mjs?' in entry
+    assert '/account/planner/album-geometry.mjs?' not in entry
 
 
 def test_two_section_wardrobe_pdf_before_and_after_photo():

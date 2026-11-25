@@ -62,7 +62,7 @@ with sync_playwright() as pw:
         }''',rotation)
         expect(dim()).to_be_visible();expect(page.locator('.dimension-run.dimension-label')).to_have_text('1800')
     try:
-        page.goto(base+'/constructor');expect(page.locator('#check-project')).to_be_attached(timeout=30000)
+        page.goto(base+'/constructor');expect(page.locator('#project-versions')).to_be_attached(timeout=30000)
         expect(page.locator('body')).to_have_attribute('data-planner-renderer','webgl');page.locator('#room-setup-close').click()
         fixture();saved();page.screenshot(path=str(out/'desktop.png'))
         # Overall room dimensions persist when zoomed into furniture, while
@@ -92,9 +92,6 @@ with sync_playwright() as pw:
         page.evaluate('()=>{MF_PLANNER.adapter.selected.x+=0.25;MF_PLANNER.bridge.refresh();}')
         expect(page.locator('#project-save-warning')).to_contain_text('Модуль 3 · Положение X',timeout=12000)
         expect(page.get_by_role('button',name='Сохранить копией',exact=True)).to_be_hidden()
-        page.get_by_role('button',name='Проверить параметры',exact=True).click()
-        expect(page.locator('[data-code=server-validation]')).to_contain_text('Положение X')
-        page.locator('#project-checks-dialog').get_by_role('button',name='Закрыть',exact=True).click()
         page.evaluate('()=>{MF_PLANNER.adapter.selected.x-=0.25;MF_PLANNER.bridge.refresh();}')
         saved();expect(page.locator('#project-save-warning')).to_be_hidden();expected_rejection=False
         fixture();saved()

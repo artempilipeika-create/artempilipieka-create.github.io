@@ -109,7 +109,7 @@ def test_material_overflow_preflight_and_pdf_succeed_without_a_paid_request(monk
             response=client.post(f'/api/v2/3d-projects/{pid}/sales-album.pdf',json={
                 'version':3,'layout':'client','hero_data_url':encoded,'photo':True})
             assert response.status_code==200,response.text
-            pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)>4
+            pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)==2
             text=' '.join(' '.join(p.extract_text().split()) for p in pdf.pages)
-            for record in records.values():assert text.count(record['name'])==1
+            assert 'Выбранный-' not in text and 'Стоимость заказа' in text
             assert pdf.pages[0].images[0].data==jpeg

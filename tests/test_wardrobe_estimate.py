@@ -86,6 +86,7 @@ def test_owner_markup_and_dated_snapshot(api,settings,admin_user):
 
 def test_manager_album_and_render_use_the_saved_revision_and_current_selling_price(api, settings, admin_user, monkeypatch):
     import base64
+    import json
     from copy import deepcopy
     import pytest
     from psycopg.types.json import Jsonb
@@ -118,8 +119,16 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
                             hero_data_url=encoded, include_hardware=True))
         assert response.status_code == 200, response.text
         pdf = PdfReader(BytesIO(response.content))
-        assert pdf.pages[0].images[0].data == photo
-        sheet = pdf.pages[-1].extract_text()
+        assert len(pdf.pages) == 2 and pdf.pages[0].images[0].data == photo
+        cover, sheet = [page.extract_text() for page in pdf.pages]
+        shown = json.loads(response.headers['X-MF-Album-Price'])
+        assert shown['amount'] == money(quote['total'])+' BYN'
+        assert shown['amount'] in cover and shown['amount'] in sheet and shown['label'] in cover
+        assert all(x not in str(shown).lower() for x in ('markup','fingerprint','baseunit'))
+        assert sheet.index('Фурнитура') < sheet.index('Материалы') < sheet.index('Работы') < sheet.index('Итого')
+        for key, group in quote['groups'].items():
+            known = not group['rows'] or group['missing'] < len(group['rows'])
+            assert shown['groups'][key] == (money(group['total'])+' BYN' if known else 'Уточняется')
         assert money(quote['total'])+' BYN' in sheet
         assert '.'.join(reversed(quote['date'].split('-'))) in sheet
         assert money(quote['base'])+' BYN' not in sheet and 'наценка' not in sheet.lower()
@@ -152,8 +161,8 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
     reopened = api.get(kitchen_path).json()
     assert reopened['scene']['items'][0]['countertopMaterialId'] == WORKTOP_ID
     first, sheet = album(kitchen_path, 1, old)
-    assert not first['complete'] and 'Рассчитанная часть заказа' in sheet
-    assert 'Позиций к уточнению: '+str(first['missing']) in sheet
+    assert not first['complete'] and 'Итого по рассчитанным позициям' in sheet
+    assert 'Позиций без цены: '+str(first['missing']) in sheet
     old['items'][0]['countertopMaterialId'] = second
     update = api.patch(kitchen_path, json=dict(name='Прежняя кухня',version=1,scene=old))
     assert update.status_code == 200, update.text
@@ -168,5 +177,22 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
         response = api.post(path+'/sales-album.pdf', json=dict(version=version, layout='client', hero_data_url=encoded))
         assert response.status_code == 200, response.text
         return PdfReader(BytesIO(response.content)).pages[-1].extract_text()
-    assert money(quote['total'])+' BYN' in issued_sheet(path, 1)
-    assert 'Уточнит менеджер' in issued_sheet(kitchen_path, 2)
+    issued = issued_sheet(path, 1)
+    assert all(money(g['total'])+' BYN' in issued for g in quote['groups'].values())
+    assert money(quote['total'])+' BYN' in issued
+    assert issued_sheet(kitchen_path, 2).count('Уточняется') == 4
+
+def test_earlier_issued_pdf_supplies_its_original_three_selling_amounts(monkeypatch):
+    from decimal import Decimal
+    from reportlab.pdfgen.canvas import Canvas
+    from backend.v2.wardrobe_estimate import calculate, customer_totals
+    from backend.v2.wardrobe_estimate_pdf import issued_price
+    from tests.test_kitchen_estimate import cabinet
+
+    monkeypatch.setattr(Canvas, 'setKeywords', lambda *_: None)
+    for scene in ({'items':[panel()]}, {'items':[cabinet()]}):
+        quote = calculate(scene, 19, date='2026-10-01')
+        price = issued_price(render('Проект', scene, quote), quote['date'], Decimal(str(quote['total'])), quote['complete'])
+        expected = customer_totals(quote)
+        assert {k:float(v) if v is not None else None for k,v in price['groups'].items()} == expected['groups']
+        assert price['missing'] == expected['missing']

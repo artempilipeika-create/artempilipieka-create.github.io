@@ -61,7 +61,7 @@ with sync_playwright() as pw:
     browser=pw.chromium.launch(headless=True,executable_path=os.environ.get('MF_TEST_BROWSER'),args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
     context=browser.new_context(viewport={'width':1500,'height':1000});context.route('**/*',gate)
     page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
-    def ready():expect(page.locator('#check-project')).to_be_attached(timeout=30000)
+    def ready():expect(page.locator('#project-versions')).to_be_attached(timeout=30000)
     def saved():expect(page.locator('#studio-save-state')).to_have_text('Сохранено',timeout=12000)
     def name(value):page.locator('#project-name').fill(value)
     def menu(selector):page.locator('.studio-menu summary').click();page.locator(selector).click()
@@ -70,8 +70,7 @@ with sync_playwright() as pw:
         page.evaluate('''()=>{const p=MF_PLANNER,it=p.adapter.createDraft({bazis:MF_FURNITURE_CORE.VITRINE_VARIANTS[0].id});it.item_id='qa-vitrine';it.glass_shelf_count=3;
           p.bridge.restore({name:'Проект проверки',scene:{schema_version:2,room:{width:4200,depth:3600,height:3000,setup_complete:true,survey:'none',features:[]},items:[it],selected_item_id:it.item_id,view_mode:'3d'}});}''')
         saved();assert len(projects)==1;pid=next(iter(projects));assert projects[pid]['scene']['items'][0]['glass_shelf_count']==3
-        page.locator('#check-project').click();expect(page.locator('[data-code="material"]')).to_have_count(1);expect(page.locator('[data-code="native-adjustment"]')).to_have_count(1)
-        page.screenshot(path=str(args.out/'project-checks.png'));page.locator('[data-code="material"] strong').click();assert page.evaluate('MF_PLANNER.adapter.selected.item_id')=='qa-vitrine'
+        expect(page.locator('#check-project')).to_have_count(0)
         menu('#project-versions');page.get_by_role('button',name='Первоначальный',exact=True).click();page.locator('#project-version-save').click();expect(page.locator('.mf-version-row')).to_have_count(1)
         page.locator('#project-versions-dialog .mf-project-dialog-head button').click();name('После правок клиента');saved()
         menu('#project-versions');page.locator('.mf-version-row button').click();expect(page.locator('.mf-version-row')).to_have_count(2);expect(page.locator('#project-name')).to_have_value('Проект проверки')
@@ -83,7 +82,7 @@ with sync_playwright() as pw:
         offline=False;page.locator('#project-drafts-dialog .mf-version-row').first.get_by_role('button',name='Восстановить',exact=True).click();saved()
         expect(page.locator('#project-name')).to_have_value('Локальные правки');assert len(projects)==1 and projects[pid]['name']=='Локальные правки'
         # A second tab saves a newer revision. The first must preserve its draft.
-        other=context.new_page();other.on('pageerror',lambda e:errors.append(str(e)));other.goto(base+'/constructor');expect(other.locator('#check-project')).to_be_attached(timeout=30000);expect(other.locator('#project-name')).to_have_value('Локальные правки')
+        other=context.new_page();other.on('pageerror',lambda e:errors.append(str(e)));other.goto(base+'/constructor');expect(other.locator('#project-versions')).to_be_attached(timeout=30000);expect(other.locator('#project-name')).to_have_value('Локальные правки')
         other.locator('#project-name').fill('Из другой вкладки');expect(other.locator('#studio-save-state')).to_have_text('Сохранено',timeout=12000)
         name('Мои правки');expect(page.locator('#studio-save-state')).to_have_text('Конфликт версий',timeout=12000);assert projects[pid]['name']=='Из другой вкладки'
         page.screenshot(path=str(args.out/'project-conflict.png'));page.get_by_role('button',name='Сохранить копией',exact=True).click();saved();assert len(projects)==2
@@ -96,11 +95,12 @@ with sync_playwright() as pw:
         page.evaluate('MF_PROJECT_SAFETY.flush()');saved()
         assert any(d['snapshot']['name']=='Правки после сбоя восстановления' for d in page.evaluate('MF_PROJECT_SAFETY.drafts()'))
         page.evaluate('MF_PLANNER.bridge.duplicateProject()');saved();assert len(projects)==3
-        page.set_viewport_size({'width':390,'height':844});page.locator('#check-project').click();page.screenshot(path=str(args.out/'project-checks-mobile.png'))
+        page.set_viewport_size({'width':390,'height':844});menu('#project-versions')
+        page.screenshot(path=str(args.out/'project-versions-mobile.png'))
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
-        page.locator('#project-checks-dialog .mf-project-dialog-head button').click()
+        page.locator('#project-versions-dialog .mf-project-dialog-head button').click()
         assert not errors,errors
-        (args.out/'report.json').write_text(json.dumps({'passed':True,'projects':len(projects),'writes':len(writes),'checks':['autosave','named version','restore + backup','lost reply recovery','two-tab conflict','save copy','restore lost reply preserves subsequent edits','warning selection','project duplication','mobile'],'errors':errors},ensure_ascii=False,indent=2))
+        (args.out/'report.json').write_text(json.dumps({'passed':True,'projects':len(projects),'writes':len(writes),'checks':['autosave','named version','restore + backup','lost reply recovery','two-tab conflict','save copy','restore lost reply preserves subsequent edits','project check removed','project duplication','mobile'],'errors':errors},ensure_ascii=False,indent=2))
         print((args.out/'report.json').read_text())
     except Exception:
         print({'errors':errors,'status':page.locator('#status').text_content(),'safety':page.evaluate('()=>({paused:MF_PROJECT_SAFETY.paused,pending:MF_PLANNER.history.pending,operation:MF_PROJECT_SAFETY.engine.operation,error:MF_PROJECT_SAFETY.engine.error?.message,dirty:MF_PROJECT_SAFETY.engine.dirty,name:MF_PROJECT_SAFETY.engine.snapshot.name,keys:Object.keys(localStorage)})')});page.screenshot(path=str(args.out/'failure.png'));raise

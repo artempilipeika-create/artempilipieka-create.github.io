@@ -6,7 +6,7 @@ const date=value=>new Date(value).toLocaleString('ru-RU');
 const message=error=>error?.status===401?'Сессия завершена. Войдите в кабинет; черновик останется на этом устройстве.':
   error?.status===403?'Сохранение недоступно для этой учётной записи.':error?.status===404?'Проект удалён или недоступен. Сохраните черновик отдельной копией.':
   error?.status===409?'Проект изменён в другой вкладке. Ваши правки сохранены отдельным черновиком.':
-  error?.status===422?'Проект сохранён на устройстве. '+(error.issues?.map(x=>x.message).join(' · ')||'Проверьте параметры через «Проверить проект».'):'Связь с сервером прервана. Повторим сохранение при подключении.';
+  error?.status===422?'Проект сохранён на устройстве. '+(error.issues?.map(x=>x.message).join(' · ')||'Исправьте параметры проекта и сохраните ещё раз.'):'Связь с сервером прервана. Повторим сохранение при подключении.';
 
 export class ProjectSafety {
   constructor(app){
@@ -81,7 +81,6 @@ export class ProjectSafety {
     this.warning.hidden=!e.error&&!e.localError&&!e.operation;
     this.warningText.textContent=e.localError?'Не удалось сохранить черновик на устройстве. Сохраните на сервере перед закрытием вкладки.':e.operation?'Есть незавершённая операция с версией. Нажмите «Повторить».':e.error?message(e.error):'';
     this.serverButton.hidden=!e.meta;this.copyButton.hidden=!e.error||e.error.status===422||Boolean(e.operation);this.retryButton.hidden=e.conflict&&!e.operation;
-    this.checkErrorButton.hidden=e.error?.status!==422;
     this.updateDraftCount();
   }
   dialog(id,title){
@@ -91,15 +90,14 @@ export class ProjectSafety {
   }
   show(dialog){document.querySelector('.studio-menu').open=false;for(const d of document.querySelectorAll('.mf-project-dialog[open]'))if(d!==dialog)d.close();if(!dialog.open)dialog.showModal();}
   build(){
-    const actions=document.querySelector('.mf3d-top-actions'),check=button('Проверить проект',()=>this.showChecks());check.id='check-project';document.getElementById('to-order').before(check);
+    const actions=document.querySelector('.mf3d-top-actions');
     const menu=document.querySelector('.studio-menu-panel');this.versionsButton=button('Версии проекта',()=>this.showVersions());this.versionsButton.id='project-versions';
     this.draftsButton=button('Черновики на устройстве',()=>this.showDrafts());menu.prepend(this.versionsButton,this.draftsButton);
     this.warning=el('div',null,'mf-project-warning');this.warning.id='project-save-warning';this.warning.hidden=true;this.warning.setAttribute('role','status');
     this.warningText=el('span');this.retryButton=button('Повторить',()=>this.flush().catch(()=>{}));
     this.copyButton=button('Сохранить копией',()=>this.saveCopy().catch(e=>this.bridge.status(message(e))));
     this.serverButton=button('Открыть с сервера',()=>this.openServer());
-    this.checkErrorButton=button('Проверить параметры',()=>this.showChecks());
-    this.warning.append(this.warningText,this.checkErrorButton,this.retryButton,this.copyButton,this.serverButton);actions.closest('header').after(this.warning);
+    this.warning.append(this.warningText,this.retryButton,this.copyButton,this.serverButton);actions.closest('header').after(this.warning);
     this.versionsDialog=this.dialog('project-versions-dialog','Версии проекта');
     this.versionForm=el('form',null,'mf-version-form');const label=el('label','Название версии');this.labelInput=el('input');this.labelInput.id='project-version-label';this.labelInput.maxLength=120;this.labelInput.required=true;this.labelInput.placeholder='Например, После правок клиента';label.append(this.labelInput);
     const presets=el('div',null,'mf-version-presets');for(const name of ['Первоначальный','После правок клиента','Согласованный'])presets.append(button(name,()=>{this.labelInput.value=name;this.labelInput.focus();}));
@@ -109,21 +107,6 @@ export class ProjectSafety {
     this.draftsDialog=this.dialog('project-drafts-dialog','Восстановление проекта');
     this.draftsDialog.append(el('p','Здесь остались изменения, которые не подтверждены сервером. Если проект открыт в другой вкладке, сравните версии перед продолжением.','mf-project-hint'));
     this.draftList=el('div',null,'mf-version-list');this.draftsDialog.append(this.draftList);
-    this.checksDialog=this.dialog('project-checks-dialog','Проверка проекта');this.checkSummary=el('p');this.checkList=el('div',null,'mf-check-list');
-    this.checksDialog.append(this.checkSummary,el('p','Открывание проверяется по геометрии двери и заданному углу; ящик — по длине направляющей. Ручки, одновременное открывание соседних фасадов и движение комнатных дверей требуют отдельной проверки.','mf-project-hint'),this.checkList);
-    this.orderActions=el('div',null,'mf-order-check-actions');this.orderActions.hidden=true;
-    this.orderHint=el('p');this.orderContinue=button('Продолжить подготовку заказа',()=>{
-      const next=this.orderNext;if(!next||!this.orderReady())return;
-      this.checksDialog.close();this.orderNext=null;next();
-    });
-    this.hardwareButton=button('Фурнитура по модулям · PDF',async()=>{
-      this.hardwareButton.disabled=true;
-      try{await this.bridge.downloadHardware();}
-      catch(error){this.orderHint.textContent=error.message;}
-      finally{this.hardwareButton.disabled=false;}
-    });
-    this.hardwareButton.id='order-hardware-pdf';
-    this.orderContinue.id='project-checks-continue';this.orderActions.append(this.orderHint,this.hardwareButton,this.orderContinue);this.checksDialog.append(this.orderActions);
   }
   async saveCopy(){
     this.capture(false);const previous=this.engine;
@@ -219,43 +202,10 @@ export class ProjectSafety {
     }catch(error){this.bridge.status(message(error));}
   }
   report(){return checkProject(this.bridge.state(),{template:this.bridge.template,material:this.bridge.material,estimate:this.app.estimate?.quote});}
-  orderReady(){
-    const report=this.report();
-    if(!this.bridge.state().items.length||report.counts.error){this.showChecks(this.orderNext);return false;}
-    return true;
-  }
-  reviewBeforeOrder(next){this.showChecks(next);}
-  showChecks(next=null){
-    this.app.interaction?.cancel();const report=this.report();this.orderNext=typeof next==='function'?next:null;
-    const rejected=this.engine.error?.status===422?this.engine.error.issues||[]:[];
-    for(const issue of rejected){
-      const it=Number.isInteger(issue.item_index)?this.bridge.state().items[issue.item_index]:null;
-      report.issues.unshift({severity:'error',code:'server-validation',name:it?.name||'Сохранение проекта',message:issue.message,
-        detail:'Причина последнего отказа сервера. После исправления нажмите «Сохранить».',itemId:it?.item_id});
-      report.counts.error++;
-    }
-    // Technical warnings remain available to staff; clients see actionable checks.
-    if(!this.bridge.productionTools?.()){
-      const technical=new Set(['native-source','native-identity','native-adjustment','native-legs','counter-native']);
-      report.issues=report.issues.filter(issue=>!technical.has(issue.code));
-      report.counts=Object.fromEntries(['error','warning','info'].map(s=>[s,report.issues.filter(i=>i.severity===s).length]));
-    }
-    this.checkSummary.textContent=`Ошибки: ${report.counts.error} · Проверить: ${report.counts.warning} · Примечания: ${report.counts.info}.`;
-    this.orderActions.hidden=!this.orderNext;this.hardwareButton.disabled=!this.bridge.state().items.length;this.orderContinue.disabled=Boolean(report.counts.error||!this.bridge.state().items.length);
-    this.orderHint.textContent=this.orderContinue.disabled?'Исправьте ошибки перед подготовкой заказа. Кнопка «Показать шкаф» откроет нужный модуль.':
-      report.counts.warning?'Ознакомьтесь с замечаниями. Стоимость и конструкцию проверит менеджер.':'Можно перейти к подготовке заказа.';
-    this.checkList.replaceChildren();
-    if(!report.issues.length)this.checkList.append(el('p','Замечаний по доступным данным не найдено.'));
-    for(const issue of report.issues){
-      const row=el('article',null,'mf-check-row');row.dataset.severity=issue.severity;row.dataset.code=issue.code;
-      const info=el('div');info.append(el('small',({error:'Ошибка',warning:'Проверить',info:'Примечание'}[issue.severity])+' · '+issue.name),el('strong',issue.message));if(issue.detail)info.append(el('p',issue.detail));row.append(info);
-      if(issue.itemId){
-        const focus=()=>{this.checksDialog.close();this.bridge.select(issue.itemId);this.app.ensureSelectedVisible();this.app.scene.fit('selected');};
-        row.append(button('Показать шкаф',focus));row.onclick=e=>{if(!e.target.closest('button'))focus();};row.dataset.actionable='true';
-      }
-      this.checkList.append(row);
-    }
-    this.show(this.checksDialog);
+  orderError(){
+    if(!this.bridge.state().items.length)return 'Добавьте мебель в проект.';
+    const issue=this.report().issues.find(issue=>issue.severity==='error');
+    return issue?[issue.name,issue.message].filter(Boolean).join(' · '):'';
   }
   dispose(){clearTimeout(this.timer);this.capture(false);this.unsubscribe?.();this.abort.abort();for(const d of document.querySelectorAll('.mf-project-dialog'))d.remove();delete window.MF_PROJECT_SAFETY;}
 }

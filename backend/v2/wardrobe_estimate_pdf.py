@@ -2,6 +2,12 @@
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
+import json
+import logging
+import re
+
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A3, landscape
@@ -11,6 +17,7 @@ from reportlab.pdfgen.canvas import Canvas
 
 from .album_wardrobe import profile
 from .sales_album import fonts
+from .wardrobe_estimate import GROUPS, customer_totals
 from .estimate_photos import pdf_image
 
 W, H = landscape(A3)
@@ -29,12 +36,49 @@ def number(value, places=3):
     return '—' if value is None else f'{value:.{places}f}'.rstrip('0').rstrip('.').replace('.', ',')
 
 
+def issued_price(pdf, date, total, complete):
+    """Read selling amounts from the frozen estimate; archived prices never use today's rates."""
+    price = dict(date=date, total=total if complete or total else None,
+                 complete=complete, missing=None, groups={})
+    try:
+        reader = PdfReader(BytesIO(pdf))
+        keywords = (reader.metadata or {}).get('/Keywords', '')
+        if keywords.startswith('MF1 '):
+            return json.loads(keywords[4:])
+
+        # Earlier documents printed these same three amounts on their cover.
+        rows = reader.pages[0].extract_text().strip()
+        titles = list(GROUPS.values())
+        number = r'([0-9][0-9 ]*,[0-9]{2})'
+        pattern = r'\n'.join(re.escape(title) + r'\n' + number for title in titles)
+        match = re.search(r'\n' + pattern + r'(?:\nТребуют уточнения: (\d+) поз\.)?\Z', rows)
+        if not match:
+            return price
+        amounts = {title: Decimal(value.replace(' ', '').replace(',', '.'))
+                   for title, value in zip(titles, match.groups())}
+        if sum(amounts.values()) != total:
+            return price
+        if not complete and 0 in amounts.values():
+            for page in reader.pages[1:]:
+                lines = page.extract_text().splitlines()
+                for title, value in amounts.items():
+                    if value == 0 and any(lines[i:i+2] == [title, '0,00 BYN'] and
+                                          lines[i+2].startswith('Сумма известных позиций')
+                                          for i in range(len(lines)-2)):
+                        amounts[title] = None
+        price.update(groups=amounts, missing=int(match.groups()[-1] or 0))
+    except (PdfReadError, ValueError, IndexError, TypeError) as exc:
+        logging.getLogger(__name__).warning('Could not read issued estimate breakdown: %s', type(exc).__name__)
+    return price
+
+
 def render(name, scene, quote, hero=None):
     fonts()
     stream = BytesIO()
     c = Canvas(stream, pagesize=(W,H), pageCompression=1)
     c.setTitle('Смета · '+name)
     c.setAuthor('Martin Forest')
+    c.setKeywords('MF1 ' + json.dumps(customer_totals(quote), ensure_ascii=True, separators=(',', ':')))
     date = '.'.join(reversed(quote['date'].split('-')))
     groups = quote['groups']
     columns = W-2*M

@@ -11,7 +11,7 @@ from .constructor_access import require_design
 from .sales_album import image_bytes
 from .security import error, identity
 from .wardrobe_estimate import calculate
-from .wardrobe_estimate_pdf import render
+from .wardrobe_estimate_pdf import issued_price, render
 
 
 class Terms(StrictModel):
@@ -35,12 +35,11 @@ def markup(conn, user):
 
 
 def issued_album_price(conn, project_id, version):
-    row = conn.execute("""SELECT cost_date, amount, complete FROM mf_3d_estimates
+    row = conn.execute("""SELECT cost_date, amount, complete, pdf FROM mf_3d_estimates
         WHERE project_id=%s AND project_version=%s ORDER BY created_at DESC, estimate_id DESC LIMIT 1""",
         (project_id, version)).fetchone()
     if row:
-        return dict(date=row['cost_date'].isoformat(), total=row['amount'] if row['complete'] or row['amount'] else None,
-                    complete=row['complete'], missing=None, groups={})
+        return issued_price(row['pdf'], row['cost_date'].isoformat(), row['amount'], row['complete'])
 
 
 def register(api, settings, own):

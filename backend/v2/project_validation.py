@@ -55,7 +55,7 @@ def project_validation_issues(errors):
         item_index=loc[loc.index('items')+1] if 'items' in loc and len(loc)>loc.index('items')+1 else None
         item_index=item_index if type(item_index) is int else None
         field=next((FIELDS[k] for k in reversed(loc) if isinstance(k,str) and k in FIELDS),'Параметры')
-        reason=REASONS.get(err.get('type'),'параметры не согласованы; откройте «Проверить проект»')
+        reason=REASONS.get(err.get('type'),'параметры не согласованы друг с другом')
         model_reason=str((err.get('ctx') or {}).get('error',''))
         reason=MODEL_REASONS.get(model_reason,reason)
         prefix=f'Модуль {item_index+1}' if item_index is not None else 'Комната' if 'room' in loc else 'Проект'
