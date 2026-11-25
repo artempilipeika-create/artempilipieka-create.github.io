@@ -58,18 +58,18 @@ def test_preflight_checks_saved_layout_and_pdf_retry_reuses_original_image(monke
         response=client.post(f'/api/v2/3d-projects/{pid}/sales-album.pdf',json={
             'version':3,'layout':'client','hero_data_url':encoded,'photo':True})
         assert response.status_code==200,response.text
-        pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)==2
+        pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)>=5
+        assert 'Фурнитура по модулям' in pdf.pages[2].extract_text()
         assert pdf.pages[0].images[0].data==jpeg
     row['scene']=kitchen(35)
     assert client.post(url,json={'version':3}).json()=={'ok':True}
     response=client.post(f'/api/v2/3d-projects/{pid}/sales-album.pdf',json={
         'version':3,'layout':'client','hero_data_url':encoded,'photo':True})
     assert response.status_code==200,response.text
-    pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)==2
+    pdf=PdfReader(BytesIO(response.content));assert len(pdf.pages)>4
     assert pdf.pages[0].images[0].data==jpeg
-    assert '600 × 820 × 510 мм' not in pdf.pages[1].extract_text()
+    assert sum(p.extract_text().count('600 × 820 × 510 мм') for p in pdf.pages if 'Состав кухни' in p.extract_text())==35
     response=client.post(url,json={'version':3,'elevation_geometry':[]})
-    assert response.status_code==200  # Older callers can still send drawing data.
-    row['scene']=kitchen(0)
-    assert client.post(url,json={'version':3}).status_code==400
+    assert response.status_code==400
+    assert 'Чертёж не соответствует' in response.json()['detail']['code']
     auth['ok']=False;assert client.post(url,json={'version':3}).status_code==401

@@ -14,6 +14,7 @@ from .kitchen_worktop import carries_worktop
 from .wardrobe_photo import subject
 from .sales_album import fonts, client_title, material_name
 from .wardrobe_estimate_pdf import money
+from .wardrobe_estimate import GROUPS
 from .three_d_open_tall import open_tall_variant
 from .album_materials import sample
 from .album_elevation import draw as draw_elevation, validate_geometry
@@ -103,7 +104,21 @@ def schedule_pages(items):
     return pages
 
 
-def draw_cover(c, name, scene, hero, *, price=None):
+def price_summary(price):
+    """Customer amounts for the printed album and its matching screen preview."""
+    price = price or {}
+    def byn(value):
+        return money(value) + ' BYN' if value is not None else 'Уточняется'
+
+    total = price.get('total')
+    amount = byn(total)
+    return dict(label='Стоимость заказа', amount=amount, total_label='Итого', note='',
+                caption='Стоимость заказа — '+amount if total is not None else '',
+                groups={key: byn(price.get('groups', {}).get(title)) for key, title in GROUPS.items()},
+                date='.'.join(reversed(price.get('date', '').split('-'))))
+
+
+def draw_cover(c, name, scene, hero, caption):
     # Approved cover 2: original image to the page edges, brand above, order/title below.
     cover_font=Path(__file__).with_name('document_assets')/'DejaVuSerif.ttf'
     if hashlib.sha256(cover_font.read_bytes()).hexdigest()!='8f2c103bfa3fd5de71f1b92b18f21906b5a26871fb7e19a9a4c9af539c3cc7ab':
@@ -116,6 +131,13 @@ def draw_cover(c, name, scene, hero, *, price=None):
         grey=im.convert('L')
         top_luma=ImageStat.Stat(grey.crop((0,0,iw,max(1,int(ih*.08))))).mean[0]
         bottom_luma=ImageStat.Stat(grey.crop((0,int(ih*.80),iw,ih))).mean[0]
+        if caption:
+            # Sample the printed corner after the original image has been cropped to fill the sheet.
+            left = (iw-W/factor)/2
+            top = (ih-H/factor)/2
+            corner = grey.resize((1,1), Image.Resampling.BOX, (
+                left+.64*W/factor, top+.90*H/factor, left+.965*W/factor, top+.96*H/factor))
+            caption_ink = HexColor('#202020') if corner.getpixel((0,0))>135 else white
     top_ink=INK if top_luma>140 else white;bottom_ink=INK if bottom_luma>140 else white
     c.saveState()
     label='MARTIN FOREST';spacing=2.4;size=19
@@ -123,30 +145,30 @@ def draw_cover(c, name, scene, hero, *, price=None):
     t=c.beginText((W-brand_width)/2,H-30);t.setFont('SalesBold',size);t.setCharSpace(spacing);t.setFillColor(top_ink);t.textLine(label);c.drawText(t)
     c.restoreState()
     order=str((scene.get('albumSettings') or {}).get('order_number') or '').strip()
-    width = W-64 if price is None else W*.55
+    width = W*.55 if caption else W-64
     order_label = 'ЗАКАЗ № '+(order or 'не указан')
     order_size = min(8.5, 8.5*width/pdfmetrics.stringWidth(order_label, 'SalesBold', 8.5))
     c.setFont('SalesBold',order_size);c.setFillColor(bottom_ink)
     c.drawString(32,91,order_label)
-    sizes = [(24,28), (18,21)] if price is None else [(24,28), (18,21), (13,15), (10,12), (8,10)]
+    sizes = [(24,28), (18,21), (13,15), (10,12), (8,10)]
     for size, leading in sizes:
         style=ParagraphStyle('cover-title',fontName='SalesSerif',fontSize=size,leading=leading,textColor=bottom_ink)
         title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
         if th<=70:break
     if th>70:raise ValueError('Название слишком длинное для обложки. Сократите название проекта.')
     title.drawOn(c,32,79-th)
-    if price is not None:
-        right, width = W-32, W*.335
+    if caption:
+        size = min(12, 12 * (W*.38) / pdfmetrics.stringWidth(caption, 'Sales', 12))
+        width = pdfmetrics.stringWidth(caption, 'Sales', size)
+        right, baseline = W-32, 30
         c.saveState()
-        c.setFillColor(INK)
-        c.setFillAlpha(.94)
-        c.roundRect(right-width, 26, width, 78, 4, fill=1, stroke=0)
+        c.setFillColor(caption_ink)
+        c.setStrokeColor(caption_ink)
+        c.setLineWidth(.5)
+        c.line(right-width, baseline+size+5, right, baseline+size+5)
+        c.setFont('Sales', size)
+        c.drawRightString(right, baseline, caption)
         c.restoreState()
-        c.setFillColor(white)
-        for value, font, size, y in [(price['label'], 'Sales', 13, 81), (price['amount'], 'SalesBold', 28, 45)]:
-            size = min(size, size*(width-30)/max(1, pdfmetrics.stringWidth(value, font, size)))
-            c.setFont(font, size)
-            c.drawRightString(right-15, y, value)
     return order
 
 
@@ -193,7 +215,8 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         text(f'{number:02d} / {page_count:02d}', W-90, 30, 54, 8, color=MUTED)
         return H-66-title_height-18
 
-    order = draw_cover(c, name, scene, hero)
+    pricing = price_summary(price)
+    order = draw_cover(c, name, scene, hero, pricing['caption'])
     c.showPage()
 
     for sheet_number,cabinet in enumerate(drawings,2):
@@ -264,35 +287,26 @@ def render(name, scene, materials, hero, detail=None, photo=True, *, material_vi
         if sheet == len(schedule_sheets)-1:
             bottom, height = (109, 58) if compact else (140, 96)
             top = bottom + height
-            c.setFillColor(INK)
-            c.roundRect(M, bottom, W-2*M, height, 9, fill=1, stroke=0)
-            label = 'Стоимость заказа'
-            amount = 'Уточнит менеджер'
-            note = ''
-            groups = {}
-            if price:
-                groups = price['groups']
-                note = 'Расчёт от ' + '.'.join(reversed(price['date'].split('-')))
-                if price['total'] is not None:
-                    amount = money(price['total']) + ' BYN'
-                    if not price['complete']:
-                        label = 'Рассчитанная часть заказа'
-                if price['missing']:
-                    note += ' · Позиций к уточнению: ' + str(price['missing'])
-            left = M+20
-            text(label, left, top-(5 if compact else 10), W/2-M, 9, True, white)
-            text(amount, left, top-(18 if compact else 25), W/2-M, 17 if compact else 24, True, white)
-            if note:
-                text(note, left, bottom+(14 if compact else 26), W/2-M, 8 if compact else 10, color=white)
+            c.setStrokeColor(HexColor('#a9ada9'))
+            c.setLineWidth(.5)
+            c.line(M, top, W-M, top)
+            left = M+4
+            amount = pricing['amount'] if pricing['caption'] else 'Уточнит менеджер'
+            text('Стоимость заказа — ' + amount, left, top-(9 if compact else 17),
+                 W/2-M, 12 if compact else 15, color=HexColor('#252525'))
+            if pricing['date']:
+                text('Расчёт от ' + pricing['date'], left, bottom+(15 if compact else 32),
+                     W/2-M, 8 if compact else 10, color=MUTED)
+            groups = (price or {}).get('groups', {})
             row_height = 15 if compact else 23
             y = bottom + (height + (len(groups)-1)*row_height)/2 - 4
-            for title, subtotal in groups.items():
-                c.setFillColor(white)
-                c.setFont('Sales', 9 if compact else 11)
-                c.drawString(W*.55, y, title)
-                c.setFont('SalesBold', 9 if compact else 11)
-                c.drawRightString(W-M-20, y, 'Уточняется' if subtotal is None else money(subtotal)+' BYN')
-                y -= row_height
+            for key, title in GROUPS.items():
+                if title in groups:
+                    c.setFillColor(HexColor('#252525'))
+                    c.setFont('Sales', 9 if compact else 11)
+                    c.drawString(W*.55, y, title)
+                    c.drawRightString(W-M-4, y, pricing['groups'][key])
+                    y -= row_height
             assembly = 'Для самостоятельной сборки. Доставка рассчитывается отдельно.'
             terms = 'Согласуйте размеры, материалы и комплектацию. Состав фурнитуры, обработку и комплектность подтверждаем перед заказом. Техника и декор на изображении не означают включение в поставку.'
             text(assembly+' '+terms, M, 98 if compact else 120, W-2*M, 8.5 if compact else 10, color=MUTED)

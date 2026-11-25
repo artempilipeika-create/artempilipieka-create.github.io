@@ -119,13 +119,16 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
                             hero_data_url=encoded, include_hardware=True))
         assert response.status_code == 200, response.text
         pdf = PdfReader(BytesIO(response.content))
-        assert len(pdf.pages) == 2 and pdf.pages[0].images[0].data == photo
-        cover, sheet = [page.extract_text() for page in pdf.pages]
+        assert len(pdf.pages) >= 5 and pdf.pages[0].images[0].data == photo
+        cover, sheet = pdf.pages[0].extract_text(), pdf.pages[-1].extract_text()
+        assert 'мм' in pdf.pages[1].extract_text() and 'Фурнитура по модулям' in pdf.pages[2].extract_text()
         shown = json.loads(response.headers['X-MF-Album-Price'])
         assert shown['amount'] == money(quote['total'])+' BYN'
         assert shown['amount'] in cover and shown['amount'] in sheet and shown['label'] in cover
         assert all(x not in str(shown).lower() for x in ('markup','fingerprint','baseunit'))
-        assert sheet.index('Фурнитура') < sheet.index('Материалы') < sheet.index('Работы') < sheet.index('Итого')
+        assert sheet.index('Фурнитура') < sheet.index('Материалы') < sheet.index('Работы')
+        assert shown['caption'] == 'Стоимость заказа — '+shown['amount']
+        assert shown['caption'] in cover and shown['caption'] in sheet and not shown['note']
         for key, group in quote['groups'].items():
             known = not group['rows'] or group['missing'] < len(group['rows'])
             assert shown['groups'][key] == (money(group['total'])+' BYN' if known else 'Уточняется')
@@ -161,8 +164,8 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
     reopened = api.get(kitchen_path).json()
     assert reopened['scene']['items'][0]['countertopMaterialId'] == WORKTOP_ID
     first, sheet = album(kitchen_path, 1, old)
-    assert not first['complete'] and 'Итого по рассчитанным позициям' in sheet
-    assert 'Позиций без цены: '+str(first['missing']) in sheet
+    assert not first['complete'] and first['missing'] > 0
+    assert 'Рассчитанная часть' not in sheet and 'Позиций к уточнению' not in sheet
     old['items'][0]['countertopMaterialId'] = second
     update = api.patch(kitchen_path, json=dict(name='Прежняя кухня',version=1,scene=old))
     assert update.status_code == 200, update.text
@@ -180,7 +183,7 @@ def test_manager_album_and_render_use_the_saved_revision_and_current_selling_pri
     issued = issued_sheet(path, 1)
     assert all(money(g['total'])+' BYN' in issued for g in quote['groups'].values())
     assert money(quote['total'])+' BYN' in issued
-    assert issued_sheet(kitchen_path, 2).count('Уточняется') == 4
+    assert 'Уточнит менеджер' in issued_sheet(kitchen_path, 2)
 
 def test_earlier_issued_pdf_supplies_its_original_three_selling_amounts(monkeypatch):
     from decimal import Decimal

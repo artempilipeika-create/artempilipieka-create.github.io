@@ -16,15 +16,9 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     ${wardrobe?'<label data-view-label>Ракурс шкафа<select data-view><option value="full">Шкаф целиком</option>'+(hasCurrentView?'<option value="current">Текущий ракурс из 3D</option>':'')+'</select></label>':''}
     <div class="mf-album-cover">
       <canvas data-preview width="1200" height="849" aria-label="Рендер проекта"></canvas>
-      <div data-cover-price class="mf-album-cover-price" hidden><span data-cover-label></span><strong data-cover-amount></strong></div>
+      <span data-cover-price class="mf-album-cover-price" hidden></span>
     </div>
-    <section data-breakdown class="mf-album-breakdown" aria-label="Расчёт стоимости заказа" hidden>
-      <dl><div><dt>Фурнитура</dt><dd data-hardware></dd></div>
-        <div><dt>Материалы</dt><dd data-materials></dd></div>
-        <div><dt>Работы</dt><dd data-work></dd></div>
-        <div class="mf-album-total"><dt data-total-label></dt><dd data-total></dd></div></dl>
-      <p data-price-note hidden></p>
-    </section>
+    <ul class="mf-album-pages" aria-label="Содержание альбома"><li>Обложка</li><li>2D-чертежи с размерами</li><li>Фурнитура</li><li>Материалы</li><li>Состав и стоимость</li></ul>
     <label class="mf-sales-check"><input data-consent type="checkbox">Разрешаю одну платную генерацию фоторендера для альбома.</label>
     <p data-message role="status" aria-live="polite">Сохраняем проект и проверяем готовый фоторендер…</p>
     <div class="mf-sales-actions"><button data-create disabled>Создать фоторендер и PDF</button><button data-check class="secondary" hidden>Обновить статус</button><button data-build class="secondary" hidden>Собрать PDF из готового рендера</button><a data-photo class="presentation-download" hidden>Скачать фоторендер</a><a data-pdf class="presentation-download" hidden>Скачать альбом · PDF</a></div>`;
@@ -61,20 +55,20 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
       const canvas=q('[data-preview]'),ctx=canvas.getContext('2d');ctx.fillStyle='#f6f3ed';ctx.fillRect(0,0,canvas.width,canvas.height);
       const scale=Math.max(canvas.width/bitmap.width,canvas.height/bitmap.height),w=bitmap.width*scale,h=bitmap.height*scale;
       ctx.drawImage(bitmap,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+      const pixels=ctx.getImageData(canvas.width*.64,canvas.height*.90,canvas.width*.325,canvas.height*.06).data;
+      let luminance=0;
+      for(let i=0;i<pixels.length;i+=4)luminance+=.299*pixels[i]+.587*pixels[i+1]+.114*pixels[i+2];
+      q('[data-cover-price]').dataset.ink=luminance/(pixels.length/4)>135?'dark':'light';
     }finally{bitmap.close();}
   };
   const showPrice=price=>{
-    q('[data-cover-price]').hidden=!price;q('[data-breakdown]').hidden=!price;
-    if(!price)return;
-    q('[data-cover-label]').textContent=price.label;
-    q('[data-cover-amount]').textContent=q('[data-total]').textContent=price.amount;
-    q('[data-total-label]').textContent=price.total_label;
-    for(const key of ['hardware','materials','work'])q('[data-'+key+']').textContent=price.groups[key];
-    q('[data-price-note]').textContent=price.note;q('[data-price-note]').hidden=!price.note;
+    const label=q('[data-cover-price]');
+    label.textContent=price?.caption||'';
+    label.hidden=!label.textContent;
   };
   const build=async()=>{
     assertSame();if(!orderNumber()){say('Укажите номер заказа для обложки. Готовый рендер сохранён.');return;}say('Фоторендер готов. Автоматически помещаем его в PDF-альбом…');
-    const r=await fetch(`/api/v2/3d-projects/${frozen.id}/sales-album.pdf`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:frozen.version,layout:'client',hero_data_url:hero,photo:true})});
+    const r=await fetch(`/api/v2/3d-projects/${frozen.id}/sales-album.pdf`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:frozen.version,layout:'client',include_hardware:true,elevation_geometry:views.geometry,hero_data_url:hero,photo:true})});
     if(!r.ok){const b=await r.json().catch(()=>({}));throw Error(b.detail?.code||'Не удалось собрать PDF. Фоторендер сохранён; повторная сборка PDF бесплатна.');}
     const blob=await r.blob();assertSame();if(closed)return;
     const price=JSON.parse(r.headers.get('X-MF-Album-Price'));
@@ -138,7 +132,7 @@ export async function openKitchenAlbum({save,snapshot,capture,request,setOrderNu
     // A missing provider/key must not prevent retrieval of an already paid image.
     if(result.state==='none'){
       say('Проверяем сборку PDF до платной генерации…');
-      await request(`/3d-projects/${frozen.id}/sales-album/preflight`,'POST',{version:frozen.version});
+      await request(`/3d-projects/${frozen.id}/sales-album/preflight`,'POST',{version:frozen.version,include_hardware:true,elevation_geometry:views.geometry});
       const capabilities=await request('/3d-sales-capabilities');automatic=capabilities.automatic_render;
     }
     await consume(result);

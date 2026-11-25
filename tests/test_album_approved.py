@@ -76,7 +76,7 @@ def test_elevation_module_is_served_with_the_constructor_assets():
     assert '/account/planner/bridge.js?' in client.get('/constructor').text
     entry=client.get('/account/3d.js').text
     assert '/account/planner/kitchen-album-ui.mjs?' in entry
-    assert '/account/planner/album-geometry.mjs?' not in entry
+    assert '/account/planner/album-geometry.mjs?' in entry
 
 
 def test_two_section_wardrobe_pdf_before_and_after_photo():
@@ -137,11 +137,36 @@ def test_standard_wardrobe_uses_enabled_shelf_top_above_base_and_floor():
     assert drawing_sets([item])==[[item]]
     assert profile([item])[1]==[[559]]
 
-def test_price_cover_fits_a_full_length_project_name_beside_the_amount():
-    from backend.v2 import client_price_album
-    from tests.test_kitchen_album import image
+@pytest.mark.parametrize('backdrop,light_text',[(250,False),(20,True)])
+def test_price_is_one_regular_line_in_the_lower_right_and_keeps_the_drawings(backdrop, light_text):
     name = 'Щ' * 200
-    scene = {'items':[{}], 'albumSettings':{'order_number':'W' * 60}}
-    data = client_price_album.render(name, scene, image(), client_price_album.summary(None))
-    cover = PdfReader(BytesIO(data)).pages[0].extract_text()
-    assert name in ''.join(cover.split()) and 'W' * 60 in cover and 'Уточняется' in cover
+    scene = specimen()
+    scene['albumSettings']['order_number'] = 'W' * 60
+    price = dict(total=2005.51, complete=False, missing=24, groups={})
+    # The original photograph stays intact under the line, including in the printed crop.
+    picture = BytesIO()
+    Image.new('RGB',(320,180),(backdrop,)*3).save(picture,'JPEG')
+    doc = kitchen_album.render(name, scene, {}, picture.getvalue(), include_hardware=True, price=price)
+    pdf = PdfReader(BytesIO(doc))
+    page = pdf.pages[0]
+    caption = 'Стоимость заказа — 2 005,51 BYN'
+    runs = []
+    def visit(text, cm, tm, font, size):
+        if caption in text:
+            runs.append((text.strip(),tm[4],tm[5],font['/BaseFont'],size))
+    cover = page.extract_text(visitor_text=visit)
+    assert name in ''.join(cover.split()) and 'W' * 60 in cover
+    assert len(runs)==1 and runs[0][0]==caption
+    _,x,y,font,size=runs[0]
+    assert x>kitchen_album.W/2 and 0<y<kitchen_album.H*.1 and 'Bold' not in font and size<=12
+    ops=page.get_contents().operations
+    assert any(op==b'w' and values==[.5] for values,op in ops)
+    assert all(op not in (b'f',b'f*',b'B',b'B*') for values,op in ops)
+    color=next(values for values,op in reversed(ops) if op==b'rg')
+    assert color[0]==color[1]==color[2] and (color[0]>.5)==light_text
+    assert next(iter(page['/Resources']['/XObject'].values())).get_object().get_data()==picture.getvalue()
+    assert 'Вид спереди' in pdf.pages[1].extract_text()
+    assert 'Фурнитура по модулям' in pdf.pages[2].extract_text()
+    assert 'Материалы и характер' in pdf.pages[-2].extract_text()
+    assert 'Состав кухни' in pdf.pages[-1].extract_text() and caption in pdf.pages[-1].extract_text()
+    assert all('Рассчитанная часть' not in pg.extract_text() for pg in pdf.pages)
