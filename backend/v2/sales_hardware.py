@@ -4,7 +4,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 from .wardrobe_lighting_kit import project_lighting_kits
-from .three_d_document import hardware_for, drawer_slide_length, with_installed_drawer_depths
+from .three_d_document import _facade_handle_row, hardware_for, drawer_slide_length, with_installed_drawer_depths
 from .three_d_pullout_dryers import refresh_dryer_source
 from .three_d_base import refresh_base_source
 from .three_d_drawers import drawer_variant, drawer_configuration
@@ -46,7 +46,13 @@ def module_hardware(item):
         rows.append(dict(key='slides',name=f"Направляющие шариковые L-{length or '?'} h=45 " + ('PRIME by AKS SOFT CLOSE' if soft else 'AKS PLUS'),quantity=hw['drawer_count'],unit='pair'))
     if item.get('handles') == 'handles':
         count = len(p.get('doors',[])) + hw.get('drawer_count',0)
-        if count: rows.append(dict(key='handle',name='Ручка мебельная (модель требует выбора)',quantity=count,unit='pcs'))
+        if count:
+            sku=(item.get('kitchenFilling') or {}).get('pull')
+            if sku:
+                pull=_facade_handle_row({'article':sku},item)
+                rows.append(dict(key='handle',name=pull['name'],article=sku,quantity=count,unit=pull['unit']))
+            else:
+                rows.append(dict(key='handle',name='Ручка мебельная (модель требует выбора)',quantity=count,unit='pcs'))
     if p.get('dryer'):
         for row in rows:
             if row['key'] == 'dish-dryer': row['name'] = f"Сушка для посуды {item['width']} MOUNT, белый AKS"

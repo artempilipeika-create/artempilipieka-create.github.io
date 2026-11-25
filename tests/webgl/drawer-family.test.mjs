@@ -79,7 +79,8 @@ test('Unsupported combinations and incompatible metal dimensions cannot silently
   const it=item(v);
   assert.equal(D.available(v,{opening:'push'}),null);assert.equal(D.available(v,{layout:'inner'}),null);
   assert.throws(()=>D.select(it,{opening:'push'},choices),/сочетания/);
-  const narrow={...it,width:350};assert.throws(()=>D.select(narrow,{system:'aq'},choices),/400–1200/);
+  assert.equal(D.select({...it,width:357},{system:'aq'},choices).width,357);
+  const narrow={...it,width:349};assert.throws(()=>D.select(narrow,{system:'aq'},choices),/350–1200/);
   const shallow={...it,depth:450};assert.throws(()=>D.select(shallow,{system:'slimbox'},choices),/глубины/);assert.equal(shallow.depth,450);
   assert.equal(D.select(shallow,{layout:v.layout==='two'?'three':'two'},choices).depth,450);
  }

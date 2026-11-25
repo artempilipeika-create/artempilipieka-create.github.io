@@ -23,3 +23,7 @@
 #estimate-history{padding-top:15px;font-size:13px}#estimate-history summary{cursor:pointer}#estimate-history a{display:block;margin:8px 0}
 @media(max-width:650px){#estimate-dialog{padding:16px}.estimate-amounts{grid-template-columns:1fr 1fr}.estimate-amounts>div:last-child{grid-column:1/-1}.mf3d-top-actions #estimate-open{font-size:11px;padding:6px 9px}}
 .estimate-row.with-photo{display:grid;grid-template-columns:44px 1fr auto}.estimate-row img{object-fit:contain;background:#fff;border-radius:6px}
+
+.estimate-modules>summary{font-weight:700}.estimate-module{margin-bottom:.4rem}
+.estimate-drawer{padding:4px 6px 4px 34px;color:#4e6155;border:0}
+#kitchen-cost>button{display:block;margin-top:.65rem}

@@ -218,7 +218,7 @@ export class ProjectSafety {
       finally{this.paused--;}
     }catch(error){this.bridge.status(message(error));}
   }
-  report(){return checkProject(this.bridge.state(),{template:this.bridge.template,material:this.bridge.material});}
+  report(){return checkProject(this.bridge.state(),{template:this.bridge.template,material:this.bridge.material,estimate:this.app.estimate?.quote});}
   orderReady(){
     const report=this.report();
     if(!this.bridge.state().items.length||report.counts.error){this.showChecks(this.orderNext);return false;}

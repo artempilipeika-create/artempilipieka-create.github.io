@@ -40,13 +40,19 @@ def render(name, scene, quote, hero=None):
     columns = W-2*M
     limit = 11
     page_counts = {k:1 for k in groups}
+    module_rows=[]
+    for m in quote.get('modules',[]):
+        caption=m['name']+(f" · {m['width']:g} × {m['height']:g} × {m['depth']:g} мм" if m['width'] else '')
+        module_rows.append((caption,m,True))
+        module_rows.extend((d['name'],d,False) for d in m['drawers'])
+    module_pages=min(4,(len(module_rows)+23)//24)
     # Allocate the five additional sheets first to the sections with longest remaining lists.
-    for _ in range(5):
+    for _ in range(5-module_pages):
         key = max(groups,key=lambda k:len(groups[k]['rows'])-page_counts[k]*limit)
         if len(groups[key]['rows'])<=page_counts[key]*limit:
             break
         page_counts[key] += 1
-    pages = 2+sum(page_counts.values())
+    pages = 2+module_pages+sum(page_counts.values())
     page_no = 0
 
     def text(x,y,value,size=14,color=INK,bold=False,right=False):
@@ -140,6 +146,22 @@ def render(name, scene, quote, hero=None):
     if quote['missing']:
         text(x,bottom+4,'Требуют уточнения: '+str(quote['missing'])+' поз.',13,GRAY)
     c.showPage()
+
+    for idx in range(module_pages):
+        start('Модули кухни')
+        text(M,H-127,'Стоимость по модулям',32,bold=True)
+        text(M,H-157,'Шуфляды входят в стоимость своего модуля.',13,GRAY)
+        shown=module_rows[idx*24:(idx+1)*24]
+        if idx==module_pages-1 and len(module_rows)>(idx+1)*24:
+            shown=shown[:23]
+            text(M,76,'Полный список модулей и шуфляд доступен в смете конструктора.',12,GRAY)
+        for j,(caption,record,heading) in enumerate(shown):
+            y=H-200-j*23
+            if heading:
+                rect(M,y-6,columns,23,PAPER)
+            text(M+(12 if heading else 32),y,words(caption,columns-235,12,heading,1)[0],12,bold=heading)
+            text(W-M-12,y,('Рассчитано · ' if record['missing'] else '')+money(record['total'])+' BYN',12,GREEN,heading,True)
+        c.showPage()
 
     start('Комплектация')
     text(M,H-130,'Фурнитура проекта',34,bold=True)

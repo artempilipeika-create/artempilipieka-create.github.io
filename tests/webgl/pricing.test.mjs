@@ -5,13 +5,13 @@ import {PILOT_PRODUCTION,normalizeKitchen,productionParts} from '../../backend/v
 const ids=Object.keys(PILOT_PRODUCTION),room={width:6200,depth:3600,height:2700};
 const item=(width=600,id=ids[0],x=0)=>normalizeKitchen({item_id:id,bazis_id:id,bazis_sha256:PILOT_PRODUCTION[id].source_sha256,module_type:'base_cabinet',name:PILOT_PRODUCTION[id].label,width,height:820,depth:510,base_height:100,body_height:720,base:'plinth',layout:'doors',handles:'handles',x,z:-1485,rotation:0,shelves:structuredClone(PILOT_PRODUCTION[id].shelves)});
 const template=it=>({production:PILOT_PRODUCTION[it.bazis_id]});
-for(const [actual,expected]of [[270,300],[299,300],[300,300],[301,350],[320,350],[349,350],[350,350],[351,400],[599,600],[600,600],[601,650],[999,1000],[1000,1000],[1001,null]])test('Pricing width '+actual+' → '+(expected??'CUSTOM'),()=>{
- const c=pricingCategory(actual);assert.equal(c.actualWidthMm,actual);assert.equal(c.pricingWidthMm,expected);assert.equal(c.status,expected===null?'CUSTOM':'STANDARD');
+for(const width of [270,299,300,301,320,349,350,351,357,489,599,600,601,999,1000,1001])test('Quote at '+width+' mm',()=>{
+ assert.deepEqual(pricingCategory(width),{actualWidthMm:width,pricingWidthMm:width,status:'ACTUAL'});
 });
 for(const id of ids)test(PILOT_PRODUCTION[id].label+': quote uses canonical BOM without changing actual construction or inventing rates',()=>{
  const it=item(320,id),before=structuredClone(it),t=template(it),actual=productionParts(it,t),b=modulePriceBreakdown(it,t);
- assert.deepEqual(it,before);assert.deepEqual(b.actualBOM.parts,actual);assert.equal(b.actualWidthMm,320);assert.equal(b.pricingWidthMm,350);
- assert.deepEqual(b.pricingBOM.parts,productionParts({...it,width:350},t));
+ assert.deepEqual(it,before);assert.deepEqual(b.actualBOM.parts,actual);assert.equal(b.actualWidthMm,320);assert.equal(b.pricingWidthMm,320);
+ assert.deepEqual(b.pricingBOM.parts,actual);
  const quotedArea=b.pricingBOM.parts.reduce((n,p)=>n+p.length*p.width/1e6,0);
  assert.ok(Math.abs(b.sheetMaterials.reduce((n,p)=>n+p.quantity,0)-quotedArea)<.00001);
  if(Number.isInteger(t.production.hardware.hinge_count))assert.equal(b.hardware.find(r=>r.key.startsWith('hinges:')).quantity,t.production.hardware.hinge_count);
@@ -27,7 +27,7 @@ for(const id of ids)test(PILOT_PRODUCTION[id].label+': quote uses canonical BOM 
 });
 test('Custom width has no capped quote and missing rules remain missing even with a supplied price',()=>{
  const it=item(1001),t=template(it),b=modulePriceBreakdown(it,t,()=>null,{markupBasisPoints:0,rates:{edging:{currency:'BYN',unit:'m',unitPriceMinor:100}}});
- assert.equal(b.status,'CUSTOM');assert.equal(b.totals.status,'CUSTOM');assert.equal(b.totals.saleMinor,null);assert.deepEqual(b.pricingBOM.parts,[]);assert.equal(b.edging[0].status,'PRICING_RULE_MISSING');
+ assert.equal(b.status,'ACTUAL');assert.equal(b.totals.status,'PRICE_DATA_MISSING');assert.equal(b.totals.saleMinor,null);assert.deepEqual(b.pricingBOM.parts,b.actualBOM.parts);assert.equal(b.edging[0].status,'PRICING_RULE_MISSING');
 });
 test('Explicit rates price only the identified row; absent rows never become zero',()=>{
  const it=item(),t=template(it),first=modulePriceBreakdown(it,t),sheet=first.sheetMaterials[0];

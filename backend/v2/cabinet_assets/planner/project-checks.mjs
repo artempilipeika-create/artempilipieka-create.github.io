@@ -66,7 +66,7 @@ export function openingCheck(it,template,items,room,parts=productionParts(it,tem
   return {collisions:[...collisions.values()],unknown:[...new Set(unknown)],checked};
 }
 
-export function checkProject(scene,{template,material=()=>null,priceList=null}){
+export function checkProject(scene,{template,material=()=>null,priceList=null,estimate=null}){
   const issues=[],items=scene.items||[],room=scene.room;
   const add=(code,severity,message,it=null,detail='')=>issues.push({id:code+':'+(it?.item_id||'project')+':'+issues.length,code,severity,message,detail,itemId:it?.item_id||null,name:it?.name||'Проект'});
   if(!items.length)add('empty','warning','В проекте ещё нет модулей.');
@@ -92,11 +92,16 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
       'Требуемая толщина: '+[...new Set(backForReview.map(p=>p.thickness+' мм'))].join(', ')+'. В заказе материал останется неназначенным до проверки.');
     if(missing.length)add('material','error','Не назначен материал: '+[...new Set(missing.map(p=>p.name))].join(', ')+'.',it);
     if(unresolved.length)add('material-unavailable','warning','Материал назначен, но не найден в доступном каталоге.',it,[...new Set(unresolved.map(p=>p.name))].join(', '));
-    const price=modulePriceBreakdown(it,t,material,priceList);
-    const missingPrices=[['Материалы',price.sheetMaterials],['Фурнитура',price.hardware],['Операции',price.operations],['Кромка',price.edging],['Дополнения',price.extras]]
-      .map(([label,rows])=>[label,rows.filter(r=>r.status!=='PRICED').length]).filter(([,n])=>n).map(([label,n])=>label+' ('+n+')');
-    if(price.totals.saleMinor===null)add('price','warning',price.totals.status==='CUSTOM'?'Нестандартный размер: требуется индивидуальная цена.':'Цена модуля не рассчитана полностью.',it,
-      missingPrices.length?'Не заполнены цены или правила расчёта: '+missingPrices.join(', ')+'.':'Проверьте наценку и правила расчёта.');
+    if(estimate){
+      const module=estimate.modules?.find(row=>row.id===(it.assistant_carcass?.group_id??it.item_id));
+      if((module?.missing??estimate.missing)>0)add('price','warning','Цена модуля рассчитана частично.',it,'Откройте смету, чтобы увидеть позиции для уточнения.');
+    }else{
+      const price=modulePriceBreakdown(it,t,material,priceList);
+      const missingPrices=[['Материалы',price.sheetMaterials],['Фурнитура',price.hardware],['Операции',price.operations],['Кромка',price.edging],['Дополнения',price.extras]]
+        .map(([label,rows])=>[label,rows.filter(r=>r.status!=='PRICED').length]).filter(([,n])=>n).map(([label,n])=>label+' ('+n+')');
+      if(price.totals.saleMinor===null)add('price','warning','Цена модуля не рассчитана полностью.',it,
+        missingPrices.length?'Не заполнены цены или правила расчёта: '+missingPrices.join(', ')+'.':'Проверьте наценку и правила расчёта.');
+    }
     if(blank){
       if(!missing.length&&!unresolved.length){
         const stock=material(it.body_variant_id),mismatch=blankMaterialError(it,stock);
@@ -130,9 +135,9 @@ export function checkProject(scene,{template,material=()=>null,priceList=null}){
     else if(!p.material_id)add('plinth-material','error','Не назначен материал цоколя.',items.find(i=>p.members.includes(i.item_id)));
   }
   for(const [list,light]of [[resolvedPanels(scene),false],[scene.wallLights||[],true]])for(const p of list){const error=light?finishError(p,room,true):resolvedFinishError(p,room);if(error)add('wall-finish','error',error);}
-  if(scene.wallPanels?.length||scene.wallLights?.length)add('wall-finish-price','info','Стеновые панели и подсветка показаны для визуализации; в цену и распил не включены.');
-  const shared=kitchenPriceBreakdown(items,room,template,material,priceList,scene.plinths||[]).extras;
-  if(shared.some(r=>r.status!=='PRICED'))add('shared-price','warning','Не полностью рассчитана цена столешниц, цоколей или соединений.');
+  if(!estimate&&(scene.wallPanels?.length||scene.wallLights?.length))add('wall-finish-price','info','Стеновые панели и подсветка показаны для визуализации; в цену и распил не включены.');
+  const shared=estimate?[]:kitchenPriceBreakdown(items,room,template,material,priceList,scene.plinths||[]).extras;
+  if(estimate?.modules?.find(m=>m.id===null)?.missing || shared.some(r=>r.status!=='PRICED'))add('shared-price','warning','Не полностью рассчитана цена столешниц, цоколей или соединений.');
   issues.sort((a,b)=>({error:0,warning:1,info:2}[a.severity]-{error:0,warning:1,info:2}[b.severity]));
   return {issues,mechanisms,counts:Object.fromEntries(['error','warning','info'].map(s=>[s,issues.filter(i=>i.severity===s).length]))};
 }

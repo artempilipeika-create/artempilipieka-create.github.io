@@ -16,11 +16,11 @@ export class WardrobeEstimateUI{
     byId('estimate-close').onclick=()=>this.dialog.close();
     byId('estimate-pdf').onclick=()=>this.issue();
     byId('estimate-retry').onclick=()=>this.sync(true);
-    this.onFocus=()=>{if(this.app.adapter.items.some(it=>it.module_type==='blank'||it.module_type==='wardrobe'))this.sync(true);};
+    this.onFocus=()=>{if(this.app.adapter.items.length)this.sync(true);};
     window.addEventListener('focus',this.onFocus);
   }
   sync(force=false){
-    const hasPanels=this.app.bridge.estimateAccess()&&this.app.adapter.items.some(it=>it.module_type==='blank'||it.module_type==='wardrobe');
+    const hasPanels=this.app.bridge.estimateAccess()&&this.app.adapter.items.length;
     this.button.hidden=!hasPanels;
     if(!hasPanels){
       clearTimeout(this.timer);
@@ -29,7 +29,7 @@ export class WardrobeEstimateUI{
       return;
     }
     const scene=this.app.bridge.payload();
-    const key=JSON.stringify([this.app.bridge.projectId(),scene.items,scene.materialIdentities,scene.plinths,scene.wallPanels,scene.worktops]);
+    const key=JSON.stringify([this.app.bridge.projectId(),scene.items,scene.materialIdentities,scene.plinths,scene.wallPanels,scene.countertopSettings,scene.room]);
     if(!force&&key===this.key)return;
     this.key=key;this.quote=null;
     const id=++this.revision;
@@ -66,6 +66,7 @@ export class WardrobeEstimateUI{
     }catch{ /* The live calculation remains available when history cannot load. */ }
   }
   render(error=''){
+    this.app.roomPricing?.syncEstimate(error);
     const quote=this.quote, box=byId('estimate-result'), status=byId('estimate-status');
     box.replaceChildren();byId('estimate-pdf').disabled=this.issuing||!quote;
     byId('estimate-retry').hidden=!error;
@@ -77,6 +78,23 @@ export class WardrobeEstimateUI{
       const group=element('div');group.append(element('span',label),element('strong',value));amounts.append(group);
     }
     box.append(amounts);
+    if(quote.modules?.length){
+      const section=element('details',undefined,'estimate-section estimate-modules');
+      section.open=true;section.append(element('summary','Стоимость по модулям'));
+      for(const m of quote.modules){
+        const part=element('div',undefined,'estimate-module');
+        const title=element('div',undefined,'estimate-row');
+        const caption=element('div');caption.append(element('strong',m.name));
+        if(m.width)caption.append(element('small',[m.width,m.height,m.depth].join(' × ')+' мм'));
+        title.append(caption,element('b',(m.missing?'Рассчитано · ':'')+money(m.total)));part.append(title);
+        for(const drawer of m.drawers){
+          const line=element('div',undefined,'estimate-row estimate-drawer');
+          line.append(element('span',drawer.name),element('span',(drawer.missing?'Рассчитано · ':'')+money(drawer.total)));part.append(line);
+        }
+        section.append(part);
+      }
+      box.append(section);
+    }
     for(const group of Object.values(quote.groups)){
       const section=element('details',undefined,'estimate-section'),head=element('summary');
       head.append(element('strong',group.title),element('span',money(group.total)));

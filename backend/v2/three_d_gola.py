@@ -11,7 +11,7 @@ def gola_error(it,v=None):
  v=v or gola_variant(it)
  if not v:return 'Фрагмент Gola не совпадает с проверенным исходником'
  base=it.get('legHeightMm') or it.get('base_height') or 100
- minimum=300 if v['kind']=='doors' else 400;maximum=600 if v['door_count']==1 else 1200
+ minimum=300 if v['kind']=='doors' else 350;maximum=600 if v['door_count']==1 else 1200
  if it.get('module_type')!='base_cabinet' or it.get('base')=='wall' or base not in (80,100,150):return 'Gola: нижний модуль на ножках 80, 100 или 150 мм'
  if not minimum<=it['width']<=maximum or not 600<=it['height']-base<=1000 or not 300<=it['depth']<=700:return f'Gola: ширина {minimum}–{maximum}, корпус 600–1000, глубина 300–700 мм'
  return drawer_configuration(it,v)[1] if v['kind']=='drawers' else ''

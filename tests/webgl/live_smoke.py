@@ -108,10 +108,8 @@ def main():
             page.locator('#planner-undo').click();check('Published undo',page.evaluate('MF_PLANNER.adapter.selected.width')==600)
             page.locator('#planner-redo').click();check('Published redo',page.evaluate('MF_PLANNER.adapter.selected.width')==650)
             page.locator('#width').fill('320');page.locator('#width').press('Tab')
-            expect(page.locator('#module-cost')).to_contain_text('Фактическая ширина: 320 мм')
-            expect(page.locator('#module-cost')).to_contain_text('Ценовая категория: 350 мм')
-            expect(page.locator('#module-cost')).to_have_attribute('data-price-status','PRICE_DATA_MISSING')
-            check('Published pricing preserves actual width and reports missing rates',page.evaluate('MF_PLANNER.adapter.selected.width')==320)
+            expect(page.locator('#module-cost')).to_be_hidden()
+            check('Published guest scene preserves its exact width',page.evaluate('MF_PLANNER.adapter.selected.width')==320)
             furniture=page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')
             close_panels(page);page.locator('#planner-room-settings summary').click();page.locator('#planner-client').click()
             for preset in ['studio','warm','showroom']:
@@ -146,10 +144,8 @@ def main():
                 panel(page,'right')
                 if name=='D2':
                     page.locator('#width').fill('1100');page.locator('#width').press('Tab')
-                    expect(page.locator('#module-cost')).to_contain_text('Фактическая ширина: 1100 мм')
-                    expect(page.locator('#module-cost')).to_contain_text('Ценовая категория: CUSTOM · нестандарт')
-                    expect(page.locator('#module-cost')).to_have_attribute('data-price-status','CUSTOM')
-                    check('Published width above 1000 is CUSTOM without invented price',page.evaluate('MF_PLANNER.adapter.selected.width')==1100 and 'Цена: не настроена' in page.locator('#module-cost').inner_text())
+                    expect(page.locator('#module-cost')).to_be_hidden()
+                    check('Published guest can set the 1100 mm module width',page.evaluate('MF_PLANNER.adapter.selected.width')==1100)
                     page.locator('#width').fill('600');page.locator('#width').press('Tab')
                 geometry=page.evaluate('MF_PLANNER.scene.entries.get(MF_PLANNER.adapter.selected.item_id).group.uuid')
                 for kind,article in [('body','W1000 ST9'),('front','U999 ST7'),('front','U708 ST9'),('front','H1180 ST37'),('front','F186 ST9')]:

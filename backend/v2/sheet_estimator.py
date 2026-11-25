@@ -12,7 +12,7 @@ VERSION='guillotine-vertical-first-decimal-v1'
 
 class PlacementError(ValueError): pass
 
-def estimate(sheet,parts,settings):
+def estimate(sheet,parts,settings,*,cut_by_detail=None):
     k=dec(settings['kerf_mm']);sl=dec(sheet['length']);sw=dec(sheet['width'])
     ul=sl-dec(settings['trim_left_mm'])-dec(settings['trim_right_mm'])
     uw=sw-dec(settings['trim_top_mm'])-dec(settings['trim_bottom_mm'])
@@ -49,6 +49,9 @@ def estimate(sheet,parts,settings):
         key,ri,r,pl,pw,rotated=min(options,key=lambda o:o[0]);si=key[0];s=sheets[si]
         x,y,a,b=r;s['free'].pop(ri)
         s['placements'].append({'detail_id':ident,'copy':copy,'x':x,'y':y,'length':pl,'width':pw,'rotated':rotated})
+        if cut_by_detail is not None:
+            length=(b if pl<a else 0)+(pl if pw<b else 0)
+            cut_by_detail[ident]=cut_by_detail.get(ident,0)+length/1000
         if pl<a:
             segments.append({'sheet':si+1,'axis':'Y','x':x+pl,'y':y,'length_mm':b,'kind':'nesting','kerf_mm':k})
             if a-pl-k>0: s['free'].append((x+pl+k,y,a-pl-k,b))

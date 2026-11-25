@@ -1,11 +1,13 @@
+FROM node:22-bookworm-slim AS geometry
 FROM postgres:18-trixie AS pgtools
 FROM python:3.12-slim-trixie
+COPY --from=geometry /usr/local/bin/node /usr/local/bin/node
 # Matching pg_dump/pg_restore major for the existing staging Postgres 18, not a DB server.
 COPY --from=pgtools /usr/lib/postgresql/18/bin/pg_dump /usr/local/bin/pg_dump
 COPY --from=pgtools /usr/lib/postgresql/18/bin/pg_restore /usr/local/bin/pg_restore
 COPY --from=pgtools /usr/lib/x86_64-linux-gnu/libpq.so.5* /usr/lib/x86_64-linux-gnu/
-RUN apt-get update && apt-get install -y --no-install-recommends liblz4-1 libzstd1 libgssapi-krb5-2 libldap2 libsasl2-2 \
-    && rm -rf /var/lib/apt/lists/* && pg_dump --version && pg_restore --version
+RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 liblz4-1 libzstd1 libgssapi-krb5-2 libldap2 libsasl2-2 \
+    && rm -rf /var/lib/apt/lists/* && pg_dump --version && pg_restore --version && node --version
 WORKDIR /app
 COPY backend/v2/requirements.txt /app/backend/v2/requirements.txt
 RUN pip install --no-cache-dir -r /app/backend/v2/requirements.txt

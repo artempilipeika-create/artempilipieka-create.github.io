@@ -2,7 +2,6 @@ import {WALLS} from './room-plan.mjs';
 import {wallCoatings,roomById,wallCoating} from './render-rooms/catalogue.mjs';
 import {RenderRoomPicker} from './render-room-picker.mjs';
 import {ROOM_PRESETS,FLOOR_OPTIONS,LIGHT_OPTIONS,roomSettings,finishSettings,presetSettings,selectInterior,designedInterior} from './room-state.mjs';
-import {modulePriceBreakdown,kitchenPriceBreakdown} from './pricing.mjs';
 const el=(tag,text,id)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(id)e.id=id;return e;};
 const select=(id,title,options)=>{const label=el('label',title),s=el('select',undefined,id);s.setAttribute('aria-label',title);for(const [value,text]of Object.entries(options)){const o=el('option',text);o.value=value;s.append(o);}label.append(s);return label;};
 export class RoomPricingUI{
@@ -99,31 +98,30 @@ export class RoomPricingUI{
     const designed=designedInterior(s.environmentPreset);
     this.applyPreset.hidden=photographic||(designed?['wallColor']:['wallColor','floorMaterial','lightingPreset']).every(key=>s[key]===preset[key]);
     this.applyPreset.textContent=(designed?'Вернуть оттенок «':'Применить «')+ROOM_PRESETS[s.environmentPreset].label+'»';
-    const it=a.selected;
-    const wardrobe=a.items.some(item=>['blank','wardrobe'].includes(item.module_type));
-    this.module.hidden=wardrobe;this.kitchen.hidden=wardrobe;
-    if(wardrobe){this.syncVisualNotice();return;}
-    this.module.replaceChildren(el('h3','Стоимость'));
-    if(it){
-      const b=modulePriceBreakdown(it,a.template(it),id=>a.material(id));
-      this.module.dataset.priceStatus=b.totals.status;
-      const lines=[b.label,'Фактическая ширина: '+b.actualWidthMm+' мм','Ценовая категория: '+(b.status==='CUSTOM'?'CUSTOM · нестандарт':b.pricingWidthMm+' мм'),'Цена: не настроена'];
-      lines.forEach(t=>this.module.append(el('p',t)));
-      const details=el('details'),summary=el('summary','Состав расчёта');details.append(summary);
-      for(const [title,rows]of [['Листовые материалы',b.sheetMaterials],['Кромка',b.edging],['Фурнитура',b.hardware],['Операции',b.operations],['Подсветка: комплектование',b.extras]]){
-        details.append(el('strong',title));
-        for(const r of rows)details.append(el('p',r.label+': '+(r.quantity===null?'правило расчёта не задано':r.quantity.toLocaleString('ru-RU',{maximumFractionDigits:3})+' '+({m2:'м²',pcs:'шт.',m:'м'}[r.unit]||r.unit)+' · цена не настроена')));
-      }
-      details.append(el('strong','Итого'),el('p','Себестоимость: не рассчитана'),el('p','Наценка: правило не задано'),el('p','Цена продажи: не рассчитана'));
-      details.append(el('p','Количество для цены — по ценовой категории. Столешница и цоколь учитываются один раз в стоимости кухни.'));this.module.append(details);
-    }
-    const k=kitchenPriceBreakdown(a.items,a.room,it=>a.template(it),id=>a.material(id),null,a.state.plinths||[]);
-    this.kitchen.dataset.priceStatus=k.status;this.kitchen.replaceChildren(el('h3','Стоимость кухни'),el('p',k.notice));
-    for(const m of k.modules)this.kitchen.append(el('p',m.label+' · '+(m.pricingWidthMm===null?'нестандарт':m.pricingWidthMm+' мм')+' · цена не настроена'));
-    if(k.extras.length){this.kitchen.append(el('strong','Общие элементы кухни'));for(const r of k.extras)this.kitchen.append(el('p',r.label+': '+r.quantity.toLocaleString('ru-RU',{maximumFractionDigits:3})+' '+({m2:'м²',joint:'стык.',m:'м',pcs:'шт.'}[r.unit]||r.unit)+' · цена не настроена'));}
-    this.kitchen.append(el('p','Себестоимость, наценка и цена продажи: не рассчитаны'));
-    this.kitchen.append(el('p','Материалы и фасады — в составе модулей. Столешница, цоколь и дополнительные элементы — отдельные позиции.'));
+    this.syncEstimate();
     this.syncVisualNotice();
+  }
+  syncEstimate(error=''){
+    const app=this.app, a=app.adapter, it=a.selected, quote=app.estimate?.quote;
+    const available=app.bridge.estimateAccess() && a.items.some(p=>['base_cabinet','wall_cabinet','tall_cabinet'].includes(p.module_type)||p.assistant_carcass?.spec.kitchenModel);
+    this.module.hidden=!available||!it;
+    this.kitchen.hidden=!available;
+    if(!available)return;
+    const money=n=>n.toLocaleString('ru-BY',{minimumFractionDigits:2,maximumFractionDigits:2})+' BYN';
+    const label=m=>(m.missing?'Рассчитано · ':'')+money(m.total);
+    const selected=quote?.modules?.find(m=>m.id===(it?.assistant_carcass?.group_id??it?.item_id));
+    const waiting=error||'Считаем по деталям…';
+    this.module.dataset.priceStatus=selected?(selected.missing?'PARTIAL':'PRICED'):'PENDING';
+    this.module.replaceChildren(el('h3','Стоимость модуля'));
+    if(selected){
+      this.module.append(el('p',selected.name+' · '+selected.width+' × '+selected.height+' × '+selected.depth+' мм'),el('strong',label(selected)));
+      for(const d of selected.drawers)this.module.append(el('p',d.name+' · '+label(d)));
+    }else this.module.append(el('p',waiting));
+    this.kitchen.dataset.priceStatus=quote?(quote.complete?'PRICED':'PARTIAL'):'PENDING';
+    this.kitchen.replaceChildren(el('h3','Стоимость кухни'),el('strong',quote?label(quote):waiting));
+    if(quote){
+      const button=el('button','Открыть смету');button.type='button';button.onclick=()=>app.estimate.open();this.kitchen.append(button);
+    }
   }
   syncVisualNotice(){
     const a=this.app.adapter,missing=new Set(),approximate=new Set(),sampleColors=new Set();

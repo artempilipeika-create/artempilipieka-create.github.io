@@ -5,7 +5,7 @@ import {productionParts,productionHardware,kitchenRuns,kitchenLegs,PILOT_PRODUCT
 export const PRICING_WIDTHS=Object.freeze(Array.from({length:15},(_,i)=>300+i*50));
 export function pricingCategory(actualWidthMm){
   if(!Number.isFinite(actualWidthMm)||actualWidthMm<=0)return {actualWidthMm,pricingWidthMm:null,status:'INVALID_WIDTH'};
-  return {actualWidthMm,pricingWidthMm:actualWidthMm>1000?null:Math.max(300,Math.ceil(actualWidthMm/50)*50),status:actualWidthMm>1000?'CUSTOM':'STANDARD'};
+  return {actualWidthMm,pricingWidthMm:actualWidthMm,status:'ACTUAL'};
 }
 const row=(key,label,quantity,unit,source,extra={})=>({key,label,quantity,unit,source,...extra,
   status:quantity===null?'PRICING_RULE_MISSING':'PRICE_DATA_MISSING',unitPriceMinor:null,amountMinor:null});
@@ -40,10 +40,7 @@ function totals(rows,markupBasisPoints){
 }
 export function modulePriceBreakdown(item,template,materialLookup=()=>null,priceList=null){
   const category=pricingCategory(item.width),actualParts=productionParts(item,template,materialLookup);
-  // The same production generator calculates a quote at the next standard width.
-  // Only this isolated copy is resized. Actual scene/export geometry is untouched.
-  const categoryParts=category.status==='STANDARD'&&actualParts?productionParts({...item,width:category.pricingWidthMm},template,materialLookup):null;
-  const parts=categoryParts||actualParts||[],hardware=productionHardware(item,template?.production),legs=kitchenLegs(item),hardwareRows=[];
+  const parts=actualParts||[],hardware=productionHardware(item,template?.production),legs=kitchenLegs(item),hardwareRows=[];
   if(Number.isInteger(hardware?.hinge_count)&&!hardware.hinges_in_items)hardwareRows.push(
     row('hinges:'+String(hardware.hinge_article||hardware.hinge_name||'missing'),hardware.hinge_name||'Петли',hardware.hinge_count,'pcs','FR3D donor',{article:hardware.hinge_article||null}));
   if(Number.isInteger(hardware?.drawer_count))hardwareRows.push(
@@ -78,10 +75,10 @@ export function modulePriceBreakdown(item,template,materialLookup=()=>null,price
   if(!actualParts)sections.operations.push(row('production','Производственная модель',null,'module','Unsupported donor'));
   for(const key of Object.keys(sections))sections[key]=priceRows(sections[key],priceList?.rates);
   const all=Object.values(sections).flat(),calculated=totals(all,priceList?.markupBasisPoints);
-  if(category.status!=='STANDARD')Object.assign(calculated,{status:category.status,costMinor:null,markupMinor:null,saleMinor:null});
+  if(category.status==='INVALID_WIDTH')Object.assign(calculated,{status:category.status,costMinor:null,markupMinor:null,saleMinor:null});
   return {schema:'ModulePriceBreakdown/1',moduleId:item.item_id,moduleType:template?.production?.key||item.bazis_id||item.module_type,
-    label:template?.production?.label||item.name,...category,quantityBasis:categoryParts?'PRICING_CATEGORY':'ACTUAL_REFERENCE_ONLY',
-    actualBOM:{parts:actualParts||[],sheetMaterials:panelRows(actualParts||[])},pricingBOM:{parts:categoryParts||[]},
+    label:template?.production?.label||item.name,...category,quantityBasis:'ACTUAL',
+    actualBOM:{parts:actualParts||[],sheetMaterials:panelRows(actualParts||[])},pricingBOM:{parts},
     ...sections,extrasScope:'KITCHEN_SHARED_RUNS',totals:calculated,
     missing:all.filter(r=>r.status!=='PRICED').map(r=>({key:r.key,status:r.status}))};
 }

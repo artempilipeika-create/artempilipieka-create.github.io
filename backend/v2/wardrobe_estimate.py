@@ -4,6 +4,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
@@ -11,6 +12,7 @@ from functools import lru_cache
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from . import kitchen_estimate as kitchen
 from . import sheet_estimator
 from .estimate_drilling import drill_key
 from .sales_hardware import module_hardware, purchasing_rows
@@ -50,12 +52,15 @@ def ratebook():
 
 
 class Lines:
-    def __init__(self):
+    def __init__(self, breakdown=None):
+        self.breakdown = breakdown
         self.groups = {group: {} for group in GROUPS}
 
     def add(self, group, key, name, qty, unit, rate=None, *, record=None, reason=None, article=None, photo=None):
         if qty == 0:
             return
+        if self.breakdown:
+            self.breakdown.track(group,key,qty)
         rows = self.groups[group]
         if key in rows:
             row = rows[key]
@@ -66,6 +71,10 @@ class Lines:
                          rate=None if rate is None else decimal(rate), article=article, photo=photo,
                          source=record.get('source'), checked=record.get('date'), photoSeries=bool(record.get('photoSeries')),
                          reason=reason or ('Требуется цена' if rate is None else None))
+
+    def owner(self, item):
+        if self.breakdown:
+            self.breakdown.current = kitchen.source_owner(item)
 
     def work(self, operations, key, qty, label=None, unit='м'):
         record = operations.get(key, {})
@@ -100,6 +109,8 @@ class Lines:
                                total=float(customer_total-customer_before))
         result = dict(date=date, currency='BYN', markup=float(markup), groups=groups, missing=missing,
                       base=float(base_total), total=float(customer_total), complete=missing == 0)
+        if self.breakdown:
+            result['modules'] = self.breakdown.finish(result)
         result['fingerprint'] = hashlib.sha256(json.dumps(result, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         return result
 
@@ -112,19 +123,23 @@ def decor_label(record):
 def panel_costs(scene, book, lines):
     operations = book['operations']
     sheets = {v: row for row in book['sheets'] for v in row.get('variantIds', [])}
-    edges = {(r['brand'], r['code'], r['texture'], r['width'], decimal(r['thickness'])): r for r in book['edges']}
+    edges = defaultdict(list)
+    for edge in book['edges']:
+        edges[edge['brand'],edge['code'],edge['texture'],edge['width'],decimal(edge['thickness'])].append(edge)
     batches = defaultdict(list)
+    owners = {}
     for item in scene.get('items', []):
         name = item['name']
+        lines.owner(item)
         if item.get('module_type') != 'blank':
             lines.add('materials', 'unmeasured:'+item['item_id'], name, None, 'м²', reason='Нужна деталировка модуля')
             continue
         length, width, thickness = (decimal(item['blank_'+v+'_mm']) for v in ('length','width','thickness'))
         shelf = item.get('blank_shelf') or ''
-        if item.get('blank_front_frame') == 'Z1' or (shelf and not shelf.startswith('board/')):
+        if item.get('estimate_glass') or item.get('blank_front_frame') == 'Z1' or (shelf and not shelf.startswith('board/')):
             frame = item.get('blank_front_frame') == 'Z1'
             area = (length-decimal(27.5))*(width-decimal(27.5)) if frame else length*width
-            glass = 'Стекло для фасада Z1' if frame else 'Стекло для полок '+str(thickness)+' мм'
+            glass = 'Стекло для фасада Z1' if frame else 'Стекло '+str(thickness)+' мм'
             lines.add('materials', glass, glass, area/1000000, 'м²')
             if frame:
                 lines.add('hardware','frame-z1','Алюминиевый профиль Z1',(length+width)*2/1000,'м')
@@ -134,29 +149,45 @@ def panel_costs(scene, book, lines):
         board = sheets.get(variant, {})
         if board and decimal(board['thickness']) != thickness:
             board = {}
-        label = decor_label(board) if board else ' '.join(x for x in (identity.get('manufacturer'),identity.get('article')) if x) or ('Плита '+name)
+        label = decor_label(board) if board else ' '.join(x for x in (identity.get('manufacturer'),identity.get('article')) if x) or name
         label += ' · '+str(thickness)+' мм'
         material_key = variant or label
-        bits = item.get('blank_edge_code') or '0000'
-        long_sides, short_sides = bits[:2].count('1'), bits[2:].count('1')
-        edge_t = decimal(item.get('blank_edge_thickness_mm', 1))
-        edge_m = (length*long_sides+width*short_sides)/1000
-        if edge_m:
-            tape_width = 22 if thickness <= 18 else (42 if thickness <= 36 else None)
-            match = edges.get((board.get('brand'), board.get('code'), board.get('texture'), tape_width, edge_t))
-            if match is None and tape_width == 42:
-                match = edges.get((board.get('brand'), board.get('code'), board.get('texture'), 43, edge_t))
-            match = match or {}
-            tape = 'Кромка ПВХ '+str(match.get('width') or tape_width or '—')+' × '+str(edge_t)+' мм · '+label
-            lines.add('materials','edge:'+material_key+':'+str(thickness)+':'+str(edge_t),tape,edge_m,'м',match.get('price'),record=match)
-            edge_key = 'edgeComplex' if min(width,length)<60 else 'edgeThick' if thickness>22 else 'edgeNormal'
+        raw_l, raw_w = length, width
+        dimensions = {'length':length,'width':width}
+        parts = item.get('estimate_edges')
+        if parts is None:
+            bits = item.get('blank_edge_code') or '0000'
+            parts = [dict(span=span,thick=item.get('blank_edge_thickness_mm',1),clip=True)
+                     for bit,span in zip(bits,['length','length','width','width']) if bit=='1']
+        totals = defaultdict(Decimal)
+        if item.get('estimate_edge_review'):
+            lines.add('materials','edge-plan:'+item['item_id'],name+' · схема кромления',None,'м',reason='Сверить оклейку с фрагментом БАЗИС')
+        for edge in parts:
+            et=decimal(edge['thick'])
+            totals[et] += decimal(edge['mm'])/1000 if 'mm' in edge else dimensions[edge['span']]/1000
+            if edge.get('clip') and edge.get('span')=='length':
+                raw_w-=et
+            if edge.get('clip') and edge.get('span')=='width':
+                raw_l-=et
+        for edge_t,edge_m in totals.items():
+            widths=(22,23) if thickness<=18 else (42,43) if thickness<=36 else ()
+            candidates=[v for w in widths for v in edges.get((board.get('brand'),board.get('code'),board.get('texture'),w,edge_t),[])]
+            if lines.breakdown:
+                candidates=kitchen.edge_options(board,edge_t,thickness,candidates)
+            match=max(candidates,key=lambda r:r['price'],default={})
+            tape='Кромка ПВХ '+str(match.get('width') or next(iter(widths),'—'))+' × '+str(edge_t)+' мм · '+label
+            lines.add('materials','edge:'+material_key+':'+str(thickness)+':'+str(edge_t.normalize()),tape,edge_m,'м',match.get('price'),record=match)
+            edge_key='edgeComplex' if min(width,length)<60 else 'edgeThick' if thickness>22 else 'edgeNormal'
             lines.work(operations,edge_key,edge_m)
-        raw_l, raw_w = length-short_sides*edge_t, width-long_sides*edge_t
         lines.add('materials','sheet:'+material_key+':'+str(thickness),label,raw_l*raw_w/1000000,
                   'м²',board.get('price'),record=board)
+        owners[item['item_id']]=item
         batches[(material_key,thickness)].append(dict(detail_id=item['item_id'],length=str(raw_l),width=str(raw_w),
                                                      qty=1,grain='length',rotation=False))
         lines.work(operations,'pack',length*width/1000000,unit='м²')
+        for cut in item.get('estimate_cuts',()):
+            qty=None if cut['mm'] is None else decimal(cut['mm'])/1000
+            lines.work(operations,cut['key'],qty,cut['name'])
         for op in item.get('blank_machining') or []:
             kind = op['kind']
             label_op = {'groove':'Фрезеровка паза','rabbet':'Выборка четверти','miter':'Запил под 45°'}[kind]
@@ -172,15 +203,19 @@ def panel_costs(scene, book, lines):
         rate_key = 'cutHdf' if thickness in (3,4) else 'cut18' if 10<=thickness<=18 else 'cut36' if thickness==36 else 'cut:'+str(thickness)
         if sizes:
             try:
-                plan = sheet_estimator.estimate(dict(length=str(sizes[0]),width=str(sizes[1])),parts,CUT)
-                lines.work(operations,rate_key,plan['cut_metres'],'Раскрой плиты '+str(thickness)+' мм')
+                cuts={}
+                sheet_estimator.estimate(dict(length=str(sizes[0]),width=str(sizes[1])),parts,CUT,cut_by_detail=cuts)
+                for ident,metres in cuts.items():
+                    lines.owner(owners[ident])
+                    lines.work(operations,rate_key,metres,'Раскрой плиты '+str(thickness)+' мм')
                 continue
             except sheet_estimator.PlacementError:
                 pass
-        lines.add('work','cut-missing:'+variant+':'+str(thickness),'Раскрой · '+(decor_label(sheets.get(variant,{})) or 'плита '+str(thickness)+' мм'),
-                  None,'м',reason='Уточнить формат листа или карту раскроя')
-    if scene.get('plinths') or scene.get('wallPanels') or scene.get('worktops'):
-        lines.add('materials','kitchen-accessories','Общие элементы кухни',None,'',reason='Требуется отдельный расчёт')
+        for part in parts:
+            lines.owner(owners[part['detail_id']])
+            lines.add('work','cut-missing:'+variant+':'+str(thickness),'Раскрой · '+(decor_label(sheets.get(variant,{})) or 'плита '+str(thickness)+' мм'),
+                      None,'м',reason='Уточнить формат листа или карту раскроя')
+
 
 
 def rod_lengths(spec):
@@ -201,15 +236,31 @@ def rod_lengths(spec):
         yield rod['article'], width-product['cutAllowance'], product['holderArticle']
 
 
-def hardware_costs(scene, book, prices, drilling, lines):
+def drill_costs(operations, lines, rule, qty):
+    for hole in rule:
+        key = 'drill:'+str(hole['diameter'])+':'+hole['kind']
+        kind = {'end':'торцевое','blind':'глухое','through':'сквозное'}[hole['kind']]
+        lines.work(operations,key,decimal(qty)*hole['count'],'Присадка Ø'+str(hole['diameter'])+', '+kind,'шт.')
+
+
+def hardware_costs(scene, book, prices, drilling, lines, geometry=None):
     items = scene.get('items') or []
     kits = project_lighting_kits(items)
     cuts = defaultdict(list)
     operations = book['operations']
     for item in with_installed_drawer_depths(items):
+        lines.owner(item)
+        owner=kitchen.source_owner(item)
+        measured=(geometry or {}).get('modules',{}).get(item['item_id']) or {}
         rows, warnings = module_hardware(item)
         rows, _ = purchasing_rows(item,rows)
+        if measured and (item.get('kitchenFilling') or {}).get('backMount'):
+            rows=[r for r in rows if r.get('article')!='16181' and not r['name'].lower().startswith('гвозди')]
         for note in warnings:
+            if measured and (item.get('kitchenFilling') or {}).get('backMount'):
+                note = re.sub(r'(?: · )?(?:Паз|Четверть) под ЛХДФ 3 мм · [0-9.,]+ × [0-9.,]+ мм$', '', note)
+                if not note:
+                    continue
             if note == 'Нет проверенной ведомости фурнитуры' and item.get('module_type')=='blank':
                 continue
             lines.add('hardware','note:'+note,note,None,'',reason='Уточнить комплектацию')
@@ -237,12 +288,36 @@ def hardware_costs(scene, book, prices, drilling, lines):
             for sku, length, holder in rod_lengths(spec):
                 cuts[sku].append((length,item['item_id']))
                 rows.append(dict(article=holder, name='Держатель штанги AKS · '+holder, unit='pcs', qty=2))
-        for row in rows:
+        drawer_drilling=kitchen.metal_drawer_drilling(item) if measured else {}
+        for index,holes in drawer_drilling.items():
+            lines.breakdown.current=(owner[0],index)
+            drill_costs(operations,lines,holes,1)
+        for drawer,row in kitchen.drawer_rows(item,rows,measured.get('panels',[]),measured.get('guideDepth')) if measured else ((None,r) for r in rows):
+            if lines.breakdown:
+                lines.breakdown.current=(owner[0],drawer if drawer is not None else owner[1])
             article, name, qty, unit = row.get('article') or '', row['name'], row['qty'], row['unit']
             article = str(article).replace('\xa0',' ').strip()
+            if kitchen.is_kitchen(item) and re.search(r'blum|бл[юу]м|legrabox|леграбокс|tandembox|тандембокс|movento', name, re.I):
+                lines.add('hardware','blum:'+str(article or name),name,qty,UNITS.get(unit,unit),reason='BLUM пока не оценивается',article=article)
+                continue
             product = prices.get(article,{})
             profile = drill_key(item,row,drilling)
-            rule = drilling.get(profile)
+            rule = [] if drawer in drawer_drilling else drilling.get(profile)
+            if measured and (article=='16181' or name.lower().startswith('гвозди')):
+                rule=[]
+            if measured and rule is None:
+                rule=kitchen.native_rule(item,row)
+            if measured:
+                # An explicit empty list in the source means no machining on boards.
+                from .estimate_drilling import _joint, _normal
+                joint = _joint(_normal(name))
+                if joint:
+                    profile=joint
+                    if rule is None:
+                        rule=drilling.get(joint)
+            if measured and rule is None:
+                lines.add('work','drilling-unverified:'+(article or name),'Присадка · '+name,None,'шт.',
+                          reason='Уточнить схему присадки')
             # The BOM gives the entire eccentric joint. The shop sells its two components separately.
             if (profile or '').endswith('joint:confirmat') and not article:
                 article='73116'
@@ -257,23 +332,23 @@ def hardware_costs(scene, book, prices, drilling, lines):
                 lines.add('work','drilling-unverified:'+(article or name),'Присадка · '+name,None,'шт.',
                           reason='Уточнить схему присадки')
             if rule is not None and qty is not None:
-                for hole in rule:
-                    key = 'drill:'+str(hole['diameter'])+':'+hole['kind']
-                    kind = {'end':'торцевое','blind':'глухое','through':'сквозное'}[hole['kind']]
-                    lines.work(operations,key,decimal(qty)*hole['count'],'Присадка Ø'+str(hole['diameter'])+', '+kind,'шт.')
+                drill_costs(operations,lines,rule,qty)
             if (profile or '').endswith('joint:cam') and not article:
                 continue
             if unit=='m' and product.get('stockMm') and qty is not None:
                 cuts[article].append((float(decimal(qty)*1000),item['item_id']))
                 continue
             rate = decimal(product['price'])/decimal(product['pack']) if product else None
-            lines.add('hardware',(article or name)+':'+unit,name,qty,UNITS.get(unit,unit),rate,record=product,
+            lines.add('hardware',((article+'·'+name) if article=='05.0360' else (article or name))+':'+unit,name,qty,UNITS.get(unit,unit),rate,record=product,
                       article=article or None,photo=product.get('photo'),reason='Уточнить количество' if qty is None else None)
     for article,pieces in cuts.items():
         product = prices.get(article,{})
         length = product.get('stockMm')
         ok = length and all(0 < span <= length for span,_ in pieces)
         qty = len(pack_lengths(pieces,length,4.4)) if ok else None
+        if lines.breakdown:
+            owners={lines.breakdown.by_item.get(key) for _,key in pieces}
+            lines.breakdown.current=owners.pop() if len(owners)==1 else (kitchen.SHARED,None)
         lines.add('hardware',article+':stock',product.get('name') or 'Профиль · '+article,qty,'хлыст',
                   product.get('price'),record=product,article=article,photo=product.get('photo'),
                   reason=None if ok else 'Уточнить длину хлыста')
@@ -281,7 +356,30 @@ def hardware_costs(scene, book, prices, drilling, lines):
 
 def calculate(scene, markup=0, date=None, rates=None):
     book, prices, drilling = rates or ratebook()
-    lines = Lines()
-    panel_costs(scene,book,lines)
-    hardware_costs(scene,book,prices,drilling,lines)
+    items = scene.get('items') or []
+    has_kitchen = any(kitchen.is_kitchen(it) for it in items) or bool(scene.get('wallPanels') or scene.get('plinths'))
+    lines = Lines(kitchen.Breakdown(items) if has_kitchen else None)
+    geometry = None
+    if has_kitchen:
+        geometry=kitchen.project_geometry(scene)
+        panels=[]
+        for it in items:
+            module=geometry['modules'].get(it['item_id'])
+            if module is None:
+                panels.append(it)
+            else:
+                owner=kitchen.source_owner(it)[0]
+                panels.extend(kitchen.board_panel(p,owner,book,it.get('body_variant_id')) for p in module['panels'])
+        panels.extend(kitchen.board_panel(p,kitchen.SHARED,book) for p in geometry['extraPanels'])
+        panel_costs({**scene,'items':panels},book,lines)
+        for op in geometry['operations']:
+            lines.breakdown.current=lines.breakdown.by_item.get(op.get('item'),(kitchen.SHARED,None))
+            qty=decimal(op['mm'])/1000 if 'mm' in op else op['qty']
+            lines.work(book['operations'],op['key'],qty,op['name'],op.get('unit','м'))
+        lines.breakdown.current=(kitchen.SHARED,None)
+        for issue in geometry['issues']:
+            lines.add('work','shared:'+issue,issue,None,'',reason='Уточнить конструкцию')
+    else:
+        panel_costs(scene,book,lines)
+    hardware_costs(scene,book,prices,drilling,lines,geometry)
     return lines.finish(markup,date or datetime.now(ZoneInfo('Europe/Minsk')).date().isoformat())

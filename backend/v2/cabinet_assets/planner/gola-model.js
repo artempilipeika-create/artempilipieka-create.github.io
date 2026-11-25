@@ -33,7 +33,7 @@
  const configuration=(it,v=source(it))=>D().configuration(it,v);
  function dimensionError(it,v=source(it)){
   if(!v)return 'Фрагмент Gola не совпадает с проверенным исходником';
-  const base=it.legHeightMm??it.base_height??100,min=v.kind==='doors'?300:400,max=v.door_count===1?600:1200;
+  const base=it.legHeightMm??it.base_height??100,min=v.kind==='doors'?300:350,max=v.door_count===1?600:1200;
   if(it.module_type!=='base_cabinet'||it.base==='wall'||![80,100,150].includes(base))return 'Gola: нижний модуль на ножках 80, 100 или 150 мм';
   if(it.width<min||it.width>max||it.height-base<600||it.height-base>1000||it.depth<300||it.depth>700)return `Gola: ширина ${min}–${max}, корпус 600–1000, глубина 300–700 мм`;
   if(v.kind==='drawers')return configuration(it).error;
@@ -45,7 +45,7 @@
    carcass:{type:'gola',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},back:v.purpose==='sink'?null:{type:'overlay_nails',thickness:3,material_name:'ЛХДФ 3ММ Белый'},
    facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},shelves:[],doors:v.kind==='doors'?(v.side==='double'?['left','right']:[v.side]).map(side=>({side,hinge_count:2,open_angle:105})):[],
    hardware:{native_fixed_items:true,hinges_in_items:true,items:v.hardware_items},front:{kind:v.kind,count:v.kind==='doors'?v.door_count:v.front_heights.length}};
-  return {...p,gola:v,label:v.label,key:'base.gola.'+v.id,source_file:v.source_file,source_sha256:v.source_sha256,limits:{w:[v.kind==='doors'?300:400,v.door_count===1?600:1200],h:[700,1100],d:[300,700]}};
+  return {...p,gola:v,label:v.label,key:'base.gola.'+v.id,source_file:v.source_file,source_sha256:v.source_sha256,limits:{w:[v.kind==='doors'?300:350,v.door_count===1?600:1200],h:[700,1100],d:[300,700]}};
  }
  function contour(it,v,s){return s.contour_yz?.map(([y,z])=>[point(it,v,1,y),point(it,v,2,z)]);}
  function parts(it,p,lookup=()=>null){

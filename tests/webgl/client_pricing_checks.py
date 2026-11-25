@@ -21,9 +21,8 @@ def test_room_presets_pricing_history_save_load_and_native_isolation(page,api,se
     open_planner(page,api);panel(page,'left','catalog')
     page.locator('[data-bazis="bazis.0211e4f77fc4"]').click();panel(page,'right')
     page.locator('#width').fill('320');page.locator('#width').press('Tab')
-    expect(page.locator('#module-cost')).to_contain_text('Фактическая ширина: 320 мм')
-    expect(page.locator('#module-cost')).to_contain_text('Ценовая категория: 350 мм')
-    expect(page.locator('#module-cost')).to_have_attribute('data-price-status','PRICE_DATA_MISSING')
+    assert page.evaluate('MF_PLANNER.adapter.selected.width') == 320
+    expect(page.locator('#module-cost')).to_be_hidden()
     native=export_payload(page)['items'];before=page.evaluate('JSON.stringify(MF_PLANNER.adapter.items)')
     geometry=page.evaluate('[...MF_PLANNER.scene.entries.values()].map(e=>e.group.uuid)')
     close_panels(page)

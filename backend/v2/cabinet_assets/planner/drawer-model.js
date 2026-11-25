@@ -24,7 +24,7 @@
   const selectionError=(it,v)=>!v?'Такого сочетания нет среди проверенных фрагментов':v.execution==='gola'?root.MF_GOLA.dimensionError(selectedSource(it,v)):v.system==='ball'?'':dimensionError(selectedSource(it,v));
   function model(v){return {tier:'base',key:'base.metal-drawers.'+v.system+'.'+v.layout+'.'+v.opening,label:family.label,source_file:v.source_file,source_sha256:v.source_sha256,
     native_defaults:{width:600,height:820,depth:510},body_height:720,base_height:100,scene_depth:510,worktop_thickness:38,resize:true,
-    limits:{w:[400,1200],h:[700,1100],d:[300,700]},metal_drawers:v,
+    limits:{w:[350,1200],h:[700,1100],d:[300,700]},metal_drawers:v,
     carcass:{type:'metal_drawers',panel_thickness:18,material_name:'ЛДСП- БЕЛЫЙ'},
     facade:{thickness:18,gap_mm:1.5,clearance_mm:0,material_name:'Evagloss P004'},back:{type:'overlay_nails',thickness:3,material_name:'ЛХДФ 3ММ Белый'},
     front:{kind:'drawers',count:v.front_heights.length},shelves:[],doors:[],
@@ -52,7 +52,7 @@
     const v=info(it);if(!v)return 'Фрагмент ящиков не совпадает с проверенным исходником';
     const base=it.legHeightMm??it.base_height??100;
     if(it.module_type!=='base_cabinet'||it.base==='wall'||![80,100,150].includes(base))return 'Нижний шкаф с ящиками устанавливается на ножки 80, 100 или 150 мм';
-    if(it.height-base<600||it.height-base>1000||it.depth<300||it.depth>700||it.width<400||it.width>1200)return 'Размеры шкафа: корпус 600–1000 мм, глубина 300–700 мм, ширина 400–1200 мм.';
+    if(it.height-base<600||it.height-base>1000||it.depth<300||it.depth>700||it.width<350||it.width>1200)return 'Размеры шкафа: корпус 600–1000 мм, глубина 300–700 мм, ширина 350–1200 мм.';
     return configuration(it,v).error;
   }
   const round=n=>Math.round(n*10000)/10000;
@@ -94,7 +94,7 @@
       let id=it.part_materials?.[s.key]??(s.role==='drawer'?null:s.role==='front'?it.front_variant_id:s.role==='back'?it.back_variant_id:it.body_variant_id),mat=id?lookup(id):null;
       // Inherit only the carcass appearance. An 18 mm SKU must never be emitted as
       // the purchasing/native material of a 16 mm board, including old bad overrides.
-      if(s.role==='drawer'&&(id===it.body_variant_id||(mat&&Number(mat.thickness)!==16))){id=null;mat=null;}
+      if(s.role==='drawer'&&(id===it.body_variant_id||(mat?.thickness!=null&&Number(mat.thickness)!==16))){id=null;mat=null;}
       const [length_axis,width_axis,thickness_axis]=s.axes.map(i=>['x','y','z'][i]);
       return {part_id:it.item_id+':'+s.key,module_id:it.item_id,key:s.key,name:s.name,role:s.role,type:'panel',size,position,
         length:size[length_axis],width:size[width_axis],thickness:size[thickness_axis],orientation:{length_axis,width_axis,thickness_axis},
