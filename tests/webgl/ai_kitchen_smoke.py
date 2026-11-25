@@ -401,6 +401,9 @@ if __name__=='__main__':
     a=p.parse_args()
     def check(page,projects,pid):
         if a.live:
+            assert page.request.get(ORIGIN+'/health').ok
+            app=page.request.get(ORIGIN+'/account/3d.js')
+            assert app.ok and app.body()==(ROOT/'backend/v2/cabinet_assets/3d.js').read_bytes()
             for name in ['ai-kitchen.mjs','ai-kitchen-project.mjs','ai-kitchen-ui.mjs','ai-kitchen.css','furniture-core.js','module-mesh.mjs','materials/egger-f243-st76.webp']+['module-card-images/ai-'+key+'.webp' for key in MODELS]:
                 asset=page.request.get(ORIGIN+'/account/planner/'+name)
                 assert asset.ok and asset.body()==(ROOT/'backend/v2/cabinet_assets/planner'/name).read_bytes(),name
