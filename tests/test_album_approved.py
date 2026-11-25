@@ -136,3 +136,12 @@ def test_standard_wardrobe_uses_enabled_shelf_top_above_base_and_floor():
               shelves=[dict(offset_mm=400,thickness=18),dict(offset_mm=320,thickness=6,enabled=False)])
     assert drawing_sets([item])==[[item]]
     assert profile([item])[1]==[[559]]
+
+def test_price_cover_fits_a_full_length_project_name_beside_the_amount():
+    from backend.v2 import client_price_album
+    from tests.test_kitchen_album import image
+    name = 'Щ' * 200
+    scene = {'items':[{}], 'albumSettings':{'order_number':'W' * 60}}
+    data = client_price_album.render(name, scene, image(), client_price_album.summary(None))
+    cover = PdfReader(BytesIO(data)).pages[0].extract_text()
+    assert name in ''.join(cover.split()) and 'W' * 60 in cover and 'Уточняется' in cover

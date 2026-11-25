@@ -123,15 +123,16 @@ def draw_cover(c, name, scene, hero, *, price=None):
     t=c.beginText((W-brand_width)/2,H-30);t.setFont('SalesBold',size);t.setCharSpace(spacing);t.setFillColor(top_ink);t.textLine(label);c.drawText(t)
     c.restoreState()
     order=str((scene.get('albumSettings') or {}).get('order_number') or '').strip()
-    c.setFont('SalesBold',8.5);c.setFillColor(bottom_ink)
-    c.drawString(32,91,'ЗАКАЗ № '+(order or 'не указан'))
-    style=ParagraphStyle('cover-title',fontName='SalesSerif',fontSize=24,leading=28,textColor=bottom_ink)
     width = W-64 if price is None else W*.55
-    title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
-    if th>70:
-        style.fontSize=18;style.leading=21;title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
-    if th>70 and price is not None:
-        style.fontSize=13;style.leading=15;title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
+    order_label = 'ЗАКАЗ № '+(order or 'не указан')
+    order_size = min(8.5, 8.5*width/pdfmetrics.stringWidth(order_label, 'SalesBold', 8.5))
+    c.setFont('SalesBold',order_size);c.setFillColor(bottom_ink)
+    c.drawString(32,91,order_label)
+    sizes = [(24,28), (18,21)] if price is None else [(24,28), (18,21), (13,15), (10,12), (8,10)]
+    for size, leading in sizes:
+        style=ParagraphStyle('cover-title',fontName='SalesSerif',fontSize=size,leading=leading,textColor=bottom_ink)
+        title=Paragraph(escape(name),style);_,th=title.wrap(width,90)
+        if th<=70:break
     if th>70:raise ValueError('Название слишком длинное для обложки. Сократите название проекта.')
     title.drawOn(c,32,79-th)
     if price is not None:
