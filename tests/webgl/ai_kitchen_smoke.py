@@ -142,12 +142,19 @@ def scenario(page, projects, pid):
     tab('materials')
     form.get_by_role('button',name='Закрыть двери').click()
     wait_for_state(page, '()=>MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
-    part_point=page.evaluate("""()=>{const v=MF_PLANNER.aiKitchen.preview,r=v.canvas.getBoundingClientRect();
-      const point=v.camera.position.clone().set(0,0.30,0.015);
-      const g=v.entries.get('questionnaire-preview:door-left').group;
-      point.applyMatrix4(g.matrixWorld).project(v.camera);
-      return [r.left+(1+point.x)*r.width/2,r.top+(1-point.y)*r.height/2];}""")
-    page.mouse.click(*part_point)
+    canvas=form.locator('.wardrobe-live canvas')
+    canvas.scroll_into_view_if_needed()
+    # Supplier photos can move the dialog while loading. Click the visible door under the pointer.
+    point=page.wait_for_function("""()=>{
+      const v=MF_PLANNER.aiKitchen.preview, r=v.canvas.getBoundingClientRect();
+      for(let y=12;y<r.height-10;y+=12)for(let x=12;x<r.width-10;x+=12){
+        if(document.elementFromPoint(r.left+x,r.top+y)!==v.canvas)continue;
+        v.ray.setFromCamera({x:2*x/r.width-1,y:1-2*y/r.height},v.camera);
+        const hit=v.ray.intersectObject(v.model,true).find(h=>h.object.visible&&h.object.isMesh);
+        if(hit?.object.userData.itemId==='questionnaire-preview:door-left')return {x,y};
+      }
+      return null;}""",timeout=20000).json_value()
+    canvas.click(position=point)
     expect(form.locator('[name=part]')).to_have_value('door-left')
     wait_for_state(page, '()=>MF_PLANNER.aiKitchen.preview.outline.visible')
     form.locator('[name=part]').select_option('left')
