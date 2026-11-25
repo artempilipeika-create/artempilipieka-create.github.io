@@ -1,3 +1,4 @@
+import {showModuleCost} from './wardrobe-estimate-ui.mjs';
 import {fillingCards,fillingSource,fillingFamily,fillingCabinet,fillingClearanceError} from './kitchen-filling-geometry.mjs';
 import {kitchenPlacementItems,assistantStamp} from './assistant-model.mjs';
 import {lowerMembers} from './ai-kitchen-project.mjs';
@@ -34,9 +35,10 @@ export class KitchenFillingUI{
   this.body=node('div');this.body.className='ai-kitchen-body';
   this.form=node('form');this.form.onsubmit=e=>{e.preventDefault();this.save();};const aside=node('aside');this.canvas=node('canvas');this.canvas.className='kitchen-filling-preview';this.canvas.setAttribute('aria-label','Предпросмотр модуля');
   this.toggle=button('',()=>{this.inside=!this.inside;this.draw();});aside.append(this.canvas,this.toggle);this.body.append(this.form,aside);
+  this.cost=node('section');this.cost.id='kitchen-filling-cost';this.cost.className='cost-card';this.cost.setAttribute('aria-live','polite');this.cost.hidden=true;aside.append(this.cost);
   const foot=node('footer');this.status=node('p');this.status.setAttribute('role','status');this.apply=button('Применить изменения',()=>this.save());this.apply.className='primary';foot.append(this.status,this.apply);
   this.dialog.append(head,this.tabs,this.body,foot);document.body.append(this.dialog);
-  this.dialog.onclose=()=>this.app.executions?.renderer?.cancel(this.canvas);
+  this.dialog.onclose=()=>{this.updateCost(null);this.app.executions?.renderer?.cancel(this.canvas);};
  }
  add(id){
   if(this.app.workspace?.isClient())this.app.workspace.client();
@@ -115,7 +117,7 @@ export class KitchenFillingUI{
    }
   }
   if(this.tab==='body'){
-   if(v.allowed_widths)choice(grid,'Ширина корпуса, мм',v.allowed_widths.map(n=>[n,n]),d.width,n=>this.variant({width:Number(n)}));else this.number(grid,'Ширина корпуса, мм','width',400,1200);
+   if(v.allowed_widths)choice(grid,'Ширина корпуса, мм',v.allowed_widths.map(n=>[n,n]),d.width,n=>this.variant({width:Number(n)}));else this.number(grid,'Ширина корпуса, мм','width',...(this.app.adapter.template(d)?.production?.limits?.w??[350,1200]));
    this.number(grid,'Высота с опорами, мм','height',700,1150);this.number(grid,'Глубина боковины, мм','depth',family==='drawers'?300:510,700);
    const b=o.backMount,method=b?.kind==='rabbet'?'quarter':b?.layout??'overlay';
    choice(grid,'Задняя стенка',[['overlay','Накладная ЛХДФ 3 мм'],['sides','Паз в боковинах · ХДФ под гвозди'],['perimeter','Паз по кругу'],['quarter','Четверть']],method,val=>{
@@ -125,6 +127,13 @@ export class KitchenFillingUI{
   }
   if(this.tab==='materials'){
    for(const [title,field] of [['Корпус','body_variant_id'],['Фасады','front_variant_id']])this.kitchen.picker(grid,title,d[field],18,id=>{d[field]=id;},()=>this.render());
+   const boards=(v.panels??[]).filter(p=>p.role==='drawer' && p.size[p.axes[2]]===16);
+   if(boards.length){
+    const ids=new Set(boards.map(p=>d.part_materials?.[p.key]??null));
+    this.kitchen.picker(grid,'Дно и задние стенки шуфляд · 16 мм',ids.size===1?[...ids][0]:null,16,id=>{
+     d.part_materials={...d.part_materials,...Object.fromEntries(boards.map(p=>[p.key,id]))};
+    },()=>this.render(),ids.size>1?'Разные материалы деталей':'По декору корпуса, если есть плита 16 мм');
+   }
   }
   this.draw();
  }
@@ -133,6 +142,26 @@ export class KitchenFillingUI{
   const dz=(d.depth-a.depth)/2+kitchenSettings(d).rearServiceGapMm-kitchenSettings(a).rearServiceGapMm;
   const shift=rotateXZ((d.width-a.width)/2,dz,rotation);
   return {...d,x:a.x+shift.x,z:a.z+shift.z,rearServiceGapMm:kitchenSettings(d).rearServiceGapMm};
+ }
+ updateCost(item){
+  if(!item||!this.app.bridge.estimateAccess()){
+   clearTimeout(this.priceTimer);this.priceKey=null;this.cost.hidden=true;return;
+  }
+  const scene=this.app.bridge.payload();
+  scene.items=scene.items.map(current=>current.item_id===item.item_id?item:current);
+  const key=JSON.stringify(scene);
+  if(key===this.priceKey)return;
+  this.priceKey=key;clearTimeout(this.priceTimer);this.cost.hidden=false;
+  showModuleCost(this.cost,null);
+  this.priceTimer=setTimeout(async()=>{
+   try{
+    const quote=await this.app.bridge.request('/3d-estimates/preview','POST',scene);
+    if(this.priceKey!==key||!this.dialog.open)return;
+    showModuleCost(this.cost,quote.modules?.find(it=>it.id===item.item_id),'Нет расчёта для выбранного модуля.',false);
+   }catch{
+    if(this.priceKey===key&&this.dialog.open)showModuleCost(this.cost,null,'Не удалось рассчитать стоимость.');
+   }
+  },300);
  }
  draw(){
   const d=this.draft;this.apply.disabled=true;this.toggle.textContent=this.inside?'Показать фасады':'Показать наполнение';
@@ -144,9 +173,10 @@ export class KitchenFillingUI{
    if(pull&&kitchenPulls.find(([a])=>a===pull)[1].length>Math.min(...p.filter(p=>p.role==='front').map(p=>p.size.x)))throw Error('Ручка MONBLAN длиннее фасада. Выберите меньший размер.');
    checkBackMount(fillingCabinet(it));const clearance=fillingClearanceError(it,p);if(clearance)throw Error(clearance);
    this.apply.disabled=false;this.status.textContent=it.width+' × '+it.height+' × '+it.depth+' мм · '+(v.execution==='gola'?'Gola':pull?'MONBLAN '+pull:'Исполнение исходного модуля');
+   this.updateCost(it);
    const renderer=this.app.executions?.ensureRenderer();this.canvas.hidden=!renderer;
    renderer?.request(this.canvas,it,{view:this.inside?'inside':'closed',sceneDisplayMode:true,dialog:true});
-  }catch(e){this.status.textContent=e.message;this.canvas.hidden=true;}
+  }catch(e){this.updateCost(null);this.status.textContent=e.message;this.canvas.hidden=true;}
  }
  save(){
   if(this.apply.disabled)return;
@@ -157,5 +187,5 @@ export class KitchenFillingUI{
    if(saved){this.dialog.close();this.app.sync();}
   }catch(e){this.status.textContent=e.message;}
  }
- dispose(){this.dialog.close();this.dialog.remove();}
+ dispose(){this.updateCost(null);this.dialog.close();this.dialog.remove();}
 }

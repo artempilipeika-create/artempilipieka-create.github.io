@@ -1,3 +1,4 @@
+import {showModuleCost} from './wardrobe-estimate-ui.mjs';
 import {WALLS} from './room-plan.mjs';
 import {wallCoatings,roomById,wallCoating} from './render-rooms/catalogue.mjs';
 import {RenderRoomPicker} from './render-room-picker.mjs';
@@ -111,12 +112,7 @@ export class RoomPricingUI{
     const label=m=>(m.missing?'Рассчитано · ':'')+money(m.total);
     const selected=quote?.modules?.find(m=>m.id===(it?.assistant_carcass?.group_id??it?.item_id));
     const waiting=error||'Считаем по деталям…';
-    this.module.dataset.priceStatus=selected?(selected.missing?'PARTIAL':'PRICED'):'PENDING';
-    this.module.replaceChildren(el('h3','Стоимость модуля'));
-    if(selected){
-      this.module.append(el('p',selected.name+' · '+selected.width+' × '+selected.height+' × '+selected.depth+' мм'),el('strong',label(selected)));
-      for(const d of selected.drawers)this.module.append(el('p',d.name+' · '+label(d)));
-    }else this.module.append(el('p',waiting));
+    showModuleCost(this.module,selected,waiting);
     this.kitchen.dataset.priceStatus=quote?(quote.complete?'PRICED':'PARTIAL'):'PENDING';
     this.kitchen.replaceChildren(el('h3','Стоимость кухни'),el('strong',quote?label(quote):waiting));
     if(quote){

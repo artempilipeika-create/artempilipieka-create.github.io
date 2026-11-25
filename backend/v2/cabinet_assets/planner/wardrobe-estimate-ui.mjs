@@ -8,6 +8,16 @@ function element(tag,text,cls){
   return node;
 }
 
+export function showModuleCost(card, module, message='Считаем по деталям…', dimensions=true){
+  card.dataset.priceStatus=module?(module.missing?'PARTIAL':'PRICED'):'PENDING';
+  card.replaceChildren(element('h3','Стоимость модуля'));
+  if(!module){card.append(element('p',message));return;}
+  const amount=row=>(row.missing?'Рассчитано · ':'')+money(row.total);
+  if(dimensions)card.append(element('p',module.name+' · '+[module.width,module.height,module.depth].join(' × ')+' мм'));
+  card.append(element('strong',amount(module)));
+  for(const drawer of module.drawers)card.append(element('p',drawer.name+' · '+amount(drawer)));
+}
+
 export class WardrobeEstimateUI{
   constructor(app){
     this.app=app;

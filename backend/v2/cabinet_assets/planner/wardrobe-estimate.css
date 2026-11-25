@@ -27,3 +27,6 @@
 .estimate-modules>summary{font-weight:700}.estimate-module{margin-bottom:.4rem}
 .estimate-drawer{padding:4px 6px 4px 34px;color:#4e6155;border:0}
 #kitchen-cost>button{display:block;margin-top:.65rem}
+
+#kitchen-filling-cost{margin-top:12px;padding:12px 14px;border:1px solid #d4ded7;border-radius:8px;background:#fff}
+#kitchen-filling-cost h3{margin:0 0 6px;font-size:14px}#kitchen-filling-cost p{margin:4px 0;font-size:12px}

@@ -307,10 +307,10 @@ export class AIKitchenUI{
   }
   group.append(list);grid.append(group);
  }
- picker(grid,title,id,thickness,assign,refresh=()=>this.render()){
+ picker(grid,title,id,thickness,assign,refresh=()=>this.render(),fallbackLabel='Материал проекта'){
   const card=el('fieldset');card.className='ai-picker ai-span';card.append(el('legend',title));
   const material=this.app.adapter.material(id),defaultIds=globalThis.MF_FURNITURE_CORE.DEFAULT_MATERIALS;
-  const known=id===defaultIds.body_variant_id?'BYSPAN 605 PO':id===defaultIds.front_variant_id?'BYSPAN 890 PO':id===CARCASS_BACK_MATERIAL_ID?'ЛХДФ белый':'Материал проекта';
+  const known=id===defaultIds.body_variant_id?'BYSPAN 605 PO':id===defaultIds.front_variant_id?'BYSPAN 890 PO':id===CARCASS_BACK_MATERIAL_ID?'ЛХДФ белый':fallbackLabel;
   const active=el('strong',material?.name??known);card.append(active);
   const input=el('input');input.type='search';input.placeholder='Название или артикул';input.setAttribute('aria-label','Поиск · '+title);
   const matches=el('div');matches.className='ai-material-results';
