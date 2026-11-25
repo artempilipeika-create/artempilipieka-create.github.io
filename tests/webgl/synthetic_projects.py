@@ -7,7 +7,12 @@ class SyntheticProjects:
 
     def route(self,route,path):
         base='/api/v2/3d-projects';req=route.request;method=req.method
-        if path==base and method=='GET':result={'items':list(self.projects.values())}
+        if path=='/api/v2/3d-estimates/preview' and method=='POST':
+            from backend.v2.three_d_api import Scene
+            from backend.v2.wardrobe_estimate import calculate
+            payload=Scene.model_validate_json(req.post_data).model_dump(mode='json')
+            result=calculate(payload)
+        elif path==base and method=='GET':result={'items':list(self.projects.values())}
         elif path==base and method=='POST':
             data=json.loads(req.post_data);pid=str(uuid4())
             result={**data,'project_id':pid,'version':1};self.projects[pid]=result;self.writes+=1

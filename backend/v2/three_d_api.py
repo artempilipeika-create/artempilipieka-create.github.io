@@ -13,6 +13,7 @@ from .security import identity,error
 from .domain_api import require,create_draft
 from .events import record_event
 from . import catalogue
+from .constructor_access import require_design
 from .three_d_document import render as render_spec
 from .sales_album import render as render_sales, image_bytes as sales_image
 from . import sales_render, sales_render_store, kitchen_album, customer_hardware, customer_hardware_pdf
@@ -877,10 +878,13 @@ def router(settings):
         if not row: error(404,'PROJECT_3D_NOT_FOUND')
         return row
 
+    from .wardrobe_estimate_api import register as register_estimates
+    register_estimates(api,settings,own)
+
     @api.get('/3d-projects')
     def list_projects(request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            user=identity(conn,request);require_design(conn,user)
             rows=conn.execute('SELECT * FROM mf_3d_projects WHERE owner_user_id=%s AND archived_at IS NULL ORDER BY updated_at DESC,project_id',
                               (user['user_id'],)).fetchall()
             return {'items':[projection(r) for r in rows]}
@@ -890,7 +894,7 @@ def router(settings):
     @api.post('/3d-projects',status_code=201)
     def create_project(body:Create,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');pid=uuid4()
+            user=identity(conn,request);require_design(conn,user);pid=uuid4()
             digest,replayed=request_receipt(conn,user,body,'create')
             if replayed:
                 own(conn,user,replayed['project_id'])
@@ -904,12 +908,12 @@ def router(settings):
     @api.get('/3d-projects/{project_id}')
     def read_project(project_id:UUID,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');return projection(own(conn,user,project_id))
+            user=identity(conn,request);require_design(conn,user);return projection(own(conn,user,project_id))
 
     @api.patch('/3d-projects/{project_id}')
     def update_project(project_id:UUID,body:Update,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            user=identity(conn,request);require_design(conn,user)
             digest,replayed=request_receipt(conn,user,body,'update:'+str(project_id))
             row=own(conn,user,project_id,True)
             if replayed:return {**replayed,'scene':body.scene.model_dump(mode='json')}
@@ -923,14 +927,14 @@ def router(settings):
     @api.get('/3d-projects/{project_id}/versions')
     def list_versions(project_id:UUID,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');own(conn,user,project_id)
+            user=identity(conn,request);require_design(conn,user);own(conn,user,project_id)
             rows=conn.execute('SELECT version_id,label,kind,project_version,name,created_at FROM mf_3d_project_versions WHERE project_id=%s ORDER BY created_at DESC,version_id', (project_id,)).fetchall()
             return {'items':rows}
 
     @api.post('/3d-projects/{project_id}/versions',status_code=201)
     def create_version(project_id:UUID,body:Checkpoint,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            user=identity(conn,request);require_design(conn,user)
             digest,replayed=request_receipt(conn,user,body,'checkpoint:'+str(project_id))
             row=own(conn,user,project_id,True)
             if replayed:return replayed
@@ -944,7 +948,7 @@ def router(settings):
     @api.post('/3d-projects/{project_id}/versions/{version_id}/restore')
     def restore_version(project_id:UUID,version_id:UUID,body:RestoreCheckpoint,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write')
+            user=identity(conn,request);require_design(conn,user)
             digest,replayed=request_receipt(conn,user,body,'restore:'+str(project_id)+':'+str(version_id))
             row=own(conn,user,project_id,True)
             target=conn.execute('SELECT * FROM mf_3d_project_versions WHERE project_id=%s AND version_id=%s',(project_id,version_id)).fetchone()
@@ -962,7 +966,7 @@ def router(settings):
     @api.post('/3d-projects/{project_id}/duplicate',status_code=201)
     def duplicate_project(project_id:UUID,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');source=own(conn,user,project_id)
+            user=identity(conn,request);require_design(conn,user);source=own(conn,user,project_id)
             pid=uuid4();name=(source['name']+' — копия')[:200]
             row=conn.execute('''INSERT INTO mf_3d_projects(project_id,owner_user_id,name,module_type,scene)
                 VALUES(%s,%s,%s,%s,%s) RETURNING *''',(pid,user['user_id'],name,source['module_type'],Jsonb(source['scene']))).fetchone()
@@ -1168,7 +1172,7 @@ def router(settings):
     @api.delete('/3d-projects/{project_id}',status_code=204)
     def archive_project(project_id:UUID,request:Request):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'orders.draft.write');own(conn,user,project_id,True)
+            user=identity(conn,request);require_design(conn,user);own(conn,user,project_id,True)
             conn.execute('UPDATE mf_3d_projects SET archived_at=now(),updated_at=now() WHERE project_id=%s',(project_id,))
             record_event(conn,settings,actor=user['user_id'],action='3d.project.archived',object_type='3d_project',object_id=project_id,reason='User archived 3D project')
     return api

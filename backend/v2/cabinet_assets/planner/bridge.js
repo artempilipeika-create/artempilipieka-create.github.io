@@ -26,6 +26,7 @@
     projectId:()=>project?.project_id||null,
     userId:()=>user?.user_id,
     assistantAccess:()=>globalThis.MF_CONSTRUCTOR_ACCESS?.canUseAssistant(user)||false,
+    estimateAccess:()=>Boolean(user?.account_status==='active'&&(user.capabilities?.constructor_edit??user.capabilities?.draft_create)&&user.roles?.some(r=>r==='manager'||r==='admin')),
     productionTools:()=>globalThis.MF_CONSTRUCTOR_ACCESS?.canUseProductionTools(user)||false,
     projectMeta:()=>project?copy({project_id:project.project_id,version:project.version,updated_at:project.updated_at}):null,
     request:(path,method,body)=>api(path,method,body,{}, {timeoutMs:20000}),
@@ -63,6 +64,12 @@
     view:mode=>{viewMode=mode==='top'?'2d':'3d';state.view_mode=viewMode;updateAll();},
     payload:()=>scenePayload(),
     save:()=>saveProject(),
+    estimatePreview:()=>{
+      const view=window.MF_PLANNER?.scene;
+      try{if(view?.renderer&&view.camera)view.renderer.render(view.scene,view.camera);
+        return pdfPreviewDataUrl($('scene'),1150,780)||null;
+      }catch{return null;}
+    },
     openAlbum:()=>openKitchenAlbumFlow(),
     downloadHardware:()=>downloadHardwareReport(),
     open:id=>openProject(id),

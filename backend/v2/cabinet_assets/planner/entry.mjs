@@ -16,6 +16,7 @@ function waitReady(){return new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>{observer.disconnect();reject(new Error('Не удалось дождаться загрузки проекта. Проверьте вход в кабинет.'));},30000);
 });}
 
+import {WardrobeEstimateUI} from './wardrobe-estimate-ui.mjs';
 import {RoomPricingUI} from './room-pricing-ui.mjs';
 import {RoomSetup} from './room-setup.mjs';
 import {EquipmentControls} from './equipment-controls.mjs';
@@ -42,7 +43,7 @@ class PlannerApplication {
   async init(){
     if(this.ready)return this;await waitReady();
     this.bridge=window.MF_PLANNER_BRIDGE;this.adapter=new StateAdapter(this.bridge);this.history=new History(this.adapter);
-    this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.bindBrief();this.roomPricing=new RoomPricingUI(this);
+    this.uiAbort=new AbortController();this.buildToolbar();this.workspace=new PlannerWorkspace(this);this.bindInspector();this.bindBrief();this.roomPricing=new RoomPricingUI(this);this.estimate=new WardrobeEstimateUI(this);
     this.countertops=new CountertopUI(this);this.worktopFixtures=new WorktopFixtureUI(this);this.accessories=new AccessoryUI(this);
     this.wallFinishes=new WallFinishUI(this);this.finishCatalogue=new FinishCatalogue(this);this.mobility=new MobilityUI(this);this.materialAppearance=new MaterialAppearanceUI(this);
     this.equipment=new EquipmentControls(this);
@@ -525,7 +526,7 @@ class PlannerApplication {
     const selectedId=this.adapter.state?.selected_item_id;
     if(selectedId&&!this.adapter.items.some(it=>it.item_id===selectedId)){this.adapter.select(null);return;}
     get('to-order').disabled=count===0;get('export-bazis').disabled=count===0;
-    this.cabinets?.sync();this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.wallFinishes?.sync();this.mobility?.sync();this.materialAppearance?.sync();this.blanks?.sync();
+    this.cabinets?.sync();this.scene.sync();this.syncBrief();if(get('material-scope'))get('material-scope').value=this.scene.selectionScope||'module';this.roomPricing?.sync();this.estimate?.sync();this.roomSetup?.sync();this.countertops?.sync();this.worktopFixtures?.sync();this.accessories?.sync();this.wallFinishes?.sync();this.mobility?.sync();this.materialAppearance?.sync();this.blanks?.sync();
     if(count>this.previousCount)this.ensureSelectedVisible();
     if(!this.previousCount&&count)this.scene.fit('kitchen');this.previousCount=count;
     const selected=this.adapter.selected;
@@ -534,7 +535,7 @@ class PlannerApplication {
     if(selected)this.scene.highlight(placementError(selected,this.adapter.items,this.adapter.room));
     get('studio-empty-scene').hidden=Boolean(count||this.adapter.room.features?.some(f=>['window','radiator','gas_cooker','gas_boiler','water_heater'].includes(f.kind)));this.paintMode();this.equipment?.sync();this.executions?.sync();
   }
-  dispose(){this.aiKitchen?.dispose();this.assistant?.dispose();this.blanks?.dispose();this.executions?.dispose();this.equipment?.dispose();this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
+  dispose(){this.estimate?.dispose();this.aiKitchen?.dispose();this.assistant?.dispose();this.blanks?.dispose();this.executions?.dispose();this.equipment?.dispose();this.presentation?.dispose();this.dimensions?.dispose();this.safety?.dispose();this.roomSetup?.dispose();this.workspace?.dispose();this.unsubscribe?.();this.uiAbort?.abort();this.interaction?.dispose();this.scene?.dispose();this.ready=false;document.body.dataset.plannerReady='false';}
 }
 export const planner=new PlannerApplication();
 window.MF_PLANNER=planner;

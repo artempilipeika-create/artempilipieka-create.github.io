@@ -5,7 +5,7 @@
     account?.capabilities?.draft_create&&account.roles?.length===1&&
     ['admin','manager'].includes(account.roles[0]));
   const canUseAssistant=account=>Boolean(account?.account_status==='active'&&
-    account?.email_verified&&account?.capabilities?.draft_create);
+    account?.email_verified&&(account?.capabilities?.constructor_edit??account?.capabilities?.draft_create));
   const apply=account=>{
     const enabled=canUseProductionTools(account);
     document.body.dataset.constructorAudience=enabled?'staff':'client';

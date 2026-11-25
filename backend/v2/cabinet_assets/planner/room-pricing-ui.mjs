@@ -100,6 +100,9 @@ export class RoomPricingUI{
     this.applyPreset.hidden=photographic||(designed?['wallColor']:['wallColor','floorMaterial','lightingPreset']).every(key=>s[key]===preset[key]);
     this.applyPreset.textContent=(designed?'Вернуть оттенок «':'Применить «')+ROOM_PRESETS[s.environmentPreset].label+'»';
     const it=a.selected;
+    const wardrobe=a.items.some(item=>['blank','wardrobe'].includes(item.module_type));
+    this.module.hidden=wardrobe;this.kitchen.hidden=wardrobe;
+    if(wardrobe){this.syncVisualNotice();return;}
     this.module.replaceChildren(el('h3','Стоимость'));
     if(it){
       const b=modulePriceBreakdown(it,a.template(it),id=>a.material(id));

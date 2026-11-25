@@ -1,0 +1,25 @@
+.mf3d-top-actions #estimate-open{background:#174b37;color:#fff;border:0;white-space:nowrap;font-weight:650}
+#estimate-dialog{box-sizing:border-box;width:min(690px,94vw);max-height:86vh;padding:24px 28px;border:1px solid #b8c7bb;border-radius:18px;color:#183b2c;background:#fff;overflow:auto}
+#estimate-dialog::backdrop{background:rgb(14 37 27/.46)}
+#estimate-dialog header,#estimate-dialog footer,.estimate-section summary,.estimate-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+#estimate-dialog header,#estimate-dialog footer{position:static;height:auto;background:transparent;color:inherit;padding:0;box-shadow:none}
+#estimate-dialog header h2{font-size:26px;margin:0 0 3px}
+#estimate-dialog header p,#estimate-dialog #estimate-status{font-size:13px;margin:3px 0;color:#536b5c}
+#estimate-dialog #estimate-status{margin:12px 0}
+#estimate-dialog #estimate-status:empty{margin:0}
+#estimate-dialog footer{margin-top:15px;flex-wrap:wrap}
+#estimate-dialog footer a,#estimate-history a,.estimate-row a{color:#176346;text-underline-offset:3px}
+.estimate-amounts{display:grid;grid-template-columns:1fr .65fr 1.2fr;margin:22px 0 16px;background:#f0f4ef;border-radius:10px;overflow:hidden}
+.estimate-amounts>div{padding:14px 12px;display:grid;gap:6px;align-content:start}
+.estimate-amounts>div:last-child{background:#174b37;color:#fff}
+.estimate-amounts span,.estimate-section small,.estimate-row small,.estimate-row a{font-size:12px}
+.estimate-amounts strong{font-size:19px;line-height:1.2}
+.estimate-section{border-bottom:1px solid #d8e1d9}
+.estimate-section summary{cursor:pointer;padding:13px 2px}
+.estimate-section summary strong{margin-right:auto}.estimate-section summary strong:before{content:'▸';margin-right:8px}.estimate-section[open] summary strong:before{content:'▾'}
+.estimate-section small,.estimate-row small{color:#637366}
+.estimate-row{padding:9px 6px 9px 18px;border-top:1px solid #e7ece7;font-size:13px}
+.estimate-row>div{display:grid;gap:3px;overflow-wrap:anywhere}.estimate-row b{white-space:nowrap}
+#estimate-history{padding-top:15px;font-size:13px}#estimate-history summary{cursor:pointer}#estimate-history a{display:block;margin:8px 0}
+@media(max-width:650px){#estimate-dialog{padding:16px}.estimate-amounts{grid-template-columns:1fr 1fr}.estimate-amounts>div:last-child{grid-column:1/-1}.mf3d-top-actions #estimate-open{font-size:11px;padding:6px 9px}}
+.estimate-row.with-photo{display:grid;grid-template-columns:44px 1fr auto}.estimate-row img{object-fit:contain;background:#fff;border-radius:6px}

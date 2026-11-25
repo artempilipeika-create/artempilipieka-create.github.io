@@ -51,7 +51,7 @@ def router():
         'countertop-variants.js','countertop-variants.json','countertops.js','countertop-ui.mjs','countertop.css',
         'vitrine-model.js','vitrine-ui.js','vitrine.css','appliance-tall-ui.js','appliance-tall.css','production-notes.js','production-notes.css','entry.mjs','bridge.js','fallback.mjs','canvas-renderer.mjs','canvas-materials.mjs','canvas-shadows.mjs','furniture-core.js','furniture-core.mjs','corner-variants.js','tall-variants.js',
         'studio-environment.mjs','studio-render.mjs','state-adapter.mjs','history.mjs','scene.mjs','client-camera.mjs','module-mesh.mjs','vitrine-visuals.mjs','countertop-visuals.mjs','placement.mjs','mobility.mjs','mobility-ui.mjs',
-        'interaction.mjs','material-visuals.mjs','room-state.mjs','room-daylight.mjs','room-interiors.mjs','room-pricing-ui.mjs','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
+        'interaction.mjs','material-visuals.mjs','room-state.mjs','room-daylight.mjs','room-interiors.mjs','room-pricing-ui.mjs','wardrobe-estimate-ui.mjs','wardrobe-estimate.css','room-plan.mjs','room-setup.mjs','room-mesh.mjs','room-setup.css','pricing.mjs','workspace.mjs','workspace.css','planner.css','vendor/three.module.js','vendor/three.core.min.js',
         'vendor/OrbitControls.js','vendor/THREE-LICENSE.txt','vendor/manifest.json',
     }
     planner_files.update({'room-surfaces.mjs','render-rooms.mjs','render-room-picker.mjs','render-framing.mjs','vendor/room-loaders.mjs',
@@ -229,6 +229,9 @@ def router():
                          for opening in ('left', 'right', 'double'))
     countertops=json.loads((root/'planner/countertop-variants.json').read_text())
     planner_files.update('countertop-sources/'+v['joint']+'-'+v['shape']+'.png' for v in countertops)
+    from . import estimate_photos
+    planner_files.update(estimate_photos.names())
+
     @api.get('/account/planner/{asset:path}')
     def planner_asset(asset:str):
         # Native production models are never public assets, including known archive URLs.
@@ -236,6 +239,9 @@ def router():
         if Path(asset).suffix.lower() in {'.fr3d','.b3d','.zip','.rar','.7z'}:
             return Response(status_code=404,headers={'Cache-Control':'no-store'})
         if asset not in planner_files:return Response(status_code=404)
+        if asset.startswith(estimate_photos.PREFIX):
+            return Response(estimate_photos.image_bytes(asset),media_type='image/webp',
+                            headers={'Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'})
         if asset.startswith('materials/user-'):
             image=user_texture_bytes(asset.removeprefix('materials/'))
             if image is not None:

@@ -13,7 +13,10 @@ async function start(){
  try{currentUser=await api('/auth/me');}catch(e){$('auth').hidden=false;$('account').hidden=true;$('logout').hidden=true;if(e.status!==401)message(e.message,true);return;}
  $('auth').hidden=true;$('account').hidden=false;$('logout').hidden=false;$('registration-pending').hidden=true;pendingVerificationEmail='';$('verification').hidden=currentUser.email_verified;
  const staff=!currentUser.roles.includes('client');$('staff-link').hidden=!staff;$('profile').hidden=staff;$('orders').textContent=staff?'Рабочая очередь':'Мои заказы';$('prepare-link').hidden=!currentUser.capabilities.draft_create;
+ const pricing=currentUser.account_status==='active'&&(currentUser.capabilities.constructor_edit??currentUser.capabilities.draft_create)&&currentUser.roles.some(r=>r==='manager'||r==='admin');
+ $('estimate-settings').hidden=!pricing;
  await workspaceStart();
+ if(location.hash==='#estimate-settings'&&pricing)await estimateSettings();
 }
 function showVerificationPending(email){
  pendingVerificationEmail=email;$('registration-pending').hidden=false;
@@ -66,3 +69,18 @@ async function detail(id){const o=await api('/account/orders/'+id),timeline=awai
 }
 async function submit(o){content.replaceChildren(node('h1','Передать заказ на обработку'),node('p','Проверьте комментарий. Передача сохраняет текущую редакцию и направляет её менеджеру для проверки.'));const f=node('form'),label=node('label','Комментарий менеджеру'),text=node('textarea');text.name='comment';text.maxLength=2000;text.required=false;label.append(text);f.append(label);let check=null;if(['invalid','needs_confirmation','incomplete'].includes(o.calculation_state)){const l=node('label','Передать позиции, требующие уточнения, на проверку менеджеру');check=node('input');check.type='checkbox';l.append(check);f.append(l);}f.append(node('button','Подтвердить отправку'));const key=crypto.randomUUID();f.onsubmit=e=>{e.preventDefault();run(async()=>{const body={comment:text.value,handoff_problematic:check?.checked||false};if(o.revision_id)body.revision_id=o.revision_id;if(o.calculation_id)body.preliminary_calculation_id=o.calculation_id;await api('/orders/'+o.order_id+'/submit','POST',body,{'If-Match':String(o.optimistic_lock_version),'Idempotency-Key':key});await detail(o.order_id);message('Заказ передан на обработку.');});};content.append(f,button('Назад к заказу',()=>detail(o.order_id),true));}
 window.addEventListener('DOMContentLoaded',()=>{authMode();run(start);});
+
+async function estimateSettings(){
+  const settings=await api('/account/estimate-settings');
+  content.replaceChildren(node('h1','Моя наценка'));
+  const form=node('form'),label=node('label','Наценка к стоимости Martin Forest, %'),input=node('input');
+  input.type='number';input.min='0';input.max='999999.99';input.step='0.01';input.required=true;input.value=settings.markup;
+  label.append(input);form.append(label,node('p','Процент применяется к материалам, фурнитуре и работам при расчёте цены для клиента.'));
+  const submit=node('button','Сохранить наценку');submit.type='submit';form.append(submit);
+  form.onsubmit=event=>{event.preventDefault();run(async()=>{
+    const saved=await api('/account/estimate-settings','PUT',{markup:input.valueAsNumber});
+    input.value=saved.markup;message('Наценка сохранена: '+saved.markup.toLocaleString('ru-BY')+' %.');
+  });};
+  content.append(form);
+}
+$('estimate-settings').onclick=()=>run(estimateSettings);

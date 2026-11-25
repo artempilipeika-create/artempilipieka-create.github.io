@@ -106,10 +106,12 @@ def router(settings, policy):
     @api.get('/me')
     def me(request: Request):
         from .rbac import allowed
+        from .constructor_access import can_design
         with transaction(settings) as conn:
             user = identity(conn,request)
             result = user_dto(user)
             result['capabilities'] = {'draft_create':allowed(conn,user['user_id'],'orders.draft.write'),
+                                      'constructor_edit':can_design(conn,user),
                                       'email_verification_request':user['account_status']=='active' and not user['email_verified_at']}
             return result
 

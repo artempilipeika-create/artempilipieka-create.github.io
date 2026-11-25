@@ -83,9 +83,10 @@ def configured():
 
 
 def authorize(settings, request):
+    from .constructor_access import require_design
     with transaction(settings) as conn:
         user = identity(conn, request)
-        require(conn, user, 'orders.draft.write')
+        require_design(conn, user)
         verified(user)
         return str(user['user_id'])
 

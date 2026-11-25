@@ -211,7 +211,10 @@ def router(settings,policy):
     @api.get('/catalogue/materials')
     def materials(request:Request,q:str='',thickness:float|None=Query(None,gt=0),release:UUID|None=None,offset:int=Query(0,ge=0),limit:int=Query(100,ge=1,le=250)):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'catalogue.read')
+            from .constructor_access import manager_grant
+            user=identity(conn,request)
+            if not manager_grant(conn,user,'catalogue.read'):
+                require(conn,user,'catalogue.read')
             version=release_or_active(conn,release)
             found=[safe_item(i,version) for i in catalogue.items(conn,version,'material') if matches(i,q)]
             if thickness is not None:
@@ -238,7 +241,10 @@ def router(settings,policy):
     @api.get('/catalogue/materials/{variant_id}')
     def material(variant_id:UUID,request:Request,release:UUID|None=None):
         with transaction(settings) as conn:
-            user=identity(conn,request);require(conn,user,'catalogue.read')
+            from .constructor_access import manager_grant
+            user=identity(conn,request)
+            if not manager_grant(conn,user,'catalogue.read'):
+                require(conn,user,'catalogue.read')
             return catalogue.get_item(conn,release_or_active(conn,release),variant_id,'material')
 
     @api.get('/catalogue/releases')
