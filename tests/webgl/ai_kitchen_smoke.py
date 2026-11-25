@@ -144,17 +144,21 @@ def scenario(page, projects, pid):
     wait_for_state(page, '()=>MF_PLANNER.aiKitchen.preview.motion.door < 0.01')
     canvas=form.locator('.wardrobe-live canvas')
     canvas.scroll_into_view_if_needed()
-    # Supplier photos can move the dialog while loading. Click the visible door under the pointer.
-    point=page.wait_for_function("""()=>{
-      const v=MF_PLANNER.aiKitchen.preview, r=v.canvas.getBoundingClientRect();
-      for(let y=12;y<r.height-10;y+=12)for(let x=12;x<r.width-10;x+=12){
-        if(document.elementFromPoint(r.left+x,r.top+y)!==v.canvas)continue;
-        v.ray.setFromCamera({x:2*x/r.width-1,y:1-2*y/r.height},v.camera);
-        const hit=v.ray.intersectObject(v.model,true).find(h=>h.object.visible&&h.object.isMesh);
-        if(hit?.object.userData.itemId==='questionnaire-preview:door-left')return {x,y};
+    # Solve the actual ray and deliver the canvas click in the same frame: the live
+    # preview resizes as product images load between browser automation commands.
+    picked=page.evaluate("""()=>{const v=MF_PLANNER.aiKitchen.preview,r=v.canvas.getBoundingClientRect();
+      const hitAt=(x,y)=>{v.ray.setFromCamera({x:2*x/r.width-1,y:1-2*y/r.height},v.camera);
+        return v.ray.intersectObject(v.model,true).find(h=>h.object.visible&&h.object.isMesh)?.object.userData.itemId;};
+      const key='questionnaire-preview:door-left';
+      for(let y=18;y<r.height-18;y+=10)for(let x=18;x<r.width-18;x+=10){
+        const clientX=r.left+x,clientY=r.top+y;
+        if(document.elementFromPoint(clientX,clientY)!==v.canvas||hitAt(x,y)!==key)continue;
+        if([[-5,0],[5,0],[0,5],[0,-5]].some(([dx,dy])=>hitAt(x+dx,y+dy)!==key))continue;
+        v.canvas.dispatchEvent(new MouseEvent('click',{clientX,clientY,bubbles:true,cancelable:true}));
+        return {hit:key, part:MF_PLANNER.aiKitchen.partKey, group:!!MF_PLANNER.aiKitchen.current};
       }
-      return null;}""",timeout=20000).json_value()
-    canvas.click(position=point)
+      throw Error('The client view has no exposed interior point on the closed left door');}""")
+    assert picked['part']=='door-left',picked
     expect(form.locator('[name=part]')).to_have_value('door-left')
     wait_for_state(page, '()=>MF_PLANNER.aiKitchen.preview.outline.visible')
     form.locator('[name=part]').select_option('left')
